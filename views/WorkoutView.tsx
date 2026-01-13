@@ -205,66 +205,83 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onBack, onAd
     return (
         <div className="fixed inset-0 z-40 flex flex-col bg-gray-50 dark:bg-zinc-950 font-sans" onClick={() => ctrl.setOpenMenuId(null)}>
             
-            {/* --- Header Section --- */}
-            <div className="glass z-30 px-4 h-20 shrink-0 flex items-center justify-between border-b border-zinc-200 dark:border-white/5">
-                <button onClick={onBack} className="w-10 h-10 flex items-center justify-center rounded-full active:bg-zinc-200 dark:active:bg-zinc-800 transition-colors -ml-2 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white">
-                    <Icon name="ChevronLeft" size={24} />
-                </button>
-                <div className="text-center">
-                    {/* Timer added here, isolated from main list render cycle */}
-                    <div className="flex justify-center mb-0.5">
-                        <WorkoutTimer startTime={activeSession.startTime} />
+            {/* --- Minimalist Header --- */}
+            <div className="glass z-30 pt-safe border-b border-zinc-200 dark:border-white/5 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-xl">
+                {/* Top Actions Row */}
+                <div className="px-3 h-14 flex items-center justify-between">
+                    <button onClick={onBack} className="w-10 h-10 flex items-center justify-center rounded-full active:bg-zinc-100 dark:active:bg-zinc-800 transition-colors text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white">
+                        <Icon name="ChevronLeft" size={24} strokeWidth={2.5} />
+                    </button>
+                    
+                    <WorkoutTimer startTime={activeSession.startTime} />
+
+                    <div className="flex items-center gap-1">
+                         <button 
+                             onClick={(e) => { e.stopPropagation(); toggleViewMode(); }}
+                             className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${viewMode === 'focus' ? 'bg-zinc-900 text-white dark:bg-white dark:text-black' : 'text-zinc-400 hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-white'}`}
+                        >
+                            <Icon name={viewMode === 'focus' ? 'Layout' : 'Eye'} size={20} />
+                        </button>
+                        
+                        <button 
+                            id="tut-finish-btn"
+                            onClick={(e) => { e.stopPropagation(); ctrl.setShowFinishModal(true); }} 
+                            className="ml-1 bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-full shadow-lg shadow-red-600/20 active:scale-95 flex items-center gap-1.5 transition-all"
+                        >
+                            <span className="text-xs font-bold uppercase tracking-wider">{t.finishWorkout}</span>
+                        </button>
                     </div>
-                    
-                    <div className="text-base font-black text-zinc-900 dark:text-zinc-100 leading-none mb-1">{activeSession.name}</div>
-                    
-                    {showStageInfo && (
-                        <div className="inline-flex items-center gap-2 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded text-[10px] font-bold text-zinc-600 dark:text-zinc-300">
-                             {stageConfig.label === 'recovery' ? (
-                                <><Icon name="Activity" size={10} className="text-blue-500" /> DELOAD</>
-                             ) : (
-                                <><Icon name="Zap" size={10} className="text-yellow-500" /> {stageConfig.label} ({stageConfig.rir} RIR)</>
-                             )}
-                        </div>
-                    )}
                 </div>
-                <div className="flex items-center gap-2">
-                     <button 
-                         onClick={(e) => { e.stopPropagation(); toggleViewMode(); }}
-                         className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${viewMode === 'focus' ? 'bg-zinc-900 text-white dark:bg-white dark:text-black' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400'}`}
-                    >
-                        <Icon name={viewMode === 'focus' ? 'Layout' : 'Eye'} size={18} />
-                    </button>
+
+                {/* Unified Title & Stage Info Row */}
+                <div className="px-5 pb-4">
+                    <h1 className="text-2xl font-black text-zinc-900 dark:text-white leading-tight tracking-tight mb-1 truncate">
+                        {activeSession.name}
+                    </h1>
                     
-                    <button 
-                        id="tut-finish-btn"
-                        onClick={(e) => { e.stopPropagation(); ctrl.setShowFinishModal(true); }} 
-                        className="bg-red-600 hover:bg-red-500 text-white p-2 rounded-full shadow-lg shadow-red-900/20 transition-transform active:scale-95 flex items-center justify-center"
-                    >
-                        <Icon name="Check" size={20} />
-                    </button>
+                    <div className="flex flex-wrap items-center gap-2">
+                        {/* Week Indicator */}
+                        <div className="flex items-center gap-1.5">
+                            <Icon name="Calendar" size={12} className="text-zinc-400" />
+                            <span className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                                {t.week} {activeSession.week}
+                            </span>
+                        </div>
+
+                        {/* Minimalist Separator */}
+                        <span className="text-zinc-300 dark:text-zinc-700 font-light">•</span>
+
+                        {/* RIR Target / Deload Pill */}
+                        {showStageInfo && (
+                            <div className={`
+                                inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest
+                                ${stageConfig.label === 'recovery' 
+                                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' 
+                                    : 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400'}
+                            `}>
+                                {stageConfig.label === 'recovery' ? (
+                                    <>DELOAD PHASE</>
+                                ) : (
+                                    <>{t.target}: {stageConfig.rir} RIR</>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
             {/* --- Linking Banner --- */}
             {ctrl.linkingId && (
-                <div className="bg-orange-500 text-white p-2 text-center text-xs font-bold animate-in slide-in-from-top">
+                <div className="bg-orange-500 text-white p-2 text-center text-xs font-bold animate-in slide-in-from-top z-20 shadow-md">
                     {t.selectToLink}
-                    <button onClick={() => ctrl.setLinkingId(null)} className="ml-4 underline opacity-80">{t.cancel}</button>
+                    <button onClick={() => ctrl.setLinkingId(null)} className="ml-4 underline opacity-80 hover:opacity-100">{t.cancel}</button>
                 </div>
             )}
 
             {/* --- Main Content --- */}
             <div className="flex-1 overflow-hidden flex flex-col">
-                
-                {stageConfig?.note && viewMode === 'list' && showStageInfo && (
-                    <div className="mx-4 mt-4 p-3 bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-xl text-center text-xs font-medium text-zinc-500 dark:text-zinc-400 shrink-0">
-                        {stageConfig.note}
-                    </div>
-                )}
-
                 {viewMode === 'list' ? (
-                    <div id="tut-exercise-list" className="flex-1 overflow-y-auto scroll-container p-4 pb-32 space-y-6">
+                    <div id="tut-exercise-list" className="flex-1 overflow-y-auto scroll-container p-4 pb-32 space-y-4">
                         <DndContext 
                             sensors={sensors}
                             collisionDetection={closestCenter}
@@ -310,16 +327,19 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onBack, onAd
                             </SortableContext>
                         </DndContext>
 
-                        <Button variant="secondary" onClick={() => ctrl.setAddingExercise(true)} fullWidth className="border-dashed py-3">
-                            <Icon name="Plus" size={16} /> {t.addExercise}
-                        </Button>
-                        <div className="h-4"></div>
-                        <Button onClick={(e) => { e.stopPropagation(); ctrl.setShowFinishModal(true); }} size="lg" fullWidth className="py-4 text-base shadow-xl shadow-red-600/20 bg-gradient-to-r from-red-600 to-red-500 border-none">
-                            {t.finishWorkout}
-                        </Button>
+                        <div className="pt-4 space-y-4">
+                            <Button variant="secondary" onClick={() => ctrl.setAddingExercise(true)} fullWidth className="border-dashed py-3 text-zinc-500 hover:text-zinc-900 dark:hover:text-white">
+                                <Icon name="Plus" size={16} /> {t.addExercise}
+                            </Button>
+                            
+                            {/* Bottom Finish Button (Redundant but useful for long lists) */}
+                            <Button onClick={(e) => { e.stopPropagation(); ctrl.setShowFinishModal(true); }} size="lg" fullWidth className="py-4 text-base shadow-xl shadow-red-600/20 bg-gradient-to-r from-red-600 to-red-500 border-none">
+                                {t.finishWorkout}
+                            </Button>
+                        </div>
                     </div>
                 ) : (
-                    // Focus Mode (Kept same logic, just less frequent renders)
+                    // Focus Mode
                     <div className="flex-1 flex flex-col p-4 pb-24 h-full relative">
                          <div className="flex items-center gap-2 mb-4 shrink-0">
                             {sessionExercises.map((_, idx) => (

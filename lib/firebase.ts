@@ -1,13 +1,13 @@
+
 import { initializeApp } from "firebase/app";
 import { getAuth, Auth } from "firebase/auth";
 import { getFirestore, Firestore } from "firebase/firestore";
 
-// Safe environment access
-// We assign to a variable to handle cases where import.meta.env might be undefined
-// or strict replacement didn't happen.
+// --- CONFIGURATION STRATEGY ---
+// 1. Try to read from Environment Variables (Best Practice)
 const env = (import.meta.env || {}) as any;
 
-const firebaseConfig = {
+let firebaseConfig = {
   apiKey: env.VITE_FIREBASE_API_KEY,
   authDomain: env.VITE_FIREBASE_AUTH_DOMAIN,
   projectId: env.VITE_FIREBASE_PROJECT_ID,
@@ -16,8 +16,22 @@ const firebaseConfig = {
   appId: env.VITE_FIREBASE_APP_ID
 };
 
+// 2. FALLBACK: Direct Paste (Testing/Dev Mode)
+// If environment variables are missing, use these provided credentials.
+if (!firebaseConfig.apiKey) {
+    console.log("⚠️ Using provided Firebase Config (Testing Mode)");
+    firebaseConfig = {
+        apiKey: "AIzaSyAfrO4IpIzXuNd-dcpVHFdSJjmNx9wHpIE",
+        authDomain: "ironlog-409eb.firebaseapp.com",
+        projectId: "ironlog-409eb",
+        storageBucket: "ironlog-409eb.firebasestorage.app",
+        messagingSenderId: "926261848983",
+        appId: "1:926261848983:web:a7cd25334f6f3dc99172d2"
+    };
+}
+
 // Check if config is valid (at least apiKey and projectId are required)
-const isValidConfig = !!(firebaseConfig.apiKey && firebaseConfig.projectId);
+const isValidConfig = !!(firebaseConfig.apiKey && firebaseConfig.projectId && !firebaseConfig.apiKey.includes("INSERT_KEY"));
 
 let app;
 let auth: Auth | undefined;
@@ -28,11 +42,12 @@ if (isValidConfig) {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     db = getFirestore(app);
+    console.log("✅ Firebase initialized successfully");
   } catch (e) {
-    console.error("Firebase initialization error:", e);
+    console.error("❌ Firebase initialization error:", e);
   }
 } else {
-  console.warn("Firebase configuration missing or incomplete. Cloud features will be disabled.");
+  console.warn("⚠️ Firebase config missing. Cloud features (Sync/Auth) disabled. Check .env or lib/firebase.ts");
 }
 
 export { auth, db };
