@@ -3,6 +3,15 @@ import { doc, getDoc, writeBatch } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { AppState } from "../types";
 
+/**
+ * Firestore no soporta valores `undefined`.
+ * Esta función elimina las claves con undefined o las convierte en null
+ * usando el truco de JSON.stringify/parse que elimina undefined automáticamente.
+ */
+const sanitizeForFirestore = <T>(data: T): T => {
+    return JSON.parse(JSON.stringify(data));
+};
+
 export const syncService = {
     /**
      * SUBIDA (PUSH): Envía el estado local a Firebase.
@@ -16,8 +25,8 @@ export const syncService = {
             const batch = writeBatch(db);
             const userRef = doc(db, "users", userId);
 
-            // 1. Guardamos datos "ligeros" en el documento principal
-            const mainData = {
+            // 1. Preparamos los datos y LIMPIAMOS los 'undefined'
+            const rawMainData = {
                 program: state.program || [],
                 activeMeso: state.activeMeso || null,
                 activeSession: state.activeSession || null,
@@ -26,16 +35,18 @@ export const syncService = {
                 rpFeedback: state.rpFeedback || {},
                 lastUpdated: Date.now()
             };
+
+            // Sanitización crítica: convierte undefined -> desaparece del objeto
+            const mainData = sanitizeForFirestore(rawMainData);
             
             batch.set(userRef, mainData, { merge: true });
 
-            // 2. Guardamos los LOGS (Historial) en un documento separado para no saturar
-            // la lectura inicial.
+            // 2. Guardamos los LOGS (Historial) en un documento separado
             if (state.logs && state.logs.length > 0) {
                 const logsRef = doc(db, "users", userId, "data", "history");
-                // Importante: Aquí sobrescribimos el array de logs completo por simplicidad.
-                // En una app masiva, usaríamos 'arrayUnion', pero para <10k logs esto es seguro y previene duplicados.
-                batch.set(logsRef, { logs: state.logs });
+                // También limpiamos los logs por si acaso
+                const logsData = sanitizeForFirestore({ logs: state.logs });
+                batch.set(logsRef, logsData);
             }
 
             await batch.commit();
