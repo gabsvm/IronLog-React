@@ -39,9 +39,10 @@ export const syncService = {
             }
 
             await batch.commit();
-            console.log("☁️ Cloud Sync: Upload Complete");
+            console.log(`☁️ Cloud Sync: Upload Complete (User: ${userId}) at ${new Date().toLocaleTimeString()}`);
         } catch (error) {
             console.error("❌ Cloud Sync Upload Failed:", error);
+            throw error; // Rethrow so manual triggers can catch it
         }
     },
 

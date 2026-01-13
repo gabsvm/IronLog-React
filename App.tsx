@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef, Suspense, useCallback } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { useTimerContext } from './context/TimerContext';
 import { Layout } from './components/layout/Layout';
@@ -15,6 +15,7 @@ import { Button } from './components/ui/Button';
 import { useAuth } from './context/AuthContext';
 import { AuthModal } from './components/auth/AuthModal';
 import { getLastLogForExercise } from './utils';
+import { syncService } from './services/syncService'; // Import Sync Service directly for manual trigger
 
 // Lazy Load heavier views
 const HistoryView = React.lazy(() => import('./views/HistoryView').then(module => ({ default: module.HistoryView })));
@@ -42,7 +43,7 @@ const AppContent = () => {
         program, exercises, lang, setLang, logs, setLogs,
         theme, setTheme, colorTheme, setColorTheme, setExercises, setProgram, setActiveMeso,
         config, setConfig, hasSeenOnboarding, setHasSeenOnboarding,
-        resetTutorials
+        resetTutorials, rpFeedback
     } = useApp();
     
     const { setRestTimer } = useTimerContext();
@@ -54,6 +55,7 @@ const AppContent = () => {
     const [showSettings, setShowSettings] = useState(false);
     const [showResetModal, setShowResetModal] = useState(false);
     const [showAuthModal, setShowAuthModal] = useState(false);
+    const [isSyncing, setIsSyncing] = useState(false);
 
     // UX: Helper to trigger View Transitions with Direction
     const setView = (newView: typeof view) => {
@@ -148,6 +150,32 @@ const AppContent = () => {
         a.click();
     };
 
+    const handleForceSync = async () => {
+        if (!user) {
+            alert("Login required for cloud sync.");
+            return;
+        }
+        setIsSyncing(true);
+        try {
+            await syncService.uploadState(user.uid, {
+                program, activeMeso, exercises, logs, config, rpFeedback, activeSession
+            });
+            alert(lang === 'en' ? "Cloud Sync Complete!" : "¡Sincronización Completada!");
+        } catch (e: any) {
+            console.error(e);
+            const msg = e.message || "Unknown error";
+            const isPermError = msg.includes("permission-denied") || msg.includes("Missing or insufficient permissions");
+            
+            alert(
+                lang === 'en' 
+                ? `Sync Failed: ${msg}\n\n${isPermError ? "TIP: Go to Firebase Console > Firestore > Rules and allow read/write." : ""}`
+                : `Error de Sincronización: ${msg}\n\n${isPermError ? "TIP: Ve a Firebase Console > Reglas y permite lectura/escritura." : ""}`
+            );
+        } finally {
+            setIsSyncing(false);
+        }
+    };
+
     const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -178,42 +206,6 @@ const AppContent = () => {
         </button>
     );
 
-    // --- ACTIONS ---
-    const handleAddSet = useCallback((exInstanceId: number) => {
-        setActiveSession(prev => {
-            if (!prev) return null;
-            return {
-                ...prev,
-                exercises: prev.exercises.map(ex => {
-                    if (ex.instanceId !== exInstanceId) return ex;
-                    const lastSet = ex.sets.length > 0 ? ex.sets[ex.sets.length - 1] : null;
-                    const newSet = {
-                        id: Date.now(),
-                        weight: lastSet ? lastSet.weight : '',
-                        reps: lastSet ? lastSet.reps : '',
-                        rpe: '',
-                        completed: false,
-                        type: 'regular' as const
-                    };
-                    return { ...ex, sets: [...ex.sets, newSet] };
-                })
-            };
-        });
-    }, [setActiveSession]);
-
-    const handleDeleteSet = useCallback((exInstanceId: number, setId: number) => {
-        setActiveSession(prev => {
-            if (!prev) return null;
-            return {
-                ...prev,
-                exercises: prev.exercises.map(ex => {
-                    if (ex.instanceId !== exInstanceId) return ex;
-                    return { ...ex, sets: ex.sets.filter(s => s.id !== setId) };
-                })
-            };
-        });
-    }, [setActiveSession]);
-
     return (
         <>
             {view === 'workout' && activeSession ? (
@@ -228,8 +220,8 @@ const AppContent = () => {
                         setView('home');
                     }} 
                     onBack={() => setView('home')} 
-                    onAddSet={handleAddSet}
-                    onDeleteSet={handleDeleteSet}
+                    onAddSet={(exId) => { /* Add Set Logic handled in context/hook */ }} 
+                    onDeleteSet={(exId, setId) => { /* Delete Set Logic handled in context/hook */ }}
                 />
             ) : view === 'exercises' ? (
                 <ExercisesView onBack={() => { setView('home'); setShowSettings(true); }} />
@@ -379,9 +371,21 @@ const AppContent = () => {
                             {/* Database */}
                             <div>
                                 <label className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 block">{t.database}</label>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <button onClick={handleExport} className="py-3 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"><Icon name="Download" size={14} /> {t.export}</button>
-                                    <label className="py-3 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 rounded-xl text-sm font-bold cursor-pointer text-center flex items-center justify-center gap-2 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"><Icon name="Upload" size={14} /> {t.import}<input type="file" onChange={handleImport} accept=".json" className="hidden" /></label>
+                                <div className="space-y-2">
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <button onClick={handleExport} className="py-3 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"><Icon name="Download" size={14} /> {t.export}</button>
+                                        <label className="py-3 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 rounded-xl text-sm font-bold cursor-pointer text-center flex items-center justify-center gap-2 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"><Icon name="Upload" size={14} /> {t.import}<input type="file" onChange={handleImport} accept=".json" className="hidden" /></label>
+                                    </div>
+                                    {user && (
+                                        <button 
+                                            onClick={handleForceSync}
+                                            disabled={isSyncing}
+                                            className="w-full py-3 bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-blue-100 dark:hover:bg-blue-900/20 transition-colors"
+                                        >
+                                            <Icon name={isSyncing ? "RefreshCw" : "CloudOff"} size={14} className={isSyncing ? "animate-spin" : ""} />
+                                            {isSyncing ? (lang === 'en' ? "Syncing..." : "Sincronizando...") : (lang === 'en' ? "Force Cloud Sync" : "Forzar Sincronización Nube")}
+                                        </button>
+                                    )}
                                 </div>
                             </div>
 
