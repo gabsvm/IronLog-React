@@ -8,8 +8,9 @@ import { Icon } from '../components/ui/Icon';
 import { Logo } from '../components/ui/Logo';
 import { TimerProvider } from './TimerContext';
 import { HomeSkeleton } from '../components/ui/SkeletonLoader';
+import { AuthProvider, useAuth } from './AuthContext'; // Import Auth
+import { syncService } from '../services/syncService'; // Import Sync
 
-// Removed restTimer from AppContextType to decouple high-frequency updates
 interface AppContextType extends AppState {
     lang: Lang;
     theme: Theme;
@@ -36,10 +37,12 @@ interface AppContextType extends AppState {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-export const AppProvider = ({ children }: PropsWithChildren) => {
+// Separated component to handle Sync Logic inside AuthProvider
+const AppStateProvider = ({ children }: PropsWithChildren) => {
+    const { user } = useAuth(); // Access User
+
     // --- Synchronous Config ---
     const [langStored, setLang] = useLocalStorage<Lang>('il_lang_v1', 'en');
-    // Sanitize lang to ensure it matches available translations
     const lang: Lang = (langStored === 'en' || langStored === 'es') ? langStored : 'en';
 
     const [theme, setTheme] = useLocalStorage<Theme>('il_theme_v1', 'dark');
@@ -50,12 +53,8 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     const [rpTargetRIR, setRpTargetRIR] = useLocalStorage('il_cfg_rp_rir', 2);
     const [keepScreenOn, setKeepScreenOn] = useLocalStorage('il_cfg_screen', false);
 
-    // Tutorial State
     const [tutorialProgress, setTutorialProgress] = useLocalStorage<TutorialState>('il_tutorial_v1', {
-        home: false,
-        workout: false,
-        history: false,
-        stats: false
+        home: false, workout: false, history: false, stats: false
     });
 
     // --- Heavy Data (IndexedDB) ---
@@ -71,7 +70,60 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     const isAppLoading = programLoading || mesoLoading || sessionLoading || exLoading || logsLoading || fbLoading || onboardingLoading;
     const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
-    // Theme (Light/Dark) Effect
+    // --- CLOUD SYNC LOGIC ---
+    
+    // 1. Download on Login
+    useEffect(() => {
+        if (user && !isAppLoading) {
+            syncService.downloadState(user.uid).then(cloudData => {
+                if (cloudData) {
+                    const confirmSync = window.confirm(lang === 'en' 
+                        ? "Cloud data found. Overwrite local data?" 
+                        : "Datos en la nube encontrados. ¿Sobrescribir datos locales?");
+                    
+                    if (confirmSync) {
+                        if (cloudData.program) setProgram(cloudData.program);
+                        if (cloudData.activeMeso) setActiveMeso(cloudData.activeMeso);
+                        if (cloudData.activeSession) setActiveSession(cloudData.activeSession);
+                        if (cloudData.exercises) setExercises(cloudData.exercises);
+                        if (cloudData.logs) setLogs(cloudData.logs);
+                        if (cloudData.rpFeedback) setRpFeedback(cloudData.rpFeedback);
+                        // Merge config if needed, or overwrite
+                        if (cloudData.config) {
+                            if (cloudData.config.showRIR !== undefined) setShowRIR(cloudData.config.showRIR);
+                            if (cloudData.config.rpEnabled !== undefined) setRpEnabled(cloudData.config.rpEnabled);
+                        }
+                    }
+                } else {
+                    // First time login with this user - Upload local data to init cloud
+                    syncService.uploadState(user.uid, { program, activeMeso, exercises, logs, config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn }, rpFeedback, activeSession });
+                }
+            });
+        }
+    }, [user, isAppLoading]); // Run once when user status changes to signed-in
+
+    // 2. Upload on Data Change (Debounced by usePersistedState, but we need a listener here)
+    // We create a bundled state object to watch
+    useEffect(() => {
+        if (!user || isAppLoading) return;
+
+        const timer = setTimeout(() => {
+            syncService.uploadState(user.uid, {
+                program,
+                activeMeso,
+                activeSession,
+                exercises,
+                logs,
+                config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn },
+                rpFeedback
+            });
+        }, 5000); // 5 second debounce for cloud sync to avoid spamming Firestore
+
+        return () => clearTimeout(timer);
+    }, [user, program, activeMeso, activeSession, exercises, logs, showRIR, rpEnabled, rpFeedback, isAppLoading]);
+
+
+    // --- THEME & WAKELOCK EFFECTS ---
     useEffect(() => {
         const root = window.document.documentElement;
         root.classList.remove('light', 'dark');
@@ -83,24 +135,18 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         }
     }, [theme]);
 
-    // Color Theme Effect (CSS Variables)
     useEffect(() => {
         const root = window.document.documentElement;
         root.setAttribute('data-theme', colorTheme);
     }, [colorTheme]);
 
-    // Wake Lock Effect
     useEffect(() => {
         const requestWakeLock = async () => {
             if (keepScreenOn && 'wakeLock' in navigator) {
                 try {
                     wakeLockRef.current = await navigator.wakeLock.request('screen');
                 } catch (err: any) {
-                    // Suppress known errors (Policy or User denial) to avoid console noise
-                    const isPolicyError = err.name === 'NotAllowedError' || err.message?.includes('policy');
-                    if (!isPolicyError) {
-                        console.warn('Wake Lock failed:', err);
-                    }
+                    if (err.name !== 'NotAllowedError') console.warn('Wake Lock failed:', err);
                 }
             } else if (!keepScreenOn && wakeLockRef.current) {
                 wakeLockRef.current.release().catch(() => {});
@@ -162,7 +208,6 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         isAppLoading
     ]);
 
-    // Use SkeletonLoader instead of spinner for better perceived performance
     if (isAppLoading) {
         return <HomeSkeleton />;
     }
@@ -173,6 +218,17 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                 {children}
             </TimerProvider>
         </AppContext.Provider>
+    );
+};
+
+// Root Provider Wrapper
+export const AppProvider = ({ children }: PropsWithChildren) => {
+    return (
+        <AuthProvider>
+            <AppStateProvider>
+                {children}
+            </AppStateProvider>
+        </AuthProvider>
     );
 };
 

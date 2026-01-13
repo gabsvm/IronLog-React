@@ -550,6 +550,28 @@ export const TRANSLATIONS = {
         updateRoutine: "Update Routine Template?",
         updateRoutineDesc: "Save exercises, order, and sets for future workouts.",
 
+        // Auth
+        auth: {
+            signIn: "Sign In",
+            register: "Create Account",
+            email: "Email",
+            password: "Password",
+            continueGuest: "Continue as Guest (Local Mode)",
+            guestNote: "Data is kept on device until you sign in.",
+            noAccount: "Don't have an account?",
+            hasAccount: "Already have an account?",
+            signUpBtn: "Sign Up",
+            signInBtn: "Log In",
+            processing: "Processing...",
+            or: "OR",
+            syncNote: "Data is synced securely to the cloud when online. You can use the app offline and it will sync later.",
+            logout: "Log Out",
+            guestUser: "Guest User",
+            localStorage: "Local Storage Only",
+            proMember: "Pro Member",
+            signInRegister: "Sign In / Register"
+        },
+
         // Home View Specific
         upNext: "Up Next",
         tapToStart: "Tap to start",
@@ -677,6 +699,28 @@ export const TRANSLATIONS = {
         
         updateRoutine: "¿Actualizar Plantilla?",
         updateRoutineDesc: "Guardar ejercicios, orden y series para futuros entrenos.",
+
+        // Auth
+        auth: {
+            signIn: "Iniciar Sesión",
+            register: "Crear Cuenta",
+            email: "Correo Electrónico",
+            password: "Contraseña",
+            continueGuest: "Seguir como Invitado (Modo Local)",
+            guestNote: "Los datos se guardan en el dispositivo hasta que inicies sesión.",
+            noAccount: "¿No tienes cuenta?",
+            hasAccount: "¿Ya tienes cuenta?",
+            signUpBtn: "Regístrate",
+            signInBtn: "Acceder",
+            processing: "Procesando...",
+            or: "O",
+            syncNote: "Tus datos se sincronizan en la nube. Puedes usar la app offline y se sincronizará luego.",
+            logout: "Cerrar Sesión",
+            guestUser: "Usuario Invitado",
+            localStorage: "Solo almacenamiento local",
+            proMember: "Miembro Pro",
+            signInRegister: "Iniciar Sesión / Registro"
+        },
 
         // Home View Specific
         upNext: "Siguiente",
