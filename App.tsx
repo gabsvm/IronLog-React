@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef, Suspense } from 'react';
+import React, { useState, useEffect, useRef, Suspense, useCallback } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { useTimerContext } from './context/TimerContext';
 import { Layout } from './components/layout/Layout';
@@ -178,6 +178,42 @@ const AppContent = () => {
         </button>
     );
 
+    // --- ACTIONS ---
+    const handleAddSet = useCallback((exInstanceId: number) => {
+        setActiveSession(prev => {
+            if (!prev) return null;
+            return {
+                ...prev,
+                exercises: prev.exercises.map(ex => {
+                    if (ex.instanceId !== exInstanceId) return ex;
+                    const lastSet = ex.sets.length > 0 ? ex.sets[ex.sets.length - 1] : null;
+                    const newSet = {
+                        id: Date.now(),
+                        weight: lastSet ? lastSet.weight : '',
+                        reps: lastSet ? lastSet.reps : '',
+                        rpe: '',
+                        completed: false,
+                        type: 'regular' as const
+                    };
+                    return { ...ex, sets: [...ex.sets, newSet] };
+                })
+            };
+        });
+    }, [setActiveSession]);
+
+    const handleDeleteSet = useCallback((exInstanceId: number, setId: number) => {
+        setActiveSession(prev => {
+            if (!prev) return null;
+            return {
+                ...prev,
+                exercises: prev.exercises.map(ex => {
+                    if (ex.instanceId !== exInstanceId) return ex;
+                    return { ...ex, sets: ex.sets.filter(s => s.id !== setId) };
+                })
+            };
+        });
+    }, [setActiveSession]);
+
     return (
         <>
             {view === 'workout' && activeSession ? (
@@ -192,8 +228,8 @@ const AppContent = () => {
                         setView('home');
                     }} 
                     onBack={() => setView('home')} 
-                    onAddSet={(exId) => { /* Add Set Logic */ }} 
-                    onDeleteSet={(exId, setId) => { /* Delete Set Logic */ }}
+                    onAddSet={handleAddSet}
+                    onDeleteSet={handleDeleteSet}
                 />
             ) : view === 'exercises' ? (
                 <ExercisesView onBack={() => { setView('home'); setShowSettings(true); }} />
