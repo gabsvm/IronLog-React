@@ -37,16 +37,14 @@ import {
 interface WorkoutViewProps {
     onFinish: () => void;
     onBack: () => void;
-    onAddSet: (exId: number) => void;
-    onDeleteSet: (exId: number, setId: number) => void;
 }
 
 // Container Component
-export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onBack, onAddSet, onDeleteSet }) => {
+export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onBack }) => {
     const { activeSession, activeMeso, lang, config, exercises, logs, tutorialProgress, markTutorialSeen } = useApp();
     const t = TRANSLATIONS[lang];
     
-    // Use the Custom Controller Hook (Now Light-Weight without timer loop)
+    // Use the Custom Controller Hook
     const ctrl = useWorkoutController(onFinish);
 
     // View State for Focus Mode
@@ -303,8 +301,8 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onBack, onAd
                                             onSetUpdate={ctrl.handleSetUpdate}
                                             onSetComplete={ctrl.toggleSetComplete}
                                             onSetTypeChange={handleSetTypeChange}
-                                            onAddSet={onAddSet}
-                                            onDeleteSet={onDeleteSet}
+                                            onAddSet={ctrl.handleAddSet}
+                                            onDeleteSet={ctrl.handleDeleteSet}
                                             onOpenDetail={(ex) => ctrl.setDetailExercise(ex)}
                                             onLink={ctrl.setLinkingId}
                                             onReplace={ctrl.setReplacingExId}
@@ -378,8 +376,8 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onBack, onAd
                                         onSetUpdate={ctrl.handleSetUpdate}
                                         onSetComplete={ctrl.toggleSetComplete}
                                         onSetTypeChange={handleSetTypeChange}
-                                        onAddSet={onAddSet}
-                                        onDeleteSet={onDeleteSet}
+                                        onAddSet={ctrl.handleAddSet}
+                                        onDeleteSet={ctrl.handleDeleteSet}
                                         onOpenDetail={(ex) => ctrl.setDetailExercise(ex)}
                                         onLink={ctrl.setLinkingId}
                                         onReplace={ctrl.setReplacingExId}

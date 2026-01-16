@@ -2,7 +2,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
 import { useTimerContext } from '../context/TimerContext';
-import { SessionExercise, ExerciseDef, SetType, Log } from '../types';
+import { SessionExercise, ExerciseDef, SetType, Log, WorkoutSet } from '../types';
 import { arrayMove } from '@dnd-kit/sortable';
 import { triggerHaptic } from '../utils/audio';
 import { getLastLogForExercise } from '../utils';
@@ -49,6 +49,52 @@ export const useWorkoutController = (onFinishCallback: () => void) => {
                         ...ex,
                         sets: (ex.sets || []).map(s => s.id === setId ? { ...s, [field]: value } : s)
                     };
+                })
+            };
+        });
+    }, [setActiveSession]);
+
+    // Implement Logic for Add Set
+    const handleAddSet = useCallback((exInstanceId: number) => {
+        setActiveSession(prev => {
+            if (!prev) return null;
+            return {
+                ...prev,
+                exercises: (prev.exercises || []).map(ex => {
+                    if (ex.instanceId !== exInstanceId) return ex;
+                    
+                    const sets = ex.sets || [];
+                    const lastSet = sets.length > 0 ? sets[sets.length - 1] : null;
+                    
+                    const newSet: WorkoutSet = {
+                        id: Date.now(),
+                        weight: lastSet ? lastSet.weight : '',
+                        reps: lastSet ? lastSet.reps : '',
+                        rpe: '',
+                        completed: false,
+                        type: lastSet ? lastSet.type : 'regular',
+                        // Preserve cardio values if applicable
+                        duration: lastSet?.duration,
+                        distance: lastSet?.distance,
+                        workSeconds: lastSet?.workSeconds,
+                        restSeconds: lastSet?.restSeconds
+                    };
+
+                    return { ...ex, sets: [...sets, newSet] };
+                })
+            };
+        });
+    }, [setActiveSession]);
+
+    // Implement Logic for Delete Set
+    const handleDeleteSet = useCallback((exInstanceId: number, setId: number) => {
+        setActiveSession(prev => {
+            if (!prev) return null;
+            return {
+                ...prev,
+                exercises: (prev.exercises || []).map(ex => {
+                    if (ex.instanceId !== exInstanceId) return ex;
+                    return { ...ex, sets: (ex.sets || []).filter(s => s.id !== setId) };
                 })
             };
         });
@@ -263,6 +309,8 @@ export const useWorkoutController = (onFinishCallback: () => void) => {
         showPRSuccess, dismissPRSuccess,
         detailExercise, setDetailExercise,
         handleSetUpdate,
+        handleAddSet,
+        handleDeleteSet,
         handleNoteUpdate,
         toggleSetComplete,
         handleConfirmFinish,

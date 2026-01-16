@@ -220,8 +220,6 @@ const AppContent = () => {
                         setView('home');
                     }} 
                     onBack={() => setView('home')} 
-                    onAddSet={(exId) => { /* Add Set Logic handled in context/hook */ }} 
-                    onDeleteSet={(exId, setId) => { /* Delete Set Logic handled in context/hook */ }}
                 />
             ) : view === 'exercises' ? (
                 <ExercisesView onBack={() => { setView('home'); setShowSettings(true); }} />
@@ -361,6 +359,11 @@ const AppContent = () => {
                                         </div>
                                     </button>
                                     
+                                    <button onClick={() => { setView('program'); setShowSettings(false); }} className="w-full p-3 bg-zinc-100 dark:bg-zinc-800 rounded-xl flex justify-between items-center transition-colors hover:bg-zinc-200 dark:hover:bg-zinc-700">
+                                        <span className="text-sm font-bold text-zinc-700 dark:text-zinc-200">{t.editTemplate}</span>
+                                        <Icon name="Edit" size={16} className="text-zinc-400" />
+                                    </button>
+
                                     <button onClick={() => setView('exercises')} className="w-full p-3 bg-zinc-100 dark:bg-zinc-800 rounded-xl flex justify-between items-center transition-colors hover:bg-zinc-200 dark:hover:bg-zinc-700">
                                         <span className="text-sm font-bold text-zinc-700 dark:text-zinc-200">{t.manageEx}</span>
                                         <Icon name="ChevronRight" size={16} className="text-zinc-400" />
