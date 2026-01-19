@@ -7,7 +7,8 @@ import { Button } from '../components/ui/Button';
 import { MuscleGroup, ExerciseDef } from '../types';
 import { getTranslated } from '../utils';
 import { Virtuoso } from 'react-virtuoso';
-import { ExerciseDetailModal } from '../components/ui/ExerciseDetailModal'; // New Import
+import { ExerciseDetailModal } from '../components/ui/ExerciseDetailModal'; 
+import { ConfirmModal } from '../components/ui/ConfirmModal'; // New Import
 
 interface ExercisesViewProps {
     onBack: () => void;
@@ -20,14 +21,17 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
     
     // Detail Modal State
     const [detailEx, setDetailEx] = useState<ExerciseDef | null>(null);
+    // Delete Confirmation State
+    const [deleteId, setDeleteId] = useState<string | null>(null);
 
     // Create State
     const [newName, setNewName] = useState('');
     const [newMuscle, setNewMuscle] = useState<MuscleGroup>('CHEST');
 
-    const handleDelete = (id: string) => {
-        if (window.confirm(t.deleteConfirm)) {
-            setExercises(prev => prev.filter(e => e.id !== id));
+    const handleDelete = () => {
+        if (deleteId) {
+            setExercises(prev => prev.filter(e => e.id !== deleteId));
+            setDeleteId(null);
         }
     };
 
@@ -68,7 +72,7 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
                         <Icon name="ChevronRight" size={18} />
                     </div>
                     <div
-                        onClick={(e) => { e.stopPropagation(); handleDelete(ex.id); }}
+                        onClick={(e) => { e.stopPropagation(); setDeleteId(ex.id); }}
                         className="p-2 text-zinc-300 hover:text-red-500 transition-colors"
                     >
                         <Icon name="Trash2" size={18} />
@@ -153,6 +157,16 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
                     onClose={() => setDetailEx(null)}
                 />
             )}
+
+            {/* Confirm Delete */}
+            <ConfirmModal 
+                isOpen={!!deleteId}
+                title={t.delete}
+                description={t.deleteConfirm}
+                onConfirm={handleDelete}
+                onCancel={() => setDeleteId(null)}
+                variant="danger"
+            />
         </div>
     );
 };

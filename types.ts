@@ -134,4 +134,5 @@ export interface AppState {
     rpFeedback: Record<string, Record<string, Record<string, FeedbackEntry>>>; 
     hasSeenOnboarding: boolean;
     tutorialProgress: TutorialState;
+    lastUpdated?: number;
 }

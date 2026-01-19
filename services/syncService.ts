@@ -75,7 +75,7 @@ export const syncService = {
                 config: state.config || {},
                 exercises: state.exercises || [],
                 rpFeedback: state.rpFeedback || {},
-                lastUpdated: Date.now()
+                lastUpdated: state.lastUpdated || Date.now()
             };
 
             // 2. Sanitización (undefined -> null)
@@ -125,7 +125,8 @@ export const syncService = {
                     config: data.config,
                     exercises: data.exercises,
                     rpFeedback: data.rpFeedback,
-                    logs: logsData
+                    logs: logsData,
+                    lastUpdated: data.lastUpdated
                 };
             }
             return null; 

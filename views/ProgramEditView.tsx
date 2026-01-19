@@ -7,6 +7,7 @@ import { Button } from '../components/ui/Button';
 import { MuscleGroup, MesoType } from '../types';
 import { ExerciseSelector } from '../components/ui/ExerciseSelector';
 import { getTranslated } from '../utils';
+import { ConfirmModal } from '../components/ui/ConfirmModal'; // New Import
 
 interface ProgramEditViewProps {
     onBack: () => void;
@@ -18,6 +19,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
     
     const [pickingForSlot, setPickingForSlot] = useState<{dayId: string, slotIdx: number} | null>(null);
     const [showStartModal, setShowStartModal] = useState(false);
+    const [dayToDelete, setDayToDelete] = useState<string | null>(null);
     
     // New Meso Config State
     const [mesoConfig, setMesoConfig] = useState<{
@@ -43,9 +45,10 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
         setProgram(prev => [...prev, newDay]);
     };
 
-    const handleDeleteDay = (id: string) => {
-        if(window.confirm(t.deleteConfirm)) {
-            setProgram(prev => prev.filter(d => d.id !== id));
+    const handleDeleteDay = () => {
+        if(dayToDelete) {
+            setProgram(prev => prev.filter(d => d.id !== dayToDelete));
+            setDayToDelete(null);
         }
     };
 
@@ -130,7 +133,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
                                 onChange={e => handleUpdateDayName(day.id, e.target.value)}
                                 placeholder="Day Name"
                             />
-                            <button onClick={() => handleDeleteDay(day.id)} className="text-zinc-400 hover:text-red-500 ml-2">
+                            <button onClick={() => setDayToDelete(day.id)} className="text-zinc-400 hover:text-red-500 ml-2">
                                 <Icon name="Trash2" size={18} />
                             </button>
                         </div>
@@ -283,6 +286,15 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
                     </div>
                 </div>
             )}
+
+            <ConfirmModal 
+                isOpen={!!dayToDelete}
+                title={t.delete}
+                description={t.deleteConfirm}
+                onConfirm={handleDeleteDay}
+                onCancel={() => setDayToDelete(null)}
+                variant="danger"
+            />
         </div>
     );
 };

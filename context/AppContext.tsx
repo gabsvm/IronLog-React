@@ -32,7 +32,12 @@ interface AppContextType extends AppState {
     markTutorialSeen: (section: keyof TutorialState) => void;
     resetTutorials: () => void;
     
+    // Sync UI State
     isAppLoading: boolean;
+    pendingCloudData: Partial<AppState> | null;
+    confirmCloudSync: () => void;
+    cancelCloudSync: () => void;
+    localLastUpdated: number;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -66,48 +71,53 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
     
     const [rpFeedback, setRpFeedback, fbLoading] = usePersistedState<AppState['rpFeedback']>('il_rp_fb_v1', {}, 1000);
     const [hasSeenOnboarding, setHasSeenOnboarding, onboardingLoading] = usePersistedState<boolean>('il_onboarded_v2', false, 1000);
+    
+    // NEW: Persist local timestamp to compare with cloud
+    const [localLastUpdated, setLocalLastUpdated] = usePersistedState<number>('il_last_sync_ts', 0, 0);
+
+    const [pendingCloudData, setPendingCloudData] = useState<Partial<AppState> | null>(null);
 
     const isAppLoading = programLoading || mesoLoading || sessionLoading || exLoading || logsLoading || fbLoading || onboardingLoading;
     const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
     // --- CLOUD SYNC LOGIC ---
     
-    // 1. Download on Login
+    // 1. Download & Compare on Login
     useEffect(() => {
         if (user && !isAppLoading) {
-            syncService.downloadState(user.uid).then(cloudData => {
+            syncService.downloadState(user.uid).then((cloudData: any) => {
                 if (cloudData) {
-                    const confirmSync = window.confirm(lang === 'en' 
-                        ? "Cloud data found. Overwrite local data?" 
-                        : "Datos en la nube encontrados. ¿Sobrescribir datos locales?");
-                    
-                    if (confirmSync) {
-                        if (cloudData.program) setProgram(cloudData.program);
-                        if (cloudData.activeMeso) setActiveMeso(cloudData.activeMeso);
-                        if (cloudData.activeSession) setActiveSession(cloudData.activeSession);
-                        if (cloudData.exercises) setExercises(cloudData.exercises);
-                        if (cloudData.logs) setLogs(cloudData.logs);
-                        if (cloudData.rpFeedback) setRpFeedback(cloudData.rpFeedback);
-                        // Merge config if needed, or overwrite
-                        if (cloudData.config) {
-                            if (cloudData.config.showRIR !== undefined) setShowRIR(cloudData.config.showRIR);
-                            if (cloudData.config.rpEnabled !== undefined) setRpEnabled(cloudData.config.rpEnabled);
-                        }
+                    const cloudTS = cloudData.lastUpdated || 0;
+                    const localTS = localLastUpdated || 0;
+
+                    console.log(`☁️ Sync Check | Cloud: ${new Date(cloudTS).toLocaleTimeString()} vs Local: ${new Date(localTS).toLocaleTimeString()}`);
+
+                    // LOGIC FIX: Only prompt download if Cloud is STRICTLY newer than local.
+                    // If local is newer (user worked offline), we will auto-upload in the next effect.
+                    if (cloudTS > localTS) {
+                        setPendingCloudData(cloudData);
+                    } else if (localTS > cloudTS) {
+                        console.log("☁️ Local data is newer. Skipping download. Will auto-upload.");
                     }
                 } else {
-                    // First time login with this user - Upload local data to init cloud
-                    syncService.uploadState(user.uid, { program, activeMeso, exercises, logs, config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn }, rpFeedback, activeSession });
+                    // No cloud data -> Upload local to init
+                    const now = Date.now();
+                    setLocalLastUpdated(now);
+                    syncService.uploadState(user.uid, { program, activeMeso, exercises, logs, config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn }, rpFeedback, activeSession, lastUpdated: now });
                 }
             });
         }
-    }, [user, isAppLoading]); // Run once when user status changes to signed-in
+    }, [user, isAppLoading]); 
 
-    // 2. Upload on Data Change (Debounced by usePersistedState, but we need a listener here)
-    // We create a bundled state object to watch
+    // 2. Upload on Data Change (Debounced)
     useEffect(() => {
         if (!user || isAppLoading) return;
 
         const timer = setTimeout(() => {
+            const now = Date.now();
+            // Update local timestamp whenever we prepare to save
+            setLocalLastUpdated(now);
+            
             syncService.uploadState(user.uid, {
                 program,
                 activeMeso,
@@ -115,12 +125,40 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
                 exercises,
                 logs,
                 config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn },
-                rpFeedback
+                rpFeedback,
+                lastUpdated: now
             });
-        }, 5000); // 5 second debounce for cloud sync to avoid spamming Firestore
+        }, 5000); 
 
         return () => clearTimeout(timer);
     }, [user, program, activeMeso, activeSession, exercises, logs, showRIR, rpEnabled, rpFeedback, isAppLoading]);
+
+    const confirmCloudSync = useCallback(() => {
+        if (pendingCloudData) {
+            if (pendingCloudData.program) setProgram(pendingCloudData.program);
+            if (pendingCloudData.activeMeso) setActiveMeso(pendingCloudData.activeMeso);
+            if (pendingCloudData.activeSession) setActiveSession(pendingCloudData.activeSession);
+            if (pendingCloudData.exercises) setExercises(pendingCloudData.exercises);
+            if (pendingCloudData.logs) setLogs(pendingCloudData.logs);
+            if (pendingCloudData.rpFeedback) setRpFeedback(pendingCloudData.rpFeedback);
+            
+            if (pendingCloudData.config) {
+                if (pendingCloudData.config.showRIR !== undefined) setShowRIR(pendingCloudData.config.showRIR);
+                if (pendingCloudData.config.rpEnabled !== undefined) setRpEnabled(pendingCloudData.config.rpEnabled);
+            }
+            // Update local TS to match the cloud TS we just accepted
+            // @ts-ignore
+            if (pendingCloudData.lastUpdated) setLocalLastUpdated(pendingCloudData.lastUpdated);
+            
+            setPendingCloudData(null);
+        }
+    }, [pendingCloudData]);
+
+    const cancelCloudSync = useCallback(() => {
+        setPendingCloudData(null);
+        // If we cancel, it implies we prefer local. 
+        // The write-effect will trigger eventually and overwrite cloud (which is what we want if we rejected the cloud state)
+    }, []);
 
 
     // --- THEME & WAKELOCK EFFECTS ---
@@ -177,7 +215,6 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
 
     const resetTutorials = useCallback(() => {
         setTutorialProgress({ home: false, workout: false, history: false, stats: false });
-        alert("Tutorials reset!");
     }, [setTutorialProgress]);
 
     const config = useMemo(() => ({ showRIR, rpEnabled, rpTargetRIR, keepScreenOn }), [showRIR, rpEnabled, rpTargetRIR, keepScreenOn]);
@@ -193,7 +230,8 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
         rpFeedback, setRpFeedback,
         hasSeenOnboarding, setHasSeenOnboarding,
         tutorialProgress, markTutorialSeen, resetTutorials,
-        isAppLoading
+        isAppLoading,
+        pendingCloudData, confirmCloudSync, cancelCloudSync, localLastUpdated
     }), [
         lang, setLang, theme, setTheme, colorTheme, setColorTheme,
         program, setProgram,
@@ -205,7 +243,8 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
         rpFeedback, setRpFeedback,
         hasSeenOnboarding, setHasSeenOnboarding,
         tutorialProgress, markTutorialSeen, resetTutorials,
-        isAppLoading
+        isAppLoading,
+        pendingCloudData, confirmCloudSync, cancelCloudSync, localLastUpdated
     ]);
 
     if (isAppLoading) {

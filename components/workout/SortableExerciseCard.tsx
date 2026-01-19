@@ -1,5 +1,5 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { SessionExercise, WorkoutSet, CardioType, SetType } from '../../types';
@@ -65,6 +65,7 @@ export const SortableExerciseCard = React.memo(({
     viewMode = 'list'
 }: SortableExerciseCardProps) => {
     const { logs } = useApp();
+    const [isDeleting, setIsDeleting] = useState(false); // Local delete confirmation state
     
     const {
         attributes,
@@ -110,7 +111,8 @@ export const SortableExerciseCard = React.memo(({
         const targetWeight = Number(firstRegularSet?.weight) || Number(firstRegularSet?.hintWeight) || 0;
 
         if (targetWeight === 0) {
-            alert(lang === 'es' ? "Introduce un peso objetivo en la primera serie para calcular." : "Enter a target weight in the first set to calculate.");
+            // Replaced Alert with a temporary UI shake or small message could be better,
+            // but for now we just return. The user needs to input weight.
             return;
         }
 
@@ -155,6 +157,12 @@ export const SortableExerciseCard = React.memo(({
             ...prev,
             exercises: prev.exercises.map((e: any) => e.instanceId === ex.instanceId ? { ...e, note: val } : e)
         });
+    };
+
+    const confirmDelete = () => {
+        onUpdateSession((prev: any) => prev ? { ...prev, exercises: prev.exercises.filter((e: any) => e.instanceId !== ex.instanceId) } : null);
+        setOpenMenuId(null);
+        setIsDeleting(false);
     };
 
     return (
@@ -245,80 +253,91 @@ export const SortableExerciseCard = React.memo(({
                         )}
 
                         <div className="relative">
-                            <button onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === ex.instanceId ? null : ex.instanceId); }} className="w-8 h-8 flex items-center justify-center rounded-full text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                            <button onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === ex.instanceId ? null : ex.instanceId); setIsDeleting(false); }} className="w-8 h-8 flex items-center justify-center rounded-full text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800">
                                 <Icon name="MoreVertical" size={20} />
                             </button>
                             
                             {/* Dropdown Menu */}
                             {openMenuId === ex.instanceId && (
                                 <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-zinc-800 rounded-xl shadow-xl border border-zinc-100 dark:border-white/5 z-20 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
-                                    <button onClick={(e) => { e.stopPropagation(); if(onOpenDetail) onOpenDetail(ex); setOpenMenuId(null); }} className="w-full text-left px-4 py-3 text-sm font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2">
-                                        <Icon name="Info" size={16} /> {String(t.exDetail)}
-                                    </button>
-                                    <div className="h-px bg-zinc-100 dark:bg-white/5 my-1"></div>
-
-                                    {isCardio && (
+                                    {!isDeleting ? (
                                         <>
-                                            {['steady', 'hiit', 'tabata'].map(m => (
-                                                <button key={m} onClick={(e) => { e.stopPropagation(); handleCardioModeChange(m as CardioType); }} className={`w-full text-left px-4 py-2 text-sm font-bold hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2 ${cardioMode === m ? 'text-blue-600' : 'text-zinc-600 dark:text-zinc-300'}`}>
-                                                    {cardioMode === m && <Icon name="Check" size={14} />} {String(t.cardioModes?.[m])}
-                                                </button>
-                                            ))}
+                                            <button onClick={(e) => { e.stopPropagation(); if(onOpenDetail) onOpenDetail(ex); setOpenMenuId(null); }} className="w-full text-left px-4 py-3 text-sm font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2">
+                                                <Icon name="Info" size={16} /> {String(t.exDetail)}
+                                            </button>
                                             <div className="h-px bg-zinc-100 dark:bg-white/5 my-1"></div>
+
+                                            {isCardio && (
+                                                <>
+                                                    {['steady', 'hiit', 'tabata'].map(m => (
+                                                        <button key={m} onClick={(e) => { e.stopPropagation(); handleCardioModeChange(m as CardioType); }} className={`w-full text-left px-4 py-2 text-sm font-bold hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2 ${cardioMode === m ? 'text-blue-600' : 'text-zinc-600 dark:text-zinc-300'}`}>
+                                                            {cardioMode === m && <Icon name="Check" size={14} />} {String(t.cardioModes?.[m])}
+                                                        </button>
+                                                    ))}
+                                                    <div className="h-px bg-zinc-100 dark:bg-white/5 my-1"></div>
+                                                </>
+                                            )}
+
+                                            {!isCardio && (
+                                                <button onClick={(e) => { e.stopPropagation(); handleInjectWarmup(); }} className="w-full text-left px-4 py-3 text-sm font-bold text-orange-600 dark:text-orange-400 hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2">
+                                                    <Icon name="Zap" size={16} /> Add Warmup Sets
+                                                </button>
+                                            )}
+                                            
+                                            {!isCardio && (
+                                                <button onClick={(e) => { 
+                                                    e.stopPropagation();
+                                                    const newUnit = unit === 'kg' ? 'pl' : 'kg';
+                                                    onUpdateSession((prev: any) => !prev ? null : {
+                                                        ...prev,
+                                                        exercises: prev.exercises.map((e: any) => e.instanceId === ex.instanceId ? { ...e, weightUnit: newUnit } : e)
+                                                    });
+                                                    setOpenMenuId(null);
+                                                }} className="w-full text-left px-4 py-3 text-sm font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2">
+                                                    <Icon name="Settings" size={16} /> {String(t.units?.toggle)}
+                                                </button>
+                                            )}
+
+                                            <div className="h-px bg-zinc-100 dark:bg-white/5 my-1"></div>
+                                            <button onClick={(e) => { e.stopPropagation(); onReplace(ex.instanceId); }} className="w-full text-left px-4 py-3 text-sm font-bold text-blue-600 dark:text-blue-400 hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2">
+                                                <Icon name="RefreshCw" size={16} /> {String(t.replaceEx)}
+                                            </button>
+                                            <button onClick={(e) => { e.stopPropagation(); onEditMuscle(ex.instanceId); }} className="w-full text-left px-4 py-3 text-sm font-bold text-purple-600 dark:text-purple-400 hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2">
+                                                <Icon name="Dumbbell" size={16} /> {String(t.changeMuscle)}
+                                            </button>
+                                            <button onClick={(e) => { 
+                                                e.stopPropagation(); 
+                                                if (ex.supersetId) {
+                                                     onUpdateSession((prev: any) => !prev ? null : {
+                                                         ...prev,
+                                                         exercises: (prev.exercises || []).map((e: any) => e.instanceId === ex.instanceId ? { ...e, supersetId: undefined } : e)
+                                                     });
+                                                } else {
+                                                    onLink(ex.instanceId);
+                                                }
+                                                setOpenMenuId(null);
+                                            }} className={`w-full text-left px-4 py-3 text-sm font-bold hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2 ${ssStyle ? 'text-red-500' : 'text-orange-600'}`}>
+                                                <Icon name={ssStyle ? "Unlink" : "Link"} size={16} /> {ssStyle ? String(t.unlinkSuperset) : String(t.linkSuperset)}
+                                            </button>
+                                            <div className="h-px bg-zinc-100 dark:bg-white/5 my-1"></div>
+                                            <button onClick={(e) => { e.stopPropagation(); setIsDeleting(true); }} className="w-full text-left px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50 flex items-center gap-2">
+                                                <Icon name="Trash2" size={16} /> {String(t.removeEx)}
+                                            </button>
                                         </>
+                                    ) : (
+                                        // Inline Delete Confirmation
+                                        <div className="p-2 space-y-2 bg-red-50 dark:bg-red-900/10">
+                                            <p className="text-xs text-red-600 text-center font-bold px-2">{String(t.confirmRemoveEx)}</p>
+                                            <div className="flex gap-2">
+                                                <button onClick={(e) => { e.stopPropagation(); setIsDeleting(false); }} className="flex-1 py-2 text-xs font-bold bg-white dark:bg-zinc-800 rounded-lg text-zinc-600 dark:text-zinc-300">
+                                                    {String(t.cancel)}
+                                                </button>
+                                                <button onClick={(e) => { e.stopPropagation(); confirmDelete(); }} className="flex-1 py-2 text-xs font-bold bg-red-600 text-white rounded-lg">
+                                                    {String(t.delete)}
+                                                </button>
+                                            </div>
+                                        </div>
                                     )}
-
-                                    {!isCardio && (
-                                        <button onClick={(e) => { e.stopPropagation(); handleInjectWarmup(); }} className="w-full text-left px-4 py-3 text-sm font-bold text-orange-600 dark:text-orange-400 hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2">
-                                            <Icon name="Zap" size={16} /> Add Warmup Sets
-                                        </button>
-                                    )}
-                                    
-                                    {!isCardio && (
-                                        <button onClick={(e) => { 
-                                            e.stopPropagation();
-                                            const newUnit = unit === 'kg' ? 'pl' : 'kg';
-                                            onUpdateSession((prev: any) => !prev ? null : {
-                                                ...prev,
-                                                exercises: prev.exercises.map((e: any) => e.instanceId === ex.instanceId ? { ...e, weightUnit: newUnit } : e)
-                                            });
-                                            setOpenMenuId(null);
-                                        }} className="w-full text-left px-4 py-3 text-sm font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2">
-                                            <Icon name="Settings" size={16} /> {String(t.units?.toggle)}
-                                        </button>
-                                    )}
-
-                                    <div className="h-px bg-zinc-100 dark:bg-white/5 my-1"></div>
-                                    <button onClick={(e) => { e.stopPropagation(); onReplace(ex.instanceId); }} className="w-full text-left px-4 py-3 text-sm font-bold text-blue-600 dark:text-blue-400 hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2">
-                                        <Icon name="RefreshCw" size={16} /> {String(t.replaceEx)}
-                                    </button>
-                                    <button onClick={(e) => { e.stopPropagation(); onEditMuscle(ex.instanceId); }} className="w-full text-left px-4 py-3 text-sm font-bold text-purple-600 dark:text-purple-400 hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2">
-                                        <Icon name="Dumbbell" size={16} /> {String(t.changeMuscle)}
-                                    </button>
-                                    <button onClick={(e) => { 
-                                        e.stopPropagation(); 
-                                        if (ex.supersetId) {
-                                             onUpdateSession((prev: any) => !prev ? null : {
-                                                 ...prev,
-                                                 exercises: (prev.exercises || []).map((e: any) => e.instanceId === ex.instanceId ? { ...e, supersetId: undefined } : e)
-                                             });
-                                        } else {
-                                            onLink(ex.instanceId);
-                                        }
-                                        setOpenMenuId(null);
-                                    }} className={`w-full text-left px-4 py-3 text-sm font-bold hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2 ${ssStyle ? 'text-red-500' : 'text-orange-600'}`}>
-                                        <Icon name={ssStyle ? "Unlink" : "Link"} size={16} /> {ssStyle ? String(t.unlinkSuperset) : String(t.linkSuperset)}
-                                    </button>
-                                    <div className="h-px bg-zinc-100 dark:bg-white/5 my-1"></div>
-                                    <button onClick={(e) => { 
-                                        e.stopPropagation(); 
-                                        if(window.confirm(String(t.confirmRemoveEx))) {
-                                            onUpdateSession((prev: any) => prev ? { ...prev, exercises: prev.exercises.filter((e: any) => e.instanceId !== ex.instanceId) } : null);
-                                            setOpenMenuId(null);
-                                        }
-                                    }} className="w-full text-left px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50 flex items-center gap-2">
-                                        <Icon name="Trash2" size={16} /> {String(t.removeEx)}
-                                    </button>
                                 </div>
                             )}
                         </div>

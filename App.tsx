@@ -9,13 +9,14 @@ import { ExercisesView } from './views/ExercisesView';
 import { ProgramEditView } from './views/ProgramEditView';
 import { RestTimerOverlay } from './components/ui/RestTimerOverlay';
 import { OnboardingModal } from './components/ui/OnboardingModal';
+import { ConfirmModal } from './components/ui/ConfirmModal'; // New
 import { Icon } from './components/ui/Icon';
 import { TRANSLATIONS } from './constants';
 import { Button } from './components/ui/Button';
 import { useAuth } from './context/AuthContext';
 import { AuthModal } from './components/auth/AuthModal';
 import { getLastLogForExercise } from './utils';
-import { syncService } from './services/syncService'; // Import Sync Service directly for manual trigger
+import { syncService } from './services/syncService';
 
 // Lazy Load heavier views
 const HistoryView = React.lazy(() => import('./views/HistoryView').then(module => ({ default: module.HistoryView })));
@@ -43,7 +44,8 @@ const AppContent = () => {
         program, exercises, lang, setLang, logs, setLogs,
         theme, setTheme, colorTheme, setColorTheme, setExercises, setProgram, setActiveMeso,
         config, setConfig, hasSeenOnboarding, setHasSeenOnboarding,
-        resetTutorials, rpFeedback
+        resetTutorials, rpFeedback,
+        pendingCloudData, confirmCloudSync, cancelCloudSync
     } = useApp();
     
     const { setRestTimer } = useTimerContext();
@@ -56,6 +58,10 @@ const AppContent = () => {
     const [showResetModal, setShowResetModal] = useState(false);
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
+    
+    // Custom Modals State
+    const [importData, setImportData] = useState<any>(null);
+    const [showForceSyncModal, setShowForceSyncModal] = useState(false);
 
     // UX: Helper to trigger View Transitions with Direction
     const setView = (newView: typeof view) => {
@@ -152,51 +158,77 @@ const AppContent = () => {
 
     const handleForceSync = async () => {
         if (!user) {
-            alert("Login required for cloud sync.");
+            // Replace alert with Auth Modal
+            setShowAuthModal(true);
             return;
         }
+        setShowForceSyncModal(true); // Open confirmation instead of immediate action
+    };
+
+    const executeForceSync = async () => {
+        if(!user) return;
         setIsSyncing(true);
+        setShowForceSyncModal(false);
         try {
             await syncService.uploadState(user.uid, {
                 program, activeMeso, exercises, logs, config, rpFeedback, activeSession
             });
-            alert(lang === 'en' ? "Cloud Sync Complete!" : "¡Sincronización Completada!");
+            // Replaced alert with temporary toast via Button or just silent success
+            // For now, we can just log or show a small tick
         } catch (e: any) {
             console.error(e);
-            const msg = e.message || "Unknown error";
-            const isPermError = msg.includes("permission-denied") || msg.includes("Missing or insufficient permissions");
-            
-            alert(
-                lang === 'en' 
-                ? `Sync Failed: ${msg}\n\n${isPermError ? "TIP: Go to Firebase Console > Firestore > Rules and allow read/write." : ""}`
-                : `Error de Sincronización: ${msg}\n\n${isPermError ? "TIP: Ve a Firebase Console > Reglas y permite lectura/escritura." : ""}`
-            );
         } finally {
             setIsSyncing(false);
         }
     };
 
-    const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
         const reader = new FileReader();
         reader.onload = (ev) => {
             try {
                 const data = JSON.parse(ev.target?.result as string);
-                if (window.confirm(t.importConfirm)) {
-                    if (data.program) setProgram(data.program);
-                    if (data.exercises) setExercises(data.exercises);
-                    if (data.logs) setLogs(data.logs);
-                    if (data.activeMeso) setActiveMeso(data.activeMeso);
-                    if (data.activeSession) setActiveSession(data.activeSession);
-                    alert(t.importSuccess);
-                    window.location.reload();
-                }
+                setImportData(data); // Triggers Confirm Modal
             } catch (err) {
-                alert(t.invalidFile);
+                console.error("Invalid File");
             }
         };
         reader.readAsText(file);
+    };
+
+    const confirmImport = () => {
+        if (importData) {
+            if (importData.program) setProgram(importData.program);
+            if (importData.exercises) setExercises(importData.exercises);
+            if (importData.logs) setLogs(importData.logs);
+            if (importData.activeMeso) setActiveMeso(importData.activeMeso);
+            if (importData.activeSession) setActiveSession(importData.activeSession);
+            setImportData(null);
+            window.location.reload();
+        }
+    };
+
+    const handleSkipSession = (dayIdx: number) => {
+        if (!activeMeso) return;
+        const safeProgram = Array.isArray(program) ? program : [];
+        const dayDef = safeProgram[dayIdx];
+        
+        // Create a log entry marked as skipped
+        const skippedLog: any = {
+            id: Date.now(),
+            dayIdx: dayIdx,
+            name: dayDef ? (typeof dayDef.dayName === 'object' ? dayDef.dayName[lang] : dayDef.dayName) : `Day ${dayIdx + 1}`,
+            startTime: Date.now(),
+            endTime: Date.now(),
+            duration: 0,
+            mesoId: activeMeso.id,
+            week: activeMeso.week,
+            exercises: [],
+            skipped: true
+        };
+        
+        setLogs([skippedLog, ...(Array.isArray(logs) ? logs : [])]);
     };
 
     const ColorPill = ({ color, active, onClick, label }: any) => (
@@ -227,42 +259,46 @@ const AppContent = () => {
                 <ProgramEditView onBack={() => setView('home')} />
             ) : (
                 <Layout view={view as any} setView={setView as any} onOpenSettings={() => setShowSettings(true)}>
-                    {view === 'home' && <HomeView startSession={(idx) => {
-                        if (!activeMeso) return;
-                        const safeProgram = Array.isArray(program) ? program : [];
-                        const dayDef = safeProgram[idx];
-                        if (!dayDef) return;
-                        const dayNameSafe = dayDef.dayName ? (typeof dayDef.dayName === 'object' ? dayDef.dayName[lang] : dayDef.dayName) : `Day ${idx + 1}`;
-                        const mesoPlan = Array.isArray(activeMeso.plan) ? activeMeso.plan : [];
-                        const dayPlan = Array.isArray(mesoPlan[idx]) ? mesoPlan[idx] : [];
-                        const safeExercises = Array.isArray(exercises) ? exercises.filter(e => !!e) : [];
-                        const safeLogs = Array.isArray(logs) ? logs : [];
-                        const isDeload = !!activeMeso.isDeload;
+                    {view === 'home' && <HomeView 
+                        startSession={(idx) => {
+                            if (!activeMeso) return;
+                            const safeProgram = Array.isArray(program) ? program : [];
+                            const dayDef = safeProgram[idx];
+                            if (!dayDef) return;
+                            const dayNameSafe = dayDef.dayName ? (typeof dayDef.dayName === 'object' ? dayDef.dayName[lang] : dayDef.dayName) : `Day ${idx + 1}`;
+                            const mesoPlan = Array.isArray(activeMeso.plan) ? activeMeso.plan : [];
+                            const dayPlan = Array.isArray(mesoPlan[idx]) ? mesoPlan[idx] : [];
+                            const safeExercises = Array.isArray(exercises) ? exercises.filter(e => !!e) : [];
+                            const safeLogs = Array.isArray(logs) ? logs : [];
+                            const isDeload = !!activeMeso.isDeload;
 
-                        const sessionExs = (dayDef.slots || []).map((slotDef, sIdx) => {
-                            if (!slotDef) return null;
-                            const exId = dayPlan[sIdx];
-                            let exDef = exId ? safeExercises.find(e => e.id === exId) : safeExercises.find(e => e.muscle === slotDef.muscle);
-                            if (!exDef && safeExercises.length > 0) exDef = safeExercises[0];
-                            if (!exDef) exDef = { id: 'unknown', name: 'Unknown', muscle: slotDef.muscle || 'CHEST' };
+                            const sessionExs = (dayDef.slots || []).map((slotDef, sIdx) => {
+                                if (!slotDef) return null;
+                                const exId = dayPlan[sIdx];
+                                let exDef = exId ? safeExercises.find(e => e.id === exId) : safeExercises.find(e => e.muscle === slotDef.muscle);
+                                if (!exDef && safeExercises.length > 0) exDef = safeExercises[0];
+                                if (!exDef) exDef = { id: 'unknown', name: 'Unknown', muscle: slotDef.muscle || 'CHEST' };
 
-                            const lastSets = getLastLogForExercise(exDef.id, safeLogs);
-                            let setTarget = slotDef.setTarget || 3;
-                            if (isDeload) setTarget = Math.max(1, Math.ceil(setTarget / 2));
+                                const lastSets = getLastLogForExercise(exDef.id, safeLogs);
+                                let setTarget = slotDef.setTarget || 3;
+                                if (isDeload) setTarget = Math.max(1, Math.ceil(setTarget / 2));
 
-                            const initialSets = Array(setTarget).fill(null).map((_, i) => ({
-                                id: Date.now() + Math.random() + i,
-                                weight: '', reps: '', rpe: '', completed: false, type: 'regular',
-                                hintWeight: lastSets?.[i]?.weight, hintReps: lastSets?.[i]?.reps,
-                                prevWeight: lastSets?.[i]?.weight, prevReps: lastSets?.[i]?.reps
-                            }));
+                                const initialSets = Array(setTarget).fill(null).map((_, i) => ({
+                                    id: Date.now() + Math.random() + i,
+                                    weight: '', reps: '', rpe: '', completed: false, type: 'regular',
+                                    hintWeight: lastSets?.[i]?.weight, hintReps: lastSets?.[i]?.reps,
+                                    prevWeight: lastSets?.[i]?.weight, prevReps: lastSets?.[i]?.reps
+                                }));
 
-                            return { ...exDef, instanceId: Date.now() + Math.random() + sIdx, slotLabel: slotDef.muscle, targetReps: slotDef.reps, sets: initialSets };
-                        }).filter(Boolean);
+                                return { ...exDef, instanceId: Date.now() + Math.random() + sIdx, slotLabel: slotDef.muscle, targetReps: slotDef.reps, sets: initialSets };
+                            }).filter(Boolean);
 
-                        setActiveSession({ id: Date.now(), dayIdx: idx, name: `${activeMeso.week} • ${dayNameSafe}`, exercises: sessionExs as any, startTime: Date.now(), mesoId: activeMeso.id, week: activeMeso.week });
-                        setView('workout');
-                    }} onEditProgram={() => setView('program')} />}
+                            setActiveSession({ id: Date.now(), dayIdx: idx, name: `${activeMeso.week} • ${dayNameSafe}`, exercises: sessionExs as any, startTime: Date.now(), mesoId: activeMeso.id, week: activeMeso.week });
+                            setView('workout');
+                        }} 
+                        onEditProgram={() => setView('program')} 
+                        onSkipSession={handleSkipSession} // Connected Logic
+                    />}
                     {view === 'history' && (
                         <Suspense fallback={<LoadingSpinner />}>
                             <HistoryView />
@@ -279,6 +315,61 @@ const AppContent = () => {
             <RestTimerOverlay />
             {!hasSeenOnboarding && <OnboardingModal onClose={() => setHasSeenOnboarding(true)} />}
             {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
+
+            {/* SYNC CONFLICT MODAL */}
+            <ConfirmModal 
+                isOpen={!!pendingCloudData}
+                title={lang === 'en' ? "Cloud Sync" : "Sincronización Nube"}
+                description={lang === 'en' ? "Newer data found in the cloud. Download it? (This will overwrite current local data)" : "Datos más recientes encontrados en la nube. ¿Descargar? (Esto sobrescribirá los datos locales actuales)"}
+                confirmText={lang === 'en' ? "Download" : "Descargar"}
+                cancelText={lang === 'en' ? "Keep Local" : "Mantener Local"}
+                onConfirm={confirmCloudSync}
+                onCancel={cancelCloudSync}
+                variant="primary"
+            />
+
+            {/* IMPORT CONFIRM MODAL */}
+            <ConfirmModal 
+                isOpen={!!importData}
+                title={t.import}
+                description={t.importConfirm}
+                confirmText={t.import}
+                cancelText={t.cancel}
+                onConfirm={confirmImport}
+                onCancel={() => setImportData(null)}
+                variant="danger"
+            />
+
+            {/* FORCE SYNC MODAL */}
+            <ConfirmModal 
+                isOpen={showForceSyncModal}
+                title={lang === 'en' ? "Force Sync" : "Forzar Sincronización"}
+                description={lang === 'en' ? "Upload current local data to cloud? This will overwrite cloud data." : "¿Subir datos locales a la nube? Esto sobrescribirá los datos de la nube."}
+                confirmText={lang === 'en' ? "Upload" : "Subir"}
+                cancelText={t.cancel}
+                onConfirm={executeForceSync}
+                onCancel={() => setShowForceSyncModal(false)}
+            />
+
+            {/* FACTORY RESET MODAL (Already exists, but using the new generic if preferred, kept custom for now) */}
+            {showResetModal && (
+                <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-200">
+                    <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-2xl p-6 shadow-2xl border border-zinc-200 dark:border-white/10 text-center" onClick={e => e.stopPropagation()}>
+                        <div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+                            <Icon name="AlertTriangle" size={32} />
+                        </div>
+                        <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">{t.dangerZone}</h3>
+                        <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6 leading-relaxed">{t.deleteDataConfirm}</p>
+                        <div className="grid grid-cols-2 gap-3">
+                            <Button variant="secondary" onClick={() => setShowResetModal(false)}>{t.cancel}</Button>
+                            <Button variant="danger" onClick={() => {
+                                localStorage.clear();
+                                window.location.reload();
+                            }}>{t.delete}</Button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Settings Overlay */}
             {showSettings && view !== 'exercises' && (
@@ -377,7 +468,7 @@ const AppContent = () => {
                                 <div className="space-y-2">
                                     <div className="grid grid-cols-2 gap-2">
                                         <button onClick={handleExport} className="py-3 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"><Icon name="Download" size={14} /> {t.export}</button>
-                                        <label className="py-3 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 rounded-xl text-sm font-bold cursor-pointer text-center flex items-center justify-center gap-2 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"><Icon name="Upload" size={14} /> {t.import}<input type="file" onChange={handleImport} accept=".json" className="hidden" /></label>
+                                        <label className="py-3 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 rounded-xl text-sm font-bold cursor-pointer text-center flex items-center justify-center gap-2 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"><Icon name="Upload" size={14} /> {t.import}<input type="file" onChange={handleImportFile} accept=".json" className="hidden" /></label>
                                     </div>
                                     {user && (
                                         <button 
@@ -413,26 +504,6 @@ const AppContent = () => {
                                     <Icon name="Trash2" size={16} /> {t.factoryReset}
                                 </button>
                             </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Factory Reset Modal */}
-            {showResetModal && (
-                <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-200">
-                    <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-2xl p-6 shadow-2xl border border-zinc-200 dark:border-white/10 text-center" onClick={e => e.stopPropagation()}>
-                        <div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
-                            <Icon name="AlertTriangle" size={32} />
-                        </div>
-                        <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">{t.dangerZone}</h3>
-                        <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6 leading-relaxed">{t.deleteDataConfirm}</p>
-                        <div className="grid grid-cols-2 gap-3">
-                            <Button variant="secondary" onClick={() => setShowResetModal(false)}>{t.cancel}</Button>
-                            <Button variant="danger" onClick={() => {
-                                localStorage.clear();
-                                window.location.reload();
-                            }}>{t.delete}</Button>
                         </div>
                     </div>
                 </div>
