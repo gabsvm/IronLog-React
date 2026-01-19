@@ -81,7 +81,7 @@ export interface ProgramDay {
   slots: ProgramSlot[];
 }
 
-export type MesoType = 'hyp_1' | 'hyp_2' | 'metabolite' | 'resensitization' | 'full_body';
+export type MesoType = 'hyp_1' | 'hyp_2' | 'metabolite' | 'resensitization' | 'full_body' | 'wizard' | 'male_physique';
 
 export interface MesoCycle {
   id: number;
@@ -119,6 +119,14 @@ export interface TutorialState {
     stats: boolean;
 }
 
+// New User Profile Types for Onboarding
+export interface UserProfile {
+    experience: 'beginner' | 'intermediate' | 'advanced';
+    daysPerWeek: number;
+    goal: 'hypertrophy' | 'strength' | 'endurance';
+    sessionDuration: 'short' | 'medium' | 'long'; // <45m, 60m, 90m+
+}
+
 export interface AppState {
     program: ProgramDay[];
     activeMeso: MesoCycle | null;
@@ -134,5 +142,6 @@ export interface AppState {
     rpFeedback: Record<string, Record<string, Record<string, FeedbackEntry>>>; 
     hasSeenOnboarding: boolean;
     tutorialProgress: TutorialState;
+    userProfile?: UserProfile; // Optional profile data
     lastUpdated?: number;
 }

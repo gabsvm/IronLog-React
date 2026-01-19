@@ -8,8 +8,8 @@ import { WorkoutView } from './views/WorkoutView';
 import { ExercisesView } from './views/ExercisesView';
 import { ProgramEditView } from './views/ProgramEditView';
 import { RestTimerOverlay } from './components/ui/RestTimerOverlay';
-import { OnboardingModal } from './components/ui/OnboardingModal';
-import { ConfirmModal } from './components/ui/ConfirmModal'; // New
+import { SetupWizard } from './components/onboarding/SetupWizard'; // New Import
+import { ConfirmModal } from './components/ui/ConfirmModal'; 
 import { Icon } from './components/ui/Icon';
 import { TRANSLATIONS } from './constants';
 import { Button } from './components/ui/Button';
@@ -240,80 +240,91 @@ const AppContent = () => {
 
     return (
         <>
-            {view === 'workout' && activeSession ? (
-                <WorkoutView 
-                    onFinish={() => { 
-                        if (!activeSession) return;
-                        const duration = activeSession.startTime ? (Date.now() - activeSession.startTime) / 1000 : 0;
-                        const log = { ...activeSession, endTime: Date.now(), duration };
-                        setLogs([log as any, ...(Array.isArray(logs) ? logs : [])]);
-                        setActiveSession(null);
-                        setRestTimer({ active: false, timeLeft: 0, duration: 0, endAt: 0 }); 
-                        setView('home');
-                    }} 
-                    onBack={() => setView('home')} 
-                />
-            ) : view === 'exercises' ? (
-                <ExercisesView onBack={() => { setView('home'); setShowSettings(true); }} />
-            ) : view === 'program' ? (
-                <ProgramEditView onBack={() => setView('home')} />
-            ) : (
-                <Layout view={view as any} setView={setView as any} onOpenSettings={() => setShowSettings(true)}>
-                    {view === 'home' && <HomeView 
-                        startSession={(idx) => {
-                            if (!activeMeso) return;
-                            const safeProgram = Array.isArray(program) ? program : [];
-                            const dayDef = safeProgram[idx];
-                            if (!dayDef) return;
-                            const dayNameSafe = dayDef.dayName ? (typeof dayDef.dayName === 'object' ? dayDef.dayName[lang] : dayDef.dayName) : `Day ${idx + 1}`;
-                            const mesoPlan = Array.isArray(activeMeso.plan) ? activeMeso.plan : [];
-                            const dayPlan = Array.isArray(mesoPlan[idx]) ? mesoPlan[idx] : [];
-                            const safeExercises = Array.isArray(exercises) ? exercises.filter(e => !!e) : [];
-                            const safeLogs = Array.isArray(logs) ? logs : [];
-                            const isDeload = !!activeMeso.isDeload;
+            {/* New Setup Wizard Logic */}
+            {!hasSeenOnboarding && (
+                <SetupWizard onComplete={() => setHasSeenOnboarding(true)} />
+            )}
 
-                            const sessionExs = (dayDef.slots || []).map((slotDef, sIdx) => {
-                                if (!slotDef) return null;
-                                const exId = dayPlan[sIdx];
-                                let exDef = exId ? safeExercises.find(e => e.id === exId) : safeExercises.find(e => e.muscle === slotDef.muscle);
-                                if (!exDef && safeExercises.length > 0) exDef = safeExercises[0];
-                                if (!exDef) exDef = { id: 'unknown', name: 'Unknown', muscle: slotDef.muscle || 'CHEST' };
+            {/* Main App Content - Only visible if onboarding is done */}
+            {hasSeenOnboarding && (
+                <>
+                    {view === 'workout' && activeSession ? (
+                        <WorkoutView 
+                            onFinish={() => { 
+                                if (!activeSession) return;
+                                const duration = activeSession.startTime ? (Date.now() - activeSession.startTime) / 1000 : 0;
+                                const log = { ...activeSession, endTime: Date.now(), duration };
+                                setLogs([log as any, ...(Array.isArray(logs) ? logs : [])]);
+                                setActiveSession(null);
+                                setRestTimer({ active: false, timeLeft: 0, duration: 0, endAt: 0 }); 
+                                setView('home');
+                            }} 
+                            onBack={() => setView('home')} 
+                        />
+                    ) : view === 'exercises' ? (
+                        <ExercisesView onBack={() => { setView('home'); setShowSettings(true); }} />
+                    ) : view === 'program' ? (
+                        <ProgramEditView onBack={() => setView('home')} />
+                    ) : (
+                        <Layout view={view as any} setView={setView as any} onOpenSettings={() => setShowSettings(true)}>
+                            {view === 'home' && <HomeView 
+                                startSession={(idx) => {
+                                    if (!activeMeso) return;
+                                    const safeProgram = Array.isArray(program) ? program : [];
+                                    const dayDef = safeProgram[idx];
+                                    if (!dayDef) return;
+                                    const dayNameSafe = dayDef.dayName ? (typeof dayDef.dayName === 'object' ? dayDef.dayName[lang] : dayDef.dayName) : `Day ${idx + 1}`;
+                                    const mesoPlan = Array.isArray(activeMeso.plan) ? activeMeso.plan : [];
+                                    const dayPlan = Array.isArray(mesoPlan[idx]) ? mesoPlan[idx] : [];
+                                    const safeExercises = Array.isArray(exercises) ? exercises.filter(e => !!e) : [];
+                                    const safeLogs = Array.isArray(logs) ? logs : [];
+                                    const isDeload = !!activeMeso.isDeload;
 
-                                const lastSets = getLastLogForExercise(exDef.id, safeLogs);
-                                let setTarget = slotDef.setTarget || 3;
-                                if (isDeload) setTarget = Math.max(1, Math.ceil(setTarget / 2));
+                                    const sessionExs = (dayDef.slots || []).map((slotDef, sIdx) => {
+                                        if (!slotDef) return null;
+                                        const exId = dayPlan[sIdx];
+                                        let exDef = exId ? safeExercises.find(e => e.id === exId) : safeExercises.find(e => e.muscle === slotDef.muscle);
+                                        if (!exDef && safeExercises.length > 0) exDef = safeExercises[0];
+                                        if (!exDef) exDef = { id: 'unknown', name: 'Unknown', muscle: slotDef.muscle || 'CHEST' };
 
-                                const initialSets = Array(setTarget).fill(null).map((_, i) => ({
-                                    id: Date.now() + Math.random() + i,
-                                    weight: '', reps: '', rpe: '', completed: false, type: 'regular',
-                                    hintWeight: lastSets?.[i]?.weight, hintReps: lastSets?.[i]?.reps,
-                                    prevWeight: lastSets?.[i]?.weight, prevReps: lastSets?.[i]?.reps
-                                }));
+                                        const lastSets = getLastLogForExercise(exDef.id, safeLogs);
+                                        let setTarget = slotDef.setTarget || 3;
+                                        if (isDeload) setTarget = Math.max(1, Math.ceil(setTarget / 2));
 
-                                return { ...exDef, instanceId: Date.now() + Math.random() + sIdx, slotLabel: slotDef.muscle, targetReps: slotDef.reps, sets: initialSets };
-                            }).filter(Boolean);
+                                        const initialSets = Array(setTarget).fill(null).map((_, i) => ({
+                                            id: Date.now() + Math.random() + i,
+                                            weight: '', reps: '', rpe: '', completed: false, type: 'regular',
+                                            hintWeight: lastSets?.[i]?.weight, hintReps: lastSets?.[i]?.reps,
+                                            prevWeight: lastSets?.[i]?.weight, prevReps: lastSets?.[i]?.reps
+                                        }));
 
-                            setActiveSession({ id: Date.now(), dayIdx: idx, name: `${activeMeso.week} • ${dayNameSafe}`, exercises: sessionExs as any, startTime: Date.now(), mesoId: activeMeso.id, week: activeMeso.week });
-                            setView('workout');
-                        }} 
-                        onEditProgram={() => setView('program')} 
-                        onSkipSession={handleSkipSession} // Connected Logic
-                    />}
-                    {view === 'history' && (
-                        <Suspense fallback={<LoadingSpinner />}>
-                            <HistoryView />
-                        </Suspense>
+                                        return { ...exDef, instanceId: Date.now() + Math.random() + sIdx, slotLabel: slotDef.muscle, targetReps: slotDef.reps, sets: initialSets };
+                                    }).filter(Boolean);
+
+                                    setActiveSession({ id: Date.now(), dayIdx: idx, name: `${activeMeso.week} • ${dayNameSafe}`, exercises: sessionExs as any, startTime: Date.now(), mesoId: activeMeso.id, week: activeMeso.week });
+                                    setView('workout');
+                                }} 
+                                onEditProgram={() => setView('program')} 
+                                onSkipSession={handleSkipSession} 
+                            />}
+                            {view === 'history' && (
+                                <Suspense fallback={<LoadingSpinner />}>
+                                    <HistoryView />
+                                </Suspense>
+                            )}
+                            {view === 'stats' && (
+                                <Suspense fallback={<LoadingSpinner />}>
+                                    <StatsView />
+                                </Suspense>
+                            )}
+                        </Layout>
                     )}
-                    {view === 'stats' && (
-                         <Suspense fallback={<LoadingSpinner />}>
-                            <StatsView />
-                         </Suspense>
-                    )}
-                </Layout>
+                </>
             )}
 
             <RestTimerOverlay />
-            {!hasSeenOnboarding && <OnboardingModal onClose={() => setHasSeenOnboarding(true)} />}
+            
+            {/* Standard Modal Overlays */}
             {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
 
             {/* SYNC CONFLICT MODAL */}
@@ -351,7 +362,7 @@ const AppContent = () => {
                 onCancel={() => setShowForceSyncModal(false)}
             />
 
-            {/* FACTORY RESET MODAL (Already exists, but using the new generic if preferred, kept custom for now) */}
+            {/* FACTORY RESET MODAL */}
             {showResetModal && (
                 <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-200">
                     <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-2xl p-6 shadow-2xl border border-zinc-200 dark:border-white/10 text-center" onClick={e => e.stopPropagation()}>

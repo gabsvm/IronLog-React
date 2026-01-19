@@ -1,7 +1,7 @@
 
 import React, { useState, Suspense } from 'react';
 import { useApp } from '../context/AppContext';
-import { TRANSLATIONS, FULL_BODY_TEMPLATE, DEFAULT_TEMPLATE, METABOLITE_TEMPLATE, RESENS_TEMPLATE, UPPER_LOWER_TEMPLATE } from '../constants';
+import { TRANSLATIONS, FULL_BODY_TEMPLATE, DEFAULT_TEMPLATE, METABOLITE_TEMPLATE, RESENS_TEMPLATE, UPPER_LOWER_TEMPLATE, WIZARD_TEMPLATE, MALE_PHYSIQUE_TEMPLATE } from '../constants';
 import { Icon } from '../components/ui/Icon';
 import { Button } from '../components/ui/Button';
 import { getTranslated, formatDate } from '../utils';
@@ -70,6 +70,14 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                 planToUse = FULL_BODY_TEMPLATE;
                 setProgram(FULL_BODY_TEMPLATE);
                 break;
+            case 'wizard':
+                planToUse = WIZARD_TEMPLATE;
+                setProgram(WIZARD_TEMPLATE);
+                break;
+            case 'male_physique':
+                planToUse = MALE_PHYSIQUE_TEMPLATE;
+                setProgram(MALE_PHYSIQUE_TEMPLATE);
+                break;
             default:
                 break;
         }
@@ -91,6 +99,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
         setShowStartWizard(false);
     };
 
+    // ... (KEEP ALL EXISTING REPORT AND UTILITY FUNCTIONS) ...
     const generateMesoReport = () => {
         if (!activeMeso) return null;
         
@@ -238,9 +247,25 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
         setActiveMeso(prev => prev ? { ...prev, [field]: val } : null);
     };
 
+    // Helper to render template buttons
+    const TemplateButton = ({ type }: { type: MesoType }) => (
+        <button
+            onClick={() => setNewMesoType(type)}
+            className={`w-full text-left p-3 rounded-xl border transition-all mb-2 ${
+                newMesoType === type 
+                ? 'bg-red-50 dark:bg-red-900/20 border-red-500 text-red-700 dark:text-red-400' 
+                : 'bg-zinc-50 dark:bg-white/5 border-transparent text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/10'
+            }`}
+        >
+            <div className="font-bold mb-0.5 text-sm">{String(t.phases?.[type] || type)}</div>
+            <div className="text-[10px] opacity-70 leading-relaxed">{String(t.phaseDesc?.[type] || "")}</div>
+        </button>
+    );
+
     if (!activeMeso) {
         return (
             <div className="p-8 flex flex-col items-center justify-center h-full text-center space-y-8 animate-in fade-in zoom-in-95 duration-500 bg-grid-pattern">
+                {/* ... (EXISTING INTRO UI) ... */}
                 <div className="relative group cursor-pointer flex justify-center items-center -space-x-8" onClick={() => setShowStartWizard(true)}>
                     <div className="relative z-10 w-32 h-32 rounded-full overflow-hidden border-4 border-zinc-100 dark:border-zinc-800 shadow-xl">
                         <img 
@@ -284,38 +309,46 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
 
                 {showStartWizard && (
                     <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in">
-                        <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-2xl p-6 shadow-2xl border border-zinc-200 dark:border-white/10 flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
-                            <div className="flex justify-between items-center mb-6 shrink-0">
+                        <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-2xl p-0 shadow-2xl border border-zinc-200 dark:border-white/10 flex flex-col max-h-[85vh]" onClick={e => e.stopPropagation()}>
+                            <div className="flex justify-between items-center p-6 pb-4 shrink-0 bg-white dark:bg-zinc-900 rounded-t-2xl z-10">
                                 <h3 className="text-xl font-bold text-zinc-900 dark:text-white">{String(t.startMeso)}</h3>
                                 <button onClick={() => setShowStartWizard(false)} className="text-zinc-400"><Icon name="X" size={24} /></button>
                             </div>
                             
-                            <div className="space-y-4 mb-8 overflow-y-auto scroll-container flex-1">
-                                <p className="text-sm font-bold text-zinc-400 uppercase tracking-widest sticky top-0 bg-white dark:bg-zinc-900 py-2 z-10">{String(t.mesoType)}</p>
-                                {(['hyp_1', 'hyp_2', 'full_body', 'metabolite', 'resensitization'] as MesoType[]).map(type => (
-                                    <button
-                                        key={type}
-                                        onClick={() => setNewMesoType(type)}
-                                        className={`w-full text-left p-4 rounded-xl border transition-all ${
-                                            newMesoType === type 
-                                            ? 'bg-red-50 dark:bg-red-900/20 border-red-500 text-red-700 dark:text-red-400' 
-                                            : 'bg-zinc-50 dark:bg-white/5 border-transparent text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/10'
-                                        }`}
-                                    >
-                                        <div className="font-bold mb-1">{String(t.phases?.[type] || type)}</div>
-                                        <div className="text-xs opacity-70 leading-relaxed">{String(t.phaseDesc?.[type] || "")}</div>
-                                    </button>
-                                ))}
-                            </div>
-
-                            <div className="shrink-0 space-y-4">
-                                <div className="bg-orange-50 dark:bg-orange-900/20 p-3 rounded-xl flex gap-3 items-start animate-in fade-in">
-                                    <div className="text-orange-500 shrink-0 mt-0.5"><Icon name="Activity" size={16} /></div>
-                                    <p className="text-xs text-orange-700 dark:text-orange-300 leading-tight font-medium">
-                                        {String(t.overwriteTemplateConfirm)}
-                                    </p>
+                            <div className="space-y-6 overflow-y-auto scroll-container flex-1 px-6 pb-6">
+                                {/* Beginner / Reset */}
+                                <div>
+                                    <div className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                                        {String(t.cat.beginner)}
+                                    </div>
+                                    <TemplateButton type="resensitization" />
                                 </div>
 
+                                {/* Intermediate */}
+                                <div>
+                                    <div className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                                        {String(t.cat.intermediate)}
+                                    </div>
+                                    <TemplateButton type="wizard" />
+                                    <TemplateButton type="hyp_2" />
+                                </div>
+
+                                {/* Advanced */}
+                                <div>
+                                    <div className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-purple-500"></div>
+                                        {String(t.cat.advanced)}
+                                    </div>
+                                    <TemplateButton type="male_physique" />
+                                    <TemplateButton type="hyp_1" />
+                                    <TemplateButton type="full_body" />
+                                    <TemplateButton type="metabolite" />
+                                </div>
+                            </div>
+
+                            <div className="shrink-0 p-6 pt-2 border-t border-zinc-100 dark:border-white/5 bg-white dark:bg-zinc-900 rounded-b-2xl">
                                 <Button onClick={handleStartMeso} fullWidth size="lg">
                                     {String(t.createAndSelect)}
                                 </Button>
@@ -578,6 +611,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                  </div>
              )}
 
+            {/* ... (Existing skip and complete modals) ... */}
             {skipConfirmationId !== null && (
                 /* ... existing modal code ... */
                 <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-200" onClick={() => setSkipConfirmationId(null)}>

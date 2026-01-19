@@ -8,6 +8,7 @@ export const MUSCLE_GROUPS: Record<string, MuscleGroup> = {
     ABS: 'ABS', FOREARMS: 'FOREARMS', CARDIO: 'CARDIO'
 };
 
+// ... (KEEP ALL EXISTING EXERCISES AS IS) ...
 export const DEFAULT_LIBRARY: ExerciseDef[] = [
     // Cardio (Generic safe links)
     { 
@@ -127,6 +128,13 @@ export const DEFAULT_LIBRARY: ExerciseDef[] = [
         videoId: "F_iF87c4gD8" // Straight Arm Pulldown
     },
     { 
+        id: 'pullover_db', 
+        name: { en: 'Dumbbell Pullover', es: 'Pullover con Mancuerna' }, 
+        muscle: 'BACK',
+        instructions: { en: "Old school lat builder. Stretch.", es: "Constructor de dorsales de la vieja escuela. Estira bien." },
+        videoId: "5_J5E68rFfE" 
+    },
+    { 
         id: 'row_mach', 
         name: { en: 'Machine Row', es: 'Remo en Máquina' }, 
         muscle: 'BACK',
@@ -139,6 +147,12 @@ export const DEFAULT_LIBRARY: ExerciseDef[] = [
         videoId: "GZbfZ033f74"
     },
     { 
+        id: 'row_db', 
+        name: { en: 'Dumbbell Row', es: 'Remo con Mancuerna' }, 
+        muscle: 'BACK',
+        videoId: "roCP6wCXPqq"
+    },
+    { 
         id: 'pullup', 
         name: { en: 'Pull Ups', es: 'Dominadas' }, 
         muscle: 'BACK',
@@ -147,6 +161,13 @@ export const DEFAULT_LIBRARY: ExerciseDef[] = [
     },
     
     // Legs - Verified Scott Herman Links
+    { 
+        id: 'sq_bar', 
+        name: { en: 'Barbell Squat', es: 'Sentadilla con Barra' }, 
+        muscle: 'QUADS',
+        instructions: { en: "The king of legs. Hit depth.", es: "El rey de las piernas. Rompe la paralela." },
+        videoId: "MVMVx5g0Zsk" // Scott Herman Squat
+    },
     { 
         id: 'sq_hack', 
         name: { en: 'Hack Squat', es: 'Sentadilla Hack' }, 
@@ -173,6 +194,19 @@ export const DEFAULT_LIBRARY: ExerciseDef[] = [
         videoId: "JCXUYuzwNrM"
     },
     { 
+        id: 'sldl', 
+        name: { en: 'Stiff Leg Deadlift', es: 'Peso Muerto Piernas Rígidas' }, 
+        muscle: 'HAMSTRINGS',
+        instructions: { en: "Minimal knee bend. Hamstring focus.", es: "Mínima flexión de rodilla. Enfoque en isquios." },
+        videoId: "1uDiW5--rAE"
+    },
+    { 
+        id: 'glute_bridge', 
+        name: { en: 'Glute Bridge', es: 'Puente de Glúteos' }, 
+        muscle: 'GLUTES',
+        videoId: "8Z7t6j5G9V0" // Generic placeholder
+    },
+    { 
         id: 'leg_curl', 
         name: { en: 'Seated Leg Curl', es: 'Curl Femoral Sentado' }, 
         muscle: 'HAMSTRINGS', 
@@ -197,6 +231,12 @@ export const DEFAULT_LIBRARY: ExerciseDef[] = [
         name: { en: 'Overhead Press', es: 'Press Militar' }, 
         muscle: 'SHOULDERS', 
         videoId: "QAQ64hK4Xxs"
+    },
+    { 
+        id: 'ohp_db', 
+        name: { en: 'Seated DB Press', es: 'Press Militar Mancuernas' }, 
+        muscle: 'SHOULDERS', 
+        videoId: "qEwK657kfLM"
     },
     { 
         id: 'lat_raise', 
@@ -293,6 +333,13 @@ export const DEFAULT_LIBRARY: ExerciseDef[] = [
         instructions: { en: "Giant set style: aim for 50-60 total reps.", es: "Estilo 'Giant Set': busca 50-60 reps totales con descansos cortos." },
         videoId: "2t4B3-1Z9G4"
     },
+    { 
+        id: 'dips', 
+        name: { en: 'Weighted Dips', es: 'Fondos Lastrados' }, 
+        muscle: 'TRICEPS',
+        instructions: { en: "Leaning forward hits chest, upright hits triceps.", es: "Inclinado enfoca pecho, vertical enfoca tríceps." },
+        videoId: "2z8DdPdFfD4"
+    },
     
     { 
         id: 'abs_cable', 
@@ -316,7 +363,6 @@ export const DEFAULT_LIBRARY: ExerciseDef[] = [
     }
 ];
 
-// HYP 1: Classic PPL (Push Pull Legs)
 export const DEFAULT_TEMPLATE: ProgramDay[] = [
     {
         id: 'd_push',
@@ -353,7 +399,6 @@ export const DEFAULT_TEMPLATE: ProgramDay[] = [
     }
 ];
 
-// HYP 2: Upper / Lower Split (4 Days)
 export const UPPER_LOWER_TEMPLATE: ProgramDay[] = [
     {
         id: 'ul_1',
@@ -399,7 +444,6 @@ export const UPPER_LOWER_TEMPLATE: ProgramDay[] = [
     }
 ];
 
-// RESENSITIZATION: Low Volume Full Body (2 Days)
 export const RESENS_TEMPLATE: ProgramDay[] = [
     {
         id: 'res_1',
@@ -425,7 +469,6 @@ export const RESENS_TEMPLATE: ProgramDay[] = [
     }
 ];
 
-// METABOLITE: High Reps, Short Rest (4 Days)
 export const METABOLITE_TEMPLATE: ProgramDay[] = [
     {
         id: 'meta_1',
@@ -460,7 +503,6 @@ export const METABOLITE_TEMPLATE: ProgramDay[] = [
     }
 ];
 
-// AESTHETIC V-TAPER SPLIT (4 Days) - Dr. Mike Israetel Style
 export const FULL_BODY_TEMPLATE: ProgramDay[] = [
     {
         id: 'vt_1',
@@ -510,6 +552,99 @@ export const FULL_BODY_TEMPLATE: ProgramDay[] = [
     }
 ];
 
+export const WIZARD_TEMPLATE: ProgramDay[] = [
+    {
+        id: 'wiz_heavy',
+        dayName: { en: 'Day 1: Heavy (5-8 Reps)', es: 'Día 1: Pesado (5-8 Reps)' },
+        slots: [
+            { muscle: 'CHEST', setTarget: 3, exerciseId: 'bp_bar', reps: '5-8' },
+            { muscle: 'BACK', setTarget: 3, exerciseId: 'pullup', reps: '5-8' },
+            { muscle: 'QUADS', setTarget: 3, exerciseId: 'sq_bar', reps: '5-8' },
+            { muscle: 'HAMSTRINGS', setTarget: 3, exerciseId: 'sldl', reps: '5-8' },
+            { muscle: 'SHOULDERS', setTarget: 3, exerciseId: 'ohp', reps: '5-8' },
+            { muscle: 'BICEPS', setTarget: 3, exerciseId: 'curl_bar', reps: '5-8' },
+            { muscle: 'TRICEPS', setTarget: 3, exerciseId: 'dips', reps: '5-8' }
+        ]
+    },
+    {
+        id: 'wiz_light',
+        dayName: { en: 'Day 2: Light (12-15 Reps)', es: 'Día 2: Liviano (12-15 Reps)' },
+        slots: [
+            { muscle: 'CHEST', setTarget: 3, exerciseId: 'pec_fly', reps: '12-15' },
+            { muscle: 'BACK', setTarget: 3, exerciseId: 'pullover_db', reps: '12-15' },
+            { muscle: 'QUADS', setTarget: 3, exerciseId: 'leg_ext', reps: '12-15' },
+            { muscle: 'HAMSTRINGS', setTarget: 3, exerciseId: 'leg_curl', reps: '12-15' },
+            { muscle: 'SHOULDERS', setTarget: 3, exerciseId: 'lat_raise', reps: '12-15' },
+            { muscle: 'BICEPS', setTarget: 3, exerciseId: 'curl_cable', reps: '12-15' },
+            { muscle: 'TRICEPS', setTarget: 3, exerciseId: 'tri_push', reps: '12-15' }
+        ]
+    },
+    {
+        id: 'wiz_medium',
+        dayName: { en: 'Day 3: Medium (8-12 Reps)', es: 'Día 3: Medio (8-12 Reps)' },
+        slots: [
+            { muscle: 'CHEST', setTarget: 3, exerciseId: 'bp_inc_bar', reps: '8-12' },
+            { muscle: 'BACK', setTarget: 3, exerciseId: 'row_db', reps: '8-12' },
+            { muscle: 'QUADS', setTarget: 3, exerciseId: 'leg_press', reps: '8-12' },
+            { muscle: 'GLUTES', setTarget: 3, exerciseId: 'glute_bridge', reps: '8-12' },
+            { muscle: 'SHOULDERS', setTarget: 3, exerciseId: 'ohp_db', reps: '8-12' },
+            { muscle: 'BICEPS', setTarget: 3, exerciseId: 'curl_ez', reps: '8-12' },
+            { muscle: 'TRICEPS', setTarget: 3, exerciseId: 'tri_ext', reps: '8-12' }
+        ]
+    }
+];
+
+export const MALE_PHYSIQUE_TEMPLATE: ProgramDay[] = [
+    {
+        id: 'mp_1',
+        dayName: { en: 'Upper A (Chest Focus)', es: 'Torso A (Foco Pecho)' },
+        slots: [
+            { muscle: 'CHEST', setTarget: 3, exerciseId: 'bp_bar', reps: "6-10" },
+            { muscle: 'CHEST', setTarget: 3, exerciseId: 'bp_inc', reps: "8-12" },
+            { muscle: 'TRICEPS', setTarget: 3, exerciseId: 'skull_crusher', reps: "10-15" },
+            { muscle: 'BACK', setTarget: 3, exerciseId: 'pullup', reps: "AMRAP" },
+            { muscle: 'BACK', setTarget: 3, exerciseId: 'row_cable', reps: "10-15" },
+            { muscle: 'BICEPS', setTarget: 3, exerciseId: 'curl_ez', reps: "10-15" },
+            { muscle: 'SHOULDERS', setTarget: 4, exerciseId: 'lat_raise', reps: "12-20" }
+        ]
+    },
+    {
+        id: 'mp_2',
+        dayName: { en: 'Lower A (Quad Focus)', es: 'Pierna A (Foco Quads)' },
+        slots: [
+            { muscle: 'QUADS', setTarget: 3, exerciseId: 'sq_bar', reps: "6-10" },
+            { muscle: 'QUADS', setTarget: 3, exerciseId: 'leg_press', reps: "10-15" },
+            { muscle: 'GLUTES', setTarget: 3, exerciseId: 'glute_bridge', reps: "10-15" },
+            { muscle: 'HAMSTRINGS', setTarget: 3, exerciseId: 'rdl', reps: "8-12" },
+            { muscle: 'CALVES', setTarget: 4, exerciseId: 'calf_raise', reps: "12-20" }
+        ]
+    },
+    {
+        id: 'mp_3',
+        dayName: { en: 'Upper B (Shoulder/Arm Focus)', es: 'Torso B (Foco Hombro/Brazo)' },
+        slots: [
+            { muscle: 'SHOULDERS', setTarget: 3, exerciseId: 'ohp', reps: "6-10" },
+            { muscle: 'BICEPS', setTarget: 3, exerciseId: 'curl_bar', reps: "8-12" },
+            { muscle: 'BICEPS', setTarget: 3, exerciseId: 'curl_cable', reps: "12-15" },
+            { muscle: 'BACK', setTarget: 3, exerciseId: 'lat_pull', reps: "10-15" },
+            { muscle: 'TRICEPS', setTarget: 3, exerciseId: 'tri_push', reps: "12-15" },
+            { muscle: 'TRICEPS', setTarget: 3, exerciseId: 'tri_ext', reps: "12-15" },
+            { muscle: 'CHEST', setTarget: 3, exerciseId: 'pec_fly', reps: "12-20" }
+        ]
+    },
+    {
+        id: 'mp_4',
+        dayName: { en: 'Lower B (Hams/Glute Focus)', es: 'Pierna B (Foco Isquios/Glúteo)' },
+        slots: [
+            { muscle: 'HAMSTRINGS', setTarget: 3, exerciseId: 'leg_curl', reps: "10-15" },
+            { muscle: 'HAMSTRINGS', setTarget: 3, exerciseId: 'sldl', reps: "8-12" },
+            { muscle: 'GLUTES', setTarget: 3, exerciseId: 'glute_bridge', reps: "10-15" },
+            { muscle: 'QUADS', setTarget: 3, exerciseId: 'leg_ext', reps: "12-20" },
+            { muscle: 'CALVES', setTarget: 4, exerciseId: 'calf_raise', reps: "12-20" }
+        ]
+    }
+];
+
 export const TRANSLATIONS = {
     en: { 
         startMeso: "Start New Mesocycle", finishWorkout: "Finish Workout", finishConfirm: "Finish workout?", cancel: "Cancel", delete: "Delete", skip: "Skip Exercise", skipDay: "Skip Workout", skipped: "Skipped", completed: "Completed", swap: "Swap Exercise", changeMuscle: "Change muscle", chooseMuscle: "Choose muscle", addSetBelow: "Add Set Below", deleteSet: "Delete Set", skipSet: "Skip Set", unskipSet: "Unskip Set", sets: "Set", weight: "Weight", reps: "Reps", rir: "RIR", log: "Log", note: "Range: 6-10", active: "Active", history: "History", settings: "Settings", volume: "Weekly Volume", workouts: "Recent Workouts", noData: "No data", duration: "Duration", exercises: "Exercises", configure: "Configure", week: "WEEK", massPhase: "Mass Phase", resting: "Resting", language: "Language", theme: "Theme", back: "Back", finishCycle: "Finish Cycle", confirmCycle: "Finish current mesocycle?", selectEx: "Select Exercise", searchPlaceholder: "Search...", createEx: "Create", noExFound: "No exercises found", keepScreen: "Keep Screen On", setType: "SET TYPE", mesoStats: "Mesocycle Stats", totalWorkouts: "Total Workouts", currentWeek: "Current Week", linkSuperset: "Link Superset", unlinkSuperset: "Unlink", selectToLink: "Select exercise to link...", superset: "SUPERSET", workoutComplete: "WORKOUT COMPLETE", goodJob: "Great job!", totalVolume: "Total Volume", totalSets: "Total Sets", totalReps: "Total Reps", share: "Share", close: "Save & Close", resume: "Resume Workout", backup: "Data Backup", export: "Export Data", import: "Import Data", importConfirm: "Overwrite data?", dataSaved: "Saved!", addSet: "Set", remSet: "Set", delSlot: "Delete Slot", offline: "Local Mode", mesoAvg: "Meso Avg Volume", routineGuide: "Routine Guide", executionInfo: "Execution & Goals",
@@ -539,8 +674,16 @@ export const TRANSLATIONS = {
         mesoName: "Mesocycle Name",
         exportReport: "Export Report & Finish", justFinish: "Just Finish",
         mesoType: "Phase Type",
-        phases: { hyp_1: "Base Hypertrophy 1", hyp_2: "Base Hypertrophy 2", metabolite: "Metabolite Phase", resensitization: "Resensitization", full_body: "Aesthetic V-Taper" },
-        phaseDesc: { hyp_1: "Standard PPL. Balanced volume.", hyp_2: "Upper/Lower Split (4 Days). Focus on compounds.", metabolite: "High reps (20-30), short rests, the 'burn'.", resensitization: "Low volume, heavy weight to reset fatigue.", full_body: "Dr. Mike Style. Focus on V-Taper (Lats/Side Delts)." },
+        phases: { hyp_1: "Base Hypertrophy 1", hyp_2: "Base Hypertrophy 2", metabolite: "Metabolite Phase", resensitization: "Resensitization", full_body: "Aesthetic V-Taper", wizard: "The Wizard v3 (Full Body)", male_physique: "Male Physique (Upper/Lower)" },
+        phaseDesc: { hyp_1: "Standard PPL. Balanced volume.", hyp_2: "Upper/Lower Split (4 Days). Focus on compounds.", metabolite: "High reps (20-30), short rests, the 'burn'.", resensitization: "Low volume, heavy weight to reset fatigue.", full_body: "Dr. Mike Style. Focus on V-Taper (Lats/Side Delts).", wizard: "3-Days Heavy/Light/Medium. Classic intensity cycling for steady gains.", male_physique: "4-Days Bodybuilding Focus. Higher volume, arm & shoulder specialization." },
+        
+        // Template Categories
+        cat: {
+            beginner: "Beginner / Reset",
+            intermediate: "Intermediate (Steady Progress)",
+            advanced: "Advanced / Specialization"
+        },
+
         targetRIR: "Target RIR", recoveryWeek: "Recovery Week", focusMode: "Focus Mode", repsRange: "Reps Range", startNow: "Start Cycle Now", setupCycle: "Setup & Start Cycle", saveAsMeso: "Use this program to create a new active mesocycle immediately.",
         units: { kg: "KG", pl: "Plates", lb: "LBS", toggle: "Change Unit (KG/Plates)", plateWeight: "Weight per Plate", setPlateWeight: "Set Weight per Plate (kg)", enterWeight: "e.g. 5, 10..." },
         fb: { sorenessLabel: "Soreness / Recovery", performanceLabel: "Pump / Capacity", soreness: { 1: "Healed Early / Fresh", 2: "Healed on Time (Ideal)", 3: "Still Sore / Ouch" }, performance: { 1: "Bad / Grind", 2: "Good / Target", 3: "Great / Too Easy" }, adjust: { add: "+1/2 Sets", sub: "-1 Set", keep: "Keep (Optimal)" } },
@@ -549,6 +692,56 @@ export const TRANSLATIONS = {
         
         updateRoutine: "Update Routine Template?",
         updateRoutineDesc: "Save exercises, order, and sets for future workouts.",
+
+        // Setup Wizard
+        wizard: {
+            title: "Setup Your Profile",
+            welcome: "Let's build your perfect plan.",
+            steps: {
+                exp: "Experience Level",
+                freq: "Training Frequency",
+                goal: "Primary Goal",
+                time: "Session Duration",
+                result: "Your Recommended Plan"
+            },
+            expOptions: {
+                beginner: "Beginner",
+                intermediate: "Intermediate",
+                advanced: "Advanced"
+            },
+            // NEW: Detailed Descriptions
+            expDesc: {
+                beginner: "Training consistently for <1 year. You get stronger every week.",
+                intermediate: "1-3 years of consistent training. You need periods of accumulation.",
+                advanced: "3+ years of serious training. Gains are very slow and require specialization."
+            },
+            // NEW: Global Disclaimer
+            expNote: "Note: 'Years' implies consistent training with a structured plan. If your training has been sporadic or without a clear program, choose Beginner.",
+            
+            goalOptions: {
+                hypertrophy: "Hypertrophy (Muscle Size)",
+                strength: "Strength / Power",
+                endurance: "Endurance / Conditioning"
+            },
+            timeOptions: {
+                short: "Short (<45 mins)",
+                medium: "Standard (60 mins)",
+                long: "Long (90+ mins)"
+            },
+            generating: "Analyzing profile...",
+            apply: "Apply & Start",
+            manual: "Skip to Manual Setup",
+            reason: {
+                rec_low_freq: "Recommended for 2 days/week to hit full body frequency.",
+                rec_3_day: "Classic 3-day Full Body split for optimal frequency.",
+                rec_4_day: "Upper/Lower split allows focused work with good recovery.",
+                rec_ppl: "Push/Pull/Legs allows high volume for advanced trainees.",
+                rec_endurance: "Metabolite training focuses on higher reps and endurance.",
+                rec_default: "Balanced starting point.",
+                rec_wizard: "The 'Wizard' split (Heavy/Light/Medium) is perfect for 3-day frequency."
+            },
+            adjusted: "Note: Volume reduced slightly to fit your time constraints."
+        },
 
         // Auth
         auth: {
@@ -572,6 +765,7 @@ export const TRANSLATIONS = {
             signInRegister: "Sign In / Register"
         },
 
+        // ... (REST OF THE FILE)
         // Home View Specific
         upNext: "Up Next",
         tapToStart: "Tap to start",
@@ -689,8 +883,16 @@ export const TRANSLATIONS = {
         mesoName: "Nombre Mesociclo",
         exportReport: "Exportar Informe y Terminar", justFinish: "Solo Terminar",
         mesoType: "Tipo de Fase",
-        phases: { hyp_1: "Hipertrofia Base 1", hyp_2: "Hipertrofia Base 2", metabolite: "Fase Metabolitos", resensitization: "Resensitization", full_body: "Aesthetic V-Taper" },
-        phaseDesc: { hyp_1: "PPL Estándar. Volumen equilibrado.", hyp_2: "Torso/Pierna (4 Días). Foco en básicos.", metabolite: "Reps altas (20-30), descanso corto, 'quemazón'.", resensitization: "Bajo volumen, peso alto para resetear fatiga.", full_body: "Estilo Dr. Mike. Foco en V-Taper (Dorsal/Hombro Lateral)." },
+        phases: { hyp_1: "Hipertrofia Base 1", hyp_2: "Hipertrofia Base 2", metabolite: "Fase Metabolitos", resensitization: "Resensitization", full_body: "Aesthetic V-Taper", wizard: "The Wizard v3 (Full Body)", male_physique: "Male Physique (Torso/Pierna)" },
+        phaseDesc: { hyp_1: "PPL Estándar. Volumen equilibrado.", hyp_2: "Torso/Pierna (4 Días). Foco en básicos.", metabolite: "Reps altas (20-30), descanso corto, 'quemazón'.", resensitization: "Bajo volumen, peso alto para resetear fatiga.", full_body: "Estilo Dr. Mike. Foco en V-Taper (Dorsal/Hombro Lateral).", wizard: "3-Días Pesado/Liviano/Medio. Ciclo de intensidad clásico para ganancias constantes.", male_physique: "4-Días Foco Culturismo. Mayor volumen, especialización en brazos y hombros." },
+        
+        // Template Categories
+        cat: {
+            beginner: "Principiante / Reset",
+            intermediate: "Intermedio (Progreso Constante)",
+            advanced: "Avanzado / Especialización"
+        },
+
         targetRIR: "RIR Objetivo", recoveryWeek: "Semana Recuperación", focusMode: "Modo Foco", repsRange: "Rango Reps", startNow: "Empezar Ciclo", setupCycle: "Configurar y Empezar", saveAsMeso: "Usar este programa para crear un nuevo mesociclo activo.",
         units: { kg: "KG", pl: "Discos", lb: "LBS", toggle: "Cambiar Unidad (KG/Discos)", plateWeight: "Peso por Disco", setPlateWeight: "Fijar Peso Disco (kg)", enterWeight: "ej. 5, 10..." },
         fb: { sorenessLabel: "Agujetas / Recuperación", performanceLabel: "Bombeo / Capacidad", soreness: { 1: "Recuperado Antes / Fresco", 2: "Recuperado a Tiempo (Ideal)", 3: "Aún con Agujetas / Dolor" }, performance: { 1: "Mal / Forzado", 2: "Bien / Objetivo", 3: "Genial / Demasiado Fácil" }, adjust: { add: "+1/2 Series", sub: "-1 Serie", keep: "Mantener (Óptimo)" } },
@@ -699,6 +901,56 @@ export const TRANSLATIONS = {
         
         updateRoutine: "¿Actualizar Plantilla?",
         updateRoutineDesc: "Guardar ejercicios, orden y series para futuros entrenos.",
+
+        // Setup Wizard
+        wizard: {
+            title: "Configura tu Perfil",
+            welcome: "Construyamos tu plan ideal.",
+            steps: {
+                exp: "Nivel de Experiencia",
+                freq: "Frecuencia Semanal",
+                goal: "Objetivo Principal",
+                time: "Duración de Sesión",
+                result: "Tu Plan Recomendado"
+            },
+            expOptions: {
+                beginner: "Principiante",
+                intermediate: "Intermedio",
+                advanced: "Avanzado"
+            },
+            // NEW: Detailed Descriptions (Spanish)
+            expDesc: {
+                beginner: "Entrenamiento constante <1 año. Progresas en cargas casi cada semana.",
+                intermediate: "1-3 años constantes. Necesitas periodización para seguir avanzando.",
+                advanced: "3+ años serios. Ganancias muy lentas, requiere bloques especializados."
+            },
+            // NEW: Global Disclaimer (Spanish)
+            expNote: "Nota: 'Años' implica entrenamiento constante con un plan real. Si has entrenado intermitentemente o sin rutina clara, elige Principiante.",
+
+            goalOptions: {
+                hypertrophy: "Hipertrofia (Músculo)",
+                strength: "Fuerza / Power",
+                endurance: "Resistencia / Cardio"
+            },
+            timeOptions: {
+                short: "Corto (<45 min)",
+                medium: "Estándar (60 min)",
+                long: "Largo (90+ min)"
+            },
+            generating: "Analizando perfil...",
+            apply: "Aplicar y Empezar",
+            manual: "Saltar a Configuración Manual",
+            reason: {
+                rec_low_freq: "Recomendado para 2 días/sem para cubrir cuerpo completo.",
+                rec_3_day: "Full Body de 3 días para frecuencia óptima.",
+                rec_4_day: "División Torso/Pierna: buen equilibrio trabajo/descanso.",
+                rec_ppl: "Push/Pull/Legs: alto volumen para avanzados.",
+                rec_endurance: "Entreno de metabolitos enfocado en altas reps.",
+                rec_default: "Punto de partida equilibrado.",
+                rec_wizard: "El sistema 'Wizard' (Pesado/Liviano/Medio) es perfecto para frecuencia 3 días."
+            },
+            adjusted: "Nota: Volumen reducido ligeramente por tiempo limitado."
+        },
 
         // Auth
         auth: {
@@ -722,6 +974,7 @@ export const TRANSLATIONS = {
             signInRegister: "Iniciar Sesión / Registro"
         },
 
+        // ... (REST OF FILE)
         // Home View Specific
         upNext: "Siguiente",
         tapToStart: "Toca para empezar",
@@ -767,7 +1020,7 @@ export const TRANSLATIONS = {
         plateCalc: {
             title: "Calc. Discos",
             totalWeight: "Peso Total (KG)",
-            bar: "Barra",
+            bar: "Bar",
             empty: "Barra Vacía",
             loadPerSide: "Carga por lado",
             cannotLoad: "⚠️ No se puede cargar exacto"
