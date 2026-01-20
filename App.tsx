@@ -270,6 +270,14 @@ const AppContent = () => {
                             {view === 'home' && <HomeView 
                                 startSession={(idx) => {
                                     if (!activeMeso) return;
+
+                                    // CRITICAL FIX: Check if an active session already exists for this day/meso
+                                    // If so, just resume it instead of overwriting.
+                                    if (activeSession && activeSession.mesoId === activeMeso.id && activeSession.dayIdx === idx) {
+                                        setView('workout');
+                                        return;
+                                    }
+
                                     const safeProgram = Array.isArray(program) ? program : [];
                                     const dayDef = safeProgram[idx];
                                     if (!dayDef) return;

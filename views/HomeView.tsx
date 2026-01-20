@@ -20,7 +20,7 @@ interface HomeViewProps {
 }
 
 export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram, onSkipSession }) => {
-    const { activeMeso, program, setActiveMeso, lang, logs, config, rpFeedback, setProgram, exercises, tutorialProgress, markTutorialSeen } = useApp();
+    const { activeMeso, activeSession, program, setActiveMeso, lang, logs, config, rpFeedback, setProgram, exercises, tutorialProgress, markTutorialSeen } = useApp();
     const t = TRANSLATIONS[lang] || TRANSLATIONS['en']; // Safe fallback
     
     // Safer Muscle Translator
@@ -378,6 +378,9 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
         nextWorkoutIdx = -1;
     }
 
+    // Check if there is an active suspended session for the current day
+    const isSessionActive = activeSession && activeSession.mesoId === activeMeso.id && activeSession.dayIdx === nextWorkoutIdx;
+
     const nextDayDef = nextWorkoutIdx !== -1 ? safeProgram[nextWorkoutIdx] : null;
 
     // Tutorial Steps for Home
@@ -441,18 +444,22 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                     <div className="relative z-10">
                         <div className="flex justify-between items-start mb-6">
                             <div className="inline-flex items-center gap-2 bg-white/10 dark:bg-black/5 px-3 py-1 rounded-full backdrop-blur-sm">
-                                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                                <span className="text-[10px] font-black uppercase tracking-widest">{String(t.upNext)}</span>
+                                <span className={`w-2 h-2 rounded-full ${isSessionActive ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}></span>
+                                <span className="text-[10px] font-black uppercase tracking-widest">
+                                    {isSessionActive ? (lang === 'en' ? "IN PROGRESS" : "EN PROGRESO") : String(t.upNext)}
+                                </span>
                             </div>
                             
                             {/* Skip Button for the Main Card */}
-                            <button 
-                                onClick={(e) => handleSkipClick(e, nextWorkoutIdx)}
-                                className="p-2 -mr-2 text-zinc-400 hover:text-red-500 transition-colors z-20 relative"
-                                title={String(t.skipDay)}
-                            >
-                                <Icon name="SkipForward" size={20} />
-                            </button>
+                            {!isSessionActive && (
+                                <button 
+                                    onClick={(e) => handleSkipClick(e, nextWorkoutIdx)}
+                                    className="p-2 -mr-2 text-zinc-400 hover:text-red-500 transition-colors z-20 relative"
+                                    title={String(t.skipDay)}
+                                >
+                                    <Icon name="SkipForward" size={20} />
+                                </button>
+                            )}
                         </div>
 
                         <h3 className="text-3xl font-black mb-2 leading-tight tracking-tight">
@@ -471,7 +478,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                         </div>
 
                         <div className="flex items-center gap-2 text-sm font-bold opacity-80">
-                            <span>{String(t.tapToStart)}</span>
+                            <span>{isSessionActive ? (lang === 'en' ? "RESUME SESSION" : "REANUDAR") : String(t.tapToStart)}</span>
                             <Icon name="ArrowRight" size={16} />
                         </div>
                     </div>
