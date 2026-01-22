@@ -1,17 +1,71 @@
+
 {
   "name": "IronLog Pro",
   "short_name": "IronLog",
+  "description": "Professional Hypertrophy Tracker with RP-style progression, analytics, and offline support.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#09090b",
   "theme_color": "#09090b",
   "orientation": "portrait",
+  "categories": ["fitness", "health", "lifestyle", "productivity"],
   "icons": [
     {
       "src": "/icon.svg",
       "type": "image/svg+xml",
       "sizes": "any",
       "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-1.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Workout Tracker Interface"
+    },
+    {
+      "src": "/screenshot-2.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Analytics and Progress"
+    },
+    {
+      "src": "/screenshot-3.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Desktop Dashboard"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Start Workout",
+      "short_name": "Workout",
+      "description": "Jump straight into your active session",
+      "url": "/#workout",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "View Stats",
+      "short_name": "Stats",
+      "description": "Check your progress",
+      "url": "/#stats",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }

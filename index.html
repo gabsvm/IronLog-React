@@ -7,9 +7,14 @@
     <link rel="manifest" href="/manifest.json" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#09090b" />
+    <meta name="description" content="Professional Hypertrophy Tracker with RP-style progression, analytics, and offline support.">
+    
+    <!-- PWA / Apple Specific -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="/icon.svg?v=2">
+    <meta name="apple-mobile-web-app-title" content="IronLog">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -62,12 +67,10 @@
       window.onerror = function(message, source, lineno, colno, error) {
         var msg = message + '\n' + source + ':' + lineno;
         console.error(msg);
-        // Don't show error box immediately for resizeobserver loops
         if (message.includes('ResizeObserver')) return;
         showError(msg);
       };
 
-      // Watchdog: If React doesn't load in 3 seconds, show error
       setTimeout(function() {
         var root = document.getElementById('root');
         if (!root || root.innerHTML.trim() === '') {
@@ -85,7 +88,6 @@
           document.body.appendChild(box);
           box.innerHTML = '<h2 style="margin-top:0">Application Error</h2>';
         }
-        // Avoid duplicate messages
         if(!box.innerHTML.includes(msg.substring(0, 20))) {
             box.innerHTML += '<div style="margin-top:10px; border-top:1px solid #333; padding-top:10px;">' + msg + '</div>';
         }
