@@ -3,7 +3,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.ironlog.pro',
-  appName: 'IronLog Pro',
+  appName: 'IronLog',
   webDir: 'dist',
   server: {
     androidScheme: 'https'
@@ -16,7 +16,7 @@ const config: CapacitorConfig = {
     },
     SplashScreen: {
       launchShowDuration: 2000,
-      backgroundColor: "#09090b",
+      backgroundColor: "#000000",
       showSpinner: false,
       androidScaleType: "CENTER_CROP",
     },
