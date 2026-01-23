@@ -38,6 +38,7 @@ interface AppContextType extends AppState {
     confirmCloudSync: () => void;
     cancelCloudSync: () => void;
     localLastUpdated: number;
+    isOnline: boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -76,28 +77,46 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
     const [localLastUpdated, setLocalLastUpdated] = usePersistedState<number>('il_last_sync_ts', 0, 0);
 
     const [pendingCloudData, setPendingCloudData] = useState<Partial<AppState> | null>(null);
+    const [isOnline, setIsOnline] = useState(navigator.onLine);
 
     const isAppLoading = programLoading || mesoLoading || sessionLoading || exLoading || logsLoading || fbLoading || onboardingLoading;
     const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
     // --- CLOUD SYNC LOGIC ---
     
+    // 0. Network Status Listener
+    useEffect(() => {
+        const handleOnline = () => {
+            setIsOnline(true);
+            console.log("🌐 Back Online! Triggering sync...");
+            // Force a sync upload when we come back online
+            if(user) {
+                syncService.uploadState(user.uid, {
+                    program, activeMeso, exercises, logs, config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn }, rpFeedback, activeSession, lastUpdated: Date.now()
+                });
+            }
+        };
+        const handleOffline = () => setIsOnline(false);
+
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, [user, program, activeMeso, exercises, logs]);
+
     // 1. Download & Compare on Login
     useEffect(() => {
-        if (user && !isAppLoading) {
+        if (user && !isAppLoading && isOnline) {
             syncService.downloadState(user.uid).then((cloudData: any) => {
                 if (cloudData) {
                     const cloudTS = cloudData.lastUpdated || 0;
                     const localTS = localLastUpdated || 0;
 
-                    console.log(`☁️ Sync Check | Cloud: ${new Date(cloudTS).toLocaleTimeString()} vs Local: ${new Date(localTS).toLocaleTimeString()}`);
-
-                    // LOGIC FIX: Only prompt download if Cloud is STRICTLY newer than local.
-                    // If local is newer (user worked offline), we will auto-upload in the next effect.
                     if (cloudTS > localTS) {
                         setPendingCloudData(cloudData);
-                    } else if (localTS > cloudTS) {
-                        console.log("☁️ Local data is newer. Skipping download. Will auto-upload.");
                     }
                 } else {
                     // No cloud data -> Upload local to init
@@ -107,7 +126,7 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
                 }
             });
         }
-    }, [user, isAppLoading]); 
+    }, [user, isAppLoading, isOnline]); 
 
     // 2. Upload on Data Change (Debounced)
     useEffect(() => {
@@ -115,9 +134,10 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
 
         const timer = setTimeout(() => {
             const now = Date.now();
-            // Update local timestamp whenever we prepare to save
             setLocalLastUpdated(now);
             
+            // This writes to Firestore local cache immediately.
+            // If offline, Firebase Persistence queues it automatically.
             syncService.uploadState(user.uid, {
                 program,
                 activeMeso,
@@ -146,7 +166,6 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
                 if (pendingCloudData.config.showRIR !== undefined) setShowRIR(pendingCloudData.config.showRIR);
                 if (pendingCloudData.config.rpEnabled !== undefined) setRpEnabled(pendingCloudData.config.rpEnabled);
             }
-            // Update local TS to match the cloud TS we just accepted
             // @ts-ignore
             if (pendingCloudData.lastUpdated) setLocalLastUpdated(pendingCloudData.lastUpdated);
             
@@ -156,8 +175,6 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
 
     const cancelCloudSync = useCallback(() => {
         setPendingCloudData(null);
-        // If we cancel, it implies we prefer local. 
-        // The write-effect will trigger eventually and overwrite cloud (which is what we want if we rejected the cloud state)
     }, []);
 
 
@@ -231,7 +248,8 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
         hasSeenOnboarding, setHasSeenOnboarding,
         tutorialProgress, markTutorialSeen, resetTutorials,
         isAppLoading,
-        pendingCloudData, confirmCloudSync, cancelCloudSync, localLastUpdated
+        pendingCloudData, confirmCloudSync, cancelCloudSync, localLastUpdated,
+        isOnline
     }), [
         lang, setLang, theme, setTheme, colorTheme, setColorTheme,
         program, setProgram,
@@ -244,7 +262,8 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
         hasSeenOnboarding, setHasSeenOnboarding,
         tutorialProgress, markTutorialSeen, resetTutorials,
         isAppLoading,
-        pendingCloudData, confirmCloudSync, cancelCloudSync, localLastUpdated
+        pendingCloudData, confirmCloudSync, cancelCloudSync, localLastUpdated,
+        isOnline
     ]);
 
     if (isAppLoading) {

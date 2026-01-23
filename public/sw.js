@@ -1,22 +1,23 @@
 
-const CACHE_NAME = 'ironlog-v3';
-const ASSETS = [
-  '/',
-  '/index.html',
-  '/index.css',
+const CACHE_NAME = 'ironlog-pro-v4';
+const STATIC_ASSETS = [
+  '/manifest.json',
   '/icon.svg',
-  '/manifest.json'
+  '/icons/icon-96x96.png',
+  '/icons/icon-192x192.png'
 ];
 
-self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
-  );
+self.addEventListener('install', (event) => {
   self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(STATIC_ASSETS);
+    })
+  );
 });
 
-self.addEventListener('activate', (e) => {
-  e.waitUntil(
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
     caches.keys().then((keyList) => {
       return Promise.all(
         keyList.map((key) => {
@@ -30,34 +31,49 @@ self.addEventListener('activate', (e) => {
   self.clients.claim();
 });
 
-self.addEventListener('fetch', (e) => {
-  // Only cache GET requests
-  if (e.request.method !== 'GET') return;
+self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
 
-  e.respondWith(
-    caches.match(e.request).then((cachedResponse) => {
-      // Network fetch to update cache in background (Stale-While-Revalidate)
-      const fetchPromise = fetch(e.request)
-        .then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
-            const clone = networkResponse.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
-          }
-          return networkResponse;
+  // 1. Navigation Requests (HTML) -> Network First, Fallback to Cache
+  // This ensures we try to get the latest version, but if offline, we load the app.
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          // Clone and cache the index.html for offline use
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          return response;
         })
         .catch(() => {
-          // Fallback logic could go here
+          // If offline, return cached index.html
+          return caches.match(event.request).then(resp => resp || caches.match('/'));
+        })
+    );
+    return;
+  }
+
+  // 2. Static Assets (JS, CSS, Images) -> Stale While Revalidate
+  // Serve from cache immediately, then update cache in background.
+  if (
+    url.pathname.match(/\.(js|css|png|jpg|jpeg|svg|ico|json)$/) ||
+    url.origin === self.location.origin
+  ) {
+    event.respondWith(
+      caches.match(event.request).then((cachedResponse) => {
+        const fetchPromise = fetch(event.request).then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const clone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return networkResponse;
+        }).catch(() => {
+            // Swallow offline errors for background fetches
         });
 
-      // If we have a cached response, return it immediately, 
-      // but ensure the network request runs to update the cache for next time.
-      if (cachedResponse) {
-        e.waitUntil(fetchPromise);
-        return cachedResponse;
-      }
-
-      // If no cache, return the network response directly
-      return fetchPromise;
-    })
-  );
+        return cachedResponse || fetchPromise;
+      })
+    );
+    return;
+  }
 });

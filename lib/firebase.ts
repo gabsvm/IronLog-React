@@ -1,10 +1,14 @@
 
 import { initializeApp } from "firebase/app";
 import { getAuth, Auth } from "firebase/auth";
-import { getFirestore, Firestore } from "firebase/firestore";
+import { 
+  initializeFirestore, 
+  Firestore, 
+  persistentLocalCache, 
+  indexedDbLocalCache 
+} from "firebase/firestore";
 
 // --- CONFIGURATION STRATEGY ---
-// 1. Try to read from Environment Variables (Best Practice)
 const env = (import.meta.env || {}) as any;
 
 let firebaseConfig = {
@@ -16,8 +20,7 @@ let firebaseConfig = {
   appId: env.VITE_FIREBASE_APP_ID
 };
 
-// 2. FALLBACK: Direct Paste (Testing/Dev Mode)
-// If environment variables are missing, use these provided credentials.
+// FALLBACK: Direct Paste (Testing/Dev Mode)
 if (!firebaseConfig.apiKey) {
     console.log("⚠️ Using provided Firebase Config (Testing Mode)");
     firebaseConfig = {
@@ -30,7 +33,6 @@ if (!firebaseConfig.apiKey) {
     };
 }
 
-// Check if config is valid (at least apiKey and projectId are required)
 const isValidConfig = !!(firebaseConfig.apiKey && firebaseConfig.projectId && !firebaseConfig.apiKey.includes("INSERT_KEY"));
 
 let app;
@@ -41,13 +43,21 @@ if (isValidConfig) {
   try {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
-    db = getFirestore(app);
-    console.log("✅ Firebase initialized successfully");
+    
+    // ENABLE OFFLINE PERSISTENCE
+    // This allows the app to work offline and sync changes later automatically.
+    db = initializeFirestore(app, {
+      localCache: persistentLocalCache({
+        tabManager: undefined // Default auto tab manager
+      })
+    });
+    
+    console.log("✅ Firebase initialized with Offline Persistence");
   } catch (e) {
     console.error("❌ Firebase initialization error:", e);
   }
 } else {
-  console.warn("⚠️ Firebase config missing. Cloud features (Sync/Auth) disabled. Check .env or lib/firebase.ts");
+  console.warn("⚠️ Firebase config missing. Cloud features disabled.");
 }
 
 export { auth, db };
