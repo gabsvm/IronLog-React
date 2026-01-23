@@ -42,7 +42,7 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
     const setType = set.type || 'regular';
     const isInterval = cardioMode === 'hiit' || cardioMode === 'tabata';
 
-    // Local State for Inputs - defaulting to empty string to ensure controlled inputs
+    // Local State for Inputs
     const [localWeight, setLocalWeight] = useState(set.weight ?? '');
     const [localReps, setLocalReps] = useState(set.reps ?? '');
     const [localRPE, setLocalRPE] = useState(set.rpe ?? '');
@@ -60,18 +60,22 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
     const [intervalSeconds, setIntervalSeconds] = useState(0); 
     const [roundsLeft, setRoundsLeft] = useState(0);
     const timerRef = useRef<any>(null);
+    
+    // Safety Refs for Focus Management
+    // We do NOT update local state from props if the user is currently editing (focused)
+    const activeFieldRef = useRef<string | null>(null);
 
-    // Sync props to state (safely)
-    useEffect(() => { setLocalWeight(set.weight ?? ''); }, [set.weight]);
-    useEffect(() => { setLocalReps(set.reps ?? ''); }, [set.reps]);
-    useEffect(() => { setLocalRPE(set.rpe ?? ''); }, [set.rpe]);
-    useEffect(() => { setLocalDuration(set.duration ?? ''); }, [set.duration]);
-    useEffect(() => { setLocalDistance(set.distance ?? ''); }, [set.distance]);
+    // Sync props to state (Safely)
+    useEffect(() => { if (activeFieldRef.current !== 'weight') setLocalWeight(set.weight ?? ''); }, [set.weight]);
+    useEffect(() => { if (activeFieldRef.current !== 'reps') setLocalReps(set.reps ?? ''); }, [set.reps]);
+    useEffect(() => { if (activeFieldRef.current !== 'rpe') setLocalRPE(set.rpe ?? ''); }, [set.rpe]);
+    useEffect(() => { if (activeFieldRef.current !== 'duration') setLocalDuration(set.duration ?? ''); }, [set.duration]);
+    useEffect(() => { if (activeFieldRef.current !== 'distance') setLocalDistance(set.distance ?? ''); }, [set.distance]);
     
     useEffect(() => { 
-        if (set.workSeconds !== undefined) setLocalWork(set.workSeconds);
-        if (set.restSeconds !== undefined) setLocalRest(set.restSeconds);
-        if (isInterval && set.reps !== undefined) setLocalRounds(set.reps);
+        if (set.workSeconds !== undefined && activeFieldRef.current !== 'workSeconds') setLocalWork(set.workSeconds);
+        if (set.restSeconds !== undefined && activeFieldRef.current !== 'restSeconds') setLocalRest(set.restSeconds);
+        if (isInterval && set.reps !== undefined && activeFieldRef.current !== 'reps') setLocalRounds(set.reps);
     }, [set.workSeconds, set.restSeconds, set.reps, isInterval]);
 
     useEffect(() => {
@@ -79,23 +83,32 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
     }, []);
 
     const commitChange = (field: string, value: any) => {
-        if (value !== set[field as keyof WorkoutSet]) {
+        // Only trigger update if value actually changed to reduce re-renders
+        if (value != set[field as keyof WorkoutSet]) { // loose equality for string/number match
             onUpdate(exInstanceId, set.id, field, value);
         }
     };
 
-    const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    const handleFocus = (e: React.FocusEvent<HTMLInputElement>, field: string) => {
+        activeFieldRef.current = field;
         e.target.select();
+    };
+
+    const handleBlur = (field: string, value: any) => {
+        activeFieldRef.current = null;
+        commitChange(field, value);
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, field: string, val: any) => {
         if (e.key === 'Enter') {
             e.currentTarget.blur(); 
-            commitChange(field, val); 
-            if (!isDone && !isInterval) onToggleComplete(exInstanceId, set.id);
+            // Blur triggers commitChange via handleBlur, so we don't need to call it here explicitly
+            // But we do want to toggle complete if valid
+            if (!isDone && !isInterval && val) onToggleComplete(exInstanceId, set.id);
         }
     };
 
+    // ... (Keep existing Timer Logic unchanged) ...
     // --- STEADY STATE TIMER ---
     const toggleSteadyTimer = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -217,8 +230,8 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
                         placeholder="20s" 
                         value={localWork} 
                         onChange={(e) => setLocalWork(Number(e.target.value))}
-                        onBlur={() => commitChange('workSeconds', Number(localWork))}
-                        onFocus={handleFocus}
+                        onBlur={() => handleBlur('workSeconds', Number(localWork))}
+                        onFocus={(e) => handleFocus(e, 'workSeconds')}
                         disabled={timerActive}
                     />
                 </div>
@@ -230,8 +243,8 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
                         placeholder="10s" 
                         value={localRest} 
                         onChange={(e) => setLocalRest(Number(e.target.value))}
-                        onBlur={() => commitChange('restSeconds', Number(localRest))}
-                        onFocus={handleFocus}
+                        onBlur={() => handleBlur('restSeconds', Number(localRest))}
+                        onFocus={(e) => handleFocus(e, 'restSeconds')}
                         disabled={timerActive}
                     />
                 </div>
@@ -243,8 +256,8 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
                         placeholder="8" 
                         value={localRounds} 
                         onChange={(e) => setLocalRounds(Number(e.target.value))}
-                        onBlur={() => commitChange('reps', Number(localRounds))}
-                        onFocus={handleFocus}
+                        onBlur={() => handleBlur('reps', Number(localRounds))}
+                        onFocus={(e) => handleFocus(e, 'reps')}
                         disabled={timerActive}
                     />
                 </div>
@@ -308,8 +321,8 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
                             placeholder="Min" 
                             value={localDuration} 
                             onChange={(e) => setLocalDuration(e.target.value)}
-                            onBlur={() => commitChange('duration', localDuration)}
-                            onFocus={handleFocus}
+                            onBlur={() => handleBlur('duration', localDuration)}
+                            onFocus={(e) => handleFocus(e, 'duration')}
                         />
                         <button 
                             onClick={toggleSteadyTimer}
@@ -328,8 +341,8 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
                         placeholder="Km" 
                         value={localDistance} 
                         onChange={(e) => setLocalDistance(e.target.value)}
-                        onBlur={() => commitChange('distance', localDistance)}
-                        onFocus={handleFocus}
+                        onBlur={() => handleBlur('distance', localDistance)}
+                        onFocus={(e) => handleFocus(e, 'distance')}
                     />
                  </div>
 
@@ -340,8 +353,8 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
                         placeholder="-"
                         value={localRPE}
                         onChange={(e) => setLocalRPE(e.target.value)}
-                        onBlur={() => commitChange('rpe', localRPE)}
-                        onFocus={handleFocus}
+                        onBlur={() => handleBlur('rpe', localRPE)}
+                        onFocus={(e) => handleFocus(e, 'rpe')}
                     />
                  </div>
 
@@ -389,8 +402,8 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
                         placeholder={set.hintWeight ? String(set.hintWeight) : "-"} 
                         value={localWeight} 
                         onChange={(e) => setLocalWeight(e.target.value)}
-                        onBlur={() => commitChange('weight', localWeight)}
-                        onFocus={handleFocus}
+                        onBlur={() => handleBlur('weight', localWeight)}
+                        onFocus={(e) => handleFocus(e, 'weight')}
                         onKeyDown={(e) => handleKeyDown(e, 'weight', localWeight)}
                     />
                 </div>
@@ -412,8 +425,8 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
                     placeholder={set.hintReps ? String(set.hintReps) : "-"} 
                     value={localReps} 
                     onChange={(e) => setLocalReps(e.target.value)}
-                    onBlur={() => commitChange('reps', localReps)}
-                    onFocus={handleFocus}
+                    onBlur={() => handleBlur('reps', localReps)}
+                    onFocus={(e) => handleFocus(e, 'reps')}
                     onKeyDown={(e) => handleKeyDown(e, 'reps', localReps)}
                 />
                 <div className="text-[9px] font-semibold text-zinc-400 uppercase tracking-tight mt-1">
@@ -430,8 +443,8 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
                         placeholder={stageRIR}
                         value={localRPE} 
                         onChange={(e) => setLocalRPE(e.target.value)}
-                        onBlur={() => commitChange('rpe', localRPE)}
-                        onFocus={handleFocus}
+                        onBlur={() => handleBlur('rpe', localRPE)}
+                        onFocus={(e) => handleFocus(e, 'rpe')}
                         onKeyDown={(e) => handleKeyDown(e, 'rpe', localRPE)}
                     />
                 </div>

@@ -45,10 +45,9 @@ if (isValidConfig) {
     
     // ENABLE OFFLINE PERSISTENCE
     // This allows the app to work offline and sync changes later automatically.
+    // We utilize persistentLocalCache which defaults to IndexedDB.
     db = initializeFirestore(app, {
-      localCache: persistentLocalCache({
-        tabManager: undefined // Default auto tab manager
-      })
+      localCache: persistentLocalCache()
     });
     
     console.log("✅ Firebase initialized with Offline Persistence");

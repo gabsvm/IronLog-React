@@ -119,12 +119,21 @@ export interface TutorialState {
     stats: boolean;
 }
 
-// New User Profile Types for Onboarding
+// --- NEW SUBSCRIPTION TYPES ---
+export type SubscriptionTier = 'free' | 'monthly' | 'yearly' | 'lifetime';
+
+export interface UserSubscription {
+    isPro: boolean;
+    tier: SubscriptionTier;
+    expiryDate: number | null; // Timestamp, null for lifetime
+}
+
 export interface UserProfile {
     experience: 'beginner' | 'intermediate' | 'advanced';
     daysPerWeek: number;
     goal: 'hypertrophy' | 'strength' | 'endurance';
-    sessionDuration: 'short' | 'medium' | 'long'; // <45m, 60m, 90m+
+    sessionDuration: 'short' | 'medium' | 'long';
+    subscription?: UserSubscription; // Optional for backward compatibility
 }
 
 export interface AppState {
@@ -142,6 +151,6 @@ export interface AppState {
     rpFeedback: Record<string, Record<string, Record<string, FeedbackEntry>>>; 
     hasSeenOnboarding: boolean;
     tutorialProgress: TutorialState;
-    userProfile?: UserProfile; // Optional profile data
+    userProfile?: UserProfile;
     lastUpdated?: number;
 }

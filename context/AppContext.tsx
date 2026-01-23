@@ -45,7 +45,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 // Separated component to handle Sync Logic inside AuthProvider
 const AppStateProvider = ({ children }: PropsWithChildren) => {
-    const { user } = useAuth(); // Access User
+    const { user, subscription } = useAuth(); // Access User & Subscription
 
     // --- Synchronous Config ---
     const [langStored, setLang] = useLocalStorage<Lang>('il_lang_v1', 'en');
@@ -84,15 +84,17 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
 
     // --- CLOUD SYNC LOGIC ---
     
-    // 0. Network Status Listener
+    // 0. Network Status Listener & Reconnection Sync
     useEffect(() => {
         const handleOnline = () => {
             setIsOnline(true);
-            console.log("🌐 Back Online! Triggering sync...");
-            // Force a sync upload when we come back online
-            if(user) {
+            console.log("🌐 Back Online! Checking sync...");
+            // Only trigger sync if PRO
+            if(user && subscription.isPro) {
+                const now = Date.now();
+                setLocalLastUpdated(now);
                 syncService.uploadState(user.uid, {
-                    program, activeMeso, exercises, logs, config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn }, rpFeedback, activeSession, lastUpdated: Date.now()
+                    program, activeMeso, exercises, logs, config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn }, rpFeedback, activeSession, lastUpdated: now
                 });
             }
         };
@@ -105,11 +107,11 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
             window.removeEventListener('online', handleOnline);
             window.removeEventListener('offline', handleOffline);
         };
-    }, [user, program, activeMeso, exercises, logs]);
+    }, [user, subscription.isPro, program, activeMeso, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, rpFeedback, activeSession]);
 
-    // 1. Download & Compare on Login
+    // 1. Download & Compare on Login (Check PRO)
     useEffect(() => {
-        if (user && !isAppLoading && isOnline) {
+        if (user && !isAppLoading && isOnline && subscription.isPro) {
             syncService.downloadState(user.uid).then((cloudData: any) => {
                 if (cloudData) {
                     const cloudTS = cloudData.lastUpdated || 0;
@@ -126,18 +128,16 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
                 }
             });
         }
-    }, [user, isAppLoading, isOnline]); 
+    }, [user, isAppLoading, isOnline, subscription.isPro]); 
 
-    // 2. Upload on Data Change (Debounced)
+    // 2. Upload on Data Change (Debounced) - Gate with PRO check
     useEffect(() => {
-        if (!user || isAppLoading) return;
+        if (!user || isAppLoading || !subscription.isPro) return;
 
         const timer = setTimeout(() => {
             const now = Date.now();
             setLocalLastUpdated(now);
             
-            // This writes to Firestore local cache immediately.
-            // If offline, Firebase Persistence queues it automatically.
             syncService.uploadState(user.uid, {
                 program,
                 activeMeso,
@@ -151,7 +151,7 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
         }, 5000); 
 
         return () => clearTimeout(timer);
-    }, [user, program, activeMeso, activeSession, exercises, logs, showRIR, rpEnabled, rpFeedback, isAppLoading]);
+    }, [user, subscription.isPro, program, activeMeso, activeSession, exercises, logs, showRIR, rpEnabled, rpFeedback, isAppLoading]);
 
     const confirmCloudSync = useCallback(() => {
         if (pendingCloudData) {
@@ -234,7 +234,7 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
         setTutorialProgress({ home: false, workout: false, history: false, stats: false });
     }, [setTutorialProgress]);
 
-    const config = useMemo(() => ({ showRIR, rpEnabled, rpTargetRIR, keepScreenOn }), [showRIR, rpEnabled, rpTargetRIR, keepScreenOn]);
+    const configState = useMemo(() => ({ showRIR, rpEnabled, rpTargetRIR, keepScreenOn }), [showRIR, rpEnabled, rpTargetRIR, keepScreenOn]);
 
     const contextValue = useMemo(() => ({
         lang, setLang, theme, setTheme, colorTheme, setColorTheme,
@@ -243,7 +243,7 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
         activeSession, setActiveSession,
         exercises, setExercises,
         logs, setLogs,
-        config, setConfig,
+        config: configState, setConfig,
         rpFeedback, setRpFeedback,
         hasSeenOnboarding, setHasSeenOnboarding,
         tutorialProgress, markTutorialSeen, resetTutorials,
@@ -257,7 +257,7 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
         activeSession, setActiveSession,
         exercises, setExercises,
         logs, setLogs,
-        config, setConfig,
+        configState, setConfig,
         rpFeedback, setRpFeedback,
         hasSeenOnboarding, setHasSeenOnboarding,
         tutorialProgress, markTutorialSeen, resetTutorials,

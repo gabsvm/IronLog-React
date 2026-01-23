@@ -8,7 +8,7 @@ export const MUSCLE_GROUPS: Record<string, MuscleGroup> = {
     ABS: 'ABS', FOREARMS: 'FOREARMS', CARDIO: 'CARDIO'
 };
 
-// ... (KEEP ALL EXISTING EXERCISES AS IS) ...
+// ... (KEEP ALL EXISTING EXERCISES & TEMPLATES AS IS - DO NOT REMOVE) ...
 export const DEFAULT_LIBRARY: ExerciseDef[] = [
     // Cardio (Generic safe links)
     { 
@@ -677,6 +677,30 @@ export const TRANSLATIONS = {
         phases: { hyp_1: "Base Hypertrophy 1", hyp_2: "Base Hypertrophy 2", metabolite: "Metabolite Phase", resensitization: "Resensitization", full_body: "Aesthetic V-Taper", wizard: "The Wizard v3 (Full Body)", male_physique: "Male Physique (Upper/Lower)" },
         phaseDesc: { hyp_1: "Standard PPL. Balanced volume.", hyp_2: "Upper/Lower Split (4 Days). Focus on compounds.", metabolite: "High reps (20-30), short rests, the 'burn'.", resensitization: "Low volume, heavy weight to reset fatigue.", full_body: "Dr. Mike Style. Focus on V-Taper (Lats/Side Delts).", wizard: "3-Days Heavy/Light/Medium. Classic intensity cycling for steady gains.", male_physique: "4-Days Bodybuilding Focus. Higher volume, arm & shoulder specialization." },
         
+        // PAYWALL & PRO
+        pro: {
+            title: "Unlock Your Maximum Potential",
+            subtitle: "Access advanced analytics, AI, and professional tracking.",
+            features: [
+                "Advanced analytics & full mesocycles",
+                "AI auto-regulation & progress adjustments",
+                "Unlimited templates & complete history"
+            ],
+            plans: {
+                monthly: "$5.99 / month",
+                yearly: "$34.99 / year",
+                lifetime: "$49.99 lifetime"
+            },
+            bestValue: "Save 50%",
+            guarantee: "Cancel anytime. Your data is always yours.",
+            triggers: {
+                history: "Unlock full history to see your real progress.",
+                analytics: "Advanced analytics are available in Premium.",
+                ai: "AI training features are part of Premium.",
+                sync: "Cloud Sync is a Premium feature."
+            }
+        },
+
         // Template Categories
         cat: {
             beginner: "Beginner / Reset",
@@ -886,6 +910,30 @@ export const TRANSLATIONS = {
         phases: { hyp_1: "Hipertrofia Base 1", hyp_2: "Hipertrofia Base 2", metabolite: "Fase Metabolitos", resensitization: "Resensitization", full_body: "Aesthetic V-Taper", wizard: "The Wizard v3 (Full Body)", male_physique: "Male Physique (Torso/Pierna)" },
         phaseDesc: { hyp_1: "PPL Estándar. Volumen equilibrado.", hyp_2: "Torso/Pierna (4 Días). Foco en básicos.", metabolite: "Reps altas (20-30), descanso corto, 'quemazón'.", resensitization: "Bajo volumen, peso alto para resetear fatiga.", full_body: "Estilo Dr. Mike. Foco en V-Taper (Dorsal/Hombro Lateral).", wizard: "3-Días Pesado/Liviano/Medio. Ciclo de intensidad clásico para ganancias constantes.", male_physique: "4-Días Foco Culturismo. Mayor volumen, especialización en brazos y hombros." },
         
+        // PAYWALL & PRO (Updated with specific strategy)
+        pro: {
+            title: "Desbloquea tu máximo potencial",
+            subtitle: "Accede a analíticas avanzadas, IA y seguimiento profesional.",
+            features: [
+                "Analíticas avanzadas y mesociclos completos",
+                "IA que ajusta tu progreso automáticamente",
+                "Plantillas ilimitadas y historial completo"
+            ],
+            plans: {
+                monthly: "$5.99 / mes",
+                yearly: "$34.99 / año",
+                lifetime: "$49.99 de por vida"
+            },
+            bestValue: "Ahorra 50%",
+            guarantee: "Cancela cuando quieras. Tus datos siempre son tuyos.",
+            triggers: {
+                history: "Has llegado al límite. Desbloquea el historial completo.",
+                analytics: "Las analíticas avanzadas están disponibles en Premium.",
+                ai: "La IA de entrenamiento es parte de Premium.",
+                sync: "Sincronización en nube es Premium."
+            }
+        },
+
         // Template Categories
         cat: {
             beginner: "Principiante / Reset",

@@ -17,6 +17,8 @@ import { useAuth } from './context/AuthContext';
 import { AuthModal } from './components/auth/AuthModal';
 import { getLastLogForExercise } from './utils';
 import { syncService } from './services/syncService';
+import { usePro } from './hooks/usePro';
+import { PaywallModal } from './components/pro/PaywallModal';
 
 // Lazy Load heavier views
 const HistoryView = React.lazy(() => import('./views/HistoryView').then(module => ({ default: module.HistoryView })));
@@ -50,6 +52,7 @@ const AppContent = () => {
     
     const { setRestTimer } = useTimerContext();
     const { user, logout } = useAuth();
+    const { checkPro, showPaywall, setShowPaywall, featureAttempted } = usePro();
     
     const t = TRANSLATIONS[lang];
 
@@ -158,11 +161,14 @@ const AppContent = () => {
 
     const handleForceSync = async () => {
         if (!user) {
-            // Replace alert with Auth Modal
             setShowAuthModal(true);
             return;
         }
-        setShowForceSyncModal(true); // Open confirmation instead of immediate action
+        
+        // CHECK PRO before allowing sync
+        if (!checkPro("sync")) return;
+
+        setShowForceSyncModal(true);
     };
 
     const executeForceSync = async () => {
@@ -173,8 +179,6 @@ const AppContent = () => {
             await syncService.uploadState(user.uid, {
                 program, activeMeso, exercises, logs, config, rpFeedback, activeSession
             });
-            // Replaced alert with temporary toast via Button or just silent success
-            // For now, we can just log or show a small tick
         } catch (e: any) {
             console.error(e);
         } finally {
@@ -334,6 +338,10 @@ const AppContent = () => {
             
             {/* Standard Modal Overlays */}
             {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
+            
+            {showPaywall && (
+                <PaywallModal onClose={() => setShowPaywall(false)} feature={featureAttempted} />
+            )}
 
             {/* SYNC CONFLICT MODAL */}
             <ConfirmModal 
@@ -403,7 +411,7 @@ const AppContent = () => {
                                     <Icon name="User" size={20} />
                                 </div>
                                 <div>
-                                    <div className="text-sm font-bold text-zinc-900 dark:text-white">{user ? t.auth.proMember : t.auth.guestUser}</div>
+                                    <div className="text-sm font-bold text-zinc-900 dark:text-white">{user ? (checkPro("") ? t.auth.proMember : "Free Member") : t.auth.guestUser}</div>
                                     <div className="text-xs text-zinc-500 truncate max-w-[160px]">{user ? user.email : t.auth.localStorage}</div>
                                 </div>
                             </div>
