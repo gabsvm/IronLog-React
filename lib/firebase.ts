@@ -4,8 +4,7 @@ import { getAuth, Auth } from "firebase/auth";
 import { 
   initializeFirestore, 
   Firestore, 
-  persistentLocalCache, 
-  indexedDbLocalCache 
+  persistentLocalCache
 } from "firebase/firestore";
 
 // --- CONFIGURATION STRATEGY ---
