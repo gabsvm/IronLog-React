@@ -1,79 +1,56 @@
 
-const CACHE_NAME = 'ironlog-pro-v5-offline';
-const STATIC_ASSETS = [
-  '/manifest.json',
-  '/icon.svg',
-  '/icons/icon-96x96.png',
-  '/icons/icon-192x192.png'
+const CACHE_NAME = 'ironlog-cache-v4';
+const URLS_TO_CACHE = [
+  '/',
+  '/index.html',
+  '/manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS);
-    })
+    caches.open(CACHE_NAME)
+      .then((cache) => {
+        console.log('Opened cache');
+        // Usar addAll con tolerancia a fallos o filtrar
+        return Promise.all(
+            URLS_TO_CACHE.map(url => {
+                return cache.add(url).catch(err => console.warn('Failed to cache:', url, err));
+            })
+        );
+      })
+  );
+  self.skipWaiting();
+});
+
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request)
+      .then((response) => {
+        if (response) {
+          return response;
+        }
+        return fetch(event.request).catch(() => {
+            // Fallback for offline navigation
+            if (event.request.mode === 'navigate') {
+                return caches.match('/index.html');
+            }
+        });
+      })
   );
 });
 
 self.addEventListener('activate', (event) => {
+  const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
-    caches.keys().then((keyList) => {
+    caches.keys().then((cacheNames) => {
       return Promise.all(
-        keyList.map((key) => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
+        cacheNames.map((cacheName) => {
+          if (cacheWhitelist.indexOf(cacheName) === -1) {
+            return caches.delete(cacheName);
           }
         })
       );
     })
   );
   self.clients.claim();
-});
-
-self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
-
-  // 1. Navigation Requests (HTML) -> Network First, Fallback to Cache
-  // This ensures we try to get the latest version, but if offline, we load the app shell.
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          // Clone and cache the index.html for offline use
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-          return response;
-        })
-        .catch(() => {
-          // If offline, return cached index.html
-          return caches.match(event.request).then(resp => resp || caches.match('/'));
-        })
-    );
-    return;
-  }
-
-  // 2. Static Assets (JS, CSS, Images) -> Stale While Revalidate
-  // Serve from cache immediately, then update cache in background.
-  if (
-    url.pathname.match(/\.(js|css|png|jpg|jpeg|svg|ico|json)$/) ||
-    url.origin === self.location.origin
-  ) {
-    event.respondWith(
-      caches.match(event.request).then((cachedResponse) => {
-        const fetchPromise = fetch(event.request).then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            const clone = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-          }
-          return networkResponse;
-        }).catch(() => {
-            // Swallow offline errors for background fetches
-        });
-
-        return cachedResponse || fetchPromise;
-      })
-    );
-    return;
-  }
 });
