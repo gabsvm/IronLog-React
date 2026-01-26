@@ -10,6 +10,7 @@ import { TimerProvider } from './TimerContext';
 import { HomeSkeleton } from '../components/ui/SkeletonLoader';
 import { AuthProvider, useAuth } from './AuthContext'; // Import Auth
 import { syncService } from '../services/syncService'; // Import Sync
+import { db as localDb } from '../utils/db'; // Import direct DB for non-state updates
 
 interface AppContextType extends AppState {
     lang: Lang;
@@ -73,14 +74,35 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
     const [rpFeedback, setRpFeedback, fbLoading] = usePersistedState<AppState['rpFeedback']>('il_rp_fb_v1', {}, 1000);
     const [hasSeenOnboarding, setHasSeenOnboarding, onboardingLoading] = usePersistedState<boolean>('il_onboarded_v2', false, 1000);
     
-    // NEW: Persist local timestamp to compare with cloud
-    const [localLastUpdated, setLocalLastUpdated] = usePersistedState<number>('il_last_sync_ts', 0, 0);
+    // USE REF for localLastUpdated to avoid re-renders of the whole app context during sync checks
+    // We only expose a getter or snapshot if needed, but for internal logic we use Ref.
+    // However, AppContext interface exposes `localLastUpdated` number. We will use a state for that BUT decouple the update.
+    const [localLastUpdatedState, setLocalLastUpdatedState] = useState<number>(0);
+    const lastUpdatedRef = useRef<number>(0);
+
+    // Init localLastUpdated from DB
+    useEffect(() => {
+        localDb.get<number>('il_last_sync_ts', 0).then(val => {
+            lastUpdatedRef.current = val;
+            setLocalLastUpdatedState(val);
+        });
+    }, []);
 
     const [pendingCloudData, setPendingCloudData] = useState<Partial<AppState> | null>(null);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
 
     const isAppLoading = programLoading || mesoLoading || sessionLoading || exLoading || logsLoading || fbLoading || onboardingLoading;
     const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+
+    // Helper to update lastUpdated without triggering render if not needed (for sync logic)
+    const updateLastUpdated = (ts: number) => {
+        lastUpdatedRef.current = ts;
+        localDb.set('il_last_sync_ts', ts);
+        // We do NOT call setLocalLastUpdatedState here to avoid re-rendering entire app during background sync
+        // unless we really need to show it in UI (which we don't currently).
+        // But if we want `confirmCloudSync` to work, we might need it. 
+        // Actually confirmCloudSync reads from `pendingCloudData`.
+    };
 
     // --- CLOUD SYNC LOGIC ---
     
@@ -89,10 +111,9 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
         const handleOnline = () => {
             setIsOnline(true);
             console.log("🌐 Back Online! Checking sync...");
-            // Only trigger sync if PRO
             if(user && subscription.isPro) {
                 const now = Date.now();
-                setLocalLastUpdated(now);
+                updateLastUpdated(now);
                 syncService.uploadState(user.uid, {
                     program, activeMeso, exercises, logs, config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn }, rpFeedback, activeSession, lastUpdated: now
                 });
@@ -115,7 +136,7 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
             syncService.downloadState(user.uid).then((cloudData: any) => {
                 if (cloudData) {
                     const cloudTS = cloudData.lastUpdated || 0;
-                    const localTS = localLastUpdated || 0;
+                    const localTS = lastUpdatedRef.current || 0;
 
                     if (cloudTS > localTS) {
                         setPendingCloudData(cloudData);
@@ -123,7 +144,7 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
                 } else {
                     // No cloud data -> Upload local to init
                     const now = Date.now();
-                    setLocalLastUpdated(now);
+                    updateLastUpdated(now);
                     syncService.uploadState(user.uid, { program, activeMeso, exercises, logs, config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn }, rpFeedback, activeSession, lastUpdated: now });
                 }
             });
@@ -136,7 +157,7 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
 
         const timer = setTimeout(() => {
             const now = Date.now();
-            setLocalLastUpdated(now);
+            updateLastUpdated(now);
             
             syncService.uploadState(user.uid, {
                 program,
@@ -167,7 +188,10 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
                 if (pendingCloudData.config.rpEnabled !== undefined) setRpEnabled(pendingCloudData.config.rpEnabled);
             }
             // @ts-ignore
-            if (pendingCloudData.lastUpdated) setLocalLastUpdated(pendingCloudData.lastUpdated);
+            if (pendingCloudData.lastUpdated) {
+                updateLastUpdated(pendingCloudData.lastUpdated);
+                setLocalLastUpdatedState(pendingCloudData.lastUpdated);
+            }
             
             setPendingCloudData(null);
         }
@@ -248,7 +272,8 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
         hasSeenOnboarding, setHasSeenOnboarding,
         tutorialProgress, markTutorialSeen, resetTutorials,
         isAppLoading,
-        pendingCloudData, confirmCloudSync, cancelCloudSync, localLastUpdated,
+        pendingCloudData, confirmCloudSync, cancelCloudSync, 
+        localLastUpdated: localLastUpdatedState, // Use state for UI consumption
         isOnline
     }), [
         lang, setLang, theme, setTheme, colorTheme, setColorTheme,
@@ -262,7 +287,7 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
         hasSeenOnboarding, setHasSeenOnboarding,
         tutorialProgress, markTutorialSeen, resetTutorials,
         isAppLoading,
-        pendingCloudData, confirmCloudSync, cancelCloudSync, localLastUpdated,
+        pendingCloudData, confirmCloudSync, cancelCloudSync, localLastUpdatedState,
         isOnline
     ]);
 
