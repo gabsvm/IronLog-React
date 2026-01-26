@@ -104,6 +104,8 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
         // Actually confirmCloudSync reads from `pendingCloudData`.
     };
 
+    const downloadInProgressRef = useRef(false);
+
     // --- CLOUD SYNC LOGIC ---
     
     // 0. Network Status Listener & Reconnection Sync
@@ -132,8 +134,11 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
 
     // 1. Download & Compare on Login (Check PRO)
     useEffect(() => {
-        if (user && !isAppLoading && isOnline && subscription.isPro) {
-            syncService.downloadState(user.uid).then((cloudData: any) => {
+        const uid = user?.uid;
+        if (uid && !isAppLoading && isOnline && subscription.isPro && !downloadInProgressRef.current) {
+            downloadInProgressRef.current = true;
+            syncService.downloadState(uid).then((cloudData: any) => {
+                downloadInProgressRef.current = false;
                 if (cloudData) {
                     const cloudTS = cloudData.lastUpdated || 0;
                     const localTS = lastUpdatedRef.current || 0;
@@ -145,11 +150,13 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
                     // No cloud data -> Upload local to init
                     const now = Date.now();
                     updateLastUpdated(now);
-                    syncService.uploadState(user.uid, { program, activeMeso, exercises, logs, config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn }, rpFeedback, activeSession, lastUpdated: now });
+                    syncService.uploadState(uid, { program, activeMeso, exercises, logs, config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn }, rpFeedback, activeSession, lastUpdated: now });
                 }
+            }).catch(() => {
+                downloadInProgressRef.current = false;
             });
         }
-    }, [user, isAppLoading, isOnline, subscription.isPro]); 
+    }, [user?.uid, isAppLoading, isOnline, subscription.isPro]); 
 
     // 2. Upload on Data Change (Debounced) - Gate with PRO check
     useEffect(() => {
