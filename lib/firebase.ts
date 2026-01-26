@@ -8,19 +8,18 @@ import {
 } from "firebase/firestore";
 import { getFunctions, httpsCallable, Functions } from "firebase/functions";
 
-// --- CONFIGURATION STRATEGY ---
-const env = (import.meta.env || {}) as any;
-
-let firebaseConfig = {
-  apiKey: env.VITE_FIREBASE_API_KEY,
-  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: env.VITE_FIREBASE_APP_ID
+// --- DIRECT CONFIGURATION (Repo is Private) ---
+const firebaseConfig = {
+  apiKey: "AIzaSyAfrO4IpIzXuNd-dcpVHFdSJjmNx9wHpIE",
+  authDomain: "ironlog-409eb.firebaseapp.com",
+  projectId: "ironlog-409eb",
+  storageBucket: "ironlog-409eb.firebasestorage.app",
+  messagingSenderId: "926261848983",
+  appId: "1:926261848983:web:a7cd25334f6f3dc99172d2",
+  measurementId: "G-4P6FV3WQ41"
 };
 
-const isValidConfig = !!(firebaseConfig.apiKey && firebaseConfig.projectId && !firebaseConfig.apiKey.includes("INSERT_KEY"));
+const isValidConfig = !!(firebaseConfig.apiKey && firebaseConfig.projectId);
 
 let app;
 let auth: Auth | undefined;
@@ -38,12 +37,12 @@ if (isValidConfig) {
       localCache: persistentLocalCache()
     });
     
-    console.log("✅ Firebase initialized with Offline Persistence");
+    console.log("✅ Firebase initialized with Offline Persistence (Direct Config)");
   } catch (e) {
     console.error("❌ Firebase initialization error:", e);
   }
 } else {
-  console.warn("⚠️ Firebase config missing. Please check Vercel Environment Variables. Cloud features disabled.");
+  console.warn("⚠️ Firebase config invalid.");
 }
 
 export { auth, db, functions, httpsCallable };
