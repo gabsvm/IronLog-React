@@ -19,6 +19,14 @@ interface SettingsModalProps {
     isSyncing: boolean;
 }
 
+// Extracted Component to avoid nested definition issues
+const ColorPill = ({ color, active, onClick, label }: { color: string, active: boolean, onClick: () => void, label: string }) => (
+    <button onClick={onClick} className="flex flex-col items-center gap-1.5 transition-transform active:scale-95 group">
+        <div className={`w-10 h-10 rounded-full ${color} shadow-sm border-2 transition-all ${active ? 'border-zinc-900 dark:border-white scale-110' : 'border-transparent opacity-80 group-hover:opacity-100'}`} />
+        <span className={`text-[9px] font-bold uppercase tracking-wide ${active ? 'text-zinc-900 dark:text-white' : 'text-zinc-400'}`}>{label}</span>
+    </button>
+);
+
 export const SettingsModal: React.FC<SettingsModalProps> = ({ 
     onClose, onOpenProgram, onOpenExercises, onReset, onExport, onForceSync, onImportFile, isSyncing 
 }) => {
@@ -60,16 +68,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         }
     };
 
-    const ColorPill = ({ color, active, onClick, label }: any) => (
-        <button onClick={onClick} className={`flex flex-col items-center gap-1.5 transition-transform active:scale-95 group`}>
-            <div className={`w-10 h-10 rounded-full ${color} shadow-sm border-2 transition-all ${active ? 'border-zinc-900 dark:border-white scale-110' : 'border-transparent opacity-80 group-hover:opacity-100'}`} />
-            <span className={`text-[9px] font-bold uppercase tracking-wide ${active ? 'text-zinc-900 dark:text-white' : 'text-zinc-400'}`}>{label}</span>
-        </button>
-    );
-
     return (
         <div className="fixed inset-0 bg-black/60 z-[60] flex justify-end backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose}>
             <div className="w-80 bg-white dark:bg-zinc-900 h-full p-6 shadow-2xl border-l border-zinc-200 dark:border-white/5 flex flex-col overflow-y-auto" onClick={e => e.stopPropagation()}>
+                
+                {/* Header */}
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="font-bold text-2xl dark:text-white tracking-tight">{t.settings}</h2>
                     <button onClick={onClose} className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white">
