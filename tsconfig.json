@@ -25,5 +25,6 @@
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
-  }
+  },
+  "exclude": ["IronLog-React", "node_modules", "dist"]
 }
