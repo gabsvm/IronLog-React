@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
 import { auth, db } from '../lib/firebase';
 import { 
     signInWithEmailAndPassword, 
@@ -45,7 +45,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-            setUser(currentUser);
+            // Prevent redundant updates if user object is structurally same (though Firebase creates new obj)
+            // But checking UID is safer.
+            setUser(prev => {
+                if (prev?.uid === currentUser?.uid) return prev;
+                return currentUser;
+            });
+
             if (currentUser) {
                 setIsGuest(false);
                 // Fetch Subscription Status from Firestore
@@ -151,8 +157,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const clearError = () => setError(null);
 
+    // MEMOIZE context value to prevent unnecessary re-renders in consumers
+    const contextValue = useMemo(() => ({
+        user, isGuest, loading, login, register, logout, continueAsGuest, error, clearError, subscription, upgradeToPro
+    }), [user, isGuest, loading, error, subscription]);
+
     return (
-        <AuthContext.Provider value={{ user, isGuest, loading, login, register, logout, continueAsGuest, error, clearError, subscription, upgradeToPro }}>
+        <AuthContext.Provider value={contextValue}>
             {children}
         </AuthContext.Provider>
     );
