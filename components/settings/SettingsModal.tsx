@@ -119,7 +119,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <div className={`text-xs font-bold uppercase py-1 px-2 rounded-full inline-block bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300`}>
                         {tierString}
                     </div>
-                    <Button onClick={() => { setIsAuthModalOpen(true); onClose(); }} fullWidth>
+                    <Button onClick={() => { setIsAuthModalOpen(true); }} fullWidth>
                         <Icon name="LogIn" size={16} />
                         <span className="ml-2">Login / Sign Up</span>
                     </Button>
