@@ -31,9 +31,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 }) => {
     const { 
         lang, setLang, theme, setTheme, colorTheme, setColorTheme, 
-        config, setConfig, resetTutorials 
+        resetTutorials 
     } = useApp();
-    const { user, profile, updateProfile, logout, subscription } = useAuth();
+    const { 
+        user, profile, updateProfile, logout, subscription, 
+        loading, isGuest 
+    } = useAuth();
     const t = TRANSLATIONS[lang];
 
     const [displayName, setDisplayName] = useState(profile?.displayName || '');
@@ -43,27 +46,27 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     useEffect(() => {
         if (profile?.displayName) {
             setDisplayName(profile.displayName);
+        } else {
+            setDisplayName('');
         }
     }, [profile]);
 
     const handleSaveProfile = async () => {
-        if (!displayName.trim() || displayName.trim() === profile?.displayName) return;
+        if (!profile || !displayName.trim() || displayName.trim() === profile.displayName) return;
         setIsSaving(true);
         try {
             await updateProfile({ displayName: displayName.trim() });
             setSaved(true);
-            setTimeout(() => setSaved(false), 2000); // Show 'Saved!' for 2 seconds
+            setTimeout(() => setSaved(false), 2000);
         } catch (error) {
             console.error("Failed to update profile", error);
         }
         setIsSaving(false);
     };
 
-    // Admin state
     const [isAdminMode, setIsAdminMode] = useState(false);
     const [targetUid, setTargetUid] = useState('');
     const [adminStatus, setAdminStatus] = useState('');
-
     const isAdmin = user?.email === 'gabsvm@gmail.com';
 
     const handleAdminGrant = async () => {
@@ -72,29 +75,98 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         try {
             const uidToGrant = targetUid.trim() || user?.uid;
             if (!uidToGrant) return;
-
             await setDoc(doc(db, "users", uidToGrant, "data", "subscription"), {
                 isPro: true,
-                tier: { tier: 'lifetime', grantedByAdmin: true },
-                expiryDate: null,
+                tier: 'lifetime',
                 grantedAt: Date.now()
             }, { merge: true });
-
             setAdminStatus(`Success! Pro granted to ${uidToGrant.slice(0, 5)}...`);
-            if (uidToGrant === user?.uid) {
-                window.location.reload();
-            }
+            if (uidToGrant === user?.uid) window.location.reload();
         } catch (e: any) {
             setAdminStatus('Error: ' + e.message);
         }
     };
 
-    const isNameChanged = displayName.trim() !== profile?.displayName;
+    const isNameChanged = profile ? displayName.trim() !== profile.displayName : false;
+
+    const renderAccountSection = () => {
+        if (loading) {
+            return (
+                <div className="mb-8 p-4 bg-zinc-50 dark:bg-white/5 rounded-2xl border border-zinc-100 dark:border-white/5 h-[160px] flex items-center justify-center">
+                    <div className="w-6 h-6 border-2 border-zinc-300 dark:border-zinc-600 border-t-red-600 rounded-full animate-spin" />
+                </div>
+            );
+        }
+
+        if (isGuest || !user) {
+            return (
+                <div className="mb-8 p-4 bg-zinc-50 dark:bg-white/5 rounded-2xl border border-zinc-100 dark:border-white/5 space-y-3 text-center">
+                    <div className="flex items-center justify-center gap-2">
+                        <Icon name="User" size={16} className="text-zinc-500" />
+                        <p className="text-sm font-bold text-zinc-600 dark:text-zinc-300">Guest User</p>
+                    </div>
+                    <div className={`text-xs font-bold uppercase py-1 px-2 rounded-full inline-block bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-200`}>
+                        {subscription.tier}
+                    </div>
+                    <Button onClick={onClose} fullWidth>
+                        <Icon name="LogIn" size={16} />
+                        <span className="ml-2">Login / Sign Up</span>
+                    </Button>
+                    <p className="text-xs text-zinc-400 px-2 pt-1">Create an account to sync your data.</p>
+                </div>
+            );
+        }
+
+        if (user && profile) {
+            return (
+                <div className="mb-8 p-4 bg-zinc-50 dark:bg-white/5 rounded-2xl border border-zinc-100 dark:border-white/5 space-y-4">
+                    <div className="flex justify-between items-start">
+                        <h3 className="text-sm font-bold dark:text-white pt-1">Account</h3>
+                        <div className={`text-[10px] font-bold uppercase py-0.5 px-2 rounded-full ${subscription.isPro ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-400' : 'bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300'}`}>
+                            {subscription.tier}
+                        </div>
+                    </div>
+                    <div>
+                        <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Display Name</label>
+                        <input 
+                            type="text"
+                            value={displayName}
+                            onChange={(e) => setDisplayName(e.target.value)}
+                            className="w-full bg-white dark:bg-zinc-800 p-2 rounded-lg text-sm font-bold mt-1 border-2 border-transparent focus:border-red-500"
+                        />
+                    </div>
+                    <div>
+                        <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Account Email</label>
+                        <p className="text-xs text-zinc-500 mt-1">{profile.email}</p>
+                    </div>
+                    <div className="flex items-center gap-2 pt-2">
+                       <Button 
+                            onClick={handleSaveProfile} 
+                            disabled={!isNameChanged || isSaving} 
+                            size="sm" 
+                            fullWidth
+                            variant={saved ? "success" : "primary"}
+                        >
+                            {isSaving ? 'Saving...' : (saved ? 'Saved!' : 'Save Changes')}
+                       </Button>
+                       <Button onClick={() => { logout(); onClose(); }} size="sm" variant="secondary">
+                            <Icon name="LogOut" size={16} />
+                       </Button>
+                    </div>
+                    {isAdmin && (
+                        <button onClick={() => setIsAdminMode(!isAdminMode)} className="w-full py-2 bg-zinc-900 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2 mt-2">
+                            <Icon name="Bot" size={14} /> Admin Panel
+                        </button>
+                    )}
+                </div>
+            );
+        }
+        return null;
+    };
 
     return (
         <div className="fixed inset-0 bg-black/60 z-[60] flex justify-end backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose}>
-            <div className="w-80 bg-white dark:bg-zinc-900 h-full p-6 shadow-2xl border-l border-zinc-200 dark:border-white/5 flex flex-col overflow-y-auto" onClick={e => e.stopPropagation()}>
-                
+            <div className="w-80 bg-white dark:bg-zinc-900 h-full p-6 shadow-2xl border-l border-zinc-200 dark:border-white/5 flex flex-col" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="font-bold text-2xl dark:text-white tracking-tight">{t.settings}</h2>
                     <button onClick={onClose} className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white">
@@ -102,99 +174,52 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     </button>
                 </div>
                 
-                {/* Account Section - UPDATED */}
-                {user && profile && (
-                    <div className="mb-8 p-4 bg-zinc-50 dark:bg-white/5 rounded-2xl border border-zinc-100 dark:border-white/5 space-y-4">
-                        <div>
-                            <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Display Name</label>
-                            <input 
-                                type="text"
-                                value={displayName}
-                                onChange={(e) => setDisplayName(e.target.value)}
-                                className="w-full bg-white dark:bg-zinc-800 p-2 rounded-lg text-sm font-bold mt-1 border-2 border-transparent focus:border-red-500"
-                            />
-                        </div>
-                        <div>
-                            <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Account Email</label>
-                            <p className="text-xs text-zinc-500 mt-1">{profile.email}</p>
-                        </div>
-                        
-                        <div className="flex items-center gap-2 pt-2">
-                           <Button 
-                                onClick={handleSaveProfile} 
-                                disabled={!isNameChanged || isSaving} 
-                                size="sm" 
-                                fullWidth
-                                variant={saved ? "success" : "primary"}
-                            >
-                                {isSaving ? 'Saving...' : (saved ? 'Saved!' : 'Save Changes')}
-                           </Button>
-                           <Button onClick={() => { logout(); onClose(); }} size="sm" variant="secondary">
-                                <Icon name="LogOut" size={16} />
-                           </Button>
-                        </div>
+                <div className="overflow-y-auto flex-1 pr-1 -mr-3">
+                    {renderAccountSection()}
 
-                        {isAdmin && (
-                            <button onClick={() => setIsAdminMode(!isAdminMode)} className="w-full py-2 bg-zinc-900 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2">
-                                <Icon name="Bot" size={14} /> Admin Panel
-                            </button>
-                        )}
-                    </div>
-                )}
-
-                {/* ADMIN PANEL */}
-                {isAdminMode && (
-                     <div className="mb-8 p-4 bg-zinc-100 dark:bg-zinc-800 rounded-2xl border-2 border-red-500/20">
-                        <h3 className="text-xs font-black text-red-500 uppercase tracking-widest mb-3">Master Control</h3>
-                        <div className="space-y-3">
-                            <div>
-                                <label className="text-[10px] text-zinc-400 block mb-1">Target UID (Leave empty for self)</label>
-                                <input 
-                                    className="w-full bg-white dark:bg-zinc-950 p-2 rounded text-xs font-mono" 
-                                    placeholder={user?.uid}
-                                    value={targetUid}
-                                    onChange={e => setTargetUid(e.target.value)}
-                                />
-                            </div>
-                            <Button size="sm" fullWidth onClick={handleAdminGrant}>Grant Lifetime PRO</Button>
-                            {adminStatus && <p className="text-[10px] font-mono text-green-500 break-all">{adminStatus}</p>}
-                        </div>
-                    </div>
-                )}
-
-                <div className="space-y-8 flex-1">
-                    {/* Language */}
-                    <div>
-                        <label className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 block">{t.language}</label>
-                        <div className="grid grid-cols-2 gap-3 mb-6">
-                            <button onClick={() => setLang('en')} className={`py-3 rounded-xl text-sm font-bold border flex items-center justify-center gap-2 ${lang === 'en' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 border-transparent' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border-transparent'}`}>English</button>
-                            <button onClick={() => setLang('es')} className={`py-3 rounded-xl text-sm font-bold border flex items-center justify-center gap-2 ${lang === 'es' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 border-transparent' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border-transparent'}`}>Español</button>
-                        </div>
-                    </div>
-
-                    {/* Appearance */}
-                    <div>
-                        <label className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 block">{t.appearance}</label>
-                        <div className="grid grid-cols-2 gap-3 mb-6">
-                            <button onClick={() => setTheme('dark')} className={`py-3 rounded-xl text-sm font-bold border flex items-center justify-center gap-2 ${theme === 'dark' ? 'bg-zinc-800 text-white border-zinc-600' : 'bg-zinc-50 text-zinc-500 border-transparent'}`}><Icon name="Moon" size={16} /> Dark</button>
-                            <button onClick={() => setTheme('light')} className={`py-3 rounded-xl text-sm font-bold border flex items-center justify-center gap-2 ${theme === 'light' ? 'bg-white text-zinc-900 border-zinc-300' : 'bg-zinc-800/50 text-zinc-500 border-transparent'}`}><Icon name="Sun" size={16} /> Light</button>
-                        </div>
-                        <div className="bg-zinc-50 dark:bg-white/5 p-4 rounded-2xl">
-                            <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3 block">Accent Color</label>
-                            <div className="grid grid-cols-4 gap-4">
-                                <ColorPill color="bg-red-600" label="Iron" active={colorTheme === 'iron'} onClick={() => setColorTheme('iron')} />
-                                <ColorPill color="bg-blue-600" label="Ocean" active={colorTheme === 'ocean'} onClick={() => setColorTheme('ocean')} />
-                                <ColorPill color="bg-emerald-600" label="Forest" active={colorTheme === 'forest'} onClick={() => setColorTheme('forest')} />
-                                <ColorPill color="bg-purple-600" label="Royal" active={colorTheme === 'royal'} onClick={() => setColorTheme('royal')} />
+                    {isAdminMode && (
+                         <div className="mb-8 p-4 bg-zinc-100 dark:bg-zinc-800 rounded-2xl border-2 border-red-500/20">
+                            <h3 className="text-xs font-black text-red-500 uppercase tracking-widest mb-3">Master Control</h3>
+                            <div className="space-y-3">
+                                <div>
+                                    <label className="text-[10px] text-zinc-400 block mb-1">Target UID (Leave empty for self)</label>
+                                    <input 
+                                        className="w-full bg-white dark:bg-zinc-950 p-2 rounded text-xs font-mono" 
+                                        placeholder={user?.uid}
+                                        value={targetUid}
+                                        onChange={e => setTargetUid(e.target.value)}
+                                    />
+                                </div>
+                                <Button size="sm" fullWidth onClick={handleAdminGrant}>Grant Lifetime PRO</Button>
+                                {adminStatus && <p className="text-[10px] font-mono text-green-500 break-all">{adminStatus}</p>}
                             </div>
                         </div>
-                    </div>
+                    )}
 
-                     {/* Config etc */}
-                    <div className="space-y-8 flex-1">
-                        {/* Existing sections... */}
-
-                        {/* Data Management */}
+                    <div className="space-y-8">
+                        <div>
+                            <label className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 block">{t.language}</label>
+                            <div className="grid grid-cols-2 gap-3 mb-6">
+                                <button onClick={() => setLang('en')} className={`py-3 rounded-xl text-sm font-bold border flex items-center justify-center gap-2 ${lang === 'en' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 border-transparent' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border-transparent'}`}>English</button>
+                                <button onClick={() => setLang('es')} className={`py-3 rounded-xl text-sm font-bold border flex items-center justify-center gap-2 ${lang === 'es' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 border-transparent' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border-transparent'}`}>Español</button>
+                            </div>
+                        </div>
+                        <div>
+                            <label className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 block">{t.appearance}</label>
+                            <div className="grid grid-cols-2 gap-3 mb-6">
+                                <button onClick={() => setTheme('dark')} className={`py-3 rounded-xl text-sm font-bold border flex items-center justify-center gap-2 ${theme === 'dark' ? 'bg-zinc-800 text-white border-zinc-600' : 'bg-zinc-50 text-zinc-500 border-transparent'}`}><Icon name="Moon" size={16} /> Dark</button>
+                                <button onClick={() => setTheme('light')} className={`py-3 rounded-xl text-sm font-bold border flex items-center justify-center gap-2 ${theme === 'light' ? 'bg-white text-zinc-900 border-zinc-300' : 'bg-zinc-800/50 text-zinc-500 border-transparent'}`}><Icon name="Sun" size={16} /> Light</button>
+                            </div>
+                            <div className="bg-zinc-50 dark:bg-white/5 p-4 rounded-2xl">
+                                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3 block">Accent Color</label>
+                                <div className="grid grid-cols-4 gap-4">
+                                    <ColorPill color="bg-red-600" label="Iron" active={colorTheme === 'iron'} onClick={() => setColorTheme('iron')} />
+                                    <ColorPill color="bg-blue-600" label="Ocean" active={colorTheme === 'ocean'} onClick={() => setColorTheme('ocean')} />
+                                    <ColorPill color="bg-emerald-600" label="Forest" active={colorTheme === 'forest'} onClick={() => setColorTheme('forest')} />
+                                    <ColorPill color="bg-purple-600" label="Royal" active={colorTheme === 'royal'} onClick={() => setColorTheme('royal')} />
+                                </div>
+                            </div>
+                        </div>
                         <div>
                             <label className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 block">Data</label>
                             <div className="space-y-2">
@@ -213,8 +238,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                 </button>
                             </div>
                         </div>
-                        
-                        {/* Tutorials & Reset */}
                         <div>
                              <label className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 block">Advanced</label>
                              <div className="space-y-2">
@@ -230,9 +253,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         </div>
                     </div>
                 </div>
-
                  <div className="text-center text-xs text-zinc-400 mt-6">
-                    Version 4.0.1
+                    Version 4.0.2
                 </div>
             </div>
         </div>

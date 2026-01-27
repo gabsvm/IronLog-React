@@ -11,16 +11,14 @@ import {
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { SubscriptionTier, UserSubscription, UserProfile } from '../types';
 
-// Define a default subscription state
 const DEFAULT_SUB: UserSubscription = { isPro: false, tier: 'free', expiryDate: null };
 
-// The shape of our Authentication Context
 interface AuthContextType {
     user: User | null;
     profile: UserProfile | null;
     isGuest: boolean;
     loading: boolean;
-    login: (email: string, pass: string) => Promise<void>;
+    login: (email: string, pass:string) => Promise<void>;
     register: (email: string, pass: string) => Promise<void>;
     logout: () => Promise<void>;
     continueAsGuest: () => void;
@@ -37,25 +35,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [user, setUser] = useState<User | null>(null);
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [isGuest, setIsGuest] = useState(false);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(true); // Start with loading true
     const [error, setError] = useState<string | null>(null);
     const [subscription, setSubscription] = useState<UserSubscription>(DEFAULT_SUB);
 
     useEffect(() => {
         if (!auth) {
-            console.log("Auth not initialized, skipping auth listener.");
+            console.log("Auth not initialized, using guest mode.");
+            setIsGuest(true);
             setLoading(false);
             return;
         }
 
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+            setLoading(true); // Set loading true on auth state change
             setUser(currentUser);
 
             if (currentUser) {
                 setIsGuest(false);
                 if (db) {
                     try {
-                        // Parallel fetch for profile and subscription
                         const userRef = doc(db, "users", currentUser.uid);
                         const subRef = doc(db, "users", currentUser.uid, "data", "subscription");
 
@@ -71,20 +70,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         if (subSnap.exists()) {
                             setSubscription(subSnap.data() as UserSubscription);
                         } else {
-                            // If for some reason a user exists without a subscription doc, create it.
                             await setDoc(subRef, DEFAULT_SUB);
                             setSubscription(DEFAULT_SUB);
                         }
                     } catch (e) {
                         console.error("Error fetching user data", e);
-                        // Set to default states on error
                         setProfile(null);
                         setSubscription(DEFAULT_SUB);
                     }
                 }
             } else {
-                // Clear all user-related state on logout
-                setIsGuest(false);
+                // If no user, check local storage if they were a guest before.
+                const guestStatus = localStorage.getItem('isGuest');
+                if (guestStatus === 'true') {
+                    setIsGuest(true);
+                } else {
+                    setIsGuest(false);
+                }
                 setProfile(null);
                 setSubscription(DEFAULT_SUB);
             }
@@ -94,13 +96,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, []);
 
     const login = async (email: string, pass: string) => {
+        setLoading(true);
         setError(null);
         if (!auth) {
-            setError("Authentication service unavailable (Config missing).");
+            setError("Authentication service unavailable.");
+            setLoading(false);
             return Promise.reject(new Error("Auth unavailable"));
         }
         try {
             await signInWithEmailAndPassword(auth, email, pass);
+            // State will be updated by onAuthStateChanged, which will set loading to false
         } catch (err: any) {
             console.error("Login Error:", err);
             if (err.code === 'auth/invalid-credential') {
@@ -110,38 +115,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             } else {
                 setError(err.message || "Login failed");
             }
+            setLoading(false);
             throw err;
         }
     };
 
     const register = async (email: string, pass: string) => {
+        setLoading(true);
         setError(null);
         if (!auth || !db) {
-            setError("Authentication service unavailable (Config missing).");
+            setError("Authentication service unavailable.");
+            setLoading(false);
             return Promise.reject(new Error("Auth or DB unavailable"));
         }
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
             const newUser = userCredential.user;
 
-            // ==> NEW: Create user profile and subscription documents in Firestore <==
             const userRef = doc(db, "users", newUser.uid);
             const subRef = doc(db, "users", newUser.uid, "data", "subscription");
 
             const displayName = email.split('@')[0];
             const userProfileData: UserProfile = {
                 email: newUser.email || email,
-                displayName: displayName
+                displayName: displayName,
+                 // Initialize optional fitness properties
+                experience: 'intermediate',
+                goal: 'hypertrophy',
+                daysPerWeek: 4,
+                sessionDuration: 'medium'
             };
 
-            // Create both documents in a batch for atomicity
             await Promise.all([
                 setDoc(userRef, userProfileData),
                 setDoc(subRef, DEFAULT_SUB)
             ]);
             
-            // Optimistically set the profile for the new user
-            setProfile(userProfileData);
+            setProfile(userProfileData); // Optimistically set profile
+            // onAuthStateChanged will handle the rest, including setting loading to false
 
         } catch (err: any) {
             console.error("Register Error:", err);
@@ -152,6 +163,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             } else {
                 setError(err.message || "Registration failed");
             }
+            setLoading(false);
             throw err;
         }
     };
@@ -160,6 +172,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (auth) {
             await signOut(auth);
         }
+        localStorage.removeItem('isGuest');
         // State clearing is handled by onAuthStateChanged
     };
 
@@ -167,6 +180,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(null);
         setProfile(null);
         setIsGuest(true);
+        localStorage.setItem('isGuest', 'true');
         setLoading(false);
         setSubscription(DEFAULT_SUB);
     };
@@ -175,7 +189,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (!user || !db) return;
         const userRef = doc(db, "users", user.uid);
         await setDoc(userRef, data, { merge: true });
-        // Optimistic update of local state
         setProfile(prev => prev ? { ...prev, ...data } : null);
     };
 
@@ -187,7 +200,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             tier: tier,
             expiryDate: tier === 'lifetime' ? null : Date.now() + (tier === 'monthly' ? 2592000000 : 31536000000)
         };
-        setSubscription(newSub); // Optimistic UI Update
+        setSubscription(newSub);
         const subRef = doc(db, "users", user.uid, "data", "subscription");
         await setDoc(subRef, newSub, { merge: true });
     };
@@ -210,4 +223,3 @@ export const useAuth = () => {
     if (!context) throw new Error("useAuth must be used within AuthProvider");
     return context;
 };
-
