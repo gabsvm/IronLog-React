@@ -119,22 +119,20 @@ export interface TutorialState {
     stats: boolean;
 }
 
-// --- NEW SUBSCRIPTION TYPES ---
+// --- NEW & CORRECTED USER/SUB TYPES ---
 export type SubscriptionTier = 'free' | 'monthly' | 'yearly' | 'lifetime';
 
 export interface UserSubscription {
     isPro: boolean;
-    tier: SubscriptionTier;
+    tier: SubscriptionTier | { tier: SubscriptionTier, grantedByAdmin: boolean }; // Tier can be a string or an admin object
     expiryDate: number | null; // Timestamp, null for lifetime
 }
 
 export interface UserProfile {
-    experience: 'beginner' | 'intermediate' | 'advanced';
-    daysPerWeek: number;
-    goal: 'hypertrophy' | 'strength' | 'endurance';
-    sessionDuration: 'short' | 'medium' | 'long';
-    subscription?: UserSubscription; // Optional for backward compatibility
+    email: string;
+    displayName: string;
 }
+
 
 export interface AppState {
     program: ProgramDay[];
@@ -151,6 +149,5 @@ export interface AppState {
     rpFeedback: Record<string, Record<string, Record<string, FeedbackEntry>>>; 
     hasSeenOnboarding: boolean;
     tutorialProgress: TutorialState;
-    userProfile?: UserProfile;
     lastUpdated?: number;
 }
