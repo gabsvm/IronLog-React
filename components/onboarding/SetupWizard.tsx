@@ -1,6 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext'; // Import useAuth
 import { TRANSLATIONS } from '../../constants';
 import { UserProfile, MesoType } from '../../types';
 import { Button } from '../ui/Button';
@@ -13,11 +14,16 @@ interface SetupWizardProps {
 
 export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
     const { lang, setLang, setProgram, setActiveMeso } = useApp();
+    const { user } = useAuth(); // Get user from auth context
     const t = TRANSLATIONS[lang];
     const w = t.wizard;
 
     const [step, setStep] = useState(0);
     const [profile, setProfile] = useState<UserProfile>({
+        // Initialize with required fields
+        email: user?.email || '',
+        displayName: '', 
+        // Default fitness profile
         experience: 'intermediate',
         daysPerWeek: 4,
         goal: 'hypertrophy',
@@ -30,7 +36,6 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
     const handleNext = () => {
         if (step === 3) {
             setIsGenerating(true);
-            // Simulate analyzing delay for better UX
             setTimeout(() => {
                 const rec = recommendProgram(profile);
                 setRecommendation(rec);
@@ -45,10 +50,8 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
     const handleApply = () => {
         if (!recommendation) return;
 
-        // Apply Template
         setProgram(recommendation.template);
 
-        // Apply Meso Settings
         const plan = recommendation.template.map(day => (day.slots || []).map(slot => slot.exerciseId || null));
         setActiveMeso({
             id: Date.now(),
@@ -83,14 +86,12 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
         </button>
     );
 
-    // Render Steps
     const renderStep = () => {
         switch (step) {
             case 0: // Experience
                 return (
                     <div className="space-y-3 animate-in slide-in-from-right duration-300">
                         <h3 className="text-xl font-black text-center mb-6 dark:text-white">{w.steps.exp}</h3>
-                        
                         <OptionBtn 
                             label={w.expOptions.beginner} 
                             description={w.expDesc?.beginner}
@@ -112,7 +113,6 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                             onClick={() => setProfile({...profile, experience: 'advanced'})}
                             icon="Zap"
                         />
-
                         {w.expNote && (
                             <div className="mt-6 bg-blue-50 dark:bg-blue-900/10 p-3 rounded-xl flex gap-3 items-start border border-blue-100 dark:border-blue-900/20">
                                 <Icon name="Info" size={16} className="text-blue-500 mt-0.5 shrink-0" />
@@ -161,7 +161,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                             label={w.goalOptions.strength} 
                             selected={profile.goal === 'strength'} 
                             onClick={() => setProfile({...profile, goal: 'strength'})}
-                            icon="Anchor" // Fallback icon, ensure imported or mapped
+                            icon="Anchor"
                         />
                         <OptionBtn 
                             label={w.goalOptions.endurance} 
@@ -206,13 +206,11 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                         <div className="w-20 h-20 bg-green-100 dark:bg-green-900/20 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
                             <Icon name="Check" size={40} strokeWidth={4} />
                         </div>
-                        
                         <div>
                             <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-2">{w.steps.result}</h3>
                             <h2 className="text-2xl font-black text-zinc-900 dark:text-white mb-2">{recTitle}</h2>
                             <p className="text-sm text-zinc-600 dark:text-zinc-300 italic px-4">"{recDesc}"</p>
                         </div>
-
                         <div className="bg-zinc-50 dark:bg-white/5 p-4 rounded-xl text-left space-y-2 border border-zinc-100 dark:border-white/5">
                             <div className="flex gap-3 items-start">
                                 <Icon name="Info" size={18} className="text-blue-500 mt-0.5 shrink-0" />
@@ -243,15 +241,12 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
 
     return (
         <div className="fixed inset-0 z-[100] bg-white dark:bg-zinc-950 flex flex-col">
-            {/* Header */}
             <div className="p-6 border-b border-zinc-100 dark:border-zinc-900 flex justify-between items-center">
                 <div className="flex items-center gap-2 text-zinc-900 dark:text-white font-bold">
                     <div className="w-8 h-8 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-lg flex items-center justify-center font-black text-xs">IL</div>
                     <span>IronLog Setup</span>
                 </div>
-                
                 <div className="flex items-center gap-3">
-                    {/* Language Toggle */}
                     <div className="flex bg-zinc-100 dark:bg-zinc-800 rounded-lg p-1">
                         <button 
                             onClick={() => setLang('en')}
@@ -266,19 +261,16 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                             ES
                         </button>
                     </div>
-
                     {step < 4 && (
                         <button onClick={onComplete} className="text-xs font-bold text-zinc-400 hover:text-zinc-900 dark:hover:text-white uppercase tracking-widest">{w.manual}</button>
                     )}
                 </div>
             </div>
 
-            {/* Content */}
             <div className="flex-1 overflow-y-auto p-6 flex flex-col justify-center max-w-md mx-auto w-full">
                 {renderStep()}
             </div>
 
-            {/* Footer */}
             <div className="p-6 border-t border-zinc-100 dark:border-zinc-900 bg-white dark:bg-zinc-950">
                 <div className="max-w-md mx-auto w-full">
                     {step === 4 ? (
@@ -301,7 +293,6 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                         </div>
                     )}
                     
-                    {/* Progress Dots */}
                     {step < 4 && (
                         <div className="flex justify-center gap-2 mt-6">
                             {[0, 1, 2, 3].map(i => (
