@@ -7,6 +7,7 @@ import { Icon } from '../ui/Icon';
 import { Button } from '../ui/Button';
 import { doc, setDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
+import { SubscriptionTier } from '../../types';
 
 interface SettingsModalProps {
     onClose: () => void;
@@ -88,8 +89,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     };
 
     const isNameChanged = profile ? displayName.trim() !== profile.displayName : false;
+    
+    // Correctly get the tier as a string
+    const getTierString = (tier: SubscriptionTier | { tier: SubscriptionTier, grantedByAdmin: boolean }): SubscriptionTier => {
+        if (typeof tier === 'object') {
+            return tier.tier;
+        }
+        return tier;
+    };
 
     const renderAccountSection = () => {
+        const tierString = getTierString(subscription.tier);
+
         if (loading) {
             return (
                 <div className="mb-8 p-4 bg-zinc-50 dark:bg-white/5 rounded-2xl border border-zinc-100 dark:border-white/5 h-[160px] flex items-center justify-center">
@@ -106,7 +117,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         <p className="text-sm font-bold text-zinc-600 dark:text-zinc-300">Guest User</p>
                     </div>
                     <div className={`text-xs font-bold uppercase py-1 px-2 rounded-full inline-block bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-200`}>
-                        {subscription.tier}
+                        {tierString}
                     </div>
                     <Button onClick={onClose} fullWidth>
                         <Icon name="LogIn" size={16} />
@@ -123,7 +134,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <div className="flex justify-between items-start">
                         <h3 className="text-sm font-bold dark:text-white pt-1">Account</h3>
                         <div className={`text-[10px] font-bold uppercase py-0.5 px-2 rounded-full ${subscription.isPro ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-400' : 'bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300'}`}>
-                            {subscription.tier}
+                            {tierString}
                         </div>
                     </div>
                     <div>
@@ -254,7 +265,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     </div>
                 </div>
                  <div className="text-center text-xs text-zinc-400 mt-6">
-                    Version 4.0.2
+                    Version 4.0.3
                 </div>
             </div>
         </div>
