@@ -1,329 +1,185 @@
 
-import React, { createContext, useContext, useEffect, useRef, ReactNode, useState, PropsWithChildren, useMemo, useCallback } from 'react';
-import { AppState, Lang, Theme, ColorTheme, ExerciseDef, ActiveSession, MesoCycle, Log, ProgramDay, TutorialState } from '../types';
-import { DEFAULT_LIBRARY, DEFAULT_TEMPLATE } from '../constants';
-import { useLocalStorage } from '../hooks/useLocalStorage';
-import { usePersistedState } from '../hooks/usePersistedState';
-import { Icon } from '../components/ui/Icon';
-import { Logo } from '../components/ui/Logo';
-import { TimerProvider } from './TimerContext';
-import { HomeSkeleton } from '../components/ui/SkeletonLoader';
-import { AuthProvider, useAuth } from './AuthContext'; // Import Auth
-import { syncService } from '../services/syncService'; // Import Sync
-import { db as localDb } from '../utils/db'; // Import direct DB for non-state updates
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import { AppState, Lang, Theme, ColorTheme, MesoCycle, ActiveSession } from '../types';
+import { initialAppState } from '../constants';
+import { useAuth } from './AuthContext';
+import { db } from '../lib/firebase';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { upgradeToPro } from '../utils/subscriptions';
+
+const DEBOUNCE_TIME = 2000; // 2 seconds
 
 interface AppContextType extends AppState {
     lang: Lang;
+    setLang: (lang: Lang) => void;
     theme: Theme;
+    setTheme: (theme: Theme) => void;
     colorTheme: ColorTheme;
-    setLang: (l: Lang) => void;
-    setTheme: (t: Theme) => void;
-    setColorTheme: (t: ColorTheme) => void;
-    
-    setProgram: (val: ProgramDay[] | ((prev: ProgramDay[]) => ProgramDay[])) => void;
-    setActiveMeso: (val: MesoCycle | null | ((prev: MesoCycle | null) => MesoCycle | null)) => void;
-    setActiveSession: (val: ActiveSession | null | ((prev: ActiveSession | null) => ActiveSession | null)) => void;
-    setExercises: (val: ExerciseDef[] | ((prev: ExerciseDef[]) => ExerciseDef[])) => void;
-    setLogs: (val: Log[] | ((prev: Log[]) => Log[])) => void;
-    setConfig: (val: AppState['config']) => void;
-    setRpFeedback: (val: AppState['rpFeedback'] | ((prev: AppState['rpFeedback']) => AppState['rpFeedback'])) => void;
-    setHasSeenOnboarding: (val: boolean) => void;
-    
-    // Tutorial Methods
-    markTutorialSeen: (section: keyof TutorialState) => void;
+    setColorTheme: (color: ColorTheme) => void;
+    setInitialState: (data: Partial<AppState>) => void;
+    resetState: () => void;
     resetTutorials: () => void;
-    
-    // Sync UI State
-    isAppLoading: boolean;
-    pendingCloudData: Partial<AppState> | null;
-    confirmCloudSync: () => void;
-    cancelCloudSync: () => void;
-    localLastUpdated: number;
-    isOnline: boolean;
+    isSyncing: boolean;
+    lastSyncTime: number | null;
+    forceSync: () => Promise<void>;
+    setActiveMeso: (meso: MesoCycle | null) => void;
+    setActiveSession: (session: ActiveSession | null) => void;
+    isAuthModalOpen: boolean; // New state for auth modal
+    setIsAuthModalOpen: (isOpen: boolean) => void; // New state setter for auth modal
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-// Separated component to handle Sync Logic inside AuthProvider
-const AppStateProvider = ({ children }: PropsWithChildren) => {
-    const { user, subscription } = useAuth(); // Access User & Subscription
+export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const { user, isGuest } = useAuth();
+    const [state, setState] = useState<AppState>(initialAppState);
+    const [lang, setLang] = useState<Lang>('en');
+    const [theme, setTheme] = useState<Theme>('dark');
+    const [colorTheme, setColorTheme] = useState<ColorTheme>('iron');
+    const [isSyncing, setIsSyncing] = useState(false);
+    const [lastSyncTime, setLastSyncTime] = useState<number | null>(null);
+    const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-    // --- Synchronous Config ---
-    const [langStored, setLang] = useLocalStorage<Lang>('il_lang_v1', 'en');
-    const lang: Lang = (langStored === 'en' || langStored === 'es') ? langStored : 'en';
-
-    const [theme, setTheme] = useLocalStorage<Theme>('il_theme_v1', 'dark');
-    const [colorTheme, setColorTheme] = useLocalStorage<ColorTheme>('il_color_theme_v1', 'iron');
-    
-    const [showRIR, setShowRIR] = useLocalStorage('il_cfg_rir', true);
-    const [rpEnabled, setRpEnabled] = useLocalStorage('il_cfg_rp', true);
-    const [rpTargetRIR, setRpTargetRIR] = useLocalStorage('il_cfg_rp_rir', 2);
-    const [keepScreenOn, setKeepScreenOn] = useLocalStorage('il_cfg_screen', false);
-
-    const [tutorialProgress, setTutorialProgress] = useLocalStorage<TutorialState>('il_tutorial_v1', {
-        home: false, workout: false, history: false, stats: false
-    });
-
-    // --- Heavy Data (IndexedDB) ---
-    const [program, setProgram, programLoading] = usePersistedState<ProgramDay[]>('il_prog_v16', DEFAULT_TEMPLATE, 1000);
-    const [activeMeso, setActiveMeso, mesoLoading] = usePersistedState<MesoCycle | null>('il_meso_v16', null, 500);
-    const [activeSession, setActiveSession, sessionLoading] = usePersistedState<ActiveSession | null>('il_session_v16', null, 500);
-    const [exercises, setExercises, exLoading] = usePersistedState<ExerciseDef[]>('il_ex_v16', DEFAULT_LIBRARY, 1000);
-    const [logs, setLogs, logsLoading] = usePersistedState<Log[]>('il_logs_v16', [], 1000);
-    
-    const [rpFeedback, setRpFeedback, fbLoading] = usePersistedState<AppState['rpFeedback']>('il_rp_fb_v1', {}, 1000);
-    const [hasSeenOnboarding, setHasSeenOnboarding, onboardingLoading] = usePersistedState<boolean>('il_onboarded_v2', false, 1000);
-    
-    // USE REF for localLastUpdated to avoid re-renders of the whole app context during sync checks
-    // We only expose a getter or snapshot if needed, but for internal logic we use Ref.
-    // However, AppContext interface exposes `localLastUpdated` number. We will use a state for that BUT decouple the update.
-    const [localLastUpdatedState, setLocalLastUpdatedState] = useState<number>(0);
-    const lastUpdatedRef = useRef<number>(0);
-
-    // Init localLastUpdated from DB
+    // Debounce state updates
     useEffect(() => {
-        localDb.get<number>('il_last_sync_ts', 0).then(val => {
-            lastUpdatedRef.current = val;
-            setLocalLastUpdatedState(val);
-        });
+        const handler = setTimeout(() => {
+            if (user && db) {
+                console.log("Syncing data with Firestore...");
+                setIsSyncing(true);
+                const userRef = doc(db, 'users', user.uid);
+                setDoc(userRef, { appState: { ...state, lastUpdated: Date.now() } }, { merge: true })
+                    .then(() => {
+                        setLastSyncTime(Date.now());
+                        console.log("Sync successful!");
+                    })
+                    .catch(e => console.error("Sync failed", e))
+                    .finally(() => setIsSyncing(false));
+            } else if (isGuest) {
+                localStorage.setItem('guestAppState', JSON.stringify({ ...state, lastUpdated: Date.now() }));
+                console.log("Saved state to localStorage for guest.");
+            }
+        }, DEBOUNCE_TIME);
+
+        return () => clearTimeout(handler);
+    }, [state, user, isGuest]);
+
+    // Load data on user change
+    useEffect(() => {
+        const loadData = async () => {
+            if (user && db) {
+                const userRef = doc(db, 'users', user.uid);
+                const docSnap = await getDoc(userRef);
+                if (docSnap.exists() && docSnap.data().appState) {
+                    console.log("Loading user data from Firestore.");
+                    setState(prev => ({ ...prev, ...docSnap.data().appState }));
+                } else {
+                     console.log("No existing user data, checking localStorage.");
+                     const guestData = localStorage.getItem('guestAppState');
+                     if (guestData) {
+                        setState(prev => ({ ...prev, ...JSON.parse(guestData) }));
+                     } else {
+                        setState(initialAppState);
+                     }
+                }
+            } else if (isGuest) {
+                const guestData = localStorage.getItem('guestAppState');
+                if (guestData) {
+                    console.log("Loading guest data from localStorage.");
+                    setState(prev => ({ ...prev, ...JSON.parse(guestData) }));
+                } else {
+                    setState(initialAppState);
+                }
+            } else {
+                setState(initialAppState);
+            }
+        };
+        loadData();
+    }, [user, isGuest]);
+
+    // Local settings persistence
+    useEffect(() => {
+        const savedLang = localStorage.getItem('appLang') as Lang | null;
+        if (savedLang) setLang(savedLang);
+
+        const savedTheme = localStorage.getItem('appTheme') as Theme | null;
+        const savedColor = localStorage.getItem('appColorTheme') as ColorTheme | null;
+
+        if (savedTheme) setTheme(savedTheme);
+        if (savedColor) setColorTheme(savedColor);
     }, []);
 
-    const [pendingCloudData, setPendingCloudData] = useState<Partial<AppState> | null>(null);
-    const [isOnline, setIsOnline] = useState(navigator.onLine);
-
-    const isAppLoading = programLoading || mesoLoading || sessionLoading || exLoading || logsLoading || fbLoading || onboardingLoading;
-    const wakeLockRef = useRef<WakeLockSentinel | null>(null);
-
-    // Helper to update lastUpdated without triggering render if not needed (for sync logic)
-    const updateLastUpdated = (ts: number) => {
-        lastUpdatedRef.current = ts;
-        localDb.set('il_last_sync_ts', ts);
-        // We do NOT call setLocalLastUpdatedState here to avoid re-rendering entire app during background sync
-        // unless we really need to show it in UI (which we don't currently).
-        // But if we want `confirmCloudSync` to work, we might need it. 
-        // Actually confirmCloudSync reads from `pendingCloudData`.
+    const handleSetLang = (lang: Lang) => {
+        setLang(lang);
+        localStorage.setItem('appLang', lang);
     };
 
-    const downloadInProgressRef = useRef(false);
+    const handleSetTheme = (theme: Theme) => {
+        setTheme(theme);
+        document.documentElement.classList.toggle('dark', theme === 'dark');
+        localStorage.setItem('appTheme', theme);
+    };
 
-    // --- CLOUD SYNC LOGIC ---
-    
-    // 0. Network Status Listener & Reconnection Sync
-    useEffect(() => {
-        const handleOnline = () => {
-            setIsOnline(true);
-            console.log("🌐 Back Online! Checking sync...");
-            if(user && subscription.isPro) {
-                const now = Date.now();
-                updateLastUpdated(now);
-                syncService.uploadState(user.uid, {
-                    program, activeMeso, exercises, logs, config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn }, rpFeedback, activeSession, lastUpdated: now
-                });
-            }
-        };
-        const handleOffline = () => setIsOnline(false);
+    const handleSetColorTheme = (color: ColorTheme) => {
+        setColorTheme(color);
+        localStorage.setItem('appColorTheme', color);
+    };
 
-        window.addEventListener('online', handleOnline);
-        window.addEventListener('offline', handleOffline);
+    const setInitialState = (data: Partial<AppState>) => setState(prev => ({ ...prev, ...data }));
+    const resetState = () => setState(initialAppState);
+    const setActiveMeso = (meso: MesoCycle | null) => setState(prev => ({ ...prev, activeMeso: meso }));
+    const setActiveSession = (session: ActiveSession | null) => setState(prev => ({...prev, activeSession: session }));
 
-        return () => {
-            window.removeEventListener('online', handleOnline);
-            window.removeEventListener('offline', handleOffline);
-        };
-    }, [user, subscription.isPro, program, activeMeso, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, rpFeedback, activeSession]);
+    const resetTutorials = () => {
+        setState(prev => ({ ...prev, tutorialProgress: initialAppState.tutorialProgress }));
+    };
 
-    // 1. Download & Compare on Login (Check PRO)
-    useEffect(() => {
-        const uid = user?.uid;
-        if (uid && !isAppLoading && isOnline && subscription.isPro && !downloadInProgressRef.current) {
-            downloadInProgressRef.current = true;
-            syncService.downloadState(uid).then((cloudData: any) => {
-                downloadInProgressRef.current = false;
-                if (cloudData) {
-                    const cloudTS = cloudData.lastUpdated || 0;
-                    const localTS = lastUpdatedRef.current || 0;
-
-                    if (cloudTS > localTS) {
-                        setPendingCloudData(cloudData);
-                    }
-                } else {
-                    // No cloud data -> Upload local to init
-                    const now = Date.now();
-                    updateLastUpdated(now);
-                    syncService.uploadState(uid, { program, activeMeso, exercises, logs, config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn }, rpFeedback, activeSession, lastUpdated: now });
-                }
-            }).catch(() => {
-                downloadInProgressRef.current = false;
-            });
+    const forceSync = async () => {
+        if (!user || !db) {
+            console.warn("Cannot sync without user or db connection.");
+            return;
         }
-    }, [user?.uid, isAppLoading, isOnline, subscription.isPro]); 
-
-    // 2. Upload on Data Change (Debounced) - Gate with PRO check
-    useEffect(() => {
-        if (!user || isAppLoading || !subscription.isPro) return;
-
-        const timer = setTimeout(() => {
-            const now = Date.now();
-            updateLastUpdated(now);
-            
-            syncService.uploadState(user.uid, {
-                program,
-                activeMeso,
-                activeSession,
-                exercises,
-                logs,
-                config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn },
-                rpFeedback,
-                lastUpdated: now
-            });
-        }, 5000); 
-
-        return () => clearTimeout(timer);
-    }, [user, subscription.isPro, program, activeMeso, activeSession, exercises, logs, showRIR, rpEnabled, rpFeedback, isAppLoading]);
-
-    const confirmCloudSync = useCallback(() => {
-        if (pendingCloudData) {
-            if (pendingCloudData.program) setProgram(pendingCloudData.program);
-            if (pendingCloudData.activeMeso) setActiveMeso(pendingCloudData.activeMeso);
-            if (pendingCloudData.activeSession) setActiveSession(pendingCloudData.activeSession);
-            if (pendingCloudData.exercises) setExercises(pendingCloudData.exercises);
-            if (pendingCloudData.logs) setLogs(pendingCloudData.logs);
-            if (pendingCloudData.rpFeedback) setRpFeedback(pendingCloudData.rpFeedback);
-            
-            if (pendingCloudData.config) {
-                if (pendingCloudData.config.showRIR !== undefined) setShowRIR(pendingCloudData.config.showRIR);
-                if (pendingCloudData.config.rpEnabled !== undefined) setRpEnabled(pendingCloudData.config.rpEnabled);
-            }
-            // @ts-ignore
-            if (pendingCloudData.lastUpdated) {
-                updateLastUpdated(pendingCloudData.lastUpdated);
-                setLocalLastUpdatedState(pendingCloudData.lastUpdated);
-            }
-            
-            setPendingCloudData(null);
+        setIsSyncing(true);
+        try {
+            const userRef = doc(db, 'users', user.uid);
+            await setDoc(userRef, { appState: { ...state, lastUpdated: Date.now() } }, { merge: true });
+            setLastSyncTime(Date.now());
+            console.log("Manual sync successful!");
+        } catch (e) {
+            console.error("Manual sync failed", e);
+        } finally {
+            setIsSyncing(false);
         }
-    }, [pendingCloudData]);
-
-    const cancelCloudSync = useCallback(() => {
-        setPendingCloudData(null);
-    }, []);
-
-
-    // --- THEME & WAKELOCK EFFECTS ---
-    useEffect(() => {
-        const root = window.document.documentElement;
-        root.classList.remove('light', 'dark');
-        if (theme === 'system') {
-            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-            root.classList.add(systemTheme);
-        } else {
-            root.classList.add(theme);
-        }
-    }, [theme]);
-
-    useEffect(() => {
-        const root = window.document.documentElement;
-        root.setAttribute('data-theme', colorTheme);
-    }, [colorTheme]);
-
-    useEffect(() => {
-        const requestWakeLock = async () => {
-            if (keepScreenOn && 'wakeLock' in navigator) {
-                try {
-                    wakeLockRef.current = await navigator.wakeLock.request('screen');
-                } catch (err: any) {
-                    if (err.name !== 'NotAllowedError') console.warn('Wake Lock failed:', err);
-                }
-            } else if (!keepScreenOn && wakeLockRef.current) {
-                wakeLockRef.current.release().catch(() => {});
-                wakeLockRef.current = null;
-            }
-        };
-        requestWakeLock();
-        const handleVisibilityChange = () => {
-            if (document.visibilityState === 'visible' && keepScreenOn) requestWakeLock();
-        };
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-        return () => {
-            document.removeEventListener('visibilitychange', handleVisibilityChange);
-            if (wakeLockRef.current) wakeLockRef.current.release().catch(() => {});
-        };
-    }, [keepScreenOn]);
-
-    const setConfig = useCallback((newConfig: any) => {
-        if (newConfig.showRIR !== undefined) setShowRIR(newConfig.showRIR);
-        if (newConfig.rpEnabled !== undefined) setRpEnabled(newConfig.rpEnabled);
-        if (newConfig.rpTargetRIR !== undefined) setRpTargetRIR(newConfig.rpTargetRIR);
-        if (newConfig.keepScreenOn !== undefined) setKeepScreenOn(newConfig.keepScreenOn);
-    }, [setShowRIR, setRpEnabled, setRpTargetRIR, setKeepScreenOn]);
-
-    const markTutorialSeen = useCallback((section: keyof TutorialState) => {
-        setTutorialProgress(prev => ({ ...prev, [section]: true }));
-    }, [setTutorialProgress]);
-
-    const resetTutorials = useCallback(() => {
-        setTutorialProgress({ home: false, workout: false, history: false, stats: false });
-    }, [setTutorialProgress]);
-
-    const configState = useMemo(() => ({ showRIR, rpEnabled, rpTargetRIR, keepScreenOn }), [showRIR, rpEnabled, rpTargetRIR, keepScreenOn]);
+    };
 
     const contextValue = useMemo(() => ({
-        lang, setLang, theme, setTheme, colorTheme, setColorTheme,
-        program, setProgram,
-        activeMeso, setActiveMeso,
-        activeSession, setActiveSession,
-        exercises, setExercises,
-        logs, setLogs,
-        config: configState, setConfig,
-        rpFeedback, setRpFeedback,
-        hasSeenOnboarding, setHasSeenOnboarding,
-        tutorialProgress, markTutorialSeen, resetTutorials,
-        isAppLoading,
-        pendingCloudData, confirmCloudSync, cancelCloudSync, 
-        localLastUpdated: localLastUpdatedState, // Use state for UI consumption
-        isOnline
-    }), [
-        lang, setLang, theme, setTheme, colorTheme, setColorTheme,
-        program, setProgram,
-        activeMeso, setActiveMeso,
-        activeSession, setActiveSession,
-        exercises, setExercises,
-        logs, setLogs,
-        configState, setConfig,
-        rpFeedback, setRpFeedback,
-        hasSeenOnboarding, setHasSeenOnboarding,
-        tutorialProgress, markTutorialSeen, resetTutorials,
-        isAppLoading,
-        pendingCloudData, confirmCloudSync, cancelCloudSync, localLastUpdatedState,
-        isOnline
-    ]);
-
-    if (isAppLoading) {
-        return <HomeSkeleton />;
-    }
+        ...state,
+        lang,
+        setLang: handleSetLang,
+        theme,
+        setTheme: handleSetTheme,
+        colorTheme,
+        setColorTheme: handleSetColorTheme,
+        setInitialState,
+        resetState,
+        resetTutorials,
+        isSyncing,
+        lastSyncTime,
+        forceSync,
+        setActiveMeso,
+        setActiveSession,
+        isAuthModalOpen,
+        setIsAuthModalOpen
+    }), [state, lang, theme, colorTheme, isSyncing, lastSyncTime, isAuthModalOpen]);
 
     return (
         <AppContext.Provider value={contextValue}>
-            <TimerProvider>
-                {children}
-            </TimerProvider>
+            {children}
         </AppContext.Provider>
-    );
-};
-
-// Root Provider Wrapper
-export const AppProvider = ({ children }: PropsWithChildren) => {
-    return (
-        <AuthProvider>
-            <AppStateProvider>
-                {children}
-            </AppStateProvider>
-        </AuthProvider>
     );
 };
 
 export const useApp = () => {
     const context = useContext(AppContext);
-    if (!context) throw new Error("useApp must be used within AppProvider");
+    if (!context) throw new Error("useApp must be used within an AppProvider");
     return context;
 };

@@ -19,7 +19,7 @@ import { getLastLogForExercise } from './utils';
 import { syncService } from './services/syncService';
 import { usePro } from './hooks/usePro';
 import { PaywallModal } from './components/pro/PaywallModal';
-import { SettingsModal } from './components/settings/SettingsModal'; // IMPORT THE CORRECT MODAL
+import { SettingsModal } from './components/settings/SettingsModal';
 
 // Lazy Load heavier views
 const HistoryView = React.lazy(() => import('./views/HistoryView').then(module => ({ default: module.HistoryView })));
@@ -48,7 +48,8 @@ const AppContent = () => {
         theme, setTheme, colorTheme, setColorTheme, setExercises, setProgram, setActiveMeso,
         config, setConfig, hasSeenOnboarding, setHasSeenOnboarding,
         resetTutorials, rpFeedback,
-        pendingCloudData, confirmCloudSync, cancelCloudSync
+        pendingCloudData, confirmCloudSync, cancelCloudSync,
+        isAuthModalOpen, setIsAuthModalOpen // Use context for auth modal
     } = useApp();
     
     const { setRestTimer } = useTimerContext();
@@ -60,7 +61,6 @@ const AppContent = () => {
     const [view, setViewState] = useState<'home' | 'workout' | 'history' | 'exercises' | 'program' | 'stats'>('home');
     const [showSettings, setShowSettings] = useState(false);
     const [showResetModal, setShowResetModal] = useState(false);
-    const [showAuthModal, setShowAuthModal] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
     
     // Custom Modals State
@@ -162,7 +162,7 @@ const AppContent = () => {
 
     const handleForceSync = async () => {
         if (!user) {
-            setShowAuthModal(true);
+            setIsAuthModalOpen(true);
             return;
         }
         
@@ -324,7 +324,7 @@ const AppContent = () => {
 
             <RestTimerOverlay />
             
-            {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
+            {isAuthModalOpen && <AuthModal onClose={() => setIsAuthModalOpen(false)} />}
             
             {showPaywall && (
                 <PaywallModal onClose={() => setShowPaywall(false)} feature={featureAttempted} />
@@ -381,7 +381,6 @@ const AppContent = () => {
                 </div>
             )}
 
-            {/* USE THE CORRECT SETTINGS MODAL */}
             {showSettings && (
                 <SettingsModal 
                     onClose={() => setShowSettings(false)}

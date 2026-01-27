@@ -32,7 +32,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 }) => {
     const { 
         lang, setLang, theme, setTheme, colorTheme, setColorTheme, 
-        resetTutorials 
+        resetTutorials, setIsAuthModalOpen
     } = useApp();
     const { 
         user, profile, updateProfile, logout, subscription, 
@@ -116,10 +116,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         <Icon name="User" size={16} className="text-zinc-500" />
                         <p className="text-sm font-bold text-zinc-600 dark:text-zinc-300">Guest User</p>
                     </div>
-                    <div className={`text-xs font-bold uppercase py-1 px-2 rounded-full inline-block bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-200`}>
+                    <div className={`text-xs font-bold uppercase py-1 px-2 rounded-full inline-block bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300`}>
                         {tierString}
                     </div>
-                    <Button onClick={onClose} fullWidth>
+                    <Button onClick={() => { setIsAuthModalOpen(true); onClose(); }} fullWidth>
                         <Icon name="LogIn" size={16} />
                         <span className="ml-2">Login / Sign Up</span>
                     </Button>
