@@ -124,15 +124,20 @@ export type SubscriptionTier = 'free' | 'monthly' | 'yearly' | 'lifetime';
 
 export interface UserSubscription {
     isPro: boolean;
-    tier: SubscriptionTier | { tier: SubscriptionTier, grantedByAdmin: boolean }; // Tier can be a string or an admin object
-    expiryDate: number | null; // Timestamp, null for lifetime
+    tier: SubscriptionTier | { tier: SubscriptionTier, grantedByAdmin: boolean };
+    expiryDate: number | null;
 }
 
+// COMBINED UserProfile for both account info and fitness profile
 export interface UserProfile {
     email: string;
     displayName: string;
+    // Fitness profile - optional to not break existing users
+    experience?: 'beginner' | 'intermediate' | 'advanced';
+    daysPerWeek?: number;
+    goal?: 'hypertrophy' | 'strength' | 'endurance';
+    sessionDuration?: 'short' | 'medium' | 'long';
 }
-
 
 export interface AppState {
     program: ProgramDay[];
