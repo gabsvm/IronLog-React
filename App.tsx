@@ -8,7 +8,7 @@ import { WorkoutView } from './views/WorkoutView';
 import { ExercisesView } from './views/ExercisesView';
 import { ProgramEditView } from './views/ProgramEditView';
 import { RestTimerOverlay } from './components/ui/RestTimerOverlay';
-import { SetupWizard } from './components/onboarding/SetupWizard'; // New Import
+import { SetupWizard } from './components/onboarding/SetupWizard';
 import { ConfirmModal } from './components/ui/ConfirmModal'; 
 import { Icon } from './components/ui/Icon';
 import { TRANSLATIONS } from './constants';
@@ -17,6 +17,9 @@ import { useAuth } from './context/AuthContext';
 import { AuthModal } from './components/auth/AuthModal';
 import { getLastLogForExercise } from './utils';
 import { syncService } from './services/syncService';
+import { usePro } from './hooks/usePro';
+import { PaywallModal } from './components/pro/PaywallModal';
+import { SettingsModal } from './components/settings/SettingsModal'; 
 
 // Lazy Load heavier views
 const HistoryView = React.lazy(() => import('./views/HistoryView').then(module => ({ default: module.HistoryView })));
@@ -41,15 +44,15 @@ const VIEW_DEPTH: Record<string, number> = {
 const AppContent = () => {
     const { 
         activeSession, activeMeso, setActiveSession, 
-        program, exercises, lang, setLang, logs, setLogs,
-        theme, setTheme, colorTheme, setColorTheme, setExercises, setProgram, setActiveMeso,
-        config, setConfig, hasSeenOnboarding, setHasSeenOnboarding,
-        resetTutorials, rpFeedback,
+        program, exercises, lang, logs, setLogs,
+        setExercises, setProgram, setActiveMeso,
+        config, rpFeedback, hasSeenOnboarding, setHasSeenOnboarding,
         pendingCloudData, confirmCloudSync, cancelCloudSync
     } = useApp();
     
     const { setRestTimer } = useTimerContext();
-    const { user, logout } = useAuth();
+    const { user } = useAuth();
+    const { checkPro, showPaywall, setShowPaywall, featureAttempted } = usePro();
     
     const t = TRANSLATIONS[lang];
 
@@ -158,11 +161,14 @@ const AppContent = () => {
 
     const handleForceSync = async () => {
         if (!user) {
-            // Replace alert with Auth Modal
             setShowAuthModal(true);
             return;
         }
-        setShowForceSyncModal(true); // Open confirmation instead of immediate action
+        
+        // CHECK PRO before allowing sync
+        if (!checkPro("sync")) return;
+
+        setShowForceSyncModal(true);
     };
 
     const executeForceSync = async () => {
@@ -173,8 +179,6 @@ const AppContent = () => {
             await syncService.uploadState(user.uid, {
                 program, activeMeso, exercises, logs, config, rpFeedback, activeSession
             });
-            // Replaced alert with temporary toast via Button or just silent success
-            // For now, we can just log or show a small tick
         } catch (e: any) {
             console.error(e);
         } finally {
@@ -230,13 +234,6 @@ const AppContent = () => {
         
         setLogs([skippedLog, ...(Array.isArray(logs) ? logs : [])]);
     };
-
-    const ColorPill = ({ color, active, onClick, label }: any) => (
-        <button onClick={onClick} className={`flex flex-col items-center gap-1.5 transition-transform active:scale-95 group`}>
-            <div className={`w-10 h-10 rounded-full ${color} shadow-sm border-2 transition-all ${active ? 'border-zinc-900 dark:border-white scale-110' : 'border-transparent opacity-80 group-hover:opacity-100'}`} />
-            <span className={`text-[9px] font-bold uppercase tracking-wide ${active ? 'text-zinc-900 dark:text-white' : 'text-zinc-400'}`}>{label}</span>
-        </button>
-    );
 
     return (
         <>
@@ -334,6 +331,10 @@ const AppContent = () => {
             
             {/* Standard Modal Overlays */}
             {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
+            
+            {showPaywall && (
+                <PaywallModal onClose={() => setShowPaywall(false)} feature={featureAttempted} />
+            )}
 
             {/* SYNC CONFLICT MODAL */}
             <ConfirmModal 
@@ -372,160 +373,37 @@ const AppContent = () => {
 
             {/* FACTORY RESET MODAL */}
             {showResetModal && (
-                <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-200">
-                    <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-2xl p-6 shadow-2xl border border-zinc-200 dark:border-white/10 text-center" onClick={e => e.stopPropagation()}>
-                        <div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
-                            <Icon name="AlertTriangle" size={32} />
-                        </div>
-                        <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">{t.dangerZone}</h3>
-                        <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6 leading-relaxed">{t.deleteDataConfirm}</p>
-                        <div className="grid grid-cols-2 gap-3">
-                            <Button variant="secondary" onClick={() => setShowResetModal(false)}>{t.cancel}</Button>
-                            <Button variant="danger" onClick={() => {
-                                localStorage.clear();
-                                window.location.reload();
-                            }}>{t.delete}</Button>
-                        </div>
-                    </div>
-                </div>
+                <ConfirmModal
+                    isOpen={true}
+                    title={t.dangerZone}
+                    description={t.deleteDataConfirm}
+                    confirmText={t.delete}
+                    cancelText={t.cancel}
+                    variant="danger"
+                    onConfirm={() => {
+                        localStorage.clear();
+                        window.location.reload();
+                    }}
+                    onCancel={() => setShowResetModal(false)}
+                />
             )}
 
-            {/* Settings Overlay */}
+            {/* SETTINGS OVERLAY (Now with Login Callback) */}
             {showSettings && view !== 'exercises' && (
-                <div className="fixed inset-0 bg-black/60 z-[60] flex justify-end backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setShowSettings(false)}>
-                    <div className="w-80 bg-white dark:bg-zinc-900 h-full p-6 shadow-2xl border-l border-zinc-200 dark:border-white/5 flex flex-col overflow-y-auto" onClick={e => e.stopPropagation()}>
-                        <h2 className="font-bold text-2xl dark:text-white mb-6 tracking-tight">{t.settings}</h2>
-                        
-                        {/* Account Section */}
-                        <div className="mb-8 p-4 bg-zinc-50 dark:bg-white/5 rounded-2xl border border-zinc-100 dark:border-white/5">
-                            <div className="flex items-center gap-3 mb-3">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${user ? 'bg-green-100 text-green-600' : 'bg-zinc-200 text-zinc-500'}`}>
-                                    <Icon name="User" size={20} />
-                                </div>
-                                <div>
-                                    <div className="text-sm font-bold text-zinc-900 dark:text-white">{user ? t.auth.proMember : t.auth.guestUser}</div>
-                                    <div className="text-xs text-zinc-500 truncate max-w-[160px]">{user ? user.email : t.auth.localStorage}</div>
-                                </div>
-                            </div>
-                            {user ? (
-                                <button onClick={() => { logout(); setShowSettings(false); }} className="w-full py-2 bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-lg text-xs font-bold">
-                                    {t.auth.logout}
-                                </button>
-                            ) : (
-                                <button onClick={() => setShowAuthModal(true)} className="w-full py-2 bg-red-600 text-white rounded-lg text-xs font-bold hover:bg-red-500">
-                                    {t.auth.signInRegister}
-                                </button>
-                            )}
-                        </div>
-
-                        <div className="space-y-8 flex-1">
-                            {/* Language */}
-                            <div>
-                                <label className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 block">{t.language}</label>
-                                <div className="grid grid-cols-2 gap-3 mb-6">
-                                    <button onClick={() => setLang('en')} className={`py-3 rounded-xl text-sm font-bold border flex items-center justify-center gap-2 ${lang === 'en' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 border-transparent' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border-transparent'}`}>English</button>
-                                    <button onClick={() => setLang('es')} className={`py-3 rounded-xl text-sm font-bold border flex items-center justify-center gap-2 ${lang === 'es' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 border-transparent' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border-transparent'}`}>Español</button>
-                                </div>
-                            </div>
-
-                            {/* Appearance */}
-                            <div>
-                                <label className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 block">{t.appearance}</label>
-                                <div className="grid grid-cols-2 gap-3 mb-6">
-                                    <button onClick={() => setTheme('dark')} className={`py-3 rounded-xl text-sm font-bold border flex items-center justify-center gap-2 ${theme === 'dark' ? 'bg-zinc-800 text-white border-zinc-600' : 'bg-zinc-50 text-zinc-500 border-transparent'}`}><Icon name="Moon" size={16} /> Dark</button>
-                                    <button onClick={() => setTheme('light')} className={`py-3 rounded-xl text-sm font-bold border flex items-center justify-center gap-2 ${theme === 'light' ? 'bg-white text-zinc-900 border-zinc-300' : 'bg-zinc-800/50 text-zinc-500 border-transparent'}`}><Icon name="Sun" size={16} /> Light</button>
-                                </div>
-                                <div className="bg-zinc-50 dark:bg-white/5 p-4 rounded-2xl">
-                                    <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3 block">Accent Color</label>
-                                    <div className="grid grid-cols-4 gap-4">
-                                        <ColorPill color="bg-red-600" label="Iron" active={colorTheme === 'iron'} onClick={() => setColorTheme('iron')} />
-                                        <ColorPill color="bg-blue-600" label="Ocean" active={colorTheme === 'ocean'} onClick={() => setColorTheme('ocean')} />
-                                        <ColorPill color="bg-emerald-600" label="Forest" active={colorTheme === 'forest'} onClick={() => setColorTheme('forest')} />
-                                        <ColorPill color="bg-purple-600" label="Royal" active={colorTheme === 'royal'} onClick={() => setColorTheme('royal')} />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Workout Configuration */}
-                            <div>
-                                <label className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 block">{t.workoutConfig}</label>
-                                <div className="space-y-2">
-                                    <button onClick={() => setConfig({ ...config, showRIR: !config.showRIR })} className="w-full p-3 bg-zinc-100 dark:bg-zinc-800 rounded-xl flex justify-between items-center transition-colors hover:bg-zinc-200 dark:hover:bg-zinc-700">
-                                        <span className="text-sm font-bold text-zinc-700 dark:text-zinc-200">{t.showRIR}</span>
-                                        <div className={`w-10 h-6 rounded-full relative transition-colors ${config.showRIR ? 'bg-green-500' : 'bg-zinc-300 dark:bg-zinc-600'}`}>
-                                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${config.showRIR ? 'left-5' : 'left-1'}`} />
-                                        </div>
-                                    </button>
-                                    <button onClick={() => setConfig({ ...config, rpEnabled: !config.rpEnabled })} className="w-full p-3 bg-zinc-100 dark:bg-zinc-800 rounded-xl flex justify-between items-center transition-colors hover:bg-zinc-200 dark:hover:bg-zinc-700">
-                                        <span className="text-sm font-bold text-zinc-700 dark:text-zinc-200">{t.rpEnabled}</span>
-                                        <div className={`w-10 h-6 rounded-full relative transition-colors ${config.rpEnabled ? 'bg-green-500' : 'bg-zinc-300 dark:bg-zinc-600'}`}>
-                                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${config.rpEnabled ? 'left-5' : 'left-1'}`} />
-                                        </div>
-                                    </button>
-                                    <button onClick={() => setConfig({ ...config, keepScreenOn: !config.keepScreenOn })} className="w-full p-3 bg-zinc-100 dark:bg-zinc-800 rounded-xl flex justify-between items-center transition-colors hover:bg-zinc-200 dark:hover:bg-zinc-700">
-                                        <span className="text-sm font-bold text-zinc-700 dark:text-zinc-200">{t.keepScreen}</span>
-                                        <div className={`w-10 h-6 rounded-full relative transition-colors ${config.keepScreenOn ? 'bg-green-500' : 'bg-zinc-300 dark:bg-zinc-600'}`}>
-                                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${config.keepScreenOn ? 'left-5' : 'left-1'}`} />
-                                        </div>
-                                    </button>
-                                    
-                                    <button onClick={() => { setView('program'); setShowSettings(false); }} className="w-full p-3 bg-zinc-100 dark:bg-zinc-800 rounded-xl flex justify-between items-center transition-colors hover:bg-zinc-200 dark:hover:bg-zinc-700">
-                                        <span className="text-sm font-bold text-zinc-700 dark:text-zinc-200">{t.editTemplate}</span>
-                                        <Icon name="Edit" size={16} className="text-zinc-400" />
-                                    </button>
-
-                                    <button onClick={() => setView('exercises')} className="w-full p-3 bg-zinc-100 dark:bg-zinc-800 rounded-xl flex justify-between items-center transition-colors hover:bg-zinc-200 dark:hover:bg-zinc-700">
-                                        <span className="text-sm font-bold text-zinc-700 dark:text-zinc-200">{t.manageEx}</span>
-                                        <Icon name="ChevronRight" size={16} className="text-zinc-400" />
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Database */}
-                            <div>
-                                <label className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 block">{t.database}</label>
-                                <div className="space-y-2">
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <button onClick={handleExport} className="py-3 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"><Icon name="Download" size={14} /> {t.export}</button>
-                                        <label className="py-3 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 rounded-xl text-sm font-bold cursor-pointer text-center flex items-center justify-center gap-2 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"><Icon name="Upload" size={14} /> {t.import}<input type="file" onChange={handleImportFile} accept=".json" className="hidden" /></label>
-                                    </div>
-                                    {user && (
-                                        <button 
-                                            onClick={handleForceSync}
-                                            disabled={isSyncing}
-                                            className="w-full py-3 bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-blue-100 dark:hover:bg-blue-900/20 transition-colors"
-                                        >
-                                            <Icon name={isSyncing ? "RefreshCw" : "CloudOff"} size={14} className={isSyncing ? "animate-spin" : ""} />
-                                            {isSyncing ? (lang === 'en' ? "Syncing..." : "Sincronizando...") : (lang === 'en' ? "Force Cloud Sync" : "Forzar Sincronización Nube")}
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Tutorials / Help */}
-                            <div>
-                                <label className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 block">{lang === 'en' ? 'Tutorials' : 'Tutoriales'}</label>
-                                <button 
-                                    onClick={() => { resetTutorials(); setShowSettings(false); }}
-                                    className="w-full py-3 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
-                                >
-                                    <Icon name="RefreshCw" size={16} /> {t.tutorial.reset}
-                                </button>
-                            </div>
-
-                            {/* Danger Zone */}
-                            <div>
-                                <label className="text-xs font-black text-red-400 uppercase tracking-widest mb-3 block">{t.dangerZone}</label>
-                                <button 
-                                    onClick={() => setShowResetModal(true)}
-                                    className="w-full py-3 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors"
-                                >
-                                    <Icon name="Trash2" size={16} /> {t.factoryReset}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <SettingsModal 
+                    onClose={() => setShowSettings(false)}
+                    onOpenProgram={() => { setView('program'); setShowSettings(false); }}
+                    onOpenExercises={() => { setView('exercises'); setShowSettings(false); }}
+                    onReset={() => setShowResetModal(true)}
+                    onExport={handleExport}
+                    onForceSync={handleForceSync}
+                    onImportFile={handleImportFile}
+                    onLogin={() => {
+                        setShowSettings(false);
+                        setShowAuthModal(true);
+                    }}
+                    isSyncing={isSyncing}
+                />
             )}
         </>
     );

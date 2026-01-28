@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'ironlog-pro-v4';
+const CACHE_NAME = 'ironlog-pro-v5-offline';
 const STATIC_ASSETS = [
   '/manifest.json',
   '/icon.svg',
@@ -35,7 +35,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
   // 1. Navigation Requests (HTML) -> Network First, Fallback to Cache
-  // This ensures we try to get the latest version, but if offline, we load the app.
+  // This ensures we try to get the latest version, but if offline, we load the app shell.
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)

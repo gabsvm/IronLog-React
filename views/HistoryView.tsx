@@ -7,6 +7,9 @@ import { Icon } from '../components/ui/Icon';
 import { Log } from '../types';
 import { Virtuoso } from 'react-virtuoso';
 import { TutorialOverlay } from '../components/ui/TutorialOverlay';
+import { usePro } from '../hooks/usePro';
+import { PaywallModal } from '../components/pro/PaywallModal';
+import { Button } from '../components/ui/Button';
 
 // Helper to parse duration string "mm:ss" or number to string format
 const formatDurationDisplay = (val: string | number) => {
@@ -167,28 +170,53 @@ const HistoryCard = memo(({ log, isExpanded, onToggle, lang, t, id }: HistoryCar
 export const HistoryView: React.FC = () => {
     const { logs, lang, tutorialProgress, markTutorialSeen } = useApp();
     const t = TRANSLATIONS[lang];
+    const { isPro, showPaywall, setShowPaywall, checkPro } = usePro();
+    
     const [expandedId, setExpandedId] = useState<number | null>(null);
     const [search, setSearch] = useState('');
-    // Defer the search term update to prioritize input responsiveness
     const deferredSearch = useDeferredValue(search);
 
     const safeLogs = Array.isArray(logs) ? logs : [];
 
-    const filteredLogs = useMemo(() => {
-        if (!deferredSearch.trim()) return safeLogs;
-        const q = deferredSearch.toLowerCase();
-        return safeLogs.filter(log => {
-            if (log.name.toLowerCase().includes(q)) return true;
-            return log.exercises?.some(ex => getTranslated(ex.name, lang).toLowerCase().includes(q));
-        });
-    }, [safeLogs, deferredSearch, lang]);
+    // Filter Logs (Search + Time Limit for Free Users)
+    const { visibleLogs, hasLockedLogs } = useMemo(() => {
+        let result = safeLogs;
+        
+        // Search Filter
+        if (deferredSearch.trim()) {
+            const q = deferredSearch.toLowerCase();
+            result = result.filter(log => {
+                if (log.name.toLowerCase().includes(q)) return true;
+                return log.exercises?.some(ex => getTranslated(ex.name, lang).toLowerCase().includes(q));
+            });
+        }
+
+        // Pro Filter (7 Days)
+        const now = Date.now();
+        const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
+        
+        if (isPro) {
+            return { visibleLogs: result, hasLockedLogs: false };
+        } else {
+            const visible = [];
+            let lockedCount = 0;
+            
+            for (const log of result) {
+                if ((now - log.endTime) < SEVEN_DAYS) {
+                    visible.push(log);
+                } else {
+                    lockedCount++;
+                }
+            }
+            return { visibleLogs: visible, hasLockedLogs: lockedCount > 0 };
+        }
+    }, [safeLogs, deferredSearch, lang, isPro]);
 
     const historyTutorialSteps = [
         { targetId: 'tut-history-search', title: t.tutorial.history[1].title, text: t.tutorial.history[1].text, position: 'bottom' as const },
         { targetId: 'tut-first-card', title: t.tutorial.history[0].title, text: t.tutorial.history[0].text, position: 'bottom' as const }
     ];
 
-    // Header component for Virtuoso
     const Header = () => (
         <div className="px-6 pt-6 pb-4 space-y-4 bg-gray-50 dark:bg-zinc-950">
             <h2 className="text-2xl font-black text-zinc-900 dark:text-white">History</h2>
@@ -205,7 +233,28 @@ export const HistoryView: React.FC = () => {
         </div>
     );
 
-    const Footer = () => <div className="h-24"></div>;
+    const Footer = () => (
+        <div className="pb-24 pt-4 px-4">
+            {hasLockedLogs && (
+                <div className="bg-zinc-100 dark:bg-zinc-900 border border-dashed border-zinc-300 dark:border-zinc-700 rounded-2xl p-6 text-center">
+                    <div className="w-12 h-12 bg-zinc-200 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4 text-zinc-400">
+                        <Icon name="Lock" size={24} />
+                    </div>
+                    <h4 className="font-bold text-zinc-900 dark:text-white mb-2">History Locked</h4>
+                    <p className="text-xs text-zinc-500 mb-6 max-w-[200px] mx-auto">
+                        Older workouts are archived. Unlock Premium to access your full training history.
+                    </p>
+                    <Button 
+                        size="sm" 
+                        onClick={() => checkPro('history')}
+                        className="bg-zinc-900 dark:bg-white text-white dark:text-black mx-auto"
+                    >
+                        Unlock PRO
+                    </Button>
+                </div>
+            )}
+        </div>
+    );
 
     if (safeLogs.length === 0) {
         return (
@@ -221,34 +270,31 @@ export const HistoryView: React.FC = () => {
 
     return (
         <div className="h-full w-full bg-gray-50 dark:bg-zinc-950 flex flex-col relative">
-            {filteredLogs.length === 0 ? (
-                <>
-                    <Header />
-                    <div className="text-center py-10 text-zinc-400 text-sm">No matches found.</div>
-                </>
-            ) : (
-                <Virtuoso
-                    style={{ height: '100%' }}
-                    data={filteredLogs}
-                    components={{ Header, Footer }}
-                    itemContent={(index, log) => (
-                        <HistoryCard 
-                            id={index === 0 ? "tut-first-card" : undefined}
-                            log={log} 
-                            isExpanded={expandedId === log.id}
-                            onToggle={(id) => setExpandedId(expandedId === id ? null : id)}
-                            lang={lang}
-                            t={t}
-                        />
-                    )}
-                />
-            )}
+            <Virtuoso
+                style={{ height: '100%' }}
+                data={visibleLogs}
+                components={{ Header, Footer }}
+                itemContent={(index, log) => (
+                    <HistoryCard 
+                        id={index === 0 ? "tut-first-card" : undefined}
+                        log={log} 
+                        isExpanded={expandedId === log.id}
+                        onToggle={(id) => setExpandedId(expandedId === id ? null : id)}
+                        lang={lang}
+                        t={t}
+                    />
+                )}
+            />
             
             <TutorialOverlay 
                 steps={historyTutorialSteps}
                 isActive={!tutorialProgress.history}
                 onComplete={() => markTutorialSeen('history')}
             />
+
+            {showPaywall && (
+                <PaywallModal onClose={() => setShowPaywall(false)} feature="history" />
+            )}
         </div>
     );
 };

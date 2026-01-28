@@ -9,6 +9,7 @@ import { getTranslated } from '../utils';
 import { Icon } from '../components/ui/Icon';
 import { useStatsWorker } from '../hooks/useStatsWorker';
 import { TutorialOverlay } from '../components/ui/TutorialOverlay';
+import { ProLock } from '../components/pro/ProLock';
 import { 
     Chart as ChartJS, 
     RadialLinearScale, 
@@ -24,8 +25,6 @@ import {
 import { Doughnut } from 'react-chartjs-2';
 
 // --- REGISTER CHARTS GLOBALLY FOR THIS CHUNK ---
-// Moving this outside the component ensures it runs as soon as the module loads,
-// preventing "scale not registered" errors during the initial render pass.
 ChartJS.register(
     RadialLinearScale, 
     ArcElement, 
@@ -184,7 +183,7 @@ export const StatsView: React.FC = () => {
         <div className="p-4 space-y-6 pb-24 relative">
             <h2 className="text-2xl font-black text-zinc-900 dark:text-white px-2">Analytics</h2>
             
-            {/* --- Progress Chart Section --- */}
+            {/* --- Progress Chart Section (FREE) --- */}
             <div id="tut-progress-chart" className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-zinc-200 dark:border-white/5 shadow-sm">
                 <div className="flex flex-col gap-4 mb-6">
                     <div className="flex justify-between items-center">
@@ -252,7 +251,7 @@ export const StatsView: React.FC = () => {
                 )}
             </div>
 
-            {/* --- Symmetry Radar & Doughnut --- */}
+            {/* --- Symmetry Radar & Doughnut (PRO LOCKED) --- */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Symmetry Radar */}
                 <div id="tut-radar-chart" className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-zinc-200 dark:border-white/5 shadow-sm overflow-hidden flex flex-col h-full min-h-[320px]">
@@ -260,9 +259,11 @@ export const StatsView: React.FC = () => {
                         <Icon name="Activity" size={14} /> {t.statsBalance}
                     </h3>
                     <div className="flex-1 relative flex items-center justify-center">
-                        <div className="w-full h-64">
-                            <SymmetryRadar volumeData={rawMuscleCounts} />
-                        </div>
+                        <ProLock featureName="Radar Analysis">
+                            <div className="w-full h-64">
+                                <SymmetryRadar volumeData={rawMuscleCounts} />
+                            </div>
+                        </ProLock>
                     </div>
                 </div>
 
@@ -272,33 +273,35 @@ export const StatsView: React.FC = () => {
                         <Icon name="Layers" size={14} /> {t.statsIntensity}
                     </h3>
                     <div className="flex-1 flex flex-col items-center justify-center relative">
-                        {hasData ? (
-                            <div className="relative w-48 h-48">
-                                <Doughnut 
-                                    data={doughnutData} 
-                                    options={{ 
-                                        responsive: true,
-                                        maintainAspectRatio: false,
-                                        cutout: '75%', 
-                                        plugins: { legend: { display: false } },
-                                        elements: { arc: { borderWidth: 0 } }
-                                    }} 
-                                />
-                                <div className="absolute inset-0 flex items-center justify-center flex-col pointer-events-none">
-                                    <span className="text-3xl font-black text-zinc-900 dark:text-white tracking-tighter">
-                                        {totalSets}
-                                    </span>
-                                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{t.statsSets}</span>
+                        <ProLock featureName="Intensity Dist.">
+                            {hasData ? (
+                                <div className="relative w-48 h-48">
+                                    <Doughnut 
+                                        data={doughnutData} 
+                                        options={{ 
+                                            responsive: true,
+                                            maintainAspectRatio: false,
+                                            cutout: '75%', 
+                                            plugins: { legend: { display: false } },
+                                            elements: { arc: { borderWidth: 0 } }
+                                        }} 
+                                    />
+                                    <div className="absolute inset-0 flex items-center justify-center flex-col pointer-events-none">
+                                        <span className="text-3xl font-black text-zinc-900 dark:text-white tracking-tighter">
+                                            {totalSets}
+                                        </span>
+                                        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{t.statsSets}</span>
+                                    </div>
                                 </div>
-                            </div>
-                        ) : (
-                            <div className="flex flex-col items-center justify-center opacity-50 space-y-3">
-                                <div className="w-32 h-32 rounded-full border-[12px] border-zinc-100 dark:border-zinc-800 flex items-center justify-center">
-                                     <Icon name="CloudOff" size={24} className="text-zinc-300 dark:text-zinc-600" />
+                            ) : (
+                                <div className="flex flex-col items-center justify-center opacity-50 space-y-3">
+                                    <div className="w-32 h-32 rounded-full border-[12px] border-zinc-100 dark:border-zinc-800 flex items-center justify-center">
+                                         <Icon name="CloudOff" size={24} className="text-zinc-300 dark:text-zinc-600" />
+                                    </div>
+                                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{t.statsNoData}</span>
                                 </div>
-                                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{t.statsNoData}</span>
-                            </div>
-                        )}
+                            )}
+                        </ProLock>
                     </div>
                 </div>
             </div>

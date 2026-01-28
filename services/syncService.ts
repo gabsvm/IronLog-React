@@ -1,6 +1,6 @@
 
 import { doc, getDoc, writeBatch } from "firebase/firestore";
-import { db } from "../lib/firebase";
+import { db, auth } from "../lib/firebase"; // Import Auth to get current email
 import { AppState } from "../types";
 
 /**
@@ -75,7 +75,9 @@ export const syncService = {
                 config: state.config || {},
                 exercises: state.exercises || [],
                 rpFeedback: state.rpFeedback || {},
-                lastUpdated: state.lastUpdated || Date.now()
+                lastUpdated: state.lastUpdated || Date.now(),
+                // NEW: Save email to allow Admin Lookup
+                email: auth?.currentUser?.email || null 
             };
 
             // 2. Sanitización (undefined -> null)

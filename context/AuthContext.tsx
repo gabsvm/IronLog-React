@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { auth } from '../lib/firebase';
+import { auth, db } from '../lib/firebase';
 import { 
     signInWithEmailAndPassword, 
     createUserWithEmailAndPassword, 
@@ -8,26 +8,34 @@ import {
     onAuthStateChanged, 
     User 
 } from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { SubscriptionTier, UserSubscription } from '../types';
 
 interface AuthContextType {
     user: User | null;
-    isGuest: boolean; // New: Track if user chose offline mode
+    isGuest: boolean;
     loading: boolean;
     login: (email: string, pass: string) => Promise<void>;
     register: (email: string, pass: string) => Promise<void>;
     logout: () => Promise<void>;
-    continueAsGuest: () => void; // New: Method to bypass auth
+    continueAsGuest: () => void;
     error: string | null;
     clearError: () => void;
+    // PRO Features
+    subscription: UserSubscription;
+    upgradeToPro: (tier: SubscriptionTier) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const DEFAULT_SUB: UserSubscription = { isPro: false, tier: 'free', expiryDate: null };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
     const [isGuest, setIsGuest] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [subscription, setSubscription] = useState<UserSubscription>(DEFAULT_SUB);
 
     useEffect(() => {
         if (!auth) {
@@ -36,9 +44,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             return;
         }
 
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             setUser(currentUser);
-            if (currentUser) setIsGuest(false); // Reset guest if logged in
+            if (currentUser) {
+                setIsGuest(false);
+                // Fetch Subscription Status from Firestore
+                if (db) {
+                    try {
+                        const subRef = doc(db, "users", currentUser.uid, "data", "subscription");
+                        const subSnap = await getDoc(subRef);
+                        if (subSnap.exists()) {
+                            setSubscription(subSnap.data() as UserSubscription);
+                        } else {
+                            setSubscription(DEFAULT_SUB);
+                        }
+                    } catch (e) {
+                        console.error("Error fetching subscription", e);
+                    }
+                }
+            } else {
+                setSubscription(DEFAULT_SUB);
+            }
             setLoading(false);
         });
         return () => unsubscribe();
@@ -91,18 +117,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             await signOut(auth);
         }
         setUser(null);
-        setIsGuest(false); // Reset to allow login again if needed
+        setIsGuest(false);
+        setSubscription(DEFAULT_SUB);
     };
 
     const continueAsGuest = () => {
         setIsGuest(true);
         setLoading(false);
+        setSubscription(DEFAULT_SUB);
+    };
+
+    const upgradeToPro = async (tier: SubscriptionTier) => {
+        if (!user || !db) return;
+        
+        const newSub: UserSubscription = {
+            isPro: true,
+            tier: tier,
+            expiryDate: tier === 'lifetime' ? null : Date.now() + (tier === 'monthly' ? 2592000000 : 31536000000)
+        };
+
+        // Optimistic UI Update
+        setSubscription(newSub);
+
+        // Persist to DB
+        try {
+            const subRef = doc(db, "users", user.uid, "data", "subscription");
+            await setDoc(subRef, newSub, { merge: true });
+        } catch (e) {
+            console.error("Failed to save subscription", e);
+            // Rollback if needed
+        }
     };
 
     const clearError = () => setError(null);
 
     return (
-        <AuthContext.Provider value={{ user, isGuest, loading, login, register, logout, continueAsGuest, error, clearError }}>
+        <AuthContext.Provider value={{ user, isGuest, loading, login, register, logout, continueAsGuest, error, clearError, subscription, upgradeToPro }}>
             {children}
         </AuthContext.Provider>
     );
