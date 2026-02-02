@@ -27,7 +27,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 }) => {
     const { 
         lang, setLang, theme, setTheme, colorTheme, setColorTheme, 
-        config, setConfig, resetTutorials, deferredPrompt, installApp 
+        config, setConfig, resetTutorials, deferredPrompt, installApp, isStandalone 
     } = useApp();
     const { user, logout, subscription } = useAuth();
     const { checkPro, isPro, showPaywall, setShowPaywall, featureAttempted } = usePro();
@@ -254,38 +254,42 @@ service cloud.firestore {
                     </div>
 
                     {/* INSTALL APP SECTION - ALWAYS VISIBLE */}
-                    <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-4 shadow-lg text-white animate-in zoom-in-95">
-                        <div className="flex items-start gap-3">
-                            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
-                                <Icon name="Download" size={20} className="text-white" />
-                            </div>
-                            <div className="flex-1">
-                                <h4 className="font-bold text-sm mb-1">{t.installApp}</h4>
-                                <p className="text-[10px] opacity-80 leading-relaxed mb-3">
-                                    {t.installDesc}
-                                </p>
-                                {deferredPrompt ? (
-                                    <button 
-                                        onClick={installApp}
-                                        className="w-full py-2 bg-white text-indigo-600 rounded-lg text-xs font-bold shadow-md hover:bg-zinc-50 transition-colors"
-                                    >
-                                        {t.installBtn}
-                                    </button>
-                                ) : (
-                                    <div className="bg-black/20 rounded-lg p-3 text-[10px] space-y-2 border border-white/10">
-                                        <div className="flex items-center gap-2">
-                                            <Icon name="Share2" size={12} />
-                                            <span><strong>{t.iosInstall}</strong></span>
+                    {/* Hide entirely if already installed/standalone to reduce clutter */}
+                    {!isStandalone && (
+                        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-4 shadow-lg text-white animate-in zoom-in-95">
+                            <div className="flex items-start gap-3">
+                                <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
+                                    <Icon name="Download" size={20} className="text-white" />
+                                </div>
+                                <div className="flex-1">
+                                    <h4 className="font-bold text-sm mb-1">{t.installApp}</h4>
+                                    <p className="text-[10px] opacity-80 leading-relaxed mb-3">
+                                        {t.installDesc}
+                                    </p>
+                                    
+                                    {deferredPrompt ? (
+                                        <button 
+                                            onClick={installApp}
+                                            className="w-full py-2 bg-white text-indigo-600 rounded-lg text-xs font-bold shadow-md hover:bg-zinc-50 transition-colors active:scale-95"
+                                        >
+                                            {t.installBtn}
+                                        </button>
+                                    ) : (
+                                        <div className="bg-black/20 rounded-lg p-3 text-[10px] space-y-2 border border-white/10">
+                                            <div className="flex items-center gap-2">
+                                                <Icon name="Share2" size={12} />
+                                                <span><strong>{t.iosInstall}</strong></span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Icon name="MoreVertical" size={12} />
+                                                <span><strong>{t.androidInstall}</strong></span>
+                                            </div>
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                            <Icon name="MoreVertical" size={12} />
-                                            <span><strong>{t.androidInstall}</strong></span>
-                                        </div>
-                                    </div>
-                                )}
+                                    )}
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* ADMIN PANEL UI */}
                     {isAdminMode && isAdmin && (

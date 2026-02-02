@@ -43,6 +43,7 @@ interface AppContextType extends AppState {
     // PWA Install State
     deferredPrompt: any;
     installApp: () => void;
+    isStandalone: boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -85,27 +86,42 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
 
     // PWA Prompt State
     const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+    const [isStandalone, setIsStandalone] = useState(false);
 
     const isAppLoading = programLoading || mesoLoading || sessionLoading || exLoading || logsLoading || fbLoading || onboardingLoading;
     const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
     // --- PWA INSTALL HANDLER ---
     useEffect(() => {
+        // Check if already installed
+        if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
+            setIsStandalone(true);
+        }
+
         const handler = (e: any) => {
+            // Prevent Chrome 67+ from automatically showing the prompt
             e.preventDefault();
+            // Stash the event so it can be triggered later.
             setDeferredPrompt(e);
+            console.log("📲 Install Prompt captured");
         };
         window.addEventListener('beforeinstallprompt', handler);
         return () => window.removeEventListener('beforeinstallprompt', handler);
     }, []);
 
     const installApp = useCallback(async () => {
-        if (!deferredPrompt) return;
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted') {
-            setDeferredPrompt(null);
+        if (!deferredPrompt) {
+            console.warn("Install prompt not available");
+            return;
         }
+        // Show the native install prompt
+        deferredPrompt.prompt();
+        // Wait for the user to respond to the prompt
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`User response to install prompt: ${outcome}`);
+        
+        // We can't use the prompt again, verify outcome
+        setDeferredPrompt(null);
     }, [deferredPrompt]);
 
     // --- CLOUD SYNC LOGIC ---
@@ -276,7 +292,7 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
         isAppLoading,
         pendingCloudData, confirmCloudSync, cancelCloudSync, localLastUpdated,
         isOnline,
-        deferredPrompt, installApp
+        deferredPrompt, installApp, isStandalone
     }), [
         lang, setLang, theme, setTheme, colorTheme, setColorTheme,
         program, setProgram,
@@ -291,7 +307,7 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
         isAppLoading,
         pendingCloudData, confirmCloudSync, cancelCloudSync, localLastUpdated,
         isOnline,
-        deferredPrompt, installApp
+        deferredPrompt, installApp, isStandalone
     ]);
 
     if (isAppLoading) {
