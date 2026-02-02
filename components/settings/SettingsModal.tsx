@@ -7,6 +7,8 @@ import { Icon } from '../ui/Icon';
 import { Button } from '../ui/Button';
 import { doc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
+import { usePro } from '../../hooks/usePro';
+import { PaywallModal } from '../pro/PaywallModal';
 
 interface SettingsModalProps {
     onClose: () => void;
@@ -28,12 +30,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         config, setConfig, resetTutorials 
     } = useApp();
     const { user, logout, subscription } = useAuth();
+    const { checkPro, isPro, showPaywall, setShowPaywall, featureAttempted } = usePro();
     const t = TRANSLATIONS[lang];
 
     // Admin State
     const [isAdminMode, setIsAdminMode] = useState(false);
     const [targetInput, setTargetInput] = useState('');
-    const [adminStatus, setAdminStatus] = useState<{ msg: string, type: 'success' | 'error' | 'neutral' } | null>(null);
+    const [adminStatus, setAdminStatus] = useState<{ msg: string, type: 'success' | 'error' | 'neutral', details?: string, codeSnippet?: string } | null>(null);
 
     // HARDCODED ADMIN EMAIL CHECK
     const isAdmin = user?.email === 'gabsvm@gmail.com';
@@ -48,6 +51,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             try {
                 setAdminStatus({ msg: `Searching for email: ${trimmed}...`, type: 'neutral' });
                 const usersRef = collection(db, "users");
+                // Note: Querying requires Firestore Index or Rules allowing list
                 const q = query(usersRef, where("email", "==", trimmed));
                 const querySnapshot = await getDocs(q);
                 
@@ -56,9 +60,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 }
                 // Return the first match's UID
                 return querySnapshot.docs[0].id;
-            } catch (e) {
+            } catch (e: any) {
                 console.error("Email lookup failed", e);
-                return null;
+                // Create specific error for permission issues on list
+                if (e.code === 'permission-denied') {
+                    throw new Error("PERMISSION_DENIED_LIST");
+                }
+                throw new Error(`Email lookup failed: ${e.message}`);
             }
         }
 
@@ -105,14 +113,89 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 setTimeout(() => window.location.reload(), 1500);
             }
         } catch (e: any) {
-            setAdminStatus({ msg: 'Error: ' + e.message, type: 'error' });
+            console.error("Admin Op Error:", e);
+            
+            let helpfulMsg = e.message;
+            let details = "";
+            let codeSnippet = "";
+
+            if (e.code === 'permission-denied' || e.message === 'PERMISSION_DENIED_LIST') {
+                helpfulMsg = "⛔ FIREBASE RULES BLOCKING ADMIN ACCESS";
+                details = "Go to Firebase Console -> Firestore -> Rules and paste this:";
+                codeSnippet = `rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null && request.auth.token.email == '${user?.email}';
+    }
+    match /users { allow list: if isAdmin(); }
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null && (request.auth.uid == userId || isAdmin());
+    }
+  }
+}`;
+            }
+
+            setAdminStatus({ 
+                msg: helpfulMsg, 
+                type: 'error',
+                details: details,
+                codeSnippet: codeSnippet
+            });
         }
+    };
+
+    const copyToClipboard = (text: string) => {
+        navigator.clipboard.writeText(text);
+        alert("Rules copied! Paste them in Firebase Console.");
     };
 
     const ColorPill = ({ color, active, onClick, label }: any) => (
         <button onClick={onClick} className={`flex flex-col items-center gap-1.5 transition-transform active:scale-95 group`}>
             <div className={`w-10 h-10 rounded-full ${color} shadow-sm border-2 transition-all ${active ? 'border-zinc-900 dark:border-white scale-110' : 'border-transparent opacity-80 group-hover:opacity-100'}`} />
             <span className={`text-[9px] font-bold uppercase tracking-wide ${active ? 'text-zinc-900 dark:text-white' : 'text-zinc-400'}`}>{label}</span>
+        </button>
+    );
+
+    // --- PRO COMPONENT HELPERS ---
+    const ProToggle = ({ label, value, onChange, featureName }: any) => (
+        <div className="flex items-center justify-between p-3 bg-white dark:bg-zinc-800 rounded-xl border border-zinc-100 dark:border-white/5">
+            <span className="text-sm font-bold text-zinc-700 dark:text-zinc-300">{label}</span>
+            <button 
+                onClick={() => {
+                    if (checkPro(featureName)) {
+                        onChange(!value);
+                    }
+                }}
+                className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${value ? 'bg-green-500' : 'bg-zinc-300 dark:bg-zinc-600'}`}
+            >
+                <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-300 flex items-center justify-center ${value ? 'translate-x-6' : 'translate-x-0'}`}>
+                    {!isPro && !value && <Icon name="Lock" size={8} className="text-zinc-400" />}
+                </div>
+            </button>
+        </div>
+    );
+
+    const ProButton = ({ label, icon, onClick, featureName }: any) => (
+        <button 
+            onClick={() => {
+                if (checkPro(featureName)) {
+                    onClick();
+                }
+            }}
+            className="w-full p-3 bg-white dark:bg-zinc-800 rounded-xl flex items-center justify-between group active:scale-[0.98] transition-all border border-zinc-100 dark:border-white/5 hover:border-zinc-300 dark:hover:border-zinc-600"
+        >
+            <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg ${isPro ? 'bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white' : 'bg-zinc-100 dark:bg-zinc-700/50 text-zinc-400'}`}>
+                    <Icon name={icon} size={18} />
+                </div>
+                <span className={`font-bold text-sm ${isPro ? 'text-zinc-700 dark:text-zinc-200' : 'text-zinc-500'}`}>{label}</span>
+            </div>
+            {!isPro ? (
+                <Icon name="Lock" size={16} className="text-yellow-500" />
+            ) : (
+                <Icon name="ChevronRight" size={16} className="text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-white" />
+            )}
         </button>
     );
 
@@ -170,9 +253,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         )}
                     </div>
 
-                    {/* ADMIN PANEL UI - No Overflow Hidden to prevent clipping */}
+                    {/* ADMIN PANEL UI */}
                     {isAdminMode && isAdmin && (
-                        <div className="p-4 bg-zinc-900 rounded-2xl border-2 border-red-500/50 shadow-xl relative">
+                        <div className="p-4 bg-zinc-900 rounded-2xl border-2 border-red-500/50 shadow-xl relative animate-in slide-in-from-top-4 fade-in duration-300">
                             <div className="flex justify-between items-center mb-4">
                                 <h3 className="text-xs font-black text-red-500 uppercase tracking-widest">Admin Control</h3>
                                 <span className="text-[9px] bg-red-900/50 text-red-200 px-1.5 py-0.5 rounded border border-red-500/30">GOD MODE</span>
@@ -188,7 +271,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                         onChange={e => setTargetInput(e.target.value)}
                                     />
                                     <div className="text-[9px] text-zinc-500 mt-1 flex justify-between">
-                                        <span>Current: {user?.uid.slice(0,6)}...</span>
+                                        <span>Self: {user?.uid.slice(0,6)}...</span>
                                         {targetInput.includes('@') && <span className="text-blue-400">Email Mode</span>}
                                     </div>
                                 </div>
@@ -203,17 +286,74 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                 </div>
                                 
                                 {adminStatus && (
-                                    <div className={`p-2 rounded-lg text-[10px] font-mono break-all border ${
+                                    <div className={`p-3 rounded-xl text-[10px] font-mono break-all border ${
                                         adminStatus.type === 'success' ? 'bg-green-900/20 border-green-900/50 text-green-400' : 
                                         adminStatus.type === 'error' ? 'bg-red-900/20 border-red-900/50 text-red-400' :
                                         'bg-zinc-800 border-zinc-700 text-zinc-300'
                                     }`}>
-                                        {adminStatus.msg}
+                                        <div className="font-bold mb-1">{adminStatus.msg}</div>
+                                        {adminStatus.details && (
+                                            <div className="mt-2 pt-2 border-t border-red-500/30 opacity-80 whitespace-pre-wrap select-all cursor-text">
+                                                {adminStatus.details}
+                                                {adminStatus.codeSnippet && (
+                                                    <button 
+                                                        onClick={() => copyToClipboard(adminStatus.codeSnippet!)}
+                                                        className="mt-3 w-full py-2 bg-red-600 text-white rounded font-bold text-[10px] uppercase flex items-center justify-center gap-2 hover:bg-red-500 transition-colors"
+                                                    >
+                                                        <Icon name="Copy" size={12} /> Copy Rules to Clipboard
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
                         </div>
                     )}
+
+                    {/* --- NEW SECTION: Content (Pro Gated) --- */}
+                    <div>
+                        <label className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 block">{t.programEditor || "Content Management"}</label>
+                        <div className="space-y-3">
+                            <ProButton 
+                                label={t.programEditor} 
+                                icon="Layout" 
+                                onClick={onOpenProgram} 
+                                featureName="Custom Routines" 
+                            />
+                            <ProButton 
+                                label={t.manageEx} 
+                                icon="Dumbbell" 
+                                onClick={onOpenExercises} 
+                                featureName="Exercise Library" 
+                            />
+                        </div>
+                    </div>
+
+                    {/* --- NEW SECTION: Workout Config (Pro Gated) --- */}
+                    <div>
+                        <label className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 block">{t.workoutConfig}</label>
+                        <div className="space-y-3">
+                            <ProToggle 
+                                label={t.showRIR} 
+                                value={config.showRIR} 
+                                onChange={(val: boolean) => setConfig({ ...config, showRIR: val })} 
+                                featureName="RIR Tracking" 
+                            />
+                            <ProToggle 
+                                label={t.rpEnabled} 
+                                value={config.rpEnabled} 
+                                onChange={(val: boolean) => setConfig({ ...config, rpEnabled: val })} 
+                                featureName="IronCoach AI" 
+                            />
+                            <ProToggle 
+                                label={t.keepScreen} 
+                                value={config.keepScreenOn} 
+                                onChange={(val: boolean) => setConfig({ ...config, keepScreenOn: val })} 
+                                featureName="Screen Settings" 
+                            />
+                        </div>
+                    </div>
 
                     {/* Language */}
                     <div>
@@ -275,6 +415,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     </div>
                 </div>
             </div>
+            
+            {/* Paywall Overlay if triggered */}
+            {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} feature={featureAttempted} />}
         </div>
     );
 };
