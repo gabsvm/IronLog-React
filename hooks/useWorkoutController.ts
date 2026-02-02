@@ -7,7 +7,7 @@ import { arrayMove } from '@dnd-kit/sortable';
 import { triggerHaptic } from '../utils/audio';
 import { getLastLogForExercise } from '../utils';
 
-export const useWorkoutController = (onFinishCallback: () => void) => {
+export const useWorkoutController = (onFinishCallback: () => void, onDiscardCallback: () => void) => {
     const { activeSession, activeMeso, setActiveSession, setActiveMeso, setProgram, exercises, rpFeedback, setRpFeedback, config, logs } = useApp();
     const { setRestTimer } = useTimerContext();
     
@@ -25,6 +25,7 @@ export const useWorkoutController = (onFinishCallback: () => void) => {
     const [changingSetType, setChangingSetType] = useState<{ exId: number, setId: number, currentType: SetType } | null>(null);
     const [showPlateCalc, setShowPlateCalc] = useState<{ weight: number } | null>(null);
     const [detailExercise, setDetailExercise] = useState<SessionExercise | null>(null);
+    const [showDiscardConfirm, setShowDiscardConfirm] = useState(false); // NEW
     
     // Feature: Update Template
     const [updateTemplate, setUpdateTemplate] = useState(false);
@@ -255,6 +256,20 @@ export const useWorkoutController = (onFinishCallback: () => void) => {
         }
     }, [onFinishCallback, config, detectPRs, fireConfetti, updateTemplate, activeMeso, activeSession, sessionExercises, setProgram, setActiveMeso]);
 
+    // --- NEW: Handle Discard/Reset Session ---
+    const handleDiscardSession = useCallback(() => {
+        triggerHaptic('warning');
+        // Clear internal timer logic state
+        setRestTimer({ active: false, timeLeft: 0, duration: 0, endAt: 0 }); 
+        
+        // Close modals
+        setShowFinishModal(false);
+        setShowDiscardConfirm(false);
+        
+        // Invoke specific discard callback (handled in App.tsx)
+        onDiscardCallback();
+    }, [setRestTimer, onDiscardCallback]);
+
     const handleSaveFeedback = useCallback((feedbackData: Record<string, any>) => {
         if (!activeSession) return;
         triggerHaptic('success');
@@ -314,6 +329,8 @@ export const useWorkoutController = (onFinishCallback: () => void) => {
         handleNoteUpdate,
         toggleSetComplete,
         handleConfirmFinish,
+        handleDiscardSession, // EXPORTED
+        showDiscardConfirm, setShowDiscardConfirm, // EXPORTED
         handleSaveFeedback,
         reorderSessionExercises,
         updateSession: setActiveSession,

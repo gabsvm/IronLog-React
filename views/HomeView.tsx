@@ -1,7 +1,7 @@
 
 import React, { useState, Suspense, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
-import { TRANSLATIONS, FULL_BODY_TEMPLATE, DEFAULT_TEMPLATE, METABOLITE_TEMPLATE, RESENS_TEMPLATE, UPPER_LOWER_TEMPLATE, WIZARD_TEMPLATE, MALE_PHYSIQUE_TEMPLATE } from '../constants';
+import { TRANSLATIONS, FULL_BODY_TEMPLATE, DEFAULT_TEMPLATE, METABOLITE_TEMPLATE, RESENS_TEMPLATE, UPPER_LOWER_TEMPLATE, WIZARD_TEMPLATE, MALE_PHYSIQUE_TEMPLATE, TOJI_TEMPLATE } from '../constants';
 import { Icon } from '../components/ui/Icon';
 import { Button } from '../components/ui/Button';
 import { getTranslated, formatDate } from '../utils';
@@ -176,6 +176,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
             case 'full_body': planToUse = FULL_BODY_TEMPLATE; setProgram(FULL_BODY_TEMPLATE); break;
             case 'wizard': planToUse = WIZARD_TEMPLATE; setProgram(WIZARD_TEMPLATE); break;
             case 'male_physique': planToUse = MALE_PHYSIQUE_TEMPLATE; setProgram(MALE_PHYSIQUE_TEMPLATE); break;
+            case 'toji_fushiguro': planToUse = TOJI_TEMPLATE; setProgram(TOJI_TEMPLATE); break;
         }
 
         const initialPlan = planToUse.map(day => (day?.slots || []).map(slot => slot.exerciseId || null)); 
@@ -230,19 +231,39 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
         }
     };
 
-    const TemplateButton = ({ type }: { type: MesoType }) => (
-        <button
-            onClick={() => setNewMesoType(type)}
-            className={`w-full text-left p-3 rounded-xl border transition-all mb-2 ${
-                newMesoType === type 
-                ? 'bg-red-50 dark:bg-red-900/20 border-red-500 text-red-700 dark:text-red-400' 
-                : 'bg-zinc-50 dark:bg-white/5 border-transparent text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/10'
-            }`}
-        >
-            <div className="font-bold mb-0.5 text-sm">{String(t.phases?.[type] || type)}</div>
-            <div className="text-[10px] opacity-70 leading-relaxed">{String(t.phaseDesc?.[type] || "")}</div>
-        </button>
-    );
+    const TemplateButton = ({ type }: { type: MesoType }) => {
+        // Updated Pro Logic: Toji, Wizard, and Full Body are PRO
+        const isProTemplate = type === 'toji_fushiguro' || type === 'wizard' || type === 'full_body';
+        const isLocked = isProTemplate && !isPro;
+
+        return (
+            <button
+                onClick={() => {
+                    if (isLocked) {
+                        checkPro(String(t.phases?.[type] || "Premium Routine"));
+                        return;
+                    }
+                    setNewMesoType(type);
+                }}
+                className={`w-full text-left p-3 rounded-xl border transition-all mb-2 relative group overflow-hidden ${
+                    newMesoType === type 
+                    ? 'bg-red-50 dark:bg-red-900/20 border-red-500 text-red-700 dark:text-red-400' 
+                    : 'bg-zinc-50 dark:bg-white/5 border-transparent text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/10'
+                }`}
+            >
+                <div className="flex justify-between items-start">
+                    <div>
+                        <div className="font-bold mb-0.5 text-sm flex items-center gap-2">
+                            {String(t.phases?.[type] || type)}
+                            {isProTemplate && <span className="text-[9px] bg-zinc-900 text-white dark:bg-white dark:text-black px-1.5 py-0.5 rounded uppercase font-black tracking-wider">PRO</span>}
+                        </div>
+                        <div className="text-[10px] opacity-70 leading-relaxed">{String(t.phaseDesc?.[type] || "")}</div>
+                    </div>
+                    {isLocked && <Icon name="Lock" size={16} className="text-zinc-400" />}
+                </div>
+            </button>
+        );
+    };
 
     // Empty State (No Active Meso)
     if (!activeMeso) {
@@ -284,10 +305,11 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                                 <button onClick={() => setShowStartWizard(false)} className="text-zinc-400"><Icon name="X" size={24} /></button>
                             </div>
                             <div className="space-y-6 overflow-y-auto scroll-container flex-1 px-6 pb-6">
-                                {/* Templates */}
+                                {/* Templates - Reordered to show PRO options at top */}
+                                <TemplateButton type="toji_fushiguro" />
                                 <TemplateButton type="wizard" />
-                                <TemplateButton type="hyp_1" />
                                 <TemplateButton type="full_body" />
+                                <TemplateButton type="hyp_1" />
                             </div>
                             <div className="shrink-0 p-6 pt-2 border-t border-zinc-100 dark:border-white/5 bg-white dark:bg-zinc-900 rounded-b-2xl">
                                 <Button onClick={handleStartMeso} fullWidth size="lg">{String(t.createAndSelect)}</Button>

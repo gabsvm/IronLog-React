@@ -245,6 +245,11 @@ const AppContent = () => {
                                 setRestTimer({ active: false, timeLeft: 0, duration: 0, endAt: 0 }); 
                                 setView('home');
                             }} 
+                            onDiscard={() => {
+                                // Specific handler for Discarding a session without saving
+                                setActiveSession(null); // Wipe active session IDB
+                                setView('home'); // Go back to Home
+                            }}
                             onBack={() => setView('home')} 
                         />
                     ) : view === 'exercises' ? (

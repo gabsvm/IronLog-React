@@ -10,6 +10,7 @@ import { WarmupModal } from '../components/ui/WarmupModal';
 import { PlateCalculatorModal } from '../components/ui/PlateCalculatorModal'; 
 import { PRCelebrationOverlay } from '../components/ui/PRCelebrationOverlay'; 
 import { ExerciseDetailModal } from '../components/ui/ExerciseDetailModal';
+import { ConfirmModal } from '../components/ui/ConfirmModal'; // Import Confirm Modal
 import { ExerciseDef, SessionExercise, SetType } from '../types';
 import { getTranslated, getMesoStageConfig, getLastLogForExercise } from '../utils';
 import { useWorkoutController } from '../hooks/useWorkoutController';
@@ -36,16 +37,17 @@ import {
 
 interface WorkoutViewProps {
     onFinish: () => void;
+    onDiscard: () => void; // Added onDiscard
     onBack: () => void;
 }
 
 // Container Component
-export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onBack }) => {
+export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, onBack }) => {
     const { activeSession, activeMeso, lang, config, exercises, logs, tutorialProgress, markTutorialSeen } = useApp();
     const t = TRANSLATIONS[lang];
     
-    // Use the Custom Controller Hook
-    const ctrl = useWorkoutController(onFinish);
+    // Use the Custom Controller Hook - Pass both callbacks
+    const ctrl = useWorkoutController(onFinish, onDiscard);
 
     // View State for Focus Mode
     const [viewMode, setViewMode] = useState<'list' | 'focus'>('list');
@@ -477,9 +479,31 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onBack }) =>
                              <Button variant="secondary" onClick={() => ctrl.setShowFinishModal(false)}>{t.cancel}</Button>
                              <Button variant="primary" onClick={ctrl.handleConfirmFinish}>{t.finishWorkout}</Button>
                          </div>
+
+                         {/* NEW: Discard Session Option */}
+                         <div className="pt-2 text-center">
+                             <button 
+                                onClick={() => ctrl.setShowDiscardConfirm(true)}
+                                className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors uppercase tracking-widest"
+                             >
+                                 {t.resetSession || "Discard / Reset"}
+                             </button>
+                         </div>
                      </div>
                  </div>
             )}
+            
+            {/* NEW: Discard Confirmation Modal */}
+            <ConfirmModal 
+                isOpen={ctrl.showDiscardConfirm}
+                title={t.discardSession || "Discard Session"}
+                description={t.discardConfirm || "Discard current session data? This cannot be undone."}
+                confirmText={t.delete}
+                cancelText={t.cancel}
+                onConfirm={ctrl.handleDiscardSession}
+                onCancel={() => ctrl.setShowDiscardConfirm(false)}
+                variant="danger"
+            />
             
             {ctrl.showPRSuccess && (
                 <PRCelebrationOverlay onDismiss={ctrl.dismissPRSuccess} />

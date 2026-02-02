@@ -7,7 +7,7 @@ export type MuscleGroup =
   | 'CHEST' | 'BACK' | 'QUADS' | 'HAMSTRINGS' 
   | 'GLUTES' | 'CALVES' | 'SHOULDERS' | 'BICEPS' 
   | 'TRICEPS' | 'TRAPS' | 'ABS' | 'FOREARMS'
-  | 'CARDIO'; 
+  | 'NECK' | 'CARDIO'; // Added NECK
 
 export type CardioType = 'steady' | 'hiit' | 'tabata';
 
@@ -81,7 +81,7 @@ export interface ProgramDay {
   slots: ProgramSlot[];
 }
 
-export type MesoType = 'hyp_1' | 'hyp_2' | 'metabolite' | 'resensitization' | 'full_body' | 'wizard' | 'male_physique';
+export type MesoType = 'hyp_1' | 'hyp_2' | 'metabolite' | 'resensitization' | 'full_body' | 'wizard' | 'male_physique' | 'toji_fushiguro';
 
 export interface MesoCycle {
   id: number;
