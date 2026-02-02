@@ -1,45 +1,34 @@
 
-const CACHE_NAME = 'ironlog-pro-v7-offline';
+const CACHE_NAME = 'ironlog-pro-v8-offline-robust';
 
-// Core assets that MUST be present for the app to boot
-const CORE_ASSETS = [
+// Files that MUST be cached immediately during install
+const PRECACHE_URLS = [
   '/',
   '/index.html',
   '/manifest.json',
   '/icon.svg',
-  '/index.css' // Assuming tailwind/css might be extracted here in build
+  '/icons/icon-96x96.png',
+  '/icons/icon-192x192.png'
 ];
 
-// Helper to cache a request
-const cacheRequest = async (request, response) => {
-  if (!response || response.status !== 200 || response.type !== 'basic' && response.type !== 'cors') {
-    return;
-  }
-  try {
-    const cache = await caches.open(CACHE_NAME);
-    await cache.put(request, response.clone());
-  } catch (e) {
-    // Ignore cache errors (quota, etc)
-  }
-};
-
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
+  self.skipWaiting(); // Activate worker immediately
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      // We accept that some assets might fail (like external ones), but core must succeed
-      return cache.addAll(CORE_ASSETS).catch(err => console.warn("SW: Some assets failed to pre-cache", err));
+      // Force cache critical assets
+      return cache.addAll(PRECACHE_URLS).catch(err => console.warn("SW Precache warning:", err));
     })
   );
 });
 
 self.addEventListener('activate', (event) => {
-  self.clients.claim();
+  self.clients.claim(); // Take control of open pages immediately
   event.waitUntil(
     caches.keys().then((keyList) => {
       return Promise.all(
         keyList.map((key) => {
           if (key !== CACHE_NAME) {
+            console.log('SW: Cleaning old cache', key);
             return caches.delete(key);
           }
         })
@@ -51,49 +40,63 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // 1. NAVIGATION REQUESTS (HTML)
-  // Network First -> Fallback to Cache -> Fallback to /index.html
+  // 1. NAVIGATION (HTML) - Network First, Fallback to Cache
+  // This ensures we get updates if online, but app works if offline.
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
-        .then((response) => {
-          cacheRequest(event.request, response);
-          return response;
+        .then((networkResponse) => {
+          return caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, networkResponse.clone());
+            return networkResponse;
+          });
         })
-        .catch(async () => {
-          const cache = await caches.open(CACHE_NAME);
-          // Try exact match first
-          const cachedResponse = await cache.match(event.request);
-          if (cachedResponse) return cachedResponse;
-          
-          // Fallback to app shell
-          return cache.match('/index.html') || cache.match('/');
+        .catch(() => {
+          return caches.open(CACHE_NAME).then((cache) => {
+            return cache.match('/index.html') || cache.match('/');
+          });
         })
     );
     return;
   }
 
-  // 2. EXTERNAL DEPENDENCIES (esm.sh, fonts, etc) & ASSETS
-  // Stale-While-Revalidate Strategy: Serve fast from cache, update in background
+  // 2. ASSETS (JS, CSS, Images, Fonts) - Cache First / Stale-While-Revalidate
+  // Includes local assets AND external CDNs (esm.sh, google fonts)
   if (
-    url.hostname === 'esm.sh' || 
+    url.origin === self.location.origin || // Local files
+    url.hostname === 'esm.sh' ||           // CDN Dependencies
     url.hostname.includes('fonts') ||
-    url.pathname.match(/\.(js|css|png|jpg|jpeg|svg|ico|json|woff2)$/)
+    url.hostname.includes('gstatic')
   ) {
+    // Exclude API calls or non-GET requests
+    if (event.request.method !== 'GET' || url.pathname.startsWith('/api')) {
+      return;
+    }
+
     event.respondWith(
       caches.open(CACHE_NAME).then(async (cache) => {
         const cachedResponse = await cache.match(event.request);
         
-        const fetchPromise = fetch(event.request).then((networkResponse) => {
-          cacheRequest(event.request, networkResponse);
-          return networkResponse;
-        }).catch(() => null); // Eat errors if offline
+        // Return cached response immediately if available
+        if (cachedResponse) {
+          // Optional: Background update for next time (Stale-While-Revalidate)
+          // fetch(event.request).then(netRes => cache.put(event.request, netRes));
+          return cachedResponse;
+        }
 
-        return cachedResponse || fetchPromise;
+        // If not in cache, fetch from network and cache it
+        return fetch(event.request).then((networkResponse) => {
+          if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic' && networkResponse.type !== 'cors' && networkResponse.type !== 'opaque') {
+            return networkResponse;
+          }
+          cache.put(event.request, networkResponse.clone());
+          return networkResponse;
+        }).catch(err => {
+           // Network failed and not in cache. Return nothing (image placeholder logic could go here)
+           console.warn("SW Fetch failed:", event.request.url);
+        });
       })
     );
     return;
   }
-
-  // 3. API CALLS - Network Only (Let the app handle errors)
 });

@@ -38,7 +38,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     const [targetInput, setTargetInput] = useState('');
     const [adminStatus, setAdminStatus] = useState<{ msg: string, type: 'success' | 'error' | 'neutral', details?: string, codeSnippet?: string } | null>(null);
 
-    // HARDCODED ADMIN EMAIL CHECK
     const isAdmin = user?.email === 'gabsvm@gmail.com';
 
     const resolveUid = async (input: string): Promise<string | null> => {
@@ -102,6 +101,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         alert("Copied!");
     };
 
+    const Divider = () => <div className="h-px bg-zinc-100 dark:bg-white/5 my-6 mx-2" />;
+
     const ColorPill = ({ color, active, onClick, label }: any) => (
         <button onClick={onClick} className={`flex flex-col items-center gap-1.5 transition-transform active:scale-95 group`}>
             <div className={`w-10 h-10 rounded-full ${color} shadow-sm border-2 transition-all ${active ? 'border-zinc-900 dark:border-white scale-110' : 'border-transparent opacity-80 group-hover:opacity-100'}`} />
@@ -147,10 +148,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <button onClick={onClose} className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white"><Icon name="X" size={24} /></button>
                 </div>
                 
-                <div className="flex-1 overflow-y-auto p-6 pt-2 pb-24 space-y-8 scroll-container">
+                <div className="flex-1 overflow-y-auto p-6 pt-2 pb-24 space-y-2 scroll-container">
                     
                     {/* Account */}
-                    <div className="p-4 bg-zinc-50 dark:bg-white/5 rounded-2xl border border-zinc-100 dark:border-white/5">
+                    <div className="p-4 bg-zinc-50 dark:bg-white/5 rounded-2xl border border-zinc-100 dark:border-white/5 mb-6">
                         <div className="flex items-center gap-3 mb-3">
                             <div className={`w-10 h-10 rounded-full flex items-center justify-center ${subscription.isPro ? 'bg-gradient-to-br from-yellow-400 to-orange-500 text-white shadow-lg shadow-orange-500/30' : 'bg-zinc-200 text-zinc-500'}`}>
                                 {subscription.isPro ? <Icon name="Crown" size={20} /> : <Icon name="User" size={20} />}
@@ -181,9 +182,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         )}
                     </div>
 
-                    {/* INSTALL APP - ALWAYS VISIBLE BUT ADAPTIVE */}
+                    {/* INSTALL APP */}
                     {!isStandalone && (
-                        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-4 shadow-lg text-white animate-in zoom-in-95">
+                        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-4 shadow-lg text-white animate-in zoom-in-95 mb-6">
                             <div className="flex items-start gap-3">
                                 <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
                                     <Icon name="Download" size={20} className="text-white" />
@@ -214,7 +215,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
                     {/* Admin Panel */}
                     {isAdminMode && isAdmin && (
-                        <div className="p-4 bg-zinc-900 rounded-2xl border-2 border-red-500/50 shadow-xl relative animate-in slide-in-from-top-4 fade-in duration-300">
+                        <div className="p-4 bg-zinc-900 rounded-2xl border-2 border-red-500/50 shadow-xl relative animate-in slide-in-from-top-4 fade-in duration-300 mb-6">
                             <div className="space-y-3">
                                 <div>
                                     <label className="text-[10px] text-zinc-400 block mb-1 font-bold">USER (EMAIL OR UID)</label>
@@ -234,7 +235,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         </div>
                     )}
 
-                    {/* Content */}
+                    {/* Content Topic */}
                     <div>
                         <label className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 block">{t.programEditor || "Content Management"}</label>
                         <div className="space-y-3">
@@ -243,7 +244,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         </div>
                     </div>
 
-                    {/* Workout Config */}
+                    <Divider />
+
+                    {/* Workout Config Topic */}
                     <div>
                         <label className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 block">{t.workoutConfig}</label>
                         <div className="space-y-3">
@@ -253,16 +256,55 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         </div>
                     </div>
 
-                    {/* Language */}
+                    <Divider />
+
+                    {/* Appearance Topic */}
                     <div>
-                        <label className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 block">{t.language}</label>
-                        <div className="grid grid-cols-2 gap-3">
-                            <button onClick={() => setLang('en')} className={`py-3 rounded-xl text-sm font-bold border ${lang === 'en' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900' : 'bg-zinc-100 dark:bg-zinc-800'}`}>English</button>
-                            <button onClick={() => setLang('es')} className={`py-3 rounded-xl text-sm font-bold border ${lang === 'es' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900' : 'bg-zinc-100 dark:bg-zinc-800'}`}>Español</button>
+                        <label className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 block">{t.appearance}</label>
+                        <div className="grid grid-cols-2 gap-3 mb-6">
+                            <button onClick={() => setTheme('dark')} className={`py-3 rounded-xl text-sm font-bold border flex items-center justify-center gap-2 ${theme === 'dark' ? 'bg-zinc-800 text-white border-zinc-600' : 'bg-zinc-50 text-zinc-500 border-transparent'}`}><Icon name="Moon" size={16} /> Dark</button>
+                            <button onClick={() => setTheme('light')} className={`py-3 rounded-xl text-sm font-bold border flex items-center justify-center gap-2 ${theme === 'light' ? 'bg-white text-zinc-900 border-zinc-300' : 'bg-zinc-800/50 text-zinc-500 border-transparent'}`}><Icon name="Sun" size={16} /> Light</button>
+                        </div>
+                        <div className="bg-zinc-50 dark:bg-white/5 p-4 rounded-2xl">
+                            <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3 block">Accent Color</label>
+                            <div className="grid grid-cols-4 gap-4">
+                                <ColorPill color="bg-red-600" label="Iron" active={colorTheme === 'iron'} onClick={() => setColorTheme('iron')} />
+                                <ColorPill color="bg-blue-600" label="Ocean" active={colorTheme === 'ocean'} onClick={() => setColorTheme('ocean')} />
+                                <ColorPill color="bg-emerald-600" label="Forest" active={colorTheme === 'forest'} onClick={() => setColorTheme('forest')} />
+                                <ColorPill color="bg-purple-600" label="Royal" active={colorTheme === 'royal'} onClick={() => setColorTheme('royal')} />
+                            </div>
+                        </div>
+                        
+                        <div className="mt-6">
+                            <label className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 block">{t.language}</label>
+                            <div className="grid grid-cols-2 gap-3">
+                                <button onClick={() => setLang('en')} className={`py-3 rounded-xl text-sm font-bold border ${lang === 'en' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900' : 'bg-zinc-100 dark:bg-zinc-800'}`}>English</button>
+                                <button onClick={() => setLang('es')} className={`py-3 rounded-xl text-sm font-bold border ${lang === 'es' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900' : 'bg-zinc-100 dark:bg-zinc-800'}`}>Español</button>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Database */}
+                    <Divider />
+
+                    {/* Help Topic (Restored) */}
+                    <div>
+                        <label className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 block">Help & Support</label>
+                        <div className="space-y-3">
+                            <button onClick={() => { resetTutorials(); onClose(); alert(lang === 'en' ? "Tutorials reset!" : "¡Tutoriales reiniciados!"); }} className="w-full p-3 bg-white dark:bg-zinc-800 rounded-xl border border-zinc-100 dark:border-white/5 hover:border-zinc-300 dark:hover:border-zinc-600 flex items-center justify-between group active:scale-[0.98]">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 rounded-lg bg-zinc-100 dark:bg-zinc-700/50 text-zinc-400">
+                                        <Icon name="Info" size={18} />
+                                    </div>
+                                    <span className="font-bold text-sm text-zinc-700 dark:text-zinc-200">{t.tutorial?.reset || "Reset Tutorials"}</span>
+                                </div>
+                                <Icon name="ChevronRight" size={16} className="text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-white" />
+                            </button>
+                        </div>
+                    </div>
+
+                    <Divider />
+
+                    {/* Database Topic */}
                     <div>
                         <label className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 block">{t.database}</label>
                         <div className="space-y-2">
@@ -274,7 +316,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         </div>
                     </div>
 
-                    {/* Danger Zone */}
+                    <Divider />
+
+                    {/* Danger Zone Topic */}
                     <div>
                         <label className="text-xs font-black text-red-400 uppercase tracking-widest mb-3 block">{t.dangerZone}</label>
                         <button onClick={onReset} className="w-full py-3 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900 rounded-xl text-sm font-bold flex items-center justify-center gap-2"><Icon name="Trash2" size={16} /> {t.factoryReset}</button>
