@@ -1,19 +1,34 @@
 
-const CACHE_NAME = 'ironlog-pro-v6-offline-capable';
-const STATIC_ASSETS = [
+const CACHE_NAME = 'ironlog-pro-v7-offline';
+
+// Core assets that MUST be present for the app to boot
+const CORE_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
   '/icon.svg',
-  '/icons/icon-96x96.png',
-  '/icons/icon-192x192.png'
+  '/index.css' // Assuming tailwind/css might be extracted here in build
 ];
+
+// Helper to cache a request
+const cacheRequest = async (request, response) => {
+  if (!response || response.status !== 200 || response.type !== 'basic' && response.type !== 'cors') {
+    return;
+  }
+  try {
+    const cache = await caches.open(CACHE_NAME);
+    await cache.put(request, response.clone());
+  } catch (e) {
+    // Ignore cache errors (quota, etc)
+  }
+};
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS);
+      // We accept that some assets might fail (like external ones), but core must succeed
+      return cache.addAll(CORE_ASSETS).catch(err => console.warn("SW: Some assets failed to pre-cache", err));
     })
   );
 });
@@ -36,59 +51,49 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // 1. IGNORE: API Calls (Firebase, GenAI) - Let the app logic/SDK handle these
-  if (url.origin.includes('googleapis') || url.origin.includes('firestore') || url.origin.includes('firebase')) {
-    return; // Network only
+  // 1. NAVIGATION REQUESTS (HTML)
+  // Network First -> Fallback to Cache -> Fallback to /index.html
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          cacheRequest(event.request, response);
+          return response;
+        })
+        .catch(async () => {
+          const cache = await caches.open(CACHE_NAME);
+          // Try exact match first
+          const cachedResponse = await cache.match(event.request);
+          if (cachedResponse) return cachedResponse;
+          
+          // Fallback to app shell
+          return cache.match('/index.html') || cache.match('/');
+        })
+    );
+    return;
   }
 
-  // 2. DEPENDENCIES (esm.sh, images, css, js) -> CACHE FIRST (Stale While Revalidate logic)
-  // This is critical for the app to load without internet
+  // 2. EXTERNAL DEPENDENCIES (esm.sh, fonts, etc) & ASSETS
+  // Stale-While-Revalidate Strategy: Serve fast from cache, update in background
   if (
     url.hostname === 'esm.sh' || 
+    url.hostname.includes('fonts') ||
     url.pathname.match(/\.(js|css|png|jpg|jpeg|svg|ico|json|woff2)$/)
   ) {
     event.respondWith(
-      caches.match(event.request).then((cachedResponse) => {
-        // Return cached file immediately if found
-        if (cachedResponse) {
-          return cachedResponse;
-        }
+      caches.open(CACHE_NAME).then(async (cache) => {
+        const cachedResponse = await cache.match(event.request);
         
-        // If not in cache, fetch from network and cache it for next time
-        return fetch(event.request).then((networkResponse) => {
-          if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic' && networkResponse.type !== 'cors') {
-            return networkResponse;
-          }
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
+        const fetchPromise = fetch(event.request).then((networkResponse) => {
+          cacheRequest(event.request, networkResponse);
           return networkResponse;
-        }).catch(() => {
-           // If offline and not in cache, we can't do much for assets
-           // But because we cache on first load, this shouldn't happen for core files
-        });
+        }).catch(() => null); // Eat errors if offline
+
+        return cachedResponse || fetchPromise;
       })
     );
     return;
   }
 
-  // 3. NAVIGATION (HTML) -> NETWORK FIRST, FALLBACK TO CACHE
-  // Try to get the latest version. If offline, serve the cached app shell.
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
-          return response;
-        })
-        .catch(() => {
-          // OFFLINE FALLBACK: Serve index.html
-          return caches.match('/index.html').then(resp => resp || caches.match('/'));
-        })
-    );
-  }
+  // 3. API CALLS - Network Only (Let the app handle errors)
 });
