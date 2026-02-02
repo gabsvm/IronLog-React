@@ -39,6 +39,10 @@ interface AppContextType extends AppState {
     cancelCloudSync: () => void;
     localLastUpdated: number;
     isOnline: boolean;
+
+    // PWA Install State
+    deferredPrompt: any;
+    installApp: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -79,8 +83,30 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
     const [pendingCloudData, setPendingCloudData] = useState<Partial<AppState> | null>(null);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
 
+    // PWA Prompt State
+    const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
     const isAppLoading = programLoading || mesoLoading || sessionLoading || exLoading || logsLoading || fbLoading || onboardingLoading;
     const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+
+    // --- PWA INSTALL HANDLER ---
+    useEffect(() => {
+        const handler = (e: any) => {
+            e.preventDefault();
+            setDeferredPrompt(e);
+        };
+        window.addEventListener('beforeinstallprompt', handler);
+        return () => window.removeEventListener('beforeinstallprompt', handler);
+    }, []);
+
+    const installApp = useCallback(async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+            setDeferredPrompt(null);
+        }
+    }, [deferredPrompt]);
 
     // --- CLOUD SYNC LOGIC ---
     
@@ -249,7 +275,8 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
         tutorialProgress, markTutorialSeen, resetTutorials,
         isAppLoading,
         pendingCloudData, confirmCloudSync, cancelCloudSync, localLastUpdated,
-        isOnline
+        isOnline,
+        deferredPrompt, installApp
     }), [
         lang, setLang, theme, setTheme, colorTheme, setColorTheme,
         program, setProgram,
@@ -263,7 +290,8 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
         tutorialProgress, markTutorialSeen, resetTutorials,
         isAppLoading,
         pendingCloudData, confirmCloudSync, cancelCloudSync, localLastUpdated,
-        isOnline
+        isOnline,
+        deferredPrompt, installApp
     ]);
 
     if (isAppLoading) {

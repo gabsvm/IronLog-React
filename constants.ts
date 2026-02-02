@@ -762,7 +762,7 @@ export const TRANSLATIONS = {
                 rec_ppl: "Push/Pull/Legs allows high volume for advanced trainees.",
                 rec_endurance: "Metabolite training focuses on higher reps and endurance.",
                 rec_default: "Balanced starting point.",
-                rec_wizard: "The 'Wizard' split (Heavy/Light/Medium) is perfect for 3-day frequency."
+                rec_wizard: "The 'Wizard' split (Heavy/Light/Medium) is perfecto for 3-day frequency."
             },
             adjusted: "Note: Volume reduced slightly to fit your time constraints."
         },
@@ -788,6 +788,13 @@ export const TRANSLATIONS = {
             proMember: "Pro Member",
             signInRegister: "Sign In / Register"
         },
+
+        // NEW: PWA Install
+        installApp: "Install App",
+        installDesc: "Install IronLog on your home screen for quick access and full offline support.",
+        installBtn: "Install Now",
+        iosInstall: "iOS: Share → Add to Home Screen",
+        androidInstall: "Android: Menu → Install App",
 
         // ... (REST OF THE FILE)
         // Home View Specific
@@ -1021,6 +1028,13 @@ export const TRANSLATIONS = {
             proMember: "Miembro Pro",
             signInRegister: "Iniciar Sesión / Registro"
         },
+
+        // NEW: PWA Install
+        installApp: "Instalar App",
+        installDesc: "Instala IronLog en tu pantalla de inicio para acceso rápido y modo offline completo.",
+        installBtn: "Instalar Ahora",
+        iosInstall: "iOS: Compartir → Añadir a Inicio",
+        androidInstall: "Android: Menú → Instalar App",
 
         // ... (REST OF FILE)
         // Home View Specific

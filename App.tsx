@@ -134,17 +134,6 @@ const AppContent = () => {
         } catch (e) {}
     }, [view, showSettings]);
 
-    // PWA Install Prompt State
-    const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-    useEffect(() => {
-        const handler = (e: any) => {
-            e.preventDefault();
-            setDeferredPrompt(e);
-        };
-        window.addEventListener('beforeinstallprompt', handler);
-        return () => window.removeEventListener('beforeinstallprompt', handler);
-    }, []);
-
     // --- DATA MANAGEMENT ---
     const handleExport = () => {
         const data = {
