@@ -4,7 +4,8 @@ import { getAuth, Auth } from "firebase/auth";
 import { 
   initializeFirestore, 
   Firestore, 
-  persistentLocalCache
+  persistentLocalCache,
+  persistentMultipleTabManager
 } from "firebase/firestore";
 
 // --- CONFIGURATION STRATEGY ---
@@ -43,11 +44,13 @@ if (isValidConfig) {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     
-    // ENABLE OFFLINE PERSISTENCE
-    // This allows the app to work offline and sync changes later automatically.
-    // We utilize persistentLocalCache which defaults to IndexedDB.
+    // ENABLE ROBUST OFFLINE PERSISTENCE
+    // We use persistentLocalCache with multi-tab support to ensure
+    // data is readable/writable even when network is down.
     db = initializeFirestore(app, {
-      localCache: persistentLocalCache()
+      localCache: persistentLocalCache({
+        tabManager: persistentMultipleTabManager()
+      })
     });
     
     console.log("✅ Firebase initialized with Offline Persistence");

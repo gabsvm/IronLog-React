@@ -93,10 +93,13 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
 
     // --- PWA INSTALL HANDLER ---
     useEffect(() => {
-        // Check if already installed
-        if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
-            setIsStandalone(true);
-        }
+        // Detect if already installed
+        const isStandaloneQuery = window.matchMedia('(display-mode: standalone)');
+        setIsStandalone(isStandaloneQuery.matches);
+        
+        isStandaloneQuery.addEventListener('change', (e) => {
+            setIsStandalone(e.matches);
+        });
 
         const handler = (e: any) => {
             // Prevent Chrome 67+ from automatically showing the prompt
@@ -120,8 +123,9 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
         const { outcome } = await deferredPrompt.userChoice;
         console.log(`User response to install prompt: ${outcome}`);
         
-        // We can't use the prompt again, verify outcome
-        setDeferredPrompt(null);
+        if(outcome === 'accepted') {
+            setDeferredPrompt(null);
+        }
     }, [deferredPrompt]);
 
     // --- CLOUD SYNC LOGIC ---

@@ -253,8 +253,8 @@ service cloud.firestore {
                         )}
                     </div>
 
-                    {/* INSTALL APP SECTION - ALWAYS VISIBLE */}
-                    {/* Hide entirely if already installed/standalone to reduce clutter */}
+                    {/* INSTALL APP SECTION */}
+                    {/* Hide if already in standalone mode to avoid clutter */}
                     {!isStandalone && (
                         <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-4 shadow-lg text-white animate-in zoom-in-95">
                             <div className="flex items-start gap-3">
