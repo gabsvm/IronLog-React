@@ -1,11 +1,11 @@
 
 import React, { useState, Suspense, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
-import { TRANSLATIONS, FULL_BODY_TEMPLATE, DEFAULT_TEMPLATE, METABOLITE_TEMPLATE, RESENS_TEMPLATE, UPPER_LOWER_TEMPLATE, WIZARD_TEMPLATE, MALE_PHYSIQUE_TEMPLATE, TOJI_TEMPLATE } from '../constants';
+import { TRANSLATIONS } from '../constants';
 import { Icon } from '../components/ui/Icon';
 import { Button } from '../components/ui/Button';
 import { getTranslated, formatDate } from '../utils';
-import { MesoType, FeedbackEntry } from '../types';
+import { MesoType, FeedbackEntry, GlobalTemplate } from '../types';
 import { ActivityHeatmap } from '../components/stats/ActivityHeatmap';
 import { TutorialOverlay } from '../components/ui/TutorialOverlay';
 import { usePro } from '../hooks/usePro';
@@ -101,6 +101,48 @@ const NextSessionCard = React.memo(({ nextDayDef, isSessionActive, nextWorkoutId
     );
 });
 
+// 3. Template Selection Button (Extracted)
+interface TemplateButtonProps {
+    template: GlobalTemplate;
+    isSelected: boolean;
+    isPro: boolean;
+    lang: any;
+    onSelect: (t: GlobalTemplate) => void;
+    onCheckPro: (name: string) => void;
+}
+
+const TemplateButton = React.memo(({ template, isSelected, isPro, lang, onSelect, onCheckPro }: TemplateButtonProps) => {
+    const isLocked = template.isPro && !isPro;
+
+    return (
+        <button
+            onClick={() => {
+                if (isLocked) {
+                    onCheckPro(getTranslated(template.title, lang));
+                    return;
+                }
+                onSelect(template);
+            }}
+            className={`w-full text-left p-3 rounded-xl border transition-all mb-2 relative group overflow-hidden ${
+                isSelected 
+                ? 'bg-red-50 dark:bg-red-900/20 border-red-500 text-red-700 dark:text-red-400' 
+                : 'bg-zinc-50 dark:bg-white/5 border-transparent text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/10'
+            }`}
+        >
+            <div className="flex justify-between items-start">
+                <div>
+                    <div className="font-bold mb-0.5 text-sm flex items-center gap-2">
+                        {getTranslated(template.title, lang)}
+                        {template.isPro && <span className="text-[9px] bg-zinc-900 text-white dark:bg-white dark:text-black px-1.5 py-0.5 rounded uppercase font-black tracking-wider">PRO</span>}
+                    </div>
+                    <div className="text-[10px] opacity-70 leading-relaxed">{getTranslated(template.description, lang)}</div>
+                </div>
+                {isLocked && <Icon name="Lock" size={16} className="text-zinc-400" />}
+            </div>
+        </button>
+    );
+});
+
 // --- MAIN COMPONENT ---
 
 interface HomeViewProps {
@@ -110,7 +152,7 @@ interface HomeViewProps {
 }
 
 export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram, onSkipSession }) => {
-    const { activeMeso, activeSession, program, setActiveMeso, lang, logs, config, rpFeedback, setProgram, exercises, tutorialProgress, markTutorialSeen } = useApp();
+    const { activeMeso, activeSession, program, setActiveMeso, lang, logs, config, rpFeedback, setProgram, exercises, tutorialProgress, markTutorialSeen, globalTemplates } = useApp();
     const t = TRANSLATIONS[lang] || TRANSLATIONS['en']; 
     
     // Pro Hook
@@ -130,7 +172,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
     const [showRoutineGuide, setShowRoutineGuide] = useState(false);
     const [skipConfirmationId, setSkipConfirmationId] = useState<number | null>(null);
     const [showAIChat, setShowAIChat] = useState(false);
-    const [newMesoType, setNewMesoType] = useState<MesoType>('hyp_1');
+    const [selectedTemplate, setSelectedTemplate] = useState<GlobalTemplate | null>(null);
 
     const safeProgram = Array.isArray(program) ? program : [];
     const safeLogs = Array.isArray(logs) ? logs : [];
@@ -167,17 +209,10 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
     }, [activeMeso, activeSession, safeLogs, safeProgram]);
 
     const handleStartMeso = () => {
-        let planToUse = safeProgram;
-        switch (newMesoType) {
-            case 'hyp_1': planToUse = DEFAULT_TEMPLATE; setProgram(DEFAULT_TEMPLATE); break;
-            case 'hyp_2': planToUse = UPPER_LOWER_TEMPLATE; setProgram(UPPER_LOWER_TEMPLATE); break;
-            case 'metabolite': planToUse = METABOLITE_TEMPLATE; setProgram(METABOLITE_TEMPLATE); break;
-            case 'resensitization': planToUse = RESENS_TEMPLATE; setProgram(RESENS_TEMPLATE); break;
-            case 'full_body': planToUse = FULL_BODY_TEMPLATE; setProgram(FULL_BODY_TEMPLATE); break;
-            case 'wizard': planToUse = WIZARD_TEMPLATE; setProgram(WIZARD_TEMPLATE); break;
-            case 'male_physique': planToUse = MALE_PHYSIQUE_TEMPLATE; setProgram(MALE_PHYSIQUE_TEMPLATE); break;
-            case 'toji_fushiguro': planToUse = TOJI_TEMPLATE; setProgram(TOJI_TEMPLATE); break;
-        }
+        if (!selectedTemplate) return;
+
+        const planToUse = selectedTemplate.program;
+        setProgram(planToUse);
 
         const initialPlan = planToUse.map(day => (day?.slots || []).map(slot => slot.exerciseId || null)); 
         
@@ -185,10 +220,10 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
             id: Date.now(), 
             week: 1, 
             plan: initialPlan, 
-            targetWeeks: newMesoType === 'resensitization' ? 4 : 5, 
+            targetWeeks: selectedTemplate.name === 'resensitization' ? 4 : 5, 
             isDeload: false,
-            mesoType: newMesoType,
-            name: String(t.phases[newMesoType] || t.unnamedCycle)
+            mesoType: selectedTemplate.name,
+            name: String(getTranslated(selectedTemplate.title, lang) || t.unnamedCycle)
         });
         setShowStartWizard(false);
     };
@@ -231,40 +266,6 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
         }
     };
 
-    const TemplateButton = ({ type }: { type: MesoType }) => {
-        // Updated Pro Logic: Toji, Wizard, and Full Body are PRO
-        const isProTemplate = type === 'toji_fushiguro' || type === 'wizard' || type === 'full_body';
-        const isLocked = isProTemplate && !isPro;
-
-        return (
-            <button
-                onClick={() => {
-                    if (isLocked) {
-                        checkPro(String(t.phases?.[type] || "Premium Routine"));
-                        return;
-                    }
-                    setNewMesoType(type);
-                }}
-                className={`w-full text-left p-3 rounded-xl border transition-all mb-2 relative group overflow-hidden ${
-                    newMesoType === type 
-                    ? 'bg-red-50 dark:bg-red-900/20 border-red-500 text-red-700 dark:text-red-400' 
-                    : 'bg-zinc-50 dark:bg-white/5 border-transparent text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/10'
-                }`}
-            >
-                <div className="flex justify-between items-start">
-                    <div>
-                        <div className="font-bold mb-0.5 text-sm flex items-center gap-2">
-                            {String(t.phases?.[type] || type)}
-                            {isProTemplate && <span className="text-[9px] bg-zinc-900 text-white dark:bg-white dark:text-black px-1.5 py-0.5 rounded uppercase font-black tracking-wider">PRO</span>}
-                        </div>
-                        <div className="text-[10px] opacity-70 leading-relaxed">{String(t.phaseDesc?.[type] || "")}</div>
-                    </div>
-                    {isLocked && <Icon name="Lock" size={16} className="text-zinc-400" />}
-                </div>
-            </button>
-        );
-    };
-
     // Empty State (No Active Meso)
     if (!activeMeso) {
         return (
@@ -305,11 +306,18 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                                 <button onClick={() => setShowStartWizard(false)} className="text-zinc-400"><Icon name="X" size={24} /></button>
                             </div>
                             <div className="space-y-6 overflow-y-auto scroll-container flex-1 px-6 pb-6">
-                                {/* Templates - Reordered to show PRO options at top */}
-                                <TemplateButton type="toji_fushiguro" />
-                                <TemplateButton type="wizard" />
-                                <TemplateButton type="full_body" />
-                                <TemplateButton type="hyp_1" />
+                                {/* DYNAMIC TEMPLATES FROM CONTEXT */}
+                                {globalTemplates.map(tpl => (
+                                    <TemplateButton 
+                                        key={tpl.id} 
+                                        template={tpl}
+                                        isSelected={selectedTemplate?.id === tpl.id}
+                                        isPro={isPro}
+                                        lang={lang}
+                                        onSelect={setSelectedTemplate}
+                                        onCheckPro={(featureName) => checkPro(featureName)}
+                                    />
+                                ))}
                             </div>
                             <div className="shrink-0 p-6 pt-2 border-t border-zinc-100 dark:border-white/5 bg-white dark:bg-zinc-900 rounded-b-2xl">
                                 <Button onClick={handleStartMeso} fullWidth size="lg">{String(t.createAndSelect)}</Button>
@@ -335,7 +343,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                     <h2 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tight">{String(activeMeso.name)}</h2>
                     <div className="flex items-center gap-2 mt-1">
                         <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded ${activeMeso.isDeload ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'}`}>
-                            {String(t.phases?.[activeMeso.mesoType] || "Phase")}
+                            {String(t.phases?.[activeMeso.mesoType] || activeMeso.mesoType)}
                         </span>
                         <span className="text-[10px] text-zinc-400 font-bold">•</span>
                         <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-bold">{String(t.week)} {activeMeso.week} / {activeMeso.targetWeeks}</span>

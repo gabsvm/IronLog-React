@@ -73,6 +73,7 @@ export interface ProgramSlot {
   setTarget: number;
   reps?: string;
   exerciseId?: string | null;
+  supersetId?: string; // Added for Template supersets
 }
 
 export interface ProgramDay {
@@ -81,7 +82,18 @@ export interface ProgramDay {
   slots: ProgramSlot[];
 }
 
-export type MesoType = 'hyp_1' | 'hyp_2' | 'metabolite' | 'resensitization' | 'full_body' | 'wizard' | 'male_physique' | 'toji_fushiguro';
+export type MesoType = 'hyp_1' | 'hyp_2' | 'metabolite' | 'resensitization' | 'full_body' | 'wizard' | 'male_physique' | 'toji_fushiguro' | string;
+
+// NEW: Global Template Definition for Admin
+export interface GlobalTemplate {
+    id: string;
+    name: string; // Internal ID / Key
+    title: { en: string, es: string };
+    description: { en: string, es: string };
+    isPro: boolean;
+    program: ProgramDay[];
+    order: number; // For sorting in list
+}
 
 export interface MesoCycle {
   id: number;
@@ -153,4 +165,5 @@ export interface AppState {
     tutorialProgress: TutorialState;
     userProfile?: UserProfile;
     lastUpdated?: number;
+    globalTemplates?: GlobalTemplate[]; // Added to state
 }

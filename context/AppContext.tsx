@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useEffect, useRef, ReactNode, useState, PropsWithChildren, useMemo, useCallback } from 'react';
-import { AppState, Lang, Theme, ColorTheme, ExerciseDef, ActiveSession, MesoCycle, Log, ProgramDay, TutorialState } from '../types';
-import { DEFAULT_LIBRARY, DEFAULT_TEMPLATE } from '../constants';
+import { AppState, Lang, Theme, ColorTheme, ExerciseDef, ActiveSession, MesoCycle, Log, ProgramDay, TutorialState, GlobalTemplate } from '../types';
+import { DEFAULT_LIBRARY, DEFAULT_TEMPLATE, TOJI_TEMPLATE, WIZARD_TEMPLATE, FULL_BODY_TEMPLATE, METABOLITE_TEMPLATE, UPPER_LOWER_TEMPLATE, RESENS_TEMPLATE, MALE_PHYSIQUE_TEMPLATE } from '../constants';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { usePersistedState } from '../hooks/usePersistedState';
 import { Icon } from '../components/ui/Icon';
@@ -10,6 +10,20 @@ import { TimerProvider } from './TimerContext';
 import { HomeSkeleton } from '../components/ui/SkeletonLoader';
 import { AuthProvider, useAuth } from './AuthContext'; // Import Auth
 import { syncService } from '../services/syncService'; // Import Sync
+import { collection, getDocs, orderBy, query } from 'firebase/firestore';
+import { db as firestoreDb } from '../lib/firebase';
+
+// HARDCODED DEFAULTS (Fallback if offline/no db)
+const INITIAL_TEMPLATES: GlobalTemplate[] = [
+    { id: 'toji_fushiguro', name: 'toji_fushiguro', title: { en: "Toji (Natural Hypertrophy)", es: "Toji (Natural Hypertrophy)" }, description: { en: "4-Day Elite Split. Giant Sets, Neck, Forearms & Aesthetic focus.", es: "Rutina Élite de 4 Días. Series Gigantes, Cuello, Antebrazo y Estética." }, isPro: true, program: TOJI_TEMPLATE, order: 1 },
+    { id: 'wizard', name: 'wizard', title: { en: "The Wizard v3 (Full Body)", es: "The Wizard v3 (Full Body)" }, description: { en: "3-Days Heavy/Light/Medium. Classic intensity cycling.", es: "3-Días Pesado/Liviano/Medio. Ciclo de intensidad clásico." }, isPro: true, program: WIZARD_TEMPLATE, order: 2 },
+    { id: 'full_body', name: 'full_body', title: { en: "Aesthetic V-Taper", es: "Aesthetic V-Taper" }, description: { en: "Dr. Mike Style. Focus on V-Taper (Lats/Side Delts).", es: "Estilo Dr. Mike. Foco en V-Taper (Dorsal/Hombro Lateral)." }, isPro: true, program: FULL_BODY_TEMPLATE, order: 3 },
+    { id: 'male_physique', name: 'male_physique', title: { en: "Male Physique (Upper/Lower)", es: "Male Physique (Torso/Pierna)" }, description: { en: "4-Days Bodybuilding Focus. Higher volume.", es: "4-Días Foco Culturismo. Mayor volumen." }, isPro: false, program: MALE_PHYSIQUE_TEMPLATE, order: 4 },
+    { id: 'hyp_1', name: 'hyp_1', title: { en: "Base Hypertrophy 1", es: "Hipertrofia Base 1" }, description: { en: "Standard PPL. Balanced volume.", es: "PPL Estándar. Volumen equilibrado." }, isPro: false, program: DEFAULT_TEMPLATE, order: 5 },
+    { id: 'hyp_2', name: 'hyp_2', title: { en: "Base Hypertrophy 2", es: "Hipertrofia Base 2" }, description: { en: "Upper/Lower Split (4 Days). Focus on compounds.", es: "Torso/Pierna (4 Días). Foco en básicos." }, isPro: false, program: UPPER_LOWER_TEMPLATE, order: 6 },
+    { id: 'metabolite', name: 'metabolite', title: { en: "Metabolite Phase", es: "Fase Metabolitos" }, description: { en: "High reps (20-30), short rests, the 'burn'.", es: "Reps altas (20-30), descanso corto, 'quemazón'." }, isPro: false, program: METABOLITE_TEMPLATE, order: 7 },
+    { id: 'resensitization', name: 'resensitization', title: { en: "Resensitization", es: "Resensitization" }, description: { en: "Low volume, heavy weight to reset fatigue.", es: "Bajo volumen, peso alto para resetear fatiga." }, isPro: false, program: RESENS_TEMPLATE, order: 8 },
+];
 
 interface AppContextType extends AppState {
     lang: Lang;
@@ -27,6 +41,7 @@ interface AppContextType extends AppState {
     setConfig: (val: AppState['config']) => void;
     setRpFeedback: (val: AppState['rpFeedback'] | ((prev: AppState['rpFeedback']) => AppState['rpFeedback'])) => void;
     setHasSeenOnboarding: (val: boolean) => void;
+    setGlobalTemplates: (val: GlobalTemplate[]) => void;
     
     // Tutorial Methods
     markTutorialSeen: (section: keyof TutorialState) => void;
@@ -50,7 +65,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 // Separated component to handle Sync Logic inside AuthProvider
 const AppStateProvider = ({ children }: PropsWithChildren) => {
-    const { user, subscription } = useAuth(); // Access User & Subscription
+    const { user, subscription, loading: authLoading } = useAuth(); // Access User & Subscription
 
     // --- Synchronous Config ---
     const [langStored, setLang] = useLocalStorage<Lang>('il_lang_v1', 'en');
@@ -75,6 +90,9 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
     const [exercises, setExercises, exLoading] = usePersistedState<ExerciseDef[]>('il_ex_v16', DEFAULT_LIBRARY, 1000);
     const [logs, setLogs, logsLoading] = usePersistedState<Log[]>('il_logs_v16', [], 1000);
     
+    // NEW: Global Templates State (Defaults to constants, but can be updated from DB)
+    const [globalTemplates, setGlobalTemplates] = useState<GlobalTemplate[]>(INITIAL_TEMPLATES);
+    
     const [rpFeedback, setRpFeedback, fbLoading] = usePersistedState<AppState['rpFeedback']>('il_rp_fb_v1', {}, 1000);
     const [hasSeenOnboarding, setHasSeenOnboarding, onboardingLoading] = usePersistedState<boolean>('il_onboarded_v2', false, 1000);
     
@@ -88,8 +106,38 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
     const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
     const [isStandalone, setIsStandalone] = useState(false);
 
-    const isAppLoading = programLoading || mesoLoading || sessionLoading || exLoading || logsLoading || fbLoading || onboardingLoading;
+    const isAppLoading = programLoading || mesoLoading || sessionLoading || exLoading || logsLoading || fbLoading || onboardingLoading || authLoading;
     const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+
+    // --- FETCH GLOBAL TEMPLATES FROM FIRESTORE ---
+    useEffect(() => {
+        if (!firestoreDb || !isOnline) return;
+
+        const fetchTemplates = async () => {
+            try {
+                const q = query(collection(firestoreDb, "global_templates"), orderBy("order"));
+                const querySnapshot = await getDocs(q);
+                const fetchedTemplates: GlobalTemplate[] = [];
+                querySnapshot.forEach((doc) => {
+                    fetchedTemplates.push({ id: doc.id, ...doc.data() } as GlobalTemplate);
+                });
+                
+                if (fetchedTemplates.length > 0) {
+                    setGlobalTemplates(fetchedTemplates);
+                }
+            } catch (e: any) {
+                // Graceful fallback for permission errors
+                if (e.code === 'permission-denied' || e.message?.includes('permission') || e.code === 'failed-precondition') {
+                    console.warn("Global Templates: Access denied or index missing. Using default templates.");
+                } else {
+                    console.error("Failed to fetch global templates", e);
+                }
+            }
+        };
+
+        // Retry fetch when user logs in (in case rules depend on auth)
+        fetchTemplates();
+    }, [isOnline, user]); 
 
     // --- PWA INSTALL HANDLER ---
     useEffect(() => {
@@ -296,7 +344,8 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
         isAppLoading,
         pendingCloudData, confirmCloudSync, cancelCloudSync, localLastUpdated,
         isOnline,
-        deferredPrompt, installApp, isStandalone
+        deferredPrompt, installApp, isStandalone,
+        globalTemplates, setGlobalTemplates
     }), [
         lang, setLang, theme, setTheme, colorTheme, setColorTheme,
         program, setProgram,
@@ -311,7 +360,8 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
         isAppLoading,
         pendingCloudData, confirmCloudSync, cancelCloudSync, localLastUpdated,
         isOnline,
-        deferredPrompt, installApp, isStandalone
+        deferredPrompt, installApp, isStandalone,
+        globalTemplates
     ]);
 
     if (isAppLoading) {

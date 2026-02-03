@@ -9,6 +9,7 @@ import { doc, setDoc, collection, query, where, getDocs } from 'firebase/firesto
 import { db } from '../../lib/firebase';
 import { usePro } from '../../hooks/usePro';
 import { PaywallModal } from '../pro/PaywallModal';
+import { AdminTemplateManager } from '../admin/AdminTemplateManager'; // New import
 
 interface SettingsModalProps {
     onClose: () => void;
@@ -37,6 +38,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     const [isAdminMode, setIsAdminMode] = useState(false);
     const [targetInput, setTargetInput] = useState('');
     const [adminStatus, setAdminStatus] = useState<{ msg: string, type: 'success' | 'error' | 'neutral', details?: string, codeSnippet?: string } | null>(null);
+    const [showTemplateManager, setShowTemplateManager] = useState(false); // New state
 
     const isAdmin = user?.email === 'gabsvm@gmail.com';
 
@@ -90,7 +92,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             let codeSnippet = "";
             if (e.code === 'permission-denied' || e.message === 'PERMISSION_DENIED_LIST') {
                 helpfulMsg = "⛔ FIREBASE RULES BLOCKING";
-                codeSnippet = `rules_version = '2'; service cloud.firestore { match /databases/{database}/documents { function isAdmin() { return request.auth != null && request.auth.token.email == '${user?.email}'; } match /users { allow list: if isAdmin(); } match /users/{userId}/{document=**} { allow read, write: if request.auth != null && (request.auth.uid == userId || isAdmin()); } } }`;
+                codeSnippet = `rules_version = '2'; service cloud.firestore { match /databases/{database}/documents { function isAdmin() { return request.auth != null && request.auth.token.email == '${user?.email}'; } match /users { allow list: if isAdmin(); } match /users/{userId}/{document=**} { allow read, write: if request.auth != null && (request.auth.uid == userId || isAdmin()); } match /global_templates/{docId} { allow read: if true; allow write: if isAdmin(); } } }`;
             }
             setAdminStatus({ msg: helpfulMsg, type: 'error', codeSnippet });
         }
@@ -139,6 +141,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </button>
     );
 
+    if (showTemplateManager) {
+        return <AdminTemplateManager onClose={() => setShowTemplateManager(false)} />;
+    }
+
     return (
         <div className="fixed inset-0 bg-black/60 z-[60] flex justify-end backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose}>
             <div className="w-80 bg-white dark:bg-zinc-900 h-full shadow-2xl border-l border-zinc-200 dark:border-white/5 flex flex-col" onClick={e => e.stopPropagation()}>
@@ -170,9 +176,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                     {t.auth.logout}
                                 </button>
                                 {isAdmin && (
-                                    <button onClick={() => setIsAdminMode(!isAdminMode)} className={`w-full py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors ${isAdminMode ? 'bg-zinc-900 text-white' : 'bg-zinc-200 text-zinc-600'}`}>
-                                        <Icon name="Bot" size={14} /> {isAdminMode ? 'Close Admin' : 'Admin Panel'}
-                                    </button>
+                                    <>
+                                        <button onClick={() => setIsAdminMode(!isAdminMode)} className={`w-full py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors ${isAdminMode ? 'bg-zinc-900 text-white' : 'bg-zinc-200 text-zinc-600'}`}>
+                                            <Icon name="Bot" size={14} /> {isAdminMode ? 'Close Admin' : 'Admin Panel'}
+                                        </button>
+                                        {/* TEMPLATE MANAGER BUTTON */}
+                                        <button onClick={() => setShowTemplateManager(true)} className="w-full py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors bg-purple-600 text-white">
+                                            <Icon name="Layout" size={14} /> Manage Templates
+                                        </button>
+                                    </>
                                 )}
                             </div>
                         ) : (
