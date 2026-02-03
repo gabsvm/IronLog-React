@@ -41,7 +41,7 @@ interface AppContextType extends AppState {
     setConfig: (val: AppState['config']) => void;
     setRpFeedback: (val: AppState['rpFeedback'] | ((prev: AppState['rpFeedback']) => AppState['rpFeedback'])) => void;
     setHasSeenOnboarding: (val: boolean) => void;
-    setGlobalTemplates: (val: GlobalTemplate[]) => void;
+    setGlobalTemplates: (val: GlobalTemplate[] | ((prev: GlobalTemplate[]) => GlobalTemplate[])) => void;
     
     // Tutorial Methods
     markTutorialSeen: (section: keyof TutorialState) => void;
