@@ -1,5 +1,5 @@
 
-import { doc, getDoc, writeBatch } from "firebase/firestore";
+import { doc, getDoc, writeBatch, setDoc } from "firebase/firestore";
 import { db, auth } from "../lib/firebase"; // Import Auth to get current email
 import { AppState } from "../types";
 
@@ -55,6 +55,27 @@ const deserializeMeso = (meso: any) => {
 };
 
 export const syncService = {
+    /**
+     * ID SYNC: Saves ONLY email and metadata.
+     * Used for FREE users so Admin can find them.
+     */
+    uploadUserIdentity: async (userId: string, email: string) => {
+        if (!userId || !db) return;
+        try {
+            const userRef = doc(db, "users", userId);
+            // Use setDoc with merge to create the document if it doesn't exist,
+            // but NOT overwrite existing data fields (like subscription)
+            await setDoc(userRef, { 
+                email: email, 
+                lastSeen: Date.now(),
+                uid: userId // Explicitly saving UID helps in some manual queries
+            }, { merge: true });
+            console.log(`👤 Identity Synced: ${email}`);
+        } catch (error) {
+            console.error("❌ Identity Sync Failed:", error);
+        }
+    },
+
     /**
      * SUBIDA (PUSH): Envía el estado local a Firebase.
      */

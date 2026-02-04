@@ -183,13 +183,19 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
         const handleOnline = () => {
             setIsOnline(true);
             console.log("🌐 Back Online! Checking sync...");
-            // Only trigger sync if PRO
-            if(user && subscription.isPro) {
-                const now = Date.now();
-                setLocalLastUpdated(now);
-                syncService.uploadState(user.uid, {
-                    program, activeMeso, exercises, logs, config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn }, rpFeedback, activeSession, lastUpdated: now
-                });
+            
+            if (user) {
+                if (subscription.isPro) {
+                    // Full Sync for Pro
+                    const now = Date.now();
+                    setLocalLastUpdated(now);
+                    syncService.uploadState(user.uid, {
+                        program, activeMeso, exercises, logs, config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn }, rpFeedback, activeSession, lastUpdated: now
+                    });
+                } else {
+                    // Identity Sync for Free (So Admin can find them)
+                    syncService.uploadUserIdentity(user.uid, user.email || "");
+                }
             }
         };
         const handleOffline = () => setIsOnline(false);
@@ -205,43 +211,58 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
 
     // 1. Download & Compare on Login (Check PRO)
     useEffect(() => {
-        if (user && !isAppLoading && isOnline && subscription.isPro) {
-            syncService.downloadState(user.uid).then((cloudData: any) => {
-                if (cloudData) {
-                    const cloudTS = cloudData.lastUpdated || 0;
-                    const localTS = localLastUpdated || 0;
+        // If user is Free, we still run the effect but skip the download part
+        // We DO run uploadUserIdentity though to register them in DB.
+        
+        if (user && !isAppLoading && isOnline) {
+            if (subscription.isPro) {
+                syncService.downloadState(user.uid).then((cloudData: any) => {
+                    if (cloudData) {
+                        const cloudTS = cloudData.lastUpdated || 0;
+                        const localTS = localLastUpdated || 0;
 
-                    if (cloudTS > localTS) {
-                        setPendingCloudData(cloudData);
+                        if (cloudTS > localTS) {
+                            setPendingCloudData(cloudData);
+                        }
+                    } else {
+                        // No cloud data -> Upload local to init
+                        const now = Date.now();
+                        setLocalLastUpdated(now);
+                        syncService.uploadState(user.uid, { program, activeMeso, exercises, logs, config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn }, rpFeedback, activeSession, lastUpdated: now });
                     }
-                } else {
-                    // No cloud data -> Upload local to init
-                    const now = Date.now();
-                    setLocalLastUpdated(now);
-                    syncService.uploadState(user.uid, { program, activeMeso, exercises, logs, config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn }, rpFeedback, activeSession, lastUpdated: now });
-                }
-            });
+                });
+            } else {
+                // Free Tier: Just sync identity so Admin can find them
+                syncService.uploadUserIdentity(user.uid, user.email || "");
+            }
         }
     }, [user, isAppLoading, isOnline, subscription.isPro]); 
 
-    // 2. Upload on Data Change (Debounced) - Gate with PRO check
+    // 2. Upload on Data Change (Debounced)
     useEffect(() => {
-        if (!user || isAppLoading || !subscription.isPro) return;
+        if (!user || isAppLoading) return;
 
         const timer = setTimeout(() => {
-            const now = Date.now();
-            setLocalLastUpdated(now);
-            
-            syncService.uploadState(user.uid, {
-                program,
-                activeMeso,
-                activeSession,
-                exercises,
-                logs,
-                config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn },
-                rpFeedback,
-                lastUpdated: now
-            });
+            if (subscription.isPro) {
+                // FULL DATA SYNC (PRO ONLY)
+                const now = Date.now();
+                setLocalLastUpdated(now);
+                
+                syncService.uploadState(user.uid, {
+                    program,
+                    activeMeso,
+                    activeSession,
+                    exercises,
+                    logs,
+                    config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn },
+                    rpFeedback,
+                    lastUpdated: now
+                });
+            } else {
+                // IDENTITY SYNC (FREE USERS)
+                // Ensures their email exists in Firestore for Admin lookup
+                syncService.uploadUserIdentity(user.uid, user.email || "");
+            }
         }, 5000); 
 
         return () => clearTimeout(timer);
