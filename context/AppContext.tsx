@@ -109,34 +109,52 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
     const isAppLoading = programLoading || mesoLoading || sessionLoading || exLoading || logsLoading || fbLoading || onboardingLoading || authLoading;
     const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
-    // --- FETCH GLOBAL TEMPLATES FROM FIRESTORE ---
+    // --- FETCH GLOBAL DATA (Templates & Exercises) ---
     useEffect(() => {
         if (!firestoreDb || !isOnline) return;
 
-        const fetchTemplates = async () => {
+        const fetchData = async () => {
             try {
-                const q = query(collection(firestoreDb, "global_templates"), orderBy("order"));
-                const querySnapshot = await getDocs(q);
+                // 1. Fetch Global Templates
+                const qTpl = query(collection(firestoreDb, "global_templates"), orderBy("order"));
+                const tplSnapshot = await getDocs(qTpl);
                 const fetchedTemplates: GlobalTemplate[] = [];
-                querySnapshot.forEach((doc) => {
+                tplSnapshot.forEach((doc) => {
                     fetchedTemplates.push({ id: doc.id, ...doc.data() } as GlobalTemplate);
                 });
-                
-                if (fetchedTemplates.length > 0) {
-                    setGlobalTemplates(fetchedTemplates);
+                if (fetchedTemplates.length > 0) setGlobalTemplates(fetchedTemplates);
+
+                // 2. Fetch Global Exercises
+                const qEx = collection(firestoreDb, "global_exercises");
+                const exSnapshot = await getDocs(qEx);
+                const fetchedExercises: ExerciseDef[] = [];
+                exSnapshot.forEach((doc) => {
+                    fetchedExercises.push({ id: doc.id, ...doc.data() } as ExerciseDef);
+                });
+
+                // Merge Global Exercises into Local Library (Avoid duplicates)
+                if (fetchedExercises.length > 0) {
+                    setExercises(prev => {
+                        const currentIds = new Set(prev.map(e => e.id));
+                        const newExs = fetchedExercises.filter(e => !currentIds.has(e.id));
+                        if (newExs.length > 0) {
+                            console.log(`📥 Downloaded ${newExs.length} global exercises.`);
+                            return [...prev, ...newExs];
+                        }
+                        return prev;
+                    });
                 }
+
             } catch (e: any) {
-                // Graceful fallback for permission errors
                 if (e.code === 'permission-denied' || e.message?.includes('permission') || e.code === 'failed-precondition') {
-                    console.warn("Global Templates: Access denied or index missing. Using default templates.");
+                    console.warn("Global Data: Access denied or index missing.");
                 } else {
-                    console.error("Failed to fetch global templates", e);
+                    console.error("Failed to fetch global data", e);
                 }
             }
         };
 
-        // Retry fetch when user logs in (in case rules depend on auth)
-        fetchTemplates();
+        fetchData();
     }, [isOnline, user]); 
 
     // --- PWA INSTALL HANDLER ---

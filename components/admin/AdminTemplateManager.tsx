@@ -423,7 +423,8 @@ export const AdminTemplateManager: React.FC<{ onClose: () => void }> = ({ onClos
             {pickingFor && (
                 <ExerciseSelector 
                     onClose={() => setPickingFor(null)} 
-                    onSelect={handleSelectEx} 
+                    onSelect={handleSelectEx}
+                    persistToGlobal={true} // ENABLE GLOBAL SAVE FOR ADMIN
                 />
             )}
         </div>

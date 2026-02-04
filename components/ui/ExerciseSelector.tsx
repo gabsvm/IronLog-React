@@ -7,14 +7,17 @@ import { MuscleGroup, ExerciseDef } from '../../types';
 import { Button } from './Button';
 import { getTranslated } from '../../utils';
 import { Virtuoso } from 'react-virtuoso';
+import { db } from '../../lib/firebase';
+import { doc, setDoc } from 'firebase/firestore';
 
 interface ExerciseSelectorProps {
     onSelect: (exId: string, exercise?: ExerciseDef) => void;
     onClose: () => void;
     excludeIds?: string[];
+    persistToGlobal?: boolean; // New Prop for Admin Mode
 }
 
-export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, onClose, excludeIds = [] }) => {
+export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, onClose, excludeIds = [], persistToGlobal = false }) => {
     const { exercises, setExercises, lang } = useApp();
     const t = TRANSLATIONS[lang];
     const [search, setSearch] = useState('');
@@ -49,16 +52,43 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
         setIsCreating(true);
     };
 
-    const handleCreateSave = () => {
+    const handleCreateSave = async () => {
         if (!newName.trim()) return;
-        const newId = `custom_${Date.now()}`;
+        
+        let newId: string;
+        
+        if (persistToGlobal) {
+            // Generate nice slug ID for Global DB: e.g., "chest_incline_press"
+            // Remove special chars, replace spaces with underscores, lowercase
+            const slug = newName.toLowerCase()
+                .replace(/[^a-z0-9\s]/g, '')
+                .replace(/\s+/g, '_');
+            newId = `${newMuscle.toLowerCase()}_${slug}`;
+        } else {
+            // Standard user custom ID
+            newId = `custom_${Date.now()}`;
+        }
+
         const newEx: ExerciseDef = {
             id: newId,
-            name: newName,
+            name: { en: newName, es: newName }, // Store as bilingual object for consistency
             muscle: newMuscle
         };
         
+        // 1. Update Local State (Immediate Feedback)
         setExercises(prev => [...prev, newEx]);
+        
+        // 2. If Admin Mode, Save to Firestore Global Collection
+        if (persistToGlobal && db) {
+            try {
+                await setDoc(doc(db, "global_exercises", newId), newEx);
+                console.log(`🌍 Saved global exercise: ${newId}`);
+            } catch (e) {
+                console.error("Failed to save global exercise:", e);
+                alert("Failed to save to global DB. Check console.");
+            }
+        }
+
         // Pass newEx directly because local state update might not be reflected in 'exercises' yet in parent
         onSelect(newId, newEx); 
     };
@@ -88,12 +118,14 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
     return (
         <div className="fixed inset-0 z-[60] bg-gray-50 dark:bg-zinc-950 flex flex-col animate-in slide-in-from-bottom duration-200">
             {/* Header */}
-            <div className="glass px-4 h-16 shrink-0 flex items-center gap-3 border-b border-zinc-200 dark:border-white/5">
+            <div className={`glass px-4 h-16 shrink-0 flex items-center gap-3 border-b border-zinc-200 dark:border-white/5 ${persistToGlobal ? 'bg-purple-900/10' : ''}`}>
                 <button onClick={onClose} className="p-2 -ml-2 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white">
                     <Icon name="X" size={24} />
                 </button>
                 {isCreating ? (
-                    <div className="flex-1 font-bold text-lg dark:text-white">{t.addEx}</div>
+                    <div className="flex-1 font-bold text-lg dark:text-white">
+                        {t.addEx} {persistToGlobal && <span className="text-xs bg-purple-600 text-white px-2 py-0.5 rounded ml-2">GLOBAL</span>}
+                    </div>
                 ) : (
                     <div className="flex-1 flex gap-2">
                         <div className="relative flex-1">
