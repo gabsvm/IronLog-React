@@ -6,7 +6,8 @@ import {
     SkipForward, ArrowRight, TrendingUp, RefreshCw, Settings, DownloadCloud, Minus, Dumbbell, 
     ChevronLeft, Eye, Link, Unlink, Sun, Moon, Info, Download, Upload, CloudOff, Clock, Search, 
     GripVertical, MoreVertical, ExternalLink, VideoOff, Layers, Zap, Calendar, Home, User, LogOut,
-    Trash2, X, CornerDownRight, Share2, AlertTriangle, Play, ChevronRight, Bot, Lock, Crown, Copy
+    Trash2, X, CornerDownRight, Share2, AlertTriangle, Play, ChevronRight, Bot, Lock, Crown, Copy,
+    ChevronUp, ChevronDown
 } from 'lucide-react';
 
 // Static Map of icons used in the app
@@ -16,6 +17,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
     ChevronLeft, Eye, Link, Unlink, Sun, Moon, Info, Download, Upload, CloudOff, Clock, Search,
     GripVertical, MoreVertical, ExternalLink, VideoOff, Layers, Zap, Calendar, Home, User, LogOut,
     Trash2, X, CornerDownRight, Share2, AlertTriangle, Play, ChevronRight, Lock, Crown, Copy,
+    ChevronUp, ChevronDown,
     // Aliases for backward compatibility or logical mapping
     BrainCircuit: Activity,
     Sparkles: Star,

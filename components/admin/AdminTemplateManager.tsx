@@ -177,6 +177,19 @@ export const AdminTemplateManager: React.FC<{ onClose: () => void }> = ({ onClos
         }));
     };
 
+    // Reorder Logic
+    const moveSlot = (dayIdx: number, slotIdx: number, direction: 'up' | 'down') => {
+        updateDay(dayIdx, (day) => {
+            const newSlots = [...day.slots];
+            if (direction === 'up' && slotIdx > 0) {
+                [newSlots[slotIdx], newSlots[slotIdx - 1]] = [newSlots[slotIdx - 1], newSlots[slotIdx]];
+            } else if (direction === 'down' && slotIdx < newSlots.length - 1) {
+                [newSlots[slotIdx], newSlots[slotIdx + 1]] = [newSlots[slotIdx + 1], newSlots[slotIdx]];
+            }
+            return { ...day, slots: newSlots };
+        });
+    };
+
     // --- SUPERSET LOGIC ---
     const handleSupersetAction = (dayIdx: number, slotIdx: number) => {
         const slot = editingTemplate?.program[dayIdx].slots[slotIdx];
@@ -405,6 +418,24 @@ export const AdminTemplateManager: React.FC<{ onClose: () => void }> = ({ onClos
                                             {/* Sets/Reps */}
                                             <input type="number" className="w-10 bg-zinc-800 text-center text-xs p-1 rounded" value={slot.setTarget} onChange={e => updateSlot(dayIdx, slotIdx, 'setTarget', Number(e.target.value))} placeholder="Sets" />
                                             <input type="text" className="w-14 bg-zinc-800 text-center text-xs p-1 rounded" value={slot.reps || ''} onChange={e => updateSlot(dayIdx, slotIdx, 'reps', e.target.value)} placeholder="Reps" />
+
+                                            {/* Reorder Arrows */}
+                                            <div className="flex flex-col gap-0.5">
+                                                <button 
+                                                    onClick={() => moveSlot(dayIdx, slotIdx, 'up')} 
+                                                    disabled={slotIdx === 0} 
+                                                    className="text-zinc-500 hover:text-white disabled:opacity-20 disabled:cursor-not-allowed"
+                                                >
+                                                    <Icon name="ChevronUp" size={14} />
+                                                </button>
+                                                <button 
+                                                    onClick={() => moveSlot(dayIdx, slotIdx, 'down')} 
+                                                    disabled={slotIdx === day.slots.length - 1} 
+                                                    className="text-zinc-500 hover:text-white disabled:opacity-20 disabled:cursor-not-allowed"
+                                                >
+                                                    <Icon name="ChevronDown" size={14} />
+                                                </button>
+                                            </div>
 
                                             <button onClick={() => removeSlot(dayIdx, slotIdx)} className="text-zinc-500 hover:text-red-500"><Icon name="X" size={14} /></button>
                                         </div>
