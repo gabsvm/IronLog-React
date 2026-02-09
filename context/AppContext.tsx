@@ -107,7 +107,8 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
     const [pendingCloudData, setPendingCloudData] = useState<Partial<AppState> | null>(null);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
 
-    const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+    // Initialize with global if available (captured in index.html)
+    const [deferredPrompt, setDeferredPrompt] = useState<any>(window.deferredPrompt || null);
     const [isStandalone, setIsStandalone] = useState(false);
 
     const isAppLoading = programLoading || mesoLoading || sessionLoading || exLoading || logsLoading || fbLoading || onboardingLoading || authLoading || profileLoading;
@@ -148,16 +149,35 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
         const isStandaloneQuery = window.matchMedia('(display-mode: standalone)');
         setIsStandalone(isStandaloneQuery.matches);
         isStandaloneQuery.addEventListener('change', (e) => setIsStandalone(e.matches));
-        const handler = (e: any) => { e.preventDefault(); setDeferredPrompt(e); };
+        
+        // Ensure we catch it if it happens after mount
+        const handler = (e: any) => { 
+            e.preventDefault(); 
+            window.deferredPrompt = e;
+            setDeferredPrompt(e); 
+        };
         window.addEventListener('beforeinstallprompt', handler);
         return () => window.removeEventListener('beforeinstallprompt', handler);
     }, []);
 
     const installApp = useCallback(async () => {
-        if (!deferredPrompt) return;
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if(outcome === 'accepted') setDeferredPrompt(null);
+        const promptEvent = deferredPrompt || window.deferredPrompt;
+        if (!promptEvent) {
+            console.warn("No deferred prompt available");
+            return;
+        }
+        
+        try {
+            promptEvent.prompt();
+            const { outcome } = await promptEvent.userChoice;
+            console.log(`User response to install prompt: ${outcome}`);
+            if(outcome === 'accepted') {
+                setDeferredPrompt(null);
+                window.deferredPrompt = null;
+            }
+        } catch (e) {
+            console.error("Install prompt error", e);
+        }
     }, [deferredPrompt]);
 
     // --- SYNC LOGIC ---

@@ -65,6 +65,18 @@
       }
     </script>
 
+    <!-- GLOBAL PWA PROMPT CAPTURE -->
+    <script>
+      window.deferredPrompt = null;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        // Prevent the mini-infobar from appearing on mobile
+        e.preventDefault();
+        // Stash the event so it can be triggered later.
+        window.deferredPrompt = e;
+        console.log("✅ PWA Install Event Captured Globally");
+      });
+    </script>
+
     <!-- GLOBAL ERROR HANDLER & WATCHDOG -->
     <script>
       window.onerror = function(message, source, lineno, colno, error) {
