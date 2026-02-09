@@ -27,6 +27,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
     const [isCreating, setIsCreating] = useState(false);
     const [newName, setNewName] = useState('');
     const [newMuscle, setNewMuscle] = useState<MuscleGroup>('CHEST');
+    const [isBodyweight, setIsBodyweight] = useState(false); // NEW
 
     const filtered = useMemo(() => {
         return exercises
@@ -72,7 +73,8 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
         const newEx: ExerciseDef = {
             id: newId,
             name: { en: newName, es: newName }, // Store as bilingual object for consistency
-            muscle: newMuscle
+            muscle: newMuscle,
+            isBodyweight: isBodyweight
         };
         
         // 1. Update Local State (Immediate Feedback)
@@ -104,8 +106,9 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
                     <div className="font-bold text-zinc-900 dark:text-zinc-100 text-sm">
                         {getTranslated(ex.name, lang)}
                     </div>
-                    <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mt-0.5">
-                        {TRANSLATIONS[lang].muscle[ex.muscle]}
+                    <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mt-0.5 flex gap-2">
+                        <span>{TRANSLATIONS[lang].muscle[ex.muscle]}</span>
+                        {ex.isBodyweight && <span className="text-blue-500">BW</span>}
                     </div>
                 </div>
                 <div className="text-zinc-300 dark:text-zinc-700 group-hover:text-red-500">
@@ -177,6 +180,19 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
                                     </button>
                                 ))}
                             </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-xl">
+                            <input 
+                                type="checkbox" 
+                                id="isBW"
+                                checked={isBodyweight}
+                                onChange={e => setIsBodyweight(e.target.checked)}
+                                className="w-5 h-5 accent-red-600"
+                            />
+                            <label htmlFor="isBW" className="font-bold text-sm text-zinc-700 dark:text-zinc-300 cursor-pointer">
+                                {t.profile.isBW}
+                            </label>
                         </div>
                     </div>
 

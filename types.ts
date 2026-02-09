@@ -7,7 +7,7 @@ export type MuscleGroup =
   | 'CHEST' | 'BACK' | 'QUADS' | 'HAMSTRINGS' 
   | 'GLUTES' | 'CALVES' | 'SHOULDERS' | 'BICEPS' 
   | 'TRICEPS' | 'TRAPS' | 'ABS' | 'FOREARMS'
-  | 'NECK' | 'CARDIO'; // Added NECK
+  | 'NECK' | 'CARDIO'; 
 
 export type CardioType = 'steady' | 'hiit' | 'tabata';
 
@@ -17,7 +17,8 @@ export interface ExerciseDef {
   muscle: MuscleGroup;
   instructions?: { en: string; es: string };
   defaultCardioType?: CardioType;
-  videoId?: string; // YouTube Video ID
+  videoId?: string; 
+  isBodyweight?: boolean; // NEW: Bodyweight flag
 }
 
 export type SetType = 'regular' | 'myorep' | 'myorep_match' | 'cluster' | 'top' | 'backoff' | 'giant' | 'warmup';
@@ -26,7 +27,7 @@ export interface WorkoutSet {
   id: number;
   weight: string | number;
   reps: string | number;
-  rpe: string | number; // RIR or Intensity for cardio
+  rpe: string | number; 
   completed: boolean;
   type: SetType;
   skipped?: boolean;
@@ -34,10 +35,8 @@ export interface WorkoutSet {
   hintReps?: string | number;
   prevWeight?: string | number;
   prevReps?: string | number;
-  // Cardio fields
-  distance?: string | number; // in km
-  duration?: string | number; // in minutes (steady state)
-  // Interval fields
+  distance?: string | number; 
+  duration?: string | number; 
   workSeconds?: number;
   restSeconds?: number;
 }
@@ -54,7 +53,7 @@ export interface SessionExercise extends ExerciseDef {
   plateWeight?: number;
   supersetId?: string;
   isPlaceholder?: boolean;
-  cardioType?: CardioType; // Current mode for this session
+  cardioType?: CardioType; 
 }
 
 export interface ActiveSession {
@@ -73,7 +72,7 @@ export interface ProgramSlot {
   setTarget: number;
   reps?: string;
   exerciseId?: string | null;
-  supersetId?: string; // Added for Template supersets
+  supersetId?: string; 
 }
 
 export interface ProgramDay {
@@ -84,15 +83,14 @@ export interface ProgramDay {
 
 export type MesoType = 'hyp_1' | 'hyp_2' | 'metabolite' | 'resensitization' | 'full_body' | 'wizard' | 'male_physique' | 'toji_fushiguro' | string;
 
-// NEW: Global Template Definition for Admin
 export interface GlobalTemplate {
     id: string;
-    name: string; // Internal ID / Key
+    name: string; 
     title: { en: string, es: string };
     description: { en: string, es: string };
     isPro: boolean;
     program: ProgramDay[];
-    order: number; // For sorting in list
+    order: number; 
 }
 
 export interface MesoCycle {
@@ -131,13 +129,12 @@ export interface TutorialState {
     stats: boolean;
 }
 
-// --- NEW SUBSCRIPTION TYPES ---
 export type SubscriptionTier = 'free' | 'monthly' | 'yearly' | 'lifetime';
 
 export interface UserSubscription {
     isPro: boolean;
     tier: SubscriptionTier;
-    expiryDate: number | null; // Timestamp, null for lifetime
+    expiryDate: number | null; 
 }
 
 export interface UserProfile {
@@ -145,7 +142,11 @@ export interface UserProfile {
     daysPerWeek: number;
     goal: 'hypertrophy' | 'strength' | 'endurance';
     sessionDuration: 'short' | 'medium' | 'long';
-    subscription?: UserSubscription; // Optional for backward compatibility
+    subscription?: UserSubscription; 
+    // NEW: Body Stats
+    bodyWeight?: number;
+    height?: number;
+    bodyFat?: number;
 }
 
 export interface AppState {
@@ -165,5 +166,5 @@ export interface AppState {
     tutorialProgress: TutorialState;
     userProfile?: UserProfile;
     lastUpdated?: number;
-    globalTemplates?: GlobalTemplate[]; // Added to state
+    globalTemplates?: GlobalTemplate[]; 
 }

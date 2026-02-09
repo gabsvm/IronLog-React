@@ -219,7 +219,14 @@ export const SortableExerciseCard = React.memo(({
                                 )
                             )}
 
-                            {!isCardio && unit === 'pl' && (
+                            {/* Bodyweight Indicator */}
+                            {ex.isBodyweight && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900">
+                                    BW
+                                </span>
+                            )}
+
+                            {!isCardio && unit === 'pl' && !ex.isBodyweight && (
                                 <button 
                                     onClick={(e) => { e.stopPropagation(); onConfigPlate(ex.instanceId); }}
                                     className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-[9px] font-bold px-2 py-0.5 rounded hover:bg-blue-200"
@@ -284,7 +291,7 @@ export const SortableExerciseCard = React.memo(({
                                                 </button>
                                             )}
                                             
-                                            {!isCardio && (
+                                            {!isCardio && !ex.isBodyweight && (
                                                 <button onClick={(e) => { 
                                                     e.stopPropagation();
                                                     const newUnit = unit === 'kg' ? 'pl' : 'kg';
@@ -381,7 +388,13 @@ export const SortableExerciseCard = React.memo(({
                     )
                 ) : (
                     <>
-                        <div className="col-span-4 text-left pl-4">{String(t.weight)} ({unit === 'pl' ? 'PL' : 'KG'})</div>
+                        <div className="col-span-4 text-left pl-4">
+                            {ex.isBodyweight ? (
+                                <span className="text-blue-500">BW + KG</span>
+                            ) : (
+                                <>{String(t.weight)} ({unit === 'pl' ? 'PL' : 'KG'})</>
+                            )}
+                        </div>
                         <div className="col-span-4">{String(t.reps)}</div>
                         {config.showRIR && <div className="col-span-2">{String(t.rir)}</div>}
                         {!config.showRIR && <div className="col-span-2"></div>}
@@ -408,6 +421,7 @@ export const SortableExerciseCard = React.memo(({
                         lang={lang}
                         isCardio={isCardio}
                         cardioMode={cardioMode}
+                        isBodyweight={ex.isBodyweight} // Pass BW Flag
                     />
                 ))}
             </div>

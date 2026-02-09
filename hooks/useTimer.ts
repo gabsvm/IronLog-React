@@ -1,6 +1,8 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { playTimerFinishSound } from '../utils/audio';
+import { TRANSLATIONS } from '../constants';
+import { Lang } from '../types';
 
 export interface TimerState {
     active: boolean;
@@ -9,9 +11,15 @@ export interface TimerState {
     endAt: number;
 }
 
-export const useTimer = () => {
+export const useTimer = (lang: Lang) => {
     const [timer, setTimer] = useState<TimerState>({ active: false, timeLeft: 0, duration: 120, endAt: 0 });
     const workerRef = useRef<Worker | null>(null);
+    const langRef = useRef(lang);
+
+    // Keep lang ref current for the callback
+    useEffect(() => {
+        langRef.current = lang;
+    }, [lang]);
 
     useEffect(() => {
         // Blob for inline worker to avoid external file issues
@@ -57,29 +65,37 @@ export const useTimer = () => {
                 // FINISHED
                 playTimerFinishSound();
                 
-                // Safe Notification Logic
+                // Safe Notification Logic with Localization and Tagging
                 if ("Notification" in window && Notification.permission === "granted") {
+                    const currentLang = langRef.current;
+                    const t = TRANSLATIONS[currentLang]?.timer || TRANSLATIONS['en'].timer;
+                    const title = t.finished;
+                    const body = t.getBack;
+
                     try {
                         if ('serviceWorker' in navigator) {
                             navigator.serviceWorker.ready.then(registration => {
-                                registration.showNotification("Rest Finished!", {
-                                    body: "Get back to work!",
+                                registration.showNotification(title, {
+                                    body: body,
                                     icon: "/icon.svg",
+                                    tag: 'ironlog-timer', // Consolidate notifications
                                     vibrate: [200, 100, 200]
                                 } as any);
                             }).catch(() => {
                                 // Silent fail or fallback
                                 try {
-                                    new Notification("Rest Finished!", {
-                                        body: "Get back to work!",
-                                        icon: "/icon.svg"
+                                    new Notification(title, {
+                                        body: body,
+                                        icon: "/icon.svg",
+                                        tag: 'ironlog-timer' // Consolidate
                                     });
                                 } catch(e) {}
                             });
                         } else {
-                            new Notification("Rest Finished!", {
-                                body: "Get back to work!",
-                                icon: "/icon.svg"
+                            new Notification(title, {
+                                body: body,
+                                icon: "/icon.svg",
+                                tag: 'ironlog-timer' // Consolidate
                             });
                         }
                     } catch (e) {

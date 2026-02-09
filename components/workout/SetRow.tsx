@@ -19,6 +19,7 @@ interface SetRowProps {
     lang: 'en' | 'es';
     isCardio?: boolean;
     cardioMode?: CardioType;
+    isBodyweight?: boolean; // NEW PROP
 }
 
 const getTypeColor = (type: SetType) => {
@@ -36,7 +37,7 @@ const getTypeLabel = (type: SetType) => {
     return map[type] || 'R';
 };
 
-export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWeight, showRIR, stageRIR, onUpdate, onToggleComplete, onChangeType, lang, isCardio, cardioMode = 'steady' }: SetRowProps) => {
+export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWeight, showRIR, stageRIR, onUpdate, onToggleComplete, onChangeType, lang, isCardio, cardioMode = 'steady', isBodyweight }: SetRowProps) => {
     const t = TRANSLATIONS[lang];
     const isDone = set.completed;
     const setType = set.type || 'regular';
@@ -54,6 +55,9 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
     const [localRest, setLocalRest] = useState(set.restSeconds ?? (cardioMode === 'tabata' ? 10 : ''));
     const [localRounds, setLocalRounds] = useState(set.reps ?? (cardioMode === 'tabata' ? 8 : 4)); 
 
+    // Error State for Validation
+    const [showError, setShowError] = useState(false);
+
     // Timer State
     const [timerActive, setTimerActive] = useState(false);
     const [intervalPhase, setIntervalPhase] = useState<'work' | 'rest'>('work');
@@ -62,7 +66,6 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
     const timerRef = useRef<any>(null);
     
     // Safety Refs for Focus Management
-    // We do NOT update local state from props if the user is currently editing (focused)
     const activeFieldRef = useRef<string | null>(null);
 
     // Sync props to state (Safely)
@@ -83,10 +86,10 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
     }, []);
 
     const commitChange = (field: string, value: any) => {
-        // Only trigger update if value actually changed to reduce re-renders
-        if (value != set[field as keyof WorkoutSet]) { // loose equality for string/number match
+        if (value != set[field as keyof WorkoutSet]) {
             onUpdate(exInstanceId, set.id, field, value);
         }
+        if (showError) setShowError(false); // Clear error on change
     };
 
     const handleFocus = (e: React.FocusEvent<HTMLInputElement>, field: string) => {
@@ -99,17 +102,33 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
         commitChange(field, value);
     };
 
+    // VALIDATION LOGIC
+    const tryComplete = () => {
+        // Cardio has different validation rules (usually just time or distance)
+        // Interval uses separate flow
+        if (isCardio) {
+            if(!isInterval) onToggleComplete(exInstanceId, set.id);
+            return;
+        }
+
+        // Strength Logic
+        if (!localWeight || !localReps) {
+            setShowError(true);
+            triggerHaptic('heavy'); // Warning haptic
+            return;
+        }
+        
+        onToggleComplete(exInstanceId, set.id);
+    };
+
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, field: string, val: any) => {
         if (e.key === 'Enter') {
             e.currentTarget.blur(); 
-            // Blur triggers commitChange via handleBlur, so we don't need to call it here explicitly
-            // But we do want to toggle complete if valid
-            if (!isDone && !isInterval && val) onToggleComplete(exInstanceId, set.id);
+            if (!isDone && !isInterval) tryComplete();
         }
     };
 
-    // ... (Keep existing Timer Logic unchanged) ...
-    // --- STEADY STATE TIMER ---
+    // ... (Keep Timer Functions) ...
     const toggleSteadyTimer = (e: React.MouseEvent) => {
         e.stopPropagation();
         if (timerActive) {
@@ -133,7 +152,6 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
         }
     };
 
-    // --- INTERVAL TIMER ---
     const toggleIntervalTimer = (e: React.MouseEvent) => {
         e.stopPropagation();
         if (timerActive) {
@@ -213,6 +231,13 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
     const inputBaseClass = `w-full text-lg font-bold text-center border-0 outline-none tabular-nums rounded-lg py-1.5 transition-all focus:ring-2 focus:ring-inset focus:ring-red-500/50`;
     const activeInputClass = `bg-white dark:bg-zinc-900 shadow-sm border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-300 dark:placeholder-zinc-600`;
     const doneInputClass = `bg-transparent text-green-700 dark:text-green-400 placeholder-green-700/30`;
+    const errorInputClass = `bg-red-50 dark:bg-red-900/20 border border-red-500 shadow-sm text-red-900 dark:text-red-100 placeholder-red-300 animate-pulse`;
+
+    const getClasses = (val: any) => {
+        if (isDone) return doneInputClass;
+        if (showError && !val) return errorInputClass;
+        return activeInputClass;
+    };
 
     if (isInterval) {
         return (
@@ -280,26 +305,6 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
                         )}
                     </button>
                 </div>
-
-                {timerActive && (
-                    <div className="absolute inset-0 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm z-10 flex items-center justify-between px-6 rounded-xl animate-in fade-in zoom-in-95">
-                        <div className="flex flex-col items-start">
-                            <span className={`text-[10px] font-black uppercase tracking-widest ${intervalPhase === 'work' ? 'text-green-600' : 'text-blue-500'}`}>
-                                {intervalPhase === 'work' ? 'GO!' : 'REST'}
-                            </span>
-                            <span className="text-3xl font-black font-mono tabular-nums dark:text-white">
-                                {intervalSeconds}s
-                            </span>
-                        </div>
-                        <div className="flex flex-col items-end">
-                            <span className="text-[10px] font-bold text-zinc-400 uppercase">Rounds Left</span>
-                            <span className="text-xl font-bold text-zinc-900 dark:text-white">{roundsLeft}</span>
-                        </div>
-                        <button onClick={toggleIntervalTimer} className="w-10 h-10 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center">
-                            <Icon name="X" size={20} className="text-zinc-500 dark:text-zinc-400" />
-                        </button>
-                    </div>
-                )}
             </div>
         );
     }
@@ -360,7 +365,7 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
 
                 <div className="col-span-1 flex justify-end">
                     <button 
-                        onClick={() => onToggleComplete(exInstanceId, set.id)} 
+                        onClick={tryComplete} 
                         className={`
                             w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 active:scale-75
                             ${isDone 
@@ -376,6 +381,7 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
         );
     }
 
+    // REGULAR STRENGTH SET ROW
     return (
         <div className={`grid grid-cols-12 gap-2 px-3 py-2 items-center transition-all duration-300 relative group rounded-xl my-1 mx-2 border border-transparent ${isDone ? 'bg-green-50/80 dark:bg-green-900/10 border-green-500/20' : ''}`}>
             
@@ -398,7 +404,7 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
                     <input 
                         type="number" 
                         inputMode="decimal" 
-                        className={`${inputBaseClass} ${isDone ? doneInputClass : activeInputClass}`}
+                        className={getClasses(localWeight)}
                         placeholder={set.hintWeight ? String(set.hintWeight) : "-"} 
                         value={localWeight} 
                         onChange={(e) => setLocalWeight(e.target.value)}
@@ -409,9 +415,9 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
                 </div>
                 <div className="flex items-center gap-1 mt-1 opacity-70">
                     <span className="text-[9px] font-semibold text-zinc-400 uppercase tracking-tight">
-                        {set.prevWeight ? `${t.prev}: ${set.prevWeight}` : unitLabel}
+                        {isBodyweight ? (set.prevWeight ? `${t.prev}: +${set.prevWeight}` : '+BW') : (set.prevWeight ? `${t.prev}: ${set.prevWeight}` : unitLabel)}
                     </span>
-                    {unit === 'pl' && plateWeight && localWeight && !isDone && (
+                    {unit === 'pl' && plateWeight && localWeight && !isDone && !isBodyweight && (
                         <span className="text-[9px] text-blue-500 font-bold">≈{Number(localWeight) * plateWeight}</span>
                     )}
                 </div>
@@ -421,7 +427,7 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
                 <input 
                     type="number" 
                     inputMode="numeric" 
-                    className={`${inputBaseClass} ${isDone ? doneInputClass : activeInputClass}`} 
+                    className={getClasses(localReps)}
                     placeholder={set.hintReps ? String(set.hintReps) : "-"} 
                     value={localReps} 
                     onChange={(e) => setLocalReps(e.target.value)}
@@ -454,7 +460,7 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
 
             <div className="col-span-1 flex justify-end pb-4">
                 <button 
-                    onClick={() => onToggleComplete(exInstanceId, set.id)} 
+                    onClick={tryComplete} 
                     className={`
                         w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 active:scale-75
                         ${isDone 

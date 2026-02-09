@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useEffect, useRef, ReactNode, useState, PropsWithChildren, useMemo, useCallback } from 'react';
-import { AppState, Lang, Theme, ColorTheme, ExerciseDef, ActiveSession, MesoCycle, Log, ProgramDay, TutorialState, GlobalTemplate } from '../types';
+import { AppState, Lang, Theme, ColorTheme, ExerciseDef, ActiveSession, MesoCycle, Log, ProgramDay, TutorialState, GlobalTemplate, UserProfile } from '../types';
 import { DEFAULT_LIBRARY, DEFAULT_TEMPLATE, TOJI_TEMPLATE, WIZARD_TEMPLATE, FULL_BODY_TEMPLATE, METABOLITE_TEMPLATE, UPPER_LOWER_TEMPLATE, RESENS_TEMPLATE, MALE_PHYSIQUE_TEMPLATE } from '../constants';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { usePersistedState } from '../hooks/usePersistedState';
@@ -8,12 +8,11 @@ import { Icon } from '../components/ui/Icon';
 import { Logo } from '../components/ui/Logo';
 import { TimerProvider } from './TimerContext';
 import { HomeSkeleton } from '../components/ui/SkeletonLoader';
-import { AuthProvider, useAuth } from './AuthContext'; // Import Auth
-import { syncService } from '../services/syncService'; // Import Sync
+import { AuthProvider, useAuth } from './AuthContext'; 
+import { syncService } from '../services/syncService'; 
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { db as firestoreDb } from '../lib/firebase';
 
-// HARDCODED DEFAULTS (Fallback if offline/no db)
 const INITIAL_TEMPLATES: GlobalTemplate[] = [
     { id: 'toji_fushiguro', name: 'toji_fushiguro', title: { en: "Toji (Natural Hypertrophy)", es: "Toji (Natural Hypertrophy)" }, description: { en: "4-Day Elite Split. Giant Sets, Neck, Forearms & Aesthetic focus.", es: "Rutina Élite de 4 Días. Series Gigantes, Cuello, Antebrazo y Estética." }, isPro: true, program: TOJI_TEMPLATE, order: 1 },
     { id: 'wizard', name: 'wizard', title: { en: "The Wizard v3 (Full Body)", es: "The Wizard v3 (Full Body)" }, description: { en: "3-Days Heavy/Light/Medium. Classic intensity cycling.", es: "3-Días Pesado/Liviano/Medio. Ciclo de intensidad clásico." }, isPro: true, program: WIZARD_TEMPLATE, order: 2 },
@@ -43,6 +42,9 @@ interface AppContextType extends AppState {
     setHasSeenOnboarding: (val: boolean) => void;
     setGlobalTemplates: (val: GlobalTemplate[] | ((prev: GlobalTemplate[]) => GlobalTemplate[])) => void;
     
+    // NEW: User Profile Setter
+    setUserProfile: (val: UserProfile | ((prev: UserProfile) => UserProfile)) => void;
+
     // Tutorial Methods
     markTutorialSeen: (section: keyof TutorialState) => void;
     resetTutorials: () => void;
@@ -63,9 +65,8 @@ interface AppContextType extends AppState {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-// Separated component to handle Sync Logic inside AuthProvider
 const AppStateProvider = ({ children }: PropsWithChildren) => {
-    const { user, subscription, loading: authLoading } = useAuth(); // Access User & Subscription
+    const { user, subscription, loading: authLoading } = useAuth(); 
 
     // --- Synchronous Config ---
     const [langStored, setLang] = useLocalStorage<Lang>('il_lang_v1', 'en');
@@ -90,199 +91,111 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
     const [exercises, setExercises, exLoading] = usePersistedState<ExerciseDef[]>('il_ex_v16', DEFAULT_LIBRARY, 1000);
     const [logs, setLogs, logsLoading] = usePersistedState<Log[]>('il_logs_v16', [], 1000);
     
-    // NEW: Global Templates State (Defaults to constants, but can be updated from DB)
+    // NEW: User Profile Persistence
+    const [userProfile, setUserProfile, profileLoading] = usePersistedState<UserProfile>('il_profile_v1', {
+        experience: 'intermediate',
+        daysPerWeek: 4,
+        goal: 'hypertrophy',
+        sessionDuration: 'medium'
+    }, 1000);
+
     const [globalTemplates, setGlobalTemplates] = useState<GlobalTemplate[]>(INITIAL_TEMPLATES);
-    
     const [rpFeedback, setRpFeedback, fbLoading] = usePersistedState<AppState['rpFeedback']>('il_rp_fb_v1', {}, 1000);
     const [hasSeenOnboarding, setHasSeenOnboarding, onboardingLoading] = usePersistedState<boolean>('il_onboarded_v2', false, 1000);
-    
-    // NEW: Persist local timestamp to compare with cloud
     const [localLastUpdated, setLocalLastUpdated] = usePersistedState<number>('il_last_sync_ts', 0, 0);
 
     const [pendingCloudData, setPendingCloudData] = useState<Partial<AppState> | null>(null);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
 
-    // PWA Prompt State
     const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
     const [isStandalone, setIsStandalone] = useState(false);
 
-    const isAppLoading = programLoading || mesoLoading || sessionLoading || exLoading || logsLoading || fbLoading || onboardingLoading || authLoading;
+    const isAppLoading = programLoading || mesoLoading || sessionLoading || exLoading || logsLoading || fbLoading || onboardingLoading || authLoading || profileLoading;
     const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
-    // --- FETCH GLOBAL DATA (Templates & Exercises) ---
+    // --- FETCH GLOBAL DATA ---
     useEffect(() => {
         if (!firestoreDb || !isOnline) return;
-
         const fetchData = async () => {
             try {
-                // 1. Fetch Global Templates
                 const qTpl = query(collection(firestoreDb, "global_templates"), orderBy("order"));
                 const tplSnapshot = await getDocs(qTpl);
                 const fetchedTemplates: GlobalTemplate[] = [];
-                tplSnapshot.forEach((doc) => {
-                    fetchedTemplates.push({ id: doc.id, ...doc.data() } as GlobalTemplate);
-                });
+                tplSnapshot.forEach((doc) => fetchedTemplates.push({ id: doc.id, ...doc.data() } as GlobalTemplate));
                 if (fetchedTemplates.length > 0) setGlobalTemplates(fetchedTemplates);
 
-                // 2. Fetch Global Exercises
                 const qEx = collection(firestoreDb, "global_exercises");
                 const exSnapshot = await getDocs(qEx);
                 const fetchedExercises: ExerciseDef[] = [];
-                exSnapshot.forEach((doc) => {
-                    fetchedExercises.push({ id: doc.id, ...doc.data() } as ExerciseDef);
-                });
+                exSnapshot.forEach((doc) => fetchedExercises.push({ id: doc.id, ...doc.data() } as ExerciseDef));
 
-                // Merge Global Exercises into Local Library (Avoid duplicates)
                 if (fetchedExercises.length > 0) {
                     setExercises(prev => {
                         const currentIds = new Set(prev.map(e => e.id));
                         const newExs = fetchedExercises.filter(e => !currentIds.has(e.id));
-                        if (newExs.length > 0) {
-                            console.log(`📥 Downloaded ${newExs.length} global exercises.`);
-                            return [...prev, ...newExs];
-                        }
-                        return prev;
+                        return newExs.length > 0 ? [...prev, ...newExs] : prev;
                     });
                 }
-
             } catch (e: any) {
-                if (e.code === 'permission-denied' || e.message?.includes('permission') || e.code === 'failed-precondition') {
-                    console.warn("Global Data: Access denied or index missing.");
-                } else {
-                    console.error("Failed to fetch global data", e);
-                }
+                if (!e.code || e.code !== 'permission-denied') console.error("Global Data Fetch Error", e);
             }
         };
-
         fetchData();
     }, [isOnline, user]); 
 
     // --- PWA INSTALL HANDLER ---
     useEffect(() => {
-        // Detect if already installed
         const isStandaloneQuery = window.matchMedia('(display-mode: standalone)');
         setIsStandalone(isStandaloneQuery.matches);
-        
-        isStandaloneQuery.addEventListener('change', (e) => {
-            setIsStandalone(e.matches);
-        });
-
-        const handler = (e: any) => {
-            // Prevent Chrome 67+ from automatically showing the prompt
-            e.preventDefault();
-            // Stash the event so it can be triggered later.
-            setDeferredPrompt(e);
-            console.log("📲 Install Prompt captured");
-        };
+        isStandaloneQuery.addEventListener('change', (e) => setIsStandalone(e.matches));
+        const handler = (e: any) => { e.preventDefault(); setDeferredPrompt(e); };
         window.addEventListener('beforeinstallprompt', handler);
         return () => window.removeEventListener('beforeinstallprompt', handler);
     }, []);
 
     const installApp = useCallback(async () => {
-        if (!deferredPrompt) {
-            console.warn("Install prompt not available");
-            return;
-        }
-        // Show the native install prompt
+        if (!deferredPrompt) return;
         deferredPrompt.prompt();
-        // Wait for the user to respond to the prompt
         const { outcome } = await deferredPrompt.userChoice;
-        console.log(`User response to install prompt: ${outcome}`);
-        
-        if(outcome === 'accepted') {
-            setDeferredPrompt(null);
-        }
+        if(outcome === 'accepted') setDeferredPrompt(null);
     }, [deferredPrompt]);
 
-    // --- CLOUD SYNC LOGIC ---
-    
-    // 0. Network Status Listener & Reconnection Sync
+    // --- SYNC LOGIC ---
     useEffect(() => {
         const handleOnline = () => {
             setIsOnline(true);
-            console.log("🌐 Back Online! Checking sync...");
-            
             if (user) {
                 if (subscription.isPro) {
-                    // Full Sync for Pro
                     const now = Date.now();
                     setLocalLastUpdated(now);
                     syncService.uploadState(user.uid, {
                         program, activeMeso, exercises, logs, config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn }, rpFeedback, activeSession, lastUpdated: now
                     });
                 } else {
-                    // Identity Sync for Free (So Admin can find them)
                     syncService.uploadUserIdentity(user.uid, user.email || "");
                 }
             }
         };
         const handleOffline = () => setIsOnline(false);
-
         window.addEventListener('online', handleOnline);
         window.addEventListener('offline', handleOffline);
-
-        return () => {
-            window.removeEventListener('online', handleOnline);
-            window.removeEventListener('offline', handleOffline);
-        };
+        return () => { window.removeEventListener('online', handleOnline); window.removeEventListener('offline', handleOffline); };
     }, [user, subscription.isPro, program, activeMeso, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, rpFeedback, activeSession]);
 
-    // 1. Download & Compare on Login (Check PRO)
-    useEffect(() => {
-        // If user is Free, we still run the effect but skip the download part
-        // We DO run uploadUserIdentity though to register them in DB.
-        
-        if (user && !isAppLoading && isOnline) {
-            if (subscription.isPro) {
-                syncService.downloadState(user.uid).then((cloudData: any) => {
-                    if (cloudData) {
-                        const cloudTS = cloudData.lastUpdated || 0;
-                        const localTS = localLastUpdated || 0;
-
-                        if (cloudTS > localTS) {
-                            setPendingCloudData(cloudData);
-                        }
-                    } else {
-                        // No cloud data -> Upload local to init
-                        const now = Date.now();
-                        setLocalLastUpdated(now);
-                        syncService.uploadState(user.uid, { program, activeMeso, exercises, logs, config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn }, rpFeedback, activeSession, lastUpdated: now });
-                    }
-                });
-            } else {
-                // Free Tier: Just sync identity so Admin can find them
-                syncService.uploadUserIdentity(user.uid, user.email || "");
-            }
-        }
-    }, [user, isAppLoading, isOnline, subscription.isPro]); 
-
-    // 2. Upload on Data Change (Debounced)
+    // Upload Debounce
     useEffect(() => {
         if (!user || isAppLoading) return;
-
         const timer = setTimeout(() => {
             if (subscription.isPro) {
-                // FULL DATA SYNC (PRO ONLY)
                 const now = Date.now();
                 setLocalLastUpdated(now);
-                
                 syncService.uploadState(user.uid, {
-                    program,
-                    activeMeso,
-                    activeSession,
-                    exercises,
-                    logs,
-                    config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn },
-                    rpFeedback,
-                    lastUpdated: now
+                    program, activeMeso, activeSession, exercises, logs, config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn }, rpFeedback, lastUpdated: now
                 });
             } else {
-                // IDENTITY SYNC (FREE USERS)
-                // Ensures their email exists in Firestore for Admin lookup
                 syncService.uploadUserIdentity(user.uid, user.email || "");
             }
         }, 5000); 
-
         return () => clearTimeout(timer);
     }, [user, subscription.isPro, program, activeMeso, activeSession, exercises, logs, showRIR, rpEnabled, rpFeedback, isAppLoading]);
 
@@ -294,62 +207,41 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
             if (pendingCloudData.exercises) setExercises(pendingCloudData.exercises);
             if (pendingCloudData.logs) setLogs(pendingCloudData.logs);
             if (pendingCloudData.rpFeedback) setRpFeedback(pendingCloudData.rpFeedback);
-            
             if (pendingCloudData.config) {
                 if (pendingCloudData.config.showRIR !== undefined) setShowRIR(pendingCloudData.config.showRIR);
                 if (pendingCloudData.config.rpEnabled !== undefined) setRpEnabled(pendingCloudData.config.rpEnabled);
             }
             // @ts-ignore
             if (pendingCloudData.lastUpdated) setLocalLastUpdated(pendingCloudData.lastUpdated);
-            
             setPendingCloudData(null);
         }
     }, [pendingCloudData]);
 
-    const cancelCloudSync = useCallback(() => {
-        setPendingCloudData(null);
-    }, []);
+    const cancelCloudSync = useCallback(() => setPendingCloudData(null), []);
 
-
-    // --- THEME & WAKELOCK EFFECTS ---
+    // --- THEME & WAKELOCK ---
     useEffect(() => {
         const root = window.document.documentElement;
         root.classList.remove('light', 'dark');
-        if (theme === 'system') {
-            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-            root.classList.add(systemTheme);
-        } else {
-            root.classList.add(theme);
-        }
+        if (theme === 'system') root.classList.add(window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        else root.classList.add(theme);
     }, [theme]);
 
-    useEffect(() => {
-        const root = window.document.documentElement;
-        root.setAttribute('data-theme', colorTheme);
-    }, [colorTheme]);
+    useEffect(() => { window.document.documentElement.setAttribute('data-theme', colorTheme); }, [colorTheme]);
 
     useEffect(() => {
         const requestWakeLock = async () => {
             if (keepScreenOn && 'wakeLock' in navigator) {
-                try {
-                    wakeLockRef.current = await navigator.wakeLock.request('screen');
-                } catch (err: any) {
-                    if (err.name !== 'NotAllowedError') console.warn('Wake Lock failed:', err);
-                }
+                try { wakeLockRef.current = await navigator.wakeLock.request('screen'); } catch (err) {}
             } else if (!keepScreenOn && wakeLockRef.current) {
                 wakeLockRef.current.release().catch(() => {});
                 wakeLockRef.current = null;
             }
         };
         requestWakeLock();
-        const handleVisibilityChange = () => {
-            if (document.visibilityState === 'visible' && keepScreenOn) requestWakeLock();
-        };
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-        return () => {
-            document.removeEventListener('visibilitychange', handleVisibilityChange);
-            if (wakeLockRef.current) wakeLockRef.current.release().catch(() => {});
-        };
+        const handleVis = () => { if (document.visibilityState === 'visible' && keepScreenOn) requestWakeLock(); };
+        document.addEventListener('visibilitychange', handleVis);
+        return () => { document.removeEventListener('visibilitychange', handleVis); if (wakeLockRef.current) wakeLockRef.current.release().catch(() => {}); };
     }, [keepScreenOn]);
 
     const setConfig = useCallback((newConfig: any) => {
@@ -359,13 +251,8 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
         if (newConfig.keepScreenOn !== undefined) setKeepScreenOn(newConfig.keepScreenOn);
     }, [setShowRIR, setRpEnabled, setRpTargetRIR, setKeepScreenOn]);
 
-    const markTutorialSeen = useCallback((section: keyof TutorialState) => {
-        setTutorialProgress(prev => ({ ...prev, [section]: true }));
-    }, [setTutorialProgress]);
-
-    const resetTutorials = useCallback(() => {
-        setTutorialProgress({ home: false, workout: false, history: false, stats: false });
-    }, [setTutorialProgress]);
+    const markTutorialSeen = useCallback((section: keyof TutorialState) => setTutorialProgress(prev => ({ ...prev, [section]: true })), [setTutorialProgress]);
+    const resetTutorials = useCallback(() => setTutorialProgress({ home: false, workout: false, history: false, stats: false }), [setTutorialProgress]);
 
     const configState = useMemo(() => ({ showRIR, rpEnabled, rpTargetRIR, keepScreenOn }), [showRIR, rpEnabled, rpTargetRIR, keepScreenOn]);
 
@@ -384,7 +271,8 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
         pendingCloudData, confirmCloudSync, cancelCloudSync, localLastUpdated,
         isOnline,
         deferredPrompt, installApp, isStandalone,
-        globalTemplates, setGlobalTemplates
+        globalTemplates, setGlobalTemplates,
+        userProfile, setUserProfile // Exposed
     }), [
         lang, setLang, theme, setTheme, colorTheme, setColorTheme,
         program, setProgram,
@@ -400,12 +288,11 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
         pendingCloudData, confirmCloudSync, cancelCloudSync, localLastUpdated,
         isOnline,
         deferredPrompt, installApp, isStandalone,
-        globalTemplates
+        globalTemplates, setGlobalTemplates,
+        userProfile, setUserProfile
     ]);
 
-    if (isAppLoading) {
-        return <HomeSkeleton />;
-    }
+    if (isAppLoading) return <HomeSkeleton />;
 
     return (
         <AppContext.Provider value={contextValue}>
@@ -416,16 +303,7 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
     );
 };
 
-// Root Provider Wrapper
-export const AppProvider = ({ children }: PropsWithChildren) => {
-    return (
-        <AuthProvider>
-            <AppStateProvider>
-                {children}
-            </AppStateProvider>
-        </AuthProvider>
-    );
-};
+export const AppProvider = ({ children }: PropsWithChildren) => <AuthProvider><AppStateProvider>{children}</AppStateProvider></AuthProvider>;
 
 export const useApp = () => {
     const context = useContext(AppContext);
