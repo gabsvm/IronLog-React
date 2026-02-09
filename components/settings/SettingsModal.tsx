@@ -29,29 +29,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     const { 
         lang, setLang, theme, setTheme, colorTheme, setColorTheme, 
         config, setConfig, resetTutorials, deferredPrompt, installApp, isStandalone,
-        userProfile, 
-        // We need a way to update profile in AppContext, assuming setConfig or similar mechanism exists or we create one. 
-        // Since AppContext doesn't export setUserProfile directly, let's assume we update it via local state first then maybe sync?
-        // Wait, AppContext DOES NOT export setUserProfile. We must fix this or use a workaround.
-        // Actually, userProfile is in AppState. We need to update it.
-        // Let's check AppContext.tsx... it doesn't expose setUserProfile. 
-        // We will assume for this implementation that we need to add setUserProfile to AppContext or handle it here.
-        // Update: I will check AppContext.tsx in the next step. For now, I'll assume I can persist it via a hack or update context.
-        // Ah, I can't edit AppContext here. I will rely on `setConfig`? No.
-        // I will rely on `syncService` to save it? No, local state needs update.
-        // I will assume I can pass `setUserProfile` if I modified AppContext.
-        // Let's modify AppContext.tsx to expose setUserProfile first? No, I must stick to the plan.
-        // I will use a local state for now and assume the parent handles it? No.
-        // I will check AppContext again. It has `userProfile?: UserProfile`. But no setter.
-        // I will create a function `updateProfile` in this component that saves to localStorage manually if context is missing setter?
-        // Better: I will Update AppContext.tsx to expose `setUserProfile`.
+        userProfile, setUserProfile
     } = useApp();
     
-    // TEMPORARY: Access context directly. 
-    // Since I cannot change AppContext interface in this file block without changing AppContext.tsx file block.
-    // I will modify AppContext.tsx in this XML response as well.
-    const { setUserProfile } = useApp() as any; 
-
     const { user, logout, subscription } = useAuth();
     const { checkPro, isPro, showPaywall, setShowPaywall, featureAttempted } = usePro();
     const t = TRANSLATIONS[lang];
@@ -184,6 +164,27 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 
                 <div className="flex-1 overflow-y-auto p-6 pt-2 pb-24 space-y-2 scroll-container">
                     
+                    {/* NEW: Install App Banner */}
+                    {deferredPrompt && (
+                        <div className="mb-6 bg-gradient-to-r from-red-600 to-orange-600 p-4 rounded-2xl shadow-lg shadow-orange-500/20 flex items-center justify-between animate-in fade-in slide-in-from-top-4">
+                            <div className="text-white">
+                                <h3 className="font-black text-sm uppercase tracking-wide flex items-center gap-2">
+                                    <Icon name="Download" size={16} className="animate-bounce" />
+                                    {t.installApp}
+                                </h3>
+                                <p className="text-[10px] opacity-90 font-medium mt-1 max-w-[130px] leading-tight">
+                                    {t.installDesc}
+                                </p>
+                            </div>
+                            <button 
+                                onClick={installApp}
+                                className="bg-white text-red-600 px-4 py-2 rounded-xl text-xs font-black shadow-md active:scale-95 transition-transform"
+                            >
+                                {t.installBtn}
+                            </button>
+                        </div>
+                    )}
+
                     {/* Account */}
                     <div className="p-4 bg-zinc-50 dark:bg-white/5 rounded-2xl border border-zinc-100 dark:border-white/5 mb-6">
                         <div className="flex items-center gap-3 mb-3">
