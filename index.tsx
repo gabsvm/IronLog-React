@@ -5,10 +5,15 @@ import App from './App';
 
 console.log("Starting App Initialization...");
 
-// Register Service Worker with Enhanced Logging
+// Register Service Worker with Enhanced Logging & Origin Fix
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
+    // FIX: Explicitly construct the URL relative to the current window origin.
+    // This prevents issues in preview environments (like AI Studio) where the base URL 
+    // might be inferred incorrectly (e.g. pointing to ai.studio instead of the sandbox domain).
+    const swUrl = new URL('/sw.js', window.location.origin).href;
+
+    navigator.serviceWorker.register(swUrl)
       .then(registration => {
         console.log('✅ ServiceWorker registration successful with scope: ', registration.scope);
       })
