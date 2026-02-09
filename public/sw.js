@@ -1,22 +1,25 @@
+const CACHE_NAME = 'ironlog-pro-v9-robust';
 
-const CACHE_NAME = 'ironlog-pro-v8-offline-robust';
-
-// Files that MUST be cached immediately during install
+// ONLY cache the absolute essentials for the app shell.
+// Removing specific icon paths prevents the entire SW from failing 
+// if a single image file is missing or 404s.
 const PRECACHE_URLS = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/icon.svg',
-  '/icons/icon-96x96.png',
-  '/icons/icon-192x192.png'
+  '/icon.svg' 
 ];
 
 self.addEventListener('install', (event) => {
   self.skipWaiting(); // Activate worker immediately
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      // Force cache critical assets
-      return cache.addAll(PRECACHE_URLS).catch(err => console.warn("SW Precache warning:", err));
+      // Force cache critical assets. 
+      // If any of these fail, the SW won't install. 
+      // We keep this list minimal for stability.
+      return cache.addAll(PRECACHE_URLS).catch(err => {
+          console.warn("SW Precache warning - continuing anyway:", err);
+      });
     })
   );
 });
@@ -41,7 +44,6 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
   // 1. NAVIGATION (HTML) - Network First, Fallback to Cache
-  // This ensures we get updates if online, but app works if offline.
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
@@ -60,15 +62,13 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 2. ASSETS (JS, CSS, Images, Fonts) - Cache First / Stale-While-Revalidate
-  // Includes local assets AND external CDNs (esm.sh, google fonts)
+  // 2. ASSETS - Cache First
   if (
-    url.origin === self.location.origin || // Local files
-    url.hostname === 'esm.sh' ||           // CDN Dependencies
+    url.origin === self.location.origin || 
+    url.hostname === 'esm.sh' ||           
     url.hostname.includes('fonts') ||
     url.hostname.includes('gstatic')
   ) {
-    // Exclude API calls or non-GET requests
     if (event.request.method !== 'GET' || url.pathname.startsWith('/api')) {
       return;
     }
@@ -76,24 +76,18 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       caches.open(CACHE_NAME).then(async (cache) => {
         const cachedResponse = await cache.match(event.request);
-        
-        // Return cached response immediately if available
         if (cachedResponse) {
-          // Optional: Background update for next time (Stale-While-Revalidate)
-          // fetch(event.request).then(netRes => cache.put(event.request, netRes));
           return cachedResponse;
         }
 
-        // If not in cache, fetch from network and cache it
         return fetch(event.request).then((networkResponse) => {
           if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic' && networkResponse.type !== 'cors' && networkResponse.type !== 'opaque') {
             return networkResponse;
           }
           cache.put(event.request, networkResponse.clone());
           return networkResponse;
-        }).catch(err => {
-           // Network failed and not in cache. Return nothing (image placeholder logic could go here)
-           console.warn("SW Fetch failed:", event.request.url);
+        }).catch(() => {
+           // Silent fail for non-critical assets
         });
       })
     );
