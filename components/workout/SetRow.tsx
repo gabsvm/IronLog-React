@@ -19,7 +19,7 @@ interface SetRowProps {
     lang: 'en' | 'es';
     isCardio?: boolean;
     cardioMode?: CardioType;
-    isBodyweight?: boolean; // NEW PROP
+    isBodyweight?: boolean;
 }
 
 const getTypeColor = (type: SetType) => {
@@ -89,7 +89,7 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
         if (value != set[field as keyof WorkoutSet]) {
             onUpdate(exInstanceId, set.id, field, value);
         }
-        if (showError) setShowError(false); // Clear error on change
+        if (showError) setShowError(false);
     };
 
     const handleFocus = (e: React.FocusEvent<HTMLInputElement>, field: string) => {
@@ -102,22 +102,16 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
         commitChange(field, value);
     };
 
-    // VALIDATION LOGIC
     const tryComplete = () => {
-        // Cardio has different validation rules (usually just time or distance)
-        // Interval uses separate flow
         if (isCardio) {
             if(!isInterval) onToggleComplete(exInstanceId, set.id);
             return;
         }
-
-        // Strength Logic
         if (!localWeight || !localReps) {
             setShowError(true);
-            triggerHaptic('heavy'); // Warning haptic
+            triggerHaptic('heavy');
             return;
         }
-        
         onToggleComplete(exInstanceId, set.id);
     };
 
@@ -128,7 +122,6 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
         }
     };
 
-    // ... (Keep Timer Functions) ...
     const toggleSteadyTimer = (e: React.MouseEvent) => {
         e.stopPropagation();
         if (timerActive) {
@@ -182,9 +175,7 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
                 currentSecs--;
                 setIntervalSeconds(currentSecs);
 
-                if (currentSecs > 0 && currentSecs <= 3) {
-                    triggerHaptic('light'); 
-                }
+                if (currentSecs > 0 && currentSecs <= 3) triggerHaptic('light');
 
                 if (currentSecs <= 0) {
                     playTimerFinishSound();
@@ -228,9 +219,9 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
         }
     };
 
-    const inputBaseClass = `w-full text-lg font-bold text-center border-0 outline-none tabular-nums rounded-lg py-1.5 transition-all focus:ring-2 focus:ring-inset focus:ring-red-500/50`;
+    const inputBaseClass = `w-full text-lg font-bold text-center border-0 outline-none tabular-nums rounded-lg py-2 transition-all focus:ring-2 focus:ring-inset focus:ring-red-500/50`;
     const activeInputClass = `bg-white dark:bg-zinc-900 shadow-sm border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-300 dark:placeholder-zinc-600`;
-    const doneInputClass = `bg-transparent text-green-700 dark:text-green-400 placeholder-green-700/30`;
+    const doneInputClass = `bg-transparent text-green-700 dark:text-green-400 placeholder-green-700/30 border border-transparent`;
     const errorInputClass = `bg-red-50 dark:bg-red-900/20 border border-red-500 shadow-sm text-red-900 dark:text-red-100 placeholder-red-300 animate-pulse`;
 
     const getClasses = (val: any) => {
@@ -239,11 +230,14 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
         return activeInputClass;
     };
 
+    // Use gap-2 to match the header and provide breathing room
+    const containerClasses = `grid grid-cols-12 gap-2 px-2 items-center transition-all duration-200 relative group border-b border-zinc-50 dark:border-white/[0.02] last:border-0 ${isDone ? 'bg-green-50/50 dark:bg-green-900/5' : ''}`;
+
     if (isInterval) {
         return (
-            <div className={`grid grid-cols-12 gap-2 px-3 py-2 items-center transition-all duration-300 relative group rounded-xl my-1 mx-2 border border-transparent ${isDone ? 'bg-green-50/80 dark:bg-green-900/10 border-green-500/20' : ''}`}>
+            <div className={`py-2 ${containerClasses}`}>
                 <div className="col-span-1 flex justify-center">
-                    <div className="w-7 h-7 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-[10px] font-bold text-zinc-500">
+                    <div className="w-6 h-6 rounded bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-[10px] font-bold text-zinc-500">
                         {isDone ? <Icon name="Check" size={12} strokeWidth={4} className="text-green-600" /> : set.id.toString().slice(-1)}
                     </div>
                 </div>
@@ -287,21 +281,21 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
                     />
                 </div>
 
-                <div className="col-span-1 flex justify-end">
+                <div className="col-span-1 flex justify-center">
                     <button 
                         onClick={toggleIntervalTimer}
-                        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 shadow-md ${
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 shadow-sm ${
                             timerActive 
                             ? (intervalPhase === 'work' ? 'bg-green-500 text-white animate-pulse' : 'bg-blue-500 text-white animate-pulse')
                             : (isDone ? 'bg-zinc-100 dark:bg-zinc-800 text-green-600' : 'bg-red-600 text-white hover:bg-red-500')
                         }`}
                     >
                         {timerActive ? (
-                            <span className="font-mono font-bold text-xs">{intervalSeconds}</span>
+                            <span className="font-mono font-bold text-[9px]">{intervalSeconds}</span>
                         ) : isDone ? (
-                            <Icon name="Check" size={20} />
+                            <Icon name="Check" size={14} />
                         ) : (
-                            <Icon name="Play" size={16} />
+                            <Icon name="Play" size={12} />
                         )}
                     </button>
                 </div>
@@ -311,9 +305,9 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
 
     if (isCardio) {
         return (
-            <div className={`grid grid-cols-12 gap-2 px-3 py-2 items-center transition-all duration-300 relative group rounded-xl my-1 mx-2 border border-transparent ${isDone ? 'bg-green-50/80 dark:bg-green-900/10 border-green-500/20' : ''}`}>
+            <div className={`py-2 ${containerClasses}`}>
                  <div className="col-span-1 flex justify-center relative">
-                    <div className="w-7 h-7 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-[10px] font-bold text-zinc-500">
+                    <div className="w-6 h-6 rounded bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-[10px] font-bold text-zinc-500">
                         {isDone ? <Icon name="Check" size={12} strokeWidth={4} className="text-green-600" /> : set.id.toString().slice(-1)}
                     </div>
                  </div>
@@ -329,32 +323,28 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
                             onBlur={() => handleBlur('duration', localDuration)}
                             onFocus={(e) => handleFocus(e, 'duration')}
                         />
-                        <button 
-                            onClick={toggleSteadyTimer}
-                            className={`absolute right-1 top-1/2 -translate-y-1/2 p-1.5 rounded-md ${timerActive ? 'bg-red-100 text-red-600' : 'text-zinc-400 hover:text-zinc-600'}`}
-                        >
-                            <Icon name={timerActive ? "Square" : "Clock"} size={12} />
-                        </button>
                     </div>
                  </div>
 
                  <div className="col-span-4 relative flex flex-col items-center">
-                    <input 
-                        type="number" 
-                        inputMode="decimal"
-                        className={`${inputBaseClass} ${isDone ? doneInputClass : activeInputClass}`} 
-                        placeholder="Km" 
-                        value={localDistance} 
-                        onChange={(e) => setLocalDistance(e.target.value)}
-                        onBlur={() => handleBlur('distance', localDistance)}
-                        onFocus={(e) => handleFocus(e, 'distance')}
-                    />
+                    <div className="relative w-full">
+                        <input 
+                            type="number" 
+                            inputMode="decimal"
+                            className={`${inputBaseClass} ${isDone ? doneInputClass : activeInputClass}`} 
+                            placeholder="Km" 
+                            value={localDistance} 
+                            onChange={(e) => setLocalDistance(e.target.value)}
+                            onBlur={() => handleBlur('distance', localDistance)}
+                            onFocus={(e) => handleFocus(e, 'distance')}
+                        />
+                    </div>
                  </div>
 
                  <div className="col-span-2 flex justify-center">
                      <input 
                         type="text"
-                        className={`w-full text-sm font-bold py-1.5 text-center rounded-lg transition-all focus:ring-1 focus:ring-zinc-500 outline-none border ${isDone ? 'bg-transparent border-transparent text-green-600 opacity-60' : 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300'}`}
+                        className={`w-full text-sm font-bold py-2 text-center rounded-lg transition-all focus:ring-1 focus:ring-zinc-500 outline-none border ${isDone ? 'bg-transparent border-transparent text-green-600 opacity-60' : 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300'}`}
                         placeholder="-"
                         value={localRPE}
                         onChange={(e) => setLocalRPE(e.target.value)}
@@ -363,18 +353,18 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
                     />
                  </div>
 
-                <div className="col-span-1 flex justify-end">
+                <div className="col-span-1 flex justify-center">
                     <button 
                         onClick={tryComplete} 
                         className={`
-                            w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 active:scale-75
+                            w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 active:scale-90
                             ${isDone 
                                 ? 'bg-green-500 text-white shadow-lg shadow-green-500/30 scale-100 rotate-0' 
-                                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-300 dark:text-zinc-600 hover:bg-zinc-200 dark:hover:bg-zinc-700 scale-90'
+                                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-300 dark:text-zinc-600 hover:bg-zinc-200 dark:hover:bg-zinc-700'
                             }
                         `}
                     >
-                        <Icon name="Check" size={20} strokeWidth={3} />
+                        <Icon name="Check" size={16} strokeWidth={3} />
                     </button>
                 </div>
             </div>
@@ -383,21 +373,21 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
 
     // REGULAR STRENGTH SET ROW
     return (
-        <div className={`grid grid-cols-12 gap-2 px-3 py-2 items-center transition-all duration-300 relative group rounded-xl my-1 mx-2 border border-transparent ${isDone ? 'bg-green-50/80 dark:bg-green-900/10 border-green-500/20' : ''}`}>
+        <div className={`py-2 ${containerClasses}`}>
             
             <div className="col-span-1 flex justify-center relative">
                 <button 
                     onClick={(e) => { e.stopPropagation(); if (!isDone) onChangeType(exInstanceId, set.id, setType); }}
-                    className={`w-7 h-7 rounded-lg border flex items-center justify-center text-[10px] font-black cursor-pointer transition-all active:scale-95 ${isDone ? 'bg-green-100 dark:bg-green-500/20 border-green-200 dark:border-green-500/30 text-green-700 dark:text-green-400' : getTypeColor(setType)}`}
+                    className={`w-6 h-6 rounded border flex items-center justify-center text-[9px] font-black cursor-pointer transition-all active:scale-95 ${isDone ? 'bg-green-100 dark:bg-green-500/20 border-green-200 dark:border-green-500/30 text-green-700 dark:text-green-400' : getTypeColor(setType)}`}
                 >
-                   {isDone ? <Icon name="Check" size={12} strokeWidth={4} /> : getTypeLabel(setType)}
+                   {isDone ? <Icon name="Check" size={10} strokeWidth={4} /> : getTypeLabel(setType)}
                 </button>
             </div>
             
             <div className="col-span-4 relative flex flex-col items-center">
                 <div className="relative w-full">
                     {set.hintWeight && set.prevWeight && Number(set.hintWeight) > Number(set.prevWeight) && !localWeight && !isDone && (
-                        <div className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] font-bold text-green-600 bg-green-100 dark:bg-green-900/30 px-1 rounded pointer-events-none">
+                        <div className="absolute right-1 -top-2 text-[8px] font-bold text-green-500 bg-green-100 dark:bg-green-900/30 px-1 rounded pointer-events-none z-10">
                             +{Number(set.hintWeight) - Number(set.prevWeight)}
                         </div>
                     )}
@@ -413,39 +403,41 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
                         onKeyDown={(e) => handleKeyDown(e, 'weight', localWeight)}
                     />
                 </div>
-                <div className="flex items-center gap-1 mt-1 opacity-70">
-                    <span className="text-[9px] font-semibold text-zinc-400 uppercase tracking-tight">
-                        {isBodyweight ? (set.prevWeight ? `${t.prev}: +${set.prevWeight}` : '+BW') : (set.prevWeight ? `${t.prev}: ${set.prevWeight}` : unitLabel)}
-                    </span>
-                    {unit === 'pl' && plateWeight && localWeight && !isDone && !isBodyweight && (
-                        <span className="text-[9px] text-blue-500 font-bold">≈{Number(localWeight) * plateWeight}</span>
-                    )}
-                </div>
+                {/* Simplified Prev Below */}
+                {!isDone && (set.prevWeight || unitLabel) && (
+                    <div className="text-[8px] font-bold text-zinc-400 uppercase mt-0.5 opacity-60">
+                        {isBodyweight ? (set.prevWeight ? `+${set.prevWeight}` : '+BW') : (set.prevWeight ? `${set.prevWeight}` : unitLabel)}
+                    </div>
+                )}
             </div>
 
             <div className="col-span-4 relative flex flex-col items-center">
-                <input 
-                    type="number" 
-                    inputMode="numeric" 
-                    className={getClasses(localReps)}
-                    placeholder={set.hintReps ? String(set.hintReps) : "-"} 
-                    value={localReps} 
-                    onChange={(e) => setLocalReps(e.target.value)}
-                    onBlur={() => handleBlur('reps', localReps)}
-                    onFocus={(e) => handleFocus(e, 'reps')}
-                    onKeyDown={(e) => handleKeyDown(e, 'reps', localReps)}
-                />
-                <div className="text-[9px] font-semibold text-zinc-400 uppercase tracking-tight mt-1">
-                    {set.prevReps ? `${t.prev}: ${set.prevReps}` : 'reps'}
-                </div>
-            </div>
-
-            {showRIR ? (
-                <div className="col-span-2 flex justify-center pb-4">
+                <div className="relative w-full">
                     <input 
                         type="number" 
                         inputMode="numeric" 
-                        className={`w-10 text-sm font-bold py-1.5 text-center rounded-lg transition-all focus:ring-1 focus:ring-zinc-500 outline-none border ${isDone ? 'bg-transparent border-transparent text-green-600 opacity-60' : 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300'}`} 
+                        className={getClasses(localReps)}
+                        placeholder={set.hintReps ? String(set.hintReps) : "-"} 
+                        value={localReps} 
+                        onChange={(e) => setLocalReps(e.target.value)}
+                        onBlur={() => handleBlur('reps', localReps)}
+                        onFocus={(e) => handleFocus(e, 'reps')}
+                        onKeyDown={(e) => handleKeyDown(e, 'reps', localReps)}
+                    />
+                </div>
+                {!isDone && (set.prevReps || !set.prevWeight) && (
+                    <div className="text-[8px] font-bold text-zinc-400 uppercase mt-0.5 opacity-60">
+                        {set.prevReps ? `${set.prevReps}` : 'reps'}
+                    </div>
+                )}
+            </div>
+
+            {showRIR ? (
+                <div className="col-span-2 flex justify-center w-full">
+                    <input 
+                        type="number" 
+                        inputMode="numeric" 
+                        className={`w-full text-sm font-bold py-2 text-center rounded-lg transition-all focus:ring-1 focus:ring-zinc-500 outline-none border ${isDone ? 'bg-transparent border-transparent text-green-600 opacity-60' : 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300'}`} 
                         placeholder={stageRIR}
                         value={localRPE} 
                         onChange={(e) => setLocalRPE(e.target.value)}
@@ -458,18 +450,18 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
                 <div className="col-span-2"></div>
             )}
 
-            <div className="col-span-1 flex justify-end pb-4">
+            <div className="col-span-1 flex justify-center">
                 <button 
                     onClick={tryComplete} 
                     className={`
-                        w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 active:scale-75
+                        w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 active:scale-90
                         ${isDone 
                             ? 'bg-green-500 text-white shadow-lg shadow-green-500/30 scale-100 rotate-0' 
-                            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-300 dark:text-zinc-600 hover:bg-zinc-200 dark:hover:bg-zinc-700 scale-90'
+                            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-300 dark:text-zinc-600 hover:bg-zinc-200 dark:hover:bg-zinc-700'
                         }
                     `}
                 >
-                    <Icon name="Check" size={20} strokeWidth={3} />
+                    <Icon name="Check" size={16} strokeWidth={3} />
                 </button>
             </div>
         </div>

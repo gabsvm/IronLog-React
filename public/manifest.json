@@ -1,25 +1,39 @@
 {
-  "name": "IronLog",
+  "name": "IronLog Pro",
   "short_name": "IronLog",
   "id": "/",
   "scope": "/",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "background_color": "#09090b",
   "theme_color": "#000000",
-  "orientation": "portrait",
+  "orientation": "portrait-primary",
+  "categories": ["fitness", "health", "productivity"],
+  "description": "Professional Hypertrophy Tracker with RP-style progression.",
   "icons": [
     {
       "src": "icons/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

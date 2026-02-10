@@ -5,23 +5,28 @@ import App from './App';
 
 console.log("Starting App Initialization...");
 
-// Register Service Worker with Enhanced Logging & Origin Fix
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    // FIX: Explicitly construct the URL relative to the current window origin.
-    // This prevents issues in preview environments (like AI Studio) where the base URL 
-    // might be inferred incorrectly (e.g. pointing to ai.studio instead of the sandbox domain).
-    const swUrl = new URL('/sw.js', window.location.origin).href;
+// Robust Service Worker Registration
+const registerServiceWorker = () => {
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      // Delay registration to ensure the page is fully loaded and stable
+      // This prevents "The document is in an invalid state" errors
+      setTimeout(() => {
+        const swUrl = '/sw.js';
+        navigator.serviceWorker.register(swUrl, { scope: '/' })
+          .then(registration => {
+            console.log('✅ ServiceWorker registration successful with scope: ', registration.scope);
+          })
+          .catch(err => {
+            // Ignore benign errors that happen in specific preview environments
+            console.warn('ServiceWorker registration skipped:', err.message);
+          });
+      }, 1000);
+    });
+  }
+};
 
-    navigator.serviceWorker.register(swUrl)
-      .then(registration => {
-        console.log('✅ ServiceWorker registration successful with scope: ', registration.scope);
-      })
-      .catch(err => {
-        console.error('❌ ServiceWorker registration failed: ', err);
-      });
-  });
-}
+registerServiceWorker();
 
 // ERROR BOUNDARY
 interface ErrorBoundaryProps {

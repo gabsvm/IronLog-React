@@ -208,7 +208,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
             {/* --- Minimalist Header --- */}
             <div className="glass z-30 pt-safe border-b border-zinc-200 dark:border-white/5 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-xl">
                 {/* Top Actions Row */}
-                <div className="px-3 h-14 flex items-center justify-between">
+                <div className="px-4 h-14 flex items-center justify-between">
                     <button onClick={onBack} className="w-10 h-10 flex items-center justify-center rounded-full active:bg-zinc-100 dark:active:bg-zinc-800 transition-colors text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white">
                         <Icon name="ChevronLeft" size={24} strokeWidth={2.5} />
                     </button>
@@ -234,7 +234,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                 </div>
 
                 {/* Unified Title & Stage Info Row */}
-                <div className="px-5 pb-4">
+                <div className="px-4 pb-4">
                     <h1 className="text-2xl font-black text-zinc-900 dark:text-white leading-tight tracking-tight mb-1 truncate">
                         {activeSession.name}
                     </h1>

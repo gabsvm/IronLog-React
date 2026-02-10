@@ -105,6 +105,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         alert("Copied!");
     };
 
+    const handleInstallClick = () => {
+        if (deferredPrompt) {
+            installApp();
+        } else {
+            // Fallback for when the browser doesn't support the event or hasn't fired it yet
+            // This ensures the user isn't left wondering why nothing happens.
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+            if (isIOS) {
+                alert(t.iosInstall);
+            } else {
+                alert(t.androidInstall || "Tap the browser menu (⋮) and select 'Install App' or 'Add to Home Screen'.");
+            }
+        }
+    };
+
     const Divider = () => <div className="h-px bg-zinc-100 dark:bg-white/5 my-6 mx-2" />;
 
     const ColorPill = ({ color, active, onClick, label }: any) => (
@@ -164,8 +179,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 
                 <div className="flex-1 overflow-y-auto p-6 pt-2 pb-24 space-y-2 scroll-container">
                     
-                    {/* NEW: Install App Banner */}
-                    {deferredPrompt && (
+                    {/* ALWAYS SHOW INSTALL BANNER IF NOT STANDALONE */}
+                    {!isStandalone && (
                         <div className="mb-6 bg-gradient-to-r from-red-600 to-orange-600 p-4 rounded-2xl shadow-lg shadow-orange-500/20 flex items-center justify-between animate-in fade-in slide-in-from-top-4">
                             <div className="text-white">
                                 <h3 className="font-black text-sm uppercase tracking-wide flex items-center gap-2">
@@ -177,7 +192,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                 </p>
                             </div>
                             <button 
-                                onClick={installApp}
+                                onClick={handleInstallClick}
                                 className="bg-white text-red-600 px-4 py-2 rounded-xl text-xs font-black shadow-md active:scale-95 transition-transform"
                             >
                                 {t.installBtn}

@@ -11,7 +11,6 @@ import { useApp } from '../../context/AppContext';
 
 interface SortableExerciseCardProps {
     exercise: SessionExercise;
-    // Pass stable handlers instead of the entire `ctrl` object
     onSetUpdate: (exId: number, setId: number, field: string, value: any) => void;
     onSetComplete: (exId: number, setId: number) => void;
     onSetTypeChange: (exId: number, setId: number, type: SetType) => void;
@@ -65,7 +64,7 @@ export const SortableExerciseCard = React.memo(({
     viewMode = 'list'
 }: SortableExerciseCardProps) => {
     const { logs } = useApp();
-    const [isDeleting, setIsDeleting] = useState(false); // Local delete confirmation state
+    const [isDeleting, setIsDeleting] = useState(false);
     
     const {
         attributes,
@@ -87,16 +86,15 @@ export const SortableExerciseCard = React.memo(({
     const sets = ex.sets || [];
     const ssStyle = supersetStyle;
     const unit = ex.weightUnit || 'kg';
-    const unitLabel = unit === 'pl' ? String(t.units?.pl) : String(t.units?.kg);
+    const unitLabel = unit === 'pl' ? 'PL' : 'KG';
     
     const isCardio = ex.muscle === 'CARDIO';
     const cardioMode: CardioType = ex.cardioType || ex.defaultCardioType || 'steady';
     const isInterval = cardioMode === 'hiit' || cardioMode === 'tabata';
 
-    // 1. Get Last Note for Context (Memoized efficiently)
+    // 1. Get Last Note
     const lastNote = useMemo(() => {
         if (!logs) return null;
-        // Optimization: Iterate backwards to find latest match quickly
         for (let i = 0; i < logs.length; i++) {
              const log = logs[i];
              if (log.skipped) continue;
@@ -110,11 +108,7 @@ export const SortableExerciseCard = React.memo(({
         const firstRegularSet = sets.find(s => s.type === 'regular');
         const targetWeight = Number(firstRegularSet?.weight) || Number(firstRegularSet?.hintWeight) || 0;
 
-        if (targetWeight === 0) {
-            // Replaced Alert with a temporary UI shake or small message could be better,
-            // but for now we just return. The user needs to input weight.
-            return;
-        }
+        if (targetWeight === 0) return;
 
         const newSets: WorkoutSet[] = [
             { pct: 0.5, reps: 12 },
@@ -189,18 +183,18 @@ export const SortableExerciseCard = React.memo(({
             `}
         >
             {/* Header */}
-            <div className="p-4 flex flex-col gap-2 border-b border-zinc-100 dark:border-white/5 bg-zinc-50/50 dark:bg-white/[0.02]">
+            <div className="p-3 md:p-4 flex flex-col gap-2 border-b border-zinc-100 dark:border-white/5 bg-zinc-50/50 dark:bg-white/[0.02]">
                 <div className="flex justify-between items-start">
                     <div className="space-y-1">
                         <div className="flex items-center gap-2">
                             {/* Drag Handle */}
                             {viewMode === 'list' && (
                                 <div 
-                                    className="touch-none cursor-grab active:cursor-grabbing text-zinc-300 hover:text-zinc-600 dark:hover:text-zinc-200 p-3 -ml-3 mr-1" 
+                                    className="touch-none cursor-grab active:cursor-grabbing text-zinc-300 hover:text-zinc-600 dark:hover:text-zinc-200 p-2 -ml-2 mr-1" 
                                     {...attributes} 
                                     {...listeners}
                                 >
-                                    <Icon name="GripVertical" size={22} />
+                                    <Icon name="GripVertical" size={20} />
                                 </div>
                             )}
 
@@ -219,7 +213,6 @@ export const SortableExerciseCard = React.memo(({
                                 )
                             )}
 
-                            {/* Bodyweight Indicator */}
                             {ex.isBodyweight && (
                                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900">
                                     BW
@@ -239,7 +232,7 @@ export const SortableExerciseCard = React.memo(({
                         <div className="flex items-center gap-2">
                             <h3 
                                 onClick={(e) => { e.stopPropagation(); if(onOpenDetail) onOpenDetail(ex); }}
-                                className="text-xl font-bold text-zinc-900 dark:text-white leading-tight tracking-tight pl-1 cursor-pointer hover:text-red-500 transition-colors"
+                                className="text-lg font-bold text-zinc-900 dark:text-white leading-tight tracking-tight pl-1 cursor-pointer hover:text-red-500 transition-colors"
                             >
                                 {String(getTranslated(ex.name, lang))}
                             </h3>
@@ -369,8 +362,8 @@ export const SortableExerciseCard = React.memo(({
                 />
             </div>
 
-            {/* Sets Header */}
-            <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-zinc-50 dark:bg-black/20 border-b border-zinc-100 dark:border-white/5 text-[10px] font-bold text-zinc-400 uppercase tracking-widest text-center">
+            {/* Sets Header - Use GAP-2 for mobile breathing room */}
+            <div className="grid grid-cols-12 gap-2 px-2 py-2 bg-zinc-50 dark:bg-black/20 border-b border-zinc-100 dark:border-white/5 text-[10px] font-bold text-zinc-400 uppercase tracking-widest text-center items-center">
                 <div className="col-span-1">#</div>
                 {isCardio ? (
                     isInterval ? (
@@ -381,22 +374,18 @@ export const SortableExerciseCard = React.memo(({
                         </>
                     ) : (
                         <>
-                            <div className="col-span-4 text-left pl-4">{String(t.cardioTime)}</div>
-                            <div className="col-span-4">{String(t.cardioDist)}</div>
-                            <div className="col-span-2">{String(t.cardioSpeed)}</div>
+                            <div className="col-span-4 text-center">{String(t.cardioTime)}</div>
+                            <div className="col-span-4 text-center">{String(t.cardioDist)}</div>
+                            <div className="col-span-2 text-center">{String(t.cardioSpeed)}</div>
                         </>
                     )
                 ) : (
                     <>
-                        <div className="col-span-4 text-left pl-4">
-                            {ex.isBodyweight ? (
-                                <span className="text-blue-500">BW + KG</span>
-                            ) : (
-                                <>{String(t.weight)} ({unit === 'pl' ? 'PL' : 'KG'})</>
-                            )}
+                        <div className="col-span-4 text-center">
+                            {ex.isBodyweight ? "BW + KG" : `${String(t.weight)} (${unitLabel})`}
                         </div>
-                        <div className="col-span-4">{String(t.reps)}</div>
-                        {config.showRIR && <div className="col-span-2">{String(t.rir)}</div>}
+                        <div className="col-span-4 text-center">{String(t.reps)}</div>
+                        {config.showRIR && <div className="col-span-2 text-center">{String(t.rir)}</div>}
                         {!config.showRIR && <div className="col-span-2"></div>}
                     </>
                 )}
@@ -421,7 +410,7 @@ export const SortableExerciseCard = React.memo(({
                         lang={lang}
                         isCardio={isCardio}
                         cardioMode={cardioMode}
-                        isBodyweight={ex.isBodyweight} // Pass BW Flag
+                        isBodyweight={ex.isBodyweight}
                     />
                 ))}
             </div>
