@@ -39,16 +39,15 @@ ChartJS.register(
 
 // --- HELPER: Volume Zones (Dr. Mike / RP Logic) ---
 const getVolumeZone = (sets: number) => {
-    if (sets < 6) return { color: 'bg-yellow-400', label: 'Maintenance (MV)', textColor: 'text-yellow-600' };
-    if (sets < 12) return { color: 'bg-green-500', label: 'Minimum Effective (MEV)', textColor: 'text-green-600' };
-    if (sets <= 22) return { color: 'bg-blue-500', label: 'Optimal (MAV)', textColor: 'text-blue-600' };
-    return { color: 'bg-red-500', label: 'Overreaching (MRV)', textColor: 'text-red-600' };
+    if (sets < 6) return { color: 'bg-yellow-500', label: 'Maintenance (MV)', textColor: 'text-yellow-500' };
+    if (sets < 12) return { color: 'bg-green-500', label: 'Minimum Effective (MEV)', textColor: 'text-green-500' };
+    if (sets <= 22) return { color: 'bg-blue-500', label: 'Optimal (MAV)', textColor: 'text-blue-500' };
+    return { color: 'bg-red-500', label: 'Overreaching (MRV)', textColor: 'text-red-500' };
 };
 
 export const StatsView: React.FC = () => {
-    const { logs, lang, activeMeso, exercises, theme, tutorialProgress, markTutorialSeen } = useApp();
+    const { logs, lang, activeMeso, exercises, tutorialProgress, markTutorialSeen } = useApp();
     const t = TRANSLATIONS[lang];
-    const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
     
     // UI State
     const [selectedExId, setSelectedExId] = useState<string | null>(null);
@@ -181,31 +180,31 @@ export const StatsView: React.FC = () => {
 
     return (
         <div className="p-4 space-y-6 pb-24 relative">
-            <h2 className="text-2xl font-black text-zinc-900 dark:text-white px-2">Analytics</h2>
+            <h2 className="text-2xl font-black text-white px-2">Analytics</h2>
             
             {/* --- Progress Chart Section (FREE) --- */}
-            <div id="tut-progress-chart" className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-zinc-200 dark:border-white/5 shadow-sm">
+            <div id="tut-progress-chart" className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 shadow-sm">
                 <div className="flex flex-col gap-4 mb-6">
                     <div className="flex justify-between items-center">
                         <div className="flex items-center gap-2">
-                             <div className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-500 flex items-center justify-center">
+                             <div className="w-8 h-8 rounded-full bg-red-900/20 text-red-500 flex items-center justify-center">
                                 <Icon name="TrendingUp" size={16} />
                             </div>
-                            <h3 className="font-bold text-zinc-900 dark:text-white">{t.statsProgress}</h3>
+                            <h3 className="font-bold text-white">{t.statsProgress}</h3>
                         </div>
                         
-                        <div className="flex bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg">
+                        <div className="flex bg-zinc-800 p-1 rounded-lg">
                             {isCardio ? (
                                 <>
                                     <button 
                                         onClick={() => setChartMetric('duration')}
-                                        className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${chartMetric === 'duration' ? 'bg-white dark:bg-zinc-700 shadow text-zinc-900 dark:text-white' : 'text-zinc-500 hover:text-zinc-700'}`}
+                                        className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${chartMetric === 'duration' ? 'bg-zinc-700 shadow text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
                                     >
                                         TIME
                                     </button>
                                     <button 
                                         onClick={() => setChartMetric('distance')}
-                                        className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${chartMetric === 'distance' ? 'bg-white dark:bg-zinc-700 shadow text-zinc-900 dark:text-white' : 'text-zinc-500 hover:text-zinc-700'}`}
+                                        className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${chartMetric === 'distance' ? 'bg-zinc-700 shadow text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
                                     >
                                         DIST
                                     </button>
@@ -214,13 +213,13 @@ export const StatsView: React.FC = () => {
                                 <>
                                     <button 
                                         onClick={() => setChartMetric('1rm')}
-                                        className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${chartMetric === '1rm' ? 'bg-white dark:bg-zinc-700 shadow text-zinc-900 dark:text-white' : 'text-zinc-500 hover:text-zinc-700'}`}
+                                        className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${chartMetric === '1rm' ? 'bg-zinc-700 shadow text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
                                     >
                                         1RM
                                     </button>
                                     <button 
                                         onClick={() => setChartMetric('volume')}
-                                        className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${chartMetric === 'volume' ? 'bg-white dark:bg-zinc-700 shadow text-zinc-900 dark:text-white' : 'text-zinc-500 hover:text-zinc-700'}`}
+                                        className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${chartMetric === 'volume' ? 'bg-zinc-700 shadow text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
                                     >
                                         VOL
                                     </button>
@@ -231,7 +230,7 @@ export const StatsView: React.FC = () => {
 
                     <button 
                         onClick={() => { setPickerSearch(''); setShowPicker(true); }}
-                        className="w-full bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-white text-sm font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-red-500 flex justify-between items-center active:bg-zinc-100 dark:active:bg-white/10 transition-colors"
+                        className="w-full bg-white/5 border border-white/10 text-white text-sm font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-red-500 flex justify-between items-center active:bg-white/10 transition-colors"
                     >
                         <span className="truncate">
                             {loadingOverview 
@@ -254,7 +253,7 @@ export const StatsView: React.FC = () => {
             {/* --- Symmetry Radar & Doughnut (PRO LOCKED) --- */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Symmetry Radar */}
-                <div id="tut-radar-chart" className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-zinc-200 dark:border-white/5 shadow-sm overflow-hidden flex flex-col h-full min-h-[320px]">
+                <div id="tut-radar-chart" className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 shadow-sm overflow-hidden flex flex-col h-full min-h-[320px]">
                     <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-wider mb-4 flex items-center gap-2">
                         <Icon name="Activity" size={14} /> {t.statsBalance}
                     </h3>
@@ -268,7 +267,7 @@ export const StatsView: React.FC = () => {
                 </div>
 
                 {/* Set Type Distribution */}
-                <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-zinc-200 dark:border-white/5 shadow-sm flex flex-col h-full min-h-[320px]">
+                <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 shadow-sm flex flex-col h-full min-h-[320px]">
                     <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-wider mb-4 flex items-center gap-2">
                         <Icon name="Layers" size={14} /> {t.statsIntensity}
                     </h3>
@@ -287,7 +286,7 @@ export const StatsView: React.FC = () => {
                                         }} 
                                     />
                                     <div className="absolute inset-0 flex items-center justify-center flex-col pointer-events-none">
-                                        <span className="text-3xl font-black text-zinc-900 dark:text-white tracking-tighter">
+                                        <span className="text-3xl font-black text-white tracking-tighter">
                                             {totalSets}
                                         </span>
                                         <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{t.statsSets}</span>
@@ -295,8 +294,8 @@ export const StatsView: React.FC = () => {
                                 </div>
                             ) : (
                                 <div className="flex flex-col items-center justify-center opacity-50 space-y-3">
-                                    <div className="w-32 h-32 rounded-full border-[12px] border-zinc-100 dark:border-zinc-800 flex items-center justify-center">
-                                         <Icon name="CloudOff" size={24} className="text-zinc-300 dark:text-zinc-600" />
+                                    <div className="w-32 h-32 rounded-full border-[12px] border-zinc-800 flex items-center justify-center">
+                                         <Icon name="CloudOff" size={24} className="text-zinc-600" />
                                     </div>
                                     <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{t.statsNoData}</span>
                                 </div>
@@ -307,7 +306,7 @@ export const StatsView: React.FC = () => {
             </div>
 
             {/* --- Volume Bar Chart Section --- */}
-            <div id="tut-vol-bar" className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-zinc-200 dark:border-white/5 shadow-sm">
+            <div id="tut-vol-bar" className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 shadow-sm">
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-2">
                         <Icon name="BarChart2" size={14} />
@@ -315,7 +314,7 @@ export const StatsView: React.FC = () => {
                     </h3>
                     {/* Legend */}
                     <div className="flex gap-2">
-                        <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-yellow-400"></div><span className="text-[9px] text-zinc-400 font-bold">MV</span></div>
+                        <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-yellow-500"></div><span className="text-[9px] text-zinc-400 font-bold">MV</span></div>
                         <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-500"></div><span className="text-[9px] text-zinc-400 font-bold">MEV</span></div>
                         <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-500"></div><span className="text-[9px] text-zinc-400 font-bold">MAV</span></div>
                     </div>
@@ -325,9 +324,9 @@ export const StatsView: React.FC = () => {
                     <div className="space-y-4 animate-pulse">
                         {[1,2,3,4].map(i => (
                             <div key={i} className="flex gap-3 items-center">
-                                <div className="w-24 h-4 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
-                                <div className="flex-1 h-4 bg-zinc-100 dark:bg-zinc-800 rounded-full"></div>
-                                <div className="w-6 h-4 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+                                <div className="w-24 h-4 bg-zinc-800 rounded"></div>
+                                <div className="flex-1 h-4 bg-zinc-800 rounded-full"></div>
+                                <div className="w-6 h-4 bg-zinc-800 rounded"></div>
                             </div>
                         ))}
                     </div>
@@ -340,7 +339,7 @@ export const StatsView: React.FC = () => {
                                     <div className="w-24 text-xs font-bold text-zinc-500 truncate text-right">
                                         {TRANSLATIONS[lang].muscle[muscle as MuscleGroup]}
                                     </div>
-                                    <div className="flex-1 h-2 bg-zinc-100 dark:bg-white/5 rounded-full overflow-hidden relative">
+                                    <div className="flex-1 h-2 bg-white/5 rounded-full overflow-hidden relative">
                                         <div 
                                             className={`h-full rounded-full transition-all duration-1000 ${zone.color}`}
                                             style={{ width: `${Math.min(100, (count / maxVal) * 100)}%` }}
@@ -356,31 +355,11 @@ export const StatsView: React.FC = () => {
                 )}
             </div>
 
-            {/* --- Summary Cards --- */}
-            <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-zinc-200 dark:border-white/5">
-                    <div className="text-3xl font-black text-zinc-900 dark:text-white mb-1">
-                        {safeLogs.length}
-                    </div>
-                    <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{t.totalWorkouts}</div>
-                </div>
-                <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-zinc-200 dark:border-white/5">
-                    <div className="text-3xl font-black text-zinc-900 dark:text-white mb-1">
-                        {
-                            safeLogs.length > 0
-                            ? Math.round((safeLogs.reduce((acc, l) => acc + l.duration, 0) / 60) / safeLogs.length)
-                            : 0
-                        }m
-                    </div>
-                    <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{t.avgDuration}</div>
-                </div>
-            </div>
-
             {/* --- Full Screen Picker Modal --- */}
             {showPicker && (
-                <div className="fixed inset-0 z-[60] bg-gray-50 dark:bg-zinc-950 flex flex-col animate-in slide-in-from-bottom duration-200">
-                    <div className="glass px-4 h-16 shrink-0 flex items-center gap-3 border-b border-zinc-200 dark:border-white/5">
-                        <button onClick={() => setShowPicker(false)} className="p-2 -ml-2 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white">
+                <div className="fixed inset-0 z-[60] bg-zinc-950 flex flex-col animate-in slide-in-from-bottom duration-200">
+                    <div className="glass px-4 h-16 shrink-0 flex items-center gap-3 border-b border-white/5">
+                        <button onClick={() => setShowPicker(false)} className="p-2 -ml-2 text-zinc-400 hover:text-white">
                             <Icon name="X" size={24} />
                         </button>
                         <div className="relative flex-1">
@@ -389,7 +368,7 @@ export const StatsView: React.FC = () => {
                                 autoFocus
                                 type="text" 
                                 placeholder={t.searchPlaceholder}
-                                className="w-full bg-zinc-100 dark:bg-zinc-800/50 rounded-xl py-2 pl-9 pr-4 text-sm font-medium focus:ring-2 focus:ring-red-500 border-none outline-none text-zinc-900 dark:text-white placeholder-zinc-400"
+                                className="w-full bg-zinc-800/50 rounded-xl py-2 pl-9 pr-4 text-sm font-medium focus:ring-2 focus:ring-red-500 border-none outline-none text-white placeholder-zinc-400"
                                 value={pickerSearch}
                                 onChange={e => setPickerSearch(e.target.value)}
                             />
@@ -406,11 +385,11 @@ export const StatsView: React.FC = () => {
                                         setShowPicker(false);
                                     }}
                                     className={`w-full text-left p-3 rounded-xl active:scale-[0.99] transition-all flex items-center justify-between group
-                                        ${selectedExId === ex!.id ? 'bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/50' : 'hover:bg-zinc-100 dark:hover:bg-white/5 border border-transparent'}
+                                        ${selectedExId === ex!.id ? 'bg-red-900/10 border border-red-900/50' : 'hover:bg-white/5 border border-transparent'}
                                     `}
                                 >
                                     <div>
-                                        <div className={`font-bold text-sm ${selectedExId === ex!.id ? 'text-red-700 dark:text-red-400' : 'text-zinc-900 dark:text-zinc-100'}`}>
+                                        <div className={`font-bold text-sm ${selectedExId === ex!.id ? 'text-red-400' : 'text-zinc-100'}`}>
                                             {getTranslated(ex!.name, lang)}
                                         </div>
                                         <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mt-0.5">
@@ -418,7 +397,7 @@ export const StatsView: React.FC = () => {
                                         </div>
                                     </div>
                                     {selectedExId === ex!.id && (
-                                        <div className="text-red-600 dark:text-red-500">
+                                        <div className="text-red-500">
                                             <Icon name="Check" size={18} />
                                         </div>
                                     )}

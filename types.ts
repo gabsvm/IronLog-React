@@ -80,6 +80,7 @@ export interface ProgramSlot {
   reps?: string;
   exerciseId?: string | null;
   supersetId?: string; 
+  setType?: SetType; // NEW: Persist preferred set type
 }
 
 export interface ProgramDay {
@@ -108,6 +109,7 @@ export interface MesoCycle {
   plan: (string | null)[][];
   targetWeeks?: number;
   isDeload?: boolean;
+  note?: string; // NEW: General mesocycle notes
 }
 
 export interface Log {
@@ -134,6 +136,7 @@ export interface TutorialState {
     workout: boolean;
     history: boolean;
     stats: boolean;
+    mesoSettings: boolean; // NEW: Specific tutorial for the settings modal
 }
 
 export type SubscriptionTier = 'free' | 'monthly' | 'yearly' | 'lifetime';

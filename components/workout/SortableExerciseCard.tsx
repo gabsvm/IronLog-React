@@ -24,6 +24,7 @@ interface SortableExerciseCardProps {
     onEditMuscle: (id: number | null) => void;
     onConfigPlate: (id: number | null) => void;
     onUpdateSession: (cb: any) => void;
+    onOpenWarmup?: (id: number) => void; // New prop to trigger modal
     
     // UI State passed down
     openMenuId: number | null;
@@ -37,6 +38,9 @@ interface SortableExerciseCardProps {
     config: any;
     stageConfig: any;
     viewMode?: 'list' | 'focus';
+    
+    // Tutorial Hook
+    tutorialId?: string; // "tut-set-type" from parent if first card
 }
 
 export const SortableExerciseCard = React.memo(({ 
@@ -52,6 +56,7 @@ export const SortableExerciseCard = React.memo(({
     onEditMuscle,
     onConfigPlate,
     onUpdateSession,
+    onOpenWarmup,
     openMenuId,
     setOpenMenuId,
     linkingId,
@@ -61,7 +66,8 @@ export const SortableExerciseCard = React.memo(({
     isLinkingTarget, 
     config, 
     stageConfig,
-    viewMode = 'list'
+    viewMode = 'list',
+    tutorialId
 }: SortableExerciseCardProps) => {
     const { logs } = useApp();
     const [isDeleting, setIsDeleting] = useState(false);
@@ -247,7 +253,17 @@ export const SortableExerciseCard = React.memo(({
                     
                     <div className="flex items-center gap-2">
                         {!isCardio && (
-                            <button onClick={(e) => { e.stopPropagation(); handleInjectWarmup(); }} className="w-8 h-8 flex items-center justify-center rounded-full bg-orange-50 dark:bg-orange-900/10 text-orange-500 hover:scale-110 transition-transform" title="Auto Warmup">
+                            <button 
+                                id={tutorialId ? "tut-warmup-btn" : undefined}
+                                onClick={(e) => { 
+                                    e.stopPropagation(); 
+                                    // Use modal if handler provided (preferable for feedback), otherwise try internal auto-inject
+                                    if (onOpenWarmup) onOpenWarmup(ex.instanceId);
+                                    else handleInjectWarmup(); 
+                                }} 
+                                className="w-8 h-8 flex items-center justify-center rounded-full bg-orange-50 dark:bg-orange-900/10 text-orange-500 hover:scale-110 transition-transform" 
+                                title="Warmup Calculator"
+                            >
                                 <Icon name="Zap" size={16} />
                             </button>
                         )}
@@ -301,9 +317,6 @@ export const SortableExerciseCard = React.memo(({
                                             <div className="h-px bg-zinc-100 dark:bg-white/5 my-1"></div>
                                             <button onClick={(e) => { e.stopPropagation(); onReplace(ex.instanceId); }} className="w-full text-left px-4 py-3 text-sm font-bold text-blue-600 dark:text-blue-400 hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2">
                                                 <Icon name="RefreshCw" size={16} /> {String(t.replaceEx)}
-                                            </button>
-                                            <button onClick={(e) => { e.stopPropagation(); onEditMuscle(ex.instanceId); }} className="w-full text-left px-4 py-3 text-sm font-bold text-purple-600 dark:text-purple-400 hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2">
-                                                <Icon name="Dumbbell" size={16} /> {String(t.changeMuscle)}
                                             </button>
                                             <button onClick={(e) => { 
                                                 e.stopPropagation(); 
@@ -394,7 +407,7 @@ export const SortableExerciseCard = React.memo(({
 
             {/* Sets List */}
             <div className={`divide-y divide-zinc-100 dark:divide-white/5 ${viewMode === 'focus' ? 'overflow-y-auto flex-1' : ''}`}>
-                {sets.map((set) => (
+                {sets.map((set, idx) => (
                     <SetRow
                         key={set.id}
                         set={set}
@@ -411,6 +424,7 @@ export const SortableExerciseCard = React.memo(({
                         isCardio={isCardio}
                         cardioMode={cardioMode}
                         isBodyweight={ex.isBodyweight}
+                        tutorialId={idx === 0 ? tutorialId : undefined} // Only pass to first set if provided
                     />
                 ))}
             </div>

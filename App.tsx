@@ -13,7 +13,7 @@ import { ConfirmModal } from './components/ui/ConfirmModal';
 import { Icon } from './components/ui/Icon';
 import { TRANSLATIONS } from './constants';
 import { Button } from './components/ui/Button';
-import { useAuth } from './context/AuthContext';
+import { useAuth, AuthProvider } from './context/AuthContext';
 import { AuthModal } from './components/auth/AuthModal';
 import { getLastLogForExercise } from './utils';
 import { syncService } from './services/syncService';
@@ -292,7 +292,9 @@ const AppContent = () => {
 
                                         const initialSets = Array(setTarget).fill(null).map((_, i) => ({
                                             id: Date.now() + Math.random() + i,
-                                            weight: '', reps: '', rpe: '', completed: false, type: 'regular',
+                                            weight: '', reps: '', rpe: '', completed: false, 
+                                            // Apply saved Set Type preference from Template if available, else default to 'regular'
+                                            type: slotDef.setType || 'regular',
                                             hintWeight: lastSets?.[i]?.weight, hintReps: lastSets?.[i]?.reps,
                                             prevWeight: lastSets?.[i]?.weight, prevReps: lastSets?.[i]?.reps
                                         }));
@@ -405,8 +407,10 @@ const AppContent = () => {
 
 export default function App() {
     return (
-        <AppProvider>
-            <AppContent />
-        </AppProvider>
+        <AuthProvider>
+            <AppProvider>
+                <AppContent />
+            </AppProvider>
+        </AuthProvider>
     );
 }

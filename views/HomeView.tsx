@@ -1,34 +1,110 @@
 
-import React, { useState, Suspense, useMemo } from 'react';
+import React, { useState, Suspense, useMemo, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { TRANSLATIONS } from '../constants';
 import { Icon } from '../components/ui/Icon';
 import { Button } from '../components/ui/Button';
-import { getTranslated, formatDate } from '../utils';
-import { MesoType, FeedbackEntry, GlobalTemplate } from '../types';
+import { getTranslated } from '../utils';
 import { ActivityHeatmap } from '../components/stats/ActivityHeatmap';
 import { TutorialOverlay } from '../components/ui/TutorialOverlay';
 import { usePro } from '../hooks/usePro';
 import { PaywallModal } from '../components/pro/PaywallModal';
+import { GlobalTemplate, ProgramDay } from '../types';
 
 // Lazy load the AI Chat component
 const IronCoachChat = React.lazy(() => import('../components/ai/IronCoachChat').then(module => ({ default: module.IronCoachChat })));
 
 // --- INTERNAL COMPONENTS ---
 
-// 1. Week Progress Bar
-const WeekProgress = React.memo(({ program, logsForWeek, lang }: any) => {
+const TemplateSelector = ({ 
+    onClose, 
+    onSelectTemplate, 
+    onCreateCustom, 
+    templates, 
+    t, 
+    lang 
+}: { 
+    onClose: () => void, 
+    onSelectTemplate: (tpl: GlobalTemplate) => void, 
+    onCreateCustom: () => void,
+    templates: GlobalTemplate[],
+    t: any,
+    lang: string
+}) => {
+    return (
+        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex flex-col animate-in fade-in duration-200">
+            {/* Header */}
+            <div className="p-4 border-b border-white/10 flex justify-between items-center bg-zinc-900/50">
+                <h2 className="text-xl font-black text-white">{t.startMeso}</h2>
+                <button onClick={onClose} className="p-2 bg-zinc-800 rounded-full text-zinc-400 hover:text-white">
+                    <Icon name="X" size={20} />
+                </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 scroll-container">
+                {/* Option 1: Scratch */}
+                <button 
+                    onClick={onCreateCustom}
+                    className="w-full p-5 rounded-2xl border-2 border-dashed border-zinc-700 bg-zinc-900/50 hover:bg-zinc-800 hover:border-zinc-500 transition-all group text-left flex items-center gap-4"
+                >
+                    <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-colors">
+                        <Icon name="Edit" size={20} />
+                    </div>
+                    <div>
+                        <h3 className="font-bold text-white text-lg">{lang === 'en' ? "Design from Scratch" : "Crear desde Cero"}</h3>
+                        <p className="text-xs text-zinc-500">{lang === 'en' ? "Empty canvas. You choose the exercises." : "Lienzo vacío. Tú eliges los ejercicios."}</p>
+                    </div>
+                </button>
+
+                <div className="flex items-center gap-4 py-2">
+                    <div className="h-px bg-zinc-800 flex-1"></div>
+                    <span className="text-xs font-bold text-zinc-600 uppercase tracking-widest">{lang === 'en' ? "OR CHOOSE TEMPLATE" : "O ELIGE PLANTILLA"}</span>
+                    <div className="h-px bg-zinc-800 flex-1"></div>
+                </div>
+
+                {/* Templates List */}
+                <div className="grid gap-3">
+                    {templates.map(tpl => (
+                        <button 
+                            key={tpl.id}
+                            onClick={() => onSelectTemplate(tpl)}
+                            className="w-full bg-zinc-900 border border-zinc-800 p-4 rounded-2xl text-left hover:border-red-600/50 transition-colors relative overflow-hidden group"
+                        >
+                            {/* Pro Badge */}
+                            {tpl.isPro && (
+                                <div className="absolute top-3 right-3 bg-yellow-500/20 text-yellow-500 text-[9px] font-black px-2 py-0.5 rounded border border-yellow-500/30 uppercase tracking-wider">
+                                    PRO
+                                </div>
+                            )}
+                            
+                            <h3 className="font-bold text-white text-lg pr-8">{getTranslated(tpl.title, lang as any)}</h3>
+                            <p className="text-xs text-zinc-400 mt-1 leading-relaxed">{getTranslated(tpl.description, lang as any)}</p>
+                            
+                            <div className="mt-3 flex gap-2">
+                                <span className="text-[10px] font-bold bg-zinc-800 text-zinc-500 px-2 py-1 rounded">
+                                    {tpl.program.length} {lang === 'en' ? 'Days' : 'Días'}
+                                </span>
+                            </div>
+                        </button>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const WeekProgress = React.memo(({ program, logsForWeek }: any) => {
     const safeProgram = Array.isArray(program) ? program : [];
     const uniqueDaysDone = new Set(logsForWeek.map((l: any) => l.dayIdx));
 
     return (
-        <div className="flex items-center gap-1.5 h-1.5 w-full rounded-full overflow-hidden">
+        <div className="flex gap-1.5 w-full mb-6">
             {safeProgram.map((_: any, i: number) => {
                 const isDone = uniqueDaysDone.has(i);
                 return (
                     <div 
                         key={i} 
-                        className={`flex-1 h-full rounded-full transition-all duration-500 ${isDone ? 'bg-green-500' : 'bg-zinc-200 dark:bg-zinc-800'}`} 
+                        className={`h-1.5 rounded-full flex-1 transition-all duration-500 ${isDone ? 'bg-gradient-to-r from-red-600 to-orange-600 shadow-[0_0_10px_rgba(220,38,38,0.5)]' : 'bg-zinc-800'}`} 
                     />
                 );
             })}
@@ -36,15 +112,14 @@ const WeekProgress = React.memo(({ program, logsForWeek, lang }: any) => {
     );
 });
 
-// 2. Next Session Card
 const NextSessionCard = React.memo(({ nextDayDef, isSessionActive, nextWorkoutIdx, startSession, handleSkipClick, lang, t, tm }: any) => {
     if (!nextDayDef) return (
-        <div className="w-full bg-green-500/10 border border-green-500/20 rounded-3xl p-8 text-center flex flex-col items-center justify-center min-h-[200px] animate-in fade-in">
-            <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center text-white mb-4 shadow-lg shadow-green-500/30">
-                <Icon name="Check" size={32} strokeWidth={3} />
+        <div className="w-full bg-zinc-900/50 border border-zinc-800 rounded-[2rem] p-8 text-center flex flex-col items-center justify-center min-h-[220px] animate-in-up">
+            <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center text-green-500 mb-4 ring-1 ring-green-500/20">
+                <Icon name="Check" size={40} strokeWidth={3} />
             </div>
-            <h3 className="text-xl font-black text-green-600 dark:text-green-400 mb-2">{String(t.weekCompleteTitle)}</h3>
-            <p className="text-sm text-green-700/70 dark:text-green-300/70">{String(t.weekCompleteDesc)}</p>
+            <h3 className="text-2xl font-black text-white mb-2">{String(t.weekCompleteTitle)}</h3>
+            <p className="text-zinc-400">{String(t.weekCompleteDesc)}</p>
         </div>
     );
 
@@ -52,94 +127,66 @@ const NextSessionCard = React.memo(({ nextDayDef, isSessionActive, nextWorkoutId
         <div 
             id="tut-up-next"
             onClick={() => startSession(nextWorkoutIdx)}
-            className="relative w-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-3xl p-6 shadow-2xl shadow-zinc-900/20 dark:shadow-white/5 overflow-hidden group cursor-pointer active:scale-[0.98] transition-all duration-300"
+            className="group relative w-full rounded-[2rem] p-1 overflow-hidden cursor-pointer active:scale-[0.98] transition-transform duration-300"
         >
-            {/* Background Texture */}
-            <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-white via-transparent to-transparent pointer-events-none"></div>
+            {/* Gradient Border Effect */}
+            <div className="absolute inset-0 bg-gradient-to-br from-zinc-700 via-zinc-800 to-zinc-900 rounded-[2rem]"></div>
             
-            <div className="relative z-10">
-                <div className="flex justify-between items-start mb-6">
-                    <div className="inline-flex items-center gap-2 bg-white/10 dark:bg-black/5 px-3 py-1 rounded-full backdrop-blur-sm">
-                        <span className={`w-2 h-2 rounded-full ${isSessionActive ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}></span>
+            {/* Inner Content */}
+            <div className="relative bg-zinc-900 h-full rounded-[1.8rem] p-6 flex flex-col justify-between min-h-[260px] border border-white/5 shadow-2xl overflow-hidden">
+                
+                {/* Background Decor */}
+                <div className="absolute -right-10 -top-10 w-64 h-64 bg-red-600/10 rounded-full blur-[80px] pointer-events-none group-hover:bg-red-600/20 transition-colors duration-500"></div>
+                
+                <div className="relative z-10 flex justify-between items-start">
+                    <div className={`
+                        inline-flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md border border-white/5
+                        ${isSessionActive ? 'bg-red-500/20 text-red-400' : 'bg-white/5 text-zinc-300'}
+                    `}>
+                        {isSessionActive && <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>}
                         <span className="text-[10px] font-black uppercase tracking-widest">
-                            {isSessionActive ? (lang === 'en' ? "IN PROGRESS" : "EN PROGRESO") : String(t.upNext)}
+                            {isSessionActive ? (lang === 'en' ? "IN PROGRESS" : "EN CURSO") : String(t.upNext)}
                         </span>
                     </div>
-                    
+
                     {!isSessionActive && (
                         <button 
                             onClick={(e) => handleSkipClick(e, nextWorkoutIdx)}
-                            className="p-2 -mr-2 text-zinc-400 hover:text-red-500 transition-colors z-20 relative"
-                            title={String(t.skipDay)}
+                            className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-colors"
                         >
                             <Icon name="SkipForward" size={20} />
                         </button>
                     )}
                 </div>
 
-                <h3 className="text-3xl font-black mb-2 leading-tight tracking-tight line-clamp-2">
-                    {String(getTranslated(nextDayDef.dayName, lang))}
-                </h3>
-                
-                <div className="flex flex-wrap gap-2 mb-6">
-                    {(nextDayDef.slots || []).slice(0, 3).map((slot: any, sIdx: number) => (
-                        <span key={sIdx} className="text-[10px] font-bold uppercase bg-white/10 dark:bg-black/5 px-2 py-1 rounded">
-                            {String(tm(slot.muscle))}
-                        </span>
-                    ))}
-                    {(nextDayDef.slots || []).length > 3 && (
-                        <span className="text-[10px] font-bold uppercase bg-white/10 dark:bg-black/5 px-2 py-1 rounded">+{(nextDayDef.slots || []).length - 3}</span>
-                    )}
+                <div className="relative z-10 mt-6 mb-8">
+                    <h3 className="text-4xl font-black text-white leading-[0.95] tracking-tight mb-3 text-balance">
+                        {String(getTranslated(nextDayDef.dayName, lang))}
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                        {(nextDayDef.slots || []).slice(0, 3).map((slot: any, sIdx: number) => (
+                            <span key={sIdx} className="text-[10px] font-bold uppercase bg-white/10 text-zinc-300 px-2 py-1 rounded-md border border-white/5">
+                                {String(tm(slot.muscle))}
+                            </span>
+                        ))}
+                        {(nextDayDef.slots || []).length > 3 && (
+                            <span className="text-[10px] font-bold uppercase bg-white/10 text-zinc-300 px-2 py-1 rounded-md border border-white/5">
+                                +{(nextDayDef.slots || []).length - 3}
+                            </span>
+                        )}
+                    </div>
                 </div>
 
-                <div className="flex items-center gap-2 text-sm font-bold opacity-80 group-hover:gap-3 transition-all">
-                    <span>{isSessionActive ? (lang === 'en' ? "RESUME SESSION" : "REANUDAR") : String(t.tapToStart)}</span>
-                    <Icon name="ArrowRight" size={16} />
+                <div className="relative z-10 flex items-center gap-3 group-hover:translate-x-2 transition-transform duration-300">
+                    <div className="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center shadow-lg shadow-white/10">
+                        <Icon name={isSessionActive ? "Play" : "ArrowRight"} size={24} fill="currentColor" />
+                    </div>
+                    <span className="text-sm font-bold text-white">
+                        {isSessionActive ? (lang === 'en' ? "Resume Workout" : "Reanudar") : String(t.tapToStart)}
+                    </span>
                 </div>
             </div>
         </div>
-    );
-});
-
-// 3. Template Selection Button (Extracted)
-interface TemplateButtonProps {
-    template: GlobalTemplate;
-    isSelected: boolean;
-    isPro: boolean;
-    lang: any;
-    onSelect: (t: GlobalTemplate) => void;
-    onCheckPro: (name: string) => void;
-}
-
-const TemplateButton = React.memo(({ template, isSelected, isPro, lang, onSelect, onCheckPro }: TemplateButtonProps) => {
-    const isLocked = template.isPro && !isPro;
-
-    return (
-        <button
-            onClick={() => {
-                if (isLocked) {
-                    onCheckPro(getTranslated(template.title, lang));
-                    return;
-                }
-                onSelect(template);
-            }}
-            className={`w-full text-left p-3 rounded-xl border transition-all mb-2 relative group overflow-hidden ${
-                isSelected 
-                ? 'bg-red-50 dark:bg-red-900/20 border-red-500 text-red-700 dark:text-red-400' 
-                : 'bg-zinc-50 dark:bg-white/5 border-transparent text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/10'
-            }`}
-        >
-            <div className="flex justify-between items-start">
-                <div>
-                    <div className="font-bold mb-0.5 text-sm flex items-center gap-2">
-                        {getTranslated(template.title, lang)}
-                        {template.isPro && <span className="text-[9px] bg-zinc-900 text-white dark:bg-white dark:text-black px-1.5 py-0.5 rounded uppercase font-black tracking-wider">PRO</span>}
-                    </div>
-                    <div className="text-[10px] opacity-70 leading-relaxed">{getTranslated(template.description, lang)}</div>
-                </div>
-                {isLocked && <Icon name="Lock" size={16} className="text-zinc-400" />}
-            </div>
-        </button>
     );
 });
 
@@ -152,39 +199,52 @@ interface HomeViewProps {
 }
 
 export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram, onSkipSession }) => {
-    const { activeMeso, activeSession, program, setActiveMeso, lang, logs, config, rpFeedback, setProgram, exercises, tutorialProgress, markTutorialSeen, globalTemplates } = useApp();
+    const { activeMeso, activeSession, program, setActiveMeso, lang, logs, isAppLoading, setProgram, tutorialProgress, markTutorialSeen, globalTemplates } = useApp();
     const t = TRANSLATIONS[lang] || TRANSLATIONS['en']; 
     
-    // Pro Hook
     const { isPro, checkPro, showPaywall, setShowPaywall, featureAttempted } = usePro();
     
-    // Safer Muscle Translator
     const tm = (key: string) => {
         if (!key || typeof key !== 'string') return 'Unknown';
         const val = (t.muscle as any)[key];
         return typeof val === 'string' ? val : key;
     };
     
-    // Local UI State
     const [showCompleteModal, setShowCompleteModal] = useState<'week' | 'meso' | null>(null);
     const [showMesoSettings, setShowMesoSettings] = useState(false);
-    const [showStartWizard, setShowStartWizard] = useState(false);
-    const [showRoutineGuide, setShowRoutineGuide] = useState(false);
-    const [skipConfirmationId, setSkipConfirmationId] = useState<number | null>(null);
     const [showAIChat, setShowAIChat] = useState(false);
-    const [selectedTemplate, setSelectedTemplate] = useState<GlobalTemplate | null>(null);
+    const [skipConfirmationId, setSkipConfirmationId] = useState<number | null>(null);
+    const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+
+    // --- MESO SETTINGS LOCAL STATE ---
+    const [editWeeks, setEditWeeks] = useState(4);
+    const [editDeload, setEditDeload] = useState(false);
+    const [editNote, setEditNote] = useState('');
+
+    useEffect(() => {
+        if (activeMeso && showMesoSettings) {
+            setEditWeeks(activeMeso.targetWeeks || 4);
+            setEditDeload(activeMeso.isDeload || false);
+            setEditNote(activeMeso.note || '');
+        }
+    }, [activeMeso, showMesoSettings]);
+
+    const handleSaveSettings = () => {
+        if (!activeMeso) return;
+        setActiveMeso(prev => prev ? {
+            ...prev,
+            targetWeeks: editWeeks,
+            isDeload: editDeload,
+            note: editNote
+        } : null);
+        setShowMesoSettings(false);
+    };
 
     const safeProgram = Array.isArray(program) ? program : [];
     const safeLogs = Array.isArray(logs) ? logs : [];
 
-    // MEMOIZED LOGIC (Performance Optimization)
     const { 
-        uniqueDaysDone, 
-        weekComplete, 
-        nextWorkoutIdx, 
-        isSessionActive, 
-        nextDayDef, 
-        logsForWeek 
+        uniqueDaysDone, weekComplete, nextWorkoutIdx, isSessionActive, nextDayDef, logsForWeek 
     } = useMemo(() => {
         if (!activeMeso) return { uniqueDaysDone: new Set(), weekComplete: false, nextWorkoutIdx: -1, isSessionActive: false, nextDayDef: null, logsForWeek: [] };
 
@@ -208,126 +268,47 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
         return { uniqueDaysDone: daysDone, weekComplete: isComplete, nextWorkoutIdx: nextIdx, isSessionActive: active, nextDayDef: nextDef, logsForWeek: currentWeekLogs };
     }, [activeMeso, activeSession, safeLogs, safeProgram]);
 
-    const handleStartMeso = () => {
-        if (!selectedTemplate) return;
+    // Handlers
+    const handleSkipClick = (e: React.MouseEvent, dayIdx: number) => { e.stopPropagation(); setSkipConfirmationId(dayIdx); };
+    const confirmSkip = () => { if (onSkipSession && skipConfirmationId !== null) onSkipSession(skipConfirmationId); setSkipConfirmationId(null); };
+    const handleFinishMeso = (exportReport: boolean) => { setActiveMeso(null); setShowCompleteModal(null); };
+    
+    // --- TEMPLATE LOGIC ---
+    const handleOpenTemplateSelector = () => setShowTemplateSelector(true);
+    
+    const handleSelectTemplate = (tpl: GlobalTemplate) => {
+        if (tpl.isPro && !checkPro("Pro Template")) return;
 
-        const planToUse = selectedTemplate.program;
-        setProgram(planToUse);
-
-        const initialPlan = planToUse.map(day => (day?.slots || []).map(slot => slot.exerciseId || null)); 
+        setProgram(tpl.program);
         
-        setActiveMeso({ 
-            id: Date.now(), 
-            week: 1, 
-            plan: initialPlan, 
-            targetWeeks: selectedTemplate.name === 'resensitization' ? 4 : 5, 
+        // Auto-start Meso
+        const plan = tpl.program.map(day => (day.slots || []).map(slot => slot.exerciseId || null));
+        setActiveMeso({
+            id: Date.now(),
+            name: getTranslated(tpl.title, lang as any),
+            mesoType: tpl.id, // Using ID as type for tracking
+            week: 1,
+            targetWeeks: 5,
             isDeload: false,
-            mesoType: selectedTemplate.name,
-            name: String(getTranslated(selectedTemplate.title, lang) || t.unnamedCycle)
+            plan: plan
         });
-        setShowStartWizard(false);
+        
+        setShowTemplateSelector(false);
     };
 
-    // --- RENDER HELPERS ---
-    const handleSkipClick = (e: React.MouseEvent, dayIdx: number) => {
-        e.stopPropagation();
-        setSkipConfirmationId(dayIdx);
+    const handleCreateCustom = () => {
+        // Clear program and go to editor
+        setProgram([]); // Start empty
+        setShowTemplateSelector(false);
+        onEditProgram(); // Navigate to Editor
     };
 
-    const confirmSkip = () => {
-        if (onSkipSession && skipConfirmationId !== null) {
-            onSkipSession(skipConfirmationId);
-        }
-        setSkipConfirmationId(null);
-    };
-
-    const handleFinishMeso = (exportReport: boolean) => {
-        if (exportReport) {
-            // Check Pro for Report
-            if (!checkPro("Export Reports")) return;
-            alert("Report Export not fully implemented in this optimized view. Check console.");
-        }
-        setActiveMeso(null);
-        setShowCompleteModal(null);
-    };
-
-    const handleAdvanceWeek = () => {
-        if (!activeMeso) return;
-        // Simple advance logic
-        const nextWeek = activeMeso.week + 1;
-        const shouldBeDeload = activeMeso.targetWeeks ? nextWeek >= activeMeso.targetWeeks : false;
-        setActiveMeso(prev => prev ? { ...prev, week: nextWeek, isDeload: shouldBeDeload } : null);
-        setShowCompleteModal(null);
-    };
-
-    const handleOpenChat = () => {
-        if (checkPro("IronCoach AI")) {
-            setShowAIChat(true);
-        }
-    };
-
-    // Empty State (No Active Meso)
-    if (!activeMeso) {
-        return (
-            <div className="p-8 flex flex-col items-center justify-center h-full text-center space-y-8 animate-in fade-in zoom-in-95 duration-500 bg-grid-pattern">
-                <div className="relative group cursor-pointer flex justify-center items-center -space-x-8" onClick={() => setShowStartWizard(true)}>
-                    <div className="relative z-10 w-32 h-32 rounded-full overflow-hidden border-4 border-zinc-100 dark:border-zinc-800 shadow-xl">
-                        <img src="https://images.unsplash.com/photo-1605296867304-46d5465a13f1?q=80&w=400&auto=format&fit=crop" className="w-full h-full object-cover grayscale" />
-                    </div>
-                    <div className="relative z-0 w-36 h-36 rounded-full overflow-hidden border-4 border-zinc-100 dark:border-zinc-800 shadow-2xl">
-                        <img src="https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?q=80&w=400&auto=format&fit=crop" className="w-full h-full object-cover grayscale" />
-                    </div>
-                    <div className="absolute -bottom-2 right-10 bg-red-600 text-white p-2 rounded-full shadow-lg z-20">
-                        <Icon name="Plus" size={20} />
-                    </div>
-                </div>
-
-                <div>
-                    <h2 className="text-3xl font-black text-zinc-900 dark:text-white mb-3 tracking-tighter">IronLog <span className="text-red-600">PRO</span></h2>
-                    <p className="text-zinc-500 dark:text-zinc-400 text-sm leading-relaxed max-w-[280px] mx-auto">
-                        {String(t.onb?.s1_desc || t.loading)}
-                    </p>
-                </div>
-
-                <div className="w-full max-w-xs space-y-4">
-                    <Button onClick={() => setShowStartWizard(true)} size="lg" fullWidth className="shadow-xl shadow-red-500/20 py-4 text-lg">
-                        {String(t.startMeso)}
-                    </Button>
-                    <Button variant="ghost" onClick={onEditProgram} size="sm" fullWidth className="text-zinc-400">
-                        <Icon name="Edit" size={14} /> {String(t.editTemplate)}
-                    </Button>
-                </div>
-
-                {showStartWizard && (
-                    <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in">
-                        <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-2xl p-0 shadow-2xl border border-zinc-200 dark:border-white/10 flex flex-col max-h-[85vh]" onClick={e => e.stopPropagation()}>
-                            <div className="flex justify-between items-center p-6 pb-4 shrink-0 bg-white dark:bg-zinc-900 rounded-t-2xl z-10">
-                                <h3 className="text-xl font-bold text-zinc-900 dark:text-white">{String(t.startMeso)}</h3>
-                                <button onClick={() => setShowStartWizard(false)} className="text-zinc-400"><Icon name="X" size={24} /></button>
-                            </div>
-                            <div className="space-y-6 overflow-y-auto scroll-container flex-1 px-6 pb-6">
-                                {/* DYNAMIC TEMPLATES FROM CONTEXT */}
-                                {globalTemplates.map(tpl => (
-                                    <TemplateButton 
-                                        key={tpl.id} 
-                                        template={tpl}
-                                        isSelected={selectedTemplate?.id === tpl.id}
-                                        isPro={isPro}
-                                        lang={lang}
-                                        onSelect={setSelectedTemplate}
-                                        onCheckPro={(featureName) => checkPro(featureName)}
-                                    />
-                                ))}
-                            </div>
-                            <div className="shrink-0 p-6 pt-2 border-t border-zinc-100 dark:border-white/5 bg-white dark:bg-zinc-900 rounded-b-2xl">
-                                <Button onClick={handleStartMeso} fullWidth size="lg">{String(t.createAndSelect)}</Button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </div>
-        );
-    }
+    const mesoSettingsTutorialSteps = [
+        { targetId: 'tut-meso-duration', title: t.tutorial.mesoSettings[0].title, text: t.tutorial.mesoSettings[0].text, position: 'bottom' as const },
+        { targetId: 'tut-meso-deload', title: t.tutorial.mesoSettings[1].title, text: t.tutorial.mesoSettings[1].text, position: 'bottom' as const },
+        { targetId: 'tut-meso-edit', title: t.tutorial.mesoSettings[2].title, text: t.tutorial.mesoSettings[2].text, position: 'bottom' as const },
+        { targetId: 'tut-meso-notes', title: t.tutorial.mesoSettings[3].title, text: t.tutorial.mesoSettings[3].text, position: 'top' as const }
+    ];
 
     const homeTutorialSteps = [
         { targetId: 'tut-up-next', title: t.tutorial.home[0].title, text: t.tutorial.home[0].text, position: 'bottom' as const },
@@ -335,98 +316,174 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
         { targetId: 'tut-nav-bar', title: t.tutorial.home[2].title, text: t.tutorial.home[2].text, position: 'top' as const }
     ];
 
-    // --- MAIN VIEW RENDER ---
+    if (!activeMeso) {
+        return (
+            <div className="flex flex-col items-center justify-center h-full p-6 text-center space-y-8 bg-black relative overflow-hidden">
+                {/* Background Atmosphere */}
+                <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-zinc-900 to-black opacity-50 pointer-events-none"></div>
+                <div className="absolute bottom-0 right-0 w-64 h-64 bg-red-600/10 rounded-full blur-[100px] pointer-events-none"></div>
+
+                <div className="relative z-10 w-full max-w-sm">
+                    {/* Hero Card Container */}
+                    <div 
+                        onClick={handleOpenTemplateSelector}
+                        className="group w-full aspect-square rounded-[2.5rem] relative overflow-hidden cursor-pointer shadow-2xl shadow-red-900/10 active:scale-95 transition-all duration-300 border border-white/5"
+                    >
+                        {/* --- IMAGE / ARTWORK SPACE --- */}
+                        {/* If you want to use your image, uncomment below and add file to public/cover.jpg */}
+                        {/* <img src="/cover.jpg" className="absolute inset-0 w-full h-full object-cover opacity-60" /> */}
+                        
+                        {/* CSS Abstract Art (Default) */}
+                        <div className="absolute inset-0 bg-zinc-900">
+                            {/* Gradient Mesh */}
+                            <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 via-zinc-900 to-black"></div>
+                            <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-bl from-red-600/20 to-transparent"></div>
+                            
+                            {/* Abstract Lines */}
+                            <div className="absolute bottom-0 left-0 w-full h-1/2 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:linear-gradient(to_top,black,transparent)]"></div>
+                        </div>
+
+                        {/* Content Overlay */}
+                        <div className="absolute inset-0 flex flex-col items-center justify-center p-6">
+                            <div className="w-20 h-20 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 border border-white/10 shadow-lg">
+                                <Icon name="Plus" size={40} className="text-white drop-shadow-md" strokeWidth={3} />
+                            </div>
+                            
+                            <h2 className="text-3xl font-black text-white tracking-tighter drop-shadow-lg">
+                                {lang === 'en' ? "Start Journey" : "Empezar Viaje"}
+                            </h2>
+                            <p className="text-zinc-400 text-sm font-medium mt-2 max-w-[200px] leading-relaxed">
+                                {lang === 'en' ? "Begin your first mesocycle to track progressive overload." : "Inicia tu primer ciclo para registrar tu progreso."}
+                            </p>
+                        </div>
+
+                        {/* Hover Glow */}
+                        <div className="absolute inset-0 rounded-[2.5rem] ring-1 ring-white/10 group-hover:ring-white/30 transition-all duration-500"></div>
+                    </div>
+                </div>
+
+                {/* Optional: Quick Action Button below if card isn't obvious enough */}
+                <div className="w-full max-w-xs animate-in fade-in slide-in-from-bottom-4 delay-200">
+                    <Button onClick={handleOpenTemplateSelector} variant="secondary" fullWidth className="bg-zinc-900 border-zinc-800 hover:bg-zinc-800">
+                        {lang === 'en' ? "View Templates" : "Ver Plantillas"}
+                    </Button>
+                </div>
+
+                {/* Modals */}
+                {showTemplateSelector && (
+                    <TemplateSelector 
+                        onClose={() => setShowTemplateSelector(false)}
+                        onSelectTemplate={handleSelectTemplate}
+                        onCreateCustom={handleCreateCustom}
+                        templates={globalTemplates}
+                        t={t}
+                        lang={lang}
+                    />
+                )}
+                {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} feature={featureAttempted} />}
+            </div>
+        );
+    }
+
     return (
-        <div className="p-4 space-y-6 pb-safe bg-grid-pattern min-h-full relative">
+        <div className="px-6 space-y-8 pb-40">
+            {/* Header Info */}
             <div className="flex justify-between items-start pt-2">
                 <div>
-                    <h2 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tight">{String(activeMeso.name)}</h2>
-                    <div className="flex items-center gap-2 mt-1">
-                        <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded ${activeMeso.isDeload ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'}`}>
-                            {String(t.phases?.[activeMeso.mesoType] || activeMeso.mesoType)}
+                    <h2 className="text-3xl font-black text-white tracking-tight">{activeMeso.name}</h2>
+                    <div className="flex items-center gap-3 mt-2">
+                        <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded bg-zinc-800 text-zinc-400 border border-zinc-700`}>
+                            {t.phases?.[activeMeso.mesoType] || activeMeso.mesoType}
                         </span>
-                        <span className="text-[10px] text-zinc-400 font-bold">•</span>
-                        <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-bold">{String(t.week)} {activeMeso.week} / {activeMeso.targetWeeks}</span>
+                        <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">{t.week} {activeMeso.week} / {activeMeso.targetWeeks}</span>
                     </div>
                 </div>
                 
                 <div className="flex gap-2">
-                    <button onClick={() => setShowRoutineGuide(true)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-zinc-800 shadow-sm border border-zinc-100 dark:border-white/5 text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all">
-                        <Icon name="FileText" size={18} />
-                    </button>
-                    <button id="tut-settings-btn" onClick={() => setShowMesoSettings(true)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-zinc-800 shadow-sm border border-zinc-100 dark:border-white/5 text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all">
-                        <Icon name="Settings" size={18} />
+                    <button id="tut-settings-btn" onClick={() => setShowMesoSettings(true)} className="w-10 h-10 flex items-center justify-center rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-colors">
+                        <Icon name="Settings" size={20} />
                     </button>
                 </div>
             </div>
 
-            <WeekProgress program={safeProgram} logsForWeek={logsForWeek} />
-
-            <NextSessionCard 
-                nextDayDef={nextDayDef} 
-                isSessionActive={isSessionActive} 
-                nextWorkoutIdx={nextWorkoutIdx} 
-                startSession={startSession} 
-                handleSkipClick={handleSkipClick} 
-                lang={lang} 
-                t={t}
-                tm={tm}
-            />
+            <div className="space-y-2">
+                <WeekProgress program={safeProgram} logsForWeek={logsForWeek} />
+                
+                <NextSessionCard 
+                    nextDayDef={nextDayDef} 
+                    isSessionActive={isSessionActive} 
+                    nextWorkoutIdx={nextWorkoutIdx} 
+                    startSession={startSession} 
+                    handleSkipClick={handleSkipClick} 
+                    lang={lang} 
+                    t={t} 
+                    tm={tm}
+                />
+            </div>
 
             {weekComplete && !nextDayDef && (
-                <div className="flex justify-center mt-4">
-                    <Button onClick={() => setShowCompleteModal('week')} size="sm" className="bg-green-600 hover:bg-green-500 text-white border-none shadow-green-600/20">
-                        {String(t.completeWeek)}
-                    </Button>
-                </div>
+                <Button onClick={() => setShowCompleteModal('week')} fullWidth className="bg-green-600 hover:bg-green-500 text-white py-4 text-lg">
+                    {t.completeWeek}
+                </Button>
             )}
 
-            <div className="space-y-3">
-                <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-widest pl-2">{String(t.schedule)}</h4>
-                {safeProgram.map((day, idx) => {
-                    const isDone = uniqueDaysDone.has(idx);
-                    const isNext = idx === nextWorkoutIdx;
-                    if (isNext) return null; // Don't duplicate next session
+            {/* Schedule List */}
+            <div className="space-y-4">
+                <div className="flex items-center justify-between px-1">
+                    <h4 className="text-xs font-black text-zinc-500 uppercase tracking-widest">{t.schedule}</h4>
+                    <span className="text-[10px] text-zinc-600 font-bold">{Math.round((uniqueDaysDone.size / safeProgram.length) * 100)}% DONE</span>
+                </div>
+                
+                <div className="space-y-3">
+                    {safeProgram.map((day, idx) => {
+                        const isDone = uniqueDaysDone.has(idx);
+                        if (idx === nextWorkoutIdx) return null; // Hide duplicates
 
-                    return (
-                        <div 
-                            key={idx}
-                            onClick={() => !isDone && startSession(idx)}
-                            className={`flex items-center p-4 rounded-2xl border transition-all ${
-                                isDone 
-                                ? 'bg-zinc-50 dark:bg-zinc-900/50 border-transparent opacity-60' 
-                                : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-white/5 active:scale-[0.98]'
-                            }`}
-                        >
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center mr-4 shrink-0 ${isDone ? 'bg-green-100 dark:bg-green-900/20 text-green-600' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400'}`}>
-                                {isDone ? <Icon name="Check" size={16} strokeWidth={3} /> : <span className="text-xs font-bold">{idx + 1}</span>}
-                            </div>
-                            <div className="flex-1">
-                                <div className={`font-bold text-sm ${isDone ? 'text-zinc-500 line-through' : 'text-zinc-900 dark:text-white'}`}>
-                                    {String(getTranslated(day.dayName, lang))}
+                        return (
+                            <div 
+                                key={idx}
+                                onClick={() => !isDone && startSession(idx)}
+                                className={`
+                                    flex items-center p-4 rounded-2xl border transition-all
+                                    ${isDone 
+                                        ? 'bg-zinc-900/30 border-transparent opacity-50' 
+                                        : 'bg-zinc-900 border-zinc-800 active:bg-zinc-800'
+                                    }
+                                `}
+                            >
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-4 shrink-0 font-bold text-xs ${isDone ? 'bg-green-900/30 text-green-500' : 'bg-zinc-800 text-zinc-500'}`}>
+                                    {isDone ? <Icon name="Check" size={14} strokeWidth={3} /> : idx + 1}
                                 </div>
-                                <div className="text-[10px] text-zinc-400 truncate max-w-[200px]">
-                                    {(day.slots || []).map((s: any) => String(tm(s.muscle))).join(', ')}
+                                <div className="flex-1">
+                                    <div className={`font-bold text-sm ${isDone ? 'text-zinc-500 line-through' : 'text-white'}`}>
+                                        {String(getTranslated(day.dayName, lang))}
+                                    </div>
+                                    <div className="text-[10px] text-zinc-500 truncate max-w-[200px]">
+                                        {(day.slots || []).map((s: any) => String(tm(s.muscle))).join(', ')}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    );
-                })}
+                        );
+                    })}
+                </div>
             </div>
 
-            <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-200 dark:border-white/5 shadow-sm">
-                <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                    <Icon name="TrendingUp" size={14} /> {String(t.consistency)}
-                </h3>
+            {/* Consistency Heatmap */}
+            <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800">
+                <div className="flex items-center gap-2 mb-4">
+                    <Icon name="Activity" size={16} className="text-zinc-500" />
+                    <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest">{t.consistency}</h3>
+                </div>
                 <ActivityHeatmap logs={safeLogs} />
             </div>
 
-            <div className="fixed bottom-24 right-4 z-30">
+            {/* AI Floating Button */}
+            <div className="fixed bottom-24 right-6 z-40 pointer-events-none">
                 <button
-                    onClick={handleOpenChat}
-                    className={`w-14 h-14 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform ${isPro ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-400'}`}
+                    onClick={() => checkPro("IronCoach AI") && setShowAIChat(true)}
+                    className="pointer-events-auto w-14 h-14 rounded-full bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.3)] flex items-center justify-center hover:scale-110 transition-transform active:scale-95"
                 >
-                    {isPro ? <Icon name="Bot" size={24} fill="currentColor" /> : <Icon name="Lock" size={20} />}
+                    <Icon name="Bot" size={24} fill="currentColor" />
                 </button>
             </div>
 
@@ -437,90 +494,108 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
             />
 
             {/* --- MODALS --- */}
-            {showAIChat && (
-                <Suspense fallback={null}>
-                    <IronCoachChat onClose={() => setShowAIChat(false)} />
-                </Suspense>
-            )}
             
-            {showPaywall && (
-                <PaywallModal onClose={() => setShowPaywall(false)} feature={featureAttempted} />
-            )}
+            {showAIChat && <Suspense fallback={null}><IronCoachChat onClose={() => setShowAIChat(false)} /></Suspense>}
+            {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} feature={featureAttempted} />}
+            
+            {/* MESO SETTINGS MODAL */}
+            {showMesoSettings && (
+                <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in" onClick={() => setShowMesoSettings(false)}>
+                    <div className="bg-zinc-900 w-full max-w-sm rounded-3xl p-6 border border-zinc-800 shadow-2xl relative" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-white font-bold text-xl">{t.mesoConfig}</h3>
+                            <button onClick={() => setShowMesoSettings(false)} className="text-zinc-400 hover:text-white">
+                                <Icon name="X" size={24} />
+                            </button>
+                        </div>
 
-            {skipConfirmationId !== null && (
-                <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-200" onClick={() => setSkipConfirmationId(null)}>
-                    <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-2xl p-6 shadow-2xl border border-zinc-200 dark:border-white/10" onClick={e => e.stopPropagation()}>
-                        <div className="text-center mb-6">
-                            <Icon name="SkipForward" size={32} className="mx-auto text-orange-500 mb-4" />
-                            <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">{String(t.skipDay)}</h3>
-                            <p className="text-sm text-zinc-500 dark:text-zinc-400">{String(t.skipDayConfirm)}</p>
+                        <div className="space-y-6">
+                            {/* Target Weeks */}
+                            <div id="tut-meso-duration">
+                                <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider block mb-3">{t.targetWeeks}</label>
+                                <div className="flex items-center gap-4 bg-zinc-950 p-2 rounded-xl border border-white/5">
+                                    <button 
+                                        onClick={() => setEditWeeks(Math.max(1, editWeeks - 1))}
+                                        className="w-10 h-10 rounded-lg bg-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-700"
+                                    >
+                                        <Icon name="Minus" size={16} />
+                                    </button>
+                                    <span className="flex-1 text-center font-mono text-2xl font-black text-white">{editWeeks}</span>
+                                    <button 
+                                        onClick={() => setEditWeeks(editWeeks + 1)}
+                                        className="w-10 h-10 rounded-lg bg-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-700"
+                                    >
+                                        <Icon name="Plus" size={16} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Deload Toggle */}
+                            <div id="tut-meso-deload" className="flex items-center justify-between bg-blue-900/10 border border-blue-500/20 p-4 rounded-xl">
+                                <div>
+                                    <span className="text-sm font-bold text-blue-200 block mb-1">{t.deloadMode}</span>
+                                    <span className="text-[10px] text-blue-400/70 block leading-tight">{t.deloadDesc}</span>
+                                </div>
+                                <button 
+                                    onClick={() => setEditDeload(!editDeload)}
+                                    className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${editDeload ? 'bg-blue-500' : 'bg-zinc-700'}`}
+                                >
+                                    <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-300 ${editDeload ? 'translate-x-6' : 'translate-x-0'}`} />
+                                </button>
+                            </div>
+
+                            {/* Edit Template Link */}
+                            <button 
+                                id="tut-meso-edit"
+                                onClick={() => { setShowMesoSettings(false); onEditProgram(); }}
+                                className="w-full py-3 bg-zinc-800 rounded-xl flex items-center justify-center gap-2 text-sm font-bold text-zinc-300 hover:text-white hover:bg-zinc-700 transition-colors border border-zinc-700"
+                            >
+                                <Icon name="Layout" size={16} /> {t.editTemplate}
+                            </button>
+
+                            {/* Notes */}
+                            <div id="tut-meso-notes">
+                                <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider block mb-2">{t.mesoNotes}</label>
+                                <textarea 
+                                    value={editNote}
+                                    onChange={(e) => setEditNote(e.target.value)}
+                                    placeholder={t.mesoNotesPlaceholder}
+                                    className="w-full bg-zinc-950 text-white text-sm p-3 rounded-xl border border-zinc-800 focus:border-zinc-600 outline-none min-h-[80px]"
+                                />
+                            </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
-                            <Button variant="secondary" onClick={() => setSkipConfirmationId(null)}>{String(t.cancel)}</Button>
-                            <Button variant="danger" onClick={confirmSkip}>{String(t.skipDay)}</Button>
+
+                        <div className="mt-8 space-y-3">
+                            <Button onClick={handleSaveSettings} fullWidth size="lg">
+                                {t.save}
+                            </Button>
+                            
+                            <button 
+                                onClick={() => { setShowMesoSettings(false); setShowCompleteModal('meso'); }}
+                                className="w-full py-3 text-xs font-bold text-red-500 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors"
+                            >
+                                {t.finishCycle}
+                            </button>
                         </div>
+
+                        {/* INTERNAL TUTORIAL */}
+                        <TutorialOverlay 
+                            steps={mesoSettingsTutorialSteps}
+                            isActive={!tutorialProgress.mesoSettings}
+                            onComplete={() => markTutorialSeen('mesoSettings')}
+                        />
                     </div>
                 </div>
             )}
 
             {showCompleteModal && (
-                <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-200">
-                    <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-2xl p-6 shadow-2xl border border-zinc-200 dark:border-white/10">
-                        <div className="text-center mb-6">
-                            <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">
-                                {showCompleteModal === 'week' ? String(t.completeWeek) : String(t.finishCycle)}
-                            </h3>
-                            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                                {showCompleteModal === 'week' ? String(t.completeWeekConfirm) : String(t.finishMesoConfirm)}
-                            </p>
-                        </div>
-                        <div className={`grid ${showCompleteModal === 'meso' ? 'grid-cols-1 gap-3' : 'grid-cols-2 gap-3'}`}>
-                             {showCompleteModal === 'week' ? (
-                                <>
-                                    <Button variant="secondary" onClick={() => setShowCompleteModal(null)}>{String(t.cancel)}</Button>
-                                    <Button onClick={handleAdvanceWeek}>{String(t.completed)}</Button>
-                                </>
-                             ) : (
-                                 <div className="flex flex-col gap-3">
-                                     <Button onClick={() => handleFinishMeso(true)} className="bg-green-600 hover:bg-green-500 shadow-green-600/20">
-                                        <Icon name="DownloadCloud" size={18} /> {String(t.exportReport)}
-                                     </Button>
-                                     <Button variant="secondary" onClick={() => handleFinishMeso(false)}>
-                                        {String(t.justFinish)}
-                                     </Button>
-                                     <button onClick={() => setShowCompleteModal(null)} className="text-xs text-zinc-400 font-bold py-2">{String(t.cancel)}</button>
-                                 </div>
-                             )}
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {showMesoSettings && (
-                <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-200" onClick={() => setShowMesoSettings(false)}>
-                    <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-2xl p-6 shadow-2xl border border-zinc-200 dark:border-white/10" onClick={e => e.stopPropagation()}>
-                        <div className="flex justify-between items-center mb-6 border-b border-zinc-100 dark:border-white/5 pb-4">
-                            <h3 className="text-lg font-bold text-zinc-900 dark:text-white">{String(t.mesoConfig)}</h3>
-                            <button onClick={() => setShowMesoSettings(false)} className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white"><Icon name="X" size={20} /></button>
-                        </div>
-                        <div className="space-y-6">
-                            <div>
-                                <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider block mb-2">{String(t.mesoName)}</label>
-                                <input 
-                                    type="text" 
-                                    className="w-full bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white rounded-xl p-3 font-bold outline-none focus:ring-2 focus:ring-red-500"
-                                    value={activeMeso.name || ''}
-                                    onChange={(e) => setActiveMeso(prev => prev ? { ...prev, name: e.target.value } : null)}
-                                />
-                            </div>
-                            <Button 
-                                variant="ghost" 
-                                onClick={() => setShowCompleteModal('meso')} 
-                                fullWidth
-                                className="text-red-500 border border-red-500/20 hover:bg-red-50 dark:hover:bg-red-900/20"
-                            >
-                                {String(t.finishCycle)}
-                            </Button>
+                <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in">
+                    <div className="bg-zinc-900 w-full max-w-sm rounded-2xl p-6 border border-zinc-800 text-center">
+                        <h3 className="text-white font-bold text-xl mb-2">{t.finishCycle}</h3>
+                        <p className="text-zinc-400 text-sm mb-6">{t.finishMesoConfirm}</p>
+                        <div className="flex gap-3">
+                            <Button variant="secondary" onClick={() => setShowCompleteModal(null)} fullWidth>{t.cancel}</Button>
+                            <Button onClick={() => handleFinishMeso(false)} fullWidth>{t.completed}</Button>
                         </div>
                     </div>
                 </div>

@@ -14,7 +14,7 @@ interface ProgramEditViewProps {
 }
 
 export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
-    const { program, setProgram, lang, setActiveMeso } = useApp();
+    const { program, setProgram, lang, setActiveMeso, exercises } = useApp();
     const t = TRANSLATIONS[lang];
     
     const [pickingForSlot, setPickingForSlot] = useState<{dayId: string, slotIdx: number} | null>(null);
@@ -185,7 +185,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
                                                 className={`text-sm font-medium w-full text-left truncate ${slot.exerciseId ? 'text-zinc-900 dark:text-white' : 'text-zinc-400 italic'}`}
                                             >
                                                 {slot.exerciseId 
-                                                    ? getTranslated(useApp().exercises.find(e => e.id === slot.exerciseId)?.name, lang)
+                                                    ? getTranslated(exercises.find(e => e.id === slot.exerciseId)?.name, lang)
                                                     : t.selectExBtn
                                                 }
                                             </button>

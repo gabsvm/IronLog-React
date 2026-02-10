@@ -8,8 +8,9 @@ export const MUSCLE_GROUPS: Record<string, MuscleGroup> = {
     ABS: 'ABS', FOREARMS: 'FOREARMS', NECK: 'NECK', CARDIO: 'CARDIO'
 };
 
-// ... (KEEP DEFAULT_LIBRARY and TEMPLATES exactly as they are - large arrays omitted for brevity, assume they persist) ...
+// ... (KEEP DEFAULT_LIBRARY, TEMPLATES, etc. exactly as they are - omitted for brevity) ...
 export const DEFAULT_LIBRARY: ExerciseDef[] = [
+    // ... same content as before ...
     // Cardio
     { id: 'cardio_run', name: { en: 'Running (Steady)', es: 'Correr (Ritmo Constante)' }, muscle: 'CARDIO', defaultCardioType: 'steady', videoId: "brFHyOTtwNs" },
     { id: 'cardio_hiit_sprint', name: { en: 'HIIT Sprints', es: 'Sprints HIIT' }, muscle: 'CARDIO', defaultCardioType: 'hiit', instructions: { en: "High intensity intervals.", es: "Intervalos de alta intensidad." }, videoId: "Mp8qJ57971Y" },
@@ -84,7 +85,6 @@ export const DEFAULT_LIBRARY: ExerciseDef[] = [
     { id: 'neck_ext', name: { en: 'Neck Extension', es: 'Extensión de Cuello' }, muscle: 'NECK', instructions: { en: "Use harness or plate. Look up.", es: "Usa arnés o disco. Mira hacia arriba." }, videoId: "wJ8s3s7_2s" }
 ];
 
-// ... (KEEP DEFAULT_TEMPLATE, UPPER_LOWER_TEMPLATE, ETC - no changes needed there) ...
 export const DEFAULT_TEMPLATE: ProgramDay[] = [
     {
         id: 'd_push',
@@ -462,6 +462,7 @@ export const TRANSLATIONS = {
         skipDayConfirm: "Skip this workout? It will be marked as skipped.",
         mesoName: "Mesocycle Name",
         exportReport: "Export Report & Finish", justFinish: "Just Finish",
+        mesoNotes: "General Notes", mesoNotesPlaceholder: "Write down your cycle focus, goals or reminders...",
         mesoType: "Phase Type",
         phases: { hyp_1: "Base Hypertrophy 1", hyp_2: "Base Hypertrophy 2", metabolite: "Metabolite Phase", resensitization: "Resensitization", full_body: "Aesthetic V-Taper", wizard: "The Wizard v3 (Full Body)", male_physique: "Male Physique (Upper/Lower)", toji_fushiguro: "Toji (Natural Hypertrophy)" },
         phaseDesc: { hyp_1: "Standard PPL. Balanced volume.", hyp_2: "Upper/Lower Split (4 Days). Focus on compounds.", metabolite: "High reps (20-30), short rests, the 'burn'.", resensitization: "Low volume, heavy weight to reset fatigue.", full_body: "Dr. Mike Style. Focus on V-Taper (Lats/Side Delts).", wizard: "3-Days Heavy/Light/Medium. Classic intensity cycling for steady gains.", male_physique: "4-Days Bodybuilding Focus. Higher volume, arm & shoulder specialization.", toji_fushiguro: "4-Day Elite Split. Giant Sets, Neck, Forearms & Aesthetic focus. (Pro)" },
@@ -685,6 +686,12 @@ export const TRANSLATIONS = {
                 { title: "MEV (Minimum)", text: "Green (MEV): Minimum Effective Volume. This is the starting point for growth. You must do at least this much to gain muscle." },
                 { title: "MAV (Optimal)", text: "Blue (MAV): Maximum Adaptive Volume. The 'Sweet Spot'. Training in this zone yields the fastest gains." },
                 { title: "MRV (Max Recoverable)", text: "Red (MRV): Maximum Recoverable Volume. If you exceed this, you are overtraining and risking injury. Back off if you hit this." }
+            ],
+            mesoSettings: [
+                { title: "Duration", text: "Plan how long this cycle will last. 4-6 weeks is typical for hypertrophy." },
+                { title: "Deload Mode", text: "Feeling fried? Enable this to reduce volume for a week to recover." },
+                { title: "Routine Editor", text: "Need to change exercises or days? Jump to the editor from here." },
+                { title: "Notes", text: "Keep reminders, focus points, or goals for this specific cycle here." }
             ]
         }
     },
@@ -716,6 +723,7 @@ export const TRANSLATIONS = {
         skipDayConfirm: "¿Saltar este entreno? Se marcará como saltado.",
         mesoName: "Nombre Mesociclo",
         exportReport: "Exportar Informe y Terminar", justFinish: "Solo Terminar",
+        mesoNotes: "Notas Generales", mesoNotesPlaceholder: "Escribe tus objetivos, focos o recordatorios para este ciclo...",
         mesoType: "Tipo de Fase",
         phases: { hyp_1: "Hipertrofia Base 1", hyp_2: "Hipertrofia Base 2", metabolite: "Fase Metabolitos", resensitization: "Resensitization", full_body: "Aesthetic V-Taper", wizard: "The Wizard v3 (Full Body)", male_physique: "Male Physique (Torso/Pierna)", toji_fushiguro: "Toji (Natural Hypertrophy)" },
         phaseDesc: { hyp_1: "PPL Estándar. Volumen equilibrado.", hyp_2: "Torso/Pierna (4 Días). Foco en básicos.", metabolite: "Reps altas (20-30), descanso corto, 'quemazón'.", resensitization: "Bajo volumen, peso alto para resetear fatiga.", full_body: "Estilo Dr. Mike. Foco en V-Taper (Dorsal/Hombro Lateral).", wizard: "3-Días Pesado/Liviano/Medio. Ciclo de intensidad clásico para ganancias constantes.", male_physique: "4-Días Foco Culturismo. Mayor volumen, especialización en brazos y hombros.", toji_fushiguro: "Rutina Élite de 4 Días. Series Gigantes, Cuello, Antebrazo y Estética. (Pro)" },
@@ -939,6 +947,12 @@ export const TRANSLATIONS = {
                 { title: "MEV (Mínimo)", text: "Verde (MEV): Volumen Mínimo Efectivo. Punto de partida para crecer. Debes hacer al menos esto para ganar músculo." },
                 { title: "MAV (Óptimo)", text: "Azul (MAV): Volumen Máximo Adaptativo. El 'Punto Dulce'. Entrenar en esta zona da las mejores ganancias." },
                 { title: "MRV (Máximo Recup.)", text: "Rojo (MRV): Volumen Máximo Recuperable. Si pasas de aquí, estás sobreentrenando y arriesgas lesión. Baja el ritmo si llegas aquí." }
+            ],
+            mesoSettings: [
+                { title: "Duración", text: "Planifica cuánto durará este ciclo. 4-6 semanas es típico para hipertrofia." },
+                { title: "Modo Descarga", text: "¿Te sientes agotado? Activa esto para reducir el volumen una semana y recuperar." },
+                { title: "Editor de Rutina", text: "¿Necesitas cambiar ejercicios o días? Salta al editor desde aquí." },
+                { title: "Notas", text: "Guarda recordatorios, puntos de enfoque o metas para este ciclo aquí." }
             ]
         }
     }

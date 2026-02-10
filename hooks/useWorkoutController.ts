@@ -212,12 +212,18 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
         // --- UPDATE TEMPLATE LOGIC ---
         if (updateTemplate && activeMeso && activeSession) {
             // 1. Construct new Slots for Program (Base Template)
-            const newSlots = sessionExercises.map(ex => ({
-                muscle: ex.muscle,
-                setTarget: ex.sets.length, // Persist set count
-                exerciseId: ex.id,
-                reps: ex.targetReps // Persist target reps
-            }));
+            const newSlots = sessionExercises.map(ex => {
+                // Determine preferred set type from the first set
+                const firstSetType = ex.sets && ex.sets.length > 0 ? ex.sets[0].type : undefined;
+                
+                return {
+                    muscle: ex.muscle,
+                    setTarget: ex.sets.length, // Persist set count
+                    exerciseId: ex.id,
+                    reps: ex.targetReps, // Persist target reps
+                    setType: firstSetType // Persist Set Type preference
+                };
+            });
 
             // 2. Update Global Program
             setProgram(prev => {

@@ -65,7 +65,7 @@ interface AppContextType extends AppState {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-const AppStateProvider = ({ children }: PropsWithChildren) => {
+export const AppProvider = ({ children }: PropsWithChildren) => {
     const { user, subscription, loading: authLoading } = useAuth(); 
 
     // --- Synchronous Config ---
@@ -75,13 +75,15 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
     const [theme, setTheme] = useLocalStorage<Theme>('il_theme_v1', 'dark');
     const [colorTheme, setColorTheme] = useLocalStorage<ColorTheme>('il_color_theme_v1', 'iron');
     
-    const [showRIR, setShowRIR] = useLocalStorage('il_cfg_rir', true);
-    const [rpEnabled, setRpEnabled] = useLocalStorage('il_cfg_rp', true);
+    // FIXED: Default to FALSE for PRO features
+    const [showRIR, setShowRIR] = useLocalStorage('il_cfg_rir', false);
+    const [rpEnabled, setRpEnabled] = useLocalStorage('il_cfg_rp', false);
+    
     const [rpTargetRIR, setRpTargetRIR] = useLocalStorage('il_cfg_rp_rir', 2);
     const [keepScreenOn, setKeepScreenOn] = useLocalStorage('il_cfg_screen', false);
 
-    const [tutorialProgress, setTutorialProgress] = useLocalStorage<TutorialState>('il_tutorial_v1', {
-        home: false, workout: false, history: false, stats: false
+    const [tutorialProgress, setTutorialProgress] = useLocalStorage<TutorialState>('il_tutorial_v2', {
+        home: false, workout: false, history: false, stats: false, mesoSettings: false
     });
 
     // --- Heavy Data (IndexedDB) ---
@@ -272,7 +274,7 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
     }, [setShowRIR, setRpEnabled, setRpTargetRIR, setKeepScreenOn]);
 
     const markTutorialSeen = useCallback((section: keyof TutorialState) => setTutorialProgress(prev => ({ ...prev, [section]: true })), [setTutorialProgress]);
-    const resetTutorials = useCallback(() => setTutorialProgress({ home: false, workout: false, history: false, stats: false }), [setTutorialProgress]);
+    const resetTutorials = useCallback(() => setTutorialProgress({ home: false, workout: false, history: false, stats: false, mesoSettings: false }), [setTutorialProgress]);
 
     const configState = useMemo(() => ({ showRIR, rpEnabled, rpTargetRIR, keepScreenOn }), [showRIR, rpEnabled, rpTargetRIR, keepScreenOn]);
 
@@ -292,7 +294,7 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
         isOnline,
         deferredPrompt, installApp, isStandalone,
         globalTemplates, setGlobalTemplates,
-        userProfile, setUserProfile // Exposed
+        userProfile, setUserProfile
     }), [
         lang, setLang, theme, setTheme, colorTheme, setColorTheme,
         program, setProgram,
@@ -323,10 +325,8 @@ const AppStateProvider = ({ children }: PropsWithChildren) => {
     );
 };
 
-export const AppProvider = ({ children }: PropsWithChildren) => <AuthProvider><AppStateProvider>{children}</AppStateProvider></AuthProvider>;
-
 export const useApp = () => {
     const context = useContext(AppContext);
-    if (!context) throw new Error("useApp must be used within AppProvider");
+    if (!context) throw new Error('useApp must be used within an AppProvider');
     return context;
 };

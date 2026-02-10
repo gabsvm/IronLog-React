@@ -21,56 +21,65 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
         return (
             <button 
                 onClick={() => setView(id)} 
-                className={`flex-1 relative py-2 flex flex-col items-center justify-center gap-1 transition-all duration-300 group`}
+                className={`flex-1 relative h-full flex flex-col items-center justify-center gap-1 transition-all duration-300 group`}
             >
-                {/* Active Indicator Background */}
-                <div className={`absolute top-1 inset-x-0 mx-auto w-12 h-8 rounded-full transition-all duration-300 ease-out ${isActive ? 'bg-red-50 dark:bg-red-500/20 scale-100 opacity-100' : 'bg-transparent scale-50 opacity-0'}`}></div>
-                
-                {/* Icon */}
-                <div className={`relative z-10 transition-transform duration-300 ${isActive ? 'text-red-600 dark:text-red-400 -translate-y-1' : 'text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-600 dark:group-hover:text-zinc-300'}`}>
-                    <Icon name={icon} size={22} strokeWidth={isActive ? 2.5 : 2} />
+                {/* Icon Container */}
+                <div className={`
+                    p-2 rounded-2xl transition-all duration-300 relative
+                    ${isActive ? 'text-white translate-y-[-4px]' : 'text-zinc-500 hover:text-zinc-300'}
+                `}>
+                    <Icon name={icon} size={24} strokeWidth={isActive ? 2.5 : 2} fill={isActive ? "currentColor" : "none"} />
+                    
+                    {/* Active Glow Dot */}
+                    {isActive && (
+                        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1 h-1 bg-red-500 rounded-full shadow-[0_0_8px_2px_rgba(239,68,68,0.6)]"></div>
+                    )}
                 </div>
-                
-                {/* Label */}
-                <span className={`relative z-10 text-[9px] font-bold uppercase tracking-wider transition-all duration-300 ${isActive ? 'text-red-600 dark:text-red-400 translate-y-0 opacity-100' : 'text-zinc-400 translate-y-1 opacity-0'}`}>
-                    {label}
-                </span>
             </button>
         );
     };
 
-    // Optimization: When using Virtualization (History view), we disable the Layout's scroll container
-    // and let the view manage the scrolling context. This prevents double scrollbars and ensures Virtuoso works correctly.
     const isVirtualized = view === 'history';
 
     return (
-        <div className="w-full h-full flex flex-col bg-gray-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors duration-300 font-sans">
-            {/* Header with Safe Area Top padding */}
+        <div className="w-full h-full flex flex-col bg-black text-white font-sans overflow-hidden">
+            
+            {/* Header - Transparent & Cleaner */}
             {view !== 'workout' && (
-                <div className="glass sticky top-0 z-20 shrink-0 pt-safe">
-                    <div className="px-4 h-14 flex items-center justify-between">
+                <div className="absolute top-0 left-0 right-0 z-20 pt-safe px-6 pb-2 bg-gradient-to-b from-black via-black/80 to-transparent pointer-events-none">
+                    <div className="h-14 flex items-center justify-between pointer-events-auto">
                         <div className="flex items-center gap-3">
-                            <Logo className="w-8 h-8 rounded-lg shadow-md" />
-                            <h1 className="text-zinc-900 dark:text-white font-bold tracking-tight text-lg">IronLog <span className="text-red-500 text-xs align-top font-black">PRO</span></h1>
+                            <div className="w-8 h-8 bg-zinc-900 rounded-xl flex items-center justify-center border border-zinc-800">
+                                <Logo className="w-5 h-5 text-white" />
+                            </div>
+                            <h1 className="text-xl font-black tracking-tighter text-white">
+                                IronLog
+                            </h1>
                         </div>
-                        <button onClick={onOpenSettings} className="p-2 -mr-2 text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">
-                            <Icon name="Menu" size={24} />
+                        <button 
+                            id="tut-settings-btn"
+                            onClick={onOpenSettings} 
+                            className="w-10 h-10 flex items-center justify-center rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-colors active:scale-95"
+                        >
+                            <Icon name="Menu" size={20} />
                         </button>
                     </div>
                 </div>
             )}
 
-            {/* Main Content */}
-            <div className={`flex-1 relative ${isVirtualized ? 'overflow-hidden' : 'overflow-y-auto scroll-container'} pb-24 ${view === 'workout' ? 'pt-safe' : ''}`}>
+            {/* Main Content Area */}
+            <div className={`flex-1 relative z-0 ${isVirtualized ? 'overflow-hidden' : 'overflow-y-auto scroll-container'} ${view !== 'workout' ? 'pt-[calc(env(safe-area-inset-top)+60px)] pb-32' : 'pt-safe pb-0'}`}>
                 {children}
             </div>
 
-            {/* Bottom Nav with Safe Area Bottom padding handled by pb-safe in styles */}
+            {/* Floating Island Navigation */}
             {view !== 'workout' && (
-                <div id="tut-nav-bar" className="nav-bar fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-xl border-t border-zinc-200/50 dark:border-white/5 flex z-30 pb-safe pt-1 shadow-[0_-5px_20px_rgba(0,0,0,0.03)]">
-                    <NavBtn id="home" label={t.active} icon="Layout" />
-                    <NavBtn id="history" label={t.history} icon="FileText" />
-                    <NavBtn id="stats" label="Stats" icon="BarChart2" />
+                <div className="fixed bottom-0 left-0 right-0 z-30 flex justify-center pb-safe pointer-events-none">
+                    <div id="tut-nav-bar" className="pointer-events-auto mb-6 mx-6 w-full max-w-sm h-16 glass-island rounded-full flex items-center px-6 justify-between">
+                        <NavBtn id="home" label={t.active} icon="Layout" />
+                        <NavBtn id="history" label={t.history} icon="Calendar" />
+                        <NavBtn id="stats" label="Stats" icon="BarChart2" />
+                    </div>
                 </div>
             )}
         </div>
