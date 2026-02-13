@@ -26,7 +26,12 @@ const INITIAL_TEMPLATES: GlobalTemplate[] = [
         guidelineImages: [
             "https://i.postimg.cc/FK6zKfCJ/Tokita.png",
             "https://i.postimg.cc/bNd6DrT0/Tokita-2.png",
-            "https://i.postimg.cc/MZf5qNKF/Tokita-3.png"
+            "https://i.postimg.cc/MZf5qNKF/Tokita-3.png",
+            "https://i.postimg.cc/5ydyM6n7/Tokita-4.png",
+            "https://i.postimg.cc/NF6MGBz1/Tokita-5.png",
+            "https://i.postimg.cc/2yQ6jrKn/Tokita-6.png",
+            "https://i.postimg.cc/yx4xzkvf/Tokita-7.png",
+            "https://i.postimg.cc/fycLWDrK/Tokita-8.png"
         ]
     },
     { id: 'wizard', name: 'wizard', title: { en: "The Wizard v3 (Full Body)", es: "The Wizard v3 (Full Body)" }, description: { en: "3-Days Heavy/Light/Medium. Classic intensity cycling.", es: "3-Días Pesado/Liviano/Medio. Ciclo de intensidad clásico." }, isPro: true, program: WIZARD_TEMPLATE, order: 3 },

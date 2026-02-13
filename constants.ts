@@ -737,6 +737,7 @@ export const TRANSLATIONS = {
             reset: "Reset Tutorials",
             home: [
                 { title: "Your Next Workout", text: "This card shows your immediate next session. Tap the card to enter the 'Workout Mode' and start logging." },
+                { title: "Routine Guidelines (Pro)", text: "Tap here to view the detailed philosophy, infographics, and guides for your current program." },
                 { title: "Mesocycle Management", text: "A 'Mesocycle' is a block of training (usually 4-8 weeks). Here you can edit the plan or rename it. When a cycle ends, you start a new one to keep progressing." },
                 { title: "App Navigation", text: "Switch between your Active Plan (Home), History Log (Past workouts), and Analytics (Stats)." }
             ],
@@ -998,6 +999,7 @@ export const TRANSLATIONS = {
             reset: "Reiniciar Tutoriales",
             home: [
                 { title: "Tu Próximo Entreno", text: "Esta tarjeta muestra tu sesión inmediata. Tócala para entrar al 'Modo Entreno' y empezar a registrar." },
+                { title: "Guías de Rutina (Pro)", text: "Toca aquí para ver la filosofía detallada, infografías y guías de tu programa actual." },
                 { title: "Gestión de Mesociclo", text: "Un 'Mesociclo' es un bloque de entrenamiento (4-8 semanas). Aquí puedes editar el plan o renombrarlo. Al acabar el ciclo, inicias uno nuevo para seguir progresando." },
                 { title: "Navegación", text: "Cambia entre tu Plan Activo (Inicio), Historial (Entrenos pasados) y Análisis (Estadísticas)." }
             ],

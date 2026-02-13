@@ -1,5 +1,5 @@
 
-import React, { useState, Suspense, useMemo, useEffect } from 'react';
+import React, { useState, Suspense, useMemo, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { TRANSLATIONS } from '../constants';
 import { Icon } from '../components/ui/Icon';
@@ -17,14 +17,30 @@ const IronCoachChat = React.lazy(() => import('../components/ai/IronCoachChat').
 
 // --- INTERNAL COMPONENTS ---
 
-// New Guidelines Modal with Carousel for Multiple Images
+// New Guidelines Modal with Zoom & Pan Logic
 const GuidelinesModal = ({ isOpen, onClose, images }: { isOpen: boolean, onClose: () => void, images?: string[] }) => {
     const [idx, setIdx] = useState(0);
+    const [scale, setScale] = useState(1);
+    const [pos, setPos] = useState({ x: 0, y: 0 });
+    const [isDragging, setIsDragging] = useState(false);
+    const startPos = useRef({ x: 0, y: 0 });
     
-    // Reset index when opened
+    // Reset state when opening or changing page
     useEffect(() => {
-        if (isOpen) setIdx(0);
+        if (isOpen) {
+            setIdx(0);
+            resetZoom();
+        }
     }, [isOpen]);
+
+    useEffect(() => {
+        resetZoom();
+    }, [idx]);
+
+    const resetZoom = () => {
+        setScale(1);
+        setPos({ x: 0, y: 0 });
+    };
 
     if (!isOpen || !images || images.length === 0) return null;
 
@@ -32,51 +48,117 @@ const GuidelinesModal = ({ isOpen, onClose, images }: { isOpen: boolean, onClose
     const hasNext = idx < images.length - 1;
     const hasPrev = idx > 0;
 
+    const handleDoubleTap = () => {
+        if (scale > 1) {
+            resetZoom();
+        } else {
+            setScale(2.5);
+            setPos({ x: 0, y: 0 }); // Center zoom for simplicity
+        }
+    };
+
+    const onTouchStart = (e: React.TouchEvent) => {
+        if (scale === 1) return;
+        setIsDragging(true);
+        startPos.current = { 
+            x: e.touches[0].clientX - pos.x, 
+            y: e.touches[0].clientY - pos.y 
+        };
+    };
+
+    const onTouchMove = (e: React.TouchEvent) => {
+        if (!isDragging || scale === 1) return;
+        e.preventDefault(); // Prevent scrolling the body
+        const x = e.touches[0].clientX - startPos.current.x;
+        const y = e.touches[0].clientY - startPos.current.y;
+        setPos({ x, y });
+    };
+
+    const onTouchEnd = () => setIsDragging(false);
+
     return (
-        <div className="fixed inset-0 z-[120] bg-black/95 flex flex-col animate-in fade-in duration-300">
-            {/* Header */}
-            <div className="p-4 flex justify-between items-center bg-black/50 z-10 absolute top-0 w-full backdrop-blur-sm">
-                <h3 className="text-white font-black text-lg uppercase flex items-center gap-2">
+        <div className="fixed inset-0 z-[200] bg-black flex flex-col animate-in fade-in duration-300">
+            {/* Header with Zoom Controls */}
+            <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-50 bg-gradient-to-b from-black/90 to-transparent pt-safe">
+                <h3 className="text-white font-black text-lg uppercase flex items-center gap-2 drop-shadow-md">
                     <Icon name="Info" size={20} className="text-blue-500" /> Guidelines
                 </h3>
-                <button onClick={onClose} className="p-2 bg-zinc-800/50 rounded-full text-white hover:bg-zinc-700">
-                    <Icon name="X" size={24} />
-                </button>
+                <div className="flex gap-3">
+                     <button 
+                        onClick={() => setScale(s => Math.max(1, s - 0.5))} 
+                        className="w-10 h-10 rounded-full bg-black/60 text-white flex items-center justify-center border border-white/10 backdrop-blur-md active:bg-zinc-800"
+                    >
+                        <Icon name="Minus" size={20} />
+                    </button>
+                    <button 
+                        onClick={() => setScale(s => Math.min(4, s + 0.5))} 
+                        className="w-10 h-10 rounded-full bg-black/60 text-white flex items-center justify-center border border-white/10 backdrop-blur-md active:bg-zinc-800"
+                    >
+                        <Icon name="Plus" size={20} />
+                    </button>
+                    <div className="w-px h-6 bg-white/20 mx-1"></div>
+                    <button 
+                        onClick={onClose} 
+                        className="w-10 h-10 rounded-full bg-zinc-800 text-white flex items-center justify-center hover:bg-zinc-700 border border-white/10 shadow-lg"
+                    >
+                        <Icon name="X" size={24} />
+                    </button>
+                </div>
             </div>
             
-            {/* Image Viewer */}
-            <div className="flex-1 overflow-auto flex items-start justify-center p-0 touch-none pt-16 pb-20">
+            {/* Image Viewer Container */}
+            <div 
+                className="flex-1 overflow-hidden relative flex items-center justify-center touch-none bg-zinc-950"
+                onTouchStart={onTouchStart}
+                onTouchMove={onTouchMove}
+                onTouchEnd={onTouchEnd}
+                onDoubleClick={handleDoubleTap}
+            >
                 <img 
                     src={currentImg} 
                     alt={`Page ${idx + 1}`} 
-                    className="w-full h-auto max-w-2xl object-contain"
+                    className="max-w-none transition-transform duration-100 ease-out select-none pointer-events-none"
+                    style={{ 
+                        transform: `translate(${pos.x}px, ${pos.y}px) scale(${scale})`,
+                        width: '100%', 
+                        height: 'auto',
+                        maxHeight: '100%',
+                        objectFit: 'contain'
+                    }}
                 />
             </div>
 
-            {/* Navigation Controls */}
+            {/* Navigation Controls - Raised to avoid bottom nav overlap */}
             {images.length > 1 && (
-                <div className="absolute bottom-8 left-0 right-0 flex justify-center items-center gap-6 z-20 pointer-events-none">
+                <div className="absolute bottom-24 left-0 right-0 flex justify-center items-center gap-6 z-50 pointer-events-none pb-safe">
                     <button 
                         onClick={() => setIdx(i => Math.max(0, i - 1))}
                         disabled={!hasPrev}
-                        className={`pointer-events-auto w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-md transition-all ${hasPrev ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-transparent text-white/10'}`}
+                        className={`pointer-events-auto w-14 h-14 rounded-full flex items-center justify-center backdrop-blur-xl border transition-all shadow-2xl ${hasPrev ? 'bg-zinc-900 text-white border-zinc-700 active:scale-95 hover:bg-zinc-800' : 'bg-zinc-900/50 text-zinc-600 border-zinc-800/50'}`}
                     >
-                        <Icon name="ChevronLeft" size={24} />
+                        <Icon name="ChevronLeft" size={28} />
                     </button>
                     
-                    <span className="text-xs font-bold text-white/50 bg-black/20 px-3 py-1 rounded-full backdrop-blur-md">
+                    <span className="text-sm font-black text-white bg-zinc-900 px-4 py-2 rounded-full backdrop-blur-xl border border-zinc-700 shadow-2xl min-w-[80px] text-center">
                         {idx + 1} / {images.length}
                     </span>
 
                     <button 
                         onClick={() => setIdx(i => Math.min(images.length - 1, i + 1))}
                         disabled={!hasNext}
-                        className={`pointer-events-auto w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-md transition-all ${hasNext ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-transparent text-white/10'}`}
+                        className={`pointer-events-auto w-14 h-14 rounded-full flex items-center justify-center backdrop-blur-xl border transition-all shadow-2xl ${hasNext ? 'bg-zinc-900 text-white border-zinc-700 active:scale-95 hover:bg-zinc-800' : 'bg-zinc-900/50 text-zinc-600 border-zinc-800/50'}`}
                     >
-                        <Icon name="ChevronRight" size={24} />
+                        <Icon name="ChevronRight" size={28} />
                     </button>
                 </div>
             )}
+            
+            {/* Helper Text */}
+            <div className="absolute bottom-10 left-0 right-0 text-center pointer-events-none z-40 opacity-60 pb-safe">
+                <p className="text-[10px] text-white font-bold uppercase tracking-widest bg-black/40 inline-block px-3 py-1.5 rounded-full backdrop-blur border border-white/5">
+                    Double tap to zoom • Drag to pan
+                </p>
+            </div>
         </div>
     );
 };
@@ -386,8 +468,10 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
 
     const homeTutorialSteps = [
         { targetId: 'tut-up-next', title: t.tutorial.home[0].title, text: t.tutorial.home[0].text, position: 'bottom' as const },
-        { targetId: 'tut-settings-btn', title: t.tutorial.home[1].title, text: t.tutorial.home[1].text, position: 'bottom' as const },
-        { targetId: 'tut-nav-bar', title: t.tutorial.home[2].title, text: t.tutorial.home[2].text, position: 'top' as const }
+        // Conditionally include guidelines tutorial if available
+        ...(currentGuidelineImages && currentGuidelineImages.length > 0 ? [{ targetId: 'tut-guidelines', title: t.tutorial.home[1].title, text: t.tutorial.home[1].text, position: 'bottom' as const }] : []),
+        { targetId: 'tut-settings-btn', title: t.tutorial.home[2].title, text: t.tutorial.home[2].text, position: 'bottom' as const },
+        { targetId: 'tut-nav-bar', title: t.tutorial.home[3].title, text: t.tutorial.home[3].text, position: 'top' as const }
     ];
 
     if (!activeMeso) {
@@ -468,10 +552,11 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                     <div className="flex items-center gap-3 mt-2">
                         {currentGuidelineImages && currentGuidelineImages.length > 0 ? (
                             <button 
-                                onClick={() => setShowGuidelines(true)}
-                                className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded bg-zinc-800 text-blue-400 border border-zinc-700 hover:bg-zinc-700 hover:text-white transition-colors flex items-center gap-1.5"
+                                id="tut-guidelines"
+                                onClick={() => checkPro("Guidelines") && setShowGuidelines(true)}
+                                className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded bg-zinc-800 text-blue-400 border border-zinc-700 hover:bg-zinc-700 hover:text-white transition-colors flex items-center gap-1.5 active:scale-95"
                             >
-                                <Icon name="Info" size={12} /> GUIDELINES
+                                <Icon name="Info" size={12} /> GUIDELINES {!isPro && <Icon name="Lock" size={10} className="text-yellow-500 ml-1" />}
                             </button>
                         ) : (
                             <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded bg-zinc-800 text-zinc-400 border border-zinc-700`}>
