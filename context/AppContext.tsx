@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useEffect, useRef, ReactNode, useState, PropsWithChildren, useMemo, useCallback } from 'react';
 import { AppState, Lang, Theme, ColorTheme, ExerciseDef, ActiveSession, MesoCycle, Log, ProgramDay, TutorialState, GlobalTemplate, UserProfile } from '../types';
-import { DEFAULT_LIBRARY, DEFAULT_TEMPLATE, TOJI_TEMPLATE, WIZARD_TEMPLATE, FULL_BODY_TEMPLATE, METABOLITE_TEMPLATE, UPPER_LOWER_TEMPLATE, RESENS_TEMPLATE, MALE_PHYSIQUE_TEMPLATE } from '../constants';
+import { DEFAULT_LIBRARY, DEFAULT_TEMPLATE, TOJI_TEMPLATE, WIZARD_TEMPLATE, FULL_BODY_TEMPLATE, METABOLITE_TEMPLATE, UPPER_LOWER_TEMPLATE, RESENS_TEMPLATE, MALE_PHYSIQUE_TEMPLATE, TOKITA_TEMPLATE } from '../constants';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { usePersistedState } from '../hooks/usePersistedState';
 import { Icon } from '../components/ui/Icon';
@@ -15,13 +15,27 @@ import { db as firestoreDb } from '../lib/firebase';
 
 const INITIAL_TEMPLATES: GlobalTemplate[] = [
     { id: 'toji_fushiguro', name: 'toji_fushiguro', title: { en: "Toji (Natural Hypertrophy)", es: "Toji (Natural Hypertrophy)" }, description: { en: "4-Day Elite Split. Giant Sets, Neck, Forearms & Aesthetic focus.", es: "Rutina Élite de 4 Días. Series Gigantes, Cuello, Antebrazo y Estética." }, isPro: true, program: TOJI_TEMPLATE, order: 1 },
-    { id: 'wizard', name: 'wizard', title: { en: "The Wizard v3 (Full Body)", es: "The Wizard v3 (Full Body)" }, description: { en: "3-Days Heavy/Light/Medium. Classic intensity cycling.", es: "3-Días Pesado/Liviano/Medio. Ciclo de intensidad clásico." }, isPro: true, program: WIZARD_TEMPLATE, order: 2 },
-    { id: 'full_body', name: 'full_body', title: { en: "Aesthetic V-Taper", es: "Aesthetic V-Taper" }, description: { en: "Dr. Mike Style. Focus on V-Taper (Lats/Side Delts).", es: "Estilo Dr. Mike. Foco en V-Taper (Dorsal/Hombro Lateral)." }, isPro: true, program: FULL_BODY_TEMPLATE, order: 3 },
-    { id: 'male_physique', name: 'male_physique', title: { en: "Male Physique (Upper/Lower)", es: "Male Physique (Torso/Pierna)" }, description: { en: "4-Days Bodybuilding Focus. Higher volume.", es: "4-Días Foco Culturismo. Mayor volumen." }, isPro: false, program: MALE_PHYSIQUE_TEMPLATE, order: 4 },
-    { id: 'hyp_1', name: 'hyp_1', title: { en: "Base Hypertrophy 1", es: "Hipertrofia Base 1" }, description: { en: "Standard PPL. Balanced volume.", es: "PPL Estándar. Volumen equilibrado." }, isPro: false, program: DEFAULT_TEMPLATE, order: 5 },
-    { id: 'hyp_2', name: 'hyp_2', title: { en: "Base Hypertrophy 2", es: "Hipertrofia Base 2" }, description: { en: "Upper/Lower Split (4 Days). Focus on compounds.", es: "Torso/Pierna (4 Días). Foco en básicos." }, isPro: false, program: UPPER_LOWER_TEMPLATE, order: 6 },
-    { id: 'metabolite', name: 'metabolite', title: { en: "Metabolite Phase", es: "Fase Metabolitos" }, description: { en: "High reps (20-30), short rests, the 'burn'.", es: "Reps altas (20-30), descanso corto, 'quemazón'." }, isPro: false, program: METABOLITE_TEMPLATE, order: 7 },
-    { id: 'resensitization', name: 'resensitization', title: { en: "Resensitization", es: "Resensitization" }, description: { en: "Low volume, heavy weight to reset fatigue.", es: "Bajo volumen, peso alto para resetear fatiga." }, isPro: false, program: RESENS_TEMPLATE, order: 8 },
+    { 
+        id: 'tokita', 
+        name: 'tokita', 
+        title: { en: "Tokita Ohma Program", es: "Programa Tokita Ohma" }, 
+        description: { en: "4-Day Hybrid Split. High volume, supersets & functional strength.", es: "Rutina Híbrida 4 Días. Alto volumen, superseries y fuerza funcional." }, 
+        isPro: false, 
+        program: TOKITA_TEMPLATE, 
+        order: 2, 
+        guidelineImages: [
+            "https://i.postimg.cc/FK6zKfCJ/Tokita.png",
+            "https://i.postimg.cc/bNd6DrT0/Tokita-2.png",
+            "https://i.postimg.cc/MZf5qNKF/Tokita-3.png"
+        ]
+    },
+    { id: 'wizard', name: 'wizard', title: { en: "The Wizard v3 (Full Body)", es: "The Wizard v3 (Full Body)" }, description: { en: "3-Days Heavy/Light/Medium. Classic intensity cycling.", es: "3-Días Pesado/Liviano/Medio. Ciclo de intensidad clásico." }, isPro: true, program: WIZARD_TEMPLATE, order: 3 },
+    { id: 'full_body', name: 'full_body', title: { en: "Aesthetic V-Taper", es: "Aesthetic V-Taper" }, description: { en: "Dr. Mike Style. Focus on V-Taper (Lats/Side Delts).", es: "Estilo Dr. Mike. Foco en V-Taper (Dorsal/Hombro Lateral)." }, isPro: true, program: FULL_BODY_TEMPLATE, order: 4 },
+    { id: 'male_physique', name: 'male_physique', title: { en: "Male Physique (Upper/Lower)", es: "Male Physique (Torso/Pierna)" }, description: { en: "4-Days Bodybuilding Focus. Higher volume.", es: "4-Días Foco Culturismo. Mayor volumen." }, isPro: false, program: MALE_PHYSIQUE_TEMPLATE, order: 5 },
+    { id: 'hyp_1', name: 'hyp_1', title: { en: "Base Hypertrophy 1", es: "Hipertrofia Base 1" }, description: { en: "Standard PPL. Balanced volume.", es: "PPL Estándar. Volumen equilibrado." }, isPro: false, program: DEFAULT_TEMPLATE, order: 6 },
+    { id: 'hyp_2', name: 'hyp_2', title: { en: "Base Hypertrophy 2", es: "Hipertrofia Base 2" }, description: { en: "Upper/Lower Split (4 Days). Focus on compounds.", es: "Torso/Pierna (4 Días). Foco en básicos." }, isPro: false, program: UPPER_LOWER_TEMPLATE, order: 7 },
+    { id: 'metabolite', name: 'metabolite', title: { en: "Metabolite Phase", es: "Fase Metabolitos" }, description: { en: "High reps (20-30), short rests, the 'burn'.", es: "Reps altas (20-30), descanso corto, 'quemazón'." }, isPro: false, program: METABOLITE_TEMPLATE, order: 8 },
+    { id: 'resensitization', name: 'resensitization', title: { en: "Resensitization", es: "Resensitization" }, description: { en: "Low volume, heavy weight to reset fatigue.", es: "Bajo volumen, peso alto para resetear fatiga." }, isPro: false, program: RESENS_TEMPLATE, order: 9 },
 ];
 
 interface AppContextType extends AppState {
@@ -125,7 +139,25 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                 const tplSnapshot = await getDocs(qTpl);
                 const fetchedTemplates: GlobalTemplate[] = [];
                 tplSnapshot.forEach((doc) => fetchedTemplates.push({ id: doc.id, ...doc.data() } as GlobalTemplate));
-                if (fetchedTemplates.length > 0) setGlobalTemplates(fetchedTemplates);
+                
+                // MERGE STRATEGY: 
+                let mergedTemplates = [...INITIAL_TEMPLATES];
+                
+                fetchedTemplates.forEach(remote => {
+                    const idx = mergedTemplates.findIndex(local => local.id === remote.id);
+                    if (idx >= 0) {
+                        // Remote overrides local (allows updating content via CMS)
+                        mergedTemplates[idx] = remote;
+                    } else {
+                        // Append new remote templates
+                        mergedTemplates.push(remote);
+                    }
+                });
+                
+                // Sort again to respect 'order' property
+                mergedTemplates.sort((a, b) => a.order - b.order);
+
+                if (mergedTemplates.length > 0) setGlobalTemplates(mergedTemplates);
 
                 const qEx = collection(firestoreDb, "global_exercises");
                 const exSnapshot = await getDocs(qEx);

@@ -10,11 +10,76 @@ import { TutorialOverlay } from '../components/ui/TutorialOverlay';
 import { usePro } from '../hooks/usePro';
 import { PaywallModal } from '../components/pro/PaywallModal';
 import { GlobalTemplate, ProgramDay } from '../types';
+import { ConfirmModal } from '../components/ui/ConfirmModal';
 
 // Lazy load the AI Chat component
 const IronCoachChat = React.lazy(() => import('../components/ai/IronCoachChat').then(module => ({ default: module.IronCoachChat })));
 
 // --- INTERNAL COMPONENTS ---
+
+// New Guidelines Modal with Carousel for Multiple Images
+const GuidelinesModal = ({ isOpen, onClose, images }: { isOpen: boolean, onClose: () => void, images?: string[] }) => {
+    const [idx, setIdx] = useState(0);
+    
+    // Reset index when opened
+    useEffect(() => {
+        if (isOpen) setIdx(0);
+    }, [isOpen]);
+
+    if (!isOpen || !images || images.length === 0) return null;
+
+    const currentImg = images[idx];
+    const hasNext = idx < images.length - 1;
+    const hasPrev = idx > 0;
+
+    return (
+        <div className="fixed inset-0 z-[120] bg-black/95 flex flex-col animate-in fade-in duration-300">
+            {/* Header */}
+            <div className="p-4 flex justify-between items-center bg-black/50 z-10 absolute top-0 w-full backdrop-blur-sm">
+                <h3 className="text-white font-black text-lg uppercase flex items-center gap-2">
+                    <Icon name="Info" size={20} className="text-blue-500" /> Guidelines
+                </h3>
+                <button onClick={onClose} className="p-2 bg-zinc-800/50 rounded-full text-white hover:bg-zinc-700">
+                    <Icon name="X" size={24} />
+                </button>
+            </div>
+            
+            {/* Image Viewer */}
+            <div className="flex-1 overflow-auto flex items-start justify-center p-0 touch-none pt-16 pb-20">
+                <img 
+                    src={currentImg} 
+                    alt={`Page ${idx + 1}`} 
+                    className="w-full h-auto max-w-2xl object-contain"
+                />
+            </div>
+
+            {/* Navigation Controls */}
+            {images.length > 1 && (
+                <div className="absolute bottom-8 left-0 right-0 flex justify-center items-center gap-6 z-20 pointer-events-none">
+                    <button 
+                        onClick={() => setIdx(i => Math.max(0, i - 1))}
+                        disabled={!hasPrev}
+                        className={`pointer-events-auto w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-md transition-all ${hasPrev ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-transparent text-white/10'}`}
+                    >
+                        <Icon name="ChevronLeft" size={24} />
+                    </button>
+                    
+                    <span className="text-xs font-bold text-white/50 bg-black/20 px-3 py-1 rounded-full backdrop-blur-md">
+                        {idx + 1} / {images.length}
+                    </span>
+
+                    <button 
+                        onClick={() => setIdx(i => Math.min(images.length - 1, i + 1))}
+                        disabled={!hasNext}
+                        className={`pointer-events-auto w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-md transition-all ${hasNext ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-transparent text-white/10'}`}
+                    >
+                        <Icon name="ChevronRight" size={24} />
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+};
 
 const TemplateSelector = ({ 
     onClose, 
@@ -215,6 +280,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
     const [showAIChat, setShowAIChat] = useState(false);
     const [skipConfirmationId, setSkipConfirmationId] = useState<number | null>(null);
     const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+    const [showGuidelines, setShowGuidelines] = useState(false);
 
     // --- MESO SETTINGS LOCAL STATE ---
     const [editWeeks, setEditWeeks] = useState(4);
@@ -228,6 +294,14 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
             setEditNote(activeMeso.note || '');
         }
     }, [activeMeso, showMesoSettings]);
+
+    // Find the current active guideline images
+    const currentGuidelineImages = useMemo(() => {
+        if(!activeMeso) return null;
+        // Find matching global template to get the images
+        const template = globalTemplates.find(t => t.id === activeMeso.mesoType);
+        return template?.guidelineImages;
+    }, [activeMeso, globalTemplates]);
 
     const handleSaveSettings = () => {
         if (!activeMeso) return;
@@ -392,9 +466,18 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                 <div>
                     <h2 className="text-3xl font-black text-white tracking-tight">{activeMeso.name}</h2>
                     <div className="flex items-center gap-3 mt-2">
-                        <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded bg-zinc-800 text-zinc-400 border border-zinc-700`}>
-                            {t.phases?.[activeMeso.mesoType] || activeMeso.mesoType}
-                        </span>
+                        {currentGuidelineImages && currentGuidelineImages.length > 0 ? (
+                            <button 
+                                onClick={() => setShowGuidelines(true)}
+                                className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded bg-zinc-800 text-blue-400 border border-zinc-700 hover:bg-zinc-700 hover:text-white transition-colors flex items-center gap-1.5"
+                            >
+                                <Icon name="Info" size={12} /> GUIDELINES
+                            </button>
+                        ) : (
+                            <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded bg-zinc-800 text-zinc-400 border border-zinc-700`}>
+                                {t.phases?.[activeMeso.mesoType] || activeMeso.mesoType}
+                            </span>
+                        )}
                         <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">{t.week} {activeMeso.week} / {activeMeso.targetWeeks}</span>
                     </div>
                 </div>
@@ -444,7 +527,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                                 key={idx}
                                 onClick={() => !isDone && startSession(idx)}
                                 className={`
-                                    flex items-center p-4 rounded-2xl border transition-all
+                                    group flex items-center p-4 rounded-2xl border transition-all relative
                                     ${isDone 
                                         ? 'bg-zinc-900/30 border-transparent opacity-50' 
                                         : 'bg-zinc-900 border-zinc-800 active:bg-zinc-800'
@@ -462,6 +545,17 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                                         {(day.slots || []).map((s: any) => String(tm(s.muscle))).join(', ')}
                                     </div>
                                 </div>
+                                
+                                {/* Restore Skip Button */}
+                                {!isDone && (
+                                    <button 
+                                        onClick={(e) => handleSkipClick(e, idx)} 
+                                        className="p-2 text-zinc-600 hover:text-white opacity-100 transition-all active:scale-95"
+                                        title={t.skipDay}
+                                    >
+                                        <Icon name="SkipForward" size={16} />
+                                    </button>
+                                )}
                             </div>
                         );
                     })}
@@ -497,6 +591,25 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
             
             {showAIChat && <Suspense fallback={null}><IronCoachChat onClose={() => setShowAIChat(false)} /></Suspense>}
             {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} feature={featureAttempted} />}
+            
+            {/* Guidelines Modal */}
+            <GuidelinesModal 
+                isOpen={showGuidelines} 
+                onClose={() => setShowGuidelines(false)} 
+                images={currentGuidelineImages} 
+            />
+
+            {/* Skip Confirmation */}
+            <ConfirmModal 
+                isOpen={skipConfirmationId !== null}
+                title={t.skipDay}
+                description={t.skipDayConfirm}
+                onConfirm={confirmSkip}
+                onCancel={() => setSkipConfirmationId(null)}
+                confirmText={t.skip}
+                cancelText={t.cancel}
+                variant="danger"
+            />
             
             {/* MESO SETTINGS MODAL */}
             {showMesoSettings && (

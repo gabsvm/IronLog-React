@@ -28,6 +28,8 @@ export const DEFAULT_LIBRARY: ExerciseDef[] = [
     { id: 'bp_mach_inc', name: { en: 'Machine Incline Press', es: 'Press Inclinado Máquina' }, muscle: 'CHEST', instructions: { en: "Constant tension for upper pecs.", es: "Tensión constante para pectorales superiores." }, videoId: "NwzUje3z0qY" },
     { id: 'pec_fly', name: { en: 'Pec Dec Flye', es: 'Aperturas Pec Dec' }, muscle: 'CHEST', videoId: "eGjt4lkiwuc" },
     { id: 'diamond_pushup', name: { en: 'Diamond Pushups', es: 'Flexiones Diamante' }, muscle: 'CHEST', instructions: { en: "Hands close together. Hits triceps and inner chest.", es: "Manos juntas. Enfatiza tríceps y pecho interno." }, videoId: "J0DnG1_S92I", isBodyweight: true },
+    { id: 'pushup', name: { en: 'Push Ups', es: 'Flexiones' }, muscle: 'CHEST', isBodyweight: true, videoId: "IODxDxX7oi4" },
+    { id: 'bp_paused', name: { en: 'Paused Bench Press', es: 'Press Banca Pausado' }, muscle: 'CHEST', instructions: { en: "1-2s pause on chest. No bounce.", es: "Pausa 1-2s en el pecho. Sin rebote." }, videoId: "rT7DgCr-3pg" },
     // Back
     { id: 'lat_pull', name: { en: 'Lat Pulldown', es: 'Jalón al Pecho' }, muscle: 'BACK', instructions: { en: "Prone, neutral, or supine grip. Focus on back width.", es: "Agarre prono, neutro o supino. Enfocado en la amplitud de espalda." }, videoId: "CAwf7n6Luuc" },
     { id: 'lat_pull_supine', name: { en: 'Supine Lat Pulldown', es: 'Jalón Supino (Chin-grip)' }, muscle: 'BACK', instructions: { en: "Underhand grip. Great for lats.", es: "Agarre supino (palmas hacia ti). Excelente para dorsales." }, videoId: "8hKEjE58Jzo" },
@@ -49,10 +51,13 @@ export const DEFAULT_LIBRARY: ExerciseDef[] = [
     { id: 'rdl', name: { en: 'Romanian Deadlift', es: 'Peso Muerto Rumano' }, muscle: 'HAMSTRINGS', videoId: "JCXUYuzwNrM" },
     { id: 'deadlift', name: { en: 'Deadlift (Conventional)', es: 'Peso Muerto (Convencional)' }, muscle: 'BACK', instructions: { en: "Total body strength. Keep spine neutral.", es: "Fuerza total. Mantén la columna neutra." }, videoId: "r4MzxtBKyNE" },
     { id: 'sldl', name: { en: 'Stiff Leg Deadlift', es: 'Peso Muerto Piernas Rígidas' }, muscle: 'HAMSTRINGS', instructions: { en: "Minimal knee bend. Hamstring focus.", es: "Mínima flexión de rodilla. Enfoque en isquios." }, videoId: "1uDiW5--rAE" },
+    { id: 'good_morning', name: { en: 'Good Morning', es: 'Buenos Días' }, muscle: 'HAMSTRINGS', instructions: { en: "Hinge at hips, keep back straight.", es: "Bisagra de cadera, espalda recta." }, videoId: "d_1D8x_hM7o" },
     { id: 'glute_bridge', name: { en: 'Glute Bridge', es: 'Puente de Glúteos' }, muscle: 'GLUTES', videoId: "8Z7t6j5G9V0" },
     { id: 'leg_curl', name: { en: 'Seated Leg Curl', es: 'Curl Femoral Sentado' }, muscle: 'HAMSTRINGS', videoId: "OrxowZ454Po" },
     { id: 'lying_curl', name: { en: 'Lying Leg Curl', es: 'Curl Femoral Tumbado' }, muscle: 'HAMSTRINGS', videoId: "1Tq3QdYUuHs" },
     { id: 'calf_raise', name: { en: 'Calf Raise', es: 'Elevación de Talones' }, muscle: 'CALVES', videoId: "gwLzBJYoWlI" },
+    { id: 'lunges', name: { en: 'Walking Lunges', es: 'Zancadas (Lunges)' }, muscle: 'QUADS', instructions: { en: "Knee touches ground gently.", es: "Rodilla toca suelo suavemente." }, videoId: "D7KaRcUTQeE" },
+    { id: 'lunge_reverse', name: { en: 'Reverse Lunges', es: 'Zancadas Inversas' }, muscle: 'QUADS', videoId: "7pK8da5r6g" },
     // Shoulders
     { id: 'ohp', name: { en: 'Overhead Press', es: 'Press Militar' }, muscle: 'SHOULDERS', videoId: "QAQ64hK4Xxs" },
     { id: 'ohp_db', name: { en: 'Seated DB Press', es: 'Press Militar Mancuernas' }, muscle: 'SHOULDERS', videoId: "qEwK657kfLM" },
@@ -69,6 +74,7 @@ export const DEFAULT_LIBRARY: ExerciseDef[] = [
     { id: 'curl_db', name: { en: 'Dumbbell Curl', es: 'Curl con Mancuernas' }, muscle: 'BICEPS', videoId: "sAq_ocpRh_I" },
     { id: 'curl_hammer', name: { en: 'Hammer Curl', es: 'Curl Martillo' }, muscle: 'BICEPS', instructions: { en: "Neutral grip. Hits brachialis.", es: "Agarre neutro. Enfatiza braquial." }, videoId: "zC3nLlEvin4" },
     { id: 'curl_cable', name: { en: 'Cable Curl', es: 'Curl en Polea' }, muscle: 'BICEPS', instructions: { en: "High reps (15-20). Constant tension.", es: "Altas repeticiones (15-20). Tensión constante." }, videoId: "AsAVcaJ8-Y" },
+    { id: 'curl_preacher', name: { en: 'Preacher Curl', es: 'Curl Predicador' }, muscle: 'BICEPS', videoId: "fIWP-FRFnU" },
     { id: 'skull_crusher', name: { en: 'Skull Crushers', es: 'Rompecráneos (Skullcrusher)' }, muscle: 'TRICEPS', instructions: { en: "Keep elbows tucked in.", es: "Mantén los codos cerrados hacia dentro." }, videoId: "d_KZxkY_0cM" },
     { id: 'db_tri_ext', name: { en: 'DB Tricep Extension', es: 'Extensión Tríceps Mancuerna' }, muscle: 'TRICEPS', videoId: "nRiJVZDpdL0" },
     { id: 'tri_push', name: { en: 'Tricep Pushdown', es: 'Extensión Tríceps Polea' }, muscle: 'TRICEPS', videoId: "2-LAMcpzOD8" },
@@ -80,9 +86,75 @@ export const DEFAULT_LIBRARY: ExerciseDef[] = [
     { id: 'knee_raise', name: { en: 'Knee Raise', es: 'Elevación de Rodillas' }, muscle: 'ABS', videoId: "9pFL2fX8K-M", isBodyweight: true },
     { id: 'wrist_curl', name: { en: 'Wrist Curl', es: 'Curl de Muñeca' }, muscle: 'FOREARMS', instructions: { en: "Marathon sets: 50-60 reps with short breaks.", es: "Series maratón: 50-60 repeticiones con descansos cortos." }, videoId: "3Vq7J2V5y0" },
     { id: 'forearm_pushup', name: { en: 'Forearm Bar Pushups', es: 'Flexiones Antebrazo en Barra' }, muscle: 'FOREARMS', instructions: { en: "Lean on bar, push with fingers/wrists.", es: "Apóyate en la barra, empuja usando dedos y muñecas." }, videoId: "8xXJ2qM_5Z0", isBodyweight: true },
+    { id: 'finger_curl', name: { en: 'Finger Curls', es: 'Curl de Dedos' }, muscle: 'FOREARMS', instructions: { en: "Roll barbell down to fingertips and curl back up.", es: "Deja rodar la barra hasta la punta de los dedos y sube." }, videoId: "3Vq7J2V5y0" },
     // Neck
     { id: 'neck_curl', name: { en: 'Neck Curls (Plate)', es: 'Flexión de Cuello (Disco)' }, muscle: 'NECK', instructions: { en: "Lying on bench, plate on forehead. Control.", es: "Tumbado en banco, disco en la frente. Controla." }, videoId: "wJ8s3s7_2s" },
     { id: 'neck_ext', name: { en: 'Neck Extension', es: 'Extensión de Cuello' }, muscle: 'NECK', instructions: { en: "Use harness or plate. Look up.", es: "Usa arnés o disco. Mira hacia arriba." }, videoId: "wJ8s3s7_2s" }
+];
+
+export const TOKITA_TEMPLATE: ProgramDay[] = [
+    {
+        id: 'tokita_1',
+        dayName: { en: 'Day 1: Upper', es: 'Día 1: Torso' },
+        slots: [
+            { muscle: 'CHEST', setTarget: 3, exerciseId: 'bp_bar', reps: '6-10' },
+            // Superset 1: DB Shoulder Press + Weighted Chin-ups
+            { muscle: 'SHOULDERS', setTarget: 4, exerciseId: 'ohp_db', reps: '8-12', supersetId: 'tokita_d1_ss1' },
+            { muscle: 'BACK', setTarget: 4, exerciseId: 'chinup', reps: '3-6', supersetId: 'tokita_d1_ss1' },
+            // Tri-set 1: Curls + Knee Raises + Face Pulls
+            { muscle: 'BICEPS', setTarget: 4, exerciseId: 'curl_bar', reps: '8-12', supersetId: 'tokita_d1_ss2' },
+            { muscle: 'ABS', setTarget: 3, exerciseId: 'knee_raise', reps: 'AMRAP', supersetId: 'tokita_d1_ss2' },
+            { muscle: 'SHOULDERS', setTarget: 4, exerciseId: 'face_pull', reps: '15-20', supersetId: 'tokita_d1_ss2' },
+            // Tri-set 2: Pushups + Lateral Raises + Calves
+            { muscle: 'CHEST', setTarget: 3, exerciseId: 'pushup', reps: 'AMRAP', supersetId: 'tokita_d1_ss3' },
+            { muscle: 'SHOULDERS', setTarget: 4, exerciseId: 'lat_raise', reps: '8-12', supersetId: 'tokita_d1_ss3' },
+            { muscle: 'CALVES', setTarget: 3, exerciseId: 'calf_raise', reps: 'AMRAP', supersetId: 'tokita_d1_ss3' }
+        ]
+    },
+    {
+        id: 'tokita_2',
+        dayName: { en: 'Day 2: Lower', es: 'Día 2: Pierna' },
+        slots: [
+            { muscle: 'HAMSTRINGS', setTarget: 3, exerciseId: 'good_morning', reps: '6-12' }, 
+            // Superset 1: Lunges + Pullups
+            { muscle: 'QUADS', setTarget: 4, exerciseId: 'lunges', reps: '10-15', supersetId: 'tokita_d2_ss1' },
+            { muscle: 'BACK', setTarget: 4, exerciseId: 'pullup', reps: 'AMRAP', supersetId: 'tokita_d2_ss1' },
+            // Tri-set: Finger Curls + Leg Raises + Calves
+            { muscle: 'FOREARMS', setTarget: 4, exerciseId: 'finger_curl', reps: '8-12', supersetId: 'tokita_d2_ss2' },
+            { muscle: 'ABS', setTarget: 3, exerciseId: 'leg_raise', reps: 'AMRAP', supersetId: 'tokita_d2_ss2' },
+            { muscle: 'CALVES', setTarget: 3, exerciseId: 'calf_raise', reps: 'AMRAP', supersetId: 'tokita_d2_ss2' }
+        ]
+    },
+    {
+        id: 'tokita_3',
+        dayName: { en: 'Day 3: Upper', es: 'Día 3: Torso' },
+        slots: [
+            { muscle: 'SHOULDERS', setTarget: 4, exerciseId: 'ohp', reps: '6-10' },
+            // Superset 1: Pause Bench + Face Pulls
+            { muscle: 'CHEST', setTarget: 4, exerciseId: 'bp_paused', reps: '4-8', supersetId: 'tokita_d3_ss1' },
+            { muscle: 'SHOULDERS', setTarget: 4, exerciseId: 'face_pull', reps: '15-20', supersetId: 'tokita_d3_ss1' },
+            // Tri-set: Preacher + Rear Delt + Calves
+            { muscle: 'BICEPS', setTarget: 4, exerciseId: 'curl_preacher', reps: '6-10', supersetId: 'tokita_d3_ss2' },
+            { muscle: 'SHOULDERS', setTarget: 4, exerciseId: 'rear_delt_fly', reps: '8-12', supersetId: 'tokita_d3_ss2' },
+            { muscle: 'CALVES', setTarget: 3, exerciseId: 'calf_raise', reps: 'AMRAP', supersetId: 'tokita_d3_ss2' }
+        ]
+    },
+    {
+        id: 'tokita_4',
+        dayName: { en: 'Day 4: Full Body', es: 'Día 4: Cuerpo Completo' },
+        slots: [
+            // Superset 1: Reverse Lunges + Chest Flies
+            { muscle: 'QUADS', setTarget: 4, exerciseId: 'lunge_reverse', reps: '10-15', supersetId: 'tokita_d4_ss1' },
+            { muscle: 'CHEST', setTarget: 4, exerciseId: 'pec_fly', reps: '10-15', supersetId: 'tokita_d4_ss1' },
+            // Superset 2: Weighted Pullups + Pushups
+            { muscle: 'BACK', setTarget: 4, exerciseId: 'pullup', reps: '3-6', supersetId: 'tokita_d4_ss2' },
+            { muscle: 'CHEST', setTarget: 3, exerciseId: 'pushup', reps: 'AMRAP', supersetId: 'tokita_d4_ss2' },
+            // Tri-set: Triceps + Face Pulls + Leg Raises
+            { muscle: 'TRICEPS', setTarget: 4, exerciseId: 'tri_ext', reps: '8-12', supersetId: 'tokita_d4_ss3' },
+            { muscle: 'SHOULDERS', setTarget: 4, exerciseId: 'face_pull', reps: '15-20', supersetId: 'tokita_d4_ss3' },
+            { muscle: 'ABS', setTarget: 3, exerciseId: 'leg_raise', reps: 'AMRAP', supersetId: 'tokita_d4_ss3' }
+        ]
+    }
 ];
 
 export const DEFAULT_TEMPLATE: ProgramDay[] = [
@@ -464,8 +536,8 @@ export const TRANSLATIONS = {
         exportReport: "Export Report & Finish", justFinish: "Just Finish",
         mesoNotes: "General Notes", mesoNotesPlaceholder: "Write down your cycle focus, goals or reminders...",
         mesoType: "Phase Type",
-        phases: { hyp_1: "Base Hypertrophy 1", hyp_2: "Base Hypertrophy 2", metabolite: "Metabolite Phase", resensitization: "Resensitization", full_body: "Aesthetic V-Taper", wizard: "The Wizard v3 (Full Body)", male_physique: "Male Physique (Upper/Lower)", toji_fushiguro: "Toji (Natural Hypertrophy)" },
-        phaseDesc: { hyp_1: "Standard PPL. Balanced volume.", hyp_2: "Upper/Lower Split (4 Days). Focus on compounds.", metabolite: "High reps (20-30), short rests, the 'burn'.", resensitization: "Low volume, heavy weight to reset fatigue.", full_body: "Dr. Mike Style. Focus on V-Taper (Lats/Side Delts).", wizard: "3-Days Heavy/Light/Medium. Classic intensity cycling for steady gains.", male_physique: "4-Days Bodybuilding Focus. Higher volume, arm & shoulder specialization.", toji_fushiguro: "4-Day Elite Split. Giant Sets, Neck, Forearms & Aesthetic focus. (Pro)" },
+        phases: { hyp_1: "Base Hypertrophy 1", hyp_2: "Base Hypertrophy 2", metabolite: "Metabolite Phase", resensitization: "Resensitization", full_body: "Aesthetic V-Taper", wizard: "The Wizard v3 (Full Body)", male_physique: "Male Physique (Upper/Lower)", toji_fushiguro: "Toji (Natural Hypertrophy)", tokita: "Tokita Ohma Program" },
+        phaseDesc: { hyp_1: "Standard PPL. Balanced volume.", hyp_2: "Upper/Lower Split (4 Days). Focus on compounds.", metabolite: "High reps (20-30), short rests, the 'burn'.", resensitization: "Low volume, heavy weight to reset fatigue.", full_body: "Dr. Mike Style. Focus on V-Taper (Lats/Side Delts).", wizard: "3-Days Heavy/Light/Medium. Classic intensity cycling for steady gains.", male_physique: "4-Days Bodybuilding Focus. Higher volume, arm & shoulder specialization.", toji_fushiguro: "4-Day Elite Split. Giant Sets, Neck, Forearms & Aesthetic focus. (Pro)", tokita: "4-Day Hybrid Split. High volume, supersets, and functional strength focus." },
         
         // PAYWALL & PRO
         pro: {
@@ -725,8 +797,8 @@ export const TRANSLATIONS = {
         exportReport: "Exportar Informe y Terminar", justFinish: "Solo Terminar",
         mesoNotes: "Notas Generales", mesoNotesPlaceholder: "Escribe tus objetivos, focos o recordatorios para este ciclo...",
         mesoType: "Tipo de Fase",
-        phases: { hyp_1: "Hipertrofia Base 1", hyp_2: "Hipertrofia Base 2", metabolite: "Fase Metabolitos", resensitization: "Resensitization", full_body: "Aesthetic V-Taper", wizard: "The Wizard v3 (Full Body)", male_physique: "Male Physique (Torso/Pierna)", toji_fushiguro: "Toji (Natural Hypertrophy)" },
-        phaseDesc: { hyp_1: "PPL Estándar. Volumen equilibrado.", hyp_2: "Torso/Pierna (4 Días). Foco en básicos.", metabolite: "Reps altas (20-30), descanso corto, 'quemazón'.", resensitization: "Bajo volumen, peso alto para resetear fatiga.", full_body: "Estilo Dr. Mike. Foco en V-Taper (Dorsal/Hombro Lateral).", wizard: "3-Días Pesado/Liviano/Medio. Ciclo de intensidad clásico para ganancias constantes.", male_physique: "4-Días Foco Culturismo. Mayor volumen, especialización en brazos y hombros.", toji_fushiguro: "Rutina Élite de 4 Días. Series Gigantes, Cuello, Antebrazo y Estética. (Pro)" },
+        phases: { hyp_1: "Hipertrofia Base 1", hyp_2: "Hipertrofia Base 2", metabolite: "Fase Metabolitos", resensitization: "Resensitization", full_body: "Aesthetic V-Taper", wizard: "The Wizard v3 (Full Body)", male_physique: "Male Physique (Torso/Pierna)", toji_fushiguro: "Toji (Natural Hypertrophy)", tokita: "Tokita Ohma Program" },
+        phaseDesc: { hyp_1: "Hipertrofia Base 1", hyp_2: "Torso/Pierna (4 Días). Foco en básicos.", metabolite: "Reps altas (20-30), descanso corto, 'quemazón'.", resensitization: "Bajo volumen, peso alto para resetear fatiga.", full_body: "Estilo Dr. Mike. Foco en V-Taper (Dorsal/Hombro Lateral).", wizard: "3-Días Pesado/Liviano/Medio. Ciclo de intensidad clásico para ganancias constantes.", male_physique: "4-Días Foco Culturismo. Mayor volumen, especialización en brazos y hombros.", toji_fushiguro: "Rutina Élite de 4 Días. Series Gigantes, Cuello, Antebrazo y Estética. (Pro)", tokita: "Rutina Híbrida 4 Días. Alto volumen, superseries y fuerza funcional." },
         
         // PAYWALL & PRO
         pro: {

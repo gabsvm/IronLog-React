@@ -89,7 +89,7 @@ export interface ProgramDay {
   slots: ProgramSlot[];
 }
 
-export type MesoType = 'hyp_1' | 'hyp_2' | 'metabolite' | 'resensitization' | 'full_body' | 'wizard' | 'male_physique' | 'toji_fushiguro' | string;
+export type MesoType = 'hyp_1' | 'hyp_2' | 'metabolite' | 'resensitization' | 'full_body' | 'wizard' | 'male_physique' | 'toji_fushiguro' | 'tokita' | string;
 
 export interface GlobalTemplate {
     id: string;
@@ -99,6 +99,7 @@ export interface GlobalTemplate {
     isPro: boolean;
     program: ProgramDay[];
     order: number; 
+    guidelineImages?: string[]; // NEW: Array of images for guidelines
 }
 
 export interface MesoCycle {
