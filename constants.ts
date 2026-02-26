@@ -1,5 +1,6 @@
 
-import { ExerciseDef, ProgramDay, MuscleGroup } from './types';
+import { ExerciseDef, ProgramDay, MuscleGroup, GlobalTemplate } from './types';
+import { SILVER_ERA_INTERMEDIATE, SILVER_ERA_ADVANCED } from './components/programs/SilverEraAesthetics';
 
 export const MUSCLE_GROUPS: Record<string, MuscleGroup> = { 
     CHEST: 'CHEST', BACK: 'BACK', QUADS: 'QUADS', HAMS: 'HAMSTRINGS', 
@@ -89,7 +90,46 @@ export const DEFAULT_LIBRARY: ExerciseDef[] = [
     { id: 'finger_curl', name: { en: 'Finger Curls', es: 'Curl de Dedos' }, muscle: 'FOREARMS', instructions: { en: "Roll barbell down to fingertips and curl back up.", es: "Deja rodar la barra hasta la punta de los dedos y sube." }, videoId: "3Vq7J2V5y0" },
     // Neck
     { id: 'neck_curl', name: { en: 'Neck Curls (Plate)', es: 'Flexión de Cuello (Disco)' }, muscle: 'NECK', instructions: { en: "Lying on bench, plate on forehead. Control.", es: "Tumbado en banco, disco en la frente. Controla." }, videoId: "wJ8s3s7_2s" },
-    { id: 'neck_ext', name: { en: 'Neck Extension', es: 'Extensión de Cuello' }, muscle: 'NECK', instructions: { en: "Use harness or plate. Look up.", es: "Usa arnés o disco. Mira hacia arriba." }, videoId: "wJ8s3s7_2s" }
+    { id: 'neck_ext', name: { en: 'Neck Extension', es: 'Extensión de Cuello' }, muscle: 'NECK', instructions: { en: "Use harness or plate. Look up.", es: "Usa arnés o disco. Mira hacia arriba." }, videoId: "wJ8s3s7_2s" },
+    { id: 'seal_row', name: { en: 'Seal Row', es: 'Remo en Banco Plano' }, muscle: 'BACK', videoId: "vthMCoG9e54" },
+    { id: 'reverse_curl', name: { en: 'Reverse Curl', es: 'Curl Inverso' }, muscle: 'BICEPS', videoId: "hQ0c_Py637I" },
+    { id: 'upright_row', name: { en: 'Upright Row', es: 'Remo al Mentón' }, muscle: 'SHOULDERS', videoId: "WJm9zA2NY8E" },
+    { id: 'french_press', name: { en: 'French Press', es: 'Press Francés' }, muscle: 'TRICEPS', videoId: "FRDGl_z8g2U" },
+    { id: 'sited_calf_raise', name: { en: 'Sited Calf Raise', es: 'Elevación de Talones Sentado' }, muscle: 'CALVES', videoId: "JjR_o_P-4_g" },
+    { id: 'wide_grip_shrug', name: { en: 'Wide-grip BB shrugs', es: 'Encogimientos con Barra Agarre Ancho' }, muscle: 'TRAPS', videoId: "s6g2I6yH_aY" },
+    { id: 'split_squat', name: { en: 'Split Squat', es: 'Sentadilla Búlgara' }, muscle: 'QUADS', videoId: "2C-uNgN560I" },
+    { id: 'weighted_chin_up', name: { en: 'Weighted Chin-up', es: 'Dominadas Supinas con Lastre' }, muscle: 'BACK', videoId: "mRy9m2Q9_1I" },
+    { id: 'pelican_curl', name: { en: 'Pelican Cable Curl', es: 'Curl Pelícano en Polea' }, muscle: 'BICEPS', videoId: "iS5VlJnA3aQ" },
+    { id: 'fat_grip_preacher_curl', name: { en: 'Fat grips Preacher curls', es: 'Curl Predicador con Fat Grips' }, muscle: 'BICEPS', videoId: "fIWP-FRFnU" },
+    { id: 'cable_pushdown', name: { en: 'Cable Pushdown', es: 'Pushdown en Polea' }, muscle: 'TRICEPS', videoId: "2-LAMcpzOD8" },
+    { id: 'lat_raise_db', name: { en: 'Lat raises', es: 'Elevaciones Laterales con Mancuernas' }, muscle: 'SHOULDERS', videoId: "3VcKaXpzqRo" },
+    { id: 'cable_triceps_ext', name: { en: 'Cable Triceps Extension', es: 'Extensión de Tríceps en Polea' }, muscle: 'TRICEPS', videoId: "2-LAMcpzOD8" },
+    { id: 'cable_drag_curl', name: { en: 'Cable Drag Curl', es: 'Drag Curl en Polea' }, muscle: 'BICEPS', videoId: "3g6fK5l4g8c" },
+    { id: 'btn_press', name: { en: 'BTN Press', es: 'Press Trasnuca' }, muscle: 'SHOULDERS', videoId: "XpI-Z0C41S4" },
+    { id: 'db_pullover', name: { en: 'DB Pullover', es: 'Pullover con Mancuerna' }, muscle: 'CHEST', videoId: "5_J5E68rFfE" },
+    { id: 'cable_chest_fly', name: { en: 'Cable Chest Fly', es: 'Aperturas en Polea' }, muscle: 'CHEST', videoId: "eGjt4lkiwuc" },
+    { id: 'guillotine_press', name: { en: 'Guillotine Press', es: 'Press Guillotina' }, muscle: 'CHEST', videoId: "_z-0ce_sA54" },
+    { id: 'wide_grip_pull_up', name: { en: 'Wide-grip Pull-up', es: 'Dominadas con Agarre Ancho' }, muscle: 'BACK', videoId: "eGo4IYlbE5g" },
+    { id: 'hyperextension', name: { en: 'Hyperextension', es: 'Hiperextensiones' }, muscle: 'HAMSTRINGS', videoId: "C_b4QFV4Pl0" },
+    { id: 'ghr', name: { en: 'GHR', es: 'GHR' }, muscle: 'HAMSTRINGS', videoId: "8-gee1v3i5A" },
+    { id: 'standing_calf_raise', name: { en: 'Standing Calf-raise', es: 'Elevación de Talones de Pie' }, muscle: 'CALVES', videoId: "gwLzBJYoWlI" }
+];
+
+export const GLOBAL_TEMPLATES: GlobalTemplate[] = [
+    {
+        id: 'silver_era_intermediate',
+        name: 'Silver Era Aesthetics (Intermediate)',
+        description: '3-day split focused on classic aesthetics and proportions.',
+        template: SILVER_ERA_INTERMEDIATE,
+        category: 'intermediate'
+    },
+    {
+        id: 'silver_era_advanced',
+        name: 'Silver Era Aesthetics (Advanced)',
+        description: '4-day split with higher volume and intensity for experienced lifters.',
+        template: SILVER_ERA_ADVANCED,
+        category: 'advanced'
+    }
 ];
 
 export const TOKITA_TEMPLATE: ProgramDay[] = [
@@ -157,7 +197,9 @@ export const TOKITA_TEMPLATE: ProgramDay[] = [
     }
 ];
 
-export const DEFAULT_TEMPLATE: ProgramDay[] = [
+export const DEFAULT_TEMPLATE: ProgramDay[] = SILVER_ERA_INTERMEDIATE;
+
+export const TOKITA_TEMPLATE: ProgramDay[] = [
     {
         id: 'd_push',
         dayName: { en: 'Push (Chest/Shoulders/Tri)', es: 'Empuje (Pecho/Hombro/Tri)' },
@@ -536,8 +578,8 @@ export const TRANSLATIONS = {
         exportReport: "Export Report & Finish", justFinish: "Just Finish",
         mesoNotes: "General Notes", mesoNotesPlaceholder: "Write down your cycle focus, goals or reminders...",
         mesoType: "Phase Type",
-        phases: { hyp_1: "Base Hypertrophy 1", hyp_2: "Base Hypertrophy 2", metabolite: "Metabolite Phase", resensitization: "Resensitization", full_body: "Aesthetic V-Taper", wizard: "The Wizard v3 (Full Body)", male_physique: "Male Physique (Upper/Lower)", toji_fushiguro: "Toji (Natural Hypertrophy)", tokita: "Tokita Ohma Program" },
-        phaseDesc: { hyp_1: "Standard PPL. Balanced volume.", hyp_2: "Upper/Lower Split (4 Days). Focus on compounds.", metabolite: "High reps (20-30), short rests, the 'burn'.", resensitization: "Low volume, heavy weight to reset fatigue.", full_body: "Dr. Mike Style. Focus on V-Taper (Lats/Side Delts).", wizard: "3-Days Heavy/Light/Medium. Classic intensity cycling for steady gains.", male_physique: "4-Days Bodybuilding Focus. Higher volume, arm & shoulder specialization.", toji_fushiguro: "4-Day Elite Split. Giant Sets, Neck, Forearms & Aesthetic focus. (Pro)", tokita: "4-Day Hybrid Split. High volume, supersets, and functional strength focus." },
+        phases: { hyp_1: "Base Hypertrophy 1", hyp_2: "Base Hypertrophy 2", metabolite: "Metabolite Phase", resensitization: "Resensitization", full_body: "Aesthetic V-Taper", wizard: "The Wizard v3 (Full Body)", male_physique: "Male Physique (Upper/Lower)", toji_fushiguro: "Toji (Natural Hypertrophy)", tokita: "Tokita Ohma Program", silver_era: "Silver Era Aesthetics" },
+        phaseDesc: { hyp_1: "Standard PPL. Balanced volume.", hyp_2: "Upper/Lower Split (4 Days). Focus on compounds.", metabolite: "High reps (20-30), short rests, the 'burn'.", resensitization: "Low volume, heavy weight to reset fatigue.", full_body: "Dr. Mike Style. Focus on V-Taper (Lats/Side Delts).", wizard: "3-Days Heavy/Light/Medium. Classic intensity cycling for steady gains.", male_physique: "4-Days Bodybuilding Focus. Higher volume, arm & shoulder specialization.", toji_fushiguro: "4-Day Elite Split. Giant Sets, Neck, Forearms & Aesthetic focus. (Pro)", tokita: "4-Day Hybrid Split. High volume, supersets, and functional strength focus.", silver_era: "3-4 Day Split. Focus on classic aesthetics and proportions." },
         
         // PAYWALL & PRO
         pro: {
