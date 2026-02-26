@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 
 export const usePro = () => {
@@ -7,8 +7,16 @@ export const usePro = () => {
     const [showPaywall, setShowPaywall] = useState(false);
     const [featureAttempted, setFeatureAttempted] = useState<string>('');
 
+    const isCurrentlyPro = useMemo(() => {
+        if (!subscription.isPro) return false;
+        // If expiryDate is null, it's a lifetime subscription.
+        if (subscription.expiryDate === null) return true;
+        // Otherwise, check if the expiry date is in the future.
+        return new Date(subscription.expiryDate) > new Date();
+    }, [subscription]);
+
     const checkPro = (featureName: string = "Pro Feature") => {
-        if (subscription.isPro) return true;
+        if (isCurrentlyPro) return true;
         
         setFeatureAttempted(featureName);
         setShowPaywall(true);
@@ -16,7 +24,7 @@ export const usePro = () => {
     };
 
     return {
-        isPro: subscription.isPro,
+        isPro: isCurrentlyPro,
         tier: subscription.tier,
         checkPro,
         showPaywall,

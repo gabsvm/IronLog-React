@@ -140,7 +140,7 @@ export interface TutorialState {
     mesoSettings: boolean; // NEW: Specific tutorial for the settings modal
 }
 
-export type SubscriptionTier = 'free' | 'monthly' | 'yearly' | 'lifetime';
+export type SubscriptionTier = 'free' | 'monthly' | 'yearly' | 'lifetime' | 'demo';
 
 export interface UserSubscription {
     isPro: boolean;

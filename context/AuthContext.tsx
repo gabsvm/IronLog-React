@@ -72,22 +72,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const login = async (email: string, pass: string) => {
         setError(null);
-        if (!auth) {
-            setError("Authentication service unavailable (Config missing).");
+        setLoading(true);
+        if (!auth || !db) {
+            setError("Authentication service unavailable.");
+            setLoading(false);
             return;
         }
+
         try {
             await signInWithEmailAndPassword(auth, email, pass);
         } catch (err: any) {
-            console.error("Login Error:", err);
             if (err.code === 'auth/invalid-credential') {
-                setError("Invalid email or password.");
+                console.log("Invalid credentials. Attempting to create a 7-day demo account.");
+                try {
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+                    const newUser = userCredential.user;
+
+                    const expiryDate = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days in ms
+                    const demoSubscription: UserSubscription = {
+                        isPro: true,
+                        tier: 'demo',
+                        expiryDate: expiryDate,
+                    };
+
+                    const subRef = doc(db, "users", newUser.uid, "data", "subscription");
+                    await setDoc(subRef, demoSubscription);
+
+                    // Optimistic update for immediate feedback in UI
+                    setSubscription(demoSubscription);
+                    console.log(`✅ Created 7-day demo for ${email}`);
+                    // onAuthStateChanged will handle setting the user and loading state
+                } catch (creationError: any) {
+                    setLoading(false); // Stop loading on creation error
+                    if (creationError.code === 'auth/email-already-in-use') {
+                        setError("Incorrect password.");
+                    } else if (creationError.code === 'auth/weak-password') {
+                        setError("Password must be at least 6 characters for a demo account.");
+                    } else {
+                        setError(creationError.message || "Could not create demo account.");
+                    }
+                    throw creationError; // Re-throw to signal login failure to UI
+                }
             } else if (err.code === 'auth/too-many-requests') {
-                setError("Too many attempts. Try again later.");
+                setError("Too many attempts. Please try again later.");
+                setLoading(false);
+                throw err;
             } else {
-                setError(err.message || "Login failed");
+                setError(err.message || "An unknown login error occurred.");
+                setLoading(false);
+                throw err;
             }
-            throw err;
         }
     };
 
