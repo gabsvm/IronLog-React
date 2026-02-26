@@ -26,6 +26,7 @@ export const usePro = () => {
     return {
         isPro: isCurrentlyPro,
         tier: subscription.tier,
+        expiryDate: subscription.expiryDate, // Expose expiry date
         checkPro,
         showPaywall,
         setShowPaywall,

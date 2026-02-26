@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { TRANSLATIONS } from '../../constants';
@@ -9,7 +9,7 @@ import { doc, setDoc, collection, query, where, getDocs } from 'firebase/firesto
 import { db } from '../../lib/firebase';
 import { usePro } from '../../hooks/usePro';
 import { PaywallModal } from '../pro/PaywallModal';
-import { AdminTemplateManager } from '../admin/AdminTemplateManager'; // New import
+import { AdminTemplateManager } from '../admin/AdminTemplateManager';
 
 interface SettingsModalProps {
     onClose: () => void;
@@ -32,17 +32,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         userProfile, setUserProfile
     } = useApp();
     
-    const { user, logout, subscription } = useAuth();
-    const { checkPro, isPro, showPaywall, setShowPaywall, featureAttempted } = usePro();
+    const { user, logout } = useAuth();
+    const { isPro, tier, expiryDate, checkPro, showPaywall, setShowPaywall, featureAttempted } = usePro();
     const t = TRANSLATIONS[lang];
 
-    // Admin State
     const [isAdminMode, setIsAdminMode] = useState(false);
     const [targetInput, setTargetInput] = useState('');
     const [adminStatus, setAdminStatus] = useState<{ msg: string, type: 'success' | 'error' | 'neutral', details?: string, codeSnippet?: string } | null>(null);
-    const [showTemplateManager, setShowTemplateManager] = useState(false); // New state
+    const [showTemplateManager, setShowTemplateManager] = useState(false);
 
     const isAdmin = user?.email === 'gabsvm@gmail.com';
+
+    const daysRemaining = useMemo(() => {
+        if (!expiryDate) return null;
+        const now = Date.now();
+        const diff = expiryDate - now;
+        if (diff <= 0) return 0;
+        return Math.ceil(diff / (1000 * 60 * 60 * 24));
+    }, [expiryDate]);
 
     const resolveUid = async (input: string): Promise<string | null> => {
         if (!db) return null;
@@ -100,17 +107,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         }
     };
 
-    const copyToClipboard = (text: string) => {
-        navigator.clipboard.writeText(text);
-        alert("Copied!");
-    };
-
     const handleInstallClick = () => {
         if (deferredPrompt) {
             installApp();
         } else {
-            // Fallback for when the browser doesn't support the event or hasn't fired it yet
-            // This ensures the user isn't left wondering why nothing happens.
             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
             if (isIOS) {
                 alert(t.iosInstall);
@@ -168,6 +168,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         return <AdminTemplateManager onClose={() => setShowTemplateManager(false)} />;
     }
 
+    const MemberStatus = () => {
+        if (tier === 'demo') {
+            return (
+                <div className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                    Demo Account
+                    <span className="text-[9px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded uppercase font-black">
+                        {daysRemaining} {daysRemaining === 1 ? 'Day' : 'Days'} Left
+                    </span>
+                </div>
+            );
+        }
+        return (
+            <div className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                {isPro ? "Pro Member" : "Free Member"}
+                {isPro && <span className="text-[9px] bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded uppercase font-black">PRO</span>}
+            </div>
+        );
+    };
+
     return (
         <div className="fixed inset-0 bg-black/60 z-[60] flex justify-end backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose}>
             <div className="w-80 bg-white dark:bg-zinc-900 h-full shadow-2xl border-l border-zinc-200 dark:border-white/5 flex flex-col" onClick={e => e.stopPropagation()}>
@@ -179,7 +198,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 
                 <div className="flex-1 overflow-y-auto p-6 pt-2 pb-24 space-y-2 scroll-container">
                     
-                    {/* ALWAYS SHOW INSTALL BANNER IF NOT STANDALONE */}
                     {!isStandalone && (
                         <div className="mb-6 bg-gradient-to-r from-red-600 to-orange-600 p-4 rounded-2xl shadow-lg shadow-orange-500/20 flex items-center justify-between animate-in fade-in slide-in-from-top-4">
                             <div className="text-white">
@@ -203,14 +221,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     {/* Account */}
                     <div className="p-4 bg-zinc-50 dark:bg-white/5 rounded-2xl border border-zinc-100 dark:border-white/5 mb-6">
                         <div className="flex items-center gap-3 mb-3">
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${subscription.isPro ? 'bg-gradient-to-br from-yellow-400 to-orange-500 text-white shadow-lg shadow-orange-500/30' : 'bg-zinc-200 text-zinc-500'}`}>
-                                {subscription.isPro ? <Icon name="Crown" size={20} /> : <Icon name="User" size={20} />}
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isPro ? 'bg-gradient-to-br from-yellow-400 to-orange-500 text-white shadow-lg shadow-orange-500/30' : 'bg-zinc-200 text-zinc-500'}`}>
+                                {isPro ? <Icon name="Crown" size={20} /> : <Icon name="User" size={20} />}
                             </div>
                             <div className="flex-1 min-w-0">
-                                <div className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2">
-                                    {user ? (subscription.isPro ? "Pro Member" : "Free Member") : t.auth.guestUser}
-                                    {subscription.isPro && <span className="text-[9px] bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded uppercase font-black">PRO</span>}
-                                </div>
+                                <MemberStatus />
                                 <div className="text-xs text-zinc-500 truncate">{user ? user.email : t.auth.localStorage}</div>
                             </div>
                         </div>
