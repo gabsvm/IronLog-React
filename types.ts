@@ -1,4 +1,4 @@
-
+ 
 export type Lang = 'en' | 'es';
 export type Theme = 'light' | 'dark' | 'system';
 export type ColorTheme = 'iron' | 'ocean' | 'forest' | 'royal' | 'sunset' | 'monochrome';
@@ -72,6 +72,7 @@ export interface ActiveSession {
   mesoId: number;
   week: number;
   exercises: SessionExercise[];
+  skipped?: boolean; 
 }
 
 export interface ProgramSlot {
@@ -111,6 +112,7 @@ export interface MesoCycle {
   targetWeeks?: number;
   isDeload?: boolean;
   note?: string; // NEW: General mesocycle notes
+  duration: number;
 }
 
 export interface Log {
