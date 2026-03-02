@@ -9,7 +9,7 @@ import { ExercisesView } from './views/ExercisesView';
 import { ProgramEditView } from './views/ProgramEditView';
 import { RestTimerOverlay } from './components/ui/RestTimerOverlay';
 import { SetupWizard } from './components/onboarding/SetupWizard';
-import { ConfirmModal } from './components/ui/ConfirmModal'; 
+import { ConfirmModal } from './components/ui/ConfirmModal';
 import { Icon } from './components/ui/Icon';
 import { TRANSLATIONS } from './constants';
 import { Button } from './components/ui/Button';
@@ -19,7 +19,7 @@ import { getLastLogForExercise } from './utils';
 import { syncService } from './services/syncService';
 import { usePro } from './hooks/usePro';
 import { PaywallModal } from './components/pro/PaywallModal';
-import { SettingsModal } from './components/settings/SettingsModal'; 
+import { SettingsModal } from './components/settings/SettingsModal';
 
 // Lazy Load heavier views
 const HistoryView = React.lazy(() => import('./views/HistoryView').then(module => ({ default: module.HistoryView })));
@@ -42,18 +42,18 @@ const VIEW_DEPTH: Record<string, number> = {
 };
 
 const AppContent = () => {
-    const { 
-        activeSession, activeMeso, setActiveSession, 
+    const {
+        activeSession, activeMeso, setActiveSession,
         program, exercises, lang, logs, setLogs,
         setExercises, setProgram, setActiveMeso,
         config, rpFeedback, hasSeenOnboarding, setHasSeenOnboarding,
         pendingCloudData, confirmCloudSync, cancelCloudSync
     } = useApp();
-    
+
     const { setRestTimer } = useTimerContext();
     const { user } = useAuth();
     const { checkPro, showPaywall, setShowPaywall, featureAttempted } = usePro();
-    
+
     const t = TRANSLATIONS[lang];
 
     const [view, setViewState] = useState<'home' | 'workout' | 'history' | 'exercises' | 'program' | 'stats'>('home');
@@ -61,7 +61,8 @@ const AppContent = () => {
     const [showResetModal, setShowResetModal] = useState(false);
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
-    
+    const [showMesoCompleteModal, setShowMesoCompleteModal] = useState(false);
+
     // Custom Modals State
     const [importData, setImportData] = useState<any>(null);
     const [showForceSyncModal, setShowForceSyncModal] = useState(false);
@@ -153,7 +154,7 @@ const AppContent = () => {
             setShowAuthModal(true);
             return;
         }
-        
+
         // CHECK PRO before allowing sync
         if (!checkPro("sync")) return;
 
@@ -206,7 +207,7 @@ const AppContent = () => {
         if (!activeMeso) return;
         const safeProgram = Array.isArray(program) ? program : [];
         const dayDef = safeProgram[dayIdx];
-        
+
         // Create a log entry marked as skipped
         const skippedLog: any = {
             id: Date.now(),
@@ -220,7 +221,7 @@ const AppContent = () => {
             exercises: [],
             skipped: true
         };
-        
+
         setLogs([skippedLog, ...(Array.isArray(logs) ? logs : [])]);
     };
 
@@ -235,22 +236,45 @@ const AppContent = () => {
             {hasSeenOnboarding && (
                 <>
                     {view === 'workout' && activeSession ? (
-                        <WorkoutView 
-                            onFinish={() => { 
-                                if (!activeSession) return;
+                        <WorkoutView
+                            onFinish={() => {
+                                if (!activeSession || !activeMeso) return;
+
+                                // 1. Log the session
                                 const duration = activeSession.startTime ? (Date.now() - activeSession.startTime) / 1000 : 0;
                                 const log = { ...activeSession, endTime: Date.now(), duration };
-                                setLogs([log as any, ...(Array.isArray(logs) ? logs : [])]);
+                                const newLogs = [log, ...(Array.isArray(logs) ? logs : [])];
+                                setLogs(newLogs);
+
+                                // 2. Check for week / meso completion
+                                const workoutsThisWeek = newLogs.filter(l =>
+                                    l.mesoId === activeMeso.id && l.week === activeMeso.week && !l.skipped
+                                );
+                                const completedDaysThisWeek = new Set(workoutsThisWeek.map(l => l.dayIdx));
+                                const programDays = program.filter(day => (day.slots || []).length > 0).length;
+
+                                if (completedDaysThisWeek.size >= programDays) {
+                                    // Week is complete
+                                    if (activeMeso.week >= activeMeso.duration) {
+                                        // Meso is complete
+                                        setShowMesoCompleteModal(true);
+                                    } else {
+                                        // Advance to next week
+                                        setActiveMeso(prev => prev ? { ...prev, week: prev.week + 1, isDeload: false } : null);
+                                    }
+                                }
+
+                                // 3. Clean up session state and navigate
                                 setActiveSession(null);
-                                setRestTimer({ active: false, timeLeft: 0, duration: 0, endAt: 0 }); 
+                                setRestTimer({ active: false, timeLeft: 0, duration: 0, endAt: 0 });
                                 setView('home');
-                            }} 
+                            }}
                             onDiscard={() => {
                                 // Specific handler for Discarding a session without saving
                                 setActiveSession(null); // Wipe active session IDB
                                 setView('home'); // Go back to Home
                             }}
-                            onBack={() => setView('home')} 
+                            onBack={() => setView('home')}
                         />
                     ) : view === 'exercises' ? (
                         <ExercisesView onBack={() => { setView('home'); setShowSettings(true); }} />
@@ -258,7 +282,7 @@ const AppContent = () => {
                         <ProgramEditView onBack={() => setView('home')} />
                     ) : (
                         <Layout view={view as any} setView={setView as any} onOpenSettings={() => setShowSettings(true)}>
-                            {view === 'home' && <HomeView 
+                            {view === 'home' && <HomeView
                                 startSession={(idx) => {
                                     if (!activeMeso) return;
 
@@ -292,7 +316,7 @@ const AppContent = () => {
 
                                         const initialSets = Array(setTarget).fill(null).map((_, i) => ({
                                             id: Date.now() + Math.random() + i,
-                                            weight: '', reps: '', rpe: '', completed: false, 
+                                            weight: '', reps: '', rpe: '', completed: false,
                                             // Apply saved Set Type preference from Template if available, else default to 'regular'
                                             type: slotDef.setType || 'regular',
                                             hintWeight: lastSets?.[i]?.weight, hintReps: lastSets?.[i]?.reps,
@@ -304,9 +328,9 @@ const AppContent = () => {
 
                                     setActiveSession({ id: Date.now(), dayIdx: idx, name: `${activeMeso.week} • ${dayNameSafe}`, exercises: sessionExs as any, startTime: Date.now(), mesoId: activeMeso.id, week: activeMeso.week });
                                     setView('workout');
-                                }} 
-                                onEditProgram={() => setView('program')} 
-                                onSkipSession={handleSkipSession} 
+                                }}
+                                onEditProgram={() => setView('program')}
+                                onSkipSession={handleSkipSession}
                             />}
                             {view === 'history' && (
                                 <Suspense fallback={<LoadingSpinner />}>
@@ -324,16 +348,30 @@ const AppContent = () => {
             )}
 
             <RestTimerOverlay />
-            
+
             {/* Standard Modal Overlays */}
+            {showMesoCompleteModal && (
+                <ConfirmModal
+                    isOpen={true}
+                    title={t.finishMesoTitle || "Complete Mesocycle?"}
+                    description={t.finishMesoDesc || "You've completed the final week. Great work! Conclude the mesocycle now?"}
+                    confirmText={t.complete || "Complete"}
+                    cancelText={t.notYet || "Not Yet"}
+                    onConfirm={() => {
+                        setActiveMeso(null);
+                        setShowMesoCompleteModal(false);
+                    }}
+                    onCancel={() => setShowMesoCompleteModal(false)}
+                />
+            )}
             {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
-            
+
             {showPaywall && (
                 <PaywallModal onClose={() => setShowPaywall(false)} feature={featureAttempted} />
             )}
 
             {/* SYNC CONFLICT MODAL */}
-            <ConfirmModal 
+            <ConfirmModal
                 isOpen={!!pendingCloudData}
                 title={lang === 'en' ? "Cloud Sync" : "Sincronización Nube"}
                 description={lang === 'en' ? "Newer data found in the cloud. Download it? (This will overwrite current local data)" : "Datos más recientes encontrados en la nube. ¿Descargar? (Esto sobrescribirá los datos locales actuales)"}
@@ -345,7 +383,7 @@ const AppContent = () => {
             />
 
             {/* IMPORT CONFIRM MODAL */}
-            <ConfirmModal 
+            <ConfirmModal
                 isOpen={!!importData}
                 title={t.import}
                 description={t.importConfirm}
@@ -357,7 +395,7 @@ const AppContent = () => {
             />
 
             {/* FORCE SYNC MODAL */}
-            <ConfirmModal 
+            <ConfirmModal
                 isOpen={showForceSyncModal}
                 title={lang === 'en' ? "Force Sync" : "Forzar Sincronización"}
                 description={lang === 'en' ? "Upload current local data to cloud? This will overwrite cloud data." : "¿Subir datos locales a la nube? Esto sobrescribirá los datos de la nube."}
@@ -386,7 +424,7 @@ const AppContent = () => {
 
             {/* SETTINGS OVERLAY (Now with Login Callback) */}
             {showSettings && view !== 'exercises' && (
-                <SettingsModal 
+                <SettingsModal
                     onClose={() => setShowSettings(false)}
                     onOpenProgram={() => { setView('program'); setShowSettings(false); }}
                     onOpenExercises={() => { setView('exercises'); setShowSettings(false); }}
