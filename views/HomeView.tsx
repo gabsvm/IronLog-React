@@ -132,7 +132,7 @@ const GuidelinesModal = ({ isOpen, onClose, images }: { isOpen: boolean, onClose
             {images.length > 1 && (
                 <div className="absolute bottom-24 left-0 right-0 flex justify-center items-center gap-6 z-50 pointer-events-none pb-safe">
                     <button 
-                        onClick={() => setIdx(i => Math.max(0, i - 1))}
+                        onClick={() => setIdx(i => Math.max(0, i - 1)) sprinting
                         disabled={!hasPrev}
                         className={`pointer-events-auto w-14 h-14 rounded-full flex items-center justify-center backdrop-blur-xl border transition-all shadow-2xl ${hasPrev ? 'bg-zinc-900 text-white border-zinc-700 active:scale-95 hover:bg-zinc-800' : 'bg-zinc-900/50 text-zinc-600 border-zinc-800/50'}`}
                     >
@@ -428,6 +428,14 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
     const handleSkipClick = (e: React.MouseEvent, dayIdx: number) => { e.stopPropagation(); setSkipConfirmationId(dayIdx); };
     const confirmSkip = () => { if (onSkipSession && skipConfirmationId !== null) onSkipSession(skipConfirmationId); setSkipConfirmationId(null); };
     const handleFinishMeso = (exportReport: boolean) => { setActiveMeso(null); setShowCompleteModal(null); };
+    const handleFinishWeek = () => {
+        if (!activeMeso) return;
+        setActiveMeso(prev => prev ? {
+            ...prev,
+            week: prev.week + 1
+        } : null);
+        setShowCompleteModal(null);
+    };
     
     // --- TEMPLATE LOGIC ---
     const handleOpenTemplateSelector = () => setShowTemplateSelector(true);
@@ -591,8 +599,18 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
             </div>
 
             {weekComplete && !nextDayDef && (
-                <Button onClick={() => setShowCompleteModal('week')} fullWidth className="bg-green-600 hover:bg-green-500 text-white py-4 text-lg">
-                    {t.completeWeek}
+                <Button 
+                    onClick={() => {
+                        if (activeMeso && activeMeso.week >= activeMeso.targetWeeks) {
+                            setShowCompleteModal('meso');
+                        } else {
+                            setShowCompleteModal('week');
+                        }
+                    }} 
+                    fullWidth 
+                    className="bg-green-600 hover:bg-green-500 text-white py-4 text-lg"
+                >
+                    {activeMeso && activeMeso.week >= activeMeso.targetWeeks ? t.finishCycle : t.completeWeek}
                 </Button>
             )}
 
@@ -790,12 +808,25 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
             {showCompleteModal && (
                 <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in">
                     <div className="bg-zinc-900 w-full max-w-sm rounded-2xl p-6 border border-zinc-800 text-center">
-                        <h3 className="text-white font-bold text-xl mb-2">{t.finishCycle}</h3>
-                        <p className="text-zinc-400 text-sm mb-6">{t.finishMesoConfirm}</p>
-                        <div className="flex gap-3">
-                            <Button variant="secondary" onClick={() => setShowCompleteModal(null)} fullWidth>{t.cancel}</Button>
-                            <Button onClick={() => handleFinishMeso(false)} fullWidth>{t.completed}</Button>
-                        </div>
+                        {showCompleteModal === 'meso' ? (
+                            <>
+                                <h3 className="text-white font-bold text-xl mb-2">{t.finishCycle}</h3>
+                                <p className="text-zinc-400 text-sm mb-6">{t.finishMesoConfirm}</p>
+                                <div className="flex gap-3">
+                                    <Button variant="secondary" onClick={() => setShowCompleteModal(null)} fullWidth>{t.cancel}</Button>
+                                    <Button onClick={() => handleFinishMeso(false)} fullWidth>{t.completed}</Button>
+                                </div>
+                            </>
+                        ) : ( // 'week'
+                            <>
+                                <h3 className="text-white font-bold text-xl mb-2">{t.completeWeek}</h3>
+                                <p className="text-zinc-400 text-sm mb-6">{lang === 'en' ? 'Advance to the next week of your mesocycle?' : '¿Avanzar a la siguiente semana de tu mesociclo?'}</p>
+                                <div className="flex gap-3">
+                                    <Button variant="secondary" onClick={() => setShowCompleteModal(null)} fullWidth>{t.cancel}</Button>
+                                    <Button onClick={handleFinishWeek} fullWidth>{lang === 'en' ? 'Next Week' : 'Siguiente Semana'}</Button>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
             )}
