@@ -57,7 +57,8 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
             week: 1,
             targetWeeks: 5,
             isDeload: false,
-            plan: plan
+            plan: plan,
+            duration: 5
         });
 
         onComplete();

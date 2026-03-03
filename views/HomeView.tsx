@@ -446,7 +446,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
             week: 1,
             targetWeeks: 5,
             isDeload: false,
-            plan: plan
+            plan: plan,
+	    duration: 5
         });
         
         setShowTemplateSelector(false);

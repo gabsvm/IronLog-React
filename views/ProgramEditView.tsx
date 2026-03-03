@@ -98,7 +98,8 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
             week: 1,
             targetWeeks: mesoConfig.weeks,
             plan: plan,
-            isDeload: false
+            isDeload: false,
+	    duration: 5
         });
         
         // Return to home (which will now show the active meso)
