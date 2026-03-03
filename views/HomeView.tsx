@@ -132,7 +132,7 @@ const GuidelinesModal = ({ isOpen, onClose, images }: { isOpen: boolean, onClose
             {images.length > 1 && (
                 <div className="absolute bottom-24 left-0 right-0 flex justify-center items-center gap-6 z-50 pointer-events-none pb-safe">
                     <button 
-                        onClick={() => setIdx(i => Math.max(0, i - 1)) sprinting
+                        onClick={() => setIdx(i => Math.max(0, i - 1))}
                         disabled={!hasPrev}
                         className={`pointer-events-auto w-14 h-14 rounded-full flex items-center justify-center backdrop-blur-xl border transition-all shadow-2xl ${hasPrev ? 'bg-zinc-900 text-white border-zinc-700 active:scale-95 hover:bg-zinc-800' : 'bg-zinc-900/50 text-zinc-600 border-zinc-800/50'}`}
                     >
