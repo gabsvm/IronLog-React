@@ -9,6 +9,7 @@ import { ExercisesView } from './views/ExercisesView';
 import { ProgramEditView } from './views/ProgramEditView';
 import { RestTimerOverlay } from './components/ui/RestTimerOverlay';
 import { SetupWizard } from './components/onboarding/SetupWizard';
+import { Landing } from './components/onboarding/Landing';
 import { ConfirmModal } from './components/ui/ConfirmModal';
 import { Icon } from './components/ui/Icon';
 import { TRANSLATIONS } from './constants';
@@ -58,6 +59,7 @@ const AppContent = () => {
 
     const [view, setViewState] = useState<'home' | 'workout' | 'history' | 'exercises' | 'program' | 'stats'>('home');
     const [showSettings, setShowSettings] = useState(false);
+    const [showLanding, setShowLanding] = useState(!hasSeenOnboarding);
     const [showResetModal, setShowResetModal] = useState(false);
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
@@ -96,7 +98,7 @@ const AppContent = () => {
             if (typeof window !== 'undefined' && window.history) {
                 window.history.replaceState({ view: 'home', settings: false }, '', '#home');
             }
-        } catch (e) {}
+        } catch (e) { }
 
         const handlePop = (e: PopStateEvent) => {
             isPopping.current = true;
@@ -132,7 +134,7 @@ const AppContent = () => {
             if (typeof window !== 'undefined' && window.history) {
                 window.history.pushState(state, '', `#${hash}`);
             }
-        } catch (e) {}
+        } catch (e) { }
     }, [view, showSettings]);
 
     // --- DATA MANAGEMENT ---
@@ -141,7 +143,7 @@ const AppContent = () => {
             program, exercises, logs, activeMeso, activeSession,
             version: '3.0.0'
         };
-        const blob = new Blob([JSON.stringify(data)], {type: 'application/json'});
+        const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -162,7 +164,7 @@ const AppContent = () => {
     };
 
     const executeForceSync = async () => {
-        if(!user) return;
+        if (!user) return;
         setIsSyncing(true);
         setShowForceSyncModal(false);
         try {
@@ -229,7 +231,14 @@ const AppContent = () => {
         <>
             {/* New Setup Wizard Logic */}
             {!hasSeenOnboarding && (
-                <SetupWizard onComplete={() => setHasSeenOnboarding(true)} />
+                showLanding ? (
+                    <Landing
+                        onStart={() => setShowLanding(false)}
+                        onLogin={() => setShowAuthModal(true)}
+                    />
+                ) : (
+                    <SetupWizard onComplete={() => setHasSeenOnboarding(true)} />
+                )
             )}
 
             {/* Main App Content - Only visible if onboarding is done */}

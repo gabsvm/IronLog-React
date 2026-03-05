@@ -19,19 +19,19 @@ interface SettingsModalProps {
     onExport: () => void;
     onForceSync: () => void;
     onImportFile: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    onLogin: () => void; 
+    onLogin: () => void;
     isSyncing: boolean;
 }
 
-export const SettingsModal: React.FC<SettingsModalProps> = ({ 
-    onClose, onOpenProgram, onOpenExercises, onReset, onExport, onForceSync, onImportFile, onLogin, isSyncing 
+export const SettingsModal: React.FC<SettingsModalProps> = ({
+    onClose, onOpenProgram, onOpenExercises, onReset, onExport, onForceSync, onImportFile, onLogin, isSyncing
 }) => {
-    const { 
-        lang, setLang, theme, setTheme, colorTheme, setColorTheme, 
+    const {
+        lang, setLang, theme, setTheme, colorTheme, setColorTheme,
         config, setConfig, resetTutorials, deferredPrompt, installApp, isStandalone,
         userProfile, setUserProfile
     } = useApp();
-    
+
     const { user, logout } = useAuth();
     const { isPro, tier, expiryDate, checkPro, showPaywall, setShowPaywall, featureAttempted } = usePro();
     const t = TRANSLATIONS[lang];
@@ -91,9 +91,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 adminUser: user?.email
             };
             await setDoc(doc(db, "users", uidToModify, "data", "subscription"), subData, { merge: true });
-            setAdminStatus({ 
+            setAdminStatus({
                 msg: grantPro ? `✅ PRO Granted` : `🚫 PRO Revoked`,
-                type: grantPro ? 'success' : 'error' 
+                type: grantPro ? 'success' : 'error'
             });
             if (uidToModify === user?.uid) setTimeout(() => window.location.reload(), 1500);
         } catch (e: any) {
@@ -132,7 +132,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     const ProToggle = ({ label, value, onChange, featureName }: any) => (
         <div className="flex items-center justify-between p-3 bg-white dark:bg-zinc-800 rounded-xl border border-zinc-100 dark:border-white/5">
             <span className="text-sm font-bold text-zinc-700 dark:text-zinc-300">{label}</span>
-            <button 
+            <button
                 onClick={() => checkPro(featureName) && onChange(!value)}
                 className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${value ? 'bg-green-500' : 'bg-zinc-300 dark:bg-zinc-600'}`}
             >
@@ -144,7 +144,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     );
 
     const ProButton = ({ label, icon, onClick, featureName }: any) => (
-        <button 
+        <button
             onClick={() => checkPro(featureName) && onClick()}
             className="w-full p-3 bg-white dark:bg-zinc-800 rounded-xl flex items-center justify-between group active:scale-[0.98] transition-all border border-zinc-100 dark:border-white/5 hover:border-zinc-300 dark:hover:border-zinc-600"
         >
@@ -190,14 +190,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     return (
         <div className="fixed inset-0 bg-black/60 z-[60] flex justify-end backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose}>
             <div className="w-80 bg-white dark:bg-zinc-900 h-full shadow-2xl border-l border-zinc-200 dark:border-white/5 flex flex-col" onClick={e => e.stopPropagation()}>
-                
+
                 <div className="p-6 pb-2 shrink-0 flex justify-between items-center bg-white dark:bg-zinc-900 z-10">
                     <h2 className="font-bold text-2xl dark:text-white tracking-tight">{t.settings}</h2>
                     <button onClick={onClose} className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white"><Icon name="X" size={24} /></button>
                 </div>
-                
+
                 <div className="flex-1 overflow-y-auto p-6 pt-2 pb-24 space-y-2 scroll-container">
-                    
+
                     {!isStandalone && (
                         <div className="mb-6 bg-gradient-to-r from-red-600 to-orange-600 p-4 rounded-2xl shadow-lg shadow-orange-500/20 flex items-center justify-between animate-in fade-in slide-in-from-top-4">
                             <div className="text-white">
@@ -209,7 +209,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                     {t.installDesc}
                                 </p>
                             </div>
-                            <button 
+                            <button
                                 onClick={handleInstallClick}
                                 className="bg-white text-red-600 px-4 py-2 rounded-xl text-xs font-black shadow-md active:scale-95 transition-transform"
                             >
@@ -239,6 +239,50 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                         <button onClick={() => setIsAdminMode(!isAdminMode)} className={`w-full py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors ${isAdminMode ? 'bg-zinc-900 text-white' : 'bg-zinc-200 text-zinc-600'}`}>
                                             <Icon name="Bot" size={14} /> {isAdminMode ? 'Close Admin' : 'Admin Panel'}
                                         </button>
+
+                                        {/* Admin Control Panel */}
+                                        {isAdminMode && (
+                                            <div className="mt-4 p-4 bg-zinc-900 rounded-xl border border-white/10 animate-in fade-in slide-in-from-top-2">
+                                                <div className="flex items-center gap-2 mb-3">
+                                                    <Icon name="Shield" size={14} className="text-red-500" />
+                                                    <span className="text-[10px] font-black text-white uppercase tracking-widest">PRO Manager</span>
+                                                </div>
+
+                                                <div className="space-y-3">
+                                                    <input
+                                                        type="text"
+                                                        value={targetInput}
+                                                        onChange={(e) => setTargetInput(e.target.value)}
+                                                        placeholder="Email or UID"
+                                                        className="w-full bg-black border border-white/10 rounded-lg p-2 text-xs text-white placeholder:text-zinc-600 focus:border-red-500 transition-colors"
+                                                    />
+
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <button
+                                                            onClick={() => handleSubscriptionChange(true)}
+                                                            className="py-2 bg-green-600 text-white rounded-lg text-[10px] font-black uppercase tracking-tight hover:bg-green-700 active:scale-95 transition-all shadow-lg shadow-green-600/20"
+                                                        >
+                                                            Grant PRO
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleSubscriptionChange(false)}
+                                                            className="py-2 bg-red-600 text-white rounded-lg text-[10px] font-black uppercase tracking-tight hover:bg-red-700 active:scale-95 transition-all shadow-lg shadow-red-600/20"
+                                                        >
+                                                            Revoke PRO
+                                                        </button>
+                                                    </div>
+
+                                                    {adminStatus && (
+                                                        <div className={`text-[10px] font-bold p-2 rounded-lg ${adminStatus.type === 'success' ? 'bg-green-500/10 text-green-500' :
+                                                                adminStatus.type === 'error' ? 'bg-red-500/10 text-red-500' : 'bg-blue-500/10 text-blue-400'
+                                                            }`}>
+                                                            {adminStatus.msg}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+
                                         <button onClick={() => setShowTemplateManager(true)} className="w-full py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors bg-purple-600 text-white">
                                             <Icon name="Layout" size={14} /> Manage Templates
                                         </button>
@@ -258,9 +302,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         <div className="space-y-3 bg-zinc-50 dark:bg-white/5 p-4 rounded-xl border border-zinc-100 dark:border-white/5">
                             <div>
                                 <label className="text-[10px] text-zinc-500 uppercase font-bold block mb-1">{t.profile.bw} (kg)</label>
-                                <input 
-                                    type="number" 
-                                    className="w-full bg-white dark:bg-zinc-900 rounded-lg p-2 text-sm font-bold text-zinc-900 dark:text-white border border-zinc-200 dark:border-zinc-700" 
+                                <input
+                                    type="number"
+                                    className="w-full bg-white dark:bg-zinc-900 rounded-lg p-2 text-sm font-bold text-zinc-900 dark:text-white border border-zinc-200 dark:border-zinc-700"
                                     value={userProfile?.bodyWeight || ''}
                                     onChange={e => handleProfileUpdate('bodyWeight', Number(e.target.value))}
                                     placeholder="e.g. 75"
@@ -269,9 +313,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             <div className="flex gap-2">
                                 <div className="flex-1">
                                     <label className="text-[10px] text-zinc-500 uppercase font-bold block mb-1">{t.profile.height} (cm)</label>
-                                    <input 
-                                        type="number" 
-                                        className="w-full bg-white dark:bg-zinc-900 rounded-lg p-2 text-sm font-bold text-zinc-900 dark:text-white border border-zinc-200 dark:border-zinc-700" 
+                                    <input
+                                        type="number"
+                                        className="w-full bg-white dark:bg-zinc-900 rounded-lg p-2 text-sm font-bold text-zinc-900 dark:text-white border border-zinc-200 dark:border-zinc-700"
                                         value={userProfile?.height || ''}
                                         onChange={e => handleProfileUpdate('height', Number(e.target.value))}
                                         placeholder="e.g. 175"
@@ -279,9 +323,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                 </div>
                                 <div className="flex-1">
                                     <label className="text-[10px] text-zinc-500 uppercase font-bold block mb-1">{t.profile.bf}</label>
-                                    <input 
-                                        type="number" 
-                                        className="w-full bg-white dark:bg-zinc-900 rounded-lg p-2 text-sm font-bold text-zinc-900 dark:text-white border border-zinc-200 dark:border-zinc-700" 
+                                    <input
+                                        type="number"
+                                        className="w-full bg-white dark:bg-zinc-900 rounded-lg p-2 text-sm font-bold text-zinc-900 dark:text-white border border-zinc-200 dark:border-zinc-700"
                                         value={userProfile?.bodyFat || ''}
                                         onChange={e => handleProfileUpdate('bodyFat', Number(e.target.value))}
                                         placeholder="%"
@@ -332,7 +376,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                 <ColorPill color="bg-purple-600" label="Royal" active={colorTheme === 'royal'} onClick={() => setColorTheme('royal')} />
                             </div>
                         </div>
-                        
+
                         <div className="mt-6">
                             <label className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 block">{t.language}</label>
                             <div className="grid grid-cols-2 gap-3">

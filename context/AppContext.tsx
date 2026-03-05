@@ -8,21 +8,21 @@ import { Icon } from '../components/ui/Icon';
 import { Logo } from '../components/ui/Logo';
 import { TimerProvider } from './TimerContext';
 import { HomeSkeleton } from '../components/ui/SkeletonLoader';
-import { AuthProvider, useAuth } from './AuthContext'; 
-import { syncService } from '../services/syncService'; 
+import { AuthProvider, useAuth } from './AuthContext';
+import { syncService } from '../services/syncService';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { db as firestoreDb } from '../lib/firebase';
 
 const INITIAL_TEMPLATES: GlobalTemplate[] = [
     { id: 'toji_fushiguro', name: 'toji_fushiguro', title: { en: "Toji (Natural Hypertrophy)", es: "Toji (Natural Hypertrophy)" }, description: { en: "4-Day Elite Split. Giant Sets, Neck, Forearms & Aesthetic focus.", es: "Rutina Élite de 4 Días. Series Gigantes, Cuello, Antebrazo y Estética." }, isPro: true, program: TOJI_TEMPLATE, order: 1 },
-    { 
-        id: 'tokita', 
-        name: 'tokita', 
-        title: { en: "Tokita Ohma Program", es: "Programa Tokita Ohma" }, 
-        description: { en: "4-Day Hybrid Split. High volume, supersets & functional strength.", es: "Rutina Híbrida 4 Días. Alto volumen, superseries y fuerza funcional." }, 
-        isPro: false, 
-        program: TOKITA_TEMPLATE, 
-        order: 2, 
+    {
+        id: 'tokita',
+        name: 'tokita',
+        title: { en: "Tokita Ohma Program", es: "Programa Tokita Ohma" },
+        description: { en: "4-Day Hybrid Split. High volume, supersets & functional strength.", es: "Rutina Híbrida 4 Días. Alto volumen, superseries y fuerza funcional." },
+        isPro: false,
+        program: TOKITA_TEMPLATE,
+        order: 2,
         guidelineImages: [
             "https://i.postimg.cc/FK6zKfCJ/Tokita.png",
             "https://i.postimg.cc/bNd6DrT0/Tokita-2.png",
@@ -50,7 +50,7 @@ interface AppContextType extends AppState {
     setLang: (l: Lang) => void;
     setTheme: (t: Theme) => void;
     setColorTheme: (t: ColorTheme) => void;
-    
+
     setProgram: (val: ProgramDay[] | ((prev: ProgramDay[]) => ProgramDay[])) => void;
     setActiveMeso: (val: MesoCycle | null | ((prev: MesoCycle | null) => MesoCycle | null)) => void;
     setActiveSession: (val: ActiveSession | null | ((prev: ActiveSession | null) => ActiveSession | null)) => void;
@@ -60,14 +60,14 @@ interface AppContextType extends AppState {
     setRpFeedback: (val: AppState['rpFeedback'] | ((prev: AppState['rpFeedback']) => AppState['rpFeedback'])) => void;
     setHasSeenOnboarding: (val: boolean) => void;
     setGlobalTemplates: (val: GlobalTemplate[] | ((prev: GlobalTemplate[]) => GlobalTemplate[])) => void;
-    
+
     // NEW: User Profile Setter
     setUserProfile: (val: UserProfile | ((prev: UserProfile) => UserProfile)) => void;
 
     // Tutorial Methods
     markTutorialSeen: (section: keyof TutorialState) => void;
     resetTutorials: () => void;
-    
+
     // Sync UI State
     isAppLoading: boolean;
     pendingCloudData: Partial<AppState> | null;
@@ -85,19 +85,19 @@ interface AppContextType extends AppState {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider = ({ children }: PropsWithChildren) => {
-    const { user, subscription, loading: authLoading } = useAuth(); 
+    const { user, subscription, loading: authLoading } = useAuth();
 
     // --- Synchronous Config ---
-    const [langStored, setLang] = useLocalStorage<Lang>('il_lang_v1', 'en');
-    const lang: Lang = (langStored === 'en' || langStored === 'es') ? langStored : 'en';
+    const [langStored, setLang] = useLocalStorage<Lang>('il_lang_v1', 'es');
+    const lang: Lang = (langStored === 'en' || langStored === 'es') ? langStored : 'es';
 
     const [theme, setTheme] = useLocalStorage<Theme>('il_theme_v1', 'dark');
     const [colorTheme, setColorTheme] = useLocalStorage<ColorTheme>('il_color_theme_v1', 'iron');
-    
+
     // FIXED: Default to FALSE for PRO features
     const [showRIR, setShowRIR] = useLocalStorage('il_cfg_rir', false);
     const [rpEnabled, setRpEnabled] = useLocalStorage('il_cfg_rp', false);
-    
+
     const [rpTargetRIR, setRpTargetRIR] = useLocalStorage('il_cfg_rp_rir', 2);
     const [keepScreenOn, setKeepScreenOn] = useLocalStorage('il_cfg_screen', false);
 
@@ -111,7 +111,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     const [activeSession, setActiveSession, sessionLoading] = usePersistedState<ActiveSession | null>('il_session_v16', null, 500);
     const [exercises, setExercises, exLoading] = usePersistedState<ExerciseDef[]>('il_ex_v16', DEFAULT_LIBRARY, 1000);
     const [logs, setLogs, logsLoading] = usePersistedState<Log[]>('il_logs_v16', [], 1000);
-    
+
     // NEW: User Profile Persistence
     const [userProfile, setUserProfile, profileLoading] = usePersistedState<UserProfile>('il_profile_v1', {
         experience: 'intermediate',
@@ -144,10 +144,10 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                 const tplSnapshot = await getDocs(qTpl);
                 const fetchedTemplates: GlobalTemplate[] = [];
                 tplSnapshot.forEach((doc) => fetchedTemplates.push({ id: doc.id, ...doc.data() } as GlobalTemplate));
-                
+
                 // MERGE STRATEGY: 
                 let mergedTemplates = [...INITIAL_TEMPLATES];
-                
+
                 fetchedTemplates.forEach(remote => {
                     const idx = mergedTemplates.findIndex(local => local.id === remote.id);
                     if (idx >= 0) {
@@ -158,7 +158,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                         mergedTemplates.push(remote);
                     }
                 });
-                
+
                 // Sort again to respect 'order' property
                 mergedTemplates.sort((a, b) => a.order - b.order);
 
@@ -181,19 +181,19 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
             }
         };
         fetchData();
-    }, [isOnline, user]); 
+    }, [isOnline, user]);
 
     // --- PWA INSTALL HANDLER ---
     useEffect(() => {
         const isStandaloneQuery = window.matchMedia('(display-mode: standalone)');
         setIsStandalone(isStandaloneQuery.matches);
         isStandaloneQuery.addEventListener('change', (e) => setIsStandalone(e.matches));
-        
+
         // Ensure we catch it if it happens after mount
-        const handler = (e: any) => { 
-            e.preventDefault(); 
+        const handler = (e: any) => {
+            e.preventDefault();
             window.deferredPrompt = e;
-            setDeferredPrompt(e); 
+            setDeferredPrompt(e);
         };
         window.addEventListener('beforeinstallprompt', handler);
         return () => window.removeEventListener('beforeinstallprompt', handler);
@@ -205,12 +205,12 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
             console.warn("No deferred prompt available");
             return;
         }
-        
+
         try {
             promptEvent.prompt();
             const { outcome } = await promptEvent.userChoice;
             console.log(`User response to install prompt: ${outcome}`);
-            if(outcome === 'accepted') {
+            if (outcome === 'accepted') {
                 setDeferredPrompt(null);
                 window.deferredPrompt = null;
             }
@@ -218,6 +218,31 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
             console.error("Install prompt error", e);
         }
     }, [deferredPrompt]);
+
+    // --- INITIAL CLOUD DOWNLOAD ---
+    useEffect(() => {
+        if (!user || isAppLoading || !isOnline || pendingCloudData) return;
+
+        const checkCloudData = async () => {
+            try {
+                // Only trigger if we haven't checked since login or if local is empty
+                const cloudData = await syncService.downloadState(user.uid);
+                if (cloudData && cloudData.lastUpdated) {
+                    // Strategy: If local is empty (new device) OR cloud is strictly newer
+                    const isLocalEmpty = !activeMeso && (!logs || logs.length === 0);
+
+                    if (isLocalEmpty || cloudData.lastUpdated > (localLastUpdated || 0)) {
+                        console.log("☁️ Data mismatch found: Cloud is newer or Local is empty. Offering sync.");
+                        setPendingCloudData(cloudData);
+                    }
+                }
+            } catch (error) {
+                console.error("Initial cloud sync check failed", error);
+            }
+        };
+
+        checkCloudData();
+    }, [user, isOnline, isAppLoading]); // Re-run when user or online status changes
 
     // --- SYNC LOGIC ---
     useEffect(() => {
@@ -254,27 +279,44 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
             } else {
                 syncService.uploadUserIdentity(user.uid, user.email || "");
             }
-        }, 5000); 
+        }, 5000);
         return () => clearTimeout(timer);
     }, [user, subscription.isPro, program, activeMeso, activeSession, exercises, logs, showRIR, rpEnabled, rpFeedback, isAppLoading]);
 
     const confirmCloudSync = useCallback(() => {
         if (pendingCloudData) {
+            console.log("📥 Applying Cloud Data...");
+
+            // Apply all states
             if (pendingCloudData.program) setProgram(pendingCloudData.program);
             if (pendingCloudData.activeMeso) setActiveMeso(pendingCloudData.activeMeso);
             if (pendingCloudData.activeSession) setActiveSession(pendingCloudData.activeSession);
             if (pendingCloudData.exercises) setExercises(pendingCloudData.exercises);
             if (pendingCloudData.logs) setLogs(pendingCloudData.logs);
             if (pendingCloudData.rpFeedback) setRpFeedback(pendingCloudData.rpFeedback);
+
             if (pendingCloudData.config) {
                 if (pendingCloudData.config.showRIR !== undefined) setShowRIR(pendingCloudData.config.showRIR);
                 if (pendingCloudData.config.rpEnabled !== undefined) setRpEnabled(pendingCloudData.config.rpEnabled);
             }
-            // @ts-ignore
-            if (pendingCloudData.lastUpdated) setLocalLastUpdated(pendingCloudData.lastUpdated);
+
+            // Sync timestamp to prevent immediate re-upload of old local state
+            if (pendingCloudData.lastUpdated) {
+                // @ts-ignore
+                setLocalLastUpdated(pendingCloudData.lastUpdated);
+            }
+
+            // Mark onboarding as complete
+            setHasSeenOnboarding(true);
             setPendingCloudData(null);
+
+            // OPTIMIZATION: Instead of immediate reload, we let the reactive state handle it.
+            // We only reload if we detect critical inconsistencies or if the user is in a state where a refresh is better.
+            console.log("✅ Cloud Data Applied Reactively.");
+
+            // Optional: You could add a 'sync_completed' event or toast here.
         }
-    }, [pendingCloudData]);
+    }, [pendingCloudData, setProgram, setActiveMeso, setActiveSession, setExercises, setLogs, setRpFeedback, setShowRIR, setRpEnabled, setLocalLastUpdated, setHasSeenOnboarding]);
 
     const cancelCloudSync = useCallback(() => setPendingCloudData(null), []);
 
@@ -291,16 +333,16 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     useEffect(() => {
         const requestWakeLock = async () => {
             if (keepScreenOn && 'wakeLock' in navigator) {
-                try { wakeLockRef.current = await navigator.wakeLock.request('screen'); } catch (err) {}
+                try { wakeLockRef.current = await navigator.wakeLock.request('screen'); } catch (err) { }
             } else if (!keepScreenOn && wakeLockRef.current) {
-                wakeLockRef.current.release().catch(() => {});
+                wakeLockRef.current.release().catch(() => { });
                 wakeLockRef.current = null;
             }
         };
         requestWakeLock();
         const handleVis = () => { if (document.visibilityState === 'visible' && keepScreenOn) requestWakeLock(); };
         document.addEventListener('visibilitychange', handleVis);
-        return () => { document.removeEventListener('visibilitychange', handleVis); if (wakeLockRef.current) wakeLockRef.current.release().catch(() => {}); };
+        return () => { document.removeEventListener('visibilitychange', handleVis); if (wakeLockRef.current) wakeLockRef.current.release().catch(() => { }); };
     }, [keepScreenOn]);
 
     const setConfig = useCallback((newConfig: any) => {

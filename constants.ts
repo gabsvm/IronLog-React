@@ -775,6 +775,21 @@ export const TRANSLATIONS = {
             adjusted: "Note: Volume reduced slightly to fit your time constraints."
         },
 
+        // Landing Page
+        landing: {
+            title: "Forge Your Physique",
+            subtitle: "Science-based hypertrophy tracking and auto-regulation. Powered by IronCoach™.",
+            getStarted: "Get Started",
+            login: "Sign In / Register",
+            featuresTitle: "The Future of Hypertrophy",
+            features: [
+                { title: "IronCoach™ AI", desc: "Scientific volume auto-regulation based on your recovery feedback." },
+                { title: "Smart Tracking", desc: "Log RIR, intensity, and warmups with a premium, focused interface." },
+                { title: "Elite Templates", desc: "Access pro-level routines used by top physique athletes." },
+                { title: "Cloud Sync", desc: "Your data is always safe and synced across all your devices." }
+            ]
+        },
+
         // Auth
         auth: {
             signIn: "Sign In",
@@ -1183,6 +1198,21 @@ export const TRANSLATIONS = {
                 rec_wizard: "El sistema 'Wizard' (Pesado/Liviano/Medio) es perfecto para frecuencia 3 días."
             },
             adjusted: "Nota: Volumen reducido ligeramente por tiempo limitado."
+        },
+
+        // Landing Page
+        landing: {
+            title: "Forja tu Físico",
+            subtitle: "Seguimiento de hipertrofia basado en ciencia y auto-regulación. Impulsado por IronCoach™.",
+            getStarted: "Comenzar gratis",
+            login: "Iniciar Sesión / Registro",
+            featuresTitle: "El Futuro de la Hipertrofia",
+            features: [
+                { title: "IronCoach™ AI", desc: "Auto-regulación científica del volumen basada en tu recuperación." },
+                { title: "Seguimiento Inteligente", desc: "Registra RIR, intensidad y calentamientos con una interfaz de élite." },
+                { title: "Rutinas Pro", desc: "Accede a entrenamientos de nivel profesional usados por atletas de élite." },
+                { title: "Sincronización Nube", desc: "Tus datos siempre seguros y sincronizados en todos tus dispositivos." }
+            ]
         },
 
         // Auth
