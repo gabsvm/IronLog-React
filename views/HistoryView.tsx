@@ -29,12 +29,12 @@ interface HistoryCardProps {
 }
 
 const HistoryCard = memo(({ log, isExpanded, onToggle, lang, t, id }: HistoryCardProps) => {
-    
+
     // Process "Best Sets" for preview
     const bestSets = (log.exercises || []).map(ex => {
         const isCardio = ex.muscle === 'CARDIO';
         const validSets = (ex.sets || []).filter(s => s.completed);
-        
+
         if (validSets.length === 0) return null;
 
         if (isCardio) {
@@ -43,17 +43,17 @@ const HistoryCard = memo(({ log, isExpanded, onToggle, lang, t, id }: HistoryCar
             const totalTime = validSets.reduce((acc, s) => {
                 // Parse duration potentially
                 let mins = 0;
-                if(typeof s.duration === 'string' && s.duration.includes(':')) {
+                if (typeof s.duration === 'string' && s.duration.includes(':')) {
                     const [m, sec] = s.duration.split(':').map(Number);
-                    mins = m + (sec/60);
+                    mins = m + (sec / 60);
                 } else {
                     mins = Number(s.duration || 0);
                 }
                 return acc + mins;
             }, 0);
-            
-            return { 
-                name: getTranslated(ex.name, lang), 
+
+            return {
+                name: getTranslated(ex.name, lang),
                 isCardio: true,
                 summary: `${Math.round(totalTime)} min ${totalDist > 0 ? `/ ${totalDist.toFixed(1)} km` : ''}`
             };
@@ -62,17 +62,17 @@ const HistoryCard = memo(({ log, isExpanded, onToggle, lang, t, id }: HistoryCar
         // Weightlifting logic
         const validLifts = validSets.filter(s => s.weight && s.reps);
         if (validLifts.length === 0) return null;
-        
+
         const best = validLifts.reduce((prev, current) => (Number(prev.weight) > Number(current.weight)) ? prev : current);
         return { name: getTranslated(ex.name, lang), ...best, isCardio: false };
     }).filter(Boolean);
 
     return (
-        <div 
+        <div
             id={id}
             onClick={() => onToggle(log.id)}
-            className={`bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden border transition-all duration-200 cursor-pointer mb-4 mx-4
-                ${isExpanded ? 'border-red-500/50 shadow-lg shadow-red-500/5' : 'border-zinc-200 dark:border-white/5 shadow-sm'}
+            className={`bg-zinc-900 rounded-2xl overflow-hidden border transition-all duration-200 cursor-pointer mb-3 mx-4
+                ${isExpanded ? 'border-red-500/30 shadow-lg shadow-red-500/5' : 'border-zinc-800 hover:border-zinc-700'}
             `}
         >
             <div className="p-5">
@@ -92,7 +92,7 @@ const HistoryCard = memo(({ log, isExpanded, onToggle, lang, t, id }: HistoryCar
                         </div>
                     </div>
                 </div>
-                
+
                 {!isExpanded && (
                     <div className="space-y-2">
                         {bestSets.slice(0, 3).map((s: any, i) => (
@@ -109,46 +109,46 @@ const HistoryCard = memo(({ log, isExpanded, onToggle, lang, t, id }: HistoryCar
             </div>
 
             {isExpanded && (
-                <div className="bg-zinc-50 dark:bg-white/[0.02] border-t border-zinc-100 dark:border-white/5 p-4 space-y-6 animate-slideUp">
+                <div className="bg-zinc-950 border-t border-zinc-800 p-4 space-y-5">
                     {(log.exercises || []).map((ex, i) => {
                         const isCardio = ex.muscle === 'CARDIO';
                         return (
                             <div key={i}>
-                                <h4 className="font-bold text-sm text-zinc-900 dark:text-white mb-2 flex items-center justify-between">
+                                <h4 className="font-bold text-sm text-white mb-2 flex items-center justify-between">
                                     <span>{getTranslated(ex.name, lang)}</span>
-                                    {ex.note && <span className="text-[10px] text-zinc-400 italic font-normal max-w-[150px] truncate">{ex.note}</span>}
+                                    {ex.note && <span className="text-[10px] text-zinc-500 italic font-normal max-w-[150px] truncate">{ex.note}</span>}
                                 </h4>
                                 <div className="space-y-1">
                                     {(ex.sets || []).filter(s => s.completed).map((s, idx) => (
                                         <div key={idx} className="flex items-center text-xs">
-                                            <div className={`w-6 h-6 rounded flex items-center justify-center font-bold mr-3 ${s.type === 'warmup' ? 'bg-yellow-100 text-yellow-600' : 'bg-zinc-200 dark:bg-white/10 text-zinc-500'}`}>
+                                            <div className={`w-6 h-6 rounded flex items-center justify-center font-bold mr-3 ${s.type === 'warmup' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-zinc-800 text-zinc-500'}`}>
                                                 {s.type === 'warmup' ? 'W' : idx + 1}
                                             </div>
-                                            <div className="flex-1 font-mono text-zinc-700 dark:text-zinc-300">
+                                            <div className="flex-1 font-mono text-zinc-300">
                                                 {isCardio ? (
                                                     <>
                                                         <span className="font-bold">{formatDurationDisplay(s.duration || 0)}</span>
                                                         {s.distance && (
                                                             <>
-                                                                <span className="mx-2 text-zinc-300">|</span>
-                                                                <span className="font-bold">{s.distance}</span> <span className="text-zinc-400 text-[10px]">KM</span>
+                                                                <span className="mx-2 text-zinc-600">|</span>
+                                                                <span className="font-bold">{s.distance}</span> <span className="text-zinc-500 text-[10px]">KM</span>
                                                             </>
                                                         )}
                                                         {s.rpe && (
                                                             <>
-                                                                <span className="mx-2 text-zinc-300">|</span>
+                                                                <span className="mx-2 text-zinc-600">|</span>
                                                                 <span className="text-zinc-500">{t.cardioSpeed}: {s.rpe}</span>
                                                             </>
                                                         )}
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <span className="font-bold">{s.weight}</span> <span className="text-zinc-400 text-[10px]">KG</span>
-                                                        <span className="mx-2 text-zinc-300">|</span>
-                                                        <span className="font-bold">{s.reps}</span> <span className="text-zinc-400 text-[10px]">REPS</span>
+                                                        <span className="font-bold text-white">{s.weight}</span> <span className="text-zinc-500 text-[10px]">KG</span>
+                                                        <span className="mx-2 text-zinc-700">×</span>
+                                                        <span className="font-bold text-white">{s.reps}</span> <span className="text-zinc-500 text-[10px]">REPS</span>
                                                         {s.rpe && (
                                                             <>
-                                                                <span className="mx-2 text-zinc-300">|</span>
+                                                                <span className="mx-2 text-zinc-700">|</span>
                                                                 <span className="text-zinc-500">RIR {s.rpe}</span>
                                                             </>
                                                         )}
@@ -171,7 +171,7 @@ export const HistoryView: React.FC = () => {
     const { logs, lang, tutorialProgress, markTutorialSeen } = useApp();
     const t = TRANSLATIONS[lang];
     const { isPro, showPaywall, setShowPaywall, checkPro } = usePro();
-    
+
     const [expandedId, setExpandedId] = useState<number | null>(null);
     const [search, setSearch] = useState('');
     const deferredSearch = useDeferredValue(search);
@@ -181,7 +181,7 @@ export const HistoryView: React.FC = () => {
     // Filter Logs (Search + Time Limit for Free Users)
     const { visibleLogs, hasLockedLogs } = useMemo(() => {
         let result = safeLogs;
-        
+
         // Search Filter
         if (deferredSearch.trim()) {
             const q = deferredSearch.toLowerCase();
@@ -194,13 +194,13 @@ export const HistoryView: React.FC = () => {
         // Pro Filter (7 Days)
         const now = Date.now();
         const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
-        
+
         if (isPro) {
             return { visibleLogs: result, hasLockedLogs: false };
         } else {
             const visible = [];
             let lockedCount = 0;
-            
+
             for (const log of result) {
                 if ((now - log.endTime) < SEVEN_DAYS) {
                     visible.push(log);
@@ -218,14 +218,16 @@ export const HistoryView: React.FC = () => {
     ];
 
     const Header = () => (
-        <div className="px-6 pt-6 pb-4 space-y-4 bg-gray-50 dark:bg-zinc-950">
-            <h2 className="text-2xl font-black text-zinc-900 dark:text-white">History</h2>
+        <div className="px-5 pt-20 pb-4 space-y-3">
+            <h2 className="text-2xl font-black text-white tracking-tight">{lang === 'en' ? 'History' : 'Historial'}</h2>
             <div id="tut-history-search" className="relative">
-                <Icon name="Search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
-                <input 
-                    type="text" 
-                    placeholder="Search workouts..."
-                    className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-xl py-3 pl-9 pr-4 text-sm font-medium outline-none focus:ring-2 focus:ring-red-500 text-zinc-900 dark:text-white"
+                <Icon name="Search" size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
+                <input
+                    type="search"
+                    inputMode="search"
+                    enterKeyHint="search"
+                    placeholder={lang === 'en' ? 'Search workouts...' : 'Buscar entrenamientos...'}
+                    className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl py-3 pl-10 pr-4 text-sm font-medium outline-none focus:ring-2 focus:ring-red-500/50 focus:border-zinc-700 text-white placeholder-zinc-600 transition-all"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                 />
@@ -244,8 +246,8 @@ export const HistoryView: React.FC = () => {
                     <p className="text-xs text-zinc-500 mb-6 max-w-[200px] mx-auto">
                         Older workouts are archived. Unlock Premium to access your full training history.
                     </p>
-                    <Button 
-                        size="sm" 
+                    <Button
+                        size="sm"
                         onClick={() => checkPro('history')}
                         className="bg-zinc-900 dark:bg-white text-white dark:text-black mx-auto"
                     >
@@ -258,26 +260,30 @@ export const HistoryView: React.FC = () => {
 
     if (safeLogs.length === 0) {
         return (
-            <div className="p-4 space-y-6">
-                <h2 className="text-2xl font-black text-zinc-900 dark:text-white px-2">History</h2>
-                <div className="text-center py-20 opacity-50">
-                    <Icon name="CloudOff" size={48} className="mx-auto mb-4 text-zinc-600" />
-                    <p>No workouts logged yet.</p>
+            <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-zinc-950">
+                <div className="w-20 h-20 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-5">
+                    <Icon name="Dumbbell" size={36} className="text-zinc-700" />
                 </div>
+                <h3 className="text-xl font-black text-white mb-2">
+                    {lang === 'en' ? 'No workouts yet' : 'Sin entrenamientos aún'}
+                </h3>
+                <p className="text-zinc-500 text-sm max-w-[220px] leading-relaxed">
+                    {lang === 'en' ? 'Complete your first session to see it here.' : 'Completa tu primera sesión para verla aquí.'}
+                </p>
             </div>
         );
     }
 
     return (
-        <div className="h-full w-full bg-gray-50 dark:bg-zinc-950 flex flex-col relative">
+        <div className="h-full w-full bg-zinc-950 flex flex-col relative">
             <Virtuoso
                 style={{ height: '100%' }}
                 data={visibleLogs}
                 components={{ Header, Footer }}
                 itemContent={(index, log) => (
-                    <HistoryCard 
+                    <HistoryCard
                         id={index === 0 ? "tut-first-card" : undefined}
-                        log={log} 
+                        log={log}
                         isExpanded={expandedId === log.id}
                         onToggle={(id) => setExpandedId(expandedId === id ? null : id)}
                         lang={lang}
@@ -285,8 +291,8 @@ export const HistoryView: React.FC = () => {
                     />
                 )}
             />
-            
-            <TutorialOverlay 
+
+            <TutorialOverlay
                 steps={historyTutorialSteps}
                 isActive={!tutorialProgress.history}
                 onComplete={() => markTutorialSeen('history')}

@@ -56,6 +56,58 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onLogin }) => {
 
                 {/* Hero Section */}
                 <div className="flex-1 flex flex-col items-center justify-center text-center mb-16 md:mb-24 relative min-h-[60vh]">
+                    {/* Background grid */}
+                    <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff04_1px,transparent_1px),linear-gradient(to_bottom,#ffffff04_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none opacity-60" />
+
+                    {/* Floating mock workout card */}
+                    <div className="relative w-full max-w-xs mb-8 animate-bounce-cta" style={{ animationDuration: '3s' }}>
+                        <div className="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden shadow-2xl shadow-black/60">
+                            {/* Card header */}
+                            <div className="px-4 pt-4 pb-3 border-b border-zinc-800 flex items-center justify-between">
+                                <div>
+                                    <div className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest mb-0.5">CHEST · WEEK 2</div>
+                                    <div className="text-base font-black text-white">Bench Press</div>
+                                </div>
+                                <div className="text-[9px] font-bold bg-zinc-800 text-zinc-500 px-2 py-1 rounded-lg border border-zinc-700">
+                                    8-12 Reps
+                                </div>
+                            </div>
+                            {/* Mock sets */}
+                            <div className="divide-y divide-zinc-800/60">
+                                {[
+                                    { label: 'W', weight: '60', reps: '12', done: true, color: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30' },
+                                    { label: '●', weight: '100', reps: '10', done: true, color: 'bg-zinc-800 text-zinc-400 border-zinc-700' },
+                                    { label: '●', weight: '100', reps: '', done: false, color: 'bg-zinc-800 text-zinc-400 border-zinc-700' },
+                                ].map((s, i) => (
+                                    <div key={i} className={`grid grid-cols-12 gap-2 items-center py-2.5 px-3 ${s.done ? 'opacity-60' : ''}`}>
+                                        <div className="col-span-2 flex justify-center">
+                                            <div className={`w-8 h-8 rounded-lg border flex items-center justify-center text-[10px] font-black ${s.done ? 'bg-green-500/15 border-green-500/30 text-green-400' : s.color}`}>
+                                                {s.done ? '✓' : s.label}
+                                            </div>
+                                        </div>
+                                        <div className="col-span-4">
+                                            <div className={`text-center text-lg font-black rounded-lg py-1.5 ${s.done ? 'text-green-400' : 'bg-zinc-800 text-white'}`}>
+                                                {s.weight || '—'}
+                                            </div>
+                                        </div>
+                                        <div className="col-span-4">
+                                            <div className={`text-center text-lg font-black rounded-lg py-1.5 ${s.done ? 'text-green-400' : s.reps ? 'bg-zinc-800 text-white' : 'bg-zinc-800 text-zinc-600'}`}>
+                                                {s.reps || '—'}
+                                            </div>
+                                        </div>
+                                        <div className="col-span-2 flex justify-center">
+                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm ${s.done ? 'bg-green-500 text-white shadow-[0_0_12px_rgba(34,197,94,0.5)]' : 'bg-zinc-800 text-zinc-600'}`}>
+                                                ✓
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        {/* Glow below card */}
+                        <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-3/4 h-8 bg-red-600/15 blur-2xl rounded-full" />
+                    </div>
+
                     <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tighter mb-4 md:mb-6 animate-in-up" style={{ animationDelay: '0.2s' }}>
                         {t.title.split(' ').map((word, i) => (
                             <span key={i} className={i === 1 ? "text-red-600" : ""}>{word} </span>
@@ -69,10 +121,11 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onLogin }) => {
                         <Button
                             variant="primary"
                             size="lg"
-                            className="w-full h-14 md:h-16 text-lg font-bold shadow-2xl shadow-red-600/20 active:scale-95 transition-transform"
+                            className="w-full h-14 md:h-16 text-lg font-bold shadow-[0_0_30px_rgba(220,38,38,0.35)] active:scale-95 transition-transform flex items-center justify-center gap-3"
                             onClick={onStart}
                         >
                             {t.getStarted}
+                            <Icon name="ArrowRight" size={20} />
                         </Button>
                     </div>
 

@@ -24,7 +24,7 @@ const GuidelinesModal = ({ isOpen, onClose, images }: { isOpen: boolean, onClose
     const [pos, setPos] = useState({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
     const startPos = useRef({ x: 0, y: 0 });
-    
+
     // Reset state when opening or changing page
     useEffect(() => {
         if (isOpen) {
@@ -60,9 +60,9 @@ const GuidelinesModal = ({ isOpen, onClose, images }: { isOpen: boolean, onClose
     const onTouchStart = (e: React.TouchEvent) => {
         if (scale === 1) return;
         setIsDragging(true);
-        startPos.current = { 
-            x: e.touches[0].clientX - pos.x, 
-            y: e.touches[0].clientY - pos.y 
+        startPos.current = {
+            x: e.touches[0].clientX - pos.x,
+            y: e.touches[0].clientY - pos.y
         };
     };
 
@@ -84,43 +84,43 @@ const GuidelinesModal = ({ isOpen, onClose, images }: { isOpen: boolean, onClose
                     <Icon name="Info" size={20} className="text-blue-500" /> Guidelines
                 </h3>
                 <div className="flex gap-3">
-                     <button 
-                        onClick={() => setScale(s => Math.max(1, s - 0.5))} 
+                    <button
+                        onClick={() => setScale(s => Math.max(1, s - 0.5))}
                         className="w-10 h-10 rounded-full bg-black/60 text-white flex items-center justify-center border border-white/10 backdrop-blur-md active:bg-zinc-800"
                     >
                         <Icon name="Minus" size={20} />
                     </button>
-                    <button 
-                        onClick={() => setScale(s => Math.min(4, s + 0.5))} 
+                    <button
+                        onClick={() => setScale(s => Math.min(4, s + 0.5))}
                         className="w-10 h-10 rounded-full bg-black/60 text-white flex items-center justify-center border border-white/10 backdrop-blur-md active:bg-zinc-800"
                     >
                         <Icon name="Plus" size={20} />
                     </button>
                     <div className="w-px h-6 bg-white/20 mx-1"></div>
-                    <button 
-                        onClick={onClose} 
+                    <button
+                        onClick={onClose}
                         className="w-10 h-10 rounded-full bg-zinc-800 text-white flex items-center justify-center hover:bg-zinc-700 border border-white/10 shadow-lg"
                     >
                         <Icon name="X" size={24} />
                     </button>
                 </div>
             </div>
-            
+
             {/* Image Viewer Container */}
-            <div 
+            <div
                 className="flex-1 overflow-hidden relative flex items-center justify-center touch-none bg-zinc-950"
                 onTouchStart={onTouchStart}
                 onTouchMove={onTouchMove}
                 onTouchEnd={onTouchEnd}
                 onDoubleClick={handleDoubleTap}
             >
-                <img 
-                    src={currentImg} 
-                    alt={`Page ${idx + 1}`} 
+                <img
+                    src={currentImg}
+                    alt={`Page ${idx + 1}`}
                     className="max-w-none transition-transform duration-100 ease-out select-none pointer-events-none"
-                    style={{ 
+                    style={{
                         transform: `translate(${pos.x}px, ${pos.y}px) scale(${scale})`,
-                        width: '100%', 
+                        width: '100%',
                         height: 'auto',
                         maxHeight: '100%',
                         objectFit: 'contain'
@@ -131,19 +131,19 @@ const GuidelinesModal = ({ isOpen, onClose, images }: { isOpen: boolean, onClose
             {/* Navigation Controls - Raised to avoid bottom nav overlap */}
             {images.length > 1 && (
                 <div className="absolute bottom-24 left-0 right-0 flex justify-center items-center gap-6 z-50 pointer-events-none pb-safe">
-                    <button 
+                    <button
                         onClick={() => setIdx(i => Math.max(0, i - 1))}
                         disabled={!hasPrev}
                         className={`pointer-events-auto w-14 h-14 rounded-full flex items-center justify-center backdrop-blur-xl border transition-all shadow-2xl ${hasPrev ? 'bg-zinc-900 text-white border-zinc-700 active:scale-95 hover:bg-zinc-800' : 'bg-zinc-900/50 text-zinc-600 border-zinc-800/50'}`}
                     >
                         <Icon name="ChevronLeft" size={28} />
                     </button>
-                    
+
                     <span className="text-sm font-black text-white bg-zinc-900 px-4 py-2 rounded-full backdrop-blur-xl border border-zinc-700 shadow-2xl min-w-[80px] text-center">
                         {idx + 1} / {images.length}
                     </span>
 
-                    <button 
+                    <button
                         onClick={() => setIdx(i => Math.min(images.length - 1, i + 1))}
                         disabled={!hasNext}
                         className={`pointer-events-auto w-14 h-14 rounded-full flex items-center justify-center backdrop-blur-xl border transition-all shadow-2xl ${hasNext ? 'bg-zinc-900 text-white border-zinc-700 active:scale-95 hover:bg-zinc-800' : 'bg-zinc-900/50 text-zinc-600 border-zinc-800/50'}`}
@@ -152,7 +152,7 @@ const GuidelinesModal = ({ isOpen, onClose, images }: { isOpen: boolean, onClose
                     </button>
                 </div>
             )}
-            
+
             {/* Helper Text */}
             <div className="absolute bottom-10 left-0 right-0 text-center pointer-events-none z-40 opacity-60 pb-safe">
                 <p className="text-[10px] text-white font-bold uppercase tracking-widest bg-black/40 inline-block px-3 py-1.5 rounded-full backdrop-blur border border-white/5">
@@ -163,16 +163,16 @@ const GuidelinesModal = ({ isOpen, onClose, images }: { isOpen: boolean, onClose
     );
 };
 
-const TemplateSelector = ({ 
-    onClose, 
-    onSelectTemplate, 
-    onCreateCustom, 
-    templates, 
-    t, 
-    lang 
-}: { 
-    onClose: () => void, 
-    onSelectTemplate: (tpl: GlobalTemplate) => void, 
+const TemplateSelector = ({
+    onClose,
+    onSelectTemplate,
+    onCreateCustom,
+    templates,
+    t,
+    lang
+}: {
+    onClose: () => void,
+    onSelectTemplate: (tpl: GlobalTemplate) => void,
     onCreateCustom: () => void,
     templates: GlobalTemplate[],
     t: any,
@@ -190,7 +190,7 @@ const TemplateSelector = ({
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4 scroll-container">
                 {/* Option 1: Scratch */}
-                <button 
+                <button
                     onClick={onCreateCustom}
                     className="w-full p-5 rounded-2xl border-2 border-dashed border-zinc-700 bg-zinc-900/50 hover:bg-zinc-800 hover:border-zinc-500 transition-all group text-left flex items-center gap-4"
                 >
@@ -212,7 +212,7 @@ const TemplateSelector = ({
                 {/* Templates List */}
                 <div className="grid gap-3">
                     {templates.map(tpl => (
-                        <button 
+                        <button
                             key={tpl.id}
                             onClick={() => onSelectTemplate(tpl)}
                             className="w-full bg-zinc-900 border border-zinc-800 p-4 rounded-2xl text-left hover:border-red-600/50 transition-colors relative overflow-hidden group"
@@ -223,10 +223,10 @@ const TemplateSelector = ({
                                     PRO
                                 </div>
                             )}
-                            
+
                             <h3 className="font-bold text-white text-lg pr-8">{getTranslated(tpl.title, lang as any)}</h3>
                             <p className="text-xs text-zinc-400 mt-1 leading-relaxed">{getTranslated(tpl.description, lang as any)}</p>
-                            
+
                             <div className="mt-3 flex gap-2">
                                 <span className="text-[10px] font-bold bg-zinc-800 text-zinc-500 px-2 py-1 rounded">
                                     {tpl.program.length} {lang === 'en' ? 'Days' : 'Días'}
@@ -249,9 +249,10 @@ const WeekProgress = React.memo(({ program, logsForWeek }: any) => {
             {safeProgram.map((_: any, i: number) => {
                 const isDone = uniqueDaysDone.has(i);
                 return (
-                    <div 
-                        key={i} 
-                        className={`h-1.5 rounded-full flex-1 transition-all duration-500 ${isDone ? 'bg-gradient-to-r from-red-600 to-orange-600 shadow-[0_0_10px_rgba(220,38,38,0.5)]' : 'bg-zinc-800'}`} 
+                    <div
+                        key={i}
+                        className={`h-1.5 rounded-full flex-1 transition-all duration-700 origin-left ${isDone ? 'bg-gradient-to-r from-red-600 to-orange-500 shadow-[0_0_8px_rgba(220,38,38,0.4)]' : 'bg-zinc-800'}`}
+                        style={{ transitionDelay: `${i * 80}ms` }}
                     />
                 );
             })}
@@ -271,20 +272,20 @@ const NextSessionCard = React.memo(({ nextDayDef, isSessionActive, nextWorkoutId
     );
 
     return (
-        <div 
+        <div
             id="tut-up-next"
             onClick={() => startSession(nextWorkoutIdx)}
             className="group relative w-full rounded-[2rem] p-1 overflow-hidden cursor-pointer active:scale-[0.98] transition-transform duration-300"
         >
             {/* Gradient Border Effect */}
             <div className="absolute inset-0 bg-gradient-to-br from-zinc-700 via-zinc-800 to-zinc-900 rounded-[2rem]"></div>
-            
+
             {/* Inner Content */}
             <div className="relative bg-zinc-900 h-full rounded-[1.8rem] p-6 flex flex-col justify-between min-h-[260px] border border-white/5 shadow-2xl overflow-hidden">
-                
+
                 {/* Background Decor */}
                 <div className="absolute -right-10 -top-10 w-64 h-64 bg-red-600/10 rounded-full blur-[80px] pointer-events-none group-hover:bg-red-600/20 transition-colors duration-500"></div>
-                
+
                 <div className="relative z-10 flex justify-between items-start">
                     <div className={`
                         inline-flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md border border-white/5
@@ -297,7 +298,7 @@ const NextSessionCard = React.memo(({ nextDayDef, isSessionActive, nextWorkoutId
                     </div>
 
                     {!isSessionActive && (
-                        <button 
+                        <button
                             onClick={(e) => handleSkipClick(e, nextWorkoutIdx)}
                             className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-colors"
                         >
@@ -324,9 +325,9 @@ const NextSessionCard = React.memo(({ nextDayDef, isSessionActive, nextWorkoutId
                     </div>
                 </div>
 
-                <div className="relative z-10 flex items-center gap-3 group-hover:translate-x-2 transition-transform duration-300">
-                    <div className="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center shadow-lg shadow-white/10">
-                        <Icon name={isSessionActive ? "Play" : "ArrowRight"} size={24} fill="currentColor" />
+                <div className="relative z-10 flex items-center gap-3">
+                    <div className={`w-14 h-14 rounded-full bg-white text-black flex items-center justify-center shadow-lg shadow-white/10 animate-bounce-cta`}>
+                        <Icon name={isSessionActive ? "Play" : "ArrowRight"} size={26} fill="currentColor" />
                     </div>
                     <span className="text-sm font-bold text-white">
                         {isSessionActive ? (lang === 'en' ? "Resume Workout" : "Reanudar") : String(t.tapToStart)}
@@ -347,16 +348,16 @@ interface HomeViewProps {
 
 export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram, onSkipSession }) => {
     const { activeMeso, activeSession, program, setActiveMeso, lang, logs, isAppLoading, setProgram, tutorialProgress, markTutorialSeen, globalTemplates } = useApp();
-    const t = TRANSLATIONS[lang] || TRANSLATIONS['en']; 
-    
+    const t = TRANSLATIONS[lang] || TRANSLATIONS['en'];
+
     const { isPro, checkPro, showPaywall, setShowPaywall, featureAttempted } = usePro();
-    
+
     const tm = (key: string) => {
         if (!key || typeof key !== 'string') return 'Unknown';
         const val = (t.muscle as any)[key];
         return typeof val === 'string' ? val : key;
     };
-    
+
     const [showCompleteModal, setShowCompleteModal] = useState<'week' | 'meso' | null>(null);
     const [showMesoSettings, setShowMesoSettings] = useState(false);
     const [showAIChat, setShowAIChat] = useState(false);
@@ -379,7 +380,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
 
     // Find the current active guideline images
     const currentGuidelineImages = useMemo(() => {
-        if(!activeMeso) return null;
+        if (!activeMeso) return null;
         // Find matching global template to get the images
         const template = globalTemplates.find(t => t.id === activeMeso.mesoType);
         return template?.guidelineImages;
@@ -399,8 +400,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
     const safeProgram = Array.isArray(program) ? program : [];
     const safeLogs = Array.isArray(logs) ? logs : [];
 
-    const { 
-        uniqueDaysDone, weekComplete, nextWorkoutIdx, isSessionActive, nextDayDef, logsForWeek 
+    const {
+        uniqueDaysDone, weekComplete, nextWorkoutIdx, isSessionActive, nextDayDef, logsForWeek
     } = useMemo(() => {
         if (!activeMeso) return { uniqueDaysDone: new Set(), weekComplete: false, nextWorkoutIdx: -1, isSessionActive: false, nextDayDef: null, logsForWeek: [] };
 
@@ -436,15 +437,15 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
         } : null);
         setShowCompleteModal(null);
     };
-    
+
     // --- TEMPLATE LOGIC ---
     const handleOpenTemplateSelector = () => setShowTemplateSelector(true);
-    
+
     const handleSelectTemplate = (tpl: GlobalTemplate) => {
         if (tpl.isPro && !checkPro("Pro Template")) return;
 
         setProgram(tpl.program);
-        
+
         // Auto-start Meso
         const plan = tpl.program.map(day => (day.slots || []).map(slot => slot.exerciseId || null));
         setActiveMeso({
@@ -455,9 +456,9 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
             targetWeeks: 5,
             isDeload: false,
             plan: plan,
-	    duration: 5
+            duration: 5
         });
-        
+
         setShowTemplateSelector(false);
     };
 
@@ -492,20 +493,20 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
 
                 <div className="relative z-10 w-full max-w-sm">
                     {/* Hero Card Container */}
-                    <div 
+                    <div
                         onClick={handleOpenTemplateSelector}
                         className="group w-full aspect-square rounded-[2.5rem] relative overflow-hidden cursor-pointer shadow-2xl shadow-red-900/10 active:scale-95 transition-all duration-300 border border-white/5"
                     >
                         {/* --- IMAGE / ARTWORK SPACE --- */}
                         {/* If you want to use your image, uncomment below and add file to public/cover.jpg */}
                         {/* <img src="/cover.jpg" className="absolute inset-0 w-full h-full object-cover opacity-60" /> */}
-                        
+
                         {/* CSS Abstract Art (Default) */}
                         <div className="absolute inset-0 bg-zinc-900">
                             {/* Gradient Mesh */}
                             <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 via-zinc-900 to-black"></div>
                             <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-bl from-red-600/20 to-transparent"></div>
-                            
+
                             {/* Abstract Lines */}
                             <div className="absolute bottom-0 left-0 w-full h-1/2 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:linear-gradient(to_top,black,transparent)]"></div>
                         </div>
@@ -515,7 +516,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                             <div className="w-20 h-20 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 border border-white/10 shadow-lg">
                                 <Icon name="Plus" size={40} className="text-white drop-shadow-md" strokeWidth={3} />
                             </div>
-                            
+
                             <h2 className="text-3xl font-black text-white tracking-tighter drop-shadow-lg">
                                 {lang === 'en' ? "Start Journey" : "Empezar Viaje"}
                             </h2>
@@ -538,7 +539,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
 
                 {/* Modals */}
                 {showTemplateSelector && (
-                    <TemplateSelector 
+                    <TemplateSelector
                         onClose={() => setShowTemplateSelector(false)}
                         onSelectTemplate={handleSelectTemplate}
                         onCreateCustom={handleCreateCustom}
@@ -560,7 +561,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                     <h2 className="text-3xl font-black text-white tracking-tight">{activeMeso.name}</h2>
                     <div className="flex items-center gap-3 mt-2">
                         {currentGuidelineImages && currentGuidelineImages.length > 0 ? (
-                            <button 
+                            <button
                                 id="tut-guidelines"
                                 onClick={() => checkPro("Guidelines") && setShowGuidelines(true)}
                                 className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded bg-zinc-800 text-blue-400 border border-zinc-700 hover:bg-zinc-700 hover:text-white transition-colors flex items-center gap-1.5 active:scale-95"
@@ -575,7 +576,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                         <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">{t.week} {activeMeso.week} / {activeMeso.targetWeeks}</span>
                     </div>
                 </div>
-                
+
                 <div className="flex gap-2">
                     <button id="tut-settings-btn" onClick={() => setShowMesoSettings(true)} className="w-10 h-10 flex items-center justify-center rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-colors">
                         <Icon name="Settings" size={20} />
@@ -585,29 +586,29 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
 
             <div className="space-y-2">
                 <WeekProgress program={safeProgram} logsForWeek={logsForWeek} />
-                
-                <NextSessionCard 
-                    nextDayDef={nextDayDef} 
-                    isSessionActive={isSessionActive} 
-                    nextWorkoutIdx={nextWorkoutIdx} 
-                    startSession={startSession} 
-                    handleSkipClick={handleSkipClick} 
-                    lang={lang} 
-                    t={t} 
+
+                <NextSessionCard
+                    nextDayDef={nextDayDef}
+                    isSessionActive={isSessionActive}
+                    nextWorkoutIdx={nextWorkoutIdx}
+                    startSession={startSession}
+                    handleSkipClick={handleSkipClick}
+                    lang={lang}
+                    t={t}
                     tm={tm}
                 />
             </div>
 
             {weekComplete && !nextDayDef && (
-                <Button 
+                <Button
                     onClick={() => {
                         if (activeMeso && activeMeso.week >= activeMeso.targetWeeks) {
                             setShowCompleteModal('meso');
                         } else {
                             setShowCompleteModal('week');
                         }
-                    }} 
-                    fullWidth 
+                    }}
+                    fullWidth
                     className="bg-green-600 hover:bg-green-500 text-white py-4 text-lg"
                 >
                     {activeMeso && activeMeso.week >= activeMeso.targetWeeks ? t.finishCycle : t.completeWeek}
@@ -620,20 +621,20 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                     <h4 className="text-xs font-black text-zinc-500 uppercase tracking-widest">{t.schedule}</h4>
                     <span className="text-[10px] text-zinc-600 font-bold">{Math.round((uniqueDaysDone.size / safeProgram.length) * 100)}% DONE</span>
                 </div>
-                
+
                 <div className="space-y-3">
                     {safeProgram.map((day, idx) => {
                         const isDone = uniqueDaysDone.has(idx);
                         if (idx === nextWorkoutIdx) return null; // Hide duplicates
 
                         return (
-                            <div 
+                            <div
                                 key={idx}
                                 onClick={() => !isDone && startSession(idx)}
                                 className={`
                                     group flex items-center p-4 rounded-2xl border transition-all relative
-                                    ${isDone 
-                                        ? 'bg-zinc-900/30 border-transparent opacity-50' 
+                                    ${isDone
+                                        ? 'bg-zinc-900/30 border-transparent opacity-50'
                                         : 'bg-zinc-900 border-zinc-800 active:bg-zinc-800'
                                     }
                                 `}
@@ -649,11 +650,11 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                                         {(day.slots || []).map((s: any) => String(tm(s.muscle))).join(', ')}
                                     </div>
                                 </div>
-                                
+
                                 {/* Restore Skip Button */}
                                 {!isDone && (
-                                    <button 
-                                        onClick={(e) => handleSkipClick(e, idx)} 
+                                    <button
+                                        onClick={(e) => handleSkipClick(e, idx)}
                                         className="p-2 text-zinc-600 hover:text-white opacity-100 transition-all active:scale-95"
                                         title={t.skipDay}
                                     >
@@ -667,12 +668,14 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
             </div>
 
             {/* Consistency Heatmap */}
-            <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800">
-                <div className="flex items-center gap-2 mb-4">
-                    <Icon name="Activity" size={16} className="text-zinc-500" />
-                    <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest">{t.consistency}</h3>
+            <div className="relative p-px rounded-3xl bg-gradient-to-br from-zinc-700 via-zinc-800 to-zinc-900">
+                <div className="bg-zinc-900 rounded-[calc(1.5rem-1px)] p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                        <Icon name="Activity" size={16} className="text-zinc-500" />
+                        <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest">{t.consistency}</h3>
+                    </div>
+                    <ActivityHeatmap logs={safeLogs} />
                 </div>
-                <ActivityHeatmap logs={safeLogs} />
             </div>
 
             {/* AI Floating Button */}
@@ -685,26 +688,26 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                 </button>
             </div>
 
-            <TutorialOverlay 
+            <TutorialOverlay
                 steps={homeTutorialSteps}
                 isActive={!tutorialProgress.home}
                 onComplete={() => markTutorialSeen('home')}
             />
 
             {/* --- MODALS --- */}
-            
+
             {showAIChat && <Suspense fallback={null}><IronCoachChat onClose={() => setShowAIChat(false)} /></Suspense>}
             {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} feature={featureAttempted} />}
-            
+
             {/* Guidelines Modal */}
-            <GuidelinesModal 
-                isOpen={showGuidelines} 
-                onClose={() => setShowGuidelines(false)} 
-                images={currentGuidelineImages} 
+            <GuidelinesModal
+                isOpen={showGuidelines}
+                onClose={() => setShowGuidelines(false)}
+                images={currentGuidelineImages}
             />
 
             {/* Skip Confirmation */}
-            <ConfirmModal 
+            <ConfirmModal
                 isOpen={skipConfirmationId !== null}
                 title={t.skipDay}
                 description={t.skipDayConfirm}
@@ -714,7 +717,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                 cancelText={t.cancel}
                 variant="danger"
             />
-            
+
             {/* MESO SETTINGS MODAL */}
             {showMesoSettings && (
                 <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in" onClick={() => setShowMesoSettings(false)}>
@@ -731,14 +734,14 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                             <div id="tut-meso-duration">
                                 <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider block mb-3">{t.targetWeeks}</label>
                                 <div className="flex items-center gap-4 bg-zinc-950 p-2 rounded-xl border border-white/5">
-                                    <button 
+                                    <button
                                         onClick={() => setEditWeeks(Math.max(1, editWeeks - 1))}
                                         className="w-10 h-10 rounded-lg bg-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-700"
                                     >
                                         <Icon name="Minus" size={16} />
                                     </button>
                                     <span className="flex-1 text-center font-mono text-2xl font-black text-white">{editWeeks}</span>
-                                    <button 
+                                    <button
                                         onClick={() => setEditWeeks(editWeeks + 1)}
                                         className="w-10 h-10 rounded-lg bg-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-700"
                                     >
@@ -753,7 +756,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                                     <span className="text-sm font-bold text-blue-200 block mb-1">{t.deloadMode}</span>
                                     <span className="text-[10px] text-blue-400/70 block leading-tight">{t.deloadDesc}</span>
                                 </div>
-                                <button 
+                                <button
                                     onClick={() => setEditDeload(!editDeload)}
                                     className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${editDeload ? 'bg-blue-500' : 'bg-zinc-700'}`}
                                 >
@@ -762,7 +765,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                             </div>
 
                             {/* Edit Template Link */}
-                            <button 
+                            <button
                                 id="tut-meso-edit"
                                 onClick={() => { setShowMesoSettings(false); onEditProgram(); }}
                                 className="w-full py-3 bg-zinc-800 rounded-xl flex items-center justify-center gap-2 text-sm font-bold text-zinc-300 hover:text-white hover:bg-zinc-700 transition-colors border border-zinc-700"
@@ -773,7 +776,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                             {/* Notes */}
                             <div id="tut-meso-notes">
                                 <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider block mb-2">{t.mesoNotes}</label>
-                                <textarea 
+                                <textarea
                                     value={editNote}
                                     onChange={(e) => setEditNote(e.target.value)}
                                     placeholder={t.mesoNotesPlaceholder}
@@ -786,8 +789,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                             <Button onClick={handleSaveSettings} fullWidth size="lg">
                                 {t.save}
                             </Button>
-                            
-                            <button 
+
+                            <button
                                 onClick={() => { setShowMesoSettings(false); setShowCompleteModal('meso'); }}
                                 className="w-full py-3 text-xs font-bold text-red-500 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors"
                             >
@@ -796,7 +799,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                         </div>
 
                         {/* INTERNAL TUTORIAL */}
-                        <TutorialOverlay 
+                        <TutorialOverlay
                             steps={mesoSettingsTutorialSteps}
                             isActive={!tutorialProgress.mesoSettings}
                             onComplete={() => markTutorialSeen('mesoSettings')}

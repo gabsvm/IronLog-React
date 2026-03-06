@@ -19,22 +19,35 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
     const NavBtn = ({ id, label, icon }: { id: typeof view, label: string, icon: any }) => {
         const isActive = view === id;
         return (
-            <button 
-                onClick={() => setView(id)} 
-                className={`flex-1 relative h-full flex flex-col items-center justify-center gap-1 transition-all duration-300 group`}
+            <button
+                onClick={() => setView(id)}
+                className={`flex-1 relative h-full flex flex-col items-center justify-center gap-0.5 transition-all duration-200 active:scale-90 group`}
             >
-                {/* Icon Container */}
+                {/* Icon */}
                 <div className={`
-                    p-2 rounded-2xl transition-all duration-300 relative
-                    ${isActive ? 'text-white translate-y-[-4px]' : 'text-zinc-500 hover:text-zinc-300'}
+                    relative flex items-center justify-center transition-all duration-200
+                    ${isActive ? '-translate-y-1' : 'translate-y-0'}
                 `}>
-                    <Icon name={icon} size={24} strokeWidth={isActive ? 2.5 : 2} fill={isActive ? "currentColor" : "none"} />
-                    
-                    {/* Active Glow Dot */}
-                    {isActive && (
-                        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1 h-1 bg-red-500 rounded-full shadow-[0_0_8px_2px_rgba(239,68,68,0.6)]"></div>
-                    )}
+                    <Icon
+                        name={icon}
+                        size={22}
+                        strokeWidth={isActive ? 2.5 : 2}
+                        fill={isActive ? "currentColor" : "none"}
+                        className={`transition-colors duration-200 ${isActive ? 'text-white' : 'text-zinc-500 group-hover:text-zinc-300'}`}
+                    />
                 </div>
+
+                {/* Label */}
+                <span className={`text-[9px] font-bold uppercase tracking-wider transition-all duration-200 leading-none
+                    ${isActive ? 'text-white opacity-100' : 'text-zinc-600 group-hover:text-zinc-400 opacity-80'}
+                `}>
+                    {label}
+                </span>
+
+                {/* Active pill indicator */}
+                {isActive && (
+                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-5 h-0.5 bg-red-500 rounded-full shadow-[0_0_6px_2px_rgba(239,68,68,0.5)]" />
+                )}
             </button>
         );
     };
@@ -43,7 +56,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
 
     return (
         <div className="w-full h-full flex flex-col bg-black text-white font-sans overflow-hidden">
-            
+
             {/* Header - Transparent & Cleaner */}
             {view !== 'workout' && (
                 <div className="absolute top-0 left-0 right-0 z-20 pt-safe px-6 pb-2 bg-gradient-to-b from-black via-black/80 to-transparent pointer-events-none">
@@ -56,10 +69,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
                                 IronLog
                             </h1>
                         </div>
-                        <button 
+                        <button
                             id="tut-settings-btn"
-                            onClick={onOpenSettings} 
-                            className="w-10 h-10 flex items-center justify-center rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-colors active:scale-95"
+                            onClick={onOpenSettings}
+                            className="w-10 h-10 flex items-center justify-center rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-colors active:scale-90"
                         >
                             <Icon name="Menu" size={20} />
                         </button>
@@ -75,7 +88,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
             {/* Floating Island Navigation */}
             {view !== 'workout' && (
                 <div className="fixed bottom-0 left-0 right-0 z-30 flex justify-center pb-safe pointer-events-none">
-                    <div id="tut-nav-bar" className="pointer-events-auto mb-6 mx-6 w-full max-w-sm h-16 glass-island rounded-full flex items-center px-6 justify-between">
+                    <div id="tut-nav-bar" className="pointer-events-auto mb-5 mx-6 w-full max-w-sm h-[68px] glass-island rounded-[2rem] flex items-center px-4 justify-between">
                         <NavBtn id="home" label={t.active} icon="Layout" />
                         <NavBtn id="history" label={t.history} icon="Calendar" />
                         <NavBtn id="stats" label="Stats" icon="BarChart2" />

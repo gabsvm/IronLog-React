@@ -7,10 +7,10 @@ import { Button } from '../components/ui/Button';
 import { ExerciseSelector } from '../components/ui/ExerciseSelector';
 import { FeedbackModal } from '../components/ui/FeedbackModal';
 import { WarmupModal } from '../components/ui/WarmupModal';
-import { PlateCalculatorModal } from '../components/ui/PlateCalculatorModal'; 
-import { PRCelebrationOverlay } from '../components/ui/PRCelebrationOverlay'; 
+import { PlateCalculatorModal } from '../components/ui/PlateCalculatorModal';
+import { PRCelebrationOverlay } from '../components/ui/PRCelebrationOverlay';
 import { ExerciseDetailModal } from '../components/ui/ExerciseDetailModal';
-import { ConfirmModal } from '../components/ui/ConfirmModal'; 
+import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { ExerciseDef, SessionExercise, SetType } from '../types';
 import { getTranslated, getMesoStageConfig, getLastLogForExercise } from '../utils';
 import { useWorkoutController } from '../hooks/useWorkoutController';
@@ -21,18 +21,18 @@ import { TutorialOverlay } from '../components/ui/TutorialOverlay';
 
 // DnD Imports
 import {
-  DndContext, 
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-  DragStartEvent
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent,
+    DragStartEvent
 } from '@dnd-kit/core';
 import {
-  SortableContext,
-  verticalListSortingStrategy,
+    SortableContext,
+    verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 
 interface WorkoutViewProps {
@@ -45,7 +45,7 @@ interface WorkoutViewProps {
 export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, onBack }) => {
     const { activeSession, activeMeso, lang, config, exercises, logs, tutorialProgress, markTutorialSeen } = useApp();
     const t = TRANSLATIONS[lang];
-    
+
     // Use the Custom Controller Hook - Pass both callbacks
     const ctrl = useWorkoutController(onFinish, onDiscard);
 
@@ -56,7 +56,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
     // Derived State
     const stageConfig = activeMeso ? getMesoStageConfig(activeMeso.mesoType || 'hyp_1', activeMeso.week, !!activeMeso.isDeload) : null;
     const sessionExercises = ctrl.sessionExercises as SessionExercise[];
-    
+
     // Correct Sensor Config for Mobile
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -68,20 +68,20 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
     );
 
     const handleDragStart = (event: DragStartEvent) => {
-        triggerHaptic('light'); 
+        triggerHaptic('light');
     };
 
     const handleDragEnd = (event: DragEndEvent) => {
-        const {active, over} = event;
-        
+        const { active, over } = event;
+
         if (active.id !== over?.id) {
             const oldIndex = sessionExercises.findIndex((item) => item.instanceId === active.id);
             const newIndex = sessionExercises.findIndex((item) => item.instanceId === over?.id);
-            
+
             ctrl.reorderSessionExercises(oldIndex, newIndex);
         }
     };
-    
+
     const supersetStyles = useMemo(() => {
         const uniqueIds = Array.from(new Set(sessionExercises.map(e => e.supersetId).filter((id): id is string => typeof id === 'string' && !!id)));
         const palette = [
@@ -125,10 +125,10 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
             const historySet = lastSets && lastSets[i] ? lastSets[i] : null;
             return {
                 id: newInstanceId + i + 1,
-                weight: '', 
-                reps: '', 
-                rpe: '', 
-                completed: false, 
+                weight: '',
+                reps: '',
+                rpe: '',
+                completed: false,
                 type: 'regular',
                 hintWeight: historySet ? historySet.weight : undefined,
                 hintReps: historySet ? historySet.reps : undefined,
@@ -145,43 +145,43 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
     };
 
     const handleReplace = (newExId: string, customDef?: ExerciseDef) => {
-         if (!ctrl.replacingExId) return;
-         const newDef = customDef || exercises.find(e => e.id === newExId);
-         if (!newDef) return;
+        if (!ctrl.replacingExId) return;
+        const newDef = customDef || exercises.find(e => e.id === newExId);
+        if (!newDef) return;
 
-         const safeLogs = Array.isArray(logs) ? logs : [];
-         const lastSets = getLastLogForExercise(newExId, safeLogs);
+        const safeLogs = Array.isArray(logs) ? logs : [];
+        const lastSets = getLastLogForExercise(newExId, safeLogs);
 
-         ctrl.updateSession(prev => !prev ? null : {
-             ...prev,
-             exercises: (prev.exercises || []).map(ex => {
-                 if (ex.instanceId !== ctrl.replacingExId) return ex;
-                 
-                 const resetSets = (ex.sets || []).map((s, i) => {
-                     const historySet = lastSets && lastSets[i] ? lastSets[i] : null;
-                     return { 
-                         ...s, 
-                         weight: '', 
-                         reps: '', 
-                         rpe: '', 
-                         completed: false,
-                         hintWeight: historySet ? historySet.weight : undefined,
-                         hintReps: historySet ? historySet.reps : undefined,
-                         prevWeight: historySet ? historySet.weight : undefined,
-                         prevReps: historySet ? historySet.reps : undefined
-                     };
-                 });
+        ctrl.updateSession(prev => !prev ? null : {
+            ...prev,
+            exercises: (prev.exercises || []).map(ex => {
+                if (ex.instanceId !== ctrl.replacingExId) return ex;
 
-                 return { 
-                     ...ex, 
-                     ...newDef, 
-                     slotLabel: newDef.muscle, // Explicitly update the slot label to match the new muscle
-                     sets: resetSets 
-                 };
-             })
-         });
-         ctrl.setReplacingExId(null);
-         ctrl.setOpenMenuId(null);
+                const resetSets = (ex.sets || []).map((s, i) => {
+                    const historySet = lastSets && lastSets[i] ? lastSets[i] : null;
+                    return {
+                        ...s,
+                        weight: '',
+                        reps: '',
+                        rpe: '',
+                        completed: false,
+                        hintWeight: historySet ? historySet.weight : undefined,
+                        hintReps: historySet ? historySet.reps : undefined,
+                        prevWeight: historySet ? historySet.weight : undefined,
+                        prevReps: historySet ? historySet.reps : undefined
+                    };
+                });
+
+                return {
+                    ...ex,
+                    ...newDef,
+                    slotLabel: newDef.muscle, // Explicitly update the slot label to match the new muscle
+                    sets: resetSets
+                };
+            })
+        });
+        ctrl.setReplacingExId(null);
+        ctrl.setOpenMenuId(null);
     };
 
     const finishedSets = sessionExercises.reduce((acc, ex) => acc + (ex.sets || []).filter(s => s.completed).length, 0);
@@ -196,54 +196,54 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                 setViewMode(prev => prev === 'list' ? 'focus' : 'list');
             });
         } else {
-             setViewMode(prev => prev === 'list' ? 'focus' : 'list');
+            setViewMode(prev => prev === 'list' ? 'focus' : 'list');
         }
     };
 
     const showStageInfo = stageConfig && (config.showRIR || stageConfig.label === 'recovery');
 
     const workoutTutorialSteps = [
-        { 
-            targetId: 'tut-exercise-list', 
-            title: t.tutorial.workout[0].title, 
-            text: t.tutorial.workout[0].text, 
-            position: 'bottom' as const 
+        {
+            targetId: 'tut-exercise-list',
+            title: t.tutorial.workout[0].title,
+            text: t.tutorial.workout[0].text,
+            position: 'bottom' as const
         },
-        { 
-            targetId: 'tut-view-toggle', 
-            title: lang === 'en' ? "Focus Mode" : "Modo Enfoque", 
-            text: lang === 'en' 
-                ? "Tap here to toggle between List View and Focus Mode (One exercise at a time)." 
-                : "Toca aquí para cambiar entre Vista de Lista y Modo Enfoque (una tarjeta a la vez).", 
-            position: 'bottom' as const 
+        {
+            targetId: 'tut-view-toggle',
+            title: lang === 'en' ? "Focus Mode" : "Modo Enfoque",
+            text: lang === 'en'
+                ? "Tap here to toggle between List View and Focus Mode (One exercise at a time)."
+                : "Toca aquí para cambiar entre Vista de Lista y Modo Enfoque (una tarjeta a la vez).",
+            position: 'bottom' as const
         },
-        { 
-            targetId: 'tut-set-type', 
-            title: "Set Types", 
-            text: lang === 'en' 
-                ? "Tap this icon to change the set type (Warmup, Myo-reps, Dropset, etc)." 
-                : "Toca este icono para cambiar el tipo de serie (Calentamiento, Myo-reps, Dropset, etc).", 
-            position: 'bottom' as const 
+        {
+            targetId: 'tut-set-type',
+            title: "Set Types",
+            text: lang === 'en'
+                ? "Tap this icon to change the set type (Warmup, Myo-reps, Dropset, etc)."
+                : "Toca este icono para cambiar el tipo de serie (Calentamiento, Myo-reps, Dropset, etc).",
+            position: 'bottom' as const
         },
-        { 
-            targetId: 'tut-warmup-btn', 
-            title: t.warmup, 
-            text: lang === 'en' 
-                ? "Smart Warmup Calc. IMPORTANT: You must enter the weight for your first working set (Set 1) BEFORE tapping this." 
-                : "Calc. Calentamiento. IMPORTANTE: Debes ingresar el peso en tu primera serie efectiva (Set 1) ANTES de tocar aquí.", 
-            position: 'bottom' as const 
+        {
+            targetId: 'tut-warmup-btn',
+            title: t.warmup,
+            text: lang === 'en'
+                ? "Smart Warmup Calc. IMPORTANT: You must enter the weight for your first working set (Set 1) BEFORE tapping this."
+                : "Calc. Calentamiento. IMPORTANTE: Debes ingresar el peso en tu primera serie efectiva (Set 1) ANTES de tocar aquí.",
+            position: 'bottom' as const
         },
-        { 
-            targetId: 'tut-finish-btn', 
-            title: t.tutorial.workout[3].title, 
-            text: t.tutorial.workout[3].text, 
-            position: 'top' as const 
+        {
+            targetId: 'tut-finish-btn',
+            title: t.tutorial.workout[3].title,
+            text: t.tutorial.workout[3].text,
+            position: 'top' as const
         }
     ];
 
     return (
         <div className="fixed inset-0 z-40 flex flex-col bg-black font-sans" onClick={() => ctrl.setOpenMenuId(null)}>
-            
+
             {/* --- Minimalist Header --- */}
             <div className="glass z-30 pt-safe bg-black/90">
                 {/* Top Actions Row */}
@@ -251,24 +251,25 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                     <button onClick={onBack} className="w-10 h-10 flex items-center justify-center rounded-full active:bg-zinc-800 transition-colors text-zinc-400 hover:text-white">
                         <Icon name="ChevronLeft" size={24} strokeWidth={2.5} />
                     </button>
-                    
+
                     <WorkoutTimer startTime={activeSession.startTime} />
 
                     <div className="flex items-center gap-1">
-                         <button 
-                             id="tut-view-toggle"
-                             onClick={(e) => { e.stopPropagation(); toggleViewMode(); }}
-                             className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${viewMode === 'focus' ? 'bg-white text-black' : 'text-zinc-500 hover:text-white'}`}
+                        <button
+                            id="tut-view-toggle"
+                            onClick={(e) => { e.stopPropagation(); toggleViewMode(); }}
+                            className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${viewMode === 'focus' ? 'bg-white text-black' : 'text-zinc-500 hover:text-white'}`}
                         >
                             <Icon name={viewMode === 'focus' ? 'Layout' : 'Eye'} size={20} />
                         </button>
-                        
-                        <button 
+
+                        <button
                             id="tut-finish-btn"
-                            onClick={(e) => { e.stopPropagation(); ctrl.setShowFinishModal(true); }} 
-                            className="ml-1 bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-full shadow-lg shadow-red-600/20 active:scale-95 flex items-center gap-1.5 transition-all"
+                            onClick={(e) => { e.stopPropagation(); ctrl.setShowFinishModal(true); }}
+                            className="ml-1 bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-full shadow-lg shadow-red-600/30 active:scale-95 flex items-center gap-2 transition-all font-bold text-sm"
                         >
-                            <span className="text-xs font-bold uppercase tracking-wider">{t.finishWorkout}</span>
+                            <Icon name="CheckCircle" size={16} />
+                            <span className="uppercase tracking-wide text-xs">{t.finishWorkout}</span>
                         </button>
                     </div>
                 </div>
@@ -278,7 +279,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                     <h1 className="text-2xl font-black text-white leading-tight tracking-tight mb-1 truncate">
                         {activeSession.name}
                     </h1>
-                    
+
                     <div className="flex flex-wrap items-center gap-2">
                         {/* Week Indicator */}
                         <div className="flex items-center gap-1.5">
@@ -295,8 +296,8 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                         {showStageInfo && (
                             <div className={`
                                 inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest
-                                ${stageConfig.label === 'recovery' 
-                                    ? 'bg-blue-900/30 text-blue-400' 
+                                ${stageConfig.label === 'recovery'
+                                    ? 'bg-blue-900/30 text-blue-400'
                                     : 'bg-red-900/20 text-red-400'}
                             `}>
                                 {stageConfig.label === 'recovery' ? (
@@ -310,6 +311,22 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                 </div>
             </div>
 
+            {/* --- Session Progress Bar --- */}
+            {(() => {
+                const totalSets = sessionExercises.reduce((a, ex) => a + (ex.sets || []).filter(s => s.type !== 'warmup').length, 0);
+                const doneSets = sessionExercises.reduce((a, ex) => a + (ex.sets || []).filter(s => s.completed && s.type !== 'warmup').length, 0);
+                const pct = totalSets > 0 ? (doneSets / totalSets) * 100 : 0;
+                return (
+                    <div className="h-0.5 bg-zinc-900 relative overflow-hidden">
+                        <div
+                            className="h-full bg-gradient-to-r from-red-600 to-orange-500 transition-all duration-500 ease-out"
+                            style={{ width: `${pct}%` }}
+                        />
+                    </div>
+                );
+            })()}
+
+
             {/* --- Linking Banner --- */}
             {ctrl.linkingId && (
                 <div className="bg-orange-500 text-white p-2 text-center text-xs font-bold animate-in slide-in-from-top z-20 shadow-md">
@@ -322,13 +339,13 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
             <div className="flex-1 overflow-hidden flex flex-col">
                 {viewMode === 'list' ? (
                     <div id="tut-exercise-list" className="flex-1 overflow-y-auto scroll-container p-4 pb-32 space-y-4">
-                        <DndContext 
+                        <DndContext
                             sensors={sensors}
                             collisionDetection={closestCenter}
                             onDragStart={handleDragStart}
                             onDragEnd={handleDragEnd}
                         >
-                            <SortableContext 
+                            <SortableContext
                                 items={sessionExercises.map(ex => ex.instanceId)}
                                 strategy={verticalListSortingStrategy}
                             >
@@ -373,7 +390,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                             <Button variant="secondary" onClick={() => ctrl.setAddingExercise(true)} fullWidth className="border-dashed py-3 text-zinc-500 hover:text-white border-zinc-800">
                                 <Icon name="Plus" size={16} /> {t.addExercise}
                             </Button>
-                            
+
                             {/* Bottom Finish Button (Redundant but useful for long lists) */}
                             <Button onClick={(e) => { e.stopPropagation(); ctrl.setShowFinishModal(true); }} size="lg" fullWidth className="py-4 text-base shadow-xl shadow-red-600/20 bg-gradient-to-r from-red-600 to-red-500 border-none">
                                 {t.finishWorkout}
@@ -383,18 +400,18 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                 ) : (
                     // Focus Mode
                     <div className="flex-1 flex flex-col p-4 pb-24 h-full relative">
-                         <div className="flex items-center gap-2 mb-4 shrink-0">
+                        <div className="flex items-center gap-2 mb-4 shrink-0">
                             {sessionExercises.map((_, idx) => (
-                                <div 
-                                    key={idx} 
+                                <div
+                                    key={idx}
                                     className={`h-1.5 rounded-full flex-1 transition-all duration-300 ${idx === focusedIndex ? 'bg-red-600' : idx < focusedIndex ? 'bg-red-900/30' : 'bg-zinc-800'}`}
                                 ></div>
                             ))}
                         </div>
 
                         <div className="flex justify-between items-center mb-4 shrink-0">
-                            <button 
-                                onClick={goToPrev} 
+                            <button
+                                onClick={goToPrev}
                                 disabled={focusedIndex === 0}
                                 className="w-10 h-10 flex items-center justify-center rounded-xl bg-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed"
                             >
@@ -403,8 +420,8 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                             <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
                                 {focusedIndex + 1} / {sessionExercises.length}
                             </span>
-                            <button 
-                                onClick={goToNext} 
+                            <button
+                                onClick={goToNext}
                                 disabled={focusedIndex === sessionExercises.length - 1}
                                 className="w-10 h-10 flex items-center justify-center rounded-xl bg-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed"
                             >
@@ -413,9 +430,9 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                         </div>
 
                         <div className="flex-1 overflow-hidden relative">
-                             {focusedExercise ? (
+                            {focusedExercise ? (
                                 <div className="h-full flex flex-col animate-in fade-in slide-in-from-right-4 duration-300" key={focusedExercise.instanceId}>
-                                     <SortableExerciseCard
+                                    <SortableExerciseCard
                                         exercise={focusedExercise}
                                         onSetUpdate={ctrl.handleSetUpdate}
                                         onSetComplete={ctrl.toggleSetComplete}
@@ -441,35 +458,35 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                         viewMode="focus"
                                         tutorialId={focusedIndex === 0 ? "tut-set-type" : undefined}
                                     />
-                                    
+
                                     <div className="mt-4 flex gap-3 shrink-0">
-                                         <button 
-                                             onClick={(e) => { e.stopPropagation(); ctrl.setShowPlateCalc({ weight: 20 }); }}
-                                             className="flex-1 py-3 bg-zinc-800 rounded-xl font-bold text-sm text-zinc-300 flex items-center justify-center gap-2"
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); ctrl.setShowPlateCalc({ weight: 20 }); }}
+                                            className="flex-1 py-3 bg-zinc-800 rounded-xl font-bold text-sm text-zinc-300 flex items-center justify-center gap-2"
                                         >
                                             <Icon name="Dumbbell" size={16} /> {t.calc}
                                         </button>
-                                         <button 
-                                             onClick={(e) => { e.stopPropagation(); ctrl.setWarmupExId(focusedExercise.instanceId); }}
-                                             className="flex-1 py-3 bg-orange-900/10 rounded-xl font-bold text-sm text-orange-400 flex items-center justify-center gap-2"
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); ctrl.setWarmupExId(focusedExercise.instanceId); }}
+                                            className="flex-1 py-3 bg-orange-900/10 rounded-xl font-bold text-sm text-orange-400 flex items-center justify-center gap-2"
                                         >
                                             <Icon name="Zap" size={16} /> {t.warmup}
                                         </button>
                                     </div>
                                 </div>
-                             ) : (
-                                 <div className="flex flex-col items-center justify-center h-full text-zinc-400">
-                                     <p>{t.emptySession}</p>
-                                     <Button onClick={() => ctrl.setAddingExercise(true)} className="mt-4">{t.addExercise}</Button>
-                                 </div>
-                             )}
+                            ) : (
+                                <div className="flex flex-col items-center justify-center h-full text-zinc-400">
+                                    <p>{t.emptySession}</p>
+                                    <Button onClick={() => ctrl.setAddingExercise(true)} className="mt-4">{t.addExercise}</Button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
             </div>
 
             {/* TUTORIAL OVERLAY HOOK */}
-            <TutorialOverlay 
+            <TutorialOverlay
                 steps={workoutTutorialSteps}
                 isActive={!tutorialProgress.workout}
                 onComplete={() => markTutorialSeen('workout')}
@@ -477,69 +494,99 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
 
             {/* Modals remain the same... */}
             {ctrl.detailExercise && (
-                <ExerciseDetailModal 
-                    exercise={ctrl.detailExercise} 
-                    onClose={() => ctrl.setDetailExercise(null)} 
+                <ExerciseDetailModal
+                    exercise={ctrl.detailExercise}
+                    onClose={() => ctrl.setDetailExercise(null)}
                 />
             )}
 
             {ctrl.changingSetType && (
-                <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4" onClick={() => ctrl.setChangingSetType(null)}>
-                    <div className="bg-zinc-900 w-full max-w-sm rounded-2xl p-4 shadow-2xl space-y-2 border border-zinc-800" onClick={e => e.stopPropagation()}>
-                         <h3 className="text-center font-bold text-white mb-2">{t.setType}</h3>
-                         <div className="grid grid-cols-1 gap-2">
-                             {(['regular', 'warmup', 'myorep', 'myorep_match', 'giant', 'top', 'backoff', 'cluster'] as SetType[]).map(type => (
-                                 <button key={type} onClick={() => { ctrl.handleSetUpdate(ctrl.changingSetType!.exId, ctrl.changingSetType!.setId, 'type', type); ctrl.setChangingSetType(null); }} className="p-3 border border-zinc-800 rounded-xl flex items-center gap-3 text-left hover:bg-white/5 transition-colors group">
-                                     <span className="shrink-0 w-8 h-8 flex items-center justify-center text-[10px] font-bold bg-zinc-800 text-zinc-400 group-hover:bg-red-900/20 group-hover:text-red-400 rounded-lg transition-colors">{type.substring(0,2).toUpperCase()}</span>
-                                     <div>
-                                        <div className="text-sm font-bold text-white">{t.types[type]}</div>
-                                        <div className="text-[10px] text-zinc-400 leading-tight">{t.typeDesc[type]}</div>
-                                     </div>
-                                 </button>
-                             ))}
-                         </div>
+                <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center" onClick={() => ctrl.setChangingSetType(null)}>
+                    <div className="bg-zinc-900 w-full max-w-sm rounded-t-3xl sm:rounded-3xl shadow-2xl border border-zinc-800 overflow-hidden animate-spring-in" onClick={e => e.stopPropagation()}>
+                        <div className="px-4 pt-4 pb-2 flex items-center justify-between border-b border-zinc-800">
+                            <h3 className="font-black text-white text-base">{t.setType}</h3>
+                            <button onClick={() => ctrl.setChangingSetType(null)} className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-white rounded-full bg-zinc-800">
+                                <Icon name="X" size={16} />
+                            </button>
+                        </div>
+                        <div className="p-3 grid grid-cols-1 gap-1.5 max-h-[70vh] overflow-y-auto">
+                            {(['regular', 'warmup', 'myorep', 'myorep_match', 'giant', 'top', 'backoff', 'cluster'] as SetType[]).map(type => {
+                                const colors: Record<string, string> = {
+                                    regular: 'bg-zinc-800 text-zinc-300',
+                                    warmup: 'bg-yellow-500/20 text-yellow-400',
+                                    myorep: 'bg-purple-500/20 text-purple-400',
+                                    myorep_match: 'bg-purple-400/20 text-purple-300',
+                                    giant: 'bg-orange-500/20 text-orange-400',
+                                    top: 'bg-red-500/20 text-red-400',
+                                    backoff: 'bg-blue-500/20 text-blue-400',
+                                    cluster: 'bg-emerald-500/20 text-emerald-400',
+                                };
+                                const icons: Record<string, string> = {
+                                    regular: 'Circle', warmup: 'Zap', myorep: 'Repeat', myorep_match: 'Repeat2',
+                                    giant: 'Layers', top: 'TrendingUp', backoff: 'TrendingDown', cluster: 'Grid3x3'
+                                };
+                                const isSelected = ctrl.changingSetType?.currentType === type;
+                                return (
+                                    <button
+                                        key={type}
+                                        onClick={() => { ctrl.handleSetUpdate(ctrl.changingSetType!.exId, ctrl.changingSetType!.setId, 'type', type); ctrl.setChangingSetType(null); }}
+                                        className={`p-3 border rounded-xl flex items-center gap-3 text-left transition-all active:scale-98 ${isSelected ? 'border-white/20 bg-white/5' : 'border-zinc-800 hover:border-zinc-700 hover:bg-white/5'
+                                            }`}
+                                    >
+                                        <span className={`shrink-0 w-9 h-9 flex items-center justify-center rounded-lg ${colors[type] || 'bg-zinc-800 text-zinc-400'}`}>
+                                            <Icon name={icons[type] as any || 'Circle'} size={18} />
+                                        </span>
+                                        <div className="flex-1">
+                                            <div className="text-sm font-bold text-white">{t.types[type]}</div>
+                                            <div className="text-[10px] text-zinc-500 leading-tight mt-0.5">{t.typeDesc[type]}</div>
+                                        </div>
+                                        {isSelected && <Icon name="CheckCircle" size={16} className="text-white shrink-0" />}
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
             )}
 
             {ctrl.showFinishModal && (
-                 <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-6" onClick={(e) => e.stopPropagation()}>
-                     <div className="bg-zinc-900 w-full max-w-sm rounded-2xl p-6 shadow-2xl space-y-4 border border-zinc-800">
-                         <h3 className="text-xl font-bold text-center text-white">{finishedSets > 0 ? t.finishWorkout : t.emptyWorkoutTitle}</h3>
-                         
-                         {/* Update Template Option */}
-                         {finishedSets > 0 && (
-                             <div className="bg-zinc-800/50 p-4 rounded-xl border border-white/5 flex items-start gap-3 cursor-pointer" onClick={() => ctrl.setUpdateTemplate(!ctrl.updateTemplate)}>
-                                 <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center mt-0.5 transition-colors ${ctrl.updateTemplate ? 'bg-red-600 border-red-600' : 'border-zinc-600'}`}>
-                                     {ctrl.updateTemplate && <Icon name="Check" size={14} className="text-white" strokeWidth={3} />}
-                                 </div>
-                                 <div className="flex-1">
-                                     <p className="text-sm font-bold text-white">{t.updateRoutine}</p>
-                                     <p className="text-xs text-zinc-400 leading-tight mt-0.5">{t.updateRoutineDesc}</p>
-                                 </div>
-                             </div>
-                         )}
+                <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-6" onClick={(e) => e.stopPropagation()}>
+                    <div className="bg-zinc-900 w-full max-w-sm rounded-2xl p-6 shadow-2xl space-y-4 border border-zinc-800">
+                        <h3 className="text-xl font-bold text-center text-white">{finishedSets > 0 ? t.finishWorkout : t.emptyWorkoutTitle}</h3>
 
-                         <div className="grid grid-cols-2 gap-3 pt-2">
-                             <Button variant="secondary" onClick={() => ctrl.setShowFinishModal(false)}>{t.cancel}</Button>
-                             <Button variant="primary" onClick={ctrl.handleConfirmFinish}>{t.finishWorkout}</Button>
-                         </div>
+                        {/* Update Template Option */}
+                        {finishedSets > 0 && (
+                            <div className="bg-zinc-800/50 p-4 rounded-xl border border-white/5 flex items-start gap-3 cursor-pointer" onClick={() => ctrl.setUpdateTemplate(!ctrl.updateTemplate)}>
+                                <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center mt-0.5 transition-colors ${ctrl.updateTemplate ? 'bg-red-600 border-red-600' : 'border-zinc-600'}`}>
+                                    {ctrl.updateTemplate && <Icon name="Check" size={14} className="text-white" strokeWidth={3} />}
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-sm font-bold text-white">{t.updateRoutine}</p>
+                                    <p className="text-xs text-zinc-400 leading-tight mt-0.5">{t.updateRoutineDesc}</p>
+                                </div>
+                            </div>
+                        )}
 
-                         {/* NEW: Discard Session Option */}
-                         <div className="pt-2 text-center">
-                             <button 
+                        <div className="grid grid-cols-2 gap-3 pt-2">
+                            <Button variant="secondary" onClick={() => ctrl.setShowFinishModal(false)}>{t.cancel}</Button>
+                            <Button variant="primary" onClick={ctrl.handleConfirmFinish}>{t.finishWorkout}</Button>
+                        </div>
+
+                        {/* NEW: Discard Session Option */}
+                        <div className="pt-2 text-center">
+                            <button
                                 onClick={() => ctrl.setShowDiscardConfirm(true)}
                                 className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors uppercase tracking-widest"
-                             >
-                                 {t.resetSession || "Discard / Reset"}
-                             </button>
-                         </div>
-                     </div>
-                 </div>
+                            >
+                                {t.resetSession || "Discard / Reset"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
-            
+
             {/* NEW: Discard Confirmation Modal */}
-            <ConfirmModal 
+            <ConfirmModal
                 isOpen={ctrl.showDiscardConfirm}
                 title={t.discardSession || "Discard Session"}
                 description={t.discardConfirm || "Discard current session data? This cannot be undone."}
@@ -549,13 +596,13 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                 onCancel={() => ctrl.setShowDiscardConfirm(false)}
                 variant="danger"
             />
-            
+
             {ctrl.showPRSuccess && (
                 <PRCelebrationOverlay onDismiss={ctrl.dismissPRSuccess} />
             )}
-            
+
             {ctrl.showPlateCalc && (
-                <PlateCalculatorModal 
+                <PlateCalculatorModal
                     initialWeight={ctrl.showPlateCalc.weight}
                     onClose={() => ctrl.setShowPlateCalc(null)}
                 />
@@ -567,13 +614,13 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
             {ctrl.replacingExId && <ExerciseSelector onSelect={handleReplace} onClose={() => ctrl.setReplacingExId(null)} />}
             {ctrl.addingExercise && <ExerciseSelector onSelect={handleAddExercise} onClose={() => ctrl.setAddingExercise(false)} />}
             {ctrl.configPlateExId && (
-                 <div className="fixed inset-0 z-[80] bg-black/60 flex items-center justify-center p-6" onClick={() => ctrl.setConfigPlateExId(null)}>
-                     <div className="bg-zinc-900 p-6 rounded-2xl w-full max-w-xs space-y-4 border border-zinc-800" onClick={e => e.stopPropagation()}>
+                <div className="fixed inset-0 z-[80] bg-black/60 flex items-center justify-center p-6" onClick={() => ctrl.setConfigPlateExId(null)}>
+                    <div className="bg-zinc-900 p-6 rounded-2xl w-full max-w-xs space-y-4 border border-zinc-800" onClick={e => e.stopPropagation()}>
                         <h3 className="font-bold text-lg text-white text-center">{t.units.plateWeight}</h3>
                         <input type="number" autoFocus className="w-full bg-zinc-800 rounded-xl p-3 text-center font-bold text-xl outline-none" value={ctrl.plateWeightInput} onChange={(e) => ctrl.setPlateWeightInput(e.target.value)} />
                         <Button fullWidth onClick={() => handleUpdatePlateWeight(ctrl.configPlateExId!)}>{t.save}</Button>
-                     </div>
-                 </div>
+                    </div>
+                </div>
             )}
             {ctrl.warmupExId && activeSession && (
                 <WarmupModal targetWeight={Number(sessionExercises.find(e => e.instanceId === ctrl.warmupExId)?.sets?.[0]?.weight || 0)} exerciseName={getTranslated(sessionExercises.find(e => e.instanceId === ctrl.warmupExId)?.name, lang)} onClose={() => ctrl.setWarmupExId(null)} />
