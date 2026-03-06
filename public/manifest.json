@@ -3,19 +3,74 @@
   "short_name": "IronLog",
   "id": "/",
   "scope": "/",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
   "display": "standalone",
   "background_color": "#09090b",
-  "theme_color": "#000000",
+  "theme_color": "#dc2626",
   "orientation": "portrait-primary",
-  "categories": ["fitness", "health", "productivity"],
-  "description": "Professional Hypertrophy Tracker with RP-style progression.",
+  "lang": "es",
+  "dir": "ltr",
+  "categories": [
+    "fitness",
+    "health",
+    "productivity"
+  ],
+  "description": "Seguimiento profesional de hipertrofia con progresión estilo RP, analytics y soporte offline.",
   "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
     {
       "src": "/icon.svg",
       "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "type": "image/svg+xml"
     }
-  ]
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-home.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Home — Active Mesocycle"
+    },
+    {
+      "src": "/screenshot-workout.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Workout Tracker"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Start Workout",
+      "short_name": "Workout",
+      "description": "Jump straight to your next session",
+      "url": "/?action=start&source=shortcut",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "prefer_related_applications": false
 }

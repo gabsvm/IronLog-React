@@ -1,96 +1,163 @@
-const CACHE_NAME = 'ironlog-pro-v9-robust';
+const CACHE_NAME = 'ironlog-pro-v10';
 
-// ONLY cache the absolute essentials for the app shell.
-// Removing specific icon paths prevents the entire SW from failing 
-// if a single image file is missing or 404s.
+// Core app shell — always cache these
 const PRECACHE_URLS = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/icon.svg' 
+  '/icon.svg',
+  '/icon-192.png',
+  '/icon-512.png',
 ];
 
+// --------------- INSTALL ---------------
 self.addEventListener('install', (event) => {
-  self.skipWaiting(); // Activate worker immediately
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      // Force cache critical assets. 
-      // If any of these fail, the SW won't install. 
-      // We keep this list minimal for stability.
       return cache.addAll(PRECACHE_URLS).catch(err => {
-          console.warn("SW Precache warning - continuing anyway:", err);
+        console.warn('[SW] Precache warning:', err);
       });
     })
   );
 });
 
+// --------------- ACTIVATE ---------------
 self.addEventListener('activate', (event) => {
-  self.clients.claim(); // Take control of open pages immediately
+  self.clients.claim();
   event.waitUntil(
-    caches.keys().then((keyList) => {
-      return Promise.all(
+    caches.keys().then((keyList) =>
+      Promise.all(
         keyList.map((key) => {
           if (key !== CACHE_NAME) {
-            console.log('SW: Cleaning old cache', key);
+            console.log('[SW] Removing old cache:', key);
             return caches.delete(key);
           }
         })
-      );
-    })
+      )
+    )
   );
 });
 
+// --------------- FETCH ---------------
 self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
+  const { request } = event;
+  const url = new URL(request.url);
 
-  // 1. NAVIGATION (HTML) - Network First, Fallback to Cache
-  if (event.request.mode === 'navigate') {
+  // Never intercept non-GET or API/Firebase requests
+  if (
+    request.method !== 'GET' ||
+    url.pathname.startsWith('/api') ||
+    url.hostname.includes('firebaseio.com') ||
+    url.hostname.includes('googleapis.com') ||
+    url.hostname.includes('firestore.googleapis.com') ||
+    url.hostname.includes('identitytoolkit')
+  ) {
+    return;
+  }
+
+  // ---- Navigation (HTML pages) — Network First ----
+  if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request)
+      fetch(request)
         .then((networkResponse) => {
-          return caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, networkResponse.clone());
-            return networkResponse;
-          });
+          const clone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          return networkResponse;
         })
-        .catch(() => {
-          return caches.open(CACHE_NAME).then((cache) => {
-            return cache.match('/index.html') || cache.match('/');
-          });
-        })
+        .catch(() =>
+          caches.open(CACHE_NAME).then((cache) =>
+            cache.match('/index.html') || cache.match('/')
+          )
+        )
     );
     return;
   }
 
-  // 2. ASSETS - Cache First
-  if (
-    url.origin === self.location.origin || 
-    url.hostname === 'esm.sh' ||           
-    url.hostname.includes('fonts') ||
-    url.hostname.includes('gstatic')
-  ) {
-    if (event.request.method !== 'GET' || url.pathname.startsWith('/api')) {
-      return;
-    }
+  // ---- Static Assets (JS, CSS, images, fonts) — Cache First ----
+  const isStaticAsset =
+    url.origin === self.location.origin ||
+    url.hostname.includes('fonts.gstatic.com') ||
+    url.hostname.includes('fonts.googleapis.com') ||
+    url.hostname === 'esm.sh' ||
+    url.hostname === 'cdn.tailwindcss.com';
 
+  if (isStaticAsset) {
     event.respondWith(
       caches.open(CACHE_NAME).then(async (cache) => {
-        const cachedResponse = await cache.match(event.request);
-        if (cachedResponse) {
-          return cachedResponse;
-        }
+        const cached = await cache.match(request);
+        if (cached) return cached;
 
-        return fetch(event.request).then((networkResponse) => {
-          if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic' && networkResponse.type !== 'cors' && networkResponse.type !== 'opaque') {
-            return networkResponse;
+        return fetch(request).then((networkResponse) => {
+          // Only cache valid same-origin or CORS responses
+          if (
+            networkResponse &&
+            networkResponse.status === 200 &&
+            (networkResponse.type === 'basic' || networkResponse.type === 'cors' || networkResponse.type === 'opaque')
+          ) {
+            cache.put(request, networkResponse.clone());
           }
-          cache.put(event.request, networkResponse.clone());
           return networkResponse;
         }).catch(() => {
-           // Silent fail for non-critical assets
+          // Silent fail for non-critical external assets
+          return new Response('', { status: 503 });
         });
       })
     );
     return;
   }
+
+  // ---- YouTube thumbnails — Cache First (30 min TTL via opaque) ----
+  if (url.hostname === 'img.youtube.com') {
+    event.respondWith(
+      caches.open(CACHE_NAME).then(async (cache) => {
+        const cached = await cache.match(request);
+        if (cached) return cached;
+        return fetch(request).then((res) => {
+          if (res && res.status === 200) cache.put(request, res.clone());
+          return res;
+        }).catch(() => new Response('', { status: 503 }));
+      })
+    );
+    return;
+  }
+});
+
+// --------------- PUSH NOTIFICATIONS (Rest Timer) ---------------
+self.addEventListener('push', (event) => {
+  const data = event.data?.json() || {};
+  const title = data.title || 'IronLog';
+  const body = data.body || '¡Descanso terminado! Listo para el siguiente set.';
+  const icon = '/icon-192.png';
+  const badge = '/icon-192.png';
+
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body,
+      icon,
+      badge,
+      vibrate: [200, 100, 200],
+      tag: 'ironlog-timer',
+      renotify: true,
+      data: { url: data.url || '/' },
+      actions: [
+        { action: 'open', title: '💪 Ver Workout' },
+        { action: 'dismiss', title: 'Cerrar' }
+      ]
+    })
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  if (event.action === 'dismiss') return;
+
+  const targetUrl = event.notification.data?.url || '/';
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      const existing = clientList.find(c => c.url.includes(targetUrl) && 'focus' in c);
+      if (existing) return existing.focus();
+      return clients.openWindow(targetUrl);
+    })
+  );
 });

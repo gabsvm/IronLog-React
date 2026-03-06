@@ -4,6 +4,7 @@ import { WorkoutSet, SetType, CardioType } from '../../types';
 import { Icon } from '../ui/Icon';
 import { TRANSLATIONS } from '../../constants';
 import { playTimerFinishSound, triggerHaptic } from '../../utils/audio';
+import { PlateCalculatorModal } from '../ui/PlateCalculatorModal';
 
 interface SetRowProps {
     set: WorkoutSet;
@@ -57,6 +58,7 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
     const [localWeight, setLocalWeight] = useState(set.weight ?? '');
     const [localReps, setLocalReps] = useState(set.reps ?? '');
     const [localRPE, setLocalRPE] = useState(set.rpe ?? '');
+    const [showCalculator, setShowCalculator] = useState(false);
 
     const activeFieldRef = useRef<string | null>(null);
     const repsRef = useRef<HTMLInputElement>(null);
@@ -105,10 +107,18 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
             </div>
 
             {/* Weight Input */}
-            <div className="col-span-4">
+            <div className="col-span-4 relative flex items-center">
+                {!isDone && !isBodyweight && !isCardio && (
+                    <button
+                        onClick={() => setShowCalculator(true)}
+                        className="absolute left-2 w-6 h-6 flex items-center justify-center text-zinc-500 hover:text-white transition-colors"
+                    >
+                        <Icon name="Dumbbell" size={14} />
+                    </button>
+                )}
                 <input
                     type="number" inputMode="decimal"
-                    className={isDone ? inputBase + " " + doneInput : inputBase}
+                    className={isDone ? inputBase + " " + doneInput : inputBase + (!isBodyweight && !isCardio ? " pl-8" : "")}
                     placeholder={weightPlaceholder}
                     value={localWeight}
                     onChange={e => setLocalWeight(e.target.value)}
@@ -136,7 +146,10 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
             {/* Complete Button */}
             <div className="col-span-2 flex justify-center">
                 <button
-                    onClick={() => onToggleComplete(exInstanceId, set.id)}
+                    onClick={() => {
+                        triggerHaptic(isDone ? 'light' : 'medium');
+                        onToggleComplete(exInstanceId, set.id);
+                    }}
                     className={`
                         w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-150 active:scale-85
                         ${isDone
@@ -147,6 +160,13 @@ export const SetRow = React.memo(({ set, exInstanceId, unit, unitLabel, plateWei
                     <Icon name="Check" size={20} strokeWidth={3} />
                 </button>
             </div>
+
+            {showCalculator && (
+                <PlateCalculatorModal
+                    initialWeight={Number(localWeight) || 20}
+                    onClose={() => setShowCalculator(false)}
+                />
+            )}
         </div>
     );
 });

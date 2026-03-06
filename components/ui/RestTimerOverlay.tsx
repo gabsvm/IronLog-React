@@ -1,108 +1,155 @@
 
 import React, { useState } from 'react';
-import { useTimerContext } from '../../context/TimerContext'; // New import
+import { useTimerContext } from '../../context/TimerContext';
 import { useApp } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
 import { Icon } from './Icon';
+import { triggerHaptic } from '../../utils/audio';
+
+// Circular SVG countdown ring
+const CircularTimer: React.FC<{ percentage: number; timeLeft: number }> = ({ percentage, timeLeft }) => {
+    const size = 120;
+    const strokeWidth = 8;
+    const radius = (size - strokeWidth) / 2;
+    const circumference = 2 * Math.PI * radius;
+    const dashOffset = circumference * (1 - percentage / 100);
+
+    const formatSeconds = (s: number) => {
+        const sec = Math.max(0, Math.floor(Number(s) || 0));
+        return `${Math.floor(sec / 60)}:${(sec % 60).toString().padStart(2, '0')}`;
+    };
+
+    // Color transitions: green → amber → red as time runs out
+    const color = percentage > 60 ? '#22c55e' : percentage > 30 ? '#f59e0b' : '#dc2626';
+
+    return (
+        <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
+            <svg width={size} height={size} className="-rotate-90">
+                {/* Background track */}
+                <circle
+                    cx={size / 2} cy={size / 2} r={radius}
+                    fill="none" stroke="#27272a" strokeWidth={strokeWidth}
+                />
+                {/* Progress arc */}
+                <circle
+                    cx={size / 2} cy={size / 2} r={radius}
+                    fill="none"
+                    stroke={color}
+                    strokeWidth={strokeWidth}
+                    strokeLinecap="round"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={dashOffset}
+                    style={{ transition: 'stroke-dashoffset 1s linear, stroke 0.5s ease' }}
+                />
+            </svg>
+            {/* Center text */}
+            <div className="absolute flex flex-col items-center justify-center">
+                <span className="font-mono font-black text-white text-2xl leading-none tracking-tight">
+                    {formatSeconds(timeLeft)}
+                </span>
+                <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest mt-0.5">REST</span>
+            </div>
+        </div>
+    );
+};
 
 export const RestTimerOverlay: React.FC = () => {
-    const { restTimer, setRestTimer } = useTimerContext(); // Use isolated context
+    const { restTimer, setRestTimer } = useTimerContext();
     const { lang } = useApp();
-    const t = TRANSLATIONS[lang] || TRANSLATIONS['en']; // Fallback safety
+    const t = TRANSLATIONS[lang] || TRANSLATIONS['en'];
     const [minimized, setMinimized] = useState(false);
 
     if (!restTimer || !restTimer.active) return null;
 
     const formatSeconds = (s: number) => {
         const sec = Math.max(0, Math.floor(Number(s) || 0));
-        return `${Math.floor(sec/60)}:${(sec%60).toString().padStart(2,'0')}`;
+        return `${Math.floor(sec / 60)}:${(sec % 60).toString().padStart(2, '0')}`;
     };
 
     const percentage = Math.min(100, Math.max(0, (restTimer.timeLeft / restTimer.duration) * 100));
 
+    const adjustTimer = (deltaSeconds: number) => {
+        triggerHaptic('light');
+        setRestTimer(p => {
+            if (!p.active) return p;
+            const newTime = Math.max(0, p.timeLeft + deltaSeconds);
+            return {
+                ...p,
+                endAt: (p.endAt || Date.now()) + deltaSeconds * 1000,
+                timeLeft: newTime,
+                duration: deltaSeconds > 0 ? p.duration + deltaSeconds : p.duration,
+            };
+        });
+    };
+
+    const skipTimer = () => {
+        triggerHaptic('medium');
+        setRestTimer(p => ({ ...p, active: false, timeLeft: 0, endAt: 0 }));
+    };
+
     return (
-        <div className={`fixed left-0 right-0 z-50 transition-all duration-300 ${minimized ? 'bottom-4 mx-4 w-auto rounded-full' : 'bottom-0 border-t border-zinc-200 dark:border-white/10'}`}>
-            <div className={`glass shadow-[0_-10px_40px_rgba(0,0,0,0.3)] animate-slideUp overflow-hidden ${minimized ? 'rounded-full pr-2' : ''}`}>
-                
-                {/* Minimized View */}
-                {minimized && (
-                    <div className="flex items-center gap-3 p-2 cursor-pointer" onClick={() => setMinimized(false)}>
-                         <div className="w-8 h-8 rounded-full bg-red-600 text-white flex items-center justify-center animate-pulse">
-                            <Icon name="Clock" size={16} />
-                        </div>
-                        <span className="font-mono font-bold text-zinc-900 dark:text-white pr-2">
-                            {formatSeconds(restTimer.timeLeft)}
-                        </span>
+        <div className={`fixed left-0 right-0 z-50 transition-all duration-300 ${minimized ? 'bottom-24 right-4 left-auto w-auto' : 'bottom-0'}`}>
+            {/* ─── Minimized pill ─── */}
+            {minimized && (
+                <button
+                    onClick={() => { triggerHaptic('light'); setMinimized(false); }}
+                    className="flex items-center gap-3 bg-zinc-900 border border-zinc-700 rounded-2xl px-4 py-3 shadow-2xl shadow-black/50 active:scale-95 transition-transform"
+                >
+                    <div className="w-8 h-8 rounded-full border-2 border-red-500 flex items-center justify-center">
+                        <Icon name="Clock" size={14} className="text-red-400" />
                     </div>
-                )}
+                    <span className="font-mono font-black text-white text-lg">{formatSeconds(restTimer.timeLeft)}</span>
+                    <Icon name="ChevronUp" size={16} className="text-zinc-500" />
+                </button>
+            )}
 
-                {/* Maximized View */}
-                {!minimized && (
-                    <div className="max-w-md mx-auto p-4 pb-8 relative">
-                        {/* Minimize Button */}
-                        <button 
-                            onClick={() => setMinimized(true)}
-                            className="absolute top-2 right-2 p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
-                        >
-                            <Icon name="Minus" size={20} />
-                        </button>
+            {/* ─── Expanded panel ─── */}
+            {!minimized && (
+                <div className="bg-zinc-950 border-t border-zinc-800 shadow-[0_-16px_60px_rgba(0,0,0,0.6)] animate-slideUp">
+                    <div className="max-w-md mx-auto px-5 pt-4 pb-8">
+                        {/* Top row: label + minimize */}
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+                                <Icon name="Clock" size={11} /> {t.resting}
+                            </div>
+                            <button
+                                onClick={() => { triggerHaptic('light'); setMinimized(true); }}
+                                className="p-2 text-zinc-600 hover:text-zinc-300 transition-colors rounded-full hover:bg-zinc-800"
+                            >
+                                <Icon name="Minus" size={18} />
+                            </button>
+                        </div>
 
-                        <div className="flex justify-between items-center mb-3 pr-8">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-500 flex items-center justify-center animate-pulse-subtle">
-                                    <Icon name="Clock" size={20} />
-                                </div>
-                                <div>
-                                    <div className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-0.5">{t.resting}</div>
-                                    <div className="text-2xl font-black text-zinc-900 dark:text-white font-mono leading-none tracking-tight">
-                                        {formatSeconds(restTimer.timeLeft)}
-                                    </div>
-                                </div>
+                        {/* Main: circular timer + controls */}
+                        <div className="flex items-center gap-6">
+                            {/* Circle */}
+                            <CircularTimer percentage={percentage} timeLeft={restTimer.timeLeft} />
+
+                            {/* Right side controls */}
+                            <div className="flex-1 flex flex-col gap-2">
+                                <button
+                                    onClick={() => adjustTimer(30)}
+                                    className="flex items-center justify-center gap-2 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-sm font-bold text-zinc-300 transition-colors active:scale-95"
+                                >
+                                    <Icon name="Plus" size={14} /> +30s
+                                </button>
+                                <button
+                                    onClick={() => adjustTimer(-10)}
+                                    className="flex items-center justify-center gap-2 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-sm font-bold text-zinc-300 transition-colors active:scale-95"
+                                >
+                                    <Icon name="Minus" size={14} /> -10s
+                                </button>
+                                <button
+                                    onClick={skipTimer}
+                                    className="flex items-center justify-center gap-2 py-3 bg-red-600/20 hover:bg-red-600/30 border border-red-500/30 rounded-xl text-sm font-bold text-red-400 transition-colors active:scale-95"
+                                >
+                                    <Icon name="SkipForward" size={14} /> SKIP
+                                </button>
                             </div>
                         </div>
-
-                        <div className="grid grid-cols-3 gap-2 mb-3">
-                            <button 
-                                onClick={() => setRestTimer(p => {
-                                    if (!p.active) return p;
-                                    const sub = 10;
-                                    return { 
-                                        ...p, 
-                                        endAt: (p.endAt || Date.now()) - sub * 1000, 
-                                        timeLeft: Math.max(0, p.timeLeft - sub)
-                                    };
-                                })} 
-                                className="py-3 bg-zinc-100 dark:bg-zinc-800 rounded-xl text-xs font-bold text-zinc-600 dark:text-zinc-300 transition-colors active:scale-95 flex items-center justify-center gap-1"
-                            >
-                                <Icon name="Minus" size={12} /> 10s
-                            </button>
-                            <button 
-                                onClick={() => setRestTimer(p => {
-                                    if (!p.active) return p;
-                                    const add = 30;
-                                    return { ...p, endAt: (p.endAt || Date.now()) + add * 1000, timeLeft: p.timeLeft + add, duration: p.duration + add };
-                                })} 
-                                className="py-3 bg-zinc-100 dark:bg-zinc-800 rounded-xl text-xs font-bold text-zinc-600 dark:text-zinc-300 transition-colors active:scale-95 flex items-center justify-center gap-1"
-                            >
-                                <Icon name="Plus" size={12} /> 30s
-                            </button>
-                            <button 
-                                onClick={() => setRestTimer(p => ({ ...p, active: false, timeLeft: 0, endAt: 0 }))} 
-                                className="py-3 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl text-xs font-bold transition-colors active:scale-95 flex items-center justify-center gap-1"
-                            >
-                                <Icon name="SkipForward" size={14} /> SKIP
-                            </button>
-                        </div>
-
-                        <div className="h-1 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                            <div 
-                                className="h-full bg-red-600 transition-all duration-1000 ease-linear shadow-[0_0_10px_rgba(220,38,38,0.5)]" 
-                                style={{ width: `${percentage}%` }}
-                            ></div>
-                        </div>
                     </div>
-                )}
-            </div>
+                </div>
+            )}
         </div>
     );
 };

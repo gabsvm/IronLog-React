@@ -110,6 +110,32 @@ export const SortableExerciseCard = React.memo(({
         return null;
     }, [logs, ex.id]);
 
+    // 2. Calculate Historical Best PR (1RM)
+    const historicalBest = useMemo(() => {
+        if (!logs || isCardio || !ex.id) return null;
+        let best1RM = 0;
+        let bestStr = '';
+
+        // Scan backwards is slightly more optimal but for precision we scan all
+        logs.forEach(l => {
+            if (l.skipped) return;
+            const pastEx = l.exercises?.find(e => e.id === ex.id);
+            if (!pastEx) return;
+
+            (pastEx.sets || []).forEach(s => {
+                if (s.completed && s.weight && s.reps) {
+                    const e1rm = Number(s.weight) * (1 + Number(s.reps) / 30);
+                    if (e1rm > best1RM) {
+                        best1RM = e1rm;
+                        bestStr = `${s.weight}${unitLabel.toLowerCase()} × ${s.reps} (1RM: ${Math.round(e1rm)})`;
+                    }
+                }
+            });
+        });
+
+        return best1RM > 0 ? bestStr : null;
+    }, [logs, ex.id, isCardio, unitLabel]);
+
     const handleInjectWarmup = () => {
         const firstRegularSet = sets.find(s => s.type === 'regular');
         const targetWeight = Number(firstRegularSet?.weight) || Number(firstRegularSet?.hintWeight) || 0;
@@ -356,6 +382,15 @@ export const SortableExerciseCard = React.memo(({
                         </div>
                     </div>
                 </div>
+
+                {historicalBest && (
+                    <div className="flex items-start gap-1.5 mb-1.5 px-1 mt-1">
+                        <Icon name="Trophy" size={11} className="mt-0.5 text-yellow-500 shrink-0" />
+                        <p className="text-[10px] font-bold text-yellow-500/90 leading-snug">
+                            {lang === 'en' ? 'Best:' : 'Mejor:'} {historicalBest}
+                        </p>
+                    </div>
+                )}
 
                 {lastNote && (
                     <div className="flex items-start gap-1.5 mb-1.5 px-1">

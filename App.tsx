@@ -8,6 +8,7 @@ import { WorkoutView } from './views/WorkoutView';
 import { ExercisesView } from './views/ExercisesView';
 import { ProgramEditView } from './views/ProgramEditView';
 import { RestTimerOverlay } from './components/ui/RestTimerOverlay';
+import { SessionSummaryView } from './views/SessionSummaryView';
 import { SetupWizard } from './components/onboarding/SetupWizard';
 import { Landing } from './components/onboarding/Landing';
 import { ConfirmModal } from './components/ui/ConfirmModal';
@@ -57,7 +58,8 @@ const AppContent = () => {
 
     const t = TRANSLATIONS[lang];
 
-    const [view, setViewState] = useState<'home' | 'workout' | 'history' | 'exercises' | 'program' | 'stats'>('home');
+    const [view, setViewState] = useState<'home' | 'workout' | 'history' | 'exercises' | 'program' | 'stats' | 'summary'>('home');
+    const [completedWorkoutLog, setCompletedWorkoutLog] = useState<any>(null);
     const [showSettings, setShowSettings] = useState(false);
     const [showLanding, setShowLanding] = useState(!hasSeenOnboarding);
     const [showResetModal, setShowResetModal] = useState(false);
@@ -276,7 +278,8 @@ const AppContent = () => {
                                 // 3. Clean up session state and navigate
                                 setActiveSession(null);
                                 setRestTimer({ active: false, timeLeft: 0, duration: 0, endAt: 0 });
-                                setView('home');
+                                setCompletedWorkoutLog(log);
+                                setView('summary');
                             }}
                             onDiscard={() => {
                                 // Specific handler for Discarding a session without saving
@@ -284,6 +287,14 @@ const AppContent = () => {
                                 setView('home'); // Go back to Home
                             }}
                             onBack={() => setView('home')}
+                        />
+                    ) : view === 'summary' && completedWorkoutLog ? (
+                        <SessionSummaryView
+                            log={completedWorkoutLog}
+                            onClose={() => {
+                                setCompletedWorkoutLog(null);
+                                setView('home');
+                            }}
                         />
                     ) : view === 'exercises' ? (
                         <ExercisesView onBack={() => { setView('home'); setShowSettings(true); }} />
