@@ -1,0 +1,14 @@
+[
+    {
+        "relation": [
+            "delegate_permission/common.handle_all_urls"
+        ],
+        "target": {
+            "namespace": "android_app",
+            "package_name": "app.vercel.iron_log_react.twa",
+            "sha256_cert_fingerprints": [
+                "FA:C6:17:45:D6:8D:BD:24:60:8C:38:B0:81:4A:25:2A:9C:20:BE:1C:CC:D3:5F:73:9D:E8:26:A1:7E:18:25:F1"
+            ]
+        }
+    }
+]
