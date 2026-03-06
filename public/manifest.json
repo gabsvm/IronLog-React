@@ -72,5 +72,23 @@
       ]
     }
   ],
+  "share_target": {
+    "action": "/?action=share_target",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "display_override": [
+    "window-controls-overlay",
+    "minimal-ui",
+    "standalone"
+  ],
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "handle_links": "preferred",
   "prefer_related_applications": false
 }
