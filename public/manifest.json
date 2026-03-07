@@ -4,7 +4,7 @@
   "id": "/",
   "scope": "/",
   "start_url": "/?source=pwa",
-  "display": "fullscreen",
+  "display": "standalone",
   "background_color": "#09090b",
   "theme_color": "#dc2626",
   "orientation": "portrait-primary",
@@ -83,6 +83,7 @@
   },
   "display_override": [
     "window-controls-overlay",
+    "tabbed",
     "minimal-ui",
     "standalone"
   ],
@@ -90,5 +91,43 @@
     "preferred_width": 400
   },
   "handle_links": "preferred",
-  "prefer_related_applications": false
+  "prefer_related_applications": false,
+  "launch_handler": {
+    "client_mode": [
+      "navigate-existing",
+      "auto"
+    ]
+  },
+  "protocol_handlers": [
+    {
+      "protocol": "web+ironlog",
+      "url": "/?action=%s"
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "/?action=import_workout",
+      "accept": {
+        "application/json": [
+          ".json"
+        ]
+      }
+    }
+  ],
+  "note_taking": {
+    "new_note_url": "/?action=new_note"
+  },
+  "widgets": [
+    {
+      "name": "IronLog Active Routine",
+      "short_name": "Routine",
+      "description": "View your active workout routine",
+      "tag": "workout",
+      "ms_ac_template": "/widgets/workout.json",
+      "data": "/widgets/data.json",
+      "type": "application/json",
+      "auth": false,
+      "update": 86400
+    }
+  ]
 }
