@@ -82,10 +82,9 @@
     }
   },
   "display_override": [
+    "standalone",
     "window-controls-overlay",
-    "tabbed",
-    "minimal-ui",
-    "standalone"
+    "minimal-ui"
   ],
   "edge_side_panel": {
     "preferred_width": 400
@@ -131,6 +130,13 @@
       "update": 86400
     }
   ],
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "url": "https://iron-log-react.vercel.app/manifest.json"
+    }
+  ],
+  "iarc_rating_id": "",
   "scope_extensions": [
     {
       "origin": "https://*.iron-log-react.vercel.app"
