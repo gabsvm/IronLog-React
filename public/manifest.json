@@ -129,5 +129,12 @@
       "auth": false,
       "update": 86400
     }
+  ],
+  "related_applications": [],
+  "iarc_rating_id": "",
+  "scope_extensions": [
+    {
+      "origin": "*.iron-log-react.vercel.app"
+    }
   ]
 }
