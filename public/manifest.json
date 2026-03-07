@@ -3,7 +3,7 @@
   "short_name": "IronLog",
   "id": "/",
   "scope": "/",
-  "start_url": "/?source=pwa",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#09090b",
   "theme_color": "#dc2626",
@@ -128,12 +128,6 @@
       "type": "application/json",
       "auth": false,
       "update": 86400
-    }
-  ],
-  "related_applications": [
-    {
-      "platform": "webapp",
-      "url": "https://iron-log-react.vercel.app/manifest.json"
     }
   ],
   "iarc_rating_id": "",

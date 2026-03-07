@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ironlog-pro-v12';
+const CACHE_NAME = 'ironlog-pro-v13';
 
 // Core app shell — always cache these
 const PRECACHE_URLS = [
