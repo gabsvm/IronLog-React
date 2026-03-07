@@ -123,18 +123,17 @@
       "short_name": "Routine",
       "description": "View your active workout routine",
       "tag": "workout",
-      "ms_ac_template": "/widgets/workout.json",
-      "data": "/widgets/data.json",
+      "template_url": "https://iron-log-react.vercel.app/widgets/workout.json",
+      "ms_ac_template": "https://iron-log-react.vercel.app/widgets/workout.json",
+      "data": "https://iron-log-react.vercel.app/widgets/data.json",
       "type": "application/json",
       "auth": false,
       "update": 86400
     }
   ],
-  "related_applications": [],
-  "iarc_rating_id": "",
   "scope_extensions": [
     {
-      "origin": "*.iron-log-react.vercel.app"
+      "origin": "https://*.iron-log-react.vercel.app"
     }
   ]
 }
