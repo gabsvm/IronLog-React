@@ -84,8 +84,8 @@
   "related_applications": [
     {
       "platform": "play",
-      "id": "com.ironlog.pro",
-      "url": "https://play.google.com/store/apps/details?id=com.ironlog.pro"
+      "id": "app.vercel.iron_log_react.twa",
+      "url": "https://play.google.com/store/apps/details?id=app.vercel.iron_log_react.twa"
     }
   ],
   "prefer_related_applications": false,
