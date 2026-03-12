@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useEffect, useRef, ReactNode, useState, PropsWithChildren, useMemo, useCallback } from 'react';
-import { AppState, Lang, Theme, ColorTheme, ExerciseDef, ActiveSession, MesoCycle, Log, ProgramDay, TutorialState, GlobalTemplate, UserProfile } from '../types';
+import { AppState, Lang, Theme, ColorTheme, ExerciseDef, ActiveSession, MesoCycle, Log, ProgramDay, TutorialState, GlobalTemplate, UserProfile, BeforeInstallPromptEvent } from '../types';
 import { DEFAULT_LIBRARY, DEFAULT_TEMPLATE, TOJI_TEMPLATE, WIZARD_TEMPLATE, FULL_BODY_TEMPLATE, METABOLITE_TEMPLATE, UPPER_LOWER_TEMPLATE, RESENS_TEMPLATE, MALE_PHYSIQUE_TEMPLATE, TOKITA_TEMPLATE } from '../constants';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { usePersistedState } from '../hooks/usePersistedState';
@@ -24,14 +24,14 @@ const INITIAL_TEMPLATES: GlobalTemplate[] = [
         program: TOKITA_TEMPLATE,
         order: 2,
         guidelineImages: [
-            "https://i.postimg.cc/FK6zKfCJ/Tokita.png",
-            "https://i.postimg.cc/bNd6DrT0/Tokita-2.png",
-            "https://i.postimg.cc/MZf5qNKF/Tokita-3.png",
-            "https://i.postimg.cc/5ydyM6n7/Tokita-4.png",
-            "https://i.postimg.cc/NF6MGBz1/Tokita-5.png",
-            "https://i.postimg.cc/2yQ6jrKn/Tokita-6.png",
-            "https://i.postimg.cc/yx4xzkvf/Tokita-7.png",
-            "https://i.postimg.cc/fycLWDrK/Tokita-8.png"
+            "/assets/templates/tokita/Tokita.png",
+            "/assets/templates/tokita/Tokita-2.png",
+            "/assets/templates/tokita/Tokita-3.png",
+            "/assets/templates/tokita/Tokita-4.png",
+            "/assets/templates/tokita/Tokita-5.png",
+            "/assets/templates/tokita/Tokita-6.png",
+            "/assets/templates/tokita/Tokita-7.png",
+            "/assets/templates/tokita/Tokita-8.png"
         ]
     },
     { id: 'wizard', name: 'wizard', title: { en: "The Wizard v3 (Full Body)", es: "The Wizard v3 (Full Body)" }, description: { en: "3-Days Heavy/Light/Medium. Classic intensity cycling.", es: "3-Días Pesado/Liviano/Medio. Ciclo de intensidad clásico." }, isPro: true, program: WIZARD_TEMPLATE, order: 3 },
@@ -77,7 +77,7 @@ interface AppContextType extends AppState {
     isOnline: boolean;
 
     // PWA Install State
-    deferredPrompt: any;
+    deferredPrompt: BeforeInstallPromptEvent | null;
     installApp: () => void;
     isStandalone: boolean;
 }
@@ -129,7 +129,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     const [isOnline, setIsOnline] = useState(navigator.onLine);
 
     // Initialize with global if available (captured in index.html)
-    const [deferredPrompt, setDeferredPrompt] = useState<any>(window.deferredPrompt || null);
+    const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(window.deferredPrompt || null);
     const [isStandalone, setIsStandalone] = useState(false);
 
     const isAppLoading = programLoading || mesoLoading || sessionLoading || exLoading || logsLoading || fbLoading || onboardingLoading || authLoading || profileLoading;
@@ -190,7 +190,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         isStandaloneQuery.addEventListener('change', (e) => setIsStandalone(e.matches));
 
         // Ensure we catch it if it happens after mount
-        const handler = (e: any) => {
+        const handler = (e: BeforeInstallPromptEvent) => {
             e.preventDefault();
             window.deferredPrompt = e;
             setDeferredPrompt(e);

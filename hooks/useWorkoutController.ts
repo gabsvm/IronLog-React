@@ -39,7 +39,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
     [activeSession?.exercises]);
 
     // Data Mutations
-    const handleSetUpdate = useCallback((exInstanceId: number, setId: number, field: string, value: any) => {
+    const handleSetUpdate = useCallback((exInstanceId: number, setId: number, field: keyof WorkoutSet, value: any) => {
         setActiveSession(prev => {
             if (!prev) return null;
             return {

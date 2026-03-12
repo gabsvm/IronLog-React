@@ -3,10 +3,18 @@ export type Lang = 'en' | 'es';
 export type Theme = 'light' | 'dark' | 'system';
 export type ColorTheme = 'iron' | 'ocean' | 'forest' | 'royal' | 'sunset' | 'monochrome';
 
-// Add Window extension
+export interface BeforeInstallPromptEvent extends Event {
+    readonly platforms: string[];
+    readonly userChoice: Promise<{
+        outcome: 'accepted' | 'dismissed';
+        platform: string;
+    }>;
+    prompt(): Promise<void>;
+}
+
 declare global {
     interface Window {
-        deferredPrompt: any;
+        deferredPrompt: BeforeInstallPromptEvent | null;
     }
 }
 
