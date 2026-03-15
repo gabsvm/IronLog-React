@@ -20,20 +20,7 @@ let firebaseConfig = {
   appId: env.VITE_FIREBASE_APP_ID
 };
 
-// FALLBACK: Direct Paste (Testing/Dev Mode)
-if (!firebaseConfig.apiKey) {
-    console.log("⚠️ Using provided Firebase Config (Testing Mode)");
-    firebaseConfig = {
-        apiKey: "AIzaSyAfrO4IpIzXuNd-dcpVHFdSJjmNx9wHpIE",
-        authDomain: "ironlog-409eb.firebaseapp.com",
-        projectId: "ironlog-409eb",
-        storageBucket: "ironlog-409eb.firebasestorage.app",
-        messagingSenderId: "926261848983",
-        appId: "1:926261848983:web:a7cd25334f6f3dc99172d2"
-    };
-}
-
-const isValidConfig = !!(firebaseConfig.apiKey && firebaseConfig.projectId && !firebaseConfig.apiKey.includes("INSERT_KEY"));
+const isValidConfig = !!(firebaseConfig.apiKey && firebaseConfig.projectId);
 
 let app;
 let auth: Auth | undefined;

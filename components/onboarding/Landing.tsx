@@ -109,9 +109,9 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onLogin }) => {
                     </div>
 
                     <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tighter mb-4 md:mb-6 animate-in-up" style={{ animationDelay: '0.2s' }}>
-                        {t.title.split(' ').map((word, i) => (
-                            <span key={i} className={i === 1 ? "text-red-600" : ""}>{word} </span>
-                        ))}
+                        {t.title}{' '}
+                        <span className="text-red-600">{t.titleAccent}</span>
+                        {t.titleSuffix && ` ${t.titleSuffix}`}
                     </h1>
                     <p className="text-zinc-400 text-base md:text-xl max-w-sm md:max-w-md mb-8 md:mb-10 animate-in-up text-balance" style={{ animationDelay: '0.3s' }}>
                         {t.subtitle}
@@ -149,7 +149,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onLogin }) => {
                         >
                             <div className="w-10 h-10 bg-red-600/10 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                                 <Icon
-                                    name={i === 0 ? "Zap" : i === 1 ? "Activity" : i === 2 ? "Shield" : "Cloud"}
+                                    name={feature.icon || "Zap"}
                                     className="text-red-500"
                                     size={20}
                                 />

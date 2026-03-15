@@ -8,6 +8,8 @@ import { MuscleGroup, MesoType } from '../types';
 import { ExerciseSelector } from '../components/ui/ExerciseSelector';
 import { getTranslated } from '../utils';
 import { ConfirmModal } from '../components/ui/ConfirmModal'; // New Import
+import { PDFImportModal } from '../components/ui/PDFImportModal';
+import { ProgramDay } from '../types';
 
 interface ProgramEditViewProps {
     onBack: () => void;
@@ -20,6 +22,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
     const [pickingForSlot, setPickingForSlot] = useState<{dayId: string, slotIdx: number} | null>(null);
     const [showStartModal, setShowStartModal] = useState(false);
     const [dayToDelete, setDayToDelete] = useState<string | null>(null);
+    const [showPDFImport, setShowPDFImport] = useState(false);
     
     // New Meso Config State
     const [mesoConfig, setMesoConfig] = useState<{
@@ -106,6 +109,10 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
         onBack();
     };
 
+    const handleImportDays = (days: ProgramDay[]) => {
+        setProgram(days);
+    };
+
     return (
         <div className="h-full flex flex-col bg-gray-50 dark:bg-zinc-950 relative">
              {/* Header */}
@@ -115,6 +122,12 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
                     <span className="font-bold text-sm">{t.back}</span>
                 </button>
                 <div className="flex items-center gap-2">
+                    <button 
+                        onClick={() => setShowPDFImport(true)}
+                        className="flex items-center gap-2 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 px-3 py-1.5 rounded-full text-xs font-bold active:scale-95 transition-all"
+                    >
+                        <Icon name="FileText" size={12} /> {TRANSLATIONS[lang].importPDF}
+                    </button>
                     <button 
                         onClick={() => setShowStartModal(true)}
                         className="flex items-center gap-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 px-3 py-1.5 rounded-full text-xs font-bold shadow-lg shadow-zinc-500/20 active:scale-95 transition-all"
@@ -296,6 +309,13 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
                 onCancel={() => setDayToDelete(null)}
                 variant="danger"
             />
+
+            {showPDFImport && (
+                <PDFImportModal 
+                    onClose={() => setShowPDFImport(false)}
+                    onImport={handleImportDays}
+                />
+            )}
         </div>
     );
 };

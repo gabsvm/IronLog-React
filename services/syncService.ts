@@ -61,15 +61,18 @@ export const syncService = {
      */
     uploadUserIdentity: async (userId: string, email: string) => {
         if (!userId || !db) return;
+        // Avoid redundant writes if already synced this session
+        if ((window as any)._lastSyncedId === userId) return;
+
         try {
             const userRef = doc(db, "users", userId);
-            // Use setDoc with merge to create the document if it doesn't exist,
-            // but NOT overwrite existing data fields (like subscription)
             await setDoc(userRef, { 
                 email: email, 
                 lastSeen: Date.now(),
-                uid: userId // Explicitly saving UID helps in some manual queries
+                uid: userId 
             }, { merge: true });
+            
+            (window as any)._lastSyncedId = userId;
             console.log(`👤 Identity Synced: ${email}`);
         } catch (error) {
             console.error("❌ Identity Sync Failed:", error);
@@ -106,10 +109,18 @@ export const syncService = {
             
             batch.set(userRef, mainData, { merge: true });
 
-            // 3. Logs (Historial) en sub-colección
+            // 3. Logs (History) in sub-collection
             if (state.logs && state.logs.length > 0) {
                 const logsRef = doc(db, "users", userId, "data", "history");
-                const logsData = sanitizeForFirestore({ logs: state.logs });
+                let logsData = sanitizeForFirestore({ logs: state.logs });
+                
+                // Firestore document limit is 1MB. We safety check at 900KB.
+                const payloadSize = JSON.stringify(logsData).length;
+                if (payloadSize > 900000) {
+                    console.warn("⚠️ History logs exceeding limit. Truncating to last 200 entries.");
+                    logsData.logs = logsData.logs.slice(-200);
+                }
+                
                 batch.set(logsRef, logsData);
             }
 
@@ -149,7 +160,7 @@ export const syncService = {
                     exercises: data.exercises,
                     rpFeedback: data.rpFeedback,
                     logs: logsData,
-                    lastUpdated: data.lastUpdated
+                    lastUpdated: data.lastUpdated || Date.now() // Fallback if missing
                 };
             }
             return null; 

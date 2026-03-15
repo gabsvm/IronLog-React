@@ -274,13 +274,15 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                 </div>
             </div>
 
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto p-6 flex flex-col justify-center max-w-md mx-auto w-full">
-                {renderStep()}
+            {/* Content Container - Fixed height to prevent jumps */}
+            <div className="flex-1 overflow-y-auto px-6 pt-12 pb-6 max-w-md mx-auto w-full">
+                <div className="min-h-[400px]">
+                    {renderStep()}
+                </div>
             </div>
 
-            {/* Footer */}
-            <div className="p-6 border-t border-zinc-100 dark:border-zinc-900 bg-white dark:bg-zinc-950">
+            {/* Footer - Fixed height */}
+            <div className="p-6 border-t border-zinc-100 dark:border-zinc-900 bg-white dark:bg-zinc-950 min-h-[140px]">
                 <div className="max-w-md mx-auto w-full">
                     {step === 4 ? (
                         <Button size="lg" fullWidth onClick={handleApply} className="shadow-xl shadow-green-500/20 bg-green-600 hover:bg-green-500">
@@ -302,12 +304,21 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                         </div>
                     )}
                     
-                    {/* Progress Dots */}
+                    {/* Progress Dots with labels for stability */}
                     {step < 4 && (
-                        <div className="flex justify-center gap-2 mt-6">
-                            {[0, 1, 2, 3].map(i => (
-                                <div key={i} className={`w-2 h-2 rounded-full transition-all ${i === step ? 'bg-zinc-800 dark:bg-white w-4' : 'bg-zinc-200 dark:bg-zinc-800'}`} />
-                            ))}
+                        <div className="flex justify-center items-center gap-4 mt-8">
+                            {[0, 1, 2, 3].map(i => {
+                                const stepLabels = [w.steps.exp, w.steps.freq, w.steps.goal, w.steps.time];
+                                const isActive = i === step;
+                                return (
+                                    <div key={i} className="flex flex-col items-center gap-2 w-16">
+                                        <div className={`h-1 rounded-full transition-all duration-300 ${isActive ? 'bg-red-600 w-full' : 'bg-zinc-200 dark:bg-zinc-800 w-full'}`} />
+                                        <span className={`text-[8px] font-bold uppercase tracking-tighter truncate w-full text-center ${isActive ? 'text-red-600' : 'text-zinc-400'}`}>
+                                            {stepLabels[i]}
+                                        </span>
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
                 </div>

@@ -1,5 +1,5 @@
  
-import { ExerciseDef, ProgramDay, MuscleGroup } from './types';
+import { ExerciseDef, ProgramDay, MuscleGroup, GlobalTemplate } from './types';
 
 export const MUSCLE_GROUPS: Record<string, MuscleGroup> = { 
     CHEST: 'CHEST', BACK: 'BACK', QUADS: 'QUADS', HAMS: 'HAMSTRINGS', 
@@ -7,6 +7,8 @@ export const MUSCLE_GROUPS: Record<string, MuscleGroup> = {
     BICEPS: 'BICEPS', TRICEPS: 'TRICEPS', TRAPS: 'TRAPS', 
     ABS: 'ABS', FOREARMS: 'FOREARMS', NECK: 'NECK', CARDIO: 'CARDIO'
 };
+
+const ASSETS_BASE = (import.meta as any).env?.VITE_ASSETS_BASE || '';
 
 // ... (KEEP DEFAULT_LIBRARY, TEMPLATES, etc. exactly as they are - omitted for brevity) ...
 export const DEFAULT_LIBRARY: ExerciseDef[] = [
@@ -505,6 +507,29 @@ export const TOJI_TEMPLATE: ProgramDay[] = [
     }
 ];
 
+export const INITIAL_TEMPLATES: GlobalTemplate[] = [
+    { id: 'toji_fushiguro', name: 'toji_fushiguro', title: { en: "Toji (Natural Hypertrophy)", es: "Toji (Natural Hypertrophy)" }, description: { en: "4-Day Elite Split. Giant Sets, Neck, Forearms & Aesthetic focus.", es: "Rutina Élite de 4 Días. Series Gigantes, Cuello, Antebrazo y Estética." }, isPro: true, program: TOJI_TEMPLATE, order: 1 },
+    {
+        id: 'tokita',
+        name: 'tokita',
+        title: { en: "Tokita Ohma Program", es: "Programa Tokita Ohma" },
+        description: { en: "4-Day Hybrid Split. High volume, supersets & functional strength.", es: "Rutina Híbrida 4 Días. Alto volumen, superseries y fuerza funcional." },
+        isPro: false,
+        program: TOKITA_TEMPLATE,
+        order: 2,
+        guidelineImages: Array.from({length: 8}, (_, i) => 
+            `${ASSETS_BASE}/assets/templates/tokita/Tokita${i === 0 ? '' : `-${i+1}`}.png`
+        )
+    },
+    { id: 'wizard', name: 'wizard', title: { en: "The Wizard v3 (Full Body)", es: "The Wizard v3 (Full Body)" }, description: { en: "3-Days Heavy/Light/Medium. Classic intensity cycling.", es: "3-Días Pesado/Liviano/Medio. Ciclo de intensidad clásico." }, isPro: true, program: WIZARD_TEMPLATE, order: 3 },
+    { id: 'full_body', name: 'full_body', title: { en: "Aesthetic V-Taper", es: "Aesthetic V-Taper" }, description: { en: "Dr. Mike Style. Focus on V-Taper (Lats/Side Delts).", es: "Estilo Dr. Mike. Foco en V-Taper (Dorsal/Hombro Lateral)." }, isPro: true, program: FULL_BODY_TEMPLATE, order: 4 },
+    { id: 'male_physique', name: 'male_physique', title: { en: "Male Physique (Upper/Lower)", es: "Male Physique (Torso/Pierna)" }, description: { en: "4-Days Bodybuilding Focus. Higher volume.", es: "4-Días Foco Culturismo. Mayor volumen." }, isPro: false, program: MALE_PHYSIQUE_TEMPLATE, order: 5 },
+    { id: 'hyp_1', name: 'hyp_1', title: { en: "Base Hypertrophy 1", es: "Hipertrofia Base 1" }, description: { en: "Standard PPL. Balanced volume.", es: "PPL Estándar. Volumen equilibrado." }, isPro: false, program: DEFAULT_TEMPLATE, order: 6 },
+    { id: 'hyp_2', name: 'hyp_2', title: { en: "Base Hypertrophy 2", es: "Hipertrofia Base 2" }, description: { en: "Upper/Lower Split (4 Days). Focus on basics.", es: "Torso/Pierna (4 Días). Foco en básicos." }, isPro: false, program: UPPER_LOWER_TEMPLATE, order: 7 },
+    { id: 'metabolite', name: 'metabolite', title: { en: "Metabolite Phase", es: "Fase Metabolitos" }, description: { en: "High reps (20-30), short rests, the 'burn'.", es: "Reps altas (20-30), descanso corto, 'quemazón'." }, isPro: false, program: METABOLITE_TEMPLATE, order: 8 },
+    { id: 'resensitization', name: 'resensitization', title: { en: "Resensitization", es: "Resensitization" }, description: { en: "Low volume, heavy weight to reset fatigue.", es: "Bajo volumen, peso alto para resetear fatiga." }, isPro: false, program: RESENS_TEMPLATE, order: 9 },
+];
+
 export const TRANSLATIONS = {
     en: {
         startMeso: "Start New Mesocycle",
@@ -578,6 +603,11 @@ export const TRANSLATIONS = {
         dataSaved: "Saved!",
         addSet: "Set",
         remSet: "Set",
+        avtRound: "Round",
+        addRound: "+ New Round",
+        markFailure: "Failure",
+        importPDF: "Import PDF",
+        avtLabel: "AVT",
         delSlot: "Delete Slot",
         offline: "Local Mode",
         mesoAvg: "Meso Avg Volume",
@@ -631,7 +661,8 @@ export const TRANSLATIONS = {
         factoryReset: "Factory Reset App",
         workoutConfig: "Workout Config",
         completeWeek: "Complete Week",
-        completeWeekConfirm: "Advance to next week?",
+        completeWeekConfirm: "Advance to the next week of your mesocycle?",
+        more: "...and {0} more",
         autoRegulate: "Auto-regulate volume?",
         autoRegulateDesc: "IronCoach will adjust volume based on your feedback.",
         applyingChanges: "Applying IronCoach Changes:",
@@ -692,6 +723,11 @@ export const TRANSLATIONS = {
                 yearly: "$34.99 / year",
                 lifetime: "$49.99 lifetime"
             },
+            tiers: {
+                monthly:  { label: 'Monthly',  price: 'USD 4.99 / month' },
+                yearly:   { label: 'Annual',   price: 'USD 39.99 / year' },
+                lifetime: { label: 'Lifetime', price: 'USD 99.99 one-time' },
+            },
             bestValue: "Save 50%",
             guarantee: "Cancel anytime. Your data is always yours.",
             triggers: {
@@ -729,64 +765,49 @@ export const TRANSLATIONS = {
 
         // Setup Wizard
         wizard: {
-            title: "Setup Your Profile",
-            welcome: "Let's build your perfect plan.",
-            steps: {
-                exp: "Experience Level",
-                freq: "Training Frequency",
-                goal: "Primary Goal",
-                time: "Session Duration",
-                result: "Your Recommended Plan"
+            manual: "Manual Setup",
+            skip: "Skip / Manual",
+            generating: "Generating your plan...",
+            steps: { exp: "Experience", freq: "Frequency", goal: "Goal", time: "Availability", result: "Your Plan" },
+            expOptions: { beginner: "Beginner", intermediate: "Intermediate", advanced: "Advanced" },
+            expDesc: { 
+                beginner: "0-1 years of serious training. Focus on form and consistency.",
+                intermediate: "1-3 years. Familiar with RPE and compound lifting.",
+                advanced: "3+ years. High volume requirements and advanced recovery needs."
             },
-            expOptions: {
-                beginner: "Beginner",
-                intermediate: "Intermediate",
-                advanced: "Advanced"
+            expNote: "IronCoach will adjust initial volume based on your training age.",
+            goalOptions: { hypertrophy: "Hypertrophy", strength: "Strength", endurance: "Endurance" },
+            goalDesc: {
+                hypertrophy: "Maximize muscle size and body composition.",
+                strength: "Maximize 1RM on core lifts (Squat, Bench, Deadlift).",
+                endurance: "Build work capacity and cardiovascular fitness."
             },
-            expDesc: {
-                beginner: "Training consistently for <1 year. You get stronger every week.",
-                intermediate: "1-3 years of consistent training. You need periods of accumulation.",
-                advanced: "3+ years of serious training. Gains are very slow and require specialization."
-            },
-            expNote: "Note: 'Years' implies consistent training with a structured plan. If your training has been sporadic or without a clear program, choose Beginner.",
-
-            goalOptions: {
-                hypertrophy: "Hypertrophy (Muscle Size)",
-                strength: "Strength / Power",
-                endurance: "Endurance / Conditioning"
-            },
-            timeOptions: {
-                short: "Short (<45 mins)",
-                medium: "Standard (60 mins)",
-                long: "Long (90+ mins)"
-            },
-            generating: "Analyzing profile...",
-            apply: "Apply & Start",
-            manual: "Skip to Manual Setup",
+            timeOptions: { short: "Quick (45m)", medium: "Standard (75m)", long: "Extended (100m+)" },
+            apply: "Apply & Start Program",
+            adjusted: "Plan adjusted to fit your schedule.",
             reason: {
-                rec_low_freq: "Recommended for 2 days/week to hit full body frequency.",
-                rec_3_day: "Classic 3-day Full Body split for optimal frequency.",
-                rec_4_day: "Upper/Lower split allows focused work with good recovery.",
-                rec_ppl: "Push/Pull/Legs allows high volume for advanced trainees.",
-                rec_endurance: "Metabolite training focuses on higher reps and endurance.",
-                rec_default: "Balanced starting point.",
-                rec_wizard: "The 'Wizard' split (Heavy/Light/Medium) is perfecto for 3-day frequency."
-            },
-            adjusted: "Note: Volume reduced slightly to fit your time constraints."
+                freq: "Optimal frequency for your experience level.",
+                time: "Exercise selection optimized for session length.",
+                goal: "Rep ranges and movement patterns aligned with your goal."
+            }
         },
 
         // Landing Page
         landing: {
-            title: "Forge Your Physique",
-            subtitle: "Science-based hypertrophy tracking and auto-regulation. Powered by IronCoach™.",
-            getStarted: "Get Started",
-            login: "Sign In / Register",
-            featuresTitle: "The Future of Hypertrophy",
+            login: "Sign In",
+            title: "Train",
+            titleAccent: "Smarter",
+            titleSuffix: "",
+            subtitle: "The professional training log for serious athletes. Track every set, rep, and RPE with precision.",
+            getStarted: "Get Started Free",
+            featuresTitle: "Why IronLog?",
+            appVersion: "v4.1 Professional",
+            socialProof: "+2,400 athletes tracking progress",
             features: [
-                { title: "IronCoach™ AI", desc: "Scientific volume auto-regulation based on your recovery feedback." },
-                { title: "Smart Tracking", desc: "Log RIR, intensity, and warmups with a premium, focused interface." },
-                { title: "Elite Templates", desc: "Access pro-level routines used by top physique athletes." },
-                { title: "Cloud Sync", desc: "Your data is always safe and synced across all your devices." }
+                { title: "Smart Tracking", desc: "Predictive RPE and volume tracking designed for hypertrophy.", icon: "Zap" },
+                { title: "IronCoach AI", desc: "Real-time volume adjustments based on your recovery.", icon: "Activity" },
+                { title: "100% Secure", desc: "Private data sync across all your devices.", icon: "Shield" },
+                { title: "Offline First", desc: "Works deep in the gym with zero internet connection.", icon: "Cloud" }
             ]
         },
 
@@ -794,22 +815,28 @@ export const TRANSLATIONS = {
         auth: {
             signIn: "Sign In",
             register: "Create Account",
-            email: "Email",
+            email: "Email Address",
             password: "Password",
-            continueGuest: "Continue as Guest (Local Mode)",
-            guestNote: "Data is kept on device until you sign in.",
+            confirmPassword: "Confirm Password",
+            passwordMismatch: "Passwords do not match",
+            name: "Full Name",
+            forgotPassword: "Forgot password?",
+            resetSent: "Password reset link sent!",
+            startDemo: "Try 7 Days Free",
+            continueGuest: "Continue as Guest",
+            guestNote: "Workouts will be saved locally on this device.",
             noAccount: "Don't have an account?",
             hasAccount: "Already have an account?",
-            signUpBtn: "Sign Up",
-            signInBtn: "Log In",
-            processing: "Processing...",
+            signUpBtn: "Sign up",
+            signInBtn: "Sign in",
+            processing: "Please wait...",
             or: "OR",
-            syncNote: "Data is synced securely to the cloud when online. You can use the app offline and it will sync later.",
+            syncNote: "Create an account to sync your data across devices and never lose your progress.",
             logout: "Log Out",
             guestUser: "Guest User",
             localStorage: "Local Storage Only",
             proMember: "Pro Member",
-            signInRegister: "Sign In / Register"
+            signInRegister: "Sign In or Register"
         },
 
         // NEW: PWA Install
@@ -1003,6 +1030,11 @@ export const TRANSLATIONS = {
         dataSaved: "¡Guardado!",
         addSet: "Serie",
         remSet: "Serie",
+        avtRound: "Round",
+        addRound: "+ Nuevo Round",
+        markFailure: "Fallo",
+        importPDF: "Importar PDF",
+        avtLabel: "AVT",
         delSlot: "Borrar Slot",
         offline: "Modo Local",
         mesoAvg: "Vol. Promedio Meso",
@@ -1056,7 +1088,8 @@ export const TRANSLATIONS = {
         factoryReset: "Restablecer Fábrica",
         workoutConfig: "Configuración Entreno",
         completeWeek: "Completar Semana",
-        completeWeekConfirm: "¿Avanzar a la siguiente semana?",
+        completeWeekConfirm: "¿Avanzar a la siguiente semana de tu mesociclo?",
+        more: "...y {0} más",
         autoRegulate: "¿Auto-regular volumen?",
         autoRegulateDesc: "IronCoach ajustará el volumen según tu feedback.",
         applyingChanges: "Aplicando Cambios IronCoach:",
@@ -1117,6 +1150,11 @@ export const TRANSLATIONS = {
                 yearly: "$34.99 / año",
                 lifetime: "$49.99 de por vida"
             },
+            tiers: {
+                monthly:  { label: 'Mensual',  price: 'USD 4.99 / mes' },
+                yearly:   { label: 'Anual',    price: 'USD 39.99 / año' },
+                lifetime: { label: 'De por vida', price: 'USD 99.99 único pago' },
+            },
             bestValue: "Ahorra 50%",
             guarantee: "Cancela cuando quieras. Tus datos siempre son tuyos.",
             triggers: {
@@ -1154,64 +1192,49 @@ export const TRANSLATIONS = {
 
         // Setup Wizard
         wizard: {
-            title: "Configura tu Perfil",
-            welcome: "Construyamos tu plan ideal.",
-            steps: {
-                exp: "Nivel de Experiencia",
-                freq: "Frecuencia Semanal",
-                goal: "Objetivo Principal",
-                time: "Duración de Sesión",
-                result: "Tu Plan Recomendado"
+            manual: "Configuración Manual",
+            skip: "Saltar / Manual",
+            generating: "Generando tu plan...",
+            steps: { exp: "Experiencia", freq: "Frecuencia", goal: "Objetivo", time: "Tiempo", result: "Tu Plan" },
+            expOptions: { beginner: "Principiante", intermediate: "Intermedio", advanced: "Avanzado" },
+            expDesc: { 
+                beginner: "0-1 años de entrenamiento serio. Enfoque en técnica y consistencia.",
+                intermediate: "1-3 años. Familiarizado con RPE y levantamientos compuestos.",
+                advanced: "3+ años. Requerimientos de volumen alto y necesidades de recuperación avanzada."
             },
-            expOptions: {
-                beginner: "Principiante",
-                intermediate: "Intermedio",
-                advanced: "Avanzado"
+            expNote: "IronCoach ajustará el volumen inicial según tu antigüedad de entrenamiento.",
+            goalOptions: { hypertrophy: "Hipertrofia", strength: "Fuerza", endurance: "Resistencia" },
+            goalDesc: {
+                hypertrophy: "Maximiza el tamaño muscular y la composición corporal.",
+                strength: "Maximiza tu 1RM en ejercicios básicos (Squat, Bench, Deadlift).",
+                endurance: "Mejora capacidad de trabajo y condición cardiovascular."
             },
-            expDesc: {
-                beginner: "Entrenamiento constante <1 año. Progresas en cargas casi cada semana.",
-                intermediate: "1-3 años constantes. Necesitas periodización para seguir avanzando.",
-                advanced: "3+ años serios. Ganancias muy lentas, requiere bloques especializados."
-            },
-            expNote: "Nota: 'Años' implica entrenamiento constante con un plan real. Si has entrenado intermitentemente o sin rutina clara, elige Principiante.",
-
-            goalOptions: {
-                hypertrophy: "Hipertrofia (Músculo)",
-                strength: "Fuerza / Power",
-                endurance: "Resistencia / Cardio"
-            },
-            timeOptions: {
-                short: "Corto (<45 min)",
-                medium: "Estándar (60 min)",
-                long: "Largo (90+ min)"
-            },
-            generating: "Analizando perfil...",
-            apply: "Aplicar y Empezar",
-            manual: "Saltar a Configuración Manual",
+            timeOptions: { short: "Rápido (45m)", medium: "Estándar (75m)", long: "Extendido (100m+)" },
+            apply: "Aplicar y Empezar Programa",
+            adjusted: "Plan ajustado a tu disponibilidad horaria.",
             reason: {
-                rec_low_freq: "Recomendado para 2 días/sem para cubrir cuerpo completo.",
-                rec_3_day: "Full Body de 3 días para frecuencia óptima.",
-                rec_4_day: "División Torso/Pierna: buen equilibrio trabajo/descanso.",
-                rec_ppl: "Push/Pull/Legs: alto volumen para avanzados.",
-                rec_endurance: "Entreno de metabolitos enfocado en altas reps.",
-                rec_default: "Punto de partida equilibrado.",
-                rec_wizard: "El sistema 'Wizard' (Pesado/Liviano/Medio) es perfecto para frecuencia 3 días."
-            },
-            adjusted: "Nota: Volumen reducido ligeramente por tiempo limitado."
+                freq: "Frecuencia óptima para tu nivel de experiencia.",
+                time: "Selección de ejercicios optimizada para la duración de la sesión.",
+                goal: "Rangos de repeticiones y patrones de movimiento alineados con tu meta."
+            }
         },
 
         // Landing Page
         landing: {
-            title: "Forja tu Físico",
-            subtitle: "Seguimiento de hipertrofia basado en ciencia y auto-regulación. Impulsado por IronCoach™.",
-            getStarted: "Comenzar gratis",
-            login: "Iniciar Sesión / Registro",
-            featuresTitle: "El Futuro de la Hipertrofia",
+            login: "Entrar",
+            title: "Entrena con",
+            titleAccent: "Inteligencia",
+            titleSuffix: "",
+            subtitle: "El diario de entrenamiento profesional para atletas serios. Registra cada serie, rep y RPE con precisión.",
+            getStarted: "Empezar Gratis",
+            featuresTitle: "¿Por qué IronLog?",
+            appVersion: "v4.1 Professional",
+            socialProof: "+2,400 atletas registrando sus progresos",
             features: [
-                { title: "IronCoach™ AI", desc: "Auto-regulación científica del volumen basada en tu recuperación." },
-                { title: "Seguimiento Inteligente", desc: "Registra RIR, intensidad y calentamientos con una interfaz de élite." },
-                { title: "Rutinas Pro", desc: "Accede a entrenamientos de nivel profesional usados por atletas de élite." },
-                { title: "Sincronización Nube", desc: "Tus datos siempre seguros y sincronizados en todos tus dispositivos." }
+                { title: "Seguimiento Inteligente", desc: "RPE predictivo y control de volumen diseñado para hipertrofia.", icon: "Zap" },
+                { title: "IronCoach AI", desc: "Ajustes de volumen en tiempo real basados en tu recuperación.", icon: "Activity" },
+                { title: "100% Seguro", desc: "Sincronización privada de datos en todos tus dispositivos.", icon: "Shield" },
+                { title: "Offline First", desc: "Funciona perfectamente en el gimnasio sin conexión a internet.", icon: "Cloud" }
             ]
         },
 
@@ -1221,15 +1244,21 @@ export const TRANSLATIONS = {
             register: "Crear Cuenta",
             email: "Correo Electrónico",
             password: "Contraseña",
-            continueGuest: "Seguir como Invitado (Modo Local)",
-            guestNote: "Los datos se guardan en el dispositivo hasta que inicies sesión.",
-            noAccount: "¿No tienes cuenta?",
-            hasAccount: "¿Ya tienes cuenta?",
+            confirmPassword: "Confirmar Contraseña",
+            passwordMismatch: "Las contraseñas no coinciden",
+            name: "Nombre Completo",
+            forgotPassword: "¿Olvidaste tu contraseña?",
+            resetSent: "¡Enlace de recuperación enviado!",
+            startDemo: "Prueba 7 Días Pro",
+            continueGuest: "Continuar como Invitado",
+            guestNote: "Los entrenamientos se guardarán localmente en este dispositivo.",
+            noAccount: "¿No tienes una cuenta?",
+            hasAccount: "¿Ya tienes una cuenta?",
             signUpBtn: "Regístrate",
-            signInBtn: "Acceder",
+            signInBtn: "Inicia Sesión",
             processing: "Procesando...",
             or: "O",
-            syncNote: "Tus datos se sincronizan en la nube. Puedes usar la app offline y se sincronizará luego.",
+            syncNote: "Crea una cuenta para sincronizar tus datos entre dispositivos y nunca perder tu progreso.",
             logout: "Cerrar Sesión",
             guestUser: "Usuario Invitado",
             localStorage: "Solo almacenamiento local",

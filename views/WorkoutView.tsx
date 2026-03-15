@@ -380,6 +380,9 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                             stageConfig={stageConfig}
                                             viewMode="list"
                                             tutorialId={idx === 0 ? "tut-set-type" : undefined}
+                                            onMarkLastHop={ctrl.handleMarkLastHop}
+                                            onAddHopToRound={ctrl.handleAddHopToRound}
+                                            onAddAVTRound={ctrl.handleAddAVTRound}
                                         />
                                     );
                                 })}
@@ -457,6 +460,9 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                         stageConfig={stageConfig}
                                         viewMode="focus"
                                         tutorialId={focusedIndex === 0 ? "tut-set-type" : undefined}
+                                        onMarkLastHop={ctrl.handleMarkLastHop}
+                                        onAddHopToRound={ctrl.handleAddHopToRound}
+                                        onAddAVTRound={ctrl.handleAddAVTRound}
                                     />
 
                                     <div className="mt-4 flex gap-3 shrink-0">

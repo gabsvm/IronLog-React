@@ -334,16 +334,28 @@ const AppContent = () => {
                                         let setTarget = slotDef.setTarget || 3;
                                         if (isDeload) setTarget = Math.max(1, Math.ceil(setTarget / 2));
 
-                                        const initialSets = Array(setTarget).fill(null).map((_, i) => ({
-                                            id: Date.now() + Math.random() + i,
-                                            weight: '', reps: '', rpe: '', completed: false,
-                                            // Apply saved Set Type preference from Template if available, else default to 'regular'
-                                            type: slotDef.setType || 'regular',
-                                            hintWeight: lastSets?.[i]?.weight, hintReps: lastSets?.[i]?.reps,
-                                            prevWeight: lastSets?.[i]?.weight, prevReps: lastSets?.[i]?.reps
-                                        }));
+                                        let initialSets;
+                                        if (slotDef.isAVT) {
+                                            const roundId = Date.now() + Math.random();
+                                            initialSets = Array.from({ length: 4 }, (_, i) => ({
+                                                id: Date.now() + Math.random() + i,
+                                                weight: '',
+                                                reps: slotDef.avtStartReps ? String(slotDef.avtStartReps) : '6',
+                                                rpe: '', completed: false, type: 'avt_hop',
+                                                avtRoundId: roundId, isLastHop: false
+                                            }));
+                                        } else {
+                                            initialSets = Array(setTarget).fill(null).map((_, i) => ({
+                                                id: Date.now() + Math.random() + i,
+                                                weight: '', reps: '', rpe: '', completed: false,
+                                                // Apply saved Set Type preference from Template if available, else default to 'regular'
+                                                type: slotDef.setType || 'regular',
+                                                hintWeight: lastSets?.[i]?.weight, hintReps: lastSets?.[i]?.reps,
+                                                prevWeight: lastSets?.[i]?.weight, prevReps: lastSets?.[i]?.reps
+                                            }));
+                                        }
 
-                                        return { ...exDef, instanceId: Date.now() + Math.random() + sIdx, slotLabel: slotDef.muscle, targetReps: slotDef.reps, sets: initialSets };
+                                        return { ...exDef, instanceId: Date.now() + Math.random() + sIdx, slotLabel: slotDef.muscle, targetReps: slotDef.reps, sets: initialSets as any };
                                     }).filter(Boolean);
 
                                     setActiveSession({ id: Date.now(), dayIdx: idx, name: `${activeMeso.week} • ${dayNameSafe}`, exercises: sessionExs as any, startTime: Date.now(), mesoId: activeMeso.id, week: activeMeso.week });

@@ -6,6 +6,7 @@ import { SessionExercise, WorkoutSet, CardioType, SetType } from '../../types';
 import { Icon } from '../ui/Icon';
 import { MuscleTag } from './MuscleTag';
 import { SetRow } from './SetRow';
+import { AVTRoundCard } from './AVTRoundCard';
 import { getTranslated, roundWeight } from '../../utils';
 import { useApp } from '../../context/AppContext';
 
@@ -25,6 +26,9 @@ interface SortableExerciseCardProps {
     onConfigPlate: (id: number | null) => void;
     onUpdateSession: (cb: any) => void;
     onOpenWarmup?: (id: number) => void; // New prop to trigger modal
+    onMarkLastHop: (exId: number, setId: number) => void;
+    onAddHopToRound: (exId: number, roundId: number) => void;
+    onAddAVTRound: (exId: number) => void;
 
     // UI State passed down
     openMenuId: number | null;
@@ -67,7 +71,10 @@ export const SortableExerciseCard = React.memo(({
     config,
     stageConfig,
     viewMode = 'list',
-    tutorialId
+    tutorialId,
+    onMarkLastHop,
+    onAddHopToRound,
+    onAddAVTRound
 }: SortableExerciseCardProps) => {
     const { logs } = useApp();
     const [isDeleting, setIsDeleting] = useState(false);
@@ -135,6 +142,21 @@ export const SortableExerciseCard = React.memo(({
 
         return best1RM > 0 ? bestStr : null;
     }, [logs, ex.id, isCardio, unitLabel]);
+
+    // Agrupar sets AVT por roundId
+    const avtRounds = useMemo(() => {
+        const hopSets = ex.sets.filter(s => s.type === 'avt_hop' && s.avtRoundId);
+        const groups: Record<number, WorkoutSet[]> = {};
+        hopSets.forEach(s => {
+            const rid = s.avtRoundId!;
+            if (!groups[rid]) groups[rid] = [];
+            groups[rid].push(s);
+        });
+        return Object.entries(groups).map(([id, hops]) => ({ roundId: Number(id), hops }));
+    }, [ex.sets]);
+
+    const isAVTExercise = avtRounds.length > 0;
+    const regularSets = ex.sets.filter(s => s.type !== 'avt_hop');
 
     const handleInjectWarmup = () => {
         const firstRegularSet = sets.find(s => s.type === 'regular');
@@ -445,7 +467,7 @@ export const SortableExerciseCard = React.memo(({
 
             {/* Sets List */}
             <div className={`divide-y divide-zinc-100 dark:divide-white/5 ${viewMode === 'focus' ? 'overflow-y-auto flex-1' : ''}`}>
-                {sets.map((set, idx) => (
+                {!isAVTExercise && regularSets.map((set, idx) => (
                     <SetRow
                         key={set.id}
                         set={set}
@@ -465,6 +487,21 @@ export const SortableExerciseCard = React.memo(({
                         tutorialId={idx === 0 ? tutorialId : undefined} // Only pass to first set if provided
                     />
                 ))}
+
+                {isAVTExercise && avtRounds.map((round, idx) => (
+                    <AVTRoundCard
+                        key={round.roundId}
+                        roundId={round.roundId}
+                        hops={round.hops}
+                        roundNumber={idx + 1}
+                        exInstanceId={ex.instanceId}
+                        unit={unitLabel}
+                        onUpdate={onSetUpdate}
+                        onToggleComplete={onSetComplete}
+                        onMarkLastHop={onMarkLastHop}
+                        onAddHop={onAddHopToRound}
+                    />
+                ))}
             </div>
 
             {/* Footer */}
@@ -477,10 +514,10 @@ export const SortableExerciseCard = React.memo(({
                     <Icon name="Minus" size={13} /> {String(t.removeSetBtn)}
                 </button>
                 <button
-                    onClick={() => onAddSet(ex.instanceId)}
+                    onClick={() => isAVTExercise ? onAddAVTRound(ex.instanceId) : onAddSet(ex.instanceId)}
                     className="w-full py-3.5 flex items-center justify-center gap-2 text-xs font-bold text-zinc-500 hover:text-white transition-colors active:scale-95"
                 >
-                    <Icon name="Plus" size={13} /> {String(t.addSetBtn)}
+                    <Icon name="Plus" size={13} /> {isAVTExercise ? t.addRound : t.addSetBtn}
                 </button>
             </div>
         </div>

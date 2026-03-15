@@ -33,7 +33,7 @@ const HistoryCard = memo(({ log, isExpanded, onToggle, lang, t, id }: HistoryCar
     // Process "Best Sets" for preview
     const bestSets = (log.exercises || []).map(ex => {
         const isCardio = ex.muscle === 'CARDIO';
-        const validSets = (ex.sets || []).filter(s => s.completed);
+        const validSets = (ex.sets || []).filter(s => s.completed && s.type !== 'avt_hop');
 
         if (validSets.length === 0) return null;
 
@@ -103,7 +103,11 @@ const HistoryCard = memo(({ log, isExpanded, onToggle, lang, t, id }: HistoryCar
                                 </span>
                             </div>
                         ))}
-                        {bestSets.length > 3 && <div className="text-[10px] text-zinc-400 italic">...and {bestSets.length - 3} more</div>}
+                        {bestSets.length > 3 && (
+                            <div className="text-[10px] text-zinc-400 italic">
+                                {t.more.replace('{0}', String(bestSets.length - 3))}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

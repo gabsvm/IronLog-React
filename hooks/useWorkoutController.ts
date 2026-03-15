@@ -312,6 +312,78 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
         setActiveSession(prev => prev ? { ...prev, exercises: newExercises } : null);
     }, [activeSession, setActiveSession]);
 
+    const handleAddAVTRound = useCallback((exInstanceId: number) => {
+        const roundId = Date.now();
+        // Un round AVT empieza con 4 hops vacíos (peso incremental, mismas reps)
+        // El usuario va completando hop a hop y marca cuál fue el fallo
+        const initialHops: WorkoutSet[] = Array.from({ length: 4 }, (_, i) => ({
+          id: Date.now() + i,
+          weight: '',
+          reps: '',
+          rpe: '',
+          completed: false,
+          type: 'avt_hop' as SetType,
+          avtRoundId: roundId,
+          isLastHop: false,
+        }));
+      
+        setActiveSession(prev => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            exercises: prev.exercises.map(ex => {
+              if (ex.instanceId !== exInstanceId) return ex;
+              return { ...ex, sets: [...(ex.sets || []), ...initialHops] };
+            })
+          };
+        });
+      }, [setActiveSession]);
+      
+      const handleMarkLastHop = useCallback((exInstanceId: number, setId: number) => {
+        setActiveSession(prev => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            exercises: prev.exercises.map(ex => {
+              if (ex.instanceId !== exInstanceId) return ex;
+              const targetSet = ex.sets.find(s => s.id === setId);
+              if (!targetSet?.avtRoundId) return ex;
+              // Marcar todos los del round: solo el clickeado como lastHop
+              return {
+                ...ex,
+                sets: ex.sets.map(s => {
+                  if (s.avtRoundId !== targetSet.avtRoundId) return s;
+                  return { ...s, isLastHop: s.id === setId, completed: s.id === setId ? true : s.completed };
+                })
+              };
+            })
+          };
+        });
+      }, [setActiveSession]);
+
+      const handleAddHopToRound = useCallback((exInstanceId: number, roundId: number) => {
+        setActiveSession(prev => {
+            if (!prev) return null;
+            return {
+                ...prev,
+                exercises: prev.exercises.map(ex => {
+                    if (ex.instanceId !== exInstanceId) return ex;
+                    const newHop: WorkoutSet = {
+                        id: Date.now(),
+                        weight: '',
+                        reps: '',
+                        rpe: '',
+                        completed: false,
+                        type: 'avt_hop',
+                        avtRoundId: roundId,
+                        isLastHop: false,
+                    };
+                    return { ...ex, sets: [...ex.sets, newHop] };
+                })
+            };
+        });
+    }, [setActiveSession]);
+
 
     return {
         sessionExercises,
@@ -334,6 +406,9 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
         handleDeleteSet,
         handleNoteUpdate,
         toggleSetComplete,
+        handleAddAVTRound,
+        handleMarkLastHop,
+        handleAddHopToRound,
         handleConfirmFinish,
         handleDiscardSession, // EXPORTED
         showDiscardConfirm, setShowDiscardConfirm, // EXPORTED

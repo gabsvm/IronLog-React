@@ -11,14 +11,18 @@ interface AuthModalProps {
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
-    const { login, register, error, clearError, continueAsGuest } = useAuth();
+    const { login, register, error, clearError, continueAsGuest, startDemo, resetPassword } = useAuth();
     const { lang } = useApp(); // Get current language
     const t = TRANSLATIONS[lang].auth; // Get auth translations
 
     const [isLogin, setIsLogin] = useState(true);
     const [email, setEmail] = useState('');
     const [pass, setPass] = useState('');
+    const [confirmPass, setConfirmPass] = useState('');
+    const [name, setName] = useState('');
+    const [showPass, setShowPass] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [resetSent, setResetSent] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -27,7 +31,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
             if (isLogin) {
                 await login(email, pass);
             } else {
-                await register(email, pass);
+                if (pass !== confirmPass) {
+                    throw new Error("Passwords do not match");
+                }
+                await register(email, pass, name);
             }
             onClose();
         } catch (e) {
@@ -37,13 +44,43 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
         }
     };
 
+    const handleResetPassword = async () => {
+        if (!email) {
+            // Handle error or alert
+            return;
+        }
+        try {
+            await resetPassword(email);
+            setResetSent(true);
+        } catch (e) {
+            // Error handled
+        }
+    };
+
+    const handleStartDemo = async () => {
+        setLoading(true);
+        try {
+            await startDemo();
+            onClose();
+        } catch (e) {
+            // Error handled
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleBackdropClick = (e: React.MouseEvent) => {
+        if (email || pass || name) return; // Don't close if there's data
+        onClose();
+    };
+
     const handleGuest = () => {
         continueAsGuest();
         onClose();
     };
 
     return (
-        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-200" onClick={onClose}>
+        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-200" onClick={handleBackdropClick}>
             <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-2xl p-6 shadow-2xl border border-zinc-200 dark:border-white/10" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-xl font-bold text-zinc-900 dark:text-white">
@@ -55,6 +92,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
+                    {!isLogin && (
+                        <div>
+                            <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider block mb-2">{t.name || "Name"}</label>
+                            <input 
+                                type="text" 
+                                className="w-full bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white rounded-xl p-3 outline-none focus:ring-2 focus:ring-red-500"
+                                value={name}
+                                onChange={e => setName(e.target.value)}
+                                placeholder="John Doe"
+                            />
+                        </div>
+                    )}
                     <div>
                         <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider block mb-2">{t.email}</label>
                         <input 
@@ -67,22 +116,63 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                         />
                     </div>
                     <div>
-                        <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider block mb-2">{t.password}</label>
-                        <input 
-                            type="password" 
-                            required
-                            minLength={6}
-                            className="w-full bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white rounded-xl p-3 outline-none focus:ring-2 focus:ring-red-500"
-                            value={pass}
-                            onChange={e => { setPass(e.target.value); clearError(); }}
-                            placeholder="••••••"
-                        />
+                        <div className="flex justify-between items-center mb-2">
+                            <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider block">{t.password}</label>
+                            {isLogin && (
+                                <button 
+                                    type="button" 
+                                    onClick={handleResetPassword}
+                                    className="text-[10px] font-bold text-red-600 hover:underline"
+                                >
+                                    {t.forgotPassword || "Forgot password?"}
+                                </button>
+                            )}
+                        </div>
+                        <div className="relative">
+                            <input 
+                                type={showPass ? "text" : "password"} 
+                                required
+                                minLength={6}
+                                className="w-full bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white rounded-xl p-3 outline-none focus:ring-2 focus:ring-red-500 pr-10"
+                                value={pass}
+                                onChange={e => { setPass(e.target.value); clearError(); }}
+                                placeholder="••••••"
+                            />
+                            <button 
+                                type="button" 
+                                onClick={() => setShowPass(!showPass)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                            >
+                                <Icon name={showPass ? "EyeOff" : "Eye"} size={16} />
+                            </button>
+                        </div>
                     </div>
+
+                    {!isLogin && (
+                        <div>
+                            <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider block mb-2">{t.confirmPassword || "Confirm Password"}</label>
+                            <input 
+                                type="password" 
+                                required
+                                minLength={6}
+                                className={`w-full bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white rounded-xl p-3 outline-none focus:ring-2 ${pass && confirmPass && pass !== confirmPass ? 'ring-2 ring-red-500' : 'focus:ring-red-500'}`}
+                                value={confirmPass}
+                                onChange={e => setConfirmPass(e.target.value)}
+                                placeholder="••••••"
+                            />
+                        </div>
+                    )}
 
                     {error && (
                         <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-3 rounded-xl text-sm font-medium flex items-center gap-2">
                             <Icon name="AlertTriangle" size={16} />
-                            {error}
+                            {error === "Passwords do not match" ? (t.passwordMismatch || error) : error}
+                        </div>
+                    )}
+                    {resetSent && (
+                        <div className="bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 p-3 rounded-xl text-xs font-medium flex items-center gap-2">
+                            <Icon name="CheckCircle" size={16} />
+                            {t.resetSent || "Reset link sent to your email!"}
                         </div>
                     )}
 
@@ -97,9 +187,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                     <div className="flex-grow border-t border-zinc-200 dark:border-zinc-800"></div>
                 </div>
 
-                <Button variant="secondary" fullWidth onClick={handleGuest} className="dark:bg-zinc-800 dark:border-zinc-700">
-                    {t.continueGuest}
-                </Button>
+                <div className="grid grid-cols-2 gap-3">
+                    <Button variant="secondary" fullWidth onClick={handleGuest} className="dark:bg-zinc-800 dark:border-zinc-700 text-xs">
+                        {t.continueGuest}
+                    </Button>
+                    <Button variant="secondary" fullWidth onClick={handleStartDemo} className="dark:bg-zinc-800 dark:border-zinc-700 text-xs text-orange-500">
+                        {t.startDemo || "Try 7 Days Free"}
+                    </Button>
+                </div>
 
                 <div className="mt-6 text-center">
                     <p className="text-sm text-zinc-500">

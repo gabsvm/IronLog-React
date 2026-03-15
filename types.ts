@@ -36,7 +36,7 @@ export interface ExerciseDef {
   isBodyweight?: boolean; // NEW: Bodyweight flag
 }
 
-export type SetType = 'regular' | 'myorep' | 'myorep_match' | 'cluster' | 'top' | 'backoff' | 'giant' | 'warmup';
+export type SetType = 'regular' | 'myorep' | 'myorep_match' | 'cluster' | 'top' | 'backoff' | 'giant' | 'warmup' | 'avt_hop';
 
 export interface WorkoutSet {
   id: number;
@@ -54,6 +54,8 @@ export interface WorkoutSet {
   duration?: string | number; 
   workSeconds?: number;
   restSeconds?: number;
+  avtRoundId?: number;  // ID compartido entre todos los hops de un mismo round AVT
+  isLastHop?: boolean;  // true en el hop donde se llegó al fallo
 }
 
 export type WeightUnit = 'kg' | 'lb' | 'pl';
@@ -90,6 +92,9 @@ export interface ProgramSlot {
   exerciseId?: string | null;
   supersetId?: string; 
   setType?: SetType; // NEW: Persist preferred set type
+  isAVT?: boolean;         // flag para indicar que este slot usa sistema AVT
+  avtRounds?: number;      // cuántos rounds por sesión (default: 3)
+  avtStartReps?: number;   // reps objetivo por hop (default: 6)
 }
 
 export interface ProgramDay {
