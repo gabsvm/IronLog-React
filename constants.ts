@@ -507,7 +507,61 @@ export const TOJI_TEMPLATE: ProgramDay[] = [
     }
 ];
 
+export const JACKED_IN_3_TEMPLATE: ProgramDay[] = [
+    {
+      id: 'ji3_ub1',
+      dayName: { en: 'Upper Body 1', es: 'Tren Superior 1' },
+      notes: 'Jalón vertical + Press horizontal. Bíceps y tríceps al final con reps altas.',
+      slots: [
+        { muscle: 'CHEST', label: 'Press (Banco / Inclinado / Smith)', setTarget: 2, reps: '6-8', isAVT: true, avtRounds: 2, avtStartReps: 6, avtHops: '6-10', restBetweenHopsSec: 20, restBetweenRoundsSec: 180, notes: '6-10 hops por round. Subir peso en cada hop.' },
+        { muscle: 'CHEST', label: 'Aislamiento Pecho (Cruces / Fly)', setTarget: 2, reps: '10-12', isAVT: false },
+        { muscle: 'BACK', label: 'Jalón Vertical / Pull-ups / Straight-arm pulldown', setTarget: 2, reps: '6-8', isAVT: true, avtRounds: 2, avtStartReps: 6, avtHops: '6-10', restBetweenHopsSec: 20, restBetweenRoundsSec: 180, notes: '6-10 hops por round.' },
+        { muscle: 'SHOULDERS', label: 'Rear Delt (Fly invertido / Face pull)', setTarget: 2, reps: '10-12', isAVT: false },
+        { muscle: 'BICEPS', label: 'Curl (Barra / Mancuerna / Predicador)', setTarget: 2, reps: '20', isAVT: false },
+        { muscle: 'TRICEPS', label: 'Tríceps (Pushdown / Extensión overhead / PJR)', setTarget: 2, reps: '20', isAVT: false },
+      ]
+    },
+    {
+      id: 'ji3_lb1',
+      dayName: { en: 'Lower Body 1', es: 'Tren Inferior 1' },
+      notes: 'Leg Press AVT primero, luego Sentadilla conservadora con peso máximo cómodo.',
+      slots: [
+        { muscle: 'QUADS', label: 'Leg Press', setTarget: 1, reps: '10-12', isAVT: true, avtRounds: 1, avtStartReps: 10, avtHops: '12-15', restBetweenHopsSec: 20, notes: '12-15 hops. Muchos hops = mucho volumen acumulado.' },
+        { muscle: 'QUADS', label: 'Sentadilla (Back / Front / Hack)', setTarget: 1, reps: '6-8', isAVT: false, notes: 'Peso conservador post leg press. 1 top set pesado.' },
+        { muscle: 'QUADS', label: 'Extensión de cuádriceps', setTarget: 2, reps: '15-20', isAVT: false },
+        { muscle: 'BICEPS', label: 'Curl', setTarget: 2, reps: '20', isAVT: false },
+        { muscle: 'TRICEPS', label: 'Tríceps', setTarget: 2, reps: '20', isAVT: false },
+      ]
+    },
+    {
+      id: 'ji3_ub2',
+      dayName: { en: 'Upper Body 2', es: 'Tren Superior 2' },
+      notes: 'Jalón horizontal (remo) + Press. Trapecios en lugar de rear delts.',
+      slots: [
+        { muscle: 'CHEST', label: 'Press (Banco / Hombro / Smith)', setTarget: 2, reps: '6-8', isAVT: true, avtRounds: 2, avtStartReps: 6, avtHops: '6-10', restBetweenHopsSec: 20, restBetweenRoundsSec: 180 },
+        { muscle: 'CHEST', label: 'Aislamiento Hombro/Pecho (Lateral raise / Fly)', setTarget: 2, reps: '10-12', isAVT: false },
+        { muscle: 'BACK', label: 'Remo Horizontal (T-bar / Mancuerna / Cable)', setTarget: 2, reps: '6-8', isAVT: true, avtRounds: 2, avtStartReps: 6, avtHops: '6-10', restBetweenHopsSec: 20, restBetweenRoundsSec: 180 },
+        { muscle: 'TRAPS', label: 'Encogimientos (Mancuerna / Barra / Meadows)', setTarget: 2, reps: '10-12', isAVT: false },
+        { muscle: 'BICEPS', label: 'Curl', setTarget: 2, reps: '20', isAVT: false },
+        { muscle: 'TRICEPS', label: 'Tríceps', setTarget: 2, reps: '20', isAVT: false },
+      ]
+    },
+    {
+      id: 'ji3_lb2',
+      dayName: { en: 'Lower Body 2', es: 'Tren Inferior 2' },
+      notes: 'Unilateral primero (split squat o leg press sumo). Peso muerto al final.',
+      slots: [
+        { muscle: 'GLUTES', label: 'Split Squat / Búlgaro / Leg Press Sumo unilateral', setTarget: 2, reps: '10-12', isAVT: true, avtRounds: 2, avtStartReps: 10, avtHops: '10-12', restBetweenHopsSec: 20, restBetweenRoundsSec: 180, notes: 'Por pierna. Enfocarse en cadena posterior empujando el pie trasero hacia abajo.' },
+        { muscle: 'HAMSTRINGS', label: 'Peso Muerto (Convencional / Sumo / RDL)', setTarget: 2, reps: '6-8', isAVT: false, notes: '1-2 top sets. Conservador.' },
+        { muscle: 'HAMSTRINGS', label: 'Curl femoral acostado', setTarget: 2, reps: '10-12', isAVT: false },
+        { muscle: 'BICEPS', label: 'Curl', setTarget: 2, reps: '20', isAVT: false },
+        { muscle: 'TRICEPS', label: 'Tríceps', setTarget: 2, reps: '20', isAVT: false },
+      ]
+    }
+];
+
 export const INITIAL_TEMPLATES: GlobalTemplate[] = [
+    { id: 'ji3', name: 'jacked_in_3', title: { en: "Jacked in 3 — Paul Carter", es: "Jacked in 3 — Paul Carter" }, description: { en: "Accumulative Volume Training (AVT). 3 days per week. Upper/Lower with pyramid hops.", es: "Accumulative Volume Training (AVT). 3 días por semana. Torso/Pierna con pirámide de hops." }, isPro: true, program: JACKED_IN_3_TEMPLATE, order: 0 },
     { id: 'toji_fushiguro', name: 'toji_fushiguro', title: { en: "Toji (Natural Hypertrophy)", es: "Toji (Natural Hypertrophy)" }, description: { en: "4-Day Elite Split. Giant Sets, Neck, Forearms & Aesthetic focus.", es: "Rutina Élite de 4 Días. Series Gigantes, Cuello, Antebrazo y Estética." }, isPro: true, program: TOJI_TEMPLATE, order: 1 },
     {
         id: 'tokita',
@@ -706,8 +760,8 @@ export const TRANSLATIONS = {
         mesoNotes: "General Notes",
         mesoNotesPlaceholder: "Write down your cycle focus, goals or reminders...",
         mesoType: "Phase Type",
-        phases: { hyp_1: "Base Hypertrophy 1", hyp_2: "Base Hypertrophy 2", metabolite: "Metabolite Phase", resensitization: "Resensitization", full_body: "Aesthetic V-Taper", wizard: "The Wizard v3 (Full Body)", male_physique: "Male Physique (Upper/Lower)", toji_fushiguro: "Toji (Natural Hypertrophy)", tokita: "Tokita Ohma Program" },
-        phaseDesc: { hyp_1: "Standard PPL. Balanced volume.", hyp_2: "Upper/Lower Split (4 Days). Focus on compounds.", metabolite: "High reps (20-30), short rests, the 'burn'.", resensitization: "Low volume, heavy weight to reset fatigue.", full_body: "Dr. Mike Style. Focus on V-Taper (Lats/Side Delts).", wizard: "3-Days Heavy/Light/Medium. Classic intensity cycling for steady gains.", male_physique: "4-Days Bodybuilding Focus. Higher volume, arm & shoulder specialization.", toji_fushiguro: "4-Day Elite Split. Giant Sets, Neck, Forearms & Aesthetic focus. (Pro)", tokita: "4-Day Hybrid Split. High volume, supersets, and functional strength focus." },
+        phases: { hyp_1: "Base Hypertrophy 1", hyp_2: "Base Hypertrophy 2", metabolite: "Metabolite Phase", resensitization: "Resensitization", full_body: "Aesthetic V-Taper", wizard: "The Wizard v3 (Full Body)", male_physique: "Male Physique (Upper/Lower)", toji_fushiguro: "Toji (Natural Hypertrophy)", tokita: "Tokita Ohma Program", jacked_in_3: "Jacked in 3 — Paul Carter" },
+        phaseDesc: { hyp_1: "Standard PPL. Balanced volume.", hyp_2: "Upper/Lower Split (4 Days). Focus on basics.", metabolite: "High reps (20-30), short rests, the 'burn'.", resensitization: "Low volume, heavy weight to reset fatigue.", full_body: "Dr. Mike Style. Focus on V-Taper (Lats/Side Delts).", wizard: "3-Days Heavy/Light/Medium. Classic intensity cycling for steady gains.", male_physique: "4-Days Bodybuilding Focus. Higher volume, arm & shoulder specialization.", toji_fushiguro: "4-Day Elite Split. Giant Sets, Neck, Forearms & Aesthetic focus. (Pro)", tokita: "4-Day Hybrid Split. High volume, supersets, and functional strength focus.", jacked_in_3: "Accumulative Volume Training (AVT). 3 days per week. Upper/Lower with ascending pyramid of hops." },
 
         // PAYWALL & PRO
         pro: {
@@ -1133,8 +1187,8 @@ export const TRANSLATIONS = {
         mesoNotes: "Notas Generales",
         mesoNotesPlaceholder: "Escribe tus objetivos, focos o recordatorios para este ciclo...",
         mesoType: "Tipo de Fase",
-        phases: { hyp_1: "Hipertrofia Base 1", hyp_2: "Hipertrofia Base 2", metabolite: "Fase Metabolitos", resensitization: "Resensitization", full_body: "Aesthetic V-Taper", wizard: "The Wizard v3 (Full Body)", male_physique: "Male Physique (Torso/Pierna)", toji_fushiguro: "Toji (Natural Hypertrophy)", tokita: "Tokita Ohma Program" },
-        phaseDesc: { hyp_1: "Hipertrofia Base 1", hyp_2: "Torso/Pierna (4 Días). Foco en básicos.", metabolite: "Reps altas (20-30), descanso corto, 'quemazón'.", resensitization: "Bajo volumen, peso alto para resetear fatiga.", full_body: "Estilo Dr. Mike. Foco en V-Taper (Dorsal/Hombro Lateral).", wizard: "3-Días Pesado/Liviano/Medio. Ciclo de intensidad clásico para ganancias constantes.", male_physique: "4-Días Foco Culturismo. Mayor volumen, especialización en brazos y hombros.", toji_fushiguro: "Rutina Élite de 4 Días. Series Gigantes, Cuello, Antebrazo y Estética. (Pro)", tokita: "Rutina Híbrida 4 Días. Alto volumen, superseries y fuerza funcional." },
+        phases: { hyp_1: "Hipertrofia Base 1", hyp_2: "Hipertrofia Base 2", metabolite: "Fase Metabolitos", resensitization: "Resensitization", full_body: "Aesthetic V-Taper", wizard: "The Wizard v3 (Full Body)", male_physique: "Male Physique (Torso/Pierna)", toji_fushiguro: "Toji (Natural Hypertrophy)", tokita: "Tokita Ohma Program", jacked_in_3: "Jacked in 3 — Paul Carter" },
+        phaseDesc: { hyp_1: "Hipertrofia Base 1", hyp_2: "Torso/Pierna (4 Días). Foco en básicos.", metabolite: "Reps altas (20-30), descanso corto, 'quemazón'.", resensitization: "Bajo volumen, peso alto para resetear fatiga.", full_body: "Estilo Dr. Mike. Foco en V-Taper (Dorsal/Hombro Lateral).", wizard: "3-Días Pesado/Liviano/Medio. Ciclo de intensidad clásico para ganancias constantes.", male_physique: "4-Días Foco Culturismo. Mayor volumen, especialización en brazos y hombros.", toji_fushiguro: "Rutina Élite de 4 Días. Series Gigantes, Cuello, Antebrazo y Estética. (Pro)", tokita: "Rutina Híbrida 4 Días. Alto volumen, superseries y fuerza funcional.", jacked_in_3: "Accumulative Volume Training (AVT). 3 días por semana. Torso/Pierna con pirámide ascendente de hops." },
 
         // PAYWALL & PRO
         pro: {

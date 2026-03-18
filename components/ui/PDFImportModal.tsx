@@ -5,8 +5,10 @@ import { ProgramDay, ProgramSlot, MuscleGroup } from '../../types';
 import { Icon } from './Icon';
 import { Button } from './Button';
 
+import workerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url';
+
 // Worker para pdfjs
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
 
 interface PDFImportModalProps {
   onClose: () => void;

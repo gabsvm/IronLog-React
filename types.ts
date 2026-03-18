@@ -95,12 +95,18 @@ export interface ProgramSlot {
   isAVT?: boolean;         // flag para indicar que este slot usa sistema AVT
   avtRounds?: number;      // cuántos rounds por sesión (default: 3)
   avtStartReps?: number;   // reps objetivo por hop (default: 6)
+  label?: string;          // NEW: Custom label for the exercise
+  notes?: string;          // NEW: Notes for the exercise slot
+  avtHops?: string;        // NEW: Number of hops (e.g. "6-10")
+  restBetweenHopsSec?: number;  // NEW: Rest between hops
+  restBetweenRoundsSec?: number; // NEW: Rest between rounds
 }
 
 export interface ProgramDay {
   id: string;
   dayName: { en: string; es: string };
   slots: ProgramSlot[];
+  notes?: string;          // NEW: Notes for the training day
 }
 
 export type MesoType = 'hyp_1' | 'hyp_2' | 'metabolite' | 'resensitization' | 'full_body' | 'wizard' | 'male_physique' | 'toji_fushiguro' | 'tokita' | string;
