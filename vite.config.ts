@@ -14,6 +14,7 @@ export default defineConfig(({ mode }) => {
   }
 
   return {
+    base: './',
     plugins: [react()],
     define: {
       'process.env.API_KEY': JSON.stringify(apiKey),
