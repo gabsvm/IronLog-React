@@ -7,9 +7,9 @@ export default defineConfig(({ mode }) => {
   const cwd = (process as any).cwd();
   const env = loadEnv(mode, cwd, '');
   
-  const apiKey = env.API_KEY || process.env.API_KEY || env.VITE_API_KEY || process.env.VITE_API_KEY || 'AIzaSyAnVhFr2GKNsH52RdUlxiZ8j1pZDlApsp8';
+  const apiKey = env.API_KEY || process.env.API_KEY || env.VITE_API_KEY || process.env.VITE_API_KEY || '';
 
-  if (mode === 'production' && !apiKey) {
+  if (!apiKey) {
       console.warn("⚠️ WARNING: API_KEY not found in environment variables. AI features will fail.");
   }
 
@@ -17,8 +17,9 @@ export default defineConfig(({ mode }) => {
     base: './',
     plugins: [react()],
     define: {
-      'process.env.API_KEY': JSON.stringify(apiKey),
-      'process.env': {} 
+      'process.env': {
+        API_KEY: JSON.stringify(apiKey)
+      }
     },
     build: {
       outDir: 'dist',

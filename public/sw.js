@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gainslab-pro-v13';
+const CACHE_NAME = 'gainslab-pro-v14';
 
 // Core app shell — always cache these
 const PRECACHE_URLS = [
