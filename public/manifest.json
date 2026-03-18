@@ -151,10 +151,5 @@
       "update": 86400
     }
   ],
-  "iarc_rating_id": "",
-  "scope_extensions": [
-    {
-      "origin": "https://*.iron-log-react.vercel.app"
-    }
-  ]
+  "iarc_rating_id": ""
 }
