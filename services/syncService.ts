@@ -99,6 +99,9 @@ export const syncService = {
                 config: state.config || {},
                 exercises: state.exercises || [],
                 rpFeedback: state.rpFeedback || {},
+                nutritionLogs: state.nutritionLogs || [],
+                cardioSessions: state.cardioSessions || [],
+                nutritionGoal: state.nutritionGoal || null,
                 lastUpdated: state.lastUpdated || Date.now(),
                 // NEW: Save email to allow Admin Lookup
                 email: auth?.currentUser?.email || null 
@@ -159,6 +162,9 @@ export const syncService = {
                     config: data.config,
                     exercises: data.exercises,
                     rpFeedback: data.rpFeedback,
+                    nutritionLogs: data.nutritionLogs,
+                    cardioSessions: data.cardioSessions,
+                    nutritionGoal: data.nutritionGoal,
                     logs: logsData,
                     lastUpdated: data.lastUpdated || Date.now() // Fallback if missing
                 };

@@ -846,6 +846,14 @@ export const TRANSLATIONS = {
             }
         },
 
+        nutri: {
+            title: 'Nutrition',
+            today: 'Today',
+            cardio: 'Cardio',
+            tips: 'Tips',
+            history: 'History',
+        },
+
         // Landing Page
         landing: {
             login: "Sign In",
@@ -1437,6 +1445,13 @@ export const TRANSLATIONS = {
                 { title: "Editor de Rutina", text: "¿Necesitas cambiar ejercicios o días? Salta al editor desde aquí." },
                 { title: "Notas", text: "Guarda recordatorios, puntos de enfoque o metas para este ciclo aquí." }
             ]
+        },
+        nutri: {
+            title: 'Nutrición',
+            today: 'Hoy',
+            cardio: 'Cardio',
+            tips: 'Tips',
+            history: 'Historial',
         }
     }
 };

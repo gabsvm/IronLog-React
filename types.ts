@@ -199,4 +199,49 @@ export interface AppState {
     userProfile?: UserProfile;
     lastUpdated?: number;
     globalTemplates?: GlobalTemplate[]; 
+    nutritionLogs: NutritionLog[];
+    cardioSessions: CardioSession[];
+    nutritionGoal: NutritionGoal;
+}
+
+// ─── NUTRITION TYPES ───────────────────────────────────────────────
+export interface FoodEntry {
+  id: string;
+  name: string;
+  calories: number;
+  protein: number;   // gramos
+  carbs: number;     // gramos
+  fat: number;       // gramos
+  mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+  timestamp: number; // Date.now()
+}
+
+export interface NutritionLog {
+  date: string;       // "YYYY-MM-DD"
+  entries: FoodEntry[];
+  waterMl?: number;   // ml de agua consumida
+}
+
+export interface NutritionGoal {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
+
+// ─── CARDIO TYPES ───────────────────────────────────────────────────
+export type CardioActivityType = 
+  | 'running' | 'cycling' | 'swimming' | 'walking' 
+  | 'rowing' | 'elliptical' | 'jump_rope' | 'hiit' | 'other';
+
+export interface CardioSession {
+  id: string;
+  date: string;           // "YYYY-MM-DD"
+  activityType: CardioActivityType;
+  durationMin: number;
+  distanceKm?: number;
+  caloriesBurned?: number;
+  avgHeartRate?: number;
+  notes?: string;
+  timestamp: number;
 }

@@ -26,6 +26,7 @@ import { SettingsModal } from './components/settings/SettingsModal';
 // Lazy Load heavier views
 const HistoryView = React.lazy(() => import('./views/HistoryView').then(module => ({ default: module.HistoryView })));
 const StatsView = React.lazy(() => import('./views/StatsView').then(module => ({ default: module.StatsView })));
+const NutriView = React.lazy(() => import('./views/NutriView').then(m => ({ default: m.NutriView })));
 
 const LoadingSpinner = () => (
     <div className="h-full flex items-center justify-center text-zinc-400">
@@ -38,6 +39,7 @@ const VIEW_DEPTH: Record<string, number> = {
     'home': 1,
     'history': 1,
     'stats': 1,
+    'nutri': 1,
     'workout': 2,
     'exercises': 2,
     'program': 2
@@ -58,7 +60,7 @@ const AppContent = () => {
 
     const t = TRANSLATIONS[lang];
 
-    const [view, setViewState] = useState<'home' | 'workout' | 'history' | 'exercises' | 'program' | 'stats' | 'summary'>('home');
+    const [view, setViewState] = useState<'home' | 'workout' | 'history' | 'exercises' | 'program' | 'stats' | 'summary' | 'nutri'>('home');
     const [completedWorkoutLog, setCompletedWorkoutLog] = useState<any>(null);
     const [showSettings, setShowSettings] = useState(false);
     const [showLanding, setShowLanding] = useState(!hasSeenOnboarding);
@@ -372,6 +374,11 @@ const AppContent = () => {
                             {view === 'stats' && (
                                 <Suspense fallback={<LoadingSpinner />}>
                                     <StatsView />
+                                </Suspense>
+                            )}
+                            {view === 'nutri' && (
+                                <Suspense fallback={<LoadingSpinner />}>
+                                    <NutriView />
                                 </Suspense>
                             )}
                         </Layout>

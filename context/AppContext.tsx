@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useEffect, useRef, ReactNode, useState, PropsWithChildren, useMemo, useCallback } from 'react';
-import { AppState, Lang, Theme, ColorTheme, ExerciseDef, ActiveSession, MesoCycle, Log, ProgramDay, TutorialState, GlobalTemplate, UserProfile, BeforeInstallPromptEvent } from '../types';
+import { AppState, Lang, Theme, ColorTheme, ExerciseDef, ActiveSession, MesoCycle, Log, ProgramDay, TutorialState, GlobalTemplate, UserProfile, BeforeInstallPromptEvent, NutritionLog, CardioSession, NutritionGoal } from '../types';
 import { DEFAULT_LIBRARY, DEFAULT_TEMPLATE, INITIAL_TEMPLATES } from '../constants';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { usePersistedState } from '../hooks/usePersistedState';
@@ -35,6 +35,14 @@ interface AppContextType extends AppState {
 
     // NEW: User Profile Setter
     setUserProfile: (val: UserProfile | ((prev: UserProfile) => UserProfile)) => void;
+
+    // Nutrition & Cardio
+    nutritionLogs: NutritionLog[];
+    setNutritionLogs: (val: NutritionLog[] | ((prev: NutritionLog[]) => NutritionLog[])) => void;
+    cardioSessions: CardioSession[];
+    setCardioSessions: (val: CardioSession[] | ((prev: CardioSession[]) => CardioSession[])) => void;
+    nutritionGoal: NutritionGoal;
+    setNutritionGoal: (val: NutritionGoal | ((prev: NutritionGoal) => NutritionGoal)) => void;
 
     // Tutorial Methods
     markTutorialSeen: (section: keyof TutorialState) => void;
@@ -84,6 +92,11 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     const [exercises, setExercises, exLoading] = usePersistedState<ExerciseDef[]>('il_ex_v16', DEFAULT_LIBRARY, 1000);
     const [logs, setLogs, logsLoading] = usePersistedState<Log[]>('il_logs_v16', [], 1000);
 
+    const DEFAULT_NUTRITION_GOAL: NutritionGoal = { calories: 2500, protein: 180, carbs: 280, fat: 70 };
+    const [nutritionLogs, setNutritionLogs, nutLoading] = usePersistedState<NutritionLog[]>('il_nutrition_v1', [], 1000);
+    const [cardioSessions, setCardioSessions, cardioLoading] = usePersistedState<CardioSession[]>('il_cardio_v1', [], 1000);
+    const [nutritionGoal, setNutritionGoal, goalLoading] = usePersistedState<NutritionGoal>('il_nut_goal_v1', DEFAULT_NUTRITION_GOAL, 500);
+
     // NEW: User Profile Persistence
     const [userProfile, setUserProfile, profileLoading] = usePersistedState<UserProfile>('il_profile_v1', {
         experience: 'intermediate',
@@ -104,7 +117,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(window.deferredPrompt || null);
     const [isStandalone, setIsStandalone] = useState(false);
 
-    const isAppLoading = programLoading || mesoLoading || sessionLoading || exLoading || logsLoading || fbLoading || onboardingLoading || authLoading || profileLoading;
+    const isAppLoading = programLoading || mesoLoading || sessionLoading || exLoading || logsLoading || fbLoading || onboardingLoading || authLoading || profileLoading || nutLoading || cardioLoading || goalLoading;
     const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
     // --- FETCH GLOBAL DATA ---
@@ -349,7 +362,10 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         isOnline,
         deferredPrompt, installApp, isStandalone,
         globalTemplates, setGlobalTemplates,
-        userProfile, setUserProfile
+        userProfile, setUserProfile,
+        nutritionLogs, setNutritionLogs,
+        cardioSessions, setCardioSessions,
+        nutritionGoal, setNutritionGoal
     }), [
         lang, setLang, theme, setTheme, colorTheme, setColorTheme,
         program, setProgram,
@@ -366,7 +382,10 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         isOnline,
         deferredPrompt, installApp, isStandalone,
         globalTemplates, setGlobalTemplates,
-        userProfile, setUserProfile
+        userProfile, setUserProfile,
+        nutritionLogs, setNutritionLogs,
+        cardioSessions, setCardioSessions,
+        nutritionGoal, setNutritionGoal
     ]);
 
     if (isAppLoading) return <HomeSkeleton />;
