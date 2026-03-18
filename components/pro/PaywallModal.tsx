@@ -26,7 +26,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ onClose, feature }) 
             lifetime: 'Lifetime'
         };
         const message = encodeURIComponent(
-            `Hola! Quiero activar IronLog Pro (${tierLabels[tier]}). Mi email registrado es: ${user?.email || '(sin cuenta)'}`
+            `Hola! Quiero activar GainsLab Pro (${tierLabels[tier]}). Mi email registrado es: ${user?.email || '(sin cuenta)'}`
         );
         window.open(`https://wa.me/${WA_NUMBER}?text=${message}`, '_blank');
     };

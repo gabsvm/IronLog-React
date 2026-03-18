@@ -808,7 +808,7 @@ export const TRANSLATIONS = {
         saveAsMeso: "Use this program to create a new active mesocycle immediately.",
         units: { kg: "KG", pl: "Plates", lb: "LBS", toggle: "Change Unit (KG/Plates)", plateWeight: "Weight per Plate", setPlateWeight: "Set Weight per Plate (kg)", enterWeight: "e.g. 5, 10..." },
         fb: { sorenessLabel: "Soreness / Recovery", performanceLabel: "Pump / Capacity", soreness: { 1: "Healed Early / Fresh", 2: "Healed on Time (Ideal)", 3: "Still Sore / Ouch" }, performance: { 1: "Bad / Grind", 2: "Good / Target", 3: "Great / Too Easy" }, adjust: { add: "+1/2 Sets", sub: "-1 Set", keep: "Keep (Optimal)" } },
-        onb: { skip: "Skip", next: "Next", start: "Start", s1_title: "Welcome to IronLog", s1_desc: "The ultimate hypertrophy tool, powered by IronCoach.", s2_title: "Mesocycles", s2_desc: "Organize your training by weeks. IronCoach auto-regulates volume based on your feedback.", s3_title: "Smart Tracking", s3_desc: "Log RIR, use the built-in timer, and calculate warmups instantly.", s4_title: "Progress", s4_desc: "Visualize your volume landmarks (MEV/MRV) and ensure progressive overload." },
+        onb: { skip: "Skip", next: "Next", start: "Start", s1_title: "Welcome to GainsLab", s1_desc: "The ultimate hypertrophy tool, powered by IronCoach.", s2_title: "Mesocycles", s2_desc: "Organize your training by weeks. IronCoach auto-regulates volume based on your feedback.", s3_title: "Smart Tracking", s3_desc: "Log RIR, use the built-in timer, and calculate warmups instantly.", s4_title: "Progress", s4_desc: "Visualize your volume landmarks (MEV/MRV) and ensure progressive overload." },
         createAndSelect: "Create and Select",
         overwriteTemplateConfirm: "This overwrites your current routine with the selected template.",
         newRecord: "New Record!",
@@ -854,7 +854,7 @@ export const TRANSLATIONS = {
             titleSuffix: "",
             subtitle: "The professional training log for serious athletes. Track every set, rep, and RPE with precision.",
             getStarted: "Get Started Free",
-            featuresTitle: "Why IronLog?",
+            featuresTitle: "Why GainsLab?",
             appVersion: "v4.1 Professional",
             socialProof: "+2,400 athletes tracking progress",
             features: [
@@ -895,7 +895,7 @@ export const TRANSLATIONS = {
 
         // NEW: PWA Install
         installApp: "Install App",
-        installDesc: "Install IronLog on your home screen for quick access and full offline support.",
+        installDesc: "Install GainsLab on your home screen for quick access and full offline support.",
         installBtn: "Install Now",
         iosInstall: "iOS: Share → Add to Home Screen",
         androidInstall: "Android: Menu → Install App",
@@ -1235,7 +1235,7 @@ export const TRANSLATIONS = {
         saveAsMeso: "Usar este programa para crear un nuevo mesociclo activo.",
         units: { kg: "KG", pl: "Planchas", lb: "LBS", toggle: "Cambiar Unidad (KG/Planchas)", plateWeight: "Peso por Plancha", setPlateWeight: "Fijar Peso Plancha (kg)", enterWeight: "ej. 5, 10..." },
         fb: { sorenessLabel: "Agujetas / Recuperación", performanceLabel: "Bombeo / Capacidad", soreness: { 1: "Recuperado Antes / Fresco", 2: "Recuperado a Tiempo (Ideal)", 3: "Aún con Agujetas / Dolor" }, performance: { 1: "Mal / Forzado", 2: "Bien / Objetivo", 3: "Genial / Demasiado Fácil" }, adjust: { add: "+1/2 Series", sub: "-1 Serie", keep: "Mantener (Óptimo)" } },
-        onb: { skip: "Omitir", next: "Siguiente", start: "Empezar", s1_title: "Bienvenido a IronLog", s1_desc: "La herramienta definitiva para hipertrofia, impulsada por IronCoach.", s2_title: "Mesociclos", s2_desc: "Organiza tu entreno por semanas. IronCoach auto-regula el volumen según tu feedback.", s3_title: "Seguimiento Inteligente", s3_desc: "Registra RIR, usa el temporizador integrado y calcula el calentamiento al instante.", s4_title: "Progreso", s4_desc: "Visualiza tus hitos de volumen (MEV/MRV) y asegura la sobrecarga progresiva." },
+        onb: { skip: "Omitir", next: "Siguiente", start: "Empezar", s1_title: "Bienvenido a GainsLab", s1_desc: "La herramienta definitiva para hipertrofia, impulsada por IronCoach.", s2_title: "Mesociclos", s2_desc: "Organiza tu entreno por semanas. IronCoach auto-regula el volumen según tu feedback.", s3_title: "Seguimiento Inteligente", s3_desc: "Registra RIR, usa el temporizador integrado y calcula el calentamiento al instante.", s4_title: "Progreso", s4_desc: "Visualiza tus hitos de volumen (MEV/MRV) y asegura la sobrecarga progresiva." },
         createAndSelect: "Crear y Seleccionar",
         overwriteTemplateConfirm: "Esto sobrescribe tu rutina actual con la plantilla seleccionada.",
         newRecord: "¡Nuevo Récord!",
@@ -1281,7 +1281,7 @@ export const TRANSLATIONS = {
             titleSuffix: "",
             subtitle: "El diario de entrenamiento profesional para atletas serios. Registra cada serie, rep y RPE con precisión.",
             getStarted: "Empezar Gratis",
-            featuresTitle: "¿Por qué IronLog?",
+            featuresTitle: "¿Por qué GainsLab?",
             appVersion: "v4.1 Professional",
             socialProof: "+2,400 atletas registrando sus progresos",
             features: [
@@ -1322,7 +1322,7 @@ export const TRANSLATIONS = {
 
         // NEW: PWA Install
         installApp: "Instalar App",
-        installDesc: "Instala IronLog en tu pantalla de inicio para acceso rápido y modo offline completo.",
+        installDesc: "Instala GainsLab en tu pantalla de inicio para acceso rápido y modo offline completo.",
         installBtn: "Instalar Ahora",
         iosInstall: "iOS: Compartir → Añadir a Inicio",
         androidInstall: "Android: Menú → Instalar App",

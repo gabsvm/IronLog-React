@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">IronLog</string>
-    <string name="title_activity_main">IronLog</string>
-    <string name="package_name">com.ironlog.pro</string>
-    <string name="custom_url_scheme">com.ironlog.pro</string>
+    <string name="app_name">GainsLab</string>
+    <string name="title_activity_main">GainsLab</string>
+    <string name="package_name">com.gainslab.pro</string>
+    <string name="custom_url_scheme">com.gainslab.pro</string>
 </resources>

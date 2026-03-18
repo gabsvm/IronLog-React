@@ -162,7 +162,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onLogin }) => {
 
                 {/* Footer */}
                 <div className="text-center text-zinc-600 text-[9px] md:text-[10px] uppercase tracking-widest mt-auto pb-4 animate-in-up" style={{ animationDelay: '1s' }}>
-                    IronLog v4.0 &copy; {new Date().getFullYear()} &bull; Professional Edition
+                    GainsLab v4.0 &copy; {new Date().getFullYear()} &bull; Professional Edition
                 </div>
             </div>
         </div>

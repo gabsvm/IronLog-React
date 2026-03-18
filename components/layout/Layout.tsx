@@ -66,7 +66,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
                                 <Logo className="w-5 h-5 text-white" />
                             </div>
                             <h1 className="text-xl font-black tracking-tighter text-white">
-                                IronLog
+                                GainsLab
                             </h1>
                         </div>
                         <button

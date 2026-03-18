@@ -2,8 +2,8 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.ironlog.pro',
-  appName: 'IronLog',
+  appId: 'com.gainslab.pro',
+  appName: 'GainsLab',
   webDir: 'dist',
   server: {
     androidScheme: 'https'

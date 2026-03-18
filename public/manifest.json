@@ -1,6 +1,6 @@
 {
-  "name": "IronLog Pro",
-  "short_name": "IronLog",
+  "name": "GainsLab Pro",
+  "short_name": "GainsLab",
   "id": "/",
   "scope": "/",
   "start_url": "/",
@@ -101,7 +101,7 @@
   },
   "protocol_handlers": [
     {
-      "protocol": "web+ironlog",
+      "protocol": "web+gainslab",
       "url": "/?action=%s"
     }
   ],
@@ -120,7 +120,7 @@
   },
   "widgets": [
     {
-      "name": "IronLog Active Routine",
+      "name": "GainsLab Active Routine",
       "short_name": "Routine",
       "description": "View your active workout routine",
       "tag": "workout",

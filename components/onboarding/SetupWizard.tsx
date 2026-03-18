@@ -247,8 +247,8 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
             {/* Header */}
             <div className="p-6 border-b border-zinc-100 dark:border-zinc-900 flex justify-between items-center">
                 <div className="flex items-center gap-2 text-zinc-900 dark:text-white font-bold">
-                    <div className="w-8 h-8 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-lg flex items-center justify-center font-black text-xs">IL</div>
-                    <span>IronLog Setup</span>
+                    <div className="w-8 h-8 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-lg flex items-center justify-center font-black text-xs">GL</div>
+                    <span>GainsLab Setup</span>
                 </div>
                 
                 <div className="flex items-center gap-3">

@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 // Reference to vite/client removed to fix type definition error
 // Manual definitions provided below
 
@@ -18,6 +20,16 @@ declare module '*.jpg' { const src: string; export default src; }
 declare module '*.jpeg' { const src: string; export default src; }
 declare module '*.gif' { const src: string; export default src; }
 declare module '*.webp' { const src: string; export default src; }
+
+declare module '*.mjs?url' {
+  const src: string;
+  export default src;
+}
+
+declare module 'pdfjs-dist/build/pdf.worker.mjs?url' {
+  const src: string;
+  export default src;
+}
 
 interface ImportMetaEnv {
   readonly VITE_FIREBASE_API_KEY: string

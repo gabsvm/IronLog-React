@@ -1,4 +1,4 @@
-package com.ironlog.pro;
+package com.gainslab.pro;
 
 import com.getcapacitor.BridgeActivity;
 

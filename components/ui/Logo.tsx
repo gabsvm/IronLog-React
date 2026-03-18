@@ -15,7 +15,7 @@ export const Logo: React.FC<LogoProps> = ({ className = "w-10 h-10", size }) => 
             className={className}
             style={style}
             role="img"
-            aria-label="IronLog Logo"
+            aria-label="GainsLab Logo"
         >
             <defs>
                 <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -57,7 +57,7 @@ export const Logo: React.FC<LogoProps> = ({ className = "w-10 h-10", size }) => 
                 letterSpacing="0.1em"
                 style={{ textTransform: 'uppercase' }}
             >
-                IronLog
+                GainsLab
             </text>
         </svg>
     );

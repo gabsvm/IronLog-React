@@ -5,6 +5,7 @@ import { ProgramDay, ProgramSlot, MuscleGroup } from '../../types';
 import { Icon } from './Icon';
 import { Button } from './Button';
 
+// @ts-ignore - pdf.worker.mjs?url is a Vite-specific import that TS might not resolve correctly during npx tsc
 import workerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url';
 
 // Worker para pdfjs

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ironlog-pro-v13';
+const CACHE_NAME = 'gainslab-pro-v13';
 
 // Core app shell — always cache these
 const PRECACHE_URLS = [
@@ -126,7 +126,7 @@ self.addEventListener('fetch', (event) => {
 // --------------- PUSH NOTIFICATIONS (Rest Timer) ---------------
 self.addEventListener('push', (event) => {
   const data = event.data?.json() || {};
-  const title = data.title || 'IronLog';
+  const title = data.title || 'GainsLab';
   const body = data.body || '¡Descanso terminado! Listo para el siguiente set.';
   const icon = '/icon-192.png';
   const badge = '/icon-192.png';
@@ -137,7 +137,7 @@ self.addEventListener('push', (event) => {
       icon,
       badge,
       vibrate: [200, 100, 200],
-      tag: 'ironlog-timer',
+      tag: 'gainslab-timer',
       renotify: true,
       data: { url: data.url || '/' },
       actions: [
