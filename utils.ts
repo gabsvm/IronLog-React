@@ -124,3 +124,42 @@ export const calculateVolumeAdjustment = (soreness: number, performance: number)
 
     return 0;
 };
+
+/**
+ * NEW: Nutrition & Body Calculations
+ */
+export const calculateTDEE = (
+    weight: number, 
+    height: number, 
+    age: number, 
+    gender: 'male' | 'female' | 'other', 
+    activityLevel: string
+): number => {
+    // Mifflin-St Jeor Equation
+    let bmr = (10 * weight) + (6.25 * height) - (5 * age);
+    if (gender === 'male') bmr += 5;
+    else bmr -= 161;
+
+    const multipliers: Record<string, number> = {
+        'sedentary': 1.2,
+        'light': 1.375,
+        'moderate': 1.55,
+        'active': 1.725,
+        'very_active': 1.9
+    };
+
+    return Math.round(bmr * (multipliers[activityLevel] || 1.2));
+};
+
+export const calculateMacros = (calories: number, goal: 'cut' | 'maintain' | 'bulk'): { protein: number, carbs: number, fats: number } => {
+    let pPerc = 0.3, cPerc = 0.4, fPerc = 0.3;
+
+    if (goal === 'cut') { pPerc = 0.4; cPerc = 0.3; fPerc = 0.3; }
+    else if (goal === 'bulk') { pPerc = 0.25; cPerc = 0.5; fPerc = 0.25; }
+
+    return {
+        protein: Math.round((calories * pPerc) / 4),
+        carbs: Math.round((calories * cPerc) / 4),
+        fats: Math.round((calories * fPerc) / 9)
+    };
+};

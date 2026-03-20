@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useEffect, useRef, ReactNode, useState, PropsWithChildren, useMemo, useCallback } from 'react';
-import { AppState, Lang, Theme, ColorTheme, ExerciseDef, ActiveSession, MesoCycle, Log, ProgramDay, TutorialState, GlobalTemplate, UserProfile, BeforeInstallPromptEvent, NutritionLog, CardioSession, NutritionGoal } from '../types';
+import { AppState, Lang, Theme, ColorTheme, ExerciseDef, ActiveSession, MesoCycle, Log, ProgramDay, TutorialState, GlobalTemplate, UserProfile, BeforeInstallPromptEvent, NutritionLog, CardioSession, NutritionGoal, MacroGoals, DailyNutrition, BodyLog } from '../types';
 import { DEFAULT_LIBRARY, DEFAULT_TEMPLATE, INITIAL_TEMPLATES } from '../constants';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { usePersistedState } from '../hooks/usePersistedState';
@@ -44,6 +44,10 @@ interface AppContextType extends AppState {
     nutritionGoal: NutritionGoal;
     setNutritionGoal: (val: NutritionGoal | ((prev: NutritionGoal) => NutritionGoal)) => void;
 
+    // Body Tracking
+    setBodyLogs: (val: BodyLog[] | ((prev: BodyLog[]) => BodyLog[])) => void;
+    setMacroGoals: (val: MacroGoals | null | ((prev: MacroGoals | null) => MacroGoals | null)) => void;
+
     // Tutorial Methods
     markTutorialSeen: (section: keyof TutorialState) => void;
     resetTutorials: () => void;
@@ -82,7 +86,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     const [keepScreenOn, setKeepScreenOn] = useLocalStorage('il_cfg_screen', false);
 
     const [tutorialProgress, setTutorialProgress] = useLocalStorage<TutorialState>('il_tutorial_v2', {
-        home: false, workout: false, history: false, stats: false, mesoSettings: false
+        home: false, workout: false, history: false, stats: false, mesoSettings: false, nutrition: false
     });
 
     // --- Heavy Data (IndexedDB) ---
@@ -110,6 +114,10 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     const [hasSeenOnboarding, setHasSeenOnboarding, onboardingLoading] = usePersistedState<boolean>('il_onboarded_v2', false, 1000);
     const [localLastUpdated, setLocalLastUpdated] = usePersistedState<number>('il_last_sync_ts', 0, 0);
 
+    // NEW: Nutrition & Body Tracking Persistence
+    const [bodyLogs, setBodyLogs, bodyLoading] = usePersistedState<BodyLog[]>('il_body_v1', [], 1000);
+    const [macroGoals, setMacroGoals, macroLoading] = usePersistedState<MacroGoals | null>('il_macros_v1', null, 500);
+
     const [pendingCloudData, setPendingCloudData] = useState<Partial<AppState> | null>(null);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
 
@@ -117,7 +125,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(window.deferredPrompt || null);
     const [isStandalone, setIsStandalone] = useState(false);
 
-    const isAppLoading = programLoading || mesoLoading || sessionLoading || exLoading || logsLoading || fbLoading || onboardingLoading || authLoading || profileLoading || nutLoading || cardioLoading || goalLoading;
+    const isAppLoading = programLoading || mesoLoading || sessionLoading || exLoading || logsLoading || fbLoading || onboardingLoading || authLoading || profileLoading || nutLoading || cardioLoading || goalLoading || bodyLoading || macroLoading;
     const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
     // --- FETCH GLOBAL DATA ---
@@ -245,6 +253,18 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                 }
             }
         };
+
+        // Update user profile in upload for Pro users
+        const handleSyncUpdate = () => {
+            if (user && subscription.isPro) {
+                const now = Date.now();
+                setLocalLastUpdated(now);
+                syncService.uploadState(user.uid, {
+                    program, activeMeso, exercises, logs, config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn }, rpFeedback, activeSession, lastUpdated: now,
+                    userProfile, nutritionLogs, bodyLogs, macroGoals
+                });
+            }
+        };
         const handleOffline = () => setIsOnline(false);
         window.addEventListener('online', handleOnline);
         window.addEventListener('offline', handleOffline);
@@ -266,7 +286,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
             }
         }, 5000);
         return () => clearTimeout(timer);
-    }, [user, subscription.isPro, program, activeMeso, activeSession, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, rpFeedback, isAppLoading, userProfile]);
+    }, [user, subscription.isPro, program, activeMeso, activeSession, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, rpFeedback, isAppLoading, userProfile, nutritionLogs, bodyLogs, macroGoals]);
 
     const confirmCloudSync = useCallback(() => {
         if (pendingCloudData) {
@@ -288,6 +308,9 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
             }
 
             if (pendingCloudData.userProfile) setUserProfile(pendingCloudData.userProfile);
+            if (pendingCloudData.nutritionLogs) setNutritionLogs(pendingCloudData.nutritionLogs);
+            if (pendingCloudData.bodyLogs) setBodyLogs(pendingCloudData.bodyLogs);
+            if (pendingCloudData.macroGoals) setMacroGoals(pendingCloudData.macroGoals);
 
             // Sync timestamp to prevent immediate re-upload of old local state
             if (pendingCloudData.lastUpdated) {
@@ -342,7 +365,8 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     }, [setShowRIR, setRpEnabled, setRpTargetRIR, setKeepScreenOn]);
 
     const markTutorialSeen = useCallback((section: keyof TutorialState) => setTutorialProgress(prev => ({ ...prev, [section]: true })), [setTutorialProgress]);
-    const resetTutorials = useCallback(() => setTutorialProgress({ home: false, workout: false, history: false, stats: false, mesoSettings: false }), [setTutorialProgress]);
+    const resetTutorials = useCallback(() => setTutorialProgress({ home: false, workout: false, history: false, stats: false, mesoSettings: false, nutrition: false }), [setTutorialProgress]);
+
 
     const configState = useMemo(() => ({ showRIR, rpEnabled, rpTargetRIR, keepScreenOn }), [showRIR, rpEnabled, rpTargetRIR, keepScreenOn]);
 
@@ -365,7 +389,9 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         userProfile, setUserProfile,
         nutritionLogs, setNutritionLogs,
         cardioSessions, setCardioSessions,
-        nutritionGoal, setNutritionGoal
+        nutritionGoal, setNutritionGoal,
+        bodyLogs, setBodyLogs,
+        macroGoals, setMacroGoals
     }), [
         lang, setLang, theme, setTheme, colorTheme, setColorTheme,
         program, setProgram,
@@ -385,7 +411,9 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         userProfile, setUserProfile,
         nutritionLogs, setNutritionLogs,
         cardioSessions, setCardioSessions,
-        nutritionGoal, setNutritionGoal
+        nutritionGoal, setNutritionGoal,
+        bodyLogs, setBodyLogs,
+        macroGoals, setMacroGoals
     ]);
 
     if (isAppLoading) return <HomeSkeleton />;

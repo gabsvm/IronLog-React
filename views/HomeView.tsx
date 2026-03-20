@@ -344,9 +344,10 @@ interface HomeViewProps {
     startSession: (dayIdx: number) => void;
     onEditProgram: () => void;
     onSkipSession?: (dayIdx: number) => void;
+    onStartFreeSession?: () => void;
 }
 
-export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram, onSkipSession }) => {
+export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram, onSkipSession, onStartFreeSession }) => {
     const { activeMeso, activeSession, program, setActiveMeso, lang, logs, isAppLoading, setProgram, tutorialProgress, markTutorialSeen, globalTemplates } = useApp();
     const t = TRANSLATIONS[lang] || TRANSLATIONS['en'];
 
@@ -478,10 +479,10 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
 
     const homeTutorialSteps = [
         { targetId: 'tut-up-next', title: t.tutorial.home[0].title, text: t.tutorial.home[0].text, position: 'bottom' as const },
-        // Conditionally include guidelines tutorial if available
         ...(currentGuidelineImages && currentGuidelineImages.length > 0 ? [{ targetId: 'tut-guidelines', title: t.tutorial.home[1].title, text: t.tutorial.home[1].text, position: 'bottom' as const }] : []),
         { targetId: 'tut-settings-btn', title: t.tutorial.home[2].title, text: t.tutorial.home[2].text, position: 'bottom' as const },
-        { targetId: 'tut-nav-bar', title: t.tutorial.home[3].title, text: t.tutorial.home[3].text, position: 'top' as const }
+        { targetId: 'tut-nav-bar', title: t.tutorial.home[3].title, text: t.tutorial.home[3].text, position: 'top' as const },
+        ...(onStartFreeSession ? [{ targetId: 'home-freestyle-btn', title: lang === 'es' ? '🏅 Sin Programa Fijo' : '🏅 No Fixed Program', text: lang === 'es' ? 'Aquí puedes iniciar sesiones de CrossFit (WODs), Calistenia (progressions) o entrenar libremente sin un mesociclo activo.' : 'Here you can start CrossFit (WODs), Calisthenics (progressions) or train freely without an active mesocycle.', position: 'top' as const }] : [])
     ];
 
     if (!activeMeso) {
@@ -536,6 +537,26 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                         {lang === 'en' ? "View Templates" : "Ver Plantillas"}
                     </Button>
                 </div>
+
+                {/* Freestyle / CrossFit / Calisthenics option */}
+                {onStartFreeSession && (
+                    <div className="w-full max-w-xs animate-in fade-in slide-in-from-bottom-4 delay-300">
+                        <button
+                            onClick={onStartFreeSession}
+                            className="w-full flex items-center gap-3 bg-zinc-900/80 border border-zinc-800 rounded-2xl p-4 hover:border-zinc-600 active:scale-[0.98] transition-all"
+                        >
+                            <div className="flex gap-1">
+                                <div className="w-7 h-7 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center"><Icon name="Dumbbell" size={14} /></div>
+                                <div className="w-7 h-7 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center"><Icon name="Zap" size={14} /></div>
+                                <div className="w-7 h-7 rounded-xl bg-violet-500/10 text-violet-500 flex items-center justify-center"><Icon name="User" size={14} /></div>
+                            </div>
+                            <span className="flex-1 text-left text-xs font-black text-zinc-300">
+                                {lang === 'es' ? 'Gym · CrossFit · Calistenia' : 'Gym · CrossFit · Calisthenics'}
+                            </span>
+                            <Icon name="ChevronRight" size={16} className="text-zinc-600" />
+                        </button>
+                    </div>
+                )}
 
                 {/* Modals */}
                 {showTemplateSelector && (
@@ -666,6 +687,36 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                     })}
                 </div>
             </div>
+
+            {/* Freestyle / CrossFit / Calisthenics quick launcher */}
+            {onStartFreeSession && (
+                <button
+                    id="home-freestyle-btn"
+                    onClick={onStartFreeSession}
+                    className="w-full flex items-center gap-4 bg-zinc-900 border border-zinc-800 rounded-2xl p-4 hover:border-zinc-600 active:scale-[0.98] transition-all group"
+                >
+                    <div className="flex gap-1.5">
+                        <div className="w-8 h-8 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center">
+                            <Icon name="Dumbbell" size={16} />
+                        </div>
+                        <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                            <Icon name="Zap" size={16} />
+                        </div>
+                        <div className="w-8 h-8 rounded-xl bg-violet-500/10 text-violet-500 flex items-center justify-center">
+                            <Icon name="User" size={16} />
+                        </div>
+                    </div>
+                    <div className="flex-1 text-left">
+                        <div className="text-sm font-black text-white">
+                            {lang === 'es' ? 'Sesión Libre / CrossFit / Calistenia' : 'Freestyle / CrossFit / Calisthenics'}
+                        </div>
+                        <div className="text-[10px] text-zinc-500 mt-0.5">
+                            {lang === 'es' ? 'Sin programa fijo · WODs · Progressions' : 'No fixed program · WODs · Progressions'}
+                        </div>
+                    </div>
+                    <Icon name="ChevronRight" size={18} className="text-zinc-600 group-hover:text-zinc-300 transition-colors" />
+                </button>
+            )}
 
             {/* Consistency Heatmap */}
             <div className="relative p-px rounded-3xl bg-gradient-to-br from-zinc-700 via-zinc-800 to-zinc-900">
