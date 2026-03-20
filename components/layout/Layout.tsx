@@ -7,8 +7,8 @@ import { Logo } from '../ui/Logo';
 
 interface LayoutProps {
     children: React.ReactNode;
-    view: 'home' | 'workout' | 'history' | 'stats';
-    setView: (v: 'home' | 'workout' | 'history' | 'stats') => void;
+    view: 'home' | 'workout' | 'history' | 'stats' | 'nutrition';
+    setView: (v: 'home' | 'workout' | 'history' | 'stats' | 'nutrition') => void;
     onOpenSettings: () => void;
 }
 
@@ -91,6 +91,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
                     <div id="tut-nav-bar" className="pointer-events-auto mb-5 mx-6 w-full max-w-sm h-[68px] glass-island rounded-[2rem] flex items-center px-4 justify-between">
                         <NavBtn id="home" label={t.active} icon="Layout" />
                         <NavBtn id="history" label={t.history} icon="Calendar" />
+                        <NavBtn id="nutrition" label={lang === 'es' ? 'Dieta' : 'Diet'} icon="Utensils" />
                         <NavBtn id="stats" label="Stats" icon="BarChart2" />
                     </div>
                 </div>

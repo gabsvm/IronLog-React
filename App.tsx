@@ -11,6 +11,7 @@ import { RestTimerOverlay } from './components/ui/RestTimerOverlay';
 import { SessionSummaryView } from './views/SessionSummaryView';
 import { SetupWizard } from './components/onboarding/SetupWizard';
 import { Landing } from './components/onboarding/Landing';
+import { NutritionView } from './views/NutritionView';
 import { ConfirmModal } from './components/ui/ConfirmModal';
 import { Icon } from './components/ui/Icon';
 import { TRANSLATIONS } from './constants';
@@ -22,6 +23,8 @@ import { syncService } from './services/syncService';
 import { usePro } from './hooks/usePro';
 import { PaywallModal } from './components/pro/PaywallModal';
 import { SettingsModal } from './components/settings/SettingsModal';
+import { FreestyleSessionModal } from './components/workout/FreestyleSessionModal';
+import { CROSSFIT_EXERCISES, CALISTHENICS_EXERCISES } from './data/disciplineExercises';
 
 // Lazy Load heavier views
 const HistoryView = React.lazy(() => import('./views/HistoryView').then(module => ({ default: module.HistoryView })));
@@ -40,7 +43,8 @@ const VIEW_DEPTH: Record<string, number> = {
     'stats': 1,
     'workout': 2,
     'exercises': 2,
-    'program': 2
+    'program': 2,
+    'nutrition': 1
 };
 
 const AppContent = () => {
@@ -58,7 +62,7 @@ const AppContent = () => {
 
     const t = TRANSLATIONS[lang];
 
-    const [view, setViewState] = useState<'home' | 'workout' | 'history' | 'exercises' | 'program' | 'stats' | 'summary'>('home');
+    const [view, setViewState] = useState<'home' | 'workout' | 'history' | 'exercises' | 'program' | 'stats' | 'summary' | 'nutrition'>('home');
     const [completedWorkoutLog, setCompletedWorkoutLog] = useState<any>(null);
     const [showSettings, setShowSettings] = useState(false);
     const [showLanding, setShowLanding] = useState(!hasSeenOnboarding);
@@ -66,6 +70,7 @@ const AppContent = () => {
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
     const [showMesoCompleteModal, setShowMesoCompleteModal] = useState(false);
+    const [showFreestyleModal, setShowFreestyleModal] = useState(false);
 
     // Custom Modals State
     const [importData, setImportData] = useState<any>(null);
@@ -138,6 +143,17 @@ const AppContent = () => {
             }
         } catch (e) { }
     }, [view, showSettings]);
+
+    // One-time: merge CrossFit + Calisthenics exercises into library
+    useEffect(() => {
+        if (!exercises || exercises.length === 0) return;
+        const existingIds = new Set(exercises.map((e: any) => e.id));
+        const toAdd = [...CROSSFIT_EXERCISES, ...CALISTHENICS_EXERCISES].filter(e => !existingIds.has(e.id));
+        if (toAdd.length > 0) {
+            setExercises((prev: any[]) => [...(Array.isArray(prev) ? prev : []), ...toAdd]);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Run once on mount
 
     // --- DATA MANAGEMENT ---
     const handleExport = () => {
@@ -304,7 +320,7 @@ const AppContent = () => {
                         <Layout view={view as any} setView={setView as any} onOpenSettings={() => setShowSettings(true)}>
                             {view === 'home' && <HomeView
                                 startSession={(idx) => {
-                                    if (!activeMeso) return;
+                                    if (!activeMeso) { setShowFreestyleModal(true); return; }
 
                                     // CRITICAL FIX: Check if an active session already exists for this day/meso
                                     // If so, just resume it instead of overwriting.
@@ -363,6 +379,7 @@ const AppContent = () => {
                                 }}
                                 onEditProgram={() => setView('program')}
                                 onSkipSession={handleSkipSession}
+                                onStartFreeSession={() => setShowFreestyleModal(true)}
                             />}
                             {view === 'history' && (
                                 <Suspense fallback={<LoadingSpinner />}>
@@ -374,12 +391,24 @@ const AppContent = () => {
                                     <StatsView />
                                 </Suspense>
                             )}
+                            {view === 'nutrition' && <NutritionView />}
                         </Layout>
                     )}
                 </>
             )}
 
             <RestTimerOverlay />
+
+            {/* Freestyle Session Picker (CrossFit, Calisthenics, Free Gym) */}
+            <FreestyleSessionModal
+                isOpen={showFreestyleModal}
+                onClose={() => setShowFreestyleModal(false)}
+                onStart={(session) => {
+                    setActiveSession(session);
+                    setShowFreestyleModal(false);
+                    setView('workout');
+                }}
+            />
 
             {/* Standard Modal Overlays */}
             {showMesoCompleteModal && (

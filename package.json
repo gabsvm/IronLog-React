@@ -27,6 +27,7 @@
     "@google/genai": "*",
     "canvas-confetti": "^1.9.2",
     "chart.js": "^4.4.1",
+    "date-fns": "^4.1.0",
     "firebase": "^10.8.1",
     "idb-keyval": "^6.2.1",
     "lucide-react": "^0.400.0",

@@ -158,7 +158,8 @@ export interface TutorialState {
     workout: boolean;
     history: boolean;
     stats: boolean;
-    mesoSettings: boolean; // NEW: Specific tutorial for the settings modal
+    mesoSettings: boolean;
+    nutrition: boolean;
 }
 
 export type SubscriptionTier = 'free' | 'monthly' | 'yearly' | 'lifetime' | 'demo';
@@ -179,6 +180,34 @@ export interface UserProfile {
     bodyWeight?: number;
     height?: number;
     bodyFat?: number;
+    age?: number;
+    gender?: 'male' | 'female' | 'other';
+    activityLevel?: 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active';
+    nutritionGoal?: 'cut' | 'maintain' | 'bulk';
+}
+
+export interface MacroGoals {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fats: number;
+}
+
+export interface DailyNutrition {
+    id: string; // YYYY-MM-DD
+    calories: number;
+    protein: number;
+    carbs: number;
+    fats: number;
+    water: number; // in ml
+}
+
+export interface BodyLog {
+    id: number;
+    date: number;
+    weight: number;
+    bodyFat?: number;
+    notes?: string;
 }
 
 export interface AppState {
@@ -199,4 +228,8 @@ export interface AppState {
     userProfile?: UserProfile;
     lastUpdated?: number;
     globalTemplates?: GlobalTemplate[]; 
+    // NEW: Nutrition & Body Tracking
+    nutritionLogs: Record<string, DailyNutrition>;
+    bodyLogs: BodyLog[];
+    macroGoals?: MacroGoals;
 }
