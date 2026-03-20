@@ -673,8 +673,8 @@ export const TRANSLATIONS = {
         types: { regular: "Regular", myorep: "Myorep", myorep_match: "Myorep Match", cluster: "Cluster", top: "Top Set", backoff: "Back-off Set", giant: "Giant Set", warmup: "Warmup" },
         typeDesc: { regular: "Standard straight set", myorep: "Activation set + mini-sets (short rest)", myorep_match: "Match reps of previous set", cluster: "Intra-set rest periods", top: "Heaviest set (High Intensity)", backoff: "Volume work after Top Set", giant: "High reps to failure (Metabolite)", warmup: "Low fatigue preparation" },
         muscle: { CHEST: "Chest", BACK: "Back", QUADS: "Quads", HAMSTRINGS: "Hamstrings", GLUTES: "Glutes", CALVES: "Calves", SHOULDERS: "Shoulders", BICEPS: "Biceps", TRICEPS: "Triceps", TRAPS: "Traps", ABS: "Abs", FOREARMS: "Forearms", NECK: "Neck", CARDIO: "Cardio" },
-        rp: "IronCoach Progression",
-        rpEnabled: "IronCoach Suggestions",
+        rp: "GainsLab AI Progression",
+        rpEnabled: "GainsLab AI Suggestions",
         rpTargetRIR: "Target RIR",
         rpFeedbackTitle: "Muscle Feedback",
         rpRatingHelp: "Rate to auto-regulate volume (RP Logic)",
@@ -718,8 +718,8 @@ export const TRANSLATIONS = {
         completeWeekConfirm: "Advance to the next week of your mesocycle?",
         more: "...and {0} more",
         autoRegulate: "Auto-regulate volume?",
-        autoRegulateDesc: "IronCoach will adjust volume based on your feedback.",
-        applyingChanges: "Applying IronCoach Changes:",
+        autoRegulateDesc: "GainsLab AI will adjust volume based on your feedback.",
+        applyingChanges: "Applying GainsLab AI Changes:",
         setsAdded: "sets added",
         setsRemoved: "sets removed",
         noChanges: "No volume changes needed.",
@@ -808,7 +808,7 @@ export const TRANSLATIONS = {
         saveAsMeso: "Use this program to create a new active mesocycle immediately.",
         units: { kg: "KG", pl: "Plates", lb: "LBS", toggle: "Change Unit (KG/Plates)", plateWeight: "Weight per Plate", setPlateWeight: "Set Weight per Plate (kg)", enterWeight: "e.g. 5, 10..." },
         fb: { sorenessLabel: "Soreness / Recovery", performanceLabel: "Pump / Capacity", soreness: { 1: "Healed Early / Fresh", 2: "Healed on Time (Ideal)", 3: "Still Sore / Ouch" }, performance: { 1: "Bad / Grind", 2: "Good / Target", 3: "Great / Too Easy" }, adjust: { add: "+1/2 Sets", sub: "-1 Set", keep: "Keep (Optimal)" } },
-        onb: { skip: "Skip", next: "Next", start: "Start", s1_title: "Welcome to GainsLab", s1_desc: "The ultimate hypertrophy tool, powered by IronCoach.", s2_title: "Mesocycles", s2_desc: "Organize your training by weeks. IronCoach auto-regulates volume based on your feedback.", s3_title: "Smart Tracking", s3_desc: "Log RIR, use the built-in timer, and calculate warmups instantly.", s4_title: "Progress", s4_desc: "Visualize your volume landmarks (MEV/MRV) and ensure progressive overload." },
+        onb: { skip: "Skip", next: "Next", start: "Start", s1_title: "Welcome to GainsLab", s1_desc: "The ultimate hypertrophy tool, powered by GainsLab AI.", s2_title: "Mesocycles", s2_desc: "Organize your training by weeks. GainsLab AI auto-regulates volume based on your feedback.", s3_title: "Smart Tracking", s3_desc: "Log RIR, use the built-in timer, and calculate warmups instantly.", s4_title: "Progress", s4_desc: "Visualize your volume landmarks (MEV/MRV) and ensure progressive overload." },
         createAndSelect: "Create and Select",
         overwriteTemplateConfirm: "This overwrites your current routine with the selected template.",
         newRecord: "New Record!",
@@ -829,7 +829,7 @@ export const TRANSLATIONS = {
                 intermediate: "1-3 years. Familiar with RPE and compound lifting.",
                 advanced: "3+ years. High volume requirements and advanced recovery needs."
             },
-            expNote: "IronCoach will adjust initial volume based on your training age.",
+            expNote: "GainsLab AI will adjust initial volume based on your training age.",
             goalOptions: { hypertrophy: "Hypertrophy", strength: "Strength", endurance: "Endurance" },
             goalDesc: {
                 hypertrophy: "Maximize muscle size and body composition.",
@@ -867,7 +867,7 @@ export const TRANSLATIONS = {
             socialProof: "+2,400 athletes tracking progress",
             features: [
                 { title: "Smart Tracking", desc: "Predictive RPE and volume tracking designed for hypertrophy.", icon: "Zap" },
-                { title: "IronCoach AI", desc: "Real-time volume adjustments based on your recovery.", icon: "Activity" },
+                { title: "GainsLab AI", desc: "Real-time volume adjustments based on your recovery.", icon: "Activity" },
                 { title: "100% Secure", desc: "Private data sync across all your devices.", icon: "Shield" },
                 { title: "Offline First", desc: "Works deep in the gym with zero internet connection.", icon: "Cloud" }
             ]
@@ -1108,8 +1108,8 @@ export const TRANSLATIONS = {
         types: { regular: "Normal", myorep: "Myo-rep", myorep_match: "Myorep Match", cluster: "Cluster", top: "Serie Top", backoff: "Serie Back-off", giant: "Serie Gigante", warmup: "Calentamiento" },
         typeDesc: { regular: "Serie normal estándar", myorep: "Activación + mini-series (descanso corto)", myorep_match: "Igualar reps de serie anterior", cluster: "Descansos intra-serie", top: "Serie más pesada (Alta Intensidad)", backoff: "Trabajo de volumen tras Top Set", giant: "Reps altas al fallo (Metabolitos)", warmup: "Preparación baja fatiga" },
         muscle: { CHEST: "Pecho", BACK: "Espalda", QUADS: "Cuádriceps", HAMSTRINGS: "Isquios", GLUTES: "Glúteos", CALVES: "Gemelos", SHOULDERS: "Hombros", BICEPS: "Bíceps", TRICEPS: "Tríceps", TRAPS: "Trapecios", ABS: "Abdominales", FOREARMS: "Antebrazos", NECK: "Cuello", CARDIO: "Cardio" },
-        rp: "Progresión IronCoach",
-        rpEnabled: "Sugerencias IronCoach",
+        rp: "Progresión GainsLab AI",
+        rpEnabled: "Sugerencias GainsLab AI",
         rpTargetRIR: "RIR Objetivo",
         rpFeedbackTitle: "Feedback Muscular",
         rpRatingHelp: "Valora para auto-regular volumen (Lógica RP)",
@@ -1153,8 +1153,8 @@ export const TRANSLATIONS = {
         completeWeekConfirm: "¿Avanzar a la siguiente semana de tu mesociclo?",
         more: "...y {0} más",
         autoRegulate: "¿Auto-regular volumen?",
-        autoRegulateDesc: "IronCoach ajustará el volumen según tu feedback.",
-        applyingChanges: "Aplicando Cambios IronCoach:",
+        autoRegulateDesc: "GainsLab AI ajustará el volumen según tu feedback.",
+        applyingChanges: "Aplicando Cambios GainsLab AI:",
         setsAdded: "series añadidas",
         setsRemoved: "series eliminadas",
         noChanges: "Sin cambios de volumen.",
@@ -1243,7 +1243,7 @@ export const TRANSLATIONS = {
         saveAsMeso: "Usar este programa para crear un nuevo mesociclo activo.",
         units: { kg: "KG", pl: "Planchas", lb: "LBS", toggle: "Cambiar Unidad (KG/Planchas)", plateWeight: "Peso por Plancha", setPlateWeight: "Fijar Peso Plancha (kg)", enterWeight: "ej. 5, 10..." },
         fb: { sorenessLabel: "Agujetas / Recuperación", performanceLabel: "Bombeo / Capacidad", soreness: { 1: "Recuperado Antes / Fresco", 2: "Recuperado a Tiempo (Ideal)", 3: "Aún con Agujetas / Dolor" }, performance: { 1: "Mal / Forzado", 2: "Bien / Objetivo", 3: "Genial / Demasiado Fácil" }, adjust: { add: "+1/2 Series", sub: "-1 Serie", keep: "Mantener (Óptimo)" } },
-        onb: { skip: "Omitir", next: "Siguiente", start: "Empezar", s1_title: "Bienvenido a GainsLab", s1_desc: "La herramienta definitiva para hipertrofia, impulsada por IronCoach.", s2_title: "Mesociclos", s2_desc: "Organiza tu entreno por semanas. IronCoach auto-regula el volumen según tu feedback.", s3_title: "Seguimiento Inteligente", s3_desc: "Registra RIR, usa el temporizador integrado y calcula el calentamiento al instante.", s4_title: "Progreso", s4_desc: "Visualiza tus hitos de volumen (MEV/MRV) y asegura la sobrecarga progresiva." },
+        onb: { skip: "Omitir", next: "Siguiente", start: "Empezar", s1_title: "Bienvenido a GainsLab", s1_desc: "La herramienta definitiva para hipertrofia, impulsada por GainsLab AI.", s2_title: "Mesociclos", s2_desc: "Organiza tu entreno por semanas. GainsLab AI auto-regula el volumen según tu feedback.", s3_title: "Seguimiento Inteligente", s3_desc: "Registra RIR, usa el temporizador integrado y calcula el calentamiento al instante.", s4_title: "Progreso", s4_desc: "Visualiza tus hitos de volumen (MEV/MRV) y asegura la sobrecarga progresiva." },
         createAndSelect: "Crear y Seleccionar",
         overwriteTemplateConfirm: "Esto sobrescribe tu rutina actual con la plantilla seleccionada.",
         newRecord: "¡Nuevo Récord!",
@@ -1264,7 +1264,7 @@ export const TRANSLATIONS = {
                 intermediate: "1-3 años. Familiarizado con RPE y levantamientos compuestos.",
                 advanced: "3+ años. Requerimientos de volumen alto y necesidades de recuperación avanzada."
             },
-            expNote: "IronCoach ajustará el volumen inicial según tu antigüedad de entrenamiento.",
+            expNote: "GainsLab AI ajustará el volumen inicial según tu antigüedad de entrenamiento.",
             goalOptions: { hypertrophy: "Hipertrofia", strength: "Fuerza", endurance: "Resistencia" },
             goalDesc: {
                 hypertrophy: "Maximiza el tamaño muscular y la composición corporal.",
@@ -1294,7 +1294,7 @@ export const TRANSLATIONS = {
             socialProof: "+2,400 atletas registrando sus progresos",
             features: [
                 { title: "Seguimiento Inteligente", desc: "RPE predictivo y control de volumen diseñado para hipertrofia.", icon: "Zap" },
-                { title: "IronCoach AI", desc: "Ajustes de volumen en tiempo real basados en tu recuperación.", icon: "Activity" },
+                { title: "GainsLab AI", desc: "Ajustes de volumen en tiempo real basados en tu recuperación.", icon: "Activity" },
                 { title: "100% Seguro", desc: "Sincronización privada de datos en todos tus dispositivos.", icon: "Shield" },
                 { title: "Offline First", desc: "Funciona perfectamente en el gimnasio sin conexión a internet.", icon: "Cloud" }
             ]

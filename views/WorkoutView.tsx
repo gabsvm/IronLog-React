@@ -266,7 +266,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                         <button
                             id="tut-finish-btn"
                             onClick={(e) => { e.stopPropagation(); ctrl.setShowFinishModal(true); }}
-                            className="ml-1 bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-full shadow-lg shadow-red-600/30 active:scale-95 flex items-center gap-2 transition-all font-bold text-sm"
+                            className="ml-1 bg-primary-600 hover:bg-primary-500 text-white px-4 py-2 rounded-full shadow-lg shadow-primary-600/30 active:scale-95 flex items-center gap-2 transition-all font-bold text-sm"
                         >
                             <Icon name="CheckCircle" size={16} />
                             <span className="uppercase tracking-wide text-xs">{t.finishWorkout}</span>
@@ -298,7 +298,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                 inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest
                                 ${stageConfig.label === 'recovery'
                                     ? 'bg-blue-900/30 text-blue-400'
-                                    : 'bg-red-900/20 text-red-400'}
+                                    : 'bg-primary-900/20 text-red-400'}
                             `}>
                                 {stageConfig.label === 'recovery' ? (
                                     <>DELOAD PHASE</>
@@ -319,7 +319,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                 return (
                     <div className="h-0.5 bg-zinc-900 relative overflow-hidden">
                         <div
-                            className="h-full bg-gradient-to-r from-red-600 to-orange-500 transition-all duration-500 ease-out"
+                            className="h-full bg-gradient-to-r from-primary-600 to-orange-500 transition-all duration-500 ease-out"
                             style={{ width: `${pct}%` }}
                         />
                     </div>
@@ -395,7 +395,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                             </Button>
 
                             {/* Bottom Finish Button (Redundant but useful for long lists) */}
-                            <Button onClick={(e) => { e.stopPropagation(); ctrl.setShowFinishModal(true); }} size="lg" fullWidth className="py-4 text-base shadow-xl shadow-red-600/20 bg-gradient-to-r from-red-600 to-red-500 border-none">
+                            <Button onClick={(e) => { e.stopPropagation(); ctrl.setShowFinishModal(true); }} size="lg" fullWidth className="py-4 text-base shadow-xl shadow-primary-600/20 bg-gradient-to-r from-primary-600 to-primary-500 border-none">
                                 {t.finishWorkout}
                             </Button>
                         </div>
@@ -407,7 +407,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                             {sessionExercises.map((_, idx) => (
                                 <div
                                     key={idx}
-                                    className={`h-1.5 rounded-full flex-1 transition-all duration-300 ${idx === focusedIndex ? 'bg-red-600' : idx < focusedIndex ? 'bg-red-900/30' : 'bg-zinc-800'}`}
+                                    className={`h-1.5 rounded-full flex-1 transition-all duration-300 ${idx === focusedIndex ? 'bg-primary-600' : idx < focusedIndex ? 'bg-primary-900/30' : 'bg-zinc-800'}`}
                                 ></div>
                             ))}
                         </div>
@@ -523,7 +523,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                     myorep: 'bg-purple-500/20 text-purple-400',
                                     myorep_match: 'bg-purple-400/20 text-purple-300',
                                     giant: 'bg-orange-500/20 text-orange-400',
-                                    top: 'bg-red-500/20 text-red-400',
+                                    top: 'bg-primary-500/20 text-red-400',
                                     backoff: 'bg-blue-500/20 text-blue-400',
                                     cluster: 'bg-emerald-500/20 text-emerald-400',
                                 };
@@ -563,7 +563,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                         {/* Update Template Option */}
                         {finishedSets > 0 && (
                             <div className="bg-zinc-800/50 p-4 rounded-xl border border-white/5 flex items-start gap-3 cursor-pointer" onClick={() => ctrl.setUpdateTemplate(!ctrl.updateTemplate)}>
-                                <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center mt-0.5 transition-colors ${ctrl.updateTemplate ? 'bg-red-600 border-red-600' : 'border-zinc-600'}`}>
+                                <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center mt-0.5 transition-colors ${ctrl.updateTemplate ? 'bg-primary-600 border-primary-600' : 'border-zinc-600'}`}>
                                     {ctrl.updateTemplate && <Icon name="Check" size={14} className="text-white" strokeWidth={3} />}
                                 </div>
                                 <div className="flex-1">
@@ -582,7 +582,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                         <div className="pt-2 text-center">
                             <button
                                 onClick={() => ctrl.setShowDiscardConfirm(true)}
-                                className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors uppercase tracking-widest"
+                                className="text-xs font-bold text-primary-500 hover:text-red-700 transition-colors uppercase tracking-widest"
                             >
                                 {t.resetSession || "Discard / Reset"}
                             </button>

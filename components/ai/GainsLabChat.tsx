@@ -13,12 +13,12 @@ interface Message {
     text: string;
 }
 
-export const IronCoachChat: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+export const GainsLabChat: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     const { activeMeso, logs, lang, config, setProgram, program, exercises } = useApp();
     const t = TRANSLATIONS[lang];
     
     const [messages, setMessages] = useLocalStorage<Message[]>('il_chat_history_v1', [
-        { id: 'init', role: 'model', text: lang === 'en' ? "I am IronCoach. I can analyze your data, create new routines, or modify your current plan." : "Soy IronCoach. Puedo analizar tus datos, crear rutinas nuevas o modificar tu plan actual." }
+        { id: 'init', role: 'model', text: lang === 'en' ? "I am GainsLab AI. I can analyze your data, create new routines, or modify your current plan." : "Soy GainsLab AI. Puedo analizar tus datos, crear rutinas nuevas o modificar tu plan actual." }
     ]);
     
     const [input, setInput] = useState('');
@@ -80,7 +80,7 @@ export const IronCoachChat: React.FC<{ onClose: () => void }> = ({ onClose }) =>
             
             // Debug Log (will show in browser console)
             if (!apiKey || apiKey.includes("INSERT_KEY")) {
-                console.error("IronCoach Error: API Key is missing.");
+                console.error("GainsLab AI Error: API Key is missing.");
                 const missingMsg = lang === 'en' 
                     ? "⚠️ API Key Missing. Please create a .env file in the project root with: API_KEY=your_key_here"
                     : "⚠️ Falta la API Key. Crea un archivo .env en la raíz del proyecto con: API_KEY=tu_clave_aqui";
@@ -162,7 +162,7 @@ export const IronCoachChat: React.FC<{ onClose: () => void }> = ({ onClose }) =>
             const ai = new GoogleGenAI({ apiKey });
             
             const systemInstruction = `
-                You are IronCoach, an elite hypertrophy coach agent.
+                You are GainsLab AI, an elite hypertrophy coach agent.
                 
                 CONTEXT:
                 ${contextData}
@@ -296,7 +296,7 @@ export const IronCoachChat: React.FC<{ onClose: () => void }> = ({ onClose }) =>
                             <Icon name="Bot" size={24} fill="currentColor" />
                         </div>
                         <div>
-                            <h3 className="font-black text-zinc-900 dark:text-white leading-none">IronCoach AI</h3>
+                            <h3 className="font-black text-zinc-900 dark:text-white leading-none">GainsLab AI AI</h3>
                             <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium">Agent Mode Active</p>
                         </div>
                     </div>
@@ -356,7 +356,7 @@ export const IronCoachChat: React.FC<{ onClose: () => void }> = ({ onClose }) =>
                         <input 
                             type="text" 
                             className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-xl pl-4 pr-12 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 text-zinc-900 dark:text-white placeholder-zinc-400"
-                            placeholder={lang === 'en' ? "Ask IronCoach..." : "Pregunta a IronCoach..."}
+                            placeholder={lang === 'en' ? "Ask GainsLab AI..." : "Pregunta a GainsLab AI..."}
                             value={input}
                             onChange={e => setInput(e.target.value)}
                             onKeyDown={e => e.key === 'Enter' && handleSend()}

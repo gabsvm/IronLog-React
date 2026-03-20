@@ -19,7 +19,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onLogin }) => {
         <div className="fixed inset-0 z-50 bg-black overflow-y-auto scroll-container">
             {/* Background Effects */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-red-600/10 blur-[100px] md:blur-[120px] rounded-full" />
+                <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-primary-600/10 blur-[100px] md:blur-[120px] rounded-full" />
                 <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-zinc-800/20 blur-[100px] md:blur-[120px] rounded-full" />
             </div>
 
@@ -33,13 +33,13 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onLogin }) => {
                         <div className="flex bg-zinc-900/50 p-1 rounded-full border border-white/5">
                             <button
                                 onClick={() => setLang('en')}
-                                className={`px-3 py-1 text-[10px] font-bold rounded-full transition-all ${lang === 'en' ? 'bg-red-600 text-white shadow-lg' : 'text-zinc-500 hover:text-white'}`}
+                                className={`px-3 py-1 text-[10px] font-bold rounded-full transition-all ${lang === 'en' ? 'bg-primary-600 text-white shadow-lg' : 'text-zinc-500 hover:text-white'}`}
                             >
                                 EN
                             </button>
                             <button
                                 onClick={() => setLang('es')}
-                                className={`px-3 py-1 text-[10px] font-bold rounded-full transition-all ${lang === 'es' ? 'bg-red-600 text-white shadow-lg' : 'text-zinc-500 hover:text-white'}`}
+                                className={`px-3 py-1 text-[10px] font-bold rounded-full transition-all ${lang === 'es' ? 'bg-primary-600 text-white shadow-lg' : 'text-zinc-500 hover:text-white'}`}
                             >
                                 ES
                             </button>
@@ -105,12 +105,12 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onLogin }) => {
                             </div>
                         </div>
                         {/* Glow below card */}
-                        <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-3/4 h-8 bg-red-600/15 blur-2xl rounded-full" />
+                        <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-3/4 h-8 bg-primary-600/15 blur-2xl rounded-full" />
                     </div>
 
                     <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tighter mb-4 md:mb-6 animate-in-up" style={{ animationDelay: '0.2s' }}>
                         {t.title}{' '}
-                        <span className="text-red-600">{t.titleAccent}</span>
+                        <span className="text-primary-600">{t.titleAccent}</span>
                         {t.titleSuffix && ` ${t.titleSuffix}`}
                     </h1>
                     <p className="text-zinc-400 text-base md:text-xl max-w-sm md:max-w-md mb-8 md:mb-10 animate-in-up text-balance" style={{ animationDelay: '0.3s' }}>
@@ -144,13 +144,13 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onLogin }) => {
                     {t.features.map((feature: any, i: number) => (
                         <div
                             key={i}
-                            className="glass-island p-5 md:p-6 rounded-[2rem] md:rounded-3xl animate-in-up hover:border-red-600/30 transition-colors group"
+                            className="glass-island p-5 md:p-6 rounded-[2rem] md:rounded-3xl animate-in-up hover:border-primary-600/30 transition-colors group"
                             style={{ animationDelay: `${0.6 + i * 0.1}s` }}
                         >
-                            <div className="w-10 h-10 bg-red-600/10 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                            <div className="w-10 h-10 bg-primary-600/10 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                                 <Icon
                                     name={feature.icon || "Zap"}
-                                    className="text-red-500"
+                                    className="text-primary-500"
                                     size={20}
                                 />
                             </div>

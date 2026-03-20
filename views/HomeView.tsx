@@ -13,7 +13,7 @@ import { GlobalTemplate, ProgramDay } from '../types';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 
 // Lazy load the AI Chat component
-const IronCoachChat = React.lazy(() => import('../components/ai/IronCoachChat').then(module => ({ default: module.IronCoachChat })));
+const GainsLabChat = React.lazy(() => import('../components/ai/GainsLabChat').then(module => ({ default: module.GainsLabChat })));
 
 // --- INTERNAL COMPONENTS ---
 
@@ -215,7 +215,7 @@ const TemplateSelector = ({
                         <button
                             key={tpl.id}
                             onClick={() => onSelectTemplate(tpl)}
-                            className="w-full bg-zinc-900 border border-zinc-800 p-4 rounded-2xl text-left hover:border-red-600/50 transition-colors relative overflow-hidden group"
+                            className="w-full bg-zinc-900 border border-zinc-800 p-4 rounded-2xl text-left hover:border-primary-600/50 transition-colors relative overflow-hidden group"
                         >
                             {/* Pro Badge */}
                             {tpl.isPro && (
@@ -251,7 +251,7 @@ const WeekProgress = React.memo(({ program, logsForWeek }: any) => {
                 return (
                     <div
                         key={i}
-                        className={`h-1.5 rounded-full flex-1 transition-all duration-700 origin-left ${isDone ? 'bg-gradient-to-r from-red-600 to-orange-500 shadow-[0_0_8px_rgba(220,38,38,0.4)]' : 'bg-zinc-800'}`}
+                        className={`h-1.5 rounded-full flex-1 transition-all duration-700 origin-left ${isDone ? 'bg-gradient-to-r from-primary-600 to-orange-500 shadow-[0_0_8px_rgba(220,38,38,0.4)]' : 'bg-zinc-800'}`}
                         style={{ transitionDelay: `${i * 80}ms` }}
                     />
                 );
@@ -284,14 +284,14 @@ const NextSessionCard = React.memo(({ nextDayDef, isSessionActive, nextWorkoutId
             <div className="relative bg-zinc-900 h-full rounded-[1.8rem] p-6 flex flex-col justify-between min-h-[260px] border border-white/5 shadow-2xl overflow-hidden">
 
                 {/* Background Decor */}
-                <div className="absolute -right-10 -top-10 w-64 h-64 bg-red-600/10 rounded-full blur-[80px] pointer-events-none group-hover:bg-red-600/20 transition-colors duration-500"></div>
+                <div className="absolute -right-10 -top-10 w-64 h-64 bg-primary-600/10 rounded-full blur-[80px] pointer-events-none group-hover:bg-primary-600/20 transition-colors duration-500"></div>
 
                 <div className="relative z-10 flex justify-between items-start">
                     <div className={`
                         inline-flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md border border-white/5
-                        ${isSessionActive ? 'bg-red-500/20 text-red-400' : 'bg-white/5 text-zinc-300'}
+                        ${isSessionActive ? 'bg-primary-500/20 text-red-400' : 'bg-white/5 text-zinc-300'}
                     `}>
-                        {isSessionActive && <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>}
+                        {isSessionActive && <span className="w-2 h-2 rounded-full bg-primary-500 animate-pulse"></span>}
                         <span className="text-[10px] font-black uppercase tracking-widest">
                             {isSessionActive ? (lang === 'en' ? "IN PROGRESS" : "EN CURSO") : String(t.upNext)}
                         </span>
@@ -490,13 +490,13 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
             <div className="flex flex-col items-center justify-center h-full p-6 text-center space-y-8 bg-black relative overflow-hidden">
                 {/* Background Atmosphere */}
                 <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-zinc-900 to-black opacity-50 pointer-events-none"></div>
-                <div className="absolute bottom-0 right-0 w-64 h-64 bg-red-600/10 rounded-full blur-[100px] pointer-events-none"></div>
+                <div className="absolute bottom-0 right-0 w-64 h-64 bg-primary-600/10 rounded-full blur-[100px] pointer-events-none"></div>
 
                 <div className="relative z-10 w-full max-w-sm">
                     {/* Hero Card Container */}
                     <div
                         onClick={handleOpenTemplateSelector}
-                        className="group w-full aspect-square rounded-[2.5rem] relative overflow-hidden cursor-pointer shadow-2xl shadow-red-900/10 active:scale-95 transition-all duration-300 border border-white/5"
+                        className="group w-full aspect-square rounded-[2.5rem] relative overflow-hidden cursor-pointer shadow-2xl shadow-primary-900/10 active:scale-95 transition-all duration-300 border border-white/5"
                     >
                         {/* --- IMAGE / ARTWORK SPACE --- */}
                         {/* If you want to use your image, uncomment below and add file to public/cover.jpg */}
@@ -506,7 +506,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                         <div className="absolute inset-0 bg-zinc-900">
                             {/* Gradient Mesh */}
                             <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 via-zinc-900 to-black"></div>
-                            <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-bl from-red-600/20 to-transparent"></div>
+                            <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-bl from-primary-600/20 to-transparent"></div>
 
                             {/* Abstract Lines */}
                             <div className="absolute bottom-0 left-0 w-full h-1/2 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:linear-gradient(to_top,black,transparent)]"></div>
@@ -546,7 +546,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                             className="w-full flex items-center gap-3 bg-zinc-900/80 border border-zinc-800 rounded-2xl p-4 hover:border-zinc-600 active:scale-[0.98] transition-all"
                         >
                             <div className="flex gap-1">
-                                <div className="w-7 h-7 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center"><Icon name="Dumbbell" size={14} /></div>
+                                <div className="w-7 h-7 rounded-xl bg-primary-500/10 text-primary-500 flex items-center justify-center"><Icon name="Dumbbell" size={14} /></div>
                                 <div className="w-7 h-7 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center"><Icon name="Zap" size={14} /></div>
                                 <div className="w-7 h-7 rounded-xl bg-violet-500/10 text-violet-500 flex items-center justify-center"><Icon name="User" size={14} /></div>
                             </div>
@@ -696,7 +696,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                     className="w-full flex items-center gap-4 bg-zinc-900 border border-zinc-800 rounded-2xl p-4 hover:border-zinc-600 active:scale-[0.98] transition-all group"
                 >
                     <div className="flex gap-1.5">
-                        <div className="w-8 h-8 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center">
+                        <div className="w-8 h-8 rounded-xl bg-primary-500/10 text-primary-500 flex items-center justify-center">
                             <Icon name="Dumbbell" size={16} />
                         </div>
                         <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
@@ -732,7 +732,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
             {/* AI Floating Button */}
             <div className="fixed bottom-24 right-6 z-40 pointer-events-none">
                 <button
-                    onClick={() => checkPro("IronCoach AI") && setShowAIChat(true)}
+                    onClick={() => checkPro("GainsLab AI AI") && setShowAIChat(true)}
                     className="pointer-events-auto w-14 h-14 rounded-full bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.3)] flex items-center justify-center hover:scale-110 transition-transform active:scale-95"
                 >
                     <Icon name="Bot" size={24} fill="currentColor" />
@@ -747,7 +747,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
 
             {/* --- MODALS --- */}
 
-            {showAIChat && <Suspense fallback={null}><IronCoachChat onClose={() => setShowAIChat(false)} /></Suspense>}
+            {showAIChat && <Suspense fallback={null}><GainsLabChat onClose={() => setShowAIChat(false)} /></Suspense>}
             {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} feature={featureAttempted} />}
 
             {/* Guidelines Modal */}
@@ -843,7 +843,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
 
                             <button
                                 onClick={() => { setShowMesoSettings(false); setShowCompleteModal('meso'); }}
-                                className="w-full py-3 text-xs font-bold text-red-500 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors"
+                                className="w-full py-3 text-xs font-bold text-primary-500 hover:text-red-400 hover:bg-primary-500/10 rounded-xl transition-colors"
                             >
                                 {t.finishCycle}
                             </button>

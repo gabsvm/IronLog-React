@@ -108,7 +108,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         try {
-            const demoEmail = `demo_${Date.now()}@ironlog.app`;
+            const demoEmail = `demo_${Date.now()}@gainslab.app`;
             const demoPass = Math.random().toString(36).substring(2, 10);
             const userCredential = await createUserWithEmailAndPassword(auth, demoEmail, demoPass);
             const newUser = userCredential.user;

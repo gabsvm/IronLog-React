@@ -4,6 +4,7 @@ import { useApp } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
 import { UserProfile } from '../../types';
 import { Icon } from '../ui/Icon';
+import { Logo } from '../ui/Logo';
 import { recommendProgram, RecommendationResult } from '../../utils/recommendationEngine';
 
 interface SetupWizardProps {
@@ -82,24 +83,24 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
             onClick={onClick}
             className={`w-full p-4 rounded-2xl border-2 flex items-start gap-4 transition-all duration-200 active:scale-[0.98] text-left ${
                 selected
-                    ? 'border-red-600 bg-red-50 dark:bg-red-900/20'
+                    ? 'border-primary-600 bg-primary-50 dark:bg-primary-900/20'
                     : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-zinc-300 dark:hover:border-zinc-700'
             }`}
         >
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
-                selected ? 'bg-red-600 text-white' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400'
+                selected ? 'bg-primary-600 text-white' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400'
             }`}>
                 <Icon name={icon} size={20} />
             </div>
             <div className="flex-1 min-w-0">
-                <div className={`font-black text-sm ${selected ? 'text-red-700 dark:text-red-400' : 'text-zinc-900 dark:text-white'}`}>{label}</div>
+                <div className={`font-black text-sm ${selected ? 'text-primary-700 dark:text-red-400' : 'text-zinc-900 dark:text-white'}`}>{label}</div>
                 {description && (
-                    <div className={`text-xs mt-1 leading-relaxed font-medium ${selected ? 'text-red-600/70 dark:text-red-400/70' : 'text-zinc-500 dark:text-zinc-400'}`}>
+                    <div className={`text-xs mt-1 leading-relaxed font-medium ${selected ? 'text-primary-600/70 dark:text-red-400/70' : 'text-zinc-500 dark:text-zinc-400'}`}>
                         {description}
                     </div>
                 )}
             </div>
-            {selected && <Icon name="Check" size={18} className="text-red-600 mt-1 flex-shrink-0" />}
+            {selected && <Icon name="Check" size={18} className="text-primary-600 mt-1 flex-shrink-0" />}
         </button>
     );
 
@@ -146,7 +147,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                                 onClick={() => setProfile({ ...profile, daysPerWeek: d })}
                                 className={`aspect-square rounded-2xl font-black text-xl transition-all active:scale-90 ${
                                     profile.daysPerWeek === d
-                                        ? 'bg-red-600 text-white shadow-lg shadow-red-600/30 scale-110'
+                                        ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/30 scale-110'
                                         : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
                                 }`}
                             >
@@ -254,7 +255,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
 
                             <button
                                 onClick={() => handleApply('suggested')}
-                                className="w-full p-4 bg-red-600 hover:bg-red-500 rounded-2xl flex items-center gap-4 transition-all active:scale-[0.98] group shadow-lg shadow-red-600/30"
+                                className="w-full p-4 bg-primary-600 hover:bg-primary-500 rounded-2xl flex items-center gap-4 transition-all active:scale-[0.98] group shadow-lg shadow-primary-600/30"
                             >
                                 <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
                                     <Icon name="Zap" size={20} className="text-white" />
@@ -318,9 +319,9 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
         return (
             <div className="fixed inset-0 z-[100] bg-white dark:bg-zinc-950 flex flex-col items-center justify-center gap-6 p-8">
                 <div className="relative">
-                    <div className="w-20 h-20 border-4 border-zinc-100 dark:border-zinc-800 border-t-red-600 rounded-full animate-spin" />
+                    <div className="w-20 h-20 border-4 border-zinc-100 dark:border-zinc-800 border-t-primary-600 rounded-full animate-spin" />
                     <div className="absolute inset-0 flex items-center justify-center">
-                        <Icon name="Dumbbell" size={28} className="text-red-600" />
+                        <Icon name="Dumbbell" size={28} className="text-primary-600" />
                     </div>
                 </div>
                 <div className="text-center">
@@ -342,8 +343,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
             <div className="px-6 pt-safe py-4 border-b border-zinc-100 dark:border-zinc-900">
                 <div className="flex justify-between items-center mb-4">
                     <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-xl flex items-center justify-center font-black text-xs">GL</div>
-                        <span className="font-black text-zinc-900 dark:text-white text-sm">GainsLab</span>
+                        <Logo size={32} showText />
                     </div>
                     <div className="flex items-center gap-3">
                         {/* Language Toggle */}
@@ -373,7 +373,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                     <div className="space-y-2">
                         <div className="h-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
                             <div
-                                className="h-full bg-red-600 rounded-full transition-all duration-500"
+                                className="h-full bg-primary-600 rounded-full transition-all duration-500"
                                 style={{ width: `${progress}%` }}
                             />
                         </div>
@@ -382,7 +382,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                                 <span
                                     key={i}
                                     className={`text-[9px] font-black uppercase tracking-wider transition-colors ${
-                                        i <= step ? 'text-red-600' : 'text-zinc-300 dark:text-zinc-700'
+                                        i <= step ? 'text-primary-600' : 'text-zinc-300 dark:text-zinc-700'
                                     }`}
                                 >
                                     {title}
@@ -428,7 +428,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                     </button>
                     <button
                         onClick={handleNext}
-                        className="flex-1 h-12 rounded-2xl bg-red-600 hover:bg-red-500 text-white font-black text-sm shadow-lg shadow-red-600/30 transition-all active:scale-95 flex items-center justify-center gap-2"
+                        className="flex-1 h-12 rounded-2xl bg-primary-600 hover:bg-primary-500 text-white font-black text-sm shadow-lg shadow-primary-600/30 transition-all active:scale-95 flex items-center justify-center gap-2"
                     >
                         {step === 3
                             ? (lang === 'es' ? 'Analizar mi perfil →' : 'Analyze my profile →')

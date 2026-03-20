@@ -59,7 +59,7 @@ export const useTimer = (lang: Lang) => {
             const secondsLeft = Math.ceil(remainingMs / 1000);
             
             // Update Title
-            document.title = secondsLeft > 0 ? `(${Math.floor(secondsLeft/60)}:${(secondsLeft%60).toString().padStart(2,'0')}) Resting...` : "IronLog Pro";
+            document.title = secondsLeft > 0 ? `(${Math.floor(secondsLeft/60)}:${(secondsLeft%60).toString().padStart(2,'0')}) Resting...` : "GainsLab Pro";
 
             if (secondsLeft <= 0) {
                 // FINISHED
@@ -77,8 +77,8 @@ export const useTimer = (lang: Lang) => {
                             navigator.serviceWorker.ready.then(registration => {
                                 registration.showNotification(title, {
                                     body: body,
-                                    icon: "/icon.svg",
-                                    tag: 'ironlog-timer', // Consolidate notifications
+                                    icon: "/assets/icons/icon-192.webp",
+                                    tag: 'gainslab-timer', // Consolidate notifications
                                     vibrate: [200, 100, 200]
                                 } as any);
                             }).catch(() => {
@@ -86,16 +86,16 @@ export const useTimer = (lang: Lang) => {
                                 try {
                                     new Notification(title, {
                                         body: body,
-                                        icon: "/icon.svg",
-                                        tag: 'ironlog-timer' // Consolidate
+                                        icon: "/assets/icons/icon-192.webp",
+                                        tag: 'gainslab-timer' // Consolidate
                                     });
                                 } catch(e) {}
                             });
                         } else {
                             new Notification(title, {
                                 body: body,
-                                icon: "/icon.svg",
-                                tag: 'ironlog-timer' // Consolidate
+                                icon: "/assets/icons/icon-192.webp",
+                                tag: 'gainslab-timer' // Consolidate
                             });
                         }
                     } catch (e) {
@@ -103,7 +103,7 @@ export const useTimer = (lang: Lang) => {
                     }
                 }
 
-                document.title = "IronLog Pro";
+                document.title = "GainsLab Pro";
                 workerRef.current?.postMessage('stop');
                 return { ...prev, active: false, timeLeft: 0, endAt: 0 };
             }
@@ -121,7 +121,7 @@ export const useTimer = (lang: Lang) => {
             workerRef.current.postMessage('start');
         } else {
             workerRef.current.postMessage('stop');
-            document.title = "IronLog Pro";
+            document.title = "GainsLab Pro";
         }
     }, [timer.active, handleTick]);
 

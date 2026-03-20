@@ -42,7 +42,6 @@ const VIEW_DEPTH: Record<string, number> = {
     'home': 1,
     'history': 1,
     'stats': 1,
-    'nutri': 1,
     'workout': 2,
     'exercises': 2,
     'program': 2,
@@ -64,11 +63,7 @@ const AppContent = () => {
 
     const t = TRANSLATIONS[lang];
 
-<<<<<<< HEAD
-    const [view, setViewState] = useState<'home' | 'workout' | 'history' | 'exercises' | 'program' | 'stats' | 'summary' | 'nutri'>('home');
-=======
     const [view, setViewState] = useState<'home' | 'workout' | 'history' | 'exercises' | 'program' | 'stats' | 'summary' | 'nutrition'>('home');
->>>>>>> main
     const [completedWorkoutLog, setCompletedWorkoutLog] = useState<any>(null);
     const [showSettings, setShowSettings] = useState(false);
     const [showLanding, setShowLanding] = useState(!hasSeenOnboarding);
@@ -171,7 +166,7 @@ const AppContent = () => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `ironlog_backup_${new Date().toISOString().split('T')[0]}.json`;
+        a.download = `gainslab_backup_${new Date().toISOString().split('T')[0]}.json`;
         a.click();
     };
 
@@ -397,15 +392,11 @@ const AppContent = () => {
                                     <StatsView />
                                 </Suspense>
                             )}
-<<<<<<< HEAD
-                            {view === 'nutri' && (
+                            {view === 'nutrition' && (
                                 <Suspense fallback={<LoadingSpinner />}>
                                     <NutriView />
                                 </Suspense>
                             )}
-=======
-                            {view === 'nutrition' && <NutritionView />}
->>>>>>> main
                         </Layout>
                     )}
                 </>

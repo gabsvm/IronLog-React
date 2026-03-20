@@ -7,13 +7,8 @@ import { Logo } from '../ui/Logo';
 
 interface LayoutProps {
     children: React.ReactNode;
-<<<<<<< HEAD
-    view: 'home' | 'workout' | 'history' | 'stats' | 'nutri';
-    setView: (v: 'home' | 'workout' | 'history' | 'stats' | 'nutri') => void;
-=======
     view: 'home' | 'workout' | 'history' | 'stats' | 'nutrition';
     setView: (v: 'home' | 'workout' | 'history' | 'stats' | 'nutrition') => void;
->>>>>>> main
     onOpenSettings: () => void;
 }
 
@@ -51,7 +46,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
 
                 {/* Active pill indicator */}
                 {isActive && (
-                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-5 h-0.5 bg-red-500 rounded-full shadow-[0_0_6px_2px_rgba(239,68,68,0.5)]" />
+                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-5 h-0.5 bg-primary-500 rounded-full shadow-[0_0_9px_1px_rgb(var(--primary-500)/0.4)]" />
                 )}
             </button>
         );
@@ -67,12 +62,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
                 <div className="absolute top-0 left-0 right-0 z-20 pt-safe px-6 pb-2 bg-gradient-to-b from-black via-black/80 to-transparent pointer-events-none">
                     <div className="h-14 flex items-center justify-between pointer-events-auto">
                         <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-zinc-900 rounded-xl flex items-center justify-center border border-zinc-800">
-                                <Logo className="w-5 h-5 text-white" />
-                            </div>
-                            <h1 className="text-xl font-black tracking-tighter text-white">
-                                GainsLab
-                            </h1>
+                            <Logo className="w-10 h-10" showText />
                         </div>
                         <button
                             id="tut-settings-btn"
@@ -98,7 +88,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
                         <NavBtn id="history" label={t.history} icon="Calendar" />
                         <NavBtn id="nutrition" label={lang === 'es' ? 'Dieta' : 'Diet'} icon="Utensils" />
                         <NavBtn id="stats" label="Stats" icon="BarChart2" />
-                        <NavBtn id="nutri" label={lang === 'en' ? 'Nutri' : 'Nutri'} icon="Apple" />
                     </div>
                 </div>
             )}
