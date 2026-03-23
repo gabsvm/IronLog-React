@@ -1,28 +1,28 @@
- 
+
 export type Lang = 'en' | 'es';
 export type Theme = 'light' | 'dark' | 'system';
 export type ColorTheme = 'iron' | 'ocean' | 'forest' | 'royal' | 'sunset' | 'monochrome';
 
 export interface BeforeInstallPromptEvent extends Event {
-    readonly platforms: string[];
-    readonly userChoice: Promise<{
-        outcome: 'accepted' | 'dismissed';
-        platform: string;
-    }>;
-    prompt(): Promise<void>;
+  readonly platforms: string[];
+  readonly userChoice: Promise<{
+    outcome: 'accepted' | 'dismissed';
+    platform: string;
+  }>;
+  prompt(): Promise<void>;
 }
 
 declare global {
-    interface Window {
-        deferredPrompt: BeforeInstallPromptEvent | null;
-    }
+  interface Window {
+    deferredPrompt: BeforeInstallPromptEvent | null;
+  }
 }
 
-export type MuscleGroup = 
-  | 'CHEST' | 'BACK' | 'QUADS' | 'HAMSTRINGS' 
-  | 'GLUTES' | 'CALVES' | 'SHOULDERS' | 'BICEPS' 
+export type MuscleGroup =
+  | 'CHEST' | 'BACK' | 'QUADS' | 'HAMSTRINGS'
+  | 'GLUTES' | 'CALVES' | 'SHOULDERS' | 'BICEPS'
   | 'TRICEPS' | 'TRAPS' | 'ABS' | 'FOREARMS'
-  | 'NECK' | 'CARDIO'; 
+  | 'NECK' | 'CARDIO';
 
 export type CardioType = 'steady' | 'hiit' | 'tabata';
 
@@ -32,7 +32,7 @@ export interface ExerciseDef {
   muscle: MuscleGroup;
   instructions?: { en: string; es: string };
   defaultCardioType?: CardioType;
-  videoId?: string; 
+  videoId?: string;
   isBodyweight?: boolean; // NEW: Bodyweight flag
 }
 
@@ -42,7 +42,7 @@ export interface WorkoutSet {
   id: number;
   weight: string | number;
   reps: string | number;
-  rpe: string | number; 
+  rpe: string | number;
   completed: boolean;
   type: SetType;
   skipped?: boolean;
@@ -50,8 +50,8 @@ export interface WorkoutSet {
   hintReps?: string | number;
   prevWeight?: string | number;
   prevReps?: string | number;
-  distance?: string | number; 
-  duration?: string | number; 
+  distance?: string | number;
+  duration?: string | number;
   workSeconds?: number;
   restSeconds?: number;
   avtRoundId?: number;  // ID compartido entre todos los hops de un mismo round AVT
@@ -70,7 +70,7 @@ export interface SessionExercise extends ExerciseDef {
   plateWeight?: number;
   supersetId?: string;
   isPlaceholder?: boolean;
-  cardioType?: CardioType; 
+  cardioType?: CardioType;
 }
 
 export interface ActiveSession {
@@ -82,7 +82,7 @@ export interface ActiveSession {
   mesoId: number;
   week: number;
   exercises: SessionExercise[];
-  skipped?: boolean; 
+  skipped?: boolean;
 }
 
 export interface ProgramSlot {
@@ -90,7 +90,7 @@ export interface ProgramSlot {
   setTarget: number;
   reps?: string;
   exerciseId?: string | null;
-  supersetId?: string; 
+  supersetId?: string;
   setType?: SetType; // NEW: Persist preferred set type
   isAVT?: boolean;         // flag para indicar que este slot usa sistema AVT
   avtRounds?: number;      // cuántos rounds por sesión (default: 3)
@@ -112,14 +112,14 @@ export interface ProgramDay {
 export type MesoType = 'hyp_1' | 'hyp_2' | 'metabolite' | 'resensitization' | 'full_body' | 'wizard' | 'male_physique' | 'toji_fushiguro' | 'tokita' | string;
 
 export interface GlobalTemplate {
-    id: string;
-    name: string; 
-    title: { en: string, es: string };
-    description: { en: string, es: string };
-    isPro: boolean;
-    program: ProgramDay[];
-    order: number; 
-    guidelineImages?: string[]; // NEW: Array of images for guidelines
+  id: string;
+  name: string;
+  title: { en: string, es: string };
+  description: { en: string, es: string };
+  isPro: boolean;
+  program: ProgramDay[];
+  order: number;
+  guidelineImages?: string[]; // NEW: Array of images for guidelines
 }
 
 export interface MesoCycle {
@@ -148,91 +148,92 @@ export interface Log {
 }
 
 export interface FeedbackEntry {
-    soreness: number;
-    performance: number;
-    adjustment: number;
+  soreness: number;
+  performance: number;
+  adjustment: number;
 }
 
 export interface TutorialState {
-    home: boolean;
-    workout: boolean;
-    history: boolean;
-    stats: boolean;
-    mesoSettings: boolean;
-    nutrition: boolean;
+  home: boolean;
+  workout: boolean;
+  history: boolean;
+  stats: boolean;
+  mesoSettings: boolean;
+  nutrition: boolean;
 }
 
 export type SubscriptionTier = 'free' | 'monthly' | 'yearly' | 'lifetime' | 'demo';
 
 export interface UserSubscription {
-    isPro: boolean;
-    tier: SubscriptionTier;
-    expiryDate: number | null; 
+  isPro: boolean;
+  tier: SubscriptionTier;
+  expiryDate: number | null;
 }
 
 export interface UserProfile {
-    experience: 'beginner' | 'intermediate' | 'advanced';
-    daysPerWeek: number;
-    goal: 'hypertrophy' | 'strength' | 'endurance';
-    sessionDuration: 'short' | 'medium' | 'long';
-    subscription?: UserSubscription; 
-    // NEW: Body Stats
-    bodyWeight?: number;
-    height?: number;
-    bodyFat?: number;
-    age?: number;
-    gender?: 'male' | 'female' | 'other';
-    activityLevel?: 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active';
-    nutritionGoal?: 'cut' | 'maintain' | 'bulk';
+  experience: 'beginner' | 'intermediate' | 'advanced';
+  daysPerWeek: number;
+  goal: 'hypertrophy' | 'strength' | 'endurance';
+  sessionDuration: 'short' | 'medium' | 'long';
+  subscription?: UserSubscription;
+  // NEW: Body Stats
+  bodyWeight?: number;
+  height?: number;
+  bodyFat?: number;
+  age?: number;
+  gender?: 'male' | 'female' | 'other';
+  activityLevel?: 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active';
+  nutritionGoal?: 'cut' | 'maintain' | 'bulk';
 }
 
 export interface MacroGoals {
-    calories: number;
-    protein: number;
-    carbs: number;
-    fats: number;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fats: number;
 }
 
 export interface DailyNutrition {
-    id: string; // YYYY-MM-DD
-    calories: number;
-    protein: number;
-    carbs: number;
-    fats: number;
-    water: number; // in ml
+  id: string; // YYYY-MM-DD
+  calories: number;
+  protein: number;
+  carbs: number;
+  fats: number;
+  water: number; // in ml
 }
 
 export interface BodyLog {
-    id: number;
-    date: number;
-    weight: number;
-    bodyFat?: number;
-    notes?: string;
+  id: number;
+  date: number;
+  weight: number;
+  bodyFat?: number;
+  notes?: string;
 }
 
 export interface AppState {
-    program: ProgramDay[];
-    activeMeso: MesoCycle | null;
-    activeSession: ActiveSession | null;
-    exercises: ExerciseDef[];
-    logs: Log[];
-    config: {
-        showRIR: boolean;
-        rpEnabled: boolean;
-        rpTargetRIR: number;
-        keepScreenOn: boolean;
-    };
-    rpFeedback: Record<string, Record<string, Record<string, FeedbackEntry>>>; 
-    hasSeenOnboarding: boolean;
-    tutorialProgress: TutorialState;
-    userProfile?: UserProfile;
-    lastUpdated?: number;
-    globalTemplates?: GlobalTemplate[]; 
-    nutritionLogs: NutritionLog[];
-    cardioSessions: CardioSession[];
-    nutritionGoal: NutritionGoal;
-    bodyLogs: BodyLog[];
-    macroGoals?: MacroGoals;
+  program: ProgramDay[];
+  activeMeso: MesoCycle | null;
+  activeSession: ActiveSession | null;
+  exercises: ExerciseDef[];
+  logs: Log[];
+  config: {
+    showRIR: boolean;
+    rpEnabled: boolean;
+    rpTargetRIR: number;
+    keepScreenOn: boolean;
+    plateInventory: Record<number, number>;
+  };
+  rpFeedback: Record<string, Record<string, Record<string, FeedbackEntry>>>;
+  hasSeenOnboarding: boolean;
+  tutorialProgress: TutorialState;
+  userProfile?: UserProfile;
+  lastUpdated?: number;
+  globalTemplates?: GlobalTemplate[];
+  nutritionLogs: NutritionLog[];
+  cardioSessions: CardioSession[];
+  nutritionGoal: NutritionGoal;
+  bodyLogs: BodyLog[];
+  macroGoals?: MacroGoals;
 }
 
 // ─── NUTRITION TYPES ───────────────────────────────────────────────
@@ -261,8 +262,8 @@ export interface NutritionGoal {
 }
 
 // ─── CARDIO TYPES ───────────────────────────────────────────────────
-export type CardioActivityType = 
-  | 'running' | 'cycling' | 'swimming' | 'walking' 
+export type CardioActivityType =
+  | 'running' | 'cycling' | 'swimming' | 'walking'
   | 'rowing' | 'elliptical' | 'jump_rope' | 'hiit' | 'other';
 
 export interface CardioSession {

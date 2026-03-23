@@ -18,12 +18,12 @@ const sanitizeForFirestore = <T>(data: T): T => {
  */
 const serializeMeso = (meso: any) => {
     if (!meso || !Array.isArray(meso.plan)) return meso;
-    
+
     const planMap: Record<string, any[]> = {};
     meso.plan.forEach((daySlot: any[], idx: number) => {
-        planMap[String(idx)] = daySlot || []; 
+        planMap[String(idx)] = daySlot || [];
     });
-    
+
     return { ...meso, plan: planMap };
 };
 
@@ -32,25 +32,25 @@ const serializeMeso = (meso: any) => {
  */
 const deserializeMeso = (meso: any) => {
     if (!meso) return null;
-    
+
     // Si ya es un array (datos antiguos o locales), lo devolvemos tal cual
     if (Array.isArray(meso.plan)) return meso;
-    
+
     // Si es un objeto (Map), lo convertimos a array
     if (meso.plan && typeof meso.plan === 'object') {
         const planArray: any[][] = [];
-        const keys = Object.keys(meso.plan).map(Number).sort((a,b) => a-b);
-        
+        const keys = Object.keys(meso.plan).map(Number).sort((a, b) => a - b);
+
         // Encontrar el índice máximo para reconstruir el array correctamente
         const maxIdx = keys.length > 0 ? keys[keys.length - 1] : -1;
-        
+
         for (let i = 0; i <= maxIdx; i++) {
             planArray[i] = meso.plan[String(i)] || [];
         }
-        
+
         return { ...meso, plan: planArray };
     }
-    
+
     return meso;
 };
 
@@ -66,12 +66,12 @@ export const syncService = {
 
         try {
             const userRef = doc(db, "users", userId);
-            await setDoc(userRef, { 
-                email: email, 
+            await setDoc(userRef, {
+                email: email,
                 lastSeen: Date.now(),
-                uid: userId 
+                uid: userId
             }, { merge: true });
-            
+
             (window as any)._lastSyncedId = userId;
             console.log(`👤 Identity Synced: ${email}`);
         } catch (error) {
@@ -84,7 +84,7 @@ export const syncService = {
      */
     uploadState: async (userId: string, state: Partial<AppState>) => {
         if (!userId || !db) return;
-        
+
         try {
             const batch = writeBatch(db);
             const userRef = doc(db, "users", userId);
@@ -104,26 +104,26 @@ export const syncService = {
                 nutritionGoal: state.nutritionGoal || null,
                 lastUpdated: state.lastUpdated || Date.now(),
                 // NEW: Save email to allow Admin Lookup
-                email: auth?.currentUser?.email || null 
+                email: auth?.currentUser?.email || null
             };
 
             // 2. Sanitización (undefined -> null)
             const mainData = sanitizeForFirestore(rawMainData);
-            
+
             batch.set(userRef, mainData, { merge: true });
 
             // 3. Logs (History) in sub-collection
             if (state.logs && state.logs.length > 0) {
                 const logsRef = doc(db, "users", userId, "data", "history");
                 let logsData = sanitizeForFirestore({ logs: state.logs });
-                
+
                 // Firestore document limit is 1MB. We safety check at 900KB.
                 const payloadSize = JSON.stringify(logsData).length;
                 if (payloadSize > 900000) {
                     console.warn("⚠️ History logs exceeding limit. Truncating to last 200 entries.");
-                    logsData.logs = logsData.logs.slice(-200);
+                    logsData.logs = logsData.logs.slice(0, 200); // FIX: newest logs are at the beginning
                 }
-                
+
                 batch.set(logsRef, logsData);
             }
 
@@ -131,7 +131,7 @@ export const syncService = {
             console.log(`☁️ Cloud Sync: Upload Complete (User: ${userId}) at ${new Date().toLocaleTimeString()}`);
         } catch (error) {
             console.error("❌ Cloud Sync Upload Failed:", error);
-            throw error; 
+            throw error;
         }
     },
 
@@ -147,7 +147,7 @@ export const syncService = {
 
             if (userSnap.exists()) {
                 const data = userSnap.data();
-                
+
                 // Deserializar Meso Activo (Map -> Array[][])
                 const safeActiveMeso = deserializeMeso(data.activeMeso);
 
@@ -169,7 +169,7 @@ export const syncService = {
                     lastUpdated: data.lastUpdated || Date.now() // Fallback if missing
                 };
             }
-            return null; 
+            return null;
         } catch (error) {
             console.error("❌ Cloud Sync Download Failed:", error);
             return null;

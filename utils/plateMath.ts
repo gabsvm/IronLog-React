@@ -15,18 +15,25 @@ export const STANDARD_PLATES: PlateConfig[] = [
     { weight: 1.25, color: 'bg-zinc-500', heightClass: 'h-6' },
 ];
 
-export const calculatePlates = (targetWeight: number, barWeight = 20): { plates: PlateConfig[], remainder: number } => {
+export const calculatePlates = (targetWeight: number, barWeight = 20, inventory: Record<number, number> | null = null): { plates: PlateConfig[], remainder: number } => {
     let weightPerSide = (targetWeight - barWeight) / 2;
     const result: PlateConfig[] = [];
 
-    if (weightPerSide <= 0) return { plates: [], remainder: 0 };
+    if (weightPerSide <= 0) return { plates: [], remainder: targetWeight - barWeight < 0 ? 0 : targetWeight - barWeight };
 
     for (const plate of STANDARD_PLATES) {
-        while (weightPerSide >= plate.weight) {
+        let availablePerSide = Infinity;
+        if (inventory) {
+            availablePerSide = Math.floor((inventory[plate.weight] || 0) / 2);
+        }
+
+        let added = 0;
+        while (weightPerSide >= plate.weight && added < availablePerSide) {
             result.push(plate);
             weightPerSide -= plate.weight;
+            added++;
         }
     }
 
-    return { plates: result, remainder: weightPerSide * 2 }; // Remainder is total remaining weight
+    return { plates: result, remainder: weightPerSide * 2 };
 };

@@ -28,7 +28,7 @@ interface AppContextType extends AppState {
     setActiveSession: (val: ActiveSession | null | ((prev: ActiveSession | null) => ActiveSession | null)) => void;
     setExercises: (val: ExerciseDef[] | ((prev: ExerciseDef[]) => ExerciseDef[])) => void;
     setLogs: (val: Log[] | ((prev: Log[]) => Log[])) => void;
-    setConfig: (val: AppState['config']) => void;
+    setConfig: (val: Partial<AppState['config']>) => void;
     setRpFeedback: (val: AppState['rpFeedback'] | ((prev: AppState['rpFeedback']) => AppState['rpFeedback'])) => void;
     setHasSeenOnboarding: (val: boolean) => void;
     setGlobalTemplates: (val: GlobalTemplate[] | ((prev: GlobalTemplate[]) => GlobalTemplate[])) => void;
@@ -84,6 +84,9 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
 
     const [rpTargetRIR, setRpTargetRIR] = useLocalStorage('il_cfg_rp_rir', 2);
     const [keepScreenOn, setKeepScreenOn] = useLocalStorage('il_cfg_screen', false);
+    const [plateInventory, setPlateInventory] = useLocalStorage<Record<number, number>>('il_cfg_plates', {
+        25: 4, 20: 6, 15: 4, 10: 4, 5: 4, 2.5: 4, 1.25: 4
+    });
 
     const [tutorialProgress, setTutorialProgress] = useLocalStorage<TutorialState>('il_tutorial_v2', {
         home: false, workout: false, history: false, stats: false, mesoSettings: false, nutrition: false
@@ -119,6 +122,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     const [macroGoals, setMacroGoals, macroLoading] = usePersistedState<MacroGoals | null>('il_macros_v1', null, 500);
 
     const [pendingCloudData, setPendingCloudData] = useState<Partial<AppState> | null>(null);
+    const [hasCheckedSync, setHasCheckedSync] = useState(false);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
 
     // Initialize with global if available (captured in index.html)
@@ -214,7 +218,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
 
     // --- INITIAL CLOUD DOWNLOAD ---
     useEffect(() => {
-        if (!user || isAppLoading || !isOnline || pendingCloudData) return;
+        if (!user || isAppLoading || !isOnline || pendingCloudData || hasCheckedSync) return;
 
         const checkCloudData = async () => {
             try {
@@ -231,11 +235,13 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                 }
             } catch (error) {
                 console.error("Initial cloud sync check failed", error);
+            } finally {
+                setHasCheckedSync(true); // Always mark as checked so it doesn't loop
             }
         };
 
         checkCloudData();
-    }, [user, isOnline, isAppLoading, pendingCloudData]); // Re-run when user or online status changes
+    }, [user, isOnline, isAppLoading, pendingCloudData, hasCheckedSync, activeMeso, logs, localLastUpdated]); // Re-run when dependencies change
 
     // --- SYNC LOGIC ---
     useEffect(() => {
@@ -246,7 +252,8 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                     const now = Date.now();
                     setLocalLastUpdated(now);
                     syncService.uploadState(user.uid, {
-                        program, activeMeso, exercises, logs, config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn }, rpFeedback, activeSession, lastUpdated: now
+                        program, activeMeso, exercises, logs, config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn, plateInventory }, rpFeedback, activeSession, lastUpdated: now,
+                        userProfile, nutritionLogs, bodyLogs, macroGoals
                     });
                 } else {
                     syncService.uploadUserIdentity(user.uid, user.email || "");
@@ -254,22 +261,11 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
             }
         };
 
-        // Update user profile in upload for Pro users
-        const handleSyncUpdate = () => {
-            if (user && subscription.isPro) {
-                const now = Date.now();
-                setLocalLastUpdated(now);
-                syncService.uploadState(user.uid, {
-                    program, activeMeso, exercises, logs, config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn }, rpFeedback, activeSession, lastUpdated: now,
-                    userProfile, nutritionLogs, bodyLogs, macroGoals
-                });
-            }
-        };
         const handleOffline = () => setIsOnline(false);
         window.addEventListener('online', handleOnline);
         window.addEventListener('offline', handleOffline);
         return () => { window.removeEventListener('online', handleOnline); window.removeEventListener('offline', handleOffline); };
-    }, [user, subscription.isPro, program, activeMeso, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, rpFeedback, activeSession, userProfile]);
+    }, [user, subscription.isPro, program, activeMeso, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, plateInventory, rpFeedback, activeSession, userProfile, nutritionLogs, bodyLogs, macroGoals]);
 
     // Upload Debounce
     useEffect(() => {
@@ -279,14 +275,14 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                 const now = Date.now();
                 setLocalLastUpdated(now);
                 syncService.uploadState(user.uid, {
-                    program, activeMeso, activeSession, exercises, logs, config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn }, rpFeedback, lastUpdated: now
+                    program, activeMeso, activeSession, exercises, logs, config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn, plateInventory }, rpFeedback, lastUpdated: now
                 });
             } else {
                 syncService.uploadUserIdentity(user.uid, user.email || "");
             }
         }, 5000);
         return () => clearTimeout(timer);
-    }, [user, subscription.isPro, program, activeMeso, activeSession, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, rpFeedback, isAppLoading, userProfile, nutritionLogs, bodyLogs, macroGoals]);
+    }, [user, subscription.isPro, program, activeMeso, activeSession, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, plateInventory, rpFeedback, isAppLoading, userProfile, nutritionLogs, bodyLogs, macroGoals]);
 
     const confirmCloudSync = useCallback(() => {
         if (pendingCloudData) {
@@ -305,6 +301,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                 if (pendingCloudData.config.rpEnabled !== undefined) setRpEnabled(pendingCloudData.config.rpEnabled);
                 if (pendingCloudData.config.rpTargetRIR !== undefined) setRpTargetRIR(pendingCloudData.config.rpTargetRIR);
                 if (pendingCloudData.config.keepScreenOn !== undefined) setKeepScreenOn(pendingCloudData.config.keepScreenOn);
+                if (pendingCloudData.config.plateInventory !== undefined) setPlateInventory(pendingCloudData.config.plateInventory);
             }
 
             if (pendingCloudData.userProfile) setUserProfile(pendingCloudData.userProfile);
@@ -330,7 +327,10 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         }
     }, [pendingCloudData, setProgram, setActiveMeso, setActiveSession, setExercises, setLogs, setRpFeedback, setShowRIR, setRpEnabled, setLocalLastUpdated, setHasSeenOnboarding]);
 
-    const cancelCloudSync = useCallback(() => setPendingCloudData(null), []);
+    const cancelCloudSync = useCallback(() => {
+        setPendingCloudData(null);
+        setLocalLastUpdated(Date.now());
+    }, [setLocalLastUpdated]);
 
     // --- THEME & WAKELOCK ---
     useEffect(() => {
@@ -362,13 +362,14 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         if (newConfig.rpEnabled !== undefined) setRpEnabled(newConfig.rpEnabled);
         if (newConfig.rpTargetRIR !== undefined) setRpTargetRIR(newConfig.rpTargetRIR);
         if (newConfig.keepScreenOn !== undefined) setKeepScreenOn(newConfig.keepScreenOn);
-    }, [setShowRIR, setRpEnabled, setRpTargetRIR, setKeepScreenOn]);
+        if (newConfig.plateInventory !== undefined) setPlateInventory(newConfig.plateInventory);
+    }, [setShowRIR, setRpEnabled, setRpTargetRIR, setKeepScreenOn, setPlateInventory]);
 
     const markTutorialSeen = useCallback((section: keyof TutorialState) => setTutorialProgress(prev => ({ ...prev, [section]: true })), [setTutorialProgress]);
     const resetTutorials = useCallback(() => setTutorialProgress({ home: false, workout: false, history: false, stats: false, mesoSettings: false, nutrition: false }), [setTutorialProgress]);
 
 
-    const configState = useMemo(() => ({ showRIR, rpEnabled, rpTargetRIR, keepScreenOn }), [showRIR, rpEnabled, rpTargetRIR, keepScreenOn]);
+    const configState = useMemo(() => ({ showRIR, rpEnabled, rpTargetRIR, keepScreenOn, plateInventory }), [showRIR, rpEnabled, rpTargetRIR, keepScreenOn, plateInventory]);
 
     const contextValue = useMemo(() => ({
         lang, setLang, theme, setTheme, colorTheme, setColorTheme,

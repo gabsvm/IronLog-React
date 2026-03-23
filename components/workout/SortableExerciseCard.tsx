@@ -467,7 +467,7 @@ export const SortableExerciseCard = React.memo(({
 
             {/* Sets List */}
             <div className={`divide-y divide-zinc-100 dark:divide-white/5 ${viewMode === 'focus' ? 'overflow-y-auto flex-1' : ''}`}>
-                {!isAVTExercise && regularSets.map((set, idx) => (
+                {regularSets.map((set, idx) => (
                     <SetRow
                         key={set.id}
                         set={set}

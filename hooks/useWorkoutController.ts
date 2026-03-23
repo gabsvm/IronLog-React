@@ -10,7 +10,7 @@ import { getLastLogForExercise } from '../utils';
 export const useWorkoutController = (onFinishCallback: () => void, onDiscardCallback: () => void) => {
     const { activeSession, activeMeso, setActiveSession, setActiveMeso, setProgram, exercises, rpFeedback, setRpFeedback, config, logs } = useApp();
     const { setRestTimer } = useTimerContext();
-    
+
     // Local UI State
     const [openMenuId, setOpenMenuId] = useState<number | null>(null);
     const [showFinishModal, setShowFinishModal] = useState(false);
@@ -26,17 +26,17 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
     const [showPlateCalc, setShowPlateCalc] = useState<{ weight: number } | null>(null);
     const [detailExercise, setDetailExercise] = useState<SessionExercise | null>(null);
     const [showDiscardConfirm, setShowDiscardConfirm] = useState(false); // NEW
-    
+
     // Feature: Update Template
     const [updateTemplate, setUpdateTemplate] = useState(false);
-    
+
     // PR Logic
     const [hasNewPR, setHasNewPR] = useState(false);
     const [showPRSuccess, setShowPRSuccess] = useState(false);
 
-    const sessionExercises = useMemo(() => 
-        (activeSession?.exercises || []).filter((e): e is SessionExercise => !!e), 
-    [activeSession?.exercises]);
+    const sessionExercises = useMemo(() =>
+        (activeSession?.exercises || []).filter((e): e is SessionExercise => !!e),
+        [activeSession?.exercises]);
 
     // Data Mutations
     const handleSetUpdate = useCallback((exInstanceId: number, setId: number, field: keyof WorkoutSet, value: any) => {
@@ -63,10 +63,10 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
                 ...prev,
                 exercises: (prev.exercises || []).map(ex => {
                     if (ex.instanceId !== exInstanceId) return ex;
-                    
+
                     const sets = ex.sets || [];
                     const lastSet = sets.length > 0 ? sets[sets.length - 1] : null;
-                    
+
                     const newSet: WorkoutSet = {
                         id: Date.now(),
                         weight: lastSet ? lastSet.weight : '',
@@ -113,17 +113,17 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
 
     const toggleSetComplete = useCallback((exInstanceId: number, setId: number) => {
         setActiveSession(prev => {
-            if(!prev) return null;
-            
+            if (!prev) return null;
+
             const ex = prev.exercises.find(e => e.instanceId === exInstanceId);
             const set = ex?.sets?.find(s => s.id === setId);
             if (!set || set.skipped) return prev;
 
             const completing = !set.completed;
-            
+
             let startTime = prev.startTime;
             if (completing && !startTime) startTime = Date.now();
-            
+
             return {
                 ...prev,
                 startTime,
@@ -133,12 +133,12 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
                 } : e)
             }
         });
-        
+
         const ex = sessionExercises.find(e => e.instanceId === exInstanceId);
         const set = ex?.sets.find(s => s.id === setId);
-        if(set) {
+        if (set) {
             const willComplete = !set.completed;
-            if(willComplete) {
+            if (willComplete) {
                 triggerHaptic('success');
                 const isMetabolite = activeMeso?.mesoType === 'metabolite';
                 let dur = isMetabolite ? 60 : 120;
@@ -180,7 +180,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
 
                 if (currentBest1RM > historicalBest1RM) {
                     prFound = true;
-                    break; 
+                    break;
                 }
             }
         }
@@ -191,7 +191,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
         try {
             const confettiModule = await import('canvas-confetti');
             const confetti = (confettiModule.default || confettiModule) as any;
-            
+
             const count = 200;
             const defaults = { origin: { y: 0.7 }, zIndex: 9999 };
             function fire(particleRatio: number, opts: any) {
@@ -208,14 +208,14 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
     const handleConfirmFinish = useCallback(() => {
         triggerHaptic('medium');
         setShowFinishModal(false);
-        
+
         // --- UPDATE TEMPLATE LOGIC ---
         if (updateTemplate && activeMeso && activeSession) {
             // 1. Construct new Slots for Program (Base Template)
             const newSlots = sessionExercises.map(ex => {
                 // Determine preferred set type from the first set
                 const firstSetType = ex.sets && ex.sets.length > 0 ? ex.sets[0].type : undefined;
-                
+
                 return {
                     muscle: ex.muscle,
                     setTarget: ex.sets.length, // Persist set count
@@ -247,6 +247,8 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
         }
         // -----------------------------
 
+        setRestTimer({ active: false, timeLeft: 0, duration: 0, endAt: 0 }); // Fix timer leak
+
         const isPR = detectPRs();
         setHasNewPR(isPR);
 
@@ -266,12 +268,12 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
     const handleDiscardSession = useCallback(() => {
         triggerHaptic('warning');
         // Clear internal timer logic state
-        setRestTimer({ active: false, timeLeft: 0, duration: 0, endAt: 0 }); 
-        
+        setRestTimer({ active: false, timeLeft: 0, duration: 0, endAt: 0 });
+
         // Close modals
         setShowFinishModal(false);
         setShowDiscardConfirm(false);
-        
+
         // Invoke specific discard callback (handled in App.tsx)
         onDiscardCallback();
     }, [setRestTimer, onDiscardCallback]);
@@ -279,6 +281,9 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
     const handleSaveFeedback = useCallback((feedbackData: Record<string, any>) => {
         if (!activeSession) return;
         triggerHaptic('success');
+
+        setRestTimer({ active: false, timeLeft: 0, duration: 0, endAt: 0 }); // Fix timer leak (failsafe)
+
         const { mesoId, week } = activeSession;
         setRpFeedback(prev => {
             const newFb = { ...prev };
@@ -289,9 +294,9 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
             });
             return newFb;
         });
-        
+
         setShowFeedbackModal(false);
-        
+
         if (hasNewPR) {
             setShowPRSuccess(true);
             fireConfetti();
@@ -301,12 +306,13 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
     }, [activeSession, setRpFeedback, onFinishCallback, hasNewPR, fireConfetti]);
 
     const dismissPRSuccess = useCallback(() => {
+        setRestTimer({ active: false, timeLeft: 0, duration: 0, endAt: 0 }); // Extra failsafe
         setShowPRSuccess(false);
         onFinishCallback();
-    }, [onFinishCallback]);
+    }, [onFinishCallback, setRestTimer]);
 
     const reorderSessionExercises = useCallback((oldIndex: number, newIndex: number) => {
-        triggerHaptic('medium'); 
+        triggerHaptic('medium');
         if (!activeSession?.exercises) return;
         const newExercises = arrayMove(activeSession.exercises, oldIndex, newIndex);
         setActiveSession(prev => prev ? { ...prev, exercises: newExercises } : null);
@@ -317,51 +323,51 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
         // Un round AVT empieza con 4 hops vacíos (peso incremental, mismas reps)
         // El usuario va completando hop a hop y marca cuál fue el fallo
         const initialHops: WorkoutSet[] = Array.from({ length: 4 }, (_, i) => ({
-          id: Date.now() + i,
-          weight: '',
-          reps: '',
-          rpe: '',
-          completed: false,
-          type: 'avt_hop' as SetType,
-          avtRoundId: roundId,
-          isLastHop: false,
+            id: Date.now() + i,
+            weight: '',
+            reps: '',
+            rpe: '',
+            completed: false,
+            type: 'avt_hop' as SetType,
+            avtRoundId: roundId,
+            isLastHop: false,
         }));
-      
-        setActiveSession(prev => {
-          if (!prev) return null;
-          return {
-            ...prev,
-            exercises: prev.exercises.map(ex => {
-              if (ex.instanceId !== exInstanceId) return ex;
-              return { ...ex, sets: [...(ex.sets || []), ...initialHops] };
-            })
-          };
-        });
-      }, [setActiveSession]);
-      
-      const handleMarkLastHop = useCallback((exInstanceId: number, setId: number) => {
-        setActiveSession(prev => {
-          if (!prev) return null;
-          return {
-            ...prev,
-            exercises: prev.exercises.map(ex => {
-              if (ex.instanceId !== exInstanceId) return ex;
-              const targetSet = ex.sets.find(s => s.id === setId);
-              if (!targetSet?.avtRoundId) return ex;
-              // Marcar todos los del round: solo el clickeado como lastHop
-              return {
-                ...ex,
-                sets: ex.sets.map(s => {
-                  if (s.avtRoundId !== targetSet.avtRoundId) return s;
-                  return { ...s, isLastHop: s.id === setId, completed: s.id === setId ? true : s.completed };
-                })
-              };
-            })
-          };
-        });
-      }, [setActiveSession]);
 
-      const handleAddHopToRound = useCallback((exInstanceId: number, roundId: number) => {
+        setActiveSession(prev => {
+            if (!prev) return null;
+            return {
+                ...prev,
+                exercises: prev.exercises.map(ex => {
+                    if (ex.instanceId !== exInstanceId) return ex;
+                    return { ...ex, sets: [...(ex.sets || []), ...initialHops] };
+                })
+            };
+        });
+    }, [setActiveSession]);
+
+    const handleMarkLastHop = useCallback((exInstanceId: number, setId: number) => {
+        setActiveSession(prev => {
+            if (!prev) return null;
+            return {
+                ...prev,
+                exercises: prev.exercises.map(ex => {
+                    if (ex.instanceId !== exInstanceId) return ex;
+                    const targetSet = ex.sets.find(s => s.id === setId);
+                    if (!targetSet?.avtRoundId) return ex;
+                    // Marcar todos los del round: solo el clickeado como lastHop
+                    return {
+                        ...ex,
+                        sets: ex.sets.map(s => {
+                            if (s.avtRoundId !== targetSet.avtRoundId) return s;
+                            return { ...s, isLastHop: s.id === setId, completed: s.id === setId ? true : s.completed };
+                        })
+                    };
+                })
+            };
+        });
+    }, [setActiveSession]);
+
+    const handleAddHopToRound = useCallback((exInstanceId: number, roundId: number) => {
         setActiveSession(prev => {
             if (!prev) return null;
             return {

@@ -11,6 +11,7 @@ import { usePro } from '../hooks/usePro';
 import { PaywallModal } from '../components/pro/PaywallModal';
 import { GlobalTemplate, ProgramDay } from '../types';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
+import { useFatigueAI } from '../hooks/useFatigueAI';
 
 // Lazy load the AI Chat component
 const GainsLabChat = React.lazy(() => import('../components/ai/GainsLabChat').then(module => ({ default: module.GainsLabChat })));
@@ -371,6 +372,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
     const [editDeload, setEditDeload] = useState(false);
     const [editNote, setEditNote] = useState('');
 
+    const fatigueReport = useFatigueAI();
+
     useEffect(() => {
         if (activeMeso && showMesoSettings) {
             setEditWeeks(activeMeso.targetWeeks || 4);
@@ -604,6 +607,30 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                     </button>
                 </div>
             </div>
+
+            {/* AI Fatigue Warning */}
+            {fatigueReport && fatigueReport.shouldDeload && activeMeso && !activeMeso.isDeload && (
+                <div className="bg-red-900/20 border border-red-500/50 rounded-3xl p-5 mb-4 flex items-start gap-4 animate-in fade-in slide-in-from-top-4 shadow-2xl shadow-red-500/10">
+                    <div className="w-12 h-12 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center shrink-0 ring-1 ring-red-500/30 shadow-[inset_0_0_20px_rgba(239,68,68,0.2)]">
+                        <Icon name="AlertTriangle" size={24} />
+                    </div>
+                    <div className="flex-1">
+                        <h4 className="text-red-400 font-black text-sm uppercase tracking-widest">{lang === 'es' ? 'Fatiga Sistémica' : 'Systemic Fatigue'}</h4>
+                        <p className="text-zinc-300 text-sm mt-1 leading-relaxed text-balance">
+                            {lang === 'es'
+                                ? `El motor de IA detectó una caída de rendimiento y dolor muscular continuo en: `
+                                : `The AI engine detected consecutive performance drops and high soreness in: `}
+                            <span className="font-bold text-red-300">{fatigueReport.muscles.map(m => String((t.muscle as any)[m] || m)).join(', ')}</span>.
+                        </p>
+                        <button
+                            onClick={() => setShowMesoSettings(true)}
+                            className="mt-4 text-[10px] uppercase tracking-widest font-black bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl active:scale-95 transition-all shadow-lg shadow-red-500/20 flex items-center justify-center gap-2"
+                        >
+                            <Icon name="Settings" size={14} /> {lang === 'es' ? 'Activar Descarga' : 'Activate Deload'}
+                        </button>
+                    </div>
+                </div>
+            )}
 
             <div className="space-y-2">
                 <WeekProgress program={safeProgram} logsForWeek={logsForWeek} />
