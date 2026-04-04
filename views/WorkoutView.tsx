@@ -56,6 +56,14 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
     // Derived State
     const stageConfig = activeMeso ? getMesoStageConfig(activeMeso.mesoType || 'hyp_1', activeMeso.week, !!activeMeso.isDeload) : null;
     const sessionExercises = ctrl.sessionExercises as SessionExercise[];
+    const isCalisthenicsSession = useMemo(() => 
+        sessionExercises.length > 0 && sessionExercises.every(ex => ex.isBodyweight), 
+    [sessionExercises]);
+
+    const accentClass = isCalisthenicsSession ? 'bg-violet-600' : 'bg-primary-600';
+    const accentTextClass = isCalisthenicsSession ? 'text-violet-400' : 'text-red-400';
+    const accentHoverClass = isCalisthenicsSession ? 'hover:bg-violet-500' : 'hover:bg-primary-500';
+    const accentShadowClass = isCalisthenicsSession ? 'shadow-violet-600/30' : 'shadow-primary-600/30';
 
     // Correct Sensor Config for Mobile
     const sensors = useSensors(
@@ -266,7 +274,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                         <button
                             id="tut-finish-btn"
                             onClick={(e) => { e.stopPropagation(); ctrl.setShowFinishModal(true); }}
-                            className="ml-1 bg-primary-600 hover:bg-primary-500 text-white px-4 py-2 rounded-full shadow-lg shadow-primary-600/30 active:scale-95 flex items-center gap-2 transition-all font-bold text-sm"
+                            className={`ml-1 ${accentClass} ${accentHoverClass} text-white px-4 py-2 rounded-full shadow-lg ${accentShadowClass} active:scale-95 flex items-center gap-2 transition-all font-bold text-sm`}
                         >
                             <Icon name="CheckCircle" size={16} />
                             <span className="uppercase tracking-wide text-xs">{t.finishWorkout}</span>
@@ -277,7 +285,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                 {/* Unified Title & Stage Info Row */}
                 <div className="px-4 pb-4">
                     <h1 className="text-2xl font-black text-white leading-tight tracking-tight mb-1 truncate">
-                        {activeSession.name}
+                        {isCalisthenicsSession ? `🤸 Calisthenics Session` : activeSession.name}
                     </h1>
 
                     <div className="flex flex-wrap items-center gap-2">
@@ -298,7 +306,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                 inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest
                                 ${stageConfig.label === 'recovery'
                                     ? 'bg-blue-900/30 text-blue-400'
-                                    : 'bg-primary-900/20 text-red-400'}
+                                    : `bg-primary-900/20 ${accentTextClass}`}
                             `}>
                                 {stageConfig.label === 'recovery' ? (
                                     <>DELOAD PHASE</>
@@ -319,7 +327,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                 return (
                     <div className="h-0.5 bg-zinc-900 relative overflow-hidden">
                         <div
-                            className="h-full bg-gradient-to-r from-primary-600 to-orange-500 transition-all duration-500 ease-out"
+                            className={`h-full bg-gradient-to-r ${isCalisthenicsSession ? 'from-violet-600 to-indigo-500' : 'from-primary-600 to-orange-500'} transition-all duration-500 ease-out`}
                             style={{ width: `${pct}%` }}
                         />
                     </div>
@@ -395,7 +403,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                             </Button>
 
                             {/* Bottom Finish Button (Redundant but useful for long lists) */}
-                            <Button onClick={(e) => { e.stopPropagation(); ctrl.setShowFinishModal(true); }} size="lg" fullWidth className="py-4 text-base shadow-xl shadow-primary-600/20 bg-gradient-to-r from-primary-600 to-primary-500 border-none">
+                            <Button onClick={(e) => { e.stopPropagation(); ctrl.setShowFinishModal(true); }} size="lg" fullWidth className={`py-4 text-base shadow-xl ${isCalisthenicsSession ? 'shadow-violet-600/20 bg-gradient-to-r from-violet-600 to-violet-500' : 'shadow-primary-600/20 bg-gradient-to-r from-primary-600 to-primary-500'} border-none`}>
                                 {t.finishWorkout}
                             </Button>
                         </div>
@@ -407,7 +415,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                             {sessionExercises.map((_, idx) => (
                                 <div
                                     key={idx}
-                                    className={`h-1.5 rounded-full flex-1 transition-all duration-300 ${idx === focusedIndex ? 'bg-primary-600' : idx < focusedIndex ? 'bg-primary-900/30' : 'bg-zinc-800'}`}
+                                    className={`h-1.5 rounded-full flex-1 transition-all duration-300 ${idx === focusedIndex ? (isCalisthenicsSession ? 'bg-violet-600' : 'bg-primary-600') : idx < focusedIndex ? (isCalisthenicsSession ? 'bg-violet-900/30' : 'bg-primary-900/30') : 'bg-zinc-800'}`}
                                 ></div>
                             ))}
                         </div>
@@ -466,18 +474,29 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                     />
 
                                     <div className="mt-4 flex gap-3 shrink-0">
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); ctrl.setShowPlateCalc({ weight: 20 }); }}
-                                            className="flex-1 py-3 bg-zinc-800 rounded-xl font-bold text-sm text-zinc-300 flex items-center justify-center gap-2"
-                                        >
-                                            <Icon name="Dumbbell" size={16} /> {t.calc}
-                                        </button>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); ctrl.setWarmupExId(focusedExercise.instanceId); }}
-                                            className="flex-1 py-3 bg-orange-900/10 rounded-xl font-bold text-sm text-orange-400 flex items-center justify-center gap-2"
-                                        >
-                                            <Icon name="Zap" size={16} /> {t.warmup}
-                                        </button>
+                                        {!focusedExercise.isBodyweight && (
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); ctrl.setShowPlateCalc({ weight: 20 }); }}
+                                                className="flex-1 py-3 bg-zinc-800 rounded-xl font-bold text-sm text-zinc-300 flex items-center justify-center gap-2"
+                                            >
+                                                <Icon name="Dumbbell" size={16} /> {t.calc}
+                                            </button>
+                                        )}
+                                        {focusedExercise.isBodyweight ? (
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); ctrl.setDetailExercise(focusedExercise); }}
+                                                className="flex-1 py-3 bg-zinc-800 rounded-xl font-bold text-sm text-zinc-300 flex items-center justify-center gap-2"
+                                            >
+                                                <Icon name="Info" size={16} /> {lang === 'en' ? 'Technique' : 'Técnica'}
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); ctrl.setWarmupExId(focusedExercise.instanceId); }}
+                                                className="flex-1 py-3 bg-orange-900/10 rounded-xl font-bold text-sm text-orange-400 flex items-center justify-center gap-2"
+                                            >
+                                                <Icon name="Zap" size={16} /> {t.warmup}
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             ) : (

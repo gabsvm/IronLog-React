@@ -8,7 +8,7 @@ import { SymmetryRadar } from '../components/stats/SymmetryRadar';
 import { MuscleHeatmapGrid } from '../components/stats/MuscleHeatmapGrid';
 import { getTranslated } from '../utils';
 import { Icon } from '../components/ui/Icon';
-import { useStatsWorker } from '../hooks/useStatsWorker';
+import { useStatsWorker, ChartMetric } from '../hooks/useStatsWorker';
 import { TutorialOverlay } from '../components/ui/TutorialOverlay';
 import { ProLock } from '../components/pro/ProLock';
 import {
@@ -52,7 +52,7 @@ export const StatsView: React.FC = () => {
 
     // UI State
     const [selectedExId, setSelectedExId] = useState<string | null>(null);
-    const [chartMetric, setChartMetric] = useState<'1rm' | 'volume' | 'duration' | 'distance'>('1rm');
+    const [chartMetric, setChartMetric] = useState<ChartMetric>('1rm');
     const [showPicker, setShowPicker] = useState(false);
     const [pickerSearch, setPickerSearch] = useState('');
 
@@ -75,16 +75,27 @@ export const StatsView: React.FC = () => {
 
     // Auto-switch metric when exercise type changes
     useEffect(() => {
-        if (isCardio) {
+        if (!currentEx) return;
+        const isIsometric = (currentEx as any).isIsometric;
+        const isBodyweight = (currentEx as any).isBodyweight;
+        const isCardioEx = currentEx?.muscle === 'CARDIO';
+
+        if (isIsometric) {
+            setChartMetric('hold_time');
+        } else if (isCardioEx) {
             if (chartMetric !== 'duration' && chartMetric !== 'distance') {
                 setChartMetric('duration');
+            }
+        } else if (isBodyweight) {
+            if (chartMetric !== 'max_reps' && chartMetric !== 'volume') {
+                setChartMetric('max_reps');
             }
         } else {
             if (chartMetric !== '1rm' && chartMetric !== 'volume') {
                 setChartMetric('1rm');
             }
         }
-    }, [isCardio]);
+    }, [selectedExId]);
 
     // 1. Load Overview (Volume + Exercise List)
     useEffect(() => {
@@ -194,38 +205,79 @@ export const StatsView: React.FC = () => {
                             <h3 className="font-bold text-white">{t.statsProgress}</h3>
                         </div>
 
+                        {/* Context-aware metric selector */}
                         <div className="flex bg-zinc-800 p-1 rounded-lg">
-                            {isCardio ? (
-                                <>
-                                    <button
-                                        onClick={() => setChartMetric('duration')}
-                                        className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${chartMetric === 'duration' ? 'bg-zinc-700 shadow text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
-                                    >
-                                        TIME
-                                    </button>
-                                    <button
-                                        onClick={() => setChartMetric('distance')}
-                                        className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${chartMetric === 'distance' ? 'bg-zinc-700 shadow text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
-                                    >
-                                        DIST
-                                    </button>
-                                </>
-                            ) : (
-                                <>
-                                    <button
-                                        onClick={() => setChartMetric('1rm')}
-                                        className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${chartMetric === '1rm' ? 'bg-zinc-700 shadow text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
-                                    >
-                                        1RM
-                                    </button>
-                                    <button
-                                        onClick={() => setChartMetric('volume')}
-                                        className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${chartMetric === 'volume' ? 'bg-zinc-700 shadow text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
-                                    >
-                                        VOL
-                                    </button>
-                                </>
-                            )}
+                            {(() => {
+                                const isIsometric = (currentEx as any)?.isIsometric;
+                                const isBW = (currentEx as any)?.isBodyweight && !isIsometric;
+                                const isCardioEx = currentEx?.muscle === 'CARDIO';
+
+                                if (isIsometric) {
+                                    return (
+                                        <>
+                                            <button
+                                                onClick={() => setChartMetric('hold_time')}
+                                                className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${chartMetric === 'hold_time' ? 'bg-violet-700 shadow text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                            >
+                                                HOLD
+                                            </button>
+                                        </>
+                                    );
+                                }
+                                if (isBW) {
+                                    return (
+                                        <>
+                                            <button
+                                                onClick={() => setChartMetric('max_reps')}
+                                                className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${chartMetric === 'max_reps' ? 'bg-zinc-700 shadow text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                            >
+                                                REPS
+                                            </button>
+                                            <button
+                                                onClick={() => setChartMetric('volume')}
+                                                className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${chartMetric === 'volume' ? 'bg-zinc-700 shadow text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                            >
+                                                VOL
+                                            </button>
+                                        </>
+                                    );
+                                }
+                                if (isCardioEx) {
+                                    return (
+                                        <>
+                                            <button
+                                                onClick={() => setChartMetric('duration')}
+                                                className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${chartMetric === 'duration' ? 'bg-zinc-700 shadow text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                            >
+                                                TIME
+                                            </button>
+                                            <button
+                                                onClick={() => setChartMetric('distance')}
+                                                className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${chartMetric === 'distance' ? 'bg-zinc-700 shadow text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                            >
+                                                DIST
+                                            </button>
+                                        </>
+                                    );
+                                }
+                                // Standard weighted
+                                return (
+                                    <>
+                                        <button
+                                            onClick={() => setChartMetric('1rm')}
+                                            className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${chartMetric === '1rm' ? 'bg-zinc-700 shadow text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                        >
+                                            1RM
+                                        </button>
+                                        <button
+                                            onClick={() => setChartMetric('volume')}
+                                            className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${chartMetric === 'volume' ? 'bg-zinc-700 shadow text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                        >
+                                            VOL
+                                        </button>
+                                    </>
+                                );
+                            })()}
                         </div>
                     </div>
 

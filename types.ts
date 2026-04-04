@@ -33,7 +33,12 @@ export interface ExerciseDef {
   instructions?: { en: string; es: string };
   defaultCardioType?: CardioType;
   videoId?: string;
-  isBodyweight?: boolean; // NEW: Bodyweight flag
+  isBodyweight?: boolean;        // Bodyweight flag
+  isIsometric?: boolean;         // L-sit, planche hold, back lever hold — tracked in seconds
+  skillFamily?: string;          // "planche" | "front_lever" | "muscle_up" | "handstand" | "back_lever" | "human_flag"
+  skillLevel?: number;           // 1=tuck, 2=adv_tuck, 3=straddle, 4=full (within family)
+  progressionNext?: string;      // ID of next-level exercise in progression
+  progressionPrev?: string;      // ID of previous-level exercise in progression
 }
 
 export type SetType = 'regular' | 'myorep' | 'myorep_match' | 'cluster' | 'top' | 'backoff' | 'giant' | 'warmup' | 'avt_hop';

@@ -560,6 +560,119 @@ export const JACKED_IN_3_TEMPLATE: ProgramDay[] = [
     }
 ];
 
+export const CAL_BEGINNER_TEMPLATE: ProgramDay[] = [
+    {
+        id: 'cal_beg_1',
+        dayName: { en: 'Push Day', es: 'Día Empuje' },
+        slots: [
+            { muscle: 'CHEST' as MuscleGroup, exerciseId: 'cal_pu_std', setTarget: 4, reps: '8-12' },
+            { muscle: 'SHOULDERS' as MuscleGroup, exerciseId: 'cal_pike_pu', setTarget: 3, reps: '8-12' },
+            { muscle: 'TRICEPS' as MuscleGroup, exerciseId: 'cal_diamond_pu', setTarget: 3, reps: '8-12' },
+            { muscle: 'CHEST' as MuscleGroup, exerciseId: 'cal_dip_std', setTarget: 3, reps: '8-12' },
+        ]
+    },
+    {
+        id: 'cal_beg_2',
+        dayName: { en: 'Pull Day', es: 'Día Tracción' },
+        slots: [
+            { muscle: 'BACK' as MuscleGroup, exerciseId: 'cal_scap_pull', setTarget: 3, reps: '10-15' },
+            { muscle: 'BACK' as MuscleGroup, exerciseId: 'cal_au_pullup', setTarget: 4, reps: '8-15' },
+            { muscle: 'BACK' as MuscleGroup, exerciseId: 'cal_neg_pullup', setTarget: 3, reps: '5-8' },
+            { muscle: 'BICEPS' as MuscleGroup, exerciseId: 'cal_chinup', setTarget: 3, reps: '6-10' },
+        ]
+    },
+    {
+        id: 'cal_beg_3',
+        dayName: { en: 'Legs & Core', es: 'Piernas y Core' },
+        slots: [
+            { muscle: 'QUADS' as MuscleGroup, exerciseId: 'cal_squat_bw', setTarget: 4, reps: '15-20' },
+            { muscle: 'QUADS' as MuscleGroup, exerciseId: 'cal_bulgariansq', setTarget: 3, reps: '10-15' },
+            { muscle: 'HAMSTRINGS' as MuscleGroup, exerciseId: 'cal_nordic_curl', setTarget: 3, reps: '5-8' },
+            { muscle: 'ABS' as MuscleGroup, exerciseId: 'cal_plank', setTarget: 4, reps: 'HOLD' },
+            { muscle: 'ABS' as MuscleGroup, exerciseId: 'cal_hanging_lraise', setTarget: 3, reps: '8-12' },
+        ]
+    }
+];
+
+export const CAL_SKILL_MASTERY_TEMPLATE: ProgramDay[] = [
+    {
+        id: 'cal_skill_1',
+        dayName: { en: 'Planche + Push', es: 'Planche + Empuje' },
+        slots: [
+            { muscle: 'SHOULDERS' as MuscleGroup, exerciseId: 'cal_planche_lean', setTarget: 5, reps: 'HOLD' },
+            { muscle: 'SHOULDERS' as MuscleGroup, exerciseId: 'cal_tuck_planche', setTarget: 4, reps: 'HOLD' },
+            { muscle: 'CHEST' as MuscleGroup, exerciseId: 'cal_pu_std', setTarget: 3, reps: '8-12' },
+            { muscle: 'TRICEPS' as MuscleGroup, exerciseId: 'cal_dip_std', setTarget: 3, reps: '8-12' },
+        ]
+    },
+    {
+        id: 'cal_skill_2',
+        dayName: { en: 'Front Lever + Pull', es: 'Front Lever + Tracción' },
+        slots: [
+            { muscle: 'BACK' as MuscleGroup, exerciseId: 'cal_scap_pull', setTarget: 4, reps: '10-15' },
+            { muscle: 'BACK' as MuscleGroup, exerciseId: 'cal_tuck_fl', setTarget: 5, reps: 'HOLD' },
+            { muscle: 'BACK' as MuscleGroup, exerciseId: 'cal_pullup', setTarget: 4, reps: '6-10' },
+            { muscle: 'BICEPS' as MuscleGroup, exerciseId: 'cal_l_pullup', setTarget: 3, reps: '5-8' },
+        ]
+    },
+    {
+        id: 'cal_skill_3',
+        dayName: { en: 'L-Sit + Core', es: 'L-Sit + Core' },
+        slots: [
+            { muscle: 'ABS' as MuscleGroup, exerciseId: 'cal_tuck_lsit', setTarget: 5, reps: 'HOLD' },
+            { muscle: 'ABS' as MuscleGroup, exerciseId: 'cal_lsit', setTarget: 3, reps: 'HOLD' },
+            { muscle: 'ABS' as MuscleGroup, exerciseId: 'cal_dragon_flag', setTarget: 3, reps: '5-8' },
+            { muscle: 'ABS' as MuscleGroup, exerciseId: 'cal_hanging_lraise', setTarget: 3, reps: '10-15' },
+        ]
+    },
+    {
+        id: 'cal_skill_4',
+        dayName: { en: 'Handstand + Legs', es: 'Pino + Piernas' },
+        slots: [
+            { muscle: 'SHOULDERS' as MuscleGroup, exerciseId: 'cal_wall_hs', setTarget: 5, reps: 'HOLD' },
+            { muscle: 'SHOULDERS' as MuscleGroup, exerciseId: 'cf_hspu', setTarget: 3, reps: '5-8' },
+            { muscle: 'QUADS' as MuscleGroup, exerciseId: 'cal_pistol', setTarget: 4, reps: '5-8' },
+            { muscle: 'HAMSTRINGS' as MuscleGroup, exerciseId: 'cal_nordic_curl', setTarget: 3, reps: '5-8' },
+        ]
+    }
+];
+
+export const CAL_STREET_WORKOUT_TEMPLATE: ProgramDay[] = [
+    {
+        id: 'cal_sw_1',
+        dayName: { en: 'Power Day A', es: 'Día Potencia A' },
+        slots: [
+            { muscle: 'BACK' as MuscleGroup, exerciseId: 'cal_pullup', setTarget: 5, reps: '5-8' },
+            { muscle: 'CHEST' as MuscleGroup, exerciseId: 'cal_pu_std', setTarget: 5, reps: '8-12' },
+            { muscle: 'BACK' as MuscleGroup, exerciseId: 'cal_comm_pullup', setTarget: 3, reps: '6-10' },
+            { muscle: 'CHEST' as MuscleGroup, exerciseId: 'cal_archer_pu', setTarget: 3, reps: '6-10' },
+            { muscle: 'ABS' as MuscleGroup, exerciseId: 'cal_hanging_lraise', setTarget: 3, reps: '10-15' },
+        ]
+    },
+    {
+        id: 'cal_sw_2',
+        dayName: { en: 'Skill Day B', es: 'Día Habilidad B' },
+        slots: [
+            { muscle: 'BACK' as MuscleGroup, exerciseId: 'cal_tuck_fl', setTarget: 4, reps: 'HOLD' },
+            { muscle: 'SHOULDERS' as MuscleGroup, exerciseId: 'cal_planche_lean', setTarget: 4, reps: 'HOLD' },
+            { muscle: 'BACK' as MuscleGroup, exerciseId: 'cal_chinup', setTarget: 4, reps: '8-12' },
+            { muscle: 'TRICEPS' as MuscleGroup, exerciseId: 'cal_dip_std', setTarget: 4, reps: '8-12' },
+            { muscle: 'ABS' as MuscleGroup, exerciseId: 'cal_tuck_lsit', setTarget: 4, reps: 'HOLD' },
+        ]
+    },
+    {
+        id: 'cal_sw_3',
+        dayName: { en: 'Volume Day C', es: 'Día Volumen C' },
+        slots: [
+            { muscle: 'BACK' as MuscleGroup, exerciseId: 'cal_wide_grip_pu', setTarget: 4, reps: '8-12' },
+            { muscle: 'CHEST' as MuscleGroup, exerciseId: 'cal_diamond_pu', setTarget: 4, reps: '10-15' },
+            { muscle: 'BACK' as MuscleGroup, exerciseId: 'cal_au_pullup', setTarget: 3, reps: '10-15' },
+            { muscle: 'QUADS' as MuscleGroup, exerciseId: 'cal_squat_bw', setTarget: 3, reps: '20-25' },
+            { muscle: 'ABS' as MuscleGroup, exerciseId: 'cal_dragon_flag', setTarget: 3, reps: '5-8' },
+        ]
+    }
+];
+
 export const INITIAL_TEMPLATES: GlobalTemplate[] = [
     { id: 'ji3', name: 'jacked_in_3', title: { en: "Jacked in 3 — Paul Carter", es: "Jacked in 3 — Paul Carter" }, description: { en: "Accumulative Volume Training (AVT). 3 days per week. Upper/Lower with pyramid hops.", es: "Accumulative Volume Training (AVT). 3 días por semana. Torso/Pierna con pirámide de hops." }, isPro: true, program: JACKED_IN_3_TEMPLATE, order: 0 },
     { id: 'toji_fushiguro', name: 'toji_fushiguro', title: { en: "Toji (Natural Hypertrophy)", es: "Toji (Natural Hypertrophy)" }, description: { en: "4-Day Elite Split. Giant Sets, Neck, Forearms & Aesthetic focus.", es: "Rutina Élite de 4 Días. Series Gigantes, Cuello, Antebrazo y Estética." }, isPro: true, program: TOJI_TEMPLATE, order: 1 },
@@ -582,7 +695,36 @@ export const INITIAL_TEMPLATES: GlobalTemplate[] = [
     { id: 'hyp_2', name: 'hyp_2', title: { en: "Base Hypertrophy 2", es: "Hipertrofia Base 2" }, description: { en: "Upper/Lower Split (4 Days). Focus on basics.", es: "Torso/Pierna (4 Días). Foco en básicos." }, isPro: false, program: UPPER_LOWER_TEMPLATE, order: 7 },
     { id: 'metabolite', name: 'metabolite', title: { en: "Metabolite Phase", es: "Fase Metabolitos" }, description: { en: "High reps (20-30), short rests, the 'burn'.", es: "Reps altas (20-30), descanso corto, 'quemazón'." }, isPro: false, program: METABOLITE_TEMPLATE, order: 8 },
     { id: 'resensitization', name: 'resensitization', title: { en: "Resensitization", es: "Resensitization" }, description: { en: "Low volume, heavy weight to reset fatigue.", es: "Bajo volumen, peso alto para resetear fatiga." }, isPro: false, program: RESENS_TEMPLATE, order: 9 },
+    // ── CALISTHENICS TEMPLATES ─────────────────────────────────────────────────
+    {
+        id: 'cal_beginner',
+        name: 'cal_beginner',
+        title: { en: '🤸 Calisthenics Beginner', es: '🤸 Calistenia Principiante' },
+        description: { en: '3-Day Push/Pull/Legs bodyweight program. No equipment needed.', es: '3 Días Empuje/Tracción/Piernas con peso corporal. Sin equipo.' },
+        isPro: false,
+        order: 10,
+        program: CAL_BEGINNER_TEMPLATE
+    },
+    {
+        id: 'cal_skill_mastery',
+        name: 'cal_skill_mastery',
+        title: { en: '🎯 Skill Mastery', es: '🎯 Dominio de Habilidades' },
+        description: { en: '4-Day skill-focused calisthenics. Planche, Front Lever, L-Sit, Handstand.', es: '4 Días de calistenia enfocada en habilidades. Planche, Front Lever, L-Sit, Pino.' },
+        isPro: false,
+        order: 11,
+        program: CAL_SKILL_MASTERY_TEMPLATE
+    },
+    {
+        id: 'cal_street_workout',
+        name: 'cal_street_workout',
+        title: { en: '🏙️ Street Workout', es: '🏙️ Street Workout' },
+        description: { en: '3-Day full-body calisthenics. Push + Pull every session, explosive & conditioning.', es: '3 Días de calistenia full body. Empuje + Tracción cada sesión, explosivo y acondicionamiento.' },
+        isPro: false,
+        order: 12,
+        program: CAL_STREET_WORKOUT_TEMPLATE
+    },
 ];
+
 
 export const TRANSLATIONS = {
     en: {

@@ -1,5 +1,5 @@
-
-// Helper to parse "mm:ss" to number (minutes)
+// WorkerAction type includes new calisthenics metrics
+type MetricType = '1rm' | 'volume' | 'duration' | 'distance' | 'max_reps' | 'hold_time';
 const parseDuration = (val: any) => {
     if (typeof val === 'number') return val;
     if (!val) return 0;
@@ -89,6 +89,28 @@ self.onmessage = function(e: MessageEvent) {
                     }
                     return acc;
                 }, 0);
+            } else if (metric === 'max_reps') {
+                // Best single-set reps (for bodyweight exercises)
+                let bestReps = 0;
+                (ex.sets || []).forEach((s: any) => {
+                    if (s.completed && s.reps) {
+                        const r = Number(s.reps);
+                        if (r > bestReps) bestReps = r;
+                    }
+                });
+                bestValue = bestReps;
+                bestSetDetails = { w: 0, r: bestReps };
+            } else if (metric === 'hold_time') {
+                // Best single-set hold duration in seconds (for isometric exercises)
+                let bestSec = 0;
+                (ex.sets || []).forEach((s: any) => {
+                    if (s.completed && s.duration) {
+                        const sec = Number(s.duration);
+                        if (sec > bestSec) bestSec = sec;
+                    }
+                });
+                bestValue = bestSec;
+                bestSetDetails = { w: 0, r: 0 };
             } else if (metric === 'duration') {
                 bestValue = (ex.sets || []).reduce((acc: number, s: any) => {
                     if (s.completed && s.duration) return acc + parseDuration(s.duration);

@@ -142,7 +142,17 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
                 triggerHaptic('success');
                 const isMetabolite = activeMeso?.mesoType === 'metabolite';
                 let dur = isMetabolite ? 60 : 120;
+                
+                // Calisthenics Specific Durations
+                if (ex?.isIsometric) {
+                    dur = 150; // CNS heavy skills need more rest (~2.5m)
+                } else if (ex?.isBodyweight) {
+                    // Bodyweight hypertrophy often needs a bit less than heavy weights but more than metabolite
+                    dur = isMetabolite ? 45 : 90;
+                }
+
                 if (set.type === 'myorep' || set.type === 'giant') dur = 30;
+                
                 setRestTimer({ active: true, duration: dur, timeLeft: dur, endAt: Date.now() + (dur * 1000) });
             } else {
                 triggerHaptic('light');

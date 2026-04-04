@@ -1,13 +1,16 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Log, MuscleGroup, ExerciseDef, UserProfile } from '../types';
+import { Log, ExerciseDef, UserProfile } from '../types';
 import { MUSCLE_GROUPS } from '../constants';
 import { useApp } from '../context/AppContext';
+
+export type ChartMetric = '1rm' | 'volume' | 'duration' | 'distance' | 'max_reps' | 'hold_time';
 
 // Types for Worker Messages
 type WorkerAction = 
     | { type: 'CALCULATE_OVERVIEW', logs: Log[], activeMesoId?: number }
-    | { type: 'CALCULATE_CHART', logs: Log[], exerciseId: string, metric: '1rm' | 'volume' | 'duration' | 'distance', userBodyWeight?: number };
+    | { type: 'CALCULATE_CHART', logs: Log[], exerciseId: string, metric: ChartMetric, userBodyWeight?: number };
+
 
 type WorkerResponse = 
     | { type: 'OVERVIEW_READY', volumeData: [string, number][], exerciseFrequency: Record<string, number> }
@@ -44,7 +47,7 @@ export const useStatsWorker = () => {
         });
     }, []);
 
-    const calculateChartData = useCallback((logs: Log[], exerciseId: string, metric: '1rm' | 'volume' | 'duration' | 'distance'): Promise<{ date: number, value: number, weight: number, reps: number }[]> => {
+    const calculateChartData = useCallback((logs: Log[], exerciseId: string, metric: ChartMetric): Promise<{ date: number, value: number, weight: number, reps: number }[]> => {
         return new Promise((resolve) => {
             if (!workerRef.current) return;
             const handler = (e: MessageEvent) => {

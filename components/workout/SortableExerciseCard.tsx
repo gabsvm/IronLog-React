@@ -7,8 +7,10 @@ import { Icon } from '../ui/Icon';
 import { MuscleTag } from './MuscleTag';
 import { SetRow } from './SetRow';
 import { AVTRoundCard } from './AVTRoundCard';
+import { SkillProgressionBadge } from './SkillProgressionBadge';
 import { getTranslated, roundWeight } from '../../utils';
 import { useApp } from '../../context/AppContext';
+import { useTimerContext } from '../../context/TimerContext';
 
 interface SortableExerciseCardProps {
     exercise: SessionExercise;
@@ -61,6 +63,9 @@ export const SortableExerciseCard = React.memo(({
     onConfigPlate,
     onUpdateSession,
     onOpenWarmup,
+    onMarkLastHop,
+    onAddHopToRound,
+    onAddAVTRound,
     openMenuId,
     setOpenMenuId,
     linkingId,
@@ -71,11 +76,9 @@ export const SortableExerciseCard = React.memo(({
     config,
     stageConfig,
     viewMode = 'list',
-    tutorialId,
-    onMarkLastHop,
-    onAddHopToRound,
-    onAddAVTRound
+    tutorialId
 }: SortableExerciseCardProps) => {
+    const { restTimer } = useTimerContext();
     const { logs } = useApp();
     const [isDeleting, setIsDeleting] = useState(false);
 
@@ -117,18 +120,60 @@ export const SortableExerciseCard = React.memo(({
         return null;
     }, [logs, ex.id]);
 
-    // 2. Calculate Historical Best PR (1RM)
+    // 2. Calculate Historical Best PR — context-aware
     const historicalBest = useMemo(() => {
         if (!logs || isCardio || !ex.id) return null;
+
+        // ISOMETRIC: best hold time in seconds
+        if (ex.isIsometric) {
+            let bestSec = 0;
+            logs.forEach(l => {
+                if (l.skipped) return;
+                const pastEx = l.exercises?.find(e => e.id === ex.id);
+                if (!pastEx) return;
+                (pastEx.sets || []).forEach(s => {
+                    if (s.completed && s.duration) {
+                        const sec = Number(s.duration);
+                        if (sec > bestSec) bestSec = sec;
+                    }
+                });
+            });
+            if (bestSec === 0) return null;
+            const m = Math.floor(bestSec / 60);
+            const s = bestSec % 60;
+            return m > 0 ? `${m}:${s.toString().padStart(2, '0')}` : `${bestSec}s`;
+        }
+
+        // BODYWEIGHT (non-isometric): best max reps in one set
+        if (ex.isBodyweight) {
+            let bestReps = 0;
+            let bestWeight = 0;
+            logs.forEach(l => {
+                if (l.skipped) return;
+                const pastEx = l.exercises?.find(e => e.id === ex.id);
+                if (!pastEx) return;
+                (pastEx.sets || []).forEach(s => {
+                    if (s.completed && s.reps) {
+                        const r = Number(s.reps);
+                        const w = Number(s.weight) || 0;
+                        if (r > bestReps || (r === bestReps && w > bestWeight)) {
+                            bestReps = r;
+                            bestWeight = w;
+                        }
+                    }
+                });
+            });
+            if (bestReps === 0) return null;
+            return bestWeight > 0 ? `${bestReps} reps (+${bestWeight}kg)` : `${bestReps} reps`;
+        }
+
+        // WEIGHTED GYM: estimated 1RM
         let best1RM = 0;
         let bestStr = '';
-
-        // Scan backwards is slightly more optimal but for precision we scan all
         logs.forEach(l => {
             if (l.skipped) return;
             const pastEx = l.exercises?.find(e => e.id === ex.id);
             if (!pastEx) return;
-
             (pastEx.sets || []).forEach(s => {
                 if (s.completed && s.weight && s.reps) {
                     const e1rm = Number(s.weight) * (1 + Number(s.reps) / 30);
@@ -139,9 +184,8 @@ export const SortableExerciseCard = React.memo(({
                 }
             });
         });
-
         return best1RM > 0 ? bestStr : null;
-    }, [logs, ex.id, isCardio, unitLabel]);
+    }, [logs, ex.id, isCardio, ex.isIsometric, ex.isBodyweight, unitLabel]);
 
     // Agrupar sets AVT por roundId
     const avtRounds = useMemo(() => {
@@ -299,13 +343,23 @@ export const SortableExerciseCard = React.memo(({
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        {!isCardio && (
+                    <div className="flex items-center gap-1.5">
+                        {/* Integrated Rest Timer Badge */}
+                        {restTimer.active && restTimer.timeLeft > 0 && (
+                            <div className="flex items-center gap-1.5 px-2 py-1 bg-violet-900/40 text-violet-400 border border-violet-500/30 rounded-lg animate-pulse shadow-lg shadow-violet-900/20 mr-1">
+                                <Icon name="Clock" size={12} strokeWidth={3} />
+                                <span className="text-[10px] font-black font-mono">
+                                    {Math.floor(restTimer.timeLeft / 60)}:{(restTimer.timeLeft % 60).toString().padStart(2, '0')}
+                                </span>
+                            </div>
+                        )}
+
+                        {/* Warmup: only for weighted exercises (not bodyweight, not isometric, not cardio) */}
+                        {!isCardio && !ex.isBodyweight && !ex.isIsometric && (
                             <button
                                 id={tutorialId ? "tut-warmup-btn" : undefined}
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    // Use modal if handler provided (preferable for feedback), otherwise try internal auto-inject
                                     if (onOpenWarmup) onOpenWarmup(ex.instanceId);
                                     else handleInjectWarmup();
                                 }}
@@ -317,7 +371,10 @@ export const SortableExerciseCard = React.memo(({
                         )}
 
                         <div className="relative">
-                            <button onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === ex.instanceId ? null : ex.instanceId); setIsDeleting(false); }} className="w-8 h-8 flex items-center justify-center rounded-full text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === ex.instanceId ? null : ex.instanceId); setIsDeleting(false); }} 
+                                className={`w-8 h-8 flex items-center justify-center rounded-full transition-all ${openMenuId === ex.instanceId ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
+                            >
                                 <Icon name="MoreVertical" size={20} />
                             </button>
 
@@ -405,11 +462,18 @@ export const SortableExerciseCard = React.memo(({
                     </div>
                 </div>
 
+                {/* Skill Progression Badge — for calisthenics skill families */}
+                {ex.skillFamily && (
+                    <SkillProgressionBadge exercise={ex} lang={lang} />
+                )}
+
                 {historicalBest && (
                     <div className="flex items-start gap-1.5 mb-1.5 px-1 mt-1">
                         <Icon name="Trophy" size={11} className="mt-0.5 text-yellow-500 shrink-0" />
                         <p className="text-[10px] font-bold text-yellow-500/90 leading-snug">
-                            {lang === 'en' ? 'Best:' : 'Mejor:'} {historicalBest}
+                            {lang === 'en' ? 'Best:' : 'Mejor:'}{' '}
+                            {ex.isIsometric ? '⏱ ' : ''}
+                            {historicalBest}
                         </p>
                     </div>
                 )}
@@ -435,9 +499,9 @@ export const SortableExerciseCard = React.memo(({
                 </div>
             </div>
 
-            {/* Sets Header - Use GAP-2 for mobile breathing room */}
+            {/* Sets Header */}
             <div className="grid grid-cols-12 gap-2 px-2 py-2 bg-zinc-50 dark:bg-black/20 border-b border-zinc-100 dark:border-white/5 text-[10px] font-bold text-zinc-400 uppercase tracking-widest text-center items-center">
-                <div className="col-span-1">#</div>
+                <div className="col-span-2">#</div>
                 {isCardio ? (
                     isInterval ? (
                         <>
@@ -452,17 +516,32 @@ export const SortableExerciseCard = React.memo(({
                             <div className="col-span-2 text-center">{String(t.cardioSpeed)}</div>
                         </>
                     )
+                ) : ex.isIsometric ? (
+                    /* Isometric: HOLD TIME header */
+                    <>
+                        <div className="col-span-6 text-center text-violet-400">
+                            {lang === 'es' ? '⏱ TIEMPO DE HOLD' : '⏱ HOLD TIME'}
+                        </div>
+                        <div className="col-span-2"></div>
+                    </>
+                ) : ex.isBodyweight ? (
+                    /* Bodyweight: reps first, optional +kg */
+                    <>
+                        <div className="col-span-6 text-center">{String(t.reps)}</div>
+                        <div className="col-span-2 text-center text-violet-400/60">+KG</div>
+                    </>
                 ) : (
+                    /* Standard weighted */
                     <>
                         <div className="col-span-4 text-center">
-                            {ex.isBodyweight ? "BW + KG" : `${String(t.weight)} (${unitLabel})`}
+                            {`${String(t.weight)} (${unitLabel})`}
                         </div>
                         <div className="col-span-4 text-center">{String(t.reps)}</div>
                         {config.showRIR && <div className="col-span-2 text-center">{String(t.rir)}</div>}
                         {!config.showRIR && <div className="col-span-2"></div>}
                     </>
                 )}
-                <div className="col-span-1"></div>
+                <div className="col-span-2"></div>
             </div>
 
             {/* Sets List */}
@@ -484,7 +563,8 @@ export const SortableExerciseCard = React.memo(({
                         isCardio={isCardio}
                         cardioMode={cardioMode}
                         isBodyweight={ex.isBodyweight}
-                        tutorialId={idx === 0 ? tutorialId : undefined} // Only pass to first set if provided
+                        isIsometric={ex.isIsometric}
+                        tutorialId={idx === 0 ? tutorialId : undefined}
                     />
                 ))}
 
