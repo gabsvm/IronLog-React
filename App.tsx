@@ -1,17 +1,11 @@
 
-import React, { useState, useEffect, useRef, Suspense } from 'react';
+import React, { useState, useEffect, useRef, Suspense, useCallback } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { useTimerContext } from './context/TimerContext';
 import { Layout } from './components/layout/Layout';
 import { HomeView } from './views/HomeView';
 import { WorkoutView } from './views/WorkoutView';
-import { ExercisesView } from './views/ExercisesView';
-import { ProgramEditView } from './views/ProgramEditView';
 import { RestTimerOverlay } from './components/ui/RestTimerOverlay';
-import { SessionSummaryView } from './views/SessionSummaryView';
-import { SetupWizard } from './components/onboarding/SetupWizard';
-import { Landing } from './components/onboarding/Landing';
-import { NutritionView } from './views/NutritionView';
 import { ConfirmModal } from './components/ui/ConfirmModal';
 import { Icon } from './components/ui/Icon';
 import { TRANSLATIONS } from './constants';
@@ -26,10 +20,15 @@ import { SettingsModal } from './components/settings/SettingsModal';
 import { FreestyleSessionModal } from './components/workout/FreestyleSessionModal';
 import { CROSSFIT_EXERCISES, CALISTHENICS_EXERCISES } from './data/disciplineExercises';
 
-// Lazy Load heavier views
+// Lazy Load views — keeps initial bundle small
 const HistoryView = React.lazy(() => import('./views/HistoryView').then(module => ({ default: module.HistoryView })));
 const StatsView = React.lazy(() => import('./views/StatsView').then(module => ({ default: module.StatsView })));
 const NutriView = React.lazy(() => import('./views/NutriView').then(m => ({ default: m.NutriView })));
+const ExercisesView = React.lazy(() => import('./views/ExercisesView').then(m => ({ default: m.ExercisesView })));
+const ProgramEditView = React.lazy(() => import('./views/ProgramEditView').then(m => ({ default: m.ProgramEditView })));
+const SessionSummaryView = React.lazy(() => import('./views/SessionSummaryView').then(m => ({ default: m.SessionSummaryView })));
+const SetupWizard = React.lazy(() => import('./components/onboarding/SetupWizard').then(m => ({ default: m.SetupWizard })));
+const Landing = React.lazy(() => import('./components/onboarding/Landing').then(m => ({ default: m.Landing })));
 
 const LoadingSpinner = () => (
     <div className="h-full flex items-center justify-center text-zinc-400">
@@ -78,7 +77,7 @@ const AppContent = () => {
     const [showForceSyncModal, setShowForceSyncModal] = useState(false);
 
     // UX: Helper to trigger View Transitions with Direction
-    const setView = (newView: typeof view) => {
+    const setView = useCallback((newView: typeof view) => {
         if (newView === view) return;
         const currentDepth = VIEW_DEPTH[view] || 1;
         const nextDepth = VIEW_DEPTH[newView] || 1;
@@ -97,7 +96,7 @@ const AppContent = () => {
         } else {
             setViewState(newView);
         }
-    };
+    }, [view]);
 
     // History management logic
     const isPopping = useRef(false);
@@ -250,14 +249,16 @@ const AppContent = () => {
         <>
             {/* New Setup Wizard Logic */}
             {!hasSeenOnboarding && (
-                showLanding ? (
-                    <Landing
-                        onStart={() => setShowLanding(false)}
-                        onLogin={() => setShowAuthModal(true)}
-                    />
-                ) : (
-                    <SetupWizard onComplete={() => setHasSeenOnboarding(true)} />
-                )
+                <Suspense fallback={<LoadingSpinner />}>
+                    {showLanding ? (
+                        <Landing
+                            onStart={() => setShowLanding(false)}
+                            onLogin={() => setShowAuthModal(true)}
+                        />
+                    ) : (
+                        <SetupWizard onComplete={() => setHasSeenOnboarding(true)} />
+                    )}
+                </Suspense>
             )}
 
             {/* Main App Content - Only visible if onboarding is done */}
@@ -306,17 +307,23 @@ const AppContent = () => {
                             onBack={() => setView('home')}
                         />
                     ) : view === 'summary' && completedWorkoutLog ? (
-                        <SessionSummaryView
-                            log={completedWorkoutLog}
-                            onClose={() => {
-                                setCompletedWorkoutLog(null);
-                                setView('home');
-                            }}
-                        />
+                        <Suspense fallback={<LoadingSpinner />}>
+                            <SessionSummaryView
+                                log={completedWorkoutLog}
+                                onClose={() => {
+                                    setCompletedWorkoutLog(null);
+                                    setView('home');
+                                }}
+                            />
+                        </Suspense>
                     ) : view === 'exercises' ? (
-                        <ExercisesView onBack={() => { setView('home'); setShowSettings(true); }} />
+                        <Suspense fallback={<LoadingSpinner />}>
+                            <ExercisesView onBack={() => { setView('home'); setShowSettings(true); }} />
+                        </Suspense>
                     ) : view === 'program' ? (
-                        <ProgramEditView onBack={() => setView('home')} />
+                        <Suspense fallback={<LoadingSpinner />}>
+                            <ProgramEditView onBack={() => setView('home')} />
+                        </Suspense>
                     ) : (
                         <Layout view={view as any} setView={setView as any} onOpenSettings={() => setShowSettings(true)}>
                             {view === 'home' && <HomeView

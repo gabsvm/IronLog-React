@@ -1,5 +1,5 @@
 
-import React, { useState, memo, useMemo, useDeferredValue } from 'react';
+import React, { useState, memo, useMemo, useDeferredValue, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
 import { TRANSLATIONS } from '../constants';
 import { formatDate, formatHoursMinutes, getTranslated } from '../utils';
@@ -17,6 +17,68 @@ const formatDurationDisplay = (val: string | number) => {
     if (!val) return '-';
     return val.includes(':') ? val : `${val}m`;
 };
+
+// Virtuoso context type — avoids recreating Header/Footer components on every render
+interface HistoryVirtuosoContext {
+    lang: 'en' | 'es';
+    search: string;
+    setSearch: (s: string) => void;
+    hasLockedLogs: boolean;
+    checkPro: (feature: string) => boolean;
+    t: any;
+}
+
+const VirtuosoHeader = ({ context }: { context?: HistoryVirtuosoContext }) => {
+    if (!context) return null;
+    const { lang, search, setSearch } = context;
+    return (
+        <div className="px-5 pt-20 pb-4 space-y-3">
+            <h2 className="text-2xl font-black text-white tracking-tight">{lang === 'en' ? 'History' : 'Historial'}</h2>
+            <div id="tut-history-search" className="relative">
+                <Icon name="Search" size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
+                <input
+                    type="search"
+                    inputMode="search"
+                    enterKeyHint="search"
+                    placeholder={lang === 'en' ? 'Search workouts...' : 'Buscar entrenamientos...'}
+                    className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl py-3 pl-10 pr-4 text-sm font-medium outline-none focus:ring-2 focus:ring-red-500/50 focus:border-zinc-700 text-white placeholder-zinc-600 transition-all"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                />
+            </div>
+        </div>
+    );
+};
+
+const VirtuosoFooter = ({ context }: { context?: HistoryVirtuosoContext }) => {
+    if (!context) return null;
+    const { hasLockedLogs, checkPro } = context;
+    return (
+        <div className="pb-24 pt-4 px-4">
+            {hasLockedLogs && (
+                <div className="bg-zinc-100 dark:bg-zinc-900 border border-dashed border-zinc-300 dark:border-zinc-700 rounded-2xl p-6 text-center">
+                    <div className="w-12 h-12 bg-zinc-200 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4 text-zinc-400">
+                        <Icon name="Lock" size={24} />
+                    </div>
+                    <h4 className="font-bold text-zinc-900 dark:text-white mb-2">History Locked</h4>
+                    <p className="text-xs text-zinc-500 mb-6 max-w-[200px] mx-auto">
+                        Older workouts are archived. Unlock Premium to access your full training history.
+                    </p>
+                    <Button
+                        size="sm"
+                        onClick={() => checkPro('history')}
+                        className="bg-zinc-900 dark:bg-white text-white dark:text-black mx-auto"
+                    >
+                        Unlock PRO
+                    </Button>
+                </div>
+            )}
+        </div>
+    );
+};
+
+// Stable components object — defined outside render to prevent Virtuoso remounts
+const VIRTUOSO_COMPONENTS = { Header: VirtuosoHeader, Footer: VirtuosoFooter };
 
 // 1. Extract and Memoize the Card Component for Performance
 interface HistoryCardProps {
@@ -95,8 +157,8 @@ const HistoryCard = memo(({ log, isExpanded, onToggle, lang, t, id }: HistoryCar
 
                 {!isExpanded && (
                     <div className="space-y-2">
-                        {bestSets.slice(0, 3).map((s: any, i) => (
-                            <div key={i} className="flex justify-between items-center text-xs text-zinc-500">
+                        {bestSets.slice(0, 3).map((s: any) => (
+                            <div key={s.name} className="flex justify-between items-center text-xs text-zinc-500">
                                 <span className="truncate pr-4 max-w-[200px]">{s.name}</span>
                                 <span className="font-mono font-bold text-zinc-700 dark:text-zinc-300">
                                     {s.isCardio ? s.summary : `${s.weight}kg x ${s.reps}`}
@@ -114,10 +176,10 @@ const HistoryCard = memo(({ log, isExpanded, onToggle, lang, t, id }: HistoryCar
 
             {isExpanded && (
                 <div className="bg-zinc-950 border-t border-zinc-800 p-4 space-y-5">
-                    {(log.exercises || []).map((ex, i) => {
+                    {(log.exercises || []).map((ex) => {
                         const isCardio = ex.muscle === 'CARDIO';
                         return (
-                            <div key={i}>
+                            <div key={ex.instanceId ?? ex.id ?? getTranslated(ex.name, lang)}>
                                 <h4 className="font-bold text-sm text-white mb-2 flex items-center justify-between">
                                     <span>{getTranslated(ex.name, lang)}</span>
                                     {ex.note && <span className="text-[10px] text-zinc-500 italic font-normal max-w-[150px] truncate">{ex.note}</span>}
@@ -221,46 +283,20 @@ export const HistoryView: React.FC = () => {
         { targetId: 'tut-first-card', title: t.tutorial.history[0].title, text: t.tutorial.history[0].text, position: 'bottom' as const }
     ];
 
-    const Header = () => (
-        <div className="px-5 pt-20 pb-4 space-y-3">
-            <h2 className="text-2xl font-black text-white tracking-tight">{lang === 'en' ? 'History' : 'Historial'}</h2>
-            <div id="tut-history-search" className="relative">
-                <Icon name="Search" size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
-                <input
-                    type="search"
-                    inputMode="search"
-                    enterKeyHint="search"
-                    placeholder={lang === 'en' ? 'Search workouts...' : 'Buscar entrenamientos...'}
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl py-3 pl-10 pr-4 text-sm font-medium outline-none focus:ring-2 focus:ring-red-500/50 focus:border-zinc-700 text-white placeholder-zinc-600 transition-all"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                />
-            </div>
-        </div>
-    );
+    const virtuosoContext = useMemo<HistoryVirtuosoContext>(() => ({
+        lang, search, setSearch, hasLockedLogs, checkPro, t
+    }), [lang, search, setSearch, hasLockedLogs, checkPro, t]);
 
-    const Footer = () => (
-        <div className="pb-24 pt-4 px-4">
-            {hasLockedLogs && (
-                <div className="bg-zinc-100 dark:bg-zinc-900 border border-dashed border-zinc-300 dark:border-zinc-700 rounded-2xl p-6 text-center">
-                    <div className="w-12 h-12 bg-zinc-200 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4 text-zinc-400">
-                        <Icon name="Lock" size={24} />
-                    </div>
-                    <h4 className="font-bold text-zinc-900 dark:text-white mb-2">History Locked</h4>
-                    <p className="text-xs text-zinc-500 mb-6 max-w-[200px] mx-auto">
-                        Older workouts are archived. Unlock Premium to access your full training history.
-                    </p>
-                    <Button
-                        size="sm"
-                        onClick={() => checkPro('history')}
-                        className="bg-zinc-900 dark:bg-white text-white dark:text-black mx-auto"
-                    >
-                        Unlock PRO
-                    </Button>
-                </div>
-            )}
-        </div>
-    );
+    const renderItem = useCallback((index: number, log: Log) => (
+        <HistoryCard
+            id={index === 0 ? "tut-first-card" : undefined}
+            log={log}
+            isExpanded={expandedId === log.id}
+            onToggle={(id) => setExpandedId(prev => prev === id ? null : id)}
+            lang={lang}
+            t={t}
+        />
+    ), [expandedId, lang, t]);
 
     if (safeLogs.length === 0) {
         return (
@@ -283,17 +319,9 @@ export const HistoryView: React.FC = () => {
             <Virtuoso
                 style={{ height: '100%' }}
                 data={visibleLogs}
-                components={{ Header, Footer }}
-                itemContent={(index, log) => (
-                    <HistoryCard
-                        id={index === 0 ? "tut-first-card" : undefined}
-                        log={log}
-                        isExpanded={expandedId === log.id}
-                        onToggle={(id) => setExpandedId(expandedId === id ? null : id)}
-                        lang={lang}
-                        t={t}
-                    />
-                )}
+                components={VIRTUOSO_COMPONENTS}
+                context={virtuosoContext}
+                itemContent={renderItem}
             />
 
             <TutorialOverlay

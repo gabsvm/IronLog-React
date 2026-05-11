@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { CardioSession, CardioActivityType } from '../../types';
+import { useApp } from '../../context/AppContext';
 import { Icon } from '../ui/Icon';
 import { Button } from '../ui/Button';
 
@@ -22,16 +23,17 @@ const ACTIVITIES: { id: CardioActivityType; emoji: string; en: string; es: strin
   { id: 'other',     emoji: '🏋️', en: 'Other',        es: 'Otro' },
 ];
 
-const getCalEstimate = (type: CardioActivityType, durationMin: number): number => {
-  const MET: Record<CardioActivityType, number> = {
-    running: 9.8, cycling: 7.5, walking: 3.8, swimming: 8.0,
-    rowing: 7.0, elliptical: 5.0, jump_rope: 11.0, hiit: 10.0, other: 5.0
-  };
-  const bodyWeight = 75; // kg approximation
-  return Math.round(MET[type] * bodyWeight * (durationMin / 60));
+const MET: Record<CardioActivityType, number> = {
+  running: 9.8, cycling: 7.5, walking: 3.8, swimming: 8.0,
+  rowing: 7.0, elliptical: 5.0, jump_rope: 11.0, hiit: 10.0, other: 5.0
 };
 
+const getCalEstimate = (type: CardioActivityType, durationMin: number, bodyWeightKg: number): number =>
+  Math.round(MET[type] * bodyWeightKg * (durationMin / 60));
+
 export const AddCardioModal: React.FC<AddCardioModalProps> = ({ isOpen, onClose, onAdd, lang }) => {
+  const { userProfile } = useApp();
+  const bodyWeight = userProfile?.bodyWeight ?? 75;
   const today = new Date().toISOString().split('T')[0];
   const [activity, setActivity]   = useState<CardioActivityType>('running');
   const [duration, setDuration]   = useState('');
@@ -39,7 +41,7 @@ export const AddCardioModal: React.FC<AddCardioModalProps> = ({ isOpen, onClose,
   const [heartRate, setHeartRate] = useState('');
   const [notes, setNotes]         = useState('');
 
-  const calEstimate = duration ? getCalEstimate(activity, Number(duration)) : 0;
+  const calEstimate = duration ? getCalEstimate(activity, Number(duration), bodyWeight) : 0;
 
   const handleSubmit = () => {
     if (!duration) return;

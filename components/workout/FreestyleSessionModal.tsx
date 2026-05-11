@@ -164,20 +164,22 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
         ...CALISTHENICS_EXERCISES,
     ], [gymExercises]);
 
-    const handleStartFreeGym = () => {
-        const sessionExs: SessionExercise[] = [];
-        const session: ActiveSession = {
+    const handleStartBlank = (label: string) => {
+        onStart({
             id: Date.now(),
             dayIdx: -1,
-            name: lang === 'es' ? 'Sesión Libre (Gym)' : 'Freestyle Gym Session',
+            name: label,
             startTime: Date.now(),
             mesoId: -1,
             week: -1,
-            exercises: sessionExs,
-        };
-        onStart(session);
+            exercises: [],
+        });
         onClose();
     };
+
+    const handleStartFreeGym = () => handleStartBlank(
+        lang === 'es' ? 'Sesión Libre (Gym)' : 'Freestyle Gym Session'
+    );
 
     const handleStartWod = () => {
         const wod = CF_WODS.find(w => w.id === selectedWodId);
@@ -356,6 +358,25 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
             {/* CROSSFIT: WOD picker */}
             {discipline === 'crossfit' && (
                 <div className="space-y-3">
+                    {/* Blank CrossFit option */}
+                    <button
+                        onClick={() => handleStartBlank(lang === 'es' ? 'Sesión CrossFit Libre' : 'Open CrossFit Session')}
+                        className="w-full text-left p-4 rounded-2xl border-2 border-dashed border-emerald-500/40 bg-emerald-500/5 hover:border-emerald-500/60 transition-all active:scale-[0.98]"
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0">
+                                <Icon name="Plus" size={18} className="text-emerald-400" />
+                            </div>
+                            <div>
+                                <p className="font-black text-sm text-emerald-400">
+                                    {lang === 'es' ? 'Sesión Libre' : 'Open Session'}
+                                </p>
+                                <p className="text-[10px] text-zinc-500 mt-0.5">
+                                    {lang === 'es' ? 'Sin plantilla — agrega ejercicios sobre la marcha' : 'No template — add exercises as you go'}
+                                </p>
+                            </div>
+                        </div>
+                    </button>
                     <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
                         {lang === 'es' ? 'WODs Benchmark & Hero' : 'Benchmark & Hero WODs'}
                     </p>
@@ -399,6 +420,26 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
             {/* CALISTHENICS: Skill Builder */}
             {discipline === 'calisthenics' && (
                 <div className="space-y-4">
+                    {/* Blank calisthenics option */}
+                    <button
+                        onClick={() => handleStartBlank(lang === 'es' ? 'Sesión Calistenia Libre' : 'Open Calisthenics Session')}
+                        className="w-full text-left p-4 rounded-2xl border-2 border-dashed border-violet-500/40 bg-violet-500/5 hover:border-violet-500/60 transition-all active:scale-[0.98]"
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-violet-500/20 flex items-center justify-center shrink-0">
+                                <Icon name="Plus" size={18} className="text-violet-400" />
+                            </div>
+                            <div>
+                                <p className="font-black text-sm text-violet-400">
+                                    {lang === 'es' ? 'Sesión Libre' : 'Open Session'}
+                                </p>
+                                <p className="text-[10px] text-zinc-500 mt-0.5">
+                                    {lang === 'es' ? 'Sin plantilla — agrega ejercicios sobre la marcha' : 'No template — add exercises as you go'}
+                                </p>
+                            </div>
+                        </div>
+                    </button>
+
                     {/* Sub-tabs */}
                     <div className="flex bg-black/20 p-1 rounded-xl gap-1">
                         <button

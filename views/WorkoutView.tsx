@@ -535,7 +535,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                             </button>
                         </div>
                         <div className="p-3 grid grid-cols-1 gap-1.5 max-h-[70vh] overflow-y-auto">
-                            {(['regular', 'warmup', 'myorep', 'myorep_match', 'giant', 'top', 'backoff', 'cluster'] as SetType[]).map(type => {
+                            {(['regular', 'warmup', 'myorep', 'myorep_match', 'giant', 'top', 'backoff', 'cluster', 'emom'] as SetType[]).map(type => {
                                 const colors: Record<string, string> = {
                                     regular: 'bg-zinc-800 text-zinc-300',
                                     warmup: 'bg-yellow-500/20 text-yellow-400',
@@ -545,10 +545,12 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                     top: 'bg-primary-500/20 text-red-400',
                                     backoff: 'bg-blue-500/20 text-blue-400',
                                     cluster: 'bg-emerald-500/20 text-emerald-400',
+                                    emom: 'bg-cyan-500/20 text-cyan-400',
                                 };
                                 const icons: Record<string, string> = {
                                     regular: 'Circle', warmup: 'Zap', myorep: 'Repeat', myorep_match: 'Repeat2',
-                                    giant: 'Layers', top: 'TrendingUp', backoff: 'TrendingDown', cluster: 'Grid3x3'
+                                    giant: 'Layers', top: 'TrendingUp', backoff: 'TrendingDown', cluster: 'Grid3x3',
+                                    emom: 'Timer'
                                 };
                                 const isSelected = ctrl.changingSetType?.currentType === type;
                                 return (

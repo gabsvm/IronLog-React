@@ -41,7 +41,7 @@ export interface ExerciseDef {
   progressionPrev?: string;      // ID of previous-level exercise in progression
 }
 
-export type SetType = 'regular' | 'myorep' | 'myorep_match' | 'cluster' | 'top' | 'backoff' | 'giant' | 'warmup' | 'avt_hop';
+export type SetType = 'regular' | 'myorep' | 'myorep_match' | 'cluster' | 'top' | 'backoff' | 'giant' | 'warmup' | 'avt_hop' | 'emom';
 
 export interface WorkoutSet {
   id: number;
@@ -239,6 +239,19 @@ export interface AppState {
   nutritionGoal: NutritionGoal;
   bodyLogs: BodyLog[];
   macroGoals?: MacroGoals;
+}
+
+// ─── CUSTOM FOOD DATABASE ──────────────────────────────────────────
+export interface CustomFood {
+  id: string;
+  name: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  servingSize?: string;      // "100g", "1 unidad", etc.
+  isFavorite?: boolean;
+  createdAt: number;
 }
 
 // ─── NUTRITION TYPES ───────────────────────────────────────────────

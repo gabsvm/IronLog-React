@@ -35,6 +35,7 @@ const getTypeColor = (type: SetType) => {
         case 'cluster': return 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30';
         case 'giant': return 'bg-orange-500/15 text-orange-400 border-orange-500/30';
         case 'avt_hop': return 'bg-orange-500/15 text-orange-400 border-orange-500/30';
+        case 'emom': return 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30';
         default: return 'bg-zinc-800 text-zinc-400 border-zinc-700';
     }
 };
@@ -50,6 +51,7 @@ const getTypeLabel = (type: SetType) => {
         backoff: 'B',
         cluster: 'C',
         avt_hop: 'H',
+        emom: 'E',
     };
     return map[type] || '●';
 };

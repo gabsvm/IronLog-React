@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useEffect, useRef, ReactNode, useState, PropsWithChildren, useMemo, useCallback } from 'react';
-import { AppState, Lang, Theme, ColorTheme, ExerciseDef, ActiveSession, MesoCycle, Log, ProgramDay, TutorialState, GlobalTemplate, UserProfile, BeforeInstallPromptEvent, NutritionLog, CardioSession, NutritionGoal, MacroGoals, DailyNutrition, BodyLog } from '../types';
+import { AppState, Lang, Theme, ColorTheme, ExerciseDef, ActiveSession, MesoCycle, Log, ProgramDay, TutorialState, GlobalTemplate, UserProfile, BeforeInstallPromptEvent, NutritionLog, CardioSession, NutritionGoal, MacroGoals, DailyNutrition, BodyLog, CustomFood } from '../types';
 import { DEFAULT_LIBRARY, DEFAULT_TEMPLATE, INITIAL_TEMPLATES } from '../constants';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { usePersistedState } from '../hooks/usePersistedState';
@@ -47,6 +47,10 @@ interface AppContextType extends AppState {
     // Body Tracking
     setBodyLogs: (val: BodyLog[] | ((prev: BodyLog[]) => BodyLog[])) => void;
     setMacroGoals: (val: MacroGoals | null | ((prev: MacroGoals | null) => MacroGoals | null)) => void;
+
+    // Custom Food Database
+    customFoods: CustomFood[];
+    setCustomFoods: (val: CustomFood[] | ((prev: CustomFood[]) => CustomFood[])) => void;
 
     // Tutorial Methods
     markTutorialSeen: (section: keyof TutorialState) => void;
@@ -120,6 +124,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     // NEW: Nutrition & Body Tracking Persistence
     const [bodyLogs, setBodyLogs, bodyLoading] = usePersistedState<BodyLog[]>('il_body_v1', [], 1000);
     const [macroGoals, setMacroGoals, macroLoading] = usePersistedState<MacroGoals | null>('il_macros_v1', null, 500);
+    const [customFoods, setCustomFoods] = usePersistedState<CustomFood[]>('il_custom_foods_v1', [], 1000);
 
     const [pendingCloudData, setPendingCloudData] = useState<Partial<AppState> | null>(null);
     const [hasCheckedSync, setHasCheckedSync] = useState(false);
@@ -392,7 +397,8 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         cardioSessions, setCardioSessions,
         nutritionGoal, setNutritionGoal,
         bodyLogs, setBodyLogs,
-        macroGoals, setMacroGoals
+        macroGoals, setMacroGoals,
+        customFoods, setCustomFoods,
     }), [
         lang, setLang, theme, setTheme, colorTheme, setColorTheme,
         program, setProgram,
@@ -414,7 +420,8 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         cardioSessions, setCardioSessions,
         nutritionGoal, setNutritionGoal,
         bodyLogs, setBodyLogs,
-        macroGoals, setMacroGoals
+        macroGoals, setMacroGoals,
+        customFoods, setCustomFoods,
     ]);
 
     if (isAppLoading) return <HomeSkeleton />;

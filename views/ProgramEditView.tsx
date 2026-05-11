@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
 import { TRANSLATIONS, MUSCLE_GROUPS } from '../constants';
 import { Icon } from '../components/ui/Icon';
@@ -35,59 +35,59 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
         weeks: 4
     });
 
-    const handleUpdateDayName = (id: string, name: string) => {
+    const handleUpdateDayName = useCallback((id: string, name: string) => {
         setProgram(prev => prev.map(d => d.id === id ? { ...d, dayName: { en: name, es: name } } : d));
-    };
+    }, [setProgram]);
 
-    const handleAddDay = () => {
+    const handleAddDay = useCallback(() => {
         const newDay = {
             id: `d_${Date.now()}`,
             dayName: { en: "New Day", es: "Nuevo Día" },
             slots: []
         };
         setProgram(prev => [...prev, newDay]);
-    };
+    }, [setProgram]);
 
-    const handleDeleteDay = () => {
+    const handleDeleteDay = useCallback(() => {
         if(dayToDelete) {
             setProgram(prev => prev.filter(d => d.id !== dayToDelete));
             setDayToDelete(null);
         }
-    };
+    }, [dayToDelete, setProgram]);
 
-    const handleAddSlot = (dayId: string) => {
+    const handleAddSlot = useCallback((dayId: string) => {
         setProgram(prev => prev.map(d => {
             if (d.id !== dayId) return d;
             const currentSlots = d.slots || [];
             return { ...d, slots: [...currentSlots, { muscle: 'CHEST', setTarget: 3 }] };
         }));
-    };
+    }, [setProgram]);
 
-    const handleRemoveSlot = (dayId: string, idx: number) => {
+    const handleRemoveSlot = useCallback((dayId: string, idx: number) => {
         setProgram(prev => prev.map(d => {
             if (d.id !== dayId) return d;
             const newSlots = [...(d.slots || [])];
             newSlots.splice(idx, 1);
             return { ...d, slots: newSlots };
         }));
-    };
+    }, [setProgram]);
 
-    const handleUpdateSlot = (dayId: string, idx: number, field: string, val: any) => {
+    const handleUpdateSlot = useCallback((dayId: string, idx: number, field: string, val: any) => {
         setProgram(prev => prev.map(d => {
             if (d.id !== dayId) return d;
             const newSlots = [...(d.slots || [])];
-            if (!newSlots[idx]) return d; // Safety check
+            if (!newSlots[idx]) return d;
             newSlots[idx] = { ...newSlots[idx], [field]: val };
             return { ...d, slots: newSlots };
         }));
-    };
+    }, [setProgram]);
 
     // Exercise Picker handling
-    const handleSelectExercise = (exId: string) => {
+    const handleSelectExercise = useCallback((exId: string) => {
         if (!pickingForSlot) return;
         handleUpdateSlot(pickingForSlot.dayId, pickingForSlot.slotIdx, 'exerciseId', exId);
         setPickingForSlot(null);
-    };
+    }, [pickingForSlot, handleUpdateSlot]);
 
     // --- Start Mesocycle Logic ---
     const handleStartMeso = () => {
