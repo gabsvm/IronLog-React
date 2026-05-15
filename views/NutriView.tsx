@@ -7,6 +7,7 @@ import { AddCardioModal } from '../components/nutrition/AddCardioModal';
 import { LogWeightModal } from '../components/nutrition/LogWeightModal';
 import { Icon } from '../components/ui/Icon';
 import { Button } from '../components/ui/Button';
+import { triggerHaptic } from '../utils/audio';
 
 // ─── HELPERS ────────────────────────────────────────────────────────
 const todayStr = () => new Date().toISOString().split('T')[0];
@@ -165,9 +166,9 @@ export const NutriView: React.FC = () => {
   const [showGoalEditor, setShowGoalEditor] = useState(false);
   const [showLogWeight, setShowLogWeight] = useState(false);
   const [expandedMeal, setExpandedMeal]   = useState<string | null>(null);
-  const [editingEntry, setEditingEntry]   = useState<FoodEntry | null>(null);
   const [editEntryDraft, setEditEntryDraft] = useState<FoodEntry | null>(null);
   const [editGoal, setEditGoal]           = useState(nutritionGoal);
+  const [lastDeletedEntry, setLastDeletedEntry] = useState<{ entry: FoodEntry; date: string } | null>(null);
 
   const todayLog    = useMemo(() => getTodayLog(nutritionLogs), [nutritionLogs]);
   const todayMacros = useMemo(() => sumMacros(todayLog.entries), [todayLog]);
@@ -215,14 +216,36 @@ export const NutriView: React.FC = () => {
       if (existing) return prev.map(l => l.date === today ? { ...l, entries: [...l.entries, entry] } : l);
       return [...prev, { date: today, entries: [entry], waterMl: 0 }];
     });
+    triggerHaptic('success');
   }, [setNutritionLogs]);
 
   const handleDeleteMeal = useCallback((entryId: string) => {
     const today = todayStr();
+    const log = nutritionLogs.find(l => l.date === today);
+    const entry = log?.entries.find(e => e.id === entryId);
+    if (!entry) return;
+
+    setLastDeletedEntry({ entry, date: today });
     setNutritionLogs(prev =>
       prev.map(l => l.date === today ? { ...l, entries: l.entries.filter(e => e.id !== entryId) } : l)
     );
-  }, [setNutritionLogs]);
+    triggerHaptic('medium');
+
+    // Auto-clear undo after 5 seconds
+    setTimeout(() => setLastDeletedEntry(prev => (prev?.entry.id === entryId ? null : prev)), 5000);
+  }, [setNutritionLogs, nutritionLogs]);
+
+  const handleUndoDelete = useCallback(() => {
+    if (!lastDeletedEntry) return;
+    const { entry, date } = lastDeletedEntry;
+    setNutritionLogs(prev => {
+      const log = prev.find(l => l.date === date);
+      if (log) return prev.map(l => l.date === date ? { ...l, entries: [...l.entries, entry] } : l);
+      return prev;
+    });
+    setLastDeletedEntry(null);
+    triggerHaptic('success');
+  }, [lastDeletedEntry, setNutritionLogs]);
 
   const handleEditEntry = useCallback((entry: FoodEntry) => {
     setEditingEntry(entry);
@@ -257,6 +280,7 @@ export const NutriView: React.FC = () => {
       if (existing) return prev.map(l => l.date === today ? { ...l, waterMl: (l.waterMl ?? 0) + ml } : l);
       return [...prev, { date: today, entries: [], waterMl: ml }];
     });
+    triggerHaptic('light');
   }, [setNutritionLogs]);
 
   const handleLogWeight = useCallback((data: { weight: number; bodyFat?: number; notes?: string }) => {
@@ -872,6 +896,22 @@ export const NutriView: React.FC = () => {
       <AddMealModal   isOpen={showAddMeal}   onClose={() => setShowAddMeal(false)}   onAdd={handleAddMeal}   lang={lang} />
       <AddCardioModal isOpen={showAddCardio} onClose={() => setShowAddCardio(false)} onAdd={handleAddCardio} lang={lang} />
       <LogWeightModal isOpen={showLogWeight} onClose={() => setShowLogWeight(false)} onLog={handleLogWeight} />
+
+      {/* Undo Snackbar */}
+      {lastDeletedEntry && (
+        <div className="fixed bottom-24 left-4 right-4 z-[100] flex items-center justify-between bg-zinc-800 text-white px-4 py-3 rounded-2xl shadow-2xl border border-zinc-700 animate-in fade-in slide-in-from-bottom-4">
+          <div className="flex items-center gap-2">
+            <Icon name="Trash2" size={14} className="text-zinc-400" />
+            <span className="text-xs font-bold">{l('Item deleted', 'Alimento eliminado')}</span>
+          </div>
+          <button
+            onClick={handleUndoDelete}
+            className="text-xs font-black text-red-500 uppercase tracking-wider px-2 py-1 active:scale-95 transition-transform"
+          >
+            {l('Undo', 'Deshacer')}
+          </button>
+        </div>
+      )}
     </div>
   );
 };

@@ -8,7 +8,8 @@ import { MuscleGroup, ExerciseDef } from '../types';
 import { getTranslated } from '../utils';
 import { Virtuoso } from 'react-virtuoso';
 import { ExerciseDetailModal } from '../components/ui/ExerciseDetailModal'; 
-import { ConfirmModal } from '../components/ui/ConfirmModal'; // New Import
+import { ConfirmModal } from '../components/ui/ConfirmModal';
+import { triggerHaptic } from '../utils/audio';
 
 interface ExercisesViewProps {
     onBack: () => void;
@@ -32,6 +33,7 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
         if (deleteId) {
             setExercises(prev => prev.filter(e => e.id !== deleteId));
             setDeleteId(null);
+            triggerHaptic('medium');
         }
     };
 
@@ -45,6 +47,7 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
         setExercises(prev => [...prev, newEx]);
         setMode('list');
         setNewName('');
+        triggerHaptic('success');
     };
 
     const sortedExercises = [...exercises].sort((a,b) => {

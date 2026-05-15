@@ -7,8 +7,9 @@ import { Button } from '../components/ui/Button';
 import { MuscleGroup, MesoType } from '../types';
 import { ExerciseSelector } from '../components/ui/ExerciseSelector';
 import { getTranslated } from '../utils';
-import { ConfirmModal } from '../components/ui/ConfirmModal'; // New Import
+import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { PDFImportModal } from '../components/ui/PDFImportModal';
+import { triggerHaptic } from '../utils/audio';
 import { ProgramDay } from '../types';
 
 interface ProgramEditViewProps {
@@ -46,12 +47,14 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
             slots: []
         };
         setProgram(prev => [...prev, newDay]);
+        triggerHaptic('success');
     }, [setProgram]);
 
     const handleDeleteDay = useCallback(() => {
         if(dayToDelete) {
             setProgram(prev => prev.filter(d => d.id !== dayToDelete));
             setDayToDelete(null);
+            triggerHaptic('medium');
         }
     }, [dayToDelete, setProgram]);
 
@@ -61,6 +64,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
             const currentSlots = d.slots || [];
             return { ...d, slots: [...currentSlots, { muscle: 'CHEST', setTarget: 3 }] };
         }));
+        triggerHaptic('light');
     }, [setProgram]);
 
     const handleRemoveSlot = useCallback((dayId: string, idx: number) => {
@@ -70,6 +74,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
             newSlots.splice(idx, 1);
             return { ...d, slots: newSlots };
         }));
+        triggerHaptic('light');
     }, [setProgram]);
 
     const handleUpdateSlot = useCallback((dayId: string, idx: number, field: string, val: any) => {
@@ -105,6 +110,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
 	    duration: 5
         });
         
+        triggerHaptic('success');
         // Return to home (which will now show the active meso)
         onBack();
     };

@@ -227,6 +227,23 @@ const HistoryCard = memo(({ log, isExpanded, onToggle, lang, t, id }: HistoryCar
                             </div>
                         );
                     })}
+
+                    <div className="pt-4 border-t border-zinc-800 flex justify-end">
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if (window.confirm(lang === 'en' ? 'Delete this workout permanently?' : '¿Eliminar este entrenamiento permanentemente?')) {
+                                    onToggle(-1); // Close it
+                                    // @ts-ignore
+                                    window.__deleteLog(log.id);
+                                }
+                            }}
+                            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-red-500/10 text-red-500 text-xs font-bold active:scale-95 transition-all hover:bg-red-500/20"
+                        >
+                            <Icon name="Trash2" size={14} />
+                            {lang === 'en' ? 'Delete' : 'Eliminar'}
+                        </button>
+                    </div>
                 </div>
             )}
         </div>
@@ -234,11 +251,18 @@ const HistoryCard = memo(({ log, isExpanded, onToggle, lang, t, id }: HistoryCar
 });
 
 export const HistoryView: React.FC = () => {
-    const { logs, lang, tutorialProgress, markTutorialSeen } = useApp();
+    const { logs, setLogs, lang, tutorialProgress, markTutorialSeen } = useApp();
     const t = TRANSLATIONS[lang];
     const { isPro, showPaywall, setShowPaywall, checkPro } = usePro();
 
     const [expandedId, setExpandedId] = useState<number | null>(null);
+
+    // Optimistic Delete Handler
+    // @ts-ignore
+    window.__deleteLog = (id: number) => {
+        setLogs(prev => prev.filter(l => l.id !== id));
+    };
+
     const [search, setSearch] = useState('');
     const deferredSearch = useDeferredValue(search);
 

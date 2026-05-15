@@ -12,6 +12,7 @@ import { PaywallModal } from '../components/pro/PaywallModal';
 import { GlobalTemplate, ProgramDay } from '../types';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { useFatigueAI } from '../hooks/useFatigueAI';
+import { triggerHaptic } from '../utils/audio';
 
 // Lazy load the AI Chat component
 const GainsLabChat = React.lazy(() => import('../components/ai/GainsLabChat').then(module => ({ default: module.GainsLabChat })));
@@ -431,7 +432,13 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
 
     // Handlers
     const handleSkipClick = (e: React.MouseEvent, dayIdx: number) => { e.stopPropagation(); setSkipConfirmationId(dayIdx); };
-    const confirmSkip = () => { if (onSkipSession && skipConfirmationId !== null) onSkipSession(skipConfirmationId); setSkipConfirmationId(null); };
+    const confirmSkip = () => {
+        if (onSkipSession && skipConfirmationId !== null) {
+            onSkipSession(skipConfirmationId);
+            triggerHaptic('medium');
+        }
+        setSkipConfirmationId(null);
+    };
     const handleFinishMeso = (exportReport: boolean) => { setActiveMeso(null); setShowCompleteModal(null); };
     const handleFinishWeek = () => {
         if (!activeMeso) return;
@@ -439,6 +446,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
             ...prev,
             week: prev.week + 1
         } : null);
+        triggerHaptic('success');
         setShowCompleteModal(null);
     };
 
@@ -464,6 +472,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
         });
 
         setShowTemplateSelector(false);
+        triggerHaptic('success');
     };
 
     const handleCreateCustom = () => {
