@@ -152,7 +152,10 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
                 }
 
                 if (set.type === 'myorep' || set.type === 'giant') dur = 30;
-                
+
+                // EMOM self-regulates rest via minute intervals — skip auto rest timer
+                if (set.type === 'emom') return;
+
                 setRestTimer({ active: true, duration: dur, timeLeft: dur, endAt: Date.now() + (dur * 1000) });
             } else {
                 triggerHaptic('light');
@@ -328,6 +331,23 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
         setActiveSession(prev => prev ? { ...prev, exercises: newExercises } : null);
     }, [activeSession, setActiveSession]);
 
+    const handleSetTypeAll = useCallback((exInstanceId: number, type: SetType) => {
+        setActiveSession(prev => {
+            if (!prev) return null;
+            return {
+                ...prev,
+                exercises: (prev.exercises || []).map(ex => {
+                    if (ex.instanceId !== exInstanceId) return ex;
+                    return {
+                        ...ex,
+                        sets: (ex.sets || []).map(s => s.completed ? s : { ...s, type })
+                    };
+                })
+            };
+        });
+        triggerHaptic('success');
+    }, [setActiveSession]);
+
     const handleAddAVTRound = useCallback((exInstanceId: number) => {
         const roundId = Date.now();
         // Un round AVT empieza con 4 hops vacíos (peso incremental, mismas reps)
@@ -418,6 +438,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
         showPRSuccess, dismissPRSuccess,
         detailExercise, setDetailExercise,
         handleSetUpdate,
+        handleSetTypeAll,
         handleAddSet,
         handleDeleteSet,
         handleNoteUpdate,

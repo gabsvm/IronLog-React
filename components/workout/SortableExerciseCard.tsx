@@ -201,6 +201,7 @@ export const SortableExerciseCard = React.memo(({
 
     const isAVTExercise = avtRounds.length > 0;
     const regularSets = ex.sets.filter(s => s.type !== 'avt_hop');
+    const isEMOM = !isCardio && !ex.isIsometric && regularSets.length > 0 && regularSets.every(s => s.type === 'emom');
 
     const handleInjectWarmup = () => {
         const firstRegularSet = sets.find(s => s.type === 'regular');
@@ -497,11 +498,23 @@ export const SortableExerciseCard = React.memo(({
                         className="w-full bg-zinc-800/60 text-xs text-zinc-400 placeholder-zinc-700 outline-none rounded-lg py-1.5 pl-6 pr-2 focus:bg-zinc-800 focus:text-white focus:placeholder-zinc-600 transition-colors"
                     />
                 </div>
+
+                {isEMOM && (
+                    <div className="flex items-center gap-2 px-2 py-1.5 bg-cyan-500/10 border border-cyan-500/20 rounded-xl">
+                        <Icon name="Timer" size={12} className="text-cyan-400" />
+                        <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider">
+                            EMOM — {regularSets.length} {lang === 'es' ? 'rondas' : 'rounds'}
+                        </span>
+                        <span className="ml-auto text-[10px] text-cyan-600">
+                            {lang === 'es' ? 'Una serie por minuto' : 'One set per minute'}
+                        </span>
+                    </div>
+                )}
             </div>
 
             {/* Sets Header */}
             <div className="grid grid-cols-12 gap-2 px-2 py-2 bg-zinc-50 dark:bg-black/20 border-b border-zinc-100 dark:border-white/5 text-[10px] font-bold text-zinc-400 uppercase tracking-widest text-center items-center">
-                <div className="col-span-2">#</div>
+                <div className={`col-span-2 ${isEMOM ? 'text-cyan-500' : ''}`}>{isEMOM ? 'Min' : '#'}</div>
                 {isCardio ? (
                     isInterval ? (
                         <>
@@ -564,6 +577,7 @@ export const SortableExerciseCard = React.memo(({
                         cardioMode={cardioMode}
                         isBodyweight={ex.isBodyweight}
                         isIsometric={ex.isIsometric}
+                        setIndex={idx}
                         tutorialId={idx === 0 ? tutorialId : undefined}
                     />
                 ))}

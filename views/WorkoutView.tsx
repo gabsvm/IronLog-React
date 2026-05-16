@@ -1,5 +1,5 @@
 
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { TRANSLATIONS } from '../constants';
 import { Icon } from '../components/ui/Icon';
@@ -52,6 +52,15 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
     // View State for Focus Mode
     const [viewMode, setViewMode] = useState<'list' | 'focus'>('list');
     const [focusedIndex, setFocusedIndex] = useState(0);
+
+    // Set type modal: apply-to-all toggle — defaults ON when all sets share the same type
+    const [applyToAll, setApplyToAll] = useState(true);
+    useEffect(() => {
+        if (!ctrl.changingSetType) return;
+        const ex = sessionExercises.find(e => e.instanceId === ctrl.changingSetType!.exId);
+        const pending = (ex?.sets || []).filter(s => !s.completed && s.type !== 'avt_hop');
+        setApplyToAll(pending.length > 1 && pending.every(s => s.type === pending[0].type));
+    }, [ctrl.changingSetType]);
 
     // Derived State
     const stageConfig = activeMeso ? getMesoStageConfig(activeMeso.mesoType || 'hyp_1', activeMeso.week, !!activeMeso.isDeload) : null;
@@ -525,56 +534,80 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                 />
             )}
 
-            {ctrl.changingSetType && (
-                <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center" onClick={() => ctrl.setChangingSetType(null)}>
-                    <div className="bg-zinc-900 w-full max-w-sm rounded-t-3xl sm:rounded-3xl shadow-2xl border border-zinc-800 overflow-hidden animate-spring-in" onClick={e => e.stopPropagation()}>
-                        <div className="px-4 pt-4 pb-2 flex items-center justify-between border-b border-zinc-800">
-                            <h3 className="font-black text-white text-base">{t.setType}</h3>
-                            <button onClick={() => ctrl.setChangingSetType(null)} className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-white rounded-full bg-zinc-800">
-                                <Icon name="X" size={16} />
-                            </button>
-                        </div>
-                        <div className="p-3 grid grid-cols-1 gap-1.5 max-h-[70vh] overflow-y-auto">
-                            {(['regular', 'warmup', 'myorep', 'myorep_match', 'giant', 'top', 'backoff', 'cluster', 'emom'] as SetType[]).map(type => {
-                                const colors: Record<string, string> = {
-                                    regular: 'bg-zinc-800 text-zinc-300',
-                                    warmup: 'bg-yellow-500/20 text-yellow-400',
-                                    myorep: 'bg-purple-500/20 text-purple-400',
-                                    myorep_match: 'bg-purple-400/20 text-purple-300',
-                                    giant: 'bg-orange-500/20 text-orange-400',
-                                    top: 'bg-primary-500/20 text-red-400',
-                                    backoff: 'bg-blue-500/20 text-blue-400',
-                                    cluster: 'bg-emerald-500/20 text-emerald-400',
-                                    emom: 'bg-cyan-500/20 text-cyan-400',
-                                };
-                                const icons: Record<string, string> = {
-                                    regular: 'Circle', warmup: 'Zap', myorep: 'Repeat', myorep_match: 'Repeat2',
-                                    giant: 'Layers', top: 'TrendingUp', backoff: 'TrendingDown', cluster: 'Grid3x3',
-                                    emom: 'Timer'
-                                };
-                                const isSelected = ctrl.changingSetType?.currentType === type;
-                                return (
-                                    <button
-                                        key={type}
-                                        onClick={() => { ctrl.handleSetUpdate(ctrl.changingSetType!.exId, ctrl.changingSetType!.setId, 'type', type); ctrl.setChangingSetType(null); }}
-                                        className={`p-3 border rounded-xl flex items-center gap-3 text-left transition-all active:scale-98 ${isSelected ? 'border-white/20 bg-white/5' : 'border-zinc-800 hover:border-zinc-700 hover:bg-white/5'
-                                            }`}
-                                    >
-                                        <span className={`shrink-0 w-9 h-9 flex items-center justify-center rounded-lg ${colors[type] || 'bg-zinc-800 text-zinc-400'}`}>
-                                            <Icon name={icons[type] as any || 'Circle'} size={18} />
-                                        </span>
-                                        <div className="flex-1">
-                                            <div className="text-sm font-bold text-white">{t.types[type]}</div>
-                                            <div className="text-[10px] text-zinc-500 leading-tight mt-0.5">{t.typeDesc[type]}</div>
-                                        </div>
-                                        {isSelected && <Icon name="CheckCircle" size={16} className="text-white shrink-0" />}
-                                    </button>
-                                );
-                            })}
+            {ctrl.changingSetType && (() => {
+                const colors: Record<string, string> = {
+                    regular: 'bg-zinc-800 text-zinc-300',
+                    warmup: 'bg-yellow-500/20 text-yellow-400',
+                    myorep: 'bg-purple-500/20 text-purple-400',
+                    myorep_match: 'bg-purple-400/20 text-purple-300',
+                    giant: 'bg-orange-500/20 text-orange-400',
+                    top: 'bg-primary-500/20 text-red-400',
+                    backoff: 'bg-blue-500/20 text-blue-400',
+                    cluster: 'bg-emerald-500/20 text-emerald-400',
+                    emom: 'bg-cyan-500/20 text-cyan-400',
+                };
+                const icons: Record<string, string> = {
+                    regular: 'Circle', warmup: 'Zap', myorep: 'Repeat', myorep_match: 'Repeat2',
+                    giant: 'Layers', top: 'TrendingUp', backoff: 'TrendingDown', cluster: 'Grid3x3',
+                    emom: 'Timer'
+                };
+                const exForModal = sessionExercises.find(e => e.instanceId === ctrl.changingSetType!.exId);
+                const pendingSets = (exForModal?.sets || []).filter(s => !s.completed && s.type !== 'avt_hop');
+                const hasMultipleSets = pendingSets.length > 1;
+                return (
+                    <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center" onClick={() => ctrl.setChangingSetType(null)}>
+                        <div className="bg-zinc-900 w-full max-w-sm rounded-t-3xl sm:rounded-3xl shadow-2xl border border-zinc-800 overflow-hidden animate-spring-in" onClick={e => e.stopPropagation()}>
+                            <div className="px-4 pt-4 pb-2 flex items-center justify-between border-b border-zinc-800">
+                                <h3 className="font-black text-white text-base">{t.setType}</h3>
+                                <button onClick={() => ctrl.setChangingSetType(null)} className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-white rounded-full bg-zinc-800">
+                                    <Icon name="X" size={16} />
+                                </button>
+                            </div>
+                            {hasMultipleSets && (
+                                <button
+                                    onClick={() => setApplyToAll(v => !v)}
+                                    className="w-full flex items-center justify-between px-4 py-2.5 bg-zinc-800/60 border-b border-zinc-800 hover:bg-zinc-800 transition-colors"
+                                >
+                                    <span className="text-xs font-bold text-zinc-300">
+                                        {lang === 'es' ? 'Aplicar a todas las series' : 'Apply to all sets'}
+                                    </span>
+                                    <div className={`relative w-9 h-5 rounded-full transition-colors shrink-0 ${applyToAll ? 'bg-red-500' : 'bg-zinc-600'}`}>
+                                        <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${applyToAll ? 'left-4' : 'left-0.5'}`} />
+                                    </div>
+                                </button>
+                            )}
+                            <div className="p-3 grid grid-cols-1 gap-1.5 max-h-[65vh] overflow-y-auto">
+                                {(['regular', 'warmup', 'myorep', 'myorep_match', 'giant', 'top', 'backoff', 'cluster', 'emom'] as SetType[]).map(type => {
+                                    const isSelected = ctrl.changingSetType?.currentType === type;
+                                    return (
+                                        <button
+                                            key={type}
+                                            onClick={() => {
+                                                if (applyToAll && hasMultipleSets) {
+                                                    ctrl.handleSetTypeAll(ctrl.changingSetType!.exId, type);
+                                                } else {
+                                                    ctrl.handleSetUpdate(ctrl.changingSetType!.exId, ctrl.changingSetType!.setId, 'type', type);
+                                                }
+                                                ctrl.setChangingSetType(null);
+                                            }}
+                                            className={`p-3 border rounded-xl flex items-center gap-3 text-left transition-all active:scale-98 ${isSelected ? 'border-white/20 bg-white/5' : 'border-zinc-800 hover:border-zinc-700 hover:bg-white/5'}`}
+                                        >
+                                            <span className={`shrink-0 w-9 h-9 flex items-center justify-center rounded-lg ${colors[type] || 'bg-zinc-800 text-zinc-400'}`}>
+                                                <Icon name={icons[type] as any || 'Circle'} size={18} />
+                                            </span>
+                                            <div className="flex-1">
+                                                <div className="text-sm font-bold text-white">{t.types[type]}</div>
+                                                <div className="text-[10px] text-zinc-500 leading-tight mt-0.5">{t.typeDesc[type]}</div>
+                                            </div>
+                                            {isSelected && <Icon name="CheckCircle" size={16} className="text-white shrink-0" />}
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                );
+            })()}
 
             {ctrl.showFinishModal && (
                 <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-6" onClick={(e) => e.stopPropagation()}>

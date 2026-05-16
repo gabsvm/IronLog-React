@@ -22,6 +22,7 @@ interface SetRowProps {
     cardioMode?: CardioType;
     isBodyweight?: boolean;
     isIsometric?: boolean;   // NEW: L-sit, planche hold, etc. — tracked in seconds
+    setIndex?: number;
     tutorialId?: string;
 }
 
@@ -163,10 +164,13 @@ const HoldTimer: React.FC<{
 export const SetRow = React.memo(({
     set, exInstanceId, unit, unitLabel, plateWeight, showRIR, stageRIR,
     onUpdate, onToggleComplete, onChangeType,
-    lang, isCardio, cardioMode = 'steady', isBodyweight, isIsometric, tutorialId
+    lang, isCardio, cardioMode = 'steady', isBodyweight, isIsometric, setIndex, tutorialId
 }: SetRowProps) => {
     const isDone = set.completed;
     const setType = set.type || 'regular';
+    const badgeLabel = (setType === 'emom' && setIndex !== undefined)
+        ? String(setIndex + 1)
+        : getTypeLabel(setType);
 
     const [localWeight, setLocalWeight] = useState(set.weight ?? '');
     const [localReps, setLocalReps] = useState(set.reps ?? '');
@@ -222,7 +226,7 @@ export const SetRow = React.memo(({
                         onClick={() => !isDone && onChangeType(exInstanceId, set.id, setType)}
                         className={`w-10 h-10 rounded-xl border flex items-center justify-center font-black text-xs transition-all active:scale-90 ${isDone ? 'bg-green-500/10 border-green-500/20 text-green-400' : getTypeColor(setType)}`}
                     >
-                        {isDone ? <Icon name="Check" size={16} strokeWidth={2.5} /> : getTypeLabel(setType)}
+                        {isDone ? <Icon name="Check" size={16} strokeWidth={2.5} /> : badgeLabel}
                     </button>
                 </div>
 
@@ -269,7 +273,7 @@ export const SetRow = React.memo(({
                             onClick={() => !isDone && onChangeType(exInstanceId, set.id, setType)}
                             className={`w-10 h-10 rounded-xl border flex items-center justify-center font-black text-xs transition-all active:scale-90 ${isDone ? 'bg-green-500/10 border-green-500/20 text-green-400' : getTypeColor(setType)}`}
                         >
-                            {isDone ? <Icon name="Check" size={16} strokeWidth={2.5} /> : getTypeLabel(setType)}
+                            {isDone ? <Icon name="Check" size={16} strokeWidth={2.5} /> : badgeLabel}
                         </button>
                     </div>
 
@@ -346,7 +350,7 @@ export const SetRow = React.memo(({
                     onClick={() => !isDone && onChangeType(exInstanceId, set.id, setType)}
                     className={`w-10 h-10 rounded-xl border flex items-center justify-center font-black text-xs transition-all active:scale-90 ${isDone ? 'bg-green-500/10 border-green-500/20 text-green-400' : getTypeColor(setType)}`}
                 >
-                    {isDone ? <Icon name="Check" size={16} strokeWidth={2.5} /> : getTypeLabel(setType)}
+                    {isDone ? <Icon name="Check" size={16} strokeWidth={2.5} /> : badgeLabel}
                 </button>
             </div>
 
