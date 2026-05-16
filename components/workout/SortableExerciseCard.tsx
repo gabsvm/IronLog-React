@@ -201,7 +201,26 @@ export const SortableExerciseCard = React.memo(({
 
     const isAVTExercise = avtRounds.length > 0;
     const regularSets = ex.sets.filter(s => s.type !== 'avt_hop');
-    const isEMOM = !isCardio && !ex.isIsometric && regularSets.length > 0 && regularSets.every(s => s.type === 'emom');
+
+    // ── Protocol detections ──────────────────────────────────────────
+    const isEMOM      = !isCardio && !ex.isIsometric && regularSets.length > 0 && regularSets.every(s => s.type === 'emom');
+    const isMyorep    = !isCardio && !ex.isIsometric && regularSets.length > 0 && regularSets.every(s => s.type === 'myorep' || s.type === 'myorep_match');
+    const isCluster   = !isCardio && !ex.isIsometric && regularSets.length > 0 && regularSets.every(s => s.type === 'cluster');
+    const isGiant     = !isCardio && !ex.isIsometric && regularSets.length > 0 && regularSets.every(s => s.type === 'giant');
+    const hasTopBackoff = !isCardio && regularSets.some(s => s.type === 'top') && regularSets.some(s => s.type === 'backoff');
+    const isTabata    = isCardio && cardioMode === 'tabata';
+    const isHIIT      = isCardio && cardioMode === 'hiit';
+
+    // ── Badge labels per set ─────────────────────────────────────────
+    const setBadgeLabels = useMemo((): (string | undefined)[] => {
+        if (isEMOM)   return regularSets.map((_, i) => String(i + 1));
+        if (isMyorep) return regularSets.map((_, i) => i === 0 ? 'ACT' : `M${i}`);
+        if (hasTopBackoff) {
+            let bCount = 0;
+            return regularSets.map(s => s.type === 'backoff' ? `B${++bCount}` : undefined);
+        }
+        return regularSets.map(() => undefined);
+    }, [isEMOM, isMyorep, hasTopBackoff, regularSets]);
 
     const handleInjectWarmup = () => {
         const firstRegularSet = sets.find(s => s.type === 'regular');
@@ -502,19 +521,63 @@ export const SortableExerciseCard = React.memo(({
                 {isEMOM && (
                     <div className="flex items-center gap-2 px-2 py-1.5 bg-cyan-500/10 border border-cyan-500/20 rounded-xl">
                         <Icon name="Timer" size={12} className="text-cyan-400" />
-                        <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider">
-                            EMOM — {regularSets.length} {lang === 'es' ? 'rondas' : 'rounds'}
-                        </span>
-                        <span className="ml-auto text-[10px] text-cyan-600">
-                            {lang === 'es' ? 'Una serie por minuto' : 'One set per minute'}
-                        </span>
+                        <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider">EMOM — {regularSets.length} {lang === 'es' ? 'rondas' : 'rounds'}</span>
+                        <span className="ml-auto text-[10px] text-cyan-600">{lang === 'es' ? 'Una serie por minuto' : 'One set per minute'}</span>
+                    </div>
+                )}
+                {isMyorep && (
+                    <div className="flex items-center gap-2 px-2 py-1.5 bg-purple-500/10 border border-purple-500/20 rounded-xl">
+                        <Icon name="Repeat" size={12} className="text-purple-400" />
+                        <span className="text-[10px] font-bold text-purple-400 uppercase tracking-wider">Myo-rep</span>
+                        <span className="text-[10px] text-purple-600 ml-0.5">{lang === 'es' ? '· Serie 1 = activación' : '· Set 1 = activation'}</span>
+                        <span className="ml-auto text-[10px] text-purple-600 tabular-nums">{regularSets.length - 1} mini</span>
+                    </div>
+                )}
+                {isCluster && (
+                    <div className="flex items-center gap-2 px-2 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                        <Icon name="Grid3x3" size={12} className="text-emerald-400" />
+                        <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Cluster</span>
+                        <span className="ml-1 text-[10px] text-emerald-600">{lang === 'es' ? '· ~15s entre clusters' : '· ~15s intra-set rest'}</span>
+                    </div>
+                )}
+                {isGiant && (
+                    <div className="flex items-center gap-2 px-2 py-1.5 bg-orange-500/10 border border-orange-500/20 rounded-xl">
+                        <Icon name="Layers" size={12} className="text-orange-400" />
+                        <span className="text-[10px] font-bold text-orange-400 uppercase tracking-wider">Giant Set</span>
+                        <span className="ml-1 text-[10px] text-orange-600">{lang === 'es' ? '· Reps altas al fallo' : '· High reps to failure'}</span>
+                    </div>
+                )}
+                {hasTopBackoff && (
+                    <div className="flex items-center gap-1.5 px-2 py-1.5 bg-zinc-800/80 border border-zinc-700/50 rounded-xl">
+                        <span className="text-[9px] font-black text-red-400 bg-red-500/15 px-1.5 py-0.5 rounded">T</span>
+                        <Icon name="ArrowRight" size={10} className="text-zinc-600" />
+                        <span className="text-[9px] font-black text-blue-400 bg-blue-500/15 px-1.5 py-0.5 rounded">B</span>
+                        <span className="text-[10px] font-bold text-zinc-500 ml-1">{lang === 'es' ? 'Top / Back-off' : 'Top / Back-off Protocol'}</span>
+                    </div>
+                )}
+                {isTabata && (
+                    <div className="flex items-center gap-2 px-2 py-1.5 bg-red-500/10 border border-red-500/20 rounded-xl">
+                        <Icon name="Timer" size={12} className="text-red-400" />
+                        <span className="text-[10px] font-bold text-red-400 uppercase tracking-wider">Tabata</span>
+                        <span className="text-[10px] text-red-500/70 ml-0.5 font-mono">20s / 10s</span>
+                        <span className="ml-auto text-[10px] text-red-600 tabular-nums">{regularSets.length} {lang === 'es' ? 'rondas' : 'rounds'}</span>
+                    </div>
+                )}
+                {isHIIT && (
+                    <div className="flex items-center gap-2 px-2 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+                        <Icon name="Zap" size={12} className="text-amber-400" />
+                        <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">HIIT</span>
+                        <span className="ml-1 text-[10px] text-amber-600">{lang === 'es' ? '· Intervalos alta intensidad' : '· High intensity intervals'}</span>
+                        <span className="ml-auto text-[10px] text-amber-600 tabular-nums">{regularSets.length}</span>
                     </div>
                 )}
             </div>
 
             {/* Sets Header */}
             <div className="grid grid-cols-12 gap-2 px-2 py-2 bg-zinc-50 dark:bg-black/20 border-b border-zinc-100 dark:border-white/5 text-[10px] font-bold text-zinc-400 uppercase tracking-widest text-center items-center">
-                <div className={`col-span-2 ${isEMOM ? 'text-cyan-500' : ''}`}>{isEMOM ? 'Min' : '#'}</div>
+                <div className={`col-span-2 ${isEMOM ? 'text-cyan-500' : isMyorep ? 'text-purple-500' : isCluster ? 'text-emerald-500' : ''}`}>
+                    {isEMOM ? 'Min' : isMyorep ? 'Set' : '#'}
+                </div>
                 {isCardio ? (
                     isInterval ? (
                         <>
@@ -578,6 +641,7 @@ export const SortableExerciseCard = React.memo(({
                         isBodyweight={ex.isBodyweight}
                         isIsometric={ex.isIsometric}
                         setIndex={idx}
+                        badgeLabel={setBadgeLabels[idx]}
                         tutorialId={idx === 0 ? tutorialId : undefined}
                     />
                 ))}

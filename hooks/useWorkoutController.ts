@@ -151,7 +151,12 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
                     dur = isMetabolite ? 45 : 90;
                 }
 
-                if (set.type === 'myorep' || set.type === 'giant') dur = 30;
+                if (set.type === 'myorep' || set.type === 'myorep_match' || set.type === 'giant') dur = 30;
+                if (set.type === 'cluster') dur = 15; // brief intra-set rest cue
+
+                // Interval cardio: use the set's programmed rest, or protocol default
+                if (ex?.cardioType === 'tabata') dur = 10;
+                else if (ex?.cardioType === 'hiit') dur = set.restSeconds || 60;
 
                 // EMOM self-regulates rest via minute intervals — skip auto rest timer
                 if (set.type === 'emom') return;

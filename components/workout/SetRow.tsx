@@ -23,21 +23,35 @@ interface SetRowProps {
     isBodyweight?: boolean;
     isIsometric?: boolean;   // NEW: L-sit, planche hold, etc. — tracked in seconds
     setIndex?: number;
+    badgeLabel?: string;
     tutorialId?: string;
 }
 
 const getTypeColor = (type: SetType) => {
     switch (type) {
-        case 'warmup': return 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30';
-        case 'myorep': return 'bg-purple-500/15 text-purple-400 border-purple-500/30';
+        case 'warmup':       return 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30';
+        case 'myorep':       return 'bg-purple-500/15 text-purple-400 border-purple-500/30';
         case 'myorep_match': return 'bg-purple-500/15 text-purple-300 border-purple-500/30';
-        case 'top': return 'bg-red-500/15 text-red-400 border-red-500/30';
-        case 'backoff': return 'bg-blue-500/15 text-blue-400 border-blue-500/30';
-        case 'cluster': return 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30';
-        case 'giant': return 'bg-orange-500/15 text-orange-400 border-orange-500/30';
-        case 'avt_hop': return 'bg-orange-500/15 text-orange-400 border-orange-500/30';
-        case 'emom': return 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30';
-        default: return 'bg-zinc-800 text-zinc-400 border-zinc-700';
+        case 'top':          return 'bg-red-500/15 text-red-400 border-red-500/30';
+        case 'backoff':      return 'bg-blue-500/15 text-blue-400 border-blue-500/30';
+        case 'cluster':      return 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30';
+        case 'giant':        return 'bg-orange-500/15 text-orange-400 border-orange-500/30';
+        case 'avt_hop':      return 'bg-orange-500/15 text-orange-400 border-orange-500/30';
+        case 'emom':         return 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30';
+        default:             return 'bg-zinc-800 text-zinc-400 border-zinc-700';
+    }
+};
+
+const getRowAccent = (type: SetType): string => {
+    switch (type) {
+        case 'warmup':                    return 'bg-yellow-500/5';
+        case 'top':                       return 'bg-red-500/5';
+        case 'backoff':                   return 'bg-blue-500/5';
+        case 'myorep': case 'myorep_match': return 'bg-purple-500/5';
+        case 'cluster':                   return 'bg-emerald-500/5';
+        case 'giant':                     return 'bg-orange-500/5';
+        case 'emom':                      return 'bg-cyan-500/5';
+        default:                          return '';
     }
 };
 
@@ -164,13 +178,12 @@ const HoldTimer: React.FC<{
 export const SetRow = React.memo(({
     set, exInstanceId, unit, unitLabel, plateWeight, showRIR, stageRIR,
     onUpdate, onToggleComplete, onChangeType,
-    lang, isCardio, cardioMode = 'steady', isBodyweight, isIsometric, setIndex, tutorialId
+    lang, isCardio, cardioMode = 'steady', isBodyweight, isIsometric, setIndex, badgeLabel, tutorialId
 }: SetRowProps) => {
     const isDone = set.completed;
     const setType = set.type || 'regular';
-    const badgeLabel = (setType === 'emom' && setIndex !== undefined)
-        ? String(setIndex + 1)
-        : getTypeLabel(setType);
+    const effectiveBadgeLabel = badgeLabel ?? getTypeLabel(setType);
+    const rowAccent = isDone ? '' : getRowAccent(setType);
 
     const [localWeight, setLocalWeight] = useState(set.weight ?? '');
     const [localReps, setLocalReps] = useState(set.reps ?? '');
@@ -218,7 +231,7 @@ export const SetRow = React.memo(({
     // ── ISOMETRIC MODE ──────────────────────────────────────────────────────
     if (isIsometric) {
         return (
-            <div className={`grid grid-cols-12 gap-2 items-center py-2.5 px-1 transition-colors duration-200 ${isDone ? 'opacity-60' : ''}`}>
+            <div className={`grid grid-cols-12 gap-2 items-center py-2.5 px-1 transition-colors duration-200 ${isDone ? 'opacity-60' : rowAccent}`}>
                 {/* Set Type Badge */}
                 <div className="col-span-2 flex justify-center">
                     <button
@@ -226,7 +239,7 @@ export const SetRow = React.memo(({
                         onClick={() => !isDone && onChangeType(exInstanceId, set.id, setType)}
                         className={`w-10 h-10 rounded-xl border flex items-center justify-center font-black text-xs transition-all active:scale-90 ${isDone ? 'bg-green-500/10 border-green-500/20 text-green-400' : getTypeColor(setType)}`}
                     >
-                        {isDone ? <Icon name="Check" size={16} strokeWidth={2.5} /> : badgeLabel}
+                        {isDone ? <Icon name="Check" size={16} strokeWidth={2.5} /> : effectiveBadgeLabel}
                     </button>
                 </div>
 
@@ -264,7 +277,7 @@ export const SetRow = React.memo(({
     // ── BODYWEIGHT MODE ─────────────────────────────────────────────────────
     if (isBodyweight && !isCardio) {
         return (
-            <div className={`transition-colors duration-200 ${isDone ? 'opacity-60' : ''}`}>
+            <div className={`transition-colors duration-200 ${isDone ? 'opacity-60' : rowAccent}`}>
                 <div className="grid grid-cols-12 gap-2 items-center py-2.5 px-1">
                     {/* Set Type Badge */}
                     <div className="col-span-2 flex justify-center">
@@ -273,7 +286,7 @@ export const SetRow = React.memo(({
                             onClick={() => !isDone && onChangeType(exInstanceId, set.id, setType)}
                             className={`w-10 h-10 rounded-xl border flex items-center justify-center font-black text-xs transition-all active:scale-90 ${isDone ? 'bg-green-500/10 border-green-500/20 text-green-400' : getTypeColor(setType)}`}
                         >
-                            {isDone ? <Icon name="Check" size={16} strokeWidth={2.5} /> : badgeLabel}
+                            {isDone ? <Icon name="Check" size={16} strokeWidth={2.5} /> : effectiveBadgeLabel}
                         </button>
                     </div>
 
@@ -341,7 +354,7 @@ export const SetRow = React.memo(({
 
     // ── STANDARD GYM / CARDIO MODE ──────────────────────────────────────────
     return (
-        <div className={`grid grid-cols-12 gap-2 items-center py-2.5 px-1 transition-colors duration-200 ${isDone ? 'opacity-60' : ''}`}>
+        <div className={`grid grid-cols-12 gap-2 items-center py-2.5 px-1 transition-colors duration-200 ${isDone ? 'opacity-60' : rowAccent}`}>
 
             {/* Set Type / Number Badge */}
             <div className="col-span-2 flex justify-center">
@@ -350,7 +363,7 @@ export const SetRow = React.memo(({
                     onClick={() => !isDone && onChangeType(exInstanceId, set.id, setType)}
                     className={`w-10 h-10 rounded-xl border flex items-center justify-center font-black text-xs transition-all active:scale-90 ${isDone ? 'bg-green-500/10 border-green-500/20 text-green-400' : getTypeColor(setType)}`}
                 >
-                    {isDone ? <Icon name="Check" size={16} strokeWidth={2.5} /> : badgeLabel}
+                    {isDone ? <Icon name="Check" size={16} strokeWidth={2.5} /> : effectiveBadgeLabel}
                 </button>
             </div>
 
