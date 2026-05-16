@@ -1,5 +1,5 @@
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { SessionExercise, WorkoutSet, CardioType, SetType } from '../../types';
@@ -7,6 +7,7 @@ import { Icon } from '../ui/Icon';
 import { MuscleTag } from './MuscleTag';
 import { SetRow } from './SetRow';
 import { AVTRoundCard } from './AVTRoundCard';
+import { EMOMTimer, TabataTimer } from './ProtocolTimers';
 import { SkillProgressionBadge } from './SkillProgressionBadge';
 import { getTranslated, roundWeight } from '../../utils';
 import { useApp } from '../../context/AppContext';
@@ -81,6 +82,8 @@ export const SortableExerciseCard = React.memo(({
     const { restTimer } = useTimerContext();
     const { logs } = useApp();
     const [isDeleting, setIsDeleting] = useState(false);
+    const [activeEmomMinute, setActiveEmomMinute] = useState(0);
+    const handleEmomMinuteChange = useCallback((m: number) => setActiveEmomMinute(m), []);
 
     const {
         attributes,
@@ -519,11 +522,11 @@ export const SortableExerciseCard = React.memo(({
                 </div>
 
                 {isEMOM && (
-                    <div className="flex items-center gap-2 px-2 py-1.5 bg-cyan-500/10 border border-cyan-500/20 rounded-xl">
-                        <Icon name="Timer" size={12} className="text-cyan-400" />
-                        <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider">EMOM — {regularSets.length} {lang === 'es' ? 'rondas' : 'rounds'}</span>
-                        <span className="ml-auto text-[10px] text-cyan-600">{lang === 'es' ? 'Una serie por minuto' : 'One set per minute'}</span>
-                    </div>
+                    <EMOMTimer
+                        totalSets={regularSets.length}
+                        lang={lang}
+                        onMinuteChange={handleEmomMinuteChange}
+                    />
                 )}
                 {isMyorep && (
                     <div className="flex items-center gap-2 px-2 py-1.5 bg-purple-500/10 border border-purple-500/20 rounded-xl">
@@ -556,12 +559,10 @@ export const SortableExerciseCard = React.memo(({
                     </div>
                 )}
                 {isTabata && (
-                    <div className="flex items-center gap-2 px-2 py-1.5 bg-red-500/10 border border-red-500/20 rounded-xl">
-                        <Icon name="Timer" size={12} className="text-red-400" />
-                        <span className="text-[10px] font-bold text-red-400 uppercase tracking-wider">Tabata</span>
-                        <span className="text-[10px] text-red-500/70 ml-0.5 font-mono">20s / 10s</span>
-                        <span className="ml-auto text-[10px] text-red-600 tabular-nums">{regularSets.length} {lang === 'es' ? 'rondas' : 'rounds'}</span>
-                    </div>
+                    <TabataTimer
+                        totalRounds={regularSets.length}
+                        lang={lang}
+                    />
                 )}
                 {isHIIT && (
                     <div className="flex items-center gap-2 px-2 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-xl">
@@ -643,6 +644,8 @@ export const SortableExerciseCard = React.memo(({
                         setIndex={idx}
                         badgeLabel={setBadgeLabels[idx]}
                         tutorialId={idx === 0 ? tutorialId : undefined}
+                        disableTypeChange={isEMOM || isMyorep || isCluster || isGiant}
+                        isActiveProtocolSet={isEMOM && activeEmomMinute === idx + 1}
                     />
                 ))}
 

@@ -25,6 +25,8 @@ interface SetRowProps {
     setIndex?: number;
     badgeLabel?: string;
     tutorialId?: string;
+    disableTypeChange?: boolean;
+    isActiveProtocolSet?: boolean;
 }
 
 const getTypeColor = (type: SetType) => {
@@ -178,12 +180,17 @@ const HoldTimer: React.FC<{
 export const SetRow = React.memo(({
     set, exInstanceId, unit, unitLabel, plateWeight, showRIR, stageRIR,
     onUpdate, onToggleComplete, onChangeType,
-    lang, isCardio, cardioMode = 'steady', isBodyweight, isIsometric, setIndex, badgeLabel, tutorialId
+    lang, isCardio, cardioMode = 'steady', isBodyweight, isIsometric,
+    setIndex, badgeLabel, tutorialId, disableTypeChange, isActiveProtocolSet
 }: SetRowProps) => {
     const isDone = set.completed;
     const setType = set.type || 'regular';
     const effectiveBadgeLabel = badgeLabel ?? getTypeLabel(setType);
-    const rowAccent = isDone ? '' : getRowAccent(setType);
+    const rowAccent = isDone
+        ? ''
+        : isActiveProtocolSet
+            ? getRowAccent(setType).replace('/5', '/15') + ' ring-1 ring-inset ring-cyan-500/20'
+            : getRowAccent(setType);
 
     const [localWeight, setLocalWeight] = useState(set.weight ?? '');
     const [localReps, setLocalReps] = useState(set.reps ?? '');
@@ -228,19 +235,21 @@ export const SetRow = React.memo(({
     const weightPlaceholder = set.hintWeight ? String(set.hintWeight) : '—';
     const repsPlaceholder = set.hintReps ? String(set.hintReps) : '—';
 
+    const BadgeEl = disableTypeChange || isDone ? 'div' : 'button';
+    const badgeProps = (!disableTypeChange && !isDone)
+        ? { id: tutorialId, onClick: () => onChangeType(exInstanceId, set.id, setType) }
+        : { id: tutorialId };
+    const badgeClass = `w-11 h-11 rounded-xl border flex items-center justify-center font-black text-xs transition-all ${isDone ? 'bg-green-500/10 border-green-500/20 text-green-400' : getTypeColor(setType)} ${!disableTypeChange && !isDone ? 'active:scale-90 cursor-pointer' : 'cursor-default'}`;
+
     // ── ISOMETRIC MODE ──────────────────────────────────────────────────────
     if (isIsometric) {
         return (
             <div className={`grid grid-cols-12 gap-2 items-center py-2.5 px-1 transition-colors duration-200 ${isDone ? 'opacity-60' : rowAccent}`}>
                 {/* Set Type Badge */}
                 <div className="col-span-2 flex justify-center">
-                    <button
-                        id={tutorialId}
-                        onClick={() => !isDone && onChangeType(exInstanceId, set.id, setType)}
-                        className={`w-11 h-11 rounded-xl border flex items-center justify-center font-black text-xs transition-all active:scale-90 ${isDone ? 'bg-green-500/10 border-green-500/20 text-green-400' : getTypeColor(setType)}`}
-                    >
+                    <BadgeEl {...badgeProps as any} className={badgeClass}>
                         {isDone ? <Icon name="Check" size={16} strokeWidth={2.5} /> : effectiveBadgeLabel}
-                    </button>
+                    </BadgeEl>
                 </div>
 
                 {/* Hold Timer — takes up the weight+reps cols */}
@@ -281,13 +290,9 @@ export const SetRow = React.memo(({
                 <div className="grid grid-cols-12 gap-2 items-center py-2.5 px-1">
                     {/* Set Type Badge */}
                     <div className="col-span-2 flex justify-center">
-                        <button
-                            id={tutorialId}
-                            onClick={() => !isDone && onChangeType(exInstanceId, set.id, setType)}
-                            className={`w-11 h-11 rounded-xl border flex items-center justify-center font-black text-xs transition-all active:scale-90 ${isDone ? 'bg-green-500/10 border-green-500/20 text-green-400' : getTypeColor(setType)}`}
-                        >
+                        <BadgeEl {...badgeProps as any} className={badgeClass}>
                             {isDone ? <Icon name="Check" size={16} strokeWidth={2.5} /> : effectiveBadgeLabel}
-                        </button>
+                        </BadgeEl>
                     </div>
 
                     {/* Reps (main field for BW) — prominent */}
@@ -371,13 +376,9 @@ export const SetRow = React.memo(({
 
             {/* Set Type / Number Badge */}
             <div className="col-span-2 flex justify-center">
-                <button
-                    id={tutorialId}
-                    onClick={() => !isDone && onChangeType(exInstanceId, set.id, setType)}
-                    className={`w-11 h-11 rounded-xl border flex items-center justify-center font-black text-xs transition-all active:scale-90 ${isDone ? 'bg-green-500/10 border-green-500/20 text-green-400' : getTypeColor(setType)}`}
-                >
+                <BadgeEl {...badgeProps as any} className={badgeClass}>
                     {isDone ? <Icon name="Check" size={16} strokeWidth={2.5} /> : effectiveBadgeLabel}
-                </button>
+                </BadgeEl>
             </div>
 
             {/* Weight Input */}
