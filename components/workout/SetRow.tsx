@@ -237,7 +237,7 @@ export const SetRow = React.memo(({
                     <button
                         id={tutorialId}
                         onClick={() => !isDone && onChangeType(exInstanceId, set.id, setType)}
-                        className={`w-10 h-10 rounded-xl border flex items-center justify-center font-black text-xs transition-all active:scale-90 ${isDone ? 'bg-green-500/10 border-green-500/20 text-green-400' : getTypeColor(setType)}`}
+                        className={`w-11 h-11 rounded-xl border flex items-center justify-center font-black text-xs transition-all active:scale-90 ${isDone ? 'bg-green-500/10 border-green-500/20 text-green-400' : getTypeColor(setType)}`}
                     >
                         {isDone ? <Icon name="Check" size={16} strokeWidth={2.5} /> : effectiveBadgeLabel}
                     </button>
@@ -284,7 +284,7 @@ export const SetRow = React.memo(({
                         <button
                             id={tutorialId}
                             onClick={() => !isDone && onChangeType(exInstanceId, set.id, setType)}
-                            className={`w-10 h-10 rounded-xl border flex items-center justify-center font-black text-xs transition-all active:scale-90 ${isDone ? 'bg-green-500/10 border-green-500/20 text-green-400' : getTypeColor(setType)}`}
+                            className={`w-11 h-11 rounded-xl border flex items-center justify-center font-black text-xs transition-all active:scale-90 ${isDone ? 'bg-green-500/10 border-green-500/20 text-green-400' : getTypeColor(setType)}`}
                         >
                             {isDone ? <Icon name="Check" size={16} strokeWidth={2.5} /> : effectiveBadgeLabel}
                         </button>
@@ -348,20 +348,33 @@ export const SetRow = React.memo(({
                         </button>
                     </div>
                 </div>
+
+                {/* Prev performance hint */}
+                {!isDone && set.prevReps && (
+                    <div className="grid grid-cols-12 px-1 pb-1.5 -mt-1">
+                        <div className="col-span-2" />
+                        <div className="col-span-6 text-center">
+                            <span className="text-[9px] font-bold text-zinc-600 tabular-nums">
+                                prev {set.prevReps} reps{set.prevWeight && Number(set.prevWeight) > 0 ? ` +${set.prevWeight}kg` : ''}
+                            </span>
+                        </div>
+                    </div>
+                )}
             </div>
         );
     }
 
     // ── STANDARD GYM / CARDIO MODE ──────────────────────────────────────────
     return (
-        <div className={`grid grid-cols-12 gap-2 items-center py-2.5 px-1 transition-colors duration-200 ${isDone ? 'opacity-60' : rowAccent}`}>
+        <div className={`transition-colors duration-200 ${isDone ? 'opacity-60' : rowAccent}`}>
+        <div className="grid grid-cols-12 gap-2 items-center py-2.5 px-1">
 
             {/* Set Type / Number Badge */}
             <div className="col-span-2 flex justify-center">
                 <button
                     id={tutorialId}
                     onClick={() => !isDone && onChangeType(exInstanceId, set.id, setType)}
-                    className={`w-10 h-10 rounded-xl border flex items-center justify-center font-black text-xs transition-all active:scale-90 ${isDone ? 'bg-green-500/10 border-green-500/20 text-green-400' : getTypeColor(setType)}`}
+                    className={`w-11 h-11 rounded-xl border flex items-center justify-center font-black text-xs transition-all active:scale-90 ${isDone ? 'bg-green-500/10 border-green-500/20 text-green-400' : getTypeColor(setType)}`}
                 >
                     {isDone ? <Icon name="Check" size={16} strokeWidth={2.5} /> : effectiveBadgeLabel}
                 </button>
@@ -429,6 +442,25 @@ export const SetRow = React.memo(({
                     onClose={() => setShowCalculator(false)}
                 />
             )}
+        </div>
+
+        {/* Prev performance hint */}
+        {!isDone && !isCardio && (set.prevWeight || set.prevReps) && (
+            <div className="grid grid-cols-12 px-1 pb-1.5 -mt-1">
+                <div className="col-span-2" />
+                <div className="col-span-4 text-center">
+                    {set.prevWeight && Number(set.prevWeight) > 0 && (
+                        <span className="text-[9px] font-bold text-zinc-600 tabular-nums">↑ {set.prevWeight}</span>
+                    )}
+                </div>
+                <div className="col-span-4 text-center">
+                    {set.prevReps && Number(set.prevReps) > 0 && (
+                        <span className="text-[9px] font-bold text-zinc-600 tabular-nums">↑ {set.prevReps}</span>
+                    )}
+                </div>
+                <div className="col-span-2" />
+            </div>
+        )}
         </div>
     );
 });

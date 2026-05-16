@@ -445,7 +445,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                 disabled={focusedIndex === sessionExercises.length - 1}
                                 className="w-10 h-10 flex items-center justify-center rounded-xl bg-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed"
                             >
-                                <Icon name="SkipForward" size={20} />
+                                <Icon name="ChevronRight" size={20} />
                             </button>
                         </div>
 
