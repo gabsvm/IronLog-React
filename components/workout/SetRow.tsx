@@ -27,6 +27,7 @@ interface SetRowProps {
     tutorialId?: string;
     disableTypeChange?: boolean;
     isActiveProtocolSet?: boolean;
+    isNextSet?: boolean;
 }
 
 const getTypeColor = (type: SetType) => {
@@ -181,7 +182,7 @@ export const SetRow = React.memo(({
     set, exInstanceId, unit, unitLabel, plateWeight, showRIR, stageRIR,
     onUpdate, onToggleComplete, onChangeType,
     lang, isCardio, cardioMode = 'steady', isBodyweight, isIsometric,
-    setIndex, badgeLabel, tutorialId, disableTypeChange, isActiveProtocolSet
+    setIndex, badgeLabel, tutorialId, disableTypeChange, isActiveProtocolSet, isNextSet
 }: SetRowProps) => {
     const isDone = set.completed;
     const setType = set.type || 'regular';
@@ -190,7 +191,9 @@ export const SetRow = React.memo(({
         ? ''
         : isActiveProtocolSet
             ? getRowAccent(setType).replace('/5', '/15') + ' ring-1 ring-inset ring-cyan-500/20'
-            : getRowAccent(setType);
+            : isNextSet
+                ? 'bg-gradient-to-r from-orange-500/8 via-transparent to-transparent'
+                : getRowAccent(setType);
 
     const [localWeight, setLocalWeight] = useState(set.weight ?? '');
     const [localReps, setLocalReps] = useState(set.reps ?? '');
@@ -270,7 +273,7 @@ export const SetRow = React.memo(({
                             onToggleComplete(exInstanceId, set.id);
                         }}
                         className={`
-                            w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-150 active:scale-85
+                            w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-150 active:scale-90
                             ${isDone
                                 ? 'bg-green-500 text-white animate-pulse-glow-green'
                                 : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700 hover:text-white active:bg-green-600 active:text-white'}
@@ -343,7 +346,7 @@ export const SetRow = React.memo(({
                                 onToggleComplete(exInstanceId, set.id);
                             }}
                             className={`
-                                w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-150 active:scale-85
+                                w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-150 active:scale-90
                                 ${isDone
                                     ? 'bg-green-500 text-white animate-pulse-glow-green'
                                     : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700 hover:text-white active:bg-green-600 active:text-white'}
@@ -356,11 +359,11 @@ export const SetRow = React.memo(({
 
                 {/* Prev performance hint */}
                 {!isDone && set.prevReps && (
-                    <div className="grid grid-cols-12 px-1 pb-1.5 -mt-1">
-                        <div className="col-span-2" />
-                        <div className="col-span-6 text-center">
-                            <span className="text-[9px] font-bold text-zinc-600 tabular-nums">
-                                prev {set.prevReps} reps{set.prevWeight && Number(set.prevWeight) > 0 ? ` +${set.prevWeight}kg` : ''}
+                    <div className="flex justify-center pb-1.5 -mt-1">
+                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-800/80 border border-zinc-700/50">
+                            <Icon name="Clock" size={9} className="text-zinc-500 shrink-0" />
+                            <span className="text-[9px] font-bold text-zinc-400 tabular-nums">
+                                {set.prevReps} reps{set.prevWeight && Number(set.prevWeight) > 0 ? ` +${set.prevWeight}kg` : ''}
                             </span>
                         </div>
                     </div>
@@ -426,7 +429,7 @@ export const SetRow = React.memo(({
                         onToggleComplete(exInstanceId, set.id);
                     }}
                     className={`
-                        w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-150 active:scale-85
+                        w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-150 active:scale-90
                         ${isDone
                             ? 'bg-green-500 text-white animate-pulse-glow-green'
                             : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700 hover:text-white active:bg-green-600 active:text-white'
@@ -447,19 +450,16 @@ export const SetRow = React.memo(({
 
         {/* Prev performance hint */}
         {!isDone && !isCardio && (set.prevWeight || set.prevReps) && (
-            <div className="grid grid-cols-12 px-1 pb-1.5 -mt-1">
-                <div className="col-span-2" />
-                <div className="col-span-4 text-center">
-                    {set.prevWeight && Number(set.prevWeight) > 0 && (
-                        <span className="text-[9px] font-bold text-zinc-600 tabular-nums">↑ {set.prevWeight}</span>
-                    )}
+            <div className="flex justify-center pb-1.5 -mt-1">
+                <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-800/80 border border-zinc-700/50">
+                    <Icon name="Clock" size={9} className="text-zinc-500 shrink-0" />
+                    <span className="text-[9px] font-bold text-zinc-400 tabular-nums">
+                        {[
+                            set.prevWeight && Number(set.prevWeight) > 0 ? `${set.prevWeight}kg` : null,
+                            set.prevReps && Number(set.prevReps) > 0 ? `${set.prevReps} reps` : null,
+                        ].filter(Boolean).join(' × ')}
+                    </span>
                 </div>
-                <div className="col-span-4 text-center">
-                    {set.prevReps && Number(set.prevReps) > 0 && (
-                        <span className="text-[9px] font-bold text-zinc-600 tabular-nums">↑ {set.prevReps}</span>
-                    )}
-                </div>
-                <div className="col-span-2" />
             </div>
         )}
         </div>

@@ -204,13 +204,19 @@ export const SortableExerciseCard = React.memo(({
 
     const isAVTExercise = avtRounds.length > 0;
     const regularSets = ex.sets.filter(s => s.type !== 'avt_hop');
+    const completedCount = regularSets.filter(s => s.completed).length;
+    const allDone = regularSets.length > 0 && completedCount === regularSets.length;
 
     // ── Protocol detections ──────────────────────────────────────────
-    const isEMOM      = !isCardio && !ex.isIsometric && regularSets.length > 0 && regularSets.every(s => s.type === 'emom');
-    const isMyorep    = !isCardio && !ex.isIsometric && regularSets.length > 0 && regularSets.every(s => s.type === 'myorep' || s.type === 'myorep_match');
-    const isCluster   = !isCardio && !ex.isIsometric && regularSets.length > 0 && regularSets.every(s => s.type === 'cluster');
-    const isGiant     = !isCardio && !ex.isIsometric && regularSets.length > 0 && regularSets.every(s => s.type === 'giant');
-    const hasTopBackoff = !isCardio && regularSets.some(s => s.type === 'top') && regularSets.some(s => s.type === 'backoff');
+    const isProtocol = !isCardio && !ex.isIsometric;
+    const isEMOM      = isProtocol && regularSets.length > 0 && regularSets.every(s => s.type === 'emom');
+    const isMyorep    = isProtocol && regularSets.length > 0 && regularSets.every(s => s.type === 'myorep' || s.type === 'myorep_match');
+    const isCluster   = isProtocol && regularSets.length > 0 && regularSets.every(s => s.type === 'cluster');
+    const isGiant     = isProtocol && regularSets.length > 0 && regularSets.every(s => s.type === 'giant');
+    const hasTopBackoff = isProtocol && regularSets.some(s => s.type === 'top') && regularSets.some(s => s.type === 'backoff');
+    const isSpecialProtocol = isEMOM || isMyorep || isCluster || isGiant;
+    // For regular workouts — highlight the next uncompleted set
+    const nextSetIdx = !isSpecialProtocol ? regularSets.findIndex(s => !s.completed) : -1;
     const isTabata    = isCardio && cardioMode === 'tabata';
     const isHIIT      = isCardio && cardioMode === 'hiit';
 
@@ -369,9 +375,9 @@ export const SortableExerciseCard = React.memo(({
                     <div className="flex items-center gap-1.5">
                         {/* Integrated Rest Timer Badge */}
                         {restTimer.active && restTimer.timeLeft > 0 && (
-                            <div className="flex items-center gap-1.5 px-2 py-1 bg-violet-900/40 text-violet-400 border border-violet-500/30 rounded-lg animate-pulse shadow-lg shadow-violet-900/20 mr-1">
+                            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-violet-900/50 text-violet-300 border border-violet-500/40 rounded-lg animate-pulse shadow-lg shadow-violet-900/30 backdrop-blur-sm mr-1">
                                 <Icon name="Clock" size={12} strokeWidth={3} />
-                                <span className="text-[10px] font-black font-mono">
+                                <span className="text-[10px] font-black font-mono tracking-tight">
                                     {Math.floor(restTimer.timeLeft / 60)}:{(restTimer.timeLeft % 60).toString().padStart(2, '0')}
                                 </span>
                             </div>
@@ -510,6 +516,21 @@ export const SortableExerciseCard = React.memo(({
                     </div>
                 )}
 
+                {/* Per-exercise set progress bar */}
+                {regularSets.length > 0 && (
+                    <div className="flex items-center gap-2 px-1 -mb-0.5">
+                        <div className="flex-1 h-1 bg-zinc-800 rounded-full overflow-hidden">
+                            <div
+                                className={`h-full rounded-full transition-all duration-500 ${allDone ? 'bg-green-500' : 'bg-red-500/70'}`}
+                                style={{ width: `${(completedCount / regularSets.length) * 100}%` }}
+                            />
+                        </div>
+                        <span className={`text-[9px] font-black tabular-nums tracking-tight ${allDone ? 'text-green-500' : 'text-zinc-600'}`}>
+                            {completedCount}/{regularSets.length}
+                        </span>
+                    </div>
+                )}
+
                 <div className="relative flex items-center">
                     <Icon name="Pencil" size={11} className="absolute left-2 text-zinc-700 pointer-events-none" />
                     <input
@@ -644,8 +665,9 @@ export const SortableExerciseCard = React.memo(({
                         setIndex={idx}
                         badgeLabel={setBadgeLabels[idx]}
                         tutorialId={idx === 0 ? tutorialId : undefined}
-                        disableTypeChange={isEMOM || isMyorep || isCluster || isGiant}
+                        disableTypeChange={isSpecialProtocol}
                         isActiveProtocolSet={isEMOM && activeEmomMinute === idx + 1}
+                        isNextSet={nextSetIdx === idx}
                     />
                 ))}
 
