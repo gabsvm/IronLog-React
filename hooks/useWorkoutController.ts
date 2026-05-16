@@ -345,7 +345,9 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
                     if (ex.instanceId !== exInstanceId) return ex;
                     return {
                         ...ex,
-                        sets: (ex.sets || []).map(s => s.completed ? s : { ...s, type })
+                        sets: (ex.sets || []).map(s =>
+                            (s.completed || s.type === 'avt_hop') ? s : { ...s, type }
+                        )
                     };
                 })
             };

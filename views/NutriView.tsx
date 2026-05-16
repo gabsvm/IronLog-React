@@ -162,6 +162,10 @@ export const NutriView: React.FC = () => {
   nutritionLogsRef.current = nutritionLogs;
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const cardioSessionsRef = useRef(cardioSessions);
+  cardioSessionsRef.current = cardioSessions;
+  const undoCardioTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const [subTab, setSubTab]             = useState<SubTab>('today');
   const [showAddMeal, setShowAddMeal]   = useState(false);
   const [showAddCardio, setShowAddCardio] = useState(false);
@@ -172,6 +176,7 @@ export const NutriView: React.FC = () => {
   const [editEntryDraft, setEditEntryDraft] = useState<FoodEntry | null>(null);
   const [editGoal, setEditGoal]           = useState(nutritionGoal);
   const [lastDeletedEntry, setLastDeletedEntry] = useState<{ entry: FoodEntry; date: string } | null>(null);
+  const [lastDeletedCardio, setLastDeletedCardio] = useState<CardioSession | null>(null);
 
   const todayLog    = useMemo(() => getTodayLog(nutritionLogs), [nutritionLogs]);
   const todayMacros = useMemo(() => sumMacros(todayLog.entries), [todayLog]);
@@ -280,8 +285,25 @@ export const NutriView: React.FC = () => {
   }, [setCardioSessions]);
 
   const handleDeleteCardio = useCallback((id: string) => {
+    const session = cardioSessionsRef.current.find(s => s.id === id);
+    if (!session) return;
+    if (undoCardioTimerRef.current) clearTimeout(undoCardioTimerRef.current);
+    setLastDeletedCardio(session);
     setCardioSessions(prev => prev.filter(s => s.id !== id));
+    triggerHaptic('medium');
+    undoCardioTimerRef.current = setTimeout(() => {
+      setLastDeletedCardio(null);
+      undoCardioTimerRef.current = null;
+    }, 5000);
   }, [setCardioSessions]);
+
+  const handleUndoDeleteCardio = useCallback(() => {
+    if (!lastDeletedCardio) return;
+    if (undoCardioTimerRef.current) { clearTimeout(undoCardioTimerRef.current); undoCardioTimerRef.current = null; }
+    setCardioSessions(prev => [lastDeletedCardio, ...prev]);
+    setLastDeletedCardio(null);
+    triggerHaptic('success');
+  }, [lastDeletedCardio, setCardioSessions]);
 
   const handleAddWater = useCallback((ml: number) => {
     const today = todayStr();
@@ -501,13 +523,13 @@ export const NutriView: React.FC = () => {
                               <span className="text-pink-400">{entry.fat}g F</span>
                             </p>
                           </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            <span className="text-sm font-bold text-zinc-300">{entry.calories}</span>
-                            <button onClick={() => handleEditEntry(entry)} className="text-zinc-600 hover:text-zinc-300 transition-colors active:scale-90 p-1">
-                              <Icon name="Edit" size={12} />
+                          <div className="flex items-center gap-1 shrink-0">
+                            <span className="text-sm font-bold text-zinc-300 mr-1">{entry.calories}</span>
+                            <button onClick={() => handleEditEntry(entry)} className="text-zinc-600 hover:text-zinc-300 transition-colors active:scale-90 p-2 rounded-lg">
+                              <Icon name="Pencil" size={14} />
                             </button>
-                            <button onClick={() => handleDeleteMeal(entry.id)} className="text-zinc-700 hover:text-red-500 transition-colors active:scale-90 p-1">
-                              <Icon name="Trash2" size={12} />
+                            <button onClick={() => handleDeleteMeal(entry.id)} className="text-zinc-700 hover:text-red-500 transition-colors active:scale-90 p-2 rounded-lg">
+                              <Icon name="Trash2" size={14} />
                             </button>
                           </div>
                         </div>
@@ -818,18 +840,21 @@ export const NutriView: React.FC = () => {
 
             {/* Quick multiplier buttons */}
             <div className="mb-4">
-              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">{l('Quick scale from current', 'Escalar desde el valor actual')}</p>
+              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">{l('Quick scale', 'Escalar')}</p>
               <div className="flex gap-2">
                 {[0.5, 0.75, 1, 1.5, 2].map(mult => (
                   <button
                     key={mult}
-                    onClick={() => setEditEntryDraft({
-                      ...editingEntry,
-                      calories: Math.round(editingEntry.calories * mult),
-                      protein:  Math.round(editingEntry.protein  * mult),
-                      carbs:    Math.round(editingEntry.carbs    * mult),
-                      fat:      Math.round(editingEntry.fat      * mult),
-                    })}
+                    onClick={() => {
+                      if (!editEntryDraft) return;
+                      setEditEntryDraft({
+                        ...editEntryDraft,
+                        calories: Math.round(editEntryDraft.calories * mult),
+                        protein:  Math.round(editEntryDraft.protein  * mult),
+                        carbs:    Math.round(editEntryDraft.carbs    * mult),
+                        fat:      Math.round(editEntryDraft.fat      * mult),
+                      });
+                    }}
                     className="flex-1 py-2 rounded-xl bg-zinc-800 text-zinc-300 text-xs font-bold active:scale-95 transition-all hover:bg-zinc-700"
                   >
                     ×{mult}
@@ -867,8 +892,8 @@ export const NutriView: React.FC = () => {
 
       {/* ─── GOAL EDITOR MODAL ─────────────────────────────── */}
       {showGoalEditor && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end">
-          <div className="w-full bg-zinc-900 rounded-t-3xl border-t border-zinc-800 p-6 pb-safe animate-spring-in">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end" onClick={() => setShowGoalEditor(false)}>
+          <div className="w-full bg-zinc-900 rounded-t-3xl border-t border-zinc-800 p-6 pb-safe animate-spring-in" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-1">
               <h2 className="text-lg font-bold text-white">{l('Edit Goals', 'Editar Metas')}</h2>
               <button onClick={() => setShowGoalEditor(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-800 text-zinc-400">
@@ -906,21 +931,31 @@ export const NutriView: React.FC = () => {
       <AddCardioModal isOpen={showAddCardio} onClose={() => setShowAddCardio(false)} onAdd={handleAddCardio} lang={lang} />
       <LogWeightModal isOpen={showLogWeight} onClose={() => setShowLogWeight(false)} onLog={handleLogWeight} />
 
-      {/* Undo Snackbar */}
-      {lastDeletedEntry && (
-        <div className="fixed bottom-24 left-4 right-4 z-[100] flex items-center justify-between bg-zinc-800 text-white px-4 py-3 rounded-2xl shadow-2xl border border-zinc-700 animate-in fade-in slide-in-from-bottom-4">
-          <div className="flex items-center gap-2">
-            <Icon name="Trash2" size={14} className="text-zinc-400" />
-            <span className="text-xs font-bold">{l('Item deleted', 'Alimento eliminado')}</span>
+      {/* Undo Snackbars — stacked, food + cardio */}
+      <div className="fixed bottom-24 left-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none">
+        {lastDeletedEntry && (
+          <div className="flex items-center justify-between bg-zinc-800 text-white px-4 py-3 rounded-2xl shadow-2xl border border-zinc-700 animate-in fade-in slide-in-from-bottom-4 pointer-events-auto">
+            <div className="flex items-center gap-2">
+              <Icon name="Trash2" size={14} className="text-zinc-400" />
+              <span className="text-xs font-bold">{l('Item deleted', 'Alimento eliminado')}</span>
+            </div>
+            <button onClick={handleUndoDelete} className="text-xs font-black text-red-500 uppercase tracking-wider px-2 py-1 active:scale-95 transition-transform">
+              {l('Undo', 'Deshacer')}
+            </button>
           </div>
-          <button
-            onClick={handleUndoDelete}
-            className="text-xs font-black text-red-500 uppercase tracking-wider px-2 py-1 active:scale-95 transition-transform"
-          >
-            {l('Undo', 'Deshacer')}
-          </button>
-        </div>
-      )}
+        )}
+        {lastDeletedCardio && (
+          <div className="flex items-center justify-between bg-zinc-800 text-white px-4 py-3 rounded-2xl shadow-2xl border border-zinc-700 animate-in fade-in slide-in-from-bottom-4 pointer-events-auto">
+            <div className="flex items-center gap-2">
+              <Icon name="Flame" size={14} className="text-zinc-400" />
+              <span className="text-xs font-bold">{l('Cardio deleted', 'Cardio eliminado')}</span>
+            </div>
+            <button onClick={handleUndoDeleteCardio} className="text-xs font-black text-red-500 uppercase tracking-wider px-2 py-1 active:scale-95 transition-transform">
+              {l('Undo', 'Deshacer')}
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
