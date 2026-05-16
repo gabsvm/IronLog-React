@@ -75,7 +75,7 @@ const calcTDEE = (profile: any): number | null => {
 };
 
 // ─── MINI MACRO BAR ─────────────────────────────────────────────────
-const MacroBar: React.FC<{ value: number; goal: number; color: string; label: string }> = ({ value, goal, color, label }) => {
+const MacroBar: React.FC<{ value: number; goal: number; color: string; label: string }> = React.memo(({ value, goal, color, label }) => {
   const pct = Math.min(100, goal > 0 ? (value / goal) * 100 : 0);
   const over = goal > 0 && value > goal;
   return (
@@ -92,14 +92,14 @@ const MacroBar: React.FC<{ value: number; goal: number; color: string; label: st
       </div>
     </div>
   );
-};
+});
 
 // ─── WATER TRACKER ──────────────────────────────────────────────────
 const WaterTracker: React.FC<{
   waterMl: number;
   onAdd: (ml: number) => void;
   lang: 'en' | 'es';
-}> = ({ waterMl, onAdd, lang }) => {
+}> = React.memo(({ waterMl, onAdd, lang }) => {
   const pct = Math.min(100, (waterMl / WATER_GOAL_ML) * 100);
   const cups = Math.round(waterMl / 250);
   return (
@@ -145,7 +145,7 @@ const WaterTracker: React.FC<{
       </div>
     </div>
   );
-};
+});
 
 // ─── COMPONENT ──────────────────────────────────────────────────────
 type SubTab = 'today' | 'body' | 'history';
@@ -176,7 +176,7 @@ export const NutriView: React.FC = () => {
   const todayLog    = useMemo(() => getTodayLog(nutritionLogs), [nutritionLogs]);
   const todayMacros = useMemo(() => sumMacros(todayLog.entries), [todayLog]);
   const todayWater  = todayLog.waterMl ?? 0;
-  const todayCardio = useMemo(() => cardioSessions.filter(s => s.date === todayStr()), [cardioSessions]);
+  const todayCardio = useMemo(() => { const d = todayStr(); return cardioSessions.filter(s => s.date === d); }, [cardioSessions]);
   const streak      = useMemo(() => calcStreak(nutritionLogs), [nutritionLogs]);
   const tdee        = useMemo(() => calcTDEE(userProfile), [userProfile]);
 
@@ -209,6 +209,9 @@ export const NutriView: React.FC = () => {
       .sort((a, b) => a.date - b.date)
       .slice(-30);
   }, [bodyLogs]);
+
+  const recentWeighIns = useMemo(() => [...weightTrend].reverse().slice(0, 7), [weightTrend]);
+  const historyDayList = useMemo(() => [...last14Days].reverse().filter(d => d.calories > 0), [last14Days]);
 
   // ─── HANDLERS ────────────────────────────────────────────────────
   const handleAddMeal = useCallback((entry: FoodEntry) => {
@@ -291,11 +294,10 @@ export const NutriView: React.FC = () => {
   }, [setNutritionLogs]);
 
   const handleLogWeight = useCallback((data: { weight: number; bodyFat?: number; notes?: string }) => {
-    const entry: BodyLog = { id: Date.now(), date: Date.now(), weight: data.weight, bodyFat: data.bodyFat, notes: data.notes };
-    setBodyLogs(prev => [entry, ...prev.filter(l => {
-      const d = new Date(l.date).toISOString().split('T')[0];
-      return d !== todayStr();
-    })]);
+    const now = Date.now();
+    const today = todayStr();
+    const entry: BodyLog = { id: now, date: now, weight: data.weight, bodyFat: data.bodyFat, notes: data.notes };
+    setBodyLogs(prev => [entry, ...prev.filter(l => new Date(l.date).toISOString().split('T')[0] !== today)]);
   }, [setBodyLogs]);
 
   const saveGoal = useCallback(() => {
@@ -631,12 +633,12 @@ export const NutriView: React.FC = () => {
                 </p>
                 <div className="space-y-2">
                   {[
-                    { label: l('Min protein', 'Proteína mínima'), value: `${Math.round(userProfile.bodyWeight * 1.8)}g`, color: 'text-blue-400' },
-                    { label: l('Optimal protein', 'Proteína óptima'), value: `${Math.round(userProfile.bodyWeight * 2.2)}g`, color: 'text-blue-300' },
-                    { label: l('Daily water', 'Agua diaria'), value: `${Math.round(userProfile.bodyWeight * 37)}ml`, color: 'text-sky-400' },
-                    ...(userProfile.bodyFat ? [{ label: l('Body fat', 'Grasa corporal'), value: `${userProfile.bodyFat}%`, color: 'text-zinc-300' }] : []),
+                    { id: 'min_protein',  label: l('Min protein', 'Proteína mínima'), value: `${Math.round(userProfile.bodyWeight * 1.8)}g`, color: 'text-blue-400' },
+                    { id: 'opt_protein',  label: l('Optimal protein', 'Proteína óptima'), value: `${Math.round(userProfile.bodyWeight * 2.2)}g`, color: 'text-blue-300' },
+                    { id: 'water',        label: l('Daily water', 'Agua diaria'), value: `${Math.round(userProfile.bodyWeight * 37)}ml`, color: 'text-sky-400' },
+                    ...(userProfile.bodyFat ? [{ id: 'body_fat', label: l('Body fat', 'Grasa corporal'), value: `${userProfile.bodyFat}%`, color: 'text-zinc-300' }] : []),
                   ].map(item => (
-                    <div key={item.label} className="flex justify-between items-center py-1.5 border-b border-zinc-800/50 last:border-0">
+                    <div key={item.id} className="flex justify-between items-center py-1.5 border-b border-zinc-800/50 last:border-0">
                       <span className="text-xs text-zinc-500">{item.label}</span>
                       <span className={`text-sm font-bold ${item.color}`}>{item.value}</span>
                     </div>
@@ -652,7 +654,7 @@ export const NutriView: React.FC = () => {
                   {l('Recent Weigh-ins', 'Pesajes Recientes')}
                 </p>
                 <div className="space-y-1">
-                  {[...weightTrend].reverse().slice(0, 7).map(entry => (
+                  {recentWeighIns.map(entry => (
                     <div key={entry.id} className="flex justify-between items-center py-1.5 border-b border-zinc-800/50 last:border-0">
                       <span className="text-xs text-zinc-500">
                         {new Date(entry.date).toLocaleDateString(lang === 'es' ? 'es-AR' : 'en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
@@ -767,7 +769,7 @@ export const NutriView: React.FC = () => {
             </div>
 
             {/* Day log list */}
-            {[...last14Days].reverse().filter(d => d.calories > 0).map(day => (
+            {historyDayList.map(day => (
               <div key={day.date} className="bg-zinc-900 rounded-2xl border border-zinc-800 p-4">
                 <div className="flex justify-between items-center mb-2">
                   <div>
