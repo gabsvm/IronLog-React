@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { FoodEntry, CardioSession, NutritionLog, NutritionGoal, BodyLog } from '../types';
 import { MacroRing } from '../components/nutrition/MacroRing';
@@ -43,17 +43,15 @@ const WATER_PRESETS = [200, 300, 500];
 
 // ─── STREAK HELPER ──────────────────────────────────────────────────
 const calcStreak = (logs: NutritionLog[]): number => {
+  const loggedDates = new Set(logs.filter(l => l.entries.length > 0).map(l => l.date));
+  const today = todayStr();
+  const startOffset = loggedDates.has(today) ? 0 : 1;
   let streak = 0;
   const d = new Date();
-  // Check if today has entries (don't penalize for current day not done yet)
-  const todayLog = logs.find(l => l.date === todayStr());
-  const startOffset = todayLog && todayLog.entries.length > 0 ? 0 : 1;
   for (let i = startOffset; i < 365; i++) {
     const check = new Date(d);
     check.setDate(d.getDate() - i);
-    const dateStr = check.toISOString().split('T')[0];
-    const log = logs.find(l => l.date === dateStr);
-    if (!log || log.entries.length === 0) break;
+    if (!loggedDates.has(check.toISOString().split('T')[0])) break;
     streak++;
   }
   return streak;
@@ -160,12 +158,17 @@ export const NutriView: React.FC = () => {
     userProfile, bodyLogs, setBodyLogs
   } = useApp();
 
+  const nutritionLogsRef = useRef(nutritionLogs);
+  nutritionLogsRef.current = nutritionLogs;
+  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const [subTab, setSubTab]             = useState<SubTab>('today');
   const [showAddMeal, setShowAddMeal]   = useState(false);
   const [showAddCardio, setShowAddCardio] = useState(false);
   const [showGoalEditor, setShowGoalEditor] = useState(false);
   const [showLogWeight, setShowLogWeight] = useState(false);
   const [expandedMeal, setExpandedMeal]   = useState<string | null>(null);
+  const [editingEntry, setEditingEntry]     = useState<FoodEntry | null>(null);
   const [editEntryDraft, setEditEntryDraft] = useState<FoodEntry | null>(null);
   const [editGoal, setEditGoal]           = useState(nutritionGoal);
   const [lastDeletedEntry, setLastDeletedEntry] = useState<{ entry: FoodEntry; date: string } | null>(null);
@@ -177,8 +180,7 @@ export const NutriView: React.FC = () => {
   const streak      = useMemo(() => calcStreak(nutritionLogs), [nutritionLogs]);
   const tdee        = useMemo(() => calcTDEE(userProfile), [userProfile]);
 
-  // Calories remaining
-  const caloriesBurned = todayCardio.reduce((a, s) => a + (s.caloriesBurned || 0), 0);
+  const caloriesBurned    = useMemo(() => todayCardio.reduce((a, s) => a + (s.caloriesBurned || 0), 0), [todayCardio]);
   const caloriesRemaining = nutritionGoal.calories + caloriesBurned - todayMacros.calories;
   const proteinRemaining  = nutritionGoal.protein - todayMacros.protein;
 
@@ -221,27 +223,31 @@ export const NutriView: React.FC = () => {
 
   const handleDeleteMeal = useCallback((entryId: string) => {
     const today = todayStr();
-    const log = nutritionLogs.find(l => l.date === today);
+    const log = nutritionLogsRef.current.find(l => l.date === today);
     const entry = log?.entries.find(e => e.id === entryId);
     if (!entry) return;
 
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
     setLastDeletedEntry({ entry, date: today });
     setNutritionLogs(prev =>
       prev.map(l => l.date === today ? { ...l, entries: l.entries.filter(e => e.id !== entryId) } : l)
     );
     triggerHaptic('medium');
 
-    // Auto-clear undo after 5 seconds
-    setTimeout(() => setLastDeletedEntry(prev => (prev?.entry.id === entryId ? null : prev)), 5000);
-  }, [setNutritionLogs, nutritionLogs]);
+    undoTimerRef.current = setTimeout(() => {
+      setLastDeletedEntry(prev => (prev?.entry.id === entryId ? null : prev));
+      undoTimerRef.current = null;
+    }, 5000);
+  }, [setNutritionLogs]);
 
   const handleUndoDelete = useCallback(() => {
     if (!lastDeletedEntry) return;
     const { entry, date } = lastDeletedEntry;
+    if (undoTimerRef.current) { clearTimeout(undoTimerRef.current); undoTimerRef.current = null; }
     setNutritionLogs(prev => {
       const log = prev.find(l => l.date === date);
       if (log) return prev.map(l => l.date === date ? { ...l, entries: [...l.entries, entry] } : l);
-      return prev;
+      return [...prev, { date, entries: [entry], waterMl: 0 }];
     });
     setLastDeletedEntry(null);
     triggerHaptic('success');
@@ -263,6 +269,7 @@ export const NutriView: React.FC = () => {
     );
     setEditingEntry(null);
     setEditEntryDraft(null);
+    triggerHaptic('success');
   }, [editEntryDraft, setNutritionLogs]);
 
   const handleAddCardio = useCallback((session: CardioSession) => {
