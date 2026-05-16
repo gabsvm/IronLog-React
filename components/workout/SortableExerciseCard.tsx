@@ -214,11 +214,11 @@ export const SortableExerciseCard = React.memo(({
     const isCluster   = isProtocol && regularSets.length > 0 && regularSets.every(s => s.type === 'cluster');
     const isGiant     = isProtocol && regularSets.length > 0 && regularSets.every(s => s.type === 'giant');
     const hasTopBackoff = isProtocol && regularSets.some(s => s.type === 'top') && regularSets.some(s => s.type === 'backoff');
-    const isSpecialProtocol = isEMOM || isMyorep || isCluster || isGiant;
-    // For regular workouts — highlight the next uncompleted set
-    const nextSetIdx = !isSpecialProtocol ? regularSets.findIndex(s => !s.completed) : -1;
     const isTabata    = isCardio && cardioMode === 'tabata';
     const isHIIT      = isCardio && cardioMode === 'hiit';
+    const isSpecialProtocol = isEMOM || isMyorep || isCluster || isGiant;
+    // Highlight the next uncompleted set; disabled for protocols that drive their own progression
+    const nextSetIdx = (!isSpecialProtocol && !isTabata && !isHIIT) ? regularSets.findIndex(s => !s.completed) : -1;
 
     // ── Badge labels per set ─────────────────────────────────────────
     const setBadgeLabels = useMemo((): (string | undefined)[] => {
