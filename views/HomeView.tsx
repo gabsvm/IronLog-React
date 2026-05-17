@@ -782,7 +782,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
             <div className="space-y-4">
                 <div className="flex items-center justify-between px-1">
                     <h4 className="text-xs font-black text-zinc-500 uppercase tracking-widest">{t.schedule}</h4>
-                    <span className="text-[10px] text-zinc-600 font-bold">{Math.round((uniqueDaysDone.size / safeProgram.length) * 100)}% DONE</span>
+                    <span className="text-[10px] text-zinc-600 font-bold">{safeProgram.length > 0 ? Math.round((uniqueDaysDone.size / safeProgram.length) * 100) : 0}% DONE</span>
                 </div>
 
                 <div className="space-y-3">

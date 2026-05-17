@@ -201,7 +201,6 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
         ctrl.setOpenMenuId(null);
     };
 
-    const finishedSets = sessionExercises.reduce((acc, ex) => acc + (ex.sets || []).filter(s => s.completed).length, 0);
     const totalWorkingSets = sessionExercises.reduce((acc, ex) => acc + (ex.sets || []).filter(s => s.type !== 'warmup' && s.type !== 'avt_hop').length, 0);
     const remainingSets = totalWorkingSets - sessionExercises.reduce((acc, ex) => acc + (ex.sets || []).filter(s => s.completed && s.type !== 'warmup' && s.type !== 'avt_hop').length, 0);
 
@@ -339,8 +338,8 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
 
             {/* --- Session Progress Bar --- */}
             {(() => {
-                const totalSets = sessionExercises.reduce((a, ex) => a + (ex.sets || []).filter(s => s.type !== 'warmup').length, 0);
-                const doneSets = sessionExercises.reduce((a, ex) => a + (ex.sets || []).filter(s => s.completed && s.type !== 'warmup').length, 0);
+                const totalSets = sessionExercises.reduce((a, ex) => a + (ex.sets || []).filter(s => s.type !== 'warmup' && s.type !== 'avt_hop').length, 0);
+                const doneSets = sessionExercises.reduce((a, ex) => a + (ex.sets || []).filter(s => s.completed && s.type !== 'warmup' && s.type !== 'avt_hop').length, 0);
                 const pct = totalSets > 0 ? (doneSets / totalSets) * 100 : 0;
                 return (
                     <div className="h-0.5 bg-zinc-900 relative overflow-hidden">

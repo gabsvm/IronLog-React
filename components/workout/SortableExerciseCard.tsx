@@ -235,7 +235,9 @@ export const SortableExerciseCard = React.memo(({
     }, [ex.sets]);
 
     const isAVTExercise = avtRounds.length > 0;
-    const regularSets = ex.sets.filter(s => s.type !== 'avt_hop');
+    // Memoized so the auto-scroll useEffect only fires on actual completion changes,
+    // not on every render that produces a new array reference.
+    const regularSets = useMemo(() => ex.sets.filter(s => s.type !== 'avt_hop'), [ex.sets]);
     const completedCount = regularSets.filter(s => s.completed).length;
     const allDone = regularSets.length > 0 && completedCount === regularSets.length;
 
@@ -262,6 +264,7 @@ export const SortableExerciseCard = React.memo(({
 
     // ── Auto-scroll to next uncompleted set ─────────────────────────
     const prevCompletedRef = useRef(completedCount);
+    const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     useEffect(() => {
         if (completedCount > prevCompletedRef.current) {
             // Exercise complete celebration
@@ -269,7 +272,8 @@ export const SortableExerciseCard = React.memo(({
                 setExDoneFlash(true);
                 triggerHaptic('success');
                 playTimerFinishSound();
-                setTimeout(() => setExDoneFlash(false), 1200);
+                if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
+                flashTimerRef.current = setTimeout(() => setExDoneFlash(false), 1200);
             }
             // Scroll next set into view
             const nextSet = regularSets.find(s => !s.completed);
@@ -281,6 +285,7 @@ export const SortableExerciseCard = React.memo(({
             }
         }
         prevCompletedRef.current = completedCount;
+        return () => { if (flashTimerRef.current) clearTimeout(flashTimerRef.current); };
     }, [completedCount, regularSets]);
 
     // ── Protocol detections ──────────────────────────────────────────
