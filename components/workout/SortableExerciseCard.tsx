@@ -1,5 +1,5 @@
 
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { SessionExercise, WorkoutSet, CardioType, SetType } from '../../types';
@@ -12,6 +12,35 @@ import { SkillProgressionBadge } from './SkillProgressionBadge';
 import { getTranslated, roundWeight } from '../../utils';
 import { useApp } from '../../context/AppContext';
 import { useTimerContext } from '../../context/TimerContext';
+import { triggerHaptic, playTimerFinishSound } from '../../utils/audio';
+
+// ── Simple sparkline — pure SVG, no deps ──────────────────────────────────────
+const SparkLine = React.memo(({ values }: { values: number[] }) => {
+    if (values.length < 2) return null;
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const range = max - min || 1;
+    const W = 56; const H = 18;
+    const pts = values.map((v, i) => {
+        const x = (i / (values.length - 1)) * W;
+        const y = H - ((v - min) / range) * (H - 2) - 1;
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+    const isUp = values[values.length - 1] >= values[0];
+    const pct = (((values[values.length - 1] - values[0]) / values[0]) * 100);
+    return (
+        <div className="flex items-center gap-1.5">
+            <svg width={W} height={H} className="overflow-visible shrink-0">
+                <polyline points={pts} fill="none"
+                    stroke={isUp ? '#22c55e' : '#ef4444'}
+                    strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span className={`text-[9px] font-black tabular-nums ${isUp ? 'text-green-500' : 'text-red-400'}`}>
+                {isUp ? '+' : ''}{pct.toFixed(1)}%
+            </span>
+        </div>
+    );
+});
 
 interface SortableExerciseCardProps {
     exercise: SessionExercise;
@@ -83,6 +112,9 @@ export const SortableExerciseCard = React.memo(({
     const { logs } = useApp();
     const [isDeleting, setIsDeleting] = useState(false);
     const [activeEmomMinute, setActiveEmomMinute] = useState(0);
+    const [showRestPreset, setShowRestPreset] = useState(false);
+    const [restPresetInput, setRestPresetInput] = useState(String(ex.defaultRestSeconds || ''));
+    const [exDoneFlash, setExDoneFlash] = useState(false);
     const handleEmomMinuteChange = useCallback((m: number) => setActiveEmomMinute(m), []);
 
     const {
@@ -206,6 +238,50 @@ export const SortableExerciseCard = React.memo(({
     const regularSets = ex.sets.filter(s => s.type !== 'avt_hop');
     const completedCount = regularSets.filter(s => s.completed).length;
     const allDone = regularSets.length > 0 && completedCount === regularSets.length;
+
+    // ── 1RM sparkline history (last 8 sessions) ──────────────────────
+    const oneRMHistory = useMemo(() => {
+        if (!logs || isCardio || ex.isBodyweight || ex.isIsometric || !ex.id) return [];
+        const points: number[] = [];
+        for (let i = logs.length - 1; i >= 0 && points.length < 8; i--) {
+            const l = logs[i];
+            if (l.skipped) continue;
+            const pastEx = l.exercises?.find(e => e.id === ex.id);
+            if (!pastEx) continue;
+            let best = 0;
+            (pastEx.sets || []).forEach(s => {
+                if (s.completed && s.weight && s.reps) {
+                    const e1rm = Number(s.weight) * (1 + Number(s.reps) / 30);
+                    if (e1rm > best) best = e1rm;
+                }
+            });
+            if (best > 0) points.unshift(best);
+        }
+        return points;
+    }, [logs, ex.id, isCardio, ex.isBodyweight, ex.isIsometric]);
+
+    // ── Auto-scroll to next uncompleted set ─────────────────────────
+    const prevCompletedRef = useRef(completedCount);
+    useEffect(() => {
+        if (completedCount > prevCompletedRef.current) {
+            // Exercise complete celebration
+            if (completedCount === regularSets.length && regularSets.length > 0) {
+                setExDoneFlash(true);
+                triggerHaptic('success');
+                playTimerFinishSound();
+                setTimeout(() => setExDoneFlash(false), 1200);
+            }
+            // Scroll next set into view
+            const nextSet = regularSets.find(s => !s.completed);
+            if (nextSet) {
+                setTimeout(() => {
+                    document.getElementById(`set-row-${nextSet.id}`)
+                        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 180);
+            }
+        }
+        prevCompletedRef.current = completedCount;
+    }, [completedCount, regularSets]);
 
     // ── Protocol detections ──────────────────────────────────────────
     const isProtocol = !isCardio && !ex.isIsometric;
@@ -466,6 +542,9 @@ export const SortableExerciseCard = React.memo(({
                                             }} className={`w-full text-left px-4 py-3 text-sm font-bold hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2 ${ssStyle ? 'text-red-500' : 'text-orange-600'}`}>
                                                 <Icon name={ssStyle ? "Unlink" : "Link"} size={16} /> {ssStyle ? String(t.unlinkSuperset) : String(t.linkSuperset)}
                                             </button>
+                                            <button onClick={(e) => { e.stopPropagation(); setRestPresetInput(String(ex.defaultRestSeconds || '')); setShowRestPreset(true); setOpenMenuId(null); }} className="w-full text-left px-4 py-3 text-sm font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2">
+                                                <Icon name="Clock" size={16} /> {lang === 'es' ? 'Rest Timer' : 'Rest Timer'}{ex.defaultRestSeconds ? ` · ${ex.defaultRestSeconds}s` : ''}
+                                            </button>
                                             <div className="h-px bg-zinc-100 dark:bg-white/5 my-1"></div>
                                             <button onClick={(e) => { e.stopPropagation(); setIsDeleting(true); }} className="w-full text-left px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50 flex items-center gap-2">
                                                 <Icon name="Trash2" size={16} /> {String(t.removeEx)}
@@ -497,13 +576,16 @@ export const SortableExerciseCard = React.memo(({
                 )}
 
                 {historicalBest && (
-                    <div className="flex items-start gap-1.5 mb-1.5 px-1 mt-1">
-                        <Icon name="Trophy" size={11} className="mt-0.5 text-yellow-500 shrink-0" />
-                        <p className="text-[10px] font-bold text-yellow-500/90 leading-snug">
-                            {lang === 'en' ? 'Best:' : 'Mejor:'}{' '}
-                            {ex.isIsometric ? '⏱ ' : ''}
-                            {historicalBest}
-                        </p>
+                    <div className="flex items-center gap-2 mb-1.5 px-1 mt-1">
+                        <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                            <Icon name="Trophy" size={11} className="text-yellow-500 shrink-0" />
+                            <p className="text-[10px] font-bold text-yellow-500/90 leading-snug truncate">
+                                {lang === 'en' ? 'Best:' : 'Mejor:'}{' '}
+                                {ex.isIsometric ? '⏱ ' : ''}
+                                {historicalBest}
+                            </p>
+                        </div>
+                        {oneRMHistory.length >= 3 && <SparkLine values={oneRMHistory} />}
                     </div>
                 )}
 
@@ -662,6 +744,7 @@ export const SortableExerciseCard = React.memo(({
                         cardioMode={cardioMode}
                         isBodyweight={ex.isBodyweight}
                         isIsometric={ex.isIsometric}
+                        isometricTargetSecs={ex.isIsometric ? (ex as any).isometricTargetSecs : undefined}
                         setIndex={idx}
                         badgeLabel={setBadgeLabels[idx]}
                         tutorialId={idx === 0 ? tutorialId : undefined}
@@ -687,6 +770,16 @@ export const SortableExerciseCard = React.memo(({
                 ))}
             </div>
 
+            {/* Exercise-complete flash overlay */}
+            {exDoneFlash && (
+                <div className="absolute inset-0 z-10 pointer-events-none rounded-2xl ring-2 ring-green-500/60 bg-green-500/5 flex items-center justify-center animate-in fade-in duration-150">
+                    <div className="bg-green-500 text-white text-xs font-black px-3 py-1.5 rounded-full shadow-lg shadow-green-500/30 animate-bounce">
+                        <Icon name="CheckCircle" size={14} className="inline mr-1" />
+                        {lang === 'es' ? '¡Listo!' : 'Done!'}
+                    </div>
+                </div>
+            )}
+
             {/* Footer */}
             <div className="bg-black/20 border-t border-white/5 grid grid-cols-2 divide-x divide-white/10 shrink-0">
                 <button
@@ -703,6 +796,53 @@ export const SortableExerciseCard = React.memo(({
                     <Icon name="Plus" size={13} /> {isAVTExercise ? t.addRound : t.addSetBtn}
                 </button>
             </div>
+
+            {/* Rest Timer Preset Modal */}
+            {showRestPreset && (
+                <div className="fixed inset-0 z-[80] bg-black/60 flex items-center justify-center p-6" onClick={() => setShowRestPreset(false)}>
+                    <div className="bg-zinc-900 p-6 rounded-2xl w-full max-w-xs space-y-4 border border-zinc-800" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between">
+                            <h3 className="font-bold text-white">{lang === 'es' ? 'Descanso (segundos)' : 'Rest Time (seconds)'}</h3>
+                            <button onClick={() => setShowRestPreset(false)} className="text-zinc-500 hover:text-white">
+                                <Icon name="X" size={18} />
+                            </button>
+                        </div>
+                        <input
+                            type="number" inputMode="numeric" autoFocus
+                            className="w-full bg-zinc-800 rounded-xl p-3 text-center font-bold text-xl text-white outline-none focus:ring-2 focus:ring-white/20"
+                            value={restPresetInput}
+                            onChange={e => setRestPresetInput(e.target.value)}
+                            placeholder="120"
+                        />
+                        <div className="flex gap-2">
+                            {[60, 90, 120, 180].map(s => (
+                                <button key={s} onClick={() => setRestPresetInput(String(s))}
+                                    className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${restPresetInput === String(s) ? 'bg-red-500 text-white' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'}`}>
+                                    {s}s
+                                </button>
+                            ))}
+                        </div>
+                        <button
+                            className="w-full py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl transition-colors"
+                            onClick={() => {
+                                const secs = parseInt(restPresetInput);
+                                onUpdateSession((prev: any) => !prev ? null : {
+                                    ...prev,
+                                    exercises: prev.exercises.map((e: any) =>
+                                        e.instanceId === ex.instanceId
+                                            ? { ...e, defaultRestSeconds: isNaN(secs) || secs <= 0 ? undefined : secs }
+                                            : e
+                                    )
+                                });
+                                setShowRestPreset(false);
+                                triggerHaptic('medium');
+                            }}
+                        >
+                            {lang === 'es' ? 'Guardar' : 'Save'}
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 });

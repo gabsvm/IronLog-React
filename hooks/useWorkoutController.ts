@@ -67,9 +67,15 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
                     const sets = ex.sets || [];
                     const lastSet = sets.length > 0 ? sets[sets.length - 1] : null;
 
+                    // Drop sets: auto-suggest ~80% of previous weight
+                    const isDropSet = lastSet?.type === 'drop';
+                    const dropWeight = isDropSet && lastSet?.weight
+                        ? String(Math.round(Number(lastSet.weight) * 0.8 * 2) / 2) // round to nearest 0.5
+                        : lastSet?.weight;
+
                     const newSet: WorkoutSet = {
                         id: Date.now(),
-                        weight: lastSet ? lastSet.weight : '',
+                        weight: isDropSet ? dropWeight : (lastSet ? lastSet.weight : ''),
                         reps: lastSet ? lastSet.reps : '',
                         rpe: '',
                         completed: false,
@@ -142,24 +148,31 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
                 triggerHaptic('success');
                 const isMetabolite = activeMeso?.mesoType === 'metabolite';
                 let dur = isMetabolite ? 60 : 120;
-                
-                // Calisthenics Specific Durations
-                if (ex?.isIsometric) {
-                    dur = 150; // CNS heavy skills need more rest (~2.5m)
-                } else if (ex?.isBodyweight) {
-                    // Bodyweight hypertrophy often needs a bit less than heavy weights but more than metabolite
-                    dur = isMetabolite ? 45 : 90;
+
+                // Per-exercise custom rest preset takes highest priority
+                if (ex?.defaultRestSeconds && ex.defaultRestSeconds > 0) {
+                    dur = ex.defaultRestSeconds;
+                } else {
+                    // Calisthenics Specific Durations
+                    if (ex?.isIsometric) {
+                        dur = 150; // CNS heavy skills need more rest (~2.5m)
+                    } else if (ex?.isBodyweight) {
+                        dur = isMetabolite ? 45 : 90;
+                    }
+
+                    if (set.type === 'myorep' || set.type === 'myorep_match' || set.type === 'giant') dur = 30;
+                    if (set.type === 'cluster') dur = 15;
+                    if (set.type === 'drop') dur = 0; // Drop sets have no rest — skip timer
+
+                    // Interval cardio: use the set's programmed rest, or protocol default
+                    if (ex?.cardioType === 'tabata') dur = 10;
+                    else if (ex?.cardioType === 'hiit') dur = set.restSeconds || 60;
                 }
-
-                if (set.type === 'myorep' || set.type === 'myorep_match' || set.type === 'giant') dur = 30;
-                if (set.type === 'cluster') dur = 15; // brief intra-set rest cue
-
-                // Interval cardio: use the set's programmed rest, or protocol default
-                if (ex?.cardioType === 'tabata') dur = 10;
-                else if (ex?.cardioType === 'hiit') dur = set.restSeconds || 60;
 
                 // EMOM self-regulates rest via minute intervals — skip auto rest timer
                 if (set.type === 'emom') return;
+                // Drop sets: no rest between drops
+                if (set.type === 'drop' && !ex?.defaultRestSeconds) return;
 
                 setRestTimer({ active: true, duration: dur, timeLeft: dur, endAt: Date.now() + (dur * 1000) });
             } else {

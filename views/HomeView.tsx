@@ -262,6 +262,109 @@ const WeekProgress = React.memo(({ program, logsForWeek }: any) => {
     );
 });
 
+// --- WEEKLY RECAP CARD ---
+const WeeklyRecapCard = React.memo(({ logs, lang, t }: { logs: any[], lang: string, t: any }) => {
+    const stats = useMemo(() => {
+        const now = Date.now();
+        const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
+        const recentLogs = logs.filter((l: any) => !l.skipped && l.endTime && l.endTime >= sevenDaysAgo);
+        if (recentLogs.length === 0) return null;
+
+        let totalVolume = 0;
+        const musclesSet = new Set<string>();
+        let prCount = 0;
+
+        // Build old bests for PR detection
+        const olderLogs = logs.filter((l: any) => !l.skipped && l.endTime && l.endTime < sevenDaysAgo);
+        const oldBests: Record<string, number> = {};
+        olderLogs.forEach((log: any) => {
+            (log.exercises || []).forEach((ex: any) => {
+                if (!ex.id) return;
+                (ex.sets || []).forEach((set: any) => {
+                    if (set.completed && set.weight && set.reps) {
+                        const e1rm = Number(set.weight) * (1 + Number(set.reps) / 30);
+                        if (!oldBests[ex.id] || e1rm > oldBests[ex.id]) oldBests[ex.id] = e1rm;
+                    }
+                });
+            });
+        });
+
+        const prCounted = new Set<string>();
+        recentLogs.forEach((log: any) => {
+            (log.exercises || []).forEach((ex: any) => {
+                if (ex.muscle) musclesSet.add(ex.muscle);
+                (ex.sets || []).forEach((set: any) => {
+                    if (set.completed && set.weight && set.reps) {
+                        totalVolume += Number(set.weight) * Number(set.reps);
+                        if (ex.id && oldBests[ex.id] && !prCounted.has(ex.id)) {
+                            const e1rm = Number(set.weight) * (1 + Number(set.reps) / 30);
+                            if (e1rm > oldBests[ex.id] * 1.01) {
+                                prCount++;
+                                prCounted.add(ex.id);
+                            }
+                        }
+                    }
+                });
+            });
+        });
+
+        return {
+            sessions: recentLogs.length,
+            totalVolume: Math.round(totalVolume),
+            muscles: Array.from(musclesSet),
+            prCount,
+        };
+    }, [logs]);
+
+    if (!stats) return null;
+
+    const volStr = stats.totalVolume >= 1000
+        ? `${(stats.totalVolume / 1000).toFixed(1)}k`
+        : `${stats.totalVolume}`;
+
+    return (
+        <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-5 space-y-4 animate-in fade-in">
+            <div className="flex items-center gap-2">
+                <Icon name="TrendingUp" size={13} className="text-primary-400" />
+                <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">
+                    {lang === 'es' ? 'Resumen 7 Días' : 'Last 7 Days'}
+                </h4>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+                <div className="bg-zinc-800/60 rounded-2xl p-3 text-center">
+                    <div className="text-2xl font-black text-white tabular-nums">{stats.sessions}</div>
+                    <div className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider mt-0.5">
+                        {lang === 'es' ? 'Sesiones' : 'Sessions'}
+                    </div>
+                </div>
+                <div className="bg-zinc-800/60 rounded-2xl p-3 text-center">
+                    <div className="text-2xl font-black text-white tabular-nums">{volStr}</div>
+                    <div className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider mt-0.5">
+                        {lang === 'es' ? 'Vol. kg' : 'Vol. kg'}
+                    </div>
+                </div>
+                <div className={`rounded-2xl p-3 text-center ${stats.prCount > 0 ? 'bg-yellow-500/10 border border-yellow-500/20' : 'bg-zinc-800/60'}`}>
+                    <div className={`text-2xl font-black tabular-nums ${stats.prCount > 0 ? 'text-yellow-400' : 'text-zinc-600'}`}>
+                        {stats.prCount > 0 ? `×${stats.prCount}` : '—'}
+                    </div>
+                    <div className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider mt-0.5">PRs</div>
+                </div>
+            </div>
+
+            {stats.muscles.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                    {stats.muscles.map((m: string) => (
+                        <span key={m} className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-primary-500/10 text-primary-400 border border-primary-500/20">
+                            {(t.muscle as any)[m] || m}
+                        </span>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+});
+
 const NextSessionCard = React.memo(({ nextDayDef, isSessionActive, nextWorkoutIdx, startSession, handleSkipClick, lang, t, tm }: any) => {
     if (!nextDayDef) return (
         <div className="w-full bg-zinc-900/50 border border-zinc-800 rounded-[2rem] p-8 text-center flex flex-col items-center justify-center min-h-[220px] animate-in-up">
@@ -672,6 +775,9 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                 </Button>
             )}
 
+            {/* Weekly Recap Card */}
+            <WeeklyRecapCard logs={safeLogs} lang={lang} t={t} />
+
             {/* Schedule List */}
             <div className="space-y-4">
                 <div className="flex items-center justify-between px-1">
@@ -753,6 +859,38 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                     <Icon name="ChevronRight" size={18} className="text-zinc-600 group-hover:text-zinc-300 transition-colors" />
                 </button>
             )}
+
+            {/* Copy Last Session */}
+            {(() => {
+                const lastLog = safeLogs
+                    .filter((l: any) => !l.skipped && l.mesoId === activeMeso.id && l.dayIdx < safeProgram.length)
+                    .slice(-1)[0];
+                if (!lastLog) return null;
+                const logName = lastLog.name || (lang === 'es' ? 'Última Sesión' : 'Last Session');
+                const exNames = (lastLog.exercises || []).slice(0, 3).map((e: any) => {
+                    const n = e.name;
+                    return typeof n === 'object' ? (n[lang] || n.en || '') : (n || '');
+                }).filter(Boolean).join(' · ');
+                return (
+                    <button
+                        onClick={() => startSession(lastLog.dayIdx)}
+                        className="w-full flex items-center gap-4 bg-zinc-900 border border-zinc-800 rounded-2xl p-4 hover:border-primary-500/40 active:scale-[0.98] transition-all group"
+                    >
+                        <div className="w-10 h-10 rounded-xl bg-primary-500/10 text-primary-400 flex items-center justify-center shrink-0">
+                            <Icon name="Repeat" size={18} />
+                        </div>
+                        <div className="flex-1 text-left min-w-0">
+                            <div className="text-sm font-black text-white">
+                                {lang === 'es' ? 'Repetir Última Sesión' : 'Repeat Last Session'}
+                            </div>
+                            <div className="text-[10px] text-zinc-500 mt-0.5 truncate">
+                                {exNames || logName}
+                            </div>
+                        </div>
+                        <Icon name="ChevronRight" size={18} className="text-zinc-600 group-hover:text-zinc-300 transition-colors shrink-0" />
+                    </button>
+                );
+            })()}
 
             {/* Consistency Heatmap */}
             <div className="relative p-px rounded-3xl bg-gradient-to-br from-zinc-700 via-zinc-800 to-zinc-900">

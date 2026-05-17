@@ -202,6 +202,8 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
     };
 
     const finishedSets = sessionExercises.reduce((acc, ex) => acc + (ex.sets || []).filter(s => s.completed).length, 0);
+    const totalWorkingSets = sessionExercises.reduce((acc, ex) => acc + (ex.sets || []).filter(s => s.type !== 'warmup' && s.type !== 'avt_hop').length, 0);
+    const remainingSets = totalWorkingSets - sessionExercises.reduce((acc, ex) => acc + (ex.sets || []).filter(s => s.completed && s.type !== 'warmup' && s.type !== 'avt_hop').length, 0);
 
     const focusedExercise = sessionExercises[focusedIndex];
     const goToNext = () => setFocusedIndex(prev => Math.min(prev + 1, sessionExercises.length - 1));
@@ -269,7 +271,14 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                         <Icon name="ChevronLeft" size={24} strokeWidth={2.5} />
                     </button>
 
-                    <WorkoutTimer startTime={activeSession.startTime} />
+                    <div className="flex items-center gap-2">
+                        <WorkoutTimer startTime={activeSession.startTime} />
+                        {totalWorkingSets > 0 && (
+                            <div className={`px-2 py-1 rounded-lg text-[10px] font-black tabular-nums transition-colors ${remainingSets === 0 ? 'bg-green-500/20 text-green-400' : 'bg-zinc-800 text-zinc-400'}`}>
+                                {remainingSets === 0 ? '✓' : `${remainingSets} left`}
+                            </div>
+                        )}
+                    </div>
 
                     <div className="flex items-center gap-1">
                         <button
@@ -545,11 +554,12 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                     backoff: 'bg-blue-500/20 text-blue-400',
                     cluster: 'bg-emerald-500/20 text-emerald-400',
                     emom: 'bg-cyan-500/20 text-cyan-400',
+                    drop: 'bg-teal-500/20 text-teal-400',
                 };
                 const icons: Record<string, string> = {
                     regular: 'Circle', warmup: 'Zap', myorep: 'Repeat', myorep_match: 'Repeat2',
                     giant: 'Layers', top: 'TrendingUp', backoff: 'TrendingDown', cluster: 'Grid3x3',
-                    emom: 'Timer'
+                    emom: 'Timer', drop: 'TrendingDown',
                 };
                 const exForModal = sessionExercises.find(e => e.instanceId === ctrl.changingSetType!.exId);
                 const pendingSets = (exForModal?.sets || []).filter(s => !s.completed && s.type !== 'avt_hop');
@@ -577,7 +587,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                 </button>
                             )}
                             <div className="p-3 grid grid-cols-1 gap-1.5 max-h-[65vh] overflow-y-auto">
-                                {(['regular', 'warmup', 'myorep', 'myorep_match', 'giant', 'top', 'backoff', 'cluster', 'emom'] as SetType[]).map(type => {
+                                {(['regular', 'warmup', 'drop', 'myorep', 'myorep_match', 'giant', 'top', 'backoff', 'cluster', 'emom'] as SetType[]).map(type => {
                                     const isSelected = ctrl.changingSetType?.currentType === type;
                                     return (
                                         <button

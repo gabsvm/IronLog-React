@@ -21,7 +21,8 @@ interface SetRowProps {
     isCardio?: boolean;
     cardioMode?: CardioType;
     isBodyweight?: boolean;
-    isIsometric?: boolean;   // NEW: L-sit, planche hold, etc. — tracked in seconds
+    isIsometric?: boolean;
+    isometricTargetSecs?: number;  // countdown mode for isometric
     setIndex?: number;
     badgeLabel?: string;
     tutorialId?: string;
@@ -41,6 +42,7 @@ const getTypeColor = (type: SetType) => {
         case 'giant':        return 'bg-orange-500/15 text-orange-400 border-orange-500/30';
         case 'avt_hop':      return 'bg-orange-500/15 text-orange-400 border-orange-500/30';
         case 'emom':         return 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30';
+        case 'drop':         return 'bg-teal-500/15 text-teal-400 border-teal-500/30';
         default:             return 'bg-zinc-800 text-zinc-400 border-zinc-700';
     }
 };
@@ -54,6 +56,7 @@ const getRowAccent = (type: SetType): string => {
         case 'cluster':                   return 'bg-emerald-500/5';
         case 'giant':                     return 'bg-orange-500/5';
         case 'emom':                      return 'bg-cyan-500/5';
+        case 'drop':                      return 'bg-teal-500/5';
         default:                          return '';
     }
 };
@@ -70,6 +73,7 @@ const getTypeLabel = (type: SetType) => {
         cluster: 'C',
         avt_hop: 'H',
         emom: 'E',
+        drop: 'D',
     };
     return map[type] || '●';
 };
@@ -77,10 +81,11 @@ const getTypeLabel = (type: SetType) => {
 // ─── HOLD TIMER ─────────────────────────────────────────────────────────────
 const HoldTimer: React.FC<{
     initialSeconds: number;
+    targetSeconds?: number;   // If set → countdown mode
     onSave: (seconds: number) => void;
     lang: 'en' | 'es';
     isDone: boolean;
-}> = ({ initialSeconds, onSave, lang, isDone }) => {
+}> = ({ initialSeconds, targetSeconds, onSave, lang, isDone }) => {
     const [elapsed, setElapsed] = useState(initialSeconds);
     const [running, setRunning] = useState(false);
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -127,23 +132,38 @@ const HoldTimer: React.FC<{
         return m > 0 ? `${m}:${sec.toString().padStart(2, '0')}` : `${sec}s`;
     };
 
+    // Countdown display: timeRemaining counts down from target
+    const timeRemaining = targetSeconds ? Math.max(0, targetSeconds - elapsed) : null;
+    const countdownPct = targetSeconds ? Math.min(100, (elapsed / targetSeconds) * 100) : 0;
+    const countdownUrgent = timeRemaining !== null && timeRemaining <= 5 && running;
+
     if (isDone) {
         return (
             <div className="flex items-center justify-center gap-1 text-green-400">
                 <Icon name="Timer" size={13} />
                 <span className="text-sm font-black tabular-nums">{formatTime(elapsed)}</span>
+                {targetSeconds && <span className="text-[9px] text-green-600">/ {formatTime(targetSeconds)}</span>}
             </div>
         );
     }
 
     return (
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 w-full">
             {/* Time Display */}
             <div className={`min-w-[52px] text-center text-xl font-black tabular-nums transition-colors ${
-                running ? 'text-violet-400 animate-pulse' : elapsed > 0 ? 'text-white' : 'text-zinc-600'
+                countdownUrgent ? 'text-orange-400 animate-pulse'
+                : running ? 'text-violet-400 animate-pulse'
+                : elapsed > 0 ? 'text-white' : 'text-zinc-600'
             }`}>
-                {formatTime(elapsed)}
+                {timeRemaining !== null ? formatTime(timeRemaining) : formatTime(elapsed)}
             </div>
+            {/* Countdown progress bar */}
+            {targetSeconds && (
+                <div className="flex-1 h-1.5 bg-zinc-700 rounded-full overflow-hidden">
+                    <div className={`h-full rounded-full transition-all duration-200 ${countdownUrgent ? 'bg-orange-400' : 'bg-violet-500'}`}
+                        style={{ width: `${countdownPct}%` }} />
+                </div>
+            )}
 
             {/* Controls */}
             <div className="flex gap-1">
@@ -181,7 +201,7 @@ const HoldTimer: React.FC<{
 export const SetRow = React.memo(({
     set, exInstanceId, unit, unitLabel, plateWeight, showRIR, stageRIR,
     onUpdate, onToggleComplete, onChangeType,
-    lang, isCardio, cardioMode = 'steady', isBodyweight, isIsometric,
+    lang, isCardio, cardioMode = 'steady', isBodyweight, isIsometric, isometricTargetSecs,
     setIndex, badgeLabel, tutorialId, disableTypeChange, isActiveProtocolSet, isNextSet
 }: SetRowProps) => {
     const isDone = set.completed;
@@ -247,7 +267,7 @@ export const SetRow = React.memo(({
     // ── ISOMETRIC MODE ──────────────────────────────────────────────────────
     if (isIsometric) {
         return (
-            <div className={`grid grid-cols-12 gap-2 items-center py-2.5 px-1 transition-colors duration-200 ${isDone ? 'opacity-60' : rowAccent}`}>
+            <div id={`set-row-${set.id}`} className={`grid grid-cols-12 gap-2 items-center py-2.5 px-1 transition-colors duration-200 ${isDone ? 'opacity-60' : rowAccent}`}>
                 {/* Set Type Badge */}
                 <div className="col-span-2 flex justify-center">
                     <BadgeEl {...badgeProps as any} className={badgeClass}>
@@ -259,6 +279,7 @@ export const SetRow = React.memo(({
                 <div className="col-span-8 flex items-center justify-center">
                     <HoldTimer
                         initialSeconds={Number(set.duration) || 0}
+                        targetSeconds={isometricTargetSecs}
                         onSave={handleHoldSave}
                         lang={lang}
                         isDone={isDone}
@@ -289,7 +310,7 @@ export const SetRow = React.memo(({
     // ── BODYWEIGHT MODE ─────────────────────────────────────────────────────
     if (isBodyweight && !isCardio) {
         return (
-            <div className={`transition-colors duration-200 ${isDone ? 'opacity-60' : rowAccent}`}>
+            <div id={`set-row-${set.id}`} className={`transition-colors duration-200 ${isDone ? 'opacity-60' : rowAccent}`}>
                 <div className="grid grid-cols-12 gap-2 items-center py-2.5 px-1">
                     {/* Set Type Badge */}
                     <div className="col-span-2 flex justify-center">
@@ -374,7 +395,7 @@ export const SetRow = React.memo(({
 
     // ── STANDARD GYM / CARDIO MODE ──────────────────────────────────────────
     return (
-        <div className={`transition-colors duration-200 ${isDone ? 'opacity-60' : rowAccent}`}>
+        <div id={`set-row-${set.id}`} className={`transition-colors duration-200 ${isDone ? 'opacity-60' : rowAccent}`}>
         <div className="grid grid-cols-12 gap-2 items-center py-2.5 px-1">
 
             {/* Set Type / Number Badge */}

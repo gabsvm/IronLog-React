@@ -35,13 +35,15 @@ export interface ExerciseDef {
   videoId?: string;
   isBodyweight?: boolean;        // Bodyweight flag
   isIsometric?: boolean;         // L-sit, planche hold, back lever hold — tracked in seconds
+  isometricTargetSecs?: number;  // Target hold duration (countdown mode)
   skillFamily?: string;          // "planche" | "front_lever" | "muscle_up" | "handstand" | "back_lever" | "human_flag"
   skillLevel?: number;           // 1=tuck, 2=adv_tuck, 3=straddle, 4=full (within family)
   progressionNext?: string;      // ID of next-level exercise in progression
   progressionPrev?: string;      // ID of previous-level exercise in progression
+  defaultRestSeconds?: number;   // Per-exercise rest timer override
 }
 
-export type SetType = 'regular' | 'myorep' | 'myorep_match' | 'cluster' | 'top' | 'backoff' | 'giant' | 'warmup' | 'avt_hop' | 'emom';
+export type SetType = 'regular' | 'myorep' | 'myorep_match' | 'cluster' | 'top' | 'backoff' | 'giant' | 'warmup' | 'avt_hop' | 'emom' | 'drop';
 
 export interface WorkoutSet {
   id: number;
