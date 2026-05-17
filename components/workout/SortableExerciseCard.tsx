@@ -241,6 +241,29 @@ export const SortableExerciseCard = React.memo(({
     const completedCount = regularSets.filter(s => s.completed).length;
     const allDone = regularSets.length > 0 && completedCount === regularSets.length;
 
+    // ── Progressive overload auto-suggest ────────────────────────────
+    // Show "+2.5 kg suggested" when last session had all working sets completed at/above target reps
+    const overloadSuggest = useMemo(() => {
+        if (!logs || isCardio || ex.isBodyweight || ex.isIsometric || !ex.id) return null;
+        for (let i = logs.length - 1; i >= 0; i--) {
+            const l = logs[i];
+            if (l.skipped) continue;
+            const pastEx = l.exercises?.find(e => e.id === ex.id);
+            if (!pastEx) continue;
+            const working = (pastEx.sets || []).filter((s: any) => s.type !== 'warmup' && s.type !== 'avt_hop');
+            if (working.length === 0) return null;
+            const allCompleted = working.every((s: any) => s.completed);
+            if (!allCompleted) return null;
+            const avgWeight = working.reduce((sum: number, s: any) => sum + Number(s.weight || 0), 0) / working.length;
+            if (avgWeight <= 0) return null;
+            const target = ex.targetReps ? parseInt(String(ex.targetReps)) : null;
+            if (!target) return { kg: 2.5 };
+            const allHitTarget = working.every((s: any) => Number(s.reps) >= target);
+            return allHitTarget ? { kg: 2.5 } : null;
+        }
+        return null;
+    }, [logs, ex.id, ex.targetReps, isCardio, ex.isBodyweight, ex.isIsometric]);
+
     // ── 1RM sparkline history (last 8 sessions) ──────────────────────
     const oneRMHistory = useMemo(() => {
         if (!logs || isCardio || ex.isBodyweight || ex.isIsometric || !ex.id) return [];
@@ -591,6 +614,16 @@ export const SortableExerciseCard = React.memo(({
                             </p>
                         </div>
                         {oneRMHistory.length >= 3 && <SparkLine values={oneRMHistory} />}
+                    </div>
+                )}
+                {overloadSuggest && !allDone && (
+                    <div className="flex items-center gap-1.5 mb-1.5 px-1">
+                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/10 border border-green-500/20 text-green-400">
+                            <Icon name="TrendingUp" size={10} className="shrink-0" />
+                            <span className="text-[9px] font-black uppercase tracking-wide">
+                                {lang === 'es' ? `↑ +${overloadSuggest.kg}kg sugerido` : `↑ +${overloadSuggest.kg}kg suggested`}
+                            </span>
+                        </div>
                     </div>
                 )}
 

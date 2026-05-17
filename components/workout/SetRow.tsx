@@ -220,9 +220,11 @@ export const SetRow = React.memo(({
     const [localRPE, setLocalRPE] = useState(set.rpe ?? '');
     const [showCalculator, setShowCalculator] = useState(false);
     const [showExtraWeight, setShowExtraWeight] = useState(
-        // If there's already a weight value for a BW exercise, show the input
         isBodyweight && (Number(set.weight) > 0 || Number(set.hintWeight) > 0)
     );
+    // Swipe-to-complete
+    const [swipePct, setSwipePct] = useState(0);
+    const swipeRef = useRef({ startX: 0, startY: 0, tracking: false, locked: false });
 
     const activeFieldRef = useRef<string | null>(null);
     const repsRef = useRef<HTMLInputElement>(null);
@@ -230,6 +232,8 @@ export const SetRow = React.memo(({
     useEffect(() => { if (activeFieldRef.current !== 'weight') setLocalWeight(set.weight ?? ''); }, [set.weight]);
     useEffect(() => { if (activeFieldRef.current !== 'reps') setLocalReps(set.reps ?? ''); }, [set.reps]);
     useEffect(() => { if (activeFieldRef.current !== 'rpe') setLocalRPE(set.rpe ?? ''); }, [set.rpe]);
+    // Reset swipe when set state changes
+    useEffect(() => { setSwipePct(0); swipeRef.current.tracking = false; swipeRef.current.locked = false; }, [set.completed]);
 
     const commitChange = (field: string, value: any) => {
         if (value != set[field as keyof WorkoutSet]) {
@@ -248,6 +252,54 @@ export const SetRow = React.memo(({
         commitChange(field, value);
     };
 
+    // ── Quick weight/reps adjust ─────────────────────────────────────
+    const adjustWeight = useCallback((delta: number) => {
+        const cur = Number(localWeight) || Number(set.hintWeight) || 0;
+        const next = String(Math.max(0, Math.round((cur + delta) * 2) / 2));
+        setLocalWeight(next);
+        onUpdate(exInstanceId, set.id, 'weight', next);
+    }, [localWeight, set.hintWeight, set.id, exInstanceId, onUpdate]);
+
+    const adjustReps = useCallback((delta: number) => {
+        const cur = Number(localReps) || Number(set.hintReps) || 0;
+        const next = String(Math.max(0, cur + delta));
+        setLocalReps(next);
+        onUpdate(exInstanceId, set.id, 'reps', next);
+    }, [localReps, set.hintReps, set.id, exInstanceId, onUpdate]);
+
+    // ── Swipe-to-complete handlers ───────────────────────────────────
+    const onSwipeTouchStart = useCallback((e: React.TouchEvent) => {
+        if (isDone) return;
+        swipeRef.current = { startX: e.touches[0].clientX, startY: e.touches[0].clientY, tracking: true, locked: false };
+    }, [isDone]);
+
+    const onSwipeTouchMove = useCallback((e: React.TouchEvent) => {
+        const s = swipeRef.current;
+        if (!s.tracking || isDone || s.locked) return;
+        const dx = e.touches[0].clientX - s.startX;
+        const dy = e.touches[0].clientY - s.startY;
+        // Cancel if vertical gesture dominates (user is scrolling)
+        if (Math.abs(dy) > Math.abs(dx) * 1.3 && Math.abs(dx) < 15) {
+            s.tracking = false;
+            setSwipePct(0);
+            return;
+        }
+        if (dx > 0) {
+            const pct = Math.min(100, (dx / 90) * 100);
+            setSwipePct(pct);
+        }
+    }, [isDone]);
+
+    const onSwipeTouchEnd = useCallback(() => {
+        if (swipePct >= 85 && !isDone) {
+            swipeRef.current.locked = true;
+            triggerHaptic('success');
+            onToggleComplete(exInstanceId, set.id);
+        }
+        setSwipePct(0);
+        swipeRef.current.tracking = false;
+    }, [swipePct, isDone, exInstanceId, set.id, onToggleComplete]);
+
     const handleHoldSave = useCallback((seconds: number) => {
         onUpdate(exInstanceId, set.id, 'duration', seconds);
     }, [exInstanceId, set.id, onUpdate]);
@@ -264,10 +316,34 @@ export const SetRow = React.memo(({
         : { id: tutorialId };
     const badgeClass = `w-11 h-11 rounded-xl border flex items-center justify-center font-black text-xs transition-all ${isDone ? 'bg-green-500/10 border-green-500/20 text-green-400' : getTypeColor(setType)} ${!disableTypeChange && !isDone ? 'active:scale-90 cursor-pointer' : 'cursor-default'}`;
 
+    // ── Difficulty picker (shown after completing a set with no RPE) ─
+    const DifficultyPicker = !isDone ? null : (set.rpe === '' || set.rpe === null || set.rpe === undefined) ? (
+        <div className="flex gap-1 px-2 pb-1.5 -mt-0.5 animate-in fade-in duration-300">
+            {([{ emoji: '💚', label: lang === 'es' ? 'Fácil' : 'Easy', val: '3' }, { emoji: '🟡', label: 'OK', val: '6' }, { emoji: '🔴', label: lang === 'es' ? 'Duro' : 'Hard', val: '9' }] as const).map(d => (
+                <button key={d.val}
+                    onClick={() => onUpdate(exInstanceId, set.id, 'rpe', d.val)}
+                    className="flex-1 text-[10px] font-bold py-1 rounded-lg bg-zinc-800/60 text-zinc-400 hover:bg-zinc-700 hover:text-white active:scale-95 transition-all">
+                    {d.emoji} {d.label}
+                </button>
+            ))}
+        </div>
+    ) : null;
+
+    // Swipe overlay — shared across all branches
+    const SwipeOverlay = swipePct > 0 ? (
+        <div className="absolute inset-y-0 left-0 rounded-xl bg-green-500/20 pointer-events-none transition-none flex items-center justify-start pl-3"
+            style={{ width: `${swipePct}%` }}>
+            {swipePct > 50 && <Icon name="Check" size={16} className="text-green-400" strokeWidth={3} />}
+        </div>
+    ) : null;
+
     // ── ISOMETRIC MODE ──────────────────────────────────────────────────────
     if (isIsometric) {
         return (
-            <div id={`set-row-${set.id}`} className={`grid grid-cols-12 gap-2 items-center py-2.5 px-1 transition-colors duration-200 ${isDone ? 'opacity-60' : rowAccent}`}>
+            <div id={`set-row-${set.id}`}
+                onTouchStart={onSwipeTouchStart} onTouchMove={onSwipeTouchMove} onTouchEnd={onSwipeTouchEnd}
+                className={`relative grid grid-cols-12 gap-2 items-center py-2.5 px-1 transition-colors duration-200 ${isDone ? 'opacity-60' : rowAccent}`}>
+                {SwipeOverlay}
                 {/* Set Type Badge */}
                 <div className="col-span-2 flex justify-center">
                     <BadgeEl {...badgeProps as any} className={badgeClass}>
@@ -310,7 +386,10 @@ export const SetRow = React.memo(({
     // ── BODYWEIGHT MODE ─────────────────────────────────────────────────────
     if (isBodyweight && !isCardio) {
         return (
-            <div id={`set-row-${set.id}`} className={`transition-colors duration-200 ${isDone ? 'opacity-60' : rowAccent}`}>
+            <div id={`set-row-${set.id}`}
+                onTouchStart={onSwipeTouchStart} onTouchMove={onSwipeTouchMove} onTouchEnd={onSwipeTouchEnd}
+                className={`relative transition-colors duration-200 ${isDone ? 'opacity-60' : rowAccent}`}>
+                {SwipeOverlay}
                 <div className="grid grid-cols-12 gap-2 items-center py-2.5 px-1">
                     {/* Set Type Badge */}
                     <div className="col-span-2 flex justify-center">
@@ -378,6 +457,18 @@ export const SetRow = React.memo(({
                     </div>
                 </div>
 
+                {/* Quick reps adjust */}
+                {!isDone && (
+                    <div className="flex gap-1 px-2 pb-1.5 -mt-0.5">
+                        {([-5, -1, +1, +5] as const).map(d => (
+                            <button key={d} onClick={() => adjustReps(d)}
+                                className="flex-1 text-[10px] font-bold py-0.5 rounded-lg bg-zinc-800/70 text-zinc-500 hover:text-white active:scale-95 transition-all">
+                                {d > 0 ? `+${d}` : d}
+                            </button>
+                        ))}
+                    </div>
+                )}
+
                 {/* Prev performance hint */}
                 {!isDone && set.prevReps && (
                     <div className="flex justify-center pb-1.5 -mt-1">
@@ -389,13 +480,17 @@ export const SetRow = React.memo(({
                         </div>
                     </div>
                 )}
+                {DifficultyPicker}
             </div>
         );
     }
 
     // ── STANDARD GYM / CARDIO MODE ──────────────────────────────────────────
     return (
-        <div id={`set-row-${set.id}`} className={`transition-colors duration-200 ${isDone ? 'opacity-60' : rowAccent}`}>
+        <div id={`set-row-${set.id}`}
+            onTouchStart={onSwipeTouchStart} onTouchMove={onSwipeTouchMove} onTouchEnd={onSwipeTouchEnd}
+            className={`relative transition-colors duration-200 ${isDone ? 'opacity-60' : rowAccent}`}>
+            {SwipeOverlay}
         <div className="grid grid-cols-12 gap-2 items-center py-2.5 px-1">
 
             {/* Set Type / Number Badge */}
@@ -405,26 +500,38 @@ export const SetRow = React.memo(({
                 </BadgeEl>
             </div>
 
-            {/* Weight Input */}
-            <div className="col-span-4 relative flex items-center">
-                {!isDone && !isBodyweight && !isCardio && (
-                    <button
-                        onClick={() => setShowCalculator(true)}
-                        className="absolute left-2 w-6 h-6 flex items-center justify-center text-zinc-500 hover:text-white transition-colors"
-                    >
-                        <Icon name="Dumbbell" size={14} />
-                    </button>
+            {/* Weight Input + quick adjust */}
+            <div className="col-span-4 flex flex-col gap-0.5">
+                <div className="relative flex items-center">
+                    {!isDone && !isBodyweight && !isCardio && (
+                        <button
+                            onClick={() => setShowCalculator(true)}
+                            className="absolute left-2 w-6 h-6 flex items-center justify-center text-zinc-500 hover:text-white transition-colors z-10"
+                        >
+                            <Icon name="Dumbbell" size={14} />
+                        </button>
+                    )}
+                    <input
+                        type="number" inputMode="decimal"
+                        className={isDone ? inputBase + " " + doneInput : inputBase + (!isBodyweight && !isCardio ? " pl-8" : "")}
+                        placeholder={weightPlaceholder}
+                        value={localWeight}
+                        onChange={e => setLocalWeight(e.target.value)}
+                        onBlur={() => handleWeightBlur(localWeight)}
+                        onFocus={() => activeFieldRef.current = 'weight'}
+                        enterKeyHint="next"
+                    />
+                </div>
+                {!isDone && !isCardio && (
+                    <div className="flex gap-0.5">
+                        {([-2.5, +2.5] as const).map(d => (
+                            <button key={d} onClick={() => adjustWeight(d)}
+                                className="flex-1 text-[9px] font-bold py-0.5 rounded-md bg-zinc-800/70 text-zinc-500 hover:text-white active:scale-95 transition-all tabular-nums">
+                                {d > 0 ? `+${d}` : d}
+                            </button>
+                        ))}
+                    </div>
                 )}
-                <input
-                    type="number" inputMode="decimal"
-                    className={isDone ? inputBase + " " + doneInput : inputBase + (!isBodyweight && !isCardio ? " pl-8" : "")}
-                    placeholder={weightPlaceholder}
-                    value={localWeight}
-                    onChange={e => setLocalWeight(e.target.value)}
-                    onBlur={() => handleWeightBlur(localWeight)}
-                    onFocus={() => activeFieldRef.current = 'weight'}
-                    enterKeyHint="next"
-                />
             </div>
 
             {/* Reps Input */}
@@ -483,6 +590,7 @@ export const SetRow = React.memo(({
                 </div>
             </div>
         )}
+        {DifficultyPicker}
         </div>
     );
 });

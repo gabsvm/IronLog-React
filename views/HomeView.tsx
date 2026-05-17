@@ -365,7 +365,7 @@ const WeeklyRecapCard = React.memo(({ logs, lang, t }: { logs: any[], lang: stri
     );
 });
 
-const NextSessionCard = React.memo(({ nextDayDef, isSessionActive, nextWorkoutIdx, startSession, handleSkipClick, lang, t, tm }: any) => {
+const NextSessionCard = React.memo(({ nextDayDef, isSessionActive, nextWorkoutIdx, startSession, handleSkipClick, lang, t, tm, estimatedMin, adherencePct }: any) => {
     if (!nextDayDef) return (
         <div className="w-full bg-zinc-900/50 border border-zinc-800 rounded-[2rem] p-8 text-center flex flex-col items-center justify-center min-h-[220px] animate-in-up">
             <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center text-green-500 mb-4 ring-1 ring-green-500/20">
@@ -416,7 +416,7 @@ const NextSessionCard = React.memo(({ nextDayDef, isSessionActive, nextWorkoutId
                     <h3 className="text-4xl font-black text-white leading-[0.95] tracking-tight mb-3 text-balance">
                         {String(getTranslated(nextDayDef.dayName, lang))}
                     </h3>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2 mb-3">
                         {(nextDayDef.slots || []).slice(0, 3).map((slot: any, sIdx: number) => (
                             <span key={sIdx} className="text-[10px] font-bold uppercase bg-white/10 text-zinc-300 px-2 py-1 rounded-md border border-white/5">
                                 {String(tm(slot.muscle))}
@@ -426,6 +426,21 @@ const NextSessionCard = React.memo(({ nextDayDef, isSessionActive, nextWorkoutId
                             <span className="text-[10px] font-bold uppercase bg-white/10 text-zinc-300 px-2 py-1 rounded-md border border-white/5">
                                 +{(nextDayDef.slots || []).length - 3}
                             </span>
+                        )}
+                    </div>
+                    {/* Meta row: estimated duration + adherence */}
+                    <div className="flex items-center gap-3">
+                        {estimatedMin > 0 && (
+                            <div className="flex items-center gap-1 text-zinc-400">
+                                <Icon name="Clock" size={11} />
+                                <span className="text-[10px] font-bold">~{estimatedMin} {lang === 'es' ? 'min' : 'min'}</span>
+                            </div>
+                        )}
+                        {adherencePct !== null && (
+                            <div className="flex items-center gap-1 text-zinc-400">
+                                <Icon name="TrendingUp" size={11} />
+                                <span className="text-[10px] font-bold">{adherencePct}% {lang === 'es' ? 'adherencia' : 'adherence'}</span>
+                            </div>
                         )}
                     </div>
                 </div>
@@ -532,6 +547,30 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
 
         return { uniqueDaysDone: daysDone, weekComplete: isComplete, nextWorkoutIdx: nextIdx, isSessionActive: active, nextDayDef: nextDef, logsForWeek: currentWeekLogs };
     }, [activeMeso, activeSession, safeLogs, safeProgram]);
+
+    // Estimated session duration: avg of last 3 same-dayIdx logs, else slot-based fallback
+    const estimatedMin = useMemo(() => {
+        if (nextWorkoutIdx === -1 || !activeMeso) return 0;
+        const sameDayLogs = safeLogs
+            .filter(l => l.mesoId === activeMeso.id && l.dayIdx === nextWorkoutIdx && !l.skipped && l.duration > 0)
+            .slice(-3);
+        if (sameDayLogs.length > 0) {
+            const avgSec = sameDayLogs.reduce((s, l) => s + l.duration, 0) / sameDayLogs.length;
+            return Math.round(avgSec / 60);
+        }
+        // Fallback: ~2.5 min per working set
+        const totalSets = (nextDayDef?.slots || []).reduce((s: number, slot: any) => s + (slot.setTarget || 3), 0);
+        return totalSets > 0 ? Math.round(totalSets * 2.5) : 0;
+    }, [nextWorkoutIdx, activeMeso, safeLogs, nextDayDef]);
+
+    // Adherence: percentage of scheduled sessions that were NOT skipped in current meso
+    const adherencePct = useMemo(() => {
+        if (!activeMeso) return null;
+        const mesoLogs = safeLogs.filter(l => l.mesoId === activeMeso.id);
+        if (mesoLogs.length === 0) return null;
+        const completed = mesoLogs.filter(l => !l.skipped).length;
+        return Math.round((completed / mesoLogs.length) * 100);
+    }, [activeMeso, safeLogs]);
 
     // Handlers
     const handleSkipClick = (e: React.MouseEvent, dayIdx: number) => { e.stopPropagation(); setSkipConfirmationId(dayIdx); };
@@ -756,6 +795,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                     lang={lang}
                     t={t}
                     tm={tm}
+                    estimatedMin={estimatedMin}
+                    adherencePct={adherencePct}
                 />
             </div>
 

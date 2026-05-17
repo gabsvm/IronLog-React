@@ -90,6 +90,7 @@ export interface ActiveSession {
   week: number;
   exercises: SessionExercise[];
   skipped?: boolean;
+  note?: string;            // Freeform session journal note
 }
 
 export interface ProgramSlot {
@@ -152,6 +153,7 @@ export interface Log {
   mesoId: number;
   week: number;
   exercises: SessionExercise[];
+  note?: string;            // Freeform session journal note
 }
 
 export interface FeedbackEntry {

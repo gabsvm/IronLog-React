@@ -302,6 +302,43 @@ export const HistoryView: React.FC = () => {
         }
     }, [safeLogs, deferredSearch, lang, isPro]);
 
+    const handleExportCSV = useCallback(() => {
+        if (!checkPro('csv_export')) return;
+        const rows: string[] = [];
+        // Header
+        rows.push(['Date', 'Session', 'Exercise', 'Muscle', 'Set', 'Type', 'Weight(kg)', 'Reps', 'RPE', 'Completed'].join(','));
+
+        safeLogs.forEach(log => {
+            if (log.skipped) return;
+            const date = new Date(log.startTime).toLocaleDateString('en-CA'); // YYYY-MM-DD
+            (log.exercises || []).forEach(ex => {
+                const exName = getTranslated(ex.name, lang).replace(/,/g, ';');
+                (ex.sets || []).forEach((s, si) => {
+                    rows.push([
+                        date,
+                        (log.name || '').replace(/,/g, ';'),
+                        exName,
+                        ex.muscle,
+                        si + 1,
+                        s.type,
+                        s.weight || '',
+                        s.reps || '',
+                        s.rpe || '',
+                        s.completed ? '1' : '0'
+                    ].join(','));
+                });
+            });
+        });
+
+        const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ironlog_history_${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }, [safeLogs, lang, checkPro]);
+
     const historyTutorialSteps = [
         { targetId: 'tut-history-search', title: t.tutorial.history[1].title, text: t.tutorial.history[1].text, position: 'bottom' as const },
         { targetId: 'tut-first-card', title: t.tutorial.history[0].title, text: t.tutorial.history[0].text, position: 'bottom' as const }
@@ -347,6 +384,18 @@ export const HistoryView: React.FC = () => {
                 context={virtuosoContext}
                 itemContent={renderItem}
             />
+
+            {/* CSV Export FAB */}
+            {safeLogs.length > 0 && (
+                <button
+                    onClick={handleExportCSV}
+                    className="absolute bottom-24 right-4 flex items-center gap-2 bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-white hover:border-zinc-500 px-3 py-2 rounded-full text-xs font-bold shadow-xl transition-all active:scale-95"
+                >
+                    <Icon name="Download" size={14} />
+                    CSV
+                    {!isPro && <Icon name="Lock" size={11} className="text-yellow-500" />}
+                </button>
+            )}
 
             <TutorialOverlay
                 steps={historyTutorialSteps}

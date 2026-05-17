@@ -184,6 +184,44 @@ export const StatsView: React.FC = () => {
     const totalSets = (Object.values(setTypeDist) as number[]).reduce((a, b) => a + b, 0);
     const hasData = totalSets > 0;
 
+    // PR History Board
+    const prHistory = useMemo(() => {
+        // Build a map: exerciseId → { bestE1RM, weight, reps, date, name }
+        const bestMap: Record<string, { e1rm: number; weight: number; reps: number; date: number; name: string; muscle: string }> = {};
+
+        safeLogs.forEach(log => {
+            if (log.skipped) return;
+            (log.exercises || []).forEach(ex => {
+                if (!ex.id || ex.isBodyweight || ex.isIsometric || ex.muscle === 'CARDIO') return;
+                const working = (ex.sets || []).filter(s => s.completed && s.type !== 'warmup' && s.type !== 'avt_hop');
+                working.forEach(s => {
+                    const w = Number(s.weight || 0);
+                    const r = Number(s.reps || 0);
+                    if (w <= 0 || r <= 0) return;
+                    const e1rm = w * (1 + r / 30);
+                    const existing = bestMap[ex.id];
+                    if (!existing || e1rm > existing.e1rm) {
+                        bestMap[ex.id] = {
+                            e1rm,
+                            weight: w,
+                            reps: r,
+                            date: log.startTime,
+                            name: getTranslated(ex.name, lang),
+                            muscle: ex.muscle
+                        };
+                    }
+                });
+            });
+        });
+
+        return Object.entries(bestMap)
+            .sort((a, b) => b[1].date - a[1].date) // Most recent first
+            .slice(0, 20);
+    }, [safeLogs, lang]);
+
+    const [showAllPRs, setShowAllPRs] = useState(false);
+    const displayedPRs = showAllPRs ? prHistory : prHistory.slice(0, 6);
+
     const statsTutorialSteps = [
         { targetId: 'tut-progress-chart', title: t.tutorial.stats[0].title, text: t.tutorial.stats[0].text, position: 'bottom' as const },
         { targetId: 'tut-radar-chart', title: t.tutorial.stats[1].title, text: t.tutorial.stats[1].text, position: 'top' as const },
@@ -426,6 +464,49 @@ export const StatsView: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            {/* --- PR History Board --- */}
+            {prHistory.length > 0 && (
+                <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 shadow-sm">
+                    <div className="flex items-center justify-between mb-5">
+                        <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-2">
+                            <Icon name="Trophy" size={14} />
+                            {lang === 'es' ? 'Récords Personales' : 'Personal Records'}
+                        </h3>
+                        <span className="text-[10px] font-bold text-zinc-600 uppercase">{lang === 'es' ? 'e1RM estimado' : 'est. e1RM'}</span>
+                    </div>
+
+                    <div className="space-y-2">
+                        {displayedPRs.map(([exId, pr]) => {
+                            const dateStr = new Date(pr.date).toLocaleDateString(lang === 'es' ? 'es-ES' : 'en-US', { month: 'short', day: 'numeric', year: '2-digit' });
+                            return (
+                                <div key={exId} className="flex items-center gap-3 py-2 border-b border-zinc-800/60 last:border-0">
+                                    <div className="w-8 h-8 rounded-lg bg-yellow-500/10 text-yellow-500 flex items-center justify-center shrink-0 text-sm">🏆</div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-bold text-white truncate">{pr.name}</p>
+                                        <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wide">{TRANSLATIONS[lang].muscle[pr.muscle as MuscleGroup]} · {dateStr}</p>
+                                    </div>
+                                    <div className="text-right shrink-0">
+                                        <p className="text-sm font-black text-white">{pr.weight}<span className="text-zinc-500 text-[10px] ml-0.5">kg</span></p>
+                                        <p className="text-[10px] text-zinc-500">×{pr.reps} · <span className="text-yellow-500 font-bold">{Math.round(pr.e1rm)}kg</span></p>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {prHistory.length > 6 && (
+                        <button
+                            onClick={() => setShowAllPRs(v => !v)}
+                            className="w-full text-center mt-3 text-xs font-bold text-zinc-500 hover:text-zinc-300 transition-colors py-1"
+                        >
+                            {showAllPRs
+                                ? (lang === 'es' ? '↑ Ver menos' : '↑ Show less')
+                                : (lang === 'es' ? `↓ Ver todos (${prHistory.length})` : `↓ Show all (${prHistory.length})`)}
+                        </button>
+                    )}
+                </div>
+            )}
 
             {/* --- Full Screen Picker Modal --- */}
             {showPicker && (

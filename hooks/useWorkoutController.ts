@@ -174,6 +174,22 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
                 // Drop sets: no rest between drops
                 if (set.type === 'drop' && !ex?.defaultRestSeconds) return;
 
+                // Superset: only start rest timer after BOTH sides of the superset complete
+                // the same round (i.e. both have the same number of completed working sets).
+                if (ex?.supersetId) {
+                    const partners = sessionExercises.filter(e => e.supersetId === ex.supersetId && e.instanceId !== exInstanceId);
+                    if (partners.length > 0) {
+                        // How many working sets will this exercise have completed after this one?
+                        const thisCompletedAfter = (ex.sets || []).filter(s => s.type !== 'warmup' && s.type !== 'avt_hop' && s.completed).length + 1;
+                        // If any partner hasn't reached the same count yet → hold the timer
+                        const allPartnersInSync = partners.every(p => {
+                            const pCompleted = (p.sets || []).filter(s => s.type !== 'warmup' && s.type !== 'avt_hop' && s.completed).length;
+                            return pCompleted >= thisCompletedAfter;
+                        });
+                        if (!allPartnersInSync) return;
+                    }
+                }
+
                 setRestTimer({ active: true, duration: dur, timeLeft: dur, endAt: Date.now() + (dur * 1000) });
             } else {
                 triggerHaptic('light');

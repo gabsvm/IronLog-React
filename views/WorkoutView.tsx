@@ -201,8 +201,20 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
         ctrl.setOpenMenuId(null);
     };
 
+    const completedSets = sessionExercises.reduce((acc, ex) => acc + (ex.sets || []).filter(s => s.completed).length, 0);
     const totalWorkingSets = sessionExercises.reduce((acc, ex) => acc + (ex.sets || []).filter(s => s.type !== 'warmup' && s.type !== 'avt_hop').length, 0);
     const remainingSets = totalWorkingSets - sessionExercises.reduce((acc, ex) => acc + (ex.sets || []).filter(s => s.completed && s.type !== 'warmup' && s.type !== 'avt_hop').length, 0);
+
+    const muscleCoverage = useMemo(() => {
+        const map: Record<string, number> = {};
+        sessionExercises.forEach(ex => {
+            const done = (ex.sets || []).filter(s => s.completed && s.type !== 'warmup' && s.type !== 'avt_hop').length;
+            if (done > 0 && ex.muscle) {
+                map[ex.muscle] = (map[ex.muscle] || 0) + done;
+            }
+        });
+        return Object.entries(map);
+    }, [sessionExercises]);
 
     const focusedExercise = sessionExercises[focusedIndex];
     const goToNext = () => setFocusedIndex(prev => Math.min(prev + 1, sessionExercises.length - 1));
@@ -331,6 +343,20 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                     <>{t.target}: {stageConfig.rir} RIR</>
                                 )}
                             </div>
+                        )}
+
+                        {/* Muscle Coverage Pills */}
+                        {muscleCoverage.length > 0 && (
+                            <>
+                                <span className="text-zinc-700 font-light">•</span>
+                                <div className="flex flex-wrap gap-1">
+                                    {muscleCoverage.map(([muscle, count]) => (
+                                        <span key={muscle} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-zinc-800 text-[9px] font-bold text-zinc-400 uppercase tracking-wide">
+                                            {muscle} <span className="text-zinc-500">{count}</span>
+                                        </span>
+                                    ))}
+                                </div>
+                            </>
                         )}
                     </div>
                 </div>
@@ -621,10 +647,10 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
             {ctrl.showFinishModal && (
                 <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-6" onClick={(e) => e.stopPropagation()}>
                     <div className="bg-zinc-900 w-full max-w-sm rounded-2xl p-6 shadow-2xl space-y-4 border border-zinc-800">
-                        <h3 className="text-xl font-bold text-center text-white">{finishedSets > 0 ? t.finishWorkout : t.emptyWorkoutTitle}</h3>
+                        <h3 className="text-xl font-bold text-center text-white">{completedSets > 0 ? t.finishWorkout : t.emptyWorkoutTitle}</h3>
 
                         {/* Update Template Option */}
-                        {finishedSets > 0 && (
+                        {completedSets > 0 && (
                             <div className="bg-zinc-800/50 p-4 rounded-xl border border-white/5 flex items-start gap-3 cursor-pointer" onClick={() => ctrl.setUpdateTemplate(!ctrl.updateTemplate)}>
                                 <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center mt-0.5 transition-colors ${ctrl.updateTemplate ? 'bg-primary-600 border-primary-600' : 'border-zinc-600'}`}>
                                     {ctrl.updateTemplate && <Icon name="Check" size={14} className="text-white" strokeWidth={3} />}
@@ -636,7 +662,16 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                             </div>
                         )}
 
-                        <div className="grid grid-cols-2 gap-3 pt-2">
+                        {/* Session Journal Note */}
+                        <textarea
+                            placeholder={lang === 'es' ? 'Nota de sesión...' : 'Session note...'}
+                            value={activeSession.note || ''}
+                            onChange={e => ctrl.updateSession(prev => prev ? { ...prev, note: e.target.value } : null)}
+                            rows={2}
+                            className="w-full bg-zinc-800 rounded-xl px-3 py-2.5 text-sm text-white placeholder-zinc-600 outline-none resize-none border border-zinc-700/50 focus:border-zinc-500 transition-colors"
+                        />
+
+                        <div className="grid grid-cols-2 gap-3">
                             <Button variant="secondary" onClick={() => ctrl.setShowFinishModal(false)}>{t.cancel}</Button>
                             <Button variant="primary" onClick={ctrl.handleConfirmFinish}>{t.finishWorkout}</Button>
                         </div>
