@@ -14,6 +14,8 @@ import { triggerHaptic } from '../utils/audio';
 import { todayStr, getTodayLog, sumMacros, MEAL_ORDER, MEAL_META, ACTIVITY_EMOJI, WATER_GOAL_ML, calcStreak, calcTDEE } from './nutri/nutritionHelpers';
 import { MacroBar } from './nutri/MacroBar';
 import { WaterTracker } from './nutri/WaterTracker';
+import { BodyTab } from './nutri/BodyTab';
+import { HistoryTab } from './nutri/HistoryTab';
 
 // ─── COMPONENT ──────────────────────────────────────────────────────
 type SubTab = 'today' | 'body' | 'history';
@@ -420,275 +422,28 @@ export const NutriView: React.FC = () => {
 
         {/* ─── TAB: BODY ──────────────────────────────────────── */}
         {subTab === 'body' && (
-          <div className="space-y-3 pt-1">
-
-            {/* Weight + TDEE hero */}
-            <div className="bg-zinc-900 rounded-3xl border border-zinc-800 p-4">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">
-                    {l('Body Weight', 'Peso Corporal')}
-                  </p>
-                  {latestWeight ? (
-                    <>
-                      <div className="text-4xl font-black text-white leading-none">{latestWeight.weight}</div>
-                      <p className="text-xs text-zinc-500 mt-1">kg · {new Date(latestWeight.date).toLocaleDateString(lang === 'es' ? 'es-AR' : 'en-US', { month: 'short', day: 'numeric' })}</p>
-                      {latestWeight.bodyFat && (
-                        <p className="text-xs text-zinc-500">{latestWeight.bodyFat}% {l('body fat', 'grasa corporal')}</p>
-                      )}
-                    </>
-                  ) : (
-                    <p className="text-zinc-600 text-sm mt-1">{l('No data yet', 'Sin datos aún')}</p>
-                  )}
-                </div>
-                <button
-                  onClick={() => setShowLogWeight(true)}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-800 text-zinc-300 text-xs font-bold active:scale-95 transition-all hover:bg-zinc-700"
-                >
-                  <Icon name="Plus" size={14} />
-                  {l('Log', 'Registrar')}
-                </button>
-              </div>
-
-              {/* Mini weight chart */}
-              {weightTrend.length > 1 && (() => {
-                const min = Math.min(...weightTrend.map(l => l.weight)) - 1;
-                const max = Math.max(...weightTrend.map(l => l.weight)) + 1;
-                const range = max - min || 1;
-                const points = weightTrend.map((entry, i) => {
-                  const x = (i / (weightTrend.length - 1)) * 100;
-                  const y = 100 - ((entry.weight - min) / range) * 100;
-                  return `${x},${y}`;
-                }).join(' ');
-                return (
-                  <div className="mt-3 pt-3 border-t border-zinc-800">
-                    <p className="text-[10px] text-zinc-600 mb-2">{l('Last 30 days', 'Últimos 30 días')}</p>
-                    <svg viewBox="0 0 100 40" className="w-full h-10" preserveAspectRatio="none">
-                      <polyline
-                        points={points}
-                        fill="none"
-                        stroke="#ef4444"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        vectorEffect="non-scaling-stroke"
-                      />
-                    </svg>
-                  </div>
-                );
-              })()}
-            </div>
-
-            {/* TDEE card */}
-            <div className="bg-zinc-900 rounded-3xl border border-zinc-800 p-4">
-              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">
-                {l('Energy Balance', 'Balance Energético')}
-              </p>
-              <div className="grid grid-cols-3 gap-3">
-                <div className="text-center">
-                  <p className="text-xl font-black text-white">{nutritionGoal.calories}</p>
-                  <p className="text-[9px] text-zinc-500 uppercase">{l('Goal', 'Meta')}</p>
-                </div>
-                <div className="text-center">
-                  <p className={`text-xl font-black ${todayMacros.calories > nutritionGoal.calories ? 'text-orange-400' : 'text-green-400'}`}>
-                    {todayMacros.calories}
-                  </p>
-                  <p className="text-[9px] text-zinc-500 uppercase">{l('Eaten', 'Consumido')}</p>
-                </div>
-                {tdee && (
-                  <div className="text-center">
-                    <p className="text-xl font-black text-zinc-300">{tdee}</p>
-                    <p className="text-[9px] text-zinc-500 uppercase">TDEE</p>
-                  </div>
-                )}
-              </div>
-              {tdee && (
-                <div className="mt-3 pt-3 border-t border-zinc-800">
-                  <p className="text-[11px] text-zinc-500 text-center">
-                    {nutritionGoal.calories < tdee
-                      ? `${l('Deficit', 'Déficit')} ${tdee - nutritionGoal.calories} kcal · ${l('Fat loss mode', 'Modo pérdida grasa')}`
-                      : nutritionGoal.calories > tdee
-                      ? `${l('Surplus', 'Superávit')} ${nutritionGoal.calories - tdee} kcal · ${l('Building mode', 'Modo volumen')}`
-                      : l('Maintenance calories', 'Calorías de mantenimiento')}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Personal targets */}
-            {userProfile?.bodyWeight && (
-              <div className="bg-zinc-900 rounded-3xl border border-zinc-800 p-4">
-                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">
-                  {l('Your Targets', 'Tus Objetivos')}
-                </p>
-                <div className="space-y-2">
-                  {[
-                    { id: 'min_protein',  label: l('Min protein', 'Proteína mínima'), value: `${Math.round(userProfile.bodyWeight * 1.8)}g`, color: 'text-blue-400' },
-                    { id: 'opt_protein',  label: l('Optimal protein', 'Proteína óptima'), value: `${Math.round(userProfile.bodyWeight * 2.2)}g`, color: 'text-blue-300' },
-                    { id: 'water',        label: l('Daily water', 'Agua diaria'), value: `${Math.round(userProfile.bodyWeight * 37)}ml`, color: 'text-sky-400' },
-                    ...(userProfile.bodyFat ? [{ id: 'body_fat', label: l('Body fat', 'Grasa corporal'), value: `${userProfile.bodyFat}%`, color: 'text-zinc-300' }] : []),
-                  ].map(item => (
-                    <div key={item.id} className="flex justify-between items-center py-1.5 border-b border-zinc-800/50 last:border-0">
-                      <span className="text-xs text-zinc-500">{item.label}</span>
-                      <span className={`text-sm font-bold ${item.color}`}>{item.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Recent weigh-ins */}
-            {weightTrend.length > 0 && (
-              <div className="bg-zinc-900 rounded-3xl border border-zinc-800 p-4">
-                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">
-                  {l('Recent Weigh-ins', 'Pesajes Recientes')}
-                </p>
-                <div className="space-y-1">
-                  {recentWeighIns.map(entry => (
-                    <div key={entry.id} className="flex justify-between items-center py-1.5 border-b border-zinc-800/50 last:border-0">
-                      <span className="text-xs text-zinc-500">
-                        {new Date(entry.date).toLocaleDateString(lang === 'es' ? 'es-AR' : 'en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                      </span>
-                      <div className="text-right">
-                        <span className="text-sm font-bold text-white">{entry.weight} kg</span>
-                        {entry.bodyFat && <span className="text-[10px] text-zinc-500 ml-2">{entry.bodyFat}% BF</span>}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+          <BodyTab
+            lang={lang}
+            latestWeight={latestWeight}
+            weightTrend={weightTrend}
+            recentWeighIns={recentWeighIns}
+            nutritionGoal={nutritionGoal}
+            todayCalories={todayMacros.calories}
+            tdee={tdee}
+            bodyWeight={userProfile?.bodyWeight}
+            bodyFat={userProfile?.bodyFat}
+            onLogWeight={() => setShowLogWeight(true)}
+          />
         )}
 
         {/* ─── TAB: HISTORY ───────────────────────────────────── */}
         {subTab === 'history' && (
-          <div className="space-y-3 pt-1">
-
-            {/* Weekly averages */}
-            {(() => {
-              const tracked = last14Days.filter(d => d.calories > 0);
-              if (tracked.length === 0) return null;
-              const avgCal  = Math.round(tracked.reduce((a, d) => a + d.calories, 0) / tracked.length);
-              const avgProt = Math.round(tracked.reduce((a, d) => a + d.protein, 0) / tracked.length);
-              return (
-                <div className="bg-zinc-900 rounded-3xl border border-zinc-800 p-4">
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">
-                    {l('14-Day Average', 'Promedio 14 Días')} · {tracked.length} {l('days tracked', 'días registrados')}
-                  </p>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-2xl font-black text-white">{avgCal}</p>
-                      <p className="text-[10px] text-zinc-500 uppercase">kcal/día</p>
-                      <p className={`text-[10px] mt-1 ${avgCal > nutritionGoal.calories ? 'text-orange-400' : 'text-green-400'}`}>
-                        {avgCal > nutritionGoal.calories ? '+' : ''}{avgCal - nutritionGoal.calories} vs {l('goal', 'meta')}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-2xl font-black text-blue-400">{avgProt}g</p>
-                      <p className="text-[10px] text-zinc-500 uppercase">{l('avg protein', 'proteína prom.')}</p>
-                      <p className={`text-[10px] mt-1 ${avgProt >= nutritionGoal.protein ? 'text-green-400' : 'text-zinc-500'}`}>
-                        {avgProt >= nutritionGoal.protein ? '✓ ' : ''}{l('goal', 'meta')} {nutritionGoal.protein}g
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })()}
-
-            {/* Calories chart */}
-            <div className="bg-zinc-900 rounded-3xl border border-zinc-800 p-4">
-              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-4">
-                {l('Calories — Last 14 Days', 'Calorías — 14 Días')}
-              </p>
-              <div className="flex items-end gap-1 h-24">
-                {last14Days.map(day => {
-                  const pct = Math.min(day.calories / Math.max(nutritionGoal.calories, 1), 1.15);
-                  const over = day.calories > nutritionGoal.calories;
-                  return (
-                    <div key={day.date} className="flex-1 flex flex-col items-center gap-0.5">
-                      {day.calories > 0 && (
-                        <span className="text-[7px] text-zinc-600 leading-none">
-                          {day.calories > 999 ? `${(day.calories / 1000).toFixed(1)}k` : day.calories}
-                        </span>
-                      )}
-                      <div
-                        className={`w-full rounded-t transition-all duration-500 ${
-                          day.isToday ? 'bg-red-500' : over ? 'bg-orange-500/70' : 'bg-zinc-700'
-                        }`}
-                        style={{ height: `${Math.max(pct * 80, day.calories > 0 ? 4 : 0)}px` }}
-                      />
-                      <span className={`text-[7px] leading-none ${day.isToday ? 'text-red-400 font-bold' : 'text-zinc-600'}`}>
-                        {day.shortDate}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="mt-2 flex items-center gap-3 text-[9px] text-zinc-600">
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-red-500 inline-block" />{l('Today', 'Hoy')}</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-orange-500/70 inline-block" />{l('Over goal', 'Sobre meta')}</span>
-                <span className="ml-auto">{l('Goal', 'Meta')}: {nutritionGoal.calories} kcal</span>
-              </div>
-            </div>
-
-            {/* Protein chart */}
-            <div className="bg-zinc-900 rounded-3xl border border-zinc-800 p-4">
-              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-4">
-                {l('Protein — Last 14 Days', 'Proteína — 14 Días')}
-              </p>
-              <div className="flex items-end gap-1 h-20">
-                {last14Days.map(day => {
-                  const pct = Math.min(day.protein / Math.max(nutritionGoal.protein, 1), 1.2);
-                  return (
-                    <div key={day.date} className="flex-1 flex flex-col items-center gap-0.5">
-                      <div
-                        className={`w-full rounded-t transition-all duration-500 ${
-                          day.isToday ? 'bg-blue-500' : day.protein >= nutritionGoal.protein ? 'bg-blue-600/70' : 'bg-zinc-700'
-                        }`}
-                        style={{ height: `${Math.max(pct * 68, day.protein > 0 ? 3 : 0)}px` }}
-                      />
-                      <span className={`text-[7px] leading-none ${day.isToday ? 'text-blue-400 font-bold' : 'text-zinc-600'}`}>
-                        {day.shortDate}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-              <p className="text-[9px] text-zinc-600 mt-2 text-right">{l('Goal', 'Meta')}: {nutritionGoal.protein}g</p>
-            </div>
-
-            {/* Day log list */}
-            {historyDayList.map(day => (
-              <div key={day.date} className="bg-zinc-900 rounded-2xl border border-zinc-800 p-4">
-                <div className="flex justify-between items-center mb-2">
-                  <div>
-                    <span className={`text-sm font-bold ${day.isToday ? 'text-red-400' : 'text-white'}`}>
-                      {day.isToday ? l('Today', 'Hoy') : day.label}
-                    </span>
-                    <span className="text-xs text-zinc-600 ml-2">{day.date}</span>
-                  </div>
-                  <div className="text-right">
-                    <span className={`text-sm font-bold ${day.calories > nutritionGoal.calories ? 'text-orange-400' : 'text-zinc-300'}`}>
-                      {day.calories} kcal
-                    </span>
-                  </div>
-                </div>
-                <div className="flex gap-3 text-xs">
-                  <span className="text-blue-400 font-medium">{Math.round(day.protein)}g P</span>
-                  <span className="text-amber-400 font-medium">{Math.round(day.carbs)}g C</span>
-                  <span className="text-pink-400 font-medium">{Math.round(day.fat)}g F</span>
-                </div>
-                {/* Mini progress bar for protein */}
-                <div className="mt-2 h-1 bg-zinc-800 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full ${day.protein >= nutritionGoal.protein ? 'bg-blue-500' : 'bg-blue-800'}`}
-                    style={{ width: `${Math.min(100, (day.protein / nutritionGoal.protein) * 100)}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
+          <HistoryTab
+            lang={lang}
+            last14Days={last14Days}
+            historyDayList={historyDayList}
+            nutritionGoal={nutritionGoal}
+          />
         )}
       </div>
 

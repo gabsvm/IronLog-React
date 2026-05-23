@@ -5,11 +5,9 @@ import { useAuth } from '../../context/AuthContext';
 import { TRANSLATIONS } from '../../constants';
 import { Icon } from '../ui/Icon';
 import { Button } from '../ui/Button';
-import { doc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
 import { usePro } from '../../hooks/usePro';
 import { PaywallModal } from '../pro/PaywallModal';
-import { AdminTemplateManager } from '../admin/AdminTemplateManager';
+import { AdminControlPanel } from './AdminControlPanel';
 
 interface SettingsModalProps {
     onClose: () => void;
@@ -37,10 +35,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     const { isPro, tier, expiryDate, checkPro, showPaywall, setShowPaywall, featureAttempted } = usePro();
     const t = TRANSLATIONS[lang];
 
-    const [isAdminMode, setIsAdminMode] = useState(false);
-    const [targetInput, setTargetInput] = useState('');
-    const [adminStatus, setAdminStatus] = useState<{ msg: string, type: 'success' | 'error' | 'neutral', details?: string, codeSnippet?: string } | null>(null);
-    const [showTemplateManager, setShowTemplateManager] = useState(false);
     const [tab, setTab] = useState<'account' | 'prefs' | 'advanced'>('account');
 
     const isAdmin = user?.email === 'gabsvm@gmail.com';
@@ -52,62 +46,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         if (diff <= 0) return 0;
         return Math.ceil(diff / (1000 * 60 * 60 * 24));
     }, [expiryDate]);
-
-    const resolveUid = async (input: string): Promise<string | null> => {
-        if (!db) return null;
-        const trimmed = input.trim();
-        if (!trimmed) return user?.uid || null;
-
-        if (trimmed.includes('@')) {
-            try {
-                setAdminStatus({ msg: `Searching: ${trimmed}...`, type: 'neutral' });
-                const usersRef = collection(db, "users");
-                const q = query(usersRef, where("email", "==", trimmed));
-                const querySnapshot = await getDocs(q);
-                if (querySnapshot.empty) return null;
-                return querySnapshot.docs[0].id;
-            } catch (e: any) {
-                if (e.code === 'permission-denied') throw new Error("PERMISSION_DENIED_LIST");
-                throw new Error(`Email lookup failed: ${e.message}`);
-            }
-        }
-        return trimmed;
-    };
-
-    const handleSubscriptionChange = async (grantPro: boolean) => {
-        if (!db) return;
-        setAdminStatus({ msg: 'Processing...', type: 'neutral' });
-        try {
-            const uidToModify = await resolveUid(targetInput);
-            if (!uidToModify) {
-                setAdminStatus({ msg: 'Error: User not found', type: 'error' });
-                return;
-            }
-            const subData = {
-                isPro: grantPro,
-                tier: grantPro ? 'lifetime' : 'free',
-                expiryDate: null,
-                grantedByAdmin: grantPro,
-                revokedByAdmin: !grantPro,
-                updatedAt: Date.now(),
-                adminUser: user?.email
-            };
-            await setDoc(doc(db, "users", uidToModify, "data", "subscription"), subData, { merge: true });
-            setAdminStatus({
-                msg: grantPro ? `✅ PRO Granted` : `🚫 PRO Revoked`,
-                type: grantPro ? 'success' : 'error'
-            });
-            if (uidToModify === user?.uid) setTimeout(() => window.location.reload(), 1500);
-        } catch (e: any) {
-            let helpfulMsg = e.message;
-            let codeSnippet = "";
-            if (e.code === 'permission-denied' || e.message === 'PERMISSION_DENIED_LIST') {
-                helpfulMsg = "⛔ FIREBASE RULES BLOCKING";
-                codeSnippet = `rules_version = '2'; service cloud.firestore { match /databases/{database}/documents { function isAdmin() { return request.auth != null && request.auth.token.email == '${user?.email}'; } match /users { allow list: if isAdmin(); } match /users/{userId}/{document=**} { allow read, write: if request.auth != null && (request.auth.uid == userId || isAdmin()); } match /global_templates/{docId} { allow read: if true; allow write: if isAdmin(); } } }`;
-            }
-            setAdminStatus({ msg: helpfulMsg, type: 'error', codeSnippet });
-        }
-    };
 
     const handleInstallClick = () => {
         if (deferredPrompt) {
@@ -165,10 +103,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             setUserProfile((prev: any) => ({ ...prev, [field]: val }));
         }
     };
-
-    if (showTemplateManager) {
-        return <AdminTemplateManager onClose={() => setShowTemplateManager(false)} />;
-    }
 
     const MemberStatus = () => {
         if (tier === 'demo') {
@@ -261,60 +195,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                 <button onClick={() => { logout(); onClose(); }} className="w-full py-2 bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-lg text-xs font-bold hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors">
                                     {t.auth.logout}
                                 </button>
-                                {isAdmin && (
-                                    <>
-                                        <button onClick={() => setIsAdminMode(!isAdminMode)} className={`w-full py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors ${isAdminMode ? 'bg-zinc-900 text-white' : 'bg-zinc-200 text-zinc-600'}`}>
-                                            <Icon name="Bot" size={14} /> {isAdminMode ? 'Close Admin' : 'Admin Panel'}
-                                        </button>
-
-                                        {/* Admin Control Panel */}
-                                        {isAdminMode && (
-                                            <div className="mt-4 p-4 bg-zinc-900 rounded-xl border border-white/10 animate-in fade-in slide-in-from-top-2">
-                                                <div className="flex items-center gap-2 mb-3">
-                                                    <Icon name="Shield" size={14} className="text-red-500" />
-                                                    <span className="text-[10px] font-black text-white uppercase tracking-widest">PRO Manager</span>
-                                                </div>
-
-                                                <div className="space-y-3">
-                                                    <input
-                                                        type="text"
-                                                        value={targetInput}
-                                                        onChange={(e) => setTargetInput(e.target.value)}
-                                                        placeholder="Email or UID"
-                                                        className="w-full bg-black border border-white/10 rounded-lg p-2 text-xs text-white placeholder:text-zinc-600 focus:border-red-500 transition-colors"
-                                                    />
-
-                                                    <div className="grid grid-cols-2 gap-2">
-                                                        <button
-                                                            onClick={() => handleSubscriptionChange(true)}
-                                                            className="py-2 bg-green-600 text-white rounded-lg text-[10px] font-black uppercase tracking-tight hover:bg-green-700 active:scale-95 transition-all shadow-lg shadow-green-600/20"
-                                                        >
-                                                            Grant PRO
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleSubscriptionChange(false)}
-                                                            className="py-2 bg-red-600 text-white rounded-lg text-[10px] font-black uppercase tracking-tight hover:bg-red-700 active:scale-95 transition-all shadow-lg shadow-red-600/20"
-                                                        >
-                                                            Revoke PRO
-                                                        </button>
-                                                    </div>
-
-                                                    {adminStatus && (
-                                                        <div className={`text-[10px] font-bold p-2 rounded-lg ${adminStatus.type === 'success' ? 'bg-green-500/10 text-green-500' :
-                                                                adminStatus.type === 'error' ? 'bg-red-500/10 text-red-500' : 'bg-blue-500/10 text-blue-400'
-                                                            }`}>
-                                                            {adminStatus.msg}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        <button onClick={() => setShowTemplateManager(true)} className="w-full py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors bg-purple-600 text-white">
-                                            <Icon name="Layout" size={14} /> Manage Templates
-                                        </button>
-                                    </>
-                                )}
+                                {isAdmin && <AdminControlPanel adminEmail={user?.email || undefined} />}
                             </div>
                         ) : (
                             <button onClick={onLogin} className="w-full py-2 bg-red-600 text-white rounded-lg text-xs font-bold hover:bg-red-50 shadow-lg shadow-red-600/20 transition-all active:scale-95">

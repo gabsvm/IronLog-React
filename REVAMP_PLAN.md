@@ -101,18 +101,19 @@ Extraído en `views/home/`:
 - `WeeklyRecapCard.tsx` — stats 7-días con PR detection
 - `NextSessionCard.tsx` — hero card "Up Next" con week-complete state
 
-#### `views/NutriView.tsx` (961 → 829 líneas, **-132 / -14%**) 🟡 Parcial
+#### `views/NutriView.tsx` (961 → 584 líneas, **-377 / -39%**) ✅ Hecho
 Extraído en `views/nutri/`:
-- `nutritionHelpers.ts` — todayStr, getTodayLog, sumMacros, MEAL_META, calcStreak, calcTDEE, constantes
+- `nutritionHelpers.ts` — todayStr, getTodayLog, sumMacros, MEAL_META, calcStreak, calcTDEE
 - `MacroBar.tsx` — slim macro progress bar
-- `WaterTracker.tsx` — agua del día (progress bar + cup viz + quick-add)
-- [ ] Pendiente: el render principal con tabs Today/Body/History sigue inline (~700 líneas). Extraer en `TodayTab.tsx`, `BodyTab.tsx`, `HistoryTab.tsx` requiere romper estado compartido — tarea para sesión dedicada.
+- `WaterTracker.tsx` — agua del día con quick-add
+- `BodyTab.tsx` — tab "Body": peso + TDEE + targets + chart 30d + weigh-ins recientes
+- `HistoryTab.tsx` — tab "History": promedios 14d + chart calorías + chart proteína + day-log
+- TodayTab queda inline (es el más complejo con add/edit/delete handlers + estado de undo). Aceptable.
 
-#### `components/settings/SettingsModal.tsx` (426 líneas, ahora tabbed)
-Ya está parcialmente domado por las 3 tabs. Refactor opcional:
-- Extraer tabs como componentes hijos: `<AccountTab/>`, `<PreferencesTab/>`, `<AdvancedTab/>`
-- Cada uno consume `useApp()` directamente
-- SettingsModal queda como shell + tab router
+#### `components/settings/SettingsModal.tsx` (426 → 334 líneas, **-92 / -22%**) ✅ Hecho
+- Extraído `AdminControlPanel.tsx` (147 líneas) — sub-panel admin con su propio estado (input, status, template manager toggle) y sus llamadas a Firestore. Sólo se renderiza cuando `isAdmin === true`.
+- SettingsModal ya no toca firebase directamente — pasa adminEmail al panel.
+- Tabs (Account/Prefs/Advanced) se mantienen inline porque el resto del contenido es relativamente plano y los helpers (ProToggle, ProButton, ColorPill, Divider) son closures sobre context que no aportan extraídos.
 
 #### Reglas comunes
 - Cada extracción: 1 PR pequeño, build verde, smoke-test manual en mobile + desktop
@@ -143,4 +144,4 @@ Ya está parcialmente domado por las 3 tabs. Refactor opcional:
 - ✅ Fase 3 — Sheet primitive + 6 modales migrados + a11y patch en los 4 centered restantes. Sólo 4 modales legacy pendientes (todos funcionan).
 - ✅ Fase 4 — framer-motion aplicado a 3 superficies clave
 - ✅ Fase 5 — aria-label batch (+22), focus-visible global, aria-modal en 8 modales, **eslint-plugin-jsx-a11y configurado** y 2 rules-of-hooks bugs arreglados de pasada
-- 🟡 Fase 6 — refactor monolitos: SortableExerciseCard (893→655, -27%) y HomeView (1104→672, -39%) hechos. NutriView (961→829) parcial.
+- ✅ Fase 6 — refactor monolitos: SortableExerciseCard (893→655, -27%), HomeView (1104→672, -39%), NutriView (961→584, -39%), SettingsModal (426→334, -22%). TODOS los monolitos abordados.
