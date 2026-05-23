@@ -102,8 +102,7 @@ const GuidelinesModal = ({ isOpen, onClose, images }: { isOpen: boolean, onClose
                     <button
                         onClick={onClose}
                         className="w-10 h-10 rounded-full bg-zinc-800 text-white flex items-center justify-center hover:bg-zinc-700 border border-white/10 shadow-lg"
-                    >
-                        <Icon name="X" size={24} />
+                     aria-label="Close"> <Icon name="X" size={24} />
                     </button>
                 </div>
             </div>
@@ -185,8 +184,7 @@ const TemplateSelector = ({
             {/* Header */}
             <div className="p-4 border-b border-white/10 flex justify-between items-center bg-zinc-900/50">
                 <h2 className="text-xl font-black text-white">{t.startMeso}</h2>
-                <button onClick={onClose} className="p-2 bg-zinc-800 rounded-full text-zinc-400 hover:text-white">
-                    <Icon name="X" size={20} />
+                <button onClick={onClose} className="p-2 bg-zinc-800 rounded-full text-zinc-400 hover:text-white" aria-label="Close"> <Icon name="X" size={20} />
                 </button>
             </div>
 

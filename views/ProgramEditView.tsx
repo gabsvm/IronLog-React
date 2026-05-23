@@ -123,8 +123,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
         <div className="h-full flex flex-col bg-gray-50 dark:bg-zinc-950 relative">
              {/* Header */}
              <div className="glass px-4 h-14 shrink-0 flex items-center justify-between z-10">
-                <button onClick={onBack} className="flex items-center gap-2 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white">
-                    <Icon name="ChevronLeft" size={20} />
+                <button onClick={onBack} className="flex items-center gap-2 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white" aria-label="Previous"> <Icon name="ChevronLeft" size={20} />
                     <span className="font-bold text-sm">{t.back}</span>
                 </button>
                 <div className="flex items-center gap-2">

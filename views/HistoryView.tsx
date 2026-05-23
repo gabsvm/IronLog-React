@@ -390,8 +390,7 @@ export const HistoryView: React.FC = () => {
                 <button
                     onClick={handleExportCSV}
                     className="absolute bottom-24 right-4 flex items-center gap-2 bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-white hover:border-zinc-500 px-3 py-2 rounded-full text-xs font-bold shadow-xl transition-all active:scale-95"
-                >
-                    <Icon name="Download" size={14} />
+                 aria-label="Download"> <Icon name="Download" size={14} />
                     CSV
                     {!isPro && <Icon name="Lock" size={11} className="text-yellow-500" />}
                 </button>

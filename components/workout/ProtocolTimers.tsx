@@ -90,8 +90,7 @@ export const EMOMTimer: React.FC<EMOMTimerProps> = ({ totalSets, lang, onMinuteC
             <button
                 onClick={start}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-500 text-white rounded-lg text-xs font-black active:scale-95 transition-all shrink-0"
-            >
-                <Icon name="Play" size={12} fill="currentColor" />
+             aria-label="Play"> <Icon name="Play" size={12} fill="currentColor" />
                 {l('Start', 'Iniciar')}
             </button>
         </div>
@@ -242,8 +241,7 @@ export const TabataTimer: React.FC<TabataTimerProps> = ({ totalRounds, lang }) =
             <button
                 onClick={start}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500 text-white rounded-lg text-xs font-black active:scale-95 transition-all shrink-0"
-            >
-                <Icon name="Play" size={12} fill="currentColor" />
+             aria-label="Play"> <Icon name="Play" size={12} fill="currentColor" />
                 {l('Start', 'Iniciar')}
             </button>
         </div>

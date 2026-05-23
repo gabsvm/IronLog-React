@@ -429,10 +429,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         <label className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 block">{t.database}</label>
                         <div className="space-y-2">
                             <div className="grid grid-cols-2 gap-2">
-                                <button onClick={onExport} className="py-3 bg-zinc-100 dark:bg-zinc-800 rounded-xl text-sm font-bold flex items-center justify-center gap-2"><Icon name="Download" size={14} /> {t.export}</button>
+                                <button onClick={onExport} className="py-3 bg-zinc-100 dark:bg-zinc-800 rounded-xl text-sm font-bold flex items-center justify-center gap-2" aria-label="Download"> <Icon name="Download" size={14} /> {t.export}</button>
                                 <label className="py-3 bg-zinc-100 dark:bg-zinc-800 rounded-xl text-sm font-bold cursor-pointer text-center flex items-center justify-center gap-2"><Icon name="Upload" size={14} /> {t.import}<input type="file" onChange={onImportFile} accept=".json" className="hidden" /></label>
                             </div>
-                            {user && <button onClick={onForceSync} disabled={isSyncing} className="w-full py-3 bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400 rounded-xl text-sm font-bold flex items-center justify-center gap-2"><Icon name="RefreshCw" size={14} className={isSyncing ? "animate-spin" : ""} /> {isSyncing ? "Syncing..." : "Force Sync"}</button>}
+                            {user && <button onClick={onForceSync} disabled={isSyncing} className="w-full py-3 bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400 rounded-xl text-sm font-bold flex items-center justify-center gap-2" aria-label="Refresh"> <Icon name="RefreshCw" size={14} className={isSyncing ? "animate-spin" : ""} /> {isSyncing ? "Syncing..." : "Force Sync"}</button>}
                         </div>
                     </div>
 
@@ -441,7 +441,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     {/* Danger Zone Topic */}
                     <div>
                         <label className="text-xs font-black text-red-400 uppercase tracking-widest mb-3 block">{t.dangerZone}</label>
-                        <button onClick={onReset} className="w-full py-3 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900 rounded-xl text-sm font-bold flex items-center justify-center gap-2"><Icon name="Trash2" size={16} /> {t.factoryReset}</button>
+                        <button onClick={onReset} className="w-full py-3 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900 rounded-xl text-sm font-bold flex items-center justify-center gap-2" aria-label="Delete"> <Icon name="Trash2" size={16} /> {t.factoryReset}</button>
                     </div>
 
                     </>)}

@@ -189,8 +189,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                             <MuscleTag label={exercise.muscle} />
                         </div>
                     </div>
-                    <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-white transition-colors active:scale-90">
-                        <Icon name="X" size={18} />
+                    <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-white transition-colors active:scale-90" aria-label="Close"> <Icon name="X" size={18} />
                     </button>
                 </div>
 

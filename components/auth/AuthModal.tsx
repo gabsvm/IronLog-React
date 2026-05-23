@@ -86,8 +86,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                     <h3 className="text-xl font-bold text-zinc-900 dark:text-white">
                         {isLogin ? t.signIn : t.register}
                     </h3>
-                    <button onClick={onClose} className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white">
-                        <Icon name="X" size={24} />
+                    <button onClick={onClose} className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white" aria-label="Close"> <Icon name="X" size={24} />
                     </button>
                 </div>
 

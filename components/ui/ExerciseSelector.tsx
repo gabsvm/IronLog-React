@@ -125,8 +125,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
         <div className="fixed inset-0 z-sheet bg-gray-50 dark:bg-zinc-950 flex flex-col animate-in slide-in-from-bottom duration-200">
             {/* Header */}
             <div className={`glass px-4 h-16 shrink-0 flex items-center gap-3 border-b border-zinc-200 dark:border-white/5 ${persistToGlobal ? 'bg-purple-900/10' : ''}`}>
-                <button onClick={onClose} className="p-2 -ml-2 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white">
-                    <Icon name="X" size={24} />
+                <button onClick={onClose} className="p-2 -ml-2 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white" aria-label="Close"> <Icon name="X" size={24} />
                 </button>
                 {isCreating ? (
                     <div className="flex-1 font-bold text-lg dark:text-white">
@@ -148,8 +147,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
                         <button 
                             onClick={handleCreateStart}
                             className="w-10 h-10 flex items-center justify-center rounded-xl bg-red-600 text-white shadow-md shadow-red-600/20 active:scale-95 transition-transform"
-                        >
-                            <Icon name="Plus" size={20} />
+                         aria-label="Add"> <Icon name="Plus" size={20} />
                         </button>
                     </div>
                 )}

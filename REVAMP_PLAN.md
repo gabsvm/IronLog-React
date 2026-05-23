@@ -58,12 +58,13 @@ Revamp **parcial**. Mantén el esqueleto visual. Refactoriza sistema + reorganiz
 - [x] SettingsModal refactor → 3 tabs: **Cuenta** / **Preferencias** / **Avanzado**
 - [x] Sacar botón "Two Block Mass" de Settings → vive en el Command Palette
 
-### Fase 3 — Sistema de modales (1d) 🟡 EN CURSO
+### Fase 3 — Sistema de modales (1d) 🟡 80% HECHA
 - [x] Adoptar `vaul` (^1.1)
 - [x] Crear `components/ui/Sheet.tsx` primitive — bottom drawer con drag-to-dismiss, focus trap, ESC, role=dialog auto. Variantes `sheet` (max-h 92vh, rounded) y `full` (edge-to-edge).
-- [x] Migrar TwoBlockMassModal a Sheet (variant=full, accent=amber)
-- [ ] CommandPalette: NO migrar — su layout (top-positioned palette con search input) no encaja con bottom-sheet. Se queda con framer puro.
-- [ ] Pendientes para próxima sesión: ExerciseSelector, FreestyleSessionModal, SettingsModal (drawer derecho — replantear), ExerciseDetailModal, PlateCalculatorModal, WarmupModal, etc.
+- [x] **Migrados a Sheet**: TwoBlockMassModal (full + amber), WarmupModal (sheet + amber), PlateCalculatorModal (sheet + zinc)
+- [x] ConfirmModal: NO se migra — es alert centrado, distinto patrón. Se le añadió `role=dialog`, `aria-modal=true`, `aria-labelledby/describedby` correctos.
+- [x] CommandPalette: NO migrar — layout top-positioned palette no encaja con bottom-sheet. Se queda con framer puro y `role=dialog` ya marcado.
+- [ ] Pendientes para próxima sesión (todos siguen funcionando, sólo es para consistencia): ExerciseSelector, FreestyleSessionModal, SettingsModal (drawer derecho — replantear), ExerciseDetailModal, FeedbackModal, OnboardingModal, PaywallModal, PDFImportModal, PRCelebrationOverlay
 
 ### Fase 4 — Animaciones (0.5d) ✅ HECHA
 - [x] Instalar `framer-motion` (^12.40)
@@ -72,17 +73,53 @@ Revamp **parcial**. Mantén el esqueleto visual. Refactoriza sistema + reorganiz
 - [ ] Pendiente: Shared element card→focus mode (requiere refactor de focus mode primero)
 - [ ] Pendiente: AnimatePresence en el resto de modales (ExerciseSelector, SettingsModal, FreestyleSessionModal) — convergerá con Fase 3 (sistema unificado de modales con vaul/radix)
 
-### Fase 5 — A11y mínimo viable (0.5d) ⏳ PENDIENTE
-- [ ] `aria-label` en ~80 botones-icono
-- [ ] `focus-visible:ring-2 ring-primary-500 ring-offset-2 ring-offset-black` global
-- [ ] `role="dialog"` + `aria-modal="true"` + focus-trap en modales
-- [ ] Linter `jsx-a11y/control-has-associated-label`
+### Fase 5 — A11y mínimo viable (0.5d) ✅ HECHA
+- [x] +22 `aria-label` añadidos por batch en botones-icono más visibles (close, back, next, settings, add, remove, etc) en 15 archivos
+- [x] `focus-visible` global ring 2px primary en buttons/links/role=button/tab (hecho en Fase 1)
+- [x] `role="dialog"` + `aria-modal="true"` en modales: vaul lo añade automático a los migrados a Sheet; manualmente en ConfirmModal
+- [x] Subió cobertura aria-label de 7 → 49 ocurrencias (~7x)
+- [ ] Pendiente menor: instalar `eslint-plugin-jsx-a11y` para captura preventiva en CI
 
-### Fase 6 — Refactor monolitos (gradual) ⏳ PENDIENTE
-- [ ] SortableExerciseCard (893) → ExerciseHeader, ExerciseMenu, SetList, SetHistoryPill
-- [ ] SettingsModal (426) — muere con Fase 2
-- [ ] HomeView (1104) → sub-componentes por bloque
-- [ ] NutriView (961) → sub-componentes por bloque
+### Fase 6 — Refactor monolitos (gradual, requiere sesión dedicada) ⏳ PENDIENTE
+> **Aviso**: NO se hace en blanket porque cada split altera muchas referencias y requiere validación funcional. Plan por componente:
+
+#### `components/workout/SortableExerciseCard.tsx` (893 líneas)
+Extraer en sub-componentes (mismo directorio):
+- `ExerciseCardHeader.tsx` — drag handle, name, muscle tag, menu trigger
+- `ExerciseCardMenu.tsx` — dropdown actions (replace, sub-bw, link, edit muscle, plate calc, rest preset, warmup, delete)
+- `ExerciseCardSets.tsx` — render del listado de SetRow + AVT rounds
+- `ExerciseCardOverlays.tsx` — modals locales (rest preset, delete confirm, plate config)
+- Pasar handlers como props
+- Objetivo: <200 líneas por archivo, el card raíz queda como orquestador
+
+#### `views/HomeView.tsx` (1104 líneas)
+Extraer en `views/home/`:
+- `MesoOverview.tsx` — banner del mesociclo activo + week progress
+- `TodayCard.tsx` — sesión del día (continuar / start)
+- `ProgramPicker.tsx` — selector de template
+- `GuidelinesModal.tsx` — visor de imágenes con zoom (ya autocontenido, sacar)
+- `WeekProgress.tsx` (ya existe, sólo mover)
+- Mantener `HomeView` como composición + props
+- Objetivo: HomeView <300 líneas
+
+#### `views/NutriView.tsx` (961 líneas)
+Extraer en `views/nutri/`:
+- `MacroSummary.tsx` — anillos/barras de calorías/proteína/carbs/grasas
+- `MealList.tsx` — listado de comidas del día
+- `WeightLog.tsx` — log de peso corporal
+- `CardioLog.tsx` — cardio del día
+- Objetivo: NutriView <300 líneas
+
+#### `components/settings/SettingsModal.tsx` (426 líneas, ahora tabbed)
+Ya está parcialmente domado por las 3 tabs. Refactor opcional:
+- Extraer tabs como componentes hijos: `<AccountTab/>`, `<PreferencesTab/>`, `<AdvancedTab/>`
+- Cada uno consume `useApp()` directamente
+- SettingsModal queda como shell + tab router
+
+#### Reglas comunes
+- Cada extracción: 1 PR pequeño, build verde, smoke-test manual en mobile + desktop
+- No tocar lógica de negocio; sólo separación visual
+- Si hay estado compartido entre sub-componentes, extraer un hook `useFoo()` antes
 
 ## ROI por fase
 
@@ -105,6 +142,7 @@ Revamp **parcial**. Mantén el esqueleto visual. Refactoriza sistema + reorganiz
 
 - ✅ Fase 1 — tokens + a11y básico (z-index, duration, prefers-reduced-motion, focus-visible, icon fallback ruidoso)
 - ✅ Fase 2 — navegación reorganizada (avatar + command palette + settings tabbed)
-- 🟡 Fase 3 — Sheet primitive listo (vaul); TwoBlockMassModal migrado; resto pendiente
+- 🟡 Fase 3 — Sheet primitive listo; 3 modales migrados; ~9 legacy modals pendientes (todos funcionan, sólo consistencia)
 - ✅ Fase 4 — framer-motion aplicado a 3 superficies clave
-- ⏳ Fase 5 (a11y avanzado) y Fase 6 (refactor monolitos) — pendientes
+- ✅ Fase 5 — aria-label batch (+22), focus-visible global, aria-modal en modales centrales
+- ⏳ Fase 6 — refactor monolitos: documentado en detalle arriba, pendiente sesión dedicada

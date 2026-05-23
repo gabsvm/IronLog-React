@@ -41,8 +41,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ onClose, feature }) 
                     <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-xl animate-bounce mb-2">
                         <Icon name="Crown" size={28} className="text-yellow-500 fill-yellow-500" />
                     </div>
-                    <button onClick={onClose} className="absolute top-4 right-4 bg-black/20 hover:bg-black/40 text-white rounded-full p-2 transition-colors z-20">
-                        <Icon name="X" size={20} />
+                    <button onClick={onClose} className="absolute top-4 right-4 bg-black/20 hover:bg-black/40 text-white rounded-full p-2 transition-colors z-20" aria-label="Close"> <Icon name="X" size={20} />
                     </button>
                     <div className="relative z-10 text-center px-6">
                         <h2 className="text-xl font-black text-white leading-tight mb-1 tracking-tight drop-shadow-md">

@@ -164,8 +164,7 @@ export const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose, onImpor
               {step === 'upload' ? 'PDF o .txt de tu programa' : `${parsedDays.length} días detectados`}
             </p>
           </div>
-          <button onClick={onClose} className="text-zinc-500 hover:text-white">
-            <Icon name="X" size={20} />
+          <button onClick={onClose} className="text-zinc-500 hover:text-white" aria-label="Close"> <Icon name="X" size={20} />
           </button>
         </div>
 

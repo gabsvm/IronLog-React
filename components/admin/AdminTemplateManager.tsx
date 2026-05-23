@@ -253,7 +253,7 @@ export const AdminTemplateManager: React.FC<{ onClose: () => void }> = ({ onClos
                     <h2 className="text-xl font-bold flex items-center gap-2">
                         <Icon name="Crown" className="text-yellow-500" /> Admin Template Manager
                     </h2>
-                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full"><Icon name="X" /></button>
+                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full" aria-label="Close"> <Icon name="X" /></button>
                 </div>
                 
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">

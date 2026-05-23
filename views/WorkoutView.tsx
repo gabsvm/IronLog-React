@@ -279,8 +279,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
             <div className="glass z-30 pt-safe bg-black/90">
                 {/* Top Actions Row */}
                 <div className="px-4 h-14 flex items-center justify-between">
-                    <button onClick={onBack} className="w-10 h-10 flex items-center justify-center rounded-full active:bg-zinc-800 transition-colors text-zinc-400 hover:text-white">
-                        <Icon name="ChevronLeft" size={24} strokeWidth={2.5} />
+                    <button onClick={onBack} className="w-10 h-10 flex items-center justify-center rounded-full active:bg-zinc-800 transition-colors text-zinc-400 hover:text-white" aria-label="Previous"> <Icon name="ChevronLeft" size={24} strokeWidth={2.5} />
                     </button>
 
                     <div className="flex items-center gap-2">
@@ -470,8 +469,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                 onClick={goToPrev}
                                 disabled={focusedIndex === 0}
                                 className="w-10 h-10 flex items-center justify-center rounded-xl bg-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed"
-                            >
-                                <Icon name="ChevronLeft" size={20} />
+                             aria-label="Previous"> <Icon name="ChevronLeft" size={20} />
                             </button>
                             <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
                                 {focusedIndex + 1} / {sessionExercises.length}
@@ -480,8 +478,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                 onClick={goToNext}
                                 disabled={focusedIndex === sessionExercises.length - 1}
                                 className="w-10 h-10 flex items-center justify-center rounded-xl bg-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed"
-                            >
-                                <Icon name="ChevronRight" size={20} />
+                             aria-label="Next"> <Icon name="ChevronRight" size={20} />
                             </button>
                         </div>
 

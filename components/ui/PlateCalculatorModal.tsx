@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
 import { Button } from './Button';
 import { Icon } from './Icon';
+import { Sheet } from './Sheet';
 import { calculatePlates, STANDARD_PLATES } from '../../utils/plateMath';
 
 interface PlateCalculatorModalProps {
@@ -28,49 +28,70 @@ export const PlateCalculatorModal: React.FC<PlateCalculatorModalProps> = ({ init
     };
 
     return (
-        <div className="fixed inset-0 z-sheet bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-200" onClick={onClose}>
-            <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-2xl p-6 shadow-2xl space-y-6" onClick={e => e.stopPropagation()}>
-                <div className="flex justify-between items-center">
-                    <h3 className="text-xl font-black text-zinc-900 dark:text-white uppercase flex items-center gap-2">
-                        <Icon name="Dumbbell" size={24} /> {t.plateCalc.title}
-                    </h3>
-                    <div className="flex items-center gap-1">
-                        <button onClick={() => setShowInventory(!showInventory)} className={`p-2 hover:bg-zinc-800 rounded-full transition-colors ${showInventory ? 'text-blue-500 bg-blue-500/10 hover:bg-blue-500/20' : 'text-zinc-500'}`}>
-                            <Icon name="Settings" size={24} />
-                        </button>
-                        <button onClick={onClose} className="text-zinc-400 p-2 hover:bg-zinc-800 rounded-full"><Icon name="X" size={24} /></button>
-                    </div>
+        <Sheet
+            open={true}
+            onOpenChange={(o) => { if (!o) onClose(); }}
+            title={t.plateCalc.title}
+            accent="zinc"
+            footer={<Button fullWidth onClick={onClose}>{t.close}</Button>}
+        >
+            <div className="p-5 space-y-6">
+                <div className="flex justify-end">
+                    <button
+                        onClick={() => setShowInventory(!showInventory)}
+                        aria-pressed={showInventory}
+                        aria-label={showInventory ? 'Hide plate inventory' : 'Show plate inventory'}
+                        className={`p-2 rounded-full transition-colors duration-fast ease-natural ${showInventory ? 'text-blue-500 bg-blue-500/10 hover:bg-blue-500/20' : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
+                    >
+                        <Icon name="Settings" size={20} />
+                    </button>
                 </div>
 
                 {showInventory ? (
-                    <div className="space-y-3 animate-in fade-in slide-in-from-right-4 duration-300 max-h-[60vh] overflow-y-auto pr-1">
-                        <div className="text-xs font-bold text-zinc-500 uppercase tracking-widest bg-zinc-800/50 p-3 rounded-lg flex items-start gap-2">
+                    <div className="space-y-3 animate-in fade-in slide-in-from-right-4 duration-base">
+                        <div className="text-xs font-bold text-zinc-500 uppercase tracking-widest bg-zinc-100 dark:bg-zinc-800/50 p-3 rounded-lg flex items-start gap-2">
                             <Icon name="Info" size={16} className="shrink-0 text-blue-400" />
                             {lang === 'es' ? 'La calculadora solo usará los discos que realmente tengas disponibles.' : 'The calculator will only use the plates you actually own.'}
                         </div>
                         {STANDARD_PLATES.map(p => {
                             const qty = inventory[p.weight] || 0;
                             return (
-                                <div key={p.weight} className="flex justify-between items-center bg-zinc-100 dark:bg-zinc-800/80 p-2 rounded-xl border border-transparent hover:border-zinc-700 transition-colors">
+                                <div key={p.weight} className="flex justify-between items-center bg-zinc-100 dark:bg-zinc-800/80 p-2 rounded-xl border border-transparent hover:border-zinc-700 transition-colors duration-fast">
                                     <div className="flex items-center gap-3 w-20">
                                         <div className={`w-3 h-8 shadow-sm rounded-[2px] ${p.color}`}></div>
                                         <span className="font-black text-zinc-900 dark:text-white">{p.weight}</span>
                                     </div>
                                     <div className="flex items-center gap-4 bg-white dark:bg-zinc-900 rounded-lg p-1.5 px-4 shadow-sm">
-                                        <button onClick={() => updateInventory(p.weight, -2)} className="text-red-500 font-black p-1 active:scale-90 hover:opacity-80"><Icon name="Minus" size={16} /></button>
+                                        <button
+                                            onClick={() => updateInventory(p.weight, -2)}
+                                            aria-label={`Remove 2 of ${p.weight}kg plates`}
+                                            className="text-red-500 font-black p-1 active:scale-90 hover:opacity-80 transition-transform duration-fast"
+                                        >
+                                            <Icon name="Minus" size={16} />
+                                        </button>
                                         <span className="font-mono font-black text-lg w-6 text-center text-zinc-800 dark:text-zinc-200">{qty}</span>
-                                        <button onClick={() => updateInventory(p.weight, 2)} className="text-green-500 font-black p-1 active:scale-90 hover:opacity-80"><Icon name="Plus" size={16} /></button>
+                                        <button
+                                            onClick={() => updateInventory(p.weight, 2)}
+                                            aria-label={`Add 2 of ${p.weight}kg plates`}
+                                            className="text-green-500 font-black p-1 active:scale-90 hover:opacity-80 transition-transform duration-fast"
+                                        >
+                                            <Icon name="Plus" size={16} />
+                                        </button>
                                     </div>
                                 </div>
                             )
                         })}
                     </div>
                 ) : (
-                    <div className="space-y-6 animate-in fade-in slide-in-from-left-4 duration-300">
+                    <div className="space-y-6 animate-in fade-in slide-in-from-left-4 duration-base">
                         {/* Controls */}
                         <div className="space-y-4">
                             <div className="bg-zinc-100 dark:bg-zinc-800 p-2 rounded-xl flex items-center justify-between">
-                                <button onClick={() => setWeight(w => Math.max(barWeight, w - 2.5))} className="w-12 h-12 rounded-lg bg-white dark:bg-zinc-700 flex items-center justify-center shadow-sm">
+                                <button
+                                    onClick={() => setWeight(w => Math.max(barWeight, w - 2.5))}
+                                    aria-label="Decrease weight by 2.5"
+                                    className="w-12 h-12 rounded-lg bg-white dark:bg-zinc-700 flex items-center justify-center shadow-sm"
+                                >
                                     <Icon name="Minus" size={20} />
                                 </button>
                                 <div className="text-center">
@@ -78,11 +99,16 @@ export const PlateCalculatorModal: React.FC<PlateCalculatorModalProps> = ({ init
                                         type="number"
                                         value={weight}
                                         onChange={(e) => setWeight(Number(e.target.value))}
+                                        aria-label="Total target weight"
                                         className="bg-transparent text-3xl font-black text-center w-32 outline-none"
                                     />
                                     <div className="text-[10px] font-bold text-zinc-400 uppercase">{t.plateCalc.totalWeight}</div>
                                 </div>
-                                <button onClick={() => setWeight(w => w + 2.5)} className="w-12 h-12 rounded-lg bg-white dark:bg-zinc-700 flex items-center justify-center shadow-sm">
+                                <button
+                                    onClick={() => setWeight(w => w + 2.5)}
+                                    aria-label="Increase weight by 2.5"
+                                    className="w-12 h-12 rounded-lg bg-white dark:bg-zinc-700 flex items-center justify-center shadow-sm"
+                                >
                                     <Icon name="Plus" size={20} />
                                 </button>
                             </div>
@@ -145,8 +171,7 @@ export const PlateCalculatorModal: React.FC<PlateCalculatorModalProps> = ({ init
                         </div>
                     </div>
                 )}
-                <Button fullWidth onClick={onClose}>{t.close}</Button>
             </div>
-        </div>
+        </Sheet>
     );
 };
