@@ -19,6 +19,7 @@ import { PaywallModal } from './components/pro/PaywallModal';
 import { SettingsModal } from './components/settings/SettingsModal';
 import { FreestyleSessionModal } from './components/workout/FreestyleSessionModal';
 import { TwoBlockMassModal } from './components/workout/TwoBlockMassModal';
+import { CommandPalette, CommandAction } from './components/ui/CommandPalette';
 import { CROSSFIT_EXERCISES, CALISTHENICS_EXERCISES, NILSSON_BW_EXERCISES } from './data/disciplineExercises';
 
 // Lazy Load views — keeps initial bundle small
@@ -73,6 +74,7 @@ const AppContent = () => {
     const [showMesoCompleteModal, setShowMesoCompleteModal] = useState(false);
     const [showFreestyleModal, setShowFreestyleModal] = useState(false);
     const [showTwoBlockModal, setShowTwoBlockModal] = useState(false);
+    const [showCommandPalette, setShowCommandPalette] = useState(false);
 
     // Custom Modals State
     const [importData, setImportData] = useState<any>(null);
@@ -327,7 +329,7 @@ const AppContent = () => {
                             <ProgramEditView onBack={() => setView('home')} />
                         </Suspense>
                     ) : (
-                        <Layout view={view as any} setView={setView as any} onOpenSettings={() => setShowSettings(true)}>
+                        <Layout view={view as any} setView={setView as any} onOpenSettings={() => setShowSettings(true)} onOpenCommandPalette={() => setShowCommandPalette(true)}>
                             {view === 'home' && <HomeView
                                 startSession={(idx) => {
                                     if (!activeMeso) { setShowFreestyleModal(true); return; }
@@ -433,6 +435,66 @@ const AppContent = () => {
                     setShowTwoBlockModal(false);
                     setView('workout');
                 }}
+            />
+
+            {/* Command Palette — primary "start a workout" entry point */}
+            <CommandPalette
+                isOpen={showCommandPalette}
+                onClose={() => setShowCommandPalette(false)}
+                actions={(() => {
+                    const actions: CommandAction[] = [];
+                    if (activeSession) {
+                        actions.push({
+                            id: 'resume',
+                            label: { en: 'Resume active session', es: 'Reanudar sesión activa' },
+                            description: { en: activeSession.name, es: activeSession.name },
+                            icon: 'Play',
+                            accent: 'emerald',
+                            badge: lang === 'es' ? 'EN CURSO' : 'LIVE',
+                            onSelect: () => setView('workout'),
+                            keywords: ['continue', 'resume', 'continuar', 'activa'],
+                        });
+                    }
+                    if (activeMeso) {
+                        actions.push({
+                            id: 'meso_today',
+                            label: { en: 'Continue mesocycle (today)', es: 'Continuar mesociclo (hoy)' },
+                            description: { en: `${activeMeso.mesoType || ''} · Week ${activeMeso.week}`, es: `${activeMeso.mesoType || ''} · Semana ${activeMeso.week}` },
+                            icon: 'Calendar',
+                            accent: 'primary',
+                            onSelect: () => setView('home'),
+                            keywords: ['program', 'rutina', 'plan'],
+                        });
+                    }
+                    actions.push({
+                        id: 'two_block',
+                        label: { en: 'Two Block Mass', es: 'Two Block Mass' },
+                        description: { en: 'Nick Nilsson · 8 protocols, 6-week cycle', es: 'Nick Nilsson · 8 protocolos, ciclo 6 semanas' },
+                        icon: 'Layers',
+                        accent: 'amber',
+                        onSelect: () => setShowTwoBlockModal(true),
+                        keywords: ['nilsson', 'mesocycle', 'accumulation', 'intensification', 'mesociclo'],
+                    });
+                    actions.push({
+                        id: 'freestyle',
+                        label: { en: 'Freestyle / WOD / Skill', es: 'Sesión Libre / WOD / Skill' },
+                        description: { en: 'Free gym, CrossFit benchmark or calisthenics skill', es: 'Gym libre, WOD CrossFit o skill de calistenia' },
+                        icon: 'Dumbbell',
+                        accent: 'violet',
+                        onSelect: () => setShowFreestyleModal(true),
+                        keywords: ['crossfit', 'calisthenics', 'libre', 'wod', 'skill'],
+                    });
+                    actions.push({
+                        id: 'program',
+                        label: { en: 'Edit my program', es: 'Editar mi programa' },
+                        description: { en: 'Open the routine editor', es: 'Abrir el editor de rutinas' },
+                        icon: 'Edit',
+                        accent: 'zinc',
+                        onSelect: () => setView('program'),
+                        keywords: ['routine', 'rutina', 'template', 'plantilla'],
+                    });
+                    return actions;
+                })()}
             />
 
             {/* Standard Modal Overlays */}

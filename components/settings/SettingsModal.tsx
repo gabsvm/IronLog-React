@@ -41,6 +41,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     const [targetInput, setTargetInput] = useState('');
     const [adminStatus, setAdminStatus] = useState<{ msg: string, type: 'success' | 'error' | 'neutral', details?: string, codeSnippet?: string } | null>(null);
     const [showTemplateManager, setShowTemplateManager] = useState(false);
+    const [tab, setTab] = useState<'account' | 'prefs' | 'advanced'>('account');
 
     const isAdmin = user?.email === 'gabsvm@gmail.com';
 
@@ -194,11 +195,36 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
                 <div className="p-6 pb-2 shrink-0 flex justify-between items-center bg-white dark:bg-zinc-900 z-10">
                     <h2 className="font-bold text-2xl dark:text-white tracking-tight">{t.settings}</h2>
-                    <button onClick={onClose} className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white"><Icon name="X" size={24} /></button>
+                    <button onClick={onClose} aria-label="Close settings" className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white"><Icon name="X" size={24} /></button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-6 pt-2 pb-24 space-y-2 scroll-container">
+                {/* Tab bar */}
+                <div role="tablist" aria-label="Settings sections" className="px-4 shrink-0 flex gap-1 bg-white dark:bg-zinc-900 border-b border-zinc-100 dark:border-white/5">
+                    {([
+                        { id: 'account' as const, label: lang === 'es' ? 'Cuenta' : 'Account', icon: 'User' },
+                        { id: 'prefs' as const, label: lang === 'es' ? 'Preferencias' : 'Preferences', icon: 'Settings' },
+                        { id: 'advanced' as const, label: lang === 'es' ? 'Avanzado' : 'Advanced', icon: 'Shield' },
+                    ]).map(tabDef => {
+                        const active = tab === tabDef.id;
+                        return (
+                            <button
+                                key={tabDef.id}
+                                role="tab"
+                                aria-selected={active}
+                                onClick={() => setTab(tabDef.id)}
+                                className={`relative flex-1 py-3 flex items-center justify-center gap-1.5 text-xs font-bold transition-colors duration-200 ${active ? 'text-zinc-900 dark:text-white' : 'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300'}`}
+                            >
+                                <Icon name={tabDef.icon} size={14} />
+                                {tabDef.label}
+                                {active && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-primary-500" />}
+                            </button>
+                        );
+                    })}
+                </div>
 
+                <div className="flex-1 overflow-y-auto p-6 pt-4 pb-24 space-y-2 scroll-container">
+
+                    {tab === 'account' && (<>
                     {!isStandalone && (
                         <div className="mb-6 bg-gradient-to-r from-red-600 to-orange-600 p-4 rounded-2xl shadow-lg shadow-orange-500/20 flex items-center justify-between animate-in fade-in slide-in-from-top-4">
                             <div className="text-white">
@@ -336,7 +362,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         </div>
                     </div>
 
-                    <Divider />
+                    </>)}
+
+                    {tab === 'prefs' && (<>
 
                     {/* Content Topic */}
                     <div>
@@ -344,16 +372,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         <div className="space-y-3">
                             <ProButton label={t.programEditor} icon="Layout" onClick={onOpenProgram} featureName="Custom Routines" />
                             <ProButton label={t.manageEx} icon="Dumbbell" onClick={onOpenExercises} featureName="Exercise Library" />
-                            <button onClick={onOpenTwoBlock} className="w-full flex items-center gap-3 p-4 rounded-2xl bg-gradient-to-br from-amber-500/10 to-blue-500/10 border border-amber-500/30 hover:scale-[1.01] active:scale-[0.99] transition-transform">
-                                <span className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-blue-500 flex items-center justify-center text-white">
-                                    <Icon name="Layers" size={18} />
-                                </span>
-                                <div className="flex-1 text-left">
-                                    <div className="font-black text-sm text-zinc-900 dark:text-white">Two Block Mass</div>
-                                    <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">{lang === 'es' ? 'Mesociclo Nick Nilsson · 8 protocolos' : 'Nick Nilsson mesocycle · 8 protocols'}</div>
-                                </div>
-                                <Icon name="ChevronRight" size={16} className="text-zinc-400" />
-                            </button>
+                            <p className="text-[10px] text-zinc-500 leading-snug px-1">
+                                {lang === 'es'
+                                    ? '💡 Two Block Mass se inicia desde el botón (+) en la barra inferior.'
+                                    : '💡 Start Two Block Mass from the (+) button in the bottom bar.'}
+                            </p>
                         </div>
                     </div>
 
@@ -397,7 +420,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         </div>
                     </div>
 
-                    <Divider />
+                    </>)}
+
+                    {tab === 'advanced' && (<>
 
                     {/* Database Topic */}
                     <div>
@@ -418,6 +443,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         <label className="text-xs font-black text-red-400 uppercase tracking-widest mb-3 block">{t.dangerZone}</label>
                         <button onClick={onReset} className="w-full py-3 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900 rounded-xl text-sm font-bold flex items-center justify-center gap-2"><Icon name="Trash2" size={16} /> {t.factoryReset}</button>
                     </div>
+
+                    </>)}
                 </div>
             </div>
             {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} feature={featureAttempted} />}

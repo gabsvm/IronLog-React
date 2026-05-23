@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../../context/AppContext';
 import { Icon } from '../ui/Icon';
 import { Button } from '../ui/Button';
@@ -108,13 +109,18 @@ export const TwoBlockMassModal: React.FC<Props> = ({ isOpen, onClose, onStart })
         [selectedId]
     );
 
-    if (!isOpen) return null;
-
     const t = (k: { en: string; es: string }) => (lang === 'es' ? k.es : k.en);
     const phil = TWO_BLOCK_PHILOSOPHY[lang];
 
     return (
-        <div className="fixed inset-0 z-[80] bg-gray-50 dark:bg-zinc-950 flex flex-col animate-in slide-in-from-bottom duration-200">
+        <AnimatePresence>
+            {isOpen && (
+        <motion.div
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed inset-0 z-[80] bg-gray-50 dark:bg-zinc-950 flex flex-col">
             {/* Header */}
             <div className="glass px-4 h-16 shrink-0 flex items-center gap-3 border-b border-zinc-200 dark:border-white/5">
                 <button onClick={() => selected ? setSelectedId(null) : onClose()} className="p-2 -ml-2 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white">
@@ -261,6 +267,8 @@ export const TwoBlockMassModal: React.FC<Props> = ({ isOpen, onClose, onStart })
                     </>
                 )}
             </div>
-        </div>
+        </motion.div>
+            )}
+        </AnimatePresence>
     );
 };

@@ -1,5 +1,6 @@
 
 import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { SessionExercise, WorkoutSet, CardioType, SetType } from '../../types';
@@ -393,7 +394,9 @@ export const SortableExerciseCard = React.memo(({
     };
 
     return (
-        <div
+        <motion.div
+            layout={isDragging ? false : 'position'}
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
             ref={viewMode === 'list' ? setNodeRef : null}
             style={style}
             onClick={() => {
@@ -888,6 +891,6 @@ export const SortableExerciseCard = React.memo(({
                     </div>
                 </div>
             )}
-        </div>
+        </motion.div>
     );
 });

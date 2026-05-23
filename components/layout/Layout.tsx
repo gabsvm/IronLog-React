@@ -1,19 +1,25 @@
 
 import React from 'react';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
+import { usePro } from '../../hooks/usePro';
 import { TRANSLATIONS } from '../../constants';
 import { Icon } from '../ui/Icon';
 import { Logo } from '../ui/Logo';
+import { Avatar } from '../ui/Avatar';
 
 interface LayoutProps {
     children: React.ReactNode;
     view: 'home' | 'workout' | 'history' | 'stats' | 'nutrition';
     setView: (v: 'home' | 'workout' | 'history' | 'stats' | 'nutrition') => void;
     onOpenSettings: () => void;
+    onOpenCommandPalette?: () => void;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenSettings }) => {
+export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenSettings, onOpenCommandPalette }) => {
     const { lang } = useApp();
+    const { user } = useAuth();
+    const { isPro } = usePro();
     const t = TRANSLATIONS[lang];
 
     const NavBtn = ({ id, label, icon }: { id: typeof view, label: string, icon: any }) => {
@@ -64,13 +70,15 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
                         <div className="flex items-center gap-3">
                             <Logo className="w-10 h-10" showText />
                         </div>
-                        <button
-                            id="tut-settings-btn"
-                            onClick={onOpenSettings}
-                            className="w-10 h-10 flex items-center justify-center rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-colors active:scale-90"
-                        >
-                            <Icon name="Menu" size={20} />
-                        </button>
+                        <div id="tut-settings-btn">
+                            <Avatar
+                                email={user?.email}
+                                photoURL={(user as any)?.photoURL}
+                                isPro={isPro}
+                                onClick={onOpenSettings}
+                                ariaLabel={lang === 'es' ? 'Abrir cuenta y ajustes' : 'Open account and settings'}
+                            />
+                        </div>
                     </div>
                 </div>
             )}
@@ -83,11 +91,23 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
             {/* Floating Island Navigation */}
             {view !== 'workout' && (
                 <div className="fixed bottom-0 left-0 right-0 z-30 flex justify-center pb-safe pointer-events-none">
-                    <div id="tut-nav-bar" className="pointer-events-auto mb-5 mx-6 w-full max-w-md h-[68px] glass-island rounded-[2rem] flex items-center px-4 justify-between">
-                        <NavBtn id="home" label={t.active} icon="Layout" />
-                        <NavBtn id="history" label={t.history} icon="Calendar" />
-                        <NavBtn id="nutrition" label={lang === 'es' ? 'Dieta' : 'Diet'} icon="Utensils" />
-                        <NavBtn id="stats" label="Stats" icon="BarChart2" />
+                    <div className="pointer-events-auto mb-5 mx-6 w-full max-w-md flex items-center gap-2.5">
+                        <div id="tut-nav-bar" className="flex-1 h-[68px] glass-island rounded-[2rem] flex items-center px-4 justify-between">
+                            <NavBtn id="home" label={t.active} icon="Layout" />
+                            <NavBtn id="history" label={t.history} icon="Calendar" />
+                            <NavBtn id="nutrition" label={lang === 'es' ? 'Dieta' : 'Diet'} icon="Utensils" />
+                            <NavBtn id="stats" label="Stats" icon="BarChart2" />
+                        </div>
+                        {/* FAB — opens command palette */}
+                        {onOpenCommandPalette && (
+                            <button
+                                onClick={onOpenCommandPalette}
+                                aria-label={lang === 'es' ? 'Iniciar sesión de entrenamiento' : 'Start a workout session'}
+                                className="shrink-0 w-[68px] h-[68px] rounded-[2rem] bg-gradient-to-br from-primary-500 to-primary-700 text-white flex items-center justify-center shadow-[0_8px_24px_-4px_rgba(var(--primary-500),0.6)] active:scale-90 transition-transform duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                            >
+                                <Icon name="Plus" size={26} strokeWidth={2.5} />
+                            </button>
+                        )}
                     </div>
                 </div>
             )}
