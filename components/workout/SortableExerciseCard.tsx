@@ -8,40 +8,15 @@ import { Icon } from '../ui/Icon';
 import { MuscleTag } from './MuscleTag';
 import { SetRow } from './SetRow';
 import { AVTRoundCard } from './AVTRoundCard';
-import { EMOMTimer, TabataTimer } from './ProtocolTimers';
 import { SkillProgressionBadge } from './SkillProgressionBadge';
+import { SparkLine } from './SparkLine';
+import { ExerciseProtocolBanners } from './ExerciseProtocolBanners';
+import { ExerciseCardMenu } from './ExerciseCardMenu';
+import { RestPresetSheet } from './RestPresetSheet';
 import { getTranslated, roundWeight } from '../../utils';
 import { useApp } from '../../context/AppContext';
 import { useTimerContext } from '../../context/TimerContext';
 import { triggerHaptic, playTimerFinishSound } from '../../utils/audio';
-
-// ── Simple sparkline — pure SVG, no deps ──────────────────────────────────────
-const SparkLine = React.memo(({ values }: { values: number[] }) => {
-    if (values.length < 2) return null;
-    const min = Math.min(...values);
-    const max = Math.max(...values);
-    const range = max - min || 1;
-    const W = 56; const H = 18;
-    const pts = values.map((v, i) => {
-        const x = (i / (values.length - 1)) * W;
-        const y = H - ((v - min) / range) * (H - 2) - 1;
-        return `${x.toFixed(1)},${y.toFixed(1)}`;
-    }).join(' ');
-    const isUp = values[values.length - 1] >= values[0];
-    const pct = (((values[values.length - 1] - values[0]) / values[0]) * 100);
-    return (
-        <div className="flex items-center gap-1.5">
-            <svg width={W} height={H} className="overflow-visible shrink-0">
-                <polyline points={pts} fill="none"
-                    stroke={isUp ? '#22c55e' : '#ef4444'}
-                    strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <span className={`text-[9px] font-black tabular-nums ${isUp ? 'text-green-500' : 'text-red-400'}`}>
-                {isUp ? '+' : ''}{pct.toFixed(1)}%
-            </span>
-        </div>
-    );
-});
 
 interface SortableExerciseCardProps {
     exercise: SessionExercise;
@@ -113,10 +88,8 @@ export const SortableExerciseCard = React.memo(({
 }: SortableExerciseCardProps) => {
     const { restTimer } = useTimerContext();
     const { logs } = useApp();
-    const [isDeleting, setIsDeleting] = useState(false);
     const [activeEmomMinute, setActiveEmomMinute] = useState(0);
     const [showRestPreset, setShowRestPreset] = useState(false);
-    const [restPresetInput, setRestPresetInput] = useState(String(ex.defaultRestSeconds || ''));
     const [exDoneFlash, setExDoneFlash] = useState(false);
     const handleEmomMinuteChange = useCallback((m: number) => setActiveEmomMinute(m), []);
 
@@ -390,7 +363,35 @@ export const SortableExerciseCard = React.memo(({
     const confirmDelete = () => {
         onUpdateSession((prev: any) => prev ? { ...prev, exercises: prev.exercises.filter((e: any) => e.instanceId !== ex.instanceId) } : null);
         setOpenMenuId(null);
-        setIsDeleting(false);
+    };
+
+    const handleToggleUnit = () => {
+        const newUnit = unit === 'kg' ? 'pl' : 'kg';
+        onUpdateSession((prev: any) => !prev ? null : {
+            ...prev,
+            exercises: prev.exercises.map((e: any) => e.instanceId === ex.instanceId ? { ...e, weightUnit: newUnit } : e)
+        });
+    };
+
+    const handleToggleSuperset = () => {
+        if (ex.supersetId) {
+            onUpdateSession((prev: any) => !prev ? null : {
+                ...prev,
+                exercises: (prev.exercises || []).map((e: any) => e.instanceId === ex.instanceId ? { ...e, supersetId: undefined } : e)
+            });
+        } else {
+            onLink(ex.instanceId);
+        }
+        setOpenMenuId(null);
+    };
+
+    const handleSaveRestPreset = (secs: number | undefined) => {
+        onUpdateSession((prev: any) => !prev ? null : {
+            ...prev,
+            exercises: prev.exercises.map((e: any) =>
+                e.instanceId === ex.instanceId ? { ...e, defaultRestSeconds: secs } : e
+            )
+        });
     };
 
     return (
@@ -509,101 +510,37 @@ export const SortableExerciseCard = React.memo(({
                         )}
 
                         <div className="relative">
-                            <button 
-                                onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === ex.instanceId ? null : ex.instanceId); setIsDeleting(false); }} 
-                                className={`w-8 h-8 flex items-center justify-center rounded-full transition-all ${openMenuId === ex.instanceId ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
+                            <button
+                                aria-label={lang === 'es' ? 'Más opciones' : 'More options'}
+                                aria-haspopup="menu"
+                                aria-expanded={openMenuId === ex.instanceId}
+                                onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === ex.instanceId ? null : ex.instanceId); }}
+                                className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors duration-fast ease-natural ${openMenuId === ex.instanceId ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
                             >
                                 <Icon name="MoreVertical" size={20} />
                             </button>
 
-                            {/* Dropdown Menu */}
-                            {openMenuId === ex.instanceId && (
-                                <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-zinc-800 rounded-xl shadow-xl border border-zinc-100 dark:border-white/5 z-20 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
-                                    {!isDeleting ? (
-                                        <>
-                                            <button onClick={(e) => { e.stopPropagation(); if (onOpenDetail) onOpenDetail(ex); setOpenMenuId(null); }} className="w-full text-left px-4 py-3 text-sm font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2">
-                                                <Icon name="Info" size={16} /> {String(t.exDetail)}
-                                            </button>
-                                            <div className="h-px bg-zinc-100 dark:bg-white/5 my-1"></div>
-
-                                            {isCardio && (
-                                                <>
-                                                    {['steady', 'hiit', 'tabata'].map(m => (
-                                                        <button key={m} onClick={(e) => { e.stopPropagation(); handleCardioModeChange(m as CardioType); }} className={`w-full text-left px-4 py-2 text-sm font-bold hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2 ${cardioMode === m ? 'text-blue-600' : 'text-zinc-600 dark:text-zinc-300'}`}>
-                                                            {cardioMode === m && <Icon name="Check" size={14} />} {String(t.cardioModes?.[m])}
-                                                        </button>
-                                                    ))}
-                                                    <div className="h-px bg-zinc-100 dark:bg-white/5 my-1"></div>
-                                                </>
-                                            )}
-
-                                            {!isCardio && (
-                                                <button onClick={(e) => { e.stopPropagation(); handleInjectWarmup(); }} className="w-full text-left px-4 py-3 text-sm font-bold text-orange-600 dark:text-orange-400 hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2">
-                                                    <Icon name="Zap" size={16} /> Add Warmup Sets
-                                                </button>
-                                            )}
-
-                                            {!isCardio && !ex.isBodyweight && (
-                                                <button onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    const newUnit = unit === 'kg' ? 'pl' : 'kg';
-                                                    onUpdateSession((prev: any) => !prev ? null : {
-                                                        ...prev,
-                                                        exercises: prev.exercises.map((e: any) => e.instanceId === ex.instanceId ? { ...e, weightUnit: newUnit } : e)
-                                                    });
-                                                    setOpenMenuId(null);
-                                                }} className="w-full text-left px-4 py-3 text-sm font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2">
-                                                    <Icon name="Settings" size={16} /> {String(t.units?.toggle)}
-                                                </button>
-                                            )}
-
-                                            <div className="h-px bg-zinc-100 dark:bg-white/5 my-1"></div>
-                                            <button onClick={(e) => { e.stopPropagation(); onReplace(ex.instanceId); }} className="w-full text-left px-4 py-3 text-sm font-bold text-blue-600 dark:text-blue-400 hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2">
-                                                <Icon name="RefreshCw" size={16} /> {String(t.replaceEx)}
-                                            </button>
-                                            {onSubBodyweight && (
-                                                <button onClick={(e) => { e.stopPropagation(); onSubBodyweight(ex.instanceId, ex.muscle); setOpenMenuId(null); }} className="w-full text-left px-4 py-3 text-sm font-bold text-blue-600 dark:text-blue-400 hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2">
-                                                    <Icon name="Zap" size={16} /> {lang === 'es' ? 'Sub Bodyweight (Nilsson)' : 'Sub Bodyweight (Nilsson)'}
-                                                </button>
-                                            )}
-                                            <button onClick={(e) => {
-                                                e.stopPropagation();
-                                                if (ex.supersetId) {
-                                                    onUpdateSession((prev: any) => !prev ? null : {
-                                                        ...prev,
-                                                        exercises: (prev.exercises || []).map((e: any) => e.instanceId === ex.instanceId ? { ...e, supersetId: undefined } : e)
-                                                    });
-                                                } else {
-                                                    onLink(ex.instanceId);
-                                                }
-                                                setOpenMenuId(null);
-                                            }} className={`w-full text-left px-4 py-3 text-sm font-bold hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2 ${ssStyle ? 'text-red-500' : 'text-orange-600'}`}>
-                                                <Icon name={ssStyle ? "Unlink" : "Link"} size={16} /> {ssStyle ? String(t.unlinkSuperset) : String(t.linkSuperset)}
-                                            </button>
-                                            <button onClick={(e) => { e.stopPropagation(); setRestPresetInput(String(ex.defaultRestSeconds || '')); setShowRestPreset(true); setOpenMenuId(null); }} className="w-full text-left px-4 py-3 text-sm font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2">
-                                                <Icon name="Clock" size={16} /> {lang === 'es' ? 'Rest Timer' : 'Rest Timer'}{ex.defaultRestSeconds ? ` · ${ex.defaultRestSeconds}s` : ''}
-                                            </button>
-                                            <div className="h-px bg-zinc-100 dark:bg-white/5 my-1"></div>
-                                            <button onClick={(e) => { e.stopPropagation(); setIsDeleting(true); }} className="w-full text-left px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50 flex items-center gap-2">
-                                                <Icon name="Trash2" size={16} /> {String(t.removeEx)}
-                                            </button>
-                                        </>
-                                    ) : (
-                                        // Inline Delete Confirmation
-                                        <div className="p-2 space-y-2 bg-red-50 dark:bg-red-900/10">
-                                            <p className="text-xs text-red-600 text-center font-bold px-2">{String(t.confirmRemoveEx)}</p>
-                                            <div className="flex gap-2">
-                                                <button onClick={(e) => { e.stopPropagation(); setIsDeleting(false); }} className="flex-1 py-2 text-xs font-bold bg-white dark:bg-zinc-800 rounded-lg text-zinc-600 dark:text-zinc-300">
-                                                    {String(t.cancel)}
-                                                </button>
-                                                <button onClick={(e) => { e.stopPropagation(); confirmDelete(); }} className="flex-1 py-2 text-xs font-bold bg-red-600 text-white rounded-lg">
-                                                    {String(t.delete)}
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
+                            <ExerciseCardMenu
+                                ex={ex}
+                                isOpen={openMenuId === ex.instanceId}
+                                onClose={() => setOpenMenuId(null)}
+                                isCardio={isCardio}
+                                cardioMode={cardioMode}
+                                unit={unit}
+                                hasSuperset={!!ssStyle}
+                                onOpenDetail={onOpenDetail}
+                                onCardioModeChange={handleCardioModeChange}
+                                onInjectWarmup={handleInjectWarmup}
+                                onToggleUnit={handleToggleUnit}
+                                onReplace={onReplace}
+                                onSubBodyweight={onSubBodyweight}
+                                onToggleSuperset={handleToggleSuperset}
+                                onOpenRestPreset={() => setShowRestPreset(true)}
+                                onRequestDelete={confirmDelete}
+                                t={t}
+                                lang={lang}
+                                supersetStyle={ssStyle}
+                            />
                         </div>
                     </div>
                 </div>
@@ -672,57 +609,18 @@ export const SortableExerciseCard = React.memo(({
                     />
                 </div>
 
-                {isEMOM && (
-                    <EMOMTimer
-                        totalSets={regularSets.length}
-                        lang={lang}
-                        onMinuteChange={handleEmomMinuteChange}
-                    />
-                )}
-                {isMyorep && (
-                    <div className="flex items-center gap-2 px-2 py-1.5 bg-purple-500/10 border border-purple-500/20 rounded-xl">
-                        <Icon name="Repeat" size={12} className="text-purple-400" />
-                        <span className="text-[10px] font-bold text-purple-400 uppercase tracking-wider">Myo-rep</span>
-                        <span className="text-[10px] text-purple-600 ml-0.5">{lang === 'es' ? '· Serie 1 = activación' : '· Set 1 = activation'}</span>
-                        <span className="ml-auto text-[10px] text-purple-600 tabular-nums">{regularSets.length - 1} mini</span>
-                    </div>
-                )}
-                {isCluster && (
-                    <div className="flex items-center gap-2 px-2 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
-                        <Icon name="Grid3x3" size={12} className="text-emerald-400" />
-                        <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Cluster</span>
-                        <span className="ml-1 text-[10px] text-emerald-600">{lang === 'es' ? '· ~15s entre clusters' : '· ~15s intra-set rest'}</span>
-                    </div>
-                )}
-                {isGiant && (
-                    <div className="flex items-center gap-2 px-2 py-1.5 bg-orange-500/10 border border-orange-500/20 rounded-xl">
-                        <Icon name="Layers" size={12} className="text-orange-400" />
-                        <span className="text-[10px] font-bold text-orange-400 uppercase tracking-wider">Giant Set</span>
-                        <span className="ml-1 text-[10px] text-orange-600">{lang === 'es' ? '· Reps altas al fallo' : '· High reps to failure'}</span>
-                    </div>
-                )}
-                {hasTopBackoff && (
-                    <div className="flex items-center gap-1.5 px-2 py-1.5 bg-zinc-800/80 border border-zinc-700/50 rounded-xl">
-                        <span className="text-[9px] font-black text-red-400 bg-red-500/15 px-1.5 py-0.5 rounded">T</span>
-                        <Icon name="ArrowRight" size={10} className="text-zinc-600" />
-                        <span className="text-[9px] font-black text-blue-400 bg-blue-500/15 px-1.5 py-0.5 rounded">B</span>
-                        <span className="text-[10px] font-bold text-zinc-500 ml-1">{lang === 'es' ? 'Top / Back-off' : 'Top / Back-off Protocol'}</span>
-                    </div>
-                )}
-                {isTabata && (
-                    <TabataTimer
-                        totalRounds={regularSets.length}
-                        lang={lang}
-                    />
-                )}
-                {isHIIT && (
-                    <div className="flex items-center gap-2 px-2 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-xl">
-                        <Icon name="Zap" size={12} className="text-amber-400" />
-                        <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">HIIT</span>
-                        <span className="ml-1 text-[10px] text-amber-600">{lang === 'es' ? '· Intervalos alta intensidad' : '· High intensity intervals'}</span>
-                        <span className="ml-auto text-[10px] text-amber-600 tabular-nums">{regularSets.length}</span>
-                    </div>
-                )}
+                <ExerciseProtocolBanners
+                    lang={lang}
+                    totalSets={regularSets.length}
+                    isEMOM={isEMOM}
+                    isMyorep={isMyorep}
+                    isCluster={isCluster}
+                    isGiant={isGiant}
+                    hasTopBackoff={hasTopBackoff}
+                    isTabata={isTabata}
+                    isHIIT={isHIIT}
+                    onEmomMinuteChange={handleEmomMinuteChange}
+                />
             </div>
 
             {/* Sets Header */}
@@ -845,52 +743,13 @@ export const SortableExerciseCard = React.memo(({
                 </button>
             </div>
 
-            {/* Rest Timer Preset Modal */}
-            {showRestPreset && (
-                <div className="fixed inset-0 z-sheet bg-black/60 flex items-center justify-center p-6" onClick={() => setShowRestPreset(false)}>
-                    <div className="bg-zinc-900 p-6 rounded-2xl w-full max-w-xs space-y-4 border border-zinc-800" onClick={e => e.stopPropagation()}>
-                        <div className="flex items-center justify-between">
-                            <h3 className="font-bold text-white">{lang === 'es' ? 'Descanso (segundos)' : 'Rest Time (seconds)'}</h3>
-                            <button onClick={() => setShowRestPreset(false)} className="text-zinc-500 hover:text-white">
-                                <Icon name="X" size={18} />
-                            </button>
-                        </div>
-                        <input
-                            type="number" inputMode="numeric" autoFocus
-                            className="w-full bg-zinc-800 rounded-xl p-3 text-center font-bold text-xl text-white outline-none focus:ring-2 focus:ring-white/20"
-                            value={restPresetInput}
-                            onChange={e => setRestPresetInput(e.target.value)}
-                            placeholder="120"
-                        />
-                        <div className="flex gap-2">
-                            {[60, 90, 120, 180].map(s => (
-                                <button key={s} onClick={() => setRestPresetInput(String(s))}
-                                    className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${restPresetInput === String(s) ? 'bg-red-500 text-white' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'}`}>
-                                    {s}s
-                                </button>
-                            ))}
-                        </div>
-                        <button
-                            className="w-full py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl transition-colors"
-                            onClick={() => {
-                                const secs = parseInt(restPresetInput);
-                                onUpdateSession((prev: any) => !prev ? null : {
-                                    ...prev,
-                                    exercises: prev.exercises.map((e: any) =>
-                                        e.instanceId === ex.instanceId
-                                            ? { ...e, defaultRestSeconds: isNaN(secs) || secs <= 0 ? undefined : secs }
-                                            : e
-                                    )
-                                });
-                                setShowRestPreset(false);
-                                triggerHaptic('medium');
-                            }}
-                        >
-                            {lang === 'es' ? 'Guardar' : 'Save'}
-                        </button>
-                    </div>
-                </div>
-            )}
+            <RestPresetSheet
+                open={showRestPreset}
+                onOpenChange={setShowRestPreset}
+                initialSeconds={ex.defaultRestSeconds || 0}
+                onSave={handleSaveRestPreset}
+                lang={lang}
+            />
         </motion.div>
     );
 });

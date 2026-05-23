@@ -83,14 +83,12 @@ Revamp **parcial**. Mantén el esqueleto visual. Refactoriza sistema + reorganiz
 ### Fase 6 — Refactor monolitos (gradual, requiere sesión dedicada) ⏳ PENDIENTE
 > **Aviso**: NO se hace en blanket porque cada split altera muchas referencias y requiere validación funcional. Plan por componente:
 
-#### `components/workout/SortableExerciseCard.tsx` (893 líneas)
-Extraer en sub-componentes (mismo directorio):
-- `ExerciseCardHeader.tsx` — drag handle, name, muscle tag, menu trigger
-- `ExerciseCardMenu.tsx` — dropdown actions (replace, sub-bw, link, edit muscle, plate calc, rest preset, warmup, delete)
-- `ExerciseCardSets.tsx` — render del listado de SetRow + AVT rounds
-- `ExerciseCardOverlays.tsx` — modals locales (rest preset, delete confirm, plate config)
-- Pasar handlers como props
-- Objetivo: <200 líneas por archivo, el card raíz queda como orquestador
+#### `components/workout/SortableExerciseCard.tsx` (893 → 755 líneas) 🟡 Parcial
+- [x] Extraído `SparkLine.tsx` (41 líneas) — SVG sparkline reusable
+- [x] Extraído `ExerciseProtocolBanners.tsx` (89 líneas) — EMOM/Myorep/Cluster/Giant/TopBackoff/Tabata/HIIT banners
+- [x] Extraído `ExerciseCardMenu.tsx` (201 líneas) — dropdown completo con role=menu + menuitemradio en cardio modes + delete inline confirm. Tiene su propio estado `isDeleting`.
+- [x] Extraído `RestPresetSheet.tsx` (72 líneas) — usa el Sheet primitive; tiene su propio estado de input.
+- [ ] Pendiente: extraer `ExerciseCardHeader` (~190 líneas todavía inline) y `ExerciseCardSets` (~90 líneas). Bajará el orquestador a <400 líneas.
 
 #### `views/HomeView.tsx` (1104 líneas)
 Extraer en `views/home/`:
