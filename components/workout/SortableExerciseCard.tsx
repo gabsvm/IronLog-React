@@ -6,12 +6,11 @@ import { CSS } from '@dnd-kit/utilities';
 import { SessionExercise, WorkoutSet, CardioType, SetType } from '../../types';
 import { Icon } from '../ui/Icon';
 import { MuscleTag } from './MuscleTag';
-import { SetRow } from './SetRow';
-import { AVTRoundCard } from './AVTRoundCard';
 import { SkillProgressionBadge } from './SkillProgressionBadge';
-import { SparkLine } from './SparkLine';
+import { ExerciseCardStats } from './ExerciseCardStats';
 import { ExerciseProtocolBanners } from './ExerciseProtocolBanners';
 import { ExerciseCardMenu } from './ExerciseCardMenu';
+import { ExerciseCardSets } from './ExerciseCardSets';
 import { RestPresetSheet } from './RestPresetSheet';
 import { getTranslated, roundWeight } from '../../utils';
 import { useApp } from '../../context/AppContext';
@@ -550,53 +549,17 @@ export const SortableExerciseCard = React.memo(({
                     <SkillProgressionBadge exercise={ex} lang={lang} />
                 )}
 
-                {historicalBest && (
-                    <div className="flex items-center gap-2 mb-1.5 px-1 mt-1">
-                        <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                            <Icon name="Trophy" size={11} className="text-yellow-500 shrink-0" />
-                            <p className="text-[10px] font-bold text-yellow-500/90 leading-snug truncate">
-                                {lang === 'en' ? 'Best:' : 'Mejor:'}{' '}
-                                {ex.isIsometric ? '⏱ ' : ''}
-                                {historicalBest}
-                            </p>
-                        </div>
-                        {oneRMHistory.length >= 3 && <SparkLine values={oneRMHistory} />}
-                    </div>
-                )}
-                {overloadSuggest && !allDone && (
-                    <div className="flex items-center gap-1.5 mb-1.5 px-1">
-                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/10 border border-green-500/20 text-green-400">
-                            <Icon name="TrendingUp" size={10} className="shrink-0" />
-                            <span className="text-[9px] font-black uppercase tracking-wide">
-                                {lang === 'es' ? `↑ +${overloadSuggest.kg}kg sugerido` : `↑ +${overloadSuggest.kg}kg suggested`}
-                            </span>
-                        </div>
-                    </div>
-                )}
-
-                {lastNote && (
-                    <div className="flex items-start gap-1.5 mb-1.5 px-1">
-                        <Icon name="FileText" size={11} className="mt-0.5 text-zinc-600 shrink-0" />
-                        <p className="text-[10px] text-zinc-600 italic leading-snug line-clamp-1">
-                            {lastNote}
-                        </p>
-                    </div>
-                )}
-
-                {/* Per-exercise set progress bar */}
-                {regularSets.length > 0 && (
-                    <div className="flex items-center gap-2 px-1 -mb-0.5">
-                        <div className="flex-1 h-1 bg-zinc-800 rounded-full overflow-hidden">
-                            <div
-                                className={`h-full rounded-full transition-all duration-500 ${allDone ? 'bg-green-500' : 'bg-red-500/70'}`}
-                                style={{ width: `${(completedCount / regularSets.length) * 100}%` }}
-                            />
-                        </div>
-                        <span className={`text-[9px] font-black tabular-nums tracking-tight ${allDone ? 'text-green-500' : 'text-zinc-600'}`}>
-                            {completedCount}/{regularSets.length}
-                        </span>
-                    </div>
-                )}
+                <ExerciseCardStats
+                    lang={lang}
+                    isIsometric={ex.isIsometric}
+                    historicalBest={historicalBest}
+                    oneRMHistory={oneRMHistory}
+                    overloadSuggest={overloadSuggest}
+                    allDone={allDone}
+                    lastNote={lastNote}
+                    completedCount={completedCount}
+                    totalSets={regularSets.length}
+                />
 
                 <div className="relative flex items-center">
                     <Icon name="Pencil" size={11} className="absolute left-2 text-zinc-700 pointer-events-none" />
@@ -623,98 +586,35 @@ export const SortableExerciseCard = React.memo(({
                 />
             </div>
 
-            {/* Sets Header */}
-            <div className="grid grid-cols-12 gap-2 px-2 py-2 bg-zinc-50 dark:bg-black/20 border-b border-zinc-100 dark:border-white/5 text-[10px] font-bold text-zinc-400 uppercase tracking-widest text-center items-center">
-                <div className={`col-span-2 ${isEMOM ? 'text-cyan-500' : isMyorep ? 'text-purple-500' : isCluster ? 'text-emerald-500' : ''}`}>
-                    {isEMOM ? 'Min' : isMyorep ? 'Set' : '#'}
-                </div>
-                {isCardio ? (
-                    isInterval ? (
-                        <>
-                            <div className="col-span-4 pl-2 text-left text-green-600 dark:text-green-400">{String(t.cardioWork)}</div>
-                            <div className="col-span-4 text-blue-500 dark:text-blue-400">{String(t.cardioRest)}</div>
-                            <div className="col-span-2">{String(t.cardioRounds)}</div>
-                        </>
-                    ) : (
-                        <>
-                            <div className="col-span-4 text-center">{String(t.cardioTime)}</div>
-                            <div className="col-span-4 text-center">{String(t.cardioDist)}</div>
-                            <div className="col-span-2 text-center">{String(t.cardioSpeed)}</div>
-                        </>
-                    )
-                ) : ex.isIsometric ? (
-                    /* Isometric: HOLD TIME header */
-                    <>
-                        <div className="col-span-6 text-center text-violet-400">
-                            {lang === 'es' ? '⏱ TIEMPO DE HOLD' : '⏱ HOLD TIME'}
-                        </div>
-                        <div className="col-span-2"></div>
-                    </>
-                ) : ex.isBodyweight ? (
-                    /* Bodyweight: reps first, optional +kg */
-                    <>
-                        <div className="col-span-6 text-center">{String(t.reps)}</div>
-                        <div className="col-span-2 text-center text-violet-400/60">+KG</div>
-                    </>
-                ) : (
-                    /* Standard weighted */
-                    <>
-                        <div className="col-span-4 text-center">
-                            {`${String(t.weight)} (${unitLabel})`}
-                        </div>
-                        <div className="col-span-4 text-center">{String(t.reps)}</div>
-                        {config.showRIR && <div className="col-span-2 text-center">{String(t.rir)}</div>}
-                        {!config.showRIR && <div className="col-span-2"></div>}
-                    </>
-                )}
-                <div className="col-span-2"></div>
-            </div>
-
-            {/* Sets List */}
-            <div className={`divide-y divide-zinc-100 dark:divide-white/5 ${viewMode === 'focus' ? 'overflow-y-auto flex-1' : ''}`}>
-                {regularSets.map((set, idx) => (
-                    <SetRow
-                        key={set.id}
-                        set={set}
-                        exInstanceId={ex.instanceId}
-                        unit={unit}
-                        unitLabel={unitLabel}
-                        plateWeight={ex.plateWeight}
-                        showRIR={config.showRIR || isCardio}
-                        stageRIR={stageConfig?.rir !== null ? String(stageConfig?.rir) : "-"}
-                        onUpdate={onSetUpdate}
-                        onToggleComplete={onSetComplete}
-                        onChangeType={(exId, setId, type) => onSetTypeChange(exId, setId, type)}
-                        lang={lang}
-                        isCardio={isCardio}
-                        cardioMode={cardioMode}
-                        isBodyweight={ex.isBodyweight}
-                        isIsometric={ex.isIsometric}
-                        isometricTargetSecs={ex.isIsometric ? (ex as any).isometricTargetSecs : undefined}
-                        setIndex={idx}
-                        badgeLabel={setBadgeLabels[idx]}
-                        tutorialId={idx === 0 ? tutorialId : undefined}
-                        disableTypeChange={isSpecialProtocol}
-                        isActiveProtocolSet={isEMOM && activeEmomMinute === idx + 1}
-                        isNextSet={nextSetIdx === idx}
-                    />
-                ))}
-
-                {isAVTExercise && avtRounds.map((round, idx) => (
-                    <AVTRoundCard
-                        key={round.roundId}
-                        roundId={round.roundId}
-                        hops={round.hops}
-                        roundNumber={idx + 1}
-                        exInstanceId={ex.instanceId}
-                        unit={unitLabel}
-                        onUpdate={onSetUpdate}
-                        onToggleComplete={onSetComplete}
-                        onMarkLastHop={onMarkLastHop}
-                        onAddHop={onAddHopToRound}
-                    />
-                ))}
-            </div>
+            <ExerciseCardSets
+                ex={ex}
+                regularSets={regularSets}
+                avtRounds={avtRounds}
+                isAVTExercise={isAVTExercise}
+                isCardio={isCardio}
+                isInterval={isInterval}
+                cardioMode={cardioMode}
+                unit={unit}
+                unitLabel={unitLabel}
+                isEMOM={isEMOM}
+                isMyorep={isMyorep}
+                isCluster={isCluster}
+                isSpecialProtocol={isSpecialProtocol}
+                activeEmomMinute={activeEmomMinute}
+                nextSetIdx={nextSetIdx}
+                setBadgeLabels={setBadgeLabels}
+                onSetUpdate={onSetUpdate}
+                onSetComplete={onSetComplete}
+                onSetTypeChange={onSetTypeChange}
+                onMarkLastHop={onMarkLastHop}
+                onAddHopToRound={onAddHopToRound}
+                config={config}
+                stageConfig={stageConfig}
+                t={t}
+                lang={lang}
+                viewMode={viewMode}
+                tutorialId={tutorialId}
+            />
 
             {/* Exercise-complete flash overlay */}
             {exDoneFlash && (

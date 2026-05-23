@@ -83,12 +83,14 @@ Revamp **parcial**. Mantén el esqueleto visual. Refactoriza sistema + reorganiz
 ### Fase 6 — Refactor monolitos (gradual, requiere sesión dedicada) ⏳ PENDIENTE
 > **Aviso**: NO se hace en blanket porque cada split altera muchas referencias y requiere validación funcional. Plan por componente:
 
-#### `components/workout/SortableExerciseCard.tsx` (893 → 755 líneas) 🟡 Parcial
-- [x] Extraído `SparkLine.tsx` (41 líneas) — SVG sparkline reusable
-- [x] Extraído `ExerciseProtocolBanners.tsx` (89 líneas) — EMOM/Myorep/Cluster/Giant/TopBackoff/Tabata/HIIT banners
-- [x] Extraído `ExerciseCardMenu.tsx` (201 líneas) — dropdown completo con role=menu + menuitemradio en cardio modes + delete inline confirm. Tiene su propio estado `isDeleting`.
-- [x] Extraído `RestPresetSheet.tsx` (72 líneas) — usa el Sheet primitive; tiene su propio estado de input.
-- [ ] Pendiente: extraer `ExerciseCardHeader` (~190 líneas todavía inline) y `ExerciseCardSets` (~90 líneas). Bajará el orquestador a <400 líneas.
+#### `components/workout/SortableExerciseCard.tsx` (893 → 655 líneas, **-238 / -27%**) ✅ Hecho
+- [x] `SparkLine.tsx` (41 líneas) — SVG sparkline reusable
+- [x] `ExerciseProtocolBanners.tsx` (89 líneas) — EMOM/Myorep/Cluster/Giant/TopBackoff/Tabata/HIIT banners
+- [x] `ExerciseCardMenu.tsx` (201 líneas) — dropdown con role=menu + menuitemradio + delete inline confirm
+- [x] `RestPresetSheet.tsx` (72 líneas) — usa el Sheet primitive
+- [x] `ExerciseCardSets.tsx` (168 líneas) — column header row + SetRow map + AVTRoundCard map
+- [x] `ExerciseCardStats.tsx` (86 líneas) — historical best + 1RM sparkline + overload pill + last note + progress bar
+- [ ] Opcional menor: extraer `ExerciseCardHeader` (drag handle + badges + title + info button + warmup btn + menu trigger). Tiene muchas deps (`useSortable` attrs, `useTimerContext`), bajaría otro ~120. No urgente.
 
 #### `views/HomeView.tsx` (1104 líneas)
 Extraer en `views/home/`:
