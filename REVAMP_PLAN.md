@@ -92,15 +92,13 @@ Revamp **parcial**. Mantén el esqueleto visual. Refactoriza sistema + reorganiz
 - [x] `ExerciseCardStats.tsx` (86 líneas) — historical best + 1RM sparkline + overload pill + last note + progress bar
 - [ ] Opcional menor: extraer `ExerciseCardHeader` (drag handle + badges + title + info button + warmup btn + menu trigger). Tiene muchas deps (`useSortable` attrs, `useTimerContext`), bajaría otro ~120. No urgente.
 
-#### `views/HomeView.tsx` (1104 líneas)
-Extraer en `views/home/`:
-- `MesoOverview.tsx` — banner del mesociclo activo + week progress
-- `TodayCard.tsx` — sesión del día (continuar / start)
-- `ProgramPicker.tsx` — selector de template
-- `GuidelinesModal.tsx` — visor de imágenes con zoom (ya autocontenido, sacar)
-- `WeekProgress.tsx` (ya existe, sólo mover)
-- Mantener `HomeView` como composición + props
-- Objetivo: HomeView <300 líneas
+#### `views/HomeView.tsx` (1104 → 672 líneas, **-432 / -39%**) ✅ Hecho
+Extraído en `views/home/`:
+- `GuidelinesModal.tsx` — visor de imágenes con zoom + pan + role=dialog
+- `TemplateSelector.tsx` — picker de templates al iniciar mesociclo
+- `WeekProgress.tsx` — barra de progreso semanal con role=progressbar
+- `WeeklyRecapCard.tsx` — stats 7-días con PR detection
+- `NextSessionCard.tsx` — hero card "Up Next" con week-complete state
 
 #### `views/NutriView.tsx` (961 líneas)
 Extraer en `views/nutri/`:
