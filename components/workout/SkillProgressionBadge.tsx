@@ -26,14 +26,13 @@ const getBestSessionValue = (sets: WorkoutSet[], isIsometric: boolean): number |
 };
 
 export const SkillProgressionBadge: React.FC<SkillProgressionBadgeProps> = ({ exercise, lang }) => {
-    if (!exercise.skillFamily) return null;
-
+    // Hook must always run unconditionally — early return goes AFTER hooks.
     const progressionInfo = useMemo(
-        () => getSkillProgressionInfo(exercise.id),
-        [exercise.id]
+        () => (exercise.skillFamily ? getSkillProgressionInfo(exercise.id) : null),
+        [exercise.id, exercise.skillFamily]
     );
 
-    if (!progressionInfo) return null;
+    if (!exercise.skillFamily || !progressionInfo) return null;
 
     const { family, currentLevel, nextLevel } = progressionInfo;
     const isIsometric = !!exercise.isIsometric;

@@ -4,7 +4,7 @@ import { useApp } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
 import { MuscleGroup } from '../../types';
 import { Button } from './Button';
-import { Icon } from './Icon';
+import { Sheet } from './Sheet';
 import { calculateVolumeAdjustment } from '../../utils';
 
 interface FeedbackModalProps {
@@ -47,14 +47,25 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
     };
 
     return (
-        <div className="fixed inset-0 z-modal bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-zinc-900 w-full max-w-lg rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl border-t sm:border border-zinc-200 dark:border-white/10 max-h-[90vh] overflow-y-auto animate-slideUp">
-                <div className="text-center mb-6">
-                    <h3 className="text-xl font-black text-zinc-900 dark:text-white uppercase tracking-tight mb-1">{t.rpFeedbackTitle}</h3>
-                    <p className="text-xs text-zinc-500">{t.rpRatingHelp}</p>
+        <Sheet
+            open={true}
+            onOpenChange={(o) => { if (!o) onCancel(); }}
+            title={t.rpFeedbackTitle}
+            description={t.rpRatingHelp}
+            accent="primary"
+            footer={
+                <div className="grid grid-cols-2 gap-3">
+                    <Button variant="secondary" onClick={onCancel}>{t.cancel}</Button>
+                    <Button onClick={handleSubmit} disabled={!isComplete}>
+                        {t.save} & {t.finishWorkout}
+                    </Button>
                 </div>
+            }
+        >
+            <div className="p-6">
+                <p className="text-xs text-zinc-500 text-center mb-6">{t.rpRatingHelp}</p>
 
-                <div className="space-y-8 mb-8">
+                <div className="space-y-8">
                     {uniqueMuscles.map(m => {
                         const s = feedback[m]?.s;
                         const p = feedback[m]?.p;
@@ -108,17 +119,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
                         );
                     })}
                 </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                    <Button variant="secondary" onClick={onCancel}>{t.cancel}</Button>
-                    <Button 
-                        onClick={handleSubmit}
-                        disabled={!isComplete}
-                    >
-                        {t.save} & {t.finishWorkout}
-                    </Button>
-                </div>
             </div>
-        </div>
+        </Sheet>
     );
 };

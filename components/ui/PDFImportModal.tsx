@@ -4,6 +4,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 import { ProgramDay, ProgramSlot, MuscleGroup } from '../../types';
 import { Icon } from './Icon';
 import { Button } from './Button';
+import { Sheet } from './Sheet';
 
 // @ts-ignore - pdf.worker.mjs?url is a Vite-specific import that TS might not resolve correctly during npx tsc
 import workerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url';
@@ -153,21 +154,13 @@ export const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose, onImpor
   };
 
   return (
-    <div className="fixed inset-0 z-confirm bg-black/90 backdrop-blur-md flex items-end justify-center p-4 animate-in fade-in duration-200">
-      <div className="bg-zinc-900 w-full max-w-lg rounded-3xl border border-zinc-700 overflow-hidden shadow-2xl">
-        
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-800">
-          <div>
-            <h2 className="text-base font-black text-white">Importar Programa</h2>
-            <p className="text-xs text-zinc-500 mt-0.5">
-              {step === 'upload' ? 'PDF o .txt de tu programa' : `${parsedDays.length} días detectados`}
-            </p>
-          </div>
-          <button onClick={onClose} className="text-zinc-500 hover:text-white" aria-label="Close"> <Icon name="X" size={20} />
-          </button>
-        </div>
-
+    <Sheet
+      open={true}
+      onOpenChange={(o) => { if (!o) onClose(); }}
+      title="Importar Programa"
+      description={step === 'upload' ? 'PDF o .txt de tu programa' : `${parsedDays.length} días detectados`}
+      accent="primary"
+    >
         {step === 'upload' && (
           <div className="p-5 space-y-4">
             {/* Drop zone */}
@@ -261,7 +254,7 @@ export const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose, onImpor
             <div className="flex gap-3 pt-2">
               <button
                 onClick={() => setStep('upload')}
-                className="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-sm font-bold text-zinc-400 transition-colors"
+                className="flex-1 py-3 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-xl text-sm font-bold text-zinc-600 dark:text-zinc-400 transition-colors duration-fast ease-natural"
               >
                 Volver
               </button>
@@ -271,7 +264,6 @@ export const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose, onImpor
             </div>
           </div>
         )}
-      </div>
-    </div>
+    </Sheet>
   );
 };

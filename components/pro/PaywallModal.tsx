@@ -32,7 +32,12 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ onClose, feature }) 
     };
 
     return (
-        <div className="fixed inset-0 z-confirm bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
+        <div
+            className="fixed inset-0 z-confirm bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-slow"
+            role="dialog"
+            aria-modal="true"
+            aria-label="GainsLab Pro upgrade"
+        >
             <div className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-3xl overflow-hidden shadow-2xl relative border border-zinc-200 dark:border-white/10 max-h-[90vh] overflow-y-auto scroll-container">
                 
                 {/* Header Image / Gradient */}

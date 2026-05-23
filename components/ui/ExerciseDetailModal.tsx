@@ -8,6 +8,7 @@ import { getTranslated } from '../../utils';
 import { MuscleTag } from '../workout/MuscleTag';
 import { Button } from './Button';
 import { ProgressChart } from '../stats/ProgressChart';
+import { Sheet } from './Sheet';
 import { useStatsWorker } from '../../hooks/useStatsWorker';
 import {
     Chart as ChartJS,
@@ -174,42 +175,39 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
         : `https://www.youtube.com/results?search_query=${encodeURIComponent(String(translatedName) + ' technique tutorial')}`;
 
     return (
-        <div className="fixed inset-0 z-modal bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={onClose}>
-            <div
-                className="bg-zinc-900 w-full max-w-lg rounded-2xl shadow-2xl border border-white/10 flex flex-col max-h-[90vh] overflow-hidden animate-spring-in"
-                onClick={e => e.stopPropagation()}
-            >
-                {/* Header */}
-                <div className="flex justify-between items-center p-4 border-b border-white/5">
-                    <div className="flex-1 min-w-0 pr-4">
-                        <h3 className="text-lg font-black text-white leading-tight truncate">
-                            {String(translatedName)}
-                        </h3>
-                        <div className="mt-1">
-                            <MuscleTag label={exercise.muscle} />
-                        </div>
-                    </div>
-                    <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-white transition-colors active:scale-90" aria-label="Close"> <Icon name="X" size={18} />
-                    </button>
-                </div>
+        <Sheet
+            open={true}
+            onOpenChange={(o) => { if (!o) onClose(); }}
+            title={String(translatedName)}
+            description={`${exercise.muscle} exercise details`}
+            accent="primary"
+            footer={<Button fullWidth onClick={onClose} variant="secondary">{t.close}</Button>}
+        >
+            <div className="px-5 pt-1">
+                <MuscleTag label={exercise.muscle} />
+            </div>
 
-                {/* Tabs */}
-                <div className="flex p-1 bg-zinc-800 mx-4 mt-4 rounded-xl">
-                    <button
-                        onClick={() => setActiveTab('guide')}
-                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'guide' ? 'bg-zinc-700 text-white shadow' : 'text-zinc-500'}`}
-                    >
-                        {t.guide || "Guide"}
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('history')}
-                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'history' ? 'bg-zinc-700 text-white shadow' : 'text-zinc-500'}`}
-                    >
-                        {t.history || "History"}
-                    </button>
-                </div>
+            {/* Tabs */}
+            <div role="tablist" className="flex p-1 bg-zinc-100 dark:bg-zinc-800 mx-4 mt-4 rounded-xl">
+                <button
+                    role="tab"
+                    aria-selected={activeTab === 'guide'}
+                    onClick={() => setActiveTab('guide')}
+                    className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all duration-fast ease-natural ${activeTab === 'guide' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow' : 'text-zinc-500'}`}
+                >
+                    {t.guide || 'Guide'}
+                </button>
+                <button
+                    role="tab"
+                    aria-selected={activeTab === 'history'}
+                    onClick={() => setActiveTab('history')}
+                    className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all duration-fast ease-natural ${activeTab === 'history' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow' : 'text-zinc-500'}`}
+                >
+                    {t.history || 'History'}
+                </button>
+            </div>
 
-                <div className="overflow-y-auto scroll-container flex-1">
+            <div className="overflow-y-auto scroll-container">
                     {activeTab === 'guide' ? (
                         <>
                             {/* Video / Visual Section */}
@@ -293,13 +291,6 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                         </div>
                     )}
                 </div>
-
-                <div className="p-4 border-t border-white/5">
-                    <Button fullWidth onClick={onClose} variant="secondary">
-                        {t.close}
-                    </Button>
-                </div>
-            </div>
-        </div>
+        </Sheet>
     );
 };

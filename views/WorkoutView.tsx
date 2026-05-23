@@ -116,6 +116,18 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
         ctrl.setChangingSetType({ exId, setId, currentType: type });
     }, [ctrl.setChangingSetType]);
 
+    // Hoisted ABOVE the early return so React hooks run unconditionally every render.
+    const muscleCoverage = useMemo(() => {
+        const map: Record<string, number> = {};
+        sessionExercises.forEach(ex => {
+            const done = (ex.sets || []).filter(s => s.completed && s.type !== 'warmup' && s.type !== 'avt_hop').length;
+            if (done > 0 && ex.muscle) {
+                map[ex.muscle] = (map[ex.muscle] || 0) + done;
+            }
+        });
+        return Object.entries(map);
+    }, [sessionExercises]);
+
     if (!activeSession) return null;
 
     const handleUpdatePlateWeight = (exInstanceId: number) => {
@@ -205,17 +217,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
     const completedSets = sessionExercises.reduce((acc, ex) => acc + (ex.sets || []).filter(s => s.completed).length, 0);
     const totalWorkingSets = sessionExercises.reduce((acc, ex) => acc + (ex.sets || []).filter(s => s.type !== 'warmup' && s.type !== 'avt_hop').length, 0);
     const remainingSets = totalWorkingSets - sessionExercises.reduce((acc, ex) => acc + (ex.sets || []).filter(s => s.completed && s.type !== 'warmup' && s.type !== 'avt_hop').length, 0);
-
-    const muscleCoverage = useMemo(() => {
-        const map: Record<string, number> = {};
-        sessionExercises.forEach(ex => {
-            const done = (ex.sets || []).filter(s => s.completed && s.type !== 'warmup' && s.type !== 'avt_hop').length;
-            if (done > 0 && ex.muscle) {
-                map[ex.muscle] = (map[ex.muscle] || 0) + done;
-            }
-        });
-        return Object.entries(map);
-    }, [sessionExercises]);
+    // muscleCoverage is computed above the early-return guard (rules-of-hooks)
 
     const focusedExercise = sessionExercises[focusedIndex];
     const goToNext = () => setFocusedIndex(prev => Math.min(prev + 1, sessionExercises.length - 1));

@@ -51,7 +51,13 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onClose }) => 
     const currentStep = steps[step];
 
     return (
-        <div className="fixed inset-0 z-modal bg-black/80 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in duration-300">
+        <div
+            className="fixed inset-0 z-modal bg-black/80 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in duration-slow"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="onb-title"
+            aria-describedby="onb-desc"
+        >
             <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-3xl p-8 shadow-2xl border border-zinc-200 dark:border-white/10 relative overflow-hidden">
                 {/* Background Blobs */}
                 <div className="absolute -top-10 -right-10 w-32 h-32 bg-zinc-100 dark:bg-zinc-800 rounded-full blur-3xl opacity-50"></div>
@@ -83,10 +89,10 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onClose }) => 
                     </div>
 
                     {/* Content */}
-                    <h2 className="text-2xl font-black text-zinc-900 dark:text-white mb-3 tracking-tight animate-in slide-in-from-bottom-2 fade-in duration-300 key={step}">
+                    <h2 id="onb-title" className="text-2xl font-black text-zinc-900 dark:text-white mb-3 tracking-tight animate-in slide-in-from-bottom-2 fade-in duration-slow">
                         {currentStep.title}
                     </h2>
-                    <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-8 leading-relaxed h-12">
+                    <p id="onb-desc" className="text-sm text-zinc-500 dark:text-zinc-400 mb-8 leading-relaxed h-12">
                         {currentStep.desc}
                     </p>
 
