@@ -847,7 +847,7 @@ export const SortableExerciseCard = React.memo(({
 
             {/* Rest Timer Preset Modal */}
             {showRestPreset && (
-                <div className="fixed inset-0 z-[80] bg-black/60 flex items-center justify-center p-6" onClick={() => setShowRestPreset(false)}>
+                <div className="fixed inset-0 z-sheet bg-black/60 flex items-center justify-center p-6" onClick={() => setShowRestPreset(false)}>
                     <div className="bg-zinc-900 p-6 rounded-2xl w-full max-w-xs space-y-4 border border-zinc-800" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-between">
                             <h3 className="font-bold text-white">{lang === 'es' ? 'Descanso (segundos)' : 'Rest Time (seconds)'}</h3>

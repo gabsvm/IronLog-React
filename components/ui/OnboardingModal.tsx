@@ -51,7 +51,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onClose }) => 
     const currentStep = steps[step];
 
     return (
-        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-modal bg-black/80 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in duration-300">
             <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-3xl p-8 shadow-2xl border border-zinc-200 dark:border-white/10 relative overflow-hidden">
                 {/* Background Blobs */}
                 <div className="absolute -top-10 -right-10 w-32 h-32 bg-zinc-100 dark:bg-zinc-800 rounded-full blur-3xl opacity-50"></div>

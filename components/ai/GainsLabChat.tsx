@@ -284,7 +284,7 @@ export const GainsLabChat: React.FC<{ onClose: () => void }> = ({ onClose }) => 
     };
 
     return (
-        <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-6" onClick={onClose}>
+        <div className="fixed inset-0 z-modal bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-6" onClick={onClose}>
             <div 
                 className="bg-white dark:bg-zinc-900 w-full sm:max-w-md h-[85vh] sm:h-[600px] rounded-t-3xl sm:rounded-3xl flex flex-col shadow-2xl border border-zinc-200 dark:border-white/10 overflow-hidden animate-slideUp" 
                 onClick={e => e.stopPropagation()}

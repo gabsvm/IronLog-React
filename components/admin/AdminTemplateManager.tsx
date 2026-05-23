@@ -248,7 +248,7 @@ export const AdminTemplateManager: React.FC<{ onClose: () => void }> = ({ onClos
 
     if (view === 'list') {
         return (
-            <div className="fixed inset-0 z-[200] bg-zinc-950 text-white flex flex-col font-sans">
+            <div className="fixed inset-0 z-confirm bg-zinc-950 text-white flex flex-col font-sans">
                 <div className="p-4 border-b border-white/10 flex justify-between items-center bg-zinc-900">
                     <h2 className="text-xl font-bold flex items-center gap-2">
                         <Icon name="Crown" className="text-yellow-500" /> Admin Template Manager
@@ -279,7 +279,7 @@ export const AdminTemplateManager: React.FC<{ onClose: () => void }> = ({ onClos
 
     // EDITOR VIEW
     return (
-        <div className="fixed inset-0 z-[200] bg-zinc-950 text-white flex flex-col font-sans">
+        <div className="fixed inset-0 z-confirm bg-zinc-950 text-white flex flex-col font-sans">
             {/* Toolbar */}
             <div className="p-4 border-b border-white/10 flex justify-between items-center bg-zinc-900 shrink-0">
                 <button onClick={() => setView('list')} className="text-zinc-400 hover:text-white flex items-center gap-1">

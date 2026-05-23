@@ -317,7 +317,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
     // ── Loading screen ────────────────────────────────────────────────
     if (isGenerating) {
         return (
-            <div className="fixed inset-0 z-[100] bg-white dark:bg-zinc-950 flex flex-col items-center justify-center gap-6 p-8">
+            <div className="fixed inset-0 z-modal bg-white dark:bg-zinc-950 flex flex-col items-center justify-center gap-6 p-8">
                 <div className="relative">
                     <div className="w-20 h-20 border-4 border-zinc-100 dark:border-zinc-800 border-t-primary-600 rounded-full animate-spin" />
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -338,7 +338,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
 
     // ── Main render ───────────────────────────────────────────────────
     return (
-        <div className="fixed inset-0 z-[100] bg-white dark:bg-zinc-950 flex flex-col">
+        <div className="fixed inset-0 z-modal bg-white dark:bg-zinc-950 flex flex-col">
             {/* Header */}
             <div className="px-6 pt-safe py-4 border-b border-zinc-100 dark:border-zinc-900">
                 <div className="flex justify-between items-center mb-4">

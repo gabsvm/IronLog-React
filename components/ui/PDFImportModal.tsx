@@ -153,7 +153,7 @@ export const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose, onImpor
   };
 
   return (
-    <div className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-md flex items-end justify-center p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-confirm bg-black/90 backdrop-blur-md flex items-end justify-center p-4 animate-in fade-in duration-200">
       <div className="bg-zinc-900 w-full max-w-lg rounded-3xl border border-zinc-700 overflow-hidden shadow-2xl">
         
         {/* Header */}

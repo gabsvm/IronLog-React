@@ -59,7 +59,21 @@ export const Icon: React.FC<IconProps> = React.memo(({ name, size = 20, classNam
     }, [name]);
 
     if (!LucideIcon) {
-        // Graceful fallback to avoid crash layout shifts
+        // In DEV: scream loudly so missing icons can't slip through review.
+        // In PROD: graceful invisible fallback so users never see a red box.
+        if (import.meta.env?.DEV) {
+            // eslint-disable-next-line no-console
+            console.warn(`[Icon] Missing icon "${name}" — register it in components/ui/Icon.tsx`);
+            return (
+                <div
+                    title={`Missing icon: ${name}`}
+                    style={{ width: size, height: size }}
+                    className={`inline-flex items-center justify-center bg-red-600 text-white text-[8px] font-black border-2 border-yellow-300 rounded ${className || ''}`}
+                >
+                    !
+                </div>
+            );
+        }
         return <div style={{ width: size, height: size, background: 'currentColor', opacity: 0.1, borderRadius: 4 }} className={className} />;
     }
 

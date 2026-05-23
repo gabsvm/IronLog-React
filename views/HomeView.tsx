@@ -79,7 +79,7 @@ const GuidelinesModal = ({ isOpen, onClose, images }: { isOpen: boolean, onClose
     const onTouchEnd = () => setIsDragging(false);
 
     return (
-        <div className="fixed inset-0 z-[200] bg-black flex flex-col animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-confirm bg-black flex flex-col animate-in fade-in duration-300">
             {/* Header with Zoom Controls */}
             <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-50 bg-gradient-to-b from-black/90 to-transparent pt-safe">
                 <h3 className="text-white font-black text-lg uppercase flex items-center gap-2 drop-shadow-md">
@@ -181,7 +181,7 @@ const TemplateSelector = ({
     lang: string
 }) => {
     return (
-        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex flex-col animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-modal bg-black/90 backdrop-blur-md flex flex-col animate-in fade-in duration-200">
             {/* Header */}
             <div className="p-4 border-b border-white/10 flex justify-between items-center bg-zinc-900/50">
                 <h2 className="text-xl font-black text-white">{t.startMeso}</h2>
@@ -986,7 +986,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
 
             {/* MESO SETTINGS MODAL */}
             {showMesoSettings && (
-                <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in" onClick={() => setShowMesoSettings(false)}>
+                <div className="fixed inset-0 z-modal bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in" onClick={() => setShowMesoSettings(false)}>
                     <div className="bg-zinc-900 w-full max-w-sm rounded-3xl p-6 border border-zinc-800 shadow-2xl relative" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-white font-bold text-xl">{t.mesoConfig}</h3>
@@ -1075,7 +1075,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
             )}
 
             {showCompleteModal && (
-                <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in">
+                <div className="fixed inset-0 z-modal bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in">
                     <div className="bg-zinc-900 w-full max-w-sm rounded-2xl p-6 border border-zinc-800 text-center">
                         {showCompleteModal === 'meso' ? (
                             <>

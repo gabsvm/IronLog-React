@@ -240,7 +240,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
 
             {/* Start Mesocycle Config Modal */}
             {showStartModal && (
-                <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in duration-200" onClick={() => setShowStartModal(false)}>
+                <div className="fixed inset-0 z-modal bg-black/80 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in duration-200" onClick={() => setShowStartModal(false)}>
                     <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-2xl p-6 shadow-2xl border border-zinc-200 dark:border-white/10" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-6 border-b border-zinc-100 dark:border-white/5 pb-4">
                             <div>

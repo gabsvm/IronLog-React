@@ -21,8 +21,8 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
     if (!isOpen) return null;
 
     return (
-        /* z-[500] ensures this is above the nav bar (z-30) AND any header (z-20) */
-        <div className="fixed inset-0 z-[500] flex items-end sm:items-center justify-center animate-in fade-in duration-300">
+        /* z-confirm ensures this is above the nav bar (z-30) AND any header (z-20) */
+        <div className="fixed inset-0 z-confirm flex items-end sm:items-center justify-center animate-in fade-in duration-300">
             {/* Backdrop */}
             <div 
                 className="absolute inset-0 bg-black/75 backdrop-blur-sm"

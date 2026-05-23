@@ -28,7 +28,7 @@ export const PlateCalculatorModal: React.FC<PlateCalculatorModalProps> = ({ init
     };
 
     return (
-        <div className="fixed inset-0 z-[80] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-200" onClick={onClose}>
+        <div className="fixed inset-0 z-sheet bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-200" onClick={onClose}>
             <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-2xl p-6 shadow-2xl space-y-6" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-center">
                     <h3 className="text-xl font-black text-zinc-900 dark:text-white uppercase flex items-center gap-2">

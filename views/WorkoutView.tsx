@@ -597,7 +597,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                 const pendingSets = (exForModal?.sets || []).filter(s => !s.completed && s.type !== 'avt_hop');
                 const hasMultipleSets = pendingSets.length > 1;
                 return (
-                    <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center" onClick={() => ctrl.setChangingSetType(null)}>
+                    <div className="fixed inset-0 z-modal bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center" onClick={() => ctrl.setChangingSetType(null)}>
                         <div className="bg-zinc-900 w-full max-w-sm rounded-t-3xl sm:rounded-3xl shadow-2xl border border-zinc-800 overflow-hidden animate-spring-in" onClick={e => e.stopPropagation()}>
                             <div className="px-4 pt-4 pb-2 flex items-center justify-between border-b border-zinc-800">
                                 <h3 className="font-black text-white text-base">{t.setType}</h3>
@@ -652,7 +652,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
             })()}
 
             {ctrl.showFinishModal && (
-                <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-6" onClick={(e) => e.stopPropagation()}>
+                <div className="fixed inset-0 z-modal bg-black/70 backdrop-blur-sm flex items-center justify-center p-6" onClick={(e) => e.stopPropagation()}>
                     <div className="bg-zinc-900 w-full max-w-sm rounded-2xl p-6 shadow-2xl space-y-4 border border-zinc-800">
                         <h3 className="text-xl font-bold text-center text-white">{completedSets > 0 ? t.finishWorkout : t.emptyWorkoutTitle}</h3>
 
@@ -725,7 +725,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
             {ctrl.replacingExId && <ExerciseSelector onSelect={handleReplace} onClose={() => { ctrl.setReplacingExId(null); ctrl.setReplaceFilter(null); }} presetMuscle={ctrl.replaceFilter?.muscle} sourceFilter={ctrl.replaceFilter?.source} />}
             {ctrl.addingExercise && <ExerciseSelector onSelect={handleAddExercise} onClose={() => ctrl.setAddingExercise(false)} />}
             {ctrl.configPlateExId && (
-                <div className="fixed inset-0 z-[80] bg-black/60 flex items-center justify-center p-6" onClick={() => ctrl.setConfigPlateExId(null)}>
+                <div className="fixed inset-0 z-sheet bg-black/60 flex items-center justify-center p-6" onClick={() => ctrl.setConfigPlateExId(null)}>
                     <div className="bg-zinc-900 p-6 rounded-2xl w-full max-w-xs space-y-4 border border-zinc-800" onClick={e => e.stopPropagation()}>
                         <h3 className="font-bold text-lg text-white text-center">{t.units.plateWeight}</h3>
                         <input type="number" autoFocus className="w-full bg-zinc-800 rounded-xl p-3 text-center font-bold text-xl outline-none" value={ctrl.plateWeightInput} onChange={(e) => ctrl.setPlateWeightInput(e.target.value)} />

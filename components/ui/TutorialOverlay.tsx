@@ -78,7 +78,7 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ steps, onCompl
     const PAD = 6;
 
     return createPortal(
-        <div className="fixed inset-0 z-[9999] pointer-events-auto font-sans touch-none overflow-hidden">
+        <div className="fixed inset-0 z-tutorial pointer-events-auto font-sans touch-none overflow-hidden">
 
             {/* === BACKDROP WITH HOLE PUNCH === */}
             {rect && (

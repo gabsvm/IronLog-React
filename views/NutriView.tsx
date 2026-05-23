@@ -932,7 +932,7 @@ export const NutriView: React.FC = () => {
       <LogWeightModal isOpen={showLogWeight} onClose={() => setShowLogWeight(false)} onLog={handleLogWeight} />
 
       {/* Undo Snackbars — stacked, food + cardio */}
-      <div className="fixed bottom-24 left-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none">
+      <div className="fixed bottom-24 left-4 right-4 z-modal flex flex-col gap-2 pointer-events-none">
         {lastDeletedEntry && (
           <div className="flex items-center justify-between bg-zinc-800 text-white px-4 py-3 rounded-2xl shadow-2xl border border-zinc-700 animate-in fade-in slide-in-from-bottom-4 pointer-events-auto">
             <div className="flex items-center gap-2">

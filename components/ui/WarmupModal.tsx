@@ -33,7 +33,7 @@ export const WarmupModal: React.FC<WarmupModalProps> = ({ targetWeight, exercise
 
     if (!targetWeight || targetWeight <= 0) {
         return (
-             <div className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-200" onClick={onClose}>
+             <div className="fixed inset-0 z-dropdown bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-200" onClick={onClose}>
                 <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-2xl p-6 text-center space-y-4 shadow-2xl" onClick={e => e.stopPropagation()}>
                     <Icon name="CloudOff" size={48} className="mx-auto text-zinc-300" />
                     <h3 className="text-lg font-bold text-zinc-900 dark:text-white">{t.warmupTitle}</h3>
@@ -45,7 +45,7 @@ export const WarmupModal: React.FC<WarmupModalProps> = ({ targetWeight, exercise
     }
 
     return (
-        <div className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-200" onClick={onClose}>
+        <div className="fixed inset-0 z-dropdown bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-200" onClick={onClose}>
             <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-2xl p-6 shadow-2xl border border-zinc-200 dark:border-white/10 animate-slideUp" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-start mb-6">
                     <div>

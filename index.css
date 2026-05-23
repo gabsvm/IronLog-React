@@ -131,6 +131,42 @@ body {
     }
 }
 
+/* --- A11Y: prefers-reduced-motion --------------------------------------- */
+/* WCAG 2.3.3 — if the user has requested reduced motion at the OS level,
+   collapse all animations and transitions to a near-instant cross-fade.
+   Keeps the UX usable for vestibular-sensitive users without breaking layout. */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    /* Disable View Transitions API transitions too */
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+        animation: none !important;
+    }
+}
+
+/* --- A11Y: focus-visible global ----------------------------------------- */
+/* Only show focus ring on keyboard navigation (not mouse). Critical for
+   keyboard users who otherwise get NO visible indicator on icon buttons. */
+@layer base {
+    button:focus-visible,
+    a:focus-visible,
+    [role="button"]:focus-visible,
+    [role="tab"]:focus-visible,
+    summary:focus-visible {
+        outline: 2px solid rgb(var(--primary-500));
+        outline-offset: 2px;
+        border-radius: 8px;
+    }
+}
+
 /* --- ANIMATIONS --- */
 
 @keyframes fade-in-up {

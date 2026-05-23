@@ -36,13 +36,14 @@ Revamp **parcial**. Mantén el esqueleto visual. Refactoriza sistema + reorganiz
 
 ## Plan por fases
 
-### Fase 1 — Sistema de diseño (1–2d, ROI alto) ⏳ PENDIENTE
-- [ ] Tokens en tailwind.config: `duration: { fast: 150, base: 200, slow: 300, sheet: 400 }`
-- [ ] Tokens `zIndex: { nav: 30, sheet: 60, modal: 80, toast: 90, dropdown: 70 }` — eliminar `z-[500]`
-- [ ] Escala tipográfica: matar `text-[9/10/11px]` arbitrarios (excepto datos numéricos densos)
-- [ ] `prefers-reduced-motion` en `:root`
-- [ ] Reemplazar `transition-all` masivo por `transition-[transform,opacity,colors]`
-- [ ] Icon fallback ruidoso (rojo visible)
+### Fase 1 — Sistema de diseño (1–2d, ROI alto) ✅ HECHA
+- [x] Tokens en tailwind.config: `transitionDuration: { fast: 150, base: 200, slow: 300, sheet: 400 }` + easing `natural`
+- [x] Tokens `zIndex: { nav, dropdown, sheet, modal, toast, confirm, celebration, tutorial }` y migración batch: 36 ocurrencias `z-[NNN]` → tokens. Solo queda el ref en este doc.
+- [x] `prefers-reduced-motion` en `:root` — colapsa todas las animaciones + view transitions
+- [x] `focus-visible` global en `@layer base` — buttons/links/role=button/tab muestran ring 2px primary cuando se navega por teclado
+- [x] Icon fallback ruidoso: caja roja con "!" + `console.warn` en DEV. Invisible en PROD (no asusta usuarios).
+- [ ] Pendiente menor: escala tipográfica (matar `text-[9/10/11px]` arbitrarios) — disruptivo, se posterga
+- [ ] Pendiente menor: reemplazar `transition-all` masivo (170 ocurrencias) — bajo ROI, se evalúa caso a caso
 
 ### Fase 2 — Reorganizar navegación (0.5d, impacto UX máximo) ✅ HECHA
 - [x] Top-right: cambiar `Menu` icon → avatar/iniciales (`components/ui/Avatar.tsx`) con inicial del email + crown PRO + photoURL si existe
@@ -57,10 +58,12 @@ Revamp **parcial**. Mantén el esqueleto visual. Refactoriza sistema + reorganiz
 - [x] SettingsModal refactor → 3 tabs: **Cuenta** / **Preferencias** / **Avanzado**
 - [x] Sacar botón "Two Block Mass" de Settings → vive en el Command Palette
 
-### Fase 3 — Sistema de modales (1d) ⏳ PENDIENTE
-- [ ] Adoptar `vaul` (12kb, gestures incluidos) o `@radix-ui/react-dialog`
-- [ ] Una sola `<Sheet>` con variantes: `sheet` / `dialog` / `command`
-- [ ] Migrar uno a uno: ExerciseSelector → FreestyleSession → TwoBlockMass → resto
+### Fase 3 — Sistema de modales (1d) 🟡 EN CURSO
+- [x] Adoptar `vaul` (^1.1)
+- [x] Crear `components/ui/Sheet.tsx` primitive — bottom drawer con drag-to-dismiss, focus trap, ESC, role=dialog auto. Variantes `sheet` (max-h 92vh, rounded) y `full` (edge-to-edge).
+- [x] Migrar TwoBlockMassModal a Sheet (variant=full, accent=amber)
+- [ ] CommandPalette: NO migrar — su layout (top-positioned palette con search input) no encaja con bottom-sheet. Se queda con framer puro.
+- [ ] Pendientes para próxima sesión: ExerciseSelector, FreestyleSessionModal, SettingsModal (drawer derecho — replantear), ExerciseDetailModal, PlateCalculatorModal, WarmupModal, etc.
 
 ### Fase 4 — Animaciones (0.5d) ✅ HECHA
 - [x] Instalar `framer-motion` (^12.40)
@@ -100,6 +103,8 @@ Revamp **parcial**. Mantén el esqueleto visual. Refactoriza sistema + reorganiz
 
 ## Estado actual
 
+- ✅ Fase 1 — tokens + a11y básico (z-index, duration, prefers-reduced-motion, focus-visible, icon fallback ruidoso)
 - ✅ Fase 2 — navegación reorganizada (avatar + command palette + settings tabbed)
+- 🟡 Fase 3 — Sheet primitive listo (vaul); TwoBlockMassModal migrado; resto pendiente
 - ✅ Fase 4 — framer-motion aplicado a 3 superficies clave
-- ⏳ Fase 1, 3, 5, 6 — pendientes
+- ⏳ Fase 5 (a11y avanzado) y Fase 6 (refactor monolitos) — pendientes

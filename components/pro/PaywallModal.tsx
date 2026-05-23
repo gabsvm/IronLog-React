@@ -32,7 +32,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ onClose, feature }) 
     };
 
     return (
-        <div className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-confirm bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
             <div className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-3xl overflow-hidden shadow-2xl relative border border-zinc-200 dark:border-white/10 max-h-[90vh] overflow-y-auto scroll-container">
                 
                 {/* Header Image / Gradient */}
@@ -113,7 +113,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ onClose, feature }) 
             </div>
             
             {loading && (
-                <div className="absolute inset-0 z-[210] bg-black/60 flex items-center justify-center backdrop-blur-sm">
+                <div className="absolute inset-0 z-celebration bg-black/60 flex items-center justify-center backdrop-blur-sm">
                     <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl flex flex-col items-center shadow-2xl animate-in zoom-in-95">
                         <div className="w-12 h-12 border-4 border-red-500 border-t-transparent rounded-full animate-spin mb-4"></div>
                         <span className="font-bold dark:text-white text-sm tracking-wide uppercase">
@@ -124,7 +124,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ onClose, feature }) 
             )}
 
             {success && (
-                <div className="absolute inset-0 z-[210] bg-black/60 flex items-center justify-center backdrop-blur-sm">
+                <div className="absolute inset-0 z-celebration bg-black/60 flex items-center justify-center backdrop-blur-sm">
                     <div className="bg-white dark:bg-zinc-900 p-8 rounded-2xl flex flex-col items-center shadow-2xl animate-in zoom-in-95">
                         <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mb-4 animate-bounce">
                             <Icon name="Check" size={32} className="text-white" strokeWidth={4} />

@@ -32,6 +32,32 @@ export default {
       fontFamily: {
         sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
       },
+      // ── Motion tokens (Fase 1) ─────────────────────────────────────────────
+      // Use these instead of raw duration-100/200/300/400/500.
+      transitionDuration: {
+        fast:  "150ms",
+        base:  "200ms",
+        slow:  "300ms",
+        sheet: "400ms",
+      },
+      transitionTimingFunction: {
+        // out-expo — natural, Apple/Linear feel
+        natural: "cubic-bezier(0.16, 1, 0.3, 1)",
+      },
+      // ── Z-index tokens (Fase 1) ────────────────────────────────────────────
+      // Single source of truth. Never use z-[NNN] arbitrary values.
+      // Order (low → high):
+      //   base < nav < dropdown < sheet < modal < toast < confirm < tutorial.
+      zIndex: {
+        nav:         "30",
+        dropdown:    "70",
+        sheet:       "80",
+        modal:       "90",
+        toast:       "100",
+        confirm:     "110", // ConfirmModal / Paywall — must overlay other modals
+        celebration: "120", // PR celebration — above confirm
+        tutorial:    "9999",
+      },
       animation: {
         "in-up":            "fade-in-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards",
         "spring-in":        "spring-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards",

@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../../context/AppContext';
 import { Icon } from '../ui/Icon';
 import { Button } from '../ui/Button';
+import { Sheet } from '../ui/Sheet';
 import { TWO_BLOCK_PROTOCOLS, TWO_BLOCK_PHILOSOPHY, TwoBlockProtocol } from '../../data/twoBlockMass';
 import { ActiveSession, SessionExercise, WorkoutSet, MuscleGroup, ExerciseDef } from '../../types';
 
@@ -113,26 +113,16 @@ export const TwoBlockMassModal: React.FC<Props> = ({ isOpen, onClose, onStart })
     const phil = TWO_BLOCK_PHILOSOPHY[lang];
 
     return (
-        <AnimatePresence>
-            {isOpen && (
-        <motion.div
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed inset-0 z-[80] bg-gray-50 dark:bg-zinc-950 flex flex-col">
-            {/* Header */}
-            <div className="glass px-4 h-16 shrink-0 flex items-center gap-3 border-b border-zinc-200 dark:border-white/5">
-                <button onClick={() => selected ? setSelectedId(null) : onClose()} className="p-2 -ml-2 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white">
-                    <Icon name={selected ? 'ArrowLeft' : 'X'} size={24} />
-                </button>
-                <div className="flex-1 min-w-0">
-                    <h2 className="font-black text-lg dark:text-white truncate">{selected ? t(selected.name) : phil.title}</h2>
-                    {selected && <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">{PHASE_LABELS[selected.phase][lang]} · Block {selected.blockNumber}</p>}
-                </div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto scroll-container p-4 pb-24 space-y-4">
+        <Sheet
+            open={isOpen}
+            onOpenChange={(o) => { if (!o) onClose(); }}
+            variant="full"
+            accent="amber"
+            title={selected ? `${t(selected.name)} · ${PHASE_LABELS[selected.phase][lang]} B${selected.blockNumber}` : phil.title}
+            onBack={selected ? () => setSelectedId(null) : undefined}
+            description={selected ? `${PHASE_LABELS[selected.phase][lang]} block ${selected.blockNumber}` : 'Two Block Mass protocol picker'}
+        >
+            <div className="p-4 pb-24 space-y-4">
                 {!selected ? (
                     <>
                         {/* Philosophy intro */}
@@ -267,8 +257,6 @@ export const TwoBlockMassModal: React.FC<Props> = ({ isOpen, onClose, onStart })
                     </>
                 )}
             </div>
-        </motion.div>
-            )}
-        </AnimatePresence>
+        </Sheet>
     );
 };

@@ -510,7 +510,7 @@ export const StatsView: React.FC = () => {
 
             {/* --- Full Screen Picker Modal --- */}
             {showPicker && (
-                <div className="fixed inset-0 z-[60] bg-zinc-950 flex flex-col animate-in slide-in-from-bottom duration-200">
+                <div className="fixed inset-0 z-sheet bg-zinc-950 flex flex-col animate-in slide-in-from-bottom duration-200">
                     <div className="glass px-4 h-16 shrink-0 flex items-center gap-3 border-b border-white/5">
                         <button onClick={() => setShowPicker(false)} className="p-2 -ml-2 text-zinc-400 hover:text-white">
                             <Icon name="X" size={24} />
