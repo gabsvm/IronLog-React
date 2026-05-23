@@ -100,13 +100,12 @@ Extraído en `views/home/`:
 - `WeeklyRecapCard.tsx` — stats 7-días con PR detection
 - `NextSessionCard.tsx` — hero card "Up Next" con week-complete state
 
-#### `views/NutriView.tsx` (961 líneas)
-Extraer en `views/nutri/`:
-- `MacroSummary.tsx` — anillos/barras de calorías/proteína/carbs/grasas
-- `MealList.tsx` — listado de comidas del día
-- `WeightLog.tsx` — log de peso corporal
-- `CardioLog.tsx` — cardio del día
-- Objetivo: NutriView <300 líneas
+#### `views/NutriView.tsx` (961 → 829 líneas, **-132 / -14%**) 🟡 Parcial
+Extraído en `views/nutri/`:
+- `nutritionHelpers.ts` — todayStr, getTodayLog, sumMacros, MEAL_META, calcStreak, calcTDEE, constantes
+- `MacroBar.tsx` — slim macro progress bar
+- `WaterTracker.tsx` — agua del día (progress bar + cup viz + quick-add)
+- [ ] Pendiente: el render principal con tabs Today/Body/History sigue inline (~700 líneas). Extraer en `TodayTab.tsx`, `BodyTab.tsx`, `HistoryTab.tsx` requiere romper estado compartido — tarea para sesión dedicada.
 
 #### `components/settings/SettingsModal.tsx` (426 líneas, ahora tabbed)
 Ya está parcialmente domado por las 3 tabs. Refactor opcional:
@@ -143,4 +142,4 @@ Ya está parcialmente domado por las 3 tabs. Refactor opcional:
 - 🟡 Fase 3 — Sheet primitive listo; 3 modales migrados; ~9 legacy modals pendientes (todos funcionan, sólo consistencia)
 - ✅ Fase 4 — framer-motion aplicado a 3 superficies clave
 - ✅ Fase 5 — aria-label batch (+22), focus-visible global, aria-modal en modales centrales
-- ⏳ Fase 6 — refactor monolitos: documentado en detalle arriba, pendiente sesión dedicada
+- 🟡 Fase 6 — refactor monolitos: SortableExerciseCard (893→655, -27%) y HomeView (1104→672, -39%) hechos. NutriView (961→829) parcial. SettingsModal sigue tabbed pero sin tab-extraction.
