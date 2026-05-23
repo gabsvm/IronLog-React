@@ -43,6 +43,9 @@ const getTypeColor = (type: SetType) => {
         case 'avt_hop':      return 'bg-orange-500/15 text-orange-400 border-orange-500/30';
         case 'emom':         return 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30';
         case 'drop':         return 'bg-teal-500/15 text-teal-400 border-teal-500/30';
+        case 'rest_pause':   return 'bg-rose-500/15 text-rose-400 border-rose-500/30';
+        case 'time_volume':  return 'bg-amber-500/15 text-amber-400 border-amber-500/30';
+        case 'triple_add':   return 'bg-pink-500/15 text-pink-400 border-pink-500/30';
         default:             return 'bg-zinc-800 text-zinc-400 border-zinc-700';
     }
 };
@@ -57,6 +60,9 @@ const getRowAccent = (type: SetType): string => {
         case 'giant':                     return 'bg-orange-500/5';
         case 'emom':                      return 'bg-cyan-500/5';
         case 'drop':                      return 'bg-teal-500/5';
+        case 'rest_pause':                return 'bg-rose-500/5';
+        case 'time_volume':               return 'bg-amber-500/5';
+        case 'triple_add':                return 'bg-pink-500/5';
         default:                          return '';
     }
 };
@@ -74,6 +80,9 @@ const getTypeLabel = (type: SetType) => {
         avt_hop: 'H',
         emom: 'E',
         drop: 'D',
+        rest_pause: 'RP',
+        time_volume: 'TV',
+        triple_add: 'TA',
     };
     return map[type] || '●';
 };

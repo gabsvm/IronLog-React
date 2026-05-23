@@ -16,6 +16,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
     const [showFinishModal, setShowFinishModal] = useState(false);
     const [showFeedbackModal, setShowFeedbackModal] = useState(false);
     const [replacingExId, setReplacingExId] = useState<number | null>(null);
+    const [replaceFilter, setReplaceFilter] = useState<{ muscle?: import('../types').MuscleGroup; source?: 'nilsson_bw' } | null>(null);
     const [addingExercise, setAddingExercise] = useState(false);
     const [linkingId, setLinkingId] = useState<number | null>(null);
     const [editingMuscleId, setEditingMuscleId] = useState<number | null>(null);
@@ -163,6 +164,9 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
                     if (set.type === 'myorep' || set.type === 'myorep_match' || set.type === 'giant') dur = 30;
                     if (set.type === 'cluster') dur = 15;
                     if (set.type === 'drop') dur = 0; // Drop sets have no rest — skip timer
+                    if (set.type === 'rest_pause') dur = 20;     // Nilsson 2-Block: 20s between rest-pause mini-sets
+                    if (set.type === 'time_volume') dur = 10;    // Nilsson 2-Block: starts at 10s (escalates manually per protocol)
+                    if (set.type === 'triple_add') dur = 10;     // Nilsson 2-Block: 10s between fiber-type drops within Triple Add
 
                     // Interval cardio: use the set's programmed rest, or protocol default
                     if (ex?.cardioType === 'tabata') dur = 10;
@@ -463,6 +467,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
         showFinishModal, setShowFinishModal,
         showFeedbackModal, setShowFeedbackModal,
         replacingExId, setReplacingExId,
+        replaceFilter, setReplaceFilter,
         addingExercise, setAddingExercise,
         linkingId, setLinkingId,
         editingMuscleId, setEditingMuscleId,

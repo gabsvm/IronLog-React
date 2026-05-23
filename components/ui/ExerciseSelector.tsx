@@ -15,13 +15,15 @@ interface ExerciseSelectorProps {
     onClose: () => void;
     excludeIds?: string[];
     persistToGlobal?: boolean; // New Prop for Admin Mode
+    presetMuscle?: MuscleGroup;            // Open with this muscle filter
+    sourceFilter?: 'nilsson_bw';           // Restrict list to a source tag (e.g. Nilsson BW)
 }
 
-export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, onClose, excludeIds = [], persistToGlobal = false }) => {
+export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, onClose, excludeIds = [], persistToGlobal = false, presetMuscle, sourceFilter }) => {
     const { exercises, setExercises, lang } = useApp();
     const t = TRANSLATIONS[lang];
     const [search, setSearch] = useState('');
-    const [filterMuscle, setFilterMuscle] = useState<MuscleGroup | 'ALL'>('ALL');
+    const [filterMuscle, setFilterMuscle] = useState<MuscleGroup | 'ALL'>(presetMuscle || 'ALL');
     
     // Creation Mode State
     const [isCreating, setIsCreating] = useState(false);
@@ -36,14 +38,15 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
                 const name = getTranslated(ex.name, lang);
                 const matchesSearch = name.toLowerCase().includes(search.toLowerCase());
                 const matchesMuscle = filterMuscle === 'ALL' || ex.muscle === filterMuscle;
-                return matchesSearch && matchesMuscle;
+                const matchesSource = !sourceFilter || (ex as any).source === sourceFilter;
+                return matchesSearch && matchesMuscle && matchesSource;
             })
             .sort((a, b) => {
                 const na = getTranslated(a.name, lang);
                 const nb = getTranslated(b.name, lang);
                 return na.localeCompare(nb);
             });
-    }, [exercises, search, filterMuscle, lang, excludeIds]);
+    }, [exercises, search, filterMuscle, lang, excludeIds, sourceFilter]);
 
     const handleCreateStart = () => {
         setNewName(search); // Use current search as draft name

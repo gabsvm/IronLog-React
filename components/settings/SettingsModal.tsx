@@ -15,6 +15,7 @@ interface SettingsModalProps {
     onClose: () => void;
     onOpenProgram: () => void;
     onOpenExercises: () => void;
+    onOpenTwoBlock: () => void;
     onReset: () => void;
     onExport: () => void;
     onForceSync: () => void;
@@ -24,7 +25,7 @@ interface SettingsModalProps {
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
-    onClose, onOpenProgram, onOpenExercises, onReset, onExport, onForceSync, onImportFile, onLogin, isSyncing
+    onClose, onOpenProgram, onOpenExercises, onOpenTwoBlock, onReset, onExport, onForceSync, onImportFile, onLogin, isSyncing
 }) => {
     const {
         lang, setLang, theme, setTheme, colorTheme, setColorTheme,
@@ -343,6 +344,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         <div className="space-y-3">
                             <ProButton label={t.programEditor} icon="Layout" onClick={onOpenProgram} featureName="Custom Routines" />
                             <ProButton label={t.manageEx} icon="Dumbbell" onClick={onOpenExercises} featureName="Exercise Library" />
+                            <button onClick={onOpenTwoBlock} className="w-full flex items-center gap-3 p-4 rounded-2xl bg-gradient-to-br from-amber-500/10 to-blue-500/10 border border-amber-500/30 hover:scale-[1.01] active:scale-[0.99] transition-transform">
+                                <span className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-blue-500 flex items-center justify-center text-white">
+                                    <Icon name="Layers" size={18} />
+                                </span>
+                                <div className="flex-1 text-left">
+                                    <div className="font-black text-sm text-zinc-900 dark:text-white">Two Block Mass</div>
+                                    <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">{lang === 'es' ? 'Mesociclo Nick Nilsson · 8 protocolos' : 'Nick Nilsson mesocycle · 8 protocols'}</div>
+                                </div>
+                                <Icon name="ChevronRight" size={16} className="text-zinc-400" />
+                            </button>
                         </div>
                     </div>
 

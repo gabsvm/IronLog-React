@@ -198,6 +198,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
             })
         });
         ctrl.setReplacingExId(null);
+        ctrl.setReplaceFilter(null);
         ctrl.setOpenMenuId(null);
     };
 
@@ -416,6 +417,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                             onOpenDetail={(ex) => ctrl.setDetailExercise(ex)}
                                             onLink={ctrl.setLinkingId}
                                             onReplace={ctrl.setReplacingExId}
+                                            onSubBodyweight={(id, muscle) => { ctrl.setReplaceFilter({ muscle, source: 'nilsson_bw' }); ctrl.setReplacingExId(id); }}
                                             onEditMuscle={ctrl.setEditingMuscleId}
                                             onConfigPlate={ctrl.setConfigPlateExId}
                                             onUpdateSession={ctrl.updateSession}
@@ -496,6 +498,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                         onOpenDetail={(ex) => ctrl.setDetailExercise(ex)}
                                         onLink={ctrl.setLinkingId}
                                         onReplace={ctrl.setReplacingExId}
+                                        onSubBodyweight={(id, muscle) => { ctrl.setReplaceFilter({ muscle, source: 'nilsson_bw' }); ctrl.setReplacingExId(id); }}
                                         onEditMuscle={ctrl.setEditingMuscleId}
                                         onConfigPlate={ctrl.setConfigPlateExId}
                                         onUpdateSession={ctrl.updateSession}
@@ -580,11 +583,15 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                     cluster: 'bg-emerald-500/20 text-emerald-400',
                     emom: 'bg-cyan-500/20 text-cyan-400',
                     drop: 'bg-teal-500/20 text-teal-400',
+                    rest_pause: 'bg-rose-500/20 text-rose-400',
+                    time_volume: 'bg-amber-500/20 text-amber-400',
+                    triple_add: 'bg-pink-500/20 text-pink-400',
                 };
                 const icons: Record<string, string> = {
                     regular: 'Circle', warmup: 'Zap', myorep: 'Repeat', myorep_match: 'Repeat2',
                     giant: 'Layers', top: 'TrendingUp', backoff: 'TrendingDown', cluster: 'Grid3x3',
                     emom: 'Timer', drop: 'TrendingDown',
+                    rest_pause: 'Pause', time_volume: 'Clock', triple_add: 'TrendingUp',
                 };
                 const exForModal = sessionExercises.find(e => e.instanceId === ctrl.changingSetType!.exId);
                 const pendingSets = (exForModal?.sets || []).filter(s => !s.completed && s.type !== 'avt_hop');
@@ -612,7 +619,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                 </button>
                             )}
                             <div className="p-3 grid grid-cols-1 gap-1.5 max-h-[65vh] overflow-y-auto">
-                                {(['regular', 'warmup', 'drop', 'myorep', 'myorep_match', 'giant', 'top', 'backoff', 'cluster', 'emom'] as SetType[]).map(type => {
+                                {(['regular', 'warmup', 'drop', 'myorep', 'myorep_match', 'giant', 'top', 'backoff', 'cluster', 'emom', 'rest_pause', 'time_volume', 'triple_add'] as SetType[]).map(type => {
                                     const isSelected = ctrl.changingSetType?.currentType === type;
                                     return (
                                         <button
@@ -715,7 +722,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
             {ctrl.showFeedbackModal && activeSession && (
                 <FeedbackModal muscles={sessionExercises.map(e => e?.muscle || 'CHEST')} onCancel={() => ctrl.setShowFeedbackModal(false)} onConfirm={ctrl.handleSaveFeedback} />
             )}
-            {ctrl.replacingExId && <ExerciseSelector onSelect={handleReplace} onClose={() => ctrl.setReplacingExId(null)} />}
+            {ctrl.replacingExId && <ExerciseSelector onSelect={handleReplace} onClose={() => { ctrl.setReplacingExId(null); ctrl.setReplaceFilter(null); }} presetMuscle={ctrl.replaceFilter?.muscle} sourceFilter={ctrl.replaceFilter?.source} />}
             {ctrl.addingExercise && <ExerciseSelector onSelect={handleAddExercise} onClose={() => ctrl.setAddingExercise(false)} />}
             {ctrl.configPlateExId && (
                 <div className="fixed inset-0 z-[80] bg-black/60 flex items-center justify-center p-6" onClick={() => ctrl.setConfigPlateExId(null)}>

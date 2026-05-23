@@ -18,7 +18,8 @@ import { usePro } from './hooks/usePro';
 import { PaywallModal } from './components/pro/PaywallModal';
 import { SettingsModal } from './components/settings/SettingsModal';
 import { FreestyleSessionModal } from './components/workout/FreestyleSessionModal';
-import { CROSSFIT_EXERCISES, CALISTHENICS_EXERCISES } from './data/disciplineExercises';
+import { TwoBlockMassModal } from './components/workout/TwoBlockMassModal';
+import { CROSSFIT_EXERCISES, CALISTHENICS_EXERCISES, NILSSON_BW_EXERCISES } from './data/disciplineExercises';
 
 // Lazy Load views — keeps initial bundle small
 const HistoryView = React.lazy(() => import('./views/HistoryView').then(module => ({ default: module.HistoryView })));
@@ -71,6 +72,7 @@ const AppContent = () => {
     const [isSyncing, setIsSyncing] = useState(false);
     const [showMesoCompleteModal, setShowMesoCompleteModal] = useState(false);
     const [showFreestyleModal, setShowFreestyleModal] = useState(false);
+    const [showTwoBlockModal, setShowTwoBlockModal] = useState(false);
 
     // Custom Modals State
     const [importData, setImportData] = useState<any>(null);
@@ -148,7 +150,7 @@ const AppContent = () => {
     useEffect(() => {
         if (!exercises || exercises.length === 0) return;
         const existingIds = new Set(exercises.map((e: any) => e.id));
-        const toAdd = [...CROSSFIT_EXERCISES, ...CALISTHENICS_EXERCISES].filter(e => !existingIds.has(e.id));
+        const toAdd = [...CROSSFIT_EXERCISES, ...CALISTHENICS_EXERCISES, ...NILSSON_BW_EXERCISES].filter(e => !existingIds.has(e.id));
         if (toAdd.length > 0) {
             setExercises((prev: any[]) => [...(Array.isArray(prev) ? prev : []), ...toAdd]);
         }
@@ -422,6 +424,17 @@ const AppContent = () => {
                 }}
             />
 
+            {/* Two Block Mass Mesocycle (Nick Nilsson 2018) */}
+            <TwoBlockMassModal
+                isOpen={showTwoBlockModal}
+                onClose={() => setShowTwoBlockModal(false)}
+                onStart={(session) => {
+                    setActiveSession(session);
+                    setShowTwoBlockModal(false);
+                    setView('workout');
+                }}
+            />
+
             {/* Standard Modal Overlays */}
             {showMesoCompleteModal && (
                 <ConfirmModal
@@ -501,6 +514,7 @@ const AppContent = () => {
                     onClose={() => setShowSettings(false)}
                     onOpenProgram={() => { setView('program'); setShowSettings(false); }}
                     onOpenExercises={() => { setView('exercises'); setShowSettings(false); }}
+                    onOpenTwoBlock={() => { setShowTwoBlockModal(true); setShowSettings(false); }}
                     onReset={() => setShowResetModal(true)}
                     onExport={handleExport}
                     onForceSync={handleForceSync}

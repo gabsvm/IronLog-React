@@ -54,6 +54,7 @@ interface SortableExerciseCardProps {
     // Handlers for menu actions
     onLink: (id: number | null) => void;
     onReplace: (id: number | null) => void;
+    onSubBodyweight?: (id: number, muscle: import('../../types').MuscleGroup) => void;
     onEditMuscle: (id: number | null) => void;
     onConfigPlate: (id: number | null) => void;
     onUpdateSession: (cb: any) => void;
@@ -89,6 +90,7 @@ export const SortableExerciseCard = React.memo(({
     onOpenDetail,
     onLink,
     onReplace,
+    onSubBodyweight,
     onEditMuscle,
     onConfigPlate,
     onUpdateSession,
@@ -556,6 +558,11 @@ export const SortableExerciseCard = React.memo(({
                                             <button onClick={(e) => { e.stopPropagation(); onReplace(ex.instanceId); }} className="w-full text-left px-4 py-3 text-sm font-bold text-blue-600 dark:text-blue-400 hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2">
                                                 <Icon name="RefreshCw" size={16} /> {String(t.replaceEx)}
                                             </button>
+                                            {onSubBodyweight && (
+                                                <button onClick={(e) => { e.stopPropagation(); onSubBodyweight(ex.instanceId, ex.muscle); setOpenMenuId(null); }} className="w-full text-left px-4 py-3 text-sm font-bold text-blue-600 dark:text-blue-400 hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2">
+                                                    <Icon name="Zap" size={16} /> {lang === 'es' ? 'Sub Bodyweight (Nilsson)' : 'Sub Bodyweight (Nilsson)'}
+                                                </button>
+                                            )}
                                             <button onClick={(e) => {
                                                 e.stopPropagation();
                                                 if (ex.supersetId) {
