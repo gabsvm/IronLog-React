@@ -68,7 +68,12 @@ export const PRCelebrationOverlay: React.FC<PRCelebrationOverlayProps> = ({ onDi
     };
 
     return (
-        <div className="fixed inset-0 z-toast bg-black/90 flex items-center justify-center p-6 animate-in fade-in duration-500">
+        <div
+            className="fixed inset-0 z-celebration bg-black/90 flex items-center justify-center p-6 animate-in fade-in duration-slow"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Personal record celebration"
+        >
             <div className="w-full max-w-sm flex flex-col items-center text-center animate-in zoom-in-95 duration-500 delay-100">
 
                 {/* Reference for the screenshot */}

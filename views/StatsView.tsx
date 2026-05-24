@@ -95,6 +95,9 @@ export const StatsView: React.FC = () => {
                 setChartMetric('1rm');
             }
         }
+        // Intentional: this effect only resets chartMetric when the selected
+        // exercise CHANGES. Re-running on chartMetric updates would create a loop.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedExId]);
 
     // 1. Load Overview (Volume + Exercise List)
@@ -144,6 +147,10 @@ export const StatsView: React.FC = () => {
         };
 
         loadOverview();
+        // Intentional: `currentEx` is derived from `exercises + selectedExId` and
+        // re-running here on every selectedExId would duplicate work that
+        // useEffect #2 (chart data load) already handles.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isWorkerReady, safeLogs, activeMeso?.id, exercises, calculateOverview]);
 
     // 2. Load Chart Data

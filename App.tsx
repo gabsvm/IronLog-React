@@ -132,6 +132,9 @@ const AppContent = () => {
         };
         window.addEventListener('popstate', handlePop);
         return () => window.removeEventListener('popstate', handlePop);
+        // Intentional: mount-once popstate listener. `setView` would change every
+        // render and re-binding the listener serves no purpose.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {

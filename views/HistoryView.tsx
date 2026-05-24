@@ -266,7 +266,8 @@ export const HistoryView: React.FC = () => {
     const [search, setSearch] = useState('');
     const deferredSearch = useDeferredValue(search);
 
-    const safeLogs = Array.isArray(logs) ? logs : [];
+    // Memoized so downstream useMemo/useCallback deps don't churn on every render.
+    const safeLogs = useMemo(() => (Array.isArray(logs) ? logs : []), [logs]);
 
     // Filter Logs (Search + Time Limit for Free Users)
     const { visibleLogs, hasLockedLogs } = useMemo(() => {

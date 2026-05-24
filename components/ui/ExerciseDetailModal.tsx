@@ -165,6 +165,8 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                 setChartLoading(false);
             });
         }
+        // `calculateChartData` from useStatsWorker is stable across renders.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeTab, isWorkerReady, exercise.id, logs, exercise.muscle]);
 
     const translatedName = getTranslated(exercise.name, lang);

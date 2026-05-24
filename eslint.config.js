@@ -28,30 +28,31 @@ export default [
             'react-hooks': reactHooks,
         },
         rules: {
-            // ── React hooks (needed for the inline disable comments to resolve) ─
-            'react-hooks/exhaustive-deps': 'warn',
+            // ── React hooks ────────────────────────────────────────────────
+            // Promoted to error in Fase 5.c — all existing offenders fixed or
+            // explicitly annotated with a justification comment.
+            'react-hooks/exhaustive-deps': 'error',
             'react-hooks/rules-of-hooks': 'error',
 
-            // ── A11y warnings (don't fail build, just nudge) ────────────────
-            // Promote to "error" later once existing offenders are fixed.
-            'jsx-a11y/alt-text': 'warn',
-            'jsx-a11y/anchor-has-content': 'warn',
+            // ── A11y rules (all promoted to error in Fase 5.c — repo is clean) ──
+            'jsx-a11y/alt-text': 'error',
+            'jsx-a11y/anchor-has-content': 'error',
             'jsx-a11y/aria-props': 'error',
             'jsx-a11y/aria-proptypes': 'error',
             'jsx-a11y/aria-role': 'error',
             'jsx-a11y/aria-unsupported-elements': 'error',
             'jsx-a11y/click-events-have-key-events': 'off', // too noisy on touch-first UI
-            'jsx-a11y/heading-has-content': 'warn',
-            'jsx-a11y/iframe-has-title': 'warn',
-            'jsx-a11y/img-redundant-alt': 'warn',
+            'jsx-a11y/heading-has-content': 'error',
+            'jsx-a11y/iframe-has-title': 'error',
+            'jsx-a11y/img-redundant-alt': 'error',
             'jsx-a11y/label-has-associated-control': 'off', // too noisy on bespoke form patterns
             'jsx-a11y/no-autofocus': 'off',                  // we use autofocus intentionally in modals
             'jsx-a11y/no-distracting-elements': 'error',
             'jsx-a11y/no-noninteractive-element-interactions': 'off',
-            'jsx-a11y/no-redundant-roles': 'warn',
+            'jsx-a11y/no-redundant-roles': 'error',
             'jsx-a11y/no-static-element-interactions': 'off', // ditto
             'jsx-a11y/role-has-required-aria-props': 'error',
-            'jsx-a11y/role-supports-aria-props': 'warn',
+            'jsx-a11y/role-supports-aria-props': 'error',
             'jsx-a11y/scope': 'error',
             'jsx-a11y/tabindex-no-positive': 'warn',
         },

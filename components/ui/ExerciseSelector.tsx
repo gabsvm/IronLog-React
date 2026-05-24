@@ -7,6 +7,7 @@ import { MuscleGroup, ExerciseDef } from '../../types';
 import { Button } from './Button';
 import { getTranslated } from '../../utils';
 import { Virtuoso } from 'react-virtuoso';
+import { Sheet } from './Sheet';
 import { db } from '../../lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 
@@ -122,10 +123,18 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
     );
 
     return (
-        <div className="fixed inset-0 z-sheet bg-gray-50 dark:bg-zinc-950 flex flex-col animate-in slide-in-from-bottom duration-200">
-            {/* Header */}
+        <Sheet
+            open={true}
+            onOpenChange={(o) => { if (!o) onClose(); }}
+            variant="full"
+            hideCloseButton
+            description={persistToGlobal ? 'Global exercise library admin' : 'Exercise picker'}
+            accent="primary"
+        >
+            {/* Custom Header (search input replaces the default Sheet title slot) */}
             <div className={`glass px-4 h-16 shrink-0 flex items-center gap-3 border-b border-zinc-200 dark:border-white/5 ${persistToGlobal ? 'bg-purple-900/10' : ''}`}>
-                <button onClick={onClose} className="p-2 -ml-2 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white" aria-label="Close"> <Icon name="X" size={24} />
+                <button onClick={onClose} className="p-2 -ml-2 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white" aria-label="Close">
+                    <Icon name="X" size={24} />
                 </button>
                 {isCreating ? (
                     <div className="flex-1 font-bold text-lg dark:text-white">
@@ -135,19 +144,22 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
                     <div className="flex-1 flex gap-2">
                         <div className="relative flex-1">
                             <Icon name="Search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
-                            <input 
+                            <input
                                 autoFocus
-                                type="text" 
+                                type="text"
                                 placeholder={t.searchPlaceholder}
+                                aria-label="Search exercises"
                                 className="w-full bg-zinc-100 dark:bg-zinc-800/50 rounded-xl py-2 pl-9 pr-4 text-sm font-medium focus:ring-2 focus:ring-red-500 border-none outline-none text-zinc-900 dark:text-white placeholder-zinc-400"
                                 value={search}
                                 onChange={e => setSearch(e.target.value)}
                             />
                         </div>
-                        <button 
+                        <button
                             onClick={handleCreateStart}
-                            className="w-10 h-10 flex items-center justify-center rounded-xl bg-red-600 text-white shadow-md shadow-red-600/20 active:scale-95 transition-transform"
-                         aria-label="Add"> <Icon name="Plus" size={20} />
+                            aria-label="Add new exercise"
+                            className="w-10 h-10 flex items-center justify-center rounded-xl bg-red-600 text-white shadow-md shadow-red-600/20 active:scale-95 transition-transform duration-fast ease-natural"
+                        >
+                            <Icon name="Plus" size={20} />
                         </button>
                     </div>
                 )}
@@ -251,6 +263,6 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
                     </div>
                 </>
             )}
-        </div>
+        </Sheet>
     );
 };

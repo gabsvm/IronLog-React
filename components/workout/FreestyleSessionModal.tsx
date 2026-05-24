@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Modal } from '../ui/Modal';
+import { Sheet } from '../ui/Sheet';
 import { Icon } from '../ui/Icon';
 import { CROSSFIT_EXERCISES, CALISTHENICS_EXERCISES } from '../../data/disciplineExercises';
 import { SKILL_PROGRESSION_MAP } from '../../data/SkillProgressionMap';
@@ -275,21 +275,23 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
     })();
 
     return (
-        <Modal
-            isOpen={isOpen}
-            onClose={onClose}
+        <Sheet
+            open={isOpen}
+            onOpenChange={(o) => { if (!o) onClose(); }}
             title={lang === 'es' ? 'Nueva Sesión' : 'New Session'}
+            accent={discipline === 'crossfit' ? 'emerald' : discipline === 'calisthenics' ? 'violet' : 'primary'}
             footer={
                 <button
                     onClick={handleStart}
                     disabled={!canStart}
-                    className="w-full py-4 rounded-2xl font-black text-sm text-white transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-lg"
+                    className="w-full py-4 rounded-2xl font-black text-sm text-white transition-all duration-fast ease-natural active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-lg"
                     style={{ background: discipline === 'crossfit' ? '#10b981' : discipline === 'calisthenics' ? '#8b5cf6' : '#ef4444' }}
                 >
                     {startLabel}
                 </button>
             }
         >
+            <div className="p-5">
             {/* Discipline Tabs */}
             <div className="flex bg-zinc-100 dark:bg-zinc-800/50 p-1 rounded-2xl mb-5 gap-1">
                 <button
@@ -587,6 +589,7 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
                     )}
                 </div>
             )}
-        </Modal>
+            </div>
+        </Sheet>
     );
 };

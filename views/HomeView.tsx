@@ -87,8 +87,10 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
         setShowMesoSettings(false);
     };
 
-    const safeProgram = Array.isArray(program) ? program : [];
-    const safeLogs = Array.isArray(logs) ? logs : [];
+    // Stable references — the conditional `Array.isArray ? : []` was making
+    // downstream useMemo dependency arrays churn every render.
+    const safeProgram = useMemo(() => (Array.isArray(program) ? program : []), [program]);
+    const safeLogs = useMemo(() => (Array.isArray(logs) ? logs : []), [logs]);
 
     const {
         uniqueDaysDone, weekComplete, nextWorkoutIdx, isSessionActive, nextDayDef, logsForWeek

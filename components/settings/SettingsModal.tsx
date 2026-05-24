@@ -124,11 +124,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-sheet flex justify-end backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose}>
+        <div
+            className="fixed inset-0 bg-black/60 z-sheet flex justify-end backdrop-blur-sm animate-in fade-in duration-base"
+            onClick={onClose}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="settings-modal-title"
+        >
             <div className="w-80 bg-white dark:bg-zinc-900 h-full shadow-2xl border-l border-zinc-200 dark:border-white/5 flex flex-col" onClick={e => e.stopPropagation()}>
 
                 <div className="p-6 pb-2 shrink-0 flex justify-between items-center bg-white dark:bg-zinc-900 z-10">
-                    <h2 className="font-bold text-2xl dark:text-white tracking-tight">{t.settings}</h2>
+                    <h2 id="settings-modal-title" className="font-bold text-2xl dark:text-white tracking-tight">{t.settings}</h2>
                     <button onClick={onClose} aria-label="Close settings" className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white"><Icon name="X" size={24} /></button>
                 </div>
 

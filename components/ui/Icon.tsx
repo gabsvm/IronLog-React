@@ -62,7 +62,6 @@ export const Icon: React.FC<IconProps> = React.memo(({ name, size = 20, classNam
         // In DEV: scream loudly so missing icons can't slip through review.
         // In PROD: graceful invisible fallback so users never see a red box.
         if (import.meta.env?.DEV) {
-            // eslint-disable-next-line no-console
             console.warn(`[Icon] Missing icon "${name}" — register it in components/ui/Icon.tsx`);
             return (
                 <div

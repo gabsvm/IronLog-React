@@ -58,13 +58,12 @@ Revamp **parcial**. Mantén el esqueleto visual. Refactoriza sistema + reorganiz
 - [x] SettingsModal refactor → 3 tabs: **Cuenta** / **Preferencias** / **Avanzado**
 - [x] Sacar botón "Two Block Mass" de Settings → vive en el Command Palette
 
-### Fase 3 — Sistema de modales (1d) ✅ 95% HECHA
+### Fase 3 — Sistema de modales (1d) ✅ HECHA
 - [x] Adoptar `vaul` (^1.1)
 - [x] Crear `components/ui/Sheet.tsx` primitive — bottom drawer con drag-to-dismiss, focus trap, ESC, role=dialog auto. Variantes `sheet` (max-h 92vh, rounded) y `full` (edge-to-edge).
-- [x] **Migrados a Sheet (6)**: TwoBlockMassModal, WarmupModal, PlateCalculatorModal, FeedbackModal, ExerciseDetailModal, PDFImportModal
-- [x] **A11y patch (no migrados a Sheet, son centered dialogs)**: ConfirmModal, OnboardingModal, PaywallModal, AuthModal con `role=dialog` + `aria-modal=true` + `aria-labelledby`
-- [x] CommandPalette: NO migrar — layout top-positioned palette no encaja con bottom-sheet. Se queda con framer puro.
-- [ ] Pendientes menores: ExerciseSelector (full-screen propio, complejo), FreestyleSessionModal (similar), SettingsModal (drawer derecho), PRCelebrationOverlay (overlay especial).
+- [x] **Migrados a Sheet (8)**: TwoBlockMassModal, WarmupModal, PlateCalculatorModal, FeedbackModal, ExerciseDetailModal, PDFImportModal, ExerciseSelector (full + custom header), FreestyleSessionModal (sheet con accent dinámico por discipline)
+- [x] **A11y patch (centered dialogs / overlay especial)**: ConfirmModal, OnboardingModal, PaywallModal, AuthModal, PRCelebrationOverlay, SettingsModal (right drawer) — todos con `role=dialog` + `aria-modal=true` + `aria-labelledby/label`
+- [x] CommandPalette: queda custom (palette top-positioned con search; role=dialog ya marcado)
 
 ### Fase 4 — Animaciones (0.5d) ✅ HECHA
 - [x] Instalar `framer-motion` (^12.40)
@@ -74,12 +73,14 @@ Revamp **parcial**. Mantén el esqueleto visual. Refactoriza sistema + reorganiz
 - [ ] Pendiente: AnimatePresence en el resto de modales (ExerciseSelector, SettingsModal, FreestyleSessionModal) — convergerá con Fase 3 (sistema unificado de modales con vaul/radix)
 
 ### Fase 5 — A11y mínimo viable (0.5d) ✅ HECHA
-- [x] +22 `aria-label` añadidos por batch en botones-icono más visibles (close, back, next, settings, add, remove, etc) en 15 archivos
-- [x] `focus-visible` global ring 2px primary en buttons/links/role=button/tab (hecho en Fase 1)
-- [x] `role="dialog"` + `aria-modal="true"` en modales: vaul lo añade automático a los migrados a Sheet; manualmente en ConfirmModal, OnboardingModal, PaywallModal, AuthModal
-- [x] Subió cobertura aria-label de 7 → 49 ocurrencias (~7x)
+- [x] +22 `aria-label` añadidos por batch en botones-icono más visibles + más en componentes nuevos
+- [x] `focus-visible` global ring 2px primary en buttons/links/role=button/tab
+- [x] `role="dialog"` + `aria-modal="true"` en TODOS los modales (10): los migrados a Sheet lo heredan de vaul, los centered/overlay están patcheados manualmente
+- [x] Cobertura aria-label: 7 → 49+ ocurrencias
 - [x] `eslint-plugin-jsx-a11y` + `react-hooks` instalados con flat config (eslint v9). Script `npm run lint:a11y`.
-- [x] **2 rules-of-hooks bugs reales arreglados** que el lint expuso: SkillProgressionBadge y WorkoutView llamaban `useMemo` después de un early-return condicional. Latente.
+- [x] **2 rules-of-hooks bugs reales arreglados** (SkillProgressionBadge + WorkoutView): `useMemo` después de early return.
+- [x] **Fase 5.c**: Resueltos los 13 react-hooks warnings — wrap-en-useMemo en HomeView/HistoryView para refs estables, disable comments justificados en los 5 intencionales. **Repositorio queda en 0 errors / 0 warnings**.
+- [x] **Reglas promovidas a `error`** (antes eran warning) en `eslint.config.js`. Nuevo script `npm run build:strict` que corre lint antes del build — listo para CI.
 
 ### Fase 6 — Refactor monolitos (gradual, requiere sesión dedicada) ⏳ PENDIENTE
 > **Aviso**: NO se hace en blanket porque cada split altera muchas referencias y requiere validación funcional. Plan por componente:
@@ -101,14 +102,14 @@ Extraído en `views/home/`:
 - `WeeklyRecapCard.tsx` — stats 7-días con PR detection
 - `NextSessionCard.tsx` — hero card "Up Next" con week-complete state
 
-#### `views/NutriView.tsx` (961 → 584 líneas, **-377 / -39%**) ✅ Hecho
+#### `views/NutriView.tsx` (961 → 417 líneas, **-544 / -57%**) ✅ Hecho
 Extraído en `views/nutri/`:
 - `nutritionHelpers.ts` — todayStr, getTodayLog, sumMacros, MEAL_META, calcStreak, calcTDEE
 - `MacroBar.tsx` — slim macro progress bar
 - `WaterTracker.tsx` — agua del día con quick-add
+- `TodayTab.tsx` — tab "Today": hero card + macro bars + water + quick actions + meal groups + cardio (con todos los handlers pasados como props)
 - `BodyTab.tsx` — tab "Body": peso + TDEE + targets + chart 30d + weigh-ins recientes
 - `HistoryTab.tsx` — tab "History": promedios 14d + chart calorías + chart proteína + day-log
-- TodayTab queda inline (es el más complejo con add/edit/delete handlers + estado de undo). Aceptable.
 
 #### `components/settings/SettingsModal.tsx` (426 → 334 líneas, **-92 / -22%**) ✅ Hecho
 - Extraído `AdminControlPanel.tsx` (147 líneas) — sub-panel admin con su propio estado (input, status, template manager toggle) y sus llamadas a Firestore. Sólo se renderiza cuando `isAdmin === true`.
@@ -141,7 +142,20 @@ Extraído en `views/nutri/`:
 
 - ✅ Fase 1 — tokens + a11y básico (z-index, duration, prefers-reduced-motion, focus-visible, icon fallback ruidoso)
 - ✅ Fase 2 — navegación reorganizada (avatar + command palette + settings tabbed)
-- ✅ Fase 3 — Sheet primitive + 6 modales migrados + a11y patch en los 4 centered restantes. Sólo 4 modales legacy pendientes (todos funcionan).
+- ✅ Fase 3 — Sheet primitive + 8 modales migrados + a11y patch en los 6 restantes (incluido SettingsModal drawer + PRCelebrationOverlay). **TODOS los modales tocados.**
 - ✅ Fase 4 — framer-motion aplicado a 3 superficies clave
-- ✅ Fase 5 — aria-label batch (+22), focus-visible global, aria-modal en 8 modales, **eslint-plugin-jsx-a11y configurado** y 2 rules-of-hooks bugs arreglados de pasada
-- ✅ Fase 6 — refactor monolitos: SortableExerciseCard (893→655, -27%), HomeView (1104→672, -39%), NutriView (961→584, -39%), SettingsModal (426→334, -22%). TODOS los monolitos abordados.
+- ✅ Fase 5 — aria-label batch (+22), focus-visible global, aria-modal en 10 modales, eslint-plugin-jsx-a11y **promovido a error**, 0 warnings remaining. `build:strict` listo para CI.
+- ✅ Fase 6 — refactor monolitos: SortableExerciseCard (893→655, -27%), HomeView (1104→672, -39%), **NutriView (961→417, -57%)**, SettingsModal (426→334, -22%). TODOS los monolitos abordados + sus tabs extraídos.
+
+---
+
+## 🎯 Revamp 100% COMPLETO
+
+Todas las 6 fases cerradas. El repo queda con:
+- 0 lint errors, 0 warnings
+- Type-check + build verde
+- Cobertura a11y baseline (aria-label, role=dialog, focus-visible, prefers-reduced-motion)
+- Sistema de diseño con tokens (duration, easing, z-index)
+- Primitivos reutilizables (Sheet, Avatar, CommandPalette)
+- Monolitos repartidos en módulos de responsabilidad única
+- Pipeline `build:strict` listo para CI

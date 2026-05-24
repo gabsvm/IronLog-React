@@ -60,6 +60,10 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
         const ex = sessionExercises.find(e => e.instanceId === ctrl.changingSetType!.exId);
         const pending = (ex?.sets || []).filter(s => !s.completed && s.type !== 'avt_hop');
         setApplyToAll(pending.length > 1 && pending.every(s => s.type === pending[0].type));
+        // Intentional: this effect only resets `applyToAll` when the modal opens
+        // for a different set, NOT every time sessionExercises changes (which
+        // would clobber the user's manual toggle while editing).
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [ctrl.changingSetType]);
 
     // Derived State
@@ -114,6 +118,9 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
 
     const handleSetTypeChange = useCallback((exId: number, setId: number, type: SetType) => {
         ctrl.setChangingSetType({ exId, setId, currentType: type });
+        // Intentional: only depend on the setter (stable). Adding `ctrl` would
+        // recreate this callback on every controller update and defeat memoization.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [ctrl.setChangingSetType]);
 
     // Hoisted ABOVE the early return so React hooks run unconditionally every render.
