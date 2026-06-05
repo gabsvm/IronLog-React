@@ -72,6 +72,10 @@ interface AppContextType extends AppState {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+const INITIAL_TUTORIAL_STATE: TutorialState = {
+    home: false, workout: false, history: false, stats: false, mesoSettings: false, nutrition: false
+};
+
 export const AppProvider = ({ children }: PropsWithChildren) => {
     const { user, subscription, loading: authLoading } = useAuth();
 
@@ -92,9 +96,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         25: 4, 20: 6, 15: 4, 10: 4, 5: 4, 2.5: 4, 1.25: 4
     });
 
-    const [tutorialProgress, setTutorialProgress] = useLocalStorage<TutorialState>('il_tutorial_v2', {
-        home: false, workout: false, history: false, stats: false, mesoSettings: false, nutrition: false
-    });
+    const [tutorialProgress, setTutorialProgress] = useLocalStorage<TutorialState>('il_tutorial_v2', INITIAL_TUTORIAL_STATE);
 
     // --- Heavy Data (IndexedDB) ---
     const [program, setProgram, programLoading] = usePersistedState<ProgramDay[]>('il_prog_v16', DEFAULT_TEMPLATE, 1000);
@@ -257,8 +259,11 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                     const now = Date.now();
                     setLocalLastUpdated(now);
                     syncService.uploadState(user.uid, {
-                        program, activeMeso, exercises, logs, config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn, plateInventory }, rpFeedback, activeSession, lastUpdated: now,
-                        userProfile, nutritionLogs, bodyLogs, macroGoals
+                        program, activeMeso, activeSession, exercises, logs,
+                        config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn, plateInventory },
+                        rpFeedback,
+                        userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals,
+                        lastUpdated: now,
                     });
                 } else {
                     syncService.uploadUserIdentity(user.uid, user.email || "");
@@ -270,24 +275,47 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         window.addEventListener('online', handleOnline);
         window.addEventListener('offline', handleOffline);
         return () => { window.removeEventListener('online', handleOnline); window.removeEventListener('offline', handleOffline); };
-    }, [user, subscription.isPro, program, activeMeso, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, plateInventory, rpFeedback, activeSession, userProfile, nutritionLogs, bodyLogs, macroGoals]);
+    }, [user, subscription.isPro, program, activeMeso, activeSession, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, plateInventory, rpFeedback, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals]);
 
-    // Upload Debounce
+    // ── Debounce A: session-only write (fast, lightweight) ─────────────────────
+    // activeSession changes on every set completion or weight input during a workout.
+    // Writing only this one field (~1-5 KB) instead of the full state document
+    // (~50-200 KB) reduces Firestore write cost by 95%+ during an active session.
     useEffect(() => {
-        if (!user || isAppLoading) return;
+        if (!user || isAppLoading || !hasCheckedSync || !!pendingCloudData) return;
+        if (!subscription.isPro) return; // free users: identity-only (handled in online handler)
+        const timer = setTimeout(() => {
+            const now = Date.now();
+            setLocalLastUpdated(now);
+            syncService.uploadSessionOnly(user.uid, activeSession, now);
+        }, 3000);
+        return () => clearTimeout(timer);
+    }, [user, subscription.isPro, isAppLoading, hasCheckedSync, pendingCloudData, activeSession]);
+
+    // ── Debounce B: full-state write (slower, only when program/data changes) ──
+    // Excludes activeSession (handled above). Fires only when program, exercises,
+    // logs, nutrition or config change — much less frequent than session updates.
+    // Uses 10s debounce: these changes are deliberate edits, not keystrokes.
+    useEffect(() => {
+        if (!user || isAppLoading || !hasCheckedSync || !!pendingCloudData) return;
         const timer = setTimeout(() => {
             if (subscription.isPro) {
                 const now = Date.now();
                 setLocalLastUpdated(now);
                 syncService.uploadState(user.uid, {
-                    program, activeMeso, activeSession, exercises, logs, config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn, plateInventory }, rpFeedback, lastUpdated: now
+                    program, activeMeso, exercises, logs,
+                    config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn, plateInventory },
+                    rpFeedback,
+                    userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals,
+                    lastUpdated: now,
+                    // activeSession intentionally omitted — Debounce A owns it.
                 });
             } else {
                 syncService.uploadUserIdentity(user.uid, user.email || "");
             }
-        }, 5000);
+        }, 10000);
         return () => clearTimeout(timer);
-    }, [user, subscription.isPro, program, activeMeso, activeSession, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, plateInventory, rpFeedback, isAppLoading, userProfile, nutritionLogs, bodyLogs, macroGoals]);
+    }, [user, subscription.isPro, program, activeMeso, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, plateInventory, rpFeedback, isAppLoading, hasCheckedSync, pendingCloudData, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals]);
 
     const confirmCloudSync = useCallback(() => {
         if (pendingCloudData) {
@@ -371,7 +399,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     }, [setShowRIR, setRpEnabled, setRpTargetRIR, setKeepScreenOn, setPlateInventory]);
 
     const markTutorialSeen = useCallback((section: keyof TutorialState) => setTutorialProgress(prev => ({ ...prev, [section]: true })), [setTutorialProgress]);
-    const resetTutorials = useCallback(() => setTutorialProgress({ home: false, workout: false, history: false, stats: false, mesoSettings: false, nutrition: false }), [setTutorialProgress]);
+    const resetTutorials = useCallback(() => setTutorialProgress(INITIAL_TUTORIAL_STATE), [setTutorialProgress]);
 
 
     const configState = useMemo(() => ({ showRIR, rpEnabled, rpTargetRIR, keepScreenOn, plateInventory }), [showRIR, rpEnabled, rpTargetRIR, keepScreenOn, plateInventory]);

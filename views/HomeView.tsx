@@ -21,9 +21,6 @@ import { WeekProgress } from './home/WeekProgress';
 import { WeeklyRecapCard } from './home/WeeklyRecapCard';
 import { NextSessionCard } from './home/NextSessionCard';
 
-// Lazy load the AI Chat component
-const GainsLabChat = React.lazy(() => import('../components/ai/GainsLabChat').then(module => ({ default: module.GainsLabChat })));
-
 
 // --- MAIN COMPONENT ---
 
@@ -48,7 +45,6 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
 
     const [showCompleteModal, setShowCompleteModal] = useState<'week' | 'meso' | null>(null);
     const [showMesoSettings, setShowMesoSettings] = useState(false);
-    const [showAIChat, setShowAIChat] = useState(false);
     const [skipConfirmationId, setSkipConfirmationId] = useState<number | null>(null);
     const [showTemplateSelector, setShowTemplateSelector] = useState(false);
     const [showGuidelines, setShowGuidelines] = useState(false);
@@ -513,15 +509,6 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                 </div>
             </div>
 
-            {/* AI Floating Button */}
-            <div className="fixed bottom-24 right-6 z-40 pointer-events-none">
-                <button
-                    onClick={() => checkPro("GainsLab AI AI") && setShowAIChat(true)}
-                    className="pointer-events-auto w-14 h-14 rounded-full bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.3)] flex items-center justify-center hover:scale-110 transition-transform active:scale-95"
-                >
-                    <Icon name="Bot" size={24} fill="currentColor" />
-                </button>
-            </div>
 
             <TutorialOverlay
                 steps={homeTutorialSteps}
@@ -531,7 +518,6 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
 
             {/* --- MODALS --- */}
 
-            {showAIChat && <Suspense fallback={null}><GainsLabChat onClose={() => setShowAIChat(false)} /></Suspense>}
             {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} feature={featureAttempted} />}
 
             {/* Guidelines Modal */}

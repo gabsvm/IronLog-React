@@ -23,7 +23,7 @@ export const MacroBar: React.FC<Props> = React.memo(({ value, goal, color, label
                     <span className="text-zinc-700">/{goal}g</span>
                 </span>
             </div>
-            <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+            <div className="h-2.5 bg-zinc-800 rounded-full overflow-hidden">
                 <div
                     className={`h-full rounded-full transition-all duration-slow ease-natural ${over ? 'bg-orange-500' : color.replace('text-', 'bg-')}`}
                     style={{ width: `${pct}%` }}

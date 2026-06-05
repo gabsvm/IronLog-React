@@ -1,16 +1,25 @@
 // components/ui/PDFImportModal.tsx
 import React, { useState, useCallback } from 'react';
-import * as pdfjsLib from 'pdfjs-dist';
 import { ProgramDay, ProgramSlot, MuscleGroup } from '../../types';
 import { Icon } from './Icon';
 import { Button } from './Button';
 import { Sheet } from './Sheet';
 
-// @ts-ignore - pdf.worker.mjs?url is a Vite-specific import that TS might not resolve correctly during npx tsc
-import workerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url';
-
-// Worker para pdfjs
-pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
+// Lazy-load pdfjs (~400KB) only when the user actually imports a PDF.
+// Keeps it out of the ProgramEditView chunk; cached after first use.
+let pdfjsPromise: Promise<typeof import('pdfjs-dist')> | null = null;
+const loadPdfjs = () => {
+    if (!pdfjsPromise) {
+        pdfjsPromise = (async () => {
+            const pdfjsLib = await import('pdfjs-dist');
+            // @ts-ignore - Vite-specific ?url import resolves to the worker asset path
+            const workerUrl = (await import('pdfjs-dist/build/pdf.worker.mjs?url')).default;
+            pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
+            return pdfjsLib;
+        })();
+    }
+    return pdfjsPromise;
+};
 
 interface PDFImportModalProps {
   onClose: () => void;
@@ -111,6 +120,7 @@ export const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose, onImpor
 
     try {
       if (file.type === 'application/pdf') {
+        const pdfjsLib = await loadPdfjs();
         const arrayBuffer = await file.arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
         let text = '';

@@ -82,6 +82,12 @@ export const Sheet: React.FC<SheetProps> = ({
                         </div>
                     )}
 
+                    {/* Drawer.Title must always exist for Radix/vaul a11y (WCAG 4.1.2).
+                        When no visible title is needed it's rendered sr-only. */}
+                    {!title && (
+                        <Drawer.Title className="sr-only">Panel</Drawer.Title>
+                    )}
+
                     {/* Header */}
                     {(title || onBack || !hideCloseButton) && (
                         <div className={`flex items-center gap-3 px-5 ${isFull ? 'h-16 pt-safe border-b border-zinc-200 dark:border-white/5' : 'py-3'} shrink-0`}>

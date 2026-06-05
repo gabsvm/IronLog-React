@@ -5,7 +5,7 @@ import { useTimerContext } from '../context/TimerContext';
 import { SessionExercise, ExerciseDef, SetType, Log, WorkoutSet } from '../types';
 import { arrayMove } from '@dnd-kit/sortable';
 import { triggerHaptic } from '../utils/audio';
-import { getLastLogForExercise } from '../utils';
+import { getLastLogForExercise, uid, estimate1RM } from '../utils';
 
 export const useWorkoutController = (onFinishCallback: () => void, onDiscardCallback: () => void) => {
     const { activeSession, activeMeso, setActiveSession, setActiveMeso, setProgram, exercises, rpFeedback, setRpFeedback, config, logs } = useApp();
@@ -38,6 +38,25 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
     const sessionExercises = useMemo(() =>
         (activeSession?.exercises || []).filter((e): e is SessionExercise => !!e),
         [activeSession?.exercises]);
+
+    // Pre-built best-1RM index from full history — O(total_history) computed once
+    // when logs change, not on every call to detectPRs.
+    const historicalBest1RM = useMemo(() => {
+        const best = new Map<string, number>();
+        const safeLogs = Array.isArray(logs) ? logs : [];
+        for (const log of safeLogs) {
+            for (const ex of (log.exercises || [])) {
+                if (!ex?.id) continue;
+                for (const s of (ex.sets || [])) {
+                    if (s.completed && s.weight && s.reps) {
+                        const e1rm = estimate1RM(Number(s.weight), Number(s.reps));
+                        if (e1rm > (best.get(ex.id) ?? 0)) best.set(ex.id, e1rm);
+                    }
+                }
+            }
+        }
+        return best;
+    }, [logs]);
 
     // Data Mutations
     const handleSetUpdate = useCallback((exInstanceId: number, setId: number, field: keyof WorkoutSet, value: any) => {
@@ -75,7 +94,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
                         : lastSet?.weight;
 
                     const newSet: WorkoutSet = {
-                        id: Date.now(),
+                        id: uid(),
                         weight: isDropSet ? dropWeight : (lastSet ? lastSet.weight : ''),
                         reps: lastSet ? lastSet.reps : '',
                         rpe: '',
@@ -203,40 +222,20 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
     }, [activeMeso, sessionExercises, setActiveSession, setRestTimer]);
 
     const detectPRs = useCallback((): boolean => {
-        let prFound = false;
-        const safeLogs = Array.isArray(logs) ? logs : [];
-
         for (const ex of sessionExercises) {
             let currentBest1RM = 0;
-            (ex.sets || []).forEach(s => {
+            for (const s of (ex.sets || [])) {
                 if (s.completed && s.weight && s.reps) {
-                    const e1rm = Number(s.weight) * (1 + Number(s.reps) / 30);
+                    const e1rm = estimate1RM(Number(s.weight), Number(s.reps));
                     if (e1rm > currentBest1RM) currentBest1RM = e1rm;
                 }
-            });
-
-            if (currentBest1RM > 0) {
-                let historicalBest1RM = 0;
-                safeLogs.forEach(l => {
-                    const oldEx = l.exercises?.find(e => e.id === ex.id);
-                    if (oldEx) {
-                        (oldEx.sets || []).forEach(s => {
-                            if (s.completed && s.weight && s.reps) {
-                                const e1rm = Number(s.weight) * (1 + Number(s.reps) / 30);
-                                if (e1rm > historicalBest1RM) historicalBest1RM = e1rm;
-                            }
-                        });
-                    }
-                });
-
-                if (currentBest1RM > historicalBest1RM) {
-                    prFound = true;
-                    break;
-                }
+            }
+            if (currentBest1RM > 0 && currentBest1RM > (historicalBest1RM.get(ex.id) ?? 0)) {
+                return true;
             }
         }
-        return prFound;
-    }, [sessionExercises, logs]);
+        return false;
+    }, [sessionExercises, historicalBest1RM]);
 
     const fireConfetti = useCallback(async () => {
         try {
@@ -389,11 +388,9 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
     }, [setActiveSession]);
 
     const handleAddAVTRound = useCallback((exInstanceId: number) => {
-        const roundId = Date.now();
-        // Un round AVT empieza con 4 hops vacíos (peso incremental, mismas reps)
-        // El usuario va completando hop a hop y marca cuál fue el fallo
-        const initialHops: WorkoutSet[] = Array.from({ length: 4 }, (_, i) => ({
-            id: Date.now() + i,
+        const roundId = uid();
+        const initialHops: WorkoutSet[] = Array.from({ length: 4 }, () => ({
+            id: uid(),
             weight: '',
             reps: '',
             rpe: '',
@@ -445,7 +442,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
                 exercises: prev.exercises.map(ex => {
                     if (ex.instanceId !== exInstanceId) return ex;
                     const newHop: WorkoutSet = {
-                        id: Date.now(),
+                        id: uid(),
                         weight: '',
                         reps: '',
                         rpe: '',

@@ -66,8 +66,12 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [ctrl.changingSetType]);
 
-    // Derived State
-    const stageConfig = activeMeso ? getMesoStageConfig(activeMeso.mesoType || 'hyp_1', activeMeso.week, !!activeMeso.isDeload) : null;
+    // Derived State — memoized so its reference is stable across keystroke re-renders,
+    // otherwise it defeats React.memo on every SortableExerciseCard.
+    const stageConfig = useMemo(
+        () => activeMeso ? getMesoStageConfig(activeMeso.mesoType || 'hyp_1', activeMeso.week, !!activeMeso.isDeload) : null,
+        [activeMeso]
+    );
     const sessionExercises = ctrl.sessionExercises as SessionExercise[];
     const isCalisthenicsSession = useMemo(() => 
         sessionExercises.length > 0 && sessionExercises.every(ex => ex.isBodyweight), 
@@ -122,6 +126,16 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
         // recreate this callback on every controller update and defeat memoization.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [ctrl.setChangingSetType]);
+
+    // Stable callbacks/values so SortableExerciseCard's React.memo holds across
+    // keystroke re-renders — inline arrows here would create new refs every render.
+    const handleSubBodyweight = useCallback((id: number, muscle: import('../types').MuscleGroup) => {
+        ctrl.setReplaceFilter({ muscle, source: 'nilsson_bw' });
+        ctrl.setReplacingExId(id);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [ctrl.setReplaceFilter, ctrl.setReplacingExId]);
+
+    const sortableItems = useMemo(() => sessionExercises.map(ex => ex.instanceId), [sessionExercises]);
 
     // Hoisted ABOVE the early return so React hooks run unconditionally every render.
     const muscleCoverage = useMemo(() => {
@@ -327,16 +341,19 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                     </h1>
 
                     <div className="flex flex-wrap items-center gap-2">
-                        {/* Week Indicator */}
-                        <div className="flex items-center gap-1.5">
-                            <Icon name="Calendar" size={12} className="text-zinc-400" />
-                            <span className="text-xs font-bold text-zinc-400 uppercase tracking-wide">
-                                {t.week} {activeSession.week}
-                            </span>
-                        </div>
-
-                        {/* Minimalist Separator */}
-                        <span className="text-zinc-700 font-light">•</span>
+                        {/* Week Indicator — omit for freestyle sessions (week < 1) */}
+                        {activeSession.week >= 1 && (
+                            <>
+                                <div className="flex items-center gap-1.5">
+                                    <Icon name="Calendar" size={12} className="text-zinc-400" />
+                                    <span className="text-xs font-bold text-zinc-400 uppercase tracking-wide">
+                                        {t.week} {activeSession.week}
+                                    </span>
+                                </div>
+                                {/* Separator only makes sense when week is shown */}
+                                <span className="text-zinc-700 font-light">•</span>
+                            </>
+                        )}
 
                         {/* RIR Target / Deload Pill */}
                         {showStageInfo && (
@@ -406,7 +423,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                             onDragEnd={handleDragEnd}
                         >
                             <SortableContext
-                                items={sessionExercises.map(ex => ex.instanceId)}
+                                items={sortableItems}
                                 strategy={verticalListSortingStrategy}
                             >
                                 {sessionExercises.map((ex, idx) => {
@@ -422,10 +439,10 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                             onSetTypeChange={handleSetTypeChange}
                                             onAddSet={ctrl.handleAddSet}
                                             onDeleteSet={ctrl.handleDeleteSet}
-                                            onOpenDetail={(ex) => ctrl.setDetailExercise(ex)}
+                                            onOpenDetail={ctrl.setDetailExercise}
                                             onLink={ctrl.setLinkingId}
                                             onReplace={ctrl.setReplacingExId}
-                                            onSubBodyweight={(id, muscle) => { ctrl.setReplaceFilter({ muscle, source: 'nilsson_bw' }); ctrl.setReplacingExId(id); }}
+                                            onSubBodyweight={handleSubBodyweight}
                                             onEditMuscle={ctrl.setEditingMuscleId}
                                             onConfigPlate={ctrl.setConfigPlateExId}
                                             onUpdateSession={ctrl.updateSession}
@@ -440,6 +457,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                             config={config}
                                             stageConfig={stageConfig}
                                             viewMode="list"
+                                            logs={logs}
                                             tutorialId={idx === 0 ? "tut-set-type" : undefined}
                                             onMarkLastHop={ctrl.handleMarkLastHop}
                                             onAddHopToRound={ctrl.handleAddHopToRound}
@@ -455,8 +473,16 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                 <Icon name="Plus" size={16} /> {t.addExercise}
                             </Button>
 
-                            {/* Bottom Finish Button (Redundant but useful for long lists) */}
-                            <Button onClick={(e) => { e.stopPropagation(); ctrl.setShowFinishModal(true); }} size="lg" fullWidth className={`py-4 text-base shadow-xl ${isCalisthenicsSession ? 'shadow-violet-600/20 bg-gradient-to-r from-violet-600 to-violet-500' : 'shadow-primary-600/20 bg-gradient-to-r from-primary-600 to-primary-500'} border-none`}>
+                            {/* Bottom Finish — secondary style: the primary TERMINAR lives in the header,
+                                this one just prevents scrolling all the way up on long sessions. */}
+                            <Button
+                                variant="secondary"
+                                onClick={(e) => { e.stopPropagation(); ctrl.setShowFinishModal(true); }}
+                                size="lg"
+                                fullWidth
+                                className="py-4 text-base border-zinc-700 text-zinc-300 hover:text-white"
+                            >
+                                <Icon name="CheckCircle" size={18} />
                                 {t.finishWorkout}
                             </Button>
                         </div>
@@ -501,10 +527,10 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                         onSetTypeChange={handleSetTypeChange}
                                         onAddSet={ctrl.handleAddSet}
                                         onDeleteSet={ctrl.handleDeleteSet}
-                                        onOpenDetail={(ex) => ctrl.setDetailExercise(ex)}
+                                        onOpenDetail={ctrl.setDetailExercise}
                                         onLink={ctrl.setLinkingId}
                                         onReplace={ctrl.setReplacingExId}
-                                        onSubBodyweight={(id, muscle) => { ctrl.setReplaceFilter({ muscle, source: 'nilsson_bw' }); ctrl.setReplacingExId(id); }}
+                                        onSubBodyweight={handleSubBodyweight}
                                         onEditMuscle={ctrl.setEditingMuscleId}
                                         onConfigPlate={ctrl.setConfigPlateExId}
                                         onUpdateSession={ctrl.updateSession}
@@ -519,6 +545,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                         config={config}
                                         stageConfig={stageConfig}
                                         viewMode="focus"
+                                        logs={logs}
                                         tutorialId={focusedIndex === 0 ? "tut-set-type" : undefined}
                                         onMarkLastHop={ctrl.handleMarkLastHop}
                                         onAddHopToRound={ctrl.handleAddHopToRound}

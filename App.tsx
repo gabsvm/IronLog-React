@@ -12,7 +12,7 @@ import { TRANSLATIONS } from './constants';
 import { Button } from './components/ui/Button';
 import { useAuth, AuthProvider } from './context/AuthContext';
 import { AuthModal } from './components/auth/AuthModal';
-import { getLastLogForExercise } from './utils';
+import { getLastLogForExercise, uid } from './utils';
 import { syncService } from './services/syncService';
 import { usePro } from './hooks/usePro';
 import { PaywallModal } from './components/pro/PaywallModal';
@@ -38,7 +38,19 @@ const LoadingSpinner = () => (
     </div>
 );
 
-// Define View Hierarchy for Directional Animations
+// Wraps a DOM mutation in a View Transition (graceful fallback when unsupported).
+const withTransition = (direction: string, callback: () => void) => {
+    document.documentElement.dataset.transition = direction;
+    if ((document as any).startViewTransition) {
+        (document as any).startViewTransition(callback)
+            .finished.finally(() => { document.documentElement.dataset.transition = ''; });
+    } else {
+        callback();
+        document.documentElement.dataset.transition = '';
+    }
+};
+
+// View Hierarchy for Directional Animations
 const VIEW_DEPTH: Record<string, number> = {
     'home': 1,
     'history': 1,
@@ -55,7 +67,8 @@ const AppContent = () => {
         program, exercises, lang, logs, setLogs,
         setExercises, setProgram, setActiveMeso,
         config, rpFeedback, hasSeenOnboarding, setHasSeenOnboarding,
-        pendingCloudData, confirmCloudSync, cancelCloudSync
+        pendingCloudData, confirmCloudSync, cancelCloudSync,
+        userProfile, nutritionLogs, cardioSessions, bodyLogs, macroGoals, nutritionGoal
     } = useApp();
 
     const { setRestTimer } = useTimerContext();
@@ -80,26 +93,12 @@ const AppContent = () => {
     const [importData, setImportData] = useState<any>(null);
     const [showForceSyncModal, setShowForceSyncModal] = useState(false);
 
-    // UX: Helper to trigger View Transitions with Direction
     const setView = useCallback((newView: typeof view) => {
         if (newView === view) return;
         const currentDepth = VIEW_DEPTH[view] || 1;
         const nextDepth = VIEW_DEPTH[newView] || 1;
-        let direction = 'fade';
-        if (nextDepth > currentDepth) direction = 'forward';
-        else if (nextDepth < currentDepth) direction = 'back';
-        document.documentElement.dataset.transition = direction;
-
-        if ((document as any).startViewTransition) {
-            const transition = (document as any).startViewTransition(() => {
-                setViewState(newView);
-            });
-            transition.finished.finally(() => {
-                document.documentElement.dataset.transition = '';
-            });
-        } else {
-            setViewState(newView);
-        }
+        const direction = nextDepth > currentDepth ? 'forward' : nextDepth < currentDepth ? 'back' : 'fade';
+        withTransition(direction, () => setViewState(newView));
     }, [view]);
 
     // History management logic
@@ -114,17 +113,10 @@ const AppContent = () => {
         const handlePop = (e: PopStateEvent) => {
             isPopping.current = true;
             if (e.state) {
-                document.documentElement.dataset.transition = 'back';
-                if ((document as any).startViewTransition) {
-                    const t = (document as any).startViewTransition(() => {
-                        if (e.state?.view) setViewState(e.state.view);
-                        setShowSettings(!!e.state?.settings);
-                    });
-                    t.finished.finally(() => { document.documentElement.dataset.transition = ''; });
-                } else {
+                withTransition('back', () => {
                     if (e.state?.view) setViewState(e.state.view);
                     setShowSettings(!!e.state?.settings);
-                }
+                });
             } else {
                 setView('home');
                 setShowSettings(false);
@@ -166,7 +158,8 @@ const AppContent = () => {
     const handleExport = () => {
         const data = {
             program, exercises, logs, activeMeso, activeSession,
-            version: '3.0.0'
+            userProfile, nutritionLogs, cardioSessions, bodyLogs, macroGoals, nutritionGoal,
+            version: '4.0.3'
         };
         const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -194,7 +187,10 @@ const AppContent = () => {
         setShowForceSyncModal(false);
         try {
             await syncService.uploadState(user.uid, {
-                program, activeMeso, exercises, logs, config, rpFeedback, activeSession
+                program, activeMeso, activeSession, exercises, logs,
+                config, rpFeedback,
+                userProfile, nutritionLogs, cardioSessions, bodyLogs, macroGoals, nutritionGoal,
+                lastUpdated: Date.now(),
             });
         } catch (e: any) {
             console.error(e);
@@ -210,9 +206,15 @@ const AppContent = () => {
         reader.onload = (ev) => {
             try {
                 const data = JSON.parse(ev.target?.result as string);
-                setImportData(data); // Triggers Confirm Modal
+                // Basic shape guard: must have at least one recognisable array field
+                if (!data || typeof data !== 'object' ||
+                    (!Array.isArray(data.program) && !Array.isArray(data.exercises) && !Array.isArray(data.logs))) {
+                    console.error("Import rejected: unrecognised backup format");
+                    return;
+                }
+                setImportData(data);
             } catch (err) {
-                console.error("Invalid File");
+                console.error("Import rejected: invalid JSON");
             }
         };
         reader.readAsText(file);
@@ -367,9 +369,9 @@ const AppContent = () => {
 
                                         let initialSets;
                                         if (slotDef.isAVT) {
-                                            const roundId = Date.now() + Math.random();
-                                            initialSets = Array.from({ length: 4 }, (_, i) => ({
-                                                id: Date.now() + Math.random() + i,
+                                            const roundId = uid();
+                                            initialSets = Array.from({ length: 4 }, () => ({
+                                                id: uid(),
                                                 weight: '',
                                                 reps: slotDef.avtStartReps ? String(slotDef.avtStartReps) : '6',
                                                 rpe: '', completed: false, type: 'avt_hop',
@@ -377,16 +379,15 @@ const AppContent = () => {
                                             }));
                                         } else {
                                             initialSets = Array(setTarget).fill(null).map((_, i) => ({
-                                                id: Date.now() + Math.random() + i,
+                                                id: uid(),
                                                 weight: '', reps: '', rpe: '', completed: false,
-                                                // Apply saved Set Type preference from Template if available, else default to 'regular'
                                                 type: slotDef.setType || 'regular',
                                                 hintWeight: lastSets?.[i]?.weight, hintReps: lastSets?.[i]?.reps,
                                                 prevWeight: lastSets?.[i]?.weight, prevReps: lastSets?.[i]?.reps
                                             }));
                                         }
 
-                                        return { ...exDef, instanceId: Date.now() + Math.random() + sIdx, slotLabel: slotDef.muscle, targetReps: slotDef.reps, sets: initialSets as any };
+                                        return { ...exDef, instanceId: uid(), slotLabel: slotDef.muscle, targetReps: slotDef.reps, sets: initialSets as any };
                                     }).filter(Boolean);
 
                                     setActiveSession({ id: Date.now(), dayIdx: idx, name: `${activeMeso.week} • ${dayNameSafe}`, exercises: sessionExs as any, startTime: Date.now(), mesoId: activeMeso.id, week: activeMeso.week });

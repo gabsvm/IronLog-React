@@ -238,10 +238,21 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
                     {/* Virtualized List */}
                     <div className="flex-1 overflow-hidden">
                         {filtered.length === 0 ? (
-                            <div className="text-center py-12 text-zinc-400 text-sm flex flex-col items-center">
-                                <div className="mb-4">{t.noExFound}</div>
-                                <Button size="sm" onClick={handleCreateStart}>
-                                    <Icon name="Plus" size={14} /> {t.createEx} "{search}"
+                            <div className="flex flex-col items-center justify-center py-16 px-8 text-center gap-4">
+                                <div className="w-16 h-16 rounded-2xl bg-zinc-800/80 flex items-center justify-center">
+                                    <Icon name="Dumbbell" size={28} className="text-zinc-600" />
+                                </div>
+                                <div>
+                                    <p className="text-white font-bold text-base mb-1">
+                                        {search ? `Sin resultados para "${search}"` : (t.noExFound || 'Sin ejercicios')}
+                                    </p>
+                                    <p className="text-zinc-500 text-sm">
+                                        {lang === 'es' ? 'Buscá por nombre o creá uno nuevo' : 'Search by name or create a new one'}
+                                    </p>
+                                </div>
+                                <Button onClick={handleCreateStart}>
+                                    <Icon name="Plus" size={14} />
+                                    {search ? `${t.createEx} "${search}"` : (lang === 'es' ? 'Crear ejercicio' : 'Create exercise')}
                                 </Button>
                             </div>
                         ) : (

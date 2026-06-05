@@ -215,7 +215,13 @@ export const SetRow = React.memo(({
 }: SetRowProps) => {
     const isDone = set.completed;
     const setType = set.type || 'regular';
-    const effectiveBadgeLabel = badgeLabel ?? getTypeLabel(setType);
+    // For regular sets: show the set number (1-based index) instead of the
+    // opaque `●` glyph — gives instant orientation ("I'm on set 2 of 3").
+    // For typed sets (warmup, myorep, drop…): keep the type letter badge.
+    const effectiveBadgeLabel = badgeLabel
+        ?? (setType === 'regular' && setIndex != null
+            ? String(setIndex + 1)
+            : getTypeLabel(setType));
     const rowAccent = isDone
         ? ''
         : isActiveProtocolSet
@@ -316,8 +322,10 @@ export const SetRow = React.memo(({
     const inputBase = "w-full text-center bg-zinc-800 rounded-xl py-3.5 text-xl font-bold text-white outline-none focus:ring-2 focus:ring-white/30 transition-all tabular-nums placeholder-zinc-600";
     const doneInput = "bg-transparent text-green-400 pointer-events-none";
 
-    const weightPlaceholder = set.hintWeight ? String(set.hintWeight) : '—';
-    const repsPlaceholder = set.hintReps ? String(set.hintReps) : '—';
+    // Show previous session value as placeholder so the field reads as "editable with context",
+    // not as a disabled em dash. Falls back to '0' so the input reads clearly as empty & tappable.
+    const weightPlaceholder = set.hintWeight ? String(set.hintWeight) : '0';
+    const repsPlaceholder = set.hintReps ? String(set.hintReps) : '0';
 
     const BadgeEl = disableTypeChange || isDone ? 'div' : 'button';
     const badgeProps = (!disableTypeChange && !isDone)

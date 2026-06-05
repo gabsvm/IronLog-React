@@ -1,5 +1,5 @@
 
-import { doc, getDoc, writeBatch, setDoc } from "firebase/firestore";
+import { doc, getDoc, writeBatch, setDoc, updateDoc } from "firebase/firestore";
 import { db, auth } from "../lib/firebase"; // Import Auth to get current email
 import { AppState } from "../types";
 
@@ -80,6 +80,24 @@ export const syncService = {
     },
 
     /**
+     * LIGHTWEIGHT SESSION WRITE — only uploads activeSession + timestamp.
+     * Called by a fast debounce (3s) during workouts so keystrokes don't trigger
+     * a full-state rewrite (~50-200KB). Uses updateDoc (field merge) instead of
+     * writeBatch setDoc to avoid touching unrelated fields.
+     */
+    uploadSessionOnly: async (userId: string, session: AppState['activeSession'], lastUpdated: number) => {
+        if (!userId || !db) return;
+        try {
+            const userRef = doc(db, "users", userId);
+            await updateDoc(userRef, sanitizeForFirestore({ activeSession: session ?? null, lastUpdated }));
+        } catch (error: any) {
+            // updateDoc fails if the document doesn't exist yet (new user before first full upload).
+            // Silently ignore — the next uploadState will create it.
+            if (error?.code !== 'not-found') console.error("❌ Session Upload Failed:", error);
+        }
+    },
+
+    /**
      * SUBIDA (PUSH): Envía el estado local a Firebase.
      */
     uploadState: async (userId: string, state: Partial<AppState>) => {
@@ -117,11 +135,16 @@ export const syncService = {
                 const logsRef = doc(db, "users", userId, "data", "history");
                 let logsData = sanitizeForFirestore({ logs: state.logs });
 
-                // Firestore document limit is 1MB. We safety check at 900KB.
+                // Firestore document limit is 1MB. Safety check at 900KB.
                 const payloadSize = JSON.stringify(logsData).length;
                 if (payloadSize > 900000) {
-                    console.warn("⚠️ History logs exceeding limit. Truncating to last 200 entries.");
-                    logsData.logs = logsData.logs.slice(0, 200); // FIX: newest logs are at the beginning
+                    // Emit a custom event so the UI can notify the user if desired.
+                    // Full log history is preserved in IndexedDB; only the cloud copy is capped.
+                    window.dispatchEvent(new CustomEvent('ironlog:sync-truncated', {
+                        detail: { total: logsData.logs.length, kept: 200 }
+                    }));
+                    console.warn(`⚠️ Cloud history capped at 200 entries (payload was ${(payloadSize / 1024).toFixed(0)} KB). Local data untouched.`);
+                    logsData.logs = logsData.logs.slice(0, 200); // newest logs are at index 0
                 }
 
                 batch.set(logsRef, logsData);
@@ -162,11 +185,14 @@ export const syncService = {
                     config: data.config,
                     exercises: data.exercises,
                     rpFeedback: data.rpFeedback,
+                    userProfile: data.userProfile,
                     nutritionLogs: data.nutritionLogs,
                     cardioSessions: data.cardioSessions,
                     nutritionGoal: data.nutritionGoal,
+                    bodyLogs: data.bodyLogs,
+                    macroGoals: data.macroGoals,
                     logs: logsData,
-                    lastUpdated: data.lastUpdated || Date.now() // Fallback if missing
+                    lastUpdated: data.lastUpdated || Date.now(),
                 };
             }
             return null;

@@ -1,0 +1,31 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Global read-only content (templates & exercise library) ──────────
+    match /global_templates/{id} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /global_exercises/{id} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // ── Per-user data ─────────────────────────────────────────────────────
+    match /users/{uid} {
+      // Owner-only access on the main user document
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+
+      match /data/{doc} {
+        // Subscription is SERVER-SIDE ONLY — the client can read but never write.
+        // Writes must come from a Cloud Function (webhook from payment provider).
+        allow read: if request.auth != null && request.auth.uid == uid;
+        allow write: if doc != 'subscription'
+                     && request.auth != null
+                     && request.auth.uid == uid;
+      }
+    }
+  }
+}

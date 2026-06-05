@@ -1,10 +1,9 @@
 
 import { ProgramDay, UserProfile, MesoType } from "../types";
-import { 
-    DEFAULT_TEMPLATE, 
-    UPPER_LOWER_TEMPLATE, 
-    FULL_BODY_TEMPLATE, 
-    METABOLITE_TEMPLATE, 
+import {
+    DEFAULT_TEMPLATE,
+    UPPER_LOWER_TEMPLATE,
+    METABOLITE_TEMPLATE,
     RESENS_TEMPLATE,
     WIZARD_TEMPLATE
 } from "../constants";

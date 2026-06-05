@@ -1,6 +1,18 @@
 
 import { Lang, Log, WorkoutSet, MesoType } from "./types";
 
+// Monotonically increasing unique integer ID — safe against Date.now() collisions
+// when multiple IDs are generated in the same millisecond (e.g. bulk set creation).
+let _uidSeq = 0;
+export const uid = (): number => {
+    _uidSeq = (_uidSeq + 1) % 1_000_000;
+    return Date.now() * 1_000_000 + _uidSeq;
+};
+
+// Epley 1RM estimate — single source of truth used by controller and stats worker.
+export const estimate1RM = (weight: number, reps: number): number =>
+    weight * (1 + reps / 30);
+
 export const formatDate = (d: number, l: Lang) => 
     new Date(d).toLocaleDateString(l==='en'?'en-US':'es-ES', {weekday:'short', month:'short', day:'numeric'});
 

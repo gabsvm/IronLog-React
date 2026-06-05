@@ -13,7 +13,6 @@ import { ExerciseCardMenu } from './ExerciseCardMenu';
 import { ExerciseCardSets } from './ExerciseCardSets';
 import { RestPresetSheet } from './RestPresetSheet';
 import { getTranslated, roundWeight } from '../../utils';
-import { useApp } from '../../context/AppContext';
 import { useTimerContext } from '../../context/TimerContext';
 import { triggerHaptic, playTimerFinishSound } from '../../utils/audio';
 
@@ -50,6 +49,7 @@ interface SortableExerciseCardProps {
     config: any;
     stageConfig: any;
     viewMode?: 'list' | 'focus';
+    logs: import('../../types').Log[]; // Passed from parent so the card no longer subscribes to the full AppContext
 
     // Tutorial Hook
     tutorialId?: string; // "tut-set-type" from parent if first card
@@ -83,10 +83,10 @@ export const SortableExerciseCard = React.memo(({
     config,
     stageConfig,
     viewMode = 'list',
+    logs,
     tutorialId
 }: SortableExerciseCardProps) => {
     const { restTimer } = useTimerContext();
-    const { logs } = useApp();
     const [activeEmomMinute, setActiveEmomMinute] = useState(0);
     const [showRestPreset, setShowRestPreset] = useState(false);
     const [exDoneFlash, setExDoneFlash] = useState(false);
