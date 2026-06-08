@@ -67,6 +67,23 @@ const getRowAccent = (type: SetType): string => {
     }
 };
 
+const getBorderAccent = (type: SetType): string => {
+    switch (type) {
+        case 'warmup':       return 'border-l-[3px] border-l-yellow-500/80';
+        case 'top':          return 'border-l-[3px] border-l-red-500/80';
+        case 'backoff':      return 'border-l-[3px] border-l-blue-500/80';
+        case 'myorep': case 'myorep_match': return 'border-l-[3px] border-l-purple-500/80';
+        case 'cluster':      return 'border-l-[3px] border-l-emerald-500/80';
+        case 'giant':        return 'border-l-[3px] border-l-orange-500/80';
+        case 'emom':         return 'border-l-[3px] border-l-cyan-500/80';
+        case 'drop':         return 'border-l-[3px] border-l-teal-500/80';
+        case 'rest_pause':   return 'border-l-[3px] border-l-rose-500/80';
+        case 'time_volume':  return 'border-l-[3px] border-l-amber-500/80';
+        case 'triple_add':   return 'border-l-[3px] border-l-pink-500/80';
+        default:             return 'border-l-[3px] border-l-transparent';
+    }
+};
+
 const getTypeLabel = (type: SetType) => {
     const map: Record<string, string> = {
         regular: '●',
@@ -319,7 +336,7 @@ export const SetRow = React.memo(({
         onUpdate(exInstanceId, set.id, 'duration', seconds);
     }, [exInstanceId, set.id, onUpdate]);
 
-    const inputBase = "w-full text-center bg-zinc-800 rounded-xl py-3.5 text-xl font-bold text-white outline-none focus:ring-2 focus:ring-white/30 transition-all tabular-nums placeholder-zinc-600";
+    const inputBase = "w-full text-center bg-zinc-800 rounded-xl py-3.5 text-xl font-bold text-white outline-none focus:ring-2 focus:ring-white/30 glow-input-neon transition-all tabular-nums placeholder-zinc-600";
     const doneInput = "bg-transparent text-green-400 pointer-events-none";
 
     // Show previous session value as placeholder so the field reads as "editable with context",
@@ -359,7 +376,7 @@ export const SetRow = React.memo(({
         return (
             <div id={`set-row-${set.id}`}
                 onTouchStart={onSwipeTouchStart} onTouchMove={onSwipeTouchMove} onTouchEnd={onSwipeTouchEnd}
-                className={`relative grid grid-cols-12 gap-2 items-center py-2.5 px-1 transition-colors duration-200 ${isDone ? 'opacity-60' : rowAccent}`}>
+                className={`relative grid grid-cols-12 gap-2 items-center py-2.5 px-1 transition-colors duration-200 ${getBorderAccent(setType)} ${isDone ? 'opacity-60' : rowAccent}`}>
                 {SwipeOverlay}
                 {/* Set Type Badge */}
                 <div className="col-span-2 flex justify-center">
@@ -389,7 +406,7 @@ export const SetRow = React.memo(({
                         className={`
                             w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-150 active:scale-90
                             ${isDone
-                                ? 'bg-green-500 text-white animate-pulse-glow-green'
+                                ? 'bg-green-500 text-white animate-pulse-glow-green glow-btn-success'
                                 : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700 hover:text-white active:bg-green-600 active:text-white'}
                         `}
                     >
@@ -405,7 +422,7 @@ export const SetRow = React.memo(({
         return (
             <div id={`set-row-${set.id}`}
                 onTouchStart={onSwipeTouchStart} onTouchMove={onSwipeTouchMove} onTouchEnd={onSwipeTouchEnd}
-                className={`relative transition-colors duration-200 ${isDone ? 'opacity-60' : rowAccent}`}>
+                className={`relative transition-colors duration-200 ${getBorderAccent(setType)} ${isDone ? 'opacity-60' : rowAccent}`}>
                 {SwipeOverlay}
                 <div className="grid grid-cols-12 gap-2 items-center py-2.5 px-1">
                     {/* Set Type Badge */}
@@ -465,7 +482,7 @@ export const SetRow = React.memo(({
                             className={`
                                 w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-150 active:scale-90
                                 ${isDone
-                                    ? 'bg-green-500 text-white animate-pulse-glow-green'
+                                    ? 'bg-green-500 text-white animate-pulse-glow-green glow-btn-success'
                                     : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700 hover:text-white active:bg-green-600 active:text-white'}
                             `}
                         >
@@ -506,7 +523,7 @@ export const SetRow = React.memo(({
     return (
         <div id={`set-row-${set.id}`}
             onTouchStart={onSwipeTouchStart} onTouchMove={onSwipeTouchMove} onTouchEnd={onSwipeTouchEnd}
-            className={`relative transition-colors duration-200 ${isDone ? 'opacity-60' : rowAccent}`}>
+            className={`relative transition-colors duration-200 ${getBorderAccent(setType)} ${isDone ? 'opacity-60' : rowAccent}`}>
             {SwipeOverlay}
         <div className="grid grid-cols-12 gap-2 items-center py-2.5 px-1">
 
@@ -576,7 +593,7 @@ export const SetRow = React.memo(({
                     className={`
                         w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-150 active:scale-90
                         ${isDone
-                            ? 'bg-green-500 text-white animate-pulse-glow-green'
+                            ? 'bg-green-500 text-white animate-pulse-glow-green glow-btn-success'
                             : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700 hover:text-white active:bg-green-600 active:text-white'
                         }
                     `}

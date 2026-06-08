@@ -363,9 +363,23 @@ const AppContent = () => {
                                         if (!exDef && safeExercises.length > 0) exDef = safeExercises[0];
                                         if (!exDef) exDef = { id: 'unknown', name: 'Unknown', muscle: slotDef.muscle || 'CHEST' };
 
-                                        const lastSets = getLastLogForExercise(exDef.id, safeLogs);
                                         let setTarget = slotDef.setTarget || 3;
+                                        if (config.rpEnabled && activeMeso && activeMeso.week > 1) {
+                                            let accumulatedAdjustment = 0;
+                                            const fbForMeso = rpFeedback[activeMeso.id];
+                                            if (fbForMeso) {
+                                                for (let w = 1; w < activeMeso.week; w++) {
+                                                    const weekFb = fbForMeso[w] || fbForMeso[String(w)];
+                                                    if (weekFb && weekFb[slotDef.muscle]) {
+                                                        accumulatedAdjustment += weekFb[slotDef.muscle].adjustment || 0;
+                                                    }
+                                                }
+                                            }
+                                            setTarget = Math.max(1, setTarget + accumulatedAdjustment);
+                                        }
                                         if (isDeload) setTarget = Math.max(1, Math.ceil(setTarget / 2));
+
+                                        const lastSets = getLastLogForExercise(exDef.id, safeLogs);
 
                                         let initialSets;
                                         if (slotDef.isAVT) {

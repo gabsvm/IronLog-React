@@ -72,45 +72,93 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
                         const adj = (s && p) ? calculateVolumeAdjustment(s, p) : null;
                         
                         return (
-                            <div key={m} className="space-y-3 pb-4 border-b border-zinc-100 dark:border-white/5 last:border-0">
+                            <div key={m} className="space-y-4 pb-6 border-b border-zinc-850 last:border-0">
                                 <div className="flex justify-between items-center">
-                                    <span className="text-sm font-black uppercase tracking-widest text-zinc-900 dark:text-white bg-zinc-100 dark:bg-white/10 px-2 py-1 rounded">
+                                    <span className="text-xs font-black uppercase tracking-widest text-white bg-zinc-800/80 px-3 py-1.5 rounded-lg border border-white/5 shadow-inner">
                                         {(t.muscle as Record<string, string>)[m]}
                                     </span>
                                     {adj !== null && (
-                                        <span className={`text-xs font-bold px-2 py-1 rounded ${adj > 0 ? 'bg-green-100 text-green-700' : adj < 0 ? 'bg-red-100 text-red-700' : 'bg-zinc-100 text-zinc-500'}`}>
-                                            {adj > 0 ? t.fb.adjust.add : adj < 0 ? t.fb.adjust.sub : t.fb.adjust.keep}
-                                        </span>
+                                        <div className={`text-[10px] font-black tracking-widest uppercase px-3 py-1.5 rounded-full border transition-all ${
+                                            adj > 0 ? 'bg-green-950/20 text-green-400 border-green-500/20 shadow-[0_0_12px_rgba(34,197,94,0.1)]' 
+                                            : adj < 0 ? 'bg-rose-950/20 text-rose-400 border-rose-500/20 shadow-[0_0_12px_rgba(244,63,94,0.1)]' 
+                                            : 'bg-zinc-950 text-zinc-500 border-zinc-850'
+                                        }`}>
+                                            {adj > 0 ? `${t.fb.adjust.add} (+${adj} ${lang === 'es' ? 'series' : 'sets'})` 
+                                            : adj < 0 ? `${t.fb.adjust.sub} (${adj} ${lang === 'es' ? 'series' : 'sets'})` 
+                                            : t.fb.adjust.keep}
+                                        </div>
                                     )}
                                 </div>
 
-                                {/* Soreness Row (UI Order: 1, 2, 3) -> Matches Best to Worst */}
-                                <div className="space-y-1">
-                                    <div className="text-[10px] font-bold text-zinc-400 uppercase">{t.fb.sorenessLabel}</div>
+                                {/* Soreness Row */}
+                                <div className="space-y-1.5">
+                                    <div className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">{t.fb.sorenessLabel}</div>
                                     <div className="grid grid-cols-3 gap-2">
-                                        <button onClick={() => handleInput(m, 's', 1)} className={`p-2 rounded-lg border text-xs font-bold transition-all ${s === 1 ? 'bg-zinc-800 text-white border-zinc-800' : 'bg-zinc-50 dark:bg-zinc-800/50 text-zinc-500 border-zinc-200 dark:border-zinc-700'}`}>
+                                        <button 
+                                            onClick={() => handleInput(m, 's', 1)} 
+                                            className={`p-2.5 rounded-xl border text-xs font-bold transition-all active:scale-95 ${
+                                                s === 1 
+                                                    ? 'bg-green-500/10 text-green-400 border-green-500/30 shadow-[0_0_10px_rgba(34,197,94,0.05)]' 
+                                                    : 'bg-zinc-950 text-zinc-500 border-zinc-900 hover:border-zinc-800'
+                                            }`}
+                                        >
                                             {t.fb.soreness[1]}
                                         </button>
-                                        <button onClick={() => handleInput(m, 's', 2)} className={`p-2 rounded-lg border text-xs font-bold transition-all ${s === 2 ? 'bg-zinc-800 text-white border-zinc-800' : 'bg-zinc-50 dark:bg-zinc-800/50 text-zinc-500 border-zinc-200 dark:border-zinc-700'}`}>
+                                        <button 
+                                            onClick={() => handleInput(m, 's', 2)} 
+                                            className={`p-2.5 rounded-xl border text-xs font-bold transition-all active:scale-95 ${
+                                                s === 2 
+                                                    ? 'bg-zinc-800 text-white border-zinc-700' 
+                                                    : 'bg-zinc-950 text-zinc-500 border-zinc-900 hover:border-zinc-800'
+                                            }`}
+                                        >
                                             {t.fb.soreness[2]}
                                         </button>
-                                        <button onClick={() => handleInput(m, 's', 3)} className={`p-2 rounded-lg border text-xs font-bold transition-all ${s === 3 ? 'bg-red-600 text-white border-red-600' : 'bg-zinc-50 dark:bg-zinc-800/50 text-zinc-500 border-zinc-200 dark:border-zinc-700'}`}>
+                                        <button 
+                                            onClick={() => handleInput(m, 's', 3)} 
+                                            className={`p-2.5 rounded-xl border text-xs font-bold transition-all active:scale-95 ${
+                                                s === 3 
+                                                    ? 'bg-rose-500/15 text-rose-400 border-rose-500/30 shadow-[0_0_10px_rgba(244,63,94,0.05)]' 
+                                                    : 'bg-zinc-950 text-zinc-500 border-zinc-900 hover:border-zinc-800'
+                                            }`}
+                                        >
                                             {t.fb.soreness[3]}
                                         </button>
                                     </div>
                                 </div>
 
-                                {/* Performance Row (UI Order: 3, 2, 1) -> Matches Best (3) to Worst (1) */}
-                                <div className="space-y-1">
-                                    <div className="text-[10px] font-bold text-zinc-400 uppercase">{t.fb.performanceLabel}</div>
+                                {/* Performance Row */}
+                                <div className="space-y-1.5">
+                                    <div className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">{t.fb.performanceLabel}</div>
                                     <div className="grid grid-cols-3 gap-2">
-                                        <button onClick={() => handleInput(m, 'p', 3)} className={`p-2 rounded-lg border text-xs font-bold transition-all ${p === 3 ? 'bg-green-600 text-white border-green-600' : 'bg-zinc-50 dark:bg-zinc-800/50 text-zinc-500 border-zinc-200 dark:border-zinc-700'}`}>
+                                        <button 
+                                            onClick={() => handleInput(m, 'p', 3)} 
+                                            className={`p-2.5 rounded-xl border text-xs font-bold transition-all active:scale-95 ${
+                                                p === 3 
+                                                    ? 'bg-green-500/10 text-green-400 border-green-500/30 shadow-[0_0_10px_rgba(34,197,94,0.05)]' 
+                                                    : 'bg-zinc-950 text-zinc-500 border-zinc-900 hover:border-zinc-800'
+                                            }`}
+                                        >
                                             {t.fb.performance[3]}
                                         </button>
-                                        <button onClick={() => handleInput(m, 'p', 2)} className={`p-2 rounded-lg border text-xs font-bold transition-all ${p === 2 ? 'bg-zinc-800 text-white border-zinc-800' : 'bg-zinc-50 dark:bg-zinc-800/50 text-zinc-500 border-zinc-200 dark:border-zinc-700'}`}>
+                                        <button 
+                                            onClick={() => handleInput(m, 'p', 2)} 
+                                            className={`p-2.5 rounded-xl border text-xs font-bold transition-all active:scale-95 ${
+                                                p === 2 
+                                                    ? 'bg-zinc-800 text-white border-zinc-700' 
+                                                    : 'bg-zinc-950 text-zinc-500 border-zinc-900 hover:border-zinc-800'
+                                            }`}
+                                        >
                                             {t.fb.performance[2]}
                                         </button>
-                                        <button onClick={() => handleInput(m, 'p', 1)} className={`p-2 rounded-lg border text-xs font-bold transition-all ${p === 1 ? 'bg-red-600 text-white border-red-600' : 'bg-zinc-50 dark:bg-zinc-800/50 text-zinc-500 border-zinc-200 dark:border-zinc-700'}`}>
+                                        <button 
+                                            onClick={() => handleInput(m, 'p', 1)} 
+                                            className={`p-2.5 rounded-xl border text-xs font-bold transition-all active:scale-95 ${
+                                                p === 1 
+                                                    ? 'bg-rose-500/15 text-rose-400 border-rose-500/30 shadow-[0_0_10px_rgba(244,63,94,0.05)]' 
+                                                    : 'bg-zinc-950 text-zinc-500 border-zinc-900 hover:border-zinc-800'
+                                            }`}
+                                        >
                                             {t.fb.performance[1]}
                                         </button>
                                     </div>

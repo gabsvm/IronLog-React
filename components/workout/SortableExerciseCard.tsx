@@ -410,7 +410,7 @@ export const SortableExerciseCard = React.memo(({
                 }
             }}
             className={`
-                flex flex-col bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-white/5 overflow-hidden transition-all
+                flex flex-col bg-white dark:glass-card rounded-2xl shadow-sm border border-zinc-200 dark:border-white/5 overflow-hidden transition-all
                 ${ssStyle ? `border-l-4 ${ssStyle.border}` : ''}
                 ${isLinkingTarget ? 'ring-2 ring-orange-500 cursor-pointer opacity-80 hover:opacity-100' : ''}
                 ${linkingId === ex.instanceId ? 'ring-2 ring-orange-500' : ''}
