@@ -291,8 +291,8 @@ input, textarea {
 }
 
 .glow-input-neon:focus {
-  border-color: rgba(239, 68, 68, 0.3);
-  box-shadow: 0 0 12px rgba(239, 68, 68, 0.15);
+  border-color: rgb(var(--primary-500) / 0.3);
+  box-shadow: 0 0 12px rgb(var(--primary-500) / 0.15);
 }
 
 /* Horizontal calendar timeline container */

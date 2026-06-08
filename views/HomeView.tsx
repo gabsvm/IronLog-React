@@ -270,7 +270,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                     <div className="w-full max-w-xs animate-in fade-in slide-in-from-bottom-4 delay-300">
                         <button
                             onClick={onStartFreeSession}
-                            className="w-full flex items-center gap-3 bg-zinc-900/80 border border-zinc-800 rounded-2xl p-4 hover:border-zinc-600 active:scale-[0.98] transition-all"
+                            className="w-full flex items-center gap-3 glass-card rounded-2xl p-4 hover:border-white/10 active:scale-[0.98] transition-all"
                         >
                             <div className="flex gap-1">
                                 <div className="w-7 h-7 rounded-xl bg-primary-500/10 text-primary-500 flex items-center justify-center"><Icon name="Dumbbell" size={14} /></div>
@@ -280,7 +280,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                             <span className="flex-1 text-left text-xs font-black text-zinc-300">
                                 {lang === 'es' ? 'Gym · CrossFit · Calistenia' : 'Gym · CrossFit · Calisthenics'}
                             </span>
-                            <Icon name="ChevronRight" size={16} className="text-zinc-600" />
+                            <Icon name="ChevronRight" size={16} className="text-zinc-650" />
                         </button>
                     </div>
                 )}
@@ -381,7 +381,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
 
                             if (isSelected) {
                                 cardBorderClass = 'border-primary-500/40 ring-1 ring-primary-500/20';
-                                cardBgClass = 'bg-zinc-900/60 shadow-[0_0_15px_rgba(239,68,68,0.08)]';
+                                cardBgClass = 'bg-primary-500/5 shadow-[0_0_15px] shadow-primary-500/10';
                                 textClass = 'text-white font-black';
                             } else if (isDone) {
                                 cardBorderClass = 'border-green-500/20';
@@ -411,7 +411,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                                                 <Icon name="Check" size={12} strokeWidth={3} />
                                             </div>
                                         ) : isNext ? (
-                                            <div className="w-6 h-6 rounded-full bg-primary-500/10 text-red-500 flex items-center justify-center border border-primary-500/20 animate-pulse">
+                                            <div className="w-6 h-6 rounded-full bg-primary-500/10 text-primary-500 flex items-center justify-center border border-primary-500/20 animate-pulse">
                                                 <span className="w-1.5 h-1.5 rounded-full bg-primary-500" />
                                             </div>
                                         ) : (
@@ -462,7 +462,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
 
                                 <div className="relative z-10 flex justify-between items-start">
                                     <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md border border-white/5 ${
-                                        isSelectedActive ? 'bg-primary-500/20 text-red-400' 
+                                        isSelectedActive ? 'bg-primary-500/20 text-primary-400' 
                                         : isDone ? 'bg-green-500/10 text-green-400 border-green-500/20' 
                                         : 'bg-white/5 text-zinc-300'
                                     }`}>
@@ -547,7 +547,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                 <button
                     id="home-freestyle-btn"
                     onClick={onStartFreeSession}
-                    className="w-full flex items-center gap-4 bg-zinc-900 border border-zinc-800 rounded-2xl p-4 hover:border-zinc-600 active:scale-[0.98] transition-all group"
+                    className="w-full flex items-center gap-4 glass-card rounded-2xl p-4 hover:border-white/10 active:scale-[0.98] transition-all group"
                 >
                     <div className="flex gap-1.5">
                         <div className="w-8 h-8 rounded-xl bg-primary-500/10 text-primary-500 flex items-center justify-center">
@@ -568,7 +568,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                             {lang === 'es' ? 'Sin programa fijo · WODs · Progressions' : 'No fixed program · WODs · Progressions'}
                         </div>
                     </div>
-                    <Icon name="ChevronRight" size={18} className="text-zinc-600 group-hover:text-zinc-300 transition-colors" />
+                    <Icon name="ChevronRight" size={18} className="text-zinc-650 group-hover:text-zinc-300 transition-colors" />
                 </button>
             )}
 
@@ -586,7 +586,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                 return (
                     <button
                         onClick={() => startSession(lastLog.dayIdx)}
-                        className="w-full flex items-center gap-4 bg-zinc-900 border border-zinc-800 rounded-2xl p-4 hover:border-primary-500/40 active:scale-[0.98] transition-all group"
+                        className="w-full flex items-center gap-4 glass-card rounded-2xl p-4 hover:border-primary-500/30 active:scale-[0.98] transition-all group"
                     >
                         <div className="w-10 h-10 rounded-xl bg-primary-500/10 text-primary-400 flex items-center justify-center shrink-0">
                             <Icon name="Repeat" size={18} />
@@ -599,20 +599,18 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                                 {exNames || logName}
                             </div>
                         </div>
-                        <Icon name="ChevronRight" size={18} className="text-zinc-600 group-hover:text-zinc-300 transition-colors shrink-0" />
+                        <Icon name="ChevronRight" size={18} className="text-zinc-650 group-hover:text-zinc-300 transition-colors shrink-0" />
                     </button>
                 );
             })()}
 
             {/* Consistency Heatmap */}
-            <div className="relative p-px rounded-3xl bg-gradient-to-br from-zinc-700 via-zinc-800 to-zinc-900">
-                <div className="bg-zinc-900 rounded-[calc(1.5rem-1px)] p-6">
-                    <div className="flex items-center gap-2 mb-4">
-                        <Icon name="Activity" size={16} className="text-zinc-500" />
-                        <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest">{t.consistency}</h3>
-                    </div>
-                    <ActivityHeatmap logs={safeLogs} />
+            <div className="glass-card rounded-3xl p-6">
+                <div className="flex items-center gap-2 mb-4">
+                    <Icon name="Activity" size={16} className="text-zinc-500" />
+                    <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest">{t.consistency}</h3>
                 </div>
+                <ActivityHeatmap logs={safeLogs} />
             </div>
 
 
@@ -648,7 +646,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
             {/* MESO SETTINGS MODAL */}
             {showMesoSettings && (
                 <div className="fixed inset-0 z-modal bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in" onClick={() => setShowMesoSettings(false)}>
-                    <div className="bg-zinc-900 w-full max-w-sm rounded-3xl p-6 border border-zinc-800 shadow-2xl relative" onClick={e => e.stopPropagation()}>
+                    <div className="glass-panel w-full max-w-sm rounded-3xl p-6 shadow-2xl relative" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-white font-bold text-xl">{t.mesoConfig}</h3>
                             <button onClick={() => setShowMesoSettings(false)} className="text-zinc-400 hover:text-white">
@@ -659,18 +657,18 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                         <div className="space-y-6">
                             {/* Target Weeks */}
                             <div id="tut-meso-duration">
-                                <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider block mb-3">{t.targetWeeks}</label>
-                                <div className="flex items-center gap-4 bg-zinc-950 p-2 rounded-xl border border-white/5">
+                                <label className="text-[10px] font-black uppercase text-zinc-500 tracking-widest block mb-2 px-1">{t.targetWeeks}</label>
+                                <div className="flex items-center gap-4 bg-white/5 p-2 rounded-xl border border-white/5">
                                     <button
                                         onClick={() => setEditWeeks(Math.max(1, editWeeks - 1))}
-                                        className="w-10 h-10 rounded-lg bg-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-700"
+                                        className="w-10 h-10 rounded-lg bg-zinc-850 border border-zinc-750 flex items-center justify-center text-zinc-400 hover:text-white"
                                     >
                                         <Icon name="Minus" size={16} />
                                     </button>
                                     <span className="flex-1 text-center font-mono text-2xl font-black text-white">{editWeeks}</span>
                                     <button
                                         onClick={() => setEditWeeks(editWeeks + 1)}
-                                        className="w-10 h-10 rounded-lg bg-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-700"
+                                        className="w-10 h-10 rounded-lg bg-zinc-850 border border-zinc-750 flex items-center justify-center text-zinc-400 hover:text-white"
                                     >
                                         <Icon name="Plus" size={16} />
                                     </button>
@@ -678,14 +676,14 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                             </div>
 
                             {/* Deload Toggle */}
-                            <div id="tut-meso-deload" className="flex items-center justify-between bg-blue-900/10 border border-blue-500/20 p-4 rounded-xl">
+                            <div id="tut-meso-deload" className="flex items-center justify-between bg-primary-500/10 border border-primary-500/20 p-4 rounded-xl">
                                 <div>
-                                    <span className="text-sm font-bold text-blue-200 block mb-1">{t.deloadMode}</span>
-                                    <span className="text-[10px] text-blue-400/70 block leading-tight">{t.deloadDesc}</span>
+                                    <span className="text-sm font-bold text-primary-200 block mb-1">{t.deloadMode}</span>
+                                    <span className="text-[10px] text-primary-400/70 block leading-tight">{t.deloadDesc}</span>
                                 </div>
                                 <button
                                     onClick={() => setEditDeload(!editDeload)}
-                                    className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${editDeload ? 'bg-blue-500' : 'bg-zinc-700'}`}
+                                    className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${editDeload ? 'bg-primary-500 shadow-[0_2px_8px] shadow-primary-500/30' : 'bg-zinc-700'}`}
                                 >
                                     <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-300 ${editDeload ? 'translate-x-6' : 'translate-x-0'}`} />
                                 </button>
@@ -695,19 +693,19 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                             <button
                                 id="tut-meso-edit"
                                 onClick={() => { setShowMesoSettings(false); onEditProgram(); }}
-                                className="w-full py-3 bg-zinc-800 rounded-xl flex items-center justify-center gap-2 text-sm font-bold text-zinc-300 hover:text-white hover:bg-zinc-700 transition-colors border border-zinc-700"
+                                className="w-full py-3 bg-white/5 border border-white/5 rounded-xl flex items-center justify-center gap-2 text-sm font-bold text-zinc-300 hover:text-white hover:bg-white/10 transition-colors"
                             >
                                 <Icon name="Layout" size={16} /> {t.editTemplate}
                             </button>
 
                             {/* Notes */}
                             <div id="tut-meso-notes">
-                                <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider block mb-2">{t.mesoNotes}</label>
+                                <label className="text-[10px] font-black uppercase text-zinc-500 tracking-widest block mb-2 px-1">{t.mesoNotes}</label>
                                 <textarea
                                     value={editNote}
                                     onChange={(e) => setEditNote(e.target.value)}
                                     placeholder={t.mesoNotesPlaceholder}
-                                    className="w-full bg-zinc-950 text-white text-sm p-3 rounded-xl border border-zinc-800 focus:border-zinc-600 outline-none min-h-[80px]"
+                                    className="w-full bg-zinc-800 text-white text-sm p-3 rounded-xl border border-zinc-700 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 outline-none min-h-[80px] transition-all glow-input-neon"
                                 />
                             </div>
                         </div>
@@ -719,7 +717,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
 
                             <button
                                 onClick={() => { setShowMesoSettings(false); setShowCompleteModal('meso'); }}
-                                className="w-full py-3 text-xs font-bold text-primary-500 hover:text-red-400 hover:bg-primary-500/10 rounded-xl transition-colors"
+                                className="w-full py-3 text-xs font-bold text-primary-500 hover:text-primary-400 hover:bg-primary-500/10 rounded-xl transition-colors"
                             >
                                 {t.finishCycle}
                             </button>
@@ -737,7 +735,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
 
             {showCompleteModal && (
                 <div className="fixed inset-0 z-modal bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in">
-                    <div className="bg-zinc-900 w-full max-w-sm rounded-2xl p-6 border border-zinc-800 text-center">
+                    <div className="glass-panel w-full max-w-sm rounded-2xl p-6 text-center">
                         {showCompleteModal === 'meso' ? (
                             <>
                                 <h3 className="text-white font-bold text-xl mb-2">{t.finishCycle}</h3>

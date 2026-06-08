@@ -52,7 +52,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
 
                 {/* Active pill indicator */}
                 {isActive && (
-                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-5 h-0.5 bg-primary-500 rounded-full shadow-[0_0_9px_1px_rgb(var(--primary-500)/0.4)]" />
+                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-5 h-0.5 bg-primary-500 rounded-full shadow-[0_0_9px_1px] shadow-primary-500/40" />
                 )}
             </button>
         );
@@ -103,7 +103,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
                             <button
                                 onClick={onOpenCommandPalette}
                                 aria-label={lang === 'es' ? 'Iniciar sesión de entrenamiento' : 'Start a workout session'}
-                                className="shrink-0 w-[68px] h-[68px] rounded-[2rem] bg-gradient-to-br from-primary-500 to-primary-700 text-white flex items-center justify-center shadow-[0_8px_24px_-4px_rgba(var(--primary-500),0.6)] active:scale-90 transition-transform duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                                className="shrink-0 w-[68px] h-[68px] rounded-[2rem] bg-gradient-to-br from-primary-500 to-primary-700 text-white flex items-center justify-center shadow-[0_8px_24px_-4px] shadow-primary-500/60 active:scale-90 transition-transform duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                             >
                                 <Icon name="Plus" size={26} strokeWidth={2.5} />
                             </button>

@@ -75,7 +75,7 @@ export const WeeklyRecapCard: React.FC<Props> = React.memo(({ logs, lang, t }) =
         stats.totalVolume >= 1000 ? `${(stats.totalVolume / 1000).toFixed(1)}k` : `${stats.totalVolume}`;
 
     return (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-5 space-y-4 animate-in fade-in">
+        <div className="glass-card rounded-3xl p-5 space-y-4 animate-in fade-in">
             <div className="flex items-center gap-2">
                 <Icon name="TrendingUp" size={13} className="text-primary-400" />
                 <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">
@@ -84,20 +84,20 @@ export const WeeklyRecapCard: React.FC<Props> = React.memo(({ logs, lang, t }) =
             </div>
 
             <div className="grid grid-cols-3 gap-3">
-                <div className="bg-zinc-800/60 rounded-2xl p-3 text-center">
+                <div className="bg-zinc-950/40 border border-white/5 rounded-2xl p-3 text-center">
                     <div className="text-2xl font-black text-white tabular-nums">{stats.sessions}</div>
                     <div className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider mt-0.5">
                         {lang === 'es' ? 'Sesiones' : 'Sessions'}
                     </div>
                 </div>
-                <div className="bg-zinc-800/60 rounded-2xl p-3 text-center">
+                <div className="bg-zinc-950/40 border border-white/5 rounded-2xl p-3 text-center">
                     <div className="text-2xl font-black text-white tabular-nums">{volStr}</div>
                     <div className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider mt-0.5">
                         {lang === 'es' ? 'Vol. kg' : 'Vol. kg'}
                     </div>
                 </div>
                 <div
-                    className={`rounded-2xl p-3 text-center ${stats.prCount > 0 ? 'bg-yellow-500/10 border border-yellow-500/20' : 'bg-zinc-800/60'}`}
+                    className={`rounded-2xl p-3 text-center ${stats.prCount > 0 ? 'bg-yellow-500/10 border border-yellow-500/20' : 'bg-zinc-950/40 border border-white/5'}`}
                 >
                     <div
                         className={`text-2xl font-black tabular-nums ${stats.prCount > 0 ? 'text-yellow-400' : 'text-zinc-600'}`}

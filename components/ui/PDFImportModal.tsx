@@ -87,7 +87,7 @@ function parseProgramText(text: string): ProgramDay[] {
       const setCount = parseInt(setsMatch[1] || setsMatch[3]) || 3;
       const reps = setsMatch[2] || '6-8';
       const isAVT = avtPattern.test(line);
-      const exerciseName = line.replace(setsPattern, '').replace(/[-:,]/g, '').trim();
+      const exerciseName = line.replace(setsPattern, '').replace(new RegExp('[' + '-:,' + ']', 'g'), '').trim();
 
       if (exerciseName.length > 2) {
         const slot: ProgramSlot = {

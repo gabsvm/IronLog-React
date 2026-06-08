@@ -60,7 +60,7 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
         <div className="px-4 py-1">
             <button 
                 onClick={() => setDetailEx(ex)} // Open details
-                className="w-full bg-white dark:bg-zinc-900 p-4 rounded-xl border border-zinc-200 dark:border-white/5 flex justify-between items-center shadow-sm text-left active:scale-[0.99] transition-transform"
+                className="w-full glass-card p-4 rounded-xl flex justify-between items-center shadow-md text-left active:scale-[0.99] transition-transform hover:border-white/10"
             >
                 <div>
                     <div className="font-bold text-zinc-900 dark:text-white text-sm">
@@ -110,7 +110,7 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
                     <div className="fixed bottom-6 right-6 z-10">
                         <button 
                             onClick={() => setMode('create')}
-                            className="w-14 h-14 bg-red-600 rounded-full text-white shadow-xl shadow-red-600/30 flex items-center justify-center hover:scale-110 transition-transform"
+                            className="w-14 h-14 bg-primary-500 rounded-full text-white shadow-xl shadow-primary-500/25 flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-fast"
                         >
                             <Icon name="Plus" size={24} />
                         </button>
@@ -122,7 +122,7 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
                         <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider mb-2 block">{t.exName}</label>
                         <input 
                             type="text" 
-                            className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 font-medium text-zinc-900 dark:text-white focus:ring-2 focus:ring-red-500 outline-none"
+                            className="w-full bg-zinc-800 border border-zinc-700/50 rounded-xl p-3 font-medium text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 outline-none transition-all glow-input-neon"
                             value={newName}
                             onChange={e => setNewName(e.target.value)}
                             placeholder="e.g., Incline Machine Press"
@@ -137,7 +137,7 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
                                 <button
                                     key={m}
                                     onClick={() => setNewMuscle(m)}
-                                    className={`p-3 rounded-xl text-xs font-bold border transition-all ${newMuscle === m ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-900 text-red-600 dark:text-red-400' : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-500'}`}
+                                    className={`p-3 rounded-xl text-xs font-bold border transition-all duration-fast active:scale-95 ${newMuscle === m ? 'bg-primary-500/10 border-primary-500/30 text-primary-400' : 'bg-white/5 border-white/5 text-zinc-400 hover:border-white/10'}`}
                                 >
                                     {TRANSLATIONS[lang].muscle[m]}
                                 </button>

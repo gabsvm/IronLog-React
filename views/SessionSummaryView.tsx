@@ -75,7 +75,7 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
             <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-8 overflow-y-auto">
                 {/* Header */}
                 <div className="text-center space-y-2">
-                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-500/20 text-red-500 mb-4 animate-in zoom-in-50 delay-100 duration-500">
+                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary-500/20 text-primary-500 mb-4 animate-in zoom-in-50 delay-100 duration-500">
                         <Icon name="Trophy" size={40} />
                     </div>
                     <h1 className="text-3xl font-black uppercase tracking-tight text-white leading-tight">
@@ -88,19 +88,19 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-2 gap-4 w-full max-w-sm">
-                    <div className="bg-zinc-900 border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center animate-in slide-in-from-bottom-4 delay-200 fade-in duration-500">
+                    <div className="glass-card rounded-2xl p-4 flex flex-col items-center justify-center animate-in slide-in-from-bottom-4 delay-200 fade-in duration-500">
                         <Icon name="Clock" size={20} className="text-blue-400 mb-2" />
                         <div className="text-2xl font-black">{formatDuration(log.duration)}</div>
                         <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">{lang === 'en' ? 'Time' : 'Tiempo'}</div>
                     </div>
 
-                    <div className="bg-zinc-900 border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center animate-in slide-in-from-bottom-4 delay-300 fade-in duration-500">
+                    <div className="glass-card rounded-2xl p-4 flex flex-col items-center justify-center animate-in slide-in-from-bottom-4 delay-300 fade-in duration-500">
                         <Icon name="CheckCircle" size={20} className="text-green-400 mb-2" />
                         <div className="text-2xl font-black">{stats.sets}</div>
                         <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">{lang === 'en' ? 'Sets' : 'Series'}</div>
                     </div>
 
-                    <div className="col-span-2 bg-zinc-900 border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center animate-in slide-in-from-bottom-4 delay-400 fade-in duration-500">
+                    <div className="col-span-2 glass-card rounded-2xl p-4 flex flex-col items-center justify-center animate-in slide-in-from-bottom-4 delay-400 fade-in duration-500">
                         <Icon name="Dumbbell" size={20} className="text-amber-400 mb-2" />
                         <div className="text-2xl font-black">{stats.volume.toLocaleString()} kg</div>
                         <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">{lang === 'en' ? 'Total Volume' : 'Volumen Total'}</div>

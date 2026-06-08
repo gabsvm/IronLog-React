@@ -23,7 +23,7 @@ export const NextSessionCard: React.FC<Props> = React.memo(
     ({ nextDayDef, isSessionActive, nextWorkoutIdx, startSession, handleSkipClick, lang, t, tm, estimatedMin, adherencePct }) => {
         if (!nextDayDef)
             return (
-                <div className="w-full bg-zinc-900/50 border border-zinc-800 rounded-[2rem] p-8 text-center flex flex-col items-center justify-center min-h-[220px] animate-in-up">
+                <div className="w-full glass-card rounded-[2rem] p-8 text-center flex flex-col items-center justify-center min-h-[220px] animate-in-up">
                     <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center text-green-500 mb-4 ring-1 ring-green-500/20">
                         <Icon name="Check" size={40} strokeWidth={3} />
                     </div>
@@ -43,12 +43,12 @@ export const NextSessionCard: React.FC<Props> = React.memo(
             >
                 <div className="absolute inset-0 bg-gradient-to-br from-zinc-700 via-zinc-800 to-zinc-900 rounded-[2rem]" />
 
-                <div className="relative bg-zinc-900 h-full rounded-[1.8rem] p-6 flex flex-col justify-between min-h-[260px] border border-white/5 shadow-2xl overflow-hidden">
+                <div className="relative glass-card h-full rounded-[1.8rem] p-6 flex flex-col justify-between min-h-[260px] shadow-2xl overflow-hidden">
                     <div className="absolute -right-10 -top-10 w-64 h-64 bg-primary-600/10 rounded-full blur-[80px] pointer-events-none group-hover:bg-primary-600/20 transition-colors duration-500" />
 
                     <div className="relative z-10 flex justify-between items-start">
                         <div
-                            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md border border-white/5 ${isSessionActive ? 'bg-primary-500/20 text-red-400' : 'bg-white/5 text-zinc-300'}`}
+                            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md border border-white/5 ${isSessionActive ? 'bg-primary-500/20 text-primary-400' : 'bg-white/5 text-zinc-300'}`}
                         >
                             {isSessionActive && <span className="w-2 h-2 rounded-full bg-primary-500 animate-pulse" />}
                             <span className="text-[10px] font-black uppercase tracking-widest">

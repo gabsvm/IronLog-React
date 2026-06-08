@@ -37,7 +37,7 @@ export const BodyTab: React.FC<Props> = ({
     return (
         <div className="space-y-3 pt-1">
             {/* Weight + TDEE hero */}
-            <div className="bg-zinc-900 rounded-3xl border border-zinc-800 p-4">
+            <div className="glass-card rounded-3xl p-4">
                 <div className="flex items-start justify-between mb-4">
                     <div>
                         <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">
@@ -88,8 +88,9 @@ export const BodyTab: React.FC<Props> = ({
                                 <polyline
                                     points={points}
                                     fill="none"
-                                    stroke="#ef4444"
-                                    strokeWidth="2"
+                                    stroke="currentColor"
+                                    className="text-primary-500"
+                                    strokeWidth="2.5"
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
                                     vectorEffect="non-scaling-stroke"
@@ -101,7 +102,7 @@ export const BodyTab: React.FC<Props> = ({
             </div>
 
             {/* TDEE card */}
-            <div className="bg-zinc-900 rounded-3xl border border-zinc-800 p-4">
+            <div className="glass-card rounded-3xl p-4">
                 <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">
                     {l('Energy Balance', 'Balance Energético')}
                 </p>
@@ -138,7 +139,7 @@ export const BodyTab: React.FC<Props> = ({
 
             {/* Personal targets */}
             {bodyWeight && (
-                <div className="bg-zinc-900 rounded-3xl border border-zinc-800 p-4">
+                <div className="glass-card rounded-3xl p-4">
                     <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">
                         {l('Your Targets', 'Tus Objetivos')}
                     </p>
@@ -160,7 +161,7 @@ export const BodyTab: React.FC<Props> = ({
 
             {/* Recent weigh-ins */}
             {weightTrend.length > 0 && (
-                <div className="bg-zinc-900 rounded-3xl border border-zinc-800 p-4">
+                <div className="glass-card rounded-3xl p-4">
                     <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">
                         {l('Recent Weigh-ins', 'Pesajes Recientes')}
                     </p>

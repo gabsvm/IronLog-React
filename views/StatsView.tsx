@@ -181,7 +181,7 @@ export const StatsView: React.FC = () => {
         datasets: [{
             data: Object.values(setTypeDist),
             backgroundColor: [
-                '#dc2626', '#ea580c', '#ca8a04', '#16a34a', '#2563eb', '#9333ea'
+                'rgb(var(--primary-500))', '#ea580c', '#ca8a04', '#16a34a', '#2563eb', '#9333ea'
             ],
             borderWidth: 0,
             hoverOffset: 4
@@ -240,18 +240,18 @@ export const StatsView: React.FC = () => {
             <h2 className="text-2xl font-black text-white px-2">Analytics</h2>
 
             {/* --- Progress Chart Section (FREE) --- */}
-            <div id="tut-progress-chart" className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 shadow-sm">
+            <div id="tut-progress-chart" className="glass-card rounded-3xl p-6 shadow-md">
                 <div className="flex flex-col gap-4 mb-6">
                     <div className="flex justify-between items-center">
                         <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-red-900/20 text-red-500 flex items-center justify-center">
+                            <div className="w-8 h-8 rounded-full bg-primary-500/10 text-primary-500 flex items-center justify-center">
                                 <Icon name="TrendingUp" size={16} />
                             </div>
                             <h3 className="font-bold text-white">{t.statsProgress}</h3>
                         </div>
 
                         {/* Context-aware metric selector */}
-                        <div className="flex bg-zinc-800 p-1 rounded-lg">
+                        <div className="flex bg-white/5 border border-white/5 p-1 rounded-xl">
                             {(() => {
                                 const isIsometric = (currentEx as any)?.isIsometric;
                                 const isBW = (currentEx as any)?.isBodyweight && !isIsometric;
@@ -262,7 +262,7 @@ export const StatsView: React.FC = () => {
                                         <>
                                             <button
                                                 onClick={() => setChartMetric('hold_time')}
-                                                className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${chartMetric === 'hold_time' ? 'bg-violet-700 shadow text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                                className={`px-3 py-1 text-[10px] font-black rounded-md transition-all ${chartMetric === 'hold_time' ? 'bg-primary-500 shadow-[0_2px_8px] shadow-primary-500/25 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
                                             >
                                                 HOLD
                                             </button>
@@ -274,13 +274,13 @@ export const StatsView: React.FC = () => {
                                         <>
                                             <button
                                                 onClick={() => setChartMetric('max_reps')}
-                                                className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${chartMetric === 'max_reps' ? 'bg-zinc-700 shadow text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                                className={`px-3 py-1 text-[10px] font-black rounded-md transition-all ${chartMetric === 'max_reps' ? 'bg-primary-500 shadow-[0_2px_8px] shadow-primary-500/25 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
                                             >
                                                 REPS
                                             </button>
                                             <button
                                                 onClick={() => setChartMetric('volume')}
-                                                className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${chartMetric === 'volume' ? 'bg-zinc-700 shadow text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                                className={`px-3 py-1 text-[10px] font-black rounded-md transition-all ${chartMetric === 'volume' ? 'bg-primary-500 shadow-[0_2px_8px] shadow-primary-500/25 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
                                             >
                                                 VOL
                                             </button>
@@ -292,13 +292,13 @@ export const StatsView: React.FC = () => {
                                         <>
                                             <button
                                                 onClick={() => setChartMetric('duration')}
-                                                className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${chartMetric === 'duration' ? 'bg-zinc-700 shadow text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                                className={`px-3 py-1 text-[10px] font-black rounded-md transition-all ${chartMetric === 'duration' ? 'bg-primary-500 shadow-[0_2px_8px] shadow-primary-500/25 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
                                             >
                                                 TIME
                                             </button>
                                             <button
                                                 onClick={() => setChartMetric('distance')}
-                                                className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${chartMetric === 'distance' ? 'bg-zinc-700 shadow text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                                className={`px-3 py-1 text-[10px] font-black rounded-md transition-all ${chartMetric === 'distance' ? 'bg-primary-500 shadow-[0_2px_8px] shadow-primary-500/25 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
                                             >
                                                 DIST
                                             </button>
@@ -310,13 +310,13 @@ export const StatsView: React.FC = () => {
                                     <>
                                         <button
                                             onClick={() => setChartMetric('1rm')}
-                                            className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${chartMetric === '1rm' ? 'bg-zinc-700 shadow text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                            className={`px-3 py-1 text-[10px] font-black rounded-md transition-all ${chartMetric === '1rm' ? 'bg-primary-500 shadow-[0_2px_8px] shadow-primary-500/25 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
                                         >
                                             1RM
                                         </button>
                                         <button
                                             onClick={() => setChartMetric('volume')}
-                                            className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${chartMetric === 'volume' ? 'bg-zinc-700 shadow text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                            className={`px-3 py-1 text-[10px] font-black rounded-md transition-all ${chartMetric === 'volume' ? 'bg-primary-500 shadow-[0_2px_8px] shadow-primary-500/25 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
                                         >
                                             VOL
                                         </button>
@@ -328,7 +328,7 @@ export const StatsView: React.FC = () => {
 
                     <button
                         onClick={() => { setPickerSearch(''); setShowPicker(true); }}
-                        className="w-full bg-white/5 border border-white/10 text-white text-sm font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-red-500 flex justify-between items-center active:bg-white/10 transition-colors"
+                        className="w-full bg-white/5 border border-white/10 text-white text-sm font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary-500 flex justify-between items-center active:bg-white/10 transition-colors"
                     >
                         <span className="truncate">
                             {loadingOverview
@@ -351,7 +351,7 @@ export const StatsView: React.FC = () => {
             {/* --- Symmetry Radar & Doughnut (PRO LOCKED) --- */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Symmetry Radar */}
-                <div id="tut-radar-chart" className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 shadow-sm overflow-hidden flex flex-col h-full min-h-[320px]">
+                <div id="tut-radar-chart" className="glass-card rounded-3xl p-6 shadow-md overflow-hidden flex flex-col h-full min-h-[320px]">
                     <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-wider mb-4 flex items-center gap-2">
                         <Icon name="Activity" size={14} /> {t.statsBalance}
                     </h3>
@@ -365,7 +365,7 @@ export const StatsView: React.FC = () => {
                 </div>
 
                 {/* Set Type Distribution */}
-                <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 shadow-sm flex flex-col h-full min-h-[320px]">
+                <div className="glass-card rounded-3xl p-6 shadow-md flex flex-col h-full min-h-[320px]">
                     <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-wider mb-4 flex items-center gap-2">
                         <Icon name="Layers" size={14} /> {t.statsIntensity}
                     </h3>
@@ -404,8 +404,8 @@ export const StatsView: React.FC = () => {
             </div>
 
             {/* --- Muscle Heatmap Grid --- */}
-            <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 shadow-sm relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/5 rounded-full blur-[80px] pointer-events-none"></div>
+            <div className="glass-card rounded-3xl p-6 shadow-md relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/5 rounded-full blur-[80px] pointer-events-none"></div>
                 <div className="flex justify-between items-center mb-6 relative z-10">
                     <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-2">
                         <Icon name="Grid" size={14} />
@@ -423,7 +423,7 @@ export const StatsView: React.FC = () => {
             </div>
 
             {/* --- Volume Bar Chart Section --- */}
-            <div id="tut-vol-bar" className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 shadow-sm">
+            <div id="tut-vol-bar" className="glass-card rounded-3xl p-6 shadow-md">
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-2">
                         <Icon name="BarChart2" size={14} />
@@ -474,7 +474,7 @@ export const StatsView: React.FC = () => {
 
             {/* --- PR History Board --- */}
             {prHistory.length > 0 && (
-                <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 shadow-sm">
+                <div className="glass-card rounded-3xl p-6 shadow-md">
                     <div className="flex items-center justify-between mb-5">
                         <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-2">
                             <Icon name="Trophy" size={14} />
@@ -528,7 +528,7 @@ export const StatsView: React.FC = () => {
                                 autoFocus
                                 type="text"
                                 placeholder={t.searchPlaceholder}
-                                className="w-full bg-zinc-800/50 rounded-xl py-2 pl-9 pr-4 text-sm font-medium focus:ring-2 focus:ring-red-500 border-none outline-none text-white placeholder-zinc-400"
+                                className="w-full bg-zinc-800/50 border border-zinc-700/50 rounded-xl py-2 pl-9 pr-4 text-sm font-medium focus:border-primary-500 focus:ring-1 focus:ring-primary-500 outline-none text-white placeholder-zinc-400 transition-all glow-input-neon"
                                 value={pickerSearch}
                                 onChange={e => setPickerSearch(e.target.value)}
                             />
@@ -545,11 +545,11 @@ export const StatsView: React.FC = () => {
                                         setShowPicker(false);
                                     }}
                                     className={`w-full text-left p-3 rounded-xl active:scale-[0.99] transition-all flex items-center justify-between group
-                                        ${selectedExId === ex!.id ? 'bg-red-900/10 border border-red-900/50' : 'hover:bg-white/5 border border-transparent'}
+                                        ${selectedExId === ex!.id ? 'bg-primary-500/10 border border-primary-500/30' : 'hover:bg-white/5 border border-transparent'}
                                     `}
                                 >
                                     <div>
-                                        <div className={`font-bold text-sm ${selectedExId === ex!.id ? 'text-red-400' : 'text-zinc-100'}`}>
+                                        <div className={`font-bold text-sm ${selectedExId === ex!.id ? 'text-primary-400' : 'text-zinc-100'}`}>
                                             {getTranslated(ex!.name, lang)}
                                         </div>
                                         <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mt-0.5">
@@ -557,7 +557,7 @@ export const StatsView: React.FC = () => {
                                         </div>
                                     </div>
                                     {selectedExId === ex!.id && (
-                                        <div className="text-red-500">
+                                        <div className="text-primary-500">
                                             <Icon name="Check" size={18} />
                                         </div>
                                     )}

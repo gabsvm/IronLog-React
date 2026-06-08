@@ -66,7 +66,7 @@ export const TodayTab: React.FC<Props> = ({
     return (
         <div className="space-y-3 pt-1">
             {/* Hero card — calories + key metrics */}
-            <div className="bg-zinc-900 rounded-3xl border border-zinc-800 p-4">
+            <div className="glass-card rounded-3xl p-4">
                 <div className="flex items-start justify-between mb-4">
                     <div>
                         <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">
@@ -139,7 +139,7 @@ export const TodayTab: React.FC<Props> = ({
                 <button
                     onClick={onAddMeal}
                     aria-label={l('Add food entry', 'Agregar entrada de comida')}
-                    className="flex items-center justify-center gap-2 p-4 rounded-2xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 active:scale-95 transition-all duration-fast ease-natural"
+                    className="flex items-center justify-center gap-2 p-4 rounded-2xl glass-card hover:border-white/10 active:scale-95 transition-all duration-fast ease-natural"
                 >
                     <div className="w-8 h-8 rounded-xl bg-green-500/15 flex items-center justify-center">
                         <Icon name="Plus" size={16} className="text-green-400" />
@@ -149,7 +149,7 @@ export const TodayTab: React.FC<Props> = ({
                 <button
                     onClick={onAddCardio}
                     aria-label={l('Log cardio session', 'Registrar sesión de cardio')}
-                    className="flex items-center justify-center gap-2 p-4 rounded-2xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 active:scale-95 transition-all duration-fast ease-natural"
+                    className="flex items-center justify-center gap-2 p-4 rounded-2xl glass-card hover:border-white/10 active:scale-95 transition-all duration-fast ease-natural"
                 >
                     <div className="w-8 h-8 rounded-xl bg-red-500/15 flex items-center justify-center">
                         <Icon name="Flame" size={16} className="text-red-400" />
@@ -160,7 +160,7 @@ export const TodayTab: React.FC<Props> = ({
 
             {/* Today cardio summary */}
             {todayCardio.length > 0 && (
-                <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-3">
+                <div className="glass-card rounded-2xl p-3">
                     <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">
                         {l("Today's Cardio", 'Cardio de Hoy')}
                     </p>
@@ -198,7 +198,7 @@ export const TodayTab: React.FC<Props> = ({
                 const mealProt = entries.reduce((a, e) => a + e.protein, 0);
                 const isExpanded = expandedMeal === mealType;
                 return (
-                    <div key={mealType} className="bg-zinc-900 rounded-3xl border border-zinc-800 overflow-hidden">
+                    <div key={mealType} className="glass-card rounded-3xl overflow-hidden">
                         <button
                             onClick={() => setExpandedMeal(isExpanded ? null : mealType)}
                             aria-expanded={isExpanded}

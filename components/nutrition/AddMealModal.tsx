@@ -1,8 +1,8 @@
-
 import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { FoodEntry, CustomFood } from '../../types';
 import { Icon } from '../ui/Icon';
 import { Button } from '../ui/Button';
+import { Sheet } from '../ui/Sheet';
 import { useApp } from '../../context/AppContext';
 import { scanNutritionLabel } from '../../services/nutritionScanner';
 
@@ -20,7 +20,6 @@ const MEAL_TYPES = [
   { id: 'snack',     en: 'Snack',     es: 'Snack',    icon: '🍎' },
 ] as const;
 
-// Built-in preset database — organized by category
 const PRESET_DB: (CustomFood & { category: string })[] = [
   // Proteins
   { id: 'p_chicken_150', name: 'Pechuga de pollo (150g)',   calories: 248, protein: 47, carbs: 0,  fat: 5,  servingSize: '150g', category: 'protein', isFavorite: false, createdAt: 0 },
@@ -97,7 +96,7 @@ const ScannerButton: React.FC<{
       <button
         onClick={() => inputRef.current?.click()}
         disabled={scanning}
-        className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border-2 border-dashed border-zinc-600 hover:border-zinc-400 bg-zinc-900 active:scale-[0.98] transition-all disabled:opacity-50"
+        className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border-2 border-dashed border-zinc-700/50 hover:border-zinc-400 bg-zinc-900 active:scale-[0.98] transition-all disabled:opacity-50"
       >
         {scanning ? (
           <>
@@ -108,8 +107,8 @@ const ScannerButton: React.FC<{
           </>
         ) : (
           <>
-            <div className="w-10 h-10 rounded-xl bg-violet-500/20 flex items-center justify-center">
-              <Icon name="Camera" size={20} className="text-violet-400" />
+            <div className="w-10 h-10 rounded-xl bg-primary-500/10 flex items-center justify-center">
+              <Icon name="Camera" size={20} className="text-primary-400" />
             </div>
             <div className="text-left">
               <p className="text-sm font-bold text-white">
@@ -141,7 +140,7 @@ const FoodCard: React.FC<{
   const cal  = Math.round(food.calories * multiplier);
   const prot = Math.round(food.protein  * multiplier);
   return (
-    <div className="flex items-center gap-3 p-3 rounded-2xl bg-zinc-800/60 border border-zinc-700/50 active:scale-[0.98] transition-all">
+    <div className="flex items-center gap-3 p-3 rounded-2xl glass-card active:scale-[0.98] transition-all">
       <button onClick={() => onSelect(food)} className="flex-1 text-left min-w-0">
         <p className="text-sm font-semibold text-white truncate">{food.name}</p>
         <p className="text-[10px] text-zinc-500 mt-0.5">
@@ -179,7 +178,6 @@ const FoodCard: React.FC<{
   );
 };
 
-// ─── MAIN COMPONENT ─────────────────────────────────────────────────
 export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onAdd, lang }) => {
   const { customFoods, setCustomFoods } = useApp();
 
@@ -216,7 +214,6 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
     return customFoods.filter(f => f.name.toLowerCase().includes(q));
   }, [customFoods, search]);
 
-  // Favorites from My Foods at top
   const sortedMyFoods = useMemo(() =>
     [...filteredMyFoods].sort((a, b) => (b.isFavorite ? 1 : 0) - (a.isFavorite ? 1 : 0)),
   [filteredMyFoods]);
@@ -284,67 +281,57 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
     setCustomFoods(prev => prev.filter(f => f.id !== id));
   };
 
-  if (!isOpen) return null;
-
   const canSubmitManual = !!name && !!calories;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end">
-      <div className="w-full bg-zinc-900 rounded-t-3xl border-t border-zinc-800 max-h-[92vh] flex flex-col animate-spring-in">
-
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 pt-5 pb-3 shrink-0">
-          <h2 className="text-lg font-bold text-white">{l('Add Food', 'Agregar Comida')}</h2>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-800 text-zinc-400" aria-label="Close"> <Icon name="X" size={16} />
-          </button>
-        </div>
-
+    <Sheet
+      open={isOpen}
+      onOpenChange={(open) => !open && onClose()}
+      title={l('Add Food', 'Agregar Comida')}
+      accent="primary"
+    >
+      <div className="px-5 pb-5 space-y-4">
         {/* Meal type chips */}
-        <div className="px-5 pb-3 shrink-0">
-          <div className="flex gap-2 overflow-x-auto scroll-container pb-0.5">
-            {MEAL_TYPES.map(m => (
-              <button
-                key={m.id}
-                onClick={() => setMealType(m.id as any)}
-                className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold border transition-all active:scale-95 ${
-                  mealType === m.id
-                    ? 'bg-white text-black border-transparent'
-                    : 'bg-zinc-800 text-zinc-400 border-zinc-700'
-                }`}
-              >
-                <span>{m.icon}</span>
-                <span>{lang === 'en' ? m.en : m.es}</span>
-              </button>
-            ))}
-          </div>
+        <div className="flex gap-2 overflow-x-auto scroll-container pb-0.5">
+          {MEAL_TYPES.map(m => (
+            <button
+              key={m.id}
+              onClick={() => setMealType(m.id as any)}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold border transition-all active:scale-95 duration-fast ease-natural ${
+                mealType === m.id
+                  ? 'bg-primary-500 text-white border-transparent shadow-[0_4px_12px] shadow-primary-500/30'
+                  : 'bg-zinc-800 text-zinc-400 border-zinc-700/50'
+              }`}
+            >
+              <span aria-hidden="true">{m.icon}</span>
+              <span>{lang === 'en' ? m.en : m.es}</span>
+            </button>
+          ))}
         </div>
 
         {/* Tabs */}
-        <div className="px-5 pb-3 shrink-0">
-          <div className="flex bg-zinc-800 p-1 rounded-2xl gap-1">
-            {([
-              { id: 'quick',   icon: 'Zap',      label: l('Quick Add', 'Rápido') },
-              { id: 'myfoods', icon: 'BookOpen',  label: l('My Foods', 'Mis Alimentos') },
-              { id: 'manual',  icon: 'Edit3',     label: l('Manual', 'Manual') },
-            ] as { id: ModalTab; icon: string; label: string }[]).map(t => (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-xl text-[11px] font-bold transition-all ${
-                  tab === t.id ? 'bg-white text-black' : 'text-zinc-500'
-                }`}
-              >
-                <Icon name={t.icon as any} size={11} />
-                {t.label}
-              </button>
-            ))}
-          </div>
+        <div className="flex bg-zinc-800 p-1 rounded-2xl gap-1">
+          {([
+            { id: 'quick',   icon: 'Zap',      label: l('Quick Add', 'Rápido') },
+            { id: 'myfoods', icon: 'BookOpen',  label: l('My Foods', 'Mis Alimentos') },
+            { id: 'manual',  icon: 'Edit3',     label: l('Manual', 'Manual') },
+          ] as { id: ModalTab; icon: string; label: string }[]).map(t => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-xl text-[11px] font-bold transition-all ${
+                tab === t.id ? 'bg-white text-black font-black' : 'text-zinc-500'
+              }`}
+            >
+              <Icon name={t.icon as any} size={11} />
+              {t.label}
+            </button>
+          ))}
         </div>
 
-        {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto scroll-container px-5 pb-6 space-y-3">
-
-          {/* ── Portion multiplier (shared across quick & my foods) ── */}
+        {/* tab contents */}
+        <div className="space-y-4">
+          {/* Portion selector for catalog tabs */}
           {tab !== 'manual' && (
             <div className="flex items-center gap-2">
               <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider shrink-0">
@@ -355,10 +342,10 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                   <button
                     key={m}
                     onClick={() => setMultiplier(m)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 ${
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 duration-fast ease-natural ${
                       multiplier === m
-                        ? 'bg-white text-black border-transparent'
-                        : 'bg-zinc-800 border-zinc-700 text-zinc-400'
+                        ? 'bg-white text-black border-transparent shadow-md'
+                        : 'bg-zinc-800 border-zinc-700/50 text-zinc-400'
                     }`}
                   >
                     ×{m}
@@ -368,10 +355,9 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
             </div>
           )}
 
-          {/* ── Quick Add tab ── */}
+          {/* Quick Add */}
           {tab === 'quick' && (
-            <>
-              {/* Search */}
+            <div className="space-y-4">
               <div className="relative">
                 <Icon name="Search" size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
                 <input
@@ -379,15 +365,13 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                   placeholder={l('Search foods…', 'Buscar alimentos…')}
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-2xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
+                  className="w-full bg-zinc-800 border border-zinc-700/50 rounded-2xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all glow-input-neon"
                 />
               </div>
 
-              {/* Scan button */}
               <ScannerButton onScanned={handleScanned} lang={lang} />
 
-              {/* Preset list */}
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 max-h-[350px] overflow-y-auto scroll-container pr-0.5">
                 {filteredPresets.length === 0 && (
                   <p className="text-center text-zinc-600 text-sm py-4">{l('No results', 'Sin resultados')}</p>
                 )}
@@ -401,12 +385,12 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                   />
                 ))}
               </div>
-            </>
+            </div>
           )}
 
-          {/* ── My Foods tab ── */}
+          {/* My Foods */}
           {tab === 'myfoods' && (
-            <>
+            <div className="space-y-4">
               {customFoods.length === 0 ? (
                 <div className="text-center py-10 space-y-2">
                   <div className="text-3xl">🥗</div>
@@ -418,14 +402,13 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                   </p>
                   <button
                     onClick={() => setTab('manual')}
-                    className="mt-3 px-4 py-2 rounded-xl bg-zinc-800 text-zinc-300 text-xs font-bold"
+                    className="mt-3 px-4 py-2 rounded-xl bg-zinc-800 text-zinc-300 text-xs font-bold active:scale-95 transition-transform"
                   >
                     {l('Add manually →', 'Agregar manualmente →')}
                   </button>
                 </div>
               ) : (
                 <>
-                  {/* Search */}
                   <div className="relative">
                     <Icon name="Search" size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
                     <input
@@ -433,13 +416,13 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                       placeholder={l('Search my foods…', 'Buscar mis alimentos…')}
                       value={search}
                       onChange={e => setSearch(e.target.value)}
-                      className="w-full bg-zinc-800 border border-zinc-700 rounded-2xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
+                      className="w-full bg-zinc-800 border border-zinc-700/50 rounded-2xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all glow-input-neon"
                     />
                   </div>
                   {sortedMyFoods.length === 0 ? (
                     <p className="text-center text-zinc-600 text-sm py-4">{l('No results', 'Sin resultados')}</p>
                   ) : (
-                    <div className="space-y-1.5">
+                    <div className="space-y-1.5 max-h-[350px] overflow-y-auto scroll-container pr-0.5">
                       {sortedMyFoods.map(food => (
                         <FoodCard
                           key={food.id}
@@ -455,103 +438,106 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                   )}
                 </>
               )}
-            </>
+            </div>
           )}
 
-          {/* ── Manual tab ── */}
+          {/* Manual / Scan form */}
           {tab === 'manual' && (
-            <div className="space-y-3">
-              {/* Scanner button */}
+            <div className="space-y-4">
               <ScannerButton onScanned={handleScanned} lang={lang} />
 
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-zinc-700" />
-                </div>
-                <div className="relative flex justify-center">
-                  <span className="px-3 bg-zinc-900 text-[10px] text-zinc-600 uppercase tracking-wider">
-                    {l('or enter manually', 'o ingresar manualmente')}
-                  </span>
-                </div>
+              <div className="relative flex py-2 items-center">
+                <div className="flex-grow border-t border-zinc-700/50"></div>
+                <span className="flex-shrink mx-4 text-zinc-500 text-[10px] font-black uppercase tracking-wider">
+                  {l('or enter manually', 'o ingresar manualmente')}
+                </span>
+                <div className="flex-grow border-t border-zinc-700/50"></div>
               </div>
 
-              {/* Food name */}
-              <input
-                value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder={l('Food name *', 'Nombre del alimento *')}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-4 py-3 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-zinc-500"
-              />
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1 px-1">{l('Food name *', 'Nombre del alimento *')}</label>
+                  <input
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    placeholder="e.g. Greek Yogurt"
+                    className="w-full bg-zinc-800 border border-zinc-700/50 rounded-2xl px-4 py-3 text-white placeholder-zinc-600 text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all glow-input-neon"
+                  />
+                </div>
 
-              {/* Calories */}
-              <input
-                value={calories}
-                onChange={e => setCalories(e.target.value)}
-                placeholder={l('Calories (kcal) *', 'Calorías (kcal) *')}
-                type="number"
-                inputMode="numeric"
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-4 py-3 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-zinc-500"
-              />
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1 px-1">{l('Calories (kcal) *', 'Calorías (kcal) *')}</label>
+                  <input
+                    value={calories}
+                    onChange={e => setCalories(e.target.value)}
+                    placeholder="0"
+                    type="number"
+                    inputMode="numeric"
+                    className="w-full bg-zinc-800 border border-zinc-700/50 rounded-2xl px-4 py-3 text-white placeholder-zinc-600 text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all glow-input-neon"
+                  />
+                </div>
 
-              {/* Macros */}
-              <div className="grid grid-cols-3 gap-2">
-                <input
-                  value={protein}
-                  onChange={e => setProtein(e.target.value)}
-                  placeholder={l('Protein', 'Proteína')}
-                  type="number"
-                  inputMode="decimal"
-                  className="bg-zinc-800 border border-blue-500/30 rounded-2xl px-3 py-3 text-white placeholder-zinc-500 text-sm text-center focus:outline-none focus:border-blue-500"
-                />
-                <input
-                  value={carbs}
-                  onChange={e => setCarbs(e.target.value)}
-                  placeholder="Carbs"
-                  type="number"
-                  inputMode="decimal"
-                  className="bg-zinc-800 border border-amber-500/30 rounded-2xl px-3 py-3 text-white placeholder-zinc-500 text-sm text-center focus:outline-none focus:border-amber-500"
-                />
-                <input
-                  value={fat}
-                  onChange={e => setFat(e.target.value)}
-                  placeholder={l('Fat', 'Grasa')}
-                  type="number"
-                  inputMode="decimal"
-                  className="bg-zinc-800 border border-pink-500/30 rounded-2xl px-3 py-3 text-white placeholder-zinc-500 text-sm text-center focus:outline-none focus:border-pink-500"
-                />
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1 px-1">{l('Macros (g)', 'Macros (g)')}</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <input
+                      value={protein}
+                      onChange={e => setProtein(e.target.value)}
+                      placeholder={l('Protein', 'Proteína')}
+                      type="number"
+                      inputMode="decimal"
+                      className="bg-zinc-800 border border-blue-500/30 focus:border-blue-500 rounded-2xl px-3 py-3 text-white placeholder-zinc-600 text-sm text-center focus:outline-none transition-all"
+                    />
+                    <input
+                      value={carbs}
+                      onChange={e => setCarbs(e.target.value)}
+                      placeholder="Carbs"
+                      type="number"
+                      inputMode="decimal"
+                      className="bg-zinc-800 border border-amber-500/30 focus:border-amber-500 rounded-2xl px-3 py-3 text-white placeholder-zinc-600 text-sm text-center focus:outline-none transition-all"
+                    />
+                    <input
+                      value={fat}
+                      onChange={e => setFat(e.target.value)}
+                      placeholder={l('Fat', 'Grasa')}
+                      type="number"
+                      inputMode="decimal"
+                      className="bg-zinc-800 border border-pink-500/30 focus:border-pink-500 rounded-2xl px-3 py-3 text-white placeholder-zinc-600 text-sm text-center focus:outline-none transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1 px-1">{l('Serving size', 'Porción')}</label>
+                  <input
+                    value={servingSize}
+                    onChange={e => setServingSize(e.target.value)}
+                    placeholder="e.g. 100g, 1 cup"
+                    className="w-full bg-zinc-800 border border-zinc-700/50 rounded-2xl px-4 py-3 text-white placeholder-zinc-600 text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all glow-input-neon"
+                  />
+                </div>
+
+                <button
+                  onClick={() => setSaveToMyFoods(!saveToMyFoods)}
+                  className="flex items-center gap-3 w-full p-3.5 rounded-2xl bg-zinc-800/50 border border-zinc-700/50 active:scale-[0.99] transition-all"
+                >
+                  <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${
+                    saveToMyFoods ? 'bg-green-500 border-green-500' : 'border-zinc-600'
+                  }`}>
+                    {saveToMyFoods && <Icon name="Check" size={12} className="text-white" strokeWidth={3} />}
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-bold text-white">{l('Save to My Foods', 'Guardar en Mis Alimentos')}</p>
+                    <p className="text-[10px] text-zinc-500">{l('Add to your personal food database', 'Agregar a tu base de datos personal')}</p>
+                  </div>
+                </button>
               </div>
-              <p className="text-[10px] text-zinc-600 text-center -mt-1">
-                {l('Protein · Carbs · Fat (g)', 'Proteína · Carbs · Grasa (g)')}
-              </p>
-
-              {/* Serving size */}
-              <input
-                value={servingSize}
-                onChange={e => setServingSize(e.target.value)}
-                placeholder={l('Serving size (e.g. 100g, 1 cup)', 'Porción (ej. 100g, 1 taza)')}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-4 py-3 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-zinc-500"
-              />
-
-              {/* Save to My Foods toggle */}
-              <button
-                onClick={() => setSaveToMyFoods(!saveToMyFoods)}
-                className="flex items-center gap-3 w-full p-3 rounded-2xl bg-zinc-800/50 border border-zinc-700/50 active:scale-[0.99] transition-all"
-              >
-                <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${
-                  saveToMyFoods ? 'bg-green-500 border-green-500' : 'border-zinc-600'
-                }`}>
-                  {saveToMyFoods && <Icon name="Check" size={12} className="text-white" strokeWidth={3} />}
-                </div>
-                <div className="text-left">
-                  <p className="text-sm font-bold text-white">{l('Save to My Foods', 'Guardar en Mis Alimentos')}</p>
-                  <p className="text-[10px] text-zinc-500">{l('Add to your personal food database', 'Agregar a tu base de datos personal')}</p>
-                </div>
-              </button>
 
               <Button
                 onClick={handleSubmitManual}
                 fullWidth
                 disabled={!canSubmitManual}
+                className="mt-2"
               >
                 {l('Add Food', 'Agregar Comida')}
               </Button>
@@ -559,6 +545,6 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
           )}
         </div>
       </div>
-    </div>
+    </Sheet>
   );
 };

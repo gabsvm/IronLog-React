@@ -7,6 +7,7 @@ import { AddCardioModal } from '../components/nutrition/AddCardioModal';
 import { LogWeightModal } from '../components/nutrition/LogWeightModal';
 import { Icon } from '../components/ui/Icon';
 import { Button } from '../components/ui/Button';
+import { Sheet } from '../components/ui/Sheet';
 import { triggerHaptic } from '../utils/audio';
 
 
@@ -282,21 +283,22 @@ export const NutriView: React.FC = () => {
       </div>
 
       {/* ─── EDIT ENTRY MODAL ──────────────────────────────── */}
-      {editingEntry && editEntryDraft && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end" onClick={() => { setEditingEntry(null); setEditEntryDraft(null); }}>
-          <div className="w-full bg-zinc-900 rounded-t-3xl border-t border-zinc-800 p-6 pb-safe" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex-1 min-w-0 pr-4">
-                <h2 className="text-base font-bold text-white truncate">{editEntryDraft.name}</h2>
-                <p className="text-[11px] text-zinc-500 mt-0.5">{l('Edit nutrition values', 'Editar valores nutricionales')}</p>
-              </div>
-              <button onClick={() => { setEditingEntry(null); setEditEntryDraft(null); }} className="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-800 text-zinc-400">
-                <Icon name="X" size={16} />
-              </button>
-            </div>
-
+      <Sheet
+        open={!!editingEntry && !!editEntryDraft}
+        onOpenChange={(open) => { if (!open) { setEditingEntry(null); setEditEntryDraft(null); } }}
+        title={editEntryDraft?.name ?? ''}
+        accent="primary"
+        footer={
+          <Button onClick={handleSaveEditEntry} fullWidth>
+            {l('Save Changes', 'Guardar Cambios')}
+          </Button>
+        }
+      >
+        {editEntryDraft && (
+          <div className="p-5 space-y-5">
+            <p className="text-[11px] text-zinc-500 -mt-3">{l('Edit nutrition values', 'Editar valores nutricionales')}</p>
             {/* Quick multiplier buttons */}
-            <div className="mb-4">
+            <div>
               <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">{l('Quick scale', 'Escalar')}</p>
               <div className="flex gap-2">
                 {[0.5, 0.75, 1, 1.5, 2].map(mult => (
@@ -335,53 +337,49 @@ export const NutriView: React.FC = () => {
                     inputMode="numeric"
                     value={editEntryDraft[key]}
                     onChange={e => setEditEntryDraft(prev => prev ? { ...prev, [key]: Math.max(0, Number(e.target.value)) } : prev)}
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-zinc-500"
+                    className="w-full bg-zinc-800 border border-zinc-700/50 rounded-2xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all glow-input-neon"
                   />
                 </div>
               ))}
             </div>
-            <Button onClick={handleSaveEditEntry} fullWidth className="mt-4">
-              {l('Save Changes', 'Guardar Cambios')}
-            </Button>
           </div>
-        </div>
-      )}
+        )}
+      </Sheet>
 
       {/* ─── GOAL EDITOR MODAL ─────────────────────────────── */}
-      {showGoalEditor && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end" onClick={() => setShowGoalEditor(false)}>
-          <div className="w-full bg-zinc-900 rounded-t-3xl border-t border-zinc-800 p-6 pb-safe animate-spring-in" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-1">
-              <h2 className="text-lg font-bold text-white">{l('Edit Goals', 'Editar Metas')}</h2>
-              <button onClick={() => setShowGoalEditor(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-800 text-zinc-400">
-                <Icon name="X" size={16} />
-              </button>
-            </div>
-            {tdee && (
-              <p className="text-[11px] text-zinc-500 mb-4">
-                {l('Estimated TDEE', 'TDEE estimado')}: <span className="text-zinc-300 font-bold">{tdee} kcal</span>
-              </p>
-            )}
-            <div className="space-y-3">
-              {(['calories', 'protein', 'carbs', 'fat'] as const).map(key => (
-                <div key={key}>
-                  <label className="text-xs text-zinc-500 capitalize mb-1 block">{key} {key === 'calories' ? '(kcal)' : '(g)'}</label>
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    value={editGoal[key]}
-                    onChange={e => setEditGoal(prev => ({ ...prev, [key]: Number(e.target.value) }))}
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-4 py-3 text-white text-sm focus:outline-none focus:border-zinc-500"
-                  />
-                </div>
-              ))}
-            </div>
-            <Button onClick={saveGoal} fullWidth className="mt-5">
-              {l('Save Goals', 'Guardar Metas')}
-            </Button>
+      <Sheet
+        open={showGoalEditor}
+        onOpenChange={setShowGoalEditor}
+        title={l('Edit Goals', 'Editar Metas')}
+        accent="primary"
+        footer={
+          <Button onClick={saveGoal} fullWidth>
+            {l('Save Goals', 'Guardar Metas')}
+          </Button>
+        }
+      >
+        <div className="p-5 space-y-4">
+          {tdee && (
+            <p className="text-[11px] text-zinc-500 -mt-2">
+              {l('Estimated TDEE', 'TDEE estimado')}: <span className="text-zinc-300 font-bold">{tdee} kcal</span>
+            </p>
+          )}
+          <div className="space-y-3">
+            {(['calories', 'protein', 'carbs', 'fat'] as const).map(key => (
+              <div key={key}>
+                <label className="text-xs text-zinc-500 capitalize mb-1 block">{key} {key === 'calories' ? '(kcal)' : '(g)'}</label>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  value={editGoal[key]}
+                  onChange={e => setEditGoal(prev => ({ ...prev, [key]: Number(e.target.value) }))}
+                  className="w-full bg-zinc-800 border border-zinc-700/50 rounded-2xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all glow-input-neon"
+                />
+              </div>
+            ))}
           </div>
         </div>
-      )}
+      </Sheet>
 
       {/* Modals */}
       <AddMealModal   isOpen={showAddMeal}   onClose={() => setShowAddMeal(false)}   onAdd={handleAddMeal}   lang={lang} />

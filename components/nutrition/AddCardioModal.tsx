@@ -3,6 +3,7 @@ import { CardioSession, CardioActivityType } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { Icon } from '../ui/Icon';
 import { Button } from '../ui/Button';
+import { Sheet } from '../ui/Sheet';
 
 interface AddCardioModalProps {
   isOpen: boolean;
@@ -60,8 +61,6 @@ export const AddCardioModal: React.FC<AddCardioModalProps> = ({ isOpen, onClose,
     onClose();
   };
 
-  if (!isOpen) return null;
-
   const t = {
     title:     lang === 'en' ? 'Log Cardio'      : 'Registrar Cardio',
     duration:  lang === 'en' ? 'Duration (min)'   : 'Duración (min)',
@@ -73,55 +72,91 @@ export const AddCardioModal: React.FC<AddCardioModalProps> = ({ isOpen, onClose,
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end">
-      <div className="w-full bg-zinc-900 rounded-t-3xl border-t border-zinc-800 p-6 pb-safe max-h-[90vh] overflow-y-auto scroll-container animate-spring-in">
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-lg font-bold text-white">{t.title}</h2>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-800 text-zinc-400" aria-label="Close"> <Icon name="X" size={16} />
-          </button>
-        </div>
-
+    <Sheet
+      open={isOpen}
+      onOpenChange={(open) => !open && onClose()}
+      title={t.title}
+      accent="primary"
+      footer={
+        <Button onClick={handleSubmit} fullWidth variant="primary" disabled={!duration}>
+          {t.add}
+        </Button>
+      }
+    >
+      <div className="p-5 space-y-5">
         {/* Activity picker */}
-        <div className="grid grid-cols-3 gap-2 mb-5">
+        <div className="grid grid-cols-3 gap-2">
           {ACTIVITIES.map(a => (
-            <button key={a.id} onClick={() => setActivity(a.id)}
-              className={`flex items-center gap-2 px-3 py-2.5 rounded-2xl text-xs font-bold border transition-all
-                ${activity === a.id ? 'bg-red-600 text-white border-transparent' : 'bg-zinc-800 text-zinc-400 border-zinc-700'}`}>
-              <span>{a.emoji}</span>
+            <button
+              key={a.id}
+              onClick={() => setActivity(a.id)}
+              className={`flex items-center gap-2 px-3 py-2.5 rounded-2xl text-xs font-bold border transition-all active:scale-95 duration-fast ease-natural
+                ${activity === a.id 
+                  ? 'bg-primary-500 text-white border-transparent shadow-[0_4px_12px] shadow-primary-500/30' 
+                  : 'bg-zinc-800 text-zinc-400 border-zinc-700/50 hover:border-zinc-600'}`}
+            >
+              <span aria-hidden="true">{a.emoji}</span>
               <span>{lang === 'en' ? a.en : a.es}</span>
             </button>
           ))}
         </div>
 
         <div className="space-y-3">
-          <input value={duration} onChange={e => setDuration(e.target.value)} placeholder={t.duration}
-            type="number" inputMode="numeric"
-            className="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-4 py-3 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-red-500" />
+          <div>
+            <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1 px-1">{t.duration}</label>
+            <input
+              value={duration}
+              onChange={e => setDuration(e.target.value)}
+              placeholder="0"
+              type="number"
+              inputMode="numeric"
+              className="w-full bg-zinc-800 border border-zinc-700/50 rounded-2xl px-4 py-3 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all glow-input-neon"
+            />
+          </div>
           
           {duration && (
-            <div className="bg-red-950/30 border border-red-500/20 rounded-2xl px-4 py-3 flex justify-between items-center">
+            <div className="bg-primary-500/10 border border-primary-500/20 rounded-2xl px-4 py-3 flex justify-between items-center animate-in fade-in duration-slow">
               <span className="text-xs text-zinc-400">{t.estimated}</span>
-              <span className="text-sm font-bold text-red-400">~{calEstimate} kcal</span>
+              <span className="text-sm font-bold text-primary-400">~{calEstimate} kcal</span>
             </div>
           )}
 
           <div className="grid grid-cols-2 gap-2">
-            <input value={distance} onChange={e => setDistance(e.target.value)} placeholder={t.distance}
-              type="number" inputMode="decimal"
-              className="bg-zinc-800 border border-zinc-700 rounded-2xl px-4 py-3 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-zinc-500" />
-            <input value={heartRate} onChange={e => setHeartRate(e.target.value)} placeholder={t.heartRate}
-              type="number" inputMode="numeric"
-              className="bg-zinc-800 border border-zinc-700 rounded-2xl px-4 py-3 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-zinc-500" />
+            <div>
+              <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1 px-1">{t.distance}</label>
+              <input
+                value={distance}
+                onChange={e => setDistance(e.target.value)}
+                placeholder="0.0"
+                type="number"
+                inputMode="decimal"
+                className="w-full bg-zinc-800 border border-zinc-700/50 rounded-2xl px-4 py-3 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all glow-input-neon"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1 px-1">{t.heartRate}</label>
+              <input
+                value={heartRate}
+                onChange={e => setHeartRate(e.target.value)}
+                placeholder="0"
+                type="number"
+                inputMode="numeric"
+                className="w-full bg-zinc-800 border border-zinc-700/50 rounded-2xl px-4 py-3 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all glow-input-neon"
+              />
+            </div>
           </div>
 
-          <input value={notes} onChange={e => setNotes(e.target.value)} placeholder={t.notes}
-            className="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-4 py-3 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-zinc-500" />
+          <div>
+            <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1 px-1">{t.notes}</label>
+            <input
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
+              placeholder="..."
+              className="w-full bg-zinc-800 border border-zinc-700/50 rounded-2xl px-4 py-3 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all glow-input-neon"
+            />
+          </div>
         </div>
-
-        <Button onClick={handleSubmit} fullWidth className="mt-5" variant="danger" disabled={!duration}>
-          {t.add}
-        </Button>
       </div>
-    </div>
+    </Sheet>
   );
 };

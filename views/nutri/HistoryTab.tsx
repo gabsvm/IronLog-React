@@ -35,7 +35,7 @@ export const HistoryTab: React.FC<Props> = ({ lang, last14Days, historyDayList, 
         <div className="space-y-3 pt-1">
             {/* Weekly averages */}
             {tracked.length > 0 && (
-                <div className="bg-zinc-900 rounded-3xl border border-zinc-800 p-4">
+                <div className="glass-card rounded-3xl p-4">
                     <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">
                         {l('14-Day Average', 'Promedio 14 Días')} · {tracked.length} {l('days tracked', 'días registrados')}
                     </p>
@@ -59,7 +59,7 @@ export const HistoryTab: React.FC<Props> = ({ lang, last14Days, historyDayList, 
             )}
 
             {/* Calories chart */}
-            <div className="bg-zinc-900 rounded-3xl border border-zinc-800 p-4">
+            <div className="glass-card rounded-3xl p-4">
                 <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-4">
                     {l('Calories — Last 14 Days', 'Calorías — 14 Días')}
                 </p>
@@ -74,26 +74,26 @@ export const HistoryTab: React.FC<Props> = ({ lang, last14Days, historyDayList, 
                                         {day.calories > 999 ? `${(day.calories / 1000).toFixed(1)}k` : day.calories}
                                     </span>
                                 )}
-                                <div
-                                    className={`w-full rounded-t transition-all duration-slow ease-natural ${day.isToday ? 'bg-red-500' : over ? 'bg-orange-500/70' : 'bg-zinc-700'}`}
+                                 <div
+                                    className={`w-full rounded-t transition-all duration-slow ease-natural ${day.isToday ? 'bg-primary-500 shadow-[0_0_8px] shadow-primary-500/30' : over ? 'bg-orange-500/70' : 'bg-zinc-700'}`}
                                     style={{ height: `${Math.max(pct * 80, day.calories > 0 ? 4 : 0)}px` }}
                                 />
-                                <span className={`text-[7px] leading-none ${day.isToday ? 'text-red-400 font-bold' : 'text-zinc-600'}`}>
+                                <span className={`text-[7px] leading-none ${day.isToday ? 'text-primary-400 font-bold' : 'text-zinc-600'}`}>
                                     {day.shortDate}
                                 </span>
                             </div>
                         );
                     })}
                 </div>
-                <div className="mt-2 flex items-center gap-3 text-[9px] text-zinc-600">
-                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-red-500 inline-block" />{l('Today', 'Hoy')}</span>
+                <div className="mt-2 flex items-center gap-3 text-[9px] text-zinc-650">
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-primary-500 inline-block" />{l('Today', 'Hoy')}</span>
                     <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-orange-500/70 inline-block" />{l('Over goal', 'Sobre meta')}</span>
                     <span className="ml-auto">{l('Goal', 'Meta')}: {nutritionGoal.calories} kcal</span>
                 </div>
             </div>
 
             {/* Protein chart */}
-            <div className="bg-zinc-900 rounded-3xl border border-zinc-800 p-4">
+            <div className="glass-card rounded-3xl p-4">
                 <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-4">
                     {l('Protein — Last 14 Days', 'Proteína — 14 Días')}
                 </p>
@@ -118,10 +118,10 @@ export const HistoryTab: React.FC<Props> = ({ lang, last14Days, historyDayList, 
 
             {/* Day log list */}
             {historyDayList.map((day) => (
-                <div key={day.date} className="bg-zinc-900 rounded-2xl border border-zinc-800 p-4">
+                <div key={day.date} className="glass-card rounded-2xl p-4">
                     <div className="flex justify-between items-center mb-2">
                         <div>
-                            <span className={`text-sm font-bold ${day.isToday ? 'text-red-400' : 'text-white'}`}>
+                            <span className={`text-sm font-bold ${day.isToday ? 'text-primary-400' : 'text-white'}`}>
                                 {day.isToday ? l('Today', 'Hoy') : day.label}
                             </span>
                             <span className="text-xs text-zinc-600 ml-2">{day.date}</span>

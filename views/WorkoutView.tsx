@@ -12,6 +12,7 @@ import { PRCelebrationOverlay } from '../components/ui/PRCelebrationOverlay';
 import { ExerciseDetailModal } from '../components/ui/ExerciseDetailModal';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { ExerciseDef, SessionExercise, SetType } from '../types';
+import { Sheet } from '../components/ui/Sheet';
 import { getTranslated, getMesoStageConfig, getLastLogForExercise } from '../utils';
 import { useWorkoutController } from '../hooks/useWorkoutController';
 import { SortableExerciseCard } from '../components/workout/SortableExerciseCard';
@@ -77,10 +78,10 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
         sessionExercises.length > 0 && sessionExercises.every(ex => ex.isBodyweight), 
     [sessionExercises]);
 
-    const accentClass = isCalisthenicsSession ? 'bg-violet-600' : 'bg-primary-600';
-    const accentTextClass = isCalisthenicsSession ? 'text-violet-400' : 'text-red-400';
-    const accentHoverClass = isCalisthenicsSession ? 'hover:bg-violet-500' : 'hover:bg-primary-500';
-    const accentShadowClass = isCalisthenicsSession ? 'shadow-violet-600/30' : 'shadow-primary-600/30';
+    const accentClass = isCalisthenicsSession ? 'bg-violet-600' : 'bg-primary-500';
+    const accentTextClass = isCalisthenicsSession ? 'text-violet-400' : 'text-primary-400';
+    const accentHoverClass = isCalisthenicsSession ? 'hover:bg-violet-500' : 'hover:bg-primary-600';
+    const accentShadowClass = isCalisthenicsSession ? 'shadow-violet-600/30' : 'shadow-primary-500/25';
 
     // Correct Sensor Config for Mobile
     const sensors = useSensors(
@@ -611,7 +612,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                     myorep: 'bg-purple-500/20 text-purple-400',
                     myorep_match: 'bg-purple-400/20 text-purple-300',
                     giant: 'bg-orange-500/20 text-orange-400',
-                    top: 'bg-primary-500/20 text-red-400',
+                    top: 'bg-primary-500/20 text-primary-400',
                     backoff: 'bg-blue-500/20 text-blue-400',
                     cluster: 'bg-emerald-500/20 text-emerald-400',
                     emom: 'bg-cyan-500/20 text-cyan-400',
@@ -630,69 +631,92 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                 const pendingSets = (exForModal?.sets || []).filter(s => !s.completed && s.type !== 'avt_hop');
                 const hasMultipleSets = pendingSets.length > 1;
                 return (
-                    <div className="fixed inset-0 z-modal bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center" onClick={() => ctrl.setChangingSetType(null)}>
-                        <div className="bg-zinc-900 w-full max-w-sm rounded-t-3xl sm:rounded-3xl shadow-2xl border border-zinc-800 overflow-hidden animate-spring-in" onClick={e => e.stopPropagation()}>
-                            <div className="px-4 pt-4 pb-2 flex items-center justify-between border-b border-zinc-800">
-                                <h3 className="font-black text-white text-base">{t.setType}</h3>
-                                <button onClick={() => ctrl.setChangingSetType(null)} className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-white rounded-full bg-zinc-800">
-                                    <Icon name="X" size={16} />
-                                </button>
-                            </div>
-                            {hasMultipleSets && (
-                                <button
-                                    onClick={() => setApplyToAll(v => !v)}
-                                    className="w-full flex items-center justify-between px-4 py-2.5 bg-zinc-800/60 border-b border-zinc-800 hover:bg-zinc-800 transition-colors"
-                                >
-                                    <span className="text-xs font-bold text-zinc-300">
-                                        {lang === 'es' ? 'Aplicar a todas las series' : 'Apply to all sets'}
-                                    </span>
-                                    <div className={`relative w-9 h-5 rounded-full transition-colors shrink-0 ${applyToAll ? 'bg-red-500' : 'bg-zinc-600'}`}>
-                                        <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${applyToAll ? 'left-4' : 'left-0.5'}`} />
-                                    </div>
-                                </button>
-                            )}
-                            <div className="p-3 grid grid-cols-1 gap-1.5 max-h-[65vh] overflow-y-auto">
-                                {(['regular', 'warmup', 'drop', 'myorep', 'myorep_match', 'giant', 'top', 'backoff', 'cluster', 'emom', 'rest_pause', 'time_volume', 'triple_add'] as SetType[]).map(type => {
-                                    const isSelected = ctrl.changingSetType?.currentType === type;
-                                    return (
-                                        <button
-                                            key={type}
-                                            onClick={() => {
-                                                if (applyToAll && hasMultipleSets) {
-                                                    ctrl.handleSetTypeAll(ctrl.changingSetType!.exId, type);
-                                                } else {
-                                                    ctrl.handleSetUpdate(ctrl.changingSetType!.exId, ctrl.changingSetType!.setId, 'type', type);
-                                                }
-                                                ctrl.setChangingSetType(null);
-                                            }}
-                                            className={`p-3 border rounded-xl flex items-center gap-3 text-left transition-all active:scale-98 ${isSelected ? 'border-white/20 bg-white/5' : 'border-zinc-800 hover:border-zinc-700 hover:bg-white/5'}`}
-                                        >
-                                            <span className={`shrink-0 w-9 h-9 flex items-center justify-center rounded-lg ${colors[type] || 'bg-zinc-800 text-zinc-400'}`}>
-                                                <Icon name={icons[type] as any || 'Circle'} size={18} />
-                                            </span>
-                                            <div className="flex-1">
-                                                <div className="text-sm font-bold text-white">{t.types[type]}</div>
-                                                <div className="text-[10px] text-zinc-500 leading-tight mt-0.5">{t.typeDesc[type]}</div>
-                                            </div>
-                                            {isSelected && <Icon name="CheckCircle" size={16} className="text-white shrink-0" />}
-                                        </button>
-                                    );
-                                })}
-                            </div>
+                    <Sheet
+                        open={!!ctrl.changingSetType}
+                        onOpenChange={(open) => !open && ctrl.setChangingSetType(null)}
+                        title={t.setType}
+                        accent="primary"
+                    >
+                        {hasMultipleSets && (
+                            <button
+                                onClick={() => setApplyToAll(v => !v)}
+                                className="w-full flex items-center justify-between px-5 py-3 bg-white/5 border-b border-white/5 hover:bg-white/10 transition-colors"
+                            >
+                                <span className="text-xs font-bold text-zinc-300">
+                                    {lang === 'es' ? 'Aplicar a todas las series' : 'Apply to all sets'}
+                                </span>
+                                <div className={`relative w-9 h-5 rounded-full transition-colors shrink-0 ${applyToAll ? 'bg-primary-500 shadow-[0_2px_8px] shadow-primary-500/30' : 'bg-zinc-600'}`}>
+                                    <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${applyToAll ? 'left-4' : 'left-0.5'}`} />
+                                </div>
+                            </button>
+                        )}
+                        <div className="p-4 grid grid-cols-1 gap-1.5 max-h-[60vh] overflow-y-auto">
+                            {(['regular', 'warmup', 'drop', 'myorep', 'myorep_match', 'giant', 'top', 'backoff', 'cluster', 'emom', 'rest_pause', 'time_volume', 'triple_add'] as SetType[]).map(type => {
+                                const isSelected = ctrl.changingSetType?.currentType === type;
+                                return (
+                                    <button
+                                        key={type}
+                                        onClick={() => {
+                                            if (applyToAll && hasMultipleSets) {
+                                                ctrl.handleSetTypeAll(ctrl.changingSetType!.exId, type);
+                                            } else {
+                                                ctrl.handleSetUpdate(ctrl.changingSetType!.exId, ctrl.changingSetType!.setId, 'type', type);
+                                            }
+                                            ctrl.setChangingSetType(null);
+                                        }}
+                                        className={`p-3 border rounded-xl flex items-center gap-3 text-left transition-all active:scale-98 ${isSelected ? 'border-primary-500/50 bg-primary-500/5' : 'border-white/5 hover:border-white/10 hover:bg-white/5'}`}
+                                    >
+                                        <span className={`shrink-0 w-9 h-9 flex items-center justify-center rounded-lg ${colors[type] || 'bg-zinc-800 text-zinc-400'}`}>
+                                            <Icon name={icons[type] as any || 'Circle'} size={18} />
+                                        </span>
+                                        <div className="flex-1">
+                                            <div className="text-sm font-bold text-white">{t.types[type]}</div>
+                                            <div className="text-[10px] text-zinc-500 leading-tight mt-0.5">{t.typeDesc[type]}</div>
+                                        </div>
+                                        {isSelected && <Icon name="CheckCircle" size={16} className="text-primary-500 shrink-0" />}
+                                    </button>
+                                );
+                            })}
                         </div>
-                    </div>
+                    </Sheet>
                 );
             })()}
 
             {ctrl.showFinishModal && (
-                <div className="fixed inset-0 z-modal bg-black/70 backdrop-blur-sm flex items-center justify-center p-6" onClick={(e) => e.stopPropagation()}>
-                    <div className="bg-zinc-900 w-full max-w-sm rounded-2xl p-6 shadow-2xl space-y-4 border border-zinc-800">
-                        <h3 className="text-xl font-bold text-center text-white">{completedSets > 0 ? t.finishWorkout : t.emptyWorkoutTitle}</h3>
-
+                <Sheet
+                    open={ctrl.showFinishModal}
+                    onOpenChange={(open) => !open && ctrl.setShowFinishModal(false)}
+                    title={completedSets > 0 ? t.finishWorkout : t.emptyWorkoutTitle}
+                    accent="primary"
+                    footer={
+                        <div className="space-y-3">
+                            <div className="grid grid-cols-2 gap-3">
+                                <Button variant="secondary" onClick={() => ctrl.setShowFinishModal(false)}>{t.cancel}</Button>
+                                <Button variant="primary" onClick={ctrl.handleConfirmFinish}>{t.finishWorkout}</Button>
+                            </div>
+                            {/* Discard Session Option */}
+                            <div className="text-center pt-1">
+                                <button
+                                    onClick={() => {
+                                        ctrl.setShowFinishModal(false);
+                                        ctrl.setShowDiscardConfirm(true);
+                                    }}
+                                    className="text-xs font-black text-primary-500 hover:text-primary-400 transition-colors uppercase tracking-widest"
+                                >
+                                    {t.resetSession || "Discard / Reset"}
+                                </button>
+                            </div>
+                        </div>
+                    }
+                >
+                    <div className="p-5 space-y-5">
                         {/* Update Template Option */}
                         {completedSets > 0 && (
-                            <div className="bg-zinc-800/50 p-4 rounded-xl border border-white/5 flex items-start gap-3 cursor-pointer" onClick={() => ctrl.setUpdateTemplate(!ctrl.updateTemplate)}>
-                                <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center mt-0.5 transition-colors ${ctrl.updateTemplate ? 'bg-primary-600 border-primary-600' : 'border-zinc-600'}`}>
+                            <div 
+                                className="bg-white/5 p-4 rounded-2xl border border-white/5 flex items-start gap-3 cursor-pointer hover:bg-white/10 transition-colors" 
+                                onClick={() => ctrl.setUpdateTemplate(!ctrl.updateTemplate)}
+                            >
+                                <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center mt-0.5 transition-colors ${ctrl.updateTemplate ? 'bg-primary-500 border-primary-500' : 'border-zinc-700'}`}>
                                     {ctrl.updateTemplate && <Icon name="Check" size={14} className="text-white" strokeWidth={3} />}
                                 </div>
                                 <div className="flex-1">
@@ -703,30 +727,18 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                         )}
 
                         {/* Session Journal Note */}
-                        <textarea
-                            placeholder={lang === 'es' ? 'Nota de sesión...' : 'Session note...'}
-                            value={activeSession.note || ''}
-                            onChange={e => ctrl.updateSession(prev => prev ? { ...prev, note: e.target.value } : null)}
-                            rows={2}
-                            className="w-full bg-zinc-800 rounded-xl px-3 py-2.5 text-sm text-white placeholder-zinc-600 outline-none resize-none border border-zinc-700/50 focus:border-zinc-500 transition-colors"
-                        />
-
-                        <div className="grid grid-cols-2 gap-3">
-                            <Button variant="secondary" onClick={() => ctrl.setShowFinishModal(false)}>{t.cancel}</Button>
-                            <Button variant="primary" onClick={ctrl.handleConfirmFinish}>{t.finishWorkout}</Button>
-                        </div>
-
-                        {/* NEW: Discard Session Option */}
-                        <div className="pt-2 text-center">
-                            <button
-                                onClick={() => ctrl.setShowDiscardConfirm(true)}
-                                className="text-xs font-bold text-primary-500 hover:text-red-700 transition-colors uppercase tracking-widest"
-                            >
-                                {t.resetSession || "Discard / Reset"}
-                            </button>
+                        <div className="space-y-1.5">
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 px-1">{lang === 'es' ? 'Nota de sesión' : 'Session note'}</label>
+                            <textarea
+                                placeholder="..."
+                                value={activeSession.note || ''}
+                                onChange={e => ctrl.updateSession(prev => prev ? { ...prev, note: e.target.value } : null)}
+                                rows={3}
+                                className="w-full bg-zinc-800 border border-zinc-700/50 rounded-2xl px-4 py-3 text-sm text-white placeholder-zinc-500 outline-none resize-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all glow-input-neon"
+                            />
                         </div>
                     </div>
-                </div>
+                </Sheet>
             )}
 
             {/* NEW: Discard Confirmation Modal */}
@@ -758,13 +770,31 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
             {ctrl.replacingExId && <ExerciseSelector onSelect={handleReplace} onClose={() => { ctrl.setReplacingExId(null); ctrl.setReplaceFilter(null); }} presetMuscle={ctrl.replaceFilter?.muscle} sourceFilter={ctrl.replaceFilter?.source} />}
             {ctrl.addingExercise && <ExerciseSelector onSelect={handleAddExercise} onClose={() => ctrl.setAddingExercise(false)} />}
             {ctrl.configPlateExId && (
-                <div className="fixed inset-0 z-sheet bg-black/60 flex items-center justify-center p-6" onClick={() => ctrl.setConfigPlateExId(null)}>
-                    <div className="bg-zinc-900 p-6 rounded-2xl w-full max-w-xs space-y-4 border border-zinc-800" onClick={e => e.stopPropagation()}>
-                        <h3 className="font-bold text-lg text-white text-center">{t.units.plateWeight}</h3>
-                        <input type="number" autoFocus className="w-full bg-zinc-800 rounded-xl p-3 text-center font-bold text-xl outline-none" value={ctrl.plateWeightInput} onChange={(e) => ctrl.setPlateWeightInput(e.target.value)} />
-                        <Button fullWidth onClick={() => handleUpdatePlateWeight(ctrl.configPlateExId!)}>{t.save}</Button>
+                <Sheet
+                    open={!!ctrl.configPlateExId}
+                    onOpenChange={(open) => !open && ctrl.setConfigPlateExId(null)}
+                    title={t.units.plateWeight}
+                    accent="primary"
+                    footer={
+                        <Button fullWidth onClick={() => handleUpdatePlateWeight(ctrl.configPlateExId!)}>
+                            {t.save}
+                        </Button>
+                    }
+                >
+                    <div className="p-5 space-y-4">
+                        <div className="space-y-2">
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 text-center">{lang === 'en' ? 'Plate Weight' : 'Peso de Disco'}</label>
+                            <input 
+                                type="number" 
+                                inputMode="decimal"
+                                autoFocus 
+                                className="w-full bg-zinc-800 border border-zinc-700/50 rounded-2xl p-4 text-center font-black text-2xl text-white outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all glow-input-neon" 
+                                value={ctrl.plateWeightInput} 
+                                onChange={(e) => ctrl.setPlateWeightInput(e.target.value)} 
+                            />
+                        </div>
                     </div>
-                </div>
+                </Sheet>
             )}
             {ctrl.warmupExId && activeSession && (
                 <WarmupModal targetWeight={Number(sessionExercises.find(e => e.instanceId === ctrl.warmupExId)?.sets?.[0]?.weight || 0)} exerciseName={getTranslated(sessionExercises.find(e => e.instanceId === ctrl.warmupExId)?.name, lang)} onClose={() => ctrl.setWarmupExId(null)} />
