@@ -67,6 +67,7 @@ const AppContent = () => {
         program, exercises, lang, logs, setLogs,
         setExercises, setProgram, setActiveMeso,
         config, rpFeedback, hasSeenOnboarding, setHasSeenOnboarding,
+        isAppLoading,
         pendingCloudData, confirmCloudSync, cancelCloudSync,
         userProfile, nutritionLogs, cardioSessions, bodyLogs, macroGoals, nutritionGoal
     } = useApp();
@@ -143,16 +144,28 @@ const AppContent = () => {
         } catch (e) { }
     }, [view, showSettings]);
 
-    // One-time: merge CrossFit + Calisthenics exercises into library
+    // Merge CrossFit + Calisthenics exercises into the library — runs ONCE, but only
+    // AFTER IndexedDB hydration finishes (isAppLoading === false). Running it earlier was
+    // the bug: the seed DEFAULT_LIBRARY is replaced by the hydrated value a tick later, so
+    // a merge against the seed (a) missed real duplicates and (b) got overwritten by the
+    // stored value. We rebuild the list keyed by id, which is idempotent AND self-heals
+    // any pre-existing duplicate ids already persisted from the previous buggy version.
+    const mergedExtrasRef = useRef(false);
     useEffect(() => {
-        if (!exercises || exercises.length === 0) return;
-        const existingIds = new Set(exercises.map((e: any) => e.id));
-        const toAdd = [...CROSSFIT_EXERCISES, ...CALISTHENICS_EXERCISES, ...NILSSON_BW_EXERCISES].filter(e => !existingIds.has(e.id));
-        if (toAdd.length > 0) {
-            setExercises((prev: any[]) => [...(Array.isArray(prev) ? prev : []), ...toAdd]);
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []); // Run once on mount
+        if (isAppLoading || mergedExtrasRef.current) return;
+        mergedExtrasRef.current = true;
+        setExercises((prev: any[]) => {
+            const base = Array.isArray(prev) ? prev : [];
+            const byId = new Map<string, any>();
+            for (const e of base) if (e && !byId.has(e.id)) byId.set(e.id, e);
+            const extras = [...CROSSFIT_EXERCISES, ...CALISTHENICS_EXERCISES, ...NILSSON_BW_EXERCISES];
+            let changed = base.length !== byId.size; // pre-existing duplicates present
+            for (const e of extras) {
+                if (!byId.has(e.id)) { byId.set(e.id, e); changed = true; }
+            }
+            return changed ? Array.from(byId.values()) : base;
+        });
+    }, [isAppLoading, setExercises]);
 
     // --- DATA MANAGEMENT ---
     const handleExport = () => {

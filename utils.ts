@@ -3,10 +3,18 @@ import { Lang, Log, WorkoutSet, MesoType } from "./types";
 
 // Monotonically increasing unique integer ID — safe against Date.now() collisions
 // when multiple IDs are generated in the same millisecond (e.g. bulk set creation).
-let _uidSeq = 0;
+//
+// IMPORTANT: We must stay within Number.MAX_SAFE_INTEGER (~9.007e15). The previous
+// implementation returned `Date.now() * 1_000_000 + seq` (~1.7e18), well past the
+// safe range — at that magnitude consecutive integers round to the SAME double
+// (the ULP is 256), so bulk-created sets all collided onto one id. That caused
+// "marking one set marks all". Seeding a counter with Date.now() keeps every id
+// unique, monotonic, and safely representable, while staying larger than any id
+// persisted before this fix.
+let _uidSeq = Date.now();
 export const uid = (): number => {
-    _uidSeq = (_uidSeq + 1) % 1_000_000;
-    return Date.now() * 1_000_000 + _uidSeq;
+    _uidSeq += 1;
+    return _uidSeq;
 };
 
 // Epley 1RM estimate — single source of truth used by controller and stats worker.

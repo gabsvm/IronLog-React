@@ -131,6 +131,10 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
             description={persistToGlobal ? 'Global exercise library admin' : 'Exercise picker'}
             accent="primary"
         >
+            {/* The Sheet body is a plain `overflow-y-auto` block, so we must re-establish
+                a full-height flex column here — otherwise the `flex-1` Virtuoso list
+                below collapses to 0px and the exercise list renders empty. */}
+            <div className="flex flex-col h-full">
             {/* Custom Header (search input replaces the default Sheet title slot) */}
             <div className={`glass px-4 h-16 shrink-0 flex items-center gap-3 border-b border-zinc-200 dark:border-white/5 ${persistToGlobal ? 'bg-purple-900/10' : ''}`}>
                 <button onClick={onClose} className="p-2 -ml-2 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white" aria-label="Close">
@@ -274,6 +278,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
                     </div>
                 </>
             )}
+            </div>
         </Sheet>
     );
 };
