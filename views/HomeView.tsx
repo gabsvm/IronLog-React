@@ -245,7 +245,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                                 <Icon name="Plus" size={40} className="text-white drop-shadow-md" strokeWidth={3} />
                             </div>
 
-                            <h2 className="text-3xl font-black text-white tracking-tighter drop-shadow-lg">
+                            <h2 className="text-3xl font-bold text-white tracking-tight drop-shadow-lg">
                                 {lang === 'en' ? "Start Journey" : "Empezar Viaje"}
                             </h2>
                             <p className="text-zinc-400 text-sm font-medium mt-2 max-w-[200px] leading-relaxed">
@@ -277,7 +277,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                                 <div className="w-7 h-7 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center"><Icon name="Zap" size={14} /></div>
                                 <div className="w-7 h-7 rounded-xl bg-violet-500/10 text-violet-500 flex items-center justify-center"><Icon name="User" size={14} /></div>
                             </div>
-                            <span className="flex-1 text-left text-xs font-black text-zinc-300">
+                            <span className="flex-1 text-left text-xs font-semibold text-zinc-300">
                                 {lang === 'es' ? 'Gym · CrossFit · Calistenia' : 'Gym · CrossFit · Calisthenics'}
                             </span>
                             <Icon name="ChevronRight" size={16} className="text-zinc-650" />
@@ -306,7 +306,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
             {/* Header Info */}
             <div className="flex justify-between items-start pt-2">
                 <div>
-                    <h2 className="text-3xl font-black text-white tracking-tight">{activeMeso.name}</h2>
+                    <h2 className="text-3xl font-bold text-white tracking-tight">{activeMeso.name}</h2>
                     <div className="flex items-center gap-3 mt-2">
                         {currentGuidelineImages && currentGuidelineImages.length > 0 ? (
                             <button
@@ -339,7 +339,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                         <Icon name="AlertTriangle" size={24} />
                     </div>
                     <div className="flex-1">
-                        <h4 className="text-red-400 font-black text-sm uppercase tracking-widest">{lang === 'es' ? 'Fatiga Sistémica' : 'Systemic Fatigue'}</h4>
+                        <h4 className="text-red-400 font-bold text-sm uppercase tracking-widest">{lang === 'es' ? 'Fatiga Sistémica' : 'Systemic Fatigue'}</h4>
                         <p className="text-zinc-300 text-sm mt-1 leading-relaxed text-balance">
                             {lang === 'es'
                                 ? `El motor de IA detectó una caída de rendimiento y dolor muscular continuo en: `
@@ -348,7 +348,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                         </p>
                         <button
                             onClick={() => setShowMesoSettings(true)}
-                            className="mt-4 text-[10px] uppercase tracking-widest font-black bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl active:scale-95 transition-all shadow-lg shadow-red-500/20 flex items-center justify-center gap-2"
+                            className="mt-4 text-[10px] uppercase tracking-widest font-bold bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl active:scale-95 transition-all shadow-lg shadow-red-500/20 flex items-center justify-center gap-2"
                         >
                             <Icon name="Settings" size={14} /> {lang === 'es' ? 'Activar Descarga' : 'Activate Deload'}
                         </button>
@@ -362,7 +362,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                 {/* Horizontal Timeline of Days */}
                 <div className="space-y-3">
                     <div className="flex items-center justify-between px-1">
-                        <h4 className="text-xs font-black text-zinc-500 uppercase tracking-widest">
+                        <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest">
                             {lang === 'en' ? 'Weekly Timeline' : 'Cronograma Semanal'}
                         </h4>
                         <span className="text-[10px] text-zinc-500 font-bold">
@@ -382,7 +382,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                             if (isSelected) {
                                 cardBorderClass = 'border-primary-500/40 ring-1 ring-primary-500/20';
                                 cardBgClass = 'bg-primary-500/5 shadow-[0_0_15px] shadow-primary-500/10';
-                                textClass = 'text-white font-black';
+                                textClass = 'text-white font-bold';
                             } else if (isDone) {
                                 cardBorderClass = 'border-green-500/20';
                                 cardBgClass = 'bg-green-950/5';
@@ -467,7 +467,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                                         : 'bg-white/5 text-zinc-300'
                                     }`}>
                                         {isSelectedActive && <span className="w-2 h-2 rounded-full bg-primary-500 animate-pulse" />}
-                                        <span className="text-[10px] font-black uppercase tracking-widest">
+                                        <span className="text-[10px] font-bold uppercase tracking-widest">
                                             {isSelectedActive ? (lang === 'en' ? 'IN PROGRESS' : 'EN CURSO') 
                                             : isDone ? (lang === 'en' ? 'COMPLETED' : 'COMPLETADO') 
                                             : isNext ? (lang === 'en' ? 'UP NEXT' : 'SIGUIENTE') 
@@ -487,7 +487,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                                 </div>
 
                                 <div className="relative z-10 mt-6 mb-8">
-                                    <h3 className="text-4xl font-black text-white leading-[0.95] tracking-tight mb-3 text-balance">
+                                    <h3 className="text-4xl font-bold text-white leading-[0.95] tracking-tight mb-3 text-balance">
                                         {String(getTranslated(dayDef.dayName, lang))}
                                     </h3>
                                     <div className="flex flex-wrap gap-2 mb-3">
@@ -561,7 +561,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                         </div>
                     </div>
                     <div className="flex-1 text-left">
-                        <div className="text-sm font-black text-white">
+                        <div className="text-sm font-bold text-white">
                             {lang === 'es' ? 'Sesión Libre / CrossFit / Calistenia' : 'Freestyle / CrossFit / Calisthenics'}
                         </div>
                         <div className="text-[10px] text-zinc-500 mt-0.5">
@@ -592,7 +592,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                             <Icon name="Repeat" size={18} />
                         </div>
                         <div className="flex-1 text-left min-w-0">
-                            <div className="text-sm font-black text-white">
+                            <div className="text-sm font-bold text-white">
                                 {lang === 'es' ? 'Repetir Última Sesión' : 'Repeat Last Session'}
                             </div>
                             <div className="text-[10px] text-zinc-500 mt-0.5 truncate">
@@ -608,7 +608,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
             <div className="glass-card rounded-3xl p-6">
                 <div className="flex items-center gap-2 mb-4">
                     <Icon name="Activity" size={16} className="text-zinc-500" />
-                    <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest">{t.consistency}</h3>
+                    <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">{t.consistency}</h3>
                 </div>
                 <ActivityHeatmap logs={safeLogs} />
             </div>
@@ -657,7 +657,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                         <div className="space-y-6">
                             {/* Target Weeks */}
                             <div id="tut-meso-duration">
-                                <label className="text-[10px] font-black uppercase text-zinc-500 tracking-widest block mb-2 px-1">{t.targetWeeks}</label>
+                                <label className="text-[10px] font-semibold uppercase text-zinc-500 tracking-wider block mb-2 px-1">{t.targetWeeks}</label>
                                 <div className="flex items-center gap-4 bg-white/5 p-2 rounded-xl border border-white/5">
                                     <button
                                         onClick={() => setEditWeeks(Math.max(1, editWeeks - 1))}
@@ -665,7 +665,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                                     >
                                         <Icon name="Minus" size={16} />
                                     </button>
-                                    <span className="flex-1 text-center font-mono text-2xl font-black text-white">{editWeeks}</span>
+                                    <span className="flex-1 text-center font-mono text-2xl font-bold text-white">{editWeeks}</span>
                                     <button
                                         onClick={() => setEditWeeks(editWeeks + 1)}
                                         className="w-10 h-10 rounded-lg bg-zinc-850 border border-zinc-750 flex items-center justify-center text-zinc-400 hover:text-white"
@@ -700,7 +700,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
 
                             {/* Notes */}
                             <div id="tut-meso-notes">
-                                <label className="text-[10px] font-black uppercase text-zinc-500 tracking-widest block mb-2 px-1">{t.mesoNotes}</label>
+                                <label className="text-[10px] font-semibold uppercase text-zinc-500 tracking-wider block mb-2 px-1">{t.mesoNotes}</label>
                                 <textarea
                                     value={editNote}
                                     onChange={(e) => setEditNote(e.target.value)}

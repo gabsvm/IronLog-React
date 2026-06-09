@@ -10,6 +10,7 @@ import { TutorialOverlay } from '../components/ui/TutorialOverlay';
 import { usePro } from '../hooks/usePro';
 import { PaywallModal } from '../components/pro/PaywallModal';
 import { Button } from '../components/ui/Button';
+import { ConfirmModal } from '../components/ui/ConfirmModal';
 
 // Helper to parse duration string "mm:ss" or number to string format
 const formatDurationDisplay = (val: string | number) => {
@@ -33,7 +34,7 @@ const VirtuosoHeader = ({ context }: { context?: HistoryVirtuosoContext }) => {
     const { lang, search, setSearch } = context;
     return (
         <div className="px-5 pt-20 pb-4 space-y-3">
-            <h2 className="text-2xl font-black text-white tracking-tight">{lang === 'en' ? 'History' : 'Historial'}</h2>
+            <h2 className="text-2xl font-bold text-white tracking-tight">{lang === 'en' ? 'History' : 'Historial'}</h2>
             <div id="tut-history-search" className="relative">
                 <Icon name="Search" size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
                 <input
@@ -88,9 +89,10 @@ interface HistoryCardProps {
     lang: 'en' | 'es';
     t: any;
     id?: string;
+    onDeleteRequest: (id: number) => void;
 }
 
-const HistoryCard = memo(({ log, isExpanded, onToggle, lang, t, id }: HistoryCardProps) => {
+const HistoryCard = memo(({ log, isExpanded, onToggle, lang, t, id, onDeleteRequest }: HistoryCardProps) => {
 
     // Process "Best Sets" for preview
     const bestSets = (log.exercises || []).map(ex => {
@@ -232,11 +234,7 @@ const HistoryCard = memo(({ log, isExpanded, onToggle, lang, t, id }: HistoryCar
                         <button
                             onClick={(e) => {
                                 e.stopPropagation();
-                                if (window.confirm(lang === 'en' ? 'Delete this workout permanently?' : '¿Eliminar este entrenamiento permanentemente?')) {
-                                    onToggle(-1); // Close it
-                                    // @ts-ignore
-                                    window.__deleteLog(log.id);
-                                }
+                                onDeleteRequest(log.id);
                             }}
                             className="flex items-center gap-2 px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold active:scale-95 transition-all hover:bg-red-500/25"
                         >
@@ -256,12 +254,7 @@ export const HistoryView: React.FC = () => {
     const { isPro, showPaywall, setShowPaywall, checkPro } = usePro();
 
     const [expandedId, setExpandedId] = useState<number | null>(null);
-
-    // Optimistic Delete Handler
-    // @ts-ignore
-    window.__deleteLog = (id: number) => {
-        setLogs(prev => prev.filter(l => l.id !== id));
-    };
+    const [deletingLogId, setDeletingLogId] = useState<number | null>(null);
 
     const [search, setSearch] = useState('');
     const deferredSearch = useDeferredValue(search);
@@ -357,6 +350,7 @@ export const HistoryView: React.FC = () => {
             onToggle={(id) => setExpandedId(prev => prev === id ? null : id)}
             lang={lang}
             t={t}
+            onDeleteRequest={(id) => setDeletingLogId(id)}
         />
     ), [expandedId, lang, t]);
 
@@ -366,7 +360,7 @@ export const HistoryView: React.FC = () => {
                 <div className="w-20 h-20 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-5">
                     <Icon name="Dumbbell" size={36} className="text-zinc-700" />
                 </div>
-                <h3 className="text-xl font-black text-white mb-2">
+                <h3 className="text-xl font-bold text-white mb-2">
                     {lang === 'en' ? 'No workouts yet' : 'Sin entrenamientos aún'}
                 </h3>
                 <p className="text-zinc-500 text-sm max-w-[220px] leading-relaxed">
@@ -390,7 +384,7 @@ export const HistoryView: React.FC = () => {
             {safeLogs.length > 0 && (
                 <button
                     onClick={handleExportCSV}
-                    className="absolute bottom-24 right-4 flex items-center gap-2 bg-white/5 border border-white/10 text-zinc-200 hover:text-white hover:border-white/20 px-4 py-2.5 rounded-full text-xs font-black shadow-xl transition-all active:scale-95 duration-fast"
+                    className="absolute bottom-24 right-4 flex items-center gap-2 bg-white/5 border border-white/10 text-zinc-200 hover:text-white hover:border-white/20 px-4 py-2.5 rounded-full text-xs font-bold shadow-xl transition-all active:scale-95 duration-fast"
                  aria-label="Download"> <Icon name="Download" size={14} />
                     CSV
                     {!isPro && <Icon name="Lock" size={11} className="text-yellow-500" />}
@@ -405,6 +399,23 @@ export const HistoryView: React.FC = () => {
 
             {showPaywall && (
                 <PaywallModal onClose={() => setShowPaywall(false)} feature="history" />
+            )}
+
+            {deletingLogId !== null && (
+                <ConfirmModal
+                    isOpen={true}
+                    title={lang === 'en' ? "Delete Workout?" : "¿Eliminar Entrenamiento?"}
+                    description={lang === 'en' ? "This workout will be permanently deleted. This cannot be undone." : "Este entrenamiento se eliminará permanentemente. No se puede deshacer."}
+                    confirmText={lang === 'en' ? "Delete" : "Eliminar"}
+                    cancelText={t.cancel}
+                    onConfirm={() => {
+                        setLogs(prev => prev.filter(l => l.id !== deletingLogId));
+                        setDeletingLogId(null);
+                        setExpandedId(null);
+                    }}
+                    onCancel={() => setDeletingLogId(null)}
+                    variant="danger"
+                />
             )}
         </div>
     );
