@@ -410,7 +410,7 @@ export const SortableExerciseCard = React.memo(({
                 }
             }}
             className={`
-                flex flex-col bg-white dark:glass-card rounded-2xl shadow-sm border border-zinc-200 dark:border-white/5 overflow-hidden transition-all
+                flex flex-col bg-white dark:bg-transparent dark:glass-card rounded-2xl shadow-sm border border-zinc-200 dark:border-white/5 overflow-hidden transition-all
                 ${ssStyle ? `border-l-4 ${ssStyle.border}` : ''}
                 ${isLinkingTarget ? 'ring-2 ring-orange-500 cursor-pointer opacity-80 hover:opacity-100' : ''}
                 ${linkingId === ex.instanceId ? 'ring-2 ring-orange-500' : ''}
@@ -468,7 +468,7 @@ export const SortableExerciseCard = React.memo(({
                         <div className="flex items-center gap-2">
                             <h3
                                 onClick={(e) => { e.stopPropagation(); if (onOpenDetail) onOpenDetail(ex); }}
-                                className="text-xl font-black text-white leading-tight tracking-tight pl-1 cursor-pointer hover:text-red-400 transition-colors"
+                                className="text-xl font-black text-zinc-900 dark:text-white leading-tight tracking-tight pl-1 cursor-pointer hover:text-red-400 transition-colors"
                             >
                                 {String(getTranslated(ex.name, lang))}
                             </h3>
@@ -637,7 +637,7 @@ export const SortableExerciseCard = React.memo(({
                 </button>
                 <button
                     onClick={() => isAVTExercise ? onAddAVTRound(ex.instanceId) : onAddSet(ex.instanceId)}
-                    className="w-full py-3.5 flex items-center justify-center gap-2 text-xs font-bold text-zinc-500 hover:text-white transition-colors active:scale-95"
+                    className="w-full py-3.5 flex items-center justify-center gap-2 text-xs font-bold text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors active:scale-95"
                 >
                     <Icon name="Plus" size={13} /> {isAVTExercise ? t.addRound : t.addSetBtn}
                 </button>
