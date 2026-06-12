@@ -33,55 +33,29 @@ interface SetRowProps {
 
 const getTypeColor = (type: SetType) => {
     switch (type) {
-        case 'warmup':       return 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30';
-        case 'myorep':       return 'bg-purple-500/15 text-purple-400 border-purple-500/30';
-        case 'myorep_match': return 'bg-purple-500/15 text-purple-300 border-purple-500/30';
-        case 'top':          return 'bg-red-500/15 text-red-400 border-red-500/30';
-        case 'backoff':      return 'bg-blue-500/15 text-blue-400 border-blue-500/30';
-        case 'cluster':      return 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30';
-        case 'giant':        return 'bg-orange-500/15 text-orange-400 border-orange-500/30';
-        case 'avt_hop':      return 'bg-orange-500/15 text-orange-400 border-orange-500/30';
-        case 'emom':         return 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30';
-        case 'drop':         return 'bg-teal-500/15 text-teal-400 border-teal-500/30';
-        case 'rest_pause':   return 'bg-rose-500/15 text-rose-400 border-rose-500/30';
-        case 'time_volume':  return 'bg-amber-500/15 text-amber-400 border-amber-500/30';
-        case 'triple_add':   return 'bg-pink-500/15 text-pink-400 border-pink-500/30';
-        default:             return 'bg-zinc-800 text-zinc-400 border-zinc-700';
+        case 'warmup':       return 'bg-zinc-800 text-zinc-400 border-zinc-700';
+        case 'myorep':       
+        case 'myorep_match': 
+        case 'top':          
+        case 'backoff':      
+        case 'cluster':      
+        case 'giant':        
+        case 'avt_hop':      
+        case 'emom':         
+        case 'drop':         
+        case 'rest_pause':   
+        case 'time_volume':  
+        case 'triple_add':   return 'bg-[#1A1A1A] text-zinc-300 border-white/10';
+        default:             return 'bg-[#121212] text-zinc-400 border-white/5';
     }
 };
 
 const getRowAccent = (type: SetType): string => {
-    switch (type) {
-        case 'warmup':                    return 'bg-yellow-500/5';
-        case 'top':                       return 'bg-red-500/5';
-        case 'backoff':                   return 'bg-blue-500/5';
-        case 'myorep': case 'myorep_match': return 'bg-purple-500/5';
-        case 'cluster':                   return 'bg-emerald-500/5';
-        case 'giant':                     return 'bg-orange-500/5';
-        case 'emom':                      return 'bg-cyan-500/5';
-        case 'drop':                      return 'bg-teal-500/5';
-        case 'rest_pause':                return 'bg-rose-500/5';
-        case 'time_volume':               return 'bg-amber-500/5';
-        case 'triple_add':                return 'bg-pink-500/5';
-        default:                          return '';
-    }
+    return ''; // Premium UI: no background rainbow rows.
 };
 
 const getBorderAccent = (type: SetType): string => {
-    switch (type) {
-        case 'warmup':       return 'border-l-[3px] border-l-yellow-500/80';
-        case 'top':          return 'border-l-[3px] border-l-red-500/80';
-        case 'backoff':      return 'border-l-[3px] border-l-blue-500/80';
-        case 'myorep': case 'myorep_match': return 'border-l-[3px] border-l-purple-500/80';
-        case 'cluster':      return 'border-l-[3px] border-l-emerald-500/80';
-        case 'giant':        return 'border-l-[3px] border-l-orange-500/80';
-        case 'emom':         return 'border-l-[3px] border-l-cyan-500/80';
-        case 'drop':         return 'border-l-[3px] border-l-teal-500/80';
-        case 'rest_pause':   return 'border-l-[3px] border-l-rose-500/80';
-        case 'time_volume':  return 'border-l-[3px] border-l-amber-500/80';
-        case 'triple_add':   return 'border-l-[3px] border-l-pink-500/80';
-        default:             return 'border-l-[3px] border-l-transparent';
-    }
+    return 'border-l-[3px] border-l-transparent'; // Premium UI: no colored left border ribbons.
 };
 
 const getTypeLabel = (type: SetType) => {
@@ -424,7 +398,7 @@ export const SetRow = React.memo(({
                 onTouchStart={onSwipeTouchStart} onTouchMove={onSwipeTouchMove} onTouchEnd={onSwipeTouchEnd}
                 className={`relative transition-colors duration-200 ${getBorderAccent(setType)} ${isDone ? 'opacity-60' : rowAccent}`}>
                 {SwipeOverlay}
-                <div className="grid grid-cols-12 gap-2 items-center py-2.5 px-1">
+                <div className="grid grid-cols-12 gap-2 items-center py-3 px-1">
                     {/* Set Type Badge */}
                     <div className="col-span-2 flex justify-center">
                         <BadgeEl {...badgeProps as any} className={badgeClass}>
@@ -482,7 +456,7 @@ export const SetRow = React.memo(({
                             className={`
                                 w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-150 active:scale-90
                                 ${isDone
-                                    ? 'bg-green-500 text-white animate-pulse-glow-green glow-btn-success'
+                                    ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
                                     : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700 hover:text-white active:bg-green-600 active:text-white'}
                             `}
                         >
@@ -525,7 +499,7 @@ export const SetRow = React.memo(({
             onTouchStart={onSwipeTouchStart} onTouchMove={onSwipeTouchMove} onTouchEnd={onSwipeTouchEnd}
             className={`relative transition-colors duration-200 ${getBorderAccent(setType)} ${isDone ? 'opacity-60' : rowAccent}`}>
             {SwipeOverlay}
-        <div className="grid grid-cols-12 gap-2 items-center py-2.5 px-1">
+        <div className="grid grid-cols-12 gap-2 items-center py-3 px-1">
 
             {/* Set Type / Number Badge */}
             <div className="col-span-2 flex justify-center">
@@ -593,7 +567,7 @@ export const SetRow = React.memo(({
                     className={`
                         w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-150 active:scale-90
                         ${isDone
-                            ? 'bg-green-500 text-white animate-pulse-glow-green glow-btn-success'
+                            ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
                             : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700 hover:text-white active:bg-green-600 active:text-white'
                         }
                     `}

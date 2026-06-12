@@ -8,8 +8,14 @@ import { triggerHaptic } from '../utils/audio';
 import { getLastLogForExercise, uid, estimate1RM } from '../utils';
 import { useStatsWorker } from './useStatsWorker';
 
+import { useStore } from '../lib/store';
+
 export const useWorkoutController = (onFinishCallback: () => void, onDiscardCallback: () => void) => {
-    const { activeSession, activeMeso, setActiveSession, setActiveMeso, setProgram, exercises, rpFeedback, setRpFeedback, config, logs } = useApp();
+    const { setProgram, exercises, rpFeedback, setRpFeedback, config, logs } = useApp();
+    const activeSession = useStore(state => state.activeSession);
+    const activeMeso = useStore(state => state.activeMeso);
+    const setActiveSession = useStore(state => state.setActiveSession);
+    const setActiveMeso = useStore(state => state.setActiveMeso);
     const { setRestTimer } = useTimerContext();
     const { calculateAllBest1RMs } = useStatsWorker();
 

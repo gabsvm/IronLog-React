@@ -6,6 +6,7 @@ import { ProgramDay, MuscleGroup } from '../../types';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { getTranslated } from '../../utils';
 import { TRANSLATIONS } from '../../constants';
+import { useStore } from '../../lib/store';
 
 interface Message {
     id: string;
@@ -14,7 +15,8 @@ interface Message {
 }
 
 export const GainsLabChat: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-    const { activeMeso, logs, lang, config, setProgram, program, exercises } = useApp();
+    const { logs, lang, config, setProgram, program, exercises } = useApp();
+    const activeMeso = useStore(state => state.activeMeso);
     const t = TRANSLATIONS[lang];
     
     const [messages, setMessages] = useLocalStorage<Message[]>('il_chat_history_v1', [

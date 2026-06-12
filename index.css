@@ -111,6 +111,14 @@ body {
     .pt-safe { padding-top: var(--safe-area-top); }
     .pb-safe { padding-bottom: var(--safe-area-bottom); }
     
+    .glow-input-neon {
+        @apply bg-[#1A1A1A] border-transparent shadow-none;
+    }
+    
+    .glow-btn-success {
+        @apply shadow-none border-none;
+    }
+    
     .glass {
         @apply bg-black/80 backdrop-blur-xl border-b border-white/10;
     }
@@ -167,8 +175,6 @@ body {
     }
 }
 
-/* --- ANIMATIONS --- */
-
 @keyframes fade-in-up {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
@@ -179,14 +185,15 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* Reduced aggressive glows to clean minimal pulses */
 @keyframes pulse-glow-green {
-    0%, 100% { box-shadow: 0 0 12px rgba(34, 197, 94, 0.4); }
-    50% { box-shadow: 0 0 28px rgba(34, 197, 94, 0.8), 0 0 8px rgba(34, 197, 94, 0.4); }
+    0%, 100% { box-shadow: 0 0 0px rgba(16, 185, 129, 0); }
+    50% { box-shadow: 0 0 12px rgba(16, 185, 129, 0.15); }
 }
 
 @keyframes bounce-cta {
     0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.06); }
+    50% { transform: scale(1.02); }
 }
 
 @keyframes slide-in-right {

@@ -22,6 +22,8 @@ import { WeeklyRecapCard } from './home/WeeklyRecapCard';
 import { NextSessionCard } from './home/NextSessionCard';
 
 
+import { useStore } from '../lib/store';
+
 // --- MAIN COMPONENT ---
 
 interface HomeViewProps {
@@ -32,7 +34,10 @@ interface HomeViewProps {
 }
 
 export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram, onSkipSession, onStartFreeSession }) => {
-    const { activeMeso, activeSession, program, setActiveMeso, lang, logs, isAppLoading, setProgram, tutorialProgress, markTutorialSeen, globalTemplates } = useApp();
+    const { program, lang, logs, isAppLoading, setProgram, tutorialProgress, markTutorialSeen, globalTemplates } = useApp();
+    const activeSession = useStore(state => state.activeSession);
+    const activeMeso = useStore(state => state.activeMeso);
+    const setActiveMeso = useStore(state => state.setActiveMeso);
     const t = TRANSLATIONS[lang] || TRANSLATIONS['en'];
 
     const { isPro, checkPro, showPaywall, setShowPaywall, featureAttempted } = usePro();
@@ -88,12 +93,20 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
     const safeProgram = useMemo(() => (Array.isArray(program) ? program : []), [program]);
     const safeLogs = useMemo(() => (Array.isArray(logs) ? logs : []), [logs]);
 
+    // Single O(N) scan to compute all log-derived metrics for the Home screen
     const {
-        uniqueDaysDone, weekComplete, nextWorkoutIdx, isSessionActive, nextDayDef, logsForWeek
+        uniqueDaysDone, weekComplete, nextWorkoutIdx, isSessionActive, nextDayDef, logsForWeek,
+        estimatedMin, adherencePct
     } = useMemo(() => {
-        if (!activeMeso) return { uniqueDaysDone: new Set(), weekComplete: false, nextWorkoutIdx: -1, isSessionActive: false, nextDayDef: null, logsForWeek: [] };
+        if (!activeMeso) {
+            return { uniqueDaysDone: new Set(), weekComplete: false, nextWorkoutIdx: -1, isSessionActive: false, nextDayDef: null, logsForWeek: [], estimatedMin: 0, adherencePct: null };
+        }
 
-        const currentWeekLogs = safeLogs.filter(l => l.mesoId === activeMeso.id && l.week === activeMeso.week);
+        // 1. O(N) Pass: Gather all logs for the current meso
+        const mesoLogs = safeLogs.filter(l => l.mesoId === activeMeso.id);
+        
+        // 2. Weekly computations
+        const currentWeekLogs = mesoLogs.filter(l => l.week === activeMeso.week);
         const daysDone = new Set(currentWeekLogs.map(l => l.dayIdx));
         const total = safeProgram.length;
         const isComplete = daysDone.size >= total && total > 0;
@@ -110,7 +123,36 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
         const active = !!(activeSession && activeSession.mesoId === activeMeso.id && activeSession.dayIdx === nextIdx);
         const nextDef = nextIdx !== -1 ? safeProgram[nextIdx] : null;
 
-        return { uniqueDaysDone: daysDone, weekComplete: isComplete, nextWorkoutIdx: nextIdx, isSessionActive: active, nextDayDef: nextDef, logsForWeek: currentWeekLogs };
+        // 3. Adherence computations
+        let pct: number | null = null;
+        if (mesoLogs.length > 0) {
+            const completed = mesoLogs.filter(l => !l.skipped).length;
+            pct = Math.round((completed / mesoLogs.length) * 100);
+        }
+
+        // 4. Estimation computation
+        let est = 0;
+        if (nextIdx !== -1) {
+            const sameDayLogs = mesoLogs.filter(l => l.dayIdx === nextIdx && !l.skipped && l.duration > 0).slice(-3);
+            if (sameDayLogs.length > 0) {
+                const avgSec = sameDayLogs.reduce((s, l) => s + l.duration, 0) / sameDayLogs.length;
+                est = Math.round(avgSec / 60);
+            } else {
+                const totalSets = (nextDef?.slots || []).reduce((s: number, slot: any) => s + (slot.setTarget || 3), 0);
+                est = totalSets > 0 ? Math.round(totalSets * 2.5) : 0;
+            }
+        }
+
+        return { 
+            uniqueDaysDone: daysDone, 
+            weekComplete: isComplete, 
+            nextWorkoutIdx: nextIdx, 
+            isSessionActive: active, 
+            nextDayDef: nextDef, 
+            logsForWeek: currentWeekLogs,
+            estimatedMin: est,
+            adherencePct: pct
+        };
     }, [activeMeso, activeSession, safeLogs, safeProgram]);
 
     const [selectedDayIdx, setSelectedDayIdx] = useState<number>(nextWorkoutIdx !== -1 ? nextWorkoutIdx : 0);
@@ -120,30 +162,6 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
             setSelectedDayIdx(nextWorkoutIdx);
         }
     }, [nextWorkoutIdx]);
-
-    // Estimated session duration: avg of last 3 same-dayIdx logs, else slot-based fallback
-    const estimatedMin = useMemo(() => {
-        if (nextWorkoutIdx === -1 || !activeMeso) return 0;
-        const sameDayLogs = safeLogs
-            .filter(l => l.mesoId === activeMeso.id && l.dayIdx === nextWorkoutIdx && !l.skipped && l.duration > 0)
-            .slice(-3);
-        if (sameDayLogs.length > 0) {
-            const avgSec = sameDayLogs.reduce((s, l) => s + l.duration, 0) / sameDayLogs.length;
-            return Math.round(avgSec / 60);
-        }
-        // Fallback: ~2.5 min per working set
-        const totalSets = (nextDayDef?.slots || []).reduce((s: number, slot: any) => s + (slot.setTarget || 3), 0);
-        return totalSets > 0 ? Math.round(totalSets * 2.5) : 0;
-    }, [nextWorkoutIdx, activeMeso, safeLogs, nextDayDef]);
-
-    // Adherence: percentage of scheduled sessions that were NOT skipped in current meso
-    const adherencePct = useMemo(() => {
-        if (!activeMeso) return null;
-        const mesoLogs = safeLogs.filter(l => l.mesoId === activeMeso.id);
-        if (mesoLogs.length === 0) return null;
-        const completed = mesoLogs.filter(l => !l.skipped).length;
-        return Math.round((completed / mesoLogs.length) * 100);
-    }, [activeMeso, safeLogs]);
 
     // Handlers
     const handleSkipClick = (e: React.MouseEvent, dayIdx: number) => { e.stopPropagation(); setSkipConfirmationId(dayIdx); };
@@ -214,46 +232,26 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
 
     if (!activeMeso) {
         return (
-            <div className="flex flex-col items-center justify-center h-full p-6 text-center space-y-8 bg-black relative overflow-hidden">
-                {/* Background Atmosphere */}
-                <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-zinc-900 to-black opacity-50 pointer-events-none"></div>
-                <div className="absolute bottom-0 right-0 w-64 h-64 bg-primary-600/10 rounded-full blur-[100px] pointer-events-none"></div>
-
+            <div className="flex flex-col items-center justify-center h-full p-6 text-center space-y-8 bg-black">
                 <div className="relative z-10 w-full max-w-sm">
                     {/* Hero Card Container */}
                     <div
                         onClick={handleOpenTemplateSelector}
-                        className="group w-full aspect-square rounded-[2.5rem] relative overflow-hidden cursor-pointer shadow-2xl shadow-primary-900/10 active:scale-95 transition-all duration-300 border border-white/5"
+                        className="group w-full aspect-square rounded-[1.5rem] relative overflow-hidden cursor-pointer bg-[#121212] active:scale-[0.98] transition-all duration-300 border border-white/5 flex flex-col items-center justify-center p-8 gap-4"
                     >
-                        {/* --- IMAGE / ARTWORK SPACE --- */}
-                        {/* If you want to use your image, uncomment below and add file to public/cover.jpg */}
-                        {/* <img src="/cover.jpg" className="absolute inset-0 w-full h-full object-cover opacity-60" /> */}
-
-                        {/* CSS Abstract Art (Default) */}
-                        <div className="absolute inset-0 bg-zinc-900">
-                            {/* Gradient Mesh */}
-                            <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 via-zinc-900 to-black"></div>
-                            <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-bl from-primary-600/20 to-transparent"></div>
-
-                            {/* Abstract Lines */}
-                            <div className="absolute bottom-0 left-0 w-full h-1/2 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:linear-gradient(to_top,black,transparent)]"></div>
+                        {/* Clean minimal UI replacing abstract art */}
+                        <div className="w-16 h-16 rounded-full bg-zinc-800/50 flex items-center justify-center text-primary-500 mb-2">
+                            <Icon name="Plus" size={32} strokeWidth={2} />
                         </div>
-
-                        {/* Content Overlay */}
-                        <div className="absolute inset-0 flex flex-col items-center justify-center p-6">
-                            <div className="w-20 h-20 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 border border-white/10 shadow-lg">
-                                <Icon name="Plus" size={40} className="text-white drop-shadow-md" strokeWidth={3} />
-                            </div>
-
-                            <h2 className="text-3xl font-bold text-white tracking-tight drop-shadow-lg">
-                                {lang === 'en' ? "Start Journey" : "Empezar Viaje"}
+                        
+                        <div className="space-y-2">
+                            <h2 className="text-2xl font-bold text-white tracking-tight">
+                                {t.startMeso}
                             </h2>
-                            <p className="text-zinc-400 text-sm font-medium mt-2 max-w-[200px] leading-relaxed">
-                                {lang === 'en' ? "Begin your first mesocycle to track progressive overload." : "Inicia tu primer ciclo para registrar tu progreso."}
+                            <p className="text-sm text-zinc-400 font-medium">
+                                {lang === 'es' ? 'Comienza un nuevo plan' : 'Start a new plan'}
                             </p>
                         </div>
-
-                        {/* Hover Glow */}
                         <div className="absolute inset-0 rounded-[2.5rem] ring-1 ring-white/10 group-hover:ring-white/30 transition-all duration-500"></div>
                     </div>
                 </div>
@@ -454,13 +452,9 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                             onClick={() => startSession(selectedDayIdx)}
                             role="button"
                             tabIndex={0}
-                            className="group relative w-full rounded-[2rem] p-1 overflow-hidden cursor-pointer active:scale-[0.98] transition-transform duration-slow ease-natural animate-in-up"
+                            className="group relative w-full rounded-[1.5rem] p-6 cursor-pointer active:scale-[0.98] transition-all duration-300 bg-[#1A1A1A] border border-white/5 shadow-lg flex flex-col justify-between min-h-[220px] overflow-hidden"
                         >
-                            <div className="absolute inset-0 bg-gradient-to-br from-zinc-700 via-zinc-800 to-zinc-900 rounded-[2rem]" />
-                            <div className="relative bg-zinc-900 h-full rounded-[1.8rem] p-6 flex flex-col justify-between min-h-[260px] border border-white/5 shadow-2xl overflow-hidden animate-spring-in">
-                                <div className={`absolute -right-10 -top-10 w-64 h-64 ${isDone ? 'bg-green-500/5' : 'bg-primary-600/10'} rounded-full blur-[80px] pointer-events-none group-hover:bg-primary-600/20 transition-colors duration-500`} />
-
-                                <div className="relative z-10 flex justify-between items-start">
+                            <div className="relative z-10 flex justify-between items-start">
                                     <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md border border-white/5 ${
                                         isSelectedActive ? 'bg-primary-500/20 text-primary-400' 
                                         : isDone ? 'bg-green-500/10 text-green-400 border-green-500/20' 
@@ -536,7 +530,6 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                                                 : String(t.tapToStart)}
                                     </span>
                                 </div>
-                            </div>
                         </div>
                     );
                 })()}

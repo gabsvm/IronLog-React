@@ -42,9 +42,13 @@ interface WorkoutViewProps {
     onBack: () => void;
 }
 
+import { useStore } from '../lib/store';
+
 // Container Component
 export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, onBack }) => {
-    const { activeSession, activeMeso, lang, config, exercises, logs, tutorialProgress, markTutorialSeen } = useApp();
+    const { lang, config, exercises, logs, tutorialProgress, markTutorialSeen } = useApp();
+    const activeSession = useStore(state => state.activeSession);
+    const activeMeso = useStore(state => state.activeMeso);
     const t = TRANSLATIONS[lang];
 
     // Use the Custom Controller Hook - Pass both callbacks
@@ -732,7 +736,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                 value={activeSession.note || ''}
                                 onChange={e => ctrl.updateSession(prev => prev ? { ...prev, note: e.target.value } : null)}
                                 rows={3}
-                                className="w-full bg-zinc-800 border border-zinc-700/50 rounded-2xl px-4 py-3 text-sm text-white placeholder-zinc-500 outline-none resize-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all glow-input-neon"
+                                className="w-full bg-[#1A1A1A] border border-white/5 rounded-2xl px-4 py-3 text-sm text-white placeholder-zinc-500 outline-none resize-none focus:border-white/20 transition-all"
                             />
                         </div>
                     </div>
@@ -786,7 +790,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                 type="number" 
                                 inputMode="decimal"
                                 autoFocus 
-                                className="w-full bg-zinc-800 border border-zinc-700/50 rounded-2xl p-4 text-center font-bold text-2xl text-white outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all glow-input-neon" 
+                                className="w-full bg-[#1A1A1A] border border-white/5 rounded-2xl p-4 text-center font-bold text-2xl text-white outline-none focus:border-white/20 transition-all" 
                                 value={ctrl.plateWeightInput} 
                                 onChange={(e) => ctrl.setPlateWeightInput(e.target.value)} 
                             />

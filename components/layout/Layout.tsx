@@ -88,26 +88,26 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
                 {children}
             </div>
 
-            {/* Floating Island Navigation */}
+            {/* Edge-to-Edge Bottom Navigation */}
             {view !== 'workout' && (
-                <div className="fixed bottom-0 left-0 right-0 z-30 flex justify-center pb-safe pointer-events-none">
-                    <div className="pointer-events-auto mb-5 mx-6 w-full max-w-md flex items-center gap-2.5">
-                        <div id="tut-nav-bar" className="flex-1 h-[68px] glass-island rounded-[2rem] flex items-center px-4 justify-between">
-                            <NavBtn id="home" label={t.active} icon="Layout" />
-                            <NavBtn id="history" label={t.history} icon="Calendar" />
-                            <NavBtn id="nutrition" label={lang === 'es' ? 'Dieta' : 'Diet'} icon="Utensils" />
-                            <NavBtn id="stats" label="Stats" icon="BarChart2" />
-                        </div>
-                        {/* FAB — opens command palette */}
+                <div className="fixed bottom-0 left-0 right-0 z-30 bg-[#0A0A0A]/95 backdrop-blur-xl border-t border-white/5 pb-safe">
+                    <div className="flex items-center justify-between px-2 h-16 w-full max-w-lg mx-auto">
+                        <NavBtn id="home" label={t.active} icon="Layout" />
+                        <NavBtn id="history" label={t.history} icon="Calendar" />
+                        
+                        {/* FAB — Integrado en la barra */}
                         {onOpenCommandPalette && (
                             <button
                                 onClick={onOpenCommandPalette}
-                                aria-label={lang === 'es' ? 'Iniciar sesión de entrenamiento' : 'Start a workout session'}
-                                className="shrink-0 w-[68px] h-[68px] rounded-[2rem] bg-gradient-to-br from-primary-500 to-primary-700 text-white flex items-center justify-center shadow-[0_8px_24px_-4px] shadow-primary-500/60 active:scale-90 transition-transform duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                                aria-label={lang === 'es' ? 'Iniciar sesión' : 'Start session'}
+                                className="shrink-0 w-12 h-12 rounded-full bg-primary-600 text-white flex items-center justify-center -translate-y-2 shadow-lg shadow-primary-900/20 active:scale-95 transition-transform duration-200 border border-white/10 mx-2"
                             >
-                                <Icon name="Plus" size={26} strokeWidth={2.5} />
+                                <Icon name="Plus" size={24} strokeWidth={2.5} />
                             </button>
                         )}
+                        
+                        <NavBtn id="nutrition" label={lang === 'es' ? 'Dieta' : 'Diet'} icon="Utensils" />
+                        <NavBtn id="stats" label="Stats" icon="BarChart2" />
                     </div>
                 </div>
             )}

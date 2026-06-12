@@ -39,7 +39,8 @@
     "react-chartjs-2": "^5.2.0",
     "react-dom": "^18.3.1",
     "react-virtuoso": "^4.7.0",
-    "vaul": "^1.1.2"
+    "vaul": "^1.1.2",
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",

@@ -12,10 +12,9 @@ import { AuthProvider, useAuth } from './AuthContext';
 import { syncService } from '../services/syncService';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { db as firestoreDb } from '../lib/firebase';
+import { useStore } from '../lib/store';
 
-
-
-interface AppContextType extends AppState {
+interface AppContextType extends Omit<AppState, 'activeSession' | 'activeMeso'> {
     lang: Lang;
     theme: Theme;
     colorTheme: ColorTheme;
@@ -24,8 +23,6 @@ interface AppContextType extends AppState {
     setColorTheme: (t: ColorTheme) => void;
 
     setProgram: (val: ProgramDay[] | ((prev: ProgramDay[]) => ProgramDay[])) => void;
-    setActiveMeso: (val: MesoCycle | null | ((prev: MesoCycle | null) => MesoCycle | null)) => void;
-    setActiveSession: (val: ActiveSession | null | ((prev: ActiveSession | null) => ActiveSession | null)) => void;
     setExercises: (val: ExerciseDef[] | ((prev: ExerciseDef[]) => ExerciseDef[])) => void;
     setLogs: (val: Log[] | ((prev: Log[]) => Log[])) => void;
     setConfig: (val: Partial<AppState['config']>) => void;
@@ -100,8 +97,6 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
 
     // --- Heavy Data (IndexedDB) ---
     const [program, setProgram, programLoading] = usePersistedState<ProgramDay[]>('il_prog_v16', DEFAULT_TEMPLATE, 1000);
-    const [activeMeso, setActiveMeso, mesoLoading] = usePersistedState<MesoCycle | null>('il_meso_v16', null, 500);
-    const [activeSession, setActiveSession, sessionLoading] = usePersistedState<ActiveSession | null>('il_session_v16', null, 500);
     const [exercises, setExercises, exLoading] = usePersistedState<ExerciseDef[]>('il_ex_v16', DEFAULT_LIBRARY, 1000);
     const [logs, setLogs, logsLoading] = usePersistedState<Log[]>('il_logs_v16', [], 1000);
 
@@ -136,7 +131,11 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(window.deferredPrompt || null);
     const [isStandalone, setIsStandalone] = useState(false);
 
-    const isAppLoading = programLoading || mesoLoading || sessionLoading || exLoading || logsLoading || fbLoading || onboardingLoading || authLoading || profileLoading || nutLoading || cardioLoading || goalLoading || bodyLoading || macroLoading;
+    const isStoreLoading = useStore(state => state.isStoreLoading);
+    const activeSession = useStore(state => state.activeSession);
+    const activeMeso = useStore(state => state.activeMeso);
+
+    const isAppLoading = isStoreLoading || programLoading || exLoading || logsLoading || fbLoading || onboardingLoading || authLoading || profileLoading || nutLoading || cardioLoading || goalLoading || bodyLoading || macroLoading;
     const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
     // --- FETCH GLOBAL DATA ---
@@ -323,8 +322,8 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
 
             // Apply all states
             if (pendingCloudData.program) setProgram(pendingCloudData.program);
-            if (pendingCloudData.activeMeso) setActiveMeso(pendingCloudData.activeMeso);
-            if (pendingCloudData.activeSession) setActiveSession(pendingCloudData.activeSession);
+            if (pendingCloudData.activeMeso) useStore.getState().setActiveMeso(pendingCloudData.activeMeso);
+            if (pendingCloudData.activeSession) useStore.getState().setActiveSession(pendingCloudData.activeSession);
             if (pendingCloudData.exercises) setExercises(pendingCloudData.exercises);
             if (pendingCloudData.logs) setLogs(pendingCloudData.logs);
             if (pendingCloudData.rpFeedback) setRpFeedback(pendingCloudData.rpFeedback);
@@ -358,7 +357,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
 
             // Optional: You could add a 'sync_completed' event or toast here.
         }
-    }, [pendingCloudData, setProgram, setActiveMeso, setActiveSession, setExercises, setLogs, setRpFeedback, setShowRIR, setRpEnabled, setLocalLastUpdated, setHasSeenOnboarding]);
+    }, [pendingCloudData, setProgram, setExercises, setLogs, setRpFeedback, setShowRIR, setRpEnabled, setLocalLastUpdated, setHasSeenOnboarding]);
 
     const cancelCloudSync = useCallback(() => {
         setPendingCloudData(null);
@@ -407,8 +406,6 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     const contextValue = useMemo(() => ({
         lang, setLang, theme, setTheme, colorTheme, setColorTheme,
         program, setProgram,
-        activeMeso, setActiveMeso,
-        activeSession, setActiveSession,
         exercises, setExercises,
         logs, setLogs,
         config: configState, setConfig,
@@ -430,8 +427,6 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     }), [
         lang, setLang, theme, setTheme, colorTheme, setColorTheme,
         program, setProgram,
-        activeMeso, setActiveMeso,
-        activeSession, setActiveSession,
         exercises, setExercises,
         logs, setLogs,
         configState, setConfig,

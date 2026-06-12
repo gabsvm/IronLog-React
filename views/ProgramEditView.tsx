@@ -12,13 +12,15 @@ import { PDFImportModal } from '../components/ui/PDFImportModal';
 import { triggerHaptic } from '../utils/audio';
 import { ProgramDay } from '../types';
 import { Sheet } from '../components/ui/Sheet';
+import { useStore } from '../lib/store';
 
 interface ProgramEditViewProps {
     onBack: () => void;
 }
 
 export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
-    const { program, setProgram, lang, setActiveMeso, exercises } = useApp();
+    const { program, setProgram, lang, exercises } = useApp();
+    const setActiveMeso = useStore(state => state.setActiveMeso);
     const t = TRANSLATIONS[lang];
     
     const [pickingForSlot, setPickingForSlot] = useState<{dayId: string, slotIdx: number} | null>(null);

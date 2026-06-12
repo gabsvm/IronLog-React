@@ -22,6 +22,7 @@ import { TwoBlockMassModal } from './components/workout/TwoBlockMassModal';
 import { CommandPalette, CommandAction } from './components/ui/CommandPalette';
 import { CROSSFIT_EXERCISES, CALISTHENICS_EXERCISES, NILSSON_BW_EXERCISES } from './data/disciplineExercises';
 import { SessionBuilder } from './services/SessionBuilder';
+import { useStore } from './lib/store';
 
 // Lazy Load views — keeps initial bundle small
 const HistoryView = React.lazy(() => import('./views/HistoryView').then(module => ({ default: module.HistoryView })));
@@ -64,14 +65,17 @@ const VIEW_DEPTH: Record<string, number> = {
 
 const AppContent = () => {
     const {
-        activeSession, activeMeso, setActiveSession,
         program, exercises, lang, logs, setLogs,
-        setExercises, setProgram, setActiveMeso,
+        setExercises, setProgram,
         config, rpFeedback, hasSeenOnboarding, setHasSeenOnboarding,
         isAppLoading,
         pendingCloudData, confirmCloudSync, cancelCloudSync,
         userProfile, nutritionLogs, cardioSessions, bodyLogs, macroGoals, nutritionGoal
     } = useApp();
+    const activeSession = useStore(state => state.activeSession);
+    const activeMeso = useStore(state => state.activeMeso);
+    const setActiveSession = useStore(state => state.setActiveSession);
+    const setActiveMeso = useStore(state => state.setActiveMeso);
 
     const { setRestTimer } = useTimerContext();
     const { user } = useAuth();

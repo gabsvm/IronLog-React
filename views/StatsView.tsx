@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { TRANSLATIONS } from '../constants';
@@ -11,6 +10,7 @@ import { Icon } from '../components/ui/Icon';
 import { useStatsWorker, ChartMetric } from '../hooks/useStatsWorker';
 import { TutorialOverlay } from '../components/ui/TutorialOverlay';
 import { ProLock } from '../components/pro/ProLock';
+import { useStore } from '../lib/store';
 import {
     Chart as ChartJS,
     RadialLinearScale,
@@ -47,7 +47,8 @@ const getVolumeZone = (sets: number) => {
 };
 
 export const StatsView: React.FC = () => {
-    const { logs, lang, activeMeso, exercises, tutorialProgress, markTutorialSeen } = useApp();
+    const { logs, lang, exercises, tutorialProgress, markTutorialSeen } = useApp();
+    const activeMeso = useStore(state => state.activeMeso);
     const t = TRANSLATIONS[lang];
 
     // UI State

@@ -1,11 +1,11 @@
-
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
-import { UserProfile } from '../../types';
+import { UserProfile, ProgramDay, AppState } from '../../types';
 import { Icon } from '../ui/Icon';
 import { Logo } from '../ui/Logo';
 import { recommendProgram, RecommendationResult } from '../../utils/recommendationEngine';
+import { useStore } from '../../lib/store';
 
 interface SetupWizardProps {
     onComplete: () => void;
@@ -14,7 +14,8 @@ interface SetupWizardProps {
 type Mode = 'suggested' | 'custom' | 'freestyle';
 
 export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
-    const { lang, setLang, setProgram, setActiveMeso } = useApp();
+    const { lang, setLang, setProgram } = useApp();
+    const setActiveMeso = useStore(state => state.setActiveMeso);
     const t = TRANSLATIONS[lang];
     const w = t.wizard;
 

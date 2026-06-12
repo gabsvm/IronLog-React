@@ -1,8 +1,10 @@
 import { useMemo } from 'react';
 import { useApp } from '../context/AppContext';
+import { useStore } from '../lib/store';
 
 export const useFatigueAI = () => {
-    const { activeMeso, rpFeedback } = useApp();
+    const activeMeso = useStore(state => state.activeMeso);
+    const { rpFeedback } = useApp();
 
     const fatigueReport = useMemo(() => {
         if (!activeMeso || !rpFeedback[activeMeso.id]) return null;
