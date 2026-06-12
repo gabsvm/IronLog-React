@@ -13,6 +13,26 @@ const parseDuration = (val: any) => {
 self.onmessage = function(e: MessageEvent) {
     const { type, logs, activeMesoId, exerciseId, metric, userBodyWeight } = e.data;
 
+    if (type === 'CALCULATE_ALL_BEST_1RM') {
+        const best = new Map<string, number>();
+        const safeLogs = Array.isArray(logs) ? logs : [];
+        for (const log of safeLogs) {
+            for (const ex of (log.exercises || [])) {
+                if (!ex?.id) continue;
+                for (const s of (ex.sets || [])) {
+                    if (s.completed && s.weight && s.reps) {
+                        const w = Number(s.weight);
+                        const r = Number(s.reps);
+                        const e1rm = w * (1 + r / 30);
+                        if (e1rm > (best.get(ex.id) ?? 0)) best.set(ex.id, e1rm);
+                    }
+                }
+            }
+        }
+        self.postMessage({ type: 'ALL_BEST_1RM_READY', best1RMs: best });
+        return;
+    }
+
     if (type === 'CALCULATE_OVERVIEW') {
         const muscleCounts: Record<string, number> = {};
         const exFreq: Record<string, number> = {};

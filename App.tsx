@@ -21,6 +21,7 @@ import { FreestyleSessionModal } from './components/workout/FreestyleSessionModa
 import { TwoBlockMassModal } from './components/workout/TwoBlockMassModal';
 import { CommandPalette, CommandAction } from './components/ui/CommandPalette';
 import { CROSSFIT_EXERCISES, CALISTHENICS_EXERCISES, NILSSON_BW_EXERCISES } from './data/disciplineExercises';
+import { SessionBuilder } from './services/SessionBuilder';
 
 // Lazy Load views — keeps initial bundle small
 const HistoryView = React.lazy(() => import('./views/HistoryView').then(module => ({ default: module.HistoryView })));
@@ -362,63 +363,22 @@ const AppContent = () => {
                                     const safeProgram = Array.isArray(program) ? program : [];
                                     const dayDef = safeProgram[idx];
                                     if (!dayDef) return;
-                                    const dayNameSafe = dayDef.dayName ? (typeof dayDef.dayName === 'object' ? dayDef.dayName[lang] : dayDef.dayName) : `Day ${idx + 1}`;
-                                    const mesoPlan = Array.isArray(activeMeso.plan) ? activeMeso.plan : [];
-                                    const dayPlan = Array.isArray(mesoPlan[idx]) ? mesoPlan[idx] : [];
-                                    const safeExercises = Array.isArray(exercises) ? exercises.filter(e => !!e) : [];
-                                    const safeLogs = Array.isArray(logs) ? logs : [];
-                                    const isDeload = !!activeMeso.isDeload;
 
-                                    const sessionExs = (dayDef.slots || []).map((slotDef, sIdx) => {
-                                        if (!slotDef) return null;
-                                        const exId = dayPlan[sIdx];
-                                        let exDef = exId ? safeExercises.find(e => e.id === exId) : safeExercises.find(e => e.muscle === slotDef.muscle);
-                                        if (!exDef && safeExercises.length > 0) exDef = safeExercises[0];
-                                        if (!exDef) exDef = { id: 'unknown', name: 'Unknown', muscle: slotDef.muscle || 'CHEST' };
+                                    const newSession = SessionBuilder.buildFromProgramDay(
+                                        idx,
+                                        dayDef,
+                                        activeMeso,
+                                        Array.isArray(exercises) ? exercises : [],
+                                        Array.isArray(logs) ? logs : [],
+                                        lang,
+                                        rpFeedback,
+                                        config
+                                    );
 
-                                        let setTarget = slotDef.setTarget || 3;
-                                        if (config.rpEnabled && activeMeso && activeMeso.week > 1) {
-                                            let accumulatedAdjustment = 0;
-                                            const fbForMeso = rpFeedback[activeMeso.id];
-                                            if (fbForMeso) {
-                                                for (let w = 1; w < activeMeso.week; w++) {
-                                                    const weekFb = fbForMeso[w] || fbForMeso[String(w)];
-                                                    if (weekFb && weekFb[slotDef.muscle]) {
-                                                        accumulatedAdjustment += weekFb[slotDef.muscle].adjustment || 0;
-                                                    }
-                                                }
-                                            }
-                                            setTarget = Math.max(1, setTarget + accumulatedAdjustment);
-                                        }
-                                        if (isDeload) setTarget = Math.max(1, Math.ceil(setTarget / 2));
-
-                                        const lastSets = getLastLogForExercise(exDef.id, safeLogs);
-
-                                        let initialSets;
-                                        if (slotDef.isAVT) {
-                                            const roundId = uid();
-                                            initialSets = Array.from({ length: 4 }, () => ({
-                                                id: uid(),
-                                                weight: '',
-                                                reps: slotDef.avtStartReps ? String(slotDef.avtStartReps) : '6',
-                                                rpe: '', completed: false, type: 'avt_hop',
-                                                avtRoundId: roundId, isLastHop: false
-                                            }));
-                                        } else {
-                                            initialSets = Array(setTarget).fill(null).map((_, i) => ({
-                                                id: uid(),
-                                                weight: '', reps: '', rpe: '', completed: false,
-                                                type: slotDef.setType || 'regular',
-                                                hintWeight: lastSets?.[i]?.weight, hintReps: lastSets?.[i]?.reps,
-                                                prevWeight: lastSets?.[i]?.weight, prevReps: lastSets?.[i]?.reps
-                                            }));
-                                        }
-
-                                        return { ...exDef, instanceId: uid(), slotLabel: slotDef.muscle, targetReps: slotDef.reps, sets: initialSets as any };
-                                    }).filter(Boolean);
-
-                                    setActiveSession({ id: Date.now(), dayIdx: idx, name: `${activeMeso.week} • ${dayNameSafe}`, exercises: sessionExs as any, startTime: Date.now(), mesoId: activeMeso.id, week: activeMeso.week });
-                                    setView('workout');
+                                    if (newSession) {
+                                        setActiveSession(newSession);
+                                        setView('workout');
+                                    }
                                 }}
                                 onEditProgram={() => setView('program')}
                                 onSkipSession={handleSkipSession}

@@ -9,12 +9,13 @@ export type ChartMetric = '1rm' | 'volume' | 'duration' | 'distance' | 'max_reps
 // Types for Worker Messages
 type WorkerAction = 
     | { type: 'CALCULATE_OVERVIEW', logs: Log[], activeMesoId?: number }
-    | { type: 'CALCULATE_CHART', logs: Log[], exerciseId: string, metric: ChartMetric, userBodyWeight?: number };
-
+    | { type: 'CALCULATE_CHART', logs: Log[], exerciseId: string, metric: ChartMetric, userBodyWeight?: number }
+    | { type: 'CALCULATE_ALL_BEST_1RM', logs: Log[] };
 
 type WorkerResponse = 
     | { type: 'OVERVIEW_READY', volumeData: [string, number][], exerciseFrequency: Record<string, number> }
-    | { type: 'CHART_READY', dataPoints: { date: number, value: number, weight: number, reps: number }[] };
+    | { type: 'CHART_READY', dataPoints: { date: number, value: number, weight: number, reps: number }[] }
+    | { type: 'ALL_BEST_1RM_READY', best1RMs: Map<string, number> };
 
 export const useStatsWorker = () => {
     const workerRef = useRef<Worker | null>(null);
@@ -68,5 +69,19 @@ export const useStatsWorker = () => {
         });
     }, [userProfile]); // Re-create callback if profile changes
 
-    return { isWorkerReady, calculateOverview, calculateChartData };
+    const calculateAllBest1RMs = useCallback((logs: Log[]): Promise<Map<string, number>> => {
+        return new Promise((resolve) => {
+            if (!workerRef.current) return;
+            const handler = (e: MessageEvent) => {
+                if (e.data.type === 'ALL_BEST_1RM_READY') {
+                    workerRef.current?.removeEventListener('message', handler);
+                    resolve(e.data.best1RMs);
+                }
+            };
+            workerRef.current.addEventListener('message', handler);
+            workerRef.current.postMessage({ type: 'CALCULATE_ALL_BEST_1RM', logs });
+        });
+    }, []);
+
+    return { isWorkerReady, calculateOverview, calculateChartData, calculateAllBest1RMs };
 };

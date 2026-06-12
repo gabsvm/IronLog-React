@@ -1,15 +1,17 @@
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { useTimerContext } from '../context/TimerContext';
 import { SessionExercise, ExerciseDef, SetType, Log, WorkoutSet } from '../types';
 import { arrayMove } from '@dnd-kit/sortable';
 import { triggerHaptic } from '../utils/audio';
 import { getLastLogForExercise, uid, estimate1RM } from '../utils';
+import { useStatsWorker } from './useStatsWorker';
 
 export const useWorkoutController = (onFinishCallback: () => void, onDiscardCallback: () => void) => {
     const { activeSession, activeMeso, setActiveSession, setActiveMeso, setProgram, exercises, rpFeedback, setRpFeedback, config, logs } = useApp();
     const { setRestTimer } = useTimerContext();
+    const { calculateAllBest1RMs } = useStatsWorker();
 
     // Local UI State
     const [openMenuId, setOpenMenuId] = useState<number | null>(null);
@@ -41,22 +43,14 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
 
     // Pre-built best-1RM index from full history — O(total_history) computed once
     // when logs change, not on every call to detectPRs.
-    const historicalBest1RM = useMemo(() => {
-        const best = new Map<string, number>();
-        const safeLogs = Array.isArray(logs) ? logs : [];
-        for (const log of safeLogs) {
-            for (const ex of (log.exercises || [])) {
-                if (!ex?.id) continue;
-                for (const s of (ex.sets || [])) {
-                    if (s.completed && s.weight && s.reps) {
-                        const e1rm = estimate1RM(Number(s.weight), Number(s.reps));
-                        if (e1rm > (best.get(ex.id) ?? 0)) best.set(ex.id, e1rm);
-                    }
-                }
-            }
-        }
-        return best;
-    }, [logs]);
+    const [historicalBest1RM, setHistoricalBest1RM] = useState<Map<string, number>>(new Map());
+
+    useEffect(() => {
+        if (!logs || logs.length === 0) return;
+        calculateAllBest1RMs(logs).then((resultMap) => {
+            setHistoricalBest1RM(resultMap);
+        });
+    }, [logs, calculateAllBest1RMs]);
 
     // Data Mutations
     const handleSetUpdate = useCallback((exInstanceId: number, setId: number, field: keyof WorkoutSet, value: any) => {
