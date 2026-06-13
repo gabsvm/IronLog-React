@@ -82,7 +82,12 @@ All macros in grams. Use 0 if a value is not visible or cannot be estimated. Do 
   // Remove any accidental markdown fences
   const cleaned = raw.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim();
 
-  const parsed: ScannedFood = JSON.parse(cleaned);
+  let parsed: ScannedFood;
+  try {
+    parsed = JSON.parse(cleaned);
+  } catch (error) {
+    throw new Error('Failed to parse AI response as JSON. Please try scanning the label again.');
+  }
 
   // Coerce all numeric fields
   return {

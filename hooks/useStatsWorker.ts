@@ -8,14 +8,14 @@ export type ChartMetric = '1rm' | 'volume' | 'duration' | 'distance' | 'max_reps
 
 // Types for Worker Messages
 type WorkerAction = 
-    | { type: 'CALCULATE_OVERVIEW', logs: Log[], activeMesoId?: number }
-    | { type: 'CALCULATE_CHART', logs: Log[], exerciseId: string, metric: ChartMetric, userBodyWeight?: number }
-    | { type: 'CALCULATE_ALL_BEST_1RM', logs: Log[] };
+    | { type: 'CALCULATE_OVERVIEW', logs: Log[], activeMesoId?: number, reqId?: number }
+    | { type: 'CALCULATE_CHART', logs: Log[], exerciseId: string, metric: ChartMetric, userBodyWeight?: number, reqId?: number }
+    | { type: 'CALCULATE_ALL_BEST_1RM', logs: Log[], reqId?: number };
 
 type WorkerResponse = 
-    | { type: 'OVERVIEW_READY', volumeData: [string, number][], exerciseFrequency: Record<string, number> }
-    | { type: 'CHART_READY', dataPoints: { date: number, value: number, weight: number, reps: number }[] }
-    | { type: 'ALL_BEST_1RM_READY', best1RMs: Map<string, number> };
+    | { type: 'OVERVIEW_READY', volumeData: [string, number][], exerciseFrequency: Record<string, number>, reqId?: number }
+    | { type: 'CHART_READY', dataPoints: { date: number, value: number, weight: number, reps: number }[], reqId?: number }
+    | { type: 'ALL_BEST_1RM_READY', best1RMs: Map<string, number>, reqId?: number };
 
 export const useStatsWorker = () => {
     const workerRef = useRef<Worker | null>(null);
@@ -37,22 +37,24 @@ export const useStatsWorker = () => {
     const calculateOverview = useCallback((logs: Log[], activeMesoId?: number): Promise<{ volumeData: [string, number][], exerciseFrequency: Record<string, number> }> => {
         return new Promise((resolve) => {
             if (!workerRef.current) return;
+            const reqId = Date.now() + Math.random();
             const handler = (e: MessageEvent) => {
-                if (e.data.type === 'OVERVIEW_READY') {
+                if (e.data.type === 'OVERVIEW_READY' && e.data.reqId === reqId) {
                     workerRef.current?.removeEventListener('message', handler);
                     resolve({ volumeData: e.data.volumeData, exerciseFrequency: e.data.exerciseFrequency });
                 }
             };
             workerRef.current.addEventListener('message', handler);
-            workerRef.current.postMessage({ type: 'CALCULATE_OVERVIEW', logs, activeMesoId });
+            workerRef.current.postMessage({ type: 'CALCULATE_OVERVIEW', logs, activeMesoId, reqId });
         });
     }, []);
 
     const calculateChartData = useCallback((logs: Log[], exerciseId: string, metric: ChartMetric): Promise<{ date: number, value: number, weight: number, reps: number }[]> => {
         return new Promise((resolve) => {
             if (!workerRef.current) return;
+            const reqId = Date.now() + Math.random();
             const handler = (e: MessageEvent) => {
-                if (e.data.type === 'CHART_READY') {
+                if (e.data.type === 'CHART_READY' && e.data.reqId === reqId) {
                     workerRef.current?.removeEventListener('message', handler);
                     resolve(e.data.dataPoints);
                 }
@@ -64,7 +66,8 @@ export const useStatsWorker = () => {
                 logs, 
                 exerciseId, 
                 metric, 
-                userBodyWeight: userProfile?.bodyWeight 
+                userBodyWeight: userProfile?.bodyWeight,
+                reqId
             });
         });
     }, [userProfile]); // Re-create callback if profile changes
@@ -72,14 +75,15 @@ export const useStatsWorker = () => {
     const calculateAllBest1RMs = useCallback((logs: Log[]): Promise<Map<string, number>> => {
         return new Promise((resolve) => {
             if (!workerRef.current) return;
+            const reqId = Date.now() + Math.random();
             const handler = (e: MessageEvent) => {
-                if (e.data.type === 'ALL_BEST_1RM_READY') {
+                if (e.data.type === 'ALL_BEST_1RM_READY' && e.data.reqId === reqId) {
                     workerRef.current?.removeEventListener('message', handler);
                     resolve(e.data.best1RMs);
                 }
             };
             workerRef.current.addEventListener('message', handler);
-            workerRef.current.postMessage({ type: 'CALCULATE_ALL_BEST_1RM', logs });
+            workerRef.current.postMessage({ type: 'CALCULATE_ALL_BEST_1RM', logs, reqId });
         });
     }, []);
 

@@ -184,7 +184,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
             }
         };
         fetchData();
-    }, [isOnline, user]);
+    }, [isOnline, user, setExercises]);
 
     // --- PWA INSTALL HANDLER ---
     useEffect(() => {
@@ -274,7 +274,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         window.addEventListener('online', handleOnline);
         window.addEventListener('offline', handleOffline);
         return () => { window.removeEventListener('online', handleOnline); window.removeEventListener('offline', handleOffline); };
-    }, [user, subscription.isPro, program, activeMeso, activeSession, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, plateInventory, rpFeedback, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods]);
+    }, [user, subscription.isPro, program, activeMeso, activeSession, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, plateInventory, rpFeedback, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, setLocalLastUpdated]);
 
     // ── Debounce A: session-only write (fast, lightweight) ─────────────────────
     // activeSession changes on every set completion or weight input during a workout.
@@ -289,7 +289,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
             syncService.uploadSessionOnly(user.uid, activeSession, now);
         }, 3000);
         return () => clearTimeout(timer);
-    }, [user, subscription.isPro, isAppLoading, hasCheckedSync, pendingCloudData, activeSession]);
+    }, [user, subscription.isPro, isAppLoading, hasCheckedSync, pendingCloudData, activeSession, setLocalLastUpdated]);
 
     // ── Debounce B: full-state write (slower, only when program/data changes) ──
     // Excludes activeSession (handled above). Fires only when program, exercises,
@@ -314,7 +314,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
             }
         }, 10000);
         return () => clearTimeout(timer);
-    }, [user, subscription.isPro, program, activeMeso, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, plateInventory, rpFeedback, isAppLoading, hasCheckedSync, pendingCloudData, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods]);
+    }, [user, subscription.isPro, program, activeMeso, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, plateInventory, rpFeedback, isAppLoading, hasCheckedSync, pendingCloudData, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, setLocalLastUpdated]);
 
     const confirmCloudSync = useCallback(() => {
         if (pendingCloudData) {
@@ -358,7 +358,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
 
             // Optional: You could add a 'sync_completed' event or toast here.
         }
-    }, [pendingCloudData, setProgram, setExercises, setLogs, setRpFeedback, setShowRIR, setRpEnabled, setLocalLastUpdated, setHasSeenOnboarding]);
+    }, [pendingCloudData, setProgram, setExercises, setLogs, setRpFeedback, setShowRIR, setRpEnabled, setLocalLastUpdated, setHasSeenOnboarding, setBodyLogs, setCustomFoods, setKeepScreenOn, setMacroGoals, setNutritionLogs, setPlateInventory, setRpTargetRIR, setUserProfile]);
 
     const cancelCloudSync = useCallback(() => {
         setPendingCloudData(null);

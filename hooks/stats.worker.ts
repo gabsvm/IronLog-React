@@ -11,7 +11,7 @@ const parseDuration = (val: any) => {
 };
 
 self.onmessage = function(e: MessageEvent) {
-    const { type, logs, activeMesoId, exerciseId, metric, userBodyWeight } = e.data;
+    const { type, logs, activeMesoId, exerciseId, metric, userBodyWeight, reqId } = e.data;
 
     if (type === 'CALCULATE_ALL_BEST_1RM') {
         const best = new Map<string, number>();
@@ -29,7 +29,7 @@ self.onmessage = function(e: MessageEvent) {
                 }
             }
         }
-        self.postMessage({ type: 'ALL_BEST_1RM_READY', best1RMs: best });
+        self.postMessage({ type: 'ALL_BEST_1RM_READY', best1RMs: best, reqId });
         return;
     }
 
@@ -65,7 +65,7 @@ self.onmessage = function(e: MessageEvent) {
         });
 
         const sortedVolume = Object.entries(muscleCounts).sort((a, b) => b[1] - a[1]);
-        self.postMessage({ type: 'OVERVIEW_READY', volumeData: sortedVolume, exerciseFrequency: exFreq });
+        self.postMessage({ type: 'OVERVIEW_READY', volumeData: sortedVolume, exerciseFrequency: exFreq, reqId });
     }
 
     if (type === 'CALCULATE_CHART') {
@@ -153,6 +153,6 @@ self.onmessage = function(e: MessageEvent) {
             }
         });
 
-        self.postMessage({ type: 'CHART_READY', dataPoints });
+        self.postMessage({ type: 'CHART_READY', dataPoints, reqId });
     }
 };

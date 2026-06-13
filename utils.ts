@@ -89,7 +89,7 @@ export const parseTargetReps = (str?: string): { min: number, max: number } | nu
     }
     
     // Check for single number "10"
-    const val = parseInt(clean);
+    const val = parseInt(clean, 10);
     if (!isNaN(val)) return { min: val, max: val };
     
     return null;

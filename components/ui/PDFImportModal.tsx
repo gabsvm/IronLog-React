@@ -84,7 +84,7 @@ function parseProgramText(text: string): ProgramDay[] {
 
     const setsMatch = line.match(setsPattern);
     if (setsMatch) {
-      const setCount = parseInt(setsMatch[1] || setsMatch[3]) || 3;
+      const setCount = parseInt(setsMatch[1] || setsMatch[3], 10) || 3;
       const reps = setsMatch[2] || '6-8';
       const isAVT = avtPattern.test(line);
       const exerciseName = line.replace(setsPattern, '').replace(new RegExp('[' + '-:,' + ']', 'g'), '').trim();
@@ -96,7 +96,7 @@ function parseProgramText(text: string): ProgramDay[] {
           reps: isAVT ? `${reps} (AVT)` : reps,
           isAVT: isAVT,
           avtRounds: isAVT ? setCount : undefined,
-          avtStartReps: isAVT ? parseInt(reps) || 6 : undefined,
+          avtStartReps: isAVT ? parseInt(reps, 10) || 6 : undefined,
         };
         currentDay.slots.push(slot);
       }

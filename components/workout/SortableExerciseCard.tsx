@@ -231,7 +231,7 @@ export const SortableExerciseCard = React.memo(({
             if (!allCompleted) return null;
             const avgWeight = working.reduce((sum: number, s: any) => sum + Number(s.weight || 0), 0) / working.length;
             if (avgWeight <= 0) return null;
-            const target = ex.targetReps ? parseInt(String(ex.targetReps)) : null;
+            const target = ex.targetReps ? parseInt(String(ex.targetReps), 10) : null;
             if (!target) return { kg: 2.5 };
             const allHitTarget = working.every((s: any) => Number(s.reps) >= target);
             return allHitTarget ? { kg: 2.5 } : null;

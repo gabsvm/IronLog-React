@@ -23,7 +23,7 @@ export const RestPresetSheet: React.FC<Props> = ({ open, onOpenChange, initialSe
     }, [open, initialSeconds]);
 
     const handleSave = () => {
-        const secs = parseInt(value);
+        const secs = parseInt(value, 10);
         onSave(isNaN(secs) || secs <= 0 ? undefined : secs);
         triggerHaptic('medium');
         onOpenChange(false);
