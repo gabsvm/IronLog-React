@@ -659,5 +659,155 @@ export const NATURAL_HYPERTROPHY_TEMPLATES: GlobalTemplate[] = [
                 ]
             }
         ]
+    },
+    {
+        id: 'nh_guts',
+        name: 'NH Guts Training Program',
+        title: { en: 'Guts Training Program (Berserk)', es: 'Programa de Guts (Berserk)' },
+        description: { en: 'Natural Hypertrophy - Survive and grow with the brute force of the Black Swordsman.', es: 'Natural Hypertrophy - Sobrevive y crece con la fuerza bruta del Espadachín Negro.' },
+        isPro: true,
+        order: 212,
+        program: [
+            {
+                id: 'd1', dayName: { en: 'Monday (Upper - Chest/Shoulders)', es: 'Lunes (Torso - Pecho/Hombros)' },
+                slots: [
+                    { muscle: 'CHEST', setTarget: 4, reps: '4-8', exerciseId: 'bp_bar', notes: 'Bench press OR Dips OR Weighted Push-ups + Pullovers' },
+                    { muscle: 'BACK', setTarget: 4, reps: '8-12', exerciseId: 'pullover_db' },
+                    { muscle: 'SHOULDERS', setTarget: 3, reps: '6-10', exerciseId: 'ohp', notes: 'Barbell OR DB OHP + Weighted Chin-ups' },
+                    { muscle: 'BACK', setTarget: 3, reps: '6-8', exerciseId: 'chinup' },
+                    { muscle: 'CHEST', setTarget: 3, reps: 'AMRAP', exerciseId: 'diamond_pushup', notes: 'Diamond push-ups + Behind the head extensions + Neck curls' },
+                    { muscle: 'TRICEPS', setTarget: 3, reps: '6-12', exerciseId: 'tri_ext' },
+                    { muscle: 'NECK', setTarget: 3, reps: '12-15', exerciseId: 'neck_curl' }
+                ]
+            },
+            {
+                id: 'd2', dayName: { en: 'Wednesday (Upper - Back/Traps)', es: 'Miércoles (Torso - Espalda/Trapecios)' },
+                slots: [
+                    { muscle: 'BACK', setTarget: 4, reps: '6-10', exerciseId: 'pendlay_row', notes: 'Barbell rows OR Deadlifts (alternate weekly) + Single leg calves' },
+                    { muscle: 'CALVES', setTarget: 4, reps: 'AMRAP', exerciseId: 'calf_raise' },
+                    { muscle: 'HAMSTRINGS', setTarget: 4, reps: '6-12', exerciseId: 'good_morning', notes: 'Zercher/SSB Good mornings OR Weighted pull-ups' },
+                    { muscle: 'BACK', setTarget: 4, reps: '3-5', exerciseId: 'pullup' },
+                    { muscle: 'BACK', setTarget: 4, reps: '8-12', exerciseId: 'pullover_db', notes: 'Hyperextensions + Supinated finger curls' },
+                    { muscle: 'FOREARMS', setTarget: 4, reps: '6-10', exerciseId: 'finger_curl' }
+                ]
+            },
+            {
+                id: 'd3', dayName: { en: 'Friday (Upper - Arms)', es: 'Viernes (Torso - Brazos)' },
+                slots: [
+                    { muscle: 'BICEPS', setTarget: 4, reps: '6-10', exerciseId: 'curl_bar', notes: 'Barbell curls + Skull crushers' },
+                    { muscle: 'TRICEPS', setTarget: 4, reps: '10-15', exerciseId: 'skull_crusher' },
+                    { muscle: 'CHEST', setTarget: 3, reps: '6-10', exerciseId: 'bp_flat', notes: 'Close grip bench OR Diamond push-ups + Hammer curls' },
+                    { muscle: 'BICEPS', setTarget: 3, reps: '8-12', exerciseId: 'curl_hammer' },
+                    { muscle: 'SHOULDERS', setTarget: 3, reps: '8-12', exerciseId: 'ohp_db', notes: 'DB OHP OR Decline push-ups + Finger curls + Neck curls' },
+                    { muscle: 'FOREARMS', setTarget: 3, reps: '8-15', exerciseId: 'finger_curl' },
+                    { muscle: 'NECK', setTarget: 3, reps: '15-20', exerciseId: 'neck_curl' }
+                ]
+            },
+            {
+                id: 'd4', dayName: { en: 'Saturday (Legs)', es: 'Sábado (Piernas)' },
+                slots: [
+                    { muscle: 'BACK', setTarget: 3, reps: '5', exerciseId: 'deadlift', notes: 'Deadlifts OR Zercher squats + Shrugs' },
+                    { muscle: 'TRAPS', setTarget: 3, reps: 'AMRAP', exerciseId: 'shrug_db' },
+                    { muscle: 'QUADS', setTarget: 3, reps: '4', exerciseId: 'sq_paused', notes: 'Pause squats OR Block pulls' },
+                    { muscle: 'SHOULDERS', setTarget: 4, reps: '12-15', exerciseId: 'face_pull', notes: 'Face-pulls + DB leg raises' },
+                    { muscle: 'ABS', setTarget: 4, reps: '15-20', exerciseId: 'leg_raise' }
+                ]
+            }
+        ]
+    },
+    {
+        id: 'nh_kratos',
+        name: 'NH Kratos Advanced',
+        title: { en: 'Kratos Program (Advanced)', es: 'Programa de Kratos (Avanzado)' },
+        description: { en: 'Natural Hypertrophy - Built for war and godly hypertrophic dominance.', es: 'Natural Hypertrophy - Diseñado para la guerra y la dominación muscular.' },
+        isPro: true,
+        order: 213,
+        program: [
+            {
+                id: 'd1', dayName: { en: 'Monday (Upper 1)', es: 'Lunes (Torso 1)' },
+                slots: [
+                    { muscle: 'CHEST', setTarget: 4, reps: '6-10', exerciseId: 'bp_flat', notes: 'Close grip bench OR Dips + DB or Meadows rows' },
+                    { muscle: 'BACK', setTarget: 4, reps: '8-12', exerciseId: 'row_db' },
+                    { muscle: 'SHOULDERS', setTarget: 3, reps: '6-10', exerciseId: 'ohp_db', notes: 'DB press OR Arnold press + Triceps extensions' },
+                    { muscle: 'TRICEPS', setTarget: 3, reps: '8-12', exerciseId: 'tri_ext' },
+                    { muscle: 'BACK', setTarget: 4, reps: '10-12', exerciseId: 'pullover_db', notes: 'DB pullovers + Neck curls' },
+                    { muscle: 'NECK', setTarget: 4, reps: '15-20', exerciseId: 'neck_curl' }
+                ]
+            },
+            {
+                id: 'd2', dayName: { en: 'Tuesday (Lower 1)', es: 'Martes (Piernas 1)' },
+                slots: [
+                    { muscle: 'BACK', setTarget: 4, reps: '10-12', exerciseId: 'pendlay_row', notes: 'Barbell rows + Seated OR Standing calf raises' },
+                    { muscle: 'CALVES', setTarget: 4, reps: '15-20', exerciseId: 'calf_raise' },
+                    { muscle: 'BACK', setTarget: 3, reps: '6-10', exerciseId: 'rack_pull', notes: 'Block pulls + Russian twists' },
+                    { muscle: 'ABS', setTarget: 3, reps: '12-15', exerciseId: 'abs_cable' },
+                    { muscle: 'QUADS', setTarget: 4, reps: '10-15', exerciseId: 'leg_press', notes: 'Leg press OR Split squats + Pinwheel curls' },
+                    { muscle: 'BICEPS', setTarget: 4, reps: '8-12', exerciseId: 'curl_hammer' }
+                ]
+            },
+            {
+                id: 'd3', dayName: { en: 'Thursday (Upper 2)', es: 'Jueves (Torso 2)' },
+                slots: [
+                    { muscle: 'SHOULDERS', setTarget: 4, reps: '12-15', exerciseId: 'ohp', notes: 'DB/BB OHP OR Viking press + Seal rows' },
+                    { muscle: 'BACK', setTarget: 4, reps: '10-15', exerciseId: 'row_cable' },
+                    { muscle: 'BACK', setTarget: 3, reps: '6-8', exerciseId: 'chinup', notes: 'Weighted chin-ups + Neck extensions' },
+                    { muscle: 'NECK', setTarget: 3, reps: '15-20', exerciseId: 'neck_ext' },
+                    { muscle: 'SHOULDERS', setTarget: 4, reps: '10-15', exerciseId: 'lat_raise', notes: 'Lateral raises + Cable curls' },
+                    { muscle: 'BICEPS', setTarget: 4, reps: '12-15', exerciseId: 'curl_cable' }
+                ]
+            },
+            {
+                id: 'd4', dayName: { en: 'Friday (Lower 2)', es: 'Viernes (Piernas 2)' },
+                slots: [
+                    { muscle: 'QUADS', setTarget: 4, reps: '6-8', exerciseId: 'sq_bar', notes: 'Squats or Hack squats + Hang pulls' },
+                    { muscle: 'TRAPS', setTarget: 4, reps: '10-15', exerciseId: 'shrug_db' },
+                    { muscle: 'HAMSTRINGS', setTarget: 3, reps: '8-12', exerciseId: 'rdl', notes: 'RDLs OR Block-pulls + Decline sit-ups' },
+                    { muscle: 'ABS', setTarget: 3, reps: '12-15', exerciseId: 'abs_cable' },
+                    { muscle: 'GLUTES', setTarget: 4, reps: '10-15', exerciseId: 'glute_bridge', notes: 'Hip thrusts + Power shrugs' },
+                    { muscle: 'TRAPS', setTarget: 4, reps: '8-10', exerciseId: 'shrug_db' }
+                ]
+            }
+        ]
+    },
+    {
+        id: 'nh_kinobody',
+        name: 'NH Kinobody Hollywood',
+        title: { en: 'Superhero Aesthetics (Kinobody)', es: 'Superhero Aesthetics (Kinobody)' },
+        description: { en: 'Natural Hypertrophy - Rest-Pause emphasis for a dense, angular Hollywood physique.', es: 'Natural Hypertrophy - Énfasis en Rest-Pause para un físico Hollywood denso y angular.' },
+        isPro: true,
+        order: 214,
+        program: [
+            {
+                id: 'd1', dayName: { en: 'Tuesday (Shoulders & Back)', es: 'Martes (Hombros y Espalda)' },
+                slots: [
+                    { muscle: 'BACK', setTarget: 3, reps: '5-8', exerciseId: 'pullup', notes: 'Weighted pull-ups (Rest-Pause on last set)' },
+                    { muscle: 'SHOULDERS', setTarget: 3, reps: '6-10', exerciseId: 'ohp' },
+                    { muscle: 'BACK', setTarget: 3, reps: '6-12', exerciseId: 'row_db' },
+                    { muscle: 'CHEST', setTarget: 4, reps: '12-15', exerciseId: 'pec_fly', notes: 'DB flyes OR Incline flyes' },
+                    { muscle: 'SHOULDERS', setTarget: 4, reps: '10-15', exerciseId: 'lat_raise' }
+                ]
+            },
+            {
+                id: 'd2', dayName: { en: 'Thursday (Lower Body)', es: 'Jueves (Piernas)' },
+                slots: [
+                    { muscle: 'QUADS', setTarget: 4, reps: '12-15', exerciseId: 'lunges', notes: 'Bulgarian split squats (Rest-Pause on last set)' },
+                    { muscle: 'NECK', setTarget: 4, reps: '15-20', exerciseId: 'neck_curl' },
+                    { muscle: 'HAMSTRINGS', setTarget: 4, reps: '6-12', exerciseId: 'rdl' },
+                    { muscle: 'QUADS', setTarget: 4, reps: '15-20', exerciseId: 'leg_ext' },
+                    { muscle: 'CALVES', setTarget: 4, reps: '15-20', exerciseId: 'calf_raise' },
+                    { muscle: 'ABS', setTarget: 4, reps: 'AMRAP', exerciseId: 'leg_raise' }
+                ]
+            },
+            {
+                id: 'd3', dayName: { en: 'Saturday (Chest & Arms)', es: 'Sábado (Pecho y Brazos)' },
+                slots: [
+                    { muscle: 'CHEST', setTarget: 3, reps: '6-10', exerciseId: 'bp_inc', notes: 'Incline Bench (Rest-Pause on last set)' },
+                    { muscle: 'CHEST', setTarget: 3, reps: '6-10', exerciseId: 'bp_flat' },
+                    { muscle: 'BACK', setTarget: 3, reps: '10-12', exerciseId: 'row_cable' },
+                    { muscle: 'BICEPS', setTarget: 4, reps: '6-10', exerciseId: 'curl_db', notes: 'Incline curls' },
+                    { muscle: 'TRICEPS', setTarget: 4, reps: '15-20', exerciseId: 'tri_push' }
+                ]
+            }
+        ]
     }
 ];
