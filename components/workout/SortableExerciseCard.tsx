@@ -568,13 +568,13 @@ export const SortableExerciseCard = React.memo(({
                 />
 
                 <div className="relative flex items-center">
-                    <Icon name="Pencil" size={11} className="absolute left-2 text-zinc-700 pointer-events-none" />
+                    <Icon name="Pencil" size={11} className="absolute left-2.5 text-zinc-600 pointer-events-none" />
                     <input
                         type="text"
                         placeholder={String(t.addNote)}
                         value={ex.note || ''}
                         onChange={(e) => handleNoteUpdate(e.target.value)}
-                        className="w-full bg-zinc-800/60 text-xs text-zinc-400 placeholder-zinc-700 outline-none rounded-lg py-1.5 pl-6 pr-2 focus:bg-zinc-800 focus:text-white focus:placeholder-zinc-600 transition-colors"
+                        className="w-full bg-[#131316] border border-white/5 text-xs text-zinc-400 placeholder-zinc-700 outline-none rounded-lg py-2 pl-7 pr-2 focus:border-primary-500/30 focus:text-white focus:placeholder-zinc-600 transition-colors"
                     />
                 </div>
 

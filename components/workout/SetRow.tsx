@@ -310,8 +310,8 @@ export const SetRow = React.memo(({
         onUpdate(exInstanceId, set.id, 'duration', seconds);
     }, [exInstanceId, set.id, onUpdate]);
 
-    const inputBase = "w-full text-center bg-zinc-800 rounded-xl py-3.5 text-xl font-bold text-white outline-none focus:ring-2 focus:ring-white/30 glow-input-neon transition-all tabular-nums placeholder-zinc-600";
-    const doneInput = "bg-transparent text-green-400 pointer-events-none";
+    const inputBase = "w-full text-center bg-[#131316] border border-white/5 rounded-xl py-3.5 text-xl font-bold text-white outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500/40 glow-input-neon transition-all tabular-nums placeholder-zinc-700";
+    const doneInput = "bg-transparent text-primary-500 border-transparent pointer-events-none";
 
     // Show previous session value as placeholder so the field reads as "editable with context",
     // not as a disabled em dash. Falls back to '0' so the input reads clearly as empty & tappable.
@@ -380,8 +380,8 @@ export const SetRow = React.memo(({
                         className={`
                             w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-150 active:scale-90
                             ${isDone
-                                ? 'bg-green-500 text-white animate-pulse-glow-green glow-btn-success'
-                                : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700 hover:text-white active:bg-green-600 active:text-white'}
+                                ? 'bg-primary-500 text-black border-transparent shadow-[0_0_15px] shadow-primary-500/20'
+                                : 'bg-[#131316] border border-white/5 text-zinc-500 hover:text-white hover:border-zinc-750 active:bg-primary-500 active:text-black'}
                         `}
                     >
                         <Icon name="Check" size={20} strokeWidth={3} />
@@ -456,8 +456,8 @@ export const SetRow = React.memo(({
                             className={`
                                 w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-150 active:scale-90
                                 ${isDone
-                                    ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
-                                    : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700 hover:text-white active:bg-green-600 active:text-white'}
+                                    ? 'bg-primary-500 text-black border-transparent shadow-[0_0_15px] shadow-primary-500/20'
+                                    : 'bg-[#131316] border border-white/5 text-zinc-500 hover:text-white hover:border-zinc-750 active:bg-primary-500 active:text-black'}
                             `}
                         >
                             <Icon name="Check" size={20} strokeWidth={3} />
@@ -567,8 +567,8 @@ export const SetRow = React.memo(({
                     className={`
                         w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-150 active:scale-90
                         ${isDone
-                            ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
-                            : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700 hover:text-white active:bg-green-600 active:text-white'
+                            ? 'bg-primary-500 text-black border-transparent shadow-[0_0_15px] shadow-primary-500/20'
+                            : 'bg-[#131316] border border-white/5 text-zinc-500 hover:text-white hover:border-zinc-750 active:bg-primary-500 active:text-black'
                         }
                     `}
                 >

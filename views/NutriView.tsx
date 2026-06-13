@@ -206,10 +206,10 @@ export const NutriView: React.FC = () => {
 
   // ─── RENDER ──────────────────────────────────────────────────────
   return (
-    <div className="h-full flex flex-col bg-zinc-950">
+    <div className="h-full flex flex-col bg-black">
       {/* ── Sub-tabs ── */}
       <div className="px-4 pt-4 pb-2 shrink-0">
-        <div className="flex gap-1 bg-zinc-900 p-1 rounded-2xl border border-zinc-800">
+        <div className="flex gap-1 bg-[#131316] p-1 rounded-2xl border border-white/5">
           {([
             { id: 'today',   label: l('Today', 'Hoy'),        icon: 'Utensils' },
             { id: 'body',    label: l('Body', 'Cuerpo'),      icon: 'Scale' },
@@ -219,7 +219,7 @@ export const NutriView: React.FC = () => {
               key={tab.id}
               onClick={() => setSubTab(tab.id)}
               className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all ${
-                subTab === tab.id ? 'bg-white text-black' : 'text-zinc-500'
+                subTab === tab.id ? 'bg-primary-500 text-black shadow-[0_0_15px] shadow-primary-500/15' : 'text-zinc-500 hover:text-white'
               }`}
             >
               <Icon name={tab.icon as any} size={12} />

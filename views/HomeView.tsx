@@ -519,7 +519,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                                 </div>
 
                                 <div className="relative z-10 flex items-center gap-3">
-                                    <div className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-transform active:scale-90 ${isDone ? 'bg-zinc-800 text-zinc-300 shadow-zinc-800/10' : 'bg-white text-black shadow-white/10 animate-bounce-cta'}`}>
+                                    <div className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-transform active:scale-90 ${isDone ? 'bg-zinc-800 text-zinc-300 shadow-zinc-800/10' : 'bg-primary-500 text-black shadow-primary-500/20 animate-bounce-cta'}`}>
                                         <Icon name={isSelectedActive ? 'Play' : isDone ? 'Repeat' : 'ArrowRight'} size={26} fill="currentColor" />
                                     </div>
                                     <span className="text-sm font-bold text-white">

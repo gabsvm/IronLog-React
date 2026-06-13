@@ -39,13 +39,13 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
                         size={22}
                         strokeWidth={isActive ? 2.5 : 2}
                         fill={isActive ? "currentColor" : "none"}
-                        className={`transition-colors duration-200 ${isActive ? 'text-white' : 'text-zinc-500 group-hover:text-zinc-300'}`}
+                        className={`transition-colors duration-200 ${isActive ? 'text-primary-500' : 'text-zinc-500 group-hover:text-zinc-300'}`}
                     />
                 </div>
 
                 {/* Label */}
                 <span className={`text-[9px] font-bold uppercase tracking-wider transition-all duration-200 leading-none
-                    ${isActive ? 'text-white opacity-100' : 'text-zinc-600 group-hover:text-zinc-400 opacity-80'}
+                    ${isActive ? 'text-primary-500 opacity-100' : 'text-zinc-600 group-hover:text-zinc-400 opacity-80'}
                 `}>
                     {label}
                 </span>
@@ -100,7 +100,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
                             <button
                                 onClick={onOpenCommandPalette}
                                 aria-label={lang === 'es' ? 'Iniciar sesión' : 'Start session'}
-                                className="shrink-0 w-12 h-12 rounded-full bg-primary-600 text-white flex items-center justify-center -translate-y-2 shadow-lg shadow-primary-900/20 active:scale-95 transition-transform duration-200 border border-white/10 mx-2"
+                                className="shrink-0 w-12 h-12 rounded-full bg-primary-500 text-black flex items-center justify-center -translate-y-3 shadow-lg shadow-primary-500/20 active:scale-95 transition-transform duration-200 border border-primary-400/20 mx-2 animate-pulse-glow-green"
                             >
                                 <Icon name="Plus" size={24} strokeWidth={2.5} />
                             </button>
