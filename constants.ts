@@ -1,5 +1,6 @@
  
 import { ExerciseDef, ProgramDay, MuscleGroup, GlobalTemplate } from './types';
+import { NATURAL_HYPERTROPHY_TEMPLATES } from './data/naturalHypertrophy';
 
 export const MUSCLE_GROUPS: Record<string, MuscleGroup> = { 
     CHEST: 'CHEST', BACK: 'BACK', QUADS: 'QUADS', HAMS: 'HAMSTRINGS', 
@@ -674,6 +675,7 @@ export const CAL_STREET_WORKOUT_TEMPLATE: ProgramDay[] = [
 ];
 
 export const INITIAL_TEMPLATES: GlobalTemplate[] = [
+    ...NATURAL_HYPERTROPHY_TEMPLATES,
     { id: 'ji3', name: 'jacked_in_3', title: { en: "Jacked in 3 — Paul Carter", es: "Jacked in 3 — Paul Carter" }, description: { en: "Accumulative Volume Training (AVT). 3 days per week. Upper/Lower with pyramid hops.", es: "Accumulative Volume Training (AVT). 3 días por semana. Torso/Pierna con pirámide de hops." }, isPro: true, program: JACKED_IN_3_TEMPLATE, order: 0 },
     { id: 'toji_fushiguro', name: 'toji_fushiguro', title: { en: "Toji (Natural Hypertrophy)", es: "Toji (Natural Hypertrophy)" }, description: { en: "4-Day Elite Split. Giant Sets, Neck, Forearms & Aesthetic focus.", es: "Rutina Élite de 4 Días. Series Gigantes, Cuello, Antebrazo y Estética." }, isPro: true, program: TOJI_TEMPLATE, order: 1 },
     {

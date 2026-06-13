@@ -8,6 +8,7 @@ import { Button } from '../ui/Button';
 import { usePro } from '../../hooks/usePro';
 import { PaywallModal } from '../pro/PaywallModal';
 import { AdminControlPanel } from './AdminControlPanel';
+import { PhilosophyModal } from '../ui/PhilosophyModal';
 
 interface SettingsModalProps {
     onClose: () => void;
@@ -36,6 +37,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     const t = TRANSLATIONS[lang];
 
     const [tab, setTab] = useState<'account' | 'prefs' | 'advanced'>('account');
+    const [showPhilosophy, setShowPhilosophy] = useState(false);
 
     const isAdmin = user?.email === 'gabsvm@gmail.com';
 
@@ -331,10 +333,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         <button onClick={onReset} className="w-full py-3 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900 rounded-xl text-sm font-bold flex items-center justify-center gap-2" aria-label="Delete"> <Icon name="Trash2" size={16} /> {t.factoryReset}</button>
                     </div>
 
+                    <Divider />
+
+                    {/* Credits & Philosophy */}
+                    <div>
+                        <label className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 block">Credits & Philosophy</label>
+                        <button onClick={() => setShowPhilosophy(true)} className="w-full py-3 bg-zinc-100 dark:bg-zinc-800 rounded-xl text-sm font-bold flex justify-center gap-2 items-center text-zinc-700 dark:text-zinc-300">
+                            <Icon name="BookOpen" size={16} /> Natural Hypertrophy (NH) 85% Rule
+                        </button>
+                    </div>
+
                     </>)}
                 </div>
             </div>
             {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} feature={featureAttempted} />}
+            <PhilosophyModal isOpen={showPhilosophy} onClose={() => setShowPhilosophy(false)} lang={lang} />
         </div>
     );
 };
