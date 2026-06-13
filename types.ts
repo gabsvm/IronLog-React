@@ -244,6 +244,7 @@ export interface AppState {
   nutritionGoal: NutritionGoal;
   bodyLogs: BodyLog[];
   macroGoals?: MacroGoals;
+  customFoods?: CustomFood[];
 }
 
 // ─── CUSTOM FOOD DATABASE ──────────────────────────────────────────

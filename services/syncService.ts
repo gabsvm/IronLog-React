@@ -117,8 +117,11 @@ export const syncService = {
                 config: state.config || {},
                 exercises: state.exercises || [],
                 rpFeedback: state.rpFeedback || {},
-                nutritionLogs: state.nutritionLogs || [],
-                cardioSessions: state.cardioSessions || [],
+                // Limit to last 60 entries to avoid Firebase 1MB limit for main document
+                nutritionLogs: (state.nutritionLogs || []).slice(-60),
+                cardioSessions: (state.cardioSessions || []).slice(-60),
+                bodyLogs: (state.bodyLogs || []).slice(-100),
+                customFoods: (state.customFoods || []).slice(-100),
                 nutritionGoal: state.nutritionGoal || null,
                 lastUpdated: state.lastUpdated || Date.now(),
                 // NEW: Save email to allow Admin Lookup
@@ -191,6 +194,7 @@ export const syncService = {
                     nutritionGoal: data.nutritionGoal,
                     bodyLogs: data.bodyLogs,
                     macroGoals: data.macroGoals,
+                    customFoods: data.customFoods,
                     logs: logsData,
                     lastUpdated: data.lastUpdated || Date.now(),
                 };

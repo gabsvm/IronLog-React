@@ -263,6 +263,8 @@ export const SortableExerciseCard = React.memo(({
     // ── Auto-scroll to next uncompleted set ─────────────────────────
     const prevCompletedRef = useRef(completedCount);
     const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    
     useEffect(() => {
         if (completedCount > prevCompletedRef.current) {
             // Exercise complete celebration
@@ -276,14 +278,18 @@ export const SortableExerciseCard = React.memo(({
             // Scroll next set into view
             const nextSet = regularSets.find(s => !s.completed);
             if (nextSet) {
-                setTimeout(() => {
+                if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+                scrollTimerRef.current = setTimeout(() => {
                     document.getElementById(`set-row-${nextSet.id}`)
                         ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }, 180);
             }
         }
         prevCompletedRef.current = completedCount;
-        return () => { if (flashTimerRef.current) clearTimeout(flashTimerRef.current); };
+        return () => { 
+            if (flashTimerRef.current) clearTimeout(flashTimerRef.current); 
+            if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+        };
     }, [completedCount, regularSets]);
 
     // ── Protocol detections ──────────────────────────────────────────

@@ -312,7 +312,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
                 onFinishCallback();
             }
         }
-    }, [onFinishCallback, config, detectPRs, fireConfetti, updateTemplate, activeMeso, activeSession, sessionExercises, setProgram, setActiveMeso]);
+    }, [onFinishCallback, config, detectPRs, fireConfetti, updateTemplate, activeMeso, activeSession, sessionExercises, setProgram, setActiveMeso, setRestTimer]);
 
     // --- NEW: Handle Discard/Reset Session ---
     const handleDiscardSession = useCallback(() => {
@@ -353,7 +353,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
         } else {
             onFinishCallback();
         }
-    }, [activeSession, setRpFeedback, onFinishCallback, hasNewPR, fireConfetti]);
+    }, [activeSession, setRpFeedback, onFinishCallback, hasNewPR, fireConfetti, setRestTimer]);
 
     const dismissPRSuccess = useCallback(() => {
         setRestTimer({ active: false, timeLeft: 0, duration: 0, endAt: 0 }); // Extra failsafe

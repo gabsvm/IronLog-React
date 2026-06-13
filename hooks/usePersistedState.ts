@@ -26,6 +26,7 @@ export function usePersistedState<T>(key: string, initialValue: T, debounceMs = 
         });
 
         return () => { isMounted = false; };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [key]); // Only run on mount or key change
 
     const flush = useCallback(() => {

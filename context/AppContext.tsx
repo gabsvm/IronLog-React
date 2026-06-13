@@ -261,7 +261,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                         program, activeMeso, activeSession, exercises, logs,
                         config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn, plateInventory },
                         rpFeedback,
-                        userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals,
+                        userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods,
                         lastUpdated: now,
                     });
                 } else {
@@ -274,7 +274,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         window.addEventListener('online', handleOnline);
         window.addEventListener('offline', handleOffline);
         return () => { window.removeEventListener('online', handleOnline); window.removeEventListener('offline', handleOffline); };
-    }, [user, subscription.isPro, program, activeMeso, activeSession, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, plateInventory, rpFeedback, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals]);
+    }, [user, subscription.isPro, program, activeMeso, activeSession, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, plateInventory, rpFeedback, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods]);
 
     // ── Debounce A: session-only write (fast, lightweight) ─────────────────────
     // activeSession changes on every set completion or weight input during a workout.
@@ -305,7 +305,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                     program, activeMeso, exercises, logs,
                     config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn, plateInventory },
                     rpFeedback,
-                    userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals,
+                    userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods,
                     lastUpdated: now,
                     // activeSession intentionally omitted — Debounce A owns it.
                 });
@@ -314,7 +314,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
             }
         }, 10000);
         return () => clearTimeout(timer);
-    }, [user, subscription.isPro, program, activeMeso, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, plateInventory, rpFeedback, isAppLoading, hasCheckedSync, pendingCloudData, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals]);
+    }, [user, subscription.isPro, program, activeMeso, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, plateInventory, rpFeedback, isAppLoading, hasCheckedSync, pendingCloudData, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods]);
 
     const confirmCloudSync = useCallback(() => {
         if (pendingCloudData) {
@@ -340,6 +340,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
             if (pendingCloudData.nutritionLogs) setNutritionLogs(pendingCloudData.nutritionLogs);
             if (pendingCloudData.bodyLogs) setBodyLogs(pendingCloudData.bodyLogs);
             if (pendingCloudData.macroGoals) setMacroGoals(pendingCloudData.macroGoals);
+            if (pendingCloudData.customFoods) setCustomFoods(pendingCloudData.customFoods);
 
             // Sync timestamp to prevent immediate re-upload of old local state
             if (pendingCloudData.lastUpdated) {
