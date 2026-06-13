@@ -76,6 +76,7 @@ export class SessionBuilder {
                 instanceId: uid(),
                 slotLabel: slotDef.muscle,
                 targetReps: slotDef.reps,
+                supersetId: slotDef.supersetId,
                 sets: initialSets as any
             };
         }).filter(Boolean);
