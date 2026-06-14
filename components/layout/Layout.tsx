@@ -99,7 +99,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
                         {onOpenCommandPalette && (
                             <button
                                 onClick={onOpenCommandPalette}
-                                aria-label={lang === 'es' ? 'Iniciar sesión' : 'Start session'}
+                                aria-label={lang === 'es' ? 'Iniciar entreno' : 'Start workout'}
                                 className="shrink-0 w-12 h-12 rounded-full bg-primary-500 text-black flex items-center justify-center -translate-y-3 shadow-lg shadow-primary-500/20 active:scale-95 transition-transform duration-200 border border-primary-400/20 mx-2 animate-pulse-glow-green"
                             >
                                 <Icon name="Plus" size={24} strokeWidth={2.5} />

@@ -474,13 +474,13 @@ export const SortableExerciseCard = React.memo(({
                         <div className="flex items-center gap-2">
                             <h3
                                 onClick={(e) => { e.stopPropagation(); if (onOpenDetail) onOpenDetail(ex); }}
-                                className="text-xl font-black text-zinc-900 dark:text-white leading-tight tracking-tight pl-1 cursor-pointer hover:text-red-400 transition-colors"
+                                className="text-xl font-black text-zinc-900 dark:text-white leading-tight tracking-tight pl-1 cursor-pointer hover:text-primary-400 transition-colors"
                             >
                                 {String(getTranslated(ex.name, lang))}
                             </h3>
                             <button
                                 onClick={(e) => { e.stopPropagation(); if (onOpenDetail) onOpenDetail(ex); }}
-                                className="text-zinc-600 hover:text-red-400 transition-colors shrink-0"
+                                className="text-zinc-600 hover:text-primary-400 transition-colors shrink-0"
                             >
                                 <Icon name="Info" size={15} />
                             </button>

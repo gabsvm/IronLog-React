@@ -94,9 +94,9 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                 <Icon name={icon} size={20} />
             </div>
             <div className="flex-1 min-w-0">
-                <div className={`font-black text-sm ${selected ? 'text-primary-700 dark:text-red-400' : 'text-zinc-900 dark:text-white'}`}>{label}</div>
+                <div className={`font-black text-sm ${selected ? 'text-primary-700 dark:text-primary-400' : 'text-zinc-900 dark:text-white'}`}>{label}</div>
                 {description && (
-                    <div className={`text-xs mt-1 leading-relaxed font-medium ${selected ? 'text-primary-600/70 dark:text-red-400/70' : 'text-zinc-500 dark:text-zinc-400'}`}>
+                    <div className={`text-xs mt-1 leading-relaxed font-medium ${selected ? 'text-primary-600/70 dark:text-primary-400/70' : 'text-zinc-500 dark:text-zinc-400'}`}>
                         {description}
                     </div>
                 )}

@@ -57,9 +57,9 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ onClose, feature }) 
 
                 <div className="p-6">
                     {/* Context Trigger */}
-                    <div className="flex items-center justify-center gap-3 mb-6 bg-red-50 dark:bg-red-900/20 p-3 rounded-xl border border-red-100 dark:border-red-900/30">
-                        <Icon name="Lock" size={16} className="text-red-500 shrink-0" />
-                        <p className="text-xs text-red-700 dark:text-red-300 font-bold leading-tight">
+                    <div className="flex items-center justify-center gap-3 mb-6 bg-amber-50 dark:bg-amber-500/10 p-3 rounded-xl border border-amber-200 dark:border-amber-500/20">
+                        <Icon name="Lock" size={16} className="text-amber-500 shrink-0" />
+                        <p className="text-xs text-amber-700 dark:text-amber-300 font-bold leading-tight">
                             {feature ? (lang === 'en' ? `Locked: ${feature}` : `Bloqueado: ${feature}`) : t.subtitle}
                         </p>
                     </div>

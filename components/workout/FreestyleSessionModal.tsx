@@ -295,7 +295,7 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
             {/* Discipline Tabs */}
             <div className="flex bg-zinc-100 dark:bg-zinc-800/50 p-1 rounded-2xl mb-5 gap-1">
                 <button
-                    className={tabStyle(discipline === 'gym', 'bg-red-500 shadow-red-500/30')}
+                    className={tabStyle(discipline === 'gym', 'bg-primary-500 shadow-primary-500/30 text-black')}
                     onClick={() => setDiscipline('gym')}
                 >
                     <span className="flex items-center justify-center gap-1">
@@ -327,8 +327,8 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
             {discipline === 'gym' && (
                 <div className="space-y-4">
                     <div className="rounded-2xl border-2 border-dashed border-zinc-200 dark:border-white/10 p-6 text-center">
-                        <div className="w-14 h-14 bg-red-500/10 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                            <Icon name="Dumbbell" size={28} className="text-red-500" />
+                        <div className="w-14 h-14 bg-primary-500/10 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                            <Icon name="Dumbbell" size={28} className="text-primary-500" />
                         </div>
                         <h3 className="font-black text-zinc-900 dark:text-white mb-1">
                             {lang === 'es' ? 'Sesión Libre de Gym' : 'Free Gym Session'}

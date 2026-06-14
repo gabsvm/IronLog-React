@@ -276,7 +276,7 @@ export const GainsLabChat: React.FC<{ onClose: () => void }> = ({ onClose }) => 
                 <p key={i} className="mb-1">
                     {parts.map((part, j) => {
                         if (part.startsWith('**') && part.endsWith('**')) {
-                            return <strong key={j} className="text-indigo-600 dark:text-indigo-400 font-bold">{part.slice(2, -2)}</strong>;
+                            return <strong key={j} className="text-primary-600 dark:text-primary-400 font-bold">{part.slice(2, -2)}</strong>;
                         }
                         return <span key={j}>{part}</span>;
                     })}
@@ -294,11 +294,11 @@ export const GainsLabChat: React.FC<{ onClose: () => void }> = ({ onClose }) => 
                 {/* Header */}
                 <div className="p-4 border-b border-zinc-100 dark:border-white/5 flex justify-between items-center bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-primary-500/20">
                             <Icon name="Bot" size={24} fill="currentColor" />
                         </div>
                         <div>
-                            <h3 className="font-black text-zinc-900 dark:text-white leading-none">GainsLab AI AI</h3>
+                            <h3 className="font-black text-zinc-900 dark:text-white leading-none">GainsLab AI</h3>
                             <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium">Agent Mode Active</p>
                         </div>
                     </div>
@@ -328,9 +328,9 @@ export const GainsLabChat: React.FC<{ onClose: () => void }> = ({ onClose }) => 
                     {isLoading && (
                         <div className="flex justify-start">
                             <div className="bg-white dark:bg-zinc-800 p-3 rounded-2xl rounded-tl-sm border border-zinc-100 dark:border-white/5 flex gap-1.5 items-center">
-                                <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce"></div>
-                                <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce delay-75"></div>
-                                <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce delay-150"></div>
+                                <div className="w-1.5 h-1.5 bg-primary-500 rounded-full animate-bounce"></div>
+                                <div className="w-1.5 h-1.5 bg-primary-500 rounded-full animate-bounce delay-75"></div>
+                                <div className="w-1.5 h-1.5 bg-primary-500 rounded-full animate-bounce delay-150"></div>
                             </div>
                         </div>
                     )}
@@ -344,7 +344,7 @@ export const GainsLabChat: React.FC<{ onClose: () => void }> = ({ onClose }) => 
                             <button 
                                 key={i}
                                 onClick={() => handleSend(qp.prompt)}
-                                className="whitespace-nowrap px-3 py-1.5 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-xs font-bold text-zinc-600 dark:text-zinc-300 hover:border-indigo-500 hover:text-indigo-500 transition-colors"
+                                className="whitespace-nowrap px-3 py-1.5 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-xs font-bold text-zinc-600 dark:text-zinc-300 hover:border-primary-500 hover:text-primary-500 transition-colors"
                             >
                                 {qp.label}
                             </button>
@@ -357,7 +357,7 @@ export const GainsLabChat: React.FC<{ onClose: () => void }> = ({ onClose }) => 
                     <div className="relative flex items-center gap-2">
                         <input 
                             type="text" 
-                            className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-xl pl-4 pr-12 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 text-zinc-900 dark:text-white placeholder-zinc-400"
+                            className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-xl pl-4 pr-12 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-primary-500 text-zinc-900 dark:text-white placeholder-zinc-400"
                             placeholder={lang === 'en' ? "Ask GainsLab AI..." : "Pregunta a GainsLab AI..."}
                             value={input}
                             onChange={e => setInput(e.target.value)}
@@ -367,7 +367,7 @@ export const GainsLabChat: React.FC<{ onClose: () => void }> = ({ onClose }) => 
                         <button 
                             onClick={() => handleSend()}
                             disabled={!input.trim() || isLoading}
-                            className="absolute right-2 p-1.5 bg-indigo-600 rounded-lg text-white disabled:opacity-50 hover:bg-indigo-500 transition-colors"
+                            className="absolute right-2 p-1.5 bg-primary-500 rounded-lg text-black disabled:opacity-50 hover:bg-primary-400 transition-colors"
                         >
                             <Icon name="CornerDownRight" size={16} />
                         </button>

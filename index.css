@@ -9,17 +9,19 @@
   --safe-area-bottom: env(safe-area-inset-bottom, 20px);
 
   /* --- DEFAULT THEME: HYPERTROPHY (RP LIME-GREEN) --- */
-  /* RGB values for Tailwind variables defined in index.html */
-  --primary-50: 247 254 231;
+  /* Brand color is the RP lime #C1F13B (193 241 59) anchored at 500.
+     Lower numbers MUST be lighter, higher numbers MUST be darker — the previous
+     palette had 500 lighter than 400, breaking every "primary-600" hover state. */
+  --primary-50:  247 254 231;
   --primary-100: 236 252 203;
   --primary-200: 217 249 157;
-  --primary-300: 190 242 99;
-  --primary-400: 163 230 53;
-  --primary-500: 193 241 59;
-  --primary-600: 132 204 22;
-  --primary-700: 101 163 13;
-  --primary-800: 77 124 15;
-  --primary-900: 63 98 18;
+  --primary-300: 207 246 120;
+  --primary-400: 200 244  90;
+  --primary-500: 193 241  59; /* RP brand */
+  --primary-600: 163 215  35;
+  --primary-700: 132 174  22;
+  --primary-800: 101 134  15;
+  --primary-900:  77 101  12;
 }
 
 /* --- THEME OVERRIDES --- */

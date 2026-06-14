@@ -76,7 +76,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <span className="text-sm font-bold text-zinc-700 dark:text-zinc-300">{label}</span>
             <button
                 onClick={() => checkPro(featureName) && onChange(!value)}
-                className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${value ? 'bg-green-500' : 'bg-zinc-300 dark:bg-zinc-600'}`}
+                className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${value ? 'bg-primary-500' : 'bg-zinc-300 dark:bg-zinc-600'}`}
             >
                 <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-300 flex items-center justify-center ${value ? 'translate-x-6' : 'translate-x-0'}`}>
                     {!isPro && !value && <Icon name="Lock" size={8} className="text-zinc-400" />}
@@ -168,8 +168,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
                     {tab === 'account' && (<>
                     {!isStandalone && (
-                        <div className="mb-6 bg-gradient-to-r from-red-600 to-orange-600 p-4 rounded-2xl shadow-lg shadow-orange-500/20 flex items-center justify-between animate-in fade-in slide-in-from-top-4">
-                            <div className="text-white">
+                        <div className="mb-6 bg-gradient-to-r from-primary-500 to-primary-600 p-4 rounded-2xl shadow-lg shadow-primary-500/20 flex items-center justify-between animate-in fade-in slide-in-from-top-4">
+                            <div className="text-black">
                                 <h3 className="font-black text-sm uppercase tracking-wide flex items-center gap-2">
                                     <Icon name="Download" size={16} className="animate-bounce" />
                                     {t.installApp}
@@ -180,7 +180,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             </div>
                             <button
                                 onClick={handleInstallClick}
-                                className="bg-white text-red-600 px-4 py-2 rounded-xl text-xs font-black shadow-md active:scale-95 transition-transform"
+                                className="bg-black text-primary-400 px-4 py-2 rounded-xl text-xs font-black shadow-md active:scale-95 transition-transform"
                             >
                                 {t.installBtn}
                             </button>
@@ -206,7 +206,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                 {isAdmin && <AdminControlPanel adminEmail={user?.email || undefined} />}
                             </div>
                         ) : (
-                            <button onClick={onLogin} className="w-full py-2 bg-red-600 text-white rounded-lg text-xs font-bold hover:bg-red-50 shadow-lg shadow-red-600/20 transition-all active:scale-95">
+                            <button onClick={onLogin} className="w-full py-2 bg-primary-500 text-black rounded-lg text-xs font-bold hover:bg-primary-400 shadow-lg shadow-primary-500/20 transition-all active:scale-95">
                                 {t.auth.signInRegister}
                             </button>
                         )}
@@ -286,17 +286,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     {/* Appearance Topic */}
                     <div>
                         <label className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 block">{t.appearance}</label>
-                        <div className="grid grid-cols-2 gap-3 mb-6">
-                            <button onClick={() => setTheme('dark')} className={`py-3 rounded-xl text-sm font-bold border flex items-center justify-center gap-2 ${theme === 'dark' ? 'bg-zinc-800 text-white border-zinc-600' : 'bg-zinc-50 text-zinc-500 border-transparent'}`}><Icon name="Moon" size={16} /> Dark</button>
-                            <button onClick={() => setTheme('light')} className={`py-3 rounded-xl text-sm font-bold border flex items-center justify-center gap-2 ${theme === 'light' ? 'bg-white text-zinc-900 border-zinc-300' : 'bg-zinc-800/50 text-zinc-500 border-transparent'}`}><Icon name="Sun" size={16} /> Light</button>
+                        <div className="grid grid-cols-3 gap-2 mb-6">
+                            <button onClick={() => setTheme('dark')} className={`py-3 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-colors duration-base ${theme === 'dark' ? 'bg-zinc-800 text-white border-zinc-600' : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-500 border-transparent'}`}><Icon name="Moon" size={14} /> Dark</button>
+                            <button onClick={() => setTheme('light')} className={`py-3 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-colors duration-base ${theme === 'light' ? 'bg-white text-zinc-900 border-zinc-300' : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-500 border-transparent'}`}><Icon name="Sun" size={14} /> Light</button>
+                            <button onClick={() => setTheme('system')} className={`py-3 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-colors duration-base ${theme === 'system' ? 'bg-zinc-900 text-white border-primary-500 dark:bg-zinc-800 dark:border-primary-500' : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-500 border-transparent'}`}><Icon name="Cpu" size={14} /> Auto</button>
                         </div>
                         <div className="bg-zinc-50 dark:bg-white/5 p-4 rounded-2xl">
-                            <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3 block">Accent Color</label>
-                            <div className="grid grid-cols-4 gap-4">
-                                <ColorPill color="bg-red-600" label="Iron" active={colorTheme === 'iron'} onClick={() => setColorTheme('iron')} />
-                                <ColorPill color="bg-blue-600" label="Ocean" active={colorTheme === 'ocean'} onClick={() => setColorTheme('ocean')} />
-                                <ColorPill color="bg-emerald-600" label="Forest" active={colorTheme === 'forest'} onClick={() => setColorTheme('forest')} />
-                                <ColorPill color="bg-purple-600" label="Royal" active={colorTheme === 'royal'} onClick={() => setColorTheme('royal')} />
+                            <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3 block">{lang === 'es' ? 'Color de Acento' : 'Accent Color'}</label>
+                            <div className="grid grid-cols-3 gap-4">
+                                {/* "iron" is the default RP Hypertrophy lime — use a swatch that mirrors the CSS variable, NOT red. */}
+                                <ColorPill color="bg-[rgb(193,241,59)]" label={lang === 'es' ? 'Hipertrofia' : 'Hypertrophy'} active={colorTheme === 'iron'} onClick={() => setColorTheme('iron')} />
+                                <ColorPill color="bg-blue-500" label="Ocean" active={colorTheme === 'ocean'} onClick={() => setColorTheme('ocean')} />
+                                <ColorPill color="bg-emerald-500" label="Forest" active={colorTheme === 'forest'} onClick={() => setColorTheme('forest')} />
+                                <ColorPill color="bg-purple-500" label="Royal" active={colorTheme === 'royal'} onClick={() => setColorTheme('royal')} />
+                                <ColorPill color="bg-orange-500" label="Sunset" active={colorTheme === 'sunset'} onClick={() => setColorTheme('sunset')} />
+                                <ColorPill color="bg-zinc-500" label="Mono" active={colorTheme === 'monochrome'} onClick={() => setColorTheme('monochrome')} />
                             </div>
                         </div>
 
@@ -321,7 +325,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                 <button onClick={onExport} className="py-3 bg-zinc-100 dark:bg-zinc-800 rounded-xl text-sm font-bold flex items-center justify-center gap-2" aria-label="Download"> <Icon name="Download" size={14} /> {t.export}</button>
                                 <label className="py-3 bg-zinc-100 dark:bg-zinc-800 rounded-xl text-sm font-bold cursor-pointer text-center flex items-center justify-center gap-2"><Icon name="Upload" size={14} /> {t.import}<input type="file" onChange={onImportFile} accept=".json" className="hidden" /></label>
                             </div>
-                            {user && <button onClick={onForceSync} disabled={isSyncing} className="w-full py-3 bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400 rounded-xl text-sm font-bold flex items-center justify-center gap-2" aria-label="Refresh"> <Icon name="RefreshCw" size={14} className={isSyncing ? "animate-spin" : ""} /> {isSyncing ? "Syncing..." : "Force Sync"}</button>}
+                            {user && <button onClick={onForceSync} disabled={isSyncing} className="w-full py-3 bg-primary-500/10 text-primary-600 dark:text-primary-400 rounded-xl text-sm font-bold flex items-center justify-center gap-2 border border-primary-500/20" aria-label="Refresh"> <Icon name="RefreshCw" size={14} className={isSyncing ? "animate-spin" : ""} /> {isSyncing ? "Syncing..." : "Force Sync"}</button>}
                         </div>
                     </div>
 

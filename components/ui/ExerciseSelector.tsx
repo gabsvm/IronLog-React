@@ -115,7 +115,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
                         {ex.isBodyweight && <span className="text-blue-500">BW</span>}
                     </div>
                 </div>
-                <div className="text-zinc-300 dark:text-zinc-700 group-hover:text-red-500">
+                <div className="text-zinc-300 dark:text-zinc-700 group-hover:text-primary-500">
                     <Icon name="Plus" size={20} />
                 </div>
             </button>
@@ -153,7 +153,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
                                 type="text"
                                 placeholder={t.searchPlaceholder}
                                 aria-label="Search exercises"
-                                className="w-full bg-zinc-100 dark:bg-zinc-800/50 rounded-xl py-2 pl-9 pr-4 text-sm font-medium focus:ring-2 focus:ring-red-500 border-none outline-none text-zinc-900 dark:text-white placeholder-zinc-400"
+                                className="w-full bg-zinc-100 dark:bg-zinc-800/50 rounded-xl py-2 pl-9 pr-4 text-sm font-medium focus:ring-2 focus:ring-primary-500 border-none outline-none text-zinc-900 dark:text-white placeholder-zinc-400"
                                 value={search}
                                 onChange={e => setSearch(e.target.value)}
                             />
@@ -161,7 +161,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
                         <button
                             onClick={handleCreateStart}
                             aria-label="Add new exercise"
-                            className="w-10 h-10 flex items-center justify-center rounded-xl bg-red-600 text-white shadow-md shadow-red-600/20 active:scale-95 transition-transform duration-fast ease-natural"
+                            className="w-10 h-10 flex items-center justify-center rounded-xl bg-primary-500 text-black shadow-md shadow-primary-500/20 active:scale-95 transition-transform duration-fast ease-natural"
                         >
                             <Icon name="Plus" size={20} />
                         </button>
@@ -177,7 +177,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
                             <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider mb-2 block">{t.exName}</label>
                             <input 
                                 type="text" 
-                                className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 font-medium text-zinc-900 dark:text-white focus:ring-2 focus:ring-red-500 outline-none"
+                                className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 font-medium text-zinc-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none"
                                 value={newName}
                                 onChange={e => setNewName(e.target.value)}
                                 autoFocus
@@ -191,7 +191,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
                                     <button
                                         key={m}
                                         onClick={() => setNewMuscle(m)}
-                                        className={`p-3 rounded-xl text-xs font-bold border transition-all ${newMuscle === m ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-900 text-red-600 dark:text-red-400' : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-500'}`}
+                                        className={`p-3 rounded-xl text-xs font-bold border transition-all ${newMuscle === m ? 'bg-primary-500/10 border-primary-500/30 text-primary-700 dark:text-primary-400' : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-500'}`}
                                     >
                                         {TRANSLATIONS[lang].muscle[m]}
                                     </button>
@@ -205,7 +205,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
                                 id="isBW"
                                 checked={isBodyweight}
                                 onChange={e => setIsBodyweight(e.target.checked)}
-                                className="w-5 h-5 accent-red-600"
+                                className="w-5 h-5 accent-primary-500"
                             />
                             <label htmlFor="isBW" className="font-bold text-sm text-zinc-700 dark:text-zinc-300 cursor-pointer">
                                 {t.profile.isBW}
@@ -232,7 +232,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
                             <button 
                                 key={m}
                                 onClick={() => setFilterMuscle(m)}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-colors ${filterMuscle === m ? 'bg-red-600 text-white' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'}`}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-colors ${filterMuscle === m ? 'bg-primary-500 text-black' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'}`}
                             >
                                 {TRANSLATIONS[lang].muscle[m]}
                             </button>

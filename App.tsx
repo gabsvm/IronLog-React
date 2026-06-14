@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef, Suspense, useCallback } from 'react';
+import React, { useState, useEffect, useRef, Suspense, useCallback, useMemo } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { useTimerContext } from './context/TimerContext';
 import { Layout } from './components/layout/Layout';
@@ -99,6 +99,17 @@ const AppContent = () => {
     const [importData, setImportData] = useState<any>(null);
     const [showForceSyncModal, setShowForceSyncModal] = useState(false);
 
+    // Sync truncation warning — fires when cloud history is capped at 200 entries
+    const [syncTruncatedWarning, setSyncTruncatedWarning] = useState<{ kept: number; total: number } | null>(null);
+    useEffect(() => {
+        const handler = (e: Event) => {
+            const { kept, total } = (e as CustomEvent).detail;
+            setSyncTruncatedWarning({ kept, total });
+        };
+        window.addEventListener('ironlog:sync-truncated', handler);
+        return () => window.removeEventListener('ironlog:sync-truncated', handler);
+    }, []);
+
     const setView = useCallback((newView: typeof view) => {
         if (newView === view) return;
         const currentDepth = VIEW_DEPTH[view] || 1;
@@ -106,6 +117,64 @@ const AppContent = () => {
         const direction = nextDepth > currentDepth ? 'forward' : nextDepth < currentDepth ? 'back' : 'fade';
         withTransition(direction, () => setViewState(newView));
     }, [view]);
+
+    // Command Palette actions — memoized so the array+5 object literals aren't
+    // rebuilt on every parent re-render (was firing on every keystroke during
+    // workouts because activeSession/activeMeso changes propagate here).
+    const commandActions = useMemo<CommandAction[]>(() => {
+        const actions: CommandAction[] = [];
+        if (activeSession) {
+            actions.push({
+                id: 'resume',
+                label: { en: 'Resume active session', es: 'Reanudar sesión activa' },
+                description: { en: activeSession.name, es: activeSession.name },
+                icon: 'Play',
+                accent: 'emerald',
+                badge: lang === 'es' ? 'EN CURSO' : 'LIVE',
+                onSelect: () => setView('workout'),
+                keywords: ['continue', 'resume', 'continuar', 'activa'],
+            });
+        }
+        if (activeMeso) {
+            actions.push({
+                id: 'meso_today',
+                label: { en: 'Continue mesocycle (today)', es: 'Continuar mesociclo (hoy)' },
+                description: { en: `${activeMeso.mesoType || ''} · Week ${activeMeso.week}`, es: `${activeMeso.mesoType || ''} · Semana ${activeMeso.week}` },
+                icon: 'Calendar',
+                accent: 'primary',
+                onSelect: () => setView('home'),
+                keywords: ['program', 'rutina', 'plan'],
+            });
+        }
+        actions.push({
+            id: 'two_block',
+            label: { en: 'Two Block Mass', es: 'Two Block Mass' },
+            description: { en: 'Nick Nilsson · 8 protocols, 6-week cycle', es: 'Nick Nilsson · 8 protocolos, ciclo 6 semanas' },
+            icon: 'Layers',
+            accent: 'amber',
+            onSelect: () => setShowTwoBlockModal(true),
+            keywords: ['nilsson', 'mesocycle', 'accumulation', 'intensification', 'mesociclo'],
+        });
+        actions.push({
+            id: 'freestyle',
+            label: { en: 'Freestyle / WOD / Skill', es: 'Sesión Libre / WOD / Skill' },
+            description: { en: 'Free gym, CrossFit benchmark or calisthenics skill', es: 'Gym libre, WOD CrossFit o skill de calistenia' },
+            icon: 'Dumbbell',
+            accent: 'violet',
+            onSelect: () => setShowFreestyleModal(true),
+            keywords: ['crossfit', 'calisthenics', 'libre', 'wod', 'skill'],
+        });
+        actions.push({
+            id: 'program',
+            label: { en: 'Edit my program', es: 'Editar mi programa' },
+            description: { en: 'Open the routine editor', es: 'Abrir el editor de rutinas' },
+            icon: 'Edit',
+            accent: 'zinc',
+            onSelect: () => setView('program'),
+            keywords: ['routine', 'rutina', 'template', 'plantilla'],
+        });
+        return actions;
+    }, [activeSession, activeMeso, lang, setView]);
 
     // History management logic
     const isPopping = useRef(false);
@@ -408,6 +477,22 @@ const AppContent = () => {
                 </>
             )}
 
+            {syncTruncatedWarning && (
+                <div className="fixed top-safe left-0 right-0 z-[200] flex justify-center px-4 pt-3 pointer-events-none">
+                    <div className="pointer-events-auto flex items-center gap-3 bg-amber-950/90 border border-amber-500/40 text-amber-200 text-xs font-semibold px-4 py-3 rounded-2xl shadow-xl backdrop-blur-md max-w-sm w-full">
+                        <Icon name="AlertTriangle" size={16} className="text-amber-400 shrink-0" />
+                        <span className="flex-1">
+                            {lang === 'es'
+                                ? `Historial en nube limitado a ${syncTruncatedWarning.kept} sesiones (de ${syncTruncatedWarning.total}). El historial local está completo.`
+                                : `Cloud history capped at ${syncTruncatedWarning.kept} of ${syncTruncatedWarning.total} sessions. Local history is complete.`}
+                        </span>
+                        <button onClick={() => setSyncTruncatedWarning(null)} className="text-amber-400 hover:text-white transition-colors">
+                            <Icon name="X" size={16} />
+                        </button>
+                    </div>
+                </div>
+            )}
+
             <RestTimerOverlay />
 
             {/* Freestyle Session Picker (CrossFit, Calisthenics, Free Gym) */}
@@ -436,60 +521,7 @@ const AppContent = () => {
             <CommandPalette
                 isOpen={showCommandPalette}
                 onClose={() => setShowCommandPalette(false)}
-                actions={(() => {
-                    const actions: CommandAction[] = [];
-                    if (activeSession) {
-                        actions.push({
-                            id: 'resume',
-                            label: { en: 'Resume active session', es: 'Reanudar sesión activa' },
-                            description: { en: activeSession.name, es: activeSession.name },
-                            icon: 'Play',
-                            accent: 'emerald',
-                            badge: lang === 'es' ? 'EN CURSO' : 'LIVE',
-                            onSelect: () => setView('workout'),
-                            keywords: ['continue', 'resume', 'continuar', 'activa'],
-                        });
-                    }
-                    if (activeMeso) {
-                        actions.push({
-                            id: 'meso_today',
-                            label: { en: 'Continue mesocycle (today)', es: 'Continuar mesociclo (hoy)' },
-                            description: { en: `${activeMeso.mesoType || ''} · Week ${activeMeso.week}`, es: `${activeMeso.mesoType || ''} · Semana ${activeMeso.week}` },
-                            icon: 'Calendar',
-                            accent: 'primary',
-                            onSelect: () => setView('home'),
-                            keywords: ['program', 'rutina', 'plan'],
-                        });
-                    }
-                    actions.push({
-                        id: 'two_block',
-                        label: { en: 'Two Block Mass', es: 'Two Block Mass' },
-                        description: { en: 'Nick Nilsson · 8 protocols, 6-week cycle', es: 'Nick Nilsson · 8 protocolos, ciclo 6 semanas' },
-                        icon: 'Layers',
-                        accent: 'amber',
-                        onSelect: () => setShowTwoBlockModal(true),
-                        keywords: ['nilsson', 'mesocycle', 'accumulation', 'intensification', 'mesociclo'],
-                    });
-                    actions.push({
-                        id: 'freestyle',
-                        label: { en: 'Freestyle / WOD / Skill', es: 'Sesión Libre / WOD / Skill' },
-                        description: { en: 'Free gym, CrossFit benchmark or calisthenics skill', es: 'Gym libre, WOD CrossFit o skill de calistenia' },
-                        icon: 'Dumbbell',
-                        accent: 'violet',
-                        onSelect: () => setShowFreestyleModal(true),
-                        keywords: ['crossfit', 'calisthenics', 'libre', 'wod', 'skill'],
-                    });
-                    actions.push({
-                        id: 'program',
-                        label: { en: 'Edit my program', es: 'Editar mi programa' },
-                        description: { en: 'Open the routine editor', es: 'Abrir el editor de rutinas' },
-                        icon: 'Edit',
-                        accent: 'zinc',
-                        onSelect: () => setView('program'),
-                        keywords: ['routine', 'rutina', 'template', 'plantilla'],
-                    });
-                    return actions;
-                })()}
+                actions={commandActions}
             />
 
             {/* Standard Modal Overlays */}
