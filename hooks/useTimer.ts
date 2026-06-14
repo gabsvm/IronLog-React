@@ -38,7 +38,8 @@ export const useTimer = (lang: Lang) => {
             };
         `;
         const blob = new Blob([workerCode], { type: 'application/javascript' });
-        workerRef.current = new Worker(URL.createObjectURL(blob));
+        const blobUrl = URL.createObjectURL(blob);
+        workerRef.current = new Worker(blobUrl);
 
         // Request Notification Permission
         if ("Notification" in window && Notification.permission === "default") {
@@ -47,6 +48,10 @@ export const useTimer = (lang: Lang) => {
 
         return () => {
             workerRef.current?.terminate();
+            // Revoke the blob URL — the worker holds its own copy of the code,
+            // so it's safe to free the URL immediately after the worker terminates.
+            // Previously this leaked one blob URL per provider mount (small but real).
+            URL.revokeObjectURL(blobUrl);
         };
     }, []);
 

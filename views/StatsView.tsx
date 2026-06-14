@@ -409,7 +409,7 @@ export const StatsView: React.FC = () => {
                 <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/5 rounded-full blur-[80px] pointer-events-none"></div>
                 <div className="flex justify-between items-center mb-6 relative z-10">
                     <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-2">
-                        <Icon name="Grid" size={14} />
+                        <Icon name="Grid3x3" size={14} />
                         {lang === 'es' ? 'Mapa de Calor Muscular' : 'Muscle Heatmap'}
                     </h3>
                 </div>

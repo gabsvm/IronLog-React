@@ -87,15 +87,15 @@ export const AdminControlPanel: React.FC<Props> = ({ adminEmail }) => {
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 aria-expanded={isOpen}
-                className={`w-full py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors duration-fast ease-natural ${isOpen ? 'bg-zinc-900 text-white' : 'bg-zinc-200 text-zinc-600'}`}
+                className={`w-full py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors duration-fast ease-natural ${isOpen ? 'bg-primary-500/15 text-primary-300 border border-primary-500/30' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'}`}
             >
-                <Icon name="Bot" size={14} /> {isOpen ? 'Close Admin' : 'Admin Panel'}
+                <Icon name="Shield" size={14} /> {isOpen ? 'Close Admin' : 'Admin Panel'}
             </button>
 
             {isOpen && (
-                <div className="mt-4 p-4 bg-zinc-900 rounded-xl border border-white/10 animate-in fade-in slide-in-from-top-2">
+                <div className="mt-3 p-4 bg-white/5 rounded-xl border border-primary-500/20 animate-in fade-in slide-in-from-top-2">
                     <div className="flex items-center gap-2 mb-3">
-                        <Icon name="Shield" size={14} className="text-red-500" />
+                        <Icon name="Crown" size={14} className="text-primary-400" />
                         <span className="text-[10px] font-black text-white uppercase tracking-widest">PRO Manager</span>
                     </div>
 
@@ -106,19 +106,19 @@ export const AdminControlPanel: React.FC<Props> = ({ adminEmail }) => {
                             onChange={(e) => setTargetInput(e.target.value)}
                             placeholder="Email or UID"
                             aria-label="Target user email or UID"
-                            className="w-full bg-black border border-white/10 rounded-lg p-2 text-xs text-white placeholder:text-zinc-600 focus:border-red-500 transition-colors duration-fast"
+                            className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-xs text-white placeholder:text-zinc-600 focus:border-primary-500 focus:outline-none transition-colors duration-fast"
                         />
 
                         <div className="grid grid-cols-2 gap-2">
                             <button
                                 onClick={() => handleSubscriptionChange(true)}
-                                className="py-2 bg-green-600 text-white rounded-lg text-[10px] font-black uppercase tracking-tight hover:bg-green-700 active:scale-95 transition-all duration-fast ease-natural shadow-lg shadow-green-600/20"
+                                className="py-2 bg-primary-500 text-black rounded-lg text-[10px] font-black uppercase tracking-tight hover:bg-primary-400 active:scale-95 transition-all duration-fast ease-natural shadow-lg shadow-primary-500/20"
                             >
                                 Grant PRO
                             </button>
                             <button
                                 onClick={() => handleSubscriptionChange(false)}
-                                className="py-2 bg-red-600 text-white rounded-lg text-[10px] font-black uppercase tracking-tight hover:bg-red-700 active:scale-95 transition-all duration-fast ease-natural shadow-lg shadow-red-600/20"
+                                className="py-2 bg-red-500/15 text-red-400 border border-red-500/30 rounded-lg text-[10px] font-black uppercase tracking-tight hover:bg-red-500/25 active:scale-95 transition-all duration-fast ease-natural"
                             >
                                 Revoke PRO
                             </button>
@@ -127,7 +127,7 @@ export const AdminControlPanel: React.FC<Props> = ({ adminEmail }) => {
                         {status && (
                             <div
                                 role="status"
-                                className={`text-[10px] font-bold p-2 rounded-lg ${status.type === 'success' ? 'bg-green-500/10 text-green-500' : status.type === 'error' ? 'bg-red-500/10 text-red-500' : 'bg-blue-500/10 text-blue-400'}`}
+                                className={`text-[10px] font-bold p-2 rounded-lg ${status.type === 'success' ? 'bg-primary-500/10 text-primary-300 border border-primary-500/20' : status.type === 'error' ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-white/5 text-zinc-300 border border-white/10'}`}
                             >
                                 {status.msg}
                             </div>
@@ -138,7 +138,7 @@ export const AdminControlPanel: React.FC<Props> = ({ adminEmail }) => {
 
             <button
                 onClick={() => setShowTemplateManager(true)}
-                className="w-full py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors duration-fast ease-natural bg-purple-600 text-white"
+                className="w-full py-2 mt-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors duration-fast ease-natural bg-primary-500 text-black hover:bg-primary-400 shadow-md shadow-primary-500/20"
             >
                 <Icon name="Layout" size={14} /> Manage Templates
             </button>

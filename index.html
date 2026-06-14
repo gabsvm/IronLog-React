@@ -5,8 +5,9 @@
   <meta charset="UTF-8" />
   <link rel="icon" type="image/png" href="./icon-192.png" />
   <link rel="manifest" href="./manifest.json" />
+  <!-- viewport-fit=cover for notch support; allow pinch-zoom for WCAG 1.4.4 compliance -->
   <meta name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#000000" />
   <meta name="description"
     content="Professional Hypertrophy Tracker with RP-style progression, analytics, and offline support.">
@@ -73,16 +74,9 @@
       }
     }
 
-    // REGISTER SERVICE WORKER
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function () {
-        navigator.serviceWorker.register('/sw.js').then(function (registration) {
-          console.log('✅ ServiceWorker registration successful with scope: ', registration.scope);
-        }, function (err) {
-          console.log('❌ ServiceWorker registration failed: ', err);
-        });
-      });
-    }
+    // Service Worker is registered from index.tsx (with delay + better error handling).
+    // Do NOT register here as well — duplicate registrations have caused intermittent
+    // scope conflicts and "invalid state" errors on iOS PWAs.
   </script>
 
   <style>

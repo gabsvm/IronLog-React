@@ -110,7 +110,7 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
                     <div className="fixed bottom-6 right-6 z-10">
                         <button 
                             onClick={() => setMode('create')}
-                            className="w-14 h-14 bg-primary-500 rounded-full text-white shadow-xl shadow-primary-500/25 flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-fast"
+                            className="w-14 h-14 bg-primary-500 rounded-full text-black shadow-xl shadow-primary-500/25 flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-fast"
                         >
                             <Icon name="Plus" size={24} />
                         </button>
