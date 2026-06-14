@@ -162,61 +162,63 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
 
         const ex = sessionExercises.find(e => e.instanceId === exInstanceId);
         const set = ex?.sets.find(s => s.id === setId);
-        if (set) {
-            const willComplete = !set.completed;
-            if (willComplete) {
-                triggerHaptic('success');
-                const isMetabolite = activeMeso?.mesoType === 'metabolite';
-                let dur = isMetabolite ? 60 : 120;
+        // Guard: skipped sets must not trigger the rest timer (the state mutation
+        // already returns early above, but sessionExercises here is still pre-mutation).
+        if (!set || set.skipped) return;
 
-                // Per-exercise custom rest preset takes highest priority
-                if (ex?.defaultRestSeconds && ex.defaultRestSeconds > 0) {
-                    dur = ex.defaultRestSeconds;
-                } else {
-                    // Calisthenics Specific Durations
-                    if (ex?.isIsometric) {
-                        dur = 150; // CNS heavy skills need more rest (~2.5m)
-                    } else if (ex?.isBodyweight) {
-                        dur = isMetabolite ? 45 : 90;
-                    }
+        const willComplete = !set.completed;
+        if (willComplete) {
+            triggerHaptic('success');
+            const isMetabolite = activeMeso?.mesoType === 'metabolite';
+            let dur = isMetabolite ? 60 : 120;
 
-                    if (set.type === 'myorep' || set.type === 'myorep_match' || set.type === 'giant') dur = 30;
-                    if (set.type === 'cluster') dur = 15;
-                    if (set.type === 'drop') dur = 0; // Drop sets have no rest — skip timer
-                    if (set.type === 'rest_pause') dur = 20;     // Nilsson 2-Block: 20s between rest-pause mini-sets
-                    if (set.type === 'time_volume') dur = 10;    // Nilsson 2-Block: starts at 10s (escalates manually per protocol)
-                    if (set.type === 'triple_add') dur = 10;     // Nilsson 2-Block: 10s between fiber-type drops within Triple Add
-
-                    // Interval cardio: use the set's programmed rest, or protocol default
-                    if (ex?.cardioType === 'tabata') dur = 10;
-                    else if (ex?.cardioType === 'hiit') dur = set.restSeconds || 60;
-                }
-
-                // EMOM self-regulates rest via minute intervals — skip auto rest timer
-                if (set.type === 'emom') return;
-                // Drop sets: no rest between drops
-                if (set.type === 'drop' && !ex?.defaultRestSeconds) return;
-
-                // Superset: only start rest timer after BOTH sides of the superset complete
-                // the same round (i.e. both have the same number of completed working sets).
-                if (ex?.supersetId) {
-                    const partners = sessionExercises.filter(e => e.supersetId === ex.supersetId && e.instanceId !== exInstanceId);
-                    if (partners.length > 0) {
-                        // How many working sets will this exercise have completed after this one?
-                        const thisCompletedAfter = (ex.sets || []).filter(s => s.type !== 'warmup' && s.type !== 'avt_hop' && s.completed).length + 1;
-                        // If any partner hasn't reached the same count yet → hold the timer
-                        const allPartnersInSync = partners.every(p => {
-                            const pCompleted = (p.sets || []).filter(s => s.type !== 'warmup' && s.type !== 'avt_hop' && s.completed).length;
-                            return pCompleted >= thisCompletedAfter;
-                        });
-                        if (!allPartnersInSync) return;
-                    }
-                }
-
-                setRestTimer({ active: true, duration: dur, timeLeft: dur, endAt: Date.now() + (dur * 1000) });
+            // Per-exercise custom rest preset takes highest priority
+            if (ex?.defaultRestSeconds && ex.defaultRestSeconds > 0) {
+                dur = ex.defaultRestSeconds;
             } else {
-                triggerHaptic('light');
+                // Calisthenics Specific Durations
+                if (ex?.isIsometric) {
+                    dur = 150; // CNS heavy skills need more rest (~2.5m)
+                } else if (ex?.isBodyweight) {
+                    dur = isMetabolite ? 45 : 90;
+                }
+
+                if (set.type === 'myorep' || set.type === 'myorep_match' || set.type === 'giant') dur = 30;
+                if (set.type === 'cluster') dur = 15;
+                if (set.type === 'drop') dur = 0; // Drop sets have no rest — skip timer
+                if (set.type === 'rest_pause') dur = 20;     // Nilsson 2-Block: 20s between rest-pause mini-sets
+                if (set.type === 'time_volume') dur = 10;    // Nilsson 2-Block: starts at 10s (escalates manually per protocol)
+                if (set.type === 'triple_add') dur = 10;     // Nilsson 2-Block: 10s between fiber-type drops within Triple Add
+
+                // Interval cardio: use the set's programmed rest, or protocol default
+                if (ex?.cardioType === 'tabata') dur = 10;
+                else if (ex?.cardioType === 'hiit') dur = set.restSeconds || 60;
             }
+
+            // EMOM self-regulates rest via minute intervals — skip auto rest timer
+            if (set.type === 'emom') return;
+            // Drop sets: no rest between drops
+            if (set.type === 'drop' && !ex?.defaultRestSeconds) return;
+
+            // Superset: only start rest timer after BOTH sides of the superset complete
+            // the same round (i.e. both have the same number of completed working sets).
+            if (ex?.supersetId) {
+                const partners = sessionExercises.filter(e => e.supersetId === ex.supersetId && e.instanceId !== exInstanceId);
+                if (partners.length > 0) {
+                    // How many working sets will this exercise have completed after this one?
+                    const thisCompletedAfter = (ex.sets || []).filter(s => s.type !== 'warmup' && s.type !== 'avt_hop' && s.completed).length + 1;
+                    // If any partner hasn't reached the same count yet → hold the timer
+                    const allPartnersInSync = partners.every(p => {
+                        const pCompleted = (p.sets || []).filter(s => s.type !== 'warmup' && s.type !== 'avt_hop' && s.completed).length;
+                        return pCompleted >= thisCompletedAfter;
+                    });
+                    if (!allPartnersInSync) return;
+                }
+            }
+
+            setRestTimer({ active: true, duration: dur, timeLeft: dur, endAt: Date.now() + (dur * 1000) });
+        } else {
+            triggerHaptic('light');
         }
 
     }, [activeMeso, sessionExercises, setActiveSession, setRestTimer]);

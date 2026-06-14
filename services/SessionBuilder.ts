@@ -27,9 +27,10 @@ export class SessionBuilder {
         const sessionExs = (programDay.slots || []).map((slotDef, sIdx) => {
             if (!slotDef) return null;
             const exId = dayPlan[sIdx];
-            let exDef = exId ? safeExercises.find(e => e.id === exId) : safeExercises.find(e => e.muscle === slotDef.muscle);
-            if (!exDef && safeExercises.length > 0) exDef = safeExercises[0];
-            if (!exDef) exDef = { id: 'unknown', name: 'Unknown', muscle: slotDef.muscle || 'CHEST' };
+            // Priority: exact ID match → same-muscle fallback → typed placeholder (never random index 0)
+            let exDef = exId ? safeExercises.find(e => e.id === exId) : null;
+            if (!exDef) exDef = safeExercises.find(e => e.muscle === slotDef.muscle) ?? null;
+            if (!exDef) exDef = { id: `placeholder_${slotDef.muscle}_${sIdx}`, name: slotDef.muscle || 'Unknown', muscle: slotDef.muscle || 'CHEST' };
 
             let setTarget = slotDef.setTarget || 3;
             

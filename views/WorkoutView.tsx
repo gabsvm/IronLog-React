@@ -44,6 +44,33 @@ interface WorkoutViewProps {
 
 import { useStore } from '../lib/store';
 
+// Module-scope constants — never change at runtime. Previously these maps were
+// allocated on every render of the set-type modal IIFE (~12 entries each), and
+// the modal can re-render frequently during a workout because `applyToAll`
+// state changes per click. Lifting them out drops 24 object allocations and
+// 100+ string allocations per render of the modal.
+const SET_TYPE_COLORS: Record<string, string> = {
+    regular: 'bg-zinc-800 text-zinc-300',
+    warmup: 'bg-yellow-500/20 text-yellow-400',
+    myorep: 'bg-purple-500/20 text-purple-400',
+    myorep_match: 'bg-purple-400/20 text-purple-300',
+    giant: 'bg-orange-500/20 text-orange-400',
+    top: 'bg-primary-500/20 text-primary-400',
+    backoff: 'bg-blue-500/20 text-blue-400',
+    cluster: 'bg-emerald-500/20 text-emerald-400',
+    emom: 'bg-cyan-500/20 text-cyan-400',
+    drop: 'bg-teal-500/20 text-teal-400',
+    rest_pause: 'bg-rose-500/20 text-rose-400',
+    time_volume: 'bg-amber-500/20 text-amber-400',
+    triple_add: 'bg-pink-500/20 text-pink-400',
+};
+const SET_TYPE_ICONS: Record<string, string> = {
+    regular: 'Circle', warmup: 'Zap', myorep: 'Repeat', myorep_match: 'Repeat2',
+    giant: 'Layers', top: 'TrendingUp', backoff: 'TrendingDown', cluster: 'Grid3x3',
+    emom: 'Timer', drop: 'TrendingDown',
+    rest_pause: 'Pause', time_volume: 'Clock', triple_add: 'TrendingUp',
+};
+
 // Container Component
 export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, onBack }) => {
     const { lang, config, exercises, logs, tutorialProgress, markTutorialSeen } = useApp();
@@ -393,7 +420,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                 return (
                     <div className="h-0.5 bg-zinc-900 relative overflow-hidden">
                         <div
-                            className={`h-full bg-gradient-to-r ${isCalisthenicsSession ? 'from-violet-600 to-indigo-500' : 'from-primary-600 to-orange-500'} transition-all duration-500 ease-out`}
+                            className={`h-full bg-gradient-to-r ${isCalisthenicsSession ? 'from-violet-600 to-indigo-500' : 'from-primary-400 to-primary-600'} transition-all duration-500 ease-out`}
                             style={{ width: `${pct}%` }}
                         />
                     </div>
@@ -403,7 +430,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
 
             {/* --- Linking Banner --- */}
             {ctrl.linkingId && (
-                <div className="bg-orange-500 text-white p-2 text-center text-xs font-bold animate-in slide-in-from-top z-20 shadow-md">
+                <div className="bg-primary-500 text-black p-2 text-center text-xs font-bold animate-in slide-in-from-top z-20 shadow-md shadow-primary-500/30">
                     {t.selectToLink}
                     <button onClick={() => ctrl.setLinkingId(null)} className="ml-4 underline opacity-80 hover:opacity-100">{t.cancel}</button>
                 </div>
@@ -608,27 +635,8 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
             )}
 
             {ctrl.changingSetType && (() => {
-                const colors: Record<string, string> = {
-                    regular: 'bg-zinc-800 text-zinc-300',
-                    warmup: 'bg-yellow-500/20 text-yellow-400',
-                    myorep: 'bg-purple-500/20 text-purple-400',
-                    myorep_match: 'bg-purple-400/20 text-purple-300',
-                    giant: 'bg-orange-500/20 text-orange-400',
-                    top: 'bg-primary-500/20 text-primary-400',
-                    backoff: 'bg-blue-500/20 text-blue-400',
-                    cluster: 'bg-emerald-500/20 text-emerald-400',
-                    emom: 'bg-cyan-500/20 text-cyan-400',
-                    drop: 'bg-teal-500/20 text-teal-400',
-                    rest_pause: 'bg-rose-500/20 text-rose-400',
-                    time_volume: 'bg-amber-500/20 text-amber-400',
-                    triple_add: 'bg-pink-500/20 text-pink-400',
-                };
-                const icons: Record<string, string> = {
-                    regular: 'Circle', warmup: 'Zap', myorep: 'Repeat', myorep_match: 'Repeat2',
-                    giant: 'Layers', top: 'TrendingUp', backoff: 'TrendingDown', cluster: 'Grid3x3',
-                    emom: 'Timer', drop: 'TrendingDown',
-                    rest_pause: 'Pause', time_volume: 'Clock', triple_add: 'TrendingUp',
-                };
+                const colors = SET_TYPE_COLORS;
+                const icons = SET_TYPE_ICONS;
                 const exForModal = sessionExercises.find(e => e.instanceId === ctrl.changingSetType!.exId);
                 const pendingSets = (exForModal?.sets || []).filter(s => !s.completed && s.type !== 'avt_hop');
                 const hasMultipleSets = pendingSets.length > 1;

@@ -20,11 +20,16 @@ export const useStore = create<AppStateStore>((set, get) => ({
     activeMeso: null,
     isStoreLoading: true,
     _init: async () => {
-        const [session, meso] = await Promise.all([
-            db.get<ActiveSession | null>('il_session_v16', null),
-            db.get<MesoCycle | null>('il_meso_v16', null)
-        ]);
-        set({ activeSession: session, activeMeso: meso, isStoreLoading: false });
+        try {
+            const [session, meso] = await Promise.all([
+                db.get<ActiveSession | null>('il_session_v16', null),
+                db.get<MesoCycle | null>('il_meso_v16', null)
+            ]);
+            set({ activeSession: session, activeMeso: meso, isStoreLoading: false });
+        } catch (e) {
+            console.error('[Store] IndexedDB init failed — defaulting to empty state:', e);
+            set({ isStoreLoading: false });
+        }
     },
     setActiveSession: (val) => {
         set((state) => {

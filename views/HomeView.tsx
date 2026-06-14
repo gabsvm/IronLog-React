@@ -95,7 +95,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
 
     // Single O(N) scan to compute all log-derived metrics for the Home screen
     const {
-        uniqueDaysDone, weekComplete, nextWorkoutIdx, isSessionActive, nextDayDef, logsForWeek,
+        uniqueDaysDone, weekComplete, nextWorkoutIdx, isSessionActive, logsForWeek,
         estimatedMin, adherencePct
     } = useMemo(() => {
         if (!activeMeso) {
@@ -143,12 +143,11 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
             }
         }
 
-        return { 
-            uniqueDaysDone: daysDone, 
-            weekComplete: isComplete, 
-            nextWorkoutIdx: nextIdx, 
-            isSessionActive: active, 
-            nextDayDef: nextDef, 
+        return {
+            uniqueDaysDone: daysDone,
+            weekComplete: isComplete,
+            nextWorkoutIdx: nextIdx,
+            isSessionActive: active,
             logsForWeek: currentWeekLogs,
             estimatedMin: est,
             adherencePct: pct
@@ -163,6 +162,24 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
         }
     }, [nextWorkoutIdx]);
 
+    // Memoized estimate for the currently selected day. Previously this ran as
+    // an IIFE inside the JSX, so the O(N) scan over logs fired on every render —
+    // including every rest-timer tick that re-renders the home shell.
+    const selectedDayEstimatedMin = useMemo(() => {
+        if (!activeMeso) return 0;
+        const dayDef = safeProgram[selectedDayIdx];
+        if (!dayDef) return 0;
+        const sameDayLogs = safeLogs
+            .filter(l => l.mesoId === activeMeso.id && l.dayIdx === selectedDayIdx && !l.skipped && l.duration > 0)
+            .slice(-3);
+        if (sameDayLogs.length > 0) {
+            const avgSec = sameDayLogs.reduce((s, l) => s + l.duration, 0) / sameDayLogs.length;
+            return Math.round(avgSec / 60);
+        }
+        const totalSets = (dayDef.slots || []).reduce((s: number, slot: any) => s + (slot.setTarget || 3), 0);
+        return totalSets > 0 ? Math.round(totalSets * 2.5) : 0;
+    }, [activeMeso, safeLogs, safeProgram, selectedDayIdx]);
+
     // Handlers
     const handleSkipClick = (e: React.MouseEvent, dayIdx: number) => { e.stopPropagation(); setSkipConfirmationId(dayIdx); };
     const confirmSkip = () => {
@@ -172,7 +189,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
         }
         setSkipConfirmationId(null);
     };
-    const handleFinishMeso = (exportReport: boolean) => { setActiveMeso(null); setShowCompleteModal(null); };
+    const handleFinishMeso = () => { setActiveMeso(null); setShowCompleteModal(null); };
     const handleFinishWeek = () => {
         if (!activeMeso) return;
         setActiveMeso(prev => prev ? {
@@ -433,18 +450,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                     const isNext = selectedDayIdx === nextWorkoutIdx;
                     const isSelectedActive = activeSession && activeSession.mesoId === activeMeso.id && activeSession.dayIdx === selectedDayIdx;
 
-                    // Estimate duration for this day
-                    const dayEstimatedMin = (() => {
-                        const sameDayLogs = safeLogs
-                            .filter(l => l.mesoId === activeMeso.id && l.dayIdx === selectedDayIdx && !l.skipped && l.duration > 0)
-                            .slice(-3);
-                        if (sameDayLogs.length > 0) {
-                            const avgSec = sameDayLogs.reduce((s, l) => s + l.duration, 0) / sameDayLogs.length;
-                            return Math.round(avgSec / 60);
-                        }
-                        const totalSets = (dayDef.slots || []).reduce((s: number, slot: any) => s + (slot.setTarget || 3), 0);
-                        return totalSets > 0 ? Math.round(totalSets * 2.5) : 0;
-                    })();
+                    // Estimate duration for this day — pre-memoized below the IIFE
+                    const dayEstimatedMin = selectedDayEstimatedMin;
 
                     return (
                         <div 
@@ -567,9 +574,9 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
 
             {/* Copy Last Session */}
             {(() => {
+                // logs are stored newest-first ([newest, ..., oldest]), so [0] is the most recent
                 const lastLog = safeLogs
-                    .filter((l: any) => !l.skipped && l.mesoId === activeMeso.id && l.dayIdx < safeProgram.length)
-                    .slice(-1)[0];
+                    .filter((l: any) => !l.skipped && l.mesoId === activeMeso.id && l.dayIdx < safeProgram.length)[0];
                 if (!lastLog) return null;
                 const logName = lastLog.name || (lang === 'es' ? 'Última Sesión' : 'Last Session');
                 const exNames = (lastLog.exercises || []).slice(0, 3).map((e: any) => {
@@ -735,7 +742,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                                 <p className="text-zinc-400 text-sm mb-6">{t.finishMesoConfirm}</p>
                                 <div className="flex gap-3">
                                     <Button variant="secondary" onClick={() => setShowCompleteModal(null)} fullWidth>{t.cancel}</Button>
-                                    <Button onClick={() => handleFinishMeso(false)} fullWidth>{t.completed}</Button>
+                                    <Button onClick={() => handleFinishMeso()} fullWidth>{t.completed}</Button>
                                 </div>
                             </>
                         ) : ( // 'week'

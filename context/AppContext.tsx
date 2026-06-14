@@ -343,10 +343,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
             if (pendingCloudData.customFoods) setCustomFoods(pendingCloudData.customFoods);
 
             // Sync timestamp to prevent immediate re-upload of old local state
-            if (pendingCloudData.lastUpdated) {
-                // @ts-ignore
-                setLocalLastUpdated(pendingCloudData.lastUpdated);
-            }
+            setLocalLastUpdated(pendingCloudData.lastUpdated ?? Date.now());
 
             // Mark onboarding as complete
             setHasSeenOnboarding(true);
