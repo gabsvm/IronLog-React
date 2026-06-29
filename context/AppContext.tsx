@@ -10,9 +10,8 @@ import { TimerProvider } from './TimerContext';
 import { HomeSkeleton } from '../components/ui/SkeletonLoader';
 import { AuthProvider, useAuth } from './AuthContext';
 import { syncService } from '../services/syncService';
-import { collection, getDocs, orderBy, query } from 'firebase/firestore';
-import { db as firestoreDb } from '../lib/firebase';
 import { useStore } from '../lib/store';
+import { getFirebaseServices, isFirebaseConfigured } from '../lib/firebaseLoader';
 
 interface AppContextType extends Omit<AppState, 'activeSession' | 'activeMeso'> {
     lang: Lang;
@@ -68,6 +67,13 @@ interface AppContextType extends Omit<AppState, 'activeSession' | 'activeMeso'> 
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
+type AppPreferencesContextType = Pick<AppContextType, 'lang' | 'setLang' | 'theme' | 'setTheme' | 'colorTheme' | 'setColorTheme' | 'deferredPrompt' | 'installApp' | 'isStandalone'>;
+type AppConfigContextType = Pick<AppContextType, 'config' | 'setConfig'>;
+type TutorialContextType = Pick<AppContextType, 'tutorialProgress' | 'markTutorialSeen' | 'resetTutorials'>;
+
+const AppPreferencesContext = createContext<AppPreferencesContextType | undefined>(undefined);
+const AppConfigContext = createContext<AppConfigContextType | undefined>(undefined);
+const TutorialContext = createContext<TutorialContextType | undefined>(undefined);
 
 const INITIAL_TUTORIAL_STATE: TutorialState = {
     home: false, workout: false, history: false, stats: false, mesoSettings: false, nutrition: false
@@ -140,11 +146,15 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
 
     // --- FETCH GLOBAL DATA ---
     useEffect(() => {
-        if (!firestoreDb || !isOnline) return;
+        if (!isFirebaseConfigured() || !isOnline) return;
+        let cancelled = false;
         const fetchData = async () => {
             try {
-                const qTpl = query(collection(firestoreDb, "global_templates"), orderBy("order"));
-                const tplSnapshot = await getDocs(qTpl);
+                const { db, firestoreApi } = await getFirebaseServices();
+                if (!db || cancelled) return;
+
+                const qTpl = firestoreApi.query(firestoreApi.collection(db, "global_templates"), firestoreApi.orderBy("order"));
+                const tplSnapshot = await firestoreApi.getDocs(qTpl);
                 const fetchedTemplates: GlobalTemplate[] = [];
                 tplSnapshot.forEach((doc) => fetchedTemplates.push({ id: doc.id, ...doc.data() } as GlobalTemplate));
 
@@ -165,14 +175,14 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                 // Sort again to respect 'order' property
                 mergedTemplates.sort((a, b) => a.order - b.order);
 
-                if (mergedTemplates.length > 0) setGlobalTemplates(mergedTemplates);
+                if (!cancelled && mergedTemplates.length > 0) setGlobalTemplates(mergedTemplates);
 
-                const qEx = collection(firestoreDb, "global_exercises");
-                const exSnapshot = await getDocs(qEx);
+                const qEx = firestoreApi.collection(db, "global_exercises");
+                const exSnapshot = await firestoreApi.getDocs(qEx);
                 const fetchedExercises: ExerciseDef[] = [];
                 exSnapshot.forEach((doc) => fetchedExercises.push({ id: doc.id, ...doc.data() } as ExerciseDef));
 
-                if (fetchedExercises.length > 0) {
+                if (!cancelled && fetchedExercises.length > 0) {
                     setExercises(prev => {
                         const currentIds = new Set(prev.map(e => e.id));
                         const newExs = fetchedExercises.filter(e => !currentIds.has(e.id));
@@ -184,6 +194,9 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
             }
         };
         fetchData();
+        return () => {
+            cancelled = true;
+        };
     }, [isOnline, user, setExercises]);
 
     // --- PWA INSTALL HANDLER ---
@@ -400,6 +413,19 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
 
 
     const configState = useMemo(() => ({ showRIR, rpEnabled, rpTargetRIR, keepScreenOn, plateInventory }), [showRIR, rpEnabled, rpTargetRIR, keepScreenOn, plateInventory]);
+    const preferencesValue = useMemo(() => ({
+        lang, setLang, theme, setTheme, colorTheme, setColorTheme,
+        deferredPrompt, installApp, isStandalone,
+    }), [lang, setLang, theme, setTheme, colorTheme, setColorTheme, deferredPrompt, installApp, isStandalone]);
+    const configValue = useMemo(() => ({
+        config: configState,
+        setConfig,
+    }), [configState, setConfig]);
+    const tutorialValue = useMemo(() => ({
+        tutorialProgress,
+        markTutorialSeen,
+        resetTutorials,
+    }), [tutorialProgress, markTutorialSeen, resetTutorials]);
 
     const contextValue = useMemo(() => ({
         lang, setLang, theme, setTheme, colorTheme, setColorTheme,
@@ -449,9 +475,15 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
 
     return (
         <AppContext.Provider value={contextValue}>
-            <TimerProvider>
-                {children}
-            </TimerProvider>
+            <AppPreferencesContext.Provider value={preferencesValue}>
+                <AppConfigContext.Provider value={configValue}>
+                    <TutorialContext.Provider value={tutorialValue}>
+                        <TimerProvider>
+                            {children}
+                        </TimerProvider>
+                    </TutorialContext.Provider>
+                </AppConfigContext.Provider>
+            </AppPreferencesContext.Provider>
         </AppContext.Provider>
     );
 };
@@ -459,5 +491,23 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
 export const useApp = () => {
     const context = useContext(AppContext);
     if (!context) throw new Error('useApp must be used within an AppProvider');
+    return context;
+};
+
+export const useAppPreferences = () => {
+    const context = useContext(AppPreferencesContext);
+    if (!context) throw new Error('useAppPreferences must be used within an AppProvider');
+    return context;
+};
+
+export const useAppConfig = () => {
+    const context = useContext(AppConfigContext);
+    if (!context) throw new Error('useAppConfig must be used within an AppProvider');
+    return context;
+};
+
+export const useTutorial = () => {
+    const context = useContext(TutorialContext);
+    if (!context) throw new Error('useTutorial must be used within an AppProvider');
     return context;
 };

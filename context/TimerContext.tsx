@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, PropsWithChildren } from 'react';
 import { useTimer, TimerState } from '../hooks/useTimer';
-import { useApp } from './AppContext'; // Import App Context to get Lang
+import { useAppPreferences } from './AppContext';
 
 interface TimerContextType {
     restTimer: TimerState;
@@ -11,8 +11,7 @@ interface TimerContextType {
 const TimerContext = createContext<TimerContextType | undefined>(undefined);
 
 export const TimerProvider = ({ children }: PropsWithChildren) => {
-    // We can use useApp here because TimerProvider is nested inside AppProvider in App.tsx
-    const { lang } = useApp(); 
+    const { lang } = useAppPreferences();
     const { restTimer, setRestTimer } = useTimer(lang);
     
     return (

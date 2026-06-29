@@ -1,6 +1,6 @@
 
 import React, { useMemo, useState, useCallback, useEffect, startTransition } from 'react';
-import { useApp } from '../context/AppContext';
+import { useApp, useAppConfig, useAppPreferences, useTutorial } from '../context/AppContext';
 import { TRANSLATIONS } from '../constants';
 import { Icon } from '../components/ui/Icon';
 import { Button } from '../components/ui/Button';
@@ -73,7 +73,10 @@ const SET_TYPE_ICONS: Record<string, string> = {
 
 // Container Component
 export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, onBack }) => {
-    const { lang, config, exercises, logs, tutorialProgress, markTutorialSeen } = useApp();
+    const { exercises, logs } = useApp();
+    const { lang } = useAppPreferences();
+    const { config } = useAppConfig();
+    const { tutorialProgress, markTutorialSeen } = useTutorial();
     const activeSession = useStore(state => state.activeSession);
     const activeMeso = useStore(state => state.activeMeso);
     const t = TRANSLATIONS[lang];

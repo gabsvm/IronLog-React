@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useApp } from '../../context/AppContext';
+import { useAppPreferences } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { usePro } from '../../hooks/usePro';
 import { TRANSLATIONS } from '../../constants';
@@ -17,7 +17,7 @@ interface LayoutProps {
 }
 
 export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenSettings, onOpenCommandPalette }) => {
-    const { lang } = useApp();
+    const { lang } = useAppPreferences();
     const { user } = useAuth();
     const { isPro } = usePro();
     const t = TRANSLATIONS[lang];

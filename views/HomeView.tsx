@@ -1,6 +1,6 @@
 
 import React, { useState, Suspense, useMemo, useEffect } from 'react';
-import { useApp } from '../context/AppContext';
+import { useApp, useAppPreferences, useTutorial } from '../context/AppContext';
 import { TRANSLATIONS } from '../constants';
 import { Icon } from '../components/ui/Icon';
 import { Button } from '../components/ui/Button';
@@ -33,7 +33,9 @@ interface HomeViewProps {
 }
 
 export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram, onSkipSession, onStartFreeSession }) => {
-    const { program, lang, logs, isAppLoading, setProgram, tutorialProgress, markTutorialSeen, globalTemplates } = useApp();
+    const { program, logs, isAppLoading, setProgram, globalTemplates } = useApp();
+    const { lang } = useAppPreferences();
+    const { tutorialProgress, markTutorialSeen } = useTutorial();
     const activeSession = useStore(state => state.activeSession);
     const activeMeso = useStore(state => state.activeMeso);
     const setActiveMeso = useStore(state => state.setActiveMeso);

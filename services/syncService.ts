@@ -1,7 +1,6 @@
 
-import { doc, getDoc, writeBatch, setDoc, updateDoc } from "firebase/firestore";
-import { db, auth } from "../lib/firebase"; // Import Auth to get current email
 import { AppState } from "../types";
+import { getFirebaseServices } from "../lib/firebaseLoader";
 
 /**
  * Firestore no soporta valores `undefined`.
@@ -60,13 +59,14 @@ export const syncService = {
      * Used for FREE users so Admin can find them.
      */
     uploadUserIdentity: async (userId: string, email: string) => {
+        const { db, firestoreApi } = await getFirebaseServices();
         if (!userId || !db) return;
         // Avoid redundant writes if already synced this session
         if ((window as any)._lastSyncedId === userId) return;
 
         try {
-            const userRef = doc(db, "users", userId);
-            await setDoc(userRef, {
+            const userRef = firestoreApi.doc(db, "users", userId);
+            await firestoreApi.setDoc(userRef, {
                 email: email,
                 lastSeen: Date.now(),
                 uid: userId
@@ -86,10 +86,11 @@ export const syncService = {
      * writeBatch setDoc to avoid touching unrelated fields.
      */
     uploadSessionOnly: async (userId: string, session: AppState['activeSession'], lastUpdated: number) => {
+        const { db, firestoreApi } = await getFirebaseServices();
         if (!userId || !db) return;
         try {
-            const userRef = doc(db, "users", userId);
-            await updateDoc(userRef, sanitizeForFirestore({ activeSession: session ?? null, lastUpdated }));
+            const userRef = firestoreApi.doc(db, "users", userId);
+            await firestoreApi.updateDoc(userRef, sanitizeForFirestore({ activeSession: session ?? null, lastUpdated }));
         } catch (error: any) {
             // updateDoc fails if the document doesn't exist yet (new user before first full upload).
             // Silently ignore — the next uploadState will create it.
@@ -101,11 +102,12 @@ export const syncService = {
      * SUBIDA (PUSH): Envía el estado local a Firebase.
      */
     uploadState: async (userId: string, state: Partial<AppState>) => {
+        const { db, auth, firestoreApi } = await getFirebaseServices();
         if (!userId || !db) return;
 
         try {
-            const batch = writeBatch(db);
-            const userRef = doc(db, "users", userId);
+            const batch = firestoreApi.writeBatch(db);
+            const userRef = firestoreApi.doc(db, "users", userId);
 
             // 1. Preparar Meso Activo (Serializar Arrays Anidados para evitar error de Firestore)
             const safeActiveMeso = serializeMeso(state.activeMeso);
@@ -135,7 +137,7 @@ export const syncService = {
 
             // 3. Logs (History) in sub-collection
             if (state.logs && state.logs.length > 0) {
-                const logsRef = doc(db, "users", userId, "data", "history");
+                const logsRef = firestoreApi.doc(db, "users", userId, "data", "history");
                 let logsData = sanitizeForFirestore({ logs: state.logs });
 
                 // Firestore document limit is 1MB. Safety check at 900KB.
@@ -165,11 +167,12 @@ export const syncService = {
      * DESCARGA (PULL): Obtiene datos de Firebase.
      */
     downloadState: async (userId: string): Promise<Partial<AppState> | null> => {
+        const { db, firestoreApi } = await getFirebaseServices();
         if (!userId || !db) return null;
 
         try {
-            const userRef = doc(db, "users", userId);
-            const userSnap = await getDoc(userRef);
+            const userRef = firestoreApi.doc(db, "users", userId);
+            const userSnap = await firestoreApi.getDoc(userRef);
 
             if (userSnap.exists()) {
                 const data = userSnap.data();
@@ -177,8 +180,8 @@ export const syncService = {
                 // Deserializar Meso Activo (Map -> Array[][])
                 const safeActiveMeso = deserializeMeso(data.activeMeso);
 
-                const logsRef = doc(db, "users", userId, "data", "history");
-                const logsSnap = await getDoc(logsRef);
+                const logsRef = firestoreApi.doc(db, "users", userId, "data", "history");
+                const logsSnap = await firestoreApi.getDoc(logsRef);
                 const logsData = logsSnap.exists() ? logsSnap.data().logs : [];
 
                 return {
