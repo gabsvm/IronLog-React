@@ -13,8 +13,16 @@ export default defineConfig(() => {
       target: 'esnext', // Modern browsers for smaller bundle
       minify: 'esbuild',
       cssCodeSplit: true, // Split CSS by chunk
+      modulePreload: {
+        resolveDependencies: (_filename, deps) => deps.filter(dep =>
+          !dep.includes('vendor-firebase') &&
+          !dep.includes('vendor-charts') &&
+          !dep.includes('vendor-pdf')
+        ),
+      },
       rollupOptions: {
         output: {
+          hoistTransitiveImports: false,
           manualChunks: (id) => {
             // Core React Vendor
             if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/scheduler')) {

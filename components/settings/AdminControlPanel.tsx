@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { collection, doc, getDocs, query, setDoc, where } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
 import { Icon } from '../ui/Icon';
 import { AdminTemplateManager } from '../admin/AdminTemplateManager';
+import { getFirebaseServices } from '../../lib/firebaseLoader';
 
 interface Props {
     adminEmail: string | undefined;
@@ -24,6 +23,7 @@ export const AdminControlPanel: React.FC<Props> = ({ adminEmail }) => {
     const [showTemplateManager, setShowTemplateManager] = useState(false);
 
     const resolveUid = async (input: string): Promise<string | null> => {
+        const { db, firestoreApi } = await getFirebaseServices();
         if (!db) return null;
         const trimmed = input.trim();
         if (!trimmed) return null;
@@ -31,9 +31,9 @@ export const AdminControlPanel: React.FC<Props> = ({ adminEmail }) => {
         if (trimmed.includes('@')) {
             try {
                 setStatus({ msg: `Searching: ${trimmed}...`, type: 'neutral' });
-                const usersRef = collection(db, 'users');
-                const q = query(usersRef, where('email', '==', trimmed));
-                const snap = await getDocs(q);
+                const usersRef = firestoreApi.collection(db, 'users');
+                const q = firestoreApi.query(usersRef, firestoreApi.where('email', '==', trimmed));
+                const snap = await firestoreApi.getDocs(q);
                 if (snap.empty) return null;
                 return snap.docs[0].id;
             } catch (e: any) {
@@ -45,6 +45,7 @@ export const AdminControlPanel: React.FC<Props> = ({ adminEmail }) => {
     };
 
     const handleSubscriptionChange = async (grantPro: boolean) => {
+        const { db, firestoreApi } = await getFirebaseServices();
         if (!db) return;
         setStatus({ msg: 'Processing...', type: 'neutral' });
         try {
@@ -62,7 +63,7 @@ export const AdminControlPanel: React.FC<Props> = ({ adminEmail }) => {
                 updatedAt: Date.now(),
                 adminUser: adminEmail,
             };
-            await setDoc(doc(db, 'users', uidToModify, 'data', 'subscription'), subData, { merge: true });
+            await firestoreApi.setDoc(firestoreApi.doc(db, 'users', uidToModify, 'data', 'subscription'), subData, { merge: true });
             setStatus({
                 msg: grantPro ? `✅ PRO Granted` : `🚫 PRO Revoked`,
                 type: grantPro ? 'success' : 'error',

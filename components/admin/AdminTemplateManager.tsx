@@ -4,10 +4,9 @@ import { useApp } from '../../context/AppContext';
 import { Icon } from '../ui/Icon';
 import { GlobalTemplate, ProgramDay, ProgramSlot } from '../../types';
 import { TRANSLATIONS, MUSCLE_GROUPS, INITIAL_TEMPLATES } from '../../constants';
-import { db } from '../../lib/firebase';
-import { collection, doc, getDocs, setDoc, deleteDoc } from 'firebase/firestore';
 import { ExerciseSelector } from '../ui/ExerciseSelector';
 import { ConfirmModal } from '../ui/ConfirmModal';
+import { getFirebaseServices } from '../../lib/firebaseLoader';
 
 const SUPERSET_COLORS = [
     { border: 'border-l-orange-500', bg: 'bg-orange-500/5', text: 'text-orange-500' },
@@ -45,9 +44,10 @@ export const AdminTemplateManager: React.FC<{ onClose: () => void }> = ({ onClos
     useEffect(() => {
         let cancelled = false;
         const refreshIds = async () => {
+            const { db, firestoreApi } = await getFirebaseServices();
             if (!db) return;
             try {
-                const snap = await getDocs(collection(db, 'global_templates'));
+                const snap = await firestoreApi.getDocs(firestoreApi.collection(db, 'global_templates'));
                 if (cancelled) return;
                 setFirestoreIds(new Set(snap.docs.map(d => d.id)));
             } catch (e) {
@@ -100,11 +100,12 @@ export const AdminTemplateManager: React.FC<{ onClose: () => void }> = ({ onClos
     };
 
     const confirmDelete = async () => {
+        const { db, firestoreApi } = await getFirebaseServices();
         if (!deleteTarget || !db) return;
         const id = deleteTarget.id;
         setDeleteTarget(null);
         try {
-            await deleteDoc(doc(db, 'global_templates', id));
+            await firestoreApi.deleteDoc(firestoreApi.doc(db, 'global_templates', id));
             setFirestoreIds(prev => { const next = new Set(prev); next.delete(id); return next; });
             // If it's hardcoded, it'll reappear from INITIAL_TEMPLATES on next merge.
             // If it's custom, remove from local list now.
@@ -119,11 +120,12 @@ export const AdminTemplateManager: React.FC<{ onClose: () => void }> = ({ onClos
     };
 
     const confirmReset = async () => {
+        const { db, firestoreApi } = await getFirebaseServices();
         if (!resetTarget || !db) return;
         const id = resetTarget.id;
         setResetTarget(null);
         try {
-            await deleteDoc(doc(db, 'global_templates', id));
+            await firestoreApi.deleteDoc(firestoreApi.doc(db, 'global_templates', id));
             setFirestoreIds(prev => { const next = new Set(prev); next.delete(id); return next; });
             // Replace local with the hardcoded version
             const hardcoded = INITIAL_TEMPLATES.find(t => t.id === id);
@@ -139,11 +141,12 @@ export const AdminTemplateManager: React.FC<{ onClose: () => void }> = ({ onClos
 
     // --- EDITOR HANDLERS ---
     const handleSave = async () => {
+        const { db, firestoreApi } = await getFirebaseServices();
         if (!editingTemplate || !db) return;
         setSaveStatus('saving');
         try {
             const cleanData = JSON.parse(JSON.stringify(editingTemplate));
-            await setDoc(doc(db, 'global_templates', editingTemplate.id), cleanData);
+            await firestoreApi.setDoc(firestoreApi.doc(db, 'global_templates', editingTemplate.id), cleanData);
             setSaveStatus('saved');
 
             // Update local merged list + mark as Firestore-persisted

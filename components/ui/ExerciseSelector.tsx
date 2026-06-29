@@ -8,8 +8,7 @@ import { Button } from './Button';
 import { getTranslated } from '../../utils';
 import { Virtuoso } from 'react-virtuoso';
 import { Sheet } from './Sheet';
-import { db } from '../../lib/firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { getFirebaseServices } from '../../lib/firebaseLoader';
 
 interface ExerciseSelectorProps {
     onSelect: (exId: string, exercise?: ExerciseDef) => void;
@@ -85,10 +84,13 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
         setExercises(prev => [...prev, newEx]);
         
         // 2. If Admin Mode, Save to Firestore Global Collection
-        if (persistToGlobal && db) {
+        if (persistToGlobal) {
             try {
-                await setDoc(doc(db, "global_exercises", newId), newEx);
-                console.log(`🌍 Saved global exercise: ${newId}`);
+                const { db, firestoreApi } = await getFirebaseServices();
+                if (db) {
+                    await firestoreApi.setDoc(firestoreApi.doc(db, "global_exercises", newId), newEx);
+                    console.log(`Saved global exercise: ${newId}`);
+                }
             } catch (e) {
                 console.error("Failed to save global exercise:", e);
                 alert("Failed to save to global DB. Check console.");
