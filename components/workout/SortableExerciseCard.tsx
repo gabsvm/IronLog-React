@@ -6,12 +6,9 @@ import { CSS } from '@dnd-kit/utilities';
 import { SessionExercise, WorkoutSet, CardioType, SetType } from '../../types';
 import { Icon } from '../ui/Icon';
 import { MuscleTag } from './MuscleTag';
-import { SkillProgressionBadge } from './SkillProgressionBadge';
 import { ExerciseCardStats } from './ExerciseCardStats';
-import { ExerciseProtocolBanners } from './ExerciseProtocolBanners';
 import { ExerciseCardMenu } from './ExerciseCardMenu';
 import { ExerciseCardSets } from './ExerciseCardSets';
-import { RestPresetSheet } from './RestPresetSheet';
 import { getTranslated, roundWeight } from '../../utils';
 import { triggerHaptic, playTimerFinishSound } from '../../utils/audio';
 
@@ -27,7 +24,6 @@ interface SortableExerciseCardProps {
     // Handlers for menu actions
     onLink: (id: number | null) => void;
     onReplace: (id: number | null) => void;
-    onSubBodyweight?: (id: number, muscle: import('../../types').MuscleGroup) => void;
     onEditMuscle: (id: number | null) => void;
     onConfigPlate: (id: number | null) => void;
     onUpdateSession: (cb: any) => void;
@@ -65,7 +61,6 @@ export const SortableExerciseCard = React.memo(({
     onOpenDetail,
     onLink,
     onReplace,
-    onSubBodyweight,
     onEditMuscle,
     onConfigPlate,
     onUpdateSession,
@@ -87,11 +82,7 @@ export const SortableExerciseCard = React.memo(({
     logs,
     tutorialId
 }: SortableExerciseCardProps) => {
-    const [activeEmomMinute, setActiveEmomMinute] = useState(0);
-    const [showRestPreset, setShowRestPreset] = useState(false);
     const [exDoneFlash, setExDoneFlash] = useState(false);
-    const [localNote, setLocalNote] = useState(ex.note || '');
-    const handleEmomMinuteChange = useCallback((m: number) => setActiveEmomMinute(m), []);
 
     const {
         attributes,
@@ -366,17 +357,6 @@ export const SortableExerciseCard = React.memo(({
         setOpenMenuId(null);
     };
 
-    const handleNoteUpdate = (val: string) => {
-        onUpdateSession((prev: any) => !prev ? null : {
-            ...prev,
-            exercises: prev.exercises.map((e: any) => e.instanceId === ex.instanceId ? { ...e, note: val } : e)
-        });
-    };
-
-    useEffect(() => {
-        setLocalNote(ex.note || '');
-    }, [ex.note]);
-
     const confirmDelete = () => {
         onUpdateSession((prev: any) => prev ? { ...prev, exercises: prev.exercises.filter((e: any) => e.instanceId !== ex.instanceId) } : null);
         setOpenMenuId(null);
@@ -390,48 +370,15 @@ export const SortableExerciseCard = React.memo(({
         });
     };
 
-    const handleToggleSuperset = () => {
-        if (ex.supersetId) {
-            onUpdateSession((prev: any) => !prev ? null : {
-                ...prev,
-                exercises: (prev.exercises || []).map((e: any) => e.instanceId === ex.instanceId ? { ...e, supersetId: undefined } : e)
-            });
-        } else {
-            onLink(ex.instanceId);
-        }
-        setOpenMenuId(null);
-    };
-
-    const handleSaveRestPreset = (secs: number | undefined) => {
-        onUpdateSession((prev: any) => !prev ? null : {
-            ...prev,
-            exercises: prev.exercises.map((e: any) =>
-                e.instanceId === ex.instanceId ? { ...e, defaultRestSeconds: secs } : e
-            )
-        });
-    };
-
     return (
         <motion.div
             layout={isDragging ? false : 'position'}
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
             ref={viewMode === 'list' ? setNodeRef : null}
             style={style}
-            onClick={() => {
-                if (isLinkingTarget) {
-                    const ssid = `ss_${Date.now()}`;
-                    onUpdateSession((prev: any) => !prev ? null : {
-                        ...prev,
-                        exercises: prev.exercises.map((e: any) => (e.instanceId === linkingId || e.instanceId === ex.instanceId) ? { ...e, supersetId: ssid } : e)
-                    });
-                    onLink(null);
-                }
-            }}
             className={`
                 flex flex-col bg-white dark:bg-transparent dark:glass-card rounded-2xl shadow-sm border border-zinc-200 dark:border-white/5 overflow-hidden transition-all
                 ${ssStyle ? `border-l-4 ${ssStyle.border}` : ''}
-                ${isLinkingTarget ? 'ring-2 ring-orange-500 cursor-pointer opacity-80 hover:opacity-100' : ''}
-                ${linkingId === ex.instanceId ? 'ring-2 ring-orange-500' : ''}
                 ${isDragging ? 'shadow-2xl ring-2 ring-red-500/20 scale-[1.02]' : ''}
                 ${viewMode === 'focus' ? 'h-full flex-1' : ''} 
             `}
@@ -439,7 +386,7 @@ export const SortableExerciseCard = React.memo(({
             {/* Header */}
             <div className="p-3 md:p-4 flex flex-col gap-2 border-b border-zinc-100 dark:border-white/5 bg-zinc-50/50 dark:bg-white/[0.02]">
                 <div className="flex justify-between items-start">
-                    <div className="space-y-1">
+                    <div className="space-y-1 min-w-0">
                         <div className="flex items-center gap-2">
                             {/* Drag Handle */}
                             {viewMode === 'list' && dragEnabled && (
@@ -452,7 +399,6 @@ export const SortableExerciseCard = React.memo(({
                                 </div>
                             )}
 
-                            {ssStyle && <span className={`${ssStyle.badge} text-[9px] font-bold px-1.5 py-0.5 rounded`}>SS</span>}
                             <MuscleTag label={String(ex.slotLabel || ex.muscle || 'CHEST')} />
 
                             {isCardio ? (
@@ -473,49 +419,19 @@ export const SortableExerciseCard = React.memo(({
                                 </span>
                             )}
 
-                            {!isCardio && unit === 'pl' && !ex.isBodyweight && (
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); onConfigPlate(ex.instanceId); }}
-                                    className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-[9px] font-bold px-2 py-0.5 rounded hover:bg-blue-200"
-                                >
-                                    {ex.plateWeight ? `1 PL = ${ex.plateWeight}kg` : String(t.units?.setPlateWeight)}
-                                </button>
-                            )}
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
                             <h3
                                 onClick={(e) => { e.stopPropagation(); if (onOpenDetail) onOpenDetail(ex); }}
-                                className="text-xl font-black text-zinc-900 dark:text-white leading-tight tracking-tight pl-1 cursor-pointer hover:text-primary-400 transition-colors"
+                                className="text-lg font-black text-zinc-900 dark:text-white leading-tight tracking-tight pl-1 cursor-pointer hover:text-primary-400 transition-colors truncate"
                             >
                                 {String(getTranslated(ex.name, lang))}
                             </h3>
-                            <button
-                                onClick={(e) => { e.stopPropagation(); if (onOpenDetail) onOpenDetail(ex); }}
-                                className="text-zinc-600 hover:text-primary-400 transition-colors shrink-0"
-                            >
-                                <Icon name="Info" size={15} />
-                            </button>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-1.5">
-                        {/* Warmup: only for weighted exercises (not bodyweight, not isometric, not cardio) */}
-                        {!isCardio && !ex.isBodyweight && !ex.isIsometric && (
-                            <button
-                                id={tutorialId ? "tut-warmup-btn" : undefined}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (onOpenWarmup) onOpenWarmup(ex.instanceId);
-                                    else handleInjectWarmup();
-                                }}
-                                className="w-8 h-8 flex items-center justify-center rounded-full bg-orange-50 dark:bg-orange-900/10 text-orange-500 hover:scale-110 transition-transform"
-                                title="Warmup Calculator"
-                            >
-                                <Icon name="Zap" size={16} />
-                            </button>
-                        )}
-
                         <div className="relative">
                             <button
                                 aria-label={lang === 'es' ? 'Más opciones' : 'More options'}
@@ -540,9 +456,6 @@ export const SortableExerciseCard = React.memo(({
                                 onInjectWarmup={handleInjectWarmup}
                                 onToggleUnit={handleToggleUnit}
                                 onReplace={onReplace}
-                                onSubBodyweight={onSubBodyweight}
-                                onToggleSuperset={handleToggleSuperset}
-                                onOpenRestPreset={() => setShowRestPreset(true)}
                                 onRequestDelete={confirmDelete}
                                 t={t}
                                 lang={lang}
@@ -551,51 +464,11 @@ export const SortableExerciseCard = React.memo(({
                     </div>
                 </div>
 
-                {/* Skill Progression Badge — for calisthenics skill families */}
-                {ex.skillFamily && (
-                    <SkillProgressionBadge exercise={ex} lang={lang} />
-                )}
-
                 <ExerciseCardStats
-                    lang={lang}
-                    isIsometric={ex.isIsometric}
-                    historicalBest={historicalBest}
-                    oneRMHistory={oneRMHistory}
-                    overloadSuggest={overloadSuggest}
-                    allDone={allDone}
-                    lastNote={lastNote}
                     completedCount={completedCount}
                     totalSets={regularSets.length}
                 />
 
-                <div className="relative flex items-center">
-                    <Icon name="Pencil" size={11} className="absolute left-2.5 text-zinc-600 pointer-events-none" />
-                    <input
-                        type="text"
-                        placeholder={String(t.addNote)}
-                        value={localNote}
-                        onChange={(e) => setLocalNote(e.target.value)}
-                        onBlur={() => {
-                            if (localNote !== (ex.note || '')) {
-                                handleNoteUpdate(localNote);
-                            }
-                        }}
-                        className="w-full bg-[#131316] border border-white/5 text-xs text-zinc-400 placeholder-zinc-700 outline-none rounded-lg py-2 pl-7 pr-2 focus:border-primary-500/30 focus:text-white focus:placeholder-zinc-600 transition-colors"
-                    />
-                </div>
-
-                <ExerciseProtocolBanners
-                    lang={lang}
-                    totalSets={regularSets.length}
-                    isEMOM={isEMOM}
-                    isMyorep={isMyorep}
-                    isCluster={isCluster}
-                    isGiant={isGiant}
-                    hasTopBackoff={hasTopBackoff}
-                    isTabata={isTabata}
-                    isHIIT={isHIIT}
-                    onEmomMinuteChange={handleEmomMinuteChange}
-                />
             </div>
 
             <ExerciseCardSets
@@ -612,7 +485,7 @@ export const SortableExerciseCard = React.memo(({
                 isMyorep={isMyorep}
                 isCluster={isCluster}
                 isSpecialProtocol={isSpecialProtocol}
-                activeEmomMinute={activeEmomMinute}
+                activeEmomMinute={0}
                 nextSetIdx={nextSetIdx}
                 setBadgeLabels={setBadgeLabels}
                 onSetUpdate={onSetUpdate}
@@ -654,14 +527,6 @@ export const SortableExerciseCard = React.memo(({
                     <Icon name="Plus" size={13} /> {isAVTExercise ? t.addRound : t.addSetBtn}
                 </button>
             </div>
-
-            <RestPresetSheet
-                open={showRestPreset}
-                onOpenChange={setShowRestPreset}
-                initialSeconds={ex.defaultRestSeconds || 0}
-                onSave={handleSaveRestPreset}
-                lang={lang}
-            />
         </motion.div>
     );
 });

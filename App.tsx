@@ -29,8 +29,6 @@ const ProgramEditView = React.lazy(() => import('./views/ProgramEditView').then(
 const SessionSummaryView = React.lazy(() => import('./views/SessionSummaryView').then(m => ({ default: m.SessionSummaryView })));
 const WorkoutView = React.lazy(() => import('./views/WorkoutView').then(m => ({ default: m.WorkoutView })));
 const SettingsModal = React.lazy(() => import('./components/settings/SettingsModal').then(m => ({ default: m.SettingsModal })));
-const FreestyleSessionModal = React.lazy(() => import('./components/workout/FreestyleSessionModal').then(m => ({ default: m.FreestyleSessionModal })));
-const TwoBlockMassModal = React.lazy(() => import('./components/workout/TwoBlockMassModal').then(m => ({ default: m.TwoBlockMassModal })));
 const SetupWizard = React.lazy(() => import('./components/onboarding/SetupWizard').then(m => ({ default: m.SetupWizard })));
 const Landing = React.lazy(() => import('./components/onboarding/Landing').then(m => ({ default: m.Landing })));
 
@@ -91,8 +89,6 @@ const AppContent = () => {
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
     const [showMesoCompleteModal, setShowMesoCompleteModal] = useState(false);
-    const [showFreestyleModal, setShowFreestyleModal] = useState(false);
-    const [showTwoBlockModal, setShowTwoBlockModal] = useState(false);
     const [showCommandPalette, setShowCommandPalette] = useState(false);
 
     // Custom Modals State
@@ -150,24 +146,6 @@ const AppContent = () => {
                 keywords: ['program', 'rutina', 'plan'],
             });
         }
-        actions.push({
-            id: 'two_block',
-            label: { en: 'Two Block Mass', es: 'Two Block Mass' },
-            description: { en: 'Nick Nilsson · 8 protocols, 6-week cycle', es: 'Nick Nilsson · 8 protocolos, ciclo 6 semanas' },
-            icon: 'Layers',
-            accent: 'amber',
-            onSelect: () => setShowTwoBlockModal(true),
-            keywords: ['nilsson', 'mesocycle', 'accumulation', 'intensification', 'mesociclo'],
-        });
-        actions.push({
-            id: 'freestyle',
-            label: { en: 'Freestyle / WOD / Skill', es: 'Sesión Libre / WOD / Skill' },
-            description: { en: 'Free gym, CrossFit benchmark or calisthenics skill', es: 'Gym libre, WOD CrossFit o skill de calistenia' },
-            icon: 'Dumbbell',
-            accent: 'violet',
-            onSelect: () => setShowFreestyleModal(true),
-            keywords: ['crossfit', 'calisthenics', 'libre', 'wod', 'skill'],
-        });
         actions.push({
             id: 'program',
             label: { en: 'Edit my program', es: 'Editar mi programa' },
@@ -425,7 +403,7 @@ const AppContent = () => {
                         <Layout view={view as any} setView={setView as any} onOpenSettings={() => setShowSettings(true)} onOpenCommandPalette={() => setShowCommandPalette(true)}>
                             {view === 'home' && <HomeView
                                 startSession={(idx) => {
-                                    if (!activeMeso) { setShowFreestyleModal(true); return; }
+                                    if (!activeMeso) { setView('program'); return; }
 
                                     // CRITICAL FIX: Check if an active session already exists for this day/meso
                                     // If so, just resume it instead of overwriting.
@@ -456,7 +434,6 @@ const AppContent = () => {
                                 }}
                                 onEditProgram={() => setView('program')}
                                 onSkipSession={handleSkipSession}
-                                onStartFreeSession={() => setShowFreestyleModal(true)}
                             />}
                             {view === 'history' && (
                                 <Suspense fallback={<LoadingSpinner />}>
@@ -495,32 +472,6 @@ const AppContent = () => {
             )}
 
             <RestTimerOverlay />
-
-            {/* Freestyle Session Picker (CrossFit, Calisthenics, Free Gym) */}
-            <Suspense fallback={null}>
-                <FreestyleSessionModal
-                    isOpen={showFreestyleModal}
-                    onClose={() => setShowFreestyleModal(false)}
-                    onStart={(session) => {
-                        setActiveSession(session);
-                        setShowFreestyleModal(false);
-                        setView('workout');
-                    }}
-                />
-            </Suspense>
-
-            {/* Two Block Mass Mesocycle (Nick Nilsson 2018) */}
-            <Suspense fallback={null}>
-                <TwoBlockMassModal
-                    isOpen={showTwoBlockModal}
-                    onClose={() => setShowTwoBlockModal(false)}
-                    onStart={(session) => {
-                        setActiveSession(session);
-                        setShowTwoBlockModal(false);
-                        setView('workout');
-                    }}
-                />
-            </Suspense>
 
             {/* Command Palette — primary "start a workout" entry point */}
             <CommandPalette
@@ -609,7 +560,6 @@ const AppContent = () => {
                         onClose={() => setShowSettings(false)}
                         onOpenProgram={() => { setView('program'); setShowSettings(false); }}
                         onOpenExercises={() => { setView('exercises'); setShowSettings(false); }}
-                        onOpenTwoBlock={() => { setShowTwoBlockModal(true); setShowSettings(false); }}
                         onReset={() => setShowResetModal(true)}
                         onExport={handleExport}
                         onForceSync={handleForceSync}

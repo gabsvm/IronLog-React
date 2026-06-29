@@ -1,42 +1,25 @@
 import React, { useState } from 'react';
 import { Icon } from '../ui/Icon';
-import { SessionExercise, CardioType, MuscleGroup } from '../../types';
+import { SessionExercise, CardioType } from '../../types';
 
 interface Props {
     ex: SessionExercise;
     isOpen: boolean;
     onClose: () => void;
-
-    // Behavioural props
     isCardio: boolean;
     cardioMode: CardioType;
     unit: 'kg' | 'lb' | 'pl';
     hasSuperset: boolean;
-
-    // Handlers
     onOpenDetail?: (ex: SessionExercise) => void;
     onCardioModeChange: (m: CardioType) => void;
     onInjectWarmup: () => void;
     onToggleUnit: () => void;
     onReplace: (id: number | null) => void;
-    onSubBodyweight?: (id: number, muscle: MuscleGroup) => void;
-    onToggleSuperset: () => void;
-    onOpenRestPreset: () => void;
     onRequestDelete: () => void;
-
-    // i18n
     t: any;
     lang: 'en' | 'es';
 }
 
-/**
- * Dropdown action menu for a single ExerciseCard.
- * Extracted from SortableExerciseCard (was ~95 inline lines) — keeps the
- * parent focused on rendering and the menu focused on action wiring.
- *
- * Visible only when `isOpen`. The parent owns the open/close state because
- * only one menu in the workout can be open at a time (driven from controller).
- */
 export const ExerciseCardMenu: React.FC<Props> = ({
     ex,
     isOpen,
@@ -44,22 +27,17 @@ export const ExerciseCardMenu: React.FC<Props> = ({
     isCardio,
     cardioMode,
     unit,
-    hasSuperset,
     onOpenDetail,
     onCardioModeChange,
     onInjectWarmup,
     onToggleUnit,
     onReplace,
-    onSubBodyweight,
-    onToggleSuperset,
-    onOpenRestPreset,
     onRequestDelete,
     t,
     lang,
 }) => {
     const [isDeleting, setIsDeleting] = useState(false);
 
-    // Reset delete confirm state every time the menu closes
     React.useEffect(() => {
         if (!isOpen) setIsDeleting(false);
     }, [isOpen]);
@@ -79,17 +57,19 @@ export const ExerciseCardMenu: React.FC<Props> = ({
         >
             {!isDeleting ? (
                 <>
-                    <button
-                        onClick={(e) => { e.stopPropagation(); if (onOpenDetail) onOpenDetail(ex); onClose(); }}
-                        role="menuitem"
-                        className="w-full text-left px-4 py-3 text-sm font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2"
-                    >
-                        <Icon name="Info" size={16} /> {String(t.exDetail)}
-                    </button>
-                    <div className="h-px bg-zinc-100 dark:bg-white/5 my-1" />
+                    {onOpenDetail && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onOpenDetail(ex); onClose(); }}
+                            role="menuitem"
+                            className="w-full text-left px-4 py-3 text-sm font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2"
+                        >
+                            <Icon name="Info" size={16} /> {String(t.exDetail)}
+                        </button>
+                    )}
 
                     {isCardio && (
                         <>
+                            <div className="h-px bg-zinc-100 dark:bg-white/5 my-1" />
                             {(['steady', 'hiit', 'tabata'] as const).map((m) => (
                                 <button
                                     key={m}
@@ -101,18 +81,20 @@ export const ExerciseCardMenu: React.FC<Props> = ({
                                     {cardioMode === m && <Icon name="Check" size={14} />} {String(t.cardioModes?.[m])}
                                 </button>
                             ))}
-                            <div className="h-px bg-zinc-100 dark:bg-white/5 my-1" />
                         </>
                     )}
 
                     {!isCardio && (
-                        <button
-                            onClick={(e) => { e.stopPropagation(); onInjectWarmup(); }}
-                            role="menuitem"
-                            className="w-full text-left px-4 py-3 text-sm font-bold text-orange-600 dark:text-orange-400 hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2"
-                        >
-                            <Icon name="Zap" size={16} /> Add Warmup Sets
-                        </button>
+                        <>
+                            <div className="h-px bg-zinc-100 dark:bg-white/5 my-1" />
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onInjectWarmup(); }}
+                                role="menuitem"
+                                className="w-full text-left px-4 py-3 text-sm font-bold text-orange-600 dark:text-orange-400 hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2"
+                            >
+                                <Icon name="Zap" size={16} /> {lang === 'es' ? 'Agregar warmup' : 'Add warmup sets'}
+                            </button>
+                        </>
                     )}
 
                     {!isCardio && !ex.isBodyweight && (
@@ -135,35 +117,6 @@ export const ExerciseCardMenu: React.FC<Props> = ({
                         <Icon name="RefreshCw" size={16} /> {String(t.replaceEx)}
                     </button>
 
-                    {onSubBodyweight && (
-                        <button
-                            onClick={(e) => { e.stopPropagation(); onSubBodyweight(ex.instanceId, ex.muscle); onClose(); }}
-                            role="menuitem"
-                            className="w-full text-left px-4 py-3 text-sm font-bold text-blue-600 dark:text-blue-400 hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2"
-                        >
-                            <Icon name="Zap" size={16} /> Sub Bodyweight (Nilsson)
-                        </button>
-                    )}
-
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onToggleSuperset(); }}
-                        role="menuitem"
-                        className={`w-full text-left px-4 py-3 text-sm font-bold hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2 ${hasSuperset ? 'text-red-500' : 'text-orange-600'}`}
-                    >
-                        <Icon name={hasSuperset ? 'Unlink' : 'Link'} size={16} />{' '}
-                        {hasSuperset ? String(t.unlinkSuperset) : String(t.linkSuperset)}
-                    </button>
-
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onOpenRestPreset(); onClose(); }}
-                        role="menuitem"
-                        className="w-full text-left px-4 py-3 text-sm font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2"
-                    >
-                        <Icon name="Clock" size={16} />{' '}
-                        {lang === 'es' ? 'Rest Timer' : 'Rest Timer'}
-                        {ex.defaultRestSeconds ? ` · ${ex.defaultRestSeconds}s` : ''}
-                    </button>
-
                     <div className="h-px bg-zinc-100 dark:bg-white/5 my-1" />
 
                     <button
@@ -175,7 +128,6 @@ export const ExerciseCardMenu: React.FC<Props> = ({
                     </button>
                 </>
             ) : (
-                /* Inline Delete Confirmation */
                 <div className="p-2 space-y-2 bg-red-50 dark:bg-red-900/10">
                     <p className="text-xs text-red-600 text-center font-bold px-2">{String(t.confirmRemoveEx)}</p>
                     <div className="flex gap-2">

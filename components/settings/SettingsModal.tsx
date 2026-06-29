@@ -14,7 +14,6 @@ interface SettingsModalProps {
     onClose: () => void;
     onOpenProgram: () => void;
     onOpenExercises: () => void;
-    onOpenTwoBlock: () => void;
     onReset: () => void;
     onExport: () => void;
     onForceSync: () => void;
@@ -24,7 +23,7 @@ interface SettingsModalProps {
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
-    onClose, onOpenProgram, onOpenExercises, onOpenTwoBlock, onReset, onExport, onForceSync, onImportFile, onLogin, isSyncing
+    onClose, onOpenProgram, onOpenExercises, onReset, onExport, onForceSync, onImportFile, onLogin, isSyncing
 }) => {
     const {
         lang, setLang, theme, setTheme, colorTheme, setColorTheme,

@@ -37,11 +37,19 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
         return exercises
             .filter(ex => !excludeIds.includes(ex.id))
             .filter(ex => {
+                if (sourceFilter) {
+                    return (ex as any).source === sourceFilter;
+                }
+
+                const isNilsson = (ex as any).source === 'nilsson_bw';
+                const isSpecialCatalog = ex.id.startsWith('cf_') || ex.id.startsWith('cal_');
+                return !isNilsson && !isSpecialCatalog;
+            })
+            .filter(ex => {
                 const name = getTranslated(ex.name, lang);
                 const matchesSearch = name.toLowerCase().includes(deferredSearch.toLowerCase());
                 const matchesMuscle = filterMuscle === 'ALL' || ex.muscle === filterMuscle;
-                const matchesSource = !sourceFilter || (ex as any).source === sourceFilter;
-                return matchesSearch && matchesMuscle && matchesSource;
+                return matchesSearch && matchesMuscle;
             })
             .sort((a, b) => {
                 const na = getTranslated(a.name, lang);
