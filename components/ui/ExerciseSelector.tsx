@@ -1,6 +1,6 @@
 
-import React, { useState, useMemo } from 'react';
-import { useApp } from '../../context/AppContext';
+import React, { useState, useMemo, useDeferredValue } from 'react';
+import { useApp, useAppPreferences } from '../../context/AppContext';
 import { TRANSLATIONS, MUSCLE_GROUPS } from '../../constants';
 import { Icon } from './Icon';
 import { MuscleGroup, ExerciseDef } from '../../types';
@@ -20,9 +20,11 @@ interface ExerciseSelectorProps {
 }
 
 export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, onClose, excludeIds = [], persistToGlobal = false, presetMuscle, sourceFilter }) => {
-    const { exercises, setExercises, lang } = useApp();
+    const { exercises, setExercises } = useApp();
+    const { lang } = useAppPreferences();
     const t = TRANSLATIONS[lang];
     const [search, setSearch] = useState('');
+    const deferredSearch = useDeferredValue(search);
     const [filterMuscle, setFilterMuscle] = useState<MuscleGroup | 'ALL'>(presetMuscle || 'ALL');
     
     // Creation Mode State
@@ -36,7 +38,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
             .filter(ex => !excludeIds.includes(ex.id))
             .filter(ex => {
                 const name = getTranslated(ex.name, lang);
-                const matchesSearch = name.toLowerCase().includes(search.toLowerCase());
+                const matchesSearch = name.toLowerCase().includes(deferredSearch.toLowerCase());
                 const matchesMuscle = filterMuscle === 'ALL' || ex.muscle === filterMuscle;
                 const matchesSource = !sourceFilter || (ex as any).source === sourceFilter;
                 return matchesSearch && matchesMuscle && matchesSource;
@@ -46,7 +48,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
                 const nb = getTranslated(b.name, lang);
                 return na.localeCompare(nb);
             });
-    }, [exercises, search, filterMuscle, lang, excludeIds, sourceFilter]);
+    }, [exercises, deferredSearch, filterMuscle, lang, excludeIds, sourceFilter]);
 
     const handleCreateStart = () => {
         setNewName(search); // Use current search as draft name

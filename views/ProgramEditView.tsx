@@ -1,11 +1,10 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, Suspense } from 'react';
 import { useApp } from '../context/AppContext';
 import { TRANSLATIONS, MUSCLE_GROUPS } from '../constants';
 import { Icon } from '../components/ui/Icon';
 import { Button } from '../components/ui/Button';
 import { MuscleGroup, MesoType } from '../types';
-import { ExerciseSelector } from '../components/ui/ExerciseSelector';
 import { getTranslated } from '../utils';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { PDFImportModal } from '../components/ui/PDFImportModal';
@@ -13,6 +12,8 @@ import { triggerHaptic } from '../utils/audio';
 import { ProgramDay } from '../types';
 import { Sheet } from '../components/ui/Sheet';
 import { useStore } from '../lib/store';
+
+const ExerciseSelector = React.lazy(() => import('../components/ui/ExerciseSelector').then(m => ({ default: m.ExerciseSelector })));
 
 interface ProgramEditViewProps {
     onBack: () => void;
@@ -233,10 +234,12 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
 
             {/* Exercise Selector Modal */}
             {pickingForSlot && (
-                <ExerciseSelector 
-                    onClose={() => setPickingForSlot(null)}
-                    onSelect={handleSelectExercise}
-                />
+                <Suspense fallback={null}>
+                    <ExerciseSelector 
+                        onClose={() => setPickingForSlot(null)}
+                        onSelect={handleSelectExercise}
+                    />
+                </Suspense>
             )}
 
             {/* Start Mesocycle Config Modal */}

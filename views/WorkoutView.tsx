@@ -1,15 +1,13 @@
 
-import React, { useMemo, useState, useCallback, useEffect, startTransition } from 'react';
+import React, { useMemo, useState, useCallback, useEffect, startTransition, Suspense } from 'react';
 import { useApp, useAppConfig, useAppPreferences, useTutorial } from '../context/AppContext';
 import { TRANSLATIONS } from '../constants';
 import { Icon } from '../components/ui/Icon';
 import { Button } from '../components/ui/Button';
-import { ExerciseSelector } from '../components/ui/ExerciseSelector';
 import { FeedbackModal } from '../components/ui/FeedbackModal';
 import { WarmupModal } from '../components/ui/WarmupModal';
 import { PlateCalculatorModal } from '../components/ui/PlateCalculatorModal';
 import { PRCelebrationOverlay } from '../components/ui/PRCelebrationOverlay';
-import { ExerciseDetailModal } from '../components/ui/ExerciseDetailModal';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { ExerciseDef, SessionExercise, SetType } from '../types';
 import { Sheet } from '../components/ui/Sheet';
@@ -43,6 +41,9 @@ interface WorkoutViewProps {
 }
 
 import { useStore } from '../lib/store';
+
+const ExerciseSelector = React.lazy(() => import('../components/ui/ExerciseSelector').then(m => ({ default: m.ExerciseSelector })));
+const ExerciseDetailModal = React.lazy(() => import('../components/ui/ExerciseDetailModal').then(m => ({ default: m.ExerciseDetailModal })));
 
 // Module-scope constants — never change at runtime. Previously these maps were
 // allocated on every render of the set-type modal IIFE (~12 entries each), and
@@ -692,10 +693,12 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
 
             {/* Modals remain the same... */}
             {ctrl.detailExercise && (
-                <ExerciseDetailModal
-                    exercise={ctrl.detailExercise}
-                    onClose={() => ctrl.setDetailExercise(null)}
-                />
+                <Suspense fallback={null}>
+                    <ExerciseDetailModal
+                        exercise={ctrl.detailExercise}
+                        onClose={() => ctrl.setDetailExercise(null)}
+                    />
+                </Suspense>
             )}
 
             {ctrl.changingSetType && (() => {
@@ -841,8 +844,16 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
             {ctrl.showFeedbackModal && activeSession && (
                 <FeedbackModal muscles={sessionExercises.map(e => e?.muscle || 'CHEST')} onCancel={() => ctrl.setShowFeedbackModal(false)} onConfirm={ctrl.handleSaveFeedback} />
             )}
-            {ctrl.replacingExId && <ExerciseSelector onSelect={handleReplace} onClose={() => { ctrl.setReplacingExId(null); ctrl.setReplaceFilter(null); }} presetMuscle={ctrl.replaceFilter?.muscle} sourceFilter={ctrl.replaceFilter?.source} />}
-            {ctrl.addingExercise && <ExerciseSelector onSelect={handleAddExercise} onClose={() => ctrl.setAddingExercise(false)} />}
+            {ctrl.replacingExId && (
+                <Suspense fallback={null}>
+                    <ExerciseSelector onSelect={handleReplace} onClose={() => { ctrl.setReplacingExId(null); ctrl.setReplaceFilter(null); }} presetMuscle={ctrl.replaceFilter?.muscle} sourceFilter={ctrl.replaceFilter?.source} />
+                </Suspense>
+            )}
+            {ctrl.addingExercise && (
+                <Suspense fallback={null}>
+                    <ExerciseSelector onSelect={handleAddExercise} onClose={() => ctrl.setAddingExercise(false)} />
+                </Suspense>
+            )}
             {ctrl.configPlateExId && (
                 <Sheet
                     open={!!ctrl.configPlateExId}
