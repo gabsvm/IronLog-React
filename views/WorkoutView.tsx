@@ -454,16 +454,61 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
             <div className="flex-1 overflow-hidden flex flex-col">
                 {viewMode === 'list' ? (
                     <div id="tut-exercise-list" className="flex-1 overflow-y-auto scroll-container p-4 pb-32 space-y-4">
-                        <DndContext
-                            sensors={sensors}
-                            collisionDetection={closestCenter}
-                            onDragStart={handleDragStart}
-                            onDragEnd={handleDragEnd}
-                        >
-                            <SortableContext
-                                items={sortableItems}
-                                strategy={verticalListSortingStrategy}
+                        {reorderMode ? (
+                            <DndContext
+                                sensors={sensors}
+                                collisionDetection={closestCenter}
+                                onDragStart={handleDragStart}
+                                onDragEnd={handleDragEnd}
                             >
+                                <SortableContext
+                                    items={sortableItems}
+                                    strategy={verticalListSortingStrategy}
+                                >
+                                    {sessionExercises.map((ex, idx) => {
+                                        const supersetColorIndex = ex.supersetId ? supersetColorIndexes[ex.supersetId] : undefined;
+                                        const isLinkingTarget = ctrl.linkingId && ctrl.linkingId !== ex.instanceId;
+
+                                        return (
+                                            <SortableExerciseCard
+                                                key={ex.instanceId}
+                                                exercise={ex}
+                                                onSetUpdate={ctrl.handleSetUpdate}
+                                                onSetComplete={ctrl.toggleSetComplete}
+                                                onSetTypeChange={handleSetTypeChange}
+                                                onAddSet={ctrl.handleAddSet}
+                                                onDeleteSet={ctrl.handleDeleteSet}
+                                                onOpenDetail={ctrl.setDetailExercise}
+                                                onLink={ctrl.setLinkingId}
+                                                onReplace={ctrl.setReplacingExId}
+                                                onSubBodyweight={handleSubBodyweight}
+                                                onEditMuscle={ctrl.setEditingMuscleId}
+                                                onConfigPlate={ctrl.setConfigPlateExId}
+                                                onUpdateSession={ctrl.updateSession}
+                                                onOpenWarmup={ctrl.setWarmupExId}
+                                                openMenuId={ctrl.openMenuId}
+                                                setOpenMenuId={ctrl.setOpenMenuId}
+                                                linkingId={ctrl.linkingId}
+                                                t={t}
+                                                lang={lang}
+                                                supersetColorIndex={supersetColorIndex}
+                                                isLinkingTarget={!!isLinkingTarget}
+                                                config={config}
+                                                stageConfig={stageConfig}
+                                                viewMode="list"
+                                                dragEnabled={true}
+                                                logs={logs}
+                                                tutorialId={idx === 0 ? "tut-set-type" : undefined}
+                                                onMarkLastHop={ctrl.handleMarkLastHop}
+                                                onAddHopToRound={ctrl.handleAddHopToRound}
+                                                onAddAVTRound={ctrl.handleAddAVTRound}
+                                            />
+                                        );
+                                    })}
+                                </SortableContext>
+                            </DndContext>
+                        ) : (
+                            <>
                                 {sessionExercises.map((ex, idx) => {
                                     const supersetColorIndex = ex.supersetId ? supersetColorIndexes[ex.supersetId] : undefined;
                                     const isLinkingTarget = ctrl.linkingId && ctrl.linkingId !== ex.instanceId;
@@ -484,7 +529,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                             onEditMuscle={ctrl.setEditingMuscleId}
                                             onConfigPlate={ctrl.setConfigPlateExId}
                                             onUpdateSession={ctrl.updateSession}
-                                            onOpenWarmup={ctrl.setWarmupExId} // Pass handle to open modal
+                                            onOpenWarmup={ctrl.setWarmupExId}
                                             openMenuId={ctrl.openMenuId}
                                             setOpenMenuId={ctrl.setOpenMenuId}
                                             linkingId={ctrl.linkingId}
@@ -495,7 +540,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                             config={config}
                                             stageConfig={stageConfig}
                                             viewMode="list"
-                                            dragEnabled={reorderMode}
+                                            dragEnabled={false}
                                             logs={logs}
                                             tutorialId={idx === 0 ? "tut-set-type" : undefined}
                                             onMarkLastHop={ctrl.handleMarkLastHop}
@@ -504,8 +549,8 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                         />
                                     );
                                 })}
-                            </SortableContext>
-                        </DndContext>
+                            </>
+                        )}
 
                         {/* Spacer to prevent fixed footer overlap */}
                         <div className="h-28" />

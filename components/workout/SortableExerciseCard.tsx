@@ -13,7 +13,6 @@ import { ExerciseCardMenu } from './ExerciseCardMenu';
 import { ExerciseCardSets } from './ExerciseCardSets';
 import { RestPresetSheet } from './RestPresetSheet';
 import { getTranslated, roundWeight } from '../../utils';
-import { useTimerContext } from '../../context/TimerContext';
 import { triggerHaptic, playTimerFinishSound } from '../../utils/audio';
 
 interface SortableExerciseCardProps {
@@ -88,10 +87,10 @@ export const SortableExerciseCard = React.memo(({
     logs,
     tutorialId
 }: SortableExerciseCardProps) => {
-    const { restTimer } = useTimerContext();
     const [activeEmomMinute, setActiveEmomMinute] = useState(0);
     const [showRestPreset, setShowRestPreset] = useState(false);
     const [exDoneFlash, setExDoneFlash] = useState(false);
+    const [localNote, setLocalNote] = useState(ex.note || '');
     const handleEmomMinuteChange = useCallback((m: number) => setActiveEmomMinute(m), []);
 
     const {
@@ -374,6 +373,10 @@ export const SortableExerciseCard = React.memo(({
         });
     };
 
+    useEffect(() => {
+        setLocalNote(ex.note || '');
+    }, [ex.note]);
+
     const confirmDelete = () => {
         onUpdateSession((prev: any) => prev ? { ...prev, exercises: prev.exercises.filter((e: any) => e.instanceId !== ex.instanceId) } : null);
         setOpenMenuId(null);
@@ -497,16 +500,6 @@ export const SortableExerciseCard = React.memo(({
                     </div>
 
                     <div className="flex items-center gap-1.5">
-                        {/* Integrated Rest Timer Badge */}
-                        {restTimer.active && restTimer.timeLeft > 0 && (
-                            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-violet-900/50 text-violet-300 border border-violet-500/40 rounded-lg animate-pulse shadow-lg shadow-violet-900/30 backdrop-blur-sm mr-1">
-                                <Icon name="Clock" size={12} strokeWidth={3} />
-                                <span className="text-[10px] font-black font-mono tracking-tight">
-                                    {Math.floor(restTimer.timeLeft / 60)}:{(restTimer.timeLeft % 60).toString().padStart(2, '0')}
-                                </span>
-                            </div>
-                        )}
-
                         {/* Warmup: only for weighted exercises (not bodyweight, not isometric, not cardio) */}
                         {!isCardio && !ex.isBodyweight && !ex.isIsometric && (
                             <button
@@ -580,8 +573,13 @@ export const SortableExerciseCard = React.memo(({
                     <input
                         type="text"
                         placeholder={String(t.addNote)}
-                        value={ex.note || ''}
-                        onChange={(e) => handleNoteUpdate(e.target.value)}
+                        value={localNote}
+                        onChange={(e) => setLocalNote(e.target.value)}
+                        onBlur={() => {
+                            if (localNote !== (ex.note || '')) {
+                                handleNoteUpdate(localNote);
+                            }
+                        }}
                         className="w-full bg-[#131316] border border-white/5 text-xs text-zinc-400 placeholder-zinc-700 outline-none rounded-lg py-2 pl-7 pr-2 focus:border-primary-500/30 focus:text-white focus:placeholder-zinc-600 transition-colors"
                     />
                 </div>
