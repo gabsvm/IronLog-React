@@ -276,7 +276,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         <label className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 block">{t.workoutConfig}</label>
                         <div className="space-y-3">
                             <ProToggle label={t.showRIR} value={config.showRIR} onChange={(val: boolean) => setConfig({ ...config, showRIR: val })} featureName="RIR Tracking" />
-                            <ProToggle label={t.rpEnabled} value={config.rpEnabled} onChange={(val: boolean) => setConfig({ ...config, rpEnabled: val })} featureName="IronCoach AI" />
                             <ProToggle label={t.keepScreen} value={config.keepScreenOn} onChange={(val: boolean) => setConfig({ ...config, keepScreenOn: val })} featureName="Screen Settings" />
                         </div>
                     </div>

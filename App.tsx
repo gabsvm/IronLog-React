@@ -1,10 +1,9 @@
 
-import React, { useState, useEffect, useRef, Suspense, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, Suspense, useCallback, useMemo, startTransition } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { useTimerContext } from './context/TimerContext';
 import { Layout } from './components/layout/Layout';
 import { HomeView } from './views/HomeView';
-import { WorkoutView } from './views/WorkoutView';
 import { RestTimerOverlay } from './components/ui/RestTimerOverlay';
 import { ConfirmModal } from './components/ui/ConfirmModal';
 import { Icon } from './components/ui/Icon';
@@ -16,9 +15,6 @@ import { getLastLogForExercise, uid } from './utils';
 import { syncService } from './services/syncService';
 import { usePro } from './hooks/usePro';
 import { PaywallModal } from './components/pro/PaywallModal';
-import { SettingsModal } from './components/settings/SettingsModal';
-import { FreestyleSessionModal } from './components/workout/FreestyleSessionModal';
-import { TwoBlockMassModal } from './components/workout/TwoBlockMassModal';
 import { CommandPalette, CommandAction } from './components/ui/CommandPalette';
 import { CROSSFIT_EXERCISES, CALISTHENICS_EXERCISES, NILSSON_BW_EXERCISES } from './data/disciplineExercises';
 import { SessionBuilder } from './services/SessionBuilder';
@@ -31,6 +27,10 @@ const NutriView = React.lazy(() => import('./views/NutriView').then(m => ({ defa
 const ExercisesView = React.lazy(() => import('./views/ExercisesView').then(m => ({ default: m.ExercisesView })));
 const ProgramEditView = React.lazy(() => import('./views/ProgramEditView').then(m => ({ default: m.ProgramEditView })));
 const SessionSummaryView = React.lazy(() => import('./views/SessionSummaryView').then(m => ({ default: m.SessionSummaryView })));
+const WorkoutView = React.lazy(() => import('./views/WorkoutView').then(m => ({ default: m.WorkoutView })));
+const SettingsModal = React.lazy(() => import('./components/settings/SettingsModal').then(m => ({ default: m.SettingsModal })));
+const FreestyleSessionModal = React.lazy(() => import('./components/workout/FreestyleSessionModal').then(m => ({ default: m.FreestyleSessionModal })));
+const TwoBlockMassModal = React.lazy(() => import('./components/workout/TwoBlockMassModal').then(m => ({ default: m.TwoBlockMassModal })));
 const SetupWizard = React.lazy(() => import('./components/onboarding/SetupWizard').then(m => ({ default: m.SetupWizard })));
 const Landing = React.lazy(() => import('./components/onboarding/Landing').then(m => ({ default: m.Landing })));
 
@@ -115,7 +115,11 @@ const AppContent = () => {
         const currentDepth = VIEW_DEPTH[view] || 1;
         const nextDepth = VIEW_DEPTH[newView] || 1;
         const direction = nextDepth > currentDepth ? 'forward' : nextDepth < currentDepth ? 'back' : 'fade';
-        withTransition(direction, () => setViewState(newView));
+        withTransition(direction, () => {
+            startTransition(() => {
+                setViewState(newView);
+            });
+        });
     }, [view]);
 
     // Command Palette actions — memoized so the array+5 object literals aren't
@@ -361,47 +365,44 @@ const AppContent = () => {
             {hasSeenOnboarding && (
                 <>
                     {view === 'workout' && activeSession ? (
-                        <WorkoutView
-                            onFinish={() => {
-                                if (!activeSession || !activeMeso) return;
+                        <Suspense fallback={<LoadingSpinner />}>
+                            <WorkoutView
+                                onFinish={() => {
+                                    if (!activeSession || !activeMeso) return;
 
-                                // 1. Log the session
-                                const duration = activeSession.startTime ? (Date.now() - activeSession.startTime) / 1000 : 0;
-                                const log = { ...activeSession, endTime: Date.now(), duration };
-                                const newLogs = [log, ...(Array.isArray(logs) ? logs : [])];
-                                setLogs(newLogs);
+                                    // 1. Log the session
+                                    const duration = activeSession.startTime ? (Date.now() - activeSession.startTime) / 1000 : 0;
+                                    const log = { ...activeSession, endTime: Date.now(), duration };
+                                    const newLogs = [log, ...(Array.isArray(logs) ? logs : [])];
+                                    setLogs(newLogs);
 
-                                // 2. Check for week / meso completion
-                                const workoutsThisWeek = newLogs.filter(l =>
-                                    l.mesoId === activeMeso.id && l.week === activeMeso.week && !l.skipped
-                                );
-                                const completedDaysThisWeek = new Set(workoutsThisWeek.map(l => l.dayIdx));
-                                const programDays = program.filter(day => (day.slots || []).length > 0).length;
+                                    // 2. Check for week / meso completion
+                                    const workoutsThisWeek = newLogs.filter(l =>
+                                        l.mesoId === activeMeso.id && l.week === activeMeso.week && !l.skipped
+                                    );
+                                    const completedDaysThisWeek = new Set(workoutsThisWeek.map(l => l.dayIdx));
+                                    const programDays = program.filter(day => (day.slots || []).length > 0).length;
 
-                                if (completedDaysThisWeek.size >= programDays) {
-                                    // Week is complete
-                                    if (activeMeso.week >= activeMeso.duration) {
-                                        // Meso is complete
-                                        setShowMesoCompleteModal(true);
-                                    } else {
-                                        // Advance to next week
-                                        setActiveMeso(prev => prev ? { ...prev, week: prev.week + 1, isDeload: false } : null);
+                                    if (completedDaysThisWeek.size >= programDays) {
+                                        if (activeMeso.week >= activeMeso.duration) {
+                                            setShowMesoCompleteModal(true);
+                                        } else {
+                                            setActiveMeso(prev => prev ? { ...prev, week: prev.week + 1, isDeload: false } : null);
+                                        }
                                     }
-                                }
 
-                                // 3. Clean up session state and navigate
-                                setActiveSession(null);
-                                setRestTimer({ active: false, timeLeft: 0, duration: 0, endAt: 0 });
-                                setCompletedWorkoutLog(log);
-                                setView('summary');
-                            }}
-                            onDiscard={() => {
-                                // Specific handler for Discarding a session without saving
-                                setActiveSession(null); // Wipe active session IDB
-                                setView('home'); // Go back to Home
-                            }}
-                            onBack={() => setView('home')}
-                        />
+                                    setActiveSession(null);
+                                    setRestTimer({ active: false, timeLeft: 0, duration: 0, endAt: 0 });
+                                    setCompletedWorkoutLog(log);
+                                    setView('summary');
+                                }}
+                                onDiscard={() => {
+                                    setActiveSession(null);
+                                    setView('home');
+                                }}
+                                onBack={() => setView('home')}
+                            />
+                        </Suspense>
                     ) : view === 'summary' && completedWorkoutLog ? (
                         <Suspense fallback={<LoadingSpinner />}>
                             <SessionSummaryView
@@ -496,26 +497,30 @@ const AppContent = () => {
             <RestTimerOverlay />
 
             {/* Freestyle Session Picker (CrossFit, Calisthenics, Free Gym) */}
-            <FreestyleSessionModal
-                isOpen={showFreestyleModal}
-                onClose={() => setShowFreestyleModal(false)}
-                onStart={(session) => {
-                    setActiveSession(session);
-                    setShowFreestyleModal(false);
-                    setView('workout');
-                }}
-            />
+            <Suspense fallback={null}>
+                <FreestyleSessionModal
+                    isOpen={showFreestyleModal}
+                    onClose={() => setShowFreestyleModal(false)}
+                    onStart={(session) => {
+                        setActiveSession(session);
+                        setShowFreestyleModal(false);
+                        setView('workout');
+                    }}
+                />
+            </Suspense>
 
             {/* Two Block Mass Mesocycle (Nick Nilsson 2018) */}
-            <TwoBlockMassModal
-                isOpen={showTwoBlockModal}
-                onClose={() => setShowTwoBlockModal(false)}
-                onStart={(session) => {
-                    setActiveSession(session);
-                    setShowTwoBlockModal(false);
-                    setView('workout');
-                }}
-            />
+            <Suspense fallback={null}>
+                <TwoBlockMassModal
+                    isOpen={showTwoBlockModal}
+                    onClose={() => setShowTwoBlockModal(false)}
+                    onStart={(session) => {
+                        setActiveSession(session);
+                        setShowTwoBlockModal(false);
+                        setView('workout');
+                    }}
+                />
+            </Suspense>
 
             {/* Command Palette — primary "start a workout" entry point */}
             <CommandPalette
@@ -599,21 +604,23 @@ const AppContent = () => {
 
             {/* SETTINGS OVERLAY (Now with Login Callback) */}
             {showSettings && view !== 'exercises' && (
-                <SettingsModal
-                    onClose={() => setShowSettings(false)}
-                    onOpenProgram={() => { setView('program'); setShowSettings(false); }}
-                    onOpenExercises={() => { setView('exercises'); setShowSettings(false); }}
-                    onOpenTwoBlock={() => { setShowTwoBlockModal(true); setShowSettings(false); }}
-                    onReset={() => setShowResetModal(true)}
-                    onExport={handleExport}
-                    onForceSync={handleForceSync}
-                    onImportFile={handleImportFile}
-                    onLogin={() => {
-                        setShowSettings(false);
-                        setShowAuthModal(true);
-                    }}
-                    isSyncing={isSyncing}
-                />
+                <Suspense fallback={<LoadingSpinner />}>
+                    <SettingsModal
+                        onClose={() => setShowSettings(false)}
+                        onOpenProgram={() => { setView('program'); setShowSettings(false); }}
+                        onOpenExercises={() => { setView('exercises'); setShowSettings(false); }}
+                        onOpenTwoBlock={() => { setShowTwoBlockModal(true); setShowSettings(false); }}
+                        onReset={() => setShowResetModal(true)}
+                        onExport={handleExport}
+                        onForceSync={handleForceSync}
+                        onImportFile={handleImportFile}
+                        onLogin={() => {
+                            setShowSettings(false);
+                            setShowAuthModal(true);
+                        }}
+                        isSyncing={isSyncing}
+                    />
+                </Suspense>
             )}
         </>
     );

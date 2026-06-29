@@ -11,7 +11,6 @@ import { usePro } from '../hooks/usePro';
 import { PaywallModal } from '../components/pro/PaywallModal';
 import { GlobalTemplate, ProgramDay } from '../types';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
-import { useFatigueAI } from '../hooks/useFatigueAI';
 import { triggerHaptic } from '../utils/audio';
 
 // Sub-components extracted in Phase 6.2
@@ -53,13 +52,12 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
     const [skipConfirmationId, setSkipConfirmationId] = useState<number | null>(null);
     const [showTemplateSelector, setShowTemplateSelector] = useState(false);
     const [showGuidelines, setShowGuidelines] = useState(false);
+    const fatigueReport: { shouldDeload?: boolean; muscles: string[] } | null = null;
 
     // --- MESO SETTINGS LOCAL STATE ---
     const [editWeeks, setEditWeeks] = useState(4);
     const [editDeload, setEditDeload] = useState(false);
     const [editNote, setEditNote] = useState('');
-
-    const fatigueReport = useFatigueAI();
 
     useEffect(() => {
         if (activeMeso && showMesoSettings) {

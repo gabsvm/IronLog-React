@@ -44,11 +44,12 @@ interface SortableExerciseCardProps {
 
     t: any;
     lang: 'en' | 'es';
-    supersetStyle: any;
+    supersetColorIndex?: number;
     isLinkingTarget: boolean;
     config: any;
     stageConfig: any;
     viewMode?: 'list' | 'focus';
+    dragEnabled?: boolean;
     logs: import('../../types').Log[]; // Passed from parent so the card no longer subscribes to the full AppContext
 
     // Tutorial Hook
@@ -78,11 +79,12 @@ export const SortableExerciseCard = React.memo(({
     linkingId,
     t,
     lang,
-    supersetStyle,
+    supersetColorIndex,
     isLinkingTarget,
     config,
     stageConfig,
     viewMode = 'list',
+    dragEnabled = true,
     logs,
     tutorialId
 }: SortableExerciseCardProps) => {
@@ -99,7 +101,7 @@ export const SortableExerciseCard = React.memo(({
         transform,
         transition,
         isDragging
-    } = useSortable({ id: ex.instanceId });
+    } = useSortable({ id: ex.instanceId, disabled: !dragEnabled });
 
     const style = viewMode === 'list' ? {
         transform: CSS.Transform.toString(transform),
@@ -110,7 +112,14 @@ export const SortableExerciseCard = React.memo(({
     } : { position: 'relative' as const };
 
     const sets = ex.sets || [];
-    const ssStyle = supersetStyle;
+    const ssStyle = typeof supersetColorIndex === 'number'
+        ? [
+            { border: 'border-l-orange-500', badge: 'bg-orange-900/30 text-orange-500' },
+            { border: 'border-l-blue-500', badge: 'bg-blue-900/30 text-blue-500' },
+            { border: 'border-l-purple-500', badge: 'bg-purple-900/30 text-purple-500' },
+            { border: 'border-l-emerald-500', badge: 'bg-emerald-900/30 text-emerald-500' },
+        ][supersetColorIndex]
+        : null;
     const unit = ex.weightUnit || 'kg';
     const unitLabel = unit === 'pl' ? 'PL' : 'KG';
 
@@ -430,7 +439,7 @@ export const SortableExerciseCard = React.memo(({
                     <div className="space-y-1">
                         <div className="flex items-center gap-2">
                             {/* Drag Handle */}
-                            {viewMode === 'list' && (
+                            {viewMode === 'list' && dragEnabled && (
                                 <div
                                     className="touch-none cursor-grab active:cursor-grabbing text-zinc-300 hover:text-zinc-600 dark:hover:text-zinc-200 p-2 -ml-2 mr-1"
                                     {...attributes}
@@ -544,7 +553,6 @@ export const SortableExerciseCard = React.memo(({
                                 onRequestDelete={confirmDelete}
                                 t={t}
                                 lang={lang}
-                                supersetStyle={ssStyle}
                             />
                         </div>
                     </div>

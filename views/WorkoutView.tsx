@@ -1,5 +1,5 @@
 
-import React, { useMemo, useState, useCallback, useEffect } from 'react';
+import React, { useMemo, useState, useCallback, useEffect, startTransition } from 'react';
 import { useApp } from '../context/AppContext';
 import { TRANSLATIONS } from '../constants';
 import { Icon } from '../components/ui/Icon';
@@ -84,6 +84,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
     // View State for Focus Mode
     const [viewMode, setViewMode] = useState<'list' | 'focus'>('list');
     const [focusedIndex, setFocusedIndex] = useState(0);
+    const [reorderMode, setReorderMode] = useState(false);
 
     // Set type modal: apply-to-all toggle — defaults ON when all sets share the same type
     const [applyToAll, setApplyToAll] = useState(true);
@@ -139,16 +140,10 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
         }
     };
 
-    const supersetStyles = useMemo(() => {
+    const supersetColorIndexes = useMemo(() => {
         const uniqueIds = Array.from(new Set(sessionExercises.map(e => e.supersetId).filter((id): id is string => typeof id === 'string' && !!id)));
-        const palette = [
-            { border: 'border-l-orange-500', badge: 'bg-orange-900/30 text-orange-500' },
-            { border: 'border-l-blue-500', badge: 'bg-blue-900/30 text-blue-500' },
-            { border: 'border-l-purple-500', badge: 'bg-purple-900/30 text-purple-500' },
-            { border: 'border-l-emerald-500', badge: 'bg-emerald-900/30 text-emerald-500' },
-        ];
-        const map: Record<string, typeof palette[0]> = {};
-        uniqueIds.forEach((id, idx) => { map[id] = palette[idx % palette.length]; });
+        const map: Record<string, number> = {};
+        uniqueIds.forEach((id, idx) => { map[id] = idx % 4; });
         return map;
     }, [sessionExercises]);
 
@@ -279,10 +274,16 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
     const toggleViewMode = () => {
         if ((document as any).startViewTransition) {
             (document as any).startViewTransition(() => {
-                setViewMode(prev => prev === 'list' ? 'focus' : 'list');
+                startTransition(() => {
+                    setViewMode(prev => prev === 'list' ? 'focus' : 'list');
+                    setReorderMode(false);
+                });
             });
         } else {
-            setViewMode(prev => prev === 'list' ? 'focus' : 'list');
+            startTransition(() => {
+                setViewMode(prev => prev === 'list' ? 'focus' : 'list');
+                setReorderMode(false);
+            });
         }
     };
 
@@ -355,6 +356,19 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                         >
                             <Icon name={viewMode === 'focus' ? 'Layout' : 'Eye'} size={20} />
                         </button>
+                        {viewMode === 'list' && (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setReorderMode(prev => !prev);
+                                    ctrl.setOpenMenuId(null);
+                                }}
+                                className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors ${reorderMode ? 'bg-primary-500 text-white' : 'text-zinc-500 hover:text-white'}`}
+                                title={lang === 'en' ? 'Reorder exercises' : 'Reordenar ejercicios'}
+                            >
+                                <Icon name="GripVertical" size={18} />
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -451,7 +465,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                 strategy={verticalListSortingStrategy}
                             >
                                 {sessionExercises.map((ex, idx) => {
-                                    const ssStyle = ex.supersetId ? supersetStyles[ex.supersetId] : null;
+                                    const supersetColorIndex = ex.supersetId ? supersetColorIndexes[ex.supersetId] : undefined;
                                     const isLinkingTarget = ctrl.linkingId && ctrl.linkingId !== ex.instanceId;
 
                                     return (
@@ -476,11 +490,12 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                             linkingId={ctrl.linkingId}
                                             t={t}
                                             lang={lang}
-                                            supersetStyle={ssStyle}
+                                            supersetColorIndex={supersetColorIndex}
                                             isLinkingTarget={!!isLinkingTarget}
                                             config={config}
                                             stageConfig={stageConfig}
                                             viewMode="list"
+                                            dragEnabled={reorderMode}
                                             logs={logs}
                                             tutorialId={idx === 0 ? "tut-set-type" : undefined}
                                             onMarkLastHop={ctrl.handleMarkLastHop}
@@ -548,11 +563,12 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                         linkingId={ctrl.linkingId}
                                         t={t}
                                         lang={lang}
-                                        supersetStyle={focusedExercise.supersetId ? supersetStyles[focusedExercise.supersetId] : null}
+                                        supersetColorIndex={focusedExercise.supersetId ? supersetColorIndexes[focusedExercise.supersetId] : undefined}
                                         isLinkingTarget={false}
                                         config={config}
                                         stageConfig={stageConfig}
                                         viewMode="focus"
+                                        dragEnabled={false}
                                         logs={logs}
                                         tutorialId={focusedIndex === 0 ? "tut-set-type" : undefined}
                                         onMarkLastHop={ctrl.handleMarkLastHop}

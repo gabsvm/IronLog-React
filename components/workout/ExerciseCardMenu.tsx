@@ -27,7 +27,6 @@ interface Props {
     // i18n
     t: any;
     lang: 'en' | 'es';
-    supersetStyle: any;
 }
 
 /**
@@ -57,7 +56,6 @@ export const ExerciseCardMenu: React.FC<Props> = ({
     onRequestDelete,
     t,
     lang,
-    supersetStyle: ssStyle,
 }) => {
     const [isDeleting, setIsDeleting] = useState(false);
 

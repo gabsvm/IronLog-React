@@ -48,7 +48,7 @@ interface Props {
  * Sets section of an ExerciseCard: column header row + the list of SetRow / AVTRoundCard.
  * Extracted from SortableExerciseCard to keep that orchestrator focused on layout/state.
  */
-export const ExerciseCardSets: React.FC<Props> = ({
+export const ExerciseCardSets: React.FC<Props> = React.memo(({
     ex,
     regularSets,
     avtRounds,
@@ -133,7 +133,7 @@ export const ExerciseCardSets: React.FC<Props> = ({
                     stageRIR={stageConfig?.rir !== null ? String(stageConfig?.rir) : '-'}
                     onUpdate={onSetUpdate}
                     onToggleComplete={onSetComplete}
-                    onChangeType={(exId, setId, type) => onSetTypeChange(exId, setId, type)}
+                    onChangeType={onSetTypeChange}
                     lang={lang}
                     isCardio={isCardio}
                     cardioMode={cardioMode}
@@ -165,4 +165,4 @@ export const ExerciseCardSets: React.FC<Props> = ({
             ))}
         </div>
     </>
-);
+));
