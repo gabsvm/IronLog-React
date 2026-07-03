@@ -326,11 +326,35 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                 // Only trigger if we haven't checked since login or if local is empty
                 const cloudData = await syncService.downloadState(user.uid);
                 if (cloudData && cloudData.lastUpdated) {
-                    // Strategy: If local is empty (new device) OR cloud is strictly newer
                     const isLocalEmpty = !activeMeso && (!logs || logs.length === 0);
 
-                    if (isLocalEmpty || cloudData.lastUpdated > (localLastUpdated || 0)) {
-                        console.log("☁️ Data mismatch found: Cloud is newer or Local is empty. Offering sync.");
+                    if (isLocalEmpty) {
+                        console.log("Cloud data found on empty device. Applying automatically.");
+
+                        if (cloudData.program) setProgram(cloudData.program);
+                        if (cloudData.activeMeso) useStore.getState().setActiveMeso(cloudData.activeMeso);
+                        if (cloudData.activeSession) useStore.getState().setActiveSession(cloudData.activeSession);
+                        if (cloudData.exercises) setExercises(cloudData.exercises);
+                        if (cloudData.logs) setLogs(cloudData.logs);
+                        if (cloudData.rpFeedback) setRpFeedback(cloudData.rpFeedback);
+
+                        if (cloudData.config) {
+                            if (cloudData.config.showRIR !== undefined) setShowRIR(cloudData.config.showRIR);
+                            if (cloudData.config.rpEnabled !== undefined) setRpEnabled(cloudData.config.rpEnabled);
+                            if (cloudData.config.rpTargetRIR !== undefined) setRpTargetRIR(cloudData.config.rpTargetRIR);
+                            if (cloudData.config.keepScreenOn !== undefined) setKeepScreenOn(cloudData.config.keepScreenOn);
+                        }
+
+                        if (cloudData.userProfile) setUserProfile(cloudData.userProfile);
+                        if (cloudData.nutritionLogs) setNutritionLogs(cloudData.nutritionLogs);
+                        if (cloudData.bodyLogs) setBodyLogs(cloudData.bodyLogs);
+                        if (cloudData.macroGoals) setMacroGoals(cloudData.macroGoals);
+                        if (cloudData.customFoods) setCustomFoods(cloudData.customFoods);
+
+                        setLocalLastUpdated(cloudData.lastUpdated ?? Date.now());
+                        setHasSeenOnboarding(true);
+                    } else if (cloudData.lastUpdated > (localLastUpdated || 0)) {
+                        console.log("Cloud data is newer than local. Offering sync.");
                         setPendingCloudData(cloudData);
                     }
                 }
@@ -342,7 +366,12 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         };
 
         checkCloudData();
-    }, [user, isOnline, isAppLoading, pendingCloudData, hasCheckedSync, activeMeso, logs, localLastUpdated]); // Re-run when dependencies change
+    }, [
+        user, isOnline, isAppLoading, pendingCloudData, hasCheckedSync, activeMeso, logs, localLastUpdated,
+        setProgram, setExercises, setLogs, setRpFeedback, setShowRIR, setRpEnabled, setLocalLastUpdated,
+        setHasSeenOnboarding, setBodyLogs, setCustomFoods, setKeepScreenOn, setMacroGoals, setNutritionLogs,
+        setRpTargetRIR, setUserProfile
+    ]); // Re-run when dependencies change
 
     // --- SYNC LOGIC ---
     useEffect(() => {
