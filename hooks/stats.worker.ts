@@ -19,12 +19,13 @@ self.onmessage = function(e: MessageEvent) {
         for (const log of safeLogs) {
             for (const ex of (log.exercises || [])) {
                 if (!ex?.id) continue;
+                const exId = String(ex.id);
                 for (const s of (ex.sets || [])) {
                     if (s.completed && s.weight && s.reps) {
                         const w = Number(s.weight);
                         const r = Number(s.reps);
                         const e1rm = w * (1 + r / 30);
-                        if (e1rm > (best.get(ex.id) ?? 0)) best.set(ex.id, e1rm);
+                        if (e1rm > (best.get(exId) ?? 0)) best.set(exId, e1rm);
                     }
                 }
             }
@@ -53,7 +54,10 @@ self.onmessage = function(e: MessageEvent) {
                         if (muscleCounts[ex.muscle] !== undefined) {
                             muscleCounts[ex.muscle] += setsDone;
                         }
-                        exFreq[ex.id] = (exFreq[ex.id] || 0) + 1;
+                        if (ex?.id != null) {
+                            const exId = String(ex.id);
+                            exFreq[exId] = (exFreq[exId] || 0) + 1;
+                        }
                     });
                 }
             });
@@ -75,7 +79,7 @@ self.onmessage = function(e: MessageEvent) {
 
         sortedLogs.forEach(log => {
             if (log.skipped) return;
-            const ex = (log.exercises || []).find((e: any) => e.id === exerciseId);
+            const ex = (log.exercises || []).find((e: any) => String(e.id) === String(exerciseId));
             if (!ex) return;
 
             let bestValue = 0;

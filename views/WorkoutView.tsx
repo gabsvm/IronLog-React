@@ -10,6 +10,8 @@ import { getTranslated, getMesoStageConfig, getLastLogForExercise } from '../uti
 import { useWorkoutController } from '../hooks/useWorkoutController';
 import { SortableExerciseCard } from '../components/workout/SortableExerciseCard';
 import { WorkoutTimer } from '../components/workout/WorkoutTimer';
+import { useTimerContext } from '../context/TimerContext';
+import { formatSeconds } from '../utils';
 
 interface WorkoutViewProps {
     onFinish: () => void;
@@ -62,6 +64,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
     const { tutorialProgress, markTutorialSeen } = useTutorial();
     const activeSession = useStore(state => state.activeSession);
     const activeMeso = useStore(state => state.activeMeso);
+    const { restTimer, setRestTimer } = useTimerContext();
     const t = TRANSLATIONS[lang];
 
     // Use the Custom Controller Hook - Pass both callbacks
@@ -213,6 +216,17 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
     const quickAccessExercise = useMemo(() => {
         return sessionExercises.find(ex => ex.sets.some(set => !set.completed && set.type !== 'warmup')) || sessionExercises[0] || null;
     }, [sessionExercises]);
+    const startManualRest = useCallback((duration = 90) => {
+        setRestTimer({
+            active: true,
+            duration,
+            timeLeft: duration,
+            endAt: Date.now() + duration * 1000,
+        });
+    }, [setRestTimer]);
+    const stopRest = useCallback(() => {
+        setRestTimer(prev => ({ ...prev, active: false, timeLeft: 0, endAt: 0 }));
+    }, [setRestTimer]);
 
     const showStageInfo = stageConfig && (config.showRIR || stageConfig.label === 'recovery');
 
@@ -261,6 +275,27 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                         <div className="rounded-full border border-white/8 bg-white/[0.04] px-3 py-1">
                             <WorkoutTimer startTime={activeSession.startTime} />
                         </div>
+                        <button
+                            type="button"
+                            onClick={(event) => {
+                                event.stopPropagation();
+                                if (restTimer.active) {
+                                    stopRest();
+                                } else {
+                                    startManualRest();
+                                }
+                            }}
+                            className={`rounded-full px-2.5 py-1 text-[10px] font-semibold tabular-nums transition-colors ${
+                                restTimer.active
+                                    ? 'bg-primary-500/20 text-primary-300'
+                                    : 'bg-zinc-800 text-zinc-400'
+                            }`}
+                            title={restTimer.active
+                                ? (lang === 'es' ? 'Finalizar descanso' : 'Stop rest')
+                                : (lang === 'es' ? 'Iniciar descanso de 90s' : 'Start 90s rest')}
+                        >
+                            {restTimer.active ? `rest ${formatSeconds(restTimer.timeLeft)}` : 'rest'}
+                        </button>
                         {totalWorkingSets > 0 && (
                             <div className={`rounded-full px-2.5 py-1 text-[10px] font-semibold tabular-nums transition-colors ${remainingSets === 0 ? 'bg-green-500/20 text-green-400' : 'bg-zinc-800 text-zinc-300'}`}>
                                 {remainingSets === 0 ? (lang === 'es' ? 'listo' : 'done') : `${remainingSets} left`}

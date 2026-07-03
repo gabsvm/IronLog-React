@@ -75,13 +75,15 @@ export const StatsView: React.FC = () => {
         const byId = new Map<string, any>();
 
         for (const ex of exercises) {
-            if (ex?.id && !byId.has(ex.id)) byId.set(ex.id, ex);
+            const exId = ex?.id != null ? String(ex.id) : null;
+            if (exId && !byId.has(exId)) byId.set(exId, ex);
         }
 
         for (const log of safeLogs) {
             for (const ex of (log.exercises || [])) {
-                if (!ex?.id || byId.has(ex.id)) continue;
-                byId.set(ex.id, {
+                const exId = ex?.id != null ? String(ex.id) : null;
+                if (!exId || byId.has(exId)) continue;
+                byId.set(exId, {
                     id: ex.id,
                     name: ex.name,
                     muscle: ex.muscle,
@@ -93,7 +95,7 @@ export const StatsView: React.FC = () => {
 
         return byId;
     }, [exercises, safeLogs]);
-    const currentEx = selectedExId ? exerciseMetaById.get(selectedExId) : null;
+    const currentEx = selectedExId ? exerciseMetaById.get(String(selectedExId)) : null;
     const isCardio = currentEx?.muscle === 'CARDIO';
 
     // Auto-switch metric when exercise type changes
@@ -156,7 +158,7 @@ export const StatsView: React.FC = () => {
             // Transform frequency map to sorted exercise objects
             const sortedExs = Object.entries(exerciseFrequency)
                 .sort((a, b) => (b[1] as number) - (a[1] as number)) // Most frequent first
-                .map(([id]) => exerciseMetaById.get(id))
+                .map(([id]) => exerciseMetaById.get(String(id)))
                 .filter(Boolean);
 
             setAvailableExercises(sortedExs);
