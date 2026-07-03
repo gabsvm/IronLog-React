@@ -30,7 +30,6 @@ interface Props {
     stageConfig: any;
     t: any;
     lang: 'en' | 'es';
-    viewMode?: 'list' | 'focus';
     tutorialId?: string;
 }
 
@@ -60,12 +59,11 @@ export const ExerciseCardSets: React.FC<Props> = React.memo(({
     stageConfig,
     t,
     lang,
-    viewMode = 'list',
     tutorialId,
 }) => (
     <>
         {/* Column header row */}
-        <div className="grid grid-cols-12 items-center gap-2 border-b border-white/5 px-4 py-3 text-center text-[10px] font-bold uppercase tracking-[0.22em] text-zinc-500">
+        <div className="grid grid-cols-12 items-center gap-2 border-b border-white/5 px-3 py-2 text-center text-[9px] font-bold uppercase tracking-[0.18em] text-zinc-500">
             <div className={`col-span-2 ${isEMOM ? 'text-cyan-500' : isMyorep ? 'text-purple-500' : isCluster ? 'text-emerald-500' : ''}`}>
                 {isEMOM ? 'Min' : isMyorep ? 'Set' : '#'}
             </div>
@@ -106,7 +104,7 @@ export const ExerciseCardSets: React.FC<Props> = React.memo(({
         </div>
 
         {/* Sets list */}
-        <div className={`space-y-2 px-3 py-3 ${viewMode === 'focus' ? 'flex-1 overflow-y-auto' : ''}`}>
+        <div className="space-y-1.5 px-2.5 py-2.5">
             {regularSets.map((set, idx) => (
                 <SetRow
                     key={set.id}

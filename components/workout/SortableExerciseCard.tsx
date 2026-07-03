@@ -32,11 +32,9 @@ interface SortableExerciseCardProps {
     isLinkingTarget: boolean;
     config: any;
     stageConfig: any;
-    viewMode?: 'list' | 'focus';
     dragEnabled?: boolean;
     logs: import('../../types').Log[];
     tutorialId?: string;
-    reducedEffects?: boolean;
 }
 
 export const SortableExerciseCard = React.memo(({
@@ -61,11 +59,9 @@ export const SortableExerciseCard = React.memo(({
     isLinkingTarget,
     config,
     stageConfig,
-    viewMode = 'list',
     dragEnabled = true,
     logs,
     tutorialId,
-    reducedEffects = false,
 }: SortableExerciseCardProps) => {
     const [exDoneFlash, setExDoneFlash] = useState(false);
 
@@ -78,15 +74,16 @@ export const SortableExerciseCard = React.memo(({
         isDragging,
     } = useSortable({ id: ex.instanceId, disabled: !dragEnabled });
 
-    const style = viewMode === 'list'
-        ? {
-            transform: CSS.Transform.toString(transform),
-            transition: reducedEffects ? undefined : transition,
-            zIndex: isDragging ? 100 : 1,
-            opacity: isDragging ? 0.8 : 1,
-            position: 'relative' as const,
-        }
-        : { position: 'relative' as const };
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        zIndex: isDragging ? 100 : 1,
+        opacity: isDragging ? 0.8 : 1,
+        position: 'relative' as const,
+        contentVisibility: 'auto' as const,
+        containIntrinsicSize: '500px',
+        contain: 'layout paint style' as const,
+    };
 
     const sets = ex.sets || [];
     const ssStyle = typeof supersetColorIndex === 'number'
@@ -104,16 +101,7 @@ export const SortableExerciseCard = React.memo(({
     const cardioMode: CardioType = ex.cardioType || ex.defaultCardioType || 'steady';
     const isInterval = cardioMode === 'hiit' || cardioMode === 'tabata';
 
-    const lastNote = useMemo(() => {
-        if (!logs) return null;
-        for (let i = 0; i < logs.length; i += 1) {
-            const log = logs[i];
-            if (log.skipped) continue;
-            const found = log.exercises?.find((item) => item.id === ex.id);
-            if (found && found.note) return String(found.note);
-        }
-        return null;
-    }, [logs, ex.id]);
+
 
     const historicalBest = useMemo(() => {
         if (!logs || isCardio || !ex.id) return null;
@@ -203,25 +191,7 @@ export const SortableExerciseCard = React.memo(({
         return null;
     }, [logs, ex.id, ex.targetReps, isCardio, ex.isBodyweight, ex.isIsometric]);
 
-    const oneRMHistory = useMemo(() => {
-        if (!logs || isCardio || ex.isBodyweight || ex.isIsometric || !ex.id) return [];
-        const points: number[] = [];
-        for (let i = logs.length - 1; i >= 0 && points.length < 8; i -= 1) {
-            const log = logs[i];
-            if (log.skipped) continue;
-            const pastEx = log.exercises?.find((item) => item.id === ex.id);
-            if (!pastEx) continue;
-            let best = 0;
-            (pastEx.sets || []).forEach((set) => {
-                if (set.completed && set.weight && set.reps) {
-                    const e1rm = Number(set.weight) * (1 + Number(set.reps) / 30);
-                    if (e1rm > best) best = e1rm;
-                }
-            });
-            if (best > 0) points.unshift(best);
-        }
-        return points;
-    }, [logs, ex.id, isCardio, ex.isBodyweight, ex.isIsometric]);
+
 
     const prevCompletedRef = useRef(completedCount);
     const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -362,58 +332,56 @@ export const SortableExerciseCard = React.memo(({
         }
         : historicalBest
             ? { icon: 'Trophy', label: historicalBest, tone: 'text-amber-300' }
-            : lastNote
-                ? { icon: 'BookOpen', label: lastNote, tone: 'text-zinc-300' }
-                : null;
+            : null;
 
     return (
         <div
-            ref={viewMode === 'list' ? setNodeRef : null}
+            ref={setNodeRef}
             style={style}
             className={`
-                flex flex-col overflow-hidden rounded-[1.9rem] border border-white/10 bg-[#141416] shadow-[0_20px_50px_-24px_rgba(0,0,0,0.9)] transition-all
+                flex flex-col overflow-hidden rounded-[1.35rem] border border-white/10 bg-[#141416] shadow-[0_20px_50px_-24px_rgba(0,0,0,0.9)] transition-all
                 ${ssStyle ? `border-l-4 ${ssStyle.border}` : ''}
                 ${isDragging ? 'scale-[1.02] shadow-2xl ring-2 ring-red-500/20' : ''}
                 ${isLinkSource ? 'ring-2 ring-amber-400/40 shadow-[0_0_0_1px_rgba(251,191,36,0.15)]' : ''}
                 ${isLinkingTarget ? 'ring-2 ring-cyan-400/30 shadow-[0_0_0_1px_rgba(34,211,238,0.12)]' : ''}
                 ${allDone ? 'shadow-[0_20px_50px_-24px_rgba(34,197,94,0.32)]' : ''}
-                ${viewMode === 'focus' ? 'h-full flex-1' : ''}
+                
             `}
         >
-            <div className="border-b border-white/5 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.06),_transparent_55%)] px-4 pb-4 pt-4 md:px-5 md:pt-5">
+            <div className="border-b border-white/5 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.06),_transparent_55%)] px-3 pb-2.5 pt-2.5">
                 <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0 space-y-3">
-                        <div className="flex items-center gap-2">
-                            {viewMode === 'list' && dragEnabled && (
+                    <div className="min-w-0 space-y-1.5">
+                        <div className="flex items-center gap-1.5">
+                            {dragEnabled && (
                                 <div
-                                    className="mr-1 -ml-2 rounded-full p-2 text-zinc-500 touch-none cursor-grab active:cursor-grabbing hover:text-zinc-200"
+                                    className="mr-0.5 -ml-2 rounded-full p-2 text-zinc-500 touch-none cursor-grab active:cursor-grabbing hover:text-zinc-200"
                                     {...attributes}
                                     {...listeners}
                                 >
-                                    <Icon name="GripVertical" size={20} />
+                                    <Icon name="GripVertical" size={18} />
                                 </div>
                             )}
 
                             <MuscleTag label={String(ex.slotLabel || ex.muscle || 'CHEST')} />
 
                             {isCardio ? (
-                                <span className="inline-flex items-center rounded-full border border-cyan-500/20 bg-cyan-500/10 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-300">
+                                <span className="inline-flex items-center rounded-full border border-cyan-500/20 bg-cyan-500/10 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.18em] text-cyan-300">
                                     {String(t.cardioModes?.[cardioMode] || cardioMode)}
                                 </span>
                             ) : ex.targetReps ? (
-                                <span className="inline-flex items-center rounded-full border border-white/8 bg-white/[0.04] px-2 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-300">
+                                <span className="inline-flex items-center rounded-full border border-white/8 bg-white/[0.04] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.18em] text-zinc-300">
                                     {String(ex.targetReps)} Reps
                                 </span>
                             ) : null}
 
                             {ex.isBodyweight && (
-                                <span className="inline-flex items-center rounded-full border border-blue-500/20 bg-blue-500/10 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-blue-300">
+                                <span className="inline-flex items-center rounded-full border border-blue-500/20 bg-blue-500/10 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.18em] text-blue-300">
                                     BW
                                 </span>
                             )}
 
                             {isSuperseted && (
-                                <span className={`inline-flex items-center rounded-full border px-2 py-1 text-[10px] font-bold uppercase tracking-[0.2em] ${ssStyle?.badge || 'border-violet-500/20 bg-violet-500/10 text-violet-300'}`}>
+                                <span className={`inline-flex items-center rounded-full border px-2 py-1 text-[9px] font-bold uppercase tracking-[0.18em] ${ssStyle?.badge || 'border-violet-500/20 bg-violet-500/10 text-violet-300'}`}>
                                     SS
                                 </span>
                             )}
@@ -424,33 +392,63 @@ export const SortableExerciseCard = React.memo(({
                                 event.stopPropagation();
                                 if (onOpenDetail) onOpenDetail(ex);
                             }}
-                            className="cursor-pointer truncate pl-1 text-[1.85rem] font-black leading-none tracking-[-0.04em] text-white transition-colors hover:text-primary-400"
+                            className="cursor-pointer truncate pl-1 text-[1.3rem] font-black leading-none tracking-[-0.04em] text-white transition-colors hover:text-primary-400"
                         >
                             {String(getTranslated(ex.name, lang))}
                         </h3>
 
-                        {heroMetric && (
-                            <div className={`inline-flex max-w-full items-center gap-2 rounded-full border border-white/8 bg-white/[0.04] px-3 py-2 text-xs font-semibold ${heroMetric.tone}`}>
-                                <Icon name={heroMetric.icon} size={13} />
-                                <span className="truncate">{heroMetric.label}</span>
+                        {(heroMetric || isLinkSource || isLinkingTarget) && (
+                            <div className="flex flex-wrap items-center gap-1.5 pl-1">
+                                {heroMetric && (
+                                    <div className={`inline-flex max-w-full items-center gap-1 rounded-full px-1 py-0.5 text-[10px] font-semibold ${heroMetric.tone}`}>
+                                        <Icon name={heroMetric.icon} size={10} />
+                                        <span className="truncate">{heroMetric.label}</span>
+                                    </div>
+                                )}
+
+                                {isLinkSource && (
+                                    <button
+                                        type="button"
+                                        onClick={(event) => {
+                                            event.stopPropagation();
+                                            onLink(null);
+                                        }}
+                                        className="inline-flex items-center gap-1 rounded-full border border-amber-400/20 bg-amber-500/10 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-amber-200 transition-colors hover:bg-amber-500/15"
+                                    >
+                                        <Icon name="Link" size={10} />
+                                        <span>{lang === 'es' ? 'Elige pareja' : 'Pick pair'}</span>
+                                    </button>
+                                )}
+
+                                {isLinkingTarget && (
+                                    <button
+                                        type="button"
+                                        onClick={(event) => {
+                                            event.stopPropagation();
+                                            handleSupersetAction();
+                                        }}
+                                        className="inline-flex items-center gap-1 rounded-full border border-cyan-400/20 bg-cyan-500/10 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-cyan-200 transition-colors hover:bg-cyan-500/15"
+                                    >
+                                        <Icon name="Link" size={10} />
+                                        <span>{lang === 'es' ? 'Unir aqui' : 'Pair here'}</span>
+                                    </button>
+                                )}
                             </div>
                         )}
                     </div>
 
                     <div className="flex items-center gap-2">
-                        {oneRMHistory.length > 1 && !isCardio && !ex.isBodyweight && !ex.isIsometric && (
-                            <button
-                                type="button"
-                                onClick={(event) => {
-                                    event.stopPropagation();
-                                    if (onOpenDetail) onOpenDetail(ex);
-                                }}
-                                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/8 bg-white/[0.05] text-zinc-300 transition-colors hover:bg-white/[0.08] hover:text-white"
-                                aria-label={lang === 'es' ? 'Ver progreso' : 'View progress'}
-                            >
-                                <Icon name="BarChart2" size={18} />
-                            </button>
-                        )}
+                        <button
+                            type="button"
+                            onClick={(event) => {
+                                event.stopPropagation();
+                                handleSupersetAction();
+                            }}
+                            className={`flex h-9 w-9 items-center justify-center rounded-full border transition-colors ${isSuperseted ? 'border-violet-500/30 bg-violet-500/15 text-violet-200' : isLinkSource ? 'border-amber-400/30 bg-amber-500/15 text-amber-200' : 'border-white/8 bg-white/[0.04] text-zinc-400 hover:bg-white/[0.08] hover:text-white'}`}
+                            aria-label={isSuperseted ? (lang === 'es' ? 'Quitar superserie' : 'Remove superset') : (lang === 'es' ? 'Crear superserie' : 'Create superset')}
+                        >
+                            <Icon name={isSuperseted ? 'Unlink' : 'Link'} size={16} />
+                        </button>
 
                         <div className="relative">
                             <button
@@ -461,7 +459,7 @@ export const SortableExerciseCard = React.memo(({
                                     event.stopPropagation();
                                     setOpenMenuId(openMenuId === ex.instanceId ? null : ex.instanceId);
                                 }}
-                                className={`flex h-10 w-10 items-center justify-center rounded-full border transition-colors duration-fast ease-natural ${openMenuId === ex.instanceId ? 'border-white/10 bg-white/10 text-white' : 'border-white/8 bg-white/[0.04] text-zinc-400 hover:bg-white/[0.08] hover:text-white'}`}
+                                className={`flex h-9 w-9 items-center justify-center rounded-full border transition-colors duration-fast ease-natural ${openMenuId === ex.instanceId ? 'border-white/10 bg-white/10 text-white' : 'border-white/8 bg-white/[0.04] text-zinc-400 hover:bg-white/[0.08] hover:text-white'}`}
                             >
                                 <Icon name="MoreVertical" size={20} />
                             </button>
@@ -494,19 +492,6 @@ export const SortableExerciseCard = React.memo(({
                     />
                 </div>
 
-                {isLinkingTarget && (
-                    <button
-                        type="button"
-                        onClick={(event) => {
-                            event.stopPropagation();
-                            handleSupersetAction();
-                        }}
-                        className="mt-3 flex w-full items-center justify-between rounded-2xl border border-cyan-400/20 bg-cyan-500/10 px-3 py-3 text-left text-sm font-bold text-cyan-200 transition-colors hover:bg-cyan-500/15"
-                    >
-                        <span>{lang === 'es' ? 'Vincular en superserie con este ejercicio' : 'Link this as a superset partner'}</span>
-                        <Icon name="Link" size={16} />
-                    </button>
-                )}
             </div>
 
             <ExerciseCardSets
@@ -531,12 +516,11 @@ export const SortableExerciseCard = React.memo(({
                 stageConfig={stageConfig}
                 t={t}
                 lang={lang}
-                viewMode={viewMode}
                 tutorialId={tutorialId}
             />
 
             {exDoneFlash && (
-                <div className="absolute inset-0 z-10 flex items-center justify-center rounded-[1.9rem] bg-green-500/5 ring-2 ring-green-500/60 pointer-events-none animate-in fade-in duration-150">
+                <div className="absolute inset-0 z-10 flex items-center justify-center rounded-[1.35rem] bg-green-500/5 ring-2 ring-green-500/60 pointer-events-none animate-in fade-in duration-150">
                     <div className="animate-bounce rounded-full bg-green-500 px-3 py-1.5 text-xs font-black text-white shadow-lg shadow-green-500/30">
                         <Icon name="CheckCircle" size={14} className="mr-1 inline" />
                         {lang === 'es' ? 'Listo' : 'Done'}
@@ -548,13 +532,13 @@ export const SortableExerciseCard = React.memo(({
                 <button
                     onClick={() => sets.length > 0 && onDeleteSet(ex.instanceId, sets[sets.length - 1].id)}
                     disabled={sets.length <= 1}
-                    className="flex w-full items-center justify-center gap-2 py-4 text-xs font-bold text-zinc-500 transition-colors active:scale-95 hover:text-red-400 disabled:opacity-25"
+                    className="flex w-full items-center justify-center gap-2 py-3 text-[11px] font-bold text-zinc-500 transition-colors active:scale-95 hover:text-red-400 disabled:opacity-25"
                 >
                     <Icon name="Minus" size={13} /> {String(t.removeSetBtn)}
                 </button>
                 <button
                     onClick={() => onAddSet(ex.instanceId)}
-                    className="flex w-full items-center justify-center gap-2 py-4 text-xs font-bold text-zinc-500 transition-colors active:scale-95 hover:text-white"
+                    className="flex w-full items-center justify-center gap-2 py-3 text-[11px] font-bold text-zinc-500 transition-colors active:scale-95 hover:text-white"
                 >
                     <Icon name="Plus" size={13} /> {t.addSetBtn}
                 </button>

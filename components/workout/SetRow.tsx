@@ -1,4 +1,4 @@
-
+﻿
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { WorkoutSet, SetType } from '../../types';
 import { Icon } from '../ui/Icon';
@@ -66,7 +66,7 @@ const getBorderAccent = (type: SetType): string => {
 
 const getTypeLabel = (type: SetType) => {
     const map: Record<string, string> = {
-        regular: '●',
+        regular: 'â—',
         warmup: 'W',
         myorep: 'M',
         myorep_match: 'MM',
@@ -81,13 +81,13 @@ const getTypeLabel = (type: SetType) => {
         time_volume: 'TV',
         triple_add: 'TA',
     };
-    return map[type] || '●';
+    return map[type] || 'â—';
 };
 
-// ─── HOLD TIMER ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ HOLD TIMER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const HoldTimer: React.FC<{
     initialSeconds: number;
-    targetSeconds?: number;   // If set → countdown mode
+    targetSeconds?: number;   // If set â†’ countdown mode
     onSave: (seconds: number) => void;
     lang: 'en' | 'es';
     isDone: boolean;
@@ -203,7 +203,7 @@ const HoldTimer: React.FC<{
     );
 };
 
-// ─── MAIN SETROW ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ MAIN SETROW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const SetRow = React.memo(({
     set, exInstanceId,
     onUpdate, onToggleComplete, onChangeType,
@@ -213,8 +213,8 @@ export const SetRow = React.memo(({
     const isDone = set.completed;
     const setType = set.type || 'regular';
     // For regular sets: show the set number (1-based index) instead of the
-    // opaque `●` glyph — gives instant orientation ("I'm on set 2 of 3").
-    // For typed sets (warmup, myorep, drop…): keep the type letter badge.
+    // opaque `â—` glyph â€” gives instant orientation ("I'm on set 2 of 3").
+    // For typed sets (warmup, myorep, dropâ€¦): keep the type letter badge.
     const effectiveBadgeLabel = badgeLabel
         ?? (setType === 'regular' && setIndex != null
             ? String(setIndex + 1)
@@ -284,23 +284,7 @@ export const SetRow = React.memo(({
         activeFieldRef.current = null;
         flushScheduledCommit(field as 'weight' | 'reps', value);
     };
-
-    // ── Quick weight/reps adjust ─────────────────────────────────────
-    const adjustWeight = useCallback((delta: number) => {
-        const cur = Number(localWeight) || Number(set.hintWeight) || 0;
-        const next = String(Math.max(0, Math.round((cur + delta) * 2) / 2));
-        setLocalWeight(next);
-        scheduleCommit('weight', next);
-    }, [localWeight, set.hintWeight, scheduleCommit]);
-
-    const adjustReps = useCallback((delta: number) => {
-        const cur = Number(localReps) || Number(set.hintReps) || 0;
-        const next = String(Math.max(0, cur + delta));
-        setLocalReps(next);
-        scheduleCommit('reps', next);
-    }, [localReps, set.hintReps, scheduleCommit]);
-
-    // ── Swipe-to-complete handlers ───────────────────────────────────
+    // Swipe-to-complete handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const onSwipeTouchStart = useCallback((e: React.TouchEvent) => {
         if (isDone) return;
         swipeRef.current = { startX: e.touches[0].clientX, startY: e.touches[0].clientY, tracking: true, locked: false };
@@ -337,7 +321,7 @@ export const SetRow = React.memo(({
         onUpdate(exInstanceId, set.id, 'duration', seconds);
     }, [exInstanceId, set.id, onUpdate]);
 
-    const inputBase = "w-full rounded-2xl border border-white/6 bg-[#2a2a2e] py-3.5 text-center text-xl font-bold text-white outline-none transition-all tabular-nums placeholder-zinc-600 focus:border-primary-500/30 focus:ring-2 focus:ring-primary-500/30";
+    const inputBase = "w-full rounded-[1.15rem] border border-white/6 bg-[#242428] px-2 py-2.5 text-center text-lg font-bold text-white outline-none transition-all tabular-nums placeholder-zinc-600 focus:border-primary-500/30 focus:ring-2 focus:ring-primary-500/20";
     const doneInput = "border-transparent bg-transparent text-white/90 pointer-events-none";
 
     // Show previous session value as placeholder so the field reads as "editable with context",
@@ -349,12 +333,12 @@ export const SetRow = React.memo(({
     const badgeProps = (!disableTypeChange && !isDone)
         ? { id: tutorialId, onClick: () => onChangeType(exInstanceId, set.id, setType) }
         : { id: tutorialId };
-    const badgeClass = `flex h-11 w-11 items-center justify-center rounded-full border font-black text-xs transition-all ${isDone ? 'border-emerald-400/20 bg-emerald-500 text-black shadow-[0_10px_25px_-10px_rgba(34,197,94,0.7)]' : getTypeColor(setType)} ${!disableTypeChange && !isDone ? 'cursor-pointer active:scale-90' : 'cursor-default'}`;
+    const badgeClass = `flex h-9 w-9 items-center justify-center rounded-full border font-black text-xs transition-all ${isDone ? 'border-emerald-400/20 bg-emerald-500 text-black shadow-[0_10px_25px_-10px_rgba(34,197,94,0.7)]' : getTypeColor(setType)} ${!disableTypeChange && !isDone ? 'cursor-pointer active:scale-90' : 'cursor-default'}`;
 
-    // ── Difficulty picker (shown after completing a set with no RPE) ─
+    // â”€â”€ Difficulty picker (shown after completing a set with no RPE) â”€
     const DifficultyPicker = !isDone ? null : (set.rpe === '' || set.rpe === null || set.rpe === undefined) ? (
         <div className="flex gap-1 px-2 pb-1.5 -mt-0.5 animate-in fade-in duration-300">
-            {([{ emoji: '💚', label: lang === 'es' ? 'Fácil' : 'Easy', val: '3' }, { emoji: '🟡', label: 'OK', val: '6' }, { emoji: '🔴', label: lang === 'es' ? 'Duro' : 'Hard', val: '9' }] as const).map(d => (
+            {([{ emoji: 'ðŸ’š', label: lang === 'es' ? 'FÃ¡cil' : 'Easy', val: '3' }, { emoji: 'ðŸŸ¡', label: 'OK', val: '6' }, { emoji: 'ðŸ”´', label: lang === 'es' ? 'Duro' : 'Hard', val: '9' }] as const).map(d => (
                 <button key={d.val}
                     onClick={() => onUpdate(exInstanceId, set.id, 'rpe', d.val)}
                     className="flex-1 text-[10px] font-bold py-1 rounded-lg bg-zinc-800/60 text-zinc-400 hover:bg-zinc-700 hover:text-white active:scale-95 transition-all">
@@ -364,7 +348,7 @@ export const SetRow = React.memo(({
         </div>
     ) : null;
 
-    // Swipe overlay — shared across all branches
+    // Swipe overlay â€” shared across all branches
     const SwipeOverlay = swipePct > 0 ? (
         <div className="absolute inset-y-0 left-0 rounded-xl bg-green-500/20 pointer-events-none transition-none flex items-center justify-start pl-3"
             style={{ width: `${swipePct}%` }}>
@@ -372,12 +356,12 @@ export const SetRow = React.memo(({
         </div>
     ) : null;
 
-    // ── ISOMETRIC MODE ──────────────────────────────────────────────────────
+    // â”€â”€ ISOMETRIC MODE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (isIsometric) {
         return (
             <div id={`set-row-${set.id}`}
                 onTouchStart={onSwipeTouchStart} onTouchMove={onSwipeTouchMove} onTouchEnd={onSwipeTouchEnd}
-                className={`relative grid grid-cols-12 gap-2 items-center rounded-[1.35rem] px-2 py-3 transition-colors duration-200 ${getBorderAccent(setType)} ${rowAccent} ${isDone ? 'opacity-80' : ''}`}>
+                className={`relative grid grid-cols-12 gap-2 items-center rounded-[1.1rem] px-2 py-2.5 transition-colors duration-200 ${getBorderAccent(setType)} ${rowAccent} ${isDone ? 'opacity-80' : ''}`}>
                 {SwipeOverlay}
                 {/* Set Type Badge */}
                 <div className="col-span-2 flex justify-center">
@@ -386,7 +370,7 @@ export const SetRow = React.memo(({
                     </BadgeEl>
                 </div>
 
-                {/* Hold Timer — takes up the weight+reps cols */}
+                {/* Hold Timer â€” takes up the weight+reps cols */}
                 <div className="col-span-8 flex items-center justify-center">
                     <HoldTimer
                         initialSeconds={Number(set.duration) || 0}
@@ -405,27 +389,27 @@ export const SetRow = React.memo(({
                             onToggleComplete(exInstanceId, set.id);
                         }}
                         className={`
-                            flex h-12 w-12 items-center justify-center rounded-full transition-all duration-150 active:scale-90
+                            flex h-10 w-10 items-center justify-center rounded-full transition-all duration-150 active:scale-90
                             ${isDone
                                 ? 'bg-primary-500 text-black border-transparent shadow-[0_0_15px] shadow-primary-500/20'
                                 : 'border border-white/8 bg-white/[0.04] text-zinc-500 hover:border-white/15 hover:text-white active:bg-primary-500 active:text-black'}
                         `}
                     >
-                        <Icon name="Check" size={20} strokeWidth={3} />
+                        <Icon name="Check" size={18} strokeWidth={3} />
                     </button>
                 </div>
             </div>
         );
     }
 
-    // ── BODYWEIGHT MODE ─────────────────────────────────────────────────────
+    // â”€â”€ BODYWEIGHT MODE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (isBodyweight && !isCardio) {
         return (
             <div id={`set-row-${set.id}`}
                 onTouchStart={onSwipeTouchStart} onTouchMove={onSwipeTouchMove} onTouchEnd={onSwipeTouchEnd}
-                className={`relative rounded-[1.35rem] transition-colors duration-200 ${getBorderAccent(setType)} ${rowAccent} ${isDone ? 'opacity-80' : ''}`}>
+                className={`relative rounded-[1.1rem] transition-colors duration-200 ${getBorderAccent(setType)} ${rowAccent} ${isDone ? 'opacity-80' : ''}`}>
                 {SwipeOverlay}
-                <div className="grid grid-cols-12 items-center gap-2 px-2 py-3">
+                <div className="grid grid-cols-12 items-center gap-2 px-2 py-2.5">
                     {/* Set Type Badge */}
                     <div className="col-span-2 flex justify-center">
                         <BadgeEl {...badgeProps as any} className={badgeClass}>
@@ -433,7 +417,7 @@ export const SetRow = React.memo(({
                         </BadgeEl>
                     </div>
 
-                    {/* Reps (main field for BW) — prominent */}
+                    {/* Reps (main field for BW) â€” prominent */}
                     <div className="col-span-6">
                         <input
                             ref={repsRef}
@@ -462,7 +446,7 @@ export const SetRow = React.memo(({
                         ) : (
                             <input
                                 type="number" inputMode="decimal"
-                                className="w-full rounded-2xl border border-white/6 bg-[#2a2a2e] py-3.5 text-center text-sm font-bold text-violet-300 outline-none transition-all tabular-nums placeholder-zinc-600 focus:ring-2 focus:ring-violet-500/30"
+                                className="w-full rounded-[1rem] border border-white/6 bg-[#242428] px-1 py-2.5 text-center text-xs font-bold text-violet-300 outline-none transition-all tabular-nums placeholder-zinc-600 focus:ring-2 focus:ring-violet-500/20"
                                 placeholder="0"
                                 value={localWeight}
                                 onChange={e => setLocalWeight(e.target.value)}
@@ -481,35 +465,23 @@ export const SetRow = React.memo(({
                                 onToggleComplete(exInstanceId, set.id);
                             }}
                             className={`
-                                flex h-12 w-12 items-center justify-center rounded-full transition-all duration-150 active:scale-90
+                                flex h-10 w-10 items-center justify-center rounded-full transition-all duration-150 active:scale-90
                                 ${isDone
                                     ? 'bg-primary-500 text-black border-transparent shadow-[0_0_15px] shadow-primary-500/20'
                                     : 'border border-white/8 bg-white/[0.04] text-zinc-500 hover:border-white/15 hover:text-white active:bg-primary-500 active:text-black'}
                             `}
                         >
-                            <Icon name="Check" size={20} strokeWidth={3} />
+                            <Icon name="Check" size={18} strokeWidth={3} />
                         </button>
                     </div>
                 </div>
 
-                {/* Quick reps adjust */}
-                {!isDone && (
-                    <div className="flex gap-1 px-2 pb-1.5 -mt-0.5">
-                        {([-5, -1, +1, +5] as const).map(d => (
-                            <button key={d} onClick={() => adjustReps(d)}
-                                className="flex-1 rounded-full bg-white/[0.04] py-1 text-[10px] font-bold text-zinc-400 transition-all hover:text-white active:scale-95">
-                                {d > 0 ? `+${d}` : d}
-                            </button>
-                        ))}
-                    </div>
-                )}
-
                 {/* Prev performance hint */}
                 {!isDone && set.prevReps && (
                     <div className="flex justify-center pb-1.5 -mt-1">
-                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-800/80 border border-zinc-700/50">
+                        <div className="inline-flex items-center gap-1 rounded-full bg-zinc-800/70 px-2 py-0.5 border border-zinc-700/40">
                             <Icon name="Clock" size={9} className="text-zinc-500 shrink-0" />
-                            <span className="text-[9px] font-bold text-zinc-400 tabular-nums">
+                            <span className="text-[8px] font-bold text-zinc-500 tabular-nums">
                                 {set.prevReps} reps{set.prevWeight && Number(set.prevWeight) > 0 ? ` +${set.prevWeight}kg` : ''}
                             </span>
                         </div>
@@ -520,13 +492,13 @@ export const SetRow = React.memo(({
         );
     }
 
-    // ── STANDARD GYM / CARDIO MODE ──────────────────────────────────────────
+    // â”€â”€ STANDARD GYM / CARDIO MODE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     return (
         <div id={`set-row-${set.id}`}
             onTouchStart={onSwipeTouchStart} onTouchMove={onSwipeTouchMove} onTouchEnd={onSwipeTouchEnd}
-            className={`relative rounded-[1.35rem] transition-colors duration-200 ${getBorderAccent(setType)} ${rowAccent} ${isDone ? 'opacity-80' : ''}`}>
+            className={`relative rounded-[1.1rem] transition-colors duration-200 ${getBorderAccent(setType)} ${rowAccent} ${isDone ? 'opacity-80' : ''}`}>
             {SwipeOverlay}
-        <div className="grid grid-cols-12 items-center gap-2 px-2 py-3">
+        <div className="grid grid-cols-12 items-center gap-2 px-2 py-2.5">
 
             {/* Set Type / Number Badge */}
             <div className="col-span-2 flex justify-center">
@@ -535,8 +507,8 @@ export const SetRow = React.memo(({
                 </BadgeEl>
             </div>
 
-            {/* Weight Input + quick adjust */}
-            <div className="col-span-4 flex flex-col gap-0.5">
+            {/* Weight Input */}
+            <div className="col-span-4">
                 <input
                     type="number" inputMode="decimal"
                     className={isDone ? inputBase + " " + doneInput : inputBase}
@@ -547,16 +519,6 @@ export const SetRow = React.memo(({
                     onFocus={() => activeFieldRef.current = 'weight'}
                     enterKeyHint="next"
                 />
-                {!isDone && !isCardio && (
-                    <div className="flex gap-0.5">
-                        {([-2.5, +2.5] as const).map(d => (
-                            <button key={d} onClick={() => adjustWeight(d)}
-                                className="flex-1 rounded-full bg-white/[0.04] py-1 text-[9px] font-bold tabular-nums text-zinc-400 transition-all hover:text-white active:scale-95">
-                                {d > 0 ? `+${d}` : d}
-                            </button>
-                        ))}
-                    </div>
-                )}
             </div>
 
             {/* Reps Input */}
@@ -582,14 +544,14 @@ export const SetRow = React.memo(({
                         onToggleComplete(exInstanceId, set.id);
                     }}
                     className={`
-                        flex h-12 w-12 items-center justify-center rounded-full transition-all duration-150 active:scale-90
+                        flex h-10 w-10 items-center justify-center rounded-full transition-all duration-150 active:scale-90
                         ${isDone
                             ? 'bg-primary-500 text-black border-transparent shadow-[0_0_15px] shadow-primary-500/20'
                             : 'border border-white/8 bg-white/[0.04] text-zinc-500 hover:border-white/15 hover:text-white active:bg-primary-500 active:text-black'
                         }
                     `}
                 >
-                    <Icon name="Check" size={20} strokeWidth={3} />
+                    <Icon name="Check" size={18} strokeWidth={3} />
                 </button>
             </div>
         </div>
@@ -597,13 +559,13 @@ export const SetRow = React.memo(({
         {/* Prev performance hint */}
         {!isDone && !isCardio && (set.prevWeight || set.prevReps) && (
             <div className="flex justify-center pb-1.5 -mt-1">
-                <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-800/80 border border-zinc-700/50">
+                <div className="inline-flex items-center gap-1 rounded-full bg-zinc-800/70 px-2 py-0.5 border border-zinc-700/40">
                     <Icon name="Clock" size={9} className="text-zinc-500 shrink-0" />
-                    <span className="text-[9px] font-bold text-zinc-400 tabular-nums">
+                    <span className="text-[8px] font-bold text-zinc-500 tabular-nums">
                         {[
                             set.prevWeight && Number(set.prevWeight) > 0 ? `${set.prevWeight}kg` : null,
                             set.prevReps && Number(set.prevReps) > 0 ? `${set.prevReps} reps` : null,
-                        ].filter(Boolean).join(' × ')}
+                        ].filter(Boolean).join(' Ã— ')}
                     </span>
                 </div>
             </div>
