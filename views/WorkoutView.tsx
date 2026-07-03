@@ -28,7 +28,7 @@ const PRCelebrationOverlay = React.lazy(() => import('../components/ui/PRCelebra
 const ConfirmModal = React.lazy(() => import('../components/ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
 const TutorialOverlay = React.lazy(() => import('../components/ui/TutorialOverlay').then(m => ({ default: m.TutorialOverlay })));
 
-// Module-scope constants â€” never change at runtime. Previously these maps were
+// Module-scope constants never change at runtime. Previously these maps were
 // allocated on every render of the set-type modal IIFE (~12 entries each), and
 // the modal can re-render frequently during a workout because `applyToAll`
 // state changes per click. Lifting them out drops 24 object allocations and
@@ -69,7 +69,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
 
     const [showAdvancedSetTypes, setShowAdvancedSetTypes] = useState(false);
 
-    // Set type modal: apply-to-all toggle â€” defaults ON when all sets share the same type
+    // Set type modal: apply-to-all toggle defaults ON when all sets share the same type
     const [applyToAll, setApplyToAll] = useState(true);
     useEffect(() => {
         if (!ctrl.changingSetType) return;
@@ -83,7 +83,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [ctrl.changingSetType]);
 
-    // Derived State â€” memoized so its reference is stable across keystroke re-renders,
+    // Derived State - memoized so its reference is stable across keystroke re-renders,
     // otherwise it defeats React.memo on every SortableExerciseCard.
     const stageConfig = useMemo(
         () => activeMeso ? getMesoStageConfig(activeMeso.mesoType || 'hyp_1', activeMeso.week, !!activeMeso.isDeload) : null,

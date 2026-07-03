@@ -87,7 +87,7 @@ const getTypeLabel = (type: SetType) => {
 // â”€â”€â”€ HOLD TIMER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const HoldTimer: React.FC<{
     initialSeconds: number;
-    targetSeconds?: number;   // If set â†’ countdown mode
+    targetSeconds?: number;   // If set -> countdown mode
     onSave: (seconds: number) => void;
     lang: 'en' | 'es';
     isDone: boolean;
@@ -213,8 +213,8 @@ export const SetRow = React.memo(({
     const isDone = set.completed;
     const setType = set.type || 'regular';
     // For regular sets: show the set number (1-based index) instead of the
-    // opaque `â—` glyph â€” gives instant orientation ("I'm on set 2 of 3").
-    // For typed sets (warmup, myorep, dropâ€¦): keep the type letter badge.
+    // opaque bullet glyph gives instant orientation ("I'm on set 2 of 3").
+    // For typed sets (warmup, myorep, drop...): keep the type letter badge.
     const effectiveBadgeLabel = badgeLabel
         ?? (setType === 'regular' && setIndex != null
             ? String(setIndex + 1)
@@ -348,7 +348,7 @@ export const SetRow = React.memo(({
         </div>
     ) : null;
 
-    // Swipe overlay â€” shared across all branches
+    // Swipe overlay - shared across all branches
     const SwipeOverlay = swipePct > 0 ? (
         <div className="absolute inset-y-0 left-0 rounded-xl bg-green-500/20 pointer-events-none transition-none flex items-center justify-start pl-3"
             style={{ width: `${swipePct}%` }}>
@@ -356,7 +356,7 @@ export const SetRow = React.memo(({
         </div>
     ) : null;
 
-    // â”€â”€ ISOMETRIC MODE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ISOMETRIC MODE
     if (isIsometric) {
         return (
             <div id={`set-row-${set.id}`}
@@ -370,7 +370,7 @@ export const SetRow = React.memo(({
                     </BadgeEl>
                 </div>
 
-                {/* Hold Timer â€” takes up the weight+reps cols */}
+                {/* Hold Timer - takes up the weight+reps cols */}
                 <div className="col-span-8 flex items-center justify-center">
                     <HoldTimer
                         initialSeconds={Number(set.duration) || 0}
@@ -402,7 +402,7 @@ export const SetRow = React.memo(({
         );
     }
 
-    // â”€â”€ BODYWEIGHT MODE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // BODYWEIGHT MODE
     if (isBodyweight && !isCardio) {
         return (
             <div id={`set-row-${set.id}`}
@@ -417,7 +417,7 @@ export const SetRow = React.memo(({
                         </BadgeEl>
                     </div>
 
-                    {/* Reps (main field for BW) â€” prominent */}
+                    {/* Reps (main field for BW) - prominent */}
                     <div className="col-span-6">
                         <input
                             ref={repsRef}
@@ -492,7 +492,7 @@ export const SetRow = React.memo(({
         );
     }
 
-    // â”€â”€ STANDARD GYM / CARDIO MODE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // STANDARD GYM / CARDIO MODE
     return (
         <div id={`set-row-${set.id}`}
             onTouchStart={onSwipeTouchStart} onTouchMove={onSwipeTouchMove} onTouchEnd={onSwipeTouchEnd}
