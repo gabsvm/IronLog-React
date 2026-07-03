@@ -63,7 +63,7 @@ export const ExerciseCardSets: React.FC<Props> = React.memo(({
 }) => (
     <>
         {/* Column header row */}
-        <div className="grid grid-cols-12 items-center gap-2 border-b border-white/5 px-3 py-2 text-center text-[9px] font-bold uppercase tracking-[0.18em] text-zinc-500">
+        <div className="grid grid-cols-12 items-center gap-2 border-b border-white/5 px-3 py-1.5 text-center text-[9px] font-bold uppercase tracking-[0.16em] text-zinc-500">
             <div className={`col-span-2 ${isEMOM ? 'text-cyan-500' : isMyorep ? 'text-purple-500' : isCluster ? 'text-emerald-500' : ''}`}>
                 {isEMOM ? 'Min' : isMyorep ? 'Set' : '#'}
             </div>
@@ -84,7 +84,7 @@ export const ExerciseCardSets: React.FC<Props> = React.memo(({
             ) : ex.isIsometric ? (
                 <>
                     <div className="col-span-6 text-center text-violet-400">
-                        {lang === 'es' ? '⏱ TIEMPO DE HOLD' : '⏱ HOLD TIME'}
+                        HOLD TIME
                     </div>
                     <div className="col-span-2"></div>
                 </>
@@ -104,7 +104,7 @@ export const ExerciseCardSets: React.FC<Props> = React.memo(({
         </div>
 
         {/* Sets list */}
-        <div className="space-y-1.5 px-2.5 py-2.5">
+        <div className="space-y-1.5 px-2 py-2">
             {regularSets.map((set, idx) => (
                 <SetRow
                     key={set.id}

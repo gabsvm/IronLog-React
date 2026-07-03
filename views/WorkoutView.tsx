@@ -252,12 +252,12 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
 
             {/* --- Compact Header --- */}
             <div className="glass z-30 border-b border-white/5 pt-safe bg-black/92">
-                <div className="flex h-12 items-center justify-between px-4">
+                <div className="flex h-11 items-center justify-between px-4">
                     <button onClick={onBack} className="flex h-10 w-10 items-center justify-center rounded-full text-zinc-400 transition-colors active:bg-zinc-800 hover:text-white" aria-label="Previous">
                         <Icon name="ChevronLeft" size={22} strokeWidth={2.5} />
                     </button>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                         <div className="rounded-full border border-white/8 bg-white/[0.04] px-3 py-1">
                             <WorkoutTimer startTime={activeSession.startTime} />
                         </div>
@@ -280,16 +280,12 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                     </button>
                 </div>
 
-                <div className="px-4 pb-3 pt-1">
-                    <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-white/8 bg-white/[0.04] px-3 py-1 text-[10px] font-bold text-zinc-200">
-                        <Icon name="TrendingUp" size={12} className="text-zinc-300" />
-                        <span>{lang === 'es' ? 'Progreso' : 'Progress'}</span>
-                    </div>
-                    <h1 className="mb-1 truncate text-[1.8rem] font-black leading-[0.95] tracking-[-0.05em] text-white">
+                <div className="px-4 pb-2.5 pt-1">
+                    <h1 className="mb-1 truncate text-[1.55rem] font-black leading-[0.96] tracking-[-0.05em] text-white">
                         {isCalisthenicsSession ? 'Calisthenics Session' : activeSession.name}
                     </h1>
 
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-1.5">
                         {activeSession.week >= 1 && (
                             <>
                                 <div className="flex items-center gap-1.5">
@@ -319,7 +315,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
             </div>
 
             <div className="flex-1 overflow-hidden flex flex-col">
-                <div id="tut-exercise-list" className="flex-1 overflow-y-auto scroll-container px-4 pb-28 pt-3 space-y-3">
+                <div id="tut-exercise-list" className="flex-1 overflow-y-auto scroll-container px-4 pb-28 pt-2.5 space-y-2.5">
                     <Suspense fallback={null}>
                         <WorkoutSortableList itemIds={sortableItems} onReorder={ctrl.reorderSessionExercises}>
                             {sessionExercises.map((ex, idx) => {
@@ -367,7 +363,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                     <button
                         id="tut-finish-btn"
                         onClick={(e) => { e.stopPropagation(); ctrl.setShowFinishModal(true); }}
-                        className={`flex-1 h-[54px] rounded-2xl bg-gradient-to-r ${isCalisthenicsSession ? 'from-violet-600 to-indigo-600 shadow-violet-600/30' : 'from-primary-500 to-primary-600 shadow-primary-500/30'} text-white font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-[0_8px_24px_-4px]`}
+                        className={`flex-1 h-[52px] rounded-2xl bg-gradient-to-r ${isCalisthenicsSession ? 'from-violet-600 to-indigo-600 shadow-violet-600/30' : 'from-primary-500 to-primary-600 shadow-primary-500/30'} text-white font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-[0_8px_24px_-4px]`}
                     >
                         <Icon name="CheckCircle" size={19} strokeWidth={2.5} />
                         <span className="text-xs uppercase tracking-wide">{t.finishWorkout}</span>
@@ -386,7 +382,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                         ctrl.setWarmupExId(quickAccessExercise.instanceId);
                                     }
                                 }}
-                                className="flex h-[54px] w-[54px] items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-900 text-zinc-300 shadow-lg transition-transform active:scale-90 hover:text-white"
+                                className="flex h-[52px] w-[52px] items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-900 text-zinc-300 shadow-lg transition-transform active:scale-90 hover:text-white"
                                 title={isBw ? (lang === 'en' ? 'Technique' : 'Tecnica') : t.warmup}
                             >
                                 <Icon name={isBw ? 'Info' : 'Zap'} size={20} />
