@@ -338,7 +338,7 @@ export const SetRow = React.memo(({
     // â”€â”€ Difficulty picker (shown after completing a set with no RPE) â”€
     const DifficultyPicker = !isDone ? null : (set.rpe === '' || set.rpe === null || set.rpe === undefined) ? (
         <div className="flex gap-1 px-2 pb-1.5 -mt-0.5 animate-in fade-in duration-300">
-            {([{ emoji: 'ðŸ’š', label: lang === 'es' ? 'FÃ¡cil' : 'Easy', val: '3' }, { emoji: 'ðŸŸ¡', label: 'OK', val: '6' }, { emoji: 'ðŸ”´', label: lang === 'es' ? 'Duro' : 'Hard', val: '9' }] as const).map(d => (
+            {([{ emoji: 'Easy', label: lang === 'es' ? 'Facil' : 'Easy', val: '3' }, { emoji: 'OK', label: 'OK', val: '6' }, { emoji: 'Hard', label: lang === 'es' ? 'Duro' : 'Hard', val: '9' }] as const).map(d => (
                 <button key={d.val}
                     onClick={() => onUpdate(exInstanceId, set.id, 'rpe', d.val)}
                     className="flex-1 text-[10px] font-bold py-1 rounded-lg bg-zinc-800/60 text-zinc-400 hover:bg-zinc-700 hover:text-white active:scale-95 transition-all">
@@ -565,7 +565,7 @@ export const SetRow = React.memo(({
                         {[
                             set.prevWeight && Number(set.prevWeight) > 0 ? `${set.prevWeight}kg` : null,
                             set.prevReps && Number(set.prevReps) > 0 ? `${set.prevReps} reps` : null,
-                        ].filter(Boolean).join(' Ã— ')}
+                        ].filter(Boolean).join(' x ')}
                     </span>
                 </div>
             </div>

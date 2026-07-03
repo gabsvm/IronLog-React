@@ -236,7 +236,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
             title: t.warmup,
             text: lang === 'en'
                 ? "Smart Warmup Calc. IMPORTANT: You must enter the weight for your first working set (Set 1) BEFORE tapping this."
-                : "Calc. Calentamiento. IMPORTANTE: Debes ingresar el peso en tu primera serie efectiva (Set 1) ANTES de tocar aquÃ­.",
+                : "Calc. Calentamiento. IMPORTANTE: Debes ingresar el peso en tu primera serie efectiva (Set 1) ANTES de tocar aqui.",
             position: 'bottom' as const
         },
         {
@@ -554,7 +554,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
 
                         {/* Session Journal Note */}
                         <div className="space-y-1.5">
-                            <label className="block text-[10px] font-semibold uppercase tracking-wider text-zinc-500 px-1">{lang === 'es' ? 'Nota de sesiÃ³n' : 'Session note'}</label>
+                            <label className="block text-[10px] font-semibold uppercase tracking-wider text-zinc-500 px-1">{lang === 'es' ? 'Nota de sesion' : 'Session note'}</label>
                             <textarea
                                 placeholder="..."
                                 value={activeSession.note || ''}

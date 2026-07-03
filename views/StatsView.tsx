@@ -71,7 +71,29 @@ export const StatsView: React.FC = () => {
     const { isWorkerReady, calculateOverview, calculateChartData } = useStatsWorker();
 
     const safeLogs = useMemo(() => Array.isArray(logs) ? logs : [], [logs]);
-    const currentEx = exercises.find(e => e.id === selectedExId);
+    const exerciseMetaById = useMemo(() => {
+        const byId = new Map<string, any>();
+
+        for (const ex of exercises) {
+            if (ex?.id && !byId.has(ex.id)) byId.set(ex.id, ex);
+        }
+
+        for (const log of safeLogs) {
+            for (const ex of (log.exercises || [])) {
+                if (!ex?.id || byId.has(ex.id)) continue;
+                byId.set(ex.id, {
+                    id: ex.id,
+                    name: ex.name,
+                    muscle: ex.muscle,
+                    isBodyweight: ex.isBodyweight,
+                    isIsometric: ex.isIsometric,
+                });
+            }
+        }
+
+        return byId;
+    }, [exercises, safeLogs]);
+    const currentEx = selectedExId ? exerciseMetaById.get(selectedExId) : null;
     const isCardio = currentEx?.muscle === 'CARDIO';
 
     // Auto-switch metric when exercise type changes
@@ -134,7 +156,7 @@ export const StatsView: React.FC = () => {
             // Transform frequency map to sorted exercise objects
             const sortedExs = Object.entries(exerciseFrequency)
                 .sort((a, b) => (b[1] as number) - (a[1] as number)) // Most frequent first
-                .map(([id]) => exercises.find(e => e.id === id))
+                .map(([id]) => exerciseMetaById.get(id))
                 .filter(Boolean);
 
             setAvailableExercises(sortedExs);
@@ -152,7 +174,7 @@ export const StatsView: React.FC = () => {
         // re-running here on every selectedExId would duplicate work that
         // useEffect #2 (chart data load) already handles.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isWorkerReady, safeLogs, activeMeso?.id, exercises, calculateOverview]);
+    }, [isWorkerReady, safeLogs, activeMeso?.id, exerciseMetaById, selectedExId, calculateOverview]);
 
     // 2. Load Chart Data
     useEffect(() => {
