@@ -1,7 +1,6 @@
 
 import React, { createContext, useContext, useEffect, useRef, ReactNode, useState, PropsWithChildren, useMemo, useCallback } from 'react';
 import { AppState, Lang, Theme, ColorTheme, ExerciseDef, ActiveSession, MesoCycle, Log, ProgramDay, TutorialState, GlobalTemplate, UserProfile, BeforeInstallPromptEvent, NutritionLog, CardioSession, NutritionGoal, MacroGoals, DailyNutrition, BodyLog, CustomFood } from '../types';
-import { DEFAULT_LIBRARY, DEFAULT_TEMPLATE, INITIAL_TEMPLATES } from '../constants';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { usePersistedState } from '../hooks/usePersistedState';
 import { Icon } from '../components/ui/Icon';
@@ -11,12 +10,14 @@ import { HomeSkeleton } from '../components/ui/SkeletonLoader';
 import { AuthProvider, useAuth } from './AuthContext';
 import { syncService } from '../services/syncService';
 import { useStore } from '../lib/store';
-import { getFirebaseServices, isFirebaseConfigured } from '../lib/firebaseLoader';
+import { getFirebaseFirestoreServices, isFirebaseConfigured } from '../lib/firebaseLoader';
+import { scheduleWhenIdle } from '../lib/idle';
 
 interface AppContextType extends Omit<AppState, 'activeSession' | 'activeMeso'> {
     lang: Lang;
     theme: Theme;
     colorTheme: ColorTheme;
+    reducedEffects: boolean;
     setLang: (l: Lang) => void;
     setTheme: (t: Theme) => void;
     setColorTheme: (t: ColorTheme) => void;
@@ -67,7 +68,7 @@ interface AppContextType extends Omit<AppState, 'activeSession' | 'activeMeso'> 
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
-type AppPreferencesContextType = Pick<AppContextType, 'lang' | 'setLang' | 'theme' | 'setTheme' | 'colorTheme' | 'setColorTheme' | 'deferredPrompt' | 'installApp' | 'isStandalone'>;
+type AppPreferencesContextType = Pick<AppContextType, 'lang' | 'setLang' | 'theme' | 'setTheme' | 'colorTheme' | 'setColorTheme' | 'deferredPrompt' | 'installApp' | 'isStandalone' | 'reducedEffects'>;
 type AppConfigContextType = Pick<AppContextType, 'config' | 'setConfig'>;
 type TutorialContextType = Pick<AppContextType, 'tutorialProgress' | 'markTutorialSeen' | 'resetTutorials'>;
 
@@ -95,15 +96,11 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
 
     const [rpTargetRIR, setRpTargetRIR] = useLocalStorage('il_cfg_rp_rir', 2);
     const [keepScreenOn, setKeepScreenOn] = useLocalStorage('il_cfg_screen', false);
-    const [plateInventory, setPlateInventory] = useLocalStorage<Record<number, number>>('il_cfg_plates', {
-        25: 4, 20: 6, 15: 4, 10: 4, 5: 4, 2.5: 4, 1.25: 4
-    });
-
     const [tutorialProgress, setTutorialProgress] = useLocalStorage<TutorialState>('il_tutorial_v2', INITIAL_TUTORIAL_STATE);
 
     // --- Heavy Data (IndexedDB) ---
-    const [program, setProgram, programLoading] = usePersistedState<ProgramDay[]>('il_prog_v16', DEFAULT_TEMPLATE, 1000);
-    const [exercises, setExercises, exLoading] = usePersistedState<ExerciseDef[]>('il_ex_v16', DEFAULT_LIBRARY, 1000);
+    const [program, setProgram, programLoading] = usePersistedState<ProgramDay[]>('il_prog_v16', [], 1000);
+    const [exercises, setExercises, exLoading] = usePersistedState<ExerciseDef[]>('il_ex_v16', [], 1000);
     const [logs, setLogs, logsLoading] = usePersistedState<Log[]>('il_logs_v16', [], 1000);
 
     const DEFAULT_NUTRITION_GOAL: NutritionGoal = { calories: 2500, protein: 180, carbs: 280, fat: 70 };
@@ -119,7 +116,11 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         sessionDuration: 'medium'
     }, 1000);
 
-    const [globalTemplates, setGlobalTemplates] = useState<GlobalTemplate[]>(INITIAL_TEMPLATES);
+    const [globalTemplates, setGlobalTemplates] = useState<GlobalTemplate[]>([]);
+    const [defaultLibrary, setDefaultLibrary] = useState<ExerciseDef[] | null>(null);
+    const [defaultTemplate, setDefaultTemplate] = useState<ProgramDay[] | null>(null);
+    const [baseTemplates, setBaseTemplates] = useState<GlobalTemplate[] | null>(null);
+    const [defaultsLoading, setDefaultsLoading] = useState(true);
     const [rpFeedback, setRpFeedback, fbLoading] = usePersistedState<AppState['rpFeedback']>('il_rp_fb_v1', {}, 1000);
     const [hasSeenOnboarding, setHasSeenOnboarding, onboardingLoading] = usePersistedState<boolean>('il_onboarded_v2', false, 1000);
     const [localLastUpdated, setLocalLastUpdated] = usePersistedState<number>('il_last_sync_ts', 0, 0);
@@ -136,21 +137,78 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     // Initialize with global if available (captured in index.html)
     const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(window.deferredPrompt || null);
     const [isStandalone, setIsStandalone] = useState(false);
+    const [reducedEffects, setReducedEffects] = useState(false);
 
     const isStoreLoading = useStore(state => state.isStoreLoading);
     const activeSession = useStore(state => state.activeSession);
     const activeMeso = useStore(state => state.activeMeso);
 
-    const isAppLoading = isStoreLoading || programLoading || exLoading || logsLoading || fbLoading || onboardingLoading || authLoading || profileLoading || nutLoading || cardioLoading || goalLoading || bodyLoading || macroLoading;
+    const needsDefaultBootstrap =
+        defaultsLoading &&
+        !programLoading &&
+        !exLoading &&
+        (program.length === 0 || exercises.length === 0 || globalTemplates.length === 0);
+
+    const isAppLoading =
+        isStoreLoading ||
+        programLoading ||
+        exLoading ||
+        logsLoading ||
+        fbLoading ||
+        onboardingLoading ||
+        authLoading ||
+        profileLoading ||
+        nutLoading ||
+        cardioLoading ||
+        goalLoading ||
+        bodyLoading ||
+        macroLoading ||
+        needsDefaultBootstrap;
     const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+
+    useEffect(() => {
+        let cancelled = false;
+        const cancelIdle = scheduleWhenIdle(async () => {
+            try {
+                const [{ DEFAULT_LIBRARY }, { DEFAULT_TEMPLATE, INITIAL_TEMPLATES }] = await Promise.all([
+                    import('../data/defaultLibrary'),
+                    import('../data/defaultTemplates'),
+                ]);
+
+                if (cancelled) return;
+
+                setDefaultLibrary(DEFAULT_LIBRARY);
+                setDefaultTemplate(DEFAULT_TEMPLATE);
+                setBaseTemplates(INITIAL_TEMPLATES);
+                setGlobalTemplates((prev) => (prev.length > 0 ? prev : INITIAL_TEMPLATES));
+            } finally {
+                if (!cancelled) setDefaultsLoading(false);
+            }
+        }, 200);
+
+        return () => {
+            cancelled = true;
+            cancelIdle();
+        };
+    }, []);
+
+    useEffect(() => {
+        if (programLoading || !defaultTemplate || program.length > 0) return;
+        setProgram(defaultTemplate);
+    }, [programLoading, defaultTemplate, program, setProgram]);
+
+    useEffect(() => {
+        if (exLoading || !defaultLibrary || exercises.length > 0) return;
+        setExercises(defaultLibrary);
+    }, [exLoading, defaultLibrary, exercises, setExercises]);
 
     // --- FETCH GLOBAL DATA ---
     useEffect(() => {
-        if (!isFirebaseConfigured() || !isOnline) return;
+        if (!isFirebaseConfigured() || !isOnline || !baseTemplates || defaultsLoading) return;
         let cancelled = false;
         const fetchData = async () => {
             try {
-                const { db, firestoreApi } = await getFirebaseServices();
+                const { db, firestoreApi } = await getFirebaseFirestoreServices();
                 if (!db || cancelled) return;
 
                 const qTpl = firestoreApi.query(firestoreApi.collection(db, "global_templates"), firestoreApi.orderBy("order"));
@@ -159,7 +217,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                 tplSnapshot.forEach((doc) => fetchedTemplates.push({ id: doc.id, ...doc.data() } as GlobalTemplate));
 
                 // MERGE STRATEGY: 
-                let mergedTemplates = [...INITIAL_TEMPLATES];
+                let mergedTemplates = [...baseTemplates];
 
                 fetchedTemplates.forEach(remote => {
                     const idx = mergedTemplates.findIndex(local => local.id === remote.id);
@@ -193,11 +251,13 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                 if (!e.code || e.code !== 'permission-denied') console.error("Global Data Fetch Error", e);
             }
         };
-        fetchData();
+
+        const cancelIdle = scheduleWhenIdle(fetchData, 1500);
         return () => {
             cancelled = true;
+            cancelIdle();
         };
-    }, [isOnline, user, setExercises]);
+    }, [baseTemplates, defaultsLoading, isOnline, user, setExercises]);
 
     // --- PWA INSTALL HANDLER ---
     useEffect(() => {
@@ -213,6 +273,28 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         };
         window.addEventListener('beforeinstallprompt', handler);
         return () => window.removeEventListener('beforeinstallprompt', handler);
+    }, []);
+
+    useEffect(() => {
+        const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+        const updateEffectsMode = () => {
+            const connection = (navigator as any).connection;
+            const saveData = !!connection?.saveData;
+            const lowCpu = typeof navigator.hardwareConcurrency === 'number' && navigator.hardwareConcurrency <= 4;
+            const lowMemory = typeof (navigator as any).deviceMemory === 'number' && (navigator as any).deviceMemory <= 4;
+            const shouldReduce = media.matches || saveData || lowCpu || lowMemory;
+
+            setReducedEffects(shouldReduce);
+            document.documentElement.dataset.effects = shouldReduce ? 'reduced' : 'full';
+        };
+
+        updateEffectsMode();
+        media.addEventListener('change', updateEffectsMode);
+        window.addEventListener('pageshow', updateEffectsMode);
+        return () => {
+            media.removeEventListener('change', updateEffectsMode);
+            window.removeEventListener('pageshow', updateEffectsMode);
+        };
     }, []);
 
     const installApp = useCallback(async () => {
@@ -272,9 +354,10 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                     setLocalLastUpdated(now);
                     syncService.uploadState(user.uid, {
                         program, activeMeso, activeSession, exercises, logs,
-                        config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn, plateInventory },
+                        config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn },
                         rpFeedback,
                         userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods,
+                        email: user.email || null,
                         lastUpdated: now,
                     });
                 } else {
@@ -287,7 +370,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         window.addEventListener('online', handleOnline);
         window.addEventListener('offline', handleOffline);
         return () => { window.removeEventListener('online', handleOnline); window.removeEventListener('offline', handleOffline); };
-    }, [user, subscription.isPro, program, activeMeso, activeSession, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, plateInventory, rpFeedback, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, setLocalLastUpdated]);
+    }, [user, subscription.isPro, program, activeMeso, activeSession, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, rpFeedback, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, setLocalLastUpdated]);
 
     // ── Debounce A: session-only write (fast, lightweight) ─────────────────────
     // activeSession changes on every set completion or weight input during a workout.
@@ -316,9 +399,10 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                 setLocalLastUpdated(now);
                 syncService.uploadState(user.uid, {
                     program, activeMeso, exercises, logs,
-                    config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn, plateInventory },
+                    config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn },
                     rpFeedback,
                     userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods,
+                    email: user.email || null,
                     lastUpdated: now,
                     // activeSession intentionally omitted — Debounce A owns it.
                 });
@@ -327,7 +411,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
             }
         }, 10000);
         return () => clearTimeout(timer);
-    }, [user, subscription.isPro, program, activeMeso, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, plateInventory, rpFeedback, isAppLoading, hasCheckedSync, pendingCloudData, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, setLocalLastUpdated]);
+    }, [user, subscription.isPro, program, activeMeso, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, rpFeedback, isAppLoading, hasCheckedSync, pendingCloudData, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, setLocalLastUpdated]);
 
     const confirmCloudSync = useCallback(() => {
         if (pendingCloudData) {
@@ -346,7 +430,6 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                 if (pendingCloudData.config.rpEnabled !== undefined) setRpEnabled(pendingCloudData.config.rpEnabled);
                 if (pendingCloudData.config.rpTargetRIR !== undefined) setRpTargetRIR(pendingCloudData.config.rpTargetRIR);
                 if (pendingCloudData.config.keepScreenOn !== undefined) setKeepScreenOn(pendingCloudData.config.keepScreenOn);
-                if (pendingCloudData.config.plateInventory !== undefined) setPlateInventory(pendingCloudData.config.plateInventory);
             }
 
             if (pendingCloudData.userProfile) setUserProfile(pendingCloudData.userProfile);
@@ -368,7 +451,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
 
             // Optional: You could add a 'sync_completed' event or toast here.
         }
-    }, [pendingCloudData, setProgram, setExercises, setLogs, setRpFeedback, setShowRIR, setRpEnabled, setLocalLastUpdated, setHasSeenOnboarding, setBodyLogs, setCustomFoods, setKeepScreenOn, setMacroGoals, setNutritionLogs, setPlateInventory, setRpTargetRIR, setUserProfile]);
+    }, [pendingCloudData, setProgram, setExercises, setLogs, setRpFeedback, setShowRIR, setRpEnabled, setLocalLastUpdated, setHasSeenOnboarding, setBodyLogs, setCustomFoods, setKeepScreenOn, setMacroGoals, setNutritionLogs, setRpTargetRIR, setUserProfile]);
 
     const cancelCloudSync = useCallback(() => {
         setPendingCloudData(null);
@@ -405,18 +488,17 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         if (newConfig.rpEnabled !== undefined) setRpEnabled(newConfig.rpEnabled);
         if (newConfig.rpTargetRIR !== undefined) setRpTargetRIR(newConfig.rpTargetRIR);
         if (newConfig.keepScreenOn !== undefined) setKeepScreenOn(newConfig.keepScreenOn);
-        if (newConfig.plateInventory !== undefined) setPlateInventory(newConfig.plateInventory);
-    }, [setShowRIR, setRpEnabled, setRpTargetRIR, setKeepScreenOn, setPlateInventory]);
+    }, [setShowRIR, setRpEnabled, setRpTargetRIR, setKeepScreenOn]);
 
     const markTutorialSeen = useCallback((section: keyof TutorialState) => setTutorialProgress(prev => ({ ...prev, [section]: true })), [setTutorialProgress]);
     const resetTutorials = useCallback(() => setTutorialProgress(INITIAL_TUTORIAL_STATE), [setTutorialProgress]);
 
 
-    const configState = useMemo(() => ({ showRIR, rpEnabled, rpTargetRIR, keepScreenOn, plateInventory }), [showRIR, rpEnabled, rpTargetRIR, keepScreenOn, plateInventory]);
+    const configState = useMemo(() => ({ showRIR, rpEnabled, rpTargetRIR, keepScreenOn }), [showRIR, rpEnabled, rpTargetRIR, keepScreenOn]);
     const preferencesValue = useMemo(() => ({
         lang, setLang, theme, setTheme, colorTheme, setColorTheme,
-        deferredPrompt, installApp, isStandalone,
-    }), [lang, setLang, theme, setTheme, colorTheme, setColorTheme, deferredPrompt, installApp, isStandalone]);
+        deferredPrompt, installApp, isStandalone, reducedEffects,
+    }), [lang, setLang, theme, setTheme, colorTheme, setColorTheme, deferredPrompt, installApp, isStandalone, reducedEffects]);
     const configValue = useMemo(() => ({
         config: configState,
         setConfig,
@@ -429,6 +511,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
 
     const contextValue = useMemo(() => ({
         lang, setLang, theme, setTheme, colorTheme, setColorTheme,
+        reducedEffects,
         program, setProgram,
         exercises, setExercises,
         logs, setLogs,
@@ -450,6 +533,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         customFoods, setCustomFoods,
     }), [
         lang, setLang, theme, setTheme, colorTheme, setColorTheme,
+        reducedEffects,
         program, setProgram,
         exercises, setExercises,
         logs, setLogs,

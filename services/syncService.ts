@@ -1,6 +1,6 @@
 
 import { AppState } from "../types";
-import { getFirebaseServices } from "../lib/firebaseLoader";
+import { getFirebaseFirestoreServices } from "../lib/firebaseLoader";
 
 /**
  * Firestore no soporta valores `undefined`.
@@ -59,7 +59,7 @@ export const syncService = {
      * Used for FREE users so Admin can find them.
      */
     uploadUserIdentity: async (userId: string, email: string) => {
-        const { db, firestoreApi } = await getFirebaseServices();
+        const { db, firestoreApi } = await getFirebaseFirestoreServices();
         if (!userId || !db) return;
         // Avoid redundant writes if already synced this session
         if ((window as any)._lastSyncedId === userId) return;
@@ -86,7 +86,7 @@ export const syncService = {
      * writeBatch setDoc to avoid touching unrelated fields.
      */
     uploadSessionOnly: async (userId: string, session: AppState['activeSession'], lastUpdated: number) => {
-        const { db, firestoreApi } = await getFirebaseServices();
+        const { db, firestoreApi } = await getFirebaseFirestoreServices();
         if (!userId || !db) return;
         try {
             const userRef = firestoreApi.doc(db, "users", userId);
@@ -101,8 +101,8 @@ export const syncService = {
     /**
      * SUBIDA (PUSH): Envía el estado local a Firebase.
      */
-    uploadState: async (userId: string, state: Partial<AppState>) => {
-        const { db, auth, firestoreApi } = await getFirebaseServices();
+    uploadState: async (userId: string, state: Partial<AppState> & { email?: string | null }) => {
+        const { db, firestoreApi } = await getFirebaseFirestoreServices();
         if (!userId || !db) return;
 
         try {
@@ -127,7 +127,7 @@ export const syncService = {
                 nutritionGoal: state.nutritionGoal || null,
                 lastUpdated: state.lastUpdated || Date.now(),
                 // NEW: Save email to allow Admin Lookup
-                email: auth?.currentUser?.email || null
+                email: state.email || null
             };
 
             // 2. Sanitización (undefined -> null)
@@ -167,7 +167,7 @@ export const syncService = {
      * DESCARGA (PULL): Obtiene datos de Firebase.
      */
     downloadState: async (userId: string): Promise<Partial<AppState> | null> => {
-        const { db, firestoreApi } = await getFirebaseServices();
+        const { db, firestoreApi } = await getFirebaseFirestoreServices();
         if (!userId || !db) return null;
 
         try {

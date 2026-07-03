@@ -6,7 +6,7 @@ import {
     METABOLITE_TEMPLATE,
     RESENS_TEMPLATE,
     WIZARD_TEMPLATE
-} from "../constants";
+} from "../data/defaultTemplates";
 
 export interface RecommendationResult {
     template: ProgramDay[];

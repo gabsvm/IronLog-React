@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="default_web_client_id" translatable="false">926261848983-gah12pbmujqdke4967cm1fclgvd364k8.apps.googleusercontent.com</string>
+    <string name="gcm_defaultSenderId" translatable="false">926261848983</string>
+    <string name="google_api_key" translatable="false">AIzaSyBgkg0hLBcFTafi-k13izCce9qr77EeZT0</string>
+    <string name="google_app_id" translatable="false">1:926261848983:android:74b47dee5cd72a849172d2</string>
+    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyBgkg0hLBcFTafi-k13izCce9qr77EeZT0</string>
+    <string name="google_storage_bucket" translatable="false">ironlog-409eb.firebasestorage.app</string>
+    <string name="project_id" translatable="false">ironlog-409eb</string>
+</resources>

@@ -3,10 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Icon } from '../ui/Icon';
 import { GlobalTemplate, ProgramDay, ProgramSlot } from '../../types';
-import { TRANSLATIONS, MUSCLE_GROUPS, INITIAL_TEMPLATES } from '../../constants';
+import { TRANSLATIONS, MUSCLE_GROUPS } from '../../constants';
+import { INITIAL_TEMPLATES } from '../../data/defaultTemplates';
 import { ExerciseSelector } from '../ui/ExerciseSelector';
 import { ConfirmModal } from '../ui/ConfirmModal';
-import { getFirebaseServices } from '../../lib/firebaseLoader';
+import { getFirebaseFirestoreServices } from '../../lib/firebaseLoader';
 
 const SUPERSET_COLORS = [
     { border: 'border-l-orange-500', bg: 'bg-orange-500/5', text: 'text-orange-500' },
@@ -44,7 +45,7 @@ export const AdminTemplateManager: React.FC<{ onClose: () => void }> = ({ onClos
     useEffect(() => {
         let cancelled = false;
         const refreshIds = async () => {
-            const { db, firestoreApi } = await getFirebaseServices();
+            const { db, firestoreApi } = await getFirebaseFirestoreServices();
             if (!db) return;
             try {
                 const snap = await firestoreApi.getDocs(firestoreApi.collection(db, 'global_templates'));
@@ -100,7 +101,7 @@ export const AdminTemplateManager: React.FC<{ onClose: () => void }> = ({ onClos
     };
 
     const confirmDelete = async () => {
-        const { db, firestoreApi } = await getFirebaseServices();
+        const { db, firestoreApi } = await getFirebaseFirestoreServices();
         if (!deleteTarget || !db) return;
         const id = deleteTarget.id;
         setDeleteTarget(null);
@@ -120,7 +121,7 @@ export const AdminTemplateManager: React.FC<{ onClose: () => void }> = ({ onClos
     };
 
     const confirmReset = async () => {
-        const { db, firestoreApi } = await getFirebaseServices();
+        const { db, firestoreApi } = await getFirebaseFirestoreServices();
         if (!resetTarget || !db) return;
         const id = resetTarget.id;
         setResetTarget(null);
@@ -141,7 +142,7 @@ export const AdminTemplateManager: React.FC<{ onClose: () => void }> = ({ onClos
 
     // --- EDITOR HANDLERS ---
     const handleSave = async () => {
-        const { db, firestoreApi } = await getFirebaseServices();
+        const { db, firestoreApi } = await getFirebaseFirestoreServices();
         if (!editingTemplate || !db) return;
         setSaveStatus('saving');
         try {

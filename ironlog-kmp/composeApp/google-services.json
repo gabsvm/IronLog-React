@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "926261848983",
+    "project_id": "ironlog-409eb",
+    "storage_bucket": "ironlog-409eb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:926261848983:android:74b47dee5cd72a849172d2",
+        "android_client_info": {
+          "package_name": "com.gainslab.ironlog"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "926261848983-gah12pbmujqdke4967cm1fclgvd364k8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBgkg0hLBcFTafi-k13izCce9qr77EeZT0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "926261848983-gah12pbmujqdke4967cm1fclgvd364k8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

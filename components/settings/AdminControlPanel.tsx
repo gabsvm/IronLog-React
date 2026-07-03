@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Icon } from '../ui/Icon';
 import { AdminTemplateManager } from '../admin/AdminTemplateManager';
-import { getFirebaseServices } from '../../lib/firebaseLoader';
+import { getFirebaseFirestoreServices } from '../../lib/firebaseLoader';
 
 interface Props {
     adminEmail: string | undefined;
@@ -23,7 +23,7 @@ export const AdminControlPanel: React.FC<Props> = ({ adminEmail }) => {
     const [showTemplateManager, setShowTemplateManager] = useState(false);
 
     const resolveUid = async (input: string): Promise<string | null> => {
-        const { db, firestoreApi } = await getFirebaseServices();
+        const { db, firestoreApi } = await getFirebaseFirestoreServices();
         if (!db) return null;
         const trimmed = input.trim();
         if (!trimmed) return null;
@@ -45,7 +45,7 @@ export const AdminControlPanel: React.FC<Props> = ({ adminEmail }) => {
     };
 
     const handleSubscriptionChange = async (grantPro: boolean) => {
-        const { db, firestoreApi } = await getFirebaseServices();
+        const { db, firestoreApi } = await getFirebaseFirestoreServices();
         if (!db) return;
         setStatus({ msg: 'Processing...', type: 'neutral' });
         try {

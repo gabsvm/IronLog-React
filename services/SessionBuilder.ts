@@ -52,31 +52,25 @@ export class SessionBuilder {
 
             const lastSets = getLastLogForExercise(exDef.id, safeLogs);
 
-            let initialSets;
-            if (slotDef.isAVT) {
-                const roundId = uid();
-                initialSets = Array.from({ length: 4 }, () => ({
-                    id: uid(),
-                    weight: '',
-                    reps: slotDef.avtStartReps ? String(slotDef.avtStartReps) : '6',
-                    rpe: '', completed: false, type: 'avt_hop',
-                    avtRoundId: roundId, isLastHop: false
-                }));
-            } else {
-                initialSets = Array(setTarget).fill(null).map((_, i) => ({
-                    id: uid(),
-                    weight: '', reps: '', rpe: '', completed: false,
-                    type: slotDef.setType || 'regular',
-                    hintWeight: lastSets?.[i]?.weight, hintReps: lastSets?.[i]?.reps,
-                    prevWeight: lastSets?.[i]?.weight, prevReps: lastSets?.[i]?.reps
-                }));
-            }
+            const initialSets = Array(setTarget).fill(null).map((_, i) => ({
+                id: uid(),
+                weight: '',
+                reps: '',
+                rpe: '',
+                completed: false,
+                type: slotDef.setType || 'regular',
+                hintWeight: lastSets?.[i]?.weight,
+                hintReps: lastSets?.[i]?.reps,
+                prevWeight: lastSets?.[i]?.weight,
+                prevReps: lastSets?.[i]?.reps
+            }));
 
             return {
                 ...exDef,
                 instanceId: uid(),
-                slotLabel: slotDef.muscle,
+                slotLabel: slotDef.label || slotDef.muscle,
                 targetReps: slotDef.reps,
+                note: slotDef.notes,
                 supersetId: slotDef.supersetId,
                 sets: initialSets as any
             };

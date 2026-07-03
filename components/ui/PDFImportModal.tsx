@@ -49,7 +49,7 @@ function inferMuscle(exerciseName: string): MuscleGroup {
   return 'CHEST'; // fallback
 }
 
-// Parser principal — adaptado para formato Jacked in 3 y programas genéricos
+// Parser principal para programas genéricos de sets x reps.
 function parseProgramText(text: string): ProgramDay[] {
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
   const days: ProgramDay[] = [];
@@ -59,9 +59,6 @@ function parseProgramText(text: string): ProgramDay[] {
   const dayPattern = /^(day\s*[a-z0-9]+|upper|lower|workout\s*[a-z0-9]+|push|pull|legs)/i;
   // Patterns para detectar ejercicios con sets x reps: "3 x 6", "3x6", "3 rounds"
   const setsPattern = /(\d+)\s*[x×]\s*([\d\-]+)|(\d+)\s*rounds?/i;
-  // AVT/hop pattern: "hop|avt|accumulative"
-  const avtPattern = /hop|avt|accumulative/i;
-
   for (const line of lines) {
     if (dayPattern.test(line)) {
       if (currentDay) days.push(currentDay);
@@ -86,17 +83,13 @@ function parseProgramText(text: string): ProgramDay[] {
     if (setsMatch) {
       const setCount = parseInt(setsMatch[1] || setsMatch[3], 10) || 3;
       const reps = setsMatch[2] || '6-8';
-      const isAVT = avtPattern.test(line);
       const exerciseName = line.replace(setsPattern, '').replace(new RegExp('[' + '-:,' + ']', 'g'), '').trim();
 
       if (exerciseName.length > 2) {
         const slot: ProgramSlot = {
           muscle: inferMuscle(exerciseName),
           setTarget: setCount,
-          reps: isAVT ? `${reps} (AVT)` : reps,
-          isAVT: isAVT,
-          avtRounds: isAVT ? setCount : undefined,
-          avtStartReps: isAVT ? parseInt(reps, 10) || 6 : undefined,
+          reps,
         };
         currentDay.slots.push(slot);
       }
@@ -212,7 +205,7 @@ export const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose, onImpor
               <p className="text-xs text-zinc-600 mb-2">O pegá el texto del programa directamente:</p>
               <textarea
                 className="w-full bg-zinc-800 rounded-xl p-3 text-xs text-zinc-300 outline-none resize-none h-28 font-mono"
-                placeholder={"Day A\nBench Press 3 x 6 hops\nIncline DB 3 x 8\n\nDay B\nSquat 3 x 6 AVT\n..."}
+                placeholder={"Day A\nBench Press 3 x 6\nIncline DB 3 x 8\n\nDay B\nSquat 4 x 5\n..."}
                 value={rawText}
                 onChange={e => setRawText(e.target.value)}
               />
@@ -243,16 +236,13 @@ export const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose, onImpor
                 <div className="divide-y divide-zinc-800/50">
                   {day.slots.map((slot, si) => (
                     <div key={si} className="px-4 py-2 flex items-center gap-3">
-                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${slot.isAVT ? 'bg-orange-400' : 'bg-zinc-600'}`} />
+                      <div className="w-2 h-2 rounded-full flex-shrink-0 bg-zinc-600" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-bold text-zinc-300 truncate">{slot.muscle}</span>
-                          {slot.isAVT && (
-                            <span className="text-[9px] bg-orange-500/20 text-orange-400 px-1.5 py-0.5 rounded font-bold flex-shrink-0">AVT</span>
-                          )}
                         </div>
                         <span className="text-[10px] text-zinc-500">
-                          {slot.setTarget} {slot.isAVT ? 'rounds' : 'sets'} × {slot.reps?.replace(' (AVT)', '')} reps
+                          {slot.setTarget} sets × {slot.reps} reps
                         </span>
                       </div>
                     </div>

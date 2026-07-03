@@ -3,12 +3,38 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { useTimerContext } from '../context/TimerContext';
 import { SessionExercise, ExerciseDef, SetType, Log, WorkoutSet } from '../types';
-import { arrayMove } from '@dnd-kit/sortable';
 import { triggerHaptic } from '../utils/audio';
 import { getLastLogForExercise, uid, estimate1RM } from '../utils';
 import { useStatsWorker } from './useStatsWorker';
 
 import { useStore } from '../lib/store';
+
+const TEMPLATE_SET_TYPES = new Set<SetType>([
+    'regular',
+    'warmup',
+    'drop',
+    'myorep',
+    'cluster',
+    'giant',
+    'top',
+    'backoff',
+    'emom',
+    'rest_pause',
+]);
+
+const normalizeTemplateSetType = (sets: WorkoutSet[]): SetType => {
+    const firstWorkingSet = sets.find(set => set.type !== 'warmup');
+    if (!firstWorkingSet) return 'regular';
+    return TEMPLATE_SET_TYPES.has(firstWorkingSet.type) ? firstWorkingSet.type : 'regular';
+};
+
+const reorderList = <T,>(items: T[], from: number, to: number): T[] => {
+    if (from === to) return items;
+    const next = items.slice();
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    return next;
+};
 
 export const useWorkoutController = (onFinishCallback: () => void, onDiscardCallback: () => void) => {
     const { setProgram, exercises, rpFeedback, setRpFeedback, config, logs } = useApp();
@@ -29,10 +55,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
     const [linkingId, setLinkingId] = useState<number | null>(null);
     const [editingMuscleId, setEditingMuscleId] = useState<number | null>(null);
     const [warmupExId, setWarmupExId] = useState<number | null>(null);
-    const [configPlateExId, setConfigPlateExId] = useState<number | null>(null);
-    const [plateWeightInput, setPlateWeightInput] = useState('');
     const [changingSetType, setChangingSetType] = useState<{ exId: number, setId: number, currentType: SetType } | null>(null);
-    const [showPlateCalc, setShowPlateCalc] = useState<{ weight: number } | null>(null);
     const [detailExercise, setDetailExercise] = useState<SessionExercise | null>(null);
     const [showDiscardConfirm, setShowDiscardConfirm] = useState(false); // NEW
 
@@ -46,6 +69,25 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
     const sessionExercises = useMemo(() =>
         (activeSession?.exercises || []).filter((e): e is SessionExercise => !!e),
         [activeSession?.exercises]);
+
+    const normalizedTemplateSlots = useMemo(() => sessionExercises.map(ex => {
+        const workingSetCount = ex.sets.filter(set => set.type !== 'warmup').length;
+        return {
+            muscle: ex.muscle,
+            setTarget: Math.max(1, workingSetCount || ex.sets.length || 1),
+            exerciseId: ex.id,
+            reps: ex.targetReps,
+            setType: normalizeTemplateSetType(ex.sets),
+            supersetId: ex.supersetId,
+            label: ex.slotLabel && ex.slotLabel !== ex.muscle ? ex.slotLabel : undefined,
+            notes: ex.note?.trim() || undefined,
+        };
+    }), [sessionExercises]);
+
+    const normalizedTemplatePlan = useMemo(
+        () => sessionExercises.map(ex => ex.id),
+        [sessionExercises]
+    );
 
     // Pre-built best-1RM index from full history — O(total_history) computed once
     // when logs change, not on every call to detectPRs.
@@ -263,27 +305,13 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
 
         // --- UPDATE TEMPLATE LOGIC ---
         if (updateTemplate && activeMeso && activeSession) {
-            // 1. Construct new Slots for Program (Base Template)
-            const newSlots = sessionExercises.map(ex => {
-                // Determine preferred set type from the first set
-                const firstSetType = ex.sets && ex.sets.length > 0 ? ex.sets[0].type : undefined;
-
-                return {
-                    muscle: ex.muscle,
-                    setTarget: ex.sets.length, // Persist set count
-                    exerciseId: ex.id,
-                    reps: ex.targetReps, // Persist target reps
-                    setType: firstSetType // Persist Set Type preference
-                };
-            });
-
             // 2. Update Global Program
             setProgram(prev => {
                 const newProg = [...prev];
                 if (newProg[activeSession.dayIdx]) {
                     newProg[activeSession.dayIdx] = {
                         ...newProg[activeSession.dayIdx],
-                        slots: newSlots
+                        slots: normalizedTemplateSlots
                     };
                 }
                 return newProg;
@@ -293,7 +321,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
             setActiveMeso(prev => {
                 if (!prev) return null;
                 const newPlan = [...(prev.plan || [])];
-                newPlan[activeSession.dayIdx] = sessionExercises.map(e => e.id);
+                newPlan[activeSession.dayIdx] = normalizedTemplatePlan;
                 return { ...prev, plan: newPlan };
             });
         }
@@ -314,7 +342,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
                 onFinishCallback();
             }
         }
-    }, [onFinishCallback, config, detectPRs, fireConfetti, updateTemplate, activeMeso, activeSession, sessionExercises, setProgram, setActiveMeso, setRestTimer]);
+    }, [onFinishCallback, config, detectPRs, fireConfetti, updateTemplate, activeMeso, activeSession, normalizedTemplateSlots, normalizedTemplatePlan, setProgram, setActiveMeso, setRestTimer]);
 
     // --- NEW: Handle Discard/Reset Session ---
     const handleDiscardSession = useCallback(() => {
@@ -366,7 +394,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
     const reorderSessionExercises = useCallback((oldIndex: number, newIndex: number) => {
         triggerHaptic('medium');
         if (!activeSession?.exercises) return;
-        const newExercises = arrayMove(activeSession.exercises, oldIndex, newIndex);
+        const newExercises = reorderList(activeSession.exercises, oldIndex, newIndex);
         setActiveSession(prev => prev ? { ...prev, exercises: newExercises } : null);
     }, [activeSession, setActiveSession]);
 
@@ -389,77 +417,6 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
         triggerHaptic('success');
     }, [setActiveSession]);
 
-    const handleAddAVTRound = useCallback((exInstanceId: number) => {
-        const roundId = uid();
-        const initialHops: WorkoutSet[] = Array.from({ length: 4 }, () => ({
-            id: uid(),
-            weight: '',
-            reps: '',
-            rpe: '',
-            completed: false,
-            type: 'avt_hop' as SetType,
-            avtRoundId: roundId,
-            isLastHop: false,
-        }));
-
-        setActiveSession(prev => {
-            if (!prev) return null;
-            return {
-                ...prev,
-                exercises: prev.exercises.map(ex => {
-                    if (ex.instanceId !== exInstanceId) return ex;
-                    return { ...ex, sets: [...(ex.sets || []), ...initialHops] };
-                })
-            };
-        });
-    }, [setActiveSession]);
-
-    const handleMarkLastHop = useCallback((exInstanceId: number, setId: number) => {
-        setActiveSession(prev => {
-            if (!prev) return null;
-            return {
-                ...prev,
-                exercises: prev.exercises.map(ex => {
-                    if (ex.instanceId !== exInstanceId) return ex;
-                    const targetSet = ex.sets.find(s => s.id === setId);
-                    if (!targetSet?.avtRoundId) return ex;
-                    // Marcar todos los del round: solo el clickeado como lastHop
-                    return {
-                        ...ex,
-                        sets: ex.sets.map(s => {
-                            if (s.avtRoundId !== targetSet.avtRoundId) return s;
-                            return { ...s, isLastHop: s.id === setId, completed: s.id === setId ? true : s.completed };
-                        })
-                    };
-                })
-            };
-        });
-    }, [setActiveSession]);
-
-    const handleAddHopToRound = useCallback((exInstanceId: number, roundId: number) => {
-        setActiveSession(prev => {
-            if (!prev) return null;
-            return {
-                ...prev,
-                exercises: prev.exercises.map(ex => {
-                    if (ex.instanceId !== exInstanceId) return ex;
-                    const newHop: WorkoutSet = {
-                        id: uid(),
-                        weight: '',
-                        reps: '',
-                        rpe: '',
-                        completed: false,
-                        type: 'avt_hop',
-                        avtRoundId: roundId,
-                        isLastHop: false,
-                    };
-                    return { ...ex, sets: [...ex.sets, newHop] };
-                })
-            };
-        });
-    }, [setActiveSession]);
-
-
     return {
         sessionExercises,
         openMenuId, setOpenMenuId,
@@ -471,10 +428,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
         linkingId, setLinkingId,
         editingMuscleId, setEditingMuscleId,
         warmupExId, setWarmupExId,
-        configPlateExId, setConfigPlateExId,
-        plateWeightInput, setPlateWeightInput,
         changingSetType, setChangingSetType,
-        showPlateCalc, setShowPlateCalc,
         showPRSuccess, dismissPRSuccess,
         detailExercise, setDetailExercise,
         handleSetUpdate,
@@ -483,9 +437,6 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
         handleDeleteSet,
         handleNoteUpdate,
         toggleSetComplete,
-        handleAddAVTRound,
-        handleMarkLastHop,
-        handleAddHopToRound,
         handleConfirmFinish,
         handleDiscardSession, // EXPORTED
         showDiscardConfirm, setShowDiscardConfirm, // EXPORTED

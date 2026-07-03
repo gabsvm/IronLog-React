@@ -5,18 +5,14 @@ import { useTimerContext } from './context/TimerContext';
 import { Layout } from './components/layout/Layout';
 import { HomeView } from './views/HomeView';
 import { RestTimerOverlay } from './components/ui/RestTimerOverlay';
-import { ConfirmModal } from './components/ui/ConfirmModal';
 import { Icon } from './components/ui/Icon';
 import { TRANSLATIONS } from './constants';
 import { Button } from './components/ui/Button';
 import { useAuth, AuthProvider } from './context/AuthContext';
-import { AuthModal } from './components/auth/AuthModal';
 import { getLastLogForExercise, uid } from './utils';
 import { syncService } from './services/syncService';
 import { usePro } from './hooks/usePro';
-import { PaywallModal } from './components/pro/PaywallModal';
-import { CommandPalette, CommandAction } from './components/ui/CommandPalette';
-import { CROSSFIT_EXERCISES, CALISTHENICS_EXERCISES, NILSSON_BW_EXERCISES } from './data/disciplineExercises';
+import type { CommandAction } from './components/ui/CommandPalette';
 import { SessionBuilder } from './services/SessionBuilder';
 import { useStore } from './lib/store';
 
@@ -31,6 +27,10 @@ const WorkoutView = React.lazy(() => import('./views/WorkoutView').then(m => ({ 
 const SettingsModal = React.lazy(() => import('./components/settings/SettingsModal').then(m => ({ default: m.SettingsModal })));
 const SetupWizard = React.lazy(() => import('./components/onboarding/SetupWizard').then(m => ({ default: m.SetupWizard })));
 const Landing = React.lazy(() => import('./components/onboarding/Landing').then(m => ({ default: m.Landing })));
+const AuthModal = React.lazy(() => import('./components/auth/AuthModal').then(m => ({ default: m.AuthModal })));
+const CommandPalette = React.lazy(() => import('./components/ui/CommandPalette').then(m => ({ default: m.CommandPalette })));
+const ConfirmModal = React.lazy(() => import('./components/ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
+const PaywallModal = React.lazy(() => import('./components/pro/PaywallModal').then(m => ({ default: m.PaywallModal })));
 
 const LoadingSpinner = () => (
     <div className="h-full flex items-center justify-center text-zinc-400">
@@ -41,7 +41,8 @@ const LoadingSpinner = () => (
 // Wraps a DOM mutation in a View Transition (graceful fallback when unsupported).
 const withTransition = (direction: string, callback: () => void) => {
     document.documentElement.dataset.transition = direction;
-    if ((document as any).startViewTransition) {
+    const reducedEffects = document.documentElement.dataset.effects === 'reduced';
+    if (!reducedEffects && (document as any).startViewTransition) {
         (document as any).startViewTransition(callback)
             .finished.finally(() => { document.documentElement.dataset.transition = ''; });
     } else {
@@ -210,17 +211,26 @@ const AppContent = () => {
     useEffect(() => {
         if (isAppLoading || mergedExtrasRef.current) return;
         mergedExtrasRef.current = true;
-        setExercises((prev: any[]) => {
-            const base = Array.isArray(prev) ? prev : [];
-            const byId = new Map<string, any>();
-            for (const e of base) if (e && !byId.has(e.id)) byId.set(e.id, e);
-            const extras = [...CROSSFIT_EXERCISES, ...CALISTHENICS_EXERCISES, ...NILSSON_BW_EXERCISES];
-            let changed = base.length !== byId.size; // pre-existing duplicates present
-            for (const e of extras) {
-                if (!byId.has(e.id)) { byId.set(e.id, e); changed = true; }
-            }
-            return changed ? Array.from(byId.values()) : base;
+        let cancelled = false;
+
+        void import('./data/disciplineExercises').then(({ CROSSFIT_EXERCISES, CALISTHENICS_EXERCISES, NILSSON_BW_EXERCISES }) => {
+            if (cancelled) return;
+            setExercises((prev: any[]) => {
+                const base = Array.isArray(prev) ? prev : [];
+                const byId = new Map<string, any>();
+                for (const e of base) if (e && !byId.has(e.id)) byId.set(e.id, e);
+                const extras = [...CROSSFIT_EXERCISES, ...CALISTHENICS_EXERCISES, ...NILSSON_BW_EXERCISES];
+                let changed = base.length !== byId.size; // pre-existing duplicates present
+                for (const e of extras) {
+                    if (!byId.has(e.id)) { byId.set(e.id, e); changed = true; }
+                }
+                return changed ? Array.from(byId.values()) : base;
+            });
         });
+
+        return () => {
+            cancelled = true;
+        };
     }, [isAppLoading, setExercises]);
 
     // --- DATA MANAGEMENT ---
@@ -259,6 +269,7 @@ const AppContent = () => {
                 program, activeMeso, activeSession, exercises, logs,
                 config, rpFeedback,
                 userProfile, nutritionLogs, cardioSessions, bodyLogs, macroGoals, nutritionGoal,
+                email: user.email || null,
                 lastUpdated: Date.now(),
             });
         } catch (e: any) {
@@ -474,31 +485,41 @@ const AppContent = () => {
             <RestTimerOverlay />
 
             {/* Command Palette — primary "start a workout" entry point */}
-            <CommandPalette
-                isOpen={showCommandPalette}
-                onClose={() => setShowCommandPalette(false)}
-                actions={commandActions}
-            />
+            <Suspense fallback={null}>
+                <CommandPalette
+                    isOpen={showCommandPalette}
+                    onClose={() => setShowCommandPalette(false)}
+                    actions={commandActions}
+                />
+            </Suspense>
 
             {/* Standard Modal Overlays */}
             {showMesoCompleteModal && (
-                <ConfirmModal
-                    isOpen={true}
-                    title={t.finishMesoTitle || "Complete Mesocycle?"}
-                    description={t.finishMesoDesc || "You've completed the final week. Great work! Conclude the mesocycle now?"}
-                    confirmText={t.complete || "Complete"}
-                    cancelText={t.notYet || "Not Yet"}
-                    onConfirm={() => {
-                        setActiveMeso(null);
-                        setShowMesoCompleteModal(false);
-                    }}
-                    onCancel={() => setShowMesoCompleteModal(false)}
-                />
+                <Suspense fallback={null}>
+                    <ConfirmModal
+                        isOpen={true}
+                        title={t.finishMesoTitle || "Complete Mesocycle?"}
+                        description={t.finishMesoDesc || "You've completed the final week. Great work! Conclude the mesocycle now?"}
+                        confirmText={t.complete || "Complete"}
+                        cancelText={t.notYet || "Not Yet"}
+                        onConfirm={() => {
+                            setActiveMeso(null);
+                            setShowMesoCompleteModal(false);
+                        }}
+                        onCancel={() => setShowMesoCompleteModal(false)}
+                    />
+                </Suspense>
             )}
-            {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
+            {showAuthModal && (
+                <Suspense fallback={null}>
+                    <AuthModal onClose={() => setShowAuthModal(false)} />
+                </Suspense>
+            )}
 
             {showPaywall && (
-                <PaywallModal onClose={() => setShowPaywall(false)} feature={featureAttempted} />
+                <Suspense fallback={null}>
+                    <PaywallModal onClose={() => setShowPaywall(false)} feature={featureAttempted} />
+                </Suspense>
             )}
 
             {/* SYNC CONFLICT MODAL */}
@@ -514,7 +535,8 @@ const AppContent = () => {
             />
 
             {/* IMPORT CONFIRM MODAL */}
-            <ConfirmModal
+            <Suspense fallback={null}>
+                <ConfirmModal
                 isOpen={!!importData}
                 title={t.import}
                 description={t.importConfirm}
@@ -523,7 +545,8 @@ const AppContent = () => {
                 onConfirm={confirmImport}
                 onCancel={() => setImportData(null)}
                 variant="danger"
-            />
+                />
+            </Suspense>
 
             {/* FORCE SYNC MODAL */}
             <ConfirmModal
@@ -538,19 +561,21 @@ const AppContent = () => {
 
             {/* FACTORY RESET MODAL */}
             {showResetModal && (
-                <ConfirmModal
-                    isOpen={true}
-                    title={t.dangerZone}
-                    description={t.deleteDataConfirm}
-                    confirmText={t.delete}
-                    cancelText={t.cancel}
-                    variant="danger"
-                    onConfirm={() => {
-                        localStorage.clear();
-                        window.location.reload();
-                    }}
-                    onCancel={() => setShowResetModal(false)}
-                />
+                <Suspense fallback={null}>
+                    <ConfirmModal
+                        isOpen={true}
+                        title={t.dangerZone}
+                        description={t.deleteDataConfirm}
+                        confirmText={t.delete}
+                        cancelText={t.cancel}
+                        variant="danger"
+                        onConfirm={() => {
+                            localStorage.clear();
+                            window.location.reload();
+                        }}
+                        onCancel={() => setShowResetModal(false)}
+                    />
+                </Suspense>
             )}
 
             {/* SETTINGS OVERLAY (Now with Login Callback) */}

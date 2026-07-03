@@ -1,0 +1,20 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.gainslab.ironlog.composeApp-mergeDebugResources-57:/values-watch-v21/values-watch-v21.xml",
+            "map": [
+                {
+                    "source": "C:\\Users\\Gabriel\\.gradle\\caches\\transforms-3\\626fef9096539d6d95e82fa76664c703\\transformed\\appcompat-1.6.1\\res\\values-watch-v21\\values-watch-v21.xml",
+                    "from": {
+                        "startLines": "2,6,10",
+                        "startColumns": "4,4,4",
+                        "startOffsets": "55,271,499",
+                        "endLines": "5,9,13",
+                        "endColumns": "12,12,12",
+                        "endOffsets": "266,494,724"
+                    }
+                }
+            ]
+        }
+    ]
+}

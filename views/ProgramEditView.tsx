@@ -7,13 +7,13 @@ import { Button } from '../components/ui/Button';
 import { MuscleGroup, MesoType } from '../types';
 import { getTranslated } from '../utils';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
-import { PDFImportModal } from '../components/ui/PDFImportModal';
 import { triggerHaptic } from '../utils/audio';
 import { ProgramDay } from '../types';
 import { Sheet } from '../components/ui/Sheet';
 import { useStore } from '../lib/store';
 
 const ExerciseSelector = React.lazy(() => import('../components/ui/ExerciseSelector').then(m => ({ default: m.ExerciseSelector })));
+const PDFImportModal = React.lazy(() => import('../components/ui/PDFImportModal').then(m => ({ default: m.PDFImportModal })));
 
 interface ProgramEditViewProps {
     onBack: () => void;
@@ -314,10 +314,12 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
             />
 
             {showPDFImport && (
-                <PDFImportModal 
-                    onClose={() => setShowPDFImport(false)}
-                    onImport={handleImportDays}
-                />
+                <Suspense fallback={null}>
+                    <PDFImportModal 
+                        onClose={() => setShowPDFImport(false)}
+                        onImport={handleImportDays}
+                    />
+                </Suspense>
             )}
         </div>
     );

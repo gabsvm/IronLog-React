@@ -1,8 +1,8 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { User } from 'firebase/auth';
 import { SubscriptionTier, UserSubscription } from '../types';
-import { getFirebaseServices, isFirebaseConfigured } from '../lib/firebaseLoader';
+import { getFirebaseAuthServices, getFirebaseFirestoreServices, isFirebaseConfigured } from '../lib/firebaseLoader';
+import { scheduleWhenIdle } from '../lib/idle';
 
 interface AuthContextType {
     user: User | null;
@@ -14,7 +14,6 @@ interface AuthContextType {
     continueAsGuest: () => void;
     error: string | null;
     clearError: () => void;
-    // PRO Features
     subscription: UserSubscription;
     upgradeToPro: (tier: SubscriptionTier) => Promise<void>;
     startDemo: () => Promise<void>;
@@ -34,7 +33,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     useEffect(() => {
         if (!isFirebaseConfigured()) {
-            console.log("Auth not initialized, skipping auth listener.");
+            console.log('Auth not initialized, skipping auth listener.');
             setLoading(false);
             return;
         }
@@ -42,7 +41,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         let unsubscribe = () => { };
         let cancelled = false;
 
-        getFirebaseServices().then(({ auth, db, authApi, firestoreApi }) => {
+        const cancelIdle = scheduleWhenIdle(async () => {
+            const { auth, authApi } = await getFirebaseAuthServices();
             if (!auth) {
                 if (!cancelled) setLoading(false);
                 return;
@@ -54,26 +54,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setUser(currentUser);
                 if (currentUser) {
                     setIsGuest(false);
-                    if (db) {
-                        try {
-                            const subRef = firestoreApi.doc(db, "users", currentUser.uid, "data", "subscription");
+                    try {
+                        const { db, firestoreApi } = await getFirebaseFirestoreServices();
+                        if (db) {
+                            const subRef = firestoreApi.doc(db, 'users', currentUser.uid, 'data', 'subscription');
                             const subSnap = await firestoreApi.getDoc(subRef);
                             if (!cancelled) {
                                 setSubscription(subSnap.exists() ? subSnap.data() as UserSubscription : DEFAULT_SUB);
                             }
-                        } catch (e) {
-                            console.error("Error fetching subscription", e);
                         }
+                    } catch (e) {
+                        console.error('Error fetching subscription', e);
                     }
                 } else {
                     setSubscription(DEFAULT_SUB);
                 }
                 if (!cancelled) setLoading(false);
             });
-        });
+        }, 1200);
 
         return () => {
             cancelled = true;
+            cancelIdle();
             unsubscribe();
         };
     }, []);
@@ -81,9 +83,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const login = async (email: string, pass: string) => {
         setError(null);
         setLoading(true);
-        const { auth, db, authApi } = await getFirebaseServices();
-        if (!auth || !db) {
-            setError("Authentication service unavailable.");
+        const { auth, authApi } = await getFirebaseAuthServices();
+        if (!auth) {
+            setError('Authentication service unavailable.');
             setLoading(false);
             return;
         }
@@ -93,11 +95,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } catch (err: any) {
             setLoading(false);
             if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-                setError("Email or password incorrect.");
+                setError('Email or password incorrect.');
             } else if (err.code === 'auth/too-many-requests') {
-                setError("Too many attempts. Please try again later.");
+                setError('Too many attempts. Please try again later.');
             } else {
-                setError(err.message || "An unknown login error occurred.");
+                setError(err.message || 'An unknown login error occurred.');
             }
             throw err;
         }
@@ -106,9 +108,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const startDemo = async () => {
         setError(null);
         setLoading(true);
-        const { auth, db, authApi, firestoreApi } = await getFirebaseServices();
+        const [{ auth, authApi }, { db, firestoreApi }] = await Promise.all([
+            getFirebaseAuthServices(),
+            getFirebaseFirestoreServices(),
+        ]);
         if (!auth || !db) {
-            setError("Authentication service unavailable.");
+            setError('Authentication service unavailable.');
             setLoading(false);
             return;
         }
@@ -119,19 +124,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const userCredential = await authApi.createUserWithEmailAndPassword(auth, demoEmail, demoPass);
             const newUser = userCredential.user;
 
-            const expiryDate = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days in ms
+            const expiryDate = Date.now() + 7 * 24 * 60 * 60 * 1000;
             const demoSubscription: UserSubscription = {
                 isPro: true,
                 tier: 'demo',
-                expiryDate: expiryDate,
+                expiryDate,
             };
 
-            const subRef = firestoreApi.doc(db, "users", newUser.uid, "data", "subscription");
+            const subRef = firestoreApi.doc(db, 'users', newUser.uid, 'data', 'subscription');
             await firestoreApi.setDoc(subRef, demoSubscription);
             setSubscription(demoSubscription);
             setLoading(false);
         } catch (err: any) {
-            setError(err.message || "Could not create demo account.");
+            setError(err.message || 'Could not create demo account.');
             setLoading(false);
             throw err;
         }
@@ -139,9 +144,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const register = async (email: string, pass: string, name?: string) => {
         setError(null);
-        const { auth, db, authApi, firestoreApi } = await getFirebaseServices();
+        const [{ auth, authApi }, { db, firestoreApi }] = await Promise.all([
+            getFirebaseAuthServices(),
+            getFirebaseFirestoreServices(),
+        ]);
         if (!auth) {
-            setError("Authentication service unavailable.");
+            setError('Authentication service unavailable.');
             return;
         }
         try {
@@ -149,33 +157,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (name) {
                 await authApi.updateProfile(cred.user, { displayName: name });
             }
-            
-            // Initialize subscription doc
+
             if (db) {
-                const subRef = firestoreApi.doc(db, "users", cred.user.uid, "data", "subscription");
+                const subRef = firestoreApi.doc(db, 'users', cred.user.uid, 'data', 'subscription');
                 await firestoreApi.setDoc(subRef, DEFAULT_SUB);
             }
         } catch (err: any) {
-            console.error("Register Error:", err);
+            console.error('Register Error:', err);
             if (err.code === 'auth/email-already-in-use') {
-                setError("Email already in use.");
+                setError('Email already in use.');
             } else if (err.code === 'auth/weak-password') {
-                setError("Password should be at least 6 characters.");
+                setError('Password should be at least 6 characters.');
             } else {
-                setError(err.message || "Registration failed");
+                setError(err.message || 'Registration failed');
             }
             throw err;
         }
     };
 
     const resetPassword = async (email: string) => {
-        const { auth, authApi } = await getFirebaseServices();
+        const { auth, authApi } = await getFirebaseAuthServices();
         if (!auth) return;
         await authApi.sendPasswordResetEmail(auth, email);
     };
 
     const logout = async () => {
-        const { auth, authApi } = await getFirebaseServices();
+        const { auth, authApi } = await getFirebaseAuthServices();
         if (auth) {
             await authApi.signOut(auth);
         }
@@ -191,26 +198,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const upgradeToPro = async (tier: SubscriptionTier) => {
-        // TODO: Validate server-side before production
-        const { db, firestoreApi } = await getFirebaseServices();
+        const { db, firestoreApi } = await getFirebaseFirestoreServices();
         if (!user || !db) return;
-        
+
         const newSub: UserSubscription = {
             isPro: true,
-            tier: tier,
-            expiryDate: tier === 'lifetime' ? null : Date.now() + (tier === 'monthly' ? 2592000000 : 31536000000)
+            tier,
+            expiryDate: tier === 'lifetime' ? null : Date.now() + (tier === 'monthly' ? 2592000000 : 31536000000),
         };
 
-        // Optimistic UI Update
         setSubscription(newSub);
 
-        // Persist to DB
         try {
-            const subRef = firestoreApi.doc(db, "users", user.uid, "data", "subscription");
+            const subRef = firestoreApi.doc(db, 'users', user.uid, 'data', 'subscription');
             await firestoreApi.setDoc(subRef, newSub, { merge: true });
         } catch (e) {
-            console.error("Failed to save subscription", e);
-            // Rollback if needed
+            console.error('Failed to save subscription', e);
         }
     };
 
@@ -225,6 +228,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 export const useAuth = () => {
     const context = useContext(AuthContext);
-    if (!context) throw new Error("useAuth must be used within AuthProvider");
+    if (!context) throw new Error('useAuth must be used within AuthProvider');
     return context;
 };

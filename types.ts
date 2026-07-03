@@ -66,7 +66,7 @@ export interface WorkoutSet {
   isLastHop?: boolean;  // true en el hop donde se llegó al fallo
 }
 
-export type WeightUnit = 'kg' | 'lb' | 'pl';
+export type WeightUnit = 'kg' | 'lb';
 
 export interface SessionExercise extends ExerciseDef {
   instanceId: number;
@@ -74,8 +74,6 @@ export interface SessionExercise extends ExerciseDef {
   targetReps?: string;
   note?: string;
   sets: WorkoutSet[];
-  weightUnit?: WeightUnit;
-  plateWeight?: number;
   supersetId?: string;
   isPlaceholder?: boolean;
   cardioType?: CardioType;
@@ -101,14 +99,14 @@ export interface ProgramSlot {
   exerciseId?: string | null;
   supersetId?: string;
   setType?: SetType; // NEW: Persist preferred set type
-  isAVT?: boolean;         // flag para indicar que este slot usa sistema AVT
-  avtRounds?: number;      // cuántos rounds por sesión (default: 3)
-  avtStartReps?: number;   // reps objetivo por hop (default: 6)
+  isAVT?: boolean;
+  avtRounds?: number;
+  avtStartReps?: number;
   label?: string;          // NEW: Custom label for the exercise
   notes?: string;          // NEW: Notes for the exercise slot
-  avtHops?: string;        // NEW: Number of hops (e.g. "6-10")
-  restBetweenHopsSec?: number;  // NEW: Rest between hops
-  restBetweenRoundsSec?: number; // NEW: Rest between rounds
+  avtHops?: string;
+  restBetweenHopsSec?: number;
+  restBetweenRoundsSec?: number;
 }
 
 export interface ProgramDay {
@@ -231,7 +229,6 @@ export interface AppState {
     rpEnabled: boolean;
     rpTargetRIR: number;
     keepScreenOn: boolean;
-    plateInventory: Record<number, number>;
   };
   rpFeedback: Record<string, Record<string, Record<string, FeedbackEntry>>>;
   hasSeenOnboarding: boolean;

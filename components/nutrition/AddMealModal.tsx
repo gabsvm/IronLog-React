@@ -4,7 +4,6 @@ import { Icon } from '../ui/Icon';
 import { Button } from '../ui/Button';
 import { Sheet } from '../ui/Sheet';
 import { useApp } from '../../context/AppContext';
-import { scanNutritionLabel } from '../../services/nutritionScanner';
 
 interface AddMealModalProps {
   isOpen: boolean;
@@ -71,6 +70,7 @@ const ScannerButton: React.FC<{
     setScanning(true);
     setError('');
     try {
+      const { scanNutritionLabel } = await import('../../services/nutritionScanner');
       const result = await scanNutritionLabel(file);
       onScanned(result);
     } catch (e: any) {

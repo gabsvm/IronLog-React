@@ -1,25 +1,17 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { WorkoutSet, SetType, CardioType } from '../../types';
+import { WorkoutSet, SetType } from '../../types';
 import { Icon } from '../ui/Icon';
-import { TRANSLATIONS } from '../../constants';
-import { playTimerFinishSound, triggerHaptic } from '../../utils/audio';
-import { PlateCalculatorModal } from '../ui/PlateCalculatorModal';
+import { triggerHaptic } from '../../utils/audio';
 
 interface SetRowProps {
     set: WorkoutSet;
     exInstanceId: number;
-    unit: string;
-    unitLabel: string;
-    plateWeight?: number;
-    showRIR: boolean;
-    stageRIR: string;
     onUpdate: (exId: number, setId: number, field: string, value: any) => void;
     onToggleComplete: (exId: number, setId: number) => void;
     onChangeType: (exId: number, setId: number, type: SetType) => void;
     lang: 'en' | 'es';
     isCardio?: boolean;
-    cardioMode?: CardioType;
     isBodyweight?: boolean;
     isIsometric?: boolean;
     isometricTargetSecs?: number;  // countdown mode for isometric
@@ -51,11 +43,25 @@ const getTypeColor = (type: SetType) => {
 };
 
 const getRowAccent = (type: SetType): string => {
-    return ''; // Premium UI: no background rainbow rows.
+    switch (type) {
+        case 'warmup': return 'bg-[#18181c]';
+        case 'drop': return 'bg-[#1c1816]';
+        case 'myorep':
+        case 'myorep_match': return 'bg-[#18141f]';
+        case 'emom': return 'bg-[#131b1f]';
+        default: return 'bg-[#17171b]';
+    }
 };
 
 const getBorderAccent = (type: SetType): string => {
-    return 'border-l-[3px] border-l-transparent'; // Premium UI: no colored left border ribbons.
+    switch (type) {
+        case 'warmup': return 'border border-amber-500/10';
+        case 'drop': return 'border border-orange-500/10';
+        case 'myorep':
+        case 'myorep_match': return 'border border-fuchsia-500/10';
+        case 'emom': return 'border border-cyan-500/10';
+        default: return 'border border-white/6';
+    }
 };
 
 const getTypeLabel = (type: SetType) => {
@@ -101,7 +107,7 @@ const HoldTimer: React.FC<{
             const now = Date.now();
             const delta = Math.floor((now - startTimeRef.current!) / 1000);
             setElapsed(baseElapsedRef.current + delta);
-        }, 100);
+        }, 1000);
     }, [running]);
 
     const stop = useCallback(() => {
@@ -199,9 +205,9 @@ const HoldTimer: React.FC<{
 
 // ─── MAIN SETROW ─────────────────────────────────────────────────────────────
 export const SetRow = React.memo(({
-    set, exInstanceId, unit, unitLabel, plateWeight, showRIR, stageRIR,
+    set, exInstanceId,
     onUpdate, onToggleComplete, onChangeType,
-    lang, isCardio, cardioMode = 'steady', isBodyweight, isIsometric, isometricTargetSecs,
+    lang, isCardio, isBodyweight, isIsometric, isometricTargetSecs,
     setIndex, badgeLabel, tutorialId, disableTypeChange, isActiveProtocolSet, isNextSet
 }: SetRowProps) => {
     const isDone = set.completed;
@@ -214,17 +220,15 @@ export const SetRow = React.memo(({
             ? String(setIndex + 1)
             : getTypeLabel(setType));
     const rowAccent = isDone
-        ? ''
+        ? 'bg-emerald-500/12 ring-1 ring-inset ring-emerald-400/15'
         : isActiveProtocolSet
-            ? getRowAccent(setType).replace('/5', '/15') + ' ring-1 ring-inset ring-cyan-500/20'
+            ? 'bg-cyan-500/10 ring-1 ring-inset ring-cyan-400/25'
             : isNextSet
-                ? 'bg-gradient-to-r from-orange-500/8 via-transparent to-transparent'
+                ? 'bg-amber-400/12 ring-1 ring-inset ring-amber-300/20'
                 : getRowAccent(setType);
 
     const [localWeight, setLocalWeight] = useState(set.weight ?? '');
     const [localReps, setLocalReps] = useState(set.reps ?? '');
-    const [localRPE, setLocalRPE] = useState(set.rpe ?? '');
-    const [showCalculator, setShowCalculator] = useState(false);
     const [showExtraWeight, setShowExtraWeight] = useState(
         isBodyweight && (Number(set.weight) > 0 || Number(set.hintWeight) > 0)
     );
@@ -234,12 +238,17 @@ export const SetRow = React.memo(({
 
     const activeFieldRef = useRef<string | null>(null);
     const repsRef = useRef<HTMLInputElement>(null);
+    const commitTimersRef = useRef<Partial<Record<'weight' | 'reps', ReturnType<typeof setTimeout>>>>({});
 
     useEffect(() => { if (activeFieldRef.current !== 'weight') setLocalWeight(set.weight ?? ''); }, [set.weight]);
     useEffect(() => { if (activeFieldRef.current !== 'reps') setLocalReps(set.reps ?? ''); }, [set.reps]);
-    useEffect(() => { if (activeFieldRef.current !== 'rpe') setLocalRPE(set.rpe ?? ''); }, [set.rpe]);
     // Reset swipe when set state changes
     useEffect(() => { setSwipePct(0); swipeRef.current.tracking = false; swipeRef.current.locked = false; }, [set.completed]);
+    useEffect(() => () => {
+        Object.values(commitTimersRef.current).forEach((timer) => {
+            if (timer) clearTimeout(timer);
+        });
+    }, []);
 
     const commitChange = (field: string, value: any) => {
         if (value != set[field as keyof WorkoutSet]) {
@@ -247,15 +256,33 @@ export const SetRow = React.memo(({
         }
     };
 
+    const flushScheduledCommit = useCallback((field: 'weight' | 'reps', value: any) => {
+        const existing = commitTimersRef.current[field];
+        if (existing) {
+            clearTimeout(existing);
+            delete commitTimersRef.current[field];
+        }
+        commitChange(field, value);
+    }, [commitChange]);
+
+    const scheduleCommit = useCallback((field: 'weight' | 'reps', value: any, delay = 180) => {
+        const existing = commitTimersRef.current[field];
+        if (existing) clearTimeout(existing);
+        commitTimersRef.current[field] = setTimeout(() => {
+            delete commitTimersRef.current[field];
+            commitChange(field, value);
+        }, delay);
+    }, [commitChange]);
+
     const handleWeightBlur = (value: any) => {
         activeFieldRef.current = null;
-        commitChange('weight', value);
+        flushScheduledCommit('weight', value);
         if (!isIsometric) setTimeout(() => repsRef.current?.focus(), 80);
     };
 
     const handleBlur = (field: string, value: any) => {
         activeFieldRef.current = null;
-        commitChange(field, value);
+        flushScheduledCommit(field as 'weight' | 'reps', value);
     };
 
     // ── Quick weight/reps adjust ─────────────────────────────────────
@@ -263,15 +290,15 @@ export const SetRow = React.memo(({
         const cur = Number(localWeight) || Number(set.hintWeight) || 0;
         const next = String(Math.max(0, Math.round((cur + delta) * 2) / 2));
         setLocalWeight(next);
-        onUpdate(exInstanceId, set.id, 'weight', next);
-    }, [localWeight, set.hintWeight, set.id, exInstanceId, onUpdate]);
+        scheduleCommit('weight', next);
+    }, [localWeight, set.hintWeight, scheduleCommit]);
 
     const adjustReps = useCallback((delta: number) => {
         const cur = Number(localReps) || Number(set.hintReps) || 0;
         const next = String(Math.max(0, cur + delta));
         setLocalReps(next);
-        onUpdate(exInstanceId, set.id, 'reps', next);
-    }, [localReps, set.hintReps, set.id, exInstanceId, onUpdate]);
+        scheduleCommit('reps', next);
+    }, [localReps, set.hintReps, scheduleCommit]);
 
     // ── Swipe-to-complete handlers ───────────────────────────────────
     const onSwipeTouchStart = useCallback((e: React.TouchEvent) => {
@@ -310,8 +337,8 @@ export const SetRow = React.memo(({
         onUpdate(exInstanceId, set.id, 'duration', seconds);
     }, [exInstanceId, set.id, onUpdate]);
 
-    const inputBase = "w-full text-center bg-[#131316] border border-white/5 rounded-xl py-3.5 text-xl font-bold text-white outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500/40 glow-input-neon transition-all tabular-nums placeholder-zinc-700";
-    const doneInput = "bg-transparent text-primary-500 border-transparent pointer-events-none";
+    const inputBase = "w-full rounded-2xl border border-white/6 bg-[#2a2a2e] py-3.5 text-center text-xl font-bold text-white outline-none transition-all tabular-nums placeholder-zinc-600 focus:border-primary-500/30 focus:ring-2 focus:ring-primary-500/30";
+    const doneInput = "border-transparent bg-transparent text-white/90 pointer-events-none";
 
     // Show previous session value as placeholder so the field reads as "editable with context",
     // not as a disabled em dash. Falls back to '0' so the input reads clearly as empty & tappable.
@@ -322,7 +349,7 @@ export const SetRow = React.memo(({
     const badgeProps = (!disableTypeChange && !isDone)
         ? { id: tutorialId, onClick: () => onChangeType(exInstanceId, set.id, setType) }
         : { id: tutorialId };
-    const badgeClass = `w-11 h-11 rounded-xl border flex items-center justify-center font-black text-xs transition-all ${isDone ? 'bg-green-500/10 border-green-500/20 text-green-400' : getTypeColor(setType)} ${!disableTypeChange && !isDone ? 'active:scale-90 cursor-pointer' : 'cursor-default'}`;
+    const badgeClass = `flex h-11 w-11 items-center justify-center rounded-full border font-black text-xs transition-all ${isDone ? 'border-emerald-400/20 bg-emerald-500 text-black shadow-[0_10px_25px_-10px_rgba(34,197,94,0.7)]' : getTypeColor(setType)} ${!disableTypeChange && !isDone ? 'cursor-pointer active:scale-90' : 'cursor-default'}`;
 
     // ── Difficulty picker (shown after completing a set with no RPE) ─
     const DifficultyPicker = !isDone ? null : (set.rpe === '' || set.rpe === null || set.rpe === undefined) ? (
@@ -350,7 +377,7 @@ export const SetRow = React.memo(({
         return (
             <div id={`set-row-${set.id}`}
                 onTouchStart={onSwipeTouchStart} onTouchMove={onSwipeTouchMove} onTouchEnd={onSwipeTouchEnd}
-                className={`relative grid grid-cols-12 gap-2 items-center py-2.5 px-1 transition-colors duration-200 ${getBorderAccent(setType)} ${isDone ? 'opacity-60' : rowAccent}`}>
+                className={`relative grid grid-cols-12 gap-2 items-center rounded-[1.35rem] px-2 py-3 transition-colors duration-200 ${getBorderAccent(setType)} ${rowAccent} ${isDone ? 'opacity-80' : ''}`}>
                 {SwipeOverlay}
                 {/* Set Type Badge */}
                 <div className="col-span-2 flex justify-center">
@@ -378,10 +405,10 @@ export const SetRow = React.memo(({
                             onToggleComplete(exInstanceId, set.id);
                         }}
                         className={`
-                            w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-150 active:scale-90
+                            flex h-12 w-12 items-center justify-center rounded-full transition-all duration-150 active:scale-90
                             ${isDone
                                 ? 'bg-primary-500 text-black border-transparent shadow-[0_0_15px] shadow-primary-500/20'
-                                : 'bg-[#131316] border border-white/5 text-zinc-500 hover:text-white hover:border-zinc-750 active:bg-primary-500 active:text-black'}
+                                : 'border border-white/8 bg-white/[0.04] text-zinc-500 hover:border-white/15 hover:text-white active:bg-primary-500 active:text-black'}
                         `}
                     >
                         <Icon name="Check" size={20} strokeWidth={3} />
@@ -396,9 +423,9 @@ export const SetRow = React.memo(({
         return (
             <div id={`set-row-${set.id}`}
                 onTouchStart={onSwipeTouchStart} onTouchMove={onSwipeTouchMove} onTouchEnd={onSwipeTouchEnd}
-                className={`relative transition-colors duration-200 ${getBorderAccent(setType)} ${isDone ? 'opacity-60' : rowAccent}`}>
+                className={`relative rounded-[1.35rem] transition-colors duration-200 ${getBorderAccent(setType)} ${rowAccent} ${isDone ? 'opacity-80' : ''}`}>
                 {SwipeOverlay}
-                <div className="grid grid-cols-12 gap-2 items-center py-3 px-1">
+                <div className="grid grid-cols-12 items-center gap-2 px-2 py-3">
                     {/* Set Type Badge */}
                     <div className="col-span-2 flex justify-center">
                         <BadgeEl {...badgeProps as any} className={badgeClass}>
@@ -426,7 +453,7 @@ export const SetRow = React.memo(({
                         {!showExtraWeight ? (
                             <button
                                 onClick={() => setShowExtraWeight(true)}
-                                className="w-8 h-8 flex flex-col items-center justify-center text-zinc-700 hover:text-zinc-400 transition-colors"
+                                className="flex h-8 w-8 flex-col items-center justify-center text-zinc-600 transition-colors hover:text-zinc-300"
                                 title={lang === 'es' ? '+ Peso Extra' : '+ Extra Weight'}
                             >
                                 <Icon name="PlusCircle" size={14} />
@@ -435,7 +462,7 @@ export const SetRow = React.memo(({
                         ) : (
                             <input
                                 type="number" inputMode="decimal"
-                                className="w-full text-center bg-zinc-800 rounded-xl py-3.5 text-sm font-bold text-violet-300 outline-none focus:ring-2 focus:ring-violet-500/30 transition-all tabular-nums placeholder-zinc-600"
+                                className="w-full rounded-2xl border border-white/6 bg-[#2a2a2e] py-3.5 text-center text-sm font-bold text-violet-300 outline-none transition-all tabular-nums placeholder-zinc-600 focus:ring-2 focus:ring-violet-500/30"
                                 placeholder="0"
                                 value={localWeight}
                                 onChange={e => setLocalWeight(e.target.value)}
@@ -454,10 +481,10 @@ export const SetRow = React.memo(({
                                 onToggleComplete(exInstanceId, set.id);
                             }}
                             className={`
-                                w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-150 active:scale-90
+                                flex h-12 w-12 items-center justify-center rounded-full transition-all duration-150 active:scale-90
                                 ${isDone
                                     ? 'bg-primary-500 text-black border-transparent shadow-[0_0_15px] shadow-primary-500/20'
-                                    : 'bg-[#131316] border border-white/5 text-zinc-500 hover:text-white hover:border-zinc-750 active:bg-primary-500 active:text-black'}
+                                    : 'border border-white/8 bg-white/[0.04] text-zinc-500 hover:border-white/15 hover:text-white active:bg-primary-500 active:text-black'}
                             `}
                         >
                             <Icon name="Check" size={20} strokeWidth={3} />
@@ -470,7 +497,7 @@ export const SetRow = React.memo(({
                     <div className="flex gap-1 px-2 pb-1.5 -mt-0.5">
                         {([-5, -1, +1, +5] as const).map(d => (
                             <button key={d} onClick={() => adjustReps(d)}
-                                className="flex-1 text-[10px] font-bold py-0.5 rounded-lg bg-zinc-800/70 text-zinc-500 hover:text-white active:scale-95 transition-all">
+                                className="flex-1 rounded-full bg-white/[0.04] py-1 text-[10px] font-bold text-zinc-400 transition-all hover:text-white active:scale-95">
                                 {d > 0 ? `+${d}` : d}
                             </button>
                         ))}
@@ -497,9 +524,9 @@ export const SetRow = React.memo(({
     return (
         <div id={`set-row-${set.id}`}
             onTouchStart={onSwipeTouchStart} onTouchMove={onSwipeTouchMove} onTouchEnd={onSwipeTouchEnd}
-            className={`relative transition-colors duration-200 ${getBorderAccent(setType)} ${isDone ? 'opacity-60' : rowAccent}`}>
+            className={`relative rounded-[1.35rem] transition-colors duration-200 ${getBorderAccent(setType)} ${rowAccent} ${isDone ? 'opacity-80' : ''}`}>
             {SwipeOverlay}
-        <div className="grid grid-cols-12 gap-2 items-center py-3 px-1">
+        <div className="grid grid-cols-12 items-center gap-2 px-2 py-3">
 
             {/* Set Type / Number Badge */}
             <div className="col-span-2 flex justify-center">
@@ -510,31 +537,21 @@ export const SetRow = React.memo(({
 
             {/* Weight Input + quick adjust */}
             <div className="col-span-4 flex flex-col gap-0.5">
-                <div className="relative flex items-center">
-                    {!isDone && !isBodyweight && !isCardio && (
-                        <button
-                            onClick={() => setShowCalculator(true)}
-                            className="absolute left-2 w-6 h-6 flex items-center justify-center text-zinc-500 hover:text-white transition-colors z-10"
-                        >
-                            <Icon name="Dumbbell" size={14} />
-                        </button>
-                    )}
-                    <input
-                        type="number" inputMode="decimal"
-                        className={isDone ? inputBase + " " + doneInput : inputBase + (!isBodyweight && !isCardio ? " pl-8" : "")}
-                        placeholder={weightPlaceholder}
-                        value={localWeight}
-                        onChange={e => setLocalWeight(e.target.value)}
-                        onBlur={() => handleWeightBlur(localWeight)}
-                        onFocus={() => activeFieldRef.current = 'weight'}
-                        enterKeyHint="next"
-                    />
-                </div>
+                <input
+                    type="number" inputMode="decimal"
+                    className={isDone ? inputBase + " " + doneInput : inputBase}
+                    placeholder={weightPlaceholder}
+                    value={localWeight}
+                    onChange={e => setLocalWeight(e.target.value)}
+                    onBlur={() => handleWeightBlur(localWeight)}
+                    onFocus={() => activeFieldRef.current = 'weight'}
+                    enterKeyHint="next"
+                />
                 {!isDone && !isCardio && (
                     <div className="flex gap-0.5">
                         {([-2.5, +2.5] as const).map(d => (
                             <button key={d} onClick={() => adjustWeight(d)}
-                                className="flex-1 text-[9px] font-bold py-0.5 rounded-md bg-zinc-800/70 text-zinc-500 hover:text-white active:scale-95 transition-all tabular-nums">
+                                className="flex-1 rounded-full bg-white/[0.04] py-1 text-[9px] font-bold tabular-nums text-zinc-400 transition-all hover:text-white active:scale-95">
                                 {d > 0 ? `+${d}` : d}
                             </button>
                         ))}
@@ -565,23 +582,16 @@ export const SetRow = React.memo(({
                         onToggleComplete(exInstanceId, set.id);
                     }}
                     className={`
-                        w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-150 active:scale-90
+                        flex h-12 w-12 items-center justify-center rounded-full transition-all duration-150 active:scale-90
                         ${isDone
                             ? 'bg-primary-500 text-black border-transparent shadow-[0_0_15px] shadow-primary-500/20'
-                            : 'bg-[#131316] border border-white/5 text-zinc-500 hover:text-white hover:border-zinc-750 active:bg-primary-500 active:text-black'
+                            : 'border border-white/8 bg-white/[0.04] text-zinc-500 hover:border-white/15 hover:text-white active:bg-primary-500 active:text-black'
                         }
                     `}
                 >
                     <Icon name="Check" size={20} strokeWidth={3} />
                 </button>
             </div>
-
-            {showCalculator && (
-                <PlateCalculatorModal
-                    initialWeight={Number(localWeight) || 20}
-                    onClose={() => setShowCalculator(false)}
-                />
-            )}
         </div>
 
         {/* Prev performance hint */}

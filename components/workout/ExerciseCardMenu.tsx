@@ -8,12 +8,12 @@ interface Props {
     onClose: () => void;
     isCardio: boolean;
     cardioMode: CardioType;
-    unit: 'kg' | 'lb' | 'pl';
     hasSuperset: boolean;
+    isLinking: boolean;
     onOpenDetail?: (ex: SessionExercise) => void;
     onCardioModeChange: (m: CardioType) => void;
     onInjectWarmup: () => void;
-    onToggleUnit: () => void;
+    onSupersetAction: () => void;
     onReplace: (id: number | null) => void;
     onRequestDelete: () => void;
     t: any;
@@ -26,11 +26,12 @@ export const ExerciseCardMenu: React.FC<Props> = ({
     onClose,
     isCardio,
     cardioMode,
-    unit,
+    hasSuperset,
+    isLinking,
     onOpenDetail,
     onCardioModeChange,
     onInjectWarmup,
-    onToggleUnit,
+    onSupersetAction,
     onReplace,
     onRequestDelete,
     t,
@@ -53,7 +54,7 @@ export const ExerciseCardMenu: React.FC<Props> = ({
         <div
             role="menu"
             aria-label={lang === 'es' ? 'Acciones del ejercicio' : 'Exercise actions'}
-            className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-zinc-800 rounded-xl shadow-xl border border-zinc-100 dark:border-white/5 z-dropdown overflow-hidden animate-in fade-in zoom-in-95 duration-fast"
+            className="absolute right-0 top-full mt-2 w-64 overflow-hidden rounded-[1.35rem] border border-white/10 bg-[#17171B]/95 shadow-2xl shadow-black/50 backdrop-blur-xl z-dropdown animate-in fade-in zoom-in-95 duration-fast"
         >
             {!isDeleting ? (
                 <>
@@ -61,22 +62,44 @@ export const ExerciseCardMenu: React.FC<Props> = ({
                         <button
                             onClick={(e) => { e.stopPropagation(); onOpenDetail(ex); onClose(); }}
                             role="menuitem"
-                            className="w-full text-left px-4 py-3 text-sm font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2"
+                            className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-bold text-zinc-100 transition-colors hover:bg-white/5"
                         >
-                            <Icon name="Info" size={16} /> {String(t.exDetail)}
+                            <Icon name="Info" size={16} className="text-zinc-400" /> {String(t.exDetail)}
                         </button>
+                    )}
+
+                    {!isCardio && (
+                        <>
+                            <div className="my-1 h-px bg-white/5" />
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onSupersetAction(); onClose(); }}
+                                role="menuitem"
+                                className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-bold text-zinc-100 transition-colors hover:bg-white/5"
+                            >
+                                <span className={`flex h-8 w-8 items-center justify-center rounded-full border ${hasSuperset ? 'border-violet-500/30 bg-violet-500/15 text-violet-300' : isLinking ? 'border-amber-500/30 bg-amber-500/15 text-amber-300' : 'border-white/10 bg-white/5 text-zinc-300'}`}>
+                                    <Icon name={hasSuperset ? 'Unlink' : isLinking ? 'Target' : 'Link'} size={15} />
+                                </span>
+                                <span className="flex-1">
+                                    {hasSuperset
+                                        ? (lang === 'es' ? 'Quitar superserie' : 'Remove superset')
+                                        : isLinking
+                                            ? (lang === 'es' ? 'Seleccionando pareja...' : 'Selecting partner...')
+                                            : (lang === 'es' ? 'Crear superserie' : 'Create superset')}
+                                </span>
+                            </button>
+                        </>
                     )}
 
                     {isCardio && (
                         <>
-                            <div className="h-px bg-zinc-100 dark:bg-white/5 my-1" />
+                            <div className="my-1 h-px bg-white/5" />
                             {(['steady', 'hiit', 'tabata'] as const).map((m) => (
                                 <button
                                     key={m}
                                     onClick={(e) => { e.stopPropagation(); onCardioModeChange(m); }}
                                     role="menuitemradio"
                                     aria-checked={cardioMode === m}
-                                    className={`w-full text-left px-4 py-2 text-sm font-bold hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2 ${cardioMode === m ? 'text-blue-600' : 'text-zinc-600 dark:text-zinc-300'}`}
+                                    className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-bold transition-colors hover:bg-white/5 ${cardioMode === m ? 'text-blue-300' : 'text-zinc-300'}`}
                                 >
                                     {cardioMode === m && <Icon name="Check" size={14} />} {String(t.cardioModes?.[m])}
                                 </button>
@@ -86,60 +109,48 @@ export const ExerciseCardMenu: React.FC<Props> = ({
 
                     {!isCardio && (
                         <>
-                            <div className="h-px bg-zinc-100 dark:bg-white/5 my-1" />
+                            <div className="my-1 h-px bg-white/5" />
                             <button
                                 onClick={(e) => { e.stopPropagation(); onInjectWarmup(); }}
                                 role="menuitem"
-                                className="w-full text-left px-4 py-3 text-sm font-bold text-orange-600 dark:text-orange-400 hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2"
+                                className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-bold text-amber-300 transition-colors hover:bg-white/5"
                             >
                                 <Icon name="Zap" size={16} /> {lang === 'es' ? 'Agregar warmup' : 'Add warmup sets'}
                             </button>
                         </>
                     )}
 
-                    {!isCardio && !ex.isBodyweight && (
-                        <button
-                            onClick={(e) => { e.stopPropagation(); onToggleUnit(); onClose(); }}
-                            role="menuitem"
-                            className="w-full text-left px-4 py-3 text-sm font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2"
-                        >
-                            <Icon name="Settings" size={16} /> {String(t.units?.toggle)}
-                        </button>
-                    )}
-
-                    <div className="h-px bg-zinc-100 dark:bg-white/5 my-1" />
-
                     <button
                         onClick={(e) => { e.stopPropagation(); onReplace(ex.instanceId); }}
                         role="menuitem"
-                        className="w-full text-left px-4 py-3 text-sm font-bold text-blue-600 dark:text-blue-400 hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2"
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-bold text-blue-300 transition-colors hover:bg-white/5"
                     >
                         <Icon name="RefreshCw" size={16} /> {String(t.replaceEx)}
                     </button>
 
-                    <div className="h-px bg-zinc-100 dark:bg-white/5 my-1" />
+                    <div className="my-1 h-px bg-white/5" />
 
                     <button
                         onClick={(e) => { e.stopPropagation(); setIsDeleting(true); }}
                         role="menuitem"
-                        className="w-full text-left px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50 flex items-center gap-2"
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-bold text-red-300 transition-colors hover:bg-red-500/10"
                     >
                         <Icon name="Trash2" size={16} /> {String(t.removeEx)}
                     </button>
                 </>
             ) : (
-                <div className="p-2 space-y-2 bg-red-50 dark:bg-red-900/10">
-                    <p className="text-xs text-red-600 text-center font-bold px-2">{String(t.confirmRemoveEx)}</p>
+                <div className="space-y-2 bg-red-500/10 p-3">
+                    <p className="px-2 text-center text-xs font-bold text-red-200">{String(t.confirmRemoveEx)}</p>
                     <div className="flex gap-2">
                         <button
                             onClick={(e) => { e.stopPropagation(); setIsDeleting(false); }}
-                            className="flex-1 py-2 text-xs font-bold bg-white dark:bg-zinc-800 rounded-lg text-zinc-600 dark:text-zinc-300"
+                            className="flex-1 rounded-xl bg-white/5 py-2 text-xs font-bold text-zinc-200"
                         >
                             {String(t.cancel)}
                         </button>
                         <button
                             onClick={(e) => { e.stopPropagation(); handleDeleteConfirm(); }}
-                            className="flex-1 py-2 text-xs font-bold bg-red-600 text-white rounded-lg"
+                            className="flex-1 rounded-xl bg-red-500 py-2 text-xs font-bold text-white"
                         >
                             {String(t.delete)}
                         </button>

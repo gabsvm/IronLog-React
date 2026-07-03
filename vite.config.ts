@@ -1,8 +1,6 @@
-
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// https://vitejs.dev/config/
 export default defineConfig(() => {
   return {
     base: './',
@@ -10,57 +8,57 @@ export default defineConfig(() => {
     build: {
       outDir: 'dist',
       emptyOutDir: true,
-      target: 'esnext', // Modern browsers for smaller bundle
+      target: 'esnext',
       minify: 'esbuild',
-      cssCodeSplit: true, // Split CSS by chunk
+      cssCodeSplit: true,
       modulePreload: {
         resolveDependencies: (_filename, deps) => deps.filter(dep =>
           !dep.includes('vendor-firebase') &&
           !dep.includes('vendor-charts') &&
-          !dep.includes('vendor-pdf')
+          !dep.includes('vendor-pdf') &&
+          !dep.includes('vendor-motion')
         ),
       },
       rollupOptions: {
         output: {
           hoistTransitiveImports: false,
           manualChunks: (id) => {
-            // Core React Vendor
             if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/scheduler')) {
               return 'vendor-react';
             }
-            // Firebase (auth + firestore) — large & stable, split for long-term caching
-            if (id.includes('node_modules/firebase') || id.includes('node_modules/@firebase')) {
-              return 'vendor-firebase';
+            if (id.includes('node_modules/firebase/app') || id.includes('node_modules/@firebase/app')) {
+              return 'vendor-firebase-app';
             }
-            // Animation library — used app-wide, stable across releases
+            if (id.includes('node_modules/firebase/auth') || id.includes('node_modules/@firebase/auth')) {
+              return 'vendor-firebase-auth';
+            }
+            if (id.includes('node_modules/firebase/firestore') || id.includes('node_modules/@firebase/firestore') || id.includes('node_modules/@firebase/webchannel-wrapper')) {
+              return 'vendor-firebase-db';
+            }
+            if (id.includes('node_modules/firebase') || id.includes('node_modules/@firebase')) {
+              return 'vendor-firebase-core';
+            }
             if (id.includes('node_modules/framer-motion') || id.includes('node_modules/motion')) {
               return 'vendor-motion';
             }
-            // Date utilities
             if (id.includes('node_modules/date-fns')) {
               return 'vendor-date';
             }
-            // Heavy Charting Library (Only load on Stats)
             if (id.includes('node_modules/chart.js') || id.includes('node_modules/react-chartjs-2')) {
               return 'vendor-charts';
             }
-            // GenAI SDK (Only load on nutrition label scanner)
             if (id.includes('node_modules/@google/genai')) {
               return 'vendor-ai';
             }
-            // PDF parsing (Only load when importing a PDF program)
             if (id.includes('node_modules/pdfjs-dist')) {
               return 'vendor-pdf';
             }
-            // Drag and Drop (Only load on Workout)
             if (id.includes('@dnd-kit')) {
               return 'vendor-dnd';
             }
-            // Animations
             if (id.includes('canvas-confetti')) {
               return 'vendor-effects';
             }
-            // Icons (Keep core icons fast)
             if (id.includes('lucide-react')) {
               return 'vendor-icons';
             }

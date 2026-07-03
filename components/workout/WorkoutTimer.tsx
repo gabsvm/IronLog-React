@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Icon } from '../ui/Icon';
 import { formatHoursMinutes } from '../../utils';
 
-export const WorkoutTimer: React.FC<{ startTime: number | null }> = ({ startTime }) => {
+export const WorkoutTimer: React.FC<{ startTime: number | null }> = React.memo(({ startTime }) => {
     const [elapsed, setElapsed] = useState(0);
 
     useEffect(() => {
@@ -25,4 +25,4 @@ export const WorkoutTimer: React.FC<{ startTime: number | null }> = ({ startTime
             {formatHoursMinutes(elapsed)}
         </div>
     );
-};
+});

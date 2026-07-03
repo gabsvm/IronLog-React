@@ -1,12 +1,25 @@
+import type { FirebaseApp } from 'firebase/app';
 import type { Auth } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
 
-type FirebaseServices = {
+type FirebaseAppServices = {
+    app?: FirebaseApp;
+    appApi: typeof import('firebase/app');
+};
+
+type FirebaseAuthServices = {
+    app?: FirebaseApp;
     auth?: Auth;
-    db?: Firestore;
     authApi: typeof import('firebase/auth');
+};
+
+type FirebaseFirestoreServices = {
+    app?: FirebaseApp;
+    db?: Firestore;
     firestoreApi: typeof import('firebase/firestore');
 };
+
+type FirebaseServices = FirebaseAuthServices & FirebaseFirestoreServices;
 
 const env = (import.meta.env || {}) as Record<string, string | undefined>;
 
@@ -21,48 +34,108 @@ const firebaseConfig = {
 
 const hasFirebaseConfig = !!(firebaseConfig.apiKey && firebaseConfig.projectId);
 
-let firebasePromise: Promise<FirebaseServices> | null = null;
+let appPromise: Promise<FirebaseAppServices> | null = null;
+let authPromise: Promise<FirebaseAuthServices> | null = null;
+let firestorePromise: Promise<FirebaseFirestoreServices> | null = null;
+
+const emptyAppServices = (): FirebaseAppServices => ({
+    app: undefined,
+    appApi: {} as typeof import('firebase/app'),
+});
+
+const emptyAuthServices = (): FirebaseAuthServices => ({
+    app: undefined,
+    auth: undefined,
+    authApi: {} as typeof import('firebase/auth'),
+});
+
+const emptyFirestoreServices = (): FirebaseFirestoreServices => ({
+    app: undefined,
+    db: undefined,
+    firestoreApi: {} as typeof import('firebase/firestore'),
+});
 
 export const isFirebaseConfigured = () => hasFirebaseConfig;
 
-export const getFirebaseServices = (): Promise<FirebaseServices> => {
-    if (!hasFirebaseConfig) {
-        return Promise.resolve({
-            auth: undefined,
-            db: undefined,
-            authApi: {} as typeof import('firebase/auth'),
-            firestoreApi: {} as typeof import('firebase/firestore'),
+export const getFirebaseAppServices = (): Promise<FirebaseAppServices> => {
+    if (!hasFirebaseConfig) return Promise.resolve(emptyAppServices());
+
+    if (!appPromise) {
+        appPromise = (async () => {
+            const appApi = await import('firebase/app');
+            const app = appApi.getApps().length > 0
+                ? appApi.getApps()[0]
+                : appApi.initializeApp(firebaseConfig);
+            return { app, appApi };
+        })().catch((error) => {
+            console.error('Firebase app initialization error:', error);
+            appPromise = null;
+            return emptyAppServices();
         });
     }
 
-    if (!firebasePromise) {
-        firebasePromise = (async () => {
-            const [{ initializeApp }, authApi, firestoreApi] = await Promise.all([
-                import('firebase/app'),
+    return appPromise;
+};
+
+export const getFirebaseAuthServices = (): Promise<FirebaseAuthServices> => {
+    if (!hasFirebaseConfig) return Promise.resolve(emptyAuthServices());
+
+    if (!authPromise) {
+        authPromise = (async () => {
+            const [{ app }, authApi] = await Promise.all([
+                getFirebaseAppServices(),
                 import('firebase/auth'),
+            ]);
+
+            if (!app) return emptyAuthServices();
+            return { app, auth: authApi.getAuth(app), authApi };
+        })().catch((error) => {
+            console.error('Firebase auth initialization error:', error);
+            authPromise = null;
+            return emptyAuthServices();
+        });
+    }
+
+    return authPromise;
+};
+
+export const getFirebaseFirestoreServices = (): Promise<FirebaseFirestoreServices> => {
+    if (!hasFirebaseConfig) return Promise.resolve(emptyFirestoreServices());
+
+    if (!firestorePromise) {
+        firestorePromise = (async () => {
+            const [{ app }, firestoreApi] = await Promise.all([
+                getFirebaseAppServices(),
                 import('firebase/firestore'),
             ]);
 
-            const app = initializeApp(firebaseConfig);
-            const auth = authApi.getAuth(app);
+            if (!app) return emptyFirestoreServices();
+
             const db = firestoreApi.initializeFirestore(app, {
                 localCache: firestoreApi.persistentLocalCache({
                     tabManager: firestoreApi.persistentMultipleTabManager(),
                 }),
             });
 
-            return { auth, db, authApi, firestoreApi };
+            return { app, db, firestoreApi };
         })().catch((error) => {
-            console.error('Firebase initialization error:', error);
-            firebasePromise = null;
-            return {
-                auth: undefined,
-                db: undefined,
-                authApi: {} as typeof import('firebase/auth'),
-                firestoreApi: {} as typeof import('firebase/firestore'),
-            };
+            console.error('Firebase Firestore initialization error:', error);
+            firestorePromise = null;
+            return emptyFirestoreServices();
         });
     }
 
-    return firebasePromise;
+    return firestorePromise;
+};
+
+export const getFirebaseServices = async (): Promise<FirebaseServices> => {
+    const [authServices, firestoreServices] = await Promise.all([
+        getFirebaseAuthServices(),
+        getFirebaseFirestoreServices(),
+    ]);
+
+    return {
+        ...authServices,
+        ...firestoreServices,
+    };
 };

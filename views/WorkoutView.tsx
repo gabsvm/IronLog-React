@@ -4,35 +4,12 @@ import { useApp, useAppConfig, useAppPreferences, useTutorial } from '../context
 import { TRANSLATIONS } from '../constants';
 import { Icon } from '../components/ui/Icon';
 import { Button } from '../components/ui/Button';
-import { FeedbackModal } from '../components/ui/FeedbackModal';
-import { WarmupModal } from '../components/ui/WarmupModal';
-import { PlateCalculatorModal } from '../components/ui/PlateCalculatorModal';
-import { PRCelebrationOverlay } from '../components/ui/PRCelebrationOverlay';
-import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { ExerciseDef, SessionExercise, SetType } from '../types';
 import { Sheet } from '../components/ui/Sheet';
 import { getTranslated, getMesoStageConfig, getLastLogForExercise } from '../utils';
 import { useWorkoutController } from '../hooks/useWorkoutController';
 import { SortableExerciseCard } from '../components/workout/SortableExerciseCard';
 import { WorkoutTimer } from '../components/workout/WorkoutTimer';
-import { triggerHaptic } from '../utils/audio';
-import { TutorialOverlay } from '../components/ui/TutorialOverlay';
-
-// DnD Imports
-import {
-    DndContext,
-    closestCenter,
-    KeyboardSensor,
-    PointerSensor,
-    useSensor,
-    useSensors,
-    DragEndEvent,
-    DragStartEvent
-} from '@dnd-kit/core';
-import {
-    SortableContext,
-    verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
 
 interface WorkoutViewProps {
     onFinish: () => void;
@@ -44,6 +21,12 @@ import { useStore } from '../lib/store';
 
 const ExerciseSelector = React.lazy(() => import('../components/ui/ExerciseSelector').then(m => ({ default: m.ExerciseSelector })));
 const ExerciseDetailModal = React.lazy(() => import('../components/ui/ExerciseDetailModal').then(m => ({ default: m.ExerciseDetailModal })));
+const WorkoutSortableList = React.lazy(() => import('../components/workout/WorkoutSortableList'));
+const FeedbackModal = React.lazy(() => import('../components/ui/FeedbackModal').then(m => ({ default: m.FeedbackModal })));
+const WarmupModal = React.lazy(() => import('../components/ui/WarmupModal').then(m => ({ default: m.WarmupModal })));
+const PRCelebrationOverlay = React.lazy(() => import('../components/ui/PRCelebrationOverlay').then(m => ({ default: m.PRCelebrationOverlay })));
+const ConfirmModal = React.lazy(() => import('../components/ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
+const TutorialOverlay = React.lazy(() => import('../components/ui/TutorialOverlay').then(m => ({ default: m.TutorialOverlay })));
 
 // Module-scope constants — never change at runtime. Previously these maps were
 // allocated on every render of the set-type modal IIFE (~12 entries each), and
@@ -54,7 +37,6 @@ const SET_TYPE_COLORS: Record<string, string> = {
     regular: 'bg-zinc-800 text-zinc-300',
     warmup: 'bg-yellow-500/20 text-yellow-400',
     myorep: 'bg-purple-500/20 text-purple-400',
-    myorep_match: 'bg-purple-400/20 text-purple-300',
     giant: 'bg-orange-500/20 text-orange-400',
     top: 'bg-primary-500/20 text-primary-400',
     backoff: 'bg-blue-500/20 text-blue-400',
@@ -62,20 +44,18 @@ const SET_TYPE_COLORS: Record<string, string> = {
     emom: 'bg-cyan-500/20 text-cyan-400',
     drop: 'bg-teal-500/20 text-teal-400',
     rest_pause: 'bg-rose-500/20 text-rose-400',
-    time_volume: 'bg-amber-500/20 text-amber-400',
-    triple_add: 'bg-pink-500/20 text-pink-400',
 };
 const SET_TYPE_ICONS: Record<string, string> = {
-    regular: 'Circle', warmup: 'Zap', myorep: 'Repeat', myorep_match: 'Repeat2',
+    regular: 'Circle', warmup: 'Zap', myorep: 'Repeat',
     giant: 'Layers', top: 'TrendingUp', backoff: 'TrendingDown', cluster: 'Grid3x3',
     emom: 'Timer', drop: 'TrendingDown',
-    rest_pause: 'Pause', time_volume: 'Clock', triple_add: 'TrendingUp',
+    rest_pause: 'Pause',
 };
 
 // Container Component
 export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, onBack }) => {
     const { exercises, logs } = useApp();
-    const { lang } = useAppPreferences();
+    const { lang, reducedEffects } = useAppPreferences();
     const { config } = useAppConfig();
     const { tutorialProgress, markTutorialSeen } = useTutorial();
     const activeSession = useStore(state => state.activeSession);
@@ -95,7 +75,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
     useEffect(() => {
         if (!ctrl.changingSetType) return;
         const ex = sessionExercises.find(e => e.instanceId === ctrl.changingSetType!.exId);
-        const pending = (ex?.sets || []).filter(s => !s.completed && s.type !== 'avt_hop');
+        const pending = (ex?.sets || []).filter(s => !s.completed);
         setApplyToAll(pending.length > 1 && pending.every(s => s.type === pending[0].type));
         // Intentional: this effect only resets `applyToAll` when the modal opens
         // for a different set, NOT every time sessionExercises changes (which
@@ -118,31 +98,6 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
     const accentTextClass = isCalisthenicsSession ? 'text-violet-400' : 'text-primary-400';
     const accentHoverClass = isCalisthenicsSession ? 'hover:bg-violet-500' : 'hover:bg-primary-600';
     const accentShadowClass = isCalisthenicsSession ? 'shadow-violet-600/30' : 'shadow-primary-500/25';
-
-    // Correct Sensor Config for Mobile
-    const sensors = useSensors(
-        useSensor(PointerSensor, {
-            activationConstraint: {
-                distance: 8, // Requires 8px movement to start drag
-            },
-        }),
-        useSensor(KeyboardSensor)
-    );
-
-    const handleDragStart = (event: DragStartEvent) => {
-        triggerHaptic('light');
-    };
-
-    const handleDragEnd = (event: DragEndEvent) => {
-        const { active, over } = event;
-
-        if (active.id !== over?.id) {
-            const oldIndex = sessionExercises.findIndex((item) => item.instanceId === active.id);
-            const newIndex = sessionExercises.findIndex((item) => item.instanceId === over?.id);
-
-            ctrl.reorderSessionExercises(oldIndex, newIndex);
-        }
-    };
 
     const supersetColorIndexes = useMemo(() => {
         const uniqueIds = Array.from(new Set(sessionExercises.map(e => e.supersetId).filter((id): id is string => typeof id === 'string' && !!id)));
@@ -172,7 +127,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
     const muscleCoverage = useMemo(() => {
         const map: Record<string, number> = {};
         sessionExercises.forEach(ex => {
-            const done = (ex.sets || []).filter(s => s.completed && s.type !== 'warmup' && s.type !== 'avt_hop').length;
+            const done = (ex.sets || []).filter(s => s.completed && s.type !== 'warmup').length;
             if (done > 0 && ex.muscle) {
                 map[ex.muscle] = (map[ex.muscle] || 0) + done;
             }
@@ -181,18 +136,6 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
     }, [sessionExercises]);
 
     if (!activeSession) return null;
-
-    const handleUpdatePlateWeight = (exInstanceId: number) => {
-        const weight = parseFloat(ctrl.plateWeightInput);
-        if (!isNaN(weight) && weight > 0) {
-            ctrl.updateSession(prev => !prev ? null : {
-                ...prev,
-                exercises: (prev.exercises || []).map(e => e.instanceId === exInstanceId ? { ...e, plateWeight: weight } : e)
-            });
-        }
-        ctrl.setConfigPlateExId(null);
-        ctrl.setPlateWeightInput('');
-    };
 
     const handleAddExercise = (newExId: string, customDef?: ExerciseDef) => {
         const newDef = customDef || exercises.find(e => e.id === newExId);
@@ -266,17 +209,42 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
         ctrl.setOpenMenuId(null);
     };
 
-    const completedSets = sessionExercises.reduce((acc, ex) => acc + (ex.sets || []).filter(s => s.completed).length, 0);
-    const totalWorkingSets = sessionExercises.reduce((acc, ex) => acc + (ex.sets || []).filter(s => s.type !== 'warmup' && s.type !== 'avt_hop').length, 0);
-    const remainingSets = totalWorkingSets - sessionExercises.reduce((acc, ex) => acc + (ex.sets || []).filter(s => s.completed && s.type !== 'warmup' && s.type !== 'avt_hop').length, 0);
+    const workoutStats = useMemo(() => {
+        let completedSets = 0;
+        let completedWorkingSets = 0;
+        let totalWorkingSets = 0;
+
+        sessionExercises.forEach((exercise) => {
+            (exercise.sets || []).forEach((set) => {
+                if (set.completed) completedSets += 1;
+                if (set.type !== 'warmup') {
+                    totalWorkingSets += 1;
+                    if (set.completed) completedWorkingSets += 1;
+                }
+            });
+        });
+
+        return {
+            completedSets,
+            totalWorkingSets,
+            remainingSets: totalWorkingSets - completedWorkingSets,
+            progressPct: totalWorkingSets > 0 ? (completedWorkingSets / totalWorkingSets) * 100 : 0,
+        };
+    }, [sessionExercises]);
+
+    const { completedSets, totalWorkingSets, remainingSets, progressPct } = workoutStats;
     // muscleCoverage is computed above the early-return guard (rules-of-hooks)
 
     const focusedExercise = sessionExercises[focusedIndex];
     const goToNext = () => setFocusedIndex(prev => Math.min(prev + 1, sessionExercises.length - 1));
     const goToPrev = () => setFocusedIndex(prev => Math.max(prev - 1, 0));
+    const quickAccessExercise = useMemo(() => {
+        if (viewMode === 'focus') return focusedExercise || null;
+        return sessionExercises.find(ex => ex.sets.some(set => !set.completed && set.type !== 'warmup')) || sessionExercises[0] || null;
+    }, [focusedExercise, sessionExercises, viewMode]);
 
     const toggleViewMode = () => {
-        if ((document as any).startViewTransition) {
+        if (!reducedEffects && (document as any).startViewTransition) {
             (document as any).startViewTransition(() => {
                 startTransition(() => {
                     setViewMode(prev => prev === 'list' ? 'focus' : 'list');
@@ -336,16 +304,18 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
         <div className="fixed inset-0 z-40 flex flex-col bg-black font-sans" onClick={() => ctrl.setOpenMenuId(null)}>
 
             {/* --- Minimalist Header --- */}
-            <div className="glass z-30 pt-safe bg-black/90">
+            <div className="glass z-30 border-b border-white/5 pt-safe bg-black/90">
                 {/* Top Actions Row */}
-                <div className="px-4 h-14 flex items-center justify-between">
+                <div className="flex h-14 items-center justify-between px-4">
                     <button onClick={onBack} className="w-10 h-10 flex items-center justify-center rounded-full active:bg-zinc-800 transition-colors text-zinc-400 hover:text-white" aria-label="Previous"> <Icon name="ChevronLeft" size={24} strokeWidth={2.5} />
                     </button>
 
                     <div className="flex items-center gap-2">
-                        <WorkoutTimer startTime={activeSession.startTime} />
+                        <div className="rounded-full border border-white/8 bg-white/[0.04] px-3 py-1.5">
+                            <WorkoutTimer startTime={activeSession.startTime} />
+                        </div>
                         {totalWorkingSets > 0 && (
-                            <div className={`px-2 py-1 rounded-lg text-[10px] font-semibold tabular-nums transition-colors ${remainingSets === 0 ? 'bg-green-500/20 text-green-400' : 'bg-zinc-800 text-zinc-400'}`}>
+                            <div className={`rounded-full px-2.5 py-1 text-[10px] font-semibold tabular-nums transition-colors ${remainingSets === 0 ? 'bg-green-500/20 text-green-400' : 'bg-zinc-800 text-zinc-300'}`}>
                                 {remainingSets === 0 ? '✓' : `${remainingSets} left`}
                             </div>
                         )}
@@ -377,8 +347,12 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                 </div>
 
                 {/* Unified Title & Stage Info Row */}
-                <div className="px-4 pb-4">
-                    <h1 className="text-2xl font-bold text-white leading-tight tracking-tight mb-1 truncate">
+                <div className="px-4 pb-5">
+                    <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/8 bg-white/[0.04] px-4 py-2 text-xs font-bold text-zinc-200">
+                        <Icon name="TrendingUp" size={14} className="text-zinc-300" />
+                        <span>{lang === 'es' ? 'Progreso' : 'Progress'}</span>
+                    </div>
+                    <h1 className="mb-1 truncate text-[2.35rem] font-black leading-[0.95] tracking-[-0.05em] text-white">
                         {isCalisthenicsSession ? `🤸 Calisthenics Session` : activeSession.name}
                     </h1>
 
@@ -431,24 +405,17 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
             </div>
 
             {/* --- Session Progress Bar --- */}
-            {(() => {
-                const totalSets = sessionExercises.reduce((a, ex) => a + (ex.sets || []).filter(s => s.type !== 'warmup' && s.type !== 'avt_hop').length, 0);
-                const doneSets = sessionExercises.reduce((a, ex) => a + (ex.sets || []).filter(s => s.completed && s.type !== 'warmup' && s.type !== 'avt_hop').length, 0);
-                const pct = totalSets > 0 ? (doneSets / totalSets) * 100 : 0;
-                return (
-                    <div className="h-0.5 bg-zinc-900 relative overflow-hidden">
-                        <div
-                            className={`h-full bg-gradient-to-r ${isCalisthenicsSession ? 'from-violet-600 to-indigo-500' : 'from-primary-400 to-primary-600'} transition-all duration-500 ease-out`}
-                            style={{ width: `${pct}%` }}
-                        />
-                    </div>
-                );
-            })()}
+            <div className="relative h-1.5 overflow-hidden bg-zinc-900">
+                <div
+                    className={`h-full rounded-full bg-gradient-to-r ${isCalisthenicsSession ? 'from-violet-600 to-indigo-500' : 'from-primary-400 to-primary-600'} transition-all duration-500 ease-out`}
+                    style={{ width: `${progressPct}%` }}
+                />
+            </div>
 
 
             {/* --- Linking Banner --- */}
             {ctrl.linkingId && (
-                <div className="bg-primary-500 text-black p-2 text-center text-xs font-bold animate-in slide-in-from-top z-20 shadow-md shadow-primary-500/30">
+                <div className="z-20 mx-4 mt-3 rounded-2xl border border-cyan-400/20 bg-cyan-500/12 p-3 text-center text-xs font-bold text-cyan-100 animate-in slide-in-from-top">
                     {t.selectToLink}
                     <button onClick={() => ctrl.setLinkingId(null)} className="ml-4 underline opacity-80 hover:opacity-100">{t.cancel}</button>
                 </div>
@@ -457,17 +424,12 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
             {/* --- Main Content --- */}
             <div className="flex-1 overflow-hidden flex flex-col">
                 {viewMode === 'list' ? (
-                    <div id="tut-exercise-list" className="flex-1 overflow-y-auto scroll-container p-4 pb-32 space-y-4">
+                    <div id="tut-exercise-list" className="flex-1 overflow-y-auto scroll-container px-4 pb-32 pt-5 space-y-5">
                         {reorderMode ? (
-                            <DndContext
-                                sensors={sensors}
-                                collisionDetection={closestCenter}
-                                onDragStart={handleDragStart}
-                                onDragEnd={handleDragEnd}
-                            >
-                                <SortableContext
-                                    items={sortableItems}
-                                    strategy={verticalListSortingStrategy}
+                            <Suspense fallback={null}>
+                                <WorkoutSortableList
+                                    itemIds={sortableItems}
+                                    onReorder={ctrl.reorderSessionExercises}
                                 >
                                     {sessionExercises.map((ex, idx) => {
                                         const supersetColorIndex = ex.supersetId ? supersetColorIndexes[ex.supersetId] : undefined;
@@ -486,7 +448,6 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                                 onLink={ctrl.setLinkingId}
                                                 onReplace={ctrl.setReplacingExId}
                                                 onEditMuscle={ctrl.setEditingMuscleId}
-                                                onConfigPlate={ctrl.setConfigPlateExId}
                                                 onUpdateSession={ctrl.updateSession}
                                                 onOpenWarmup={ctrl.setWarmupExId}
                                                 openMenuId={ctrl.openMenuId}
@@ -502,14 +463,12 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                                 dragEnabled={true}
                                                 logs={logs}
                                                 tutorialId={idx === 0 ? "tut-set-type" : undefined}
-                                                onMarkLastHop={ctrl.handleMarkLastHop}
-                                                onAddHopToRound={ctrl.handleAddHopToRound}
-                                                onAddAVTRound={ctrl.handleAddAVTRound}
+                                                reducedEffects={reducedEffects}
                                             />
                                         );
                                     })}
-                                </SortableContext>
-                            </DndContext>
+                                </WorkoutSortableList>
+                            </Suspense>
                         ) : (
                             <>
                                 {sessionExercises.map((ex, idx) => {
@@ -529,7 +488,6 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                             onLink={ctrl.setLinkingId}
                                             onReplace={ctrl.setReplacingExId}
                                             onEditMuscle={ctrl.setEditingMuscleId}
-                                            onConfigPlate={ctrl.setConfigPlateExId}
                                             onUpdateSession={ctrl.updateSession}
                                             onOpenWarmup={ctrl.setWarmupExId}
                                             openMenuId={ctrl.openMenuId}
@@ -545,9 +503,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                             dragEnabled={false}
                                             logs={logs}
                                             tutorialId={idx === 0 ? "tut-set-type" : undefined}
-                                            onMarkLastHop={ctrl.handleMarkLastHop}
-                                            onAddHopToRound={ctrl.handleAddHopToRound}
-                                            onAddAVTRound={ctrl.handleAddAVTRound}
+                                            reducedEffects={reducedEffects}
                                         />
                                     );
                                 })}
@@ -601,7 +557,6 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                         onLink={ctrl.setLinkingId}
                                         onReplace={ctrl.setReplacingExId}
                                         onEditMuscle={ctrl.setEditingMuscleId}
-                                        onConfigPlate={ctrl.setConfigPlateExId}
                                         onUpdateSession={ctrl.updateSession}
                                         onOpenWarmup={ctrl.setWarmupExId}
                                         openMenuId={ctrl.openMenuId}
@@ -617,9 +572,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                         dragEnabled={false}
                                         logs={logs}
                                         tutorialId={focusedIndex === 0 ? "tut-set-type" : undefined}
-                                        onMarkLastHop={ctrl.handleMarkLastHop}
-                                        onAddHopToRound={ctrl.handleAddHopToRound}
-                                        onAddAVTRound={ctrl.handleAddAVTRound}
+                                        reducedEffects={reducedEffects}
                                     />
 
                                 </div>
@@ -656,25 +609,24 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                         <span className="uppercase tracking-wide text-xs">{t.finishWorkout}</span>
                     </button>
 
-                    {/* Plate Calculator / Warmup Quick Button (Thumb reach) */}
+                    {/* Quick context action (Warmup or Technique) */}
                     {(() => {
-                        const activeFocusEx = viewMode === 'focus' ? focusedExercise : (sessionExercises[0] || null);
-                        if (!activeFocusEx) return null;
-                        const isBw = activeFocusEx.isBodyweight;
+                        if (!quickAccessExercise) return null;
+                        const isBw = quickAccessExercise.isBodyweight;
                         return (
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     if (isBw) {
-                                        ctrl.setDetailExercise(activeFocusEx);
+                                        ctrl.setDetailExercise(quickAccessExercise);
                                     } else {
-                                        ctrl.setShowPlateCalc({ weight: Number(activeFocusEx.sets?.[0]?.weight || 20) });
+                                        ctrl.setWarmupExId(quickAccessExercise.instanceId);
                                     }
                                 }}
                                 className="w-[58px] h-[58px] rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-300 flex items-center justify-center active:scale-90 transition-transform shadow-lg hover:text-white"
-                                title={isBw ? (lang === 'en' ? 'Technique' : 'Técnica') : t.calc}
+                                title={isBw ? (lang === 'en' ? 'Technique' : 'Técnica') : t.warmup}
                             >
-                                <Icon name={isBw ? 'Info' : 'Dumbbell'} size={22} />
+                                <Icon name={isBw ? 'Info' : 'Zap'} size={22} />
                             </button>
                         );
                     })()}
@@ -682,11 +634,13 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
             </div>
 
             {/* TUTORIAL OVERLAY HOOK */}
-            <TutorialOverlay
-                steps={workoutTutorialSteps}
-                isActive={!tutorialProgress.workout}
-                onComplete={() => markTutorialSeen('workout')}
-            />
+            <Suspense fallback={null}>
+                <TutorialOverlay
+                    steps={workoutTutorialSteps}
+                    isActive={!tutorialProgress.workout}
+                    onComplete={() => markTutorialSeen('workout')}
+                />
+            </Suspense>
 
             {/* Modals remain the same... */}
             {ctrl.detailExercise && (
@@ -702,7 +656,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                 const colors = SET_TYPE_COLORS;
                 const icons = SET_TYPE_ICONS;
                 const exForModal = sessionExercises.find(e => e.instanceId === ctrl.changingSetType!.exId);
-                const pendingSets = (exForModal?.sets || []).filter(s => !s.completed && s.type !== 'avt_hop');
+                const pendingSets = (exForModal?.sets || []).filter(s => !s.completed);
                 const hasMultipleSets = pendingSets.length > 1;
                 return (
                     <Sheet
@@ -725,7 +679,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                             </button>
                         )}
                         <div className="p-4 grid grid-cols-1 gap-1.5 max-h-[60vh] overflow-y-auto">
-                            {(['regular', 'warmup', 'drop', 'myorep', 'myorep_match', 'giant', 'top', 'backoff', 'cluster', 'emom', 'rest_pause', 'time_volume', 'triple_add'] as SetType[]).map(type => {
+                            {(['regular', 'warmup', 'drop', 'myorep', 'giant', 'top', 'backoff', 'cluster', 'emom', 'rest_pause'] as SetType[]).map(type => {
                                 const isSelected = ctrl.changingSetType?.currentType === type;
                                 return (
                                     <button
@@ -816,30 +770,29 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
             )}
 
             {/* NEW: Discard Confirmation Modal */}
-            <ConfirmModal
-                isOpen={ctrl.showDiscardConfirm}
-                title={t.discardSession || "Discard Session"}
-                description={t.discardConfirm || "Discard current session data? This cannot be undone."}
-                confirmText={t.delete}
-                cancelText={t.cancel}
-                onConfirm={ctrl.handleDiscardSession}
-                onCancel={() => ctrl.setShowDiscardConfirm(false)}
-                variant="danger"
-            />
+            <Suspense fallback={null}>
+                <ConfirmModal
+                    isOpen={ctrl.showDiscardConfirm}
+                    title={t.discardSession || "Discard Session"}
+                    description={t.discardConfirm || "Discard current session data? This cannot be undone."}
+                    confirmText={t.delete}
+                    cancelText={t.cancel}
+                    onConfirm={ctrl.handleDiscardSession}
+                    onCancel={() => ctrl.setShowDiscardConfirm(false)}
+                    variant="danger"
+                />
+            </Suspense>
 
             {ctrl.showPRSuccess && (
-                <PRCelebrationOverlay onDismiss={ctrl.dismissPRSuccess} />
-            )}
-
-            {ctrl.showPlateCalc && (
-                <PlateCalculatorModal
-                    initialWeight={ctrl.showPlateCalc.weight}
-                    onClose={() => ctrl.setShowPlateCalc(null)}
-                />
+                <Suspense fallback={null}>
+                    <PRCelebrationOverlay onDismiss={ctrl.dismissPRSuccess} />
+                </Suspense>
             )}
 
             {ctrl.showFeedbackModal && activeSession && (
-                <FeedbackModal muscles={sessionExercises.map(e => e?.muscle || 'CHEST')} onCancel={() => ctrl.setShowFeedbackModal(false)} onConfirm={ctrl.handleSaveFeedback} />
+                <Suspense fallback={null}>
+                    <FeedbackModal muscles={sessionExercises.map(e => e?.muscle || 'CHEST')} onCancel={() => ctrl.setShowFeedbackModal(false)} onConfirm={ctrl.handleSaveFeedback} />
+                </Suspense>
             )}
             {ctrl.replacingExId && (
                 <Suspense fallback={null}>
@@ -851,35 +804,10 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                     <ExerciseSelector onSelect={handleAddExercise} onClose={() => ctrl.setAddingExercise(false)} />
                 </Suspense>
             )}
-            {ctrl.configPlateExId && (
-                <Sheet
-                    open={!!ctrl.configPlateExId}
-                    onOpenChange={(open) => !open && ctrl.setConfigPlateExId(null)}
-                    title={t.units.plateWeight}
-                    accent="primary"
-                    footer={
-                        <Button fullWidth onClick={() => handleUpdatePlateWeight(ctrl.configPlateExId!)}>
-                            {t.save}
-                        </Button>
-                    }
-                >
-                    <div className="p-5 space-y-4">
-                        <div className="space-y-2">
-                            <label className="block text-[10px] font-semibold uppercase tracking-wider text-zinc-500 text-center">{lang === 'en' ? 'Plate Weight' : 'Peso de Disco'}</label>
-                            <input 
-                                type="number" 
-                                inputMode="decimal"
-                                autoFocus 
-                                className="w-full bg-[#1A1A1A] border border-white/5 rounded-2xl p-4 text-center font-bold text-2xl text-white outline-none focus:border-white/20 transition-all" 
-                                value={ctrl.plateWeightInput} 
-                                onChange={(e) => ctrl.setPlateWeightInput(e.target.value)} 
-                            />
-                        </div>
-                    </div>
-                </Sheet>
-            )}
             {ctrl.warmupExId && activeSession && (
-                <WarmupModal targetWeight={Number(sessionExercises.find(e => e.instanceId === ctrl.warmupExId)?.sets?.[0]?.weight || 0)} exerciseName={getTranslated(sessionExercises.find(e => e.instanceId === ctrl.warmupExId)?.name, lang)} onClose={() => ctrl.setWarmupExId(null)} />
+                <Suspense fallback={null}>
+                    <WarmupModal targetWeight={Number(sessionExercises.find(e => e.instanceId === ctrl.warmupExId)?.sets?.[0]?.weight || 0)} exerciseName={getTranslated(sessionExercises.find(e => e.instanceId === ctrl.warmupExId)?.name, lang)} onClose={() => ctrl.setWarmupExId(null)} />
+                </Suspense>
             )}
         </div>
     );
