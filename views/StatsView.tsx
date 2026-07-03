@@ -25,7 +25,6 @@ import {
 } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 
-// --- REGISTER CHARTS GLOBALLY FOR THIS CHUNK ---
 ChartJS.register(
     RadialLinearScale,
     ArcElement,
@@ -38,12 +37,23 @@ ChartJS.register(
     LinearScale
 );
 
-// --- HELPER: Volume Zones (Dr. Mike / RP Logic) ---
 const getVolumeZone = (sets: number) => {
-    if (sets < 6) return { color: 'bg-yellow-500', label: 'Maintenance (MV)', textColor: 'text-yellow-500' };
-    if (sets < 12) return { color: 'bg-green-500', label: 'Minimum Effective (MEV)', textColor: 'text-green-500' };
-    if (sets <= 22) return { color: 'bg-blue-500', label: 'Optimal (MAV)', textColor: 'text-blue-500' };
-    return { color: 'bg-red-500', label: 'Overreaching (MRV)', textColor: 'text-red-500' };
+    if (sets < 6) return { color: 'bg-yellow-500', label: 'MV', textColor: 'text-yellow-500' };
+    if (sets < 12) return { color: 'bg-green-500', label: 'MEV', textColor: 'text-green-500' };
+    if (sets <= 22) return { color: 'bg-blue-500', label: 'MAV', textColor: 'text-blue-500' };
+    return { color: 'bg-red-500', label: 'MRV', textColor: 'text-red-500' };
+};
+
+const chartMetricLabel = (metric: ChartMetric) => {
+    switch (metric) {
+        case '1rm': return '1RM';
+        case 'volume': return 'VOL';
+        case 'duration': return 'TIME';
+        case 'distance': return 'DIST';
+        case 'max_reps': return 'REPS';
+        case 'hold_time': return 'HOLD';
+        default: return '1RM';
+    }
 };
 
 export const StatsView: React.FC = () => {
@@ -51,13 +61,11 @@ export const StatsView: React.FC = () => {
     const activeMeso = useStore(state => state.activeMeso);
     const t = TRANSLATIONS[lang];
 
-    // UI State
     const [selectedExId, setSelectedExId] = useState<string | null>(null);
     const [chartMetric, setChartMetric] = useState<ChartMetric>('1rm');
     const [showPicker, setShowPicker] = useState(false);
     const [pickerSearch, setPickerSearch] = useState('');
 
-    // Async Data State
     const [volumeData, setVolumeData] = useState<[string, number][]>([]);
     const [rawMuscleCounts, setRawMuscleCounts] = useState<Record<string, number>>({});
     const [availableExercises, setAvailableExercises] = useState<any[]>([]);
@@ -67,7 +75,6 @@ export const StatsView: React.FC = () => {
     const [loadingOverview, setLoadingOverview] = useState(true);
     const [loadingChart, setLoadingChart] = useState(false);
 
-    // Worker Hook
     const { isWorkerReady, calculateOverview, calculateChartData } = useStatsWorker();
 
     const safeLogs = useMemo(() => Array.isArray(logs) ? logs : [], [logs]);
@@ -95,10 +102,9 @@ export const StatsView: React.FC = () => {
 
         return byId;
     }, [exercises, safeLogs]);
-    const currentEx = selectedExId ? exerciseMetaById.get(String(selectedExId)) : null;
-    const isCardio = currentEx?.muscle === 'CARDIO';
 
-    // Auto-switch metric when exercise type changes
+    const currentEx = selectedExId ? exerciseMetaById.get(String(selectedExId)) : null;
+
     useEffect(() => {
         if (!currentEx) return;
         const isIsometric = (currentEx as any).isIsometric;
@@ -108,24 +114,15 @@ export const StatsView: React.FC = () => {
         if (isIsometric) {
             setChartMetric('hold_time');
         } else if (isCardioEx) {
-            if (chartMetric !== 'duration' && chartMetric !== 'distance') {
-                setChartMetric('duration');
-            }
+            if (chartMetric !== 'duration' && chartMetric !== 'distance') setChartMetric('duration');
         } else if (isBodyweight) {
-            if (chartMetric !== 'max_reps' && chartMetric !== 'volume') {
-                setChartMetric('max_reps');
-            }
+            if (chartMetric !== 'max_reps' && chartMetric !== 'volume') setChartMetric('max_reps');
         } else {
-            if (chartMetric !== '1rm' && chartMetric !== 'volume') {
-                setChartMetric('1rm');
-            }
+            if (chartMetric !== '1rm' && chartMetric !== 'volume') setChartMetric('1rm');
         }
-        // Intentional: this effect only resets chartMetric when the selected
-        // exercise CHANGES. Re-running on chartMetric updates would create a loop.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedExId]);
 
-    // 1. Load Overview (Volume + Exercise List)
     useEffect(() => {
         if (!isWorkerReady) return;
 
@@ -135,19 +132,17 @@ export const StatsView: React.FC = () => {
 
             setVolumeData(volumeData);
 
-            // Convert array to object for Radar
             const counts: Record<string, number> = {};
-            volumeData.forEach(([m, v]) => counts[m] = v);
+            volumeData.forEach(([m, v]) => { counts[m] = v; });
             setRawMuscleCounts(counts);
 
-            // Calculate Set Type Distribution
             const typeCounts: Record<string, number> = {};
-            safeLogs.forEach(l => {
-                if (activeMeso?.id && l.mesoId !== activeMeso.id) return;
-                l.exercises?.forEach(ex => {
-                    ex.sets?.forEach(s => {
-                        if (s.completed) {
-                            const type = s.type || 'regular';
+            safeLogs.forEach(log => {
+                if (activeMeso?.id && log.mesoId !== activeMeso.id) return;
+                log.exercises?.forEach(ex => {
+                    ex.sets?.forEach(set => {
+                        if (set.completed) {
+                            const type = set.type || 'regular';
                             typeCounts[type] = (typeCounts[type] || 0) + 1;
                         }
                     });
@@ -155,30 +150,24 @@ export const StatsView: React.FC = () => {
             });
             setSetTypeDist(typeCounts);
 
-            // Transform frequency map to sorted exercise objects
             const sortedExs = Object.entries(exerciseFrequency)
-                .sort((a, b) => (b[1] as number) - (a[1] as number)) // Most frequent first
+                .sort((a, b) => (b[1] as number) - (a[1] as number))
                 .map(([id]) => exerciseMetaById.get(String(id)))
                 .filter(Boolean);
 
             setAvailableExercises(sortedExs);
 
-            // Auto-select first exercise if none selected
             if (!selectedExId && sortedExs.length > 0) {
-                setSelectedExId(sortedExs[0]!.id);
+                setSelectedExId(String(sortedExs[0]!.id));
             }
 
             setLoadingOverview(false);
         };
 
         loadOverview();
-        // Intentional: `currentEx` is derived from `exercises + selectedExId` and
-        // re-running here on every selectedExId would duplicate work that
-        // useEffect #2 (chart data load) already handles.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isWorkerReady, safeLogs, activeMeso?.id, exerciseMetaById, selectedExId, calculateOverview]);
 
-    // 2. Load Chart Data
     useEffect(() => {
         if (!isWorkerReady || !selectedExId) return;
 
@@ -192,14 +181,24 @@ export const StatsView: React.FC = () => {
         loadChart();
     }, [isWorkerReady, selectedExId, chartMetric, safeLogs, calculateChartData]);
 
-
     const filteredExercises = useMemo(() => {
         return availableExercises.filter(ex =>
-            getTranslated(ex!.name, lang).toLowerCase().includes(pickerSearch.toLowerCase())
+            getTranslated(ex.name, lang).toLowerCase().includes(pickerSearch.toLowerCase())
         );
     }, [availableExercises, pickerSearch, lang]);
 
     const maxVal = Math.max(...volumeData.map(d => d[1]), 25);
+    const totalSets = (Object.values(setTypeDist) as number[]).reduce((a, b) => a + b, 0);
+    const trackedMuscles = volumeData.filter(([, count]) => count > 0).length;
+    const hasData = totalSets > 0;
+    const hasExerciseHistory = availableExercises.length > 0;
+
+    const overviewPills = [
+        { label: lang === 'es' ? 'Sesiones' : 'Sessions', value: safeLogs.filter(log => !log.skipped).length },
+        { label: lang === 'es' ? 'Ejercicios' : 'Exercises', value: availableExercises.length },
+        { label: lang === 'es' ? 'Series' : 'Sets', value: totalSets },
+        { label: lang === 'es' ? 'Musculos' : 'Muscles', value: trackedMuscles },
+    ];
 
     const doughnutData = {
         labels: Object.keys(setTypeDist).map(k => t.types[k] || k),
@@ -213,30 +212,25 @@ export const StatsView: React.FC = () => {
         }]
     };
 
-    const totalSets = (Object.values(setTypeDist) as number[]).reduce((a, b) => a + b, 0);
-    const hasData = totalSets > 0;
-
-    // PR History Board
     const prHistory = useMemo(() => {
-        // Build a map: exerciseId → { bestE1RM, weight, reps, date, name }
         const bestMap: Record<string, { e1rm: number; weight: number; reps: number; date: number; name: string; muscle: string }> = {};
 
         safeLogs.forEach(log => {
             if (log.skipped) return;
             (log.exercises || []).forEach(ex => {
                 if (!ex.id || ex.isBodyweight || ex.isIsometric || ex.muscle === 'CARDIO') return;
-                const working = (ex.sets || []).filter(s => s.completed && s.type !== 'warmup' && s.type !== 'avt_hop');
-                working.forEach(s => {
-                    const w = Number(s.weight || 0);
-                    const r = Number(s.reps || 0);
-                    if (w <= 0 || r <= 0) return;
-                    const e1rm = w * (1 + r / 30);
-                    const existing = bestMap[ex.id];
+                const working = (ex.sets || []).filter(set => set.completed && set.type !== 'warmup' && set.type !== 'avt_hop');
+                working.forEach(set => {
+                    const weight = Number(set.weight || 0);
+                    const reps = Number(set.reps || 0);
+                    if (weight <= 0 || reps <= 0) return;
+                    const e1rm = weight * (1 + reps / 30);
+                    const existing = bestMap[String(ex.id)];
                     if (!existing || e1rm > existing.e1rm) {
-                        bestMap[ex.id] = {
+                        bestMap[String(ex.id)] = {
                             e1rm,
-                            weight: w,
-                            reps: r,
+                            weight,
+                            reps,
                             date: log.startTime,
                             name: getTranslated(ex.name, lang),
                             muscle: ex.muscle
@@ -247,12 +241,23 @@ export const StatsView: React.FC = () => {
         });
 
         return Object.entries(bestMap)
-            .sort((a, b) => b[1].date - a[1].date) // Most recent first
+            .sort((a, b) => b[1].date - a[1].date)
             .slice(0, 20);
     }, [safeLogs, lang]);
 
     const [showAllPRs, setShowAllPRs] = useState(false);
     const displayedPRs = showAllPRs ? prHistory : prHistory.slice(0, 6);
+
+    const metricButtons = (() => {
+        const isIsometric = (currentEx as any)?.isIsometric;
+        const isBW = (currentEx as any)?.isBodyweight && !isIsometric;
+        const isCardioEx = currentEx?.muscle === 'CARDIO';
+
+        if (isIsometric) return ['hold_time'] as ChartMetric[];
+        if (isBW) return ['max_reps', 'volume'] as ChartMetric[];
+        if (isCardioEx) return ['duration', 'distance'] as ChartMetric[];
+        return ['1rm', 'volume'] as ChartMetric[];
+    })();
 
     const statsTutorialSteps = [
         { targetId: 'tut-progress-chart', title: t.tutorial.stats[0].title, text: t.tutorial.stats[0].text, position: 'bottom' as const },
@@ -261,101 +266,73 @@ export const StatsView: React.FC = () => {
     ];
 
     return (
-        <div className="p-4 space-y-6 pb-24 relative">
-            <h2 className="text-2xl font-black text-white px-2">Analytics</h2>
+        <div className="relative space-y-4 px-4 pb-24 pt-3">
+            <div className="px-1">
+                <div className="flex items-center justify-between gap-3">
+                    <div>
+                        <h2 className="text-[1.7rem] font-black tracking-[-0.05em] text-white">Stats</h2>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
+                            {activeMeso
+                                ? `${lang === 'es' ? 'Meso activo' : 'Active meso'} · ${t.week} ${activeMeso.week}`
+                                : (lang === 'es' ? 'Historial global' : 'All-time history')}
+                        </p>
+                    </div>
+                    {activeMeso && (
+                        <div className="rounded-full border border-primary-500/15 bg-primary-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-primary-300">
+                            {activeMeso.isDeload ? 'DELOAD' : activeMeso.mesoType}
+                        </div>
+                    )}
+                </div>
+            </div>
 
-            {/* --- Progress Chart Section (FREE) --- */}
-            <div id="tut-progress-chart" className="glass-card rounded-3xl p-6 shadow-md">
-                <div className="flex flex-col gap-4 mb-6">
-                    <div className="flex justify-between items-center">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {overviewPills.map(pill => (
+                    <div key={pill.label} className="rounded-2xl border border-white/6 bg-white/[0.03] px-3 py-3">
+                        <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-zinc-500">{pill.label}</div>
+                        <div className="mt-1 text-xl font-black tracking-[-0.04em] text-white">{pill.value}</div>
+                    </div>
+                ))}
+            </div>
+
+            <div id="tut-progress-chart" className="glass-card overflow-hidden rounded-[1.7rem] border border-white/6 p-5 shadow-md">
+                <div className="mb-5 flex flex-col gap-3">
+                    <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-primary-500/10 text-primary-500 flex items-center justify-center">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-500/10 text-primary-500">
                                 <Icon name="TrendingUp" size={16} />
                             </div>
-                            <h3 className="font-bold text-white">{t.statsProgress}</h3>
+                            <div>
+                                <h3 className="font-bold text-white">{t.statsProgress}</h3>
+                                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-500">
+                                    {hasExerciseHistory
+                                        ? `${availableExercises.length} ${lang === 'es' ? 'ejercicios con historial' : 'tracked exercises'}`
+                                        : (lang === 'es' ? 'Sin historial cargado' : 'No history loaded')}
+                                </p>
+                            </div>
                         </div>
 
-                        {/* Context-aware metric selector */}
-                        <div className="flex bg-white/5 border border-white/5 p-1 rounded-xl">
-                            {(() => {
-                                const isIsometric = (currentEx as any)?.isIsometric;
-                                const isBW = (currentEx as any)?.isBodyweight && !isIsometric;
-                                const isCardioEx = currentEx?.muscle === 'CARDIO';
-
-                                if (isIsometric) {
-                                    return (
-                                        <>
-                                            <button
-                                                onClick={() => setChartMetric('hold_time')}
-                                                className={`px-3 py-1 text-[10px] font-black rounded-md transition-all ${chartMetric === 'hold_time' ? 'bg-primary-500 shadow-[0_2px_8px] shadow-primary-500/25 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
-                                            >
-                                                HOLD
-                                            </button>
-                                        </>
-                                    );
-                                }
-                                if (isBW) {
-                                    return (
-                                        <>
-                                            <button
-                                                onClick={() => setChartMetric('max_reps')}
-                                                className={`px-3 py-1 text-[10px] font-black rounded-md transition-all ${chartMetric === 'max_reps' ? 'bg-primary-500 shadow-[0_2px_8px] shadow-primary-500/25 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
-                                            >
-                                                REPS
-                                            </button>
-                                            <button
-                                                onClick={() => setChartMetric('volume')}
-                                                className={`px-3 py-1 text-[10px] font-black rounded-md transition-all ${chartMetric === 'volume' ? 'bg-primary-500 shadow-[0_2px_8px] shadow-primary-500/25 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
-                                            >
-                                                VOL
-                                            </button>
-                                        </>
-                                    );
-                                }
-                                if (isCardioEx) {
-                                    return (
-                                        <>
-                                            <button
-                                                onClick={() => setChartMetric('duration')}
-                                                className={`px-3 py-1 text-[10px] font-black rounded-md transition-all ${chartMetric === 'duration' ? 'bg-primary-500 shadow-[0_2px_8px] shadow-primary-500/25 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
-                                            >
-                                                TIME
-                                            </button>
-                                            <button
-                                                onClick={() => setChartMetric('distance')}
-                                                className={`px-3 py-1 text-[10px] font-black rounded-md transition-all ${chartMetric === 'distance' ? 'bg-primary-500 shadow-[0_2px_8px] shadow-primary-500/25 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
-                                            >
-                                                DIST
-                                            </button>
-                                        </>
-                                    );
-                                }
-                                // Standard weighted
-                                return (
-                                    <>
-                                        <button
-                                            onClick={() => setChartMetric('1rm')}
-                                            className={`px-3 py-1 text-[10px] font-black rounded-md transition-all ${chartMetric === '1rm' ? 'bg-primary-500 shadow-[0_2px_8px] shadow-primary-500/25 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
-                                        >
-                                            1RM
-                                        </button>
-                                        <button
-                                            onClick={() => setChartMetric('volume')}
-                                            className={`px-3 py-1 text-[10px] font-black rounded-md transition-all ${chartMetric === 'volume' ? 'bg-primary-500 shadow-[0_2px_8px] shadow-primary-500/25 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
-                                        >
-                                            VOL
-                                        </button>
-                                    </>
-                                );
-                            })()}
+                        <div className="flex rounded-xl border border-white/5 bg-white/5 p-1">
+                            {metricButtons.map(metric => (
+                                <button
+                                    key={metric}
+                                    onClick={() => setChartMetric(metric)}
+                                    className={`rounded-md px-3 py-1 text-[10px] font-black transition-all ${
+                                        chartMetric === metric
+                                            ? 'bg-primary-500 text-white shadow-[0_2px_8px] shadow-primary-500/25'
+                                            : 'text-zinc-500 hover:text-zinc-300'
+                                    }`}
+                                >
+                                    {chartMetricLabel(metric)}
+                                </button>
+                            ))}
                         </div>
                     </div>
 
                     <button
                         onClick={() => { setPickerSearch(''); setShowPicker(true); }}
-                        className="w-full bg-white/5 border border-white/10 text-white text-sm font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary-500 flex justify-between items-center active:bg-white/10 transition-colors"
+                        className="flex w-full items-center justify-between rounded-2xl border border-white/8 bg-white/[0.04] px-4 py-3 text-left text-white outline-none transition-colors active:bg-white/10 focus:ring-2 focus:ring-primary-500"
                     >
-                        <span className="truncate">
+                        <span className="truncate text-sm font-bold">
                             {loadingOverview
                                 ? t.loading
                                 : currentEx ? getTranslated(currentEx.name, lang) : t.selectEx}
@@ -364,40 +341,51 @@ export const StatsView: React.FC = () => {
                     </button>
                 </div>
 
-                {selectedExId && (
+                {selectedExId && hasExerciseHistory ? (
                     <ProgressChart
                         dataPoints={chartPoints}
                         metric={chartMetric as any}
                         loading={loadingChart}
                     />
+                ) : (
+                    <div className="flex h-60 flex-col items-center justify-center rounded-[1.4rem] border border-dashed border-white/8 bg-white/[0.02] px-6 text-center">
+                        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white/[0.04] text-zinc-500">
+                            <Icon name="BarChart3" size={20} />
+                        </div>
+                        <p className="text-sm font-bold text-white">
+                            {lang === 'es' ? 'Aun no hay ejercicios para graficar' : 'No exercises ready to chart yet'}
+                        </p>
+                        <p className="mt-1 text-xs text-zinc-500">
+                            {lang === 'es'
+                                ? 'Completa entrenamientos sincronizados para ver progresion por ejercicio.'
+                                : 'Complete synced workouts to unlock exercise progress.'}
+                        </p>
+                    </div>
                 )}
             </div>
 
-            {/* --- Symmetry Radar & Doughnut (PRO LOCKED) --- */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Symmetry Radar */}
-                <div id="tut-radar-chart" className="glass-card rounded-3xl p-6 shadow-md overflow-hidden flex flex-col h-full min-h-[320px]">
-                    <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div id="tut-radar-chart" className="glass-card flex min-h-[320px] h-full flex-col overflow-hidden rounded-[1.7rem] border border-white/6 p-5 shadow-md">
+                    <h3 className="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-500">
                         <Icon name="Activity" size={14} /> {t.statsBalance}
                     </h3>
-                    <div className="flex-1 relative flex items-center justify-center">
+                    <div className="relative flex flex-1 items-center justify-center">
                         <ProLock featureName="Radar Analysis">
-                            <div className="w-full h-64">
+                            <div className="h-64 w-full">
                                 <SymmetryRadar volumeData={rawMuscleCounts} />
                             </div>
                         </ProLock>
                     </div>
                 </div>
 
-                {/* Set Type Distribution */}
-                <div className="glass-card rounded-3xl p-6 shadow-md flex flex-col h-full min-h-[320px]">
-                    <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <div className="glass-card flex min-h-[320px] h-full flex-col rounded-[1.7rem] border border-white/6 p-5 shadow-md">
+                    <h3 className="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-500">
                         <Icon name="Layers" size={14} /> {t.statsIntensity}
                     </h3>
-                    <div className="flex-1 flex flex-col items-center justify-center relative">
+                    <div className="relative flex flex-1 flex-col items-center justify-center">
                         <ProLock featureName="Intensity Dist.">
                             {hasData ? (
-                                <div className="relative w-48 h-48">
+                                <div className="relative h-48 w-48">
                                     <Doughnut
                                         data={doughnutData}
                                         options={{
@@ -408,19 +396,17 @@ export const StatsView: React.FC = () => {
                                             elements: { arc: { borderWidth: 0 } }
                                         }}
                                     />
-                                    <div className="absolute inset-0 flex items-center justify-center flex-col pointer-events-none">
-                                        <span className="text-3xl font-black text-white tracking-tighter">
-                                            {totalSets}
-                                        </span>
-                                        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{t.statsSets}</span>
+                                    <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                                        <span className="text-3xl font-black tracking-[-0.05em] text-white">{totalSets}</span>
+                                        <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-500">{t.statsSets}</span>
                                     </div>
                                 </div>
                             ) : (
-                                <div className="flex flex-col items-center justify-center opacity-50 space-y-3">
-                                    <div className="w-32 h-32 rounded-full border-[12px] border-zinc-800 flex items-center justify-center">
+                                <div className="space-y-3 opacity-60 flex flex-col items-center justify-center">
+                                    <div className="flex h-32 w-32 items-center justify-center rounded-full border-[12px] border-zinc-800">
                                         <Icon name="CloudOff" size={24} className="text-zinc-600" />
                                     </div>
-                                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{t.statsNoData}</span>
+                                    <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-500">{t.statsNoData}</span>
                                 </div>
                             )}
                         </ProLock>
@@ -428,18 +414,17 @@ export const StatsView: React.FC = () => {
                 </div>
             </div>
 
-            {/* --- Muscle Heatmap Grid --- */}
-            <div className="glass-card rounded-3xl p-6 shadow-md relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/5 rounded-full blur-[80px] pointer-events-none"></div>
-                <div className="flex justify-between items-center mb-6 relative z-10">
-                    <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-2">
+            <div className="glass-card relative overflow-hidden rounded-[1.7rem] border border-white/6 p-5 shadow-md">
+                <div className="pointer-events-none absolute right-0 top-0 h-64 w-64 rounded-full bg-primary-500/5 blur-[80px]"></div>
+                <div className="relative z-10 mb-5 flex items-center justify-between">
+                    <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-500">
                         <Icon name="Grid3x3" size={14} />
                         {lang === 'es' ? 'Mapa de Calor Muscular' : 'Muscle Heatmap'}
                     </h3>
                 </div>
 
                 {loadingOverview ? (
-                    <div className="animate-pulse h-48 bg-zinc-800/50 rounded-2xl"></div>
+                    <div className="h-48 animate-pulse rounded-2xl bg-zinc-800/50"></div>
                 ) : (
                     <div className="relative z-10">
                         <MuscleHeatmapGrid volumeData={volumeData} lang={lang} />
@@ -447,49 +432,48 @@ export const StatsView: React.FC = () => {
                 )}
             </div>
 
-            {/* --- Volume Bar Chart Section --- */}
-            <div id="tut-vol-bar" className="glass-card rounded-3xl p-6 shadow-md">
-                <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-2">
+            <div id="tut-vol-bar" className="glass-card rounded-[1.7rem] border border-white/6 p-5 shadow-md">
+                <div className="mb-5 flex items-center justify-between gap-3">
+                    <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-500">
                         <Icon name="BarChart2" size={14} />
                         {t.volPerCycle}
                     </h3>
-                    {/* Legend */}
                     <div className="flex gap-2">
-                        <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-yellow-500"></div><span className="text-[9px] text-zinc-400 font-bold">MV</span></div>
-                        <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-500"></div><span className="text-[9px] text-zinc-400 font-bold">MEV</span></div>
-                        <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-500"></div><span className="text-[9px] text-zinc-400 font-bold">MAV</span></div>
+                        {['MV', 'MEV', 'MAV'].map(label => (
+                            <div key={label} className="flex items-center gap-1">
+                                <div className={`h-2 w-2 rounded-full ${label === 'MV' ? 'bg-yellow-500' : label === 'MEV' ? 'bg-green-500' : 'bg-blue-500'}`}></div>
+                                <span className="text-[9px] font-bold text-zinc-400">{label}</span>
+                            </div>
+                        ))}
                     </div>
                 </div>
 
                 {loadingOverview ? (
                     <div className="space-y-4 animate-pulse">
                         {[1, 2, 3, 4].map(i => (
-                            <div key={i} className="flex gap-3 items-center">
-                                <div className="w-24 h-4 bg-zinc-800 rounded"></div>
-                                <div className="flex-1 h-4 bg-zinc-800 rounded-full"></div>
-                                <div className="w-6 h-4 bg-zinc-800 rounded"></div>
+                            <div key={i} className="flex items-center gap-3">
+                                <div className="h-4 w-24 rounded bg-zinc-800"></div>
+                                <div className="h-4 flex-1 rounded-full bg-zinc-800"></div>
+                                <div className="h-4 w-6 rounded bg-zinc-800"></div>
                             </div>
                         ))}
                     </div>
                 ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-3.5">
                         {volumeData.map(([muscle, count]) => {
                             const zone = getVolumeZone(count);
                             return (
-                                <div key={muscle} className="flex items-center gap-3 group">
-                                    <div className="w-24 text-xs font-bold text-zinc-500 truncate text-right">
+                                <div key={muscle} className="group flex items-center gap-3">
+                                    <div className="w-24 truncate text-right text-xs font-bold text-zinc-500">
                                         {TRANSLATIONS[lang].muscle[muscle as MuscleGroup]}
                                     </div>
-                                    <div className="flex-1 h-2 bg-white/5 rounded-full overflow-hidden relative">
+                                    <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-white/5">
                                         <div
                                             className={`h-full rounded-full transition-all duration-1000 ${zone.color}`}
                                             style={{ width: `${Math.min(100, (count / maxVal) * 100)}%` }}
-                                        ></div>
+                                        />
                                     </div>
-                                    <div className={`w-8 text-xs font-mono font-bold text-right ${zone.textColor}`}>
-                                        {count}
-                                    </div>
+                                    <div className={`w-8 text-right text-xs font-mono font-bold ${zone.textColor}`}>{count}</div>
                                 </div>
                             );
                         })}
@@ -497,30 +481,39 @@ export const StatsView: React.FC = () => {
                 )}
             </div>
 
-            {/* --- PR History Board --- */}
             {prHistory.length > 0 && (
-                <div className="glass-card rounded-3xl p-6 shadow-md">
-                    <div className="flex items-center justify-between mb-5">
-                        <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-2">
+                <div className="glass-card rounded-[1.7rem] border border-white/6 p-5 shadow-md">
+                    <div className="mb-5 flex items-center justify-between">
+                        <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-500">
                             <Icon name="Trophy" size={14} />
-                            {lang === 'es' ? 'Récords Personales' : 'Personal Records'}
+                            {lang === 'es' ? 'Records Personales' : 'Personal Records'}
                         </h3>
-                        <span className="text-[10px] font-bold text-zinc-600 uppercase">{lang === 'es' ? 'e1RM estimado' : 'est. e1RM'}</span>
+                        <span className="text-[10px] font-bold uppercase text-zinc-600">{lang === 'es' ? 'e1RM estimado' : 'est. e1RM'}</span>
                     </div>
 
                     <div className="space-y-2">
                         {displayedPRs.map(([exId, pr]) => {
-                            const dateStr = new Date(pr.date).toLocaleDateString(lang === 'es' ? 'es-ES' : 'en-US', { month: 'short', day: 'numeric', year: '2-digit' });
+                            const dateStr = new Date(pr.date).toLocaleDateString(lang === 'es' ? 'es-ES' : 'en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: '2-digit'
+                            });
                             return (
-                                <div key={exId} className="flex items-center gap-3 py-2 border-b border-zinc-800/60 last:border-0">
-                                    <div className="w-8 h-8 rounded-lg bg-yellow-500/10 text-yellow-500 flex items-center justify-center shrink-0 text-sm">🏆</div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-bold text-white truncate">{pr.name}</p>
-                                        <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wide">{TRANSLATIONS[lang].muscle[pr.muscle as MuscleGroup]} · {dateStr}</p>
+                                <div key={exId} className="flex items-center gap-3 border-b border-zinc-800/60 py-2 last:border-0">
+                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-yellow-500/10 text-yellow-500 text-sm">T</div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate text-sm font-bold text-white">{pr.name}</p>
+                                        <p className="text-[10px] font-bold uppercase tracking-wide text-zinc-500">
+                                            {TRANSLATIONS[lang].muscle[pr.muscle as MuscleGroup]} · {dateStr}
+                                        </p>
                                     </div>
-                                    <div className="text-right shrink-0">
-                                        <p className="text-sm font-black text-white">{pr.weight}<span className="text-zinc-500 text-[10px] ml-0.5">kg</span></p>
-                                        <p className="text-[10px] text-zinc-500">×{pr.reps} · <span className="text-yellow-500 font-bold">{Math.round(pr.e1rm)}kg</span></p>
+                                    <div className="shrink-0 text-right">
+                                        <p className="text-sm font-black text-white">
+                                            {pr.weight}<span className="ml-0.5 text-[10px] text-zinc-500">kg</span>
+                                        </p>
+                                        <p className="text-[10px] text-zinc-500">
+                                            x{pr.reps} · <span className="font-bold text-yellow-500">{Math.round(pr.e1rm)}kg</span>
+                                        </p>
                                     </div>
                                 </div>
                             );
@@ -530,7 +523,7 @@ export const StatsView: React.FC = () => {
                     {prHistory.length > 6 && (
                         <button
                             onClick={() => setShowAllPRs(v => !v)}
-                            className="w-full text-center mt-3 text-xs font-bold text-zinc-500 hover:text-zinc-300 transition-colors py-1"
+                            className="mt-3 w-full py-1 text-center text-xs font-bold text-zinc-500 transition-colors hover:text-zinc-300"
                         >
                             {showAllPRs
                                 ? (lang === 'es' ? '↑ Ver menos' : '↑ Show less')
@@ -540,11 +533,10 @@ export const StatsView: React.FC = () => {
                 </div>
             )}
 
-            {/* --- Full Screen Picker Modal --- */}
             {showPicker && (
-                <div className="fixed inset-0 z-sheet bg-zinc-950 flex flex-col animate-in slide-in-from-bottom duration-200">
-                    <div className="glass px-4 h-16 shrink-0 flex items-center gap-3 border-b border-white/5">
-                        <button onClick={() => setShowPicker(false)} className="p-2 -ml-2 text-zinc-400 hover:text-white">
+                <div className="fixed inset-0 z-sheet flex flex-col bg-zinc-950 animate-in slide-in-from-bottom duration-200">
+                    <div className="glass flex h-16 shrink-0 items-center gap-3 border-b border-white/5 px-4">
+                        <button onClick={() => setShowPicker(false)} className="-ml-2 p-2 text-zinc-400 hover:text-white">
                             <Icon name="X" size={24} />
                         </button>
                         <div className="relative flex-1">
@@ -553,44 +545,49 @@ export const StatsView: React.FC = () => {
                                 autoFocus
                                 type="text"
                                 placeholder={t.searchPlaceholder}
-                                className="w-full bg-zinc-800/50 border border-zinc-700/50 rounded-xl py-2 pl-9 pr-4 text-sm font-medium focus:border-primary-500 focus:ring-1 focus:ring-primary-500 outline-none text-white placeholder-zinc-400 transition-all glow-input-neon"
+                                className="glow-input-neon w-full rounded-xl border border-zinc-700/50 bg-zinc-800/50 py-2 pl-9 pr-4 text-sm font-medium text-white outline-none transition-all placeholder-zinc-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
                                 value={pickerSearch}
-                                onChange={e => setPickerSearch(e.target.value)}
+                                onChange={event => setPickerSearch(event.target.value)}
                             />
                         </div>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-2 scroll-container">
+                    <div className="scroll-container flex-1 overflow-y-auto p-2">
                         <div className="space-y-1">
                             {filteredExercises.map(ex => (
                                 <button
-                                    key={ex!.id}
+                                    key={ex.id}
                                     onClick={() => {
-                                        setSelectedExId(ex!.id);
+                                        setSelectedExId(String(ex.id));
                                         setShowPicker(false);
                                     }}
-                                    className={`w-full text-left p-3 rounded-xl active:scale-[0.99] transition-all flex items-center justify-between group
-                                        ${selectedExId === ex!.id ? 'bg-primary-500/10 border border-primary-500/30' : 'hover:bg-white/5 border border-transparent'}
-                                    `}
+                                    className={`group flex w-full items-center justify-between rounded-xl border p-3 text-left transition-all active:scale-[0.99] ${
+                                        selectedExId === String(ex.id)
+                                            ? 'border-primary-500/30 bg-primary-500/10'
+                                            : 'border-transparent hover:bg-white/5'
+                                    }`}
                                 >
                                     <div>
-                                        <div className={`font-bold text-sm ${selectedExId === ex!.id ? 'text-primary-400' : 'text-zinc-100'}`}>
-                                            {getTranslated(ex!.name, lang)}
+                                        <div className={`text-sm font-bold ${selectedExId === String(ex.id) ? 'text-primary-400' : 'text-zinc-100'}`}>
+                                            {getTranslated(ex.name, lang)}
                                         </div>
-                                        <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mt-0.5">
-                                            {TRANSLATIONS[lang].muscle[ex!.muscle]}
+                                        <div className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                                            {TRANSLATIONS[lang].muscle[ex.muscle]}
                                         </div>
                                     </div>
-                                    {selectedExId === ex!.id && (
+                                    {selectedExId === String(ex.id) && (
                                         <div className="text-primary-500">
                                             <Icon name="Check" size={18} />
                                         </div>
                                     )}
                                 </button>
                             ))}
+
                             {filteredExercises.length === 0 && (
-                                <div className="text-center py-10 text-zinc-400 text-xs">
-                                    No exercises found in your history matching "{pickerSearch}".
+                                <div className="py-10 text-center text-xs text-zinc-400">
+                                    {lang === 'es'
+                                        ? `No hay ejercicios en tu historial que coincidan con "${pickerSearch}".`
+                                        : `No exercises found in your history matching "${pickerSearch}".`}
                                 </div>
                             )}
                         </div>

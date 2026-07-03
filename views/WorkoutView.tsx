@@ -266,13 +266,13 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
 
             {/* --- Compact Header --- */}
             <div className="glass z-30 border-b border-white/5 pt-safe bg-black/92">
-                <div className="flex h-11 items-center justify-between px-4">
-                    <button onClick={onBack} className="flex h-10 w-10 items-center justify-center rounded-full text-zinc-400 transition-colors active:bg-zinc-800 hover:text-white" aria-label="Previous">
+                <div className="flex h-10 items-center justify-between px-4">
+                    <button onClick={onBack} className="flex h-9 w-9 items-center justify-center rounded-full text-zinc-400 transition-colors active:bg-zinc-800 hover:text-white" aria-label="Previous">
                         <Icon name="ChevronLeft" size={22} strokeWidth={2.5} />
                     </button>
 
                     <div className="flex items-center gap-1.5">
-                        <div className="rounded-full border border-white/8 bg-white/[0.04] px-3 py-1">
+                        <div className="rounded-full border border-white/8 bg-white/[0.04] px-2.5 py-1">
                             <WorkoutTimer startTime={activeSession.startTime} />
                         </div>
                         <button
@@ -285,7 +285,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                     startManualRest();
                                 }
                             }}
-                            className={`rounded-full px-2.5 py-1 text-[10px] font-semibold tabular-nums transition-colors ${
+                            className={`rounded-full px-2 py-1 text-[10px] font-semibold tabular-nums transition-colors ${
                                 restTimer.active
                                     ? 'bg-primary-500/20 text-primary-300'
                                     : 'bg-zinc-800 text-zinc-400'
@@ -297,7 +297,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                             {restTimer.active ? `rest ${formatSeconds(restTimer.timeLeft)}` : 'rest'}
                         </button>
                         {totalWorkingSets > 0 && (
-                            <div className={`rounded-full px-2.5 py-1 text-[10px] font-semibold tabular-nums transition-colors ${remainingSets === 0 ? 'bg-green-500/20 text-green-400' : 'bg-zinc-800 text-zinc-300'}`}>
+                            <div className={`rounded-full px-2 py-1 text-[10px] font-semibold tabular-nums transition-colors ${remainingSets === 0 ? 'bg-green-500/20 text-green-400' : 'bg-zinc-800 text-zinc-300'}`}>
                                 {remainingSets === 0 ? (lang === 'es' ? 'listo' : 'done') : `${remainingSets} left`}
                             </div>
                         )}
@@ -308,15 +308,15 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                             e.stopPropagation();
                             ctrl.setAddingExercise(true);
                         }}
-                        className="flex h-10 w-10 items-center justify-center rounded-full text-zinc-400 transition-colors active:bg-zinc-800 hover:text-white"
+                        className="flex h-9 w-9 items-center justify-center rounded-full text-zinc-400 transition-colors active:bg-zinc-800 hover:text-white"
                         title={t.addExercise}
                     >
                         <Icon name="Plus" size={20} strokeWidth={2.5} />
                     </button>
                 </div>
 
-                <div className="px-4 pb-2.5 pt-1">
-                    <h1 className="mb-1 truncate text-[1.55rem] font-black leading-[0.96] tracking-[-0.05em] text-white">
+                <div className="px-4 pb-2 pt-1">
+                    <h1 className="mb-1 truncate text-[1.45rem] font-black leading-[0.98] tracking-[-0.05em] text-white">
                         {isCalisthenicsSession ? 'Calisthenics Session' : activeSession.name}
                     </h1>
 

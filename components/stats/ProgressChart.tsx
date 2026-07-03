@@ -38,17 +38,17 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ dataPoints, metric
             {
                 label: getLabel(metric),
                 data: dataPoints.map(d => d.value),
-                borderColor: '#dc2626',
+                borderColor: 'rgb(var(--primary-500))',
                 backgroundColor: (context: ScriptableContext<"line">) => {
                     const ctx = context.chart.ctx;
                     const gradient = ctx.createLinearGradient(0, 0, 0, 200);
-                    gradient.addColorStop(0, 'rgba(220, 38, 38, 0.4)'); // Red top
-                    gradient.addColorStop(1, 'rgba(220, 38, 38, 0.0)'); // Transparent bottom
+                    gradient.addColorStop(0, 'rgba(196, 255, 38, 0.32)');
+                    gradient.addColorStop(1, 'rgba(196, 255, 38, 0.0)');
                     return gradient;
                 },
                 borderWidth: 3,
                 pointBackgroundColor: '#fff',
-                pointBorderColor: '#dc2626',
+                pointBorderColor: 'rgb(var(--primary-500))',
                 pointBorderWidth: 2,
                 pointRadius: 4,
                 pointHoverRadius: 6,
@@ -128,16 +128,16 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ dataPoints, metric
 
     if (loading) {
         return (
-            <div className="h-60 flex flex-col items-center justify-center p-4 rounded-xl bg-zinc-50 dark:bg-white/[0.02]">
-                <div className="w-8 h-8 border-4 border-red-500 border-t-transparent rounded-full animate-spin"></div>
+            <div className="h-60 flex flex-col items-center justify-center p-4 rounded-[1.4rem] border border-white/6 bg-zinc-50 dark:bg-white/[0.02]">
+                <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
             </div>
         );
     }
 
     if (dataPoints.length < 2) {
         return (
-            <div className="h-60 flex flex-col items-center justify-center text-center p-4 border border-dashed border-zinc-200 dark:border-white/10 rounded-xl bg-zinc-50 dark:bg-white/[0.02]">
-                <p className="text-sm font-bold text-zinc-400 mb-1">Not enough data</p>
+            <div className="h-60 flex flex-col items-center justify-center text-center p-4 border border-dashed border-zinc-200 dark:border-white/10 rounded-[1.4rem] bg-zinc-50 dark:bg-white/[0.02]">
+                <p className="text-sm font-bold text-zinc-300 mb-1">Not enough data</p>
                 <p className="text-xs text-zinc-500">Complete at least 2 workouts with this exercise to see progress.</p>
             </div>
         );
