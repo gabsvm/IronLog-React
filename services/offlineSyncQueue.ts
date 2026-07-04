@@ -1,4 +1,4 @@
-import { AppState, SyncQueueEntry } from '../types';
+import { AppState, DirtySyncSection, SyncQueueEntry } from '../types';
 import { db } from '../utils/db';
 
 const SYNC_QUEUE_KEY = 'il_sync_queue_v1';
@@ -66,12 +66,12 @@ export const offlineSyncQueue = {
         })));
     },
 
-    async enqueueStateSnapshot(userId: string, state: QueueStateSnapshot) {
+    async enqueueStateSnapshot(userId: string, state: QueueStateSnapshot, sections?: DirtySyncSection[]) {
         const queue = await readQueue();
         await writeQueue(upsertEntry(queue, makeEntry({
             type: 'UPLOAD_STATE_SNAPSHOT',
             userId,
-            payload: { state },
+            payload: { state, sections },
         })));
     },
 

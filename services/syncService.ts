@@ -1,6 +1,7 @@
-import { AppState } from "../types";
+import { AppState, DirtySyncSection } from "../types";
 import { getFirebaseFirestoreServices } from "../lib/firebaseLoader";
 import { offlineSyncQueue } from "./offlineSyncQueue";
+import { dirtySyncState } from "./dirtySyncState";
 
 const emitSyncStatus = (detail: Record<string, unknown>) => {
     window.dispatchEvent(new CustomEvent('ironlog:sync-status', { detail }));
@@ -63,33 +64,36 @@ const uploadSessionOnlyNow = async (userId: string, session: AppState['activeSes
     await firestoreApi.updateDoc(userRef, sanitizeForFirestore({ activeSession: session ?? null, lastUpdated }));
 };
 
-const uploadStateNow = async (userId: string, state: Partial<AppState> & { email?: string | null }) => {
+const uploadStateNow = async (userId: string, state: Partial<AppState> & { email?: string | null }, sections?: DirtySyncSection[]) => {
     const { db, firestoreApi } = await getFirebaseFirestoreServices();
     if (!userId || !db) return;
 
     const batch = firestoreApi.writeBatch(db);
     const userRef = firestoreApi.doc(db, "users", userId);
-    const safeActiveMeso = serializeMeso(state.activeMeso);
-
-    const rawMainData = {
-        program: state.program || [],
-        activeMeso: safeActiveMeso || null,
-        activeSession: state.activeSession || null,
-        config: state.config || {},
-        exercises: state.exercises || [],
-        rpFeedback: state.rpFeedback || {},
-        nutritionLogs: (state.nutritionLogs || []).slice(-60),
-        cardioSessions: (state.cardioSessions || []).slice(-60),
-        bodyLogs: (state.bodyLogs || []).slice(-100),
-        customFoods: (state.customFoods || []).slice(-100),
-        nutritionGoal: state.nutritionGoal || null,
+    const includeAll = !sections || sections.length === 0;
+    const shouldInclude = (section: DirtySyncSection) => includeAll || sections.includes(section);
+    const rawMainData: Record<string, unknown> = {
         lastUpdated: state.lastUpdated || Date.now(),
         email: state.email || null
     };
 
+    if (shouldInclude('program')) rawMainData.program = state.program || [];
+    if (shouldInclude('activeMeso')) rawMainData.activeMeso = serializeMeso(state.activeMeso) || null;
+    if (state.activeSession !== undefined) rawMainData.activeSession = state.activeSession || null;
+    if (shouldInclude('config')) rawMainData.config = state.config || {};
+    if (shouldInclude('exercises')) rawMainData.exercises = state.exercises || [];
+    if (shouldInclude('rpFeedback')) rawMainData.rpFeedback = state.rpFeedback || {};
+    if (shouldInclude('nutritionLogs')) rawMainData.nutritionLogs = (state.nutritionLogs || []).slice(-60);
+    if (shouldInclude('cardioSessions')) rawMainData.cardioSessions = (state.cardioSessions || []).slice(-60);
+    if (shouldInclude('bodyLogs')) rawMainData.bodyLogs = (state.bodyLogs || []).slice(-100);
+    if (shouldInclude('customFoods')) rawMainData.customFoods = (state.customFoods || []).slice(-100);
+    if (shouldInclude('nutritionGoal')) rawMainData.nutritionGoal = state.nutritionGoal || null;
+    if (shouldInclude('macroGoals')) rawMainData.macroGoals = state.macroGoals || null;
+    if (shouldInclude('userProfile')) rawMainData.userProfile = state.userProfile || null;
+
     batch.set(userRef, sanitizeForFirestore(rawMainData), { merge: true });
 
-    if (state.logs && state.logs.length > 0) {
+    if (shouldInclude('logs') && state.logs) {
         const logsRef = firestoreApi.doc(db, "users", userId, "data", "history");
         let logsData = sanitizeForFirestore({ logs: state.logs });
         const payloadSize = JSON.stringify(logsData).length;
@@ -106,6 +110,7 @@ const uploadStateNow = async (userId: string, state: Partial<AppState> & { email
     }
 
     await batch.commit();
+    await dirtySyncState.clear(sections);
 };
 
 export const syncService = {
@@ -127,7 +132,7 @@ export const syncService = {
                 } else if (entry.type === 'UPLOAD_SESSION_SNAPSHOT') {
                     await uploadSessionOnlyNow(entry.userId, entry.payload.session, entry.payload.lastUpdated);
                 } else if (entry.type === 'UPLOAD_STATE_SNAPSHOT') {
-                    await uploadStateNow(entry.userId, entry.payload.state);
+                    await uploadStateNow(entry.userId, entry.payload.state, entry.payload.sections);
                 }
 
                 processedIds.push(entry.id);
@@ -167,14 +172,14 @@ export const syncService = {
         }
     },
 
-    uploadState: async (userId: string, state: Partial<AppState> & { email?: string | null }) => {
+    uploadState: async (userId: string, state: Partial<AppState> & { email?: string | null }, sections?: DirtySyncSection[]) => {
         try {
             emitSyncStatus({ phase: 'upload-start', scope: 'state' });
-            await uploadStateNow(userId, state);
+            await uploadStateNow(userId, state, sections);
             emitSyncStatus({ phase: 'upload-success', scope: 'state', lastSyncedAt: Date.now() });
             console.log(`Cloud Sync: Upload Complete (User: ${userId}) at ${new Date().toLocaleTimeString()}`);
         } catch (error) {
-            await offlineSyncQueue.enqueueStateSnapshot(userId, state);
+            await offlineSyncQueue.enqueueStateSnapshot(userId, state, sections);
             emitSyncStatus({ phase: 'upload-queued', scope: 'state', error: String(error) });
             console.error("Cloud Sync Upload Failed:", error);
             throw error;

@@ -249,6 +249,21 @@ export type SyncQueueEntryType =
   | 'UPLOAD_SESSION_SNAPSHOT'
   | 'UPLOAD_STATE_SNAPSHOT';
 
+export type DirtySyncSection =
+  | 'program'
+  | 'activeMeso'
+  | 'exercises'
+  | 'logs'
+  | 'config'
+  | 'rpFeedback'
+  | 'userProfile'
+  | 'nutritionLogs'
+  | 'cardioSessions'
+  | 'nutritionGoal'
+  | 'bodyLogs'
+  | 'macroGoals'
+  | 'customFoods';
+
 interface SyncQueueEntryBase {
   id: string;
   userId: string;
@@ -267,7 +282,7 @@ export type SyncQueueEntry =
     })
   | (SyncQueueEntryBase & {
       type: 'UPLOAD_STATE_SNAPSHOT';
-      payload: { state: Partial<AppState> & { email?: string | null } };
+      payload: { state: Partial<AppState> & { email?: string | null }; sections?: DirtySyncSection[] };
     });
 
 // ─── CUSTOM FOOD DATABASE ──────────────────────────────────────────

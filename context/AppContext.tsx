@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useEffect, useRef, ReactNode, useState, PropsWithChildren, useMemo, useCallback } from 'react';
-import { AppState, Lang, Theme, ColorTheme, ExerciseDef, ActiveSession, MesoCycle, Log, ProgramDay, TutorialState, GlobalTemplate, UserProfile, BeforeInstallPromptEvent, NutritionLog, CardioSession, NutritionGoal, MacroGoals, DailyNutrition, BodyLog, CustomFood } from '../types';
+import { AppState, Lang, Theme, ColorTheme, ExerciseDef, ActiveSession, MesoCycle, Log, ProgramDay, TutorialState, GlobalTemplate, UserProfile, BeforeInstallPromptEvent, NutritionLog, CardioSession, NutritionGoal, MacroGoals, DailyNutrition, BodyLog, CustomFood, DirtySyncSection } from '../types';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { usePersistedState } from '../hooks/usePersistedState';
 import { Icon } from '../components/ui/Icon';
@@ -13,6 +13,23 @@ import { useStore } from '../lib/store';
 import { getFirebaseFirestoreServices, isFirebaseConfigured } from '../lib/firebaseLoader';
 import { scheduleWhenIdle } from '../lib/idle';
 import { offlineSyncQueue } from '../services/offlineSyncQueue';
+import { dirtySyncState } from '../services/dirtySyncState';
+
+const FULL_SYNC_SECTIONS: DirtySyncSection[] = [
+    'program',
+    'activeMeso',
+    'exercises',
+    'logs',
+    'config',
+    'rpFeedback',
+    'userProfile',
+    'nutritionLogs',
+    'cardioSessions',
+    'nutritionGoal',
+    'bodyLogs',
+    'macroGoals',
+    'customFoods',
+];
 
 interface AppContextType extends Omit<AppState, 'activeSession' | 'activeMeso'> {
     lang: Lang;
@@ -176,6 +193,38 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         macroLoading ||
         needsDefaultBootstrap;
     const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+    const dirtyInitRef = useRef(new Set<DirtySyncSection>());
+    const suppressDirtyRef = useRef(false);
+
+    const trackDirtySection = (section: DirtySyncSection, deps: React.DependencyList) => {
+        useEffect(() => {
+            if (isAppLoading || !hasCheckedSync || suppressDirtyRef.current) return;
+
+            if (!dirtyInitRef.current.has(section)) {
+                dirtyInitRef.current.add(section);
+                return;
+            }
+
+            void dirtySyncState.mark([section]);
+        }, deps);
+    };
+
+    const withDirtyTrackingSuppressed = async (callback: () => void | Promise<void>) => {
+        suppressDirtyRef.current = true;
+        const release = () => {
+            window.setTimeout(() => {
+                suppressDirtyRef.current = false;
+            }, 0);
+        };
+
+        try {
+            await callback();
+        } catch (error) {
+            release();
+            throw error;
+        }
+        release();
+    };
 
     useEffect(() => {
         let cancelled = false;
@@ -357,6 +406,20 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         };
     }, []);
 
+    trackDirtySection('program', [program, isAppLoading, hasCheckedSync]);
+    trackDirtySection('activeMeso', [activeMeso, isAppLoading, hasCheckedSync]);
+    trackDirtySection('exercises', [exercises, isAppLoading, hasCheckedSync]);
+    trackDirtySection('logs', [logs, isAppLoading, hasCheckedSync]);
+    trackDirtySection('config', [showRIR, rpEnabled, rpTargetRIR, keepScreenOn, isAppLoading, hasCheckedSync]);
+    trackDirtySection('rpFeedback', [rpFeedback, isAppLoading, hasCheckedSync]);
+    trackDirtySection('userProfile', [userProfile, isAppLoading, hasCheckedSync]);
+    trackDirtySection('nutritionLogs', [nutritionLogs, isAppLoading, hasCheckedSync]);
+    trackDirtySection('cardioSessions', [cardioSessions, isAppLoading, hasCheckedSync]);
+    trackDirtySection('nutritionGoal', [nutritionGoal, isAppLoading, hasCheckedSync]);
+    trackDirtySection('bodyLogs', [bodyLogs, isAppLoading, hasCheckedSync]);
+    trackDirtySection('macroGoals', [macroGoals, isAppLoading, hasCheckedSync]);
+    trackDirtySection('customFoods', [customFoods, isAppLoading, hasCheckedSync]);
+
     const installApp = useCallback(async () => {
         const promptEvent = deferredPrompt || window.deferredPrompt;
         if (!promptEvent) {
@@ -390,29 +453,31 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
 
                     if (isLocalEmpty) {
                         console.log("Cloud data found on empty device. Applying automatically.");
+                        await withDirtyTrackingSuppressed(async () => {
+                            if (cloudData.program) setProgram(cloudData.program);
+                            if (cloudData.activeMeso) useStore.getState().setActiveMeso(cloudData.activeMeso);
+                            if (cloudData.activeSession) useStore.getState().setActiveSession(cloudData.activeSession);
+                            if (cloudData.exercises) setExercises(cloudData.exercises);
+                            if (cloudData.logs) setLogs(cloudData.logs);
+                            if (cloudData.rpFeedback) setRpFeedback(cloudData.rpFeedback);
 
-                        if (cloudData.program) setProgram(cloudData.program);
-                        if (cloudData.activeMeso) useStore.getState().setActiveMeso(cloudData.activeMeso);
-                        if (cloudData.activeSession) useStore.getState().setActiveSession(cloudData.activeSession);
-                        if (cloudData.exercises) setExercises(cloudData.exercises);
-                        if (cloudData.logs) setLogs(cloudData.logs);
-                        if (cloudData.rpFeedback) setRpFeedback(cloudData.rpFeedback);
+                            if (cloudData.config) {
+                                if (cloudData.config.showRIR !== undefined) setShowRIR(cloudData.config.showRIR);
+                                if (cloudData.config.rpEnabled !== undefined) setRpEnabled(cloudData.config.rpEnabled);
+                                if (cloudData.config.rpTargetRIR !== undefined) setRpTargetRIR(cloudData.config.rpTargetRIR);
+                                if (cloudData.config.keepScreenOn !== undefined) setKeepScreenOn(cloudData.config.keepScreenOn);
+                            }
 
-                        if (cloudData.config) {
-                            if (cloudData.config.showRIR !== undefined) setShowRIR(cloudData.config.showRIR);
-                            if (cloudData.config.rpEnabled !== undefined) setRpEnabled(cloudData.config.rpEnabled);
-                            if (cloudData.config.rpTargetRIR !== undefined) setRpTargetRIR(cloudData.config.rpTargetRIR);
-                            if (cloudData.config.keepScreenOn !== undefined) setKeepScreenOn(cloudData.config.keepScreenOn);
-                        }
+                            if (cloudData.userProfile) setUserProfile(cloudData.userProfile);
+                            if (cloudData.nutritionLogs) setNutritionLogs(cloudData.nutritionLogs);
+                            if (cloudData.bodyLogs) setBodyLogs(cloudData.bodyLogs);
+                            if (cloudData.macroGoals) setMacroGoals(cloudData.macroGoals);
+                            if (cloudData.customFoods) setCustomFoods(cloudData.customFoods);
 
-                        if (cloudData.userProfile) setUserProfile(cloudData.userProfile);
-                        if (cloudData.nutritionLogs) setNutritionLogs(cloudData.nutritionLogs);
-                        if (cloudData.bodyLogs) setBodyLogs(cloudData.bodyLogs);
-                        if (cloudData.macroGoals) setMacroGoals(cloudData.macroGoals);
-                        if (cloudData.customFoods) setCustomFoods(cloudData.customFoods);
-
-                        setLocalLastUpdated(cloudData.lastUpdated ?? Date.now());
-                        setHasSeenOnboarding(true);
+                            setLocalLastUpdated(cloudData.lastUpdated ?? Date.now());
+                            setHasSeenOnboarding(true);
+                            await dirtySyncState.clear();
+                        });
                     } else if (cloudData.lastUpdated > (localLastUpdated || 0)) {
                         console.log("Cloud data is newer than local. Offering sync.");
                         setPendingCloudData(cloudData);
@@ -439,18 +504,22 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
             setIsOnline(true);
             if (user) {
                 if (subscription.isPro) {
-                    const now = Date.now();
-                    setLocalLastUpdated(now);
-                    void syncService.flushQueue().then(() => {
-                        syncService.uploadState(user.uid, {
-                            program, activeMeso, activeSession, exercises, logs,
+                    void (async () => {
+                        const dirtySections = await dirtySyncState.list();
+                        await syncService.flushQueue();
+                        if (dirtySections.length === 0) return;
+
+                        const now = Date.now();
+                        setLocalLastUpdated(now);
+                        await syncService.uploadState(user.uid, {
+                            program, activeMeso, exercises, logs,
                             config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn },
                             rpFeedback,
                             userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods,
                             email: user.email || null,
                             lastUpdated: now,
-                        });
-                    });
+                        }, dirtySections);
+                    })();
                 } else {
                     void syncService.flushQueue();
                     syncService.uploadUserIdentity(user.uid, user.email || "");
@@ -488,6 +557,23 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         if (!user || isAppLoading || !hasCheckedSync || !!pendingCloudData) return;
         const timer = setTimeout(() => {
             if (subscription.isPro) {
+                void (async () => {
+                    const dirtySections = await dirtySyncState.list();
+                    if (dirtySections.length === 0) return;
+
+                    const now = Date.now();
+                    setLocalLastUpdated(now);
+                    void syncService.flushQueue();
+                    syncService.uploadState(user.uid, {
+                        program, activeMeso, exercises, logs,
+                        config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn },
+                        rpFeedback,
+                        userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods,
+                        email: user.email || null,
+                        lastUpdated: now,
+                    }, dirtySections);
+                })();
+                return;
                 const now = Date.now();
                 setLocalLastUpdated(now);
                 void syncService.flushQueue();
@@ -511,6 +597,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         if (pendingCloudData) {
             console.log("📥 Applying Cloud Data...");
 
+            withDirtyTrackingSuppressed(() => {
             // Apply all states
             if (pendingCloudData.program) setProgram(pendingCloudData.program);
             if (pendingCloudData.activeMeso) useStore.getState().setActiveMeso(pendingCloudData.activeMeso);
@@ -534,6 +621,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
 
             // Sync timestamp to prevent immediate re-upload of old local state
             setLocalLastUpdated(pendingCloudData.lastUpdated ?? Date.now());
+            void dirtySyncState.clear();
 
             // Mark onboarding as complete
             setHasSeenOnboarding(true);
@@ -544,12 +632,14 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
             console.log("✅ Cloud Data Applied Reactively.");
 
             // Optional: You could add a 'sync_completed' event or toast here.
+            });
         }
     }, [pendingCloudData, setProgram, setExercises, setLogs, setRpFeedback, setShowRIR, setRpEnabled, setLocalLastUpdated, setHasSeenOnboarding, setBodyLogs, setCustomFoods, setKeepScreenOn, setMacroGoals, setNutritionLogs, setRpTargetRIR, setUserProfile]);
 
     const cancelCloudSync = useCallback(() => {
         setPendingCloudData(null);
         setLocalLastUpdated(Date.now());
+        void dirtySyncState.mark(FULL_SYNC_SECTIONS);
     }, [setLocalLastUpdated]);
 
     // --- THEME & WAKELOCK ---
