@@ -135,7 +135,7 @@ export const syncService = {
     uploadStateNow,
 
     flushQueue: async () => {
-        const queue = await offlineSyncQueue.list();
+        const queue = await offlineSyncQueue.compact();
         if (queue.length === 0) return;
 
         emitSyncStatus({ phase: 'flush-start', pending: queue.length });

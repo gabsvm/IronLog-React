@@ -2,23 +2,9 @@ import React, { StrictMode, ReactNode, Component } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App';
+import { requestBackgroundSync, requestPeriodicSync } from './services/backgroundSync';
 
 console.log("Starting App Initialization...");
-
-const requestBackgroundSync = async () => {
-  if (!('serviceWorker' in navigator)) return;
-
-  try {
-    const registration = await navigator.serviceWorker.ready;
-    if ('sync' in registration) {
-      await (registration as ServiceWorkerRegistration & {
-        sync: { register: (tag: string) => Promise<void> };
-      }).sync.register('sync-workouts');
-    }
-  } catch (error) {
-    console.warn('Background sync registration skipped:', (error as Error).message);
-  }
-};
 
 const registerServiceWorker = () => {
   if (!('serviceWorker' in navigator)) return;
@@ -46,6 +32,7 @@ const registerServiceWorker = () => {
           });
 
           void requestBackgroundSync();
+          void requestPeriodicSync();
         })
         .catch((error) => {
           console.warn('ServiceWorker registration skipped:', error.message);
@@ -58,6 +45,7 @@ registerServiceWorker();
 
 window.addEventListener('online', () => {
   void requestBackgroundSync();
+  void requestPeriodicSync();
 });
 
 window.addEventListener('ironlog:sync-queue-changed', (event) => {

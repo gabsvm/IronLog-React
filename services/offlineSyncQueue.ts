@@ -1,5 +1,6 @@
 import { AppState, DirtySyncSection, SyncQueueEntry } from '../types';
 import { db } from '../utils/db';
+import { requestBackgroundSync } from './backgroundSync';
 
 const SYNC_QUEUE_KEY = 'il_sync_queue_v1';
 const SYNC_QUEUE_EVENT = 'ironlog:sync-queue-changed';
@@ -18,6 +19,8 @@ const writeQueue = async (entries: SyncQueueEntry[]) => {
 
 const dedupeKeyFor = (entry: Pick<SyncQueueEntry, 'type' | 'userId'>) => `${entry.userId}:${entry.type}`;
 
+const unique = <T,>(items: T[]) => Array.from(new Set(items));
+
 const makeEntry = <T extends SyncQueueEntry>(entry: Omit<T, 'id' | 'createdAt' | 'updatedAt'>): T => {
     const now = Date.now();
     return {
@@ -35,6 +38,29 @@ const upsertEntry = (queue: SyncQueueEntry[], next: SyncQueueEntry) => {
     if (index === -1) return [...queue, next];
 
     const existing = queue[index];
+    if (existing.type === 'UPLOAD_STATE_SNAPSHOT' && next.type === 'UPLOAD_STATE_SNAPSHOT') {
+        const merged: SyncQueueEntry = {
+            ...next,
+            id: existing.id,
+            createdAt: existing.createdAt,
+            updatedAt: Date.now(),
+            payload: {
+                state: {
+                    ...existing.payload.state,
+                    ...next.payload.state,
+                },
+                sections: unique([
+                    ...(existing.payload.sections || []),
+                    ...(next.payload.sections || []),
+                ]) as DirtySyncSection[],
+            }
+        } as SyncQueueEntry;
+
+        const copy = queue.slice();
+        copy[index] = merged;
+        return copy;
+    }
+
     const merged: SyncQueueEntry = {
         ...next,
         id: existing.id,
@@ -47,10 +73,20 @@ const upsertEntry = (queue: SyncQueueEntry[], next: SyncQueueEntry) => {
     return copy;
 };
 
+const compactQueue = (queue: SyncQueueEntry[]) =>
+    queue.reduce<SyncQueueEntry[]>((acc, entry) => upsertEntry(acc, entry), []);
+
+const persistQueue = async (entries: SyncQueueEntry[]) => {
+    await writeQueue(entries);
+    if (entries.length > 0) {
+        void requestBackgroundSync();
+    }
+};
+
 export const offlineSyncQueue = {
     async enqueueIdentity(userId: string, email: string) {
         const queue = await readQueue();
-        await writeQueue(upsertEntry(queue, makeEntry({
+        await persistQueue(upsertEntry(queue, makeEntry({
             type: 'UPLOAD_IDENTITY',
             userId,
             payload: { email },
@@ -59,7 +95,7 @@ export const offlineSyncQueue = {
 
     async enqueueSessionSnapshot(userId: string, session: AppState['activeSession'] | null, lastUpdated: number) {
         const queue = await readQueue();
-        await writeQueue(upsertEntry(queue, makeEntry({
+        await persistQueue(upsertEntry(queue, makeEntry({
             type: 'UPLOAD_SESSION_SNAPSHOT',
             userId,
             payload: { session, lastUpdated },
@@ -68,7 +104,7 @@ export const offlineSyncQueue = {
 
     async enqueueStateSnapshot(userId: string, state: QueueStateSnapshot, sections?: DirtySyncSection[]) {
         const queue = await readQueue();
-        await writeQueue(upsertEntry(queue, makeEntry({
+        await persistQueue(upsertEntry(queue, makeEntry({
             type: 'UPLOAD_STATE_SNAPSHOT',
             userId,
             payload: { state, sections },
@@ -88,6 +124,15 @@ export const offlineSyncQueue = {
         if (ids.length === 0) return;
         const queue = await readQueue();
         await writeQueue(queue.filter(entry => !ids.includes(entry.id)));
+    },
+
+    async compact() {
+        const queue = await readQueue();
+        const compacted = compactQueue(queue);
+        if (compacted.length !== queue.length || JSON.stringify(compacted) !== JSON.stringify(queue)) {
+            await writeQueue(compacted);
+        }
+        return compacted;
     },
 
     async clear() {
