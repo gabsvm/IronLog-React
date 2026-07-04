@@ -3,6 +3,7 @@ const CACHE_NAME = 'gainslab-pro-v16';
 const PRECACHE_URLS = [
   '/',
   '/index.html',
+  '/offline.html',
   '/manifest.json',
   '/icon.svg',
   '/icon-192.png',
@@ -57,7 +58,7 @@ const networkFirst = async (request) => {
     }
     return response;
   } catch (error) {
-    return cache.match(request) || cache.match('/index.html') || cache.match('/');
+    return cache.match(request) || cache.match('/index.html') || cache.match('/offline.html') || cache.match('/');
   }
 };
 
@@ -145,13 +146,25 @@ self.addEventListener('notificationclick', (event) => {
 
 self.addEventListener('sync', (event) => {
   if (event.tag === 'sync-workouts') {
-    event.waitUntil(Promise.resolve());
+    event.waitUntil(
+      clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) =>
+        Promise.all(
+          clientList.map((client) => client.postMessage({ type: 'FLUSH_SYNC_QUEUE' }))
+        )
+      )
+    );
   }
 });
 
 self.addEventListener('periodicsync', (event) => {
   if (event.tag === 'update-workouts-data') {
-    event.waitUntil(Promise.resolve());
+    event.waitUntil(
+      clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) =>
+        Promise.all(
+          clientList.map((client) => client.postMessage({ type: 'FLUSH_SYNC_QUEUE' }))
+        )
+      )
+    );
   }
 });
 

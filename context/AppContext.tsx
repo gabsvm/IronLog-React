@@ -323,6 +323,19 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     }, []);
 
     useEffect(() => {
+        if (!('serviceWorker' in navigator)) return;
+
+        const handleMessage = (event: MessageEvent) => {
+            if (event.data?.type === 'FLUSH_SYNC_QUEUE') {
+                void syncService.flushQueue();
+            }
+        };
+
+        navigator.serviceWorker.addEventListener('message', handleMessage);
+        return () => navigator.serviceWorker.removeEventListener('message', handleMessage);
+    }, []);
+
+    useEffect(() => {
         const media = window.matchMedia('(prefers-reduced-motion: reduce)');
         const updateEffectsMode = () => {
             const connection = (navigator as any).connection;
