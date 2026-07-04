@@ -1,4 +1,4 @@
-
+﻿
 import React, { useState, memo, useMemo, useDeferredValue, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
 import { TRANSLATIONS } from '../constants';
@@ -19,7 +19,7 @@ const formatDurationDisplay = (val: string | number) => {
     return val.includes(':') ? val : `${val}m`;
 };
 
-// Virtuoso context type — avoids recreating Header/Footer components on every render
+// Virtuoso context type â€” avoids recreating Header/Footer components on every render
 interface HistoryVirtuosoContext {
     lang: 'en' | 'es';
     search: string;
@@ -78,7 +78,7 @@ const VirtuosoFooter = ({ context }: { context?: HistoryVirtuosoContext }) => {
     );
 };
 
-// Stable components object — defined outside render to prevent Virtuoso remounts
+// Stable components object â€” defined outside render to prevent Virtuoso remounts
 const VIRTUOSO_COMPONENTS = { Header: VirtuosoHeader, Footer: VirtuosoFooter };
 
 // 1. Extract and Memoize the Card Component for Performance
@@ -420,3 +420,4 @@ export const HistoryView: React.FC = () => {
         </div>
     );
 };
+

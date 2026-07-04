@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+﻿import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { TRANSLATIONS } from '../constants';
 import { MuscleGroup } from '../types';
@@ -353,11 +353,11 @@ export const StatsView: React.FC = () => {
                             <Icon name="BarChart3" size={20} />
                         </div>
                         <p className="text-sm font-bold text-white">
-                            {lang === 'es' ? 'Aun no hay ejercicios para graficar' : 'No exercises ready to chart yet'}
+                            {lang === 'es' ? 'Aún no hay ejercicios para graficar' : 'No exercises ready to chart yet'}
                         </p>
                         <p className="mt-1 text-xs text-zinc-500">
                             {lang === 'es'
-                                ? 'Completa entrenamientos sincronizados para ver progresion por ejercicio.'
+                                ? 'Completa entrenamientos sincronizados para ver progresión por ejercicio.'
                                 : 'Complete synced workouts to unlock exercise progress.'}
                         </p>
                     </div>
@@ -603,3 +603,4 @@ export const StatsView: React.FC = () => {
         </div>
     );
 };
+
