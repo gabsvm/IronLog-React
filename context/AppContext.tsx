@@ -12,6 +12,7 @@ import { syncService } from '../services/syncService';
 import { useStore } from '../lib/store';
 import { getFirebaseFirestoreServices, isFirebaseConfigured } from '../lib/firebaseLoader';
 import { scheduleWhenIdle } from '../lib/idle';
+import { offlineSyncQueue } from '../services/offlineSyncQueue';
 
 interface AppContextType extends Omit<AppState, 'activeSession' | 'activeMeso'> {
     lang: Lang;
@@ -60,6 +61,11 @@ interface AppContextType extends Omit<AppState, 'activeSession' | 'activeMeso'> 
     cancelCloudSync: () => void;
     localLastUpdated: number;
     isOnline: boolean;
+    syncStatus: {
+        pending: number;
+        isSyncing: boolean;
+        lastSyncedAt: number | null;
+    };
 
     // PWA Install State
     deferredPrompt: BeforeInstallPromptEvent | null;
@@ -133,6 +139,11 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     const [pendingCloudData, setPendingCloudData] = useState<Partial<AppState> | null>(null);
     const [hasCheckedSync, setHasCheckedSync] = useState(false);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
+    const [syncStatus, setSyncStatus] = useState({
+        pending: 0,
+        isSyncing: false,
+        lastSyncedAt: null as number | null,
+    });
 
     // Initialize with global if available (captured in index.html)
     const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(window.deferredPrompt || null);
@@ -273,6 +284,42 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         };
         window.addEventListener('beforeinstallprompt', handler);
         return () => window.removeEventListener('beforeinstallprompt', handler);
+    }, []);
+
+    useEffect(() => {
+        let mounted = true;
+
+        const refreshQueueCount = async () => {
+            const pending = await offlineSyncQueue.count();
+            if (!mounted) return;
+            setSyncStatus(prev => ({ ...prev, pending }));
+        };
+
+        const handleQueueChanged = (event: Event) => {
+            const pending = Number((event as CustomEvent).detail?.pending ?? 0);
+            setSyncStatus(prev => ({ ...prev, pending }));
+        };
+
+        const handleSyncStatus = (event: Event) => {
+            const detail = (event as CustomEvent).detail || {};
+            const phase = String(detail.phase || '');
+
+            setSyncStatus(prev => ({
+                pending: typeof detail.pending === 'number' ? detail.pending : prev.pending,
+                isSyncing: phase === 'upload-start' || phase === 'flush-start',
+                lastSyncedAt: typeof detail.lastSyncedAt === 'number' ? detail.lastSyncedAt : prev.lastSyncedAt,
+            }));
+        };
+
+        void refreshQueueCount();
+        window.addEventListener('ironlog:sync-queue-changed', handleQueueChanged);
+        window.addEventListener('ironlog:sync-status', handleSyncStatus);
+
+        return () => {
+            mounted = false;
+            window.removeEventListener('ironlog:sync-queue-changed', handleQueueChanged);
+            window.removeEventListener('ironlog:sync-status', handleSyncStatus);
+        };
     }, []);
 
     useEffect(() => {
@@ -556,6 +603,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         isAppLoading,
         pendingCloudData, confirmCloudSync, cancelCloudSync, localLastUpdated,
         isOnline,
+        syncStatus,
         deferredPrompt, installApp, isStandalone,
         globalTemplates, setGlobalTemplates,
         userProfile, setUserProfile,
@@ -578,6 +626,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         isAppLoading,
         pendingCloudData, confirmCloudSync, cancelCloudSync, localLastUpdated,
         isOnline,
+        syncStatus,
         deferredPrompt, installApp, isStandalone,
         globalTemplates, setGlobalTemplates,
         userProfile, setUserProfile,

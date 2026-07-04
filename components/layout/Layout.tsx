@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useAppPreferences } from '../../context/AppContext';
+import { useApp, useAppPreferences } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { usePro } from '../../hooks/usePro';
 import { TRANSLATIONS } from '../../constants';
@@ -18,6 +18,7 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenSettings, onOpenCommandPalette }) => {
     const { lang } = useAppPreferences();
+    const { isOnline, syncStatus } = useApp();
     const { user } = useAuth();
     const { isPro } = usePro();
     const t = TRANSLATIONS[lang];
@@ -69,6 +70,30 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
                     <div className="h-14 flex items-center justify-between pointer-events-auto">
                         <div className="flex items-center gap-3">
                             <Logo className="w-10 h-10" showText />
+                            {(!isOnline || syncStatus.pending > 0 || syncStatus.isSyncing) && (
+                                <div className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] ${
+                                    !isOnline
+                                        ? 'border-amber-500/25 bg-amber-500/10 text-amber-300'
+                                        : syncStatus.isSyncing
+                                            ? 'border-cyan-500/25 bg-cyan-500/10 text-cyan-300'
+                                            : 'border-zinc-700/80 bg-zinc-900/85 text-zinc-300'
+                                }`}>
+                                    <span className={`h-1.5 w-1.5 rounded-full ${
+                                        !isOnline
+                                            ? 'bg-amber-400'
+                                            : syncStatus.isSyncing
+                                                ? 'bg-cyan-400'
+                                                : 'bg-zinc-400'
+                                    }`} />
+                                    <span>
+                                        {!isOnline
+                                            ? (lang === 'es' ? 'offline' : 'offline')
+                                            : syncStatus.isSyncing
+                                                ? (lang === 'es' ? 'sync' : 'sync')
+                                                : `${lang === 'es' ? 'cola' : 'queue'} ${syncStatus.pending}`}
+                                    </span>
+                                </div>
+                            )}
                         </div>
                         <div id="tut-settings-btn">
                             <Avatar

@@ -2,6 +2,7 @@ import { AppState, SyncQueueEntry } from '../types';
 import { db } from '../utils/db';
 
 const SYNC_QUEUE_KEY = 'il_sync_queue_v1';
+const SYNC_QUEUE_EVENT = 'ironlog:sync-queue-changed';
 
 type QueueStateSnapshot = Partial<AppState> & { email?: string | null };
 
@@ -10,6 +11,9 @@ const readQueue = async (): Promise<SyncQueueEntry[]> =>
 
 const writeQueue = async (entries: SyncQueueEntry[]) => {
     await db.set(SYNC_QUEUE_KEY, entries);
+    window.dispatchEvent(new CustomEvent(SYNC_QUEUE_EVENT, {
+        detail: { pending: entries.length }
+    }));
 };
 
 const dedupeKeyFor = (entry: Pick<SyncQueueEntry, 'type' | 'userId'>) => `${entry.userId}:${entry.type}`;
@@ -75,6 +79,11 @@ export const offlineSyncQueue = {
         return readQueue();
     },
 
+    async count() {
+        const queue = await readQueue();
+        return queue.length;
+    },
+
     async remove(ids: string[]) {
         if (ids.length === 0) return;
         const queue = await readQueue();
@@ -84,4 +93,6 @@ export const offlineSyncQueue = {
     async clear() {
         await writeQueue([]);
     },
+
+    eventName: SYNC_QUEUE_EVENT,
 };

@@ -272,7 +272,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                     </button>
 
                     <div className="flex items-center gap-1.5">
-                        <div className="rounded-full border border-white/8 bg-white/[0.04] px-2.5 py-1">
+                        <div className="rounded-full border border-zinc-700/80 bg-zinc-900/90 px-2.5 py-1">
                             <WorkoutTimer startTime={activeSession.startTime} />
                         </div>
                         <button
@@ -285,16 +285,17 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                     startManualRest();
                                 }
                             }}
-                            className={`rounded-full px-2 py-1 text-[10px] font-semibold tabular-nums transition-colors ${
+                            className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold tabular-nums transition-colors ${
                                 restTimer.active
                                     ? 'bg-primary-500/20 text-primary-300'
-                                    : 'bg-zinc-800 text-zinc-400'
+                                    : 'bg-zinc-900 text-zinc-400'
                             }`}
                             title={restTimer.active
                                 ? (lang === 'es' ? 'Finalizar descanso' : 'Stop rest')
                                 : (lang === 'es' ? 'Iniciar descanso de 90s' : 'Start 90s rest')}
                         >
-                            {restTimer.active ? `rest ${formatSeconds(restTimer.timeLeft)}` : 'rest'}
+                            <Icon name="Timer" size={11} />
+                            {restTimer.active ? formatSeconds(restTimer.timeLeft) : '90s'}
                         </button>
                         {totalWorkingSets > 0 && (
                             <div className={`rounded-full px-2 py-1 text-[10px] font-semibold tabular-nums transition-colors ${remainingSets === 0 ? 'bg-green-500/20 text-green-400' : 'bg-zinc-800 text-zinc-300'}`}>
@@ -316,25 +317,22 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                 </div>
 
                 <div className="px-4 pb-2 pt-1">
-                    <h1 className="mb-1 truncate text-[1.45rem] font-black leading-[0.98] tracking-[-0.05em] text-white">
+                    <h1 className="mb-1 truncate text-[1.35rem] font-black leading-[0.98] tracking-[-0.05em] text-white">
                         {isCalisthenicsSession ? 'Calisthenics Session' : activeSession.name}
                     </h1>
 
                     <div className="flex flex-wrap items-center gap-1.5">
                         {activeSession.week >= 1 && (
-                            <>
-                                <div className="flex items-center gap-1.5">
-                                    <Icon name="Calendar" size={12} className="text-zinc-400" />
-                                    <span className="text-[11px] font-bold uppercase tracking-wide text-zinc-400">
-                                        {t.week} {activeSession.week}
-                                    </span>
-                                </div>
-                                <span className="font-light text-zinc-700">/</span>
-                            </>
+                            <div className="flex items-center gap-1.5 rounded-full bg-zinc-900/80 px-2 py-1">
+                                <Icon name="Calendar" size={11} className="text-zinc-500" />
+                                <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-400">
+                                    {t.week} {activeSession.week}
+                                </span>
+                            </div>
                         )}
 
                         {showStageInfo && (
-                            <div className={`inline-flex items-center gap-1.5 rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest ${stageConfig.label === 'recovery' ? 'bg-blue-900/30 text-blue-400' : 'bg-primary-900/20 ' + accentTextClass}`}>
+                            <div className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-[0.16em] ${stageConfig.label === 'recovery' ? 'bg-blue-900/30 text-blue-400' : 'bg-primary-900/20 ' + accentTextClass}`}>
                                 {stageConfig.label === 'recovery' ? 'DELOAD' : <>{t.target}: {stageConfig.rir} RIR</>}
                             </div>
                         )}
@@ -462,7 +460,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                         {hasMultipleSets && (
                             <button
                                 onClick={() => setApplyToAll(v => !v)}
-                                className="w-full flex items-center justify-between px-5 py-3 bg-white/5 border-b border-white/5 hover:bg-white/10 transition-colors"
+                                className="w-full flex items-center justify-between border-b border-white/5 bg-zinc-950 px-5 py-3 hover:bg-zinc-900 transition-colors"
                             >
                                 <span className="text-xs font-bold text-zinc-300">
                                     {lang === 'es' ? 'Aplicar a todas las series' : 'Apply to all sets'}
@@ -486,7 +484,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                             }
                                             ctrl.setChangingSetType(null);
                                         }}
-                                        className={`p-3 border rounded-xl flex items-center gap-3 text-left transition-all active:scale-98 ${isSelected ? 'border-primary-500/50 bg-primary-500/5' : 'border-white/5 hover:border-white/10 hover:bg-white/5'}`}
+                                        className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-all active:scale-98 ${isSelected ? 'border-primary-500/50 bg-primary-500/5' : 'border-zinc-800 bg-zinc-950 hover:border-zinc-700 hover:bg-zinc-900'}`}
                                     >
                                         <span className={`shrink-0 w-9 h-9 flex items-center justify-center rounded-lg ${colors[type] || 'bg-zinc-800 text-zinc-400'}`}>
                                             <Icon name={icons[type] as any || 'Circle'} size={18} />
@@ -502,7 +500,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
 
                             <button
                                 onClick={() => setShowAdvancedSetTypes(v => !v)}
-                                className="mt-1 flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5 text-left text-xs font-bold uppercase tracking-[0.22em] text-zinc-400 transition-all hover:border-white/10 hover:bg-white/[0.05]"
+                                className="mt-1 flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2.5 text-left text-xs font-bold uppercase tracking-[0.22em] text-zinc-400 transition-all hover:border-zinc-700 hover:bg-zinc-900"
                             >
                                 <span>{lang === 'es' ? 'Protocolos avanzados' : 'Advanced protocols'}</span>
                                 <Icon name={showAdvancedSetTypes ? 'ChevronUp' : 'ChevronDown'} size={16} />
@@ -521,7 +519,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                             }
                                             ctrl.setChangingSetType(null);
                                         }}
-                                        className={`p-3 border rounded-xl flex items-center gap-3 text-left transition-all active:scale-98 ${isSelected ? 'border-primary-500/50 bg-primary-500/5' : 'border-white/5 hover:border-white/10 hover:bg-white/5'}`}
+                                        className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-all active:scale-98 ${isSelected ? 'border-primary-500/50 bg-primary-500/5' : 'border-zinc-800 bg-zinc-950 hover:border-zinc-700 hover:bg-zinc-900'}`}
                                     >
                                         <span className={`shrink-0 w-9 h-9 flex items-center justify-center rounded-lg ${colors[type] || 'bg-zinc-800 text-zinc-400'}`}>
                                             <Icon name={icons[type] as any || 'Circle'} size={18} />
@@ -570,7 +568,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                         {/* Update Template Option */}
                         {completedSets > 0 && (
                             <div 
-                                className="bg-white/5 p-4 rounded-2xl border border-white/5 flex items-start gap-3 cursor-pointer hover:bg-white/10 transition-colors" 
+                                className="flex items-start gap-3 rounded-2xl border border-zinc-800 bg-zinc-950 p-4 cursor-pointer hover:bg-zinc-900 transition-colors" 
                                 onClick={() => ctrl.setUpdateTemplate(!ctrl.updateTemplate)}
                             >
                                 <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center mt-0.5 transition-colors ${ctrl.updateTemplate ? 'bg-primary-500 border-primary-500' : 'border-zinc-700'}`}>
@@ -591,7 +589,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                 value={activeSession.note || ''}
                                 onChange={e => ctrl.updateSession(prev => prev ? { ...prev, note: e.target.value } : null)}
                                 rows={3}
-                                className="w-full bg-[#1A1A1A] border border-white/5 rounded-2xl px-4 py-3 text-sm text-white placeholder-zinc-500 outline-none resize-none focus:border-white/20 transition-all"
+                                className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-white placeholder-zinc-500 outline-none resize-none transition-all focus:border-zinc-700"
                             />
                         </div>
                     </div>

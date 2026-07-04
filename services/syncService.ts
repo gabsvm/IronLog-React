@@ -2,6 +2,10 @@ import { AppState } from "../types";
 import { getFirebaseFirestoreServices } from "../lib/firebaseLoader";
 import { offlineSyncQueue } from "./offlineSyncQueue";
 
+const emitSyncStatus = (detail: Record<string, unknown>) => {
+    window.dispatchEvent(new CustomEvent('ironlog:sync-status', { detail }));
+};
+
 const sanitizeForFirestore = <T>(data: T): T => {
     return JSON.parse(JSON.stringify(data));
 };
@@ -113,6 +117,7 @@ export const syncService = {
         const queue = await offlineSyncQueue.list();
         if (queue.length === 0) return;
 
+        emitSyncStatus({ phase: 'flush-start', pending: queue.length });
         const processedIds: string[] = [];
 
         for (const entry of queue) {
@@ -127,39 +132,50 @@ export const syncService = {
 
                 processedIds.push(entry.id);
             } catch (error) {
+                emitSyncStatus({ phase: 'flush-paused', pending: queue.length - processedIds.length, error: String(error) });
                 console.warn("Queued sync replay paused after failure:", error);
                 break;
             }
         }
 
         await offlineSyncQueue.remove(processedIds);
+        emitSyncStatus({ phase: 'flush-complete', processed: processedIds.length, pending: Math.max(0, queue.length - processedIds.length) });
     },
 
     uploadUserIdentity: async (userId: string, email: string) => {
         try {
+            emitSyncStatus({ phase: 'upload-start', scope: 'identity' });
             await uploadUserIdentityNow(userId, email);
+            emitSyncStatus({ phase: 'upload-success', scope: 'identity', lastSyncedAt: Date.now() });
             console.log(`Identity Synced: ${email}`);
         } catch (error) {
             await offlineSyncQueue.enqueueIdentity(userId, email);
+            emitSyncStatus({ phase: 'upload-queued', scope: 'identity', error: String(error) });
             console.error("Identity Sync Failed:", error);
         }
     },
 
     uploadSessionOnly: async (userId: string, session: AppState['activeSession'], lastUpdated: number) => {
         try {
+            emitSyncStatus({ phase: 'upload-start', scope: 'session' });
             await uploadSessionOnlyNow(userId, session, lastUpdated);
+            emitSyncStatus({ phase: 'upload-success', scope: 'session', lastSyncedAt: Date.now() });
         } catch (error: any) {
             await offlineSyncQueue.enqueueSessionSnapshot(userId, session ?? null, lastUpdated);
+            emitSyncStatus({ phase: 'upload-queued', scope: 'session', error: String(error) });
             if (error?.code !== 'not-found') console.error("Session Upload Failed:", error);
         }
     },
 
     uploadState: async (userId: string, state: Partial<AppState> & { email?: string | null }) => {
         try {
+            emitSyncStatus({ phase: 'upload-start', scope: 'state' });
             await uploadStateNow(userId, state);
+            emitSyncStatus({ phase: 'upload-success', scope: 'state', lastSyncedAt: Date.now() });
             console.log(`Cloud Sync: Upload Complete (User: ${userId}) at ${new Date().toLocaleTimeString()}`);
         } catch (error) {
             await offlineSyncQueue.enqueueStateSnapshot(userId, state);
+            emitSyncStatus({ phase: 'upload-queued', scope: 'state', error: String(error) });
             console.error("Cloud Sync Upload Failed:", error);
             throw error;
         }
