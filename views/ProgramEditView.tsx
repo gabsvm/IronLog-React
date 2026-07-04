@@ -7,12 +7,10 @@ import { Button } from '../components/ui/Button';
 import { MuscleGroup, MesoType } from '../types';
 import { getTranslated } from '../utils';
 import { triggerHaptic } from '../utils/audio';
-import { ProgramDay } from '../types';
 import { Sheet } from '../components/ui/Sheet';
 import { useStore } from '../lib/store';
 
 const ExerciseSelector = React.lazy(() => import('../components/ui/ExerciseSelector').then(m => ({ default: m.ExerciseSelector })));
-const PDFImportModal = React.lazy(() => import('../components/ui/PDFImportModal').then(m => ({ default: m.PDFImportModal })));
 const ConfirmModal = React.lazy(() => import('../components/ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
 
 interface ProgramEditViewProps {
@@ -27,8 +25,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
     const [pickingForSlot, setPickingForSlot] = useState<{dayId: string, slotIdx: number} | null>(null);
     const [showStartModal, setShowStartModal] = useState(false);
     const [dayToDelete, setDayToDelete] = useState<string | null>(null);
-    const [showPDFImport, setShowPDFImport] = useState(false);
-    
+
     // New Meso Config State
     const [mesoConfig, setMesoConfig] = useState<{
         name: string,
@@ -119,10 +116,6 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
         onBack();
     };
 
-    const handleImportDays = (days: ProgramDay[]) => {
-        setProgram(days);
-    };
-
     return (
         <div className="h-full flex flex-col bg-gray-50 dark:bg-zinc-950 relative">
              {/* Header */}
@@ -131,12 +124,6 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
                     <span className="font-bold text-sm">{t.back}</span>
                 </button>
                 <div className="flex items-center gap-2">
-                    <button 
-                        onClick={() => setShowPDFImport(true)}
-                        className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-zinc-300 border border-white/5 px-3 py-1.5 rounded-full text-xs font-bold active:scale-95 transition-all"
-                    >
-                        <Icon name="FileText" size={12} /> {TRANSLATIONS[lang].importPDF}
-                    </button>
                     <button 
                         onClick={() => setShowStartModal(true)}
                         className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-3 py-1.5 rounded-full text-xs font-black shadow-lg shadow-primary-500/25 active:scale-95 transition-all"
@@ -314,15 +301,6 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
                     variant="danger"
                 />
             </Suspense>
-
-            {showPDFImport && (
-                <Suspense fallback={null}>
-                    <PDFImportModal 
-                        onClose={() => setShowPDFImport(false)}
-                        onImport={handleImportDays}
-                    />
-                </Suspense>
-            )}
         </div>
     );
 };

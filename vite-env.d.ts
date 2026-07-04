@@ -26,11 +26,6 @@ declare module '*.mjs?url' {
   export default src;
 }
 
-declare module 'pdfjs-dist/build/pdf.worker.mjs?url' {
-  const src: string;
-  export default src;
-}
-
 interface ImportMetaEnv {
   readonly VITE_FIREBASE_API_KEY: string
   readonly VITE_FIREBASE_AUTH_DOMAIN: string

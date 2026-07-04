@@ -15,7 +15,6 @@ export default defineConfig(() => {
         resolveDependencies: (_filename, deps) => deps.filter(dep =>
           !dep.includes('vendor-firebase') &&
           !dep.includes('vendor-charts') &&
-          !dep.includes('vendor-pdf') &&
           !dep.includes('vendor-motion')
         ),
       },
@@ -46,12 +45,6 @@ export default defineConfig(() => {
             }
             if (id.includes('node_modules/chart.js') || id.includes('node_modules/react-chartjs-2')) {
               return 'vendor-charts';
-            }
-            if (id.includes('node_modules/@google/genai')) {
-              return 'vendor-ai';
-            }
-            if (id.includes('node_modules/pdfjs-dist')) {
-              return 'vendor-pdf';
             }
             if (id.includes('@dnd-kit')) {
               return 'vendor-dnd';
