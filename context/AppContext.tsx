@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useEffect, useRef, ReactNode, useState, PropsWithChildren, useMemo, useCallback } from 'react';
-import { AppState, Lang, Theme, ColorTheme, ExerciseDef, ActiveSession, MesoCycle, Log, ProgramDay, TutorialState, GlobalTemplate, UserProfile, BeforeInstallPromptEvent, NutritionLog, CardioSession, NutritionGoal, MacroGoals, DailyNutrition, BodyLog, CustomFood, DirtySyncSection } from '../types';
+import { AppState, Lang, Theme, ColorTheme, ExerciseDef, ActiveSession, MesoCycle, Log, ProgramDay, TutorialState, GlobalTemplate, UserProfile, BeforeInstallPromptEvent, NutritionLog, CardioSession, NutritionGoal, MacroGoals, DailyNutrition, BodyLog, CustomFood, DirtySyncSection, SectionSyncMeta } from '../types';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { usePersistedState } from '../hooks/usePersistedState';
 import { Icon } from '../components/ui/Icon';
@@ -74,9 +74,11 @@ interface AppContextType extends Omit<AppState, 'activeSession' | 'activeMeso'> 
     // Sync UI State
     isAppLoading: boolean;
     pendingCloudData: Partial<AppState> | null;
+    pendingCloudSections: DirtySyncSection[];
     confirmCloudSync: () => void;
     cancelCloudSync: () => void;
     localLastUpdated: number;
+    localSectionSyncMeta: SectionSyncMeta;
     isOnline: boolean;
     syncStatus: {
         pending: number;
@@ -147,6 +149,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     const [rpFeedback, setRpFeedback, fbLoading] = usePersistedState<AppState['rpFeedback']>('il_rp_fb_v1', {}, 1000);
     const [hasSeenOnboarding, setHasSeenOnboarding, onboardingLoading] = usePersistedState<boolean>('il_onboarded_v2', false, 1000);
     const [localLastUpdated, setLocalLastUpdated] = usePersistedState<number>('il_last_sync_ts', 0, 0);
+    const [localSectionSyncMeta, setLocalSectionSyncMeta] = usePersistedState<SectionSyncMeta>('il_section_sync_meta_v1', {}, 0);
 
     // NEW: Nutrition & Body Tracking Persistence
     const [bodyLogs, setBodyLogs, bodyLoading] = usePersistedState<BodyLog[]>('il_body_v1', [], 1000);
@@ -154,6 +157,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     const [customFoods, setCustomFoods] = usePersistedState<CustomFood[]>('il_custom_foods_v1', [], 1000);
 
     const [pendingCloudData, setPendingCloudData] = useState<Partial<AppState> | null>(null);
+    const [pendingCloudSections, setPendingCloudSections] = useState<DirtySyncSection[]>([]);
     const [hasCheckedSync, setHasCheckedSync] = useState(false);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     const [syncStatus, setSyncStatus] = useState({
@@ -205,6 +209,8 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                 return;
             }
 
+            const now = Date.now();
+            setLocalSectionSyncMeta(prev => ({ ...prev, [section]: now }));
             void dirtySyncState.mark([section]);
         }, deps);
     };
@@ -449,6 +455,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                 // Only trigger if we haven't checked since login or if local is empty
                 const cloudData = await syncService.downloadState(user.uid);
                 if (cloudData && cloudData.lastUpdated) {
+                    const cloudSyncMeta = ((cloudData as Partial<AppState> & { syncMeta?: SectionSyncMeta }).syncMeta) || {};
                     const isLocalEmpty = !activeMeso && (!logs || logs.length === 0);
 
                     if (isLocalEmpty) {
@@ -475,12 +482,20 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                             if (cloudData.customFoods) setCustomFoods(cloudData.customFoods);
 
                             setLocalLastUpdated(cloudData.lastUpdated ?? Date.now());
+                            setLocalSectionSyncMeta(cloudSyncMeta);
                             setHasSeenOnboarding(true);
                             await dirtySyncState.clear();
                         });
                     } else if (cloudData.lastUpdated > (localLastUpdated || 0)) {
+                        const newerSections = Object.entries(cloudSyncMeta)
+                            .filter(([section, ts]) => typeof ts === 'number' && ts > (localSectionSyncMeta[section as DirtySyncSection] || 0))
+                            .map(([section]) => section as DirtySyncSection);
+
+                        if (newerSections.length === 0) return;
+
                         console.log("Cloud data is newer than local. Offering sync.");
                         setPendingCloudData(cloudData);
+                        setPendingCloudSections(newerSections);
                     }
                 }
             } catch (error) {
@@ -492,9 +507,9 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
 
         checkCloudData();
     }, [
-        user, isOnline, isAppLoading, pendingCloudData, hasCheckedSync, activeMeso, logs, localLastUpdated,
+        user, isOnline, isAppLoading, pendingCloudData, hasCheckedSync, activeMeso, logs, localLastUpdated, localSectionSyncMeta,
         setProgram, setExercises, setLogs, setRpFeedback, setShowRIR, setRpEnabled, setLocalLastUpdated,
-        setHasSeenOnboarding, setBodyLogs, setCustomFoods, setKeepScreenOn, setMacroGoals, setNutritionLogs,
+        setHasSeenOnboarding, setBodyLogs, setCustomFoods, setKeepScreenOn, setMacroGoals, setNutritionLogs, setLocalSectionSyncMeta,
         setRpTargetRIR, setUserProfile
     ]); // Re-run when dependencies change
 
@@ -621,11 +636,13 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
 
             // Sync timestamp to prevent immediate re-upload of old local state
             setLocalLastUpdated(pendingCloudData.lastUpdated ?? Date.now());
+            setLocalSectionSyncMeta(((pendingCloudData as Partial<AppState> & { syncMeta?: SectionSyncMeta }).syncMeta) || {});
             void dirtySyncState.clear();
 
             // Mark onboarding as complete
             setHasSeenOnboarding(true);
             setPendingCloudData(null);
+            setPendingCloudSections([]);
 
             // OPTIMIZATION: Instead of immediate reload, we let the reactive state handle it.
             // We only reload if we detect critical inconsistencies or if the user is in a state where a refresh is better.
@@ -634,13 +651,21 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
             // Optional: You could add a 'sync_completed' event or toast here.
             });
         }
-    }, [pendingCloudData, setProgram, setExercises, setLogs, setRpFeedback, setShowRIR, setRpEnabled, setLocalLastUpdated, setHasSeenOnboarding, setBodyLogs, setCustomFoods, setKeepScreenOn, setMacroGoals, setNutritionLogs, setRpTargetRIR, setUserProfile]);
+    }, [pendingCloudData, setProgram, setExercises, setLogs, setRpFeedback, setShowRIR, setRpEnabled, setLocalLastUpdated, setHasSeenOnboarding, setBodyLogs, setCustomFoods, setKeepScreenOn, setMacroGoals, setNutritionLogs, setRpTargetRIR, setUserProfile, setLocalSectionSyncMeta]);
 
     const cancelCloudSync = useCallback(() => {
         setPendingCloudData(null);
+        setPendingCloudSections([]);
         setLocalLastUpdated(Date.now());
+        setLocalSectionSyncMeta(prev => {
+            const now = Date.now();
+            return FULL_SYNC_SECTIONS.reduce<SectionSyncMeta>((acc, section) => {
+                acc[section] = now;
+                return acc;
+            }, { ...prev });
+        });
         void dirtySyncState.mark(FULL_SYNC_SECTIONS);
-    }, [setLocalLastUpdated]);
+    }, [setLocalLastUpdated, setLocalSectionSyncMeta]);
 
     // --- THEME & WAKELOCK ---
     useEffect(() => {
@@ -704,7 +729,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         hasSeenOnboarding, setHasSeenOnboarding,
         tutorialProgress, markTutorialSeen, resetTutorials,
         isAppLoading,
-        pendingCloudData, confirmCloudSync, cancelCloudSync, localLastUpdated,
+        pendingCloudData, pendingCloudSections, confirmCloudSync, cancelCloudSync, localLastUpdated, localSectionSyncMeta,
         isOnline,
         syncStatus,
         deferredPrompt, installApp, isStandalone,
@@ -727,7 +752,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         hasSeenOnboarding, setHasSeenOnboarding,
         tutorialProgress, markTutorialSeen, resetTutorials,
         isAppLoading,
-        pendingCloudData, confirmCloudSync, cancelCloudSync, localLastUpdated,
+        pendingCloudData, pendingCloudSections, confirmCloudSync, cancelCloudSync, localLastUpdated, localSectionSyncMeta,
         isOnline,
         syncStatus,
         deferredPrompt, installApp, isStandalone,

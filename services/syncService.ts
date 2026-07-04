@@ -1,4 +1,4 @@
-import { AppState, DirtySyncSection } from "../types";
+import { AppState, DirtySyncSection, SectionSyncMeta } from "../types";
 import { getFirebaseFirestoreServices } from "../lib/firebaseLoader";
 import { offlineSyncQueue } from "./offlineSyncQueue";
 import { dirtySyncState } from "./dirtySyncState";
@@ -9,6 +9,14 @@ const emitSyncStatus = (detail: Record<string, unknown>) => {
 
 const sanitizeForFirestore = <T>(data: T): T => {
     return JSON.parse(JSON.stringify(data));
+};
+
+const buildSectionSyncMeta = (sections: DirtySyncSection[] | undefined, lastUpdated: number): SectionSyncMeta => {
+    if (!sections || sections.length === 0) return {};
+    return sections.reduce<SectionSyncMeta>((acc, section) => {
+        acc[section] = lastUpdated;
+        return acc;
+    }, {});
 };
 
 const serializeMeso = (meso: any) => {
@@ -72,8 +80,9 @@ const uploadStateNow = async (userId: string, state: Partial<AppState> & { email
     const userRef = firestoreApi.doc(db, "users", userId);
     const includeAll = !sections || sections.length === 0;
     const shouldInclude = (section: DirtySyncSection) => includeAll || sections.includes(section);
+    const lastUpdated = state.lastUpdated || Date.now();
     const rawMainData: Record<string, unknown> = {
-        lastUpdated: state.lastUpdated || Date.now(),
+        lastUpdated,
         email: state.email || null
     };
 
@@ -90,6 +99,13 @@ const uploadStateNow = async (userId: string, state: Partial<AppState> & { email
     if (shouldInclude('nutritionGoal')) rawMainData.nutritionGoal = state.nutritionGoal || null;
     if (shouldInclude('macroGoals')) rawMainData.macroGoals = state.macroGoals || null;
     if (shouldInclude('userProfile')) rawMainData.userProfile = state.userProfile || null;
+    rawMainData.sectionSyncMeta = includeAll
+        ? buildSectionSyncMeta([
+            'program', 'activeMeso', 'exercises', 'logs', 'config', 'rpFeedback',
+            'userProfile', 'nutritionLogs', 'cardioSessions', 'nutritionGoal',
+            'bodyLogs', 'macroGoals', 'customFoods'
+        ], lastUpdated)
+        : buildSectionSyncMeta(sections, lastUpdated);
 
     batch.set(userRef, sanitizeForFirestore(rawMainData), { merge: true });
 
@@ -186,7 +202,7 @@ export const syncService = {
         }
     },
 
-    downloadState: async (userId: string): Promise<Partial<AppState> | null> => {
+    downloadState: async (userId: string): Promise<(Partial<AppState> & { syncMeta?: SectionSyncMeta }) | null> => {
         const { db, firestoreApi } = await getFirebaseFirestoreServices();
         if (!userId || !db) return null;
 
@@ -218,6 +234,7 @@ export const syncService = {
                 customFoods: data.customFoods,
                 logs: logsData,
                 lastUpdated: data.lastUpdated || Date.now(),
+                syncMeta: data.sectionSyncMeta || {},
             };
         } catch (error) {
             console.error("Cloud Sync Download Failed:", error);

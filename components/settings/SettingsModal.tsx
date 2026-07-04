@@ -28,7 +28,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     const {
         lang, setLang, theme, setTheme, colorTheme, setColorTheme,
         config, setConfig, resetTutorials, deferredPrompt, installApp, isStandalone,
-        userProfile, setUserProfile
+        userProfile, setUserProfile, syncStatus, isOnline, localLastUpdated, localSectionSyncMeta, pendingCloudSections
     } = useApp();
 
     const { user, logout } = useAuth();
@@ -324,6 +324,41 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                 <label className="py-3 bg-zinc-100 dark:bg-zinc-800 rounded-xl text-sm font-bold cursor-pointer text-center flex items-center justify-center gap-2"><Icon name="Upload" size={14} /> {t.import}<input type="file" onChange={onImportFile} accept=".json" className="hidden" /></label>
                             </div>
                             {user && <button onClick={onForceSync} disabled={isSyncing} className="w-full py-3 bg-primary-500/10 text-primary-600 dark:text-primary-400 rounded-xl text-sm font-bold flex items-center justify-center gap-2 border border-primary-500/20" aria-label="Refresh"> <Icon name="RefreshCw" size={14} className={isSyncing ? "animate-spin" : ""} /> {isSyncing ? "Syncing..." : "Force Sync"}</button>}
+                        </div>
+                    </div>
+
+                    <Divider />
+
+                    <div>
+                        <label className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 block">{lang === 'es' ? 'Diagnóstico Sync' : 'Sync Diagnostics'}</label>
+                        <div className="space-y-2 rounded-xl border border-zinc-100 bg-zinc-50 p-4 dark:border-white/5 dark:bg-white/5">
+                            <div className="flex items-center justify-between text-xs">
+                                <span className="font-bold text-zinc-500">{lang === 'es' ? 'Red' : 'Network'}</span>
+                                <span className={`font-black ${isOnline ? 'text-emerald-500' : 'text-amber-400'}`}>{isOnline ? 'ONLINE' : 'OFFLINE'}</span>
+                            </div>
+                            <div className="flex items-center justify-between text-xs">
+                                <span className="font-bold text-zinc-500">{lang === 'es' ? 'Cola pendiente' : 'Pending queue'}</span>
+                                <span className="font-black text-zinc-900 dark:text-white">{syncStatus.pending}</span>
+                            </div>
+                            <div className="flex items-center justify-between text-xs">
+                                <span className="font-bold text-zinc-500">{lang === 'es' ? 'Estado' : 'Status'}</span>
+                                <span className="font-black text-zinc-900 dark:text-white">{syncStatus.isSyncing ? 'SYNCING' : 'IDLE'}</span>
+                            </div>
+                            <div className="text-[10px] text-zinc-500">
+                                {lang === 'es' ? 'Último cambio local:' : 'Last local change:'} {localLastUpdated ? new Date(localLastUpdated).toLocaleString() : 'n/a'}
+                            </div>
+                            {pendingCloudSections.length > 0 && (
+                                <div className="text-[10px] text-amber-500">
+                                    {lang === 'es' ? 'Secciones más nuevas en nube:' : 'Cloud-newer sections:'} {pendingCloudSections.join(', ')}
+                                </div>
+                            )}
+                            <div className="flex flex-wrap gap-1 pt-1">
+                                {Object.entries(localSectionSyncMeta).slice(0, 8).map(([section, ts]) => (
+                                    <span key={section} className="rounded-full bg-zinc-200 px-2 py-1 text-[9px] font-bold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                                        {section}
+                                    </span>
+                                ))}
+                            </div>
                         </div>
                     </div>
 

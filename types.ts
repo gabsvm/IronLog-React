@@ -264,6 +264,8 @@ export type DirtySyncSection =
   | 'macroGoals'
   | 'customFoods';
 
+export type SectionSyncMeta = Partial<Record<DirtySyncSection, number>>;
+
 interface SyncQueueEntryBase {
   id: string;
   userId: string;

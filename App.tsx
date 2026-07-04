@@ -68,7 +68,7 @@ const AppContent = () => {
         setExercises, setProgram,
         config, rpFeedback, hasSeenOnboarding, setHasSeenOnboarding,
         isAppLoading,
-        pendingCloudData, confirmCloudSync, cancelCloudSync,
+        pendingCloudData, pendingCloudSections, confirmCloudSync, cancelCloudSync,
         userProfile, nutritionLogs, cardioSessions, bodyLogs, macroGoals, nutritionGoal
     } = useApp();
     const activeSession = useStore(state => state.activeSession);
@@ -526,7 +526,9 @@ const AppContent = () => {
             <ConfirmModal
                 isOpen={!!pendingCloudData}
                 title={lang === 'en' ? "Cloud Sync" : "Sincronización Nube"}
-                description={lang === 'en' ? "Newer data found in the cloud. Download it? (This will overwrite current local data)" : "Datos más recientes encontrados en la nube. ¿Descargar? (Esto sobrescribirá los datos locales actuales)"}
+                description={lang === 'en'
+                    ? `Newer cloud data found${pendingCloudSections.length > 0 ? ` in: ${pendingCloudSections.join(', ')}` : ''}. Download it? This will overwrite those local sections.`
+                    : `Se encontraron datos más nuevos en la nube${pendingCloudSections.length > 0 ? ` en: ${pendingCloudSections.join(', ')}` : ''}. ¿Descargar? Esto sobrescribirá esas secciones locales.`}
                 confirmText={lang === 'en' ? "Download" : "Descargar"}
                 cancelText={lang === 'en' ? "Keep Local" : "Mantener Local"}
                 onConfirm={confirmCloudSync}
