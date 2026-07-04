@@ -1,13 +1,17 @@
-const CACHE_NAME = 'gainslab-pro-v16';
+const CACHE_NAME = 'gainslab-pro-v17';
 
 const PRECACHE_URLS = [
   '/',
   '/index.html',
   '/offline.html',
   '/manifest.json',
-  '/icon.svg',
   '/icon-192.png',
   '/icon-512.png',
+  '/apple-touch-icon.png',
+  '/favicon-32.png',
+  '/favicon-16.png',
+  '/assets/branding/logo-mark.png',
+  '/assets/branding/logo-lockup.png',
 ];
 
 self.addEventListener('install', (event) => {

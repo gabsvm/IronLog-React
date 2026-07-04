@@ -82,7 +82,7 @@ export const useTimer = (lang: Lang) => {
                             navigator.serviceWorker.ready.then(registration => {
                                 registration.showNotification(title, {
                                     body: body,
-                                    icon: "/assets/icons/icon-192.webp",
+                                    icon: "/icon-192.png",
                                     tag: 'gainslab-timer', // Consolidate notifications
                                     vibrate: [200, 100, 200]
                                 } as any);
@@ -91,7 +91,7 @@ export const useTimer = (lang: Lang) => {
                                 try {
                                     new Notification(title, {
                                         body: body,
-                                        icon: "/assets/icons/icon-192.webp",
+                                        icon: "/icon-192.png",
                                         tag: 'gainslab-timer' // Consolidate
                                     });
                                 } catch(e) {}
@@ -99,7 +99,7 @@ export const useTimer = (lang: Lang) => {
                         } else {
                             new Notification(title, {
                                 body: body,
-                                icon: "/assets/icons/icon-192.webp",
+                                icon: "/icon-192.png",
                                 tag: 'gainslab-timer' // Consolidate
                             });
                         }

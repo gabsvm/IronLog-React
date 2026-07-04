@@ -3,60 +3,51 @@
 
 <head>
   <meta charset="UTF-8" />
-  <link rel="icon" type="image/png" href="./icon-192.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16.png" />
   <link rel="manifest" href="./manifest.json" />
-  <!-- viewport-fit=cover for notch support; allow pinch-zoom for WCAG 1.4.4 compliance -->
-  <meta name="viewport"
-    content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#000000" />
-  <meta name="description"
-    content="Professional Hypertrophy Tracker with RP-style progression, analytics, and offline support.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#050505" />
+  <meta name="description" content="Professional Hypertrophy Tracker with RP-style progression, analytics, and offline support." />
 
-  <!-- PWA / Apple Specific -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="GainsLab">
-    <meta name="application-name" content="GainsLab">
-  <meta name="mobile-web-app-capable" content="yes">
-  <link rel="apple-touch-icon" sizes="192x192" href="./icon-192.png">
-  <link rel="apple-touch-icon" sizes="512x512" href="./icon-512.png">
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="GainsLab" />
+  <meta name="application-name" content="GainsLab" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="msapplication-TileColor" content="#050505" />
+  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
 
-  <!-- PRELOAD CRITICAL ASSETS -->
-  <link rel="preload" href="./icon-192.png" as="image" type="image/png">
-  <link rel="preload" href="./icon-512.png" as="image" type="image/png">
+  <link rel="preload" href="./icon-192.png" as="image" type="image/png" />
+  <link rel="preload" href="./assets/branding/logo-lockup.png" as="image" type="image/png" />
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <title>GainsLab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <title>GainsLab</title>
 
-
-  <!-- GLOBAL PWA PROMPT CAPTURE -->
   <script>
     window.deferredPrompt = null;
-    window.addEventListener('beforeinstallprompt', (e) => {
-      // Prevent the mini-infobar from appearing on mobile
-      e.preventDefault();
-      // Stash the event so it can be triggered later.
-      window.deferredPrompt = e;
-      console.log("✅ PWA Install Event Captured Globally");
+    window.addEventListener('beforeinstallprompt', (event) => {
+      event.preventDefault();
+      window.deferredPrompt = event;
+      console.log('PWA install event captured globally');
     });
   </script>
 
-  <!-- GLOBAL ERROR HANDLER & WATCHDOG -->
   <script>
-    window.onerror = function (message, source, lineno, colno, error) {
+    window.onerror = function (message, source, lineno) {
       var msg = message + '\n' + source + ':' + lineno;
       console.error(msg);
-      if (message.includes('ResizeObserver')) return;
+      if (String(message).includes('ResizeObserver')) return;
       showError(msg);
     };
 
     setTimeout(function () {
       var root = document.getElementById('root');
       if (!root || root.innerHTML.trim() === '') {
-        console.warn("React taking long to mount...");
-        showError("Startup Timeout: App did not mount.\nCheck console for Dual React Instance errors or Importmap conflicts.");
+        console.warn('React taking long to mount...');
+        showError('Startup Timeout: App did not mount.\nCheck console for runtime errors.');
       }
     }, 15000);
 
@@ -74,12 +65,31 @@
       }
     }
 
-    // Service Worker is registered from index.tsx (with delay + better error handling).
-    // Do NOT register here as well — duplicate registrations have caused intermittent
-    // scope conflicts and "invalid state" errors on iOS PWAs.
+    window.addEventListener('DOMContentLoaded', function () {
+      var launchScreen = document.getElementById('pwa-launch-screen');
+      var root = document.getElementById('root');
+      if (!launchScreen || !root) return;
+
+      var maybeHideLaunchScreen = function () {
+        if (root.childElementCount > 0 || root.textContent.trim().length > 0) {
+          launchScreen.classList.add('is-hidden');
+          setTimeout(function () { launchScreen.remove(); }, 260);
+          observer.disconnect();
+        }
+      };
+
+      var observer = new MutationObserver(maybeHideLaunchScreen);
+      observer.observe(root, { childList: true, subtree: true, characterData: true });
+      maybeHideLaunchScreen();
+    });
   </script>
 
   <style>
+    :root {
+      color-scheme: dark;
+      background: #050505;
+    }
+
     .glass {
       background-color: rgba(255, 255, 255, 0.85);
       backdrop-filter: blur(12px);
@@ -93,11 +103,12 @@
     }
 
     .scroll-container::-webkit-scrollbar {
-      width: 0px;
+      width: 0;
       background: transparent;
     }
 
     body {
+      margin: 0;
       background-color: #fafafa;
       color: #18181b;
     }
@@ -128,10 +139,65 @@
     .animate-slideUp {
       animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
+
+    #pwa-launch-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        radial-gradient(circle at top, rgba(200, 255, 0, 0.14), transparent 38%),
+        #050505;
+      transition: opacity 0.22s ease, visibility 0.22s ease;
+    }
+
+    #pwa-launch-screen.is-hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .launch-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      padding: 32px 28px;
+      border-radius: 32px;
+      background: rgba(10, 10, 10, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      box-shadow: 0 32px 90px rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    .launch-lockup {
+      width: min(78vw, 420px);
+      height: auto;
+      object-fit: contain;
+      filter: drop-shadow(0 0 28px rgba(200, 255, 0, 0.12));
+    }
+
+    .launch-subtitle {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: rgba(161, 161, 170, 0.92);
+    }
   </style>
 </head>
 
 <body class="h-full w-full overflow-hidden select-none transition-colors duration-300">
+  <div id="pwa-launch-screen" aria-hidden="true">
+    <div class="launch-card">
+      <img class="launch-lockup" src="./assets/branding/logo-lockup.png" alt="GainsLab" />
+      <div class="launch-subtitle">Track. Test. Grow.</div>
+    </div>
+  </div>
   <div id="root" class="h-full w-full"></div>
   <script type="module" src="./index.tsx"></script>
 </body>

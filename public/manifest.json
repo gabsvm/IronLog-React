@@ -5,8 +5,8 @@
   "scope": "/",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#dc2626",
+  "background_color": "#050505",
+  "theme_color": "#050505",
   "orientation": "portrait-primary",
   "lang": "es",
   "dir": "ltr",
@@ -15,63 +15,75 @@
     "health",
     "productivity"
   ],
-  "description": "Seguimiento profesional de hipertrofia con progresión estilo RP, analytics y soporte offline.",
+  "description": "Seguimiento profesional de hipertrofia con progresion estilo RP, analytics y soporte offline.",
   "icons": [
     {
-      "src": "assets/icons/icon-48.webp",
-      "type": "image/webp",
+      "src": "assets/icons/icon-48.png",
+      "type": "image/png",
       "sizes": "48x48",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "assets/icons/icon-72.webp",
-      "type": "image/webp",
+      "src": "assets/icons/icon-72.png",
+      "type": "image/png",
       "sizes": "72x72",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "assets/icons/icon-96.webp",
-      "type": "image/webp",
+      "src": "assets/icons/icon-96.png",
+      "type": "image/png",
       "sizes": "96x96",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "assets/icons/icon-128.webp",
-      "type": "image/webp",
+      "src": "assets/icons/icon-128.png",
+      "type": "image/png",
       "sizes": "128x128",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "assets/icons/icon-192.webp",
-      "type": "image/webp",
+      "src": "assets/icons/icon-192.png",
+      "type": "image/png",
       "sizes": "192x192",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "assets/icons/icon-256.webp",
-      "type": "image/webp",
+      "src": "assets/icons/icon-256.png",
+      "type": "image/png",
       "sizes": "256x256",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "assets/icons/icon-512.webp",
-      "type": "image/webp",
+      "src": "assets/icons/icon-512.png",
+      "type": "image/png",
       "sizes": "512x512",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/maskable-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "maskable"
+    },
+    {
+      "src": "assets/icons/maskable-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
     }
   ],
   "screenshots": [
     {
       "src": "/screenshot-home.png",
       "sizes": "390x844",
-      "type": "image/webp",
+      "type": "image/png",
       "form_factor": "narrow",
-      "label": "Home — Active Mesocycle"
+      "label": "Home - Active Mesocycle"
     },
     {
       "src": "/screenshot-workout.png",
       "sizes": "390x844",
-      "type": "image/webp",
+      "type": "image/png",
       "form_factor": "narrow",
       "label": "Workout Tracker"
     }
@@ -86,7 +98,7 @@
         {
           "src": "/icon-192.png",
           "sizes": "192x192",
-          "type": "image/webp"
+          "type": "image/png"
         }
       ]
     }
