@@ -11,6 +11,7 @@ import { useStatsWorker, ChartMetric } from '../hooks/useStatsWorker';
 import { TutorialOverlay } from '../components/ui/TutorialOverlay';
 import { ProLock } from '../components/pro/ProLock';
 import { useStore } from '../lib/store';
+import { buildStatsLogsSignature, statsCache } from '../services/statsCache';
 import {
     Chart as ChartJS,
     RadialLinearScale,
@@ -78,6 +79,7 @@ export const StatsView: React.FC = () => {
     const { isWorkerReady, calculateOverview, calculateChartData } = useStatsWorker();
 
     const safeLogs = useMemo(() => Array.isArray(logs) ? logs : [], [logs]);
+    const logsSignature = useMemo(() => buildStatsLogsSignature(safeLogs), [safeLogs]);
     const exerciseMetaById = useMemo(() => {
         const byId = new Map<string, any>();
 
@@ -106,6 +108,24 @@ export const StatsView: React.FC = () => {
     const currentEx = selectedExId ? exerciseMetaById.get(String(selectedExId)) : null;
 
     useEffect(() => {
+        let cancelled = false;
+
+        void statsCache.readSelectedExercise().then((cachedExerciseId) => {
+            if (!cancelled && cachedExerciseId) {
+                setSelectedExId(prev => prev || cachedExerciseId);
+            }
+        });
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    useEffect(() => {
+        void statsCache.writeSelectedExercise(selectedExId);
+    }, [selectedExId]);
+
+    useEffect(() => {
         if (!currentEx) return;
         const isIsometric = (currentEx as any).isIsometric;
         const isBodyweight = (currentEx as any).isBodyweight;
@@ -126,9 +146,31 @@ export const StatsView: React.FC = () => {
     useEffect(() => {
         if (!isWorkerReady) return;
 
+        let cancelled = false;
+        const mesoId = activeMeso?.id ?? null;
+
         const loadOverview = async () => {
             setLoadingOverview(true);
+            const cached = await statsCache.readOverview(logsSignature, mesoId);
+            if (cached && !cancelled) {
+                setVolumeData(cached.volumeData);
+                setRawMuscleCounts(Object.fromEntries(cached.volumeData));
+                setSetTypeDist(cached.setTypeDist);
+
+                const sortedExs = Object.entries(cached.exerciseFrequency)
+                    .sort((a, b) => (b[1] as number) - (a[1] as number))
+                    .map(([id]) => exerciseMetaById.get(String(id)))
+                    .filter(Boolean);
+
+                setAvailableExercises(sortedExs);
+                if (!selectedExId && sortedExs.length > 0) {
+                    setSelectedExId(String(sortedExs[0]!.id));
+                }
+                setLoadingOverview(false);
+            }
+
             const { volumeData, exerciseFrequency } = await calculateOverview(safeLogs, activeMeso?.id);
+            if (cancelled) return;
 
             setVolumeData(volumeData);
 
@@ -161,25 +203,46 @@ export const StatsView: React.FC = () => {
                 setSelectedExId(String(sortedExs[0]!.id));
             }
 
+            await statsCache.writeOverview(logsSignature, mesoId, {
+                volumeData,
+                exerciseFrequency,
+                setTypeDist: typeCounts,
+            });
             setLoadingOverview(false);
         };
 
-        loadOverview();
+        void loadOverview();
+        return () => {
+            cancelled = true;
+        };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isWorkerReady, safeLogs, activeMeso?.id, exerciseMetaById, selectedExId, calculateOverview]);
+    }, [isWorkerReady, safeLogs, activeMeso?.id, exerciseMetaById, selectedExId, calculateOverview, logsSignature]);
 
     useEffect(() => {
         if (!isWorkerReady || !selectedExId) return;
 
+        let cancelled = false;
+
         const loadChart = async () => {
             setLoadingChart(true);
+            const cached = await statsCache.readChart(logsSignature, selectedExId, chartMetric);
+            if (cached && !cancelled) {
+                setChartPoints(cached.dataPoints);
+                setLoadingChart(false);
+            }
+
             const points = await calculateChartData(safeLogs, selectedExId, chartMetric);
+            if (cancelled) return;
             setChartPoints(points);
+            await statsCache.writeChart(logsSignature, selectedExId, chartMetric, points);
             setLoadingChart(false);
         };
 
-        loadChart();
-    }, [isWorkerReady, selectedExId, chartMetric, safeLogs, calculateChartData]);
+        void loadChart();
+        return () => {
+            cancelled = true;
+        };
+    }, [isWorkerReady, selectedExId, chartMetric, safeLogs, calculateChartData, logsSignature]);
 
     const filteredExercises = useMemo(() => {
         return availableExercises.filter(ex =>
