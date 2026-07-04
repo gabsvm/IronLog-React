@@ -244,6 +244,32 @@ export interface AppState {
   customFoods?: CustomFood[];
 }
 
+export type SyncQueueEntryType =
+  | 'UPLOAD_IDENTITY'
+  | 'UPLOAD_SESSION_SNAPSHOT'
+  | 'UPLOAD_STATE_SNAPSHOT';
+
+interface SyncQueueEntryBase {
+  id: string;
+  userId: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export type SyncQueueEntry =
+  | (SyncQueueEntryBase & {
+      type: 'UPLOAD_IDENTITY';
+      payload: { email: string };
+    })
+  | (SyncQueueEntryBase & {
+      type: 'UPLOAD_SESSION_SNAPSHOT';
+      payload: { lastUpdated: number; session: AppState['activeSession'] | null };
+    })
+  | (SyncQueueEntryBase & {
+      type: 'UPLOAD_STATE_SNAPSHOT';
+      payload: { state: Partial<AppState> & { email?: string | null } };
+    });
+
 // ─── CUSTOM FOOD DATABASE ──────────────────────────────────────────
 export interface CustomFood {
   id: string;

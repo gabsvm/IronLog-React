@@ -381,15 +381,18 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                 if (subscription.isPro) {
                     const now = Date.now();
                     setLocalLastUpdated(now);
-                    syncService.uploadState(user.uid, {
-                        program, activeMeso, activeSession, exercises, logs,
-                        config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn },
-                        rpFeedback,
-                        userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods,
-                        email: user.email || null,
-                        lastUpdated: now,
+                    void syncService.flushQueue().then(() => {
+                        syncService.uploadState(user.uid, {
+                            program, activeMeso, activeSession, exercises, logs,
+                            config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn },
+                            rpFeedback,
+                            userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods,
+                            email: user.email || null,
+                            lastUpdated: now,
+                        });
                     });
                 } else {
+                    void syncService.flushQueue();
                     syncService.uploadUserIdentity(user.uid, user.email || "");
                 }
             }
@@ -411,6 +414,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         const timer = setTimeout(() => {
             const now = Date.now();
             setLocalLastUpdated(now);
+            void syncService.flushQueue();
             syncService.uploadSessionOnly(user.uid, activeSession, now);
         }, 3000);
         return () => clearTimeout(timer);
@@ -426,6 +430,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
             if (subscription.isPro) {
                 const now = Date.now();
                 setLocalLastUpdated(now);
+                void syncService.flushQueue();
                 syncService.uploadState(user.uid, {
                     program, activeMeso, exercises, logs,
                     config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn },
