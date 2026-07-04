@@ -1,7 +1,8 @@
-import { AppState, DirtySyncSection, SectionSyncMeta } from "../types";
+import { AppState, CloudSyncSnapshot, DirtySyncSection, SectionSyncMeta } from "../types";
 import { getFirebaseFirestoreServices } from "../lib/firebaseLoader";
 import { offlineSyncQueue } from "./offlineSyncQueue";
 import { dirtySyncState } from "./dirtySyncState";
+import { cloudSyncCache } from "./cloudSyncCache";
 
 const emitSyncStatus = (detail: Record<string, unknown>) => {
     window.dispatchEvent(new CustomEvent('ironlog:sync-status', { detail }));
@@ -202,7 +203,7 @@ export const syncService = {
         }
     },
 
-    downloadState: async (userId: string): Promise<(Partial<AppState> & { syncMeta?: SectionSyncMeta }) | null> => {
+    downloadState: async (userId: string): Promise<CloudSyncSnapshot | null> => {
         const { db, firestoreApi } = await getFirebaseFirestoreServices();
         if (!userId || !db) return null;
 
@@ -218,7 +219,7 @@ export const syncService = {
             const logsSnap = await firestoreApi.getDoc(logsRef);
             const logsData = logsSnap.exists() ? logsSnap.data().logs : [];
 
-            return {
+            const snapshot: CloudSyncSnapshot = {
                 program: data.program,
                 activeMeso: safeActiveMeso,
                 activeSession: data.activeSession,
@@ -235,10 +236,16 @@ export const syncService = {
                 logs: logsData,
                 lastUpdated: data.lastUpdated || Date.now(),
                 syncMeta: data.sectionSyncMeta || {},
+                source: 'network',
+                cachedAt: Date.now(),
             };
+
+            await cloudSyncCache.write(userId, snapshot);
+            return snapshot;
         } catch (error) {
             console.error("Cloud Sync Download Failed:", error);
-            return null;
+            const cached = await cloudSyncCache.read(userId);
+            return cached ? { ...cached, source: 'cache' } : null;
         }
     }
 };

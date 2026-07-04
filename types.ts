@@ -266,6 +266,12 @@ export type DirtySyncSection =
 
 export type SectionSyncMeta = Partial<Record<DirtySyncSection, number>>;
 
+export type CloudSyncSnapshot = Partial<AppState> & {
+  syncMeta?: SectionSyncMeta;
+  source?: 'network' | 'cache';
+  cachedAt?: number;
+};
+
 interface SyncQueueEntryBase {
   id: string;
   userId: string;

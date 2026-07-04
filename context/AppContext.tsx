@@ -455,11 +455,14 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                 // Only trigger if we haven't checked since login or if local is empty
                 const cloudData = await syncService.downloadState(user.uid);
                 if (cloudData && cloudData.lastUpdated) {
-                    const cloudSyncMeta = ((cloudData as Partial<AppState> & { syncMeta?: SectionSyncMeta }).syncMeta) || {};
+                    const cloudSyncMeta = cloudData.syncMeta || {};
                     const isLocalEmpty = !activeMeso && (!logs || logs.length === 0);
+                    const isCachedSnapshot = cloudData.source === 'cache';
 
                     if (isLocalEmpty) {
-                        console.log("Cloud data found on empty device. Applying automatically.");
+                        console.log(isCachedSnapshot
+                            ? "Applying cached cloud snapshot on empty device."
+                            : "Cloud data found on empty device. Applying automatically.");
                         await withDirtyTrackingSuppressed(async () => {
                             if (cloudData.program) setProgram(cloudData.program);
                             if (cloudData.activeMeso) useStore.getState().setActiveMeso(cloudData.activeMeso);
@@ -477,6 +480,8 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
 
                             if (cloudData.userProfile) setUserProfile(cloudData.userProfile);
                             if (cloudData.nutritionLogs) setNutritionLogs(cloudData.nutritionLogs);
+                            if (cloudData.cardioSessions) setCardioSessions(cloudData.cardioSessions);
+                            if (cloudData.nutritionGoal) setNutritionGoal(cloudData.nutritionGoal);
                             if (cloudData.bodyLogs) setBodyLogs(cloudData.bodyLogs);
                             if (cloudData.macroGoals) setMacroGoals(cloudData.macroGoals);
                             if (cloudData.customFoods) setCustomFoods(cloudData.customFoods);
@@ -486,7 +491,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                             setHasSeenOnboarding(true);
                             await dirtySyncState.clear();
                         });
-                    } else if (cloudData.lastUpdated > (localLastUpdated || 0)) {
+                    } else if (!isCachedSnapshot && cloudData.lastUpdated > (localLastUpdated || 0)) {
                         const newerSections = Object.entries(cloudSyncMeta)
                             .filter(([section, ts]) => typeof ts === 'number' && ts > (localSectionSyncMeta[section as DirtySyncSection] || 0))
                             .map(([section]) => section as DirtySyncSection);
@@ -510,7 +515,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         user, isOnline, isAppLoading, pendingCloudData, hasCheckedSync, activeMeso, logs, localLastUpdated, localSectionSyncMeta,
         setProgram, setExercises, setLogs, setRpFeedback, setShowRIR, setRpEnabled, setLocalLastUpdated,
         setHasSeenOnboarding, setBodyLogs, setCustomFoods, setKeepScreenOn, setMacroGoals, setNutritionLogs, setLocalSectionSyncMeta,
-        setRpTargetRIR, setUserProfile
+        setRpTargetRIR, setUserProfile, setCardioSessions, setNutritionGoal
     ]); // Re-run when dependencies change
 
     // --- SYNC LOGIC ---
