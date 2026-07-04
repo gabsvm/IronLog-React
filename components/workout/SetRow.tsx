@@ -37,8 +37,8 @@ const getTypeColor = (type: SetType) => {
         case 'drop':         
         case 'rest_pause':   
         case 'time_volume':  
-        case 'triple_add':   return 'bg-[#1A1A1A] text-zinc-300 border-white/10';
-        default:             return 'bg-[#121212] text-zinc-400 border-white/5';
+        case 'triple_add':   return 'bg-[#1A1A1A] text-zinc-300 border-zinc-700/70';
+        default:             return 'bg-[#121212] text-zinc-400 border-zinc-800';
     }
 };
 
@@ -58,9 +58,9 @@ const getBorderAccent = (type: SetType): string => {
         case 'warmup': return 'border border-amber-500/10';
         case 'drop': return 'border border-orange-500/10';
         case 'myorep':
-        case 'myorep_match': return 'border border-fuchsia-500/10';
-        case 'emom': return 'border border-cyan-500/10';
-        default: return 'border border-white/6';
+        case 'myorep_match': return 'border border-fuchsia-500/12';
+        case 'emom': return 'border border-cyan-500/12';
+        default: return 'border border-zinc-800/90';
     }
 };
 
@@ -321,7 +321,7 @@ export const SetRow = React.memo(({
         onUpdate(exInstanceId, set.id, 'duration', seconds);
     }, [exInstanceId, set.id, onUpdate]);
 
-    const inputBase = "w-full rounded-[0.95rem] border border-white/6 bg-[#242428] px-2 py-1.5 text-center text-[15px] font-bold text-white outline-none transition-all tabular-nums placeholder-zinc-600 focus:border-primary-500/30 focus:ring-2 focus:ring-primary-500/20";
+    const inputBase = "w-full rounded-[0.95rem] border border-zinc-700/70 bg-[#202024] px-2 py-1.5 text-center text-[15px] font-bold text-white outline-none transition-all tabular-nums placeholder-zinc-600 focus:border-primary-500/25 focus:ring-2 focus:ring-primary-500/15";
     const doneInput = "border-transparent bg-transparent text-white/90 pointer-events-none";
 
     // Show previous session value as placeholder so the field reads as "editable with context",
@@ -392,7 +392,7 @@ export const SetRow = React.memo(({
                             flex h-8 w-8 items-center justify-center rounded-full transition-all duration-150 active:scale-90
                             ${isDone
                                 ? 'bg-primary-500 text-black border-transparent shadow-[0_0_15px] shadow-primary-500/20'
-                                : 'border border-white/8 bg-white/[0.04] text-zinc-500 hover:border-white/15 hover:text-white active:bg-primary-500 active:text-black'}
+                                : 'border border-zinc-700/80 bg-zinc-900/80 text-zinc-500 hover:border-zinc-500/70 hover:text-white active:bg-primary-500 active:text-black'}
                         `}
                     >
                         <Icon name="Check" size={18} strokeWidth={3} />
@@ -446,7 +446,7 @@ export const SetRow = React.memo(({
                         ) : (
                             <input
                                 type="number" inputMode="decimal"
-                                className="w-full rounded-[0.9rem] border border-white/6 bg-[#242428] px-1 py-1.5 text-center text-xs font-bold text-violet-300 outline-none transition-all tabular-nums placeholder-zinc-600 focus:ring-2 focus:ring-violet-500/20"
+                                className="w-full rounded-[0.9rem] border border-zinc-700/70 bg-[#202024] px-1 py-1.5 text-center text-xs font-bold text-violet-300 outline-none transition-all tabular-nums placeholder-zinc-600 focus:border-violet-500/30 focus:ring-2 focus:ring-violet-500/15"
                                 placeholder="0"
                                 value={localWeight}
                                 onChange={e => setLocalWeight(e.target.value)}
@@ -468,7 +468,7 @@ export const SetRow = React.memo(({
                                 flex h-8 w-8 items-center justify-center rounded-full transition-all duration-150 active:scale-90
                                 ${isDone
                                     ? 'bg-primary-500 text-black border-transparent shadow-[0_0_15px] shadow-primary-500/20'
-                                    : 'border border-white/8 bg-white/[0.04] text-zinc-500 hover:border-white/15 hover:text-white active:bg-primary-500 active:text-black'}
+                                    : 'border border-zinc-700/80 bg-zinc-900/80 text-zinc-500 hover:border-zinc-500/70 hover:text-white active:bg-primary-500 active:text-black'}
                             `}
                         >
                             <Icon name="Check" size={18} strokeWidth={3} />
@@ -547,7 +547,7 @@ export const SetRow = React.memo(({
                         flex h-8 w-8 items-center justify-center rounded-full transition-all duration-150 active:scale-90
                         ${isDone
                             ? 'bg-primary-500 text-black border-transparent shadow-[0_0_15px] shadow-primary-500/20'
-                            : 'border border-white/8 bg-white/[0.04] text-zinc-500 hover:border-white/15 hover:text-white active:bg-primary-500 active:text-black'
+                            : 'border border-zinc-700/80 bg-zinc-900/80 text-zinc-500 hover:border-zinc-500/70 hover:text-white active:bg-primary-500 active:text-black'
                         }
                     `}
                 >

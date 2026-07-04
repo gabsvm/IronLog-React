@@ -339,7 +339,7 @@ export const SortableExerciseCard = React.memo(({
             ref={setNodeRef}
             style={style}
             className={`
-                flex flex-col overflow-hidden rounded-[1.2rem] border border-white/8 bg-[#141416] shadow-[0_14px_32px_-24px_rgba(0,0,0,0.9)] transition-all
+                flex flex-col overflow-hidden rounded-[1.2rem] border border-zinc-800 bg-[#141416] shadow-[0_14px_32px_-24px_rgba(0,0,0,0.9)] transition-all
                 ${ssStyle ? `border-l-4 ${ssStyle.border}` : ''}
                 ${isDragging ? 'scale-[1.02] shadow-2xl ring-2 ring-red-500/20' : ''}
                 ${isLinkSource ? 'ring-2 ring-amber-400/40 shadow-[0_0_0_1px_rgba(251,191,36,0.15)]' : ''}
@@ -369,7 +369,7 @@ export const SortableExerciseCard = React.memo(({
                                     {String(t.cardioModes?.[cardioMode] || cardioMode)}
                                 </span>
                             ) : ex.targetReps ? (
-                                <span className="inline-flex items-center rounded-full border border-white/8 bg-white/[0.04] px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em] text-zinc-300">
+                                <span className="inline-flex items-center rounded-full border border-zinc-700/70 bg-zinc-900/70 px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em] text-zinc-300">
                                     {String(ex.targetReps)} Reps
                                 </span>
                             ) : null}
@@ -444,7 +444,7 @@ export const SortableExerciseCard = React.memo(({
                                 event.stopPropagation();
                                 handleSupersetAction();
                             }}
-                            className={`flex h-8 w-8 items-center justify-center rounded-full border transition-colors ${isSuperseted ? 'border-violet-500/30 bg-violet-500/15 text-violet-200' : isLinkSource ? 'border-amber-400/30 bg-amber-500/15 text-amber-200' : 'border-white/8 bg-white/[0.04] text-zinc-400 hover:bg-white/[0.08] hover:text-white'}`}
+                            className={`flex h-8 w-8 items-center justify-center rounded-full border transition-colors ${isSuperseted ? 'border-violet-500/30 bg-violet-500/15 text-violet-200' : isLinkSource ? 'border-amber-400/30 bg-amber-500/15 text-amber-200' : 'border-zinc-700/80 bg-zinc-900/80 text-zinc-400 hover:border-zinc-500/70 hover:bg-zinc-800 hover:text-white'}`}
                             aria-label={isSuperseted ? (lang === 'es' ? 'Quitar superserie' : 'Remove superset') : (lang === 'es' ? 'Crear superserie' : 'Create superset')}
                         >
                             <Icon name={isSuperseted ? 'Unlink' : 'Link'} size={15} />
@@ -459,7 +459,7 @@ export const SortableExerciseCard = React.memo(({
                                     event.stopPropagation();
                                     setOpenMenuId(openMenuId === ex.instanceId ? null : ex.instanceId);
                                 }}
-                                className={`flex h-8 w-8 items-center justify-center rounded-full border transition-colors duration-fast ease-natural ${openMenuId === ex.instanceId ? 'border-white/10 bg-white/10 text-white' : 'border-white/8 bg-white/[0.04] text-zinc-400 hover:bg-white/[0.08] hover:text-white'}`}
+                                className={`flex h-8 w-8 items-center justify-center rounded-full border transition-colors duration-fast ease-natural ${openMenuId === ex.instanceId ? 'border-zinc-500/70 bg-zinc-800 text-white' : 'border-zinc-700/80 bg-zinc-900/80 text-zinc-400 hover:border-zinc-500/70 hover:bg-zinc-800 hover:text-white'}`}
                             >
                                 <Icon name="MoreVertical" size={18} />
                             </button>
