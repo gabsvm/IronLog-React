@@ -588,19 +588,6 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                         lastUpdated: now,
                     }, dirtySections);
                 })();
-                return;
-                const now = Date.now();
-                setLocalLastUpdated(now);
-                void syncService.flushQueue();
-                syncService.uploadState(user.uid, {
-                    program, activeMeso, exercises, logs,
-                    config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn },
-                    rpFeedback,
-                    userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods,
-                    email: user.email || null,
-                    lastUpdated: now,
-                    // activeSession intentionally omitted — Debounce A owns it.
-                });
             } else {
                 syncService.uploadUserIdentity(user.uid, user.email || "");
             }
@@ -609,49 +596,50 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     }, [user, subscription.isPro, program, activeMeso, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, rpFeedback, isAppLoading, hasCheckedSync, pendingCloudData, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, setLocalLastUpdated]);
 
     const confirmCloudSync = useCallback(() => {
-        if (pendingCloudData) {
-            console.log("📥 Applying Cloud Data...");
+        if (!pendingCloudData) return;
 
-            withDirtyTrackingSuppressed(() => {
-            // Apply all states
-            if (pendingCloudData.program) setProgram(pendingCloudData.program);
-            if (pendingCloudData.activeMeso) useStore.getState().setActiveMeso(pendingCloudData.activeMeso);
-            if (pendingCloudData.activeSession) useStore.getState().setActiveSession(pendingCloudData.activeSession);
-            if (pendingCloudData.exercises) setExercises(pendingCloudData.exercises);
-            if (pendingCloudData.logs) setLogs(pendingCloudData.logs);
-            if (pendingCloudData.rpFeedback) setRpFeedback(pendingCloudData.rpFeedback);
+        console.log("Applying newer cloud sections...");
+        void withDirtyTrackingSuppressed(async () => {
+            const cloudSyncMeta = ((pendingCloudData as Partial<AppState> & { syncMeta?: SectionSyncMeta }).syncMeta) || {};
 
-            if (pendingCloudData.config) {
+            if (pendingCloudSections.includes('program') && pendingCloudData.program) setProgram(pendingCloudData.program);
+            if (pendingCloudSections.includes('activeMeso') && pendingCloudData.activeMeso) useStore.getState().setActiveMeso(pendingCloudData.activeMeso);
+            if (pendingCloudSections.includes('exercises') && pendingCloudData.exercises) setExercises(pendingCloudData.exercises);
+            if (pendingCloudSections.includes('logs') && pendingCloudData.logs) setLogs(pendingCloudData.logs);
+            if (pendingCloudSections.includes('rpFeedback') && pendingCloudData.rpFeedback) setRpFeedback(pendingCloudData.rpFeedback);
+
+            if (pendingCloudSections.includes('config') && pendingCloudData.config) {
                 if (pendingCloudData.config.showRIR !== undefined) setShowRIR(pendingCloudData.config.showRIR);
                 if (pendingCloudData.config.rpEnabled !== undefined) setRpEnabled(pendingCloudData.config.rpEnabled);
                 if (pendingCloudData.config.rpTargetRIR !== undefined) setRpTargetRIR(pendingCloudData.config.rpTargetRIR);
                 if (pendingCloudData.config.keepScreenOn !== undefined) setKeepScreenOn(pendingCloudData.config.keepScreenOn);
             }
 
-            if (pendingCloudData.userProfile) setUserProfile(pendingCloudData.userProfile);
-            if (pendingCloudData.nutritionLogs) setNutritionLogs(pendingCloudData.nutritionLogs);
-            if (pendingCloudData.bodyLogs) setBodyLogs(pendingCloudData.bodyLogs);
-            if (pendingCloudData.macroGoals) setMacroGoals(pendingCloudData.macroGoals);
-            if (pendingCloudData.customFoods) setCustomFoods(pendingCloudData.customFoods);
+            if (pendingCloudSections.includes('userProfile') && pendingCloudData.userProfile) setUserProfile(pendingCloudData.userProfile);
+            if (pendingCloudSections.includes('nutritionLogs') && pendingCloudData.nutritionLogs) setNutritionLogs(pendingCloudData.nutritionLogs);
+            if (pendingCloudSections.includes('cardioSessions') && pendingCloudData.cardioSessions) setCardioSessions(pendingCloudData.cardioSessions);
+            if (pendingCloudSections.includes('nutritionGoal') && pendingCloudData.nutritionGoal) setNutritionGoal(pendingCloudData.nutritionGoal);
+            if (pendingCloudSections.includes('bodyLogs') && pendingCloudData.bodyLogs) setBodyLogs(pendingCloudData.bodyLogs);
+            if (pendingCloudSections.includes('macroGoals') && pendingCloudData.macroGoals) setMacroGoals(pendingCloudData.macroGoals);
+            if (pendingCloudSections.includes('customFoods') && pendingCloudData.customFoods) setCustomFoods(pendingCloudData.customFoods);
 
-            // Sync timestamp to prevent immediate re-upload of old local state
             setLocalLastUpdated(pendingCloudData.lastUpdated ?? Date.now());
-            setLocalSectionSyncMeta(((pendingCloudData as Partial<AppState> & { syncMeta?: SectionSyncMeta }).syncMeta) || {});
-            void dirtySyncState.clear();
+            setLocalSectionSyncMeta(prev => {
+                const next = { ...prev };
+                pendingCloudSections.forEach(section => {
+                    const cloudTs = cloudSyncMeta[section];
+                    if (typeof cloudTs === 'number') next[section] = cloudTs;
+                });
+                return next;
+            });
+            await dirtySyncState.clear(pendingCloudSections);
 
-            // Mark onboarding as complete
             setHasSeenOnboarding(true);
             setPendingCloudData(null);
             setPendingCloudSections([]);
-
-            // OPTIMIZATION: Instead of immediate reload, we let the reactive state handle it.
-            // We only reload if we detect critical inconsistencies or if the user is in a state where a refresh is better.
-            console.log("✅ Cloud Data Applied Reactively.");
-
-            // Optional: You could add a 'sync_completed' event or toast here.
-            });
-        }
-    }, [pendingCloudData, setProgram, setExercises, setLogs, setRpFeedback, setShowRIR, setRpEnabled, setLocalLastUpdated, setHasSeenOnboarding, setBodyLogs, setCustomFoods, setKeepScreenOn, setMacroGoals, setNutritionLogs, setRpTargetRIR, setUserProfile, setLocalSectionSyncMeta]);
+            console.log("Cloud sections applied.");
+        });
+    }, [pendingCloudData, pendingCloudSections, setProgram, setExercises, setLogs, setRpFeedback, setShowRIR, setRpEnabled, setLocalLastUpdated, setHasSeenOnboarding, setBodyLogs, setCustomFoods, setKeepScreenOn, setMacroGoals, setNutritionLogs, setRpTargetRIR, setUserProfile, setLocalSectionSyncMeta, setCardioSessions, setNutritionGoal]);
 
     const cancelCloudSync = useCallback(() => {
         setPendingCloudData(null);
