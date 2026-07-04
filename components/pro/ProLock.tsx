@@ -1,9 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { PaywallModal } from './PaywallModal';
 import { Icon } from '../ui/Icon';
 import { Button } from '../ui/Button';
+
+const PaywallModal = React.lazy(() => import('./PaywallModal').then(m => ({ default: m.PaywallModal })));
 
 interface ProLockProps {
     children: React.ReactNode;
@@ -37,7 +38,11 @@ export const ProLock: React.FC<ProLockProps> = ({ children, featureName, blur = 
                 </div>
             </div>
 
-            {showModal && <PaywallModal onClose={() => setShowModal(false)} feature={featureName} />}
+            {showModal && (
+                <Suspense fallback={null}>
+                    <PaywallModal onClose={() => setShowModal(false)} feature={featureName} />
+                </Suspense>
+            )}
         </div>
     );
 };

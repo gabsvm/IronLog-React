@@ -8,9 +8,7 @@ import { getTranslated } from '../utils';
 import { ActivityHeatmap } from '../components/stats/ActivityHeatmap';
 import { TutorialOverlay } from '../components/ui/TutorialOverlay';
 import { usePro } from '../hooks/usePro';
-import { PaywallModal } from '../components/pro/PaywallModal';
 import { GlobalTemplate, ProgramDay } from '../types';
-import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { triggerHaptic } from '../utils/audio';
 
 // Sub-components extracted in Phase 6.2
@@ -22,6 +20,9 @@ import { NextSessionCard } from './home/NextSessionCard';
 
 
 import { useStore } from '../lib/store';
+
+const PaywallModal = React.lazy(() => import('../components/pro/PaywallModal').then(m => ({ default: m.PaywallModal })));
+const ConfirmModal = React.lazy(() => import('../components/ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
 
 // --- MAIN COMPONENT ---
 
@@ -311,7 +312,11 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                         lang={lang}
                     />
                 )}
-                {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} feature={featureAttempted} />}
+                {showPaywall && (
+                    <Suspense fallback={null}>
+                        <PaywallModal onClose={() => setShowPaywall(false)} feature={featureAttempted} />
+                    </Suspense>
+                )}
             </div>
         );
     }
@@ -622,7 +627,11 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
 
             {/* --- MODALS --- */}
 
-            {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} feature={featureAttempted} />}
+            {showPaywall && (
+                <Suspense fallback={null}>
+                    <PaywallModal onClose={() => setShowPaywall(false)} feature={featureAttempted} />
+                </Suspense>
+            )}
 
             {/* Guidelines Modal */}
             <GuidelinesModal
@@ -632,16 +641,18 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
             />
 
             {/* Skip Confirmation */}
-            <ConfirmModal
-                isOpen={skipConfirmationId !== null}
-                title={t.skipDay}
-                description={t.skipDayConfirm}
-                onConfirm={confirmSkip}
-                onCancel={() => setSkipConfirmationId(null)}
-                confirmText={t.skip}
-                cancelText={t.cancel}
-                variant="danger"
-            />
+            <Suspense fallback={null}>
+                <ConfirmModal
+                    isOpen={skipConfirmationId !== null}
+                    title={t.skipDay}
+                    description={t.skipDayConfirm}
+                    onConfirm={confirmSkip}
+                    onCancel={() => setSkipConfirmationId(null)}
+                    confirmText={t.skip}
+                    cancelText={t.cancel}
+                    variant="danger"
+                />
+            </Suspense>
 
             {/* MESO SETTINGS MODAL */}
             {showMesoSettings && (

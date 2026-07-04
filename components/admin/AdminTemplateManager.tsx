@@ -1,13 +1,14 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Icon } from '../ui/Icon';
 import { GlobalTemplate, ProgramDay, ProgramSlot } from '../../types';
 import { TRANSLATIONS, MUSCLE_GROUPS } from '../../constants';
 import { INITIAL_TEMPLATES } from '../../data/defaultTemplates';
 import { ExerciseSelector } from '../ui/ExerciseSelector';
-import { ConfirmModal } from '../ui/ConfirmModal';
 import { getFirebaseFirestoreServices } from '../../lib/firebaseLoader';
+
+const ConfirmModal = React.lazy(() => import('../ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
 
 const SUPERSET_COLORS = [
     { border: 'border-l-orange-500', bg: 'bg-orange-500/5', text: 'text-orange-500' },
@@ -365,25 +366,27 @@ export const AdminTemplateManager: React.FC<{ onClose: () => void }> = ({ onClos
                     })}
                 </div>
 
-                <ConfirmModal
-                    isOpen={!!deleteTarget}
-                    title="Delete template"
-                    description={deleteTarget ? `Permanently delete "${deleteTarget.title.en}"? This affects ALL users.` : ''}
-                    confirmText="Delete"
-                    cancelText="Cancel"
-                    variant="danger"
-                    onConfirm={confirmDelete}
-                    onCancel={() => setDeleteTarget(null)}
-                />
-                <ConfirmModal
-                    isOpen={!!resetTarget}
-                    title="Reset to default"
-                    description={resetTarget ? `Discard all modifications to "${resetTarget.title.en}" and revert to the built-in version?` : ''}
-                    confirmText="Reset"
-                    cancelText="Cancel"
-                    onConfirm={confirmReset}
-                    onCancel={() => setResetTarget(null)}
-                />
+                <Suspense fallback={null}>
+                    <ConfirmModal
+                        isOpen={!!deleteTarget}
+                        title="Delete template"
+                        description={deleteTarget ? `Permanently delete "${deleteTarget.title.en}"? This affects ALL users.` : ''}
+                        confirmText="Delete"
+                        cancelText="Cancel"
+                        variant="danger"
+                        onConfirm={confirmDelete}
+                        onCancel={() => setDeleteTarget(null)}
+                    />
+                    <ConfirmModal
+                        isOpen={!!resetTarget}
+                        title="Reset to default"
+                        description={resetTarget ? `Discard all modifications to "${resetTarget.title.en}" and revert to the built-in version?` : ''}
+                        confirmText="Reset"
+                        cancelText="Cancel"
+                        onConfirm={confirmReset}
+                        onCancel={() => setResetTarget(null)}
+                    />
+                </Suspense>
                 <Toast />
             </div>
         );

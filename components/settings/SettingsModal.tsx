@@ -1,14 +1,15 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, Suspense } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { TRANSLATIONS } from '../../constants';
 import { Icon } from '../ui/Icon';
 import { Button } from '../ui/Button';
 import { usePro } from '../../hooks/usePro';
-import { PaywallModal } from '../pro/PaywallModal';
 import { AdminControlPanel } from './AdminControlPanel';
 import { PhilosophyModal } from '../ui/PhilosophyModal';
+
+const PaywallModal = React.lazy(() => import('../pro/PaywallModal').then(m => ({ default: m.PaywallModal })));
 
 interface SettingsModalProps {
     onClose: () => void;
@@ -383,7 +384,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     </>)}
                 </div>
             </div>
-            {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} feature={featureAttempted} />}
+            {showPaywall && (
+                <Suspense fallback={null}>
+                    <PaywallModal onClose={() => setShowPaywall(false)} feature={featureAttempted} />
+                </Suspense>
+            )}
             <PhilosophyModal isOpen={showPhilosophy} onClose={() => setShowPhilosophy(false)} lang={lang} />
         </div>
     );

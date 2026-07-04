@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { useApp } from '../context/AppContext';
 import { TRANSLATIONS, MUSCLE_GROUPS } from '../constants';
 import { Icon } from '../components/ui/Icon';
@@ -8,8 +8,9 @@ import { MuscleGroup, ExerciseDef } from '../types';
 import { getTranslated } from '../utils';
 import { Virtuoso } from 'react-virtuoso';
 import { ExerciseDetailModal } from '../components/ui/ExerciseDetailModal'; 
-import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { triggerHaptic } from '../utils/audio';
+
+const ConfirmModal = React.lazy(() => import('../components/ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
 
 interface ExercisesViewProps {
     onBack: () => void;
@@ -161,14 +162,16 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
             )}
 
             {/* Confirm Delete */}
-            <ConfirmModal 
-                isOpen={!!deleteId}
-                title={t.delete}
-                description={t.deleteConfirm}
-                onConfirm={handleDelete}
-                onCancel={() => setDeleteId(null)}
-                variant="danger"
-            />
+            <Suspense fallback={null}>
+                <ConfirmModal 
+                    isOpen={!!deleteId}
+                    title={t.delete}
+                    description={t.deleteConfirm}
+                    onConfirm={handleDelete}
+                    onCancel={() => setDeleteId(null)}
+                    variant="danger"
+                />
+            </Suspense>
         </div>
     );
 };

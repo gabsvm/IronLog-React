@@ -1,5 +1,5 @@
 ﻿
-import React, { useState, memo, useMemo, useDeferredValue, useCallback } from 'react';
+import React, { useState, memo, useMemo, useDeferredValue, useCallback, Suspense } from 'react';
 import { useApp } from '../context/AppContext';
 import { TRANSLATIONS } from '../constants';
 import { formatDate, formatHoursMinutes, getTranslated } from '../utils';
@@ -8,9 +8,10 @@ import { Log } from '../types';
 import { Virtuoso } from 'react-virtuoso';
 import { TutorialOverlay } from '../components/ui/TutorialOverlay';
 import { usePro } from '../hooks/usePro';
-import { PaywallModal } from '../components/pro/PaywallModal';
 import { Button } from '../components/ui/Button';
-import { ConfirmModal } from '../components/ui/ConfirmModal';
+
+const PaywallModal = React.lazy(() => import('../components/pro/PaywallModal').then(m => ({ default: m.PaywallModal })));
+const ConfirmModal = React.lazy(() => import('../components/ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
 
 // Helper to parse duration string "mm:ss" or number to string format
 const formatDurationDisplay = (val: string | number) => {
@@ -398,24 +399,28 @@ export const HistoryView: React.FC = () => {
             />
 
             {showPaywall && (
-                <PaywallModal onClose={() => setShowPaywall(false)} feature="history" />
+                <Suspense fallback={null}>
+                    <PaywallModal onClose={() => setShowPaywall(false)} feature="history" />
+                </Suspense>
             )}
 
             {deletingLogId !== null && (
-                <ConfirmModal
-                    isOpen={true}
-                    title={lang === 'en' ? "Delete Workout?" : "¿Eliminar Entrenamiento?"}
-                    description={lang === 'en' ? "This workout will be permanently deleted. This cannot be undone." : "Este entrenamiento se eliminará permanentemente. No se puede deshacer."}
-                    confirmText={lang === 'en' ? "Delete" : "Eliminar"}
-                    cancelText={t.cancel}
-                    onConfirm={() => {
-                        setLogs(prev => prev.filter(l => l.id !== deletingLogId));
-                        setDeletingLogId(null);
-                        setExpandedId(null);
-                    }}
-                    onCancel={() => setDeletingLogId(null)}
-                    variant="danger"
-                />
+                <Suspense fallback={null}>
+                    <ConfirmModal
+                        isOpen={true}
+                        title={lang === 'en' ? "Delete Workout?" : "¿Eliminar Entrenamiento?"}
+                        description={lang === 'en' ? "This workout will be permanently deleted. This cannot be undone." : "Este entrenamiento se eliminará permanentemente. No se puede deshacer."}
+                        confirmText={lang === 'en' ? "Delete" : "Eliminar"}
+                        cancelText={t.cancel}
+                        onConfirm={() => {
+                            setLogs(prev => prev.filter(l => l.id !== deletingLogId));
+                            setDeletingLogId(null);
+                            setExpandedId(null);
+                        }}
+                        onCancel={() => setDeletingLogId(null)}
+                        variant="danger"
+                    />
+                </Suspense>
             )}
         </div>
     );

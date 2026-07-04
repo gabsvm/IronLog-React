@@ -6,7 +6,6 @@ import { Icon } from '../components/ui/Icon';
 import { Button } from '../components/ui/Button';
 import { MuscleGroup, MesoType } from '../types';
 import { getTranslated } from '../utils';
-import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { triggerHaptic } from '../utils/audio';
 import { ProgramDay } from '../types';
 import { Sheet } from '../components/ui/Sheet';
@@ -14,6 +13,7 @@ import { useStore } from '../lib/store';
 
 const ExerciseSelector = React.lazy(() => import('../components/ui/ExerciseSelector').then(m => ({ default: m.ExerciseSelector })));
 const PDFImportModal = React.lazy(() => import('../components/ui/PDFImportModal').then(m => ({ default: m.PDFImportModal })));
+const ConfirmModal = React.lazy(() => import('../components/ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
 
 interface ProgramEditViewProps {
     onBack: () => void;
@@ -304,14 +304,16 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
                 </div>
             </Sheet>
 
-            <ConfirmModal 
-                isOpen={!!dayToDelete}
-                title={t.delete}
-                description={t.deleteConfirm}
-                onConfirm={handleDeleteDay}
-                onCancel={() => setDayToDelete(null)}
-                variant="danger"
-            />
+            <Suspense fallback={null}>
+                <ConfirmModal 
+                    isOpen={!!dayToDelete}
+                    title={t.delete}
+                    description={t.deleteConfirm}
+                    onConfirm={handleDeleteDay}
+                    onCancel={() => setDayToDelete(null)}
+                    variant="danger"
+                />
+            </Suspense>
 
             {showPDFImport && (
                 <Suspense fallback={null}>
