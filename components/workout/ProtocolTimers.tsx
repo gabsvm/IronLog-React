@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Icon } from '../ui/Icon';
 import { triggerHaptic, playTimerFinishSound } from '../../utils/audio';
@@ -6,11 +5,10 @@ import { triggerHaptic, playTimerFinishSound } from '../../utils/audio';
 const fmt = (s: number) =>
     s >= 60 ? `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}` : `${s}s`;
 
-// ── EMOM TIMER ────────────────────────────────────────────────────────────────
 interface EMOMTimerProps {
     totalSets: number;
     lang: 'en' | 'es';
-    onMinuteChange: (minute: number) => void; // 0 = idle, 1..N = active minute
+    onMinuteChange: (minute: number) => void;
 }
 
 export const EMOMTimer: React.FC<EMOMTimerProps> = ({ totalSets, lang, onMinuteChange }) => {
@@ -25,7 +23,10 @@ export const EMOMTimer: React.FC<EMOMTimerProps> = ({ totalSets, lang, onMinuteC
     totalSetsRef.current = totalSets;
 
     const clear = () => {
-        if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+        }
     };
 
     const tick = useCallback(() => {
@@ -41,13 +42,14 @@ export const EMOMTimer: React.FC<EMOMTimerProps> = ({ totalSets, lang, onMinuteC
             onMinuteChange(0);
             triggerHaptic('success');
             playTimerFinishSound();
-        } else {
-            minuteRef.current = next;
-            setMinute(next);
-            phaseStartRef.current = Date.now();
-            onMinuteChange(next);
-            triggerHaptic('heavy');
+            return;
         }
+
+        minuteRef.current = next;
+        setMinute(next);
+        phaseStartRef.current = Date.now();
+        onMinuteChange(next);
+        triggerHaptic('heavy');
     }, [onMinuteChange]);
 
     const start = useCallback(() => {
@@ -74,63 +76,70 @@ export const EMOMTimer: React.FC<EMOMTimerProps> = ({ totalSets, lang, onMinuteC
 
     useEffect(() => () => clear(), []);
 
-    const l = (en: string, es: string) => lang === 'en' ? en : es;
+    const l = (en: string, es: string) => (lang === 'en' ? en : es);
     const pct = ((60 - timeLeft) / 60) * 100;
     const urgent = timeLeft <= 10 && timeLeft > 0;
 
-    if (state === 'idle') return (
-        <div className="flex items-center gap-3 px-3 py-2.5 bg-cyan-500/10 border border-cyan-500/20 rounded-xl">
-            <Icon name="Timer" size={14} className="text-cyan-400 shrink-0" />
-            <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-black text-cyan-400 uppercase tracking-wider">
-                    EMOM · {totalSets} {l('rounds', 'rondas')}
-                </p>
-                <p className="text-[9px] text-cyan-700">{l('One set per minute — tap Start', 'Una serie por minuto — toca Iniciar')}</p>
+    if (state === 'idle') {
+        return (
+            <div className="flex items-center gap-3 rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 py-2.5">
+                <Icon name="Timer" size={14} className="shrink-0 text-cyan-400" />
+                <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-black uppercase tracking-wider text-cyan-400">
+                        EMOM - {totalSets} {l('rounds', 'rondas')}
+                    </p>
+                    <p className="text-[9px] text-cyan-700">
+                        {l('One set per minute - tap Start', 'Una serie por minuto - toca Iniciar')}
+                    </p>
+                </div>
+                <button
+                    onClick={start}
+                    className="flex shrink-0 items-center gap-1.5 rounded-lg bg-cyan-500 px-3 py-1.5 text-xs font-black text-white transition-all active:scale-95"
+                    aria-label="Play"
+                >
+                    <Icon name="Play" size={12} fill="currentColor" />
+                    {l('Start', 'Iniciar')}
+                </button>
             </div>
-            <button
-                onClick={start}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-500 text-white rounded-lg text-xs font-black active:scale-95 transition-all shrink-0"
-             aria-label="Play"> <Icon name="Play" size={12} fill="currentColor" />
-                {l('Start', 'Iniciar')}
-            </button>
-        </div>
-    );
+        );
+    }
 
-    if (state === 'done') return (
-        <div className="flex items-center gap-3 px-3 py-2.5 bg-green-500/10 border border-green-500/20 rounded-xl">
-            <Icon name="CheckCircle" size={14} className="text-green-400 shrink-0" />
-            <p className="text-[10px] font-black text-green-400 uppercase tracking-wider flex-1">
-                EMOM {l('complete', 'completo')} · {totalSets} {l('rounds done', 'rondas')}
-            </p>
-            <button onClick={stop} className="text-[10px] font-bold text-zinc-500 hover:text-white transition-colors px-2 py-1">
-                {l('Reset', 'Reiniciar')}
-            </button>
-        </div>
-    );
+    if (state === 'done') {
+        return (
+            <div className="flex items-center gap-3 rounded-xl border border-green-500/20 bg-green-500/10 px-3 py-2.5">
+                <Icon name="CheckCircle" size={14} className="shrink-0 text-green-400" />
+                <p className="flex-1 text-[10px] font-black uppercase tracking-wider text-green-400">
+                    EMOM {l('complete', 'completo')} - {totalSets} {l('rounds done', 'rondas')}
+                </p>
+                <button onClick={stop} className="px-2 py-1 text-[10px] font-bold text-zinc-500 transition-colors hover:text-white">
+                    {l('Reset', 'Reiniciar')}
+                </button>
+            </div>
+        );
+    }
 
-    // Running
     return (
-        <div className={`border rounded-xl overflow-hidden ${urgent ? 'bg-orange-500/10 border-orange-500/30' : 'bg-cyan-500/10 border-cyan-500/25'}`}>
-            <div className="flex items-center gap-2 px-3 pt-2 pb-0.5">
+        <div className={`overflow-hidden rounded-xl border ${urgent ? 'border-orange-500/30 bg-orange-500/10' : 'border-cyan-500/25 bg-cyan-500/10'}`}>
+            <div className="flex items-center gap-2 px-3 pb-0.5 pt-2">
                 <Icon name="Timer" size={13} className={urgent ? 'text-orange-400' : 'text-cyan-400'} />
-                <span className={`text-[10px] font-black uppercase tracking-wider flex-1 ${urgent ? 'text-orange-400' : 'text-cyan-400'}`}>
-                    EMOM · {l('Min', 'Min')} {minute} / {totalSets}
+                <span className={`flex-1 text-[10px] font-black uppercase tracking-wider ${urgent ? 'text-orange-400' : 'text-cyan-400'}`}>
+                    EMOM - {l('Min', 'Min')} {minute} / {totalSets}
                 </span>
                 <span className={`text-[9px] font-bold uppercase tracking-widest ${urgent ? 'text-orange-500' : 'text-cyan-600'}`}>
-                    {urgent ? l('GO NOW!', '¡AHORA!') : l('next set in', 'próxima serie en')}
+                    {urgent ? l('GO NOW', 'AHORA') : l('next set in', 'proxima serie en')}
                 </span>
                 <button
                     onClick={stop}
-                    className="ml-1 text-[10px] font-bold text-zinc-600 hover:text-white px-2 py-0.5 rounded-lg bg-zinc-800/80 transition-colors"
+                    className="ml-1 rounded-lg bg-zinc-800/80 px-2 py-0.5 text-[10px] font-bold text-zinc-600 transition-colors hover:text-white"
                 >
                     {l('Stop', 'Detener')}
                 </button>
             </div>
             <div className="px-3 pb-2">
-                <div className={`text-4xl font-black tabular-nums text-center py-0.5 tracking-tight ${urgent ? 'text-orange-300 animate-pulse' : 'text-cyan-200'}`}>
+                <div className={`py-0.5 text-center text-4xl font-black tracking-tight tabular-nums ${urgent ? 'animate-pulse text-orange-300' : 'text-cyan-200'}`}>
                     {fmt(timeLeft)}
                 </div>
-                <div className={`h-2 rounded-full overflow-hidden mt-1 ${urgent ? 'bg-orange-900/30' : 'bg-cyan-900/30'}`}>
+                <div className={`mt-1 h-2 overflow-hidden rounded-full ${urgent ? 'bg-orange-900/30' : 'bg-cyan-900/30'}`}>
                     <div
                         className={`h-full rounded-full transition-all duration-200 ${urgent ? 'bg-orange-400' : 'bg-cyan-400'}`}
                         style={{ width: `${pct}%` }}
@@ -141,7 +150,6 @@ export const EMOMTimer: React.FC<EMOMTimerProps> = ({ totalSets, lang, onMinuteC
     );
 };
 
-// ── TABATA TIMER ──────────────────────────────────────────────────────────────
 interface TabataTimerProps {
     totalRounds: number;
     lang: 'en' | 'es';
@@ -164,7 +172,10 @@ export const TabataTimer: React.FC<TabataTimerProps> = ({ totalRounds, lang }) =
     totalRoundsRef.current = totalRounds;
 
     const clear = () => {
-        if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+        }
     };
 
     const tick = useCallback(() => {
@@ -179,22 +190,24 @@ export const TabataTimer: React.FC<TabataTimerProps> = ({ totalRounds, lang }) =
             setPhase('rest');
             phaseStartRef.current = Date.now();
             triggerHaptic('medium');
-        } else {
-            const next = roundRef.current + 1;
-            if (next > totalRoundsRef.current) {
-                clear();
-                setState('done');
-                triggerHaptic('success');
-                playTimerFinishSound();
-            } else {
-                roundRef.current = next;
-                setRound(next);
-                phaseRef.current = 'work';
-                setPhase('work');
-                phaseStartRef.current = Date.now();
-                triggerHaptic('heavy');
-            }
+            return;
         }
+
+        const next = roundRef.current + 1;
+        if (next > totalRoundsRef.current) {
+            clear();
+            setState('done');
+            triggerHaptic('success');
+            playTimerFinishSound();
+            return;
+        }
+
+        roundRef.current = next;
+        setRound(next);
+        phaseRef.current = 'work';
+        setPhase('work');
+        phaseStartRef.current = Date.now();
+        triggerHaptic('heavy');
     }, []);
 
     const start = useCallback(() => {
@@ -223,64 +236,69 @@ export const TabataTimer: React.FC<TabataTimerProps> = ({ totalRounds, lang }) =
 
     useEffect(() => () => clear(), []);
 
-    const l = (en: string, es: string) => lang === 'en' ? en : es;
+    const l = (en: string, es: string) => (lang === 'en' ? en : es);
     const isWork = phase === 'work';
     const phaseDur = isWork ? WORK_SEC : REST_SEC;
     const pct = ((phaseDur - timeLeft) / phaseDur) * 100;
     const urgent = timeLeft <= 3;
 
-    if (state === 'idle') return (
-        <div className="flex items-center gap-3 px-3 py-2.5 bg-red-500/10 border border-red-500/20 rounded-xl">
-            <Icon name="Timer" size={14} className="text-red-400 shrink-0" />
-            <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-black text-red-400 uppercase tracking-wider">
-                    Tabata · {totalRounds} {l('rounds', 'rondas')}
-                </p>
-                <p className="text-[9px] text-red-700 font-mono">20s {l('work', 'trabajo')} / 10s {l('rest', 'descanso')}</p>
+    if (state === 'idle') {
+        return (
+            <div className="flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2.5">
+                <Icon name="Timer" size={14} className="shrink-0 text-red-400" />
+                <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-black uppercase tracking-wider text-red-400">
+                        Tabata - {totalRounds} {l('rounds', 'rondas')}
+                    </p>
+                    <p className="font-mono text-[9px] text-red-700">20s {l('work', 'trabajo')} / 10s {l('rest', 'descanso')}</p>
+                </div>
+                <button
+                    onClick={start}
+                    className="flex shrink-0 items-center gap-1.5 rounded-lg bg-red-500 px-3 py-1.5 text-xs font-black text-white transition-all active:scale-95"
+                    aria-label="Play"
+                >
+                    <Icon name="Play" size={12} fill="currentColor" />
+                    {l('Start', 'Iniciar')}
+                </button>
             </div>
-            <button
-                onClick={start}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500 text-white rounded-lg text-xs font-black active:scale-95 transition-all shrink-0"
-             aria-label="Play"> <Icon name="Play" size={12} fill="currentColor" />
-                {l('Start', 'Iniciar')}
-            </button>
-        </div>
-    );
+        );
+    }
 
-    if (state === 'done') return (
-        <div className="flex items-center gap-3 px-3 py-2.5 bg-green-500/10 border border-green-500/20 rounded-xl">
-            <Icon name="CheckCircle" size={14} className="text-green-400 shrink-0" />
-            <p className="text-[10px] font-black text-green-400 uppercase tracking-wider flex-1">
-                Tabata {l('complete', 'completo')} · {totalRounds} {l('rounds done', 'rondas')}
-            </p>
-            <button onClick={stop} className="text-[10px] font-bold text-zinc-500 hover:text-white transition-colors px-2 py-1">
-                {l('Reset', 'Reiniciar')}
-            </button>
-        </div>
-    );
+    if (state === 'done') {
+        return (
+            <div className="flex items-center gap-3 rounded-xl border border-green-500/20 bg-green-500/10 px-3 py-2.5">
+                <Icon name="CheckCircle" size={14} className="shrink-0 text-green-400" />
+                <p className="flex-1 text-[10px] font-black uppercase tracking-wider text-green-400">
+                    Tabata {l('complete', 'completo')} - {totalRounds} {l('rounds done', 'rondas')}
+                </p>
+                <button onClick={stop} className="px-2 py-1 text-[10px] font-bold text-zinc-500 transition-colors hover:text-white">
+                    {l('Reset', 'Reiniciar')}
+                </button>
+            </div>
+        );
+    }
 
-    // Running
     return (
-        <div className={`border rounded-xl overflow-hidden ${isWork ? 'bg-red-500/10 border-red-500/25' : 'bg-blue-500/10 border-blue-500/25'}`}>
-            <div className="flex items-center gap-2 px-3 pt-2 pb-0.5">
-                <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded shrink-0 ${isWork ? 'bg-red-500 text-white' : 'bg-blue-500 text-white'}`}>
+        <div className={`overflow-hidden rounded-xl border ${isWork ? 'border-red-500/25 bg-red-500/10' : 'border-blue-500/25 bg-blue-500/10'}`}>
+            <div className="flex items-center gap-2 px-3 pb-0.5 pt-2">
+                <span className={`shrink-0 rounded px-2 py-0.5 text-[9px] font-black uppercase tracking-widest ${isWork ? 'bg-red-500 text-white' : 'bg-blue-500 text-white'}`}>
                     {isWork ? l('WORK', 'TRABAJO') : l('REST', 'DESCANSO')}
                 </span>
-                <span className={`text-[10px] font-bold uppercase tracking-wider flex-1 ${isWork ? 'text-red-400' : 'text-blue-400'}`}>
+                <span className={`flex-1 text-[10px] font-bold uppercase tracking-wider ${isWork ? 'text-red-400' : 'text-blue-400'}`}>
                     {l('Round', 'Ronda')} {round} / {totalRounds}
                 </span>
                 <button
                     onClick={stop}
-                    className="text-[10px] font-bold text-zinc-600 hover:text-white px-2 py-0.5 rounded-lg bg-zinc-800/80 transition-colors"
+                    className="rounded-lg bg-zinc-800/80 px-2 py-0.5 text-[10px] font-bold text-zinc-600 transition-colors hover:text-white"
                 >
                     {l('Stop', 'Detener')}
                 </button>
             </div>
             <div className="px-3 pb-2">
-                <div className={`text-4xl font-black tabular-nums text-center py-0.5 tracking-tight ${urgent ? 'animate-pulse' : ''} ${isWork ? 'text-red-200' : 'text-blue-200'}`}>
+                <div className={`py-0.5 text-center text-4xl font-black tracking-tight tabular-nums ${urgent ? 'animate-pulse' : ''} ${isWork ? 'text-red-200' : 'text-blue-200'}`}>
                     {timeLeft}s
                 </div>
-                <div className={`h-2 rounded-full overflow-hidden mt-1 ${isWork ? 'bg-red-900/30' : 'bg-blue-900/30'}`}>
+                <div className={`mt-1 h-2 overflow-hidden rounded-full ${isWork ? 'bg-red-900/30' : 'bg-blue-900/30'}`}>
                     <div
                         className={`h-full rounded-full transition-all duration-200 ${isWork ? 'bg-red-400' : 'bg-blue-400'}`}
                         style={{ width: `${pct}%` }}

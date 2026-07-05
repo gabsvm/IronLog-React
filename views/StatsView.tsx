@@ -106,6 +106,10 @@ export const StatsView: React.FC = () => {
     }, [exercises, safeLogs]);
 
     const currentEx = selectedExId ? exerciseMetaById.get(String(selectedExId)) : null;
+    const selectedExAvailable = useMemo(() => {
+        if (!selectedExId) return false;
+        return availableExercises.some(ex => String(ex.id) === String(selectedExId));
+    }, [availableExercises, selectedExId]);
 
     useEffect(() => {
         let cancelled = false;
@@ -124,6 +128,19 @@ export const StatsView: React.FC = () => {
     useEffect(() => {
         void statsCache.writeSelectedExercise(selectedExId);
     }, [selectedExId]);
+
+    useEffect(() => {
+        if (availableExercises.length === 0) {
+            if (selectedExId !== null) {
+                setSelectedExId(null);
+            }
+            return;
+        }
+
+        if (!selectedExId || !selectedExAvailable || !currentEx) {
+            setSelectedExId(String(availableExercises[0]!.id));
+        }
+    }, [availableExercises, currentEx, selectedExAvailable, selectedExId]);
 
     useEffect(() => {
         if (!currentEx) return;
@@ -163,9 +180,6 @@ export const StatsView: React.FC = () => {
                     .filter(Boolean);
 
                 setAvailableExercises(sortedExs);
-                if (!selectedExId && sortedExs.length > 0) {
-                    setSelectedExId(String(sortedExs[0]!.id));
-                }
                 setLoadingOverview(false);
             }
 
@@ -198,10 +212,6 @@ export const StatsView: React.FC = () => {
                 .filter(Boolean);
 
             setAvailableExercises(sortedExs);
-
-            if (!selectedExId && sortedExs.length > 0) {
-                setSelectedExId(String(sortedExs[0]!.id));
-            }
 
             await statsCache.writeOverview(logsSignature, mesoId, {
                 volumeData,
@@ -246,7 +256,7 @@ export const StatsView: React.FC = () => {
 
     const filteredExercises = useMemo(() => {
         return availableExercises.filter(ex =>
-            getTranslated(ex.name, lang).toLowerCase().includes(pickerSearch.toLowerCase())
+            String(getTranslated(ex.name, lang) || '').toLowerCase().includes(pickerSearch.toLowerCase())
         );
     }, [availableExercises, pickerSearch, lang]);
 

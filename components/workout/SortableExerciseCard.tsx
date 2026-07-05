@@ -7,6 +7,7 @@ import { MuscleTag } from './MuscleTag';
 import { ExerciseCardStats } from './ExerciseCardStats';
 import { ExerciseCardMenu } from './ExerciseCardMenu';
 import { ExerciseCardSets } from './ExerciseCardSets';
+import { ExerciseProtocolBanners } from './ExerciseProtocolBanners';
 import { getTranslated, roundWeight } from '../../utils';
 import { triggerHaptic, playTimerFinishSound } from '../../utils/audio';
 
@@ -64,6 +65,7 @@ export const SortableExerciseCard = React.memo(({
     tutorialId,
 }: SortableExerciseCardProps) => {
     const [exDoneFlash, setExDoneFlash] = useState(false);
+    const [activeEmomMinute, setActiveEmomMinute] = useState(0);
 
     const {
         attributes,
@@ -229,6 +231,10 @@ export const SortableExerciseCard = React.memo(({
     const hasTopBackoff = isProtocol && regularSets.some((set) => set.type === 'top') && regularSets.some((set) => set.type === 'backoff');
     const isTabata = isCardio && cardioMode === 'tabata';
     const isHIIT = isCardio && cardioMode === 'hiit';
+    const isRestPause = isProtocol && regularSets.length > 0 && regularSets.every((set) => set.type === 'rest_pause');
+    const isDrop = isProtocol && regularSets.length > 0 && regularSets.every((set) => set.type === 'drop');
+    const isTimeVolume = isProtocol && regularSets.length > 0 && regularSets.every((set) => set.type === 'time_volume');
+    const isTripleAdd = isProtocol && regularSets.length > 0 && regularSets.every((set) => set.type === 'triple_add');
     const isSpecialProtocol = isEMOM || isMyorep || isCluster || isGiant;
     const nextSetIdx = (!isSpecialProtocol && !isTabata && !isHIIT) ? regularSets.findIndex((set) => !set.completed) : -1;
 
@@ -486,6 +492,26 @@ export const SortableExerciseCard = React.memo(({
                 </div>
 
                 <div className="mt-2">
+                    {(isEMOM || isMyorep || isCluster || isGiant || isRestPause || isDrop || isTimeVolume || isTripleAdd || hasTopBackoff || isTabata || isHIIT) && (
+                        <div className="mb-2">
+                            <ExerciseProtocolBanners
+                                lang={lang}
+                                totalSets={regularSets.length}
+                                isEMOM={isEMOM}
+                                isMyorep={isMyorep}
+                                isCluster={isCluster}
+                                isGiant={isGiant}
+                                isRestPause={isRestPause}
+                                isDrop={isDrop}
+                                isTimeVolume={isTimeVolume}
+                                isTripleAdd={isTripleAdd}
+                                hasTopBackoff={hasTopBackoff}
+                                isTabata={isTabata}
+                                isHIIT={isHIIT}
+                                onEmomMinuteChange={setActiveEmomMinute}
+                            />
+                        </div>
+                    )}
                     <ExerciseCardStats
                         completedCount={completedCount}
                         totalSets={regularSets.length}
@@ -506,7 +532,7 @@ export const SortableExerciseCard = React.memo(({
                 isMyorep={isMyorep}
                 isCluster={isCluster}
                 isSpecialProtocol={isSpecialProtocol}
-                activeEmomMinute={0}
+                activeEmomMinute={activeEmomMinute}
                 nextSetIdx={nextSetIdx}
                 setBadgeLabels={setBadgeLabels}
                 onSetUpdate={onSetUpdate}

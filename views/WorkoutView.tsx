@@ -55,6 +55,7 @@ const SET_TYPE_ICONS: Record<string, string> = {
 };
 const CORE_SET_TYPES: SetType[] = ['regular', 'warmup', 'drop', 'myorep', 'top', 'backoff'];
 const ADVANCED_SET_TYPES: SetType[] = ['giant', 'cluster', 'emom', 'rest_pause'];
+const MANUAL_REST_PRESETS = [60, 90, 120, 180] as const;
 
 // Container Component
 export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, onBack }) => {
@@ -71,6 +72,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
     const ctrl = useWorkoutController(onFinish, onDiscard);
 
     const [showAdvancedSetTypes, setShowAdvancedSetTypes] = useState(false);
+    const [manualRestPreset, setManualRestPreset] = useState<number>(90);
 
     // Set type modal: apply-to-all toggle defaults ON when all sets share the same type
     const [applyToAll, setApplyToAll] = useState(true);
@@ -212,21 +214,43 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
         };
     }, [sessionExercises]);
 
+    const hasWorkoutProgress = useMemo(() => {
+        if ((activeSession.note || '').trim().length > 0) return true;
+
+        return sessionExercises.some(exercise =>
+            (exercise.sets || []).some(set =>
+                set.completed ||
+                !!String(set.weight || '').trim() ||
+                !!String(set.reps || '').trim() ||
+                !!String(set.rpe || '').trim() ||
+                !!String(set.duration || '').trim() ||
+                !!String(set.distance || '').trim()
+            )
+        );
+    }, [activeSession.note, sessionExercises]);
+
     const { completedSets, totalWorkingSets, remainingSets, progressPct } = workoutStats;
     const quickAccessExercise = useMemo(() => {
         return sessionExercises.find(ex => ex.sets.some(set => !set.completed && set.type !== 'warmup')) || sessionExercises[0] || null;
     }, [sessionExercises]);
-    const startManualRest = useCallback((duration = 90) => {
+    const startManualRest = useCallback((duration = manualRestPreset) => {
         setRestTimer({
             active: true,
             duration,
             timeLeft: duration,
             endAt: Date.now() + duration * 1000,
         });
-    }, [setRestTimer]);
+    }, [manualRestPreset, setRestTimer]);
     const stopRest = useCallback(() => {
         setRestTimer(prev => ({ ...prev, active: false, timeLeft: 0, endAt: 0 }));
     }, [setRestTimer]);
+    const cycleManualRestPreset = useCallback(() => {
+        setManualRestPreset((prev) => {
+            const currentIndex = MANUAL_REST_PRESETS.indexOf(prev as typeof MANUAL_REST_PRESETS[number]);
+            const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % MANUAL_REST_PRESETS.length : 0;
+            return MANUAL_REST_PRESETS[nextIndex];
+        });
+    }, []);
 
     const showStageInfo = stageConfig && (config.showRIR || stageConfig.label === 'recovery');
 
@@ -261,6 +285,18 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
         }
     ];
 
+    useEffect(() => {
+        if (!hasWorkoutProgress) return;
+
+        const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+            event.preventDefault();
+            event.returnValue = '';
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [hasWorkoutProgress]);
+
     return (
         <div className="fixed inset-0 z-40 flex flex-col bg-black font-sans" onClick={() => ctrl.setOpenMenuId(null)}>
 
@@ -282,7 +318,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                 if (restTimer.active) {
                                     stopRest();
                                 } else {
-                                    startManualRest();
+                                    startManualRest(manualRestPreset);
                                 }
                             }}
                             className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold tabular-nums transition-colors ${
@@ -292,14 +328,30 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                             }`}
                             title={restTimer.active
                                 ? (lang === 'es' ? 'Finalizar descanso' : 'Stop rest')
-                                : (lang === 'es' ? 'Iniciar descanso de 90s' : 'Start 90s rest')}
+                                : (lang === 'es' ? `Iniciar descanso de ${manualRestPreset}s` : `Start ${manualRestPreset}s rest`)}
                         >
                             <Icon name="Timer" size={11} />
-                            {restTimer.active ? formatSeconds(restTimer.timeLeft) : '90s'}
+                            {restTimer.active ? formatSeconds(restTimer.timeLeft) : `${manualRestPreset}s`}
                         </button>
+                        {!restTimer.active && (
+                            <button
+                                type="button"
+                                onClick={(event) => {
+                                    event.stopPropagation();
+                                    cycleManualRestPreset();
+                                }}
+                                className="inline-flex items-center gap-1 rounded-full bg-zinc-900 px-2 py-1 text-[10px] font-semibold text-zinc-400 transition-colors hover:text-white"
+                                title={lang === 'es' ? 'Cambiar preset de descanso' : 'Change rest preset'}
+                            >
+                                <Icon name="RotateCw" size={11} />
+                                {manualRestPreset / 60 >= 1 ? `${manualRestPreset / 60}m` : `${manualRestPreset}s`}
+                            </button>
+                        )}
                         {totalWorkingSets > 0 && (
                             <div className={`rounded-full px-2 py-1 text-[10px] font-semibold tabular-nums transition-colors ${remainingSets === 0 ? 'bg-green-500/20 text-green-400' : 'bg-zinc-800 text-zinc-300'}`}>
-                                {remainingSets === 0 ? (lang === 'es' ? 'listo' : 'done') : `${remainingSets} left`}
+                                {remainingSets === 0
+                                    ? (lang === 'es' ? 'listo' : 'done')
+                                    : `${remainingSets} ${lang === 'es' ? 'restantes' : 'left'}`}
                             </div>
                         )}
                     </div>
@@ -318,7 +370,9 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
 
                 <div className="px-4 pb-2 pt-1">
                     <h1 className="mb-1 truncate text-[1.35rem] font-black leading-[0.98] tracking-[-0.05em] text-white">
-                        {isCalisthenicsSession ? 'Calisthenics Session' : activeSession.name}
+                        {isCalisthenicsSession
+                            ? (lang === 'es' ? 'Sesion de Calistenia' : 'Calisthenics Session')
+                            : activeSession.name}
                     </h1>
 
                     <div className="flex flex-wrap items-center gap-1.5">

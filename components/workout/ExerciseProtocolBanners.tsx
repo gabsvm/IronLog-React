@@ -9,17 +9,16 @@ interface Props {
     isMyorep: boolean;
     isCluster: boolean;
     isGiant: boolean;
+    isRestPause: boolean;
+    isDrop: boolean;
+    isTimeVolume: boolean;
+    isTripleAdd: boolean;
     hasTopBackoff: boolean;
     isTabata: boolean;
     isHIIT: boolean;
     onEmomMinuteChange: (m: number) => void;
 }
 
-/**
- * Per-protocol banners + interactive timers shown under the ExerciseCard
- * header. Pure presentational — no business logic. Splits out 50+ lines of
- * conditional JSX from the parent card.
- */
 export const ExerciseProtocolBanners: React.FC<Props> = ({
     lang,
     totalSets,
@@ -27,6 +26,10 @@ export const ExerciseProtocolBanners: React.FC<Props> = ({
     isMyorep,
     isCluster,
     isGiant,
+    isRestPause,
+    isDrop,
+    isTimeVolume,
+    isTripleAdd,
     hasTopBackoff,
     isTabata,
     isHIIT,
@@ -37,52 +40,88 @@ export const ExerciseProtocolBanners: React.FC<Props> = ({
             <EMOMTimer totalSets={totalSets} lang={lang} onMinuteChange={onEmomMinuteChange} />
         )}
         {isMyorep && (
-            <div className="flex items-center gap-2 px-2 py-1.5 bg-purple-500/10 border border-purple-500/20 rounded-xl">
+            <div className="flex items-center gap-2 rounded-xl border border-purple-500/20 bg-purple-500/10 px-2 py-1.5">
                 <Icon name="Repeat" size={12} className="text-purple-400" />
-                <span className="text-[10px] font-bold text-purple-400 uppercase tracking-wider">Myo-rep</span>
-                <span className="text-[10px] text-purple-600 ml-0.5">
-                    {lang === 'es' ? '· Serie 1 = activación' : '· Set 1 = activation'}
+                <span className="text-[10px] font-bold uppercase tracking-wider text-purple-400">Myo-rep</span>
+                <span className="ml-0.5 text-[10px] text-purple-600">
+                    {lang === 'es' ? 'Set 1 = activacion' : 'Set 1 = activation'}
                 </span>
-                <span className="ml-auto text-[10px] text-purple-600 tabular-nums">{totalSets - 1} mini</span>
+                <span className="ml-auto text-[10px] tabular-nums text-purple-600">{totalSets - 1} mini</span>
             </div>
         )}
         {isCluster && (
-            <div className="flex items-center gap-2 px-2 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+            <div className="flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-2 py-1.5">
                 <Icon name="Grid3x3" size={12} className="text-emerald-400" />
-                <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Cluster</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Cluster</span>
                 <span className="ml-1 text-[10px] text-emerald-600">
-                    {lang === 'es' ? '· ~15s entre clusters' : '· ~15s intra-set rest'}
+                    {lang === 'es' ? '~15s entre clusters' : '~15s intra-set rest'}
                 </span>
             </div>
         )}
         {isGiant && (
-            <div className="flex items-center gap-2 px-2 py-1.5 bg-orange-500/10 border border-orange-500/20 rounded-xl">
+            <div className="flex items-center gap-2 rounded-xl border border-orange-500/20 bg-orange-500/10 px-2 py-1.5">
                 <Icon name="Layers" size={12} className="text-orange-400" />
-                <span className="text-[10px] font-bold text-orange-400 uppercase tracking-wider">Giant Set</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-orange-400">Giant Set</span>
                 <span className="ml-1 text-[10px] text-orange-600">
-                    {lang === 'es' ? '· Reps altas al fallo' : '· High reps to failure'}
+                    {lang === 'es' ? 'Reps altas al fallo' : 'High reps to failure'}
+                </span>
+            </div>
+        )}
+        {isRestPause && (
+            <div className="flex items-center gap-2 rounded-xl border border-rose-500/20 bg-rose-500/10 px-2 py-1.5">
+                <Icon name="Pause" size={12} className="text-rose-400" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-rose-400">Rest Pause</span>
+                <span className="ml-1 text-[10px] text-rose-600">
+                    {lang === 'es' ? 'Auto rest de 20s' : '20s auto rest'}
+                </span>
+            </div>
+        )}
+        {isDrop && (
+            <div className="flex items-center gap-2 rounded-xl border border-teal-500/20 bg-teal-500/10 px-2 py-1.5">
+                <Icon name="TrendingDown" size={12} className="text-teal-400" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-teal-400">Drop Set</span>
+                <span className="ml-1 text-[10px] text-teal-600">
+                    {lang === 'es' ? 'Sin descanso entre drops' : 'No rest between drops'}
+                </span>
+            </div>
+        )}
+        {isTimeVolume && (
+            <div className="flex items-center gap-2 rounded-xl border border-sky-500/20 bg-sky-500/10 px-2 py-1.5">
+                <Icon name="Timer" size={12} className="text-sky-400" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-sky-400">Time Volume</span>
+                <span className="ml-1 text-[10px] text-sky-600">
+                    {lang === 'es' ? 'Descansos cortos de 10s' : '10s short rests'}
+                </span>
+            </div>
+        )}
+        {isTripleAdd && (
+            <div className="flex items-center gap-2 rounded-xl border border-indigo-500/20 bg-indigo-500/10 px-2 py-1.5">
+                <Icon name="Layers" size={12} className="text-indigo-400" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-400">Triple Add</span>
+                <span className="ml-1 text-[10px] text-indigo-600">
+                    {lang === 'es' ? 'Bloques con 10s entre cambios' : '10s between phases'}
                 </span>
             </div>
         )}
         {hasTopBackoff && (
-            <div className="flex items-center gap-1.5 px-2 py-1.5 bg-zinc-800/80 border border-zinc-700/50 rounded-xl">
-                <span className="text-[9px] font-black text-red-400 bg-red-500/15 px-1.5 py-0.5 rounded">T</span>
+            <div className="flex items-center gap-1.5 rounded-xl border border-zinc-700/50 bg-zinc-800/80 px-2 py-1.5">
+                <span className="rounded bg-red-500/15 px-1.5 py-0.5 text-[9px] font-black text-red-400">T</span>
                 <Icon name="ArrowRight" size={10} className="text-zinc-600" />
-                <span className="text-[9px] font-black text-blue-400 bg-blue-500/15 px-1.5 py-0.5 rounded">B</span>
-                <span className="text-[10px] font-bold text-zinc-500 ml-1">
+                <span className="rounded bg-blue-500/15 px-1.5 py-0.5 text-[9px] font-black text-blue-400">B</span>
+                <span className="ml-1 text-[10px] font-bold text-zinc-500">
                     {lang === 'es' ? 'Top / Back-off' : 'Top / Back-off Protocol'}
                 </span>
             </div>
         )}
         {isTabata && <TabataTimer totalRounds={totalSets} lang={lang} />}
         {isHIIT && (
-            <div className="flex items-center gap-2 px-2 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+            <div className="flex items-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 px-2 py-1.5">
                 <Icon name="Zap" size={12} className="text-amber-400" />
-                <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">HIIT</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400">HIIT</span>
                 <span className="ml-1 text-[10px] text-amber-600">
-                    {lang === 'es' ? '· Intervalos alta intensidad' : '· High intensity intervals'}
+                    {lang === 'es' ? 'Intervalos de alta intensidad' : 'High intensity intervals'}
                 </span>
-                <span className="ml-auto text-[10px] text-amber-600 tabular-nums">{totalSets}</span>
+                <span className="ml-auto text-[10px] tabular-nums text-amber-600">{totalSets}</span>
             </div>
         )}
     </>

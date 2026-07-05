@@ -6,6 +6,12 @@ import { requestBackgroundSync, requestPeriodicSync } from './services/backgroun
 
 console.log("Starting App Initialization...");
 
+const notifyUpdateAvailable = (registration: ServiceWorkerRegistration) => {
+  window.dispatchEvent(new CustomEvent('ironlog:update-available', {
+    detail: { registration },
+  }));
+};
+
 const registerServiceWorker = () => {
   if (!('serviceWorker' in navigator)) return;
 
@@ -17,7 +23,7 @@ const registerServiceWorker = () => {
           console.log('ServiceWorker registration successful with scope:', registration.scope);
 
           if (registration.waiting) {
-            registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+            notifyUpdateAvailable(registration);
           }
 
           registration.addEventListener('updatefound', () => {
@@ -26,7 +32,7 @@ const registerServiceWorker = () => {
 
             worker.addEventListener('statechange', () => {
               if (worker.state === 'installed' && navigator.serviceWorker.controller) {
-                worker.postMessage({ type: 'SKIP_WAITING' });
+                notifyUpdateAvailable(registration);
               }
             });
           });
@@ -42,6 +48,15 @@ const registerServiceWorker = () => {
 };
 
 registerServiceWorker();
+
+if ('serviceWorker' in navigator) {
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshing) return;
+    refreshing = true;
+    window.location.reload();
+  });
+}
 
 window.addEventListener('online', () => {
   void requestBackgroundSync();

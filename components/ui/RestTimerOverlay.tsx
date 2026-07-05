@@ -100,6 +100,16 @@ export const RestTimerOverlay: React.FC = () => {
         triggerHaptic('medium');
         setRestTimer(p => ({ ...p, active: false, timeLeft: 0, endAt: 0 }));
     };
+    const setQuickTimer = (seconds: number) => {
+        triggerHaptic('light');
+        setRestTimer(p => ({
+            ...p,
+            active: true,
+            duration: seconds,
+            timeLeft: seconds,
+            endAt: Date.now() + seconds * 1000,
+        }));
+    };
 
     // ─── Minimized: floating glass pill bottom-right ──────────────────────
     if (minimized) {
@@ -190,6 +200,17 @@ export const RestTimerOverlay: React.FC = () => {
                         />
 
                         <div className="flex-1 flex flex-col gap-2.5">
+                            <div className="grid grid-cols-3 gap-2">
+                                {[30, 60, 90].map((seconds) => (
+                                    <button
+                                        key={seconds}
+                                        onClick={() => setQuickTimer(seconds)}
+                                        className="rounded-2xl border border-white/5 bg-white/5 py-2 text-xs font-bold text-zinc-300 transition-all active:scale-95 hover:bg-white/10"
+                                    >
+                                        {seconds}s
+                                    </button>
+                                ))}
+                            </div>
                             <button
                                 onClick={() => adjustTimer(30)}
                                 className="flex items-center justify-center gap-1.5 py-3 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 text-sm font-bold text-zinc-200 transition-all active:scale-95"

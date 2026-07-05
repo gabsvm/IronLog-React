@@ -1,5 +1,4 @@
-
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Icon } from '../ui/Icon';
 
 const formatWorkoutElapsed = (seconds: number) => {
@@ -17,20 +16,52 @@ const formatWorkoutElapsed = (seconds: number) => {
 
 export const WorkoutTimer: React.FC<{ startTime: number | null }> = ({ startTime }) => {
     const [now, setNow] = useState(() => Date.now());
+    const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
+        const clearTick = () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+                timeoutRef.current = null;
+            }
+        };
+
         if (!startTime) {
+            clearTick();
             setNow(Date.now());
             return;
         }
 
-        setNow(Date.now());
+        const syncNow = () => setNow(Date.now());
+        const scheduleTick = () => {
+            clearTick();
+            const delay = 1000 - (Date.now() % 1000);
+            timeoutRef.current = setTimeout(() => {
+                syncNow();
+                scheduleTick();
+            }, delay);
+        };
 
-        const interval = setInterval(() => {
-            setNow(Date.now());
-        }, 1000);
+        const handleVisibilityRefresh = () => {
+            syncNow();
+            if (document.visibilityState === 'visible') {
+                scheduleTick();
+            }
+        };
 
-        return () => clearInterval(interval);
+        syncNow();
+        scheduleTick();
+
+        window.addEventListener('focus', handleVisibilityRefresh);
+        window.addEventListener('pageshow', handleVisibilityRefresh);
+        document.addEventListener('visibilitychange', handleVisibilityRefresh);
+
+        return () => {
+            clearTick();
+            window.removeEventListener('focus', handleVisibilityRefresh);
+            window.removeEventListener('pageshow', handleVisibilityRefresh);
+            document.removeEventListener('visibilitychange', handleVisibilityRefresh);
+        };
     }, [startTime]);
 
     const elapsed = startTime ? Math.floor((now - startTime) / 1000) : 0;

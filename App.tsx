@@ -91,6 +91,8 @@ const AppContent = () => {
     const [isSyncing, setIsSyncing] = useState(false);
     const [showMesoCompleteModal, setShowMesoCompleteModal] = useState(false);
     const [showCommandPalette, setShowCommandPalette] = useState(false);
+    const [updateRegistration, setUpdateRegistration] = useState<ServiceWorkerRegistration | null>(null);
+    const [dismissedUpdate, setDismissedUpdate] = useState(false);
 
     // Custom Modals State
     const [importData, setImportData] = useState<any>(null);
@@ -105,6 +107,18 @@ const AppContent = () => {
         };
         window.addEventListener('ironlog:sync-truncated', handler);
         return () => window.removeEventListener('ironlog:sync-truncated', handler);
+    }, []);
+
+    useEffect(() => {
+        const handleUpdateAvailable = (event: Event) => {
+            const registration = (event as CustomEvent<{ registration?: ServiceWorkerRegistration }>).detail?.registration;
+            if (!registration) return;
+            setDismissedUpdate(false);
+            setUpdateRegistration(registration);
+        };
+
+        window.addEventListener('ironlog:update-available', handleUpdateAvailable);
+        return () => window.removeEventListener('ironlog:update-available', handleUpdateAvailable);
     }, []);
 
     const setView = useCallback((newView: typeof view) => {
@@ -476,6 +490,36 @@ const AppContent = () => {
                                 : `Cloud history capped at ${syncTruncatedWarning.kept} of ${syncTruncatedWarning.total} sessions. Local history is complete.`}
                         </span>
                         <button onClick={() => setSyncTruncatedWarning(null)} className="text-amber-400 hover:text-white transition-colors">
+                            <Icon name="X" size={16} />
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {updateRegistration && !dismissedUpdate && (
+                <div className="fixed top-safe left-0 right-0 z-[210] flex justify-center px-4 pt-3 pointer-events-none">
+                    <div className="pointer-events-auto flex items-center gap-3 bg-zinc-950/95 border border-primary-500/30 text-zinc-100 text-xs font-semibold px-4 py-3 rounded-2xl shadow-xl backdrop-blur-md max-w-md w-full">
+                        <Icon name="Download" size={16} className="text-primary-400 shrink-0" />
+                        <span className="flex-1">
+                            {lang === 'es'
+                                ? 'Hay una nueva version lista. Actualiza para cargar los cambios mas recientes.'
+                                : 'A new version is ready. Update to load the latest changes.'}
+                        </span>
+                        <button
+                            onClick={() => {
+                                const target = updateRegistration.waiting || updateRegistration.installing;
+                                if (!target) return;
+                                target.postMessage({ type: 'SKIP_WAITING' });
+                            }}
+                            className="rounded-xl bg-primary-500 px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-black transition-colors hover:bg-primary-400"
+                        >
+                            {lang === 'es' ? 'Actualizar' : 'Update'}
+                        </button>
+                        <button
+                            onClick={() => setDismissedUpdate(true)}
+                            className="text-zinc-500 hover:text-white transition-colors"
+                            aria-label={lang === 'es' ? 'Cerrar aviso de actualizacion' : 'Dismiss update notice'}
+                        >
                             <Icon name="X" size={16} />
                         </button>
                     </div>

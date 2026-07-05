@@ -199,6 +199,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     const wakeLockRef = useRef<WakeLockSentinel | null>(null);
     const dirtyInitRef = useRef(new Set<DirtySyncSection>());
     const suppressDirtyRef = useRef(false);
+    const foregroundFlushRef = useRef(false);
 
     const trackDirtySection = (section: DirtySyncSection, deps: React.DependencyList) => {
         useEffect(() => {
@@ -376,6 +377,51 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
             window.removeEventListener('ironlog:sync-status', handleSyncStatus);
         };
     }, []);
+
+    useEffect(() => {
+        if (!user || !isOnline || syncStatus.pending <= 0 || foregroundFlushRef.current) return;
+
+        let cancelled = false;
+        let timeoutId: number | null = null;
+
+        const flushInForeground = async () => {
+            if (cancelled || foregroundFlushRef.current || document.visibilityState === 'hidden') return;
+
+            foregroundFlushRef.current = true;
+            try {
+                await syncService.flushQueue();
+            } finally {
+                foregroundFlushRef.current = false;
+            }
+        };
+
+        const scheduleForegroundFlush = () => {
+            if (cancelled || document.visibilityState === 'hidden') return;
+            if (timeoutId !== null) window.clearTimeout(timeoutId);
+            timeoutId = window.setTimeout(() => {
+                void flushInForeground();
+            }, 1200);
+        };
+
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                scheduleForegroundFlush();
+            }
+        };
+
+        scheduleForegroundFlush();
+        window.addEventListener('focus', scheduleForegroundFlush);
+        window.addEventListener('pageshow', scheduleForegroundFlush);
+        document.addEventListener('visibilitychange', handleVisibility);
+
+        return () => {
+            cancelled = true;
+            if (timeoutId !== null) window.clearTimeout(timeoutId);
+            window.removeEventListener('focus', scheduleForegroundFlush);
+            window.removeEventListener('pageshow', scheduleForegroundFlush);
+            document.removeEventListener('visibilitychange', handleVisibility);
+        };
+    }, [user, isOnline, syncStatus.pending]);
 
     useEffect(() => {
         if (!('serviceWorker' in navigator)) return;
