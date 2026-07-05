@@ -307,7 +307,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                         <Icon name="ChevronLeft" size={22} strokeWidth={2.5} />
                     </button>
 
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex min-w-0 flex-wrap items-center justify-center gap-1.5">
                         <div className="rounded-full border border-zinc-700/80 bg-zinc-900/90 px-2.5 py-1">
                             <WorkoutTimer startTime={activeSession.startTime} />
                         </div>
@@ -341,10 +341,9 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                     cycleManualRestPreset();
                                 }}
                                 className="inline-flex items-center gap-1 rounded-full bg-zinc-900 px-2 py-1 text-[10px] font-semibold text-zinc-400 transition-colors hover:text-white"
-                                title={lang === 'es' ? 'Cambiar preset de descanso' : 'Change rest preset'}
+                            title={lang === 'es' ? 'Cambiar preset de descanso' : 'Change rest preset'}
                             >
                                 <Icon name="RotateCw" size={11} />
-                                {manualRestPreset / 60 >= 1 ? `${manualRestPreset / 60}m` : `${manualRestPreset}s`}
                             </button>
                         )}
                         {totalWorkingSets > 0 && (
@@ -402,7 +401,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
             </div>
 
             <div className="flex-1 overflow-hidden flex flex-col">
-                <div id="tut-exercise-list" className="flex-1 overflow-y-auto scroll-container px-4 pb-28 pt-2.5 space-y-2.5">
+                <div id="tut-exercise-list" className="flex-1 overflow-y-auto scroll-container px-4 pb-24 pt-2.5 space-y-2.5">
                     <Suspense fallback={null}>
                         <WorkoutSortableList itemIds={sortableItems} onReorder={ctrl.reorderSessionExercises}>
                             {sessionExercises.map((ex, idx) => {
@@ -441,11 +440,11 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                             })}
                         </WorkoutSortableList>
                     </Suspense>
-                    <div className="h-20" />
+                    <div className="h-8" />
                 </div>
             </div>
 
-            <div className="fixed bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-black via-black/95 to-transparent pb-safe pt-6 px-4 pointer-events-none">
+            <div className="fixed bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-black via-black/95 to-transparent pb-safe pt-5 px-4 pointer-events-none">
                 <div className="mx-auto flex max-w-md items-center gap-2 pb-4 pointer-events-auto">
                     <button
                         id="tut-finish-btn"
@@ -458,21 +457,18 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
 
                     {(() => {
                         if (!quickAccessExercise) return null;
-                        const isBw = quickAccessExercise.isBodyweight;
+                        const canWarmupQuickAccess = !quickAccessExercise.isBodyweight && !quickAccessExercise.isIsometric && quickAccessExercise.muscle !== 'CARDIO';
+                        if (!canWarmupQuickAccess) return null;
                         return (
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    if (isBw) {
-                                        ctrl.setDetailExercise(quickAccessExercise);
-                                    } else {
-                                        ctrl.setWarmupExId(quickAccessExercise.instanceId);
-                                    }
+                                    ctrl.setWarmupExId(quickAccessExercise.instanceId);
                                 }}
-                                className="flex h-[52px] w-[52px] items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-900 text-zinc-300 shadow-lg transition-transform active:scale-90 hover:text-white"
-                                title={isBw ? (lang === 'en' ? 'Technique' : 'Tecnica') : t.warmup}
+                                className="flex h-[52px] w-[52px] items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-900/95 text-zinc-300 shadow-lg transition-transform active:scale-90 hover:text-white"
+                                title={t.warmup}
                             >
-                                <Icon name={isBw ? 'Info' : 'Zap'} size={20} />
+                                <Icon name="Zap" size={20} />
                             </button>
                         );
                     })()}

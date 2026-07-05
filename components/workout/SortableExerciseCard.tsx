@@ -357,7 +357,7 @@ export const SortableExerciseCard = React.memo(({
             <div className="border-b border-white/5 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.04),_transparent_55%)] px-3 pb-1.5 pt-1.5">
                 <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 space-y-1">
-                        <div className="flex items-center gap-1">
+                        <div className="flex flex-wrap items-center gap-1">
                             {dragEnabled && (
                                 <div
                                     className="mr-0.5 -ml-2 rounded-full p-1 text-zinc-500 touch-none cursor-grab active:cursor-grabbing hover:text-zinc-200"
@@ -403,9 +403,9 @@ export const SortableExerciseCard = React.memo(({
                             {String(getTranslated(ex.name, lang))}
                         </h3>
 
-                        {(heroMetric || isLinkSource || isLinkingTarget) && (
+                        {((heroMetric && !allDone) || isLinkSource || isLinkingTarget) && (
                             <div className="flex flex-wrap items-center gap-1 pl-0.5">
-                                {heroMetric && (
+                                {heroMetric && !allDone && (
                                     <div className={`inline-flex max-w-full items-center gap-1 rounded-full px-1 py-0.5 text-[9px] font-semibold ${heroMetric.tone}`}>
                                         <Icon name={heroMetric.icon} size={10} />
                                         <span className="truncate">{heroMetric.label}</span>
@@ -493,7 +493,7 @@ export const SortableExerciseCard = React.memo(({
 
                 <div className="mt-2">
                     {(isEMOM || isMyorep || isCluster || isGiant || isRestPause || isDrop || isTimeVolume || isTripleAdd || hasTopBackoff || isTabata || isHIIT) && (
-                        <div className="mb-2">
+                        <div className="mb-1.5">
                             <ExerciseProtocolBanners
                                 lang={lang}
                                 totalSets={regularSets.length}
@@ -558,13 +558,13 @@ export const SortableExerciseCard = React.memo(({
                 <button
                     onClick={() => sets.length > 0 && onDeleteSet(ex.instanceId, sets[sets.length - 1].id)}
                     disabled={sets.length <= 1}
-                    className="flex w-full items-center justify-center gap-2 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-zinc-500 transition-colors active:scale-95 hover:text-red-400 disabled:opacity-25"
+                    className="flex w-full items-center justify-center gap-1.5 py-1.5 text-[9px] font-bold uppercase tracking-[0.12em] text-zinc-500 transition-colors active:scale-95 hover:text-red-400 disabled:opacity-25"
                 >
                     <Icon name="Minus" size={13} /> {String(t.removeSetBtn)}
                 </button>
                 <button
                     onClick={() => onAddSet(ex.instanceId)}
-                    className="flex w-full items-center justify-center gap-2 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-zinc-500 transition-colors active:scale-95 hover:text-white"
+                    className="flex w-full items-center justify-center gap-1.5 py-1.5 text-[9px] font-bold uppercase tracking-[0.12em] text-zinc-500 transition-colors active:scale-95 hover:text-white"
                 >
                     <Icon name="Plus" size={13} /> {t.addSetBtn}
                 </button>
