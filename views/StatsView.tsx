@@ -225,7 +225,6 @@ export const StatsView: React.FC = () => {
         return () => {
             cancelled = true;
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isWorkerReady, safeLogs, activeMeso?.id, exerciseMetaById, selectedExId, calculateOverview, logsSignature]);
 
     useEffect(() => {

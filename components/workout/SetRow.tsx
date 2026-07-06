@@ -252,11 +252,11 @@ export const SetRow = React.memo(({
         });
     }, []);
 
-    const commitChange = (field: string, value: any) => {
+    const commitChange = useCallback((field: string, value: any) => {
         if (value != set[field as keyof WorkoutSet]) {
             onUpdate(exInstanceId, set.id, field, value);
         }
-    };
+    }, [exInstanceId, onUpdate, set]);
 
     const flushScheduledCommit = useCallback((field: 'weight' | 'reps', value: any) => {
         const existing = commitTimersRef.current[field];

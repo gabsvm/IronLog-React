@@ -116,9 +116,6 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
     }, [ctrl.setChangingSetType]);
     const sortableItems = useMemo(() => sessionExercises.map(ex => ex.instanceId), [sessionExercises]);
 
-
-    if (!activeSession) return null;
-
     const handleAddExercise = (newExId: string, customDef?: ExerciseDef) => {
         const newDef = customDef || exercises.find(e => e.id === newExId);
         if (!newDef) return;
@@ -215,7 +212,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
     }, [sessionExercises]);
 
     const hasWorkoutProgress = useMemo(() => {
-        if ((activeSession.note || '').trim().length > 0) return true;
+        if ((activeSession?.note || '').trim().length > 0) return true;
 
         return sessionExercises.some(exercise =>
             (exercise.sets || []).some(set =>
@@ -227,7 +224,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                 !!String(set.distance || '').trim()
             )
         );
-    }, [activeSession.note, sessionExercises]);
+    }, [activeSession?.note, sessionExercises]);
 
     const { completedSets, totalWorkingSets, remainingSets, progressPct } = workoutStats;
     const quickAccessExercise = useMemo(() => {
@@ -296,6 +293,8 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
         window.addEventListener('beforeunload', handleBeforeUnload);
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
     }, [hasWorkoutProgress]);
+
+    if (!activeSession) return null;
 
     return (
         <div className="fixed inset-0 z-40 flex flex-col bg-black font-sans" onClick={() => ctrl.setOpenMenuId(null)}>
