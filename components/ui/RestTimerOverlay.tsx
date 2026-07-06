@@ -68,11 +68,19 @@ export const RestTimerOverlay: React.FC = () => {
     const { lang } = useApp();
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
     const [minimized, setMinimized] = useState(false);
+    const [autoMinimized, setAutoMinimized] = useState(false);
     const [keyboardOffset, setKeyboardOffset] = useState(0);
+
+    const isEditableElement = (node: Element | null) => {
+        if (!(node instanceof HTMLElement)) return false;
+        const tag = node.tagName;
+        return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || node.isContentEditable;
+    };
 
     useEffect(() => {
         if (!restTimer?.active) {
             setMinimized(false);
+            setAutoMinimized(false);
             setKeyboardOffset(0);
         }
     }, [restTimer?.active]);
@@ -82,21 +90,29 @@ export const RestTimerOverlay: React.FC = () => {
             const target = event.target as HTMLElement | null;
             if (!target) return;
 
-            const tag = target.tagName;
-            const isEditable =
-                tag === 'INPUT' ||
-                tag === 'TEXTAREA' ||
-                tag === 'SELECT' ||
-                target.isContentEditable;
-
-            if (isEditable) {
+            if (isEditableElement(target)) {
                 setMinimized(true);
+                setAutoMinimized(true);
             }
         };
 
+        const handleFocusOut = () => {
+            window.setTimeout(() => {
+                const noFocusedEditable = !isEditableElement(document.activeElement);
+                if (autoMinimized && keyboardOffset <= 24 && noFocusedEditable) {
+                    setMinimized(false);
+                    setAutoMinimized(false);
+                }
+            }, 30);
+        };
+
         document.addEventListener('focusin', handleFocusIn);
-        return () => document.removeEventListener('focusin', handleFocusIn);
-    }, []);
+        document.addEventListener('focusout', handleFocusOut);
+        return () => {
+            document.removeEventListener('focusin', handleFocusIn);
+            document.removeEventListener('focusout', handleFocusOut);
+        };
+    }, [autoMinimized, keyboardOffset]);
 
     useEffect(() => {
         if (!window.visualViewport) return;
@@ -107,6 +123,10 @@ export const RestTimerOverlay: React.FC = () => {
             setKeyboardOffset(offset);
             if (offset > 120) {
                 setMinimized(true);
+                setAutoMinimized(true);
+            } else if (offset <= 24 && autoMinimized && !isEditableElement(document.activeElement)) {
+                setMinimized(false);
+                setAutoMinimized(false);
             }
         };
 
@@ -118,7 +138,7 @@ export const RestTimerOverlay: React.FC = () => {
             viewport.removeEventListener('resize', syncViewportOffset);
             viewport.removeEventListener('scroll', syncViewportOffset);
         };
-    }, []);
+    }, [autoMinimized]);
 
     if (!restTimer || !restTimer.active) return null;
 
@@ -171,6 +191,7 @@ export const RestTimerOverlay: React.FC = () => {
                     onClick={() => {
                         triggerHaptic('light');
                         setMinimized(false);
+                        setAutoMinimized(false);
                     }}
                     className={`group flex items-center gap-3 rounded-full border py-2 pl-2 pr-4 shadow-2xl shadow-black/40 backdrop-blur-2xl transition-all duration-base active:scale-95 ${
                         isCritical
@@ -244,6 +265,7 @@ export const RestTimerOverlay: React.FC = () => {
                             onClick={() => {
                                 triggerHaptic('light');
                                 setMinimized(true);
+                                setAutoMinimized(false);
                             }}
                             className="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-zinc-400 transition-colors hover:bg-white/10 hover:text-white"
                             aria-label={lang === 'es' ? 'Minimizar' : 'Minimize'}

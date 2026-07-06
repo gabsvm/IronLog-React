@@ -237,7 +237,9 @@ export const SetRow = React.memo(({
     const swipeRef = useRef({ startX: 0, startY: 0, tracking: false, locked: false });
 
     const activeFieldRef = useRef<string | null>(null);
+    const weightRef = useRef<HTMLInputElement>(null);
     const repsRef = useRef<HTMLInputElement>(null);
+    const extraWeightRef = useRef<HTMLInputElement>(null);
     const commitTimersRef = useRef<Partial<Record<'weight' | 'reps', ReturnType<typeof setTimeout>>>>({});
 
     useEffect(() => { if (activeFieldRef.current !== 'weight') setLocalWeight(set.weight ?? ''); }, [set.weight]);
@@ -320,6 +322,35 @@ export const SetRow = React.memo(({
     const handleHoldSave = useCallback((seconds: number) => {
         onUpdate(exInstanceId, set.id, 'duration', seconds);
     }, [exInstanceId, set.id, onUpdate]);
+
+    const focusPrimaryField = useCallback(() => {
+        if (isDone || isIsometric) return;
+
+        if (isBodyweight && !isCardio) {
+            if (!String(localReps ?? '').trim()) {
+                repsRef.current?.focus();
+                return;
+            }
+            if (showExtraWeight) {
+                extraWeightRef.current?.focus();
+                return;
+            }
+            repsRef.current?.focus();
+            return;
+        }
+
+        if (!String(localWeight ?? '').trim()) {
+            weightRef.current?.focus();
+            return;
+        }
+        repsRef.current?.focus();
+    }, [isBodyweight, isCardio, isDone, isIsometric, localReps, localWeight, showExtraWeight]);
+
+    const handleRowClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+        const target = event.target as HTMLElement;
+        if (target.closest('button, input, textarea, select, a')) return;
+        focusPrimaryField();
+    }, [focusPrimaryField]);
 
     const inputBase = "w-full rounded-[0.95rem] border border-zinc-700/70 bg-[#202024] px-2 py-1.5 text-center text-[15px] font-bold text-white outline-none transition-all tabular-nums placeholder-zinc-600 focus:border-primary-500/25 focus:ring-2 focus:ring-primary-500/15";
     const doneInput = "border-transparent bg-transparent text-white/90 pointer-events-none";
@@ -407,6 +438,7 @@ export const SetRow = React.memo(({
         return (
             <div id={`set-row-${set.id}`}
                 onTouchStart={onSwipeTouchStart} onTouchMove={onSwipeTouchMove} onTouchEnd={onSwipeTouchEnd}
+                onClick={handleRowClick}
             className={`relative rounded-[0.95rem] transition-colors duration-200 ${getBorderAccent(setType)} ${rowAccent} ${isDone ? 'opacity-80' : ''}`}>
                 {SwipeOverlay}
                 <div className="grid grid-cols-12 items-center gap-2 px-2 py-1.5">
@@ -445,6 +477,7 @@ export const SetRow = React.memo(({
                             </button>
                         ) : (
                             <input
+                                ref={extraWeightRef}
                                 type="number" inputMode="decimal"
                                 className="w-full rounded-[0.9rem] border border-zinc-700/70 bg-[#202024] px-1 py-1.5 text-center text-xs font-bold text-violet-300 outline-none transition-all tabular-nums placeholder-zinc-600 focus:border-violet-500/30 focus:ring-2 focus:ring-violet-500/15"
                                 placeholder="0"
@@ -496,6 +529,7 @@ export const SetRow = React.memo(({
     return (
         <div id={`set-row-${set.id}`}
             onTouchStart={onSwipeTouchStart} onTouchMove={onSwipeTouchMove} onTouchEnd={onSwipeTouchEnd}
+            onClick={handleRowClick}
             className={`relative rounded-[0.95rem] transition-colors duration-200 ${getBorderAccent(setType)} ${rowAccent} ${isDone ? 'opacity-80' : ''}`}>
             {SwipeOverlay}
         <div className="grid grid-cols-12 items-center gap-2 px-2 py-1.5">
@@ -510,6 +544,7 @@ export const SetRow = React.memo(({
             {/* Weight Input */}
             <div className="col-span-4">
                 <input
+                    ref={weightRef}
                     type="number" inputMode="decimal"
                     className={isDone ? inputBase + " " + doneInput : inputBase}
                     placeholder={weightPlaceholder}
