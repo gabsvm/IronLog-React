@@ -125,7 +125,7 @@ const HistoryCard = memo(({ log, isExpanded, onToggle, lang, t, id, onDeleteRequ
         }
 
         // Weightlifting logic
-        const validLifts = validSets.filter(s => s.weight && s.reps);
+        const validLifts = validSets.filter(s => (s.weight || s.weight === 0 || s.weight === '0') && s.reps);
         if (validLifts.length === 0) return null;
 
         const best = validLifts.reduce((prev, current) => (Number(prev.weight) > Number(current.weight)) ? prev : current);

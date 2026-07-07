@@ -25,7 +25,7 @@ import {
     LinearScale
 } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
-import { getEffectiveSetLoad, getSetLoadVolume } from '../utils/trainingMetrics';
+import { getEffectiveSetLoad, getLogBodyWeight, getSetLoadVolume } from '../utils/trainingMetrics';
 
 ChartJS.register(
     RadialLinearScale,
@@ -412,6 +412,7 @@ export const StatsView: React.FC = () => {
         let totalVolume = 0;
 
         matchingLogs.forEach(log => {
+            const logBodyWeight = getLogBodyWeight(log, userProfile?.bodyWeight);
             const exercise = (log.exercises || []).find(ex => String(ex.id) === String(currentEx.id));
             if (!exercise) return;
 
@@ -420,9 +421,9 @@ export const StatsView: React.FC = () => {
 
                 const reps = Number(set.reps || 0);
                 const addedLoad = Number(set.weight || 0);
-                const effectiveLoad = getEffectiveSetLoad(set, exercise, userProfile?.bodyWeight);
+                const effectiveLoad = getEffectiveSetLoad(set, exercise, logBodyWeight);
 
-                totalVolume += getSetLoadVolume(set, exercise, userProfile?.bodyWeight);
+                totalVolume += getSetLoadVolume(set, exercise, logBodyWeight);
                 if (reps > bestReps) bestReps = reps;
                 if (addedLoad > bestAddedLoad) bestAddedLoad = addedLoad;
                 if (Number(set.duration || 0) > bestHoldSeconds) bestHoldSeconds = Number(set.duration || 0);

@@ -339,6 +339,7 @@ const AppContent = () => {
             startTime: Date.now(),
             endTime: Date.now(),
             duration: 0,
+            bodyWeightSnapshot: userProfile?.bodyWeight,
             mesoId: activeMeso.id,
             week: activeMeso.week,
             exercises: [],
@@ -375,7 +376,12 @@ const AppContent = () => {
 
                                     // 1. Log the session
                                     const duration = activeSession.startTime ? (Date.now() - activeSession.startTime) / 1000 : 0;
-                                    const log = { ...activeSession, endTime: Date.now(), duration };
+                                    const log = {
+                                        ...activeSession,
+                                        endTime: Date.now(),
+                                        duration,
+                                        bodyWeightSnapshot: userProfile?.bodyWeight
+                                    };
                                     const newLogs = [log, ...(Array.isArray(logs) ? logs : [])];
                                     setLogs(newLogs);
 

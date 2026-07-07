@@ -4,7 +4,7 @@ import { Icon } from '../components/ui/Icon';
 import { Button } from '../components/ui/Button';
 import { TRANSLATIONS } from '../constants';
 import { useApp } from '../context/AppContext';
-import { getSetLoadVolume } from '../utils/trainingMetrics';
+import { getLogBodyWeight, getSetLoadVolume } from '../utils/trainingMetrics';
 
 // Simple confetti fallback if utility is missing
 const fireConfetti = async () => {
@@ -44,6 +44,7 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
         let volume = 0;
         let sets = 0;
         const muscles = new Set<string>();
+        const logBodyWeight = getLogBodyWeight(log, userProfile?.bodyWeight);
 
         log.exercises.forEach(ex => {
             if (ex.muscle && ex.muscle !== 'CARDIO') {
@@ -52,7 +53,7 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
             (ex.sets || []).forEach(s => {
                 if (s.completed && !s.skipped) {
                     sets++;
-                    volume += getSetLoadVolume(s, ex, userProfile?.bodyWeight);
+                    volume += getSetLoadVolume(s, ex, logBodyWeight);
                 }
             });
         });

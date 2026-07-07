@@ -6,6 +6,7 @@ import { SessionExercise, ExerciseDef, SetType, Log, WorkoutSet } from '../types
 import { triggerHaptic } from '../utils/audio';
 import { getLastLogForExercise, uid, estimate1RM } from '../utils';
 import { useStatsWorker } from './useStatsWorker';
+import { getEffectiveSetLoad } from '../utils/trainingMetrics';
 
 import { useStore } from '../lib/store';
 
@@ -37,7 +38,7 @@ const reorderList = <T,>(items: T[], from: number, to: number): T[] => {
 };
 
 export const useWorkoutController = (onFinishCallback: () => void, onDiscardCallback: () => void) => {
-    const { setProgram, exercises, rpFeedback, setRpFeedback, config, logs } = useApp();
+    const { setProgram, exercises, rpFeedback, setRpFeedback, config, logs, userProfile } = useApp();
     const activeSession = useStore(state => state.activeSession);
     const activeMeso = useStore(state => state.activeMeso);
     const setActiveSession = useStore(state => state.setActiveSession);
@@ -269,8 +270,9 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
         for (const ex of sessionExercises) {
             let currentBest1RM = 0;
             for (const s of (ex.sets || [])) {
-                if (s.completed && s.weight && s.reps) {
-                    const e1rm = estimate1RM(Number(s.weight), Number(s.reps));
+                if (s.completed && (s.weight || s.weight === 0 || s.weight === '0') && s.reps) {
+                    const effectiveLoad = getEffectiveSetLoad(s, ex, userProfile?.bodyWeight);
+                    const e1rm = estimate1RM(effectiveLoad, Number(s.reps));
                     if (e1rm > currentBest1RM) currentBest1RM = e1rm;
                 }
             }
@@ -279,7 +281,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
             }
         }
         return false;
-    }, [sessionExercises, historicalBest1RM]);
+    }, [sessionExercises, historicalBest1RM, userProfile]);
 
     const fireConfetti = useCallback(async () => {
         try {

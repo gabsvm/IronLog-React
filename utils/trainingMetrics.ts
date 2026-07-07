@@ -1,4 +1,11 @@
-import { ExerciseDef, WorkoutSet } from '../types';
+import { ExerciseDef, Log, WorkoutSet } from '../types';
+
+export const getLogBodyWeight = (log: Pick<Log, 'bodyWeightSnapshot'>, fallbackBodyWeight?: number) => {
+    const snapshot = Number(log.bodyWeightSnapshot);
+    if (Number.isFinite(snapshot) && snapshot > 0) return snapshot;
+    const fallback = Number(fallbackBodyWeight);
+    return Number.isFinite(fallback) && fallback > 0 ? fallback : undefined;
+};
 
 export const getEffectiveSetLoad = (
     set: Pick<WorkoutSet, 'weight'>,

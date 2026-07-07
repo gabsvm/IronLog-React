@@ -148,6 +148,7 @@ export interface Log {
   startTime: number;
   endTime: number;
   duration: number;
+  bodyWeightSnapshot?: number;
   skipped?: boolean;
   mesoId: number;
   week: number;

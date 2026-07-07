@@ -1,4 +1,4 @@
-import { getEffectiveSetLoad, getSetLoadVolume } from '../utils/trainingMetrics';
+import { getEffectiveSetLoad, getLogBodyWeight, getSetLoadVolume } from '../utils/trainingMetrics';
 
 // WorkerAction type includes new calisthenics metrics
 type MetricType = '1rm' | 'volume' | 'duration' | 'distance' | 'max_reps' | 'hold_time';
@@ -19,12 +19,13 @@ self.onmessage = function(e: MessageEvent) {
         const best = new Map<string, number>();
         const safeLogs = Array.isArray(logs) ? logs : [];
         for (const log of safeLogs) {
+            const logBodyWeight = getLogBodyWeight(log, userBodyWeight);
             for (const ex of (log.exercises || [])) {
                 if (!ex?.id) continue;
                 const exId = String(ex.id);
                 for (const s of (ex.sets || [])) {
-                    if (s.completed && s.weight && s.reps) {
-                        const w = Number(s.weight);
+                    if (s.completed && (s.weight || s.weight === 0 || s.weight === '0') && s.reps) {
+                        const w = getEffectiveSetLoad(s, ex, logBodyWeight);
                         const r = Number(s.reps);
                         const e1rm = w * (1 + r / 30);
                         if (e1rm > (best.get(exId) ?? 0)) best.set(exId, e1rm);
@@ -79,6 +80,7 @@ self.onmessage = function(e: MessageEvent) {
         const sortedLogs = [...logs].sort((a, b) => a.endTime - b.endTime);
         sortedLogs.forEach(log => {
             if (log.skipped) return;
+            const logBodyWeight = getLogBodyWeight(log, userBodyWeight);
             const ex = (log.exercises || []).find((e: any) => String(e.id) === String(exerciseId));
             if (!ex) return;
 
@@ -89,7 +91,7 @@ self.onmessage = function(e: MessageEvent) {
                 // Epley Formula: 1RM = Weight * (1 + Reps/30)
                 (ex.sets || []).forEach((s: any) => {
                     if (s.completed && (s.weight || s.weight === 0 || s.weight === '0') && s.reps) {
-                        const w = getEffectiveSetLoad(s, ex, userBodyWeight);
+                        const w = getEffectiveSetLoad(s, ex, logBodyWeight);
                         const r = Number(s.reps);
                         const est1rm = w * (1 + r / 30);
                         if (est1rm > bestValue) {
@@ -101,7 +103,7 @@ self.onmessage = function(e: MessageEvent) {
             } else if (metric === 'volume') {
                 // Total Tonnage
                 bestValue = (ex.sets || []).reduce((acc: number, s: any) => {
-                    return acc + getSetLoadVolume(s, ex, userBodyWeight);
+                    return acc + getSetLoadVolume(s, ex, logBodyWeight);
                 }, 0);
             } else if (metric === 'max_reps') {
                 // Best single-set reps (for bodyweight exercises)

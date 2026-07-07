@@ -10,7 +10,7 @@ export type ChartMetric = '1rm' | 'volume' | 'duration' | 'distance' | 'max_reps
 type WorkerAction = 
     | { type: 'CALCULATE_OVERVIEW', logs: Log[], activeMesoId?: number, reqId?: number }
     | { type: 'CALCULATE_CHART', logs: Log[], exerciseId: string, metric: ChartMetric, userBodyWeight?: number, reqId?: number }
-    | { type: 'CALCULATE_ALL_BEST_1RM', logs: Log[], reqId?: number };
+    | { type: 'CALCULATE_ALL_BEST_1RM', logs: Log[], userBodyWeight?: number, reqId?: number };
 
 type WorkerResponse = 
     | { type: 'OVERVIEW_READY', volumeData: [string, number][], exerciseFrequency: Record<string, number>, reqId?: number }
@@ -83,9 +83,14 @@ export const useStatsWorker = () => {
                 }
             };
             workerRef.current.addEventListener('message', handler);
-            workerRef.current.postMessage({ type: 'CALCULATE_ALL_BEST_1RM', logs, reqId });
+            workerRef.current.postMessage({
+                type: 'CALCULATE_ALL_BEST_1RM',
+                logs,
+                userBodyWeight: userProfile?.bodyWeight,
+                reqId
+            });
         });
-    }, []);
+    }, [userProfile]);
 
     return { isWorkerReady, calculateOverview, calculateChartData, calculateAllBest1RMs };
 };
