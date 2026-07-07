@@ -25,6 +25,7 @@ import {
     LinearScale
 } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
+import { getEffectiveSetLoad, getSetLoadVolume } from '../utils/trainingMetrics';
 
 ChartJS.register(
     RadialLinearScale,
@@ -57,8 +58,77 @@ const chartMetricLabel = (metric: ChartMetric) => {
     }
 };
 
+type PerformanceBand = 'beginner' | 'intermediate' | 'advanced';
+
+const getExerciseStrengthProfile = (exercise: { id?: string; muscle?: string; isBodyweight?: boolean; isIsometric?: boolean; skillLevel?: number } | null) => {
+    const id = String(exercise?.id || '').toLowerCase();
+    const muscle = exercise?.muscle || '';
+
+    if (exercise?.isIsometric) return 'isometric';
+    if (exercise?.isBodyweight) {
+        if (/(pullup|chinup)/.test(id)) return 'bw_pull';
+        if (/(dip)/.test(id)) return 'bw_dip';
+        if (/(pushup|push_up|pu)/.test(id)) return 'bw_push';
+        if (/(pistol|one_leg_squat|single_leg_squat)/.test(id)) return 'bw_single_leg';
+        return 'bw_generic';
+    }
+
+    if (/(deadlift|rdl|rack_pull|good_morning)/.test(id)) return 'hinge';
+    if (/(squat|leg_press|hack|lunge|split_squat|bulgarian|step_up)/.test(id)) return 'squat';
+    if (/(shoulder_press|ohp|military_press|arnold_press)/.test(id)) return 'vertical_press';
+    if (/(bench|chest_press|incline_press|decline_press|dip)/.test(id)) return 'horizontal_press';
+    if (/(row|pulldown|pullup|chinup|lat_|seated_row)/.test(id)) return 'upper_pull';
+    if (/(curl|pushdown|extension|lateral_raise|fly|pec_deck|rear_delt)/.test(id)) return 'isolation';
+    if (muscle === 'QUADS' || muscle === 'HAMSTRINGS' || muscle === 'GLUTES') return 'squat';
+    if (muscle === 'CHEST') return 'horizontal_press';
+    if (muscle === 'BACK') return 'upper_pull';
+    if (muscle === 'SHOULDERS') return 'vertical_press';
+    return 'isolation';
+};
+
+const getWeightedLevel = (profile: string, relativeStrength: number): PerformanceBand => {
+    const thresholds: Record<string, [number, number]> = {
+        squat: [1, 1.8],
+        hinge: [1.25, 2],
+        horizontal_press: [0.85, 1.25],
+        vertical_press: [0.6, 0.9],
+        upper_pull: [0.9, 1.4],
+        isolation: [0.25, 0.45],
+    };
+    const [intermediateFloor, advancedFloor] = thresholds[profile] || thresholds.isolation;
+    if (relativeStrength >= advancedFloor) return 'advanced';
+    if (relativeStrength >= intermediateFloor) return 'intermediate';
+    return 'beginner';
+};
+
+const getBodyweightLevel = (profile: string, reps: number, addedLoad: number, skillLevel?: number, bestHoldSeconds?: number): PerformanceBand => {
+    if (typeof skillLevel === 'number') {
+        if (skillLevel >= 4) return 'advanced';
+        if (skillLevel >= 2) return 'intermediate';
+        return 'beginner';
+    }
+    if (typeof bestHoldSeconds === 'number' && bestHoldSeconds > 0) {
+        if (bestHoldSeconds >= 30) return 'advanced';
+        if (bestHoldSeconds >= 15) return 'intermediate';
+        return 'beginner';
+    }
+    if (addedLoad > 0) return addedLoad >= 20 ? 'advanced' : 'intermediate';
+
+    const thresholds: Record<string, [number, number]> = {
+        bw_pull: [5, 12],
+        bw_dip: [8, 15],
+        bw_push: [15, 30],
+        bw_single_leg: [5, 10],
+        bw_generic: [10, 20],
+    };
+    const [intermediateFloor, advancedFloor] = thresholds[profile] || thresholds.bw_generic;
+    if (reps >= advancedFloor) return 'advanced';
+    if (reps >= intermediateFloor) return 'intermediate';
+    return 'beginner';
+};
+
 export const StatsView: React.FC = () => {
-    const { logs, lang, exercises, tutorialProgress, markTutorialSeen } = useApp();
+    const { logs, lang, exercises, tutorialProgress, markTutorialSeen, userProfile } = useApp();
     const activeMeso = useStore(state => state.activeMeso);
     const t = TRANSLATIONS[lang];
 
@@ -331,6 +401,98 @@ export const StatsView: React.FC = () => {
         return ['1rm', 'volume'] as ChartMetric[];
     })();
 
+    const selectedExerciseInsight = useMemo(() => {
+        if (!currentEx) return null;
+
+        const matchingLogs = safeLogs.filter(log => !log.skipped);
+        let bestReps = 0;
+        let bestAddedLoad = 0;
+        let bestEstimated1RM = 0;
+        let bestHoldSeconds = 0;
+        let totalVolume = 0;
+
+        matchingLogs.forEach(log => {
+            const exercise = (log.exercises || []).find(ex => String(ex.id) === String(currentEx.id));
+            if (!exercise) return;
+
+            (exercise.sets || []).forEach(set => {
+                if (!set.completed || set.skipped) return;
+
+                const reps = Number(set.reps || 0);
+                const addedLoad = Number(set.weight || 0);
+                const effectiveLoad = getEffectiveSetLoad(set, exercise, userProfile?.bodyWeight);
+
+                totalVolume += getSetLoadVolume(set, exercise, userProfile?.bodyWeight);
+                if (reps > bestReps) bestReps = reps;
+                if (addedLoad > bestAddedLoad) bestAddedLoad = addedLoad;
+                if (Number(set.duration || 0) > bestHoldSeconds) bestHoldSeconds = Number(set.duration || 0);
+
+                if (effectiveLoad > 0 && reps > 0 && !exercise.isIsometric && exercise.muscle !== 'CARDIO') {
+                    const e1rm = effectiveLoad * (1 + reps / 30);
+                    if (e1rm > bestEstimated1RM) bestEstimated1RM = e1rm;
+                }
+            });
+        });
+
+        const profile = getExerciseStrengthProfile(currentEx);
+        const muscleWeeklySets = rawMuscleCounts[currentEx.muscle] || 0;
+        const volumeStatus =
+            muscleWeeklySets < 6 ? { id: 'low', label: lang === 'es' ? 'Bajo' : 'Low' } :
+            muscleWeeklySets < 10 ? { id: 'maintenance', label: lang === 'es' ? 'Base' : 'Base' } :
+            muscleWeeklySets <= 20 ? { id: 'optimal', label: lang === 'es' ? 'Optimo' : 'Optimal' } :
+            { id: 'high', label: lang === 'es' ? 'Alto' : 'High' };
+
+        let level: PerformanceBand | null = null;
+        let rationale = '';
+
+        if (currentEx.isBodyweight) {
+            level = getBodyweightLevel(profile, bestReps, bestAddedLoad, (currentEx as any).skillLevel, bestHoldSeconds);
+            rationale = currentEx.isIsometric
+                ? (lang === 'es'
+                    ? `Mejor hold: ${bestHoldSeconds}s`
+                    : `Best hold: ${bestHoldSeconds}s`)
+                : (lang === 'es'
+                    ? `Mejor set: ${bestReps} reps${bestAddedLoad > 0 ? ` + ${bestAddedLoad}kg` : ''}`
+                    : `Best set: ${bestReps} reps${bestAddedLoad > 0 ? ` + ${bestAddedLoad}kg` : ''}`);
+        } else if (!currentEx.isIsometric && currentEx.muscle !== 'CARDIO' && userProfile?.bodyWeight) {
+            const relativeStrength = bestEstimated1RM / userProfile.bodyWeight;
+            level = getWeightedLevel(profile, relativeStrength);
+            rationale = lang === 'es'
+                ? `Est. 1RM relativo: ${relativeStrength.toFixed(2)}x peso corporal`
+                : `Relative est. 1RM: ${relativeStrength.toFixed(2)}x bodyweight`;
+        } else if (!currentEx.isIsometric && currentEx.muscle !== 'CARDIO' && bestEstimated1RM > 0) {
+            level = bestEstimated1RM >= 100 ? 'advanced' : bestEstimated1RM >= 50 ? 'intermediate' : 'beginner';
+            rationale = lang === 'es'
+                ? `Est. 1RM: ${Math.round(bestEstimated1RM)}kg (sin peso corporal cargado)`
+                : `Est. 1RM: ${Math.round(bestEstimated1RM)}kg (no bodyweight profile set)`;
+        }
+
+        const volumeBasis = currentEx.muscle === 'CARDIO'
+            ? (lang === 'es'
+                ? 'Cardio usa tiempo o distancia, no tonelaje.'
+                : 'Cardio uses time or distance, not load tonnage.')
+            : currentEx.isIsometric
+                ? (lang === 'es'
+                    ? 'Isometricos usan segundos de hold como progreso principal.'
+                    : 'Isometrics use hold seconds as the main progress signal.')
+                : currentEx.isBodyweight
+                    ? (lang === 'es'
+                        ? `El volumen de carga suma tu peso corporal${userProfile?.bodyWeight ? ` (${userProfile.bodyWeight}kg)` : ''} y cualquier lastre.`
+                        : `Load volume adds your bodyweight${userProfile?.bodyWeight ? ` (${userProfile.bodyWeight}kg)` : ''} plus any added load.`)
+                    : (lang === 'es'
+                        ? 'Maquinas, poleas y pesos libres usan el peso que registras como carga externa.'
+                        : 'Machines, cables, and free weights use the logged load as external resistance.');
+
+        return {
+            volumeBasis,
+            level,
+            rationale,
+            totalVolume,
+            muscleWeeklySets,
+            volumeStatus,
+        };
+    }, [currentEx, lang, rawMuscleCounts, safeLogs, userProfile?.bodyWeight]);
+
     const statsTutorialSteps = [
         { targetId: 'tut-progress-chart', title: t.tutorial.stats[0].title, text: t.tutorial.stats[0].text, position: 'bottom' as const },
         { targetId: 'tut-radar-chart', title: t.tutorial.stats[1].title, text: t.tutorial.stats[1].text, position: 'top' as const },
@@ -435,6 +597,58 @@ export const StatsView: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            {selectedExerciseInsight && (
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div className="glass-card rounded-[1.7rem] border border-white/6 p-5 shadow-md">
+                        <h3 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-500">
+                            <Icon name="Scale" size={14} />
+                            {lang === 'es' ? 'Base de Volumen' : 'Volume Basis'}
+                        </h3>
+                        <p className="text-sm leading-relaxed text-zinc-300">
+                            {selectedExerciseInsight.volumeBasis}
+                        </p>
+                        {selectedExerciseInsight.totalVolume > 0 && (
+                            <div className="mt-4 rounded-2xl border border-white/6 bg-white/[0.03] px-4 py-3">
+                                <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-zinc-500">
+                                    {lang === 'es' ? 'Carga total acumulada' : 'Accumulated load volume'}
+                                </div>
+                                <div className="mt-1 text-2xl font-black tracking-[-0.04em] text-white">
+                                    {Math.round(selectedExerciseInsight.totalVolume).toLocaleString()} kg
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="glass-card rounded-[1.7rem] border border-white/6 p-5 shadow-md">
+                        <h3 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-500">
+                            <Icon name="Award" size={14} />
+                            {lang === 'es' ? 'Nivel Actual' : 'Current Level'}
+                        </h3>
+                        <div className="flex items-center justify-between gap-3">
+                            <div>
+                                <div className="text-2xl font-black capitalize tracking-[-0.04em] text-white">
+                                    {selectedExerciseInsight.level || (lang === 'es' ? 'Sin clasificar' : 'Unrated')}
+                                </div>
+                                <p className="mt-1 text-sm text-zinc-400">
+                                    {selectedExerciseInsight.rationale || (lang === 'es' ? 'Falta historial suficiente para clasificar.' : 'Not enough history to classify yet.')}
+                                </p>
+                            </div>
+                            <div className="rounded-2xl border border-white/6 bg-white/[0.03] px-4 py-3 text-right">
+                                <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-zinc-500">
+                                    {lang === 'es' ? 'Series semanales del musculo' : 'Weekly muscle sets'}
+                                </div>
+                                <div className="mt-1 text-xl font-black text-white">
+                                    {selectedExerciseInsight.muscleWeeklySets}
+                                </div>
+                                <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-primary-300">
+                                    {selectedExerciseInsight.volumeStatus.label}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div id="tut-radar-chart" className="glass-card flex min-h-[320px] h-full flex-col overflow-hidden rounded-[1.7rem] border border-white/6 p-5 shadow-md">

@@ -4,6 +4,7 @@ import { Icon } from '../components/ui/Icon';
 import { Button } from '../components/ui/Button';
 import { TRANSLATIONS } from '../constants';
 import { useApp } from '../context/AppContext';
+import { getSetLoadVolume } from '../utils/trainingMetrics';
 
 // Simple confetti fallback if utility is missing
 const fireConfetti = async () => {
@@ -30,7 +31,7 @@ interface SessionSummaryViewProps {
 }
 
 export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onClose }) => {
-    const { lang } = useApp();
+    const { lang, userProfile } = useApp();
     const t = TRANSLATIONS[lang];
 
     useEffect(() => {
@@ -51,17 +52,13 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
             (ex.sets || []).forEach(s => {
                 if (s.completed && !s.skipped) {
                     sets++;
-                    const w = Number(s.weight) || 0;
-                    const r = Number(s.reps) || 0;
-                    if (w > 0 && r > 0 && !ex.isBodyweight) {
-                        volume += (w * r);
-                    }
+                    volume += getSetLoadVolume(s, ex, userProfile?.bodyWeight);
                 }
             });
         });
 
         return { volume, sets, muscles: Array.from(muscles) };
-    }, [log]);
+    }, [log, userProfile?.bodyWeight]);
 
     const formatDuration = (sec: number) => {
         const h = Math.floor(sec / 3600);

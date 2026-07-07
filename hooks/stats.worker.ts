@@ -1,3 +1,5 @@
+import { getEffectiveSetLoad, getSetLoadVolume } from '../utils/trainingMetrics';
+
 // WorkerAction type includes new calisthenics metrics
 type MetricType = '1rm' | 'volume' | 'duration' | 'distance' | 'max_reps' | 'hold_time';
 const parseDuration = (val: any) => {
@@ -75,8 +77,6 @@ self.onmessage = function(e: MessageEvent) {
     if (type === 'CALCULATE_CHART') {
         const dataPoints: any[] = [];
         const sortedLogs = [...logs].sort((a, b) => a.endTime - b.endTime);
-        const bw = userBodyWeight || 0;
-
         sortedLogs.forEach(log => {
             if (log.skipped) return;
             const ex = (log.exercises || []).find((e: any) => String(e.id) === String(exerciseId));
@@ -85,16 +85,11 @@ self.onmessage = function(e: MessageEvent) {
             let bestValue = 0;
             let bestSetDetails = { w: 0, r: 0 };
             
-            // Check if this exercise instance was marked as Bodyweight
-            const isBW = !!ex.isBodyweight;
-
             if (metric === '1rm') {
                 // Epley Formula: 1RM = Weight * (1 + Reps/30)
                 (ex.sets || []).forEach((s: any) => {
                     if (s.completed && (s.weight || s.weight === 0 || s.weight === '0') && s.reps) {
-                        let w = Number(s.weight);
-                        if (isBW) w += bw; // Add User Bodyweight if applicable
-
+                        const w = getEffectiveSetLoad(s, ex, userBodyWeight);
                         const r = Number(s.reps);
                         const est1rm = w * (1 + r / 30);
                         if (est1rm > bestValue) {
@@ -106,12 +101,7 @@ self.onmessage = function(e: MessageEvent) {
             } else if (metric === 'volume') {
                 // Total Tonnage
                 bestValue = (ex.sets || []).reduce((acc: number, s: any) => {
-                    if (s.completed && (s.weight || s.weight === 0 || s.weight === '0') && s.reps) {
-                        let w = Number(s.weight);
-                        if (isBW) w += bw; // Add User Bodyweight
-                        return acc + (w * Number(s.reps));
-                    }
-                    return acc;
+                    return acc + getSetLoadVolume(s, ex, userBodyWeight);
                 }, 0);
             } else if (metric === 'max_reps') {
                 // Best single-set reps (for bodyweight exercises)
