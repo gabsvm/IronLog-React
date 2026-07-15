@@ -19,10 +19,11 @@ export const Logo: React.FC<LogoProps> = ({ className = "w-10 h-10", size, showT
     const style = size ? { width: size, height: size } : {};
     
     return (
-        <div className={`relative flex items-center gap-2 ${className}`} style={style}>
+        <div className="relative inline-flex shrink-0 items-center gap-2">
             <svg
                 viewBox="0 0 100 100"
-                className="w-full h-full"
+                className={className}
+                style={style}
                 role="img"
                 aria-label="GainsLab Logo"
             >
@@ -65,7 +66,7 @@ export const Logo: React.FC<LogoProps> = ({ className = "w-10 h-10", size, showT
             </svg>
             
             {showText && (
-                <span className="text-xl font-black tracking-tighter text-white uppercase italic">
+                <span className="whitespace-nowrap text-xl font-black tracking-tighter text-white uppercase italic">
                     Gains<span className="text-[rgb(var(--primary-500))] font-black">Lab</span>
                 </span>
             )}

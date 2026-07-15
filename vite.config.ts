@@ -22,37 +22,46 @@ export default defineConfig(() => {
         output: {
           hoistTransitiveImports: false,
           manualChunks: (id) => {
-            if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/scheduler')) {
+            // Match package directories exactly. The previous broad `react`
+            // match also captured react-chartjs-2 and React-Native Firebase
+            // internals, making the startup React chunk pull charts and auth.
+            const moduleId = id.replace(/\\/g, '/');
+            if (
+              moduleId.includes('/node_modules/react/') ||
+              moduleId.includes('/node_modules/react-dom/') ||
+              moduleId.includes('/node_modules/scheduler/') ||
+              moduleId.includes('/node_modules/use-sync-external-store/')
+            ) {
               return 'vendor-react';
             }
-            if (id.includes('node_modules/firebase/app') || id.includes('node_modules/@firebase/app')) {
+            if (moduleId.includes('/node_modules/firebase/app') || moduleId.includes('/node_modules/@firebase/app')) {
               return 'vendor-firebase-app';
             }
-            if (id.includes('node_modules/firebase/auth') || id.includes('node_modules/@firebase/auth')) {
+            if (moduleId.includes('/node_modules/firebase/auth') || moduleId.includes('/node_modules/@firebase/auth')) {
               return 'vendor-firebase-auth';
             }
-            if (id.includes('node_modules/firebase/firestore') || id.includes('node_modules/@firebase/firestore') || id.includes('node_modules/@firebase/webchannel-wrapper')) {
+            if (moduleId.includes('/node_modules/firebase/firestore') || moduleId.includes('/node_modules/@firebase/firestore') || moduleId.includes('/node_modules/@firebase/webchannel-wrapper')) {
               return 'vendor-firebase-db';
             }
-            if (id.includes('node_modules/firebase') || id.includes('node_modules/@firebase')) {
+            if (moduleId.includes('/node_modules/firebase') || moduleId.includes('/node_modules/@firebase')) {
               return 'vendor-firebase-core';
             }
-            if (id.includes('node_modules/framer-motion') || id.includes('node_modules/motion')) {
+            if (moduleId.includes('/node_modules/framer-motion') || moduleId.includes('/node_modules/motion')) {
               return 'vendor-motion';
             }
-            if (id.includes('node_modules/date-fns')) {
+            if (moduleId.includes('/node_modules/date-fns')) {
               return 'vendor-date';
             }
-            if (id.includes('node_modules/chart.js') || id.includes('node_modules/react-chartjs-2')) {
+            if (moduleId.includes('/node_modules/chart.js') || moduleId.includes('/node_modules/react-chartjs-2')) {
               return 'vendor-charts';
             }
-            if (id.includes('@dnd-kit')) {
+            if (moduleId.includes('@dnd-kit')) {
               return 'vendor-dnd';
             }
-            if (id.includes('canvas-confetti')) {
+            if (moduleId.includes('canvas-confetti')) {
               return 'vendor-effects';
             }
-            if (id.includes('lucide-react')) {
+            if (moduleId.includes('lucide-react')) {
               return 'vendor-icons';
             }
           }

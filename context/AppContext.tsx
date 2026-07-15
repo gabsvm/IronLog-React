@@ -106,7 +106,7 @@ const INITIAL_TUTORIAL_STATE: TutorialState = {
 };
 
 export const AppProvider = ({ children }: PropsWithChildren) => {
-    const { user, subscription, loading: authLoading } = useAuth();
+    const { user, subscription } = useAuth();
 
     // --- Synchronous Config ---
     const [langStored, setLang] = useLocalStorage<Lang>('il_lang_v1', 'es');
@@ -192,7 +192,6 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         logsLoading ||
         fbLoading ||
         onboardingLoading ||
-        authLoading ||
         profileLoading ||
         needsDefaultBootstrap;
     const wakeLockRef = useRef<WakeLockSentinel | null>(null);
