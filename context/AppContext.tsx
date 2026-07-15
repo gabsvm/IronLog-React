@@ -181,6 +181,10 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         !exLoading &&
         (program.length === 0 || exercises.length === 0 || globalTemplates.length === 0);
 
+    // Keep the training core atomic at launch, but do not hold the first
+    // interactive Home render behind data that is only used by Nutrition.
+    // Those stores still hydrate safely in the background before their lazy
+    // view is opened; this only removes an unnecessary global loading gate.
     const isAppLoading =
         isStoreLoading ||
         programLoading ||
@@ -190,11 +194,6 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         onboardingLoading ||
         authLoading ||
         profileLoading ||
-        nutLoading ||
-        cardioLoading ||
-        goalLoading ||
-        bodyLoading ||
-        macroLoading ||
         needsDefaultBootstrap;
     const wakeLockRef = useRef<WakeLockSentinel | null>(null);
     const dirtyInitRef = useRef(new Set<DirtySyncSection>());

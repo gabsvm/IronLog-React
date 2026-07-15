@@ -3,7 +3,7 @@ import React, { useState, useMemo, useDeferredValue } from 'react';
 import { useApp, useAppPreferences } from '../../context/AppContext';
 import { TRANSLATIONS, MUSCLE_GROUPS } from '../../constants';
 import { Icon } from './Icon';
-import { MuscleGroup, ExerciseDef } from '../../types';
+import { MuscleGroup, ExerciseDef, VolumeCountingMode } from '../../types';
 import { Button } from './Button';
 import { getTranslated } from '../../utils';
 import { Virtuoso } from 'react-virtuoso';
@@ -32,6 +32,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
     const [newName, setNewName] = useState('');
     const [newMuscle, setNewMuscle] = useState<MuscleGroup>('CHEST');
     const [isBodyweight, setIsBodyweight] = useState(false); // NEW
+    const [volumeCountingMode, setVolumeCountingMode] = useState<VolumeCountingMode>('total');
 
     const filtered = useMemo(() => {
         return exercises
@@ -87,7 +88,8 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
             id: newId,
             name: { en: newName, es: newName }, // Store as bilingual object for consistency
             muscle: newMuscle,
-            isBodyweight: isBodyweight
+            isBodyweight: isBodyweight,
+            volumeCountingMode
         };
         
         // 1. Update Local State (Immediate Feedback)
@@ -222,6 +224,22 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
                             <label htmlFor="isBW" className="font-bold text-sm text-zinc-700 dark:text-zinc-300 cursor-pointer">
                                 {t.profile.isBW}
                             </label>
+                        </div>
+
+                        <div>
+                            <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider mb-2 block">
+                                {lang === 'es' ? 'Cálculo de tonelaje' : 'Tonnage calculation'}
+                            </label>
+                            <div className="grid gap-2">
+                                <button type="button" onClick={() => setVolumeCountingMode('total')} className={`text-left rounded-xl border p-3 ${volumeCountingMode === 'total' ? 'border-primary-500 bg-primary-500/10' : 'border-zinc-200 dark:border-zinc-800'}`}>
+                                    <span className="block text-sm font-bold text-zinc-800 dark:text-zinc-100">{lang === 'es' ? 'Total registrado · ×1' : 'Recorded total · ×1'}</span>
+                                    <span className="block mt-1 text-xs text-zinc-500">{lang === 'es' ? 'Barras, máquinas bilaterales o reps alternadas ya sumadas.' : 'Bars, bilateral machines, or alternating reps already totaled.'}</span>
+                                </button>
+                                <button type="button" onClick={() => setVolumeCountingMode('per_side')} className={`text-left rounded-xl border p-3 ${volumeCountingMode === 'per_side' ? 'border-primary-500 bg-primary-500/10' : 'border-zinc-200 dark:border-zinc-800'}`}>
+                                    <span className="block text-sm font-bold text-zinc-800 dark:text-zinc-100">{lang === 'es' ? 'Por lado · ×2' : 'Per side · ×2'}</span>
+                                    <span className="block mt-1 text-xs text-zinc-500">{lang === 'es' ? 'Si anotás carga y reps por brazo/pierna y hacés ambos lados.' : 'When load and reps are entered per arm/leg and both sides are performed.'}</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
 

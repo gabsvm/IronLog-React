@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { Icon } from '../../components/ui/Icon';
+import { getLogBodyWeight, getSetLoadVolume } from '../../utils/trainingMetrics';
 
 interface Props {
     logs: any[];
@@ -44,11 +45,12 @@ export const WeeklyRecapCard: React.FC<Props> = React.memo(({ logs, lang, t }) =
 
         const prCounted = new Set<string>();
         recentLogs.forEach((log: any) => {
+            const logBodyWeight = getLogBodyWeight(log);
             (log.exercises || []).forEach((ex: any) => {
                 if (ex.muscle) musclesSet.add(ex.muscle);
                 (ex.sets || []).forEach((set: any) => {
                     if (set.completed && set.weight && set.reps) {
-                        totalVolume += Number(set.weight) * Number(set.reps);
+                        totalVolume += getSetLoadVolume(set, ex, logBodyWeight);
                         if (ex.id && oldBests[ex.id] && !prCounted.has(ex.id)) {
                             const e1rm = Number(set.weight) * (1 + Number(set.reps) / 30);
                             if (e1rm > oldBests[ex.id] * 1.01) {

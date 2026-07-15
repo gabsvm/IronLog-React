@@ -4,7 +4,7 @@ import { useApp } from '../context/AppContext';
 import { TRANSLATIONS, MUSCLE_GROUPS } from '../constants';
 import { Icon } from '../components/ui/Icon';
 import { Button } from '../components/ui/Button';
-import { MuscleGroup, ExerciseDef } from '../types';
+import { MuscleGroup, ExerciseDef, VolumeCountingMode } from '../types';
 import { getTranslated } from '../utils';
 import { Virtuoso } from 'react-virtuoso';
 import { ExerciseDetailModal } from '../components/ui/ExerciseDetailModal'; 
@@ -29,6 +29,7 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
     // Create State
     const [newName, setNewName] = useState('');
     const [newMuscle, setNewMuscle] = useState<MuscleGroup>('CHEST');
+    const [newVolumeCountingMode, setNewVolumeCountingMode] = useState<VolumeCountingMode>('total');
 
     const handleDelete = () => {
         if (deleteId) {
@@ -43,7 +44,8 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
         const newEx = {
             id: `custom_${Date.now()}`,
             name: newName,
-            muscle: newMuscle
+            muscle: newMuscle,
+            volumeCountingMode: newVolumeCountingMode
         };
         setExercises(prev => [...prev, newEx]);
         setMode('list');
@@ -63,7 +65,7 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
                 onClick={() => setDetailEx(ex)} // Open details
                 className="w-full glass-card p-4 rounded-xl flex justify-between items-center shadow-md text-left active:scale-[0.99] transition-transform hover:border-white/10"
             >
-                <div>
+                        <div>
                     <div className="font-bold text-zinc-900 dark:text-white text-sm">
                         {getTranslated(ex.name, lang)}
                     </div>
@@ -144,6 +146,14 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
                                 </button>
                             ))}
                         </div>
+
+                    <div>
+                        <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider mb-2 block">{lang === 'es' ? 'Cálculo de tonelaje' : 'Tonnage calculation'}</label>
+                        <select value={newVolumeCountingMode} onChange={e => setNewVolumeCountingMode(e.target.value as VolumeCountingMode)} className="w-full bg-zinc-800 border border-zinc-700/50 rounded-xl p-3 font-medium text-white outline-none">
+                            <option value="total">{lang === 'es' ? 'Total registrado · ×1' : 'Recorded total · ×1'}</option>
+                            <option value="per_side">{lang === 'es' ? 'Por lado · ×2' : 'Per side · ×2'}</option>
+                        </select>
+                    </div>
                     </div>
 
                     <div className="flex gap-3 pt-4">

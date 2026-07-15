@@ -26,6 +26,14 @@ export type MuscleGroup =
 
 export type CardioType = 'steady' | 'hiit' | 'tabata';
 
+/**
+ * Defines how the load and reps entered for an exercise translate to external
+ * tonnage. `per_side` is for entries such as 20 kg x 10 per arm, performed on
+ * both sides; `total` is for bars, bilateral machines, or alternating reps
+ * already entered as a total.
+ */
+export type VolumeCountingMode = 'total' | 'per_side';
+
 export interface ExerciseDef {
   id: string;
   name: string | { en: string; es: string };
@@ -34,6 +42,7 @@ export interface ExerciseDef {
   defaultCardioType?: CardioType;
   videoId?: string;
   isBodyweight?: boolean;        // Bodyweight flag
+  volumeCountingMode?: VolumeCountingMode; // Defaults to total (x1)
   isIsometric?: boolean;         // L-sit, planche hold, back lever hold — tracked in seconds
   isometricTargetSecs?: number;  // Target hold duration (countdown mode)
   skillFamily?: string;          // "planche" | "front_lever" | "muscle_up" | "handstand" | "back_lever" | "human_flag"

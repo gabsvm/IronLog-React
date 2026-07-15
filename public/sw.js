@@ -1,4 +1,6 @@
-const CACHE_NAME = 'gainslab-pro-v17';
+// `scripts/generate-sw-precache.mjs` stamps this on production builds. Keeping
+// the source placeholder makes local development deterministic too.
+const CACHE_NAME = 'gainslab-pro-__BUILD_ID__';
 
 const PRECACHE_URLS = [
   '/',
@@ -12,6 +14,7 @@ const PRECACHE_URLS = [
   '/favicon-16.png',
   '/assets/branding/logo-mark.png',
   '/assets/branding/logo-lockup.png',
+  /* __BUILD_PRECACHE_URLS__ */
 ];
 
 self.addEventListener('install', (event) => {

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
-import { ExerciseDef } from '../../types';
+import { ExerciseDef, SessionExercise, VolumeCountingMode } from '../../types';
 import { Icon } from './Icon';
 import { getTranslated } from '../../utils';
 import { MuscleTag } from '../workout/MuscleTag';
@@ -10,6 +10,7 @@ import { Button } from './Button';
 import { ProgressChart } from '../stats/ProgressChart';
 import { Sheet } from './Sheet';
 import { useStatsWorker } from '../../hooks/useStatsWorker';
+import { useStore } from '../../lib/store';
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -147,13 +148,19 @@ const YouTubeCard: React.FC<{ videoId: string; title: string; youtubeUrl: string
 };
 
 export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exercise, onClose }) => {
-    const { lang, logs } = useApp();
+    const { lang, logs, setExercises, setLogs } = useApp();
     const t = TRANSLATIONS[lang];
     const [activeTab, setActiveTab] = useState<'guide' | 'history'>('guide');
+    const [volumeCountingMode, setVolumeCountingMode] = useState<VolumeCountingMode>(exercise.volumeCountingMode || 'total');
+    const setActiveSession = useStore(state => state.setActiveSession);
 
     const { isWorkerReady, calculateChartData } = useStatsWorker();
     const [chartData, setChartData] = useState<any[]>([]);
     const [chartLoading, setChartLoading] = useState(false);
+
+    useEffect(() => {
+        setVolumeCountingMode(exercise.volumeCountingMode || 'total');
+    }, [exercise.id, exercise.volumeCountingMode]);
 
     useEffect(() => {
         if (activeTab === 'history' && isWorkerReady) {
@@ -176,6 +183,25 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
         ? `https://www.youtube.com/watch?v=${exercise.videoId}`
         : `https://www.youtube.com/results?search_query=${encodeURIComponent(String(translatedName) + ' technique tutorial')}`;
 
+    const saveVolumeCountingMode = () => {
+        const updateExercise = <T extends ExerciseDef>(item: T): T => (
+            item.id === exercise.id ? { ...item, volumeCountingMode } : item
+        ) as T;
+
+        setExercises(prev => prev.map(updateExercise));
+        // Logs store a snapshot of the exercise. Update matching snapshots too so
+        // existing history and every summary use the configuration the user chose.
+        setLogs(prev => prev.map(log => ({
+            ...log,
+            exercises: (log.exercises || []).map(updateExercise),
+        })));
+        setActiveSession(session => session ? {
+            ...session,
+            exercises: session.exercises.map(updateExercise as (item: SessionExercise) => SessionExercise),
+        } : session);
+        onClose();
+    };
+
     return (
         <Sheet
             open={true}
@@ -183,7 +209,12 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
             title={String(translatedName)}
             description={`${exercise.muscle} exercise details`}
             accent="primary"
-            footer={<Button fullWidth onClick={onClose} variant="secondary">{t.close}</Button>}
+            footer={
+                <div className="flex gap-3">
+                    <Button fullWidth onClick={onClose} variant="secondary">{t.close}</Button>
+                    <Button fullWidth onClick={saveVolumeCountingMode}>{lang === 'es' ? 'Guardar' : 'Save'}</Button>
+                </div>
+            }
         >
             <div className="px-5 pt-1">
                 <MuscleTag label={exercise.muscle} />
@@ -270,6 +301,24 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                                         </div>
                                     </div>
                                 </div>
+
+                                {exercise.muscle !== 'CARDIO' && (
+                                    <div>
+                                        <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                            <Icon name="Dumbbell" size={13} /> {lang === 'es' ? 'Cálculo de tonelaje' : 'Tonnage calculation'}
+                                        </h4>
+                                        <div className="space-y-2">
+                                            <button type="button" onClick={() => setVolumeCountingMode('total')} className={`w-full text-left rounded-xl border p-3 transition-colors ${volumeCountingMode === 'total' ? 'border-primary-500 bg-primary-500/10' : 'border-white/10 bg-white/5'}`}>
+                                                <span className="block text-sm font-bold text-white">{lang === 'es' ? 'Total registrado · ×1' : 'Recorded total · ×1'}</span>
+                                                <span className="block mt-1 text-xs text-zinc-400">{lang === 'es' ? 'Usá esto para barras, máquinas bilaterales o si las reps alternadas ya son el total.' : 'For bars, bilateral machines, or alternating reps already entered as a total.'}</span>
+                                            </button>
+                                            <button type="button" onClick={() => setVolumeCountingMode('per_side')} className={`w-full text-left rounded-xl border p-3 transition-colors ${volumeCountingMode === 'per_side' ? 'border-primary-500 bg-primary-500/10' : 'border-white/10 bg-white/5'}`}>
+                                                <span className="block text-sm font-bold text-white">{lang === 'es' ? 'Por lado · ×2' : 'Per side · ×2'}</span>
+                                                <span className="block mt-1 text-xs text-zinc-400">{lang === 'es' ? 'Si anotás la carga y reps de un brazo/pierna y entrenás los dos lados.' : 'When you record load and reps for one arm/leg and train both sides.'}</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </>
                     ) : (

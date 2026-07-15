@@ -1,5 +1,9 @@
 import { ExerciseDef, Log, WorkoutSet } from '../types';
 
+export const getVolumeMultiplier = (
+    exercise: Pick<ExerciseDef, 'volumeCountingMode'>
+) => exercise.volumeCountingMode === 'per_side' ? 2 : 1;
+
 export const getLogBodyWeight = (log: Pick<Log, 'bodyWeightSnapshot'>, fallbackBodyWeight?: number) => {
     const snapshot = Number(log.bodyWeightSnapshot);
     if (Number.isFinite(snapshot) && snapshot > 0) return snapshot;
@@ -19,7 +23,7 @@ export const getEffectiveSetLoad = (
 
 export const getSetLoadVolume = (
     set: Pick<WorkoutSet, 'weight' | 'reps' | 'completed' | 'skipped'>,
-    exercise: Pick<ExerciseDef, 'isBodyweight'>,
+    exercise: Pick<ExerciseDef, 'isBodyweight' | 'volumeCountingMode'>,
     userBodyWeight?: number
 ) => {
     if (!set.completed || set.skipped) return 0;
@@ -27,5 +31,5 @@ export const getSetLoadVolume = (
     if (reps <= 0) return 0;
     const load = getEffectiveSetLoad(set, exercise, userBodyWeight);
     if (load <= 0) return 0;
-    return load * reps;
+    return load * reps * getVolumeMultiplier(exercise);
 };

@@ -5,11 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npx tsc && npx vite build",
+    "build": "npx tsc && npx vite build && node scripts/generate-sw-precache.mjs",
     "build:strict": "npm run lint:a11y && npm run build",
     "preview": "vite preview",
     "lint:a11y": "npx eslint \"{components,views}/**/*.{ts,tsx}\" App.tsx",
-    "static-build": "vite build",
+    "static-build": "vite build && node scripts/generate-sw-precache.mjs",
     "cap-sync": "npx cap sync",
     "cap-add-android": "npx cap add android",
     "cap-add-ios": "npx cap add ios",
