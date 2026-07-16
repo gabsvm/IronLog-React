@@ -38,6 +38,12 @@ const LoadingSpinner = () => (
     </div>
 );
 
+const FullScreenLoading = () => (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-950 text-zinc-400">
+        <Icon name="RefreshCw" size={24} className="animate-spin" />
+    </div>
+);
+
 // Wraps a DOM mutation in a View Transition (graceful fallback when unsupported).
 const withTransition = (direction: string, callback: () => void) => {
     document.documentElement.dataset.transition = direction;
@@ -413,7 +419,7 @@ const AppContent = () => {
                             />
                         </Suspense>
                     ) : view === 'summary' && completedWorkoutLog ? (
-                        <Suspense fallback={<LoadingSpinner />}>
+                        <Suspense fallback={<FullScreenLoading />}>
                             <SessionSummaryView
                                 log={completedWorkoutLog}
                                 onClose={() => {

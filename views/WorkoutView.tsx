@@ -133,6 +133,15 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [ctrl.changingSetType]);
 
+    // Hide lazy-import latency behind the finish confirmation. By the time the
+    // user confirms (or dismisses a PR), both destination overlays are already
+    // in the browser module cache instead of showing a blank transition.
+    useEffect(() => {
+        if (!ctrl.showFinishModal) return;
+        void import('../components/ui/PRCelebrationOverlay');
+        void import('./SessionSummaryView');
+    }, [ctrl.showFinishModal]);
+
     // Derived State - memoized so its reference is stable across keystroke re-renders,
     // otherwise it defeats React.memo on every SortableExerciseCard.
     const stageConfig = useMemo(
