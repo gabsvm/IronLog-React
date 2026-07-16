@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef, Suspense, useCallback, useMemo, startTransition } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
-import { useTimerContext } from './context/TimerContext';
+import { useTimerActions } from './context/TimerContext';
 import { Layout } from './components/layout/Layout';
 import { HomeView } from './views/HomeView';
 import { RestTimerOverlay } from './components/ui/RestTimerOverlay';
@@ -76,7 +76,7 @@ const AppContent = () => {
     const setActiveSession = useStore(state => state.setActiveSession);
     const setActiveMeso = useStore(state => state.setActiveMeso);
 
-    const { setRestTimer } = useTimerContext();
+    const { setRestTimer } = useTimerActions();
     const { user } = useAuth();
     const { checkPro, showPaywall, setShowPaywall, featureAttempted } = usePro();
 

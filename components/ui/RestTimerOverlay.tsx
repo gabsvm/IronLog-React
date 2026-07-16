@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useTimerContext } from '../../context/TimerContext';
+import { useTimerActions, useTimerState } from '../../context/TimerContext';
 import { useApp } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
 import { Icon } from './Icon';
@@ -64,7 +64,8 @@ const CircularTimer: React.FC<{ percentage: number; timeLeft: number; label: str
 };
 
 export const RestTimerOverlay: React.FC = () => {
-    const { restTimer, setRestTimer } = useTimerContext();
+    const restTimer = useTimerState();
+    const { setRestTimer } = useTimerActions();
     const { lang } = useApp();
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
     const [minimized, setMinimized] = useState(false);
@@ -234,7 +235,7 @@ export const RestTimerOverlay: React.FC = () => {
 
     return (
         <div
-            className="fixed left-0 right-0 z-sheet animate-in slide-in-from-bottom duration-sheet ease-natural"
+            className="fixed left-0 right-0 z-sheet animate-in slide-in-from-bottom duration-sheet ease-natural will-change-transform"
             style={{ bottom: `${keyboardOffset}px` }}
             role="dialog"
             aria-modal="false"
@@ -243,7 +244,7 @@ export const RestTimerOverlay: React.FC = () => {
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
 
             <div
-                className={`relative mx-auto max-w-md rounded-t-[28px] border-x border-t pb-safe shadow-[0_-24px_60px_rgba(0,0,0,0.7)] backdrop-blur-2xl transition-colors duration-slow ${
+                className={`relative mx-auto max-w-md rounded-t-[28px] border-x border-t pb-safe shadow-[0_-24px_60px_rgba(0,0,0,0.7)] backdrop-blur-xl transition-colors duration-slow ${
                     isCritical
                         ? 'border-red-500/30 bg-red-950/70'
                         : 'border-white/10 bg-black/85'

@@ -1,7 +1,7 @@
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { useTimerContext } from '../context/TimerContext';
+import { useTimerActions } from '../context/TimerContext';
 import { SessionExercise, ExerciseDef, SetType, Log, WorkoutSet } from '../types';
 import { triggerHaptic } from '../utils/audio';
 import { getLastLogForExercise, uid, estimate1RM } from '../utils';
@@ -43,7 +43,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
     const activeMeso = useStore(state => state.activeMeso);
     const setActiveSession = useStore(state => state.setActiveSession);
     const setActiveMeso = useStore(state => state.setActiveMeso);
-    const { setRestTimer } = useTimerContext();
+    const { setRestTimer } = useTimerActions();
     const { calculateAllBest1RMs } = useStatsWorker();
 
     // Local UI State
@@ -259,7 +259,12 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
                 }
             }
 
-            setRestTimer({ active: true, duration: dur, timeLeft: dur, endAt: Date.now() + (dur * 1000) });
+            // Let the completed-set state paint before mounting the animated
+            // rest sheet. This prevents both updates competing for the same
+            // frame on lower-end devices.
+            requestAnimationFrame(() => {
+                setRestTimer({ active: true, duration: dur, timeLeft: dur, endAt: Date.now() + (dur * 1000) });
+            });
         } else {
             triggerHaptic('light');
         }

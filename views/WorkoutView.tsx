@@ -10,7 +10,7 @@ import { getTranslated, getMesoStageConfig, getLastLogForExercise } from '../uti
 import { useWorkoutController } from '../hooks/useWorkoutController';
 import { SortableExerciseCard } from '../components/workout/SortableExerciseCard';
 import { WorkoutTimer } from '../components/workout/WorkoutTimer';
-import { useTimerContext } from '../context/TimerContext';
+import { useTimerActions, useTimerState } from '../context/TimerContext';
 import { formatSeconds } from '../utils';
 
 interface WorkoutViewProps {
@@ -57,6 +57,51 @@ const CORE_SET_TYPES: SetType[] = ['regular', 'warmup', 'drop', 'myorep', 'top',
 const ADVANCED_SET_TYPES: SetType[] = ['giant', 'cluster', 'emom', 'rest_pause'];
 const MANUAL_REST_PRESETS = [60, 90, 120, 180] as const;
 
+const RestTimerControl: React.FC<{
+    preset: number;
+    onStart: (duration: number) => void;
+    onStop: () => void;
+    onCyclePreset: () => void;
+    lang: 'en' | 'es';
+}> = React.memo(({ preset, onStart, onStop, onCyclePreset, lang }) => {
+    const restTimer = useTimerState();
+
+    return (
+        <>
+            <button
+                type="button"
+                onClick={(event) => {
+                    event.stopPropagation();
+                    if (restTimer.active) onStop();
+                    else onStart(preset);
+                }}
+                className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold tabular-nums transition-colors ${
+                    restTimer.active ? 'bg-primary-500/20 text-primary-300' : 'bg-zinc-900 text-zinc-400'
+                }`}
+                title={restTimer.active
+                    ? (lang === 'es' ? 'Finalizar descanso' : 'Stop rest')
+                    : (lang === 'es' ? `Iniciar descanso de ${preset}s` : `Start ${preset}s rest`)}
+            >
+                <Icon name="Timer" size={11} />
+                {restTimer.active ? formatSeconds(restTimer.timeLeft) : `${preset}s`}
+            </button>
+            {!restTimer.active && (
+                <button
+                    type="button"
+                    onClick={(event) => {
+                        event.stopPropagation();
+                        onCyclePreset();
+                    }}
+                    className="inline-flex items-center gap-1 rounded-full bg-zinc-900 px-2 py-1 text-[10px] font-semibold text-zinc-400 transition-colors hover:text-white"
+                    title={lang === 'es' ? 'Cambiar preset de descanso' : 'Change rest preset'}
+                >
+                    <Icon name="RotateCcw" size={11} />
+                </button>
+            )}
+        </>
+    );
+});
+
 // Container Component
 export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, onBack }) => {
     const { exercises, logs } = useApp();
@@ -65,7 +110,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
     const { tutorialProgress, markTutorialSeen } = useTutorial();
     const activeSession = useStore(state => state.activeSession);
     const activeMeso = useStore(state => state.activeMeso);
-    const { restTimer, setRestTimer } = useTimerContext();
+    const { setRestTimer } = useTimerActions();
     const t = TRANSLATIONS[lang];
 
     // Use the Custom Controller Hook - Pass both callbacks
@@ -310,41 +355,13 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                         <div className="rounded-full border border-zinc-700/80 bg-zinc-900/90 px-2.5 py-1">
                             <WorkoutTimer startTime={activeSession.startTime} />
                         </div>
-                        <button
-                            type="button"
-                            onClick={(event) => {
-                                event.stopPropagation();
-                                if (restTimer.active) {
-                                    stopRest();
-                                } else {
-                                    startManualRest(manualRestPreset);
-                                }
-                            }}
-                            className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold tabular-nums transition-colors ${
-                                restTimer.active
-                                    ? 'bg-primary-500/20 text-primary-300'
-                                    : 'bg-zinc-900 text-zinc-400'
-                            }`}
-                            title={restTimer.active
-                                ? (lang === 'es' ? 'Finalizar descanso' : 'Stop rest')
-                                : (lang === 'es' ? `Iniciar descanso de ${manualRestPreset}s` : `Start ${manualRestPreset}s rest`)}
-                        >
-                            <Icon name="Timer" size={11} />
-                            {restTimer.active ? formatSeconds(restTimer.timeLeft) : `${manualRestPreset}s`}
-                        </button>
-                        {!restTimer.active && (
-                            <button
-                                type="button"
-                                onClick={(event) => {
-                                    event.stopPropagation();
-                                    cycleManualRestPreset();
-                                }}
-                                className="inline-flex items-center gap-1 rounded-full bg-zinc-900 px-2 py-1 text-[10px] font-semibold text-zinc-400 transition-colors hover:text-white"
-                            title={lang === 'es' ? 'Cambiar preset de descanso' : 'Change rest preset'}
-                            >
-                                <Icon name="RotateCw" size={11} />
-                            </button>
-                        )}
+                        <RestTimerControl
+                            preset={manualRestPreset}
+                            onStart={startManualRest}
+                            onStop={stopRest}
+                            onCyclePreset={cycleManualRestPreset}
+                            lang={lang}
+                        />
                         {totalWorkingSets > 0 && (
                             <div className={`rounded-full px-2 py-1 text-[10px] font-semibold tabular-nums transition-colors ${remainingSets === 0 ? 'bg-green-500/20 text-green-400' : 'bg-zinc-800 text-zinc-300'}`}>
                                 {remainingSets === 0
