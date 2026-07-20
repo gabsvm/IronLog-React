@@ -8,6 +8,9 @@ import { Button } from '../ui/Button';
 import { usePro } from '../../hooks/usePro';
 import { AdminControlPanel } from './AdminControlPanel';
 import { PhilosophyModal } from '../ui/PhilosophyModal';
+import { Sheet } from '../ui/Sheet';
+import { useStore } from '../../lib/store';
+import { GlobalTemplate } from '../../types';
 
 const PaywallModal = React.lazy(() => import('../pro/PaywallModal').then(m => ({ default: m.PaywallModal })));
 
@@ -29,7 +32,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     const {
         lang, setLang, theme, setTheme, colorTheme, setColorTheme,
         config, setConfig, resetTutorials, deferredPrompt, installApp, isStandalone,
-        userProfile, setUserProfile, syncStatus, isOnline, localLastUpdated, localSectionSyncMeta, pendingCloudSections
+        userProfile, setUserProfile, syncStatus, isOnline, localLastUpdated, localSectionSyncMeta, pendingCloudSections,
+        program, personalTemplates, setPersonalTemplates
     } = useApp();
 
     const { user, logout } = useAuth();
@@ -38,6 +42,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
     const [tab, setTab] = useState<'account' | 'prefs' | 'advanced'>('account');
     const [showPhilosophy, setShowPhilosophy] = useState(false);
+    const [showSaveTemplate, setShowSaveTemplate] = useState(false);
+    const [templateName, setTemplateName] = useState('');
+    const activeMeso = useStore(state => state.activeMeso);
 
     const isAdmin = user?.email === 'gabsvm@gmail.com';
 
@@ -104,6 +111,35 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         if (setUserProfile) {
             setUserProfile((prev: any) => ({ ...prev, [field]: val }));
         }
+    };
+
+    const openSaveTemplate = () => {
+        if (!activeMeso || program.length === 0) return;
+        setTemplateName(activeMeso.name || (lang === 'es' ? 'Mi rutina' : 'My routine'));
+        setShowSaveTemplate(true);
+    };
+
+    const savePersonalTemplate = () => {
+        const title = templateName.trim();
+        if (!title || program.length === 0) return;
+
+        const id = `personal_${Date.now()}`;
+        const template: GlobalTemplate = {
+            id,
+            name: id,
+            title: { en: title, es: title },
+            description: {
+                en: 'Private template saved from your active routine.',
+                es: 'Plantilla privada guardada desde tu rutina activa.',
+            },
+            isPro: false,
+            order: personalTemplates.length,
+            scope: 'personal',
+            program: JSON.parse(JSON.stringify(program)),
+        };
+
+        setPersonalTemplates(prev => [...prev, template]);
+        setShowSaveTemplate(false);
     };
 
     const MemberStatus = () => {
@@ -261,6 +297,28 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         <div className="space-y-3">
                             <ProButton label={t.programEditor} icon="Layout" onClick={onOpenProgram} featureName="Custom Routines" />
                             <ProButton label={t.manageEx} icon="Dumbbell" onClick={onOpenExercises} featureName="Exercise Library" />
+                            <button
+                                onClick={openSaveTemplate}
+                                disabled={!activeMeso || program.length === 0}
+                                className="w-full p-3 bg-white dark:bg-zinc-800 rounded-xl flex items-center justify-between group active:scale-[0.98] transition-all border border-zinc-100 dark:border-white/5 hover:border-zinc-300 dark:hover:border-zinc-600 disabled:opacity-45 disabled:active:scale-100"
+                            >
+                                <div className="flex items-center gap-3 text-left">
+                                    <div className="p-2 rounded-lg bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white">
+                                        <Icon name="Copy" size={18} />
+                                    </div>
+                                    <div>
+                                        <span className="block font-bold text-sm text-zinc-700 dark:text-zinc-200">
+                                            {lang === 'es' ? 'Guardar rutina como plantilla' : 'Save routine as template'}
+                                        </span>
+                                        <span className="block text-[10px] text-zinc-500 mt-0.5">
+                                            {activeMeso && program.length > 0
+                                                ? (lang === 'es' ? 'Privada: solo visible en tu cuenta' : 'Private: visible only in your account')
+                                                : (lang === 'es' ? 'Inicia una rutina para poder guardarla' : 'Start a routine to save it')}
+                                        </span>
+                                    </div>
+                                </div>
+                                <Icon name="ChevronRight" size={16} className="text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-white" />
+                            </button>
                             <p className="text-[10px] text-zinc-500 leading-snug px-1">
                                 {lang === 'es'
                                     ? '💡 Two Block Mass se inicia desde el botón (+) en la barra inferior.'
@@ -390,6 +448,32 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </Suspense>
             )}
             <PhilosophyModal isOpen={showPhilosophy} onClose={() => setShowPhilosophy(false)} lang={lang} />
+            <Sheet
+                open={showSaveTemplate}
+                onOpenChange={setShowSaveTemplate}
+                title={lang === 'es' ? 'Guardar plantilla privada' : 'Save private template'}
+                accent="primary"
+                footer={<Button fullWidth onClick={savePersonalTemplate} disabled={!templateName.trim()}>{lang === 'es' ? 'Guardar plantilla' : 'Save template'}</Button>}
+            >
+                <div className="p-5 space-y-3">
+                    <p className="text-sm text-zinc-500">
+                        {lang === 'es'
+                            ? 'Se guardará una copia de la rutina activa con todos sus cambios. No será visible para otros usuarios.'
+                            : 'A copy of the active routine and its changes will be saved. Other users cannot see it.'}
+                    </p>
+                    <div>
+                        <label className="text-[10px] font-black uppercase text-zinc-500 tracking-widest block mb-2">{lang === 'es' ? 'Nombre' : 'Name'}</label>
+                        <input
+                            autoFocus
+                            value={templateName}
+                            onChange={event => setTemplateName(event.target.value)}
+                            maxLength={80}
+                            className="w-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl p-3 font-bold text-zinc-900 dark:text-white outline-none focus:border-primary-500"
+                            placeholder={lang === 'es' ? 'Ej. Upper/Lower personalizado' : 'E.g. Custom Upper/Lower'}
+                        />
+                    </div>
+                </div>
+            </Sheet>
         </div>
     );
 };

@@ -13,6 +13,9 @@ interface Props {
 }
 
 const getTemplateAuthor = (tpl: GlobalTemplate, lang: string): string => {
+    if (tpl.scope === 'personal') {
+        return lang === 'es' ? 'Mis plantillas' : 'My templates';
+    }
     const id = tpl.id;
     if (id.startsWith('nh_') || id === 'toji_fushiguro' || id === 'tokita') {
         return 'Natural Hypertrophy';

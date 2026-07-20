@@ -135,6 +135,8 @@ export interface GlobalTemplate {
   isPro: boolean;
   program: ProgramDay[];
   order: number;
+  /** Private templates are stored in the owner's account and never published. */
+  scope?: 'personal';
   guidelineImages?: string[]; // NEW: Array of images for guidelines
 }
 
@@ -246,6 +248,7 @@ export interface AppState {
   userProfile?: UserProfile;
   lastUpdated?: number;
   globalTemplates?: GlobalTemplate[];
+  personalTemplates?: GlobalTemplate[];
   nutritionLogs: NutritionLog[];
   cardioSessions: CardioSession[];
   nutritionGoal: NutritionGoal;
@@ -272,7 +275,8 @@ export type DirtySyncSection =
   | 'nutritionGoal'
   | 'bodyLogs'
   | 'macroGoals'
-  | 'customFoods';
+  | 'customFoods'
+  | 'personalTemplates';
 
 export type SectionSyncMeta = Partial<Record<DirtySyncSection, number>>;
 

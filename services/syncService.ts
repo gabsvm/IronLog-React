@@ -97,6 +97,7 @@ const uploadStateNow = async (userId: string, state: Partial<AppState> & { email
     if (shouldInclude('cardioSessions')) rawMainData.cardioSessions = (state.cardioSessions || []).slice(-60);
     if (shouldInclude('bodyLogs')) rawMainData.bodyLogs = (state.bodyLogs || []).slice(-100);
     if (shouldInclude('customFoods')) rawMainData.customFoods = (state.customFoods || []).slice(-100);
+    if (shouldInclude('personalTemplates')) rawMainData.personalTemplates = state.personalTemplates || [];
     if (shouldInclude('nutritionGoal')) rawMainData.nutritionGoal = state.nutritionGoal || null;
     if (shouldInclude('macroGoals')) rawMainData.macroGoals = state.macroGoals || null;
     if (shouldInclude('userProfile')) rawMainData.userProfile = state.userProfile || null;
@@ -104,7 +105,7 @@ const uploadStateNow = async (userId: string, state: Partial<AppState> & { email
         ? buildSectionSyncMeta([
             'program', 'activeMeso', 'exercises', 'logs', 'config', 'rpFeedback',
             'userProfile', 'nutritionLogs', 'cardioSessions', 'nutritionGoal',
-            'bodyLogs', 'macroGoals', 'customFoods'
+            'bodyLogs', 'macroGoals', 'customFoods', 'personalTemplates'
         ], lastUpdated)
         : buildSectionSyncMeta(sections, lastUpdated);
 
@@ -233,6 +234,7 @@ export const syncService = {
                 bodyLogs: data.bodyLogs,
                 macroGoals: data.macroGoals,
                 customFoods: data.customFoods,
+                personalTemplates: data.personalTemplates,
                 logs: logsData,
                 lastUpdated: data.lastUpdated || Date.now(),
                 syncMeta: data.sectionSyncMeta || {},

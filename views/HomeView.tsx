@@ -34,7 +34,7 @@ interface HomeViewProps {
 }
 
 export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram, onSkipSession, onStartFreeSession }) => {
-    const { program, logs, isAppLoading, setProgram, globalTemplates } = useApp();
+    const { program, logs, isAppLoading, setProgram, globalTemplates, personalTemplates } = useApp();
     const { lang } = useAppPreferences();
     const { tutorialProgress, markTutorialSeen } = useTutorial();
     const activeSession = useStore(state => state.activeSession);
@@ -306,7 +306,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                         onClose={() => setShowTemplateSelector(false)}
                         onSelectTemplate={handleSelectTemplate}
                         onCreateCustom={handleCreateCustom}
-                        templates={globalTemplates}
+                        templates={[...personalTemplates, ...globalTemplates]}
                         t={t}
                         lang={lang}
                     />

@@ -29,6 +29,7 @@ const FULL_SYNC_SECTIONS: DirtySyncSection[] = [
     'bodyLogs',
     'macroGoals',
     'customFoods',
+    'personalTemplates',
 ];
 
 interface AppContextType extends Omit<AppState, 'activeSession' | 'activeMeso'> {
@@ -47,6 +48,8 @@ interface AppContextType extends Omit<AppState, 'activeSession' | 'activeMeso'> 
     setRpFeedback: (val: AppState['rpFeedback'] | ((prev: AppState['rpFeedback']) => AppState['rpFeedback'])) => void;
     setHasSeenOnboarding: (val: boolean) => void;
     setGlobalTemplates: (val: GlobalTemplate[] | ((prev: GlobalTemplate[]) => GlobalTemplate[])) => void;
+    personalTemplates: GlobalTemplate[];
+    setPersonalTemplates: (val: GlobalTemplate[] | ((prev: GlobalTemplate[]) => GlobalTemplate[])) => void;
 
     // NEW: User Profile Setter
     setUserProfile: (val: UserProfile | ((prev: UserProfile) => UserProfile)) => void;
@@ -142,6 +145,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     }, 1000);
 
     const [globalTemplates, setGlobalTemplates] = useState<GlobalTemplate[]>([]);
+    const [personalTemplates, setPersonalTemplates] = usePersistedState<GlobalTemplate[]>('il_personal_templates_v1', [], 1000);
     const [defaultLibrary, setDefaultLibrary] = useState<ExerciseDef[] | null>(null);
     const [defaultTemplate, setDefaultTemplate] = useState<ProgramDay[] | null>(null);
     const [baseTemplates, setBaseTemplates] = useState<GlobalTemplate[] | null>(null);
@@ -469,6 +473,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     trackDirtySection('bodyLogs', [bodyLogs, isAppLoading, hasCheckedSync]);
     trackDirtySection('macroGoals', [macroGoals, isAppLoading, hasCheckedSync]);
     trackDirtySection('customFoods', [customFoods, isAppLoading, hasCheckedSync]);
+    trackDirtySection('personalTemplates', [personalTemplates, isAppLoading, hasCheckedSync]);
 
     const installApp = useCallback(async () => {
         const promptEvent = deferredPrompt || window.deferredPrompt;
@@ -529,6 +534,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                             if (cloudData.bodyLogs) setBodyLogs(cloudData.bodyLogs);
                             if (cloudData.macroGoals) setMacroGoals(cloudData.macroGoals);
                             if (cloudData.customFoods) setCustomFoods(cloudData.customFoods);
+                            if (cloudData.personalTemplates) setPersonalTemplates(cloudData.personalTemplates);
 
                             setLocalLastUpdated(cloudData.lastUpdated ?? Date.now());
                             setLocalSectionSyncMeta(cloudSyncMeta);
@@ -558,7 +564,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     }, [
         user, isOnline, isAppLoading, pendingCloudData, hasCheckedSync, activeMeso, logs, localLastUpdated, localSectionSyncMeta,
         setProgram, setExercises, setLogs, setRpFeedback, setShowRIR, setRpEnabled, setLocalLastUpdated,
-        setHasSeenOnboarding, setBodyLogs, setCustomFoods, setKeepScreenOn, setMacroGoals, setNutritionLogs, setLocalSectionSyncMeta,
+        setHasSeenOnboarding, setBodyLogs, setCustomFoods, setPersonalTemplates, setKeepScreenOn, setMacroGoals, setNutritionLogs, setLocalSectionSyncMeta,
         setRpTargetRIR, setUserProfile, setCardioSessions, setNutritionGoal
     ]); // Re-run when dependencies change
 
@@ -579,7 +585,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                             program, activeMeso, exercises, logs,
                             config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn },
                             rpFeedback,
-                            userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods,
+                            userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, personalTemplates,
                             email: user.email || null,
                             lastUpdated: now,
                         }, dirtySections);
@@ -595,7 +601,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         window.addEventListener('online', handleOnline);
         window.addEventListener('offline', handleOffline);
         return () => { window.removeEventListener('online', handleOnline); window.removeEventListener('offline', handleOffline); };
-    }, [user, subscription.isPro, program, activeMeso, activeSession, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, rpFeedback, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, setLocalLastUpdated]);
+    }, [user, subscription.isPro, program, activeMeso, activeSession, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, rpFeedback, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, personalTemplates, setLocalLastUpdated]);
 
     // ── Debounce A: session-only write (fast, lightweight) ─────────────────────
     // activeSession changes on every set completion or weight input during a workout.
@@ -632,7 +638,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                         program, activeMeso, exercises, logs,
                         config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn },
                         rpFeedback,
-                        userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods,
+                        userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, personalTemplates,
                         email: user.email || null,
                         lastUpdated: now,
                     }, dirtySections);
@@ -642,7 +648,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
             }
         }, 10000);
         return () => clearTimeout(timer);
-    }, [user, subscription.isPro, program, activeMeso, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, rpFeedback, isAppLoading, hasCheckedSync, pendingCloudData, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, setLocalLastUpdated]);
+    }, [user, subscription.isPro, program, activeMeso, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, rpFeedback, isAppLoading, hasCheckedSync, pendingCloudData, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, personalTemplates, setLocalLastUpdated]);
 
     const confirmCloudSync = useCallback(() => {
         if (!pendingCloudData) return;
@@ -671,6 +677,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
             if (pendingCloudSections.includes('bodyLogs') && pendingCloudData.bodyLogs) setBodyLogs(pendingCloudData.bodyLogs);
             if (pendingCloudSections.includes('macroGoals') && pendingCloudData.macroGoals) setMacroGoals(pendingCloudData.macroGoals);
             if (pendingCloudSections.includes('customFoods') && pendingCloudData.customFoods) setCustomFoods(pendingCloudData.customFoods);
+            if (pendingCloudSections.includes('personalTemplates') && pendingCloudData.personalTemplates) setPersonalTemplates(pendingCloudData.personalTemplates);
 
             setLocalLastUpdated(pendingCloudData.lastUpdated ?? Date.now());
             setLocalSectionSyncMeta(prev => {
@@ -688,7 +695,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
             setPendingCloudSections([]);
             console.log("Cloud sections applied.");
         });
-    }, [pendingCloudData, pendingCloudSections, setProgram, setExercises, setLogs, setRpFeedback, setShowRIR, setRpEnabled, setLocalLastUpdated, setHasSeenOnboarding, setBodyLogs, setCustomFoods, setKeepScreenOn, setMacroGoals, setNutritionLogs, setRpTargetRIR, setUserProfile, setLocalSectionSyncMeta, setCardioSessions, setNutritionGoal]);
+    }, [pendingCloudData, pendingCloudSections, setProgram, setExercises, setLogs, setRpFeedback, setShowRIR, setRpEnabled, setLocalLastUpdated, setHasSeenOnboarding, setBodyLogs, setCustomFoods, setPersonalTemplates, setKeepScreenOn, setMacroGoals, setNutritionLogs, setRpTargetRIR, setUserProfile, setLocalSectionSyncMeta, setCardioSessions, setNutritionGoal]);
 
     const cancelCloudSync = useCallback(() => {
         setPendingCloudData(null);
@@ -771,6 +778,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         syncStatus,
         deferredPrompt, installApp, isStandalone,
         globalTemplates, setGlobalTemplates,
+        personalTemplates, setPersonalTemplates,
         userProfile, setUserProfile,
         nutritionLogs, setNutritionLogs,
         cardioSessions, setCardioSessions,
@@ -794,6 +802,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         syncStatus,
         deferredPrompt, installApp, isStandalone,
         globalTemplates, setGlobalTemplates,
+        personalTemplates, setPersonalTemplates,
         userProfile, setUserProfile,
         nutritionLogs, setNutritionLogs,
         cardioSessions, setCardioSessions,
