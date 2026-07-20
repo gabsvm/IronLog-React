@@ -2,15 +2,22 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ── Global read-only content (templates & exercise library) ──────────
+    // The global library is maintained from the in-app admin panel.
+    // It remains public to read, while writes are restricted to its owner.
+    function isAdmin() {
+      return request.auth != null
+             && request.auth.token.email == 'gabsvm@gmail.com';
+    }
+
+    // ── Global content (templates & exercise library) ────────────────────
     match /global_templates/{id} {
       allow read: if true;
-      allow write: if false;
+      allow write: if isAdmin();
     }
 
     match /global_exercises/{id} {
       allow read: if true;
-      allow write: if false;
+      allow write: if isAdmin();
     }
 
     // ── Per-user data ─────────────────────────────────────────────────────
