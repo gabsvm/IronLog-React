@@ -3,6 +3,7 @@ package com.gainslab.ironlog.di
 import com.gainslab.ironlog.db.AppDatabase
 import com.gainslab.ironlog.db.AppPreferences
 import com.gainslab.ironlog.store.AppStore
+import com.gainslab.ironlog.auth.AuthService
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 import org.koin.dsl.KoinAppDeclaration
@@ -18,6 +19,7 @@ fun initKoin(appDeclaration: KoinAppDeclaration? = null) {
 }
 
 val commonModule = module {
+    single { AuthService() }
     single<AppPreferences> { AppPreferences(get()) }
     
     // Bind DAOs from the platform-specific AppDatabase instance

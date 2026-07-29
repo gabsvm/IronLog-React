@@ -13,8 +13,12 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.JsonEncoder
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
@@ -137,6 +141,57 @@ enum class WeightUnit {
     @SerialName("pl") PL
 }
 
+/**
+ * The web app serializes a mesocycle plan as a Firestore map keyed by day
+ * index, while Android stores it as a list. Accept both shapes when restoring
+ * the same account from the cloud.
+ */
+object MesoPlanSerializer : KSerializer<List<List<String?>>> {
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("MesoPlan", PrimitiveKind.STRING)
+
+    override fun deserialize(decoder: Decoder): List<List<String?>> {
+        val input = decoder as? JsonDecoder ?: throw SerializationException("Only works with JSON")
+        val element = input.decodeJsonElement()
+        fun parseDay(value: kotlinx.serialization.json.JsonElement): List<String?> =
+            (value as? JsonArray)?.map { item ->
+                (item as? JsonPrimitive)?.contentOrNull
+            } ?: emptyList()
+
+        return when (element) {
+            is JsonArray -> element.map(::parseDay)
+            is JsonObject -> element.entries
+                .mapNotNull { (key, value) -> key.toIntOrNull()?.let { it to parseDay(value) } }
+                .sortedBy { it.first }
+                .let { indexed ->
+                    if (indexed.isEmpty()) emptyList()
+                    else List(indexed.last().first + 1) { index -> indexed.firstOrNull { it.first == index }?.second ?: emptyList() }
+                }
+            else -> emptyList()
+        }
+    }
+
+    override fun serialize(encoder: Encoder, value: List<List<String?>>) {
+        val output = encoder as? JsonEncoder ?: throw SerializationException("Only works with JSON")
+        output.encodeJsonElement(JsonArray(value.map { day ->
+            JsonArray(day.map { item -> item?.let(::JsonPrimitive) ?: JsonNull })
+        }))
+    }
+}
+
+@Serializable
+data class AppSettings(
+    val language: Lang = Lang.ES,
+    val theme: Theme = Theme.DARK,
+    val showRir: Boolean = true,
+    val keepScreenOn: Boolean = false
+)
+
+@Serializable
+enum class VolumeCountingMode {
+    @SerialName("total") TOTAL,
+    @SerialName("per_side") PER_SIDE
+}
+
 @Serializable
 data class ExerciseDef(
     val id: String,
@@ -146,6 +201,7 @@ data class ExerciseDef(
     val defaultCardioType: CardioType? = null,
     val videoId: String? = null,
     val isBodyweight: Boolean? = null,
+    val volumeCountingMode: VolumeCountingMode = VolumeCountingMode.TOTAL,
     val isIsometric: Boolean? = null,
     val isometricTargetSecs: Int? = null,
     val skillFamily: String? = null,
@@ -195,6 +251,7 @@ data class SessionExercise(
     val defaultCardioType: CardioType? = null,
     val videoId: String? = null,
     val isBodyweight: Boolean? = null,
+    val volumeCountingMode: VolumeCountingMode = VolumeCountingMode.TOTAL,
     val isIsometric: Boolean? = null,
     val isometricTargetSecs: Int? = null,
     val skillFamily: String? = null,
@@ -266,6 +323,7 @@ data class GlobalTemplate(
     val isPro: Boolean,
     val program: List<ProgramDay> = emptyList(),
     val order: Int,
+    val scope: String? = null,
     val guidelineImages: List<String>? = null
 )
 
@@ -275,6 +333,7 @@ data class MesoCycle(
     val name: String? = null,
     val mesoType: String,
     val week: Int,
+    @Serializable(with = MesoPlanSerializer::class)
     val plan: List<List<String?>> = emptyList(),
     val targetWeeks: Int? = null,
     val isDeload: Boolean? = null,

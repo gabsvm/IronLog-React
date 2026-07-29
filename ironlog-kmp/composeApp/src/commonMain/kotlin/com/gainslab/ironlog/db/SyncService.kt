@@ -57,7 +57,10 @@ object SyncService {
         bodyLogs: List<BodyLog>,
         customFoods: List<CustomFood>,
         nutritionGoal: NutritionGoal?,
+        macroGoals: MacroGoals?,
         userProfile: UserProfile?,
+        personalTemplates: List<GlobalTemplate>,
+        appSettings: AppSettings,
         lastUpdated: Long,
         logs: List<Log>
     ) {
@@ -74,7 +77,10 @@ object SyncService {
                 bodyLogs = bodyLogs.takeLast(100),
                 customFoods = customFoods.takeLast(100),
                 nutritionGoal = nutritionGoal,
+                macroGoals = macroGoals,
                 userProfile = userProfile,
+                personalTemplates = personalTemplates,
+                appSettings = appSettings,
                 lastUpdated = lastUpdated,
                 email = currentUserEmail
             )
@@ -119,9 +125,15 @@ object SyncService {
                     nutritionLogs = data.nutritionLogs,
                     cardioSessions = data.cardioSessions,
                     nutritionGoal = data.nutritionGoal,
+                    macroGoals = data.macroGoals,
                     bodyLogs = data.bodyLogs,
                     customFoods = data.customFoods,
                     userProfile = data.userProfile,
+                    personalTemplates = data.personalTemplates,
+                    appSettings = data.appSettings.copy(
+                        showRir = data.config?.showRIR ?: data.appSettings.showRir,
+                        keepScreenOn = data.config?.keepScreenOn ?: data.appSettings.keepScreenOn
+                    ),
                     logs = logs,
                     lastUpdated = data.lastUpdated
                 )
@@ -131,6 +143,18 @@ object SyncService {
         } catch (e: Exception) {
             println("❌ Cloud Sync Download Failed: ${e.message}")
             null
+        }
+    }
+
+    /** Public template catalog shared with the PWA's global_templates collection. */
+    suspend fun downloadGlobalTemplates(): List<GlobalTemplate> {
+        return try {
+            firestore.collection("global_templates").get().documents
+                .map { it.data<GlobalTemplate>() }
+                .sortedBy { it.order }
+        } catch (e: Exception) {
+            println("Global template download failed: ${e.message}")
+            emptyList()
         }
     }
 }
@@ -146,7 +170,13 @@ data class CloudUserData(
     val bodyLogs: List<BodyLog> = emptyList(),
     val customFoods: List<CustomFood> = emptyList(),
     val nutritionGoal: NutritionGoal? = null,
+    val macroGoals: MacroGoals? = null,
     val userProfile: UserProfile? = null,
+    val personalTemplates: List<GlobalTemplate> = emptyList(),
+    val appSettings: AppSettings = AppSettings(),
+    // The existing PWA stores these two values under `config`. Keep this
+    // compatibility bridge until both clients write the same shape.
+    val config: CloudConfig? = null,
     val lastUpdated: Long = 0L,
     val email: String? = null
 )
@@ -156,17 +186,27 @@ data class CloudHistoryData(
     val logs: List<Log> = emptyList()
 )
 
+@Serializable
 data class CloudStateData(
-    val program: List<ProgramDay>,
-    val activeMeso: MesoCycle?,
-    val activeSession: ActiveSession?,
-    val exercises: List<ExerciseDef>,
-    val nutritionLogs: List<NutritionLog>,
-    val cardioSessions: List<CardioSession>,
-    val nutritionGoal: NutritionGoal?,
-    val bodyLogs: List<BodyLog>,
-    val customFoods: List<CustomFood>,
-    val userProfile: UserProfile?,
-    val logs: List<Log>,
-    val lastUpdated: Long
+    val program: List<ProgramDay> = emptyList(),
+    val activeMeso: MesoCycle? = null,
+    val activeSession: ActiveSession? = null,
+    val exercises: List<ExerciseDef> = emptyList(),
+    val nutritionLogs: List<NutritionLog> = emptyList(),
+    val cardioSessions: List<CardioSession> = emptyList(),
+    val nutritionGoal: NutritionGoal? = null,
+    val macroGoals: MacroGoals? = null,
+    val bodyLogs: List<BodyLog> = emptyList(),
+    val customFoods: List<CustomFood> = emptyList(),
+    val userProfile: UserProfile? = null,
+    val personalTemplates: List<GlobalTemplate> = emptyList(),
+    val appSettings: AppSettings = AppSettings(),
+    val logs: List<Log> = emptyList(),
+    val lastUpdated: Long = 0L
+)
+
+@Serializable
+data class CloudConfig(
+    val showRIR: Boolean? = null,
+    val keepScreenOn: Boolean? = null
 )

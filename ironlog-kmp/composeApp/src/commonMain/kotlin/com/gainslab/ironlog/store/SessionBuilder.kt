@@ -68,7 +68,7 @@ object SessionBuilder {
 
             val initialSets = if (slotDef.isAVT == true) {
                 val roundId = uid()
-                List(4) {
+                List((slotDef.avtRounds ?: 4).coerceIn(1, 20)) {
                     WorkoutSet(
                         id = uid(),
                         weight = "",
@@ -106,6 +106,7 @@ object SessionBuilder {
                 defaultCardioType = exDef.defaultCardioType,
                 videoId = exDef.videoId,
                 isBodyweight = exDef.isBodyweight,
+                volumeCountingMode = exDef.volumeCountingMode,
                 isIsometric = exDef.isIsometric,
                 isometricTargetSecs = exDef.isometricTargetSecs,
                 skillFamily = exDef.skillFamily,

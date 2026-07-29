@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -30,7 +31,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.*
@@ -38,6 +41,7 @@ import androidx.compose.ui.unit.sp
 import com.gainslab.ironlog.model.*
 import com.gainslab.ironlog.store.*
 import com.gainslab.ironlog.theme.*
+import com.gainslab.ironlog.utils.getSetLoadVolume
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -49,9 +53,50 @@ private data class AppTabItem(
     val icon: ImageVector
 )
 
+/** Keeps the one-second rest countdown out of the workout list's composition. */
+private class RestTimerController {
+    var seconds by mutableIntStateOf(0)
+    var active by mutableStateOf(false)
+
+    fun start(durationSeconds: Int) {
+        seconds = durationSeconds.coerceAtLeast(0)
+        active = seconds > 0
+    }
+}
+
+@Composable
+private fun RestTimerOverlay(controller: RestTimerController, modifier: Modifier = Modifier) {
+    val seconds = controller.seconds
+    val active = controller.active
+    LaunchedEffect(active, seconds) {
+        if (active && seconds > 0) {
+            delay(1000)
+            controller.seconds = seconds - 1
+            if (controller.seconds == 0) controller.active = false
+        }
+    }
+    AnimatedVisibility(visible = active && seconds > 0, enter = fadeIn(), exit = fadeOut(), modifier = modifier) {
+        Row(
+            modifier = Modifier
+                .clip(RoundedCornerShape(24.dp))
+                .background(Brush.horizontalGradient(listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.82f))))
+                .border(1.dp, Color.White.copy(alpha = 0.2f), RoundedCornerShape(24.dp))
+                .padding(horizontal = 24.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text("DESCANSO", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp, letterSpacing = 1.sp)
+            Text(formatTime(seconds), color = Color.Black, fontWeight = FontWeight.Black, fontSize = 18.sp)
+        }
+    }
+}
+
 @Composable
 fun App() {
     val appStore: AppStore = remember {
+        org.koin.core.context.GlobalContext.get().get()
+    }
+    val authService: com.gainslab.ironlog.auth.AuthService = remember {
         org.koin.core.context.GlobalContext.get().get()
     }
     val state by appStore.state.collectAsState()
@@ -60,12 +105,14 @@ fun App() {
     val nutritionLogs by appStore.nutritionLogs.collectAsState(initial = emptyList())
 
     var selectedTab by remember { mutableStateOf(0) }
-    var restTimerSeconds by remember { mutableStateOf(0) }
-    var restTimerActive by remember { mutableStateOf(false) }
+    val restTimer = remember { RestTimerController() }
+    val startRestTimer = remember(restTimer) { { seconds: Int -> restTimer.start(seconds) } }
     var showProgramEditor by remember { mutableStateOf(false) }
     var showExercises by remember { mutableStateOf(false) }
     var showStats by remember { mutableStateOf(false) }
     var showCommandPalette by remember { mutableStateOf(false) }
+    var showAccount by remember { mutableStateOf(false) }
+    var completedWorkoutLog by remember { mutableStateOf<Log?>(null) }
     val tabs = remember {
         listOf(
             AppTabItem("Entrenar", Icons.Default.PlayArrow),
@@ -73,16 +120,6 @@ fun App() {
             AppTabItem("Nutricion", Icons.Default.Favorite),
             AppTabItem("Ajustes", Icons.Default.Settings)
         )
-    }
-    
-    LaunchedEffect(restTimerActive, restTimerSeconds) {
-        if (restTimerActive && restTimerSeconds > 0) {
-            kotlinx.coroutines.delay(1000)
-            restTimerSeconds -= 1
-            if (restTimerSeconds == 0) {
-                restTimerActive = false
-            }
-        }
     }
     
     IronLogTheme(theme = state.colorTheme) {
@@ -108,12 +145,24 @@ fun App() {
                 appStore = appStore,
                 onBack = { showStats = false }
             )
+        } else if (showAccount) {
+            com.gainslab.ironlog.ui.AccountView(
+                authService = authService,
+                appStore = appStore,
+                onBack = { showAccount = false }
+            )
+        } else if (completedWorkoutLog != null) {
+            SessionSummaryScreen(
+                log = completedWorkoutLog!!,
+                onClose = { completedWorkoutLog = null }
+            )
         } else {
             Scaffold(
                 modifier = Modifier.fillMaxSize(),
                 containerColor = OLED_Black,
                 contentWindowInsets = WindowInsets(0.dp),
                 bottomBar = {
+                    if (state.activeSession == null) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -135,6 +184,7 @@ fun App() {
                             NavButton(icon = Icons.Default.Settings, label = "Ajustes", selected = selectedTab == 3) { selectedTab = 3 }
                         }
                     }
+                    }
                 }
             ) { paddingValues ->
                 Box(
@@ -143,7 +193,7 @@ fun App() {
                         .background(OLED_Black)
                         .padding(paddingValues)
                 ) {
-                    AppBackdrop()
+                    if (state.activeSession == null) AppBackdrop()
                     if (state.isStoreLoading) {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
@@ -153,64 +203,28 @@ fun App() {
                             0 -> WorkoutTab(
                                 state = state,
                                 appStore = appStore,
-                                onStartTimer = { seconds ->
-                                    restTimerSeconds = seconds
-                                    restTimerActive = true
-                                },
+                                onStartTimer = startRestTimer,
                                 onStartProgramEditor = { showProgramEditor = true },
-                                onShowCommandPalette = { showCommandPalette = true }
+                                onShowCommandPalette = { showCommandPalette = true },
+                                onSessionCompleted = { completedWorkoutLog = it }
                             )
                             1 -> PremiumNutritionTab(nutritionLogs = nutritionLogs, appStore = appStore)
-                            2 -> PremiumHistoryTab(workoutLogs = workoutLogs)
+                            2 -> PremiumHistoryTab(workoutLogs = workoutLogs, appStore = appStore)
                             3 -> PremiumSettingsTab(
-                                state = state, 
-                                appStore = appStore, 
-                                onStartProgramEditor = { showProgramEditor = true }, 
+                                state = state,
+                                appStore = appStore,
+                                onStartProgramEditor = { showProgramEditor = true },
                                 onManageExercises = { showExercises = true },
-                                onViewStats = { showStats = true }
+                                onViewStats = { showStats = true },
+                                onManageAccount = { showAccount = true }
                             )
                         }
                     }
 
-                    AnimatedVisibility(
-                        visible = restTimerActive && restTimerSeconds > 0,
-                        enter = fadeIn(),
-                        exit = fadeOut(),
-                        modifier = Modifier
-                            .align(Alignment.TopCenter)
-                            .padding(top = 20.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(24.dp))
-                                .background(
-                                    Brush.horizontalGradient(
-                                        listOf(
-                                            MaterialTheme.colorScheme.primary,
-                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.82f)
-                                        )
-                                    )
-                                )
-                                .border(1.dp, Color.White.copy(alpha = 0.2f), RoundedCornerShape(24.dp))
-                                .padding(horizontal = 24.dp, vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Text(
-                                text = "DESCANSO",
-                                color = Color.Black,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 12.sp,
-                                letterSpacing = 1.sp
-                            )
-                            Text(
-                                text = formatTime(restTimerSeconds),
-                                color = Color.Black,
-                                fontWeight = FontWeight.Black,
-                                fontSize = 18.sp
-                            )
-                        }
-                    }
+                    RestTimerOverlay(
+                        controller = restTimer,
+                        modifier = Modifier.align(Alignment.TopCenter).padding(top = 12.dp)
+                    )
                     
                     if (showCommandPalette) {
                         com.gainslab.ironlog.ui.CommandPaletteView(
@@ -370,16 +384,24 @@ fun WorkoutTab(
     appStore: AppStore,
     onStartTimer: (Int) -> Unit,
     onStartProgramEditor: () -> Unit,
-    onShowCommandPalette: () -> Unit
+    onShowCommandPalette: () -> Unit,
+    onSessionCompleted: (Log) -> Unit
 ) {
     if (state.activeSession != null) {
-        PremiumActiveSessionView(session = state.activeSession, appStore = appStore, onStartTimer = onStartTimer)
+        PremiumActiveSessionView(
+            session = state.activeSession,
+            appStore = appStore,
+            onStartTimer = onStartTimer,
+            onSessionCompleted = onSessionCompleted
+        )
     } else if (state.activeMeso != null) {
         PremiumActiveMesoView(state = state, appStore = appStore, onShowCommandPalette = onShowCommandPalette)
     } else {
         NoMesoView(
             appStore = appStore, 
             exercises = state.exercises, 
+            personalTemplates = state.personalTemplates,
+            globalTemplates = state.globalTemplates,
             onStartProgramEditor = onStartProgramEditor,
             onShowCommandPalette = onShowCommandPalette
         )
@@ -389,14 +411,15 @@ fun WorkoutTab(
 @Composable
 fun HomeView(state: AppState, appStore: AppStore, onStartProgramEditor: () -> Unit, onShowCommandPalette: () -> Unit) {
     if (state.activeMeso == null) {
-        NoMesoView(appStore = appStore, exercises = state.exercises, onStartProgramEditor = onStartProgramEditor, onShowCommandPalette = onShowCommandPalette)
+        NoMesoView(appStore = appStore, exercises = state.exercises, personalTemplates = state.personalTemplates, globalTemplates = state.globalTemplates, onStartProgramEditor = onStartProgramEditor, onShowCommandPalette = onShowCommandPalette)
     } else {
         PremiumActiveMesoView(state = state, appStore = appStore, onShowCommandPalette = onShowCommandPalette)
     }
 }
 
 @Composable
-fun NoMesoView(appStore: AppStore, exercises: List<ExerciseDef>, onStartProgramEditor: () -> Unit, onShowCommandPalette: () -> Unit) {
+fun NoMesoView(appStore: AppStore, exercises: List<ExerciseDef>, personalTemplates: List<GlobalTemplate>, globalTemplates: List<GlobalTemplate>, onStartProgramEditor: () -> Unit, onShowCommandPalette: () -> Unit) {
+    var showTemplates by remember { mutableStateOf(false) }
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -452,7 +475,85 @@ fun NoMesoView(appStore: AppStore, exercises: List<ExerciseDef>, onStartProgramE
                 Text("Acciones Rápidas", color = Text_White, fontWeight = FontWeight.Bold)
             }
         }
+        item {
+            OutlinedButton(
+                onClick = { showTemplates = true },
+                modifier = Modifier.fillMaxWidth().height(50.dp),
+                shape = RoundedCornerShape(14.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)
+            ) { Text("Explorar plantillas", fontWeight = FontWeight.Bold) }
+        }
     }
+    if (showTemplates) NativeTemplatePicker(
+        personalTemplates = personalTemplates,
+        globalTemplates = globalTemplates,
+        onDismiss = { showTemplates = false },
+        onSelect = { name, type, program ->
+            appStore.setProgram(program)
+            appStore.setActiveMeso(MesoCycle(System.currentTimeMillis(), name, type, 1, program.map { day -> day.slots.map { it.exerciseId } }, 5, false, null, 5))
+            showTemplates = false
+        }
+    )
+}
+
+/** Lightweight input used in the repeated workout grid. Material text fields
+ * are deliberately avoided here: a session can render dozens of these cells. */
+@Composable
+private fun WorkoutSetInput(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    BasicTextField(
+        value = value,
+        onValueChange = onValueChange,
+        singleLine = true,
+        textStyle = LocalTextStyle.current.copy(
+            color = Text_White,
+            fontSize = 15.sp,
+            textAlign = TextAlign.Center,
+            fontWeight = FontWeight.SemiBold
+        ),
+        cursorBrush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
+        modifier = modifier
+            .clip(RoundedCornerShape(9.dp))
+            .background(Color.White.copy(alpha = 0.025f))
+            .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(9.dp))
+            .padding(horizontal = 4.dp, vertical = 10.dp)
+    )
+}
+
+@Composable
+private fun NativeTemplatePicker(personalTemplates: List<GlobalTemplate>, globalTemplates: List<GlobalTemplate>, onDismiss: () -> Unit, onSelect: (String, String, List<ProgramDay>) -> Unit) {
+    val templates = remember {
+        listOf(
+            Triple("Push / Pull / Legs", "hyp_1", com.gainslab.ironlog.utils.Templates.DEFAULT_TEMPLATE),
+            Triple("Torso / Pierna", "hyp_2", com.gainslab.ironlog.utils.Templates.UPPER_LOWER_TEMPLATE),
+            Triple("Full body ondulante", "wizard", com.gainslab.ironlog.utils.Templates.WIZARD_TEMPLATE),
+            Triple("Resensibilizacion", "resensitization", com.gainslab.ironlog.utils.Templates.RESENS_TEMPLATE),
+            Triple("Metabolitos", "metabolite", com.gainslab.ironlog.utils.Templates.METABOLITE_TEMPLATE)
+        ) + globalTemplates.map { template -> Triple(template.title.es.ifBlank { template.name }, "global", template.program) } + personalTemplates.map { template -> Triple(template.title.es.ifBlank { template.name }, "custom", template.program) }
+    }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Dark_Surface,
+        title = { Text("Plantillas de entrenamiento", color = Text_White, fontWeight = FontWeight.Black) },
+        text = {
+            LazyColumn(modifier = Modifier.heightIn(max = 420.dp)) {
+                items(templates, key = { it.second }) { template ->
+                    TextButton(onClick = { onSelect(template.first, template.second, template.third) }, modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Text(template.first, color = Text_White, fontWeight = FontWeight.Bold)
+                            Text("${template.third.size} dias por semana", color = Text_Muted, fontSize = 12.sp)
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cerrar", color = Text_Muted) } }
+    )
 }
 
 @Composable
@@ -644,7 +745,27 @@ fun RoutineCard(title: String, subtitle: String, onClick: () -> Unit) {
 fun PremiumActiveMesoView(state: AppState, appStore: AppStore, onShowCommandPalette: () -> Unit) {
     val meso = state.activeMeso ?: return
     var selectedDayIdx by remember { mutableStateOf(0) }
+    var showMesoSettings by remember { mutableStateOf(false) }
+    var showSkipConfirmation by remember { mutableStateOf(false) }
     val workoutLogs by appStore.workoutLogs.collectAsState(initial = emptyList())
+    val weekLogs = remember(workoutLogs, meso.id, meso.week) {
+        workoutLogs.filter { it.mesoId == meso.id && it.week == meso.week }
+    }
+    val completedDays = remember(weekLogs) { weekLogs.filter { it.skipped != true }.map { it.dayIdx }.toSet() }
+    val nextDayIdx = remember(completedDays, state.program) { state.program.indices.firstOrNull { it !in completedDays } }
+    val completedCount = completedDays.size.coerceAtMost(state.program.size)
+    val weeklyProgress = if (state.program.isEmpty()) 0f else completedCount.toFloat() / state.program.size
+    val selectedDayLog = remember(weekLogs, selectedDayIdx) { weekLogs.lastOrNull { it.dayIdx == selectedDayIdx && it.skipped != true } }
+    val weeklyVolume = remember(weekLogs) { weekLogs.filter { it.skipped != true }.sumOf { log -> log.exercises.sumOf { ex -> ex.sets.sumOf { set -> getSetLoadVolume(set, ex) } } } }
+    val weeklyMinutes = remember(weekLogs) { weekLogs.filter { it.skipped != true }.sumOf { it.duration }.div(60) }
+    val consistencyDays = remember(workoutLogs) {
+        val today = Clock.System.now().toEpochMilliseconds()
+        (0 until 28).map { dayOffset ->
+            val start = today - (dayOffset + 1) * 86_400_000L
+            val end = today - dayOffset * 86_400_000L
+            workoutLogs.any { it.skipped != true && it.endTime in start..end }
+        }.reversed()
+    }
     val dayDef = state.program.getOrNull(selectedDayIdx)
 
     LazyColumn(
@@ -666,6 +787,42 @@ fun PremiumActiveMesoView(state: AppState, appStore: AppStore, onShowCommandPale
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     AccentChip("Semana ${meso.week}", selected = true)
                     AccentChip("Objetivo ${meso.targetWeeks ?: "?"}")
+                }
+            }
+        }
+
+        item {
+            SurfaceCard {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Column {
+                        Text("Progreso semanal", color = Text_White, fontWeight = FontWeight.Black, fontSize = 18.sp)
+                        Text("$completedCount de ${state.program.size} sesiones completadas", color = Text_Muted, fontSize = 13.sp)
+                    }
+                    Text("${(weeklyProgress * 100).toInt()}%", color = MaterialTheme.colorScheme.primary, fontSize = 22.sp, fontWeight = FontWeight.Black)
+                }
+                Spacer(Modifier.height(12.dp))
+                LinearProgressIndicator(progress = { weeklyProgress }, modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(8.dp)), color = MaterialTheme.colorScheme.primary, trackColor = Color.White.copy(alpha = 0.08f))
+                nextDayIdx?.let { next -> Text("Siguiente: DIA ${next + 1} · ${state.program[next].dayName.get("es")}", color = Text_Muted, fontSize = 12.sp, modifier = Modifier.padding(top = 12.dp)) }
+                    ?: Text("Semana completa. Podes repetir una sesion o avanzar el ciclo.", color = MaterialTheme.colorScheme.primary, fontSize = 12.sp, modifier = Modifier.padding(top = 12.dp))
+            }
+        }
+
+        item {
+            SurfaceCard {
+                Text("Recap de la semana", color = Text_White, fontWeight = FontWeight.Black, fontSize = 18.sp)
+                Spacer(Modifier.height(10.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    SummaryMetric("Sesiones", "$completedCount")
+                    SummaryMetric("Volumen", "${weeklyVolume.toInt()} kg")
+                    SummaryMetric("Tiempo", "${weeklyMinutes} min")
+                }
+                Spacer(Modifier.height(14.dp))
+                Text("Constancia · ultimos 28 dias", color = Text_Muted, fontSize = 12.sp)
+                Spacer(Modifier.height(8.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    consistencyDays.forEach { trained ->
+                        Box(modifier = Modifier.weight(1f).height(20.dp).clip(RoundedCornerShape(4.dp)).background(if (trained) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.07f)))
+                    }
                 }
             }
         }
@@ -727,7 +884,7 @@ fun PremiumActiveMesoView(state: AppState, appStore: AppStore, onShowCommandPale
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "${dayDef.slots.size} bloques de trabajo listos para arrancar",
+                        text = if (selectedDayLog != null) "Completada esta semana · podes repetirla" else "${dayDef.slots.size} bloques de trabajo listos para arrancar",
                         fontSize = 13.sp,
                         color = Text_Muted
                     )
@@ -768,7 +925,12 @@ fun PremiumActiveMesoView(state: AppState, appStore: AppStore, onShowCommandPale
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.Black)
-                            Text("INICIAR SESION", color = Color.Black, fontWeight = FontWeight.Black)
+                            Text(if (selectedDayLog != null) "REPETIR SESION" else "INICIAR SESION", color = Color.Black, fontWeight = FontWeight.Black)
+                        }
+                    }
+                    if (selectedDayLog == null) {
+                        TextButton(onClick = { showSkipConfirmation = true }, modifier = Modifier.align(Alignment.End)) {
+                            Text("Saltar sesion", color = Text_Muted, fontSize = 12.sp)
                         }
                     }
                 }
@@ -795,6 +957,26 @@ fun PremiumActiveMesoView(state: AppState, appStore: AppStore, onShowCommandPale
                     Text("Abrir acciones rapidas", color = Text_White, fontWeight = FontWeight.Bold)
                 }
 
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = { showMesoSettings = true },
+                    modifier = Modifier.fillMaxWidth().height(46.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.12f)),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Text_White)
+                ) { Text("Ajustar mesociclo", fontWeight = FontWeight.Bold) }
+
+                if (completedCount == state.program.size && state.program.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedButton(
+                        onClick = { appStore.setActiveMeso(meso.copy(week = meso.week + 1)) },
+                        modifier = Modifier.fillMaxWidth().height(50.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)
+                    ) { Text("Avanzar a semana ${meso.week + 1}", fontWeight = FontWeight.Bold) }
+                }
+
                 Spacer(modifier = Modifier.height(12.dp))
 
                 OutlinedButton(
@@ -812,6 +994,34 @@ fun PremiumActiveMesoView(state: AppState, appStore: AppStore, onShowCommandPale
             }
         }
     }
+
+    if (showSkipConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showSkipConfirmation = false }, containerColor = Dark_Surface,
+            title = { Text("Saltar sesion?", color = Text_White, fontWeight = FontWeight.Black) },
+            text = { Text("Quedara registrada como omitida para que el progreso semanal sea fiel.", color = Text_Muted) },
+            confirmButton = { Button(onClick = {
+                appStore.saveWorkoutLog(Log(id = System.currentTimeMillis(), dayIdx = selectedDayIdx, name = dayDef?.dayName?.get("es") ?: "Sesion omitida", startTime = System.currentTimeMillis(), endTime = System.currentTimeMillis(), duration = 0, skipped = true, mesoId = meso.id, week = meso.week))
+                showSkipConfirmation = false
+            }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEAB308))) { Text("Saltar", color = Color.Black, fontWeight = FontWeight.Bold) } },
+            dismissButton = { TextButton(onClick = { showSkipConfirmation = false }) { Text("Cancelar", color = Text_Muted) } }
+        )
+    }
+    if (showMesoSettings) MesoSettingsDialog(meso = meso, onDismiss = { showMesoSettings = false }) { updated -> appStore.setActiveMeso(updated); showMesoSettings = false }
+}
+
+@Composable
+private fun MesoSettingsDialog(meso: MesoCycle, onDismiss: () -> Unit, onSave: (MesoCycle) -> Unit) {
+    var weeks by remember { mutableStateOf((meso.targetWeeks ?: meso.duration).toString()) }
+    var note by remember { mutableStateOf(meso.note.orEmpty()) }
+    var deload by remember { mutableStateOf(meso.isDeload == true) }
+    AlertDialog(onDismissRequest = onDismiss, containerColor = Dark_Surface, title = { Text("Ajustar mesociclo", color = Text_White, fontWeight = FontWeight.Black) }, text = {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            GoalInput("Semanas objetivo", weeks) { weeks = it }
+            Row(verticalAlignment = Alignment.CenterVertically) { Checkbox(checked = deload, onCheckedChange = { deload = it }, colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.primary)); Text("Semana de descarga", color = Text_White, fontSize = 13.sp) }
+            GoalInput("Notas del bloque", note) { note = it }
+        }
+    }, confirmButton = { Button(onClick = { val target = (weeks.toIntOrNull() ?: meso.targetWeeks ?: meso.duration).coerceIn(1, 52); onSave(meso.copy(targetWeeks = target, duration = target, isDeload = deload, note = note.takeIf { it.isNotBlank() })) }, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)) { Text("Guardar", color = Color.Black) } }, dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar", color = Text_Muted) } })
 }
 
 @Composable
@@ -1126,6 +1336,13 @@ fun NutritionTab(nutritionLogs: List<NutritionLog>, appStore: AppStore) {
 @Composable
 fun PremiumNutritionTab(nutritionLogs: List<NutritionLog>, appStore: AppStore) {
     var showAddFoodDialog by remember { mutableStateOf(false) }
+    var showGoalEditor by remember { mutableStateOf(false) }
+    var editingFood by remember { mutableStateOf<FoodEntry?>(null) }
+    var deletingFoodId by remember { mutableStateOf<String?>(null) }
+    var selectedSection by remember { mutableStateOf(0) }
+    val appState by appStore.state.collectAsState()
+    val bodyLogs by appStore.bodyLogs.collectAsState(initial = emptyList())
+    val cardioSessions by appStore.cardioSessions.collectAsState(initial = emptyList())
     val today = remember {
         val todayDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
         "${todayDate.year.toString().padStart(4, '0')}-${todayDate.monthNumber.toString().padStart(2, '0')}-${todayDate.dayOfMonth.toString().padStart(2, '0')}"
@@ -1136,8 +1353,25 @@ fun PremiumNutritionTab(nutritionLogs: List<NutritionLog>, appStore: AppStore) {
     val totalProtein = todayLog.entries.sumOf { it.protein }.toFloat()
     val totalCarbs = todayLog.entries.sumOf { it.carbs }.toFloat()
     val totalFats = todayLog.entries.sumOf { it.fat }.toFloat()
-    val goalCalories = 2500f
+    val savedGoal = appState.nutritionGoal
+    val savedMacros = appState.macroGoals
+    val goalCalories = (savedGoal?.calories ?: savedMacros?.calories ?: 2500.0).toFloat()
     val progress = if (goalCalories > 0f) totalCalories / goalCalories else 0f
+
+    if (selectedSection == 1) {
+        Column(modifier = Modifier.fillMaxSize().padding(horizontal = 4.dp)) {
+            NutritionSectionSelector(selectedSection) { selectedSection = it }
+            NutritionBodySection(bodyLogs = bodyLogs, cardioSessions = cardioSessions, appStore = appStore, today = today)
+        }
+        return
+    }
+    if (selectedSection == 2) {
+        Column(modifier = Modifier.fillMaxSize().padding(horizontal = 4.dp)) {
+            NutritionSectionSelector(selectedSection) { selectedSection = it }
+            NutritionHistorySection(nutritionLogs = nutritionLogs, bodyLogs = bodyLogs, cardioSessions = cardioSessions)
+        }
+        return
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -1147,6 +1381,9 @@ fun PremiumNutritionTab(nutritionLogs: List<NutritionLog>, appStore: AppStore) {
         verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
         item {
+            NutritionSectionSelector(selectedSection) { selectedSection = it }
+        }
+        item {
             SurfaceCard {
                 Text("Panel de nutricion", fontSize = 28.sp, fontWeight = FontWeight.Black, color = Color.White)
                 Spacer(modifier = Modifier.height(8.dp))
@@ -1155,6 +1392,10 @@ fun PremiumNutritionTab(nutritionLogs: List<NutritionLog>, appStore: AppStore) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     AccentChip("${totalCalories.toInt()} kcal", selected = true)
                     AccentChip("${todayLog.entries.size} comidas")
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                TextButton(onClick = { showGoalEditor = true }) {
+                    Text("Configurar objetivo", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -1181,9 +1422,9 @@ fun PremiumNutritionTab(nutritionLogs: List<NutritionLog>, appStore: AppStore) {
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
-                            MacroStat("Proteina", "${totalProtein.toInt()}g", Color(0xFFEF4444))
-                            MacroStat("Carbs", "${totalCarbs.toInt()}g", Color(0xFF3B82F6))
-                            MacroStat("Grasas", "${totalFats.toInt()}g", Color(0xFFF59E0B))
+                            MacroStat("Proteina", "${totalProtein.toInt()}/${(savedGoal?.protein ?: savedMacros?.protein ?: 0.0).toInt()}g", Color(0xFFEF4444))
+                            MacroStat("Carbs", "${totalCarbs.toInt()}/${(savedGoal?.carbs ?: savedMacros?.carbs ?: 0.0).toInt()}g", Color(0xFF3B82F6))
+                            MacroStat("Grasas", "${totalFats.toInt()}/${(savedGoal?.fat ?: savedMacros?.fats ?: 0.0).toInt()}g", Color(0xFFF59E0B))
                         }
                     }
                 }
@@ -1200,6 +1441,25 @@ fun PremiumNutritionTab(nutritionLogs: List<NutritionLog>, appStore: AppStore) {
                 Icon(Icons.Default.Add, contentDescription = null, tint = Color.Black)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Anadir comida", color = Color.Black, fontWeight = FontWeight.Black)
+            }
+        }
+
+        if (todayLog.entries.isNotEmpty()) {
+            val mealOrder = listOf("breakfast" to "Desayuno", "lunch" to "Almuerzo", "dinner" to "Cena", "snack" to "Snacks")
+            mealOrder.forEach { (mealType, label) ->
+                val entries = todayLog.entries.filter { it.mealType == mealType }
+                if (entries.isNotEmpty()) item {
+                    SurfaceCard {
+                        Text(label, color = Text_White, fontSize = 17.sp, fontWeight = FontWeight.Black)
+                        entries.forEach { entry ->
+                            Row(modifier = Modifier.fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                Column(modifier = Modifier.weight(1f)) { Text(entry.name, color = Text_White, fontWeight = FontWeight.Bold, fontSize = 14.sp); Text("${entry.calories.toInt()} kcal · P ${entry.protein.toInt()}g · C ${entry.carbs.toInt()}g · G ${entry.fat.toInt()}g", color = Text_Muted, fontSize = 11.sp) }
+                                TextButton(onClick = { editingFood = entry }, contentPadding = PaddingValues(horizontal = 4.dp)) { Text("Editar", color = MaterialTheme.colorScheme.primary, fontSize = 10.sp) }
+                                TextButton(onClick = { deletingFoodId = entry.id }, contentPadding = PaddingValues(horizontal = 4.dp)) { Text("×", color = Color(0xFFEF4444), fontWeight = FontWeight.Black) }
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -1254,20 +1514,299 @@ fun PremiumNutritionTab(nutritionLogs: List<NutritionLog>, appStore: AppStore) {
                     timestamp = System.currentTimeMillis()
                 )
                 appStore.saveNutritionLog(todayLog.copy(entries = todayLog.entries + entry))
+                if (appState.customFoods.none { it.name.equals(foodName, ignoreCase = true) }) {
+                    appStore.setCustomFoods(appState.customFoods + CustomFood(id = "custom_${System.currentTimeMillis()}", name = foodName, calories = cals, protein = p, carbs = c, fat = f, isFavorite = true, createdAt = System.currentTimeMillis()))
+                }
                 showAddFoodDialog = false
+            }
+        )
+    }
+
+    editingFood?.let { entry ->
+        FoodEntryEditorDialog(entry = entry, onDismiss = { editingFood = null }) { edited ->
+            appStore.saveNutritionLog(todayLog.copy(entries = todayLog.entries.map { if (it.id == edited.id) edited else it }))
+            editingFood = null
+        }
+    }
+    deletingFoodId?.let { id ->
+        AlertDialog(onDismissRequest = { deletingFoodId = null }, containerColor = Dark_Surface, title = { Text("Eliminar comida", color = Text_White) }, text = { Text("Se quitara de este dia.", color = Text_Muted) }, confirmButton = { Button(onClick = { appStore.saveNutritionLog(todayLog.copy(entries = todayLog.entries.filterNot { it.id == id })); deletingFoodId = null }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))) { Text("Eliminar", color = Color.Black) } }, dismissButton = { TextButton(onClick = { deletingFoodId = null }) { Text("Cancelar", color = Text_Muted) } })
+    }
+
+    if (showGoalEditor) {
+        NutritionGoalDialog(
+            currentGoal = savedGoal ?: NutritionGoal(
+                calories = savedMacros?.calories ?: 2500.0,
+                protein = savedMacros?.protein ?: 150.0,
+                carbs = savedMacros?.carbs ?: 250.0,
+                fat = savedMacros?.fats ?: 70.0
+            ),
+            onDismiss = { showGoalEditor = false },
+            onSave = { goal ->
+                appStore.setNutritionGoal(goal)
+                appStore.setMacroGoals(MacroGoals(goal.calories, goal.protein, goal.carbs, goal.fat))
+                showGoalEditor = false
             }
         )
     }
 }
 
 @Composable
+private fun FoodEntryEditorDialog(entry: FoodEntry, onDismiss: () -> Unit, onSave: (FoodEntry) -> Unit) {
+    var name by remember { mutableStateOf(entry.name) }; var calories by remember { mutableStateOf(entry.calories.toInt().toString()) }; var protein by remember { mutableStateOf(entry.protein.toInt().toString()) }; var carbs by remember { mutableStateOf(entry.carbs.toInt().toString()) }; var fat by remember { mutableStateOf(entry.fat.toInt().toString()) }
+    AlertDialog(onDismissRequest = onDismiss, containerColor = Dark_Surface, title = { Text("Editar comida", color = Text_White, fontWeight = FontWeight.Black) }, text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) { GoalInput("Nombre", name) { name = it }; GoalInput("Calorias", calories) { calories = it }; GoalInput("Proteina", protein) { protein = it }; GoalInput("Carbohidratos", carbs) { carbs = it }; GoalInput("Grasas", fat) { fat = it } } }, confirmButton = { Button(onClick = { onSave(entry.copy(name = name.ifBlank { entry.name }, calories = calories.toDoubleOrNull() ?: entry.calories, protein = protein.toDoubleOrNull() ?: entry.protein, carbs = carbs.toDoubleOrNull() ?: entry.carbs, fat = fat.toDoubleOrNull() ?: entry.fat)) }, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)) { Text("Guardar", color = Color.Black) } }, dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar", color = Text_Muted) } })
+}
+
+@Composable
+private fun NutritionSectionSelector(selected: Int, onSelect: (Int) -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 16.dp, bottom = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        listOf("Hoy", "Cuerpo", "Historial").forEachIndexed { index, label ->
+            TextButton(
+                onClick = { onSelect(index) },
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.textButtonColors(
+                    containerColor = if (selected == index) MaterialTheme.colorScheme.primary.copy(alpha = 0.16f) else Color.Transparent,
+                    contentColor = if (selected == index) MaterialTheme.colorScheme.primary else Text_Muted
+                )
+            ) { Text(label, fontWeight = FontWeight.Bold) }
+        }
+    }
+}
+
+@Composable
+private fun NutritionBodySection(
+    bodyLogs: List<BodyLog>,
+    cardioSessions: List<CardioSession>,
+    appStore: AppStore,
+    today: String
+) {
+    var showWeightDialog by remember { mutableStateOf(false) }
+    var showCardioDialog by remember { mutableStateOf(false) }
+    val latest = bodyLogs.maxByOrNull { it.date }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(top = 8.dp, bottom = 110.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        item {
+            SurfaceCard {
+                Text("Cuerpo y cardio", fontSize = 27.sp, fontWeight = FontWeight.Black, color = Text_White)
+                Spacer(Modifier.height(6.dp))
+                Text("Registra tu progreso y las sesiones aerobicas sin salir de la app.", fontSize = 13.sp, color = Text_Muted)
+                Spacer(Modifier.height(16.dp))
+                Text(latest?.let { "${it.weight} kg" } ?: "Sin peso registrado", fontSize = 30.sp, fontWeight = FontWeight.Black, color = Text_White)
+                latest?.bodyFat?.let { Text("${it}% grasa corporal", color = Text_Muted, fontSize = 13.sp) }
+                Spacer(Modifier.height(14.dp))
+                Button(
+                    onClick = { showWeightDialog = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                ) { Text("Registrar peso", color = Color.Black, fontWeight = FontWeight.Black) }
+            }
+        }
+        item {
+            Button(
+                onClick = { showCardioDialog = true },
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF38BDF8))
+            ) {
+                Icon(Icons.Default.Add, contentDescription = null, tint = Color.Black)
+                Spacer(Modifier.width(8.dp))
+                Text("Agregar cardio", color = Color.Black, fontWeight = FontWeight.Black)
+            }
+        }
+        if (bodyLogs.isNotEmpty()) {
+            item { Text("Ultimos registros", fontWeight = FontWeight.Black, color = Text_White, fontSize = 18.sp) }
+            items(bodyLogs.sortedByDescending { it.date }.take(8), key = { "body_${it.id}" }) { log ->
+                SurfaceCard {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Column { Text("${log.weight} kg", color = Text_White, fontWeight = FontWeight.Black, fontSize = 20.sp); log.bodyFat?.let { Text("${it}% grasa", color = Text_Muted, fontSize = 12.sp) } }
+                        Column(horizontalAlignment = Alignment.End) { Text(formatEpochDay(log.date), color = Text_Muted, fontSize = 12.sp); TextButton(onClick = { appStore.deleteBodyLog(log.id) }, contentPadding = PaddingValues(0.dp)) { Text("Eliminar", color = Color(0xFFEF4444), fontSize = 10.sp) } }
+                    }
+                    log.notes?.takeIf { it.isNotBlank() }?.let { Text(it, color = Text_Muted, fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp)) }
+                }
+            }
+        }
+
+        if (cardioSessions.isNotEmpty()) {
+            item { Text("Cardio reciente", fontWeight = FontWeight.Black, color = Text_White, fontSize = 18.sp) }
+            items(cardioSessions.sortedByDescending { it.timestamp }.take(8), key = { "cardio_${it.id}" }) { session ->
+                SurfaceCard {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Column {
+                            Text(cardioLabel(session.activityType), color = Text_White, fontWeight = FontWeight.Black)
+                            Text("${session.durationMin.toInt()} min" + (session.distanceKm?.let { " · ${it} km" } ?: ""), color = Text_Muted, fontSize = 13.sp)
+                        }
+                        Column(horizontalAlignment = Alignment.End) { Text(session.date, color = Text_Muted, fontSize = 12.sp); TextButton(onClick = { appStore.deleteCardioSession(session.id) }, contentPadding = PaddingValues(0.dp)) { Text("Eliminar", color = Color(0xFFEF4444), fontSize = 10.sp) } }
+                    }
+                }
+            }
+        }
+    }
+
+    if (showWeightDialog) WeightLogDialog(latest, onDismiss = { showWeightDialog = false }) { weight, fat, notes ->
+        appStore.saveBodyLog(BodyLog(id = System.currentTimeMillis(), date = System.currentTimeMillis(), weight = weight, bodyFat = fat, notes = notes))
+        showWeightDialog = false
+    }
+    if (showCardioDialog) CardioLogDialog(today, onDismiss = { showCardioDialog = false }) { type, duration, distance, calories, heartRate, notes ->
+        appStore.saveCardioSession(CardioSession(id = "cardio_${System.currentTimeMillis()}", date = today, activityType = type, durationMin = duration, distanceKm = distance, caloriesBurned = calories, avgHeartRate = heartRate, notes = notes, timestamp = System.currentTimeMillis()))
+        showCardioDialog = false
+    }
+}
+
+@Composable
+private fun NutritionHistorySection(nutritionLogs: List<NutritionLog>, bodyLogs: List<BodyLog>, cardioSessions: List<CardioSession>) {
+    val days = nutritionLogs.sortedByDescending { it.date }.take(14)
+    val averageCalories = if (days.isEmpty()) 0 else days.map { it.entries.sumOf { entry -> entry.calories } }.average().toInt()
+    val averageProtein = if (days.isEmpty()) 0 else days.map { it.entries.sumOf { entry -> entry.protein } }.average().toInt()
+    LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(top = 8.dp, bottom = 110.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        item {
+            SurfaceCard {
+                Text("Historial reciente", fontSize = 27.sp, fontWeight = FontWeight.Black, color = Text_White)
+                Spacer(Modifier.height(12.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    MiniMetric("Promedio", "$averageCalories kcal")
+                    MiniMetric("Proteina", "$averageProtein g")
+                    MiniMetric("Cardio", "${cardioSessions.size}")
+                }
+            }
+        }
+        item { Text("Ultimos 14 dias con registro", color = Text_Muted, fontSize = 13.sp) }
+        items(days, key = { "nutrition_${it.date}" }) { day ->
+            val calories = day.entries.sumOf { it.calories }.toInt()
+            val protein = day.entries.sumOf { it.protein }.toInt()
+            SurfaceCard {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Column { Text(day.date, color = Text_White, fontWeight = FontWeight.Black); Text("${day.entries.size} comidas · ${protein} g proteina", color = Text_Muted, fontSize = 12.sp) }
+                    Text("$calories kcal", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Black)
+                }
+            }
+        }
+        if (days.isEmpty()) item { Text("Aun no hay dias de nutricion registrados.", modifier = Modifier.fillMaxWidth().padding(24.dp), color = Text_Muted, textAlign = TextAlign.Center) }
+    }
+}
+
+@Composable
+private fun MiniMetric(label: String, value: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(value, color = Text_White, fontWeight = FontWeight.Black, fontSize = 16.sp)
+        Text(label, color = Text_Muted, fontSize = 11.sp)
+    }
+}
+
+@Composable
+private fun WeightLogDialog(latest: BodyLog?, onDismiss: () -> Unit, onSave: (Double, Double?, String?) -> Unit) {
+    var weight by remember { mutableStateOf(latest?.weight?.toString() ?: "") }
+    var fat by remember { mutableStateOf(latest?.bodyFat?.toString() ?: "") }
+    var notes by remember { mutableStateOf("") }
+    AlertDialog(onDismissRequest = onDismiss, containerColor = Dark_Surface, title = { Text("Registrar peso", color = Text_White, fontWeight = FontWeight.Black) }, text = {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) { GoalInput("Peso (kg)", weight) { weight = it }; GoalInput("Grasa corporal (%) opcional", fat) { fat = it }; GoalInput("Notas opcionales", notes) { notes = it } }
+    }, confirmButton = { Button(onClick = { weight.toDoubleOrNull()?.let { onSave(it, fat.toDoubleOrNull(), notes.takeIf(String::isNotBlank)) } }, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)) { Text("Guardar", color = Color.Black) } }, dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar", color = Text_Muted) } })
+}
+
+@Composable
+private fun CardioLogDialog(date: String, onDismiss: () -> Unit, onSave: (CardioActivityType, Double, Double?, Double?, Double?, String?) -> Unit) {
+    var selected by remember { mutableStateOf(CardioActivityType.RUNNING) }; var duration by remember { mutableStateOf("") }; var distance by remember { mutableStateOf("") }; var calories by remember { mutableStateOf("") }; var heartRate by remember { mutableStateOf("") }; var notes by remember { mutableStateOf("") }
+    AlertDialog(onDismissRequest = onDismiss, containerColor = Dark_Surface, title = { Text("Agregar cardio", color = Text_White, fontWeight = FontWeight.Black) }, text = {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) { listOf(CardioActivityType.RUNNING, CardioActivityType.CYCLING, CardioActivityType.WALKING).forEach { type -> TextButton(onClick = { selected = type }, colors = ButtonDefaults.textButtonColors(contentColor = if (selected == type) MaterialTheme.colorScheme.primary else Text_Muted)) { Text(cardioLabel(type), fontSize = 11.sp) } } }
+            GoalInput("Duracion (min)", duration) { duration = it }; GoalInput("Distancia (km) opcional", distance) { distance = it }; GoalInput("Calorias opcional", calories) { calories = it }; GoalInput("FC media opcional", heartRate) { heartRate = it }; GoalInput("Notas opcionales", notes) { notes = it }
+        }
+    }, confirmButton = { Button(onClick = { duration.toDoubleOrNull()?.takeIf { it > 0 }?.let { onSave(selected, it, distance.toDoubleOrNull(), calories.toDoubleOrNull(), heartRate.toDoubleOrNull(), notes.takeIf(String::isNotBlank)) } }, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)) { Text("Guardar", color = Color.Black) } }, dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar", color = Text_Muted) } })
+}
+
+private fun cardioLabel(type: CardioActivityType): String = when (type) { CardioActivityType.RUNNING -> "Correr"; CardioActivityType.CYCLING -> "Bici"; CardioActivityType.SWIMMING -> "Nadar"; CardioActivityType.WALKING -> "Caminar"; CardioActivityType.ROWING -> "Remo"; CardioActivityType.ELLIPTICAL -> "Eliptica"; CardioActivityType.JUMP_ROPE -> "Soga"; CardioActivityType.HIIT -> "HIIT"; CardioActivityType.OTHER -> "Otro" }
+private fun formatEpochDay(epochMillis: Long): String { val d = kotlinx.datetime.Instant.fromEpochMilliseconds(epochMillis).toLocalDateTime(TimeZone.currentSystemDefault()).date; return "${d.dayOfMonth.toString().padStart(2, '0')}/${d.monthNumber.toString().padStart(2, '0')}/${d.year}" }
+
+@Composable
+private fun NutritionGoalDialog(
+    currentGoal: NutritionGoal,
+    onDismiss: () -> Unit,
+    onSave: (NutritionGoal) -> Unit
+) {
+    var calories by remember(currentGoal) { mutableStateOf(currentGoal.calories.toInt().toString()) }
+    var protein by remember(currentGoal) { mutableStateOf(currentGoal.protein.toInt().toString()) }
+    var carbs by remember(currentGoal) { mutableStateOf(currentGoal.carbs.toInt().toString()) }
+    var fat by remember(currentGoal) { mutableStateOf(currentGoal.fat.toInt().toString()) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Dark_Surface,
+        title = { Text("Objetivo nutricional", color = Text_White, fontWeight = FontWeight.Black) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                GoalInput("Calorias", calories) { calories = it }
+                GoalInput("Proteina (g)", protein) { protein = it }
+                GoalInput("Carbohidratos (g)", carbs) { carbs = it }
+                GoalInput("Grasas (g)", fat) { fat = it }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    onSave(NutritionGoal(
+                        calories = calories.toDoubleOrNull() ?: currentGoal.calories,
+                        protein = protein.toDoubleOrNull() ?: currentGoal.protein,
+                        carbs = carbs.toDoubleOrNull() ?: currentGoal.carbs,
+                        fat = fat.toDoubleOrNull() ?: currentGoal.fat
+                    ))
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+            ) { Text("Guardar", color = Color.Black, fontWeight = FontWeight.Bold) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar", color = Text_Muted) } }
+    )
+}
+
+@Composable
+private fun GoalInput(label: String, value: String, onValueChange: (String) -> Unit) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label) },
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth(),
+        textStyle = LocalTextStyle.current.copy(color = Text_White),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+            focusedTextColor = Text_White,
+            unfocusedTextColor = Text_White,
+            focusedLabelColor = MaterialTheme.colorScheme.primary,
+            unfocusedLabelColor = Text_Muted
+        )
+    )
+}
+
+@Composable
 fun PremiumActiveSessionView(
     session: ActiveSession,
     appStore: AppStore,
-    onStartTimer: (Int) -> Unit
+    onStartTimer: (Int) -> Unit,
+    onSessionCompleted: (Log) -> Unit
 ) {
     var exercisesList by remember(session) { mutableStateOf(session.exercises) }
     var showPlateCalculator by remember { mutableStateOf(false) }
+    var pickerTargetInstanceId by remember { mutableStateOf<Int?>(null) }
+    var exercisePickerQuery by remember { mutableStateOf("") }
+    var setTypeTarget by remember { mutableStateOf<Pair<Int, Int>?>(null) }
+    var warmupTarget by remember { mutableStateOf<SessionExercise?>(null) }
+    var detailExercise by remember { mutableStateOf<SessionExercise?>(null) }
+    var showRestSettings by remember { mutableStateOf(false) }
+    var restPresetSeconds by remember { mutableStateOf(90) }
+    var showProtocolTimer by remember { mutableStateOf(false) }
+    var pendingFinish by remember { mutableStateOf<Log?>(null) }
+    var showDiscardConfirmation by remember { mutableStateOf(false) }
+    var supersetSourceInstanceId by remember { mutableStateOf<Int?>(null) }
+    val appState by appStore.state.collectAsState()
+    val previousLogs by appStore.workoutLogs.collectAsState(initial = emptyList())
 
     fun updateSessionExercises(updatedExercises: List<SessionExercise>) {
         exercisesList = updatedExercises
@@ -1318,80 +1857,163 @@ fun PremiumActiveSessionView(
         updateSessionExercises(updated)
     }
 
+    fun addWarmupSet(exerciseInstanceId: Int) {
+        val updated = exercisesList.map { exercise ->
+            if (exercise.instanceId == exerciseInstanceId) {
+                val nextId = (exercise.sets.maxOfOrNull { it.id } ?: 0) + 1
+                val reference = exercise.sets.firstOrNull()
+                exercise.copy(sets = listOf(WorkoutSet(id = nextId, weight = reference?.weight ?: "", reps = "10", type = SetType.WARMUP)) + exercise.sets)
+            } else exercise
+        }
+        updateSessionExercises(updated)
+    }
+
+    fun insertWarmupLadder(exerciseInstanceId: Int, targetWeight: Double) {
+        val updated = exercisesList.map { exercise ->
+            if (exercise.instanceId == exerciseInstanceId) {
+                val firstId = (exercise.sets.maxOfOrNull { it.id } ?: 0) + 1
+                val ladder = listOf(0.5 to 8, 0.7 to 5, 0.85 to 3).mapIndexed { index, (ratio, reps) ->
+                    WorkoutSet(id = firstId + index, weight = (targetWeight * ratio).toInt().toString(), reps = reps.toString(), type = SetType.WARMUP)
+                }
+                exercise.copy(sets = ladder + exercise.sets)
+            } else exercise
+        }
+        updateSessionExercises(updated)
+    }
+
+    fun requestFinish() {
+        pendingFinish = Log(
+            id = session.id,
+            dayIdx = session.dayIdx,
+            name = session.name,
+            startTime = session.startTime ?: System.currentTimeMillis(),
+            endTime = System.currentTimeMillis(),
+            duration = (System.currentTimeMillis() - (session.startTime ?: System.currentTimeMillis())) / 1000,
+            mesoId = session.mesoId,
+            week = session.week,
+            exercises = exercisesList
+        )
+    }
+
+    fun moveExercise(instanceId: Int, delta: Int) {
+        val from = exercisesList.indexOfFirst { it.instanceId == instanceId }
+        val to = from + delta
+        if (from !in exercisesList.indices || to !in exercisesList.indices) return
+        val reordered = exercisesList.toMutableList()
+        val item = reordered.removeAt(from)
+        reordered.add(to, item)
+        updateSessionExercises(reordered)
+    }
+
+    fun removeExercise(instanceId: Int) {
+        updateSessionExercises(exercisesList.filterNot { it.instanceId == instanceId })
+        if (supersetSourceInstanceId == instanceId) supersetSourceInstanceId = null
+    }
+
+    fun toggleSuperset(instanceId: Int) {
+        val current = exercisesList.firstOrNull { it.instanceId == instanceId } ?: return
+        if (current.supersetId != null) {
+            updateSessionExercises(exercisesList.map { if (it.instanceId == instanceId) it.copy(supersetId = null) else it })
+            return
+        }
+        val sourceId = supersetSourceInstanceId
+        if (sourceId == null || sourceId == instanceId) {
+            supersetSourceInstanceId = instanceId
+            return
+        }
+        val groupId = "ss_${System.currentTimeMillis()}"
+        updateSessionExercises(exercisesList.map {
+            if (it.instanceId == sourceId || it.instanceId == instanceId) it.copy(supersetId = groupId) else it
+        })
+        supersetSourceInstanceId = null
+    }
+
+    fun selectExercise(definition: ExerciseDef) {
+        val target = pickerTargetInstanceId
+        val existing = exercisesList.firstOrNull { it.instanceId == target }
+        val seedSets = existing?.sets?.map { set ->
+            set.copy(weight = "", reps = "", rpe = "", completed = false)
+        } ?: List(3) { index -> WorkoutSet(id = index + 1) }
+        val sessionExercise = SessionExercise(
+            id = definition.id,
+            name = definition.name,
+            muscle = definition.muscle,
+            instructions = definition.instructions,
+            defaultCardioType = definition.defaultCardioType,
+            videoId = definition.videoId,
+            isBodyweight = definition.isBodyweight,
+            volumeCountingMode = definition.volumeCountingMode,
+            isIsometric = definition.isIsometric,
+            isometricTargetSecs = definition.isometricTargetSecs,
+            skillFamily = definition.skillFamily,
+            skillLevel = definition.skillLevel,
+            progressionNext = definition.progressionNext,
+            progressionPrev = definition.progressionPrev,
+            defaultRestSeconds = definition.defaultRestSeconds,
+            source = definition.source,
+            instanceId = existing?.instanceId ?: System.currentTimeMillis().toInt(),
+            slotLabel = definition.muscle.name,
+            sets = seedSets
+        )
+        updateSessionExercises(
+            if (existing == null) exercisesList + sessionExercise
+            else exercisesList.map { if (it.instanceId == target) sessionExercise else it }
+        )
+        pickerTargetInstanceId = null
+        exercisePickerQuery = ""
+    }
+
     val totalSets = exercisesList.sumOf { it.sets.size }
     val completedSets = exercisesList.sumOf { exercise -> exercise.sets.count { it.completed } }
 
+    Box(modifier = Modifier.fillMaxSize()) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 4.dp),
-        contentPadding = PaddingValues(top = 16.dp, bottom = 110.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp)
+            .padding(horizontal = 12.dp),
+        contentPadding = PaddingValues(top = 12.dp, bottom = 96.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         item {
-            SurfaceCard {
+            SurfaceCard(contentPadding = PaddingValues(16.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.Top
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(text = session.name, fontSize = 28.sp, fontWeight = FontWeight.Black, color = Color.White)
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(text = session.name, fontSize = 22.sp, fontWeight = FontWeight.Black, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Spacer(modifier = Modifier.height(6.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             AccentChip("Semana ${session.week}", selected = true)
-                            AccentChip("Sesion activa")
-                            AccentChip("$completedSets/$totalSets sets")
+                            AccentChip("$completedSets/$totalSets series")
                         }
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = "Marca series completadas y usa el calculador de discos sin salir del flujo.",
-                            fontSize = 13.sp,
-                            color = Text_Muted
-                        )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(18.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OutlinedButton(
-                        onClick = { showPlateCalculator = true },
-                        modifier = Modifier.weight(1f).height(50.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.08f)),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Text_White)
-                    ) {
-                        Text("Calc. discos", fontWeight = FontWeight.Bold)
-                    }
-                    Button(
-                        onClick = {
-                            val completedSession = Log(
-                                id = session.id,
-                                dayIdx = session.dayIdx,
-                                name = session.name,
-                                startTime = session.startTime ?: System.currentTimeMillis(),
-                                endTime = System.currentTimeMillis(),
-                                duration = (System.currentTimeMillis() - (session.startTime ?: System.currentTimeMillis())) / 1000,
-                                mesoId = session.mesoId,
-                                week = session.week,
-                                exercises = exercisesList
-                            )
-                            appStore.saveWorkoutLog(completedSession)
-                            appStore.setActiveSession(null)
-                        },
-                        modifier = Modifier.weight(1f).height(50.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                    ) {
-                        Text("Terminar", color = Color.Black, fontWeight = FontWeight.Black)
-                    }
+                OutlinedButton(
+                    onClick = { showPlateCalculator = true },
+                    modifier = Modifier.fillMaxWidth().height(44.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.08f)),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Text_White)
+                ) { Text("Calculador de discos", fontWeight = FontWeight.Bold) }
+                Row(
+                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    TextButton(onClick = { pickerTargetInstanceId = -1 }) { Text("+ Ejercicio", color = Text_White, fontSize = 11.sp) }
+                    TextButton(onClick = { showRestSettings = true }) { Text("Descanso ${restPresetSeconds}s", color = Text_Muted, fontSize = 11.sp) }
+                    TextButton(onClick = { showProtocolTimer = true }) { Text("Protocolos", color = MaterialTheme.colorScheme.primary, fontSize = 11.sp) }
+                    TextButton(onClick = { showDiscardConfirmation = true }) { Text("Descartar", color = Color(0xFFEF4444), fontSize = 11.sp) }
                 }
             }
         }
 
         items(exercisesList, key = { it.instanceId }) { exercise ->
-            SurfaceCard(contentPadding = PaddingValues(18.dp)) {
+            SurfaceCard(contentPadding = PaddingValues(14.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -1405,7 +2027,11 @@ fun PremiumActiveSessionView(
                             color = Color.White
                         )
                         Spacer(modifier = Modifier.height(4.dp))
-                        AccentChip(text = exercise.muscle.name, selected = true)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            AccentChip(text = exercise.muscle.name, selected = true)
+                            exercise.supersetId?.let { AccentChip("Superserie", selected = true) }
+                            TextButton(onClick = { detailExercise = exercise }, contentPadding = PaddingValues(0.dp)) { Text("Detalle", color = MaterialTheme.colorScheme.primary, fontSize = 11.sp) }
+                        }
                     }
                     OutlinedButton(
                         onClick = { addSet(exercise.instanceId) },
@@ -1417,23 +2043,54 @@ fun PremiumActiveSessionView(
                         Text("+ Serie", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                 }
-                Spacer(modifier = Modifier.height(14.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    TextButton(onClick = { warmupTarget = exercise }) { Text("Warm-up", color = Color(0xFFFACC15), fontSize = 11.sp) }
+                    TextButton(onClick = { moveExercise(exercise.instanceId, -1) }) { Text("Subir", color = Text_Muted, fontSize = 11.sp) }
+                    TextButton(onClick = { moveExercise(exercise.instanceId, 1) }) { Text("Bajar", color = Text_Muted, fontSize = 11.sp) }
+                    TextButton(onClick = { toggleSuperset(exercise.instanceId) }) {
+                        val isSource = supersetSourceInstanceId == exercise.instanceId
+                        Text(
+                            when {
+                                exercise.supersetId != null -> "Quitar SS"
+                                isSource -> "Elegí pareja"
+                                else -> "Superserie"
+                            },
+                            color = if (exercise.supersetId != null || isSource) MaterialTheme.colorScheme.primary else Text_Muted,
+                            fontSize = 11.sp
+                        )
+                    }
+                    TextButton(onClick = { pickerTargetInstanceId = exercise.instanceId }) { Text("Reemplazar", color = MaterialTheme.colorScheme.primary, fontSize = 11.sp) }
+                    TextButton(onClick = { removeExercise(exercise.instanceId) }) { Text("Quitar", color = Color(0xFFEF4444), fontSize = 11.sp) }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("SERIE", fontSize = 10.sp, color = Text_Muted, modifier = Modifier.weight(1f))
-                    Text("PESO", fontSize = 10.sp, color = Text_Muted, modifier = Modifier.weight(2f), textAlign = TextAlign.Center)
-                    Text("REPS", fontSize = 10.sp, color = Text_Muted, modifier = Modifier.weight(2f), textAlign = TextAlign.Center)
-                    Text("RPE", fontSize = 10.sp, color = Text_Muted, modifier = Modifier.weight(1.5f), textAlign = TextAlign.Center)
-                    Text("OK", fontSize = 10.sp, color = Text_Muted, modifier = Modifier.weight(1.2f), textAlign = TextAlign.End)
+                    Text("SERIE", fontSize = 10.sp, color = Text_Muted, modifier = Modifier.width(88.dp))
+                    Text("PESO", fontSize = 10.sp, color = Text_Muted, modifier = Modifier.width(72.dp), textAlign = TextAlign.Center)
+                    Text("REPS", fontSize = 10.sp, color = Text_Muted, modifier = Modifier.width(72.dp), textAlign = TextAlign.Center)
+                    if (appState.appSettings.showRir) Text("RIR", fontSize = 10.sp, color = Text_Muted, modifier = Modifier.width(52.dp), textAlign = TextAlign.Center)
+                    Text("OK", fontSize = 10.sp, color = Text_Muted, modifier = Modifier.width(62.dp), textAlign = TextAlign.Center)
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                exercise.sets.forEach { set ->
+                exercise.sets.forEachIndexed { setIndex, set ->
                     val isChecked = set.completed
+
+                    if (!set.hintWeight.isNullOrBlank() || !set.hintReps.isNullOrBlank()) {
+                        Text(
+                            text = "Anterior: ${set.hintWeight ?: "-"} kg × ${set.hintReps ?: "-"}",
+                            color = Text_Muted,
+                            fontSize = 10.sp,
+                            modifier = Modifier.padding(start = 8.dp, bottom = 3.dp)
+                        )
+                    }
 
                     Row(
                         modifier = Modifier
@@ -1445,86 +2102,68 @@ fun PremiumActiveSessionView(
                                 if (isChecked) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.04f),
                                 RoundedCornerShape(14.dp)
                             )
-                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                            .padding(horizontal = 12.dp, vertical = 5.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "${set.id}",
+                            text = if (set.type == SetType.WARMUP) "W" else "${setIndex + 1}",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             color = Text_Muted,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.width(30.dp)
                         )
-                        OutlinedTextField(
+                        Text(
+                            text = set.type.name.replace('_', ' '),
+                            color = if (set.type == SetType.REGULAR) Text_Muted else MaterialTheme.colorScheme.primary,
+                            fontSize = 8.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.width(58.dp).clickable { setTypeTarget = exercise.instanceId to set.id }
+                        )
+                        WorkoutSetInput(
                             value = set.weight,
                             onValueChange = { value ->
                                 updateSet(exercise.instanceId, set.id) { current -> current.copy(weight = value) }
                             },
-                            singleLine = true,
-                            modifier = Modifier.weight(2f),
-                            textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center, color = Color.White, fontSize = 14.sp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.35f),
-                                unfocusedBorderColor = Color.White.copy(alpha = 0.06f),
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White,
-                                cursorColor = MaterialTheme.colorScheme.primary
-                            )
+                            modifier = Modifier.width(72.dp).height(44.dp)
                         )
-                        OutlinedTextField(
+                        WorkoutSetInput(
                             value = set.reps,
                             onValueChange = { value ->
                                 updateSet(exercise.instanceId, set.id) { current -> current.copy(reps = value) }
                             },
-                            singleLine = true,
-                            modifier = Modifier.weight(2f),
-                            textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center, color = Color.White, fontSize = 14.sp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.35f),
-                                unfocusedBorderColor = Color.White.copy(alpha = 0.06f),
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White,
-                                cursorColor = MaterialTheme.colorScheme.primary
-                            )
+                            modifier = Modifier.width(72.dp).height(44.dp)
                         )
-                        OutlinedTextField(
+                        if (appState.appSettings.showRir) WorkoutSetInput(
                             value = set.rpe,
                             onValueChange = { value ->
                                 updateSet(exercise.instanceId, set.id) { current -> current.copy(rpe = value) }
                             },
-                            singleLine = true,
-                            modifier = Modifier.weight(1.5f),
-                            textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center, color = Color.White, fontSize = 14.sp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.35f),
-                                unfocusedBorderColor = Color.White.copy(alpha = 0.06f),
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White,
-                                cursorColor = MaterialTheme.colorScheme.primary
-                            )
+                            modifier = Modifier.width(52.dp).height(44.dp)
                         )
 
                         Box(
-                            modifier = Modifier.weight(1.2f),
+                            modifier = Modifier.width(62.dp),
                             contentAlignment = Alignment.CenterEnd
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
-                                TextButton(
-                                    onClick = { removeSet(exercise.instanceId, set.id) },
-                                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp),
-                                    enabled = exercise.sets.size > 1
-                                ) {
-                                    Text("x", color = if (exercise.sets.size > 1) Color.Red else Text_Muted, fontWeight = FontWeight.Black)
-                                }
+                                Text(
+                                    "×",
+                                    color = if (exercise.sets.size > 1) Color.Red else Text_Muted,
+                                    fontWeight = FontWeight.Black,
+                                    fontSize = 18.sp,
+                                    modifier = Modifier.padding(6.dp).clickable(enabled = exercise.sets.size > 1) { removeSet(exercise.instanceId, set.id) }
+                                )
                                 Checkbox(
                                     checked = isChecked,
                                     onCheckedChange = { checked ->
                                         updateSet(exercise.instanceId, set.id) { current -> current.copy(completed = checked) }
-                                        if (checked) onStartTimer(90)
+                                        if (checked) onStartTimer(restPresetSeconds)
                                     },
                                     colors = CheckboxDefaults.colors(
                                         checkedColor = MaterialTheme.colorScheme.primary,
@@ -1535,8 +2174,24 @@ fun PremiumActiveSessionView(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                 }
+            }
+        }
+    }
+
+        Surface(
+            modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth(),
+            color = OLED_Black.copy(alpha = 0.96f),
+            shadowElevation = 14.dp
+        ) {
+            Button(
+                onClick = ::requestFinish,
+                modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 16.dp, vertical = 10.dp).height(52.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+            ) {
+                Text("Finalizar entrenamiento", color = Color.Black, fontWeight = FontWeight.Black)
             }
         }
     }
@@ -1545,6 +2200,180 @@ fun PremiumActiveSessionView(
         com.gainslab.ironlog.ui.PlateCalculatorView(
             onDismiss = { showPlateCalculator = false }
         )
+    }
+
+    warmupTarget?.let { exercise ->
+        WarmupPlannerDialog(
+            exercise = exercise,
+            onDismiss = { warmupTarget = null },
+            onInsert = { targetWeight -> insertWarmupLadder(exercise.instanceId, targetWeight); warmupTarget = null }
+        )
+    }
+
+    detailExercise?.let { exercise ->
+        ExerciseRuntimeDetailDialog(exercise = exercise, onDismiss = { detailExercise = null })
+    }
+
+    if (showRestSettings) RestPresetDialog(
+        currentSeconds = restPresetSeconds,
+        onDismiss = { showRestSettings = false },
+        onSave = { restPresetSeconds = it; showRestSettings = false }
+    )
+
+    if (showProtocolTimer) ProtocolTimerDialog(onDismiss = { showProtocolTimer = false })
+
+    if (showDiscardConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showDiscardConfirmation = false }, containerColor = Dark_Surface,
+            title = { Text("Descartar sesion?", color = Text_White, fontWeight = FontWeight.Black) },
+            text = { Text("Se perderan las series sin guardar de esta sesion.", color = Text_Muted) },
+            confirmButton = { Button(onClick = { appStore.setActiveSession(null); showDiscardConfirmation = false }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))) { Text("Descartar", color = Color.Black, fontWeight = FontWeight.Bold) } },
+            dismissButton = { TextButton(onClick = { showDiscardConfirmation = false }) { Text("Cancelar", color = Text_Muted) } }
+        )
+    }
+
+    pendingFinish?.let { completedLog ->
+        val prs = remember(completedLog, previousLogs) { detectSessionPrs(completedLog, previousLogs.filter { it.id != completedLog.id }) }
+        FinishWorkoutDialog(
+            prs = prs,
+            onDismiss = { pendingFinish = null },
+            onConfirm = { feedback ->
+                val finalized = completedLog.copy(note = feedback.takeIf { it.isNotBlank() })
+                appStore.saveWorkoutLog(finalized)
+                appStore.setActiveSession(null)
+                pendingFinish = null
+                onSessionCompleted(finalized)
+            }
+        )
+    }
+
+    setTypeTarget?.let { (exerciseInstanceId, setId) ->
+        AlertDialog(
+            onDismissRequest = { setTypeTarget = null },
+            containerColor = Dark_Surface,
+            title = { Text("Tipo de serie", color = Text_White, fontWeight = FontWeight.Black) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    SetType.entries.forEach { type ->
+                        TextButton(
+                            onClick = {
+                                updateSet(exerciseInstanceId, setId) { it.copy(type = type) }
+                                setTypeTarget = null
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(type.name.replace('_', ' '), color = if (type == SetType.REGULAR) Text_White else MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = { TextButton(onClick = { setTypeTarget = null }) { Text("Cancelar", color = Text_Muted) } }
+        )
+    }
+
+    if (pickerTargetInstanceId != null) {
+        val candidates = remember(appState.exercises, exercisePickerQuery) {
+            val query = exercisePickerQuery.trim()
+            appState.exercises.filter { query.isBlank() || it.name.get("es").contains(query, ignoreCase = true) }.take(40)
+        }
+        AlertDialog(
+            onDismissRequest = { pickerTargetInstanceId = null },
+            containerColor = Dark_Surface,
+            title = { Text(if (pickerTargetInstanceId == -1) "Anadir ejercicio" else "Reemplazar ejercicio", color = Text_White, fontWeight = FontWeight.Black) },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = exercisePickerQuery,
+                        onValueChange = { exercisePickerQuery = it },
+                        label = { Text("Buscar ejercicio") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                            focusedTextColor = Text_White,
+                            unfocusedTextColor = Text_White,
+                            focusedLabelColor = MaterialTheme.colorScheme.primary,
+                            unfocusedLabelColor = Text_Muted
+                        )
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    LazyColumn(modifier = Modifier.heightIn(max = 360.dp)) {
+                        items(candidates, key = { it.id }) { definition ->
+                            TextButton(onClick = { selectExercise(definition) }, modifier = Modifier.fillMaxWidth()) {
+                                Column(modifier = Modifier.fillMaxWidth()) {
+                                    Text(definition.name.get("es"), color = Text_White, fontWeight = FontWeight.Bold)
+                                    Text(definition.muscle.name, color = Text_Muted, fontSize = 11.sp)
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = { TextButton(onClick = { pickerTargetInstanceId = null }) { Text("Cancelar", color = Text_Muted) } }
+        )
+    }
+}
+
+@Composable
+private fun SessionSummaryScreen(log: Log, onClose: () -> Unit) {
+    val completedSets = log.exercises.sumOf { exercise -> exercise.sets.count { it.completed } }
+    val totalSets = log.exercises.sumOf { it.sets.size }
+    val volume = log.exercises.sumOf { exercise -> exercise.sets.sumOf { set -> getSetLoadVolume(set, exercise) } }
+    val durationMinutes = (log.duration / 60).coerceAtLeast(1)
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize().padding(horizontal = 4.dp),
+        contentPadding = PaddingValues(top = 16.dp, bottom = 110.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        item {
+            SurfaceCard {
+                Text("Sesion completada", color = MaterialTheme.colorScheme.primary, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
+                Spacer(Modifier.height(8.dp))
+                Text(log.name, color = Text_White, fontSize = 30.sp, fontWeight = FontWeight.Black)
+                Spacer(Modifier.height(8.dp))
+                Text("El registro ya quedo guardado offline y estara listo para sincronizar cuando lo decidas.", color = Text_Muted, fontSize = 13.sp)
+            }
+        }
+        item {
+            SurfaceCard {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    SummaryMetric("Duracion", "${durationMinutes} min")
+                    SummaryMetric("Series", "$completedSets/$totalSets")
+                    SummaryMetric("Volumen", "${volume.toInt()} kg")
+                }
+            }
+        }
+        item {
+            SurfaceCard {
+                Text("Ejercicios", color = Text_White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(10.dp))
+                log.exercises.forEachIndexed { index, exercise ->
+                    Text(exercise.name.get("es"), color = Text_White, fontWeight = FontWeight.Bold)
+                    Text("${exercise.sets.count { it.completed }}/${exercise.sets.size} series completadas", color = Text_Muted, fontSize = 12.sp)
+                    if (index != log.exercises.lastIndex) Spacer(Modifier.height(12.dp))
+                }
+            }
+        }
+        item {
+            Button(
+                onClick = onClose,
+                modifier = Modifier.fillMaxWidth().height(54.dp),
+                shape = RoundedCornerShape(18.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+            ) { Text("Volver a entrenar", color = Color.Black, fontWeight = FontWeight.Black) }
+        }
+    }
+}
+
+@Composable
+private fun SummaryMetric(label: String, value: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(value, color = Text_White, fontSize = 18.sp, fontWeight = FontWeight.Black)
+        Text(label, color = Text_Muted, fontSize = 11.sp)
     }
 }
 
@@ -1703,7 +2532,103 @@ fun HistoryTab(workoutLogs: List<Log>) {
 }
 
 @Composable
-fun PremiumHistoryTab(workoutLogs: List<Log>) {
+private fun WarmupPlannerDialog(exercise: SessionExercise, onDismiss: () -> Unit, onInsert: (Double) -> Unit) {
+    var target by remember { mutableStateOf(exercise.sets.firstOrNull { it.type != SetType.WARMUP }?.weight ?: "") }
+    val targetValue = target.toDoubleOrNull() ?: 0.0
+    AlertDialog(onDismissRequest = onDismiss, containerColor = Dark_Surface, title = { Text("Warm-up progresivo", color = Text_White, fontWeight = FontWeight.Black) }, text = {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(exercise.name.get("es"), color = Text_Muted, fontSize = 13.sp)
+            GoalInput("Peso de trabajo (kg)", target) { target = it }
+            if (targetValue > 0) Text("50% × 8 · ${(targetValue * .5).toInt()} kg\n70% × 5 · ${(targetValue * .7).toInt()} kg\n85% × 3 · ${(targetValue * .85).toInt()} kg", color = MaterialTheme.colorScheme.primary, fontSize = 13.sp)
+        }
+    }, confirmButton = { Button(onClick = { if (targetValue > 0) onInsert(targetValue) }, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)) { Text("Insertar", color = Color.Black) } }, dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar", color = Text_Muted) } })
+}
+
+@Composable
+private fun ExerciseRuntimeDetailDialog(exercise: SessionExercise, onDismiss: () -> Unit) {
+    AlertDialog(onDismissRequest = onDismiss, containerColor = Dark_Surface, title = { Text(exercise.name.get("es"), color = Text_White, fontWeight = FontWeight.Black) }, text = {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(exercise.muscle.name, color = MaterialTheme.colorScheme.primary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text(exercise.instructions?.get("es")?.ifBlank { "Sin instrucciones cargadas." } ?: "Sin instrucciones cargadas.", color = Text_Muted, fontSize = 13.sp)
+            exercise.defaultRestSeconds?.let { Text("Descanso sugerido: ${it}s", color = Text_White, fontSize = 13.sp) }
+            exercise.progressionPrev?.let { Text("Progresion previa: $it", color = Text_Muted, fontSize = 12.sp) }
+            exercise.progressionNext?.let { Text("Siguiente progresion: $it", color = Text_Muted, fontSize = 12.sp) }
+            exercise.videoId?.let { Text("Video: $it", color = Text_Muted, fontSize = 12.sp) }
+        }
+    }, confirmButton = { TextButton(onClick = onDismiss) { Text("Cerrar", color = MaterialTheme.colorScheme.primary) } })
+}
+
+@Composable
+private fun RestPresetDialog(currentSeconds: Int, onDismiss: () -> Unit, onSave: (Int) -> Unit) {
+    var value by remember { mutableStateOf(currentSeconds.toString()) }
+    AlertDialog(onDismissRequest = onDismiss, containerColor = Dark_Surface, title = { Text("Descanso entre series", color = Text_White, fontWeight = FontWeight.Black) }, text = { Column { GoalInput("Segundos", value) { value = it }; Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) { listOf(60, 90, 120, 180).forEach { seconds -> TextButton(onClick = { value = seconds.toString() }) { Text("${seconds}s", color = Text_Muted, fontSize = 11.sp) } } } } }, confirmButton = { Button(onClick = { onSave((value.toIntOrNull() ?: currentSeconds).coerceIn(15, 900)) }, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)) { Text("Guardar", color = Color.Black) } }, dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar", color = Text_Muted) } })
+}
+
+@Composable
+private fun ProtocolTimerDialog(onDismiss: () -> Unit) {
+    var protocol by remember { mutableStateOf("EMOM") }
+    var remaining by remember { mutableStateOf(60) }
+    var running by remember { mutableStateOf(false) }
+    LaunchedEffect(running, remaining) { if (running && remaining > 0) { delay(1000); remaining -= 1 } else if (remaining == 0) running = false }
+    AlertDialog(onDismissRequest = onDismiss, containerColor = Dark_Surface, title = { Text("Timer de protocolo", color = Text_White, fontWeight = FontWeight.Black) }, text = {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row { listOf("EMOM", "Tabata", "Intervalos").forEach { name -> TextButton(onClick = { protocol = name; remaining = if (name == "Tabata") 20 else 60; running = false }) { Text(name, color = if (protocol == name) MaterialTheme.colorScheme.primary else Text_Muted, fontSize = 11.sp) } } }
+            Text(formatTime(remaining), color = Text_White, fontSize = 40.sp, fontWeight = FontWeight.Black)
+            Text(if (protocol == "Tabata") "20s trabajo / 10s descanso" else if (protocol == "EMOM") "Nueva ronda cada minuto" else "Intervalo configurable", color = Text_Muted, fontSize = 12.sp)
+            Button(onClick = { running = !running }, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)) { Text(if (running) "Pausar" else "Iniciar", color = Color.Black) }
+        }
+    }, confirmButton = {}, dismissButton = { TextButton(onClick = onDismiss) { Text("Cerrar", color = Text_Muted) } })
+}
+
+private fun detectSessionPrs(candidate: Log, previous: List<Log>): List<String> {
+    val historicalMax = mutableMapOf<String, Double>()
+    previous.filter { it.skipped != true }.flatMap { it.exercises }.forEach { ex -> ex.sets.filter { it.completed }.forEach { set -> historicalMax[ex.id] = maxOf(historicalMax[ex.id] ?: 0.0, set.weight.toDoubleOrNull() ?: 0.0) } }
+    return candidate.exercises.mapNotNull { ex ->
+        val current = ex.sets.filter { it.completed }.maxOfOrNull { it.weight.toDoubleOrNull() ?: 0.0 } ?: return@mapNotNull null
+        if (current > 0 && current > (historicalMax[ex.id] ?: 0.0)) "${ex.name.get("es")}: ${current} kg" else null
+    }
+}
+
+private fun buildHistoryCsv(logs: List<Log>): String {
+    val header = "fecha,sesion,semana,ejercicio,serie,tipo,peso_kg,reps,rpe,completada"
+    val rows = logs.sortedByDescending { it.endTime }.flatMap { log ->
+        log.exercises.flatMap { exercise ->
+            exercise.sets.map { set ->
+                listOf(
+                    formatEpochDay(log.endTime), log.name, log.week.toString(), exercise.name.get("es"), set.id.toString(), set.type.name,
+                    set.weight, set.reps, set.rpe, set.completed.toString()
+                ).joinToString(",") { value -> "\"${value.replace("\"", "\"\"")}\"" }
+            }
+        }
+    }
+    return (listOf(header) + rows).joinToString("\n")
+}
+
+@Composable
+private fun FinishWorkoutDialog(prs: List<String>, onDismiss: () -> Unit, onConfirm: (String) -> Unit) {
+    var feedback by remember { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Dark_Surface,
+        title = { Text(if (prs.isEmpty()) "Cerrar entrenamiento" else "Nuevos PRs", color = Text_White, fontWeight = FontWeight.Black) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                if (prs.isNotEmpty()) prs.forEach { Text("★ $it", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold) }
+                GoalInput("Como te sentiste? (opcional)", feedback) { feedback = it }
+            }
+        },
+        confirmButton = { Button(onClick = { onConfirm(feedback) }, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)) { Text("Guardar sesion", color = Color.Black) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Volver", color = Text_Muted) } }
+    )
+}
+
+@Composable
+fun PremiumHistoryTab(workoutLogs: List<Log>, appStore: AppStore) {
+    var expandedLogId by remember { mutableStateOf<Long?>(null) }
+    var pendingDelete by remember { mutableStateOf<Log?>(null) }
+    var lastDeleted by remember { mutableStateOf<Log?>(null) }
+    var csvCopied by remember { mutableStateOf(false) }
+    val clipboard = LocalClipboardManager.current
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -1719,6 +2644,22 @@ fun PremiumHistoryTab(workoutLogs: List<Log>) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     AccentChip("${workoutLogs.size} sesiones", selected = true)
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                TextButton(onClick = { clipboard.setText(AnnotatedString(buildHistoryCsv(workoutLogs))); csvCopied = true }) {
+                    Text(if (csvCopied) "CSV copiado al portapapeles" else "Copiar CSV", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+
+        lastDeleted?.let { deleted ->
+            item {
+                SurfaceCard {
+                    Text("Registro eliminado", color = Text_White, fontWeight = FontWeight.Bold)
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Text(deleted.name, color = Text_Muted, fontSize = 12.sp)
+                        TextButton(onClick = { appStore.saveWorkoutLog(deleted); lastDeleted = null }) { Text("Deshacer", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold) }
+                    }
                 }
             }
         }
@@ -1737,8 +2678,10 @@ fun PremiumHistoryTab(workoutLogs: List<Log>) {
                 }
             }
         } else {
-            items(workoutLogs) { log ->
-                SurfaceCard(contentPadding = PaddingValues(18.dp)) {
+            items(workoutLogs, key = { it.id }) { log ->
+                val isExpanded = expandedLogId == log.id
+                val volume = log.exercises.sumOf { exercise -> exercise.sets.sumOf { set -> getSetLoadVolume(set, exercise) } }
+                SurfaceCard(contentPadding = PaddingValues(18.dp), modifier = Modifier.clickable { expandedLogId = if (isExpanded) null else log.id }) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -1755,9 +2698,36 @@ fun PremiumHistoryTab(workoutLogs: List<Log>) {
                         }
                         AccentChip("${log.duration / 60} min", selected = true)
                     }
+                    if (isExpanded) {
+                        Spacer(Modifier.height(14.dp))
+                        Text("${volume.toInt()} kg de volumen · ${log.exercises.sumOf { it.sets.count { set -> set.completed } }} series completadas", color = Text_Muted, fontSize = 12.sp)
+                        Spacer(Modifier.height(10.dp))
+                        log.exercises.forEach { exercise ->
+                            Text("• ${exercise.name}: ${exercise.sets.count { it.completed }}/${exercise.sets.size} series", color = Text_White, fontSize = 13.sp, modifier = Modifier.padding(vertical = 2.dp))
+                        }
+                        TextButton(onClick = { pendingDelete = log }, modifier = Modifier.align(Alignment.End)) {
+                            Text("Eliminar registro", color = Color(0xFFF87171), fontWeight = FontWeight.Bold)
+                        }
+                    } else {
+                        Spacer(Modifier.height(10.dp))
+                        log.exercises.take(3).forEach { exercise ->
+                            val best = exercise.sets.filter { it.completed }.maxByOrNull { it.weight.toDoubleOrNull() ?: 0.0 }
+                            Text("${exercise.name.get("es")}: " + (best?.let { "${it.weight} kg × ${it.reps}" } ?: "sin series"), color = Text_Muted, fontSize = 12.sp, modifier = Modifier.padding(vertical = 2.dp))
+                        }
+                    }
                 }
             }
         }
+    }
+    pendingDelete?.let { log ->
+        AlertDialog(
+            onDismissRequest = { pendingDelete = null },
+            containerColor = Dark_Surface,
+            title = { Text("Eliminar entrenamiento", color = Text_White, fontWeight = FontWeight.Black) },
+            text = { Text("Se eliminara '${log.name}' del historial local. Esta accion no se puede deshacer.", color = Text_Muted) },
+            confirmButton = { Button(onClick = { appStore.deleteWorkoutLog(log.id); lastDeleted = log; pendingDelete = null }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE05252))) { Text("Eliminar", color = Color.Black, fontWeight = FontWeight.Bold) } },
+            dismissButton = { TextButton(onClick = { pendingDelete = null }) { Text("Cancelar", color = Text_Muted) } }
+        )
     }
 }
 
@@ -1876,7 +2846,8 @@ fun PremiumSettingsTab(
     appStore: AppStore,
     onStartProgramEditor: () -> Unit,
     onManageExercises: () -> Unit,
-    onViewStats: () -> Unit
+    onViewStats: () -> Unit,
+    onManageAccount: () -> Unit
 ) {
     LazyColumn(
         modifier = Modifier
@@ -1916,6 +2887,49 @@ fun PremiumSettingsTab(
                     title = "Ver estadisticas",
                     subtitle = "Revisar PRs y volumen acumulado"
                 ) { onViewStats() }
+                HorizontalDivider(color = Color.White.copy(alpha = 0.05f))
+                SettingsActionRow(
+                    icon = Icons.Default.Favorite,
+                    title = "Cuenta y sincronizacion",
+                    subtitle = "Ingresar, importar tu PWA o subir este dispositivo"
+                ) { onManageAccount() }
+                if (state.activeMeso != null && state.program.isNotEmpty()) {
+                    HorizontalDivider(color = Color.White.copy(alpha = 0.05f))
+                    SettingsActionRow(
+                        icon = Icons.Default.Add,
+                        title = "Guardar rutina como plantilla privada",
+                        subtitle = "Disponible en Plantillas y sincronizada con tu cuenta"
+                    ) { appStore.saveCurrentProgramAsPersonalTemplate(state.activeMeso.name ?: "Mi rutina") }
+                }
+            }
+        }
+
+        item {
+            SurfaceCard {
+                Text("Preferencias de entrenamiento", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Text_White)
+                Spacer(modifier = Modifier.height(6.dp))
+                Text("Estas preferencias se guardan en el dispositivo y se aplican en el flujo de entrenamiento.", fontSize = 13.sp, color = Text_Muted)
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Column { Text("Mostrar RIR", color = Text_White, fontWeight = FontWeight.Bold); Text("Muestra el campo de esfuerzo junto a cada serie", color = Text_Muted, fontSize = 11.sp) }
+                    Switch(checked = state.appSettings.showRir, onCheckedChange = { appStore.setAppSettings(state.appSettings.copy(showRir = it)) })
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Column { Text("Mantener pantalla activa", color = Text_White, fontWeight = FontWeight.Bold); Text("Preferencia guardada para las sesiones", color = Text_Muted, fontSize = 11.sp) }
+                    Switch(checked = state.appSettings.keepScreenOn, onCheckedChange = { appStore.setAppSettings(state.appSettings.copy(keepScreenOn = it)) })
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                Text("Idioma", color = Text_Muted, fontSize = 12.sp)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(selected = state.appSettings.language == Lang.ES, onClick = { appStore.setAppSettings(state.appSettings.copy(language = Lang.ES)) }, label = { Text("Español") })
+                    FilterChip(selected = state.appSettings.language == Lang.EN, onClick = { appStore.setAppSettings(state.appSettings.copy(language = Lang.EN)) }, label = { Text("English") })
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("Tema", color = Text_Muted, fontSize = 12.sp)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Theme.entries.forEach { option -> FilterChip(selected = state.appSettings.theme == option, onClick = { appStore.setAppSettings(state.appSettings.copy(theme = option)) }, label = { Text(option.name.lowercase().replaceFirstChar { it.uppercase() }) }) }
+                }
             }
         }
 

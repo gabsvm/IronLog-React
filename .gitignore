@@ -28,3 +28,8 @@ dist-ssr
 *.sln
 *.sw?
 dist/
+
+# Android / Kotlin Multiplatform build artifacts and machine-specific SDK paths
+ironlog-kmp/.gradle/
+ironlog-kmp/**/build/
+ironlog-kmp/local.properties

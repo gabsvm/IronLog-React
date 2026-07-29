@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import com.gainslab.ironlog.model.ExerciseDef
 import com.gainslab.ironlog.model.LocalizedText
 import com.gainslab.ironlog.model.MuscleGroup
+import com.gainslab.ironlog.model.VolumeCountingMode
 import com.gainslab.ironlog.store.AppStore
 import com.gainslab.ironlog.theme.*
 import kotlinx.datetime.Clock
@@ -41,6 +42,7 @@ fun ExercisesView(
     // Create state
     var newName by remember { mutableStateOf("") }
     var newMuscle by remember { mutableStateOf(MuscleGroup.CHEST) }
+    var newVolumeCountingMode by remember { mutableStateOf(VolumeCountingMode.TOTAL) }
 
     Column(
         modifier = Modifier
@@ -92,6 +94,9 @@ fun ExercisesView(
                                             .padding(horizontal = 6.dp, vertical = 2.dp)
                                     ) {
                                         Text(text = ex.muscle.name, color = Text_Muted, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                    if (ex.volumeCountingMode == VolumeCountingMode.PER_SIDE) {
+                                        Text("×2 por lado", color = MaterialTheme.colorScheme.primary, fontSize = 10.sp, modifier = Modifier.padding(top = 4.dp))
                                     }
                                 }
                                 IconButton(onClick = {
@@ -173,6 +178,21 @@ fun ExercisesView(
                         }
                     }
                 }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = newVolumeCountingMode == VolumeCountingMode.PER_SIDE,
+                        onCheckedChange = { newVolumeCountingMode = if (it) VolumeCountingMode.PER_SIDE else VolumeCountingMode.TOTAL },
+                        colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.primary)
+                    )
+                    Column {
+                        Text("Carga por lado", color = Text_White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        Text("El tonelaje contará peso × reps × 2.", color = Text_Muted, fontSize = 11.sp)
+                    }
+                }
                 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Button(
@@ -188,10 +208,12 @@ fun ExercisesView(
                                 val newEx = ExerciseDef(
                                     id = "custom_${Clock.System.now().toEpochMilliseconds()}",
                                     name = LocalizedText(newName, newName),
-                                    muscle = newMuscle
+                                    muscle = newMuscle,
+                                    volumeCountingMode = newVolumeCountingMode
                                 )
                                 appStore.setExercises(exercises + newEx)
                                 newName = ""
+                                newVolumeCountingMode = VolumeCountingMode.TOTAL
                                 mode = "list"
                             }
                         },
