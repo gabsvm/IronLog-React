@@ -41,15 +41,12 @@ html.native-shell .glass-panel {
 }
 
 @supports (content-visibility: auto) {
-    /* Live-workout cards are the hottest tall surfaces. */
     html.native-shell #tut-exercise-list [class~='dark:glass-card'] {
         content-visibility: auto;
         contain-intrinsic-size: auto 560px;
         contain: layout paint style;
     }
 
-    /* Chart.js canvases are expensive even when they live several screens below
-       the viewport. Chromium can skip their paint/layout until they approach it. */
     html.native-shell .glass-card:has(canvas),
     html.native-shell .glass-panel:has(canvas) {
         content-visibility: auto;
@@ -67,6 +64,12 @@ html.native-shell #tut-exercise-list .animate-bounce,
 html.native-shell #tut-exercise-list .animate-pulse-glow-green,
 html.native-shell #tut-exercise-list .animate-bounce-cta {
     animation: none !important;
+}
+
+/* The large circular rest timer updates every second. Its browser drop-shadow
+   looks good but creates an extra filter/compositing pass in Android WebView. */
+html.native-shell .rest-timer-ring {
+    filter: none !important;
 }
 
 html.native-shell [class*='transition-all'] {
