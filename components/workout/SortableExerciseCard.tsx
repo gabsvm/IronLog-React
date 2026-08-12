@@ -1,5 +1,5 @@
-
 import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { motion } from 'framer-motion';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -13,8 +13,11 @@ import { ExerciseCardMenu } from './ExerciseCardMenu';
 import { ExerciseCardSets } from './ExerciseCardSets';
 import { RestPresetSheet } from './RestPresetSheet';
 import { getTranslated, roundWeight } from '../../utils';
-import { useTimerContext } from '../../context/TimerContext';
+import { getExerciseHistorySummary } from '../../utils/exerciseHistoryIndex';
 import { triggerHaptic, playTimerFinishSound } from '../../utils/audio';
+
+const NATIVE_SHELL = Capacitor.isNativePlatform();
+const CARD_TRANSITION = { duration: 0.25, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] };
 
 interface SortableExerciseCardProps {
     exercise: SessionExercise;
@@ -24,24 +27,19 @@ interface SortableExerciseCardProps {
     onAddSet: (id: number) => void;
     onDeleteSet: (exId: number, setId: number) => void;
     onOpenDetail?: (ex: SessionExercise) => void;
-
-    // Handlers for menu actions
     onLink: (id: number | null) => void;
     onReplace: (id: number | null) => void;
     onSubBodyweight?: (id: number, muscle: import('../../types').MuscleGroup) => void;
     onEditMuscle: (id: number | null) => void;
     onConfigPlate: (id: number | null) => void;
     onUpdateSession: (cb: any) => void;
-    onOpenWarmup?: (id: number) => void; // New prop to trigger modal
+    onOpenWarmup?: (id: number) => void;
     onMarkLastHop: (exId: number, setId: number) => void;
     onAddHopToRound: (exId: number, roundId: number) => void;
     onAddAVTRound: (exId: number) => void;
-
-    // UI State passed down
     openMenuId: number | null;
     setOpenMenuId: (id: number | null) => void;
     linkingId: number | null;
-
     t: any;
     lang: 'en' | 'es';
     supersetStyle: any;
@@ -49,13 +47,22 @@ interface SortableExerciseCardProps {
     config: any;
     stageConfig: any;
     viewMode?: 'list' | 'focus';
-    logs: import('../../types').Log[]; // Passed from parent so the card no longer subscribes to the full AppContext
-
-    // Tutorial Hook
-    tutorialId?: string; // "tut-set-type" from parent if first card
+    logs: import('../../types').Log[];
+    tutorialId?: string;
 }
 
-export const SortableExerciseCard = React.memo(({
+const propsEqual = (prev: SortableExerciseCardProps, next: SortableExerciseCardProps) => {
+    const p = prev as any;
+    const n = next as any;
+    for (const key of Object.keys(p)) {
+        if (key === 'supersetStyle') continue;
+        if (p[key] !== n[key]) return false;
+    }
+    return prev.supersetStyle?.border === next.supersetStyle?.border
+        && prev.supersetStyle?.badge === next.supersetStyle?.badge;
+};
+
+const SortableExerciseCardImpl: React.FC<SortableExerciseCardProps> = ({
     exercise: ex,
     onSetUpdate,
     onSetComplete,
@@ -66,7 +73,6 @@ export const SortableExerciseCard = React.memo(({
     onLink,
     onReplace,
     onSubBodyweight,
-    onEditMuscle,
     onConfigPlate,
     onUpdateSession,
     onOpenWarmup,
@@ -85,12 +91,16 @@ export const SortableExerciseCard = React.memo(({
     viewMode = 'list',
     logs,
     tutorialId
-}: SortableExerciseCardProps) => {
-    const { restTimer } = useTimerContext();
+}) => {
     const [activeEmomMinute, setActiveEmomMinute] = useState(0);
     const [showRestPreset, setShowRestPreset] = useState(false);
     const [exDoneFlash, setExDoneFlash] = useState(false);
+    const [localNote, setLocalNote] = useState(ex.note || '');
     const handleEmomMinuteChange = useCallback((m: number) => setActiveEmomMinute(m), []);
+
+    useEffect(() => {
+        setLocalNote(ex.note || '');
+    }, [ex.note]);
 
     const {
         attributes,
@@ -99,7 +109,7 @@ export const SortableExerciseCard = React.memo(({
         transform,
         transition,
         isDragging
-    } = useSortable({ id: ex.instanceId });
+    } = useSortable({ id: ex.instanceId, disabled: viewMode !== 'list' });
 
     const style = viewMode === 'list' ? {
         transform: CSS.Transform.toString(transform),
@@ -112,94 +122,54 @@ export const SortableExerciseCard = React.memo(({
     const sets = ex.sets || [];
     const ssStyle = supersetStyle;
     const unit = ex.weightUnit || 'kg';
-    const unitLabel = unit === 'pl' ? 'PL' : 'KG';
-
+    const unitLabel = unit === 'pl' ? 'PL' : unit === 'lb' ? 'LB' : 'KG';
     const isCardio = ex.muscle === 'CARDIO';
     const cardioMode: CardioType = ex.cardioType || ex.defaultCardioType || 'steady';
     const isInterval = cardioMode === 'hiit' || cardioMode === 'tabata';
 
-    // 1. Get Last Note
-    const lastNote = useMemo(() => {
-        if (!logs) return null;
-        for (let i = 0; i < logs.length; i++) {
-            const log = logs[i];
-            if (log.skipped) continue;
-            const found = log.exercises?.find(e => e.id === ex.id);
-            if (found && found.note) return String(found.note);
-        }
-        return null;
-    }, [logs, ex.id]);
+    // One cache build for the entire logs array; every card then performs O(1)
+    // lookup instead of repeatedly scanning every workout/exercise/set.
+    const history = useMemo(() => getExerciseHistorySummary(logs, ex.id), [logs, ex.id]);
+    const lastNote = history.lastNote;
 
-    // 2. Calculate Historical Best PR — context-aware
     const historicalBest = useMemo(() => {
-        if (!logs || isCardio || !ex.id) return null;
-
-        // ISOMETRIC: best hold time in seconds
+        if (isCardio || !ex.id) return null;
         if (ex.isIsometric) {
-            let bestSec = 0;
-            logs.forEach(l => {
-                if (l.skipped) return;
-                const pastEx = l.exercises?.find(e => e.id === ex.id);
-                if (!pastEx) return;
-                (pastEx.sets || []).forEach(s => {
-                    if (s.completed && s.duration) {
-                        const sec = Number(s.duration);
-                        if (sec > bestSec) bestSec = sec;
-                    }
-                });
-            });
-            if (bestSec === 0) return null;
+            const bestSec = history.bestHoldSeconds;
+            if (!bestSec) return null;
             const m = Math.floor(bestSec / 60);
             const s = bestSec % 60;
             return m > 0 ? `${m}:${s.toString().padStart(2, '0')}` : `${bestSec}s`;
         }
-
-        // BODYWEIGHT (non-isometric): best max reps in one set
         if (ex.isBodyweight) {
-            let bestReps = 0;
-            let bestWeight = 0;
-            logs.forEach(l => {
-                if (l.skipped) return;
-                const pastEx = l.exercises?.find(e => e.id === ex.id);
-                if (!pastEx) return;
-                (pastEx.sets || []).forEach(s => {
-                    if (s.completed && s.reps) {
-                        const r = Number(s.reps);
-                        const w = Number(s.weight) || 0;
-                        if (r > bestReps || (r === bestReps && w > bestWeight)) {
-                            bestReps = r;
-                            bestWeight = w;
-                        }
-                    }
-                });
-            });
-            if (bestReps === 0) return null;
-            return bestWeight > 0 ? `${bestReps} reps (+${bestWeight}kg)` : `${bestReps} reps`;
+            if (!history.bestBodyweightReps) return null;
+            return history.bestBodyweightWeight > 0
+                ? `${history.bestBodyweightReps} reps (+${history.bestBodyweightWeight}kg)`
+                : `${history.bestBodyweightReps} reps`;
         }
+        if (!history.bestWeighted1RM || history.bestWeightedWeight == null || history.bestWeightedReps == null) return null;
+        return `${history.bestWeightedWeight}${unitLabel.toLowerCase()} × ${history.bestWeightedReps} (1RM: ${Math.round(history.bestWeighted1RM)})`;
+    }, [history, isCardio, ex.id, ex.isIsometric, ex.isBodyweight, unitLabel]);
 
-        // WEIGHTED GYM: estimated 1RM
-        let best1RM = 0;
-        let bestStr = '';
-        logs.forEach(l => {
-            if (l.skipped) return;
-            const pastEx = l.exercises?.find(e => e.id === ex.id);
-            if (!pastEx) return;
-            (pastEx.sets || []).forEach(s => {
-                if (s.completed && s.weight && s.reps) {
-                    const e1rm = Number(s.weight) * (1 + Number(s.reps) / 30);
-                    if (e1rm > best1RM) {
-                        best1RM = e1rm;
-                        bestStr = `${s.weight}${unitLabel.toLowerCase()} × ${s.reps} (1RM: ${Math.round(e1rm)})`;
-                    }
-                }
-            });
-        });
-        return best1RM > 0 ? bestStr : null;
-    }, [logs, ex.id, isCardio, ex.isIsometric, ex.isBodyweight, unitLabel]);
+    const overloadSuggest = useMemo(() => {
+        if (isCardio || ex.isBodyweight || ex.isIsometric || !ex.id) return null;
+        const working = history.latestWorkingSets;
+        if (!working || working.length === 0) return null;
+        if (!working.every(set => set.completed)) return null;
+        const avgWeight = working.reduce((sum, set) => sum + Number(set.weight || 0), 0) / working.length;
+        if (avgWeight <= 0) return null;
+        const target = ex.targetReps ? parseInt(String(ex.targetReps), 10) : null;
+        if (!target) return { kg: 2.5 };
+        return working.every(set => Number(set.reps) >= target) ? { kg: 2.5 } : null;
+    }, [history.latestWorkingSets, isCardio, ex.isBodyweight, ex.isIsometric, ex.id, ex.targetReps]);
 
-    // Agrupar sets AVT por roundId
+    const oneRMHistory = useMemo(
+        () => (!isCardio && !ex.isBodyweight && !ex.isIsometric && ex.id ? history.oneRMHistory : []),
+        [history.oneRMHistory, isCardio, ex.isBodyweight, ex.isIsometric, ex.id]
+    );
+
     const avtRounds = useMemo(() => {
-        const hopSets = ex.sets.filter(s => s.type === 'avt_hop' && s.avtRoundId);
+        const hopSets = sets.filter(s => s.type === 'avt_hop' && s.avtRoundId);
         const groups: Record<number, WorkoutSet[]> = {};
         hopSets.forEach(s => {
             const rid = s.avtRoundId!;
@@ -207,107 +177,33 @@ export const SortableExerciseCard = React.memo(({
             groups[rid].push(s);
         });
         return Object.entries(groups).map(([id, hops]) => ({ roundId: Number(id), hops }));
-    }, [ex.sets]);
+    }, [sets]);
 
     const isAVTExercise = avtRounds.length > 0;
-    // Memoized so the auto-scroll useEffect only fires on actual completion changes,
-    // not on every render that produces a new array reference.
-    const regularSets = useMemo(() => ex.sets.filter(s => s.type !== 'avt_hop'), [ex.sets]);
-    const completedCount = regularSets.filter(s => s.completed).length;
+    const regularSets = useMemo(() => sets.filter(s => s.type !== 'avt_hop'), [sets]);
+    const completedCount = useMemo(() => regularSets.filter(s => s.completed).length, [regularSets]);
     const allDone = regularSets.length > 0 && completedCount === regularSets.length;
 
-    // ── Progressive overload auto-suggest ────────────────────────────
-    // Show "+2.5 kg suggested" when last session had all working sets completed at/above target reps
-    const overloadSuggest = useMemo(() => {
-        if (!logs || isCardio || ex.isBodyweight || ex.isIsometric || !ex.id) return null;
-        for (let i = logs.length - 1; i >= 0; i--) {
-            const l = logs[i];
-            if (l.skipped) continue;
-            const pastEx = l.exercises?.find(e => e.id === ex.id);
-            if (!pastEx) continue;
-            const working = (pastEx.sets || []).filter((s: any) => s.type !== 'warmup' && s.type !== 'avt_hop');
-            if (working.length === 0) return null;
-            const allCompleted = working.every((s: any) => s.completed);
-            if (!allCompleted) return null;
-            const avgWeight = working.reduce((sum: number, s: any) => sum + Number(s.weight || 0), 0) / working.length;
-            if (avgWeight <= 0) return null;
-            const target = ex.targetReps ? parseInt(String(ex.targetReps), 10) : null;
-            if (!target) return { kg: 2.5 };
-            const allHitTarget = working.every((s: any) => Number(s.reps) >= target);
-            return allHitTarget ? { kg: 2.5 } : null;
-        }
-        return null;
-    }, [logs, ex.id, ex.targetReps, isCardio, ex.isBodyweight, ex.isIsometric]);
+    const protocol = useMemo(() => {
+        const isProtocol = !isCardio && !ex.isIsometric;
+        const isEMOM = isProtocol && regularSets.length > 0 && regularSets.every(s => s.type === 'emom');
+        const isMyorep = isProtocol && regularSets.length > 0 && regularSets.every(s => s.type === 'myorep' || s.type === 'myorep_match');
+        const isCluster = isProtocol && regularSets.length > 0 && regularSets.every(s => s.type === 'cluster');
+        const isGiant = isProtocol && regularSets.length > 0 && regularSets.every(s => s.type === 'giant');
+        const hasTopBackoff = isProtocol && regularSets.some(s => s.type === 'top') && regularSets.some(s => s.type === 'backoff');
+        const isTabata = isCardio && cardioMode === 'tabata';
+        const isHIIT = isCardio && cardioMode === 'hiit';
+        const isSpecialProtocol = isEMOM || isMyorep || isCluster || isGiant;
+        return { isEMOM, isMyorep, isCluster, isGiant, hasTopBackoff, isTabata, isHIIT, isSpecialProtocol };
+    }, [regularSets, isCardio, ex.isIsometric, cardioMode]);
 
-    // ── 1RM sparkline history (last 8 sessions) ──────────────────────
-    const oneRMHistory = useMemo(() => {
-        if (!logs || isCardio || ex.isBodyweight || ex.isIsometric || !ex.id) return [];
-        const points: number[] = [];
-        for (let i = logs.length - 1; i >= 0 && points.length < 8; i--) {
-            const l = logs[i];
-            if (l.skipped) continue;
-            const pastEx = l.exercises?.find(e => e.id === ex.id);
-            if (!pastEx) continue;
-            let best = 0;
-            (pastEx.sets || []).forEach(s => {
-                if (s.completed && s.weight && s.reps) {
-                    const e1rm = Number(s.weight) * (1 + Number(s.reps) / 30);
-                    if (e1rm > best) best = e1rm;
-                }
-            });
-            if (best > 0) points.unshift(best);
-        }
-        return points;
-    }, [logs, ex.id, isCardio, ex.isBodyweight, ex.isIsometric]);
+    const { isEMOM, isMyorep, isCluster, isGiant, hasTopBackoff, isTabata, isHIIT, isSpecialProtocol } = protocol;
+    const nextSetIdx = (!isSpecialProtocol && !isTabata && !isHIIT)
+        ? regularSets.findIndex(s => !s.completed)
+        : -1;
 
-    // ── Auto-scroll to next uncompleted set ─────────────────────────
-    const prevCompletedRef = useRef(completedCount);
-    const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    
-    useEffect(() => {
-        if (completedCount > prevCompletedRef.current) {
-            // Exercise complete celebration
-            if (completedCount === regularSets.length && regularSets.length > 0) {
-                setExDoneFlash(true);
-                triggerHaptic('success');
-                playTimerFinishSound();
-                if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
-                flashTimerRef.current = setTimeout(() => setExDoneFlash(false), 1200);
-            }
-            // Scroll next set into view
-            const nextSet = regularSets.find(s => !s.completed);
-            if (nextSet) {
-                if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
-                scrollTimerRef.current = setTimeout(() => {
-                    document.getElementById(`set-row-${nextSet.id}`)
-                        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 180);
-            }
-        }
-        prevCompletedRef.current = completedCount;
-        return () => { 
-            if (flashTimerRef.current) clearTimeout(flashTimerRef.current); 
-            if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
-        };
-    }, [completedCount, regularSets]);
-
-    // ── Protocol detections ──────────────────────────────────────────
-    const isProtocol = !isCardio && !ex.isIsometric;
-    const isEMOM      = isProtocol && regularSets.length > 0 && regularSets.every(s => s.type === 'emom');
-    const isMyorep    = isProtocol && regularSets.length > 0 && regularSets.every(s => s.type === 'myorep' || s.type === 'myorep_match');
-    const isCluster   = isProtocol && regularSets.length > 0 && regularSets.every(s => s.type === 'cluster');
-    const isGiant     = isProtocol && regularSets.length > 0 && regularSets.every(s => s.type === 'giant');
-    const hasTopBackoff = isProtocol && regularSets.some(s => s.type === 'top') && regularSets.some(s => s.type === 'backoff');
-    const isTabata    = isCardio && cardioMode === 'tabata';
-    const isHIIT      = isCardio && cardioMode === 'hiit';
-    const isSpecialProtocol = isEMOM || isMyorep || isCluster || isGiant;
-    // Highlight the next uncompleted set; disabled for protocols that drive their own progression
-    const nextSetIdx = (!isSpecialProtocol && !isTabata && !isHIIT) ? regularSets.findIndex(s => !s.completed) : -1;
-
-    // ── Badge labels per set ─────────────────────────────────────────
     const setBadgeLabels = useMemo((): (string | undefined)[] => {
-        if (isEMOM)   return regularSets.map((_, i) => String(i + 1));
+        if (isEMOM) return regularSets.map((_, i) => String(i + 1));
         if (isMyorep) return regularSets.map((_, i) => i === 0 ? 'ACT' : `M${i}`);
         if (hasTopBackoff) {
             let bCount = 0;
@@ -316,10 +212,38 @@ export const SortableExerciseCard = React.memo(({
         return regularSets.map(() => undefined);
     }, [isEMOM, isMyorep, hasTopBackoff, regularSets]);
 
-    const handleInjectWarmup = () => {
+    const prevCompletedRef = useRef(completedCount);
+    const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    useEffect(() => {
+        if (completedCount > prevCompletedRef.current) {
+            if (completedCount === regularSets.length && regularSets.length > 0) {
+                setExDoneFlash(true);
+                triggerHaptic('success');
+                playTimerFinishSound();
+                if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
+                flashTimerRef.current = setTimeout(() => setExDoneFlash(false), 1200);
+            }
+            const nextSet = regularSets.find(s => !s.completed);
+            if (nextSet) {
+                if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+                scrollTimerRef.current = setTimeout(() => {
+                    document.getElementById(`set-row-${nextSet.id}`)
+                        ?.scrollIntoView({ behavior: NATIVE_SHELL ? 'auto' : 'smooth', block: 'center' });
+                }, 180);
+            }
+        }
+        prevCompletedRef.current = completedCount;
+        return () => {
+            if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
+            if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+        };
+    }, [completedCount, regularSets]);
+
+    const handleInjectWarmup = useCallback(() => {
         const firstRegularSet = sets.find(s => s.type === 'regular');
         const targetWeight = Number(firstRegularSet?.weight) || Number(firstRegularSet?.hintWeight) || 0;
-
         if (targetWeight === 0) return;
 
         const newSets: WorkoutSet[] = [
@@ -338,98 +262,108 @@ export const SortableExerciseCard = React.memo(({
         onUpdateSession((prev: any) => !prev ? null : {
             ...prev,
             exercises: prev.exercises.map((e: any) =>
-                e.instanceId === ex.instanceId
-                    ? { ...e, sets: [...newSets, ...e.sets] }
-                    : e
+                e.instanceId === ex.instanceId ? { ...e, sets: [...newSets, ...e.sets] } : e
             )
         });
         setOpenMenuId(null);
-    };
+    }, [sets, onUpdateSession, ex.instanceId, setOpenMenuId]);
 
-    const handleCardioModeChange = (mode: CardioType) => {
+    const handleCardioModeChange = useCallback((mode: CardioType) => {
         onUpdateSession((prev: any) => !prev ? null : {
             ...prev,
             exercises: prev.exercises.map((e: any) =>
-                e.instanceId === ex.instanceId
-                    ? { ...e, cardioType: mode }
-                    : e
+                e.instanceId === ex.instanceId ? { ...e, cardioType: mode } : e
             )
         });
         setOpenMenuId(null);
-    };
+    }, [onUpdateSession, ex.instanceId, setOpenMenuId]);
 
-    const handleNoteUpdate = (val: string) => {
+    const handleNoteBlur = useCallback(() => {
+        if (localNote === (ex.note || '')) return;
         onUpdateSession((prev: any) => !prev ? null : {
             ...prev,
-            exercises: prev.exercises.map((e: any) => e.instanceId === ex.instanceId ? { ...e, note: val } : e)
+            exercises: prev.exercises.map((e: any) =>
+                e.instanceId === ex.instanceId ? { ...e, note: localNote } : e
+            )
         });
-    };
+    }, [localNote, ex.note, ex.instanceId, onUpdateSession]);
 
-    const confirmDelete = () => {
-        onUpdateSession((prev: any) => prev ? { ...prev, exercises: prev.exercises.filter((e: any) => e.instanceId !== ex.instanceId) } : null);
+    const confirmDelete = useCallback(() => {
+        onUpdateSession((prev: any) => prev ? {
+            ...prev,
+            exercises: prev.exercises.filter((e: any) => e.instanceId !== ex.instanceId)
+        } : null);
         setOpenMenuId(null);
-    };
+    }, [onUpdateSession, ex.instanceId, setOpenMenuId]);
 
-    const handleToggleUnit = () => {
+    const handleToggleUnit = useCallback(() => {
         const newUnit = unit === 'kg' ? 'pl' : 'kg';
         onUpdateSession((prev: any) => !prev ? null : {
             ...prev,
-            exercises: prev.exercises.map((e: any) => e.instanceId === ex.instanceId ? { ...e, weightUnit: newUnit } : e)
+            exercises: prev.exercises.map((e: any) =>
+                e.instanceId === ex.instanceId ? { ...e, weightUnit: newUnit } : e
+            )
         });
-    };
+    }, [unit, onUpdateSession, ex.instanceId]);
 
-    const handleToggleSuperset = () => {
+    const handleToggleSuperset = useCallback(() => {
         if (ex.supersetId) {
             onUpdateSession((prev: any) => !prev ? null : {
                 ...prev,
-                exercises: (prev.exercises || []).map((e: any) => e.instanceId === ex.instanceId ? { ...e, supersetId: undefined } : e)
+                exercises: (prev.exercises || []).map((e: any) =>
+                    e.instanceId === ex.instanceId ? { ...e, supersetId: undefined } : e
+                )
             });
         } else {
             onLink(ex.instanceId);
         }
         setOpenMenuId(null);
-    };
+    }, [ex.supersetId, ex.instanceId, onUpdateSession, onLink, setOpenMenuId]);
 
-    const handleSaveRestPreset = (secs: number | undefined) => {
+    const handleSaveRestPreset = useCallback((secs: number | undefined) => {
         onUpdateSession((prev: any) => !prev ? null : {
             ...prev,
             exercises: prev.exercises.map((e: any) =>
                 e.instanceId === ex.instanceId ? { ...e, defaultRestSeconds: secs } : e
             )
         });
-    };
+    }, [onUpdateSession, ex.instanceId]);
+
+    const handleMenuClose = useCallback(() => setOpenMenuId(null), [setOpenMenuId]);
+    const handleOpenRestPreset = useCallback(() => setShowRestPreset(true), []);
+
+    const handleCardClick = useCallback(() => {
+        if (!isLinkingTarget) return;
+        const ssid = `ss_${Date.now()}`;
+        onUpdateSession((prev: any) => !prev ? null : {
+            ...prev,
+            exercises: prev.exercises.map((e: any) =>
+                (e.instanceId === linkingId || e.instanceId === ex.instanceId) ? { ...e, supersetId: ssid } : e
+            )
+        });
+        onLink(null);
+    }, [isLinkingTarget, onUpdateSession, linkingId, ex.instanceId, onLink]);
 
     return (
         <motion.div
-            layout={isDragging ? false : 'position'}
-            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            layout={NATIVE_SHELL || isDragging ? false : 'position'}
+            transition={CARD_TRANSITION}
             ref={viewMode === 'list' ? setNodeRef : null}
             style={style}
-            onClick={() => {
-                if (isLinkingTarget) {
-                    const ssid = `ss_${Date.now()}`;
-                    onUpdateSession((prev: any) => !prev ? null : {
-                        ...prev,
-                        exercises: prev.exercises.map((e: any) => (e.instanceId === linkingId || e.instanceId === ex.instanceId) ? { ...e, supersetId: ssid } : e)
-                    });
-                    onLink(null);
-                }
-            }}
+            onClick={handleCardClick}
             className={`
                 flex flex-col bg-white dark:bg-transparent dark:glass-card rounded-2xl shadow-sm border border-zinc-200 dark:border-white/5 overflow-hidden transition-all
                 ${ssStyle ? `border-l-4 ${ssStyle.border}` : ''}
                 ${isLinkingTarget ? 'ring-2 ring-orange-500 cursor-pointer opacity-80 hover:opacity-100' : ''}
                 ${linkingId === ex.instanceId ? 'ring-2 ring-orange-500' : ''}
                 ${isDragging ? 'shadow-2xl ring-2 ring-red-500/20 scale-[1.02]' : ''}
-                ${viewMode === 'focus' ? 'h-full flex-1' : ''} 
+                ${viewMode === 'focus' ? 'h-full flex-1' : ''}
             `}
         >
-            {/* Header */}
             <div className="p-3 md:p-4 flex flex-col gap-2 border-b border-zinc-100 dark:border-white/5 bg-zinc-50/50 dark:bg-white/[0.02]">
                 <div className="flex justify-between items-start">
                     <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                            {/* Drag Handle */}
                             {viewMode === 'list' && (
                                 <div
                                     className="touch-none cursor-grab active:cursor-grabbing text-zinc-300 hover:text-zinc-600 dark:hover:text-zinc-200 p-2 -ml-2 mr-1"
@@ -488,20 +422,9 @@ export const SortableExerciseCard = React.memo(({
                     </div>
 
                     <div className="flex items-center gap-1.5">
-                        {/* Integrated Rest Timer Badge */}
-                        {restTimer.active && restTimer.timeLeft > 0 && (
-                            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-violet-900/50 text-violet-300 border border-violet-500/40 rounded-lg animate-pulse shadow-lg shadow-violet-900/30 backdrop-blur-sm mr-1">
-                                <Icon name="Clock" size={12} strokeWidth={3} />
-                                <span className="text-[10px] font-black font-mono tracking-tight">
-                                    {Math.floor(restTimer.timeLeft / 60)}:{(restTimer.timeLeft % 60).toString().padStart(2, '0')}
-                                </span>
-                            </div>
-                        )}
-
-                        {/* Warmup: only for weighted exercises (not bodyweight, not isometric, not cardio) */}
                         {!isCardio && !ex.isBodyweight && !ex.isIsometric && (
                             <button
-                                id={tutorialId ? "tut-warmup-btn" : undefined}
+                                id={tutorialId ? 'tut-warmup-btn' : undefined}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     if (onOpenWarmup) onOpenWarmup(ex.instanceId);
@@ -528,7 +451,7 @@ export const SortableExerciseCard = React.memo(({
                             <ExerciseCardMenu
                                 ex={ex}
                                 isOpen={openMenuId === ex.instanceId}
-                                onClose={() => setOpenMenuId(null)}
+                                onClose={handleMenuClose}
                                 isCardio={isCardio}
                                 cardioMode={cardioMode}
                                 unit={unit}
@@ -540,7 +463,7 @@ export const SortableExerciseCard = React.memo(({
                                 onReplace={onReplace}
                                 onSubBodyweight={onSubBodyweight}
                                 onToggleSuperset={handleToggleSuperset}
-                                onOpenRestPreset={() => setShowRestPreset(true)}
+                                onOpenRestPreset={handleOpenRestPreset}
                                 onRequestDelete={confirmDelete}
                                 t={t}
                                 lang={lang}
@@ -550,7 +473,6 @@ export const SortableExerciseCard = React.memo(({
                     </div>
                 </div>
 
-                {/* Skill Progression Badge — for calisthenics skill families */}
                 {ex.skillFamily && (
                     <SkillProgressionBadge exercise={ex} lang={lang} />
                 )}
@@ -572,8 +494,9 @@ export const SortableExerciseCard = React.memo(({
                     <input
                         type="text"
                         placeholder={String(t.addNote)}
-                        value={ex.note || ''}
-                        onChange={(e) => handleNoteUpdate(e.target.value)}
+                        value={localNote}
+                        onChange={(e) => setLocalNote(e.target.value)}
+                        onBlur={handleNoteBlur}
                         className="w-full bg-[#131316] border border-white/5 text-xs text-zinc-400 placeholder-zinc-700 outline-none rounded-lg py-2 pl-7 pr-2 focus:border-primary-500/30 focus:text-white focus:placeholder-zinc-600 transition-colors"
                     />
                 </div>
@@ -622,7 +545,6 @@ export const SortableExerciseCard = React.memo(({
                 tutorialId={tutorialId}
             />
 
-            {/* Exercise-complete flash overlay */}
             {exDoneFlash && (
                 <div className="absolute inset-0 z-10 pointer-events-none rounded-2xl ring-2 ring-green-500/60 bg-green-500/5 flex items-center justify-center animate-in fade-in duration-150">
                     <div className="bg-green-500 text-white text-xs font-black px-3 py-1.5 rounded-full shadow-lg shadow-green-500/30 animate-bounce">
@@ -632,7 +554,6 @@ export const SortableExerciseCard = React.memo(({
                 </div>
             )}
 
-            {/* Footer */}
             <div className="bg-black/20 border-t border-white/5 grid grid-cols-2 divide-x divide-white/10 shrink-0">
                 <button
                     onClick={() => sets.length > 0 && onDeleteSet(ex.instanceId, sets[sets.length - 1].id)}
@@ -658,4 +579,7 @@ export const SortableExerciseCard = React.memo(({
             />
         </motion.div>
     );
-});
+};
+
+export const SortableExerciseCard = React.memo(SortableExerciseCardImpl, propsEqual);
+SortableExerciseCard.displayName = 'SortableExerciseCard';
