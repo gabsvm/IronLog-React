@@ -24,11 +24,23 @@ public class MainActivity extends BridgeActivity {
             webView.setHorizontalScrollBarEnabled(false);
 
             // Give the live workout renderer a higher chance of staying resident
-            // when Android is under memory pressure. The WebView remains fully
-            // hardware accelerated through the manifest/application defaults.
+            // when Android is under memory pressure.
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 webView.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_IMPORTANT, true);
             }
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        WebView webView = bridge != null ? bridge.getWebView() : null;
+        // App.tsx stores view changes in window.history. WebView.goBack() therefore
+        // fires the same popstate path used by browser/PWA navigation instead of
+        // abruptly closing the activity from an inner screen.
+        if (webView != null && webView.canGoBack()) {
+            webView.goBack();
+            return;
+        }
+        super.onBackPressed();
     }
 }
