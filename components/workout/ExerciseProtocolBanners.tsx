@@ -16,11 +16,11 @@ interface Props {
 }
 
 /**
- * Per-protocol banners + interactive timers shown under the ExerciseCard
- * header. Pure presentational — no business logic. Splits out 50+ lines of
- * conditional JSX from the parent card.
+ * Per-protocol banners + timers. All props are primitives/stable callbacks, so
+ * memoization prevents this subtree from re-rendering when unrelated set input
+ * state changes elsewhere in the workout.
  */
-export const ExerciseProtocolBanners: React.FC<Props> = ({
+export const ExerciseProtocolBanners: React.FC<Props> = React.memo(({
     lang,
     totalSets,
     isEMOM,
@@ -86,4 +86,6 @@ export const ExerciseProtocolBanners: React.FC<Props> = ({
             </div>
         )}
     </>
-);
+));
+
+ExerciseProtocolBanners.displayName = 'ExerciseProtocolBanners';
