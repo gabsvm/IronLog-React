@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Icon } from '../ui/Icon';
 import { triggerHaptic, playTimerFinishSound } from '../../utils/audio';
@@ -6,14 +5,15 @@ import { triggerHaptic, playTimerFinishSound } from '../../utils/audio';
 const fmt = (s: number) =>
     s >= 60 ? `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}` : `${s}s`;
 
-// ── EMOM TIMER ────────────────────────────────────────────────────────────────
+const TICK_MS = 500;
+
 interface EMOMTimerProps {
     totalSets: number;
     lang: 'en' | 'es';
-    onMinuteChange: (minute: number) => void; // 0 = idle, 1..N = active minute
+    onMinuteChange: (minute: number) => void;
 }
 
-export const EMOMTimer: React.FC<EMOMTimerProps> = ({ totalSets, lang, onMinuteChange }) => {
+export const EMOMTimer: React.FC<EMOMTimerProps> = React.memo(({ totalSets, lang, onMinuteChange }) => {
     const [state, setState] = useState<'idle' | 'running' | 'done'>('idle');
     const [timeLeft, setTimeLeft] = useState(60);
     const [minute, setMinute] = useState(0);
@@ -24,14 +24,17 @@ export const EMOMTimer: React.FC<EMOMTimerProps> = ({ totalSets, lang, onMinuteC
     const totalSetsRef = useRef(totalSets);
     totalSetsRef.current = totalSets;
 
-    const clear = () => {
-        if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
-    };
+    const clear = useCallback(() => {
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+        }
+    }, []);
 
     const tick = useCallback(() => {
         const elapsed = Math.floor((Date.now() - phaseStartRef.current) / 1000);
         const rem = Math.max(0, 60 - elapsed);
-        setTimeLeft(rem);
+        setTimeLeft(prev => prev === rem ? prev : rem);
         if (rem > 0) return;
 
         const next = minuteRef.current + 1;
@@ -45,10 +48,11 @@ export const EMOMTimer: React.FC<EMOMTimerProps> = ({ totalSets, lang, onMinuteC
             minuteRef.current = next;
             setMinute(next);
             phaseStartRef.current = Date.now();
+            setTimeLeft(60);
             onMinuteChange(next);
             triggerHaptic('heavy');
         }
-    }, [onMinuteChange]);
+    }, [clear, onMinuteChange]);
 
     const start = useCallback(() => {
         setState('running');
@@ -59,8 +63,8 @@ export const EMOMTimer: React.FC<EMOMTimerProps> = ({ totalSets, lang, onMinuteC
         onMinuteChange(1);
         triggerHaptic('success');
         clear();
-        intervalRef.current = setInterval(tick, 200);
-    }, [tick, onMinuteChange]);
+        intervalRef.current = setInterval(tick, TICK_MS);
+    }, [tick, onMinuteChange, clear]);
 
     const stop = useCallback(() => {
         clear();
@@ -70,9 +74,9 @@ export const EMOMTimer: React.FC<EMOMTimerProps> = ({ totalSets, lang, onMinuteC
         minuteRef.current = 0;
         onMinuteChange(0);
         triggerHaptic('light');
-    }, [onMinuteChange]);
+    }, [onMinuteChange, clear]);
 
-    useEffect(() => () => clear(), []);
+    useEffect(() => () => clear(), [clear]);
 
     const l = (en: string, es: string) => lang === 'en' ? en : es;
     const pct = ((60 - timeLeft) / 60) * 100;
@@ -90,7 +94,9 @@ export const EMOMTimer: React.FC<EMOMTimerProps> = ({ totalSets, lang, onMinuteC
             <button
                 onClick={start}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-500 text-white rounded-lg text-xs font-black active:scale-95 transition-all shrink-0"
-             aria-label="Play"> <Icon name="Play" size={12} fill="currentColor" />
+                aria-label="Play"
+            >
+                <Icon name="Play" size={12} fill="currentColor" />
                 {l('Start', 'Iniciar')}
             </button>
         </div>
@@ -108,7 +114,6 @@ export const EMOMTimer: React.FC<EMOMTimerProps> = ({ totalSets, lang, onMinuteC
         </div>
     );
 
-    // Running
     return (
         <div className={`border rounded-xl overflow-hidden ${urgent ? 'bg-orange-500/10 border-orange-500/30' : 'bg-cyan-500/10 border-cyan-500/25'}`}>
             <div className="flex items-center gap-2 px-3 pt-2 pb-0.5">
@@ -139,9 +144,10 @@ export const EMOMTimer: React.FC<EMOMTimerProps> = ({ totalSets, lang, onMinuteC
             </div>
         </div>
     );
-};
+});
 
-// ── TABATA TIMER ──────────────────────────────────────────────────────────────
+EMOMTimer.displayName = 'EMOMTimer';
+
 interface TabataTimerProps {
     totalRounds: number;
     lang: 'en' | 'es';
@@ -150,7 +156,7 @@ interface TabataTimerProps {
 const WORK_SEC = 20;
 const REST_SEC = 10;
 
-export const TabataTimer: React.FC<TabataTimerProps> = ({ totalRounds, lang }) => {
+export const TabataTimer: React.FC<TabataTimerProps> = React.memo(({ totalRounds, lang }) => {
     const [state, setState] = useState<'idle' | 'running' | 'done'>('idle');
     const [phase, setPhase] = useState<'work' | 'rest'>('work');
     const [timeLeft, setTimeLeft] = useState(WORK_SEC);
@@ -163,20 +169,24 @@ export const TabataTimer: React.FC<TabataTimerProps> = ({ totalRounds, lang }) =
     const totalRoundsRef = useRef(totalRounds);
     totalRoundsRef.current = totalRounds;
 
-    const clear = () => {
-        if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
-    };
+    const clear = useCallback(() => {
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+        }
+    }, []);
 
     const tick = useCallback(() => {
         const dur = phaseRef.current === 'work' ? WORK_SEC : REST_SEC;
         const elapsed = Math.floor((Date.now() - phaseStartRef.current) / 1000);
         const rem = Math.max(0, dur - elapsed);
-        setTimeLeft(rem);
+        setTimeLeft(prev => prev === rem ? prev : rem);
         if (rem > 0) return;
 
         if (phaseRef.current === 'work') {
             phaseRef.current = 'rest';
             setPhase('rest');
+            setTimeLeft(REST_SEC);
             phaseStartRef.current = Date.now();
             triggerHaptic('medium');
         } else {
@@ -191,11 +201,12 @@ export const TabataTimer: React.FC<TabataTimerProps> = ({ totalRounds, lang }) =
                 setRound(next);
                 phaseRef.current = 'work';
                 setPhase('work');
+                setTimeLeft(WORK_SEC);
                 phaseStartRef.current = Date.now();
                 triggerHaptic('heavy');
             }
         }
-    }, []);
+    }, [clear]);
 
     const start = useCallback(() => {
         setState('running');
@@ -207,8 +218,8 @@ export const TabataTimer: React.FC<TabataTimerProps> = ({ totalRounds, lang }) =
         phaseStartRef.current = Date.now();
         triggerHaptic('success');
         clear();
-        intervalRef.current = setInterval(tick, 200);
-    }, [tick]);
+        intervalRef.current = setInterval(tick, TICK_MS);
+    }, [tick, clear]);
 
     const stop = useCallback(() => {
         clear();
@@ -219,9 +230,9 @@ export const TabataTimer: React.FC<TabataTimerProps> = ({ totalRounds, lang }) =
         phaseRef.current = 'work';
         roundRef.current = 1;
         triggerHaptic('light');
-    }, []);
+    }, [clear]);
 
-    useEffect(() => () => clear(), []);
+    useEffect(() => () => clear(), [clear]);
 
     const l = (en: string, es: string) => lang === 'en' ? en : es;
     const isWork = phase === 'work';
@@ -241,7 +252,9 @@ export const TabataTimer: React.FC<TabataTimerProps> = ({ totalRounds, lang }) =
             <button
                 onClick={start}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500 text-white rounded-lg text-xs font-black active:scale-95 transition-all shrink-0"
-             aria-label="Play"> <Icon name="Play" size={12} fill="currentColor" />
+                aria-label="Play"
+            >
+                <Icon name="Play" size={12} fill="currentColor" />
                 {l('Start', 'Iniciar')}
             </button>
         </div>
@@ -259,7 +272,6 @@ export const TabataTimer: React.FC<TabataTimerProps> = ({ totalRounds, lang }) =
         </div>
     );
 
-    // Running
     return (
         <div className={`border rounded-xl overflow-hidden ${isWork ? 'bg-red-500/10 border-red-500/25' : 'bg-blue-500/10 border-blue-500/25'}`}>
             <div className="flex items-center gap-2 px-3 pt-2 pb-0.5">
@@ -289,4 +301,6 @@ export const TabataTimer: React.FC<TabataTimerProps> = ({ totalRounds, lang }) =
             </div>
         </div>
     );
-};
+});
+
+TabataTimer.displayName = 'TabataTimer';
