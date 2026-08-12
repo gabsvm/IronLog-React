@@ -1,8 +1,6 @@
-
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// https://vitejs.dev/config/
 export default defineConfig(() => {
   return {
     base: './',
@@ -10,52 +8,54 @@ export default defineConfig(() => {
     build: {
       outDir: 'dist',
       emptyOutDir: true,
-      target: 'esnext', // Modern browsers for smaller bundle
+      target: 'esnext',
       minify: 'esbuild',
-      cssCodeSplit: true, // Split CSS by chunk
+      cssCodeSplit: true,
       rollupOptions: {
         output: {
-          manualChunks: (id) => {
-            // Core React Vendor
-            if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/scheduler')) {
+          manualChunks: (rawId) => {
+            const id = rawId.replace(/\\/g, '/');
+
+            // Match exact package folders. The previous `node_modules/react`
+            // substring also captured react-chartjs-2 and react-virtuoso, pulling
+            // lazy feature code into the core React vendor chunk.
+            if (
+              id.includes('/node_modules/react/') ||
+              id.includes('/node_modules/react-dom/') ||
+              id.includes('/node_modules/scheduler/')
+            ) {
               return 'vendor-react';
             }
-            // Firebase (auth + firestore) — large & stable, split for long-term caching
-            if (id.includes('node_modules/firebase') || id.includes('node_modules/@firebase')) {
-              return 'vendor-firebase';
-            }
-            // Animation library — used app-wide, stable across releases
-            if (id.includes('node_modules/framer-motion') || id.includes('node_modules/motion')) {
-              return 'vendor-motion';
-            }
-            // Date utilities
-            if (id.includes('node_modules/date-fns')) {
-              return 'vendor-date';
-            }
-            // Heavy Charting Library (Only load on Stats)
-            if (id.includes('node_modules/chart.js') || id.includes('node_modules/react-chartjs-2')) {
+
+            // Heavy/lazy feature vendors should stay isolated from startup code.
+            if (
+              id.includes('/node_modules/chart.js/') ||
+              id.includes('/node_modules/react-chartjs-2/')
+            ) {
               return 'vendor-charts';
             }
-            // GenAI SDK (Only load on nutrition label scanner)
-            if (id.includes('node_modules/@google/genai')) {
-              return 'vendor-ai';
+            if (id.includes('/node_modules/react-virtuoso/')) return 'vendor-virtual-list';
+            if (id.includes('/node_modules/@google/genai/')) return 'vendor-ai';
+            if (id.includes('/node_modules/pdfjs-dist/')) return 'vendor-pdf';
+            if (id.includes('/node_modules/@dnd-kit/')) return 'vendor-dnd';
+            if (id.includes('/node_modules/canvas-confetti/')) return 'vendor-effects';
+
+            // Stable shared vendors.
+            if (
+              id.includes('/node_modules/firebase/') ||
+              id.includes('/node_modules/@firebase/')
+            ) {
+              return 'vendor-firebase';
             }
-            // PDF parsing (Only load when importing a PDF program)
-            if (id.includes('node_modules/pdfjs-dist')) {
-              return 'vendor-pdf';
+            if (
+              id.includes('/node_modules/framer-motion/') ||
+              id.includes('/node_modules/motion-dom/') ||
+              id.includes('/node_modules/motion-utils/')
+            ) {
+              return 'vendor-motion';
             }
-            // Drag and Drop (Only load on Workout)
-            if (id.includes('@dnd-kit')) {
-              return 'vendor-dnd';
-            }
-            // Animations
-            if (id.includes('canvas-confetti')) {
-              return 'vendor-effects';
-            }
-            // Icons (Keep core icons fast)
-            if (id.includes('lucide-react')) {
-              return 'vendor-icons';
-            }
+            if (id.includes('/node_modules/date-fns/')) return 'vendor-date';
+            if (id.includes('/node_modules/lucide-react/')) return 'vendor-icons';
           }
         }
       }
