@@ -50,7 +50,34 @@ html.native-shell .glass-panel {
     html.native-shell #tut-exercise-list [class~='dark:glass-card'] {
         content-visibility: auto;
         contain-intrinsic-size: auto 560px;
+        contain: layout paint style;
     }
+}
+
+/* Cards already have strong borders/surfaces; repeated large shadows and filter
+   animations add fill-rate cost without improving legibility on a phone. */
+html.native-shell #tut-exercise-list [class~='dark:glass-card'] {
+    box-shadow: none !important;
+}
+
+html.native-shell #tut-exercise-list .animate-pulse,
+html.native-shell #tut-exercise-list .animate-bounce,
+html.native-shell #tut-exercise-list .animate-pulse-glow-green,
+html.native-shell #tut-exercise-list .animate-bounce-cta {
+    animation: none !important;
+}
+
+/* `transition-all` can accidentally make layout-affecting properties animatable.
+   Restrict it to compositor/paint-friendly properties in the installed shell. */
+html.native-shell [class*='transition-all'] {
+    transition-property: transform, opacity, color, background-color, border-color !important;
+}
+
+/* Prevent expensive smooth-scroll chains when multiple sets are completed in
+   quick succession. Direct manipulation remains native-smooth. */
+html.native-shell .scroll-container,
+html.native-shell .calendar-timeline {
+    scroll-behavior: auto !important;
 }
 
 /* View Transition snapshots are disabled in index.tsx for the native shell;
@@ -63,4 +90,13 @@ html.native-shell::view-transition-new(root) {
 /* Avoid costly animated shadows while a finger is actively interacting. */
 html.native-shell button:active {
     box-shadow: none !important;
+}
+
+/* Inputs are the hottest controls during a workout. Avoid browser zoom/selection
+   artifacts and keep text rasterization stable while values are entered quickly. */
+html.native-shell input[type='number'],
+html.native-shell input[inputmode='decimal'],
+html.native-shell input[inputmode='numeric'] {
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
 }
