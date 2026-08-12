@@ -8,6 +8,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
@@ -39,6 +40,8 @@ public class NativeBridgePlugin extends Plugin {
     private static final String TIMER_CHANNEL = "gainslab_rest_timer";
     private static final int TIMER_REQUEST_CODE = 8811;
     private static final int TIMER_NOTIFICATION_ID = 8812;
+    private static final String PREFS = "gainslab_native_bridge";
+    private static final String NOTIFICATION_PROMPTED = "notification_prompted";
 
     @Override
     public void load() {
@@ -55,18 +58,32 @@ public class NativeBridgePlugin extends Plugin {
     @PluginMethod
     public void scheduleRestTimer(PluginCall call) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-                && getPermissionState("notifications") != PermissionState.GRANTED) {
+                && getPermissionState("notifications") != PermissionState.GRANTED
+                && !notificationPermissionWasPrompted()) {
+            markNotificationPermissionPrompted();
             requestPermissionForAlias("notifications", call, "scheduleRestTimerAfterPermission");
             return;
         }
         scheduleRestTimerInternal(call);
     }
 
+    private boolean notificationPermissionWasPrompted() {
+        SharedPreferences prefs = getContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        return prefs.getBoolean(NOTIFICATION_PROMPTED, false);
+    }
+
+    private void markNotificationPermissionPrompted() {
+        getContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .edit()
+                .putBoolean(NOTIFICATION_PROMPTED, true)
+                .apply();
+    }
+
     @PermissionCallback
     private void scheduleRestTimerAfterPermission(PluginCall call) {
         // The alarm itself does not require notification permission. If the user
-        // declines, foreground haptic/audio still work and the receiver simply
-        // skips the background notification.
+        // declines, native tone/haptics can still fire in the background and we
+        // simply skip posting the notification card.
         scheduleRestTimerInternal(call);
     }
 
