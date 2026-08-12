@@ -23,10 +23,12 @@ public class MainActivity extends BridgeActivity {
             webView.setVerticalScrollBarEnabled(false);
             webView.setHorizontalScrollBarEnabled(false);
 
-            // Give the live workout renderer a higher chance of staying resident
-            // when Android is under memory pressure.
+            // Keep the renderer important even when the Activity is briefly not
+            // visible (checking a message between sets, locking the screen, etc.).
+            // Android can still reclaim the process under real pressure, and the
+            // session is persisted, but we avoid voluntarily waiving its priority.
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                webView.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_IMPORTANT, true);
+                webView.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_IMPORTANT, false);
             }
         }
     }
