@@ -20,8 +20,6 @@ html.native-shell textarea {
     touch-action: manipulation;
 }
 
-/* Backdrop blur is one of the most expensive effects in a scrolling WebView.
-   Keep the same dark hierarchy with near-opaque surfaces instead. */
 html.native-shell .glass {
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
@@ -36,26 +34,30 @@ html.native-shell [class*='backdrop-blur'] {
     backdrop-filter: none !important;
 }
 
-/* Preserve visual separation after dropping blur. */
 html.native-shell .glass-island,
 html.native-shell .glass-card,
 html.native-shell .glass-panel {
     background-color: rgba(18, 18, 20, 0.97);
 }
 
-/* Exercise cards can be very tall and calculation-heavy. Let Chromium skip
-   layout/paint work for cards far outside the visible workout viewport. The
-   intrinsic size prevents scroll jumps while a skipped card is off-screen. */
 @supports (content-visibility: auto) {
+    /* Live-workout cards are the hottest tall surfaces. */
     html.native-shell #tut-exercise-list [class~='dark:glass-card'] {
         content-visibility: auto;
         contain-intrinsic-size: auto 560px;
         contain: layout paint style;
     }
+
+    /* Chart.js canvases are expensive even when they live several screens below
+       the viewport. Chromium can skip their paint/layout until they approach it. */
+    html.native-shell .glass-card:has(canvas),
+    html.native-shell .glass-panel:has(canvas) {
+        content-visibility: auto;
+        contain-intrinsic-size: auto 360px;
+        contain: layout paint style;
+    }
 }
 
-/* Cards already have strong borders/surfaces; repeated large shadows and filter
-   animations add fill-rate cost without improving legibility on a phone. */
 html.native-shell #tut-exercise-list [class~='dark:glass-card'] {
     box-shadow: none !important;
 }
@@ -67,33 +69,24 @@ html.native-shell #tut-exercise-list .animate-bounce-cta {
     animation: none !important;
 }
 
-/* `transition-all` can accidentally make layout-affecting properties animatable.
-   Restrict it to compositor/paint-friendly properties in the installed shell. */
 html.native-shell [class*='transition-all'] {
     transition-property: transform, opacity, color, background-color, border-color !important;
 }
 
-/* Prevent expensive smooth-scroll chains when multiple sets are completed in
-   quick succession. Direct manipulation remains native-smooth. */
 html.native-shell .scroll-container,
 html.native-shell .calendar-timeline {
     scroll-behavior: auto !important;
 }
 
-/* View Transition snapshots are disabled in index.tsx for the native shell;
-   these rules are a fallback for WebViews where the method cannot be shadowed. */
 html.native-shell::view-transition-old(root),
 html.native-shell::view-transition-new(root) {
     animation: none !important;
 }
 
-/* Avoid costly animated shadows while a finger is actively interacting. */
 html.native-shell button:active {
     box-shadow: none !important;
 }
 
-/* Inputs are the hottest controls during a workout. Avoid browser zoom/selection
-   artifacts and keep text rasterization stable while values are entered quickly. */
 html.native-shell input[type='number'],
 html.native-shell input[inputmode='decimal'],
 html.native-shell input[inputmode='numeric'] {
