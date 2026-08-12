@@ -1,12 +1,12 @@
 import React from 'react';
-import { WorkoutSet, SetType } from '../../types';
+import { WorkoutSet } from '../../types';
 import { Icon } from '../ui/Icon';
 
 interface AVTRoundCardProps {
   roundId: number;
-  hops: WorkoutSet[];  // todos los WorkoutSet con este avtRoundId
+  hops: WorkoutSet[];
   exInstanceId: number;
-  roundNumber: number; // 1, 2, 3...
+  roundNumber: number;
   unit: string;
   onUpdate: (exId: number, setId: number, field: string, value: any) => void;
   onToggleComplete: (exId: number, setId: number) => void;
@@ -14,7 +14,7 @@ interface AVTRoundCardProps {
   onAddHop: (exId: number, roundId: number) => void;
 }
 
-export const AVTRoundCard: React.FC<AVTRoundCardProps> = ({
+export const AVTRoundCard: React.FC<AVTRoundCardProps> = React.memo(({
   roundId, hops, exInstanceId, roundNumber, unit,
   onUpdate, onToggleComplete, onMarkLastHop, onAddHop
 }) => {
@@ -22,11 +22,10 @@ export const AVTRoundCard: React.FC<AVTRoundCardProps> = ({
 
   return (
     <div className={`mx-3 mb-3 rounded-2xl border overflow-hidden transition-all
-      ${roundComplete 
-        ? 'border-green-500/30 bg-green-500/5' 
+      ${roundComplete
+        ? 'border-green-500/30 bg-green-500/5'
         : 'border-zinc-700 bg-zinc-900'}`}
     >
-      {/* Round Header */}
       <div className="flex items-center justify-between px-3 py-2 bg-zinc-800/50">
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
@@ -41,7 +40,6 @@ export const AVTRoundCard: React.FC<AVTRoundCardProps> = ({
         <span className="text-[10px] text-zinc-500">{hops.length} hops</span>
       </div>
 
-      {/* Hops */}
       <div className="divide-y divide-zinc-800">
         {hops.map((hop, idx) => (
           <HopRow
@@ -57,7 +55,6 @@ export const AVTRoundCard: React.FC<AVTRoundCardProps> = ({
         ))}
       </div>
 
-      {/* Add Hop Button */}
       {!roundComplete && (
         <button
           onClick={() => onAddHop(exInstanceId, roundId)}
@@ -68,9 +65,10 @@ export const AVTRoundCard: React.FC<AVTRoundCardProps> = ({
       )}
     </div>
   );
-};
+});
 
-// Sub-componente de fila individual
+AVTRoundCard.displayName = 'AVTRoundCard';
+
 const HopRow: React.FC<{
   hop: WorkoutSet;
   hopNumber: number;
@@ -79,18 +77,20 @@ const HopRow: React.FC<{
   onUpdate: (exId: number, setId: number, field: string, value: any) => void;
   onToggleComplete: (exId: number, setId: number) => void;
   onMarkLastHop: (exId: number, setId: number) => void;
-}> = ({ hop, hopNumber, exInstanceId, unit, onUpdate, onToggleComplete, onMarkLastHop }) => {
+}> = React.memo(({ hop, hopNumber, exInstanceId, unit, onUpdate, onToggleComplete, onMarkLastHop }) => {
   const [localWeight, setLocalWeight] = React.useState(hop.weight ?? '');
   const [localReps, setLocalReps] = React.useState(hop.reps ?? '');
 
   const isFailure = hop.isLastHop;
   const isDone = hop.completed;
 
+  React.useEffect(() => setLocalWeight(hop.weight ?? ''), [hop.weight]);
+  React.useEffect(() => setLocalReps(hop.reps ?? ''), [hop.reps]);
+
   return (
     <div className={`grid grid-cols-12 gap-2 items-center px-3 py-2.5 transition-colors
       ${isFailure ? 'bg-orange-500/10' : isDone ? 'bg-green-500/5' : ''}`}
     >
-      {/* Hop badge */}
       <div className="col-span-1 flex justify-center">
         <span className={`text-[10px] font-black w-5 h-5 rounded flex items-center justify-center
           ${isFailure ? 'text-orange-400 bg-orange-500/20' : isDone ? 'text-green-400' : 'text-zinc-500'}`}>
@@ -98,7 +98,6 @@ const HopRow: React.FC<{
         </span>
       </div>
 
-      {/* Weight */}
       <div className="col-span-4">
         <input
           type="number" inputMode="decimal"
@@ -111,7 +110,6 @@ const HopRow: React.FC<{
         />
       </div>
 
-      {/* Reps */}
       <div className="col-span-3">
         <input
           type="number" inputMode="numeric"
@@ -124,7 +122,6 @@ const HopRow: React.FC<{
         />
       </div>
 
-      {/* Failure button */}
       <div className="col-span-2 flex justify-center">
         <button
           onClick={() => onMarkLastHop(exInstanceId, hop.id)}
@@ -138,7 +135,6 @@ const HopRow: React.FC<{
         </button>
       </div>
 
-      {/* Complete */}
       <div className="col-span-2 flex justify-center">
         <button
           onClick={() => onToggleComplete(exInstanceId, hop.id)}
@@ -150,4 +146,6 @@ const HopRow: React.FC<{
       </div>
     </div>
   );
-};
+});
+
+HopRow.displayName = 'HopRow';
