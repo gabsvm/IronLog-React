@@ -1,6 +1,5 @@
-
-import React, { useMemo } from 'react';
-// Import ONLY used icons to allow Tree Shaking (Drastic bundle size reduction)
+import React from 'react';
+// Import ONLY used icons to allow tree shaking.
 import {
     Cpu, Activity, Star, Square, Pause, Menu, Layout, FileText, BarChart2, Edit, Plus, Check,
     SkipForward, ArrowRight, TrendingUp, TrendingDown, RefreshCw, Settings, DownloadCloud, Minus, Dumbbell,
@@ -12,7 +11,6 @@ import {
     BookOpen, AlertCircle, ArrowLeft, Shield
 } from 'lucide-react';
 
-// Static Map of icons used in the app
 const ICON_MAP: Record<string, React.ElementType> = {
     Bot, Cpu, Activity, Star, Square, Pause, Menu, Layout, FileText, BarChart2, Edit, Plus, Check,
     SkipForward, ArrowRight, TrendingUp, TrendingDown, RefreshCw, Settings, DownloadCloud, Minus, Dumbbell,
@@ -22,15 +20,18 @@ const ICON_MAP: Record<string, React.ElementType> = {
     ChevronUp, ChevronDown, Anchor, EyeOff, CheckCircle, Flame, Heart, Apple, UtensilsCrossed, Bike, Timer, Utensils, Droplet, Scale,
     Trophy, Pencil, Target, RotateCcw, Circle, Repeat, Repeat2,
     BookOpen, AlertCircle, ArrowLeft, Shield,
-    // Renamed in lucide-react v0.376+
     PlusCircle: CirclePlus,
-    // Grid3X3 lucide naming vs Grid3x3 usage alias
     Grid3x3: Grid3X3,
-    // Aliases for backward compatibility or logical mapping
     BrainCircuit: Activity,
     Sparkles: Star,
     Running: Activity
 };
+
+// Build the compatibility lookup once at module load instead of allocating
+// Object.keys()/lowercase strings inside every missing/case-variant icon render.
+const ICON_MAP_LOWER: Record<string, React.ElementType> = Object.fromEntries(
+    Object.entries(ICON_MAP).map(([key, value]) => [key.toLowerCase(), value])
+);
 
 export type IconName = keyof typeof ICON_MAP;
 
@@ -40,27 +41,10 @@ interface IconProps extends React.SVGProps<SVGSVGElement> {
     strokeWidth?: number | string;
 }
 
-// Optimization: Memoize the Icon component to prevent re-rendering identical SVGs 
-// during parent updates (like timer ticks or drag operations).
 export const Icon: React.FC<IconProps> = React.memo(({ name, size = 20, className, ...props }) => {
-    
-    const LucideIcon = useMemo(() => {
-        // Direct lookup is O(1) and safe
-        const icon = ICON_MAP[name];
-        
-        // Fallback for case-insensitive matches (less performant but robust)
-        if (!icon) {
-            const lowerName = name.toLowerCase();
-            const key = Object.keys(ICON_MAP).find(k => k.toLowerCase() === lowerName);
-            if (key) return ICON_MAP[key];
-        }
-        
-        return icon;
-    }, [name]);
+    const LucideIcon = ICON_MAP[name] || ICON_MAP_LOWER[name.toLowerCase()];
 
     if (!LucideIcon) {
-        // In DEV: scream loudly so missing icons can't slip through review.
-        // In PROD: graceful invisible fallback so users never see a red box.
         if (import.meta.env?.DEV) {
             console.warn(`[Icon] Missing icon "${name}" — register it in components/ui/Icon.tsx`);
             return (
