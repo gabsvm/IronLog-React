@@ -14,16 +14,8 @@ interface Props {
     totalSets: number;
 }
 
-/**
- * The strip of meta-info shown under the ExerciseCard header:
- *   - Historical best PR + 1RM sparkline
- *   - Auto-suggest +Xkg progressive overload pill
- *   - Last session's note
- *   - Per-exercise completion bar
- *
- * Pure presentational. All derivations happen in the parent (memoized there).
- */
-export const ExerciseCardStats: React.FC<Props> = ({
+/** Pure presentational strip under an exercise header. */
+export const ExerciseCardStats: React.FC<Props> = React.memo(({
     lang,
     isIsometric,
     historicalBest,
@@ -83,4 +75,6 @@ export const ExerciseCardStats: React.FC<Props> = ({
             </div>
         )}
     </>
-);
+));
+
+ExerciseCardStats.displayName = 'ExerciseCardStats';
