@@ -1,10 +1,12 @@
-// WorkerAction type includes new calisthenics metrics
 type MetricType = '1rm' | 'volume' | 'duration' | 'distance' | 'max_reps' | 'hold_time';
+
+let cachedLogs: any[] = [];
+
 const parseDuration = (val: any) => {
     if (typeof val === 'number') return val;
     if (!val) return 0;
-    if (val.includes(':')) {
-        const parts = val.split(':').map(Number);
+    if (String(val).includes(':')) {
+        const parts = String(val).split(':').map(Number);
         return parts[0] + (parts[1] / 60);
     }
     return Number(val) || 0;
@@ -13,11 +15,19 @@ const parseDuration = (val: any) => {
 self.onmessage = function(e: MessageEvent) {
     const { type, logs, activeMesoId, exerciseId, metric, userBodyWeight, reqId } = e.data;
 
+    if (type === 'SET_LOGS') {
+        cachedLogs = Array.isArray(logs) ? logs : [];
+        self.postMessage({ type: 'LOGS_READY', reqId });
+        return;
+    }
+
+    const sourceLogs = cachedLogs;
+
     if (type === 'CALCULATE_ALL_BEST_1RM') {
         const best = new Map<string, number>();
-        const safeLogs = Array.isArray(logs) ? logs : [];
-        for (const log of safeLogs) {
-            for (const ex of (log.exercises || [])) {
+        for (const log of sourceLogs) {
+            if (log?.skipped) continue;
+            for (const ex of (log?.exercises || [])) {
                 if (!ex?.id) continue;
                 for (const s of (ex.sets || [])) {
                     if (s.completed && s.weight && s.reps) {
@@ -36,111 +46,86 @@ self.onmessage = function(e: MessageEvent) {
     if (type === 'CALCULATE_OVERVIEW') {
         const muscleCounts: Record<string, number> = {};
         const exFreq: Record<string, number> = {};
-        const weeksFound = new Set();
-        
-        // Initialize muscles
+        const weeksFound = new Set<number>();
         const muscles = ['CHEST', 'BACK', 'QUADS', 'HAMSTRINGS', 'GLUTES', 'CALVES', 'SHOULDERS', 'BICEPS', 'TRICEPS', 'TRAPS', 'ABS', 'FOREARMS', 'CARDIO'];
         muscles.forEach(m => muscleCounts[m] = 0);
 
-        if (Array.isArray(logs)) {
-            logs.forEach(log => {
-                if (activeMesoId && log.mesoId !== activeMesoId) return;
-                if (log.week) weeksFound.add(log.week);
+        for (const log of sourceLogs) {
+            if (!log || log.skipped) continue;
+            if (activeMesoId && log.mesoId !== activeMesoId) continue;
+            if (log.week) weeksFound.add(log.week);
 
-                if (log.exercises && Array.isArray(log.exercises)) {
-                    log.exercises.forEach(ex => {
-                        const setsDone = (ex.sets || []).filter((s: any) => s.completed).length;
-                        if (muscleCounts[ex.muscle] !== undefined) {
-                            muscleCounts[ex.muscle] += setsDone;
-                        }
-                        exFreq[ex.id] = (exFreq[ex.id] || 0) + 1;
-                    });
-                }
-            });
+            for (const ex of (log.exercises || [])) {
+                let setsDone = 0;
+                for (const set of (ex.sets || [])) if (set.completed) setsDone += 1;
+                if (muscleCounts[ex.muscle] !== undefined) muscleCounts[ex.muscle] += setsDone;
+                if (ex.id) exFreq[ex.id] = (exFreq[ex.id] || 0) + 1;
+            }
         }
-        
+
         const numWeeks = Math.max(1, weeksFound.size);
-        Object.keys(muscleCounts).forEach(key => {
+        for (const key of Object.keys(muscleCounts)) {
             muscleCounts[key] = Math.round(muscleCounts[key] / numWeeks);
-        });
+        }
 
         const sortedVolume = Object.entries(muscleCounts).sort((a, b) => b[1] - a[1]);
         self.postMessage({ type: 'OVERVIEW_READY', volumeData: sortedVolume, exerciseFrequency: exFreq, reqId });
+        return;
     }
 
     if (type === 'CALCULATE_CHART') {
         const dataPoints: any[] = [];
-        const sortedLogs = [...logs].sort((a, b) => a.endTime - b.endTime);
+        // Do not sort the full log objects. Collect matching points and sort the
+        // much smaller result array after aggregation.
         const bw = userBodyWeight || 0;
 
-        sortedLogs.forEach(log => {
-            if (log.skipped) return;
-            const ex = (log.exercises || []).find((e: any) => e.id === exerciseId);
-            if (!ex) return;
+        for (const log of sourceLogs) {
+            if (!log || log.skipped) continue;
+            const ex = (log.exercises || []).find((candidate: any) => candidate.id === exerciseId);
+            if (!ex) continue;
 
             let bestValue = 0;
             let bestSetDetails = { w: 0, r: 0 };
-            
-            // Check if this exercise instance was marked as Bodyweight
             const isBW = !!ex.isBodyweight;
 
             if (metric === '1rm') {
-                // Epley Formula: 1RM = Weight * (1 + Reps/30)
-                (ex.sets || []).forEach((s: any) => {
+                for (const s of (ex.sets || [])) {
                     if (s.completed && (s.weight || s.weight === 0 || s.weight === '0') && s.reps) {
                         let w = Number(s.weight);
-                        if (isBW) w += bw; // Add User Bodyweight if applicable
-
+                        if (isBW) w += bw;
                         const r = Number(s.reps);
                         const est1rm = w * (1 + r / 30);
                         if (est1rm > bestValue) {
                             bestValue = est1rm;
-                            bestSetDetails = { w: Number(s.weight), r }; // Keep recorded weight for display
+                            bestSetDetails = { w: Number(s.weight), r };
                         }
                     }
-                });
+                }
             } else if (metric === 'volume') {
-                // Total Tonnage
-                bestValue = (ex.sets || []).reduce((acc: number, s: any) => {
+                for (const s of (ex.sets || [])) {
                     if (s.completed && (s.weight || s.weight === 0 || s.weight === '0') && s.reps) {
                         let w = Number(s.weight);
-                        if (isBW) w += bw; // Add User Bodyweight
-                        return acc + (w * Number(s.reps));
+                        if (isBW) w += bw;
+                        bestValue += w * Number(s.reps);
                     }
-                    return acc;
-                }, 0);
+                }
             } else if (metric === 'max_reps') {
-                // Best single-set reps (for bodyweight exercises)
-                let bestReps = 0;
-                (ex.sets || []).forEach((s: any) => {
-                    if (s.completed && s.reps) {
-                        const r = Number(s.reps);
-                        if (r > bestReps) bestReps = r;
-                    }
-                });
-                bestValue = bestReps;
-                bestSetDetails = { w: 0, r: bestReps };
+                for (const s of (ex.sets || [])) {
+                    if (s.completed && s.reps) bestValue = Math.max(bestValue, Number(s.reps));
+                }
+                bestSetDetails = { w: 0, r: bestValue };
             } else if (metric === 'hold_time') {
-                // Best single-set hold duration in seconds (for isometric exercises)
-                let bestSec = 0;
-                (ex.sets || []).forEach((s: any) => {
-                    if (s.completed && s.duration) {
-                        const sec = Number(s.duration);
-                        if (sec > bestSec) bestSec = sec;
-                    }
-                });
-                bestValue = bestSec;
-                bestSetDetails = { w: 0, r: 0 };
+                for (const s of (ex.sets || [])) {
+                    if (s.completed && s.duration) bestValue = Math.max(bestValue, Number(s.duration));
+                }
             } else if (metric === 'duration') {
-                bestValue = (ex.sets || []).reduce((acc: number, s: any) => {
-                    if (s.completed && s.duration) return acc + parseDuration(s.duration);
-                    return acc;
-                }, 0);
+                for (const s of (ex.sets || [])) {
+                    if (s.completed && s.duration) bestValue += parseDuration(s.duration);
+                }
             } else if (metric === 'distance') {
-                bestValue = (ex.sets || []).reduce((acc: number, s: any) => {
-                    if (s.completed && s.distance) return acc + Number(s.distance);
-                    return acc;
-                }, 0);
+                for (const s of (ex.sets || [])) {
+                    if (s.completed && s.distance) bestValue += Number(s.distance);
+                }
             }
 
             if (bestValue > 0) {
@@ -151,8 +136,9 @@ self.onmessage = function(e: MessageEvent) {
                     reps: bestSetDetails.r
                 });
             }
-        });
+        }
 
+        dataPoints.sort((a, b) => a.date - b.date);
         self.postMessage({ type: 'CHART_READY', dataPoints, reqId });
     }
 };
