@@ -4,6 +4,8 @@ export type HapticType = 'light' | 'medium' | 'heavy' | 'success' | 'warning';
 
 interface NativeBridgePlugin {
     haptic(options: { type: HapticType }): Promise<void>;
+    scheduleRestTimer(options: { endAt: number; title: string; body: string }): Promise<void>;
+    cancelRestTimer(): Promise<void>;
 }
 
 const NativeBridge = registerPlugin<NativeBridgePlugin>('NativeBridge');
@@ -57,7 +59,6 @@ const webHaptic = (type: HapticType) => {
     }
 };
 
-// Haptic Feedback Utility
 // Installed Android builds use a tiny local Capacitor plugin backed by the
 // platform Vibrator API. Browser/PWA builds keep navigator.vibrate as fallback.
 export const triggerHaptic = (type: HapticType = 'light') => {
@@ -67,4 +68,23 @@ export const triggerHaptic = (type: HapticType = 'light') => {
     }
 
     webHaptic(type);
+};
+
+/**
+ * Schedule the rest timer at the Android OS layer.
+ * The native implementation uses AlarmManager, so the timer can still finish
+ * while the WebView is paused/backgrounded. Browser/PWA builds do nothing here.
+ */
+export const scheduleNativeRestTimer = (endAt: number, title: string, body: string) => {
+    if (!Capacitor.isNativePlatform()) return;
+    void NativeBridge.scheduleRestTimer({ endAt, title, body }).catch((error) => {
+        console.warn('Native rest timer schedule failed', error);
+    });
+};
+
+export const cancelNativeRestTimer = () => {
+    if (!Capacitor.isNativePlatform()) return;
+    void NativeBridge.cancelRestTimer().catch((error) => {
+        console.warn('Native rest timer cancel failed', error);
+    });
 };
