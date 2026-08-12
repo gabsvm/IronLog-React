@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { useTimerContext } from '../../context/TimerContext';
+import { useTimerContext, useTimerState } from '../../context/TimerContext';
 import { useApp } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
 import { Icon } from './Icon';
@@ -36,12 +35,10 @@ const CircularTimer: React.FC<{ percentage: number; timeLeft: number; label: str
     return (
         <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
             <svg width={size} height={size} className="-rotate-90" style={{ filter: glow }}>
-                {/* Background track */}
                 <circle
                     cx={size / 2} cy={size / 2} r={radius}
                     fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={strokeWidth}
                 />
-                {/* Progress arc */}
                 <circle
                     cx={size / 2} cy={size / 2} r={radius}
                     fill="none"
@@ -53,7 +50,6 @@ const CircularTimer: React.FC<{ percentage: number; timeLeft: number; label: str
                     style={{ transition: 'stroke-dashoffset 1s linear, stroke 0.4s ease' }}
                 />
             </svg>
-            {/* Center text */}
             <div className="absolute flex flex-col items-center justify-center">
                 <span className="font-mono font-black text-white text-[40px] leading-none tracking-tight tabular-nums">
                     {formatSeconds(timeLeft)}
@@ -67,7 +63,10 @@ const CircularTimer: React.FC<{ percentage: number; timeLeft: number; label: str
 };
 
 export const RestTimerOverlay: React.FC = () => {
-    const { restTimer, setRestTimer } = useTimerContext();
+    // Only this small surface subscribes to the 1 Hz countdown. WorkoutView,
+    // the controller and every exercise card now consume stable timer controls.
+    const restTimer = useTimerState();
+    const { setRestTimer } = useTimerContext();
     const { lang } = useApp();
     const t = TRANSLATIONS[lang] || TRANSLATIONS['en'];
     const [minimized, setMinimized] = useState(false);
@@ -101,7 +100,6 @@ export const RestTimerOverlay: React.FC = () => {
         setRestTimer(p => ({ ...p, active: false, timeLeft: 0, endAt: 0 }));
     };
 
-    // ─── Minimized: floating glass pill bottom-right ──────────────────────
     if (minimized) {
         return (
             <div className="fixed bottom-28 right-4 z-sheet animate-in fade-in slide-in-from-bottom-2 duration-base">
@@ -114,7 +112,6 @@ export const RestTimerOverlay: React.FC = () => {
                     }`}
                     aria-label={`${t.resting}: ${formatSeconds(restTimer.timeLeft)}`}
                 >
-                    {/* Mini ring */}
                     <div className="relative w-9 h-9">
                         <svg width="36" height="36" className="-rotate-90">
                             <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3" />
@@ -140,7 +137,6 @@ export const RestTimerOverlay: React.FC = () => {
         );
     }
 
-    // ─── Expanded: premium glass drawer ───────────────────────────────────
     return (
         <div
             className="fixed left-0 right-0 bottom-0 z-sheet animate-in slide-in-from-bottom duration-sheet ease-natural"
@@ -148,7 +144,6 @@ export const RestTimerOverlay: React.FC = () => {
             aria-modal="false"
             aria-label={t.resting}
         >
-            {/* Backdrop fade — subtle, doesn't block underlying tap targets above */}
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
 
             <div
@@ -158,13 +153,11 @@ export const RestTimerOverlay: React.FC = () => {
                         : 'bg-black/85 border-white/10'
                 }`}
             >
-                {/* Drag handle */}
                 <div className="flex justify-center pt-3 pb-1">
                     <div className="w-10 h-1 rounded-full bg-white/15" />
                 </div>
 
                 <div className="px-6 pt-3 pb-6">
-                    {/* Header row */}
                     <div className="flex items-center justify-between mb-5">
                         <div className="flex items-center gap-2">
                             <span className={`w-1.5 h-1.5 rounded-full ${isCritical ? 'bg-red-400' : 'bg-primary-500'} animate-pulse`} />
@@ -181,7 +174,6 @@ export const RestTimerOverlay: React.FC = () => {
                         </button>
                     </div>
 
-                    {/* Timer + controls */}
                     <div className="flex items-center justify-between gap-5">
                         <CircularTimer
                             percentage={percentage}
