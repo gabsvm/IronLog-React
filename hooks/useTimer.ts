@@ -1,6 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Capacitor } from '@capacitor/core';
-import { playTimerFinishSound } from '../utils/audio';
+import {
+    cancelNativeRestTimer,
+    playTimerFinishSound,
+    scheduleNativeRestTimer,
+    triggerHaptic,
+} from '../utils/audio';
 import { TRANSLATIONS } from '../constants';
 import { Lang } from '../types';
 
@@ -43,8 +48,7 @@ export const useTimer = (lang: Lang) => {
         const blobUrl = URL.createObjectURL(blob);
         workerRef.current = new Worker(blobUrl);
 
-        // Browser/PWA only. The Capacitor shell should use native notification
-        // plumbing rather than asking the embedded WebView for web permission.
+        // Browser/PWA only. Android notifications are handled by NativeBridge.
         if (!isNative && 'Notification' in window && Notification.permission === 'default') {
             Notification.requestPermission().catch(() => {});
         }
@@ -54,6 +58,20 @@ export const useTimer = (lang: Lang) => {
             URL.revokeObjectURL(blobUrl);
         };
     }, [isNative]);
+
+    // Keep an OS-level timer scheduled in the installed Android build. This
+    // effect deliberately ignores timeLeft so the alarm is NOT rescheduled every
+    // second; only start/stop/endAt changes touch the native layer.
+    useEffect(() => {
+        if (!isNative) return;
+
+        if (timer.active && timer.endAt > Date.now()) {
+            const t = TRANSLATIONS[lang]?.timer || TRANSLATIONS.en.timer;
+            scheduleNativeRestTimer(timer.endAt, t.finished, t.getBack);
+        } else {
+            cancelNativeRestTimer();
+        }
+    }, [isNative, timer.active, timer.endAt, lang]);
 
     const handleTick = useCallback(() => {
         setTimer(prev => {
@@ -72,11 +90,14 @@ export const useTimer = (lang: Lang) => {
             }
 
             if (secondsLeft <= 0) {
+                // When foregrounded, JS owns immediate feedback. If Android put
+                // the WebView to sleep, the native AlarmManager receiver owns it.
                 playTimerFinishSound();
+                triggerHaptic('success');
 
                 if (!isNative && 'Notification' in window && Notification.permission === 'granted') {
                     const currentLang = langRef.current;
-                    const t = TRANSLATIONS[currentLang]?.timer || TRANSLATIONS['en'].timer;
+                    const t = TRANSLATIONS[currentLang]?.timer || TRANSLATIONS.en.timer;
                     const title = t.finished;
                     const body = t.getBack;
 
@@ -131,6 +152,16 @@ export const useTimer = (lang: Lang) => {
             if (!isNative) document.title = 'GainsLab Pro';
         }
     }, [timer.active, handleTick, isNative]);
+
+    // Recalculate immediately after returning to the app instead of waiting for
+    // the next worker tick. This also self-corrects any WebView timer throttling.
+    useEffect(() => {
+        const onVisibilityChange = () => {
+            if (document.visibilityState === 'visible') handleTick();
+        };
+        document.addEventListener('visibilitychange', onVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+    }, [handleTick]);
 
     return { restTimer: timer, setRestTimer: setTimer };
 };
