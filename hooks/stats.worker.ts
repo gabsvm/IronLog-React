@@ -1,5 +1,3 @@
-type MetricType = '1rm' | 'volume' | 'duration' | 'distance' | 'max_reps' | 'hold_time';
-
 let cachedLogs: any[] = [];
 
 const parseDuration = (val: any) => {
@@ -22,26 +20,6 @@ self.onmessage = function(e: MessageEvent) {
     }
 
     const sourceLogs = cachedLogs;
-
-    if (type === 'CALCULATE_ALL_BEST_1RM') {
-        const best = new Map<string, number>();
-        for (const log of sourceLogs) {
-            if (log?.skipped) continue;
-            for (const ex of (log?.exercises || [])) {
-                if (!ex?.id) continue;
-                for (const s of (ex.sets || [])) {
-                    if (s.completed && s.weight && s.reps) {
-                        const w = Number(s.weight);
-                        const r = Number(s.reps);
-                        const e1rm = w * (1 + r / 30);
-                        if (e1rm > (best.get(ex.id) ?? 0)) best.set(ex.id, e1rm);
-                    }
-                }
-            }
-        }
-        self.postMessage({ type: 'ALL_BEST_1RM_READY', best1RMs: best, reqId });
-        return;
-    }
 
     if (type === 'CALCULATE_OVERVIEW') {
         const muscleCounts: Record<string, number> = {};
