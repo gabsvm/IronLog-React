@@ -1,22 +1,46 @@
-
 import React, { useState, useEffect } from 'react';
 import { Icon } from '../ui/Icon';
 import { formatHoursMinutes } from '../../utils';
 
-export const WorkoutTimer: React.FC<{ startTime: number | null }> = ({ startTime }) => {
+/**
+ * The header only displays H:MM, so a 1 Hz interval was causing 60 needless
+ * renders for every visible minute. Schedule directly to the next minute edge
+ * and recalculate on resume instead.
+ */
+export const WorkoutTimer: React.FC<{ startTime: number | null }> = React.memo(({ startTime }) => {
     const [elapsed, setElapsed] = useState(0);
 
     useEffect(() => {
-        if (!startTime) return;
-        
-        // Initial calc
-        setElapsed(Math.floor((Date.now() - startTime) / 1000));
+        if (!startTime) {
+            setElapsed(0);
+            return;
+        }
 
-        const interval = setInterval(() => {
-            setElapsed(Math.floor((Date.now() - startTime) / 1000));
-        }, 1000);
+        let timeout: ReturnType<typeof setTimeout> | null = null;
 
-        return () => clearInterval(interval);
+        const updateAndSchedule = () => {
+            const elapsedMs = Math.max(0, Date.now() - startTime);
+            setElapsed(Math.floor(elapsedMs / 1000));
+
+            // Add a tiny guard so timer clamping cannot fire just before the minute
+            // rolls over and leave the old value visible for another minute.
+            const msIntoMinute = elapsedMs % 60_000;
+            timeout = setTimeout(updateAndSchedule, (60_000 - msIntoMinute) + 25);
+        };
+
+        const onVisibility = () => {
+            if (document.visibilityState !== 'visible') return;
+            if (timeout) clearTimeout(timeout);
+            updateAndSchedule();
+        };
+
+        updateAndSchedule();
+        document.addEventListener('visibilitychange', onVisibility);
+
+        return () => {
+            if (timeout) clearTimeout(timeout);
+            document.removeEventListener('visibilitychange', onVisibility);
+        };
     }, [startTime]);
 
     return (
@@ -25,4 +49,6 @@ export const WorkoutTimer: React.FC<{ startTime: number | null }> = ({ startTime
             {formatHoursMinutes(elapsed)}
         </div>
     );
-};
+});
+
+WorkoutTimer.displayName = 'WorkoutTimer';
