@@ -5,10 +5,6 @@ import { TRANSLATIONS } from '../../constants';
 import { Icon } from './Icon';
 import { triggerHaptic } from '../../utils/audio';
 
-// ─── Circular SVG countdown ring ──────────────────────────────────────────
-// Uses the RP primary lime as default; transitions to amber in the last 30%
-// and to a soft red in the last 10%. No raw hex anywhere — pulls from CSS vars
-// so the ring respects whichever accent theme the user picked.
 const CircularTimer: React.FC<{ percentage: number; timeLeft: number; label: string }> = ({ percentage, timeLeft, label }) => {
     const size = 152;
     const strokeWidth = 10;
@@ -21,20 +17,18 @@ const CircularTimer: React.FC<{ percentage: number; timeLeft: number; label: str
         return `${Math.floor(sec / 60)}:${(sec % 60).toString().padStart(2, '0')}`;
     };
 
-    // Color phase: primary (>30%) → amber (10-30%) → red (<10%)
     const tone = percentage > 30 ? 'primary' : percentage > 10 ? 'amber' : 'red';
     const stroke =
         tone === 'primary' ? 'rgb(var(--primary-500))' :
-        tone === 'amber'   ? '#f59e0b' :
-                              '#ef4444';
+        tone === 'amber' ? '#f59e0b' : '#ef4444';
     const glow =
         tone === 'primary' ? 'drop-shadow(0 0 12px rgb(var(--primary-500) / 0.45))' :
-        tone === 'amber'   ? 'drop-shadow(0 0 12px rgba(245, 158, 11, 0.45))' :
-                              'drop-shadow(0 0 14px rgba(239, 68, 68, 0.5))';
+        tone === 'amber' ? 'drop-shadow(0 0 12px rgba(245, 158, 11, 0.45))' :
+        'drop-shadow(0 0 14px rgba(239, 68, 68, 0.5))';
 
     return (
         <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
-            <svg width={size} height={size} className="-rotate-90" style={{ filter: glow }}>
+            <svg width={size} height={size} className="rest-timer-ring -rotate-90" style={{ filter: glow }}>
                 <circle
                     cx={size / 2} cy={size / 2} r={radius}
                     fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={strokeWidth}
@@ -63,8 +57,6 @@ const CircularTimer: React.FC<{ percentage: number; timeLeft: number; label: str
 };
 
 export const RestTimerOverlay: React.FC = () => {
-    // Only this small surface subscribes to the 1 Hz countdown. WorkoutView,
-    // the controller and every exercise card now consume stable timer controls.
     const restTimer = useTimerState();
     const { setRestTimer } = useTimerContext();
     const { lang } = useApp();
