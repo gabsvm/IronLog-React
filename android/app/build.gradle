@@ -1,5 +1,17 @@
 apply plugin: 'com.android.application'
 
+def releaseKeystorePath = System.getenv('GAINS_LAB_KEYSTORE_PATH')
+def releaseKeystorePassword = System.getenv('GAINS_LAB_KEYSTORE_PASSWORD')
+def releaseKeyAlias = System.getenv('GAINS_LAB_KEY_ALIAS')
+def releaseKeyPassword = System.getenv('GAINS_LAB_KEY_PASSWORD')
+def releaseSigningConfigured = [
+    releaseKeystorePath,
+    releaseKeystorePassword,
+    releaseKeyAlias,
+    releaseKeyPassword,
+].every { it != null && !it.trim().isEmpty() }
+def releaseTaskRequested = gradle.startParameter.taskNames.any { it.toLowerCase().contains('release') }
+
 android {
     namespace "com.gainslab.pro"
     compileSdkVersion rootProject.ext.compileSdkVersion
@@ -7,8 +19,8 @@ android {
         applicationId "com.gainslab.pro"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode 403
+        versionName "4.0.3"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,8 +28,22 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (releaseSigningConfigured) {
+                storeFile file(releaseKeystorePath)
+                storePassword releaseKeystorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
+        }
+    }
     buildTypes {
         release {
+            if (releaseTaskRequested && !releaseSigningConfigured) {
+                throw new GradleException('GainsLab release signing is not configured. Set GAINS_LAB_KEYSTORE_PATH, GAINS_LAB_KEYSTORE_PASSWORD, GAINS_LAB_KEY_ALIAS, and GAINS_LAB_KEY_PASSWORD.')
+            }
+            signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }

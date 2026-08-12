@@ -119,7 +119,7 @@ const SortableExerciseCardImpl: React.FC<SortableExerciseCardProps> = ({
         position: 'relative' as const,
     } : { position: 'relative' as const };
 
-    const sets = ex.sets || [];
+    const sets = useMemo(() => ex.sets || [], [ex.sets]);
     const ssStyle = supersetStyle;
     const unit = ex.weightUnit || 'kg';
     const unitLabel = unit === 'pl' ? 'PL' : unit === 'lb' ? 'LB' : 'KG';
