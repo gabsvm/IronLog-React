@@ -21,6 +21,15 @@ if (isNativeShell) {
         // Some WebView versions expose it as a non-writable property. The CSS
         // native-shell rules still remove the expensive visual effects.
     }
+
+    // An upgrade from an older Capacitor build may leave a Service Worker
+    // registered for the app origin. Remove those registrations once so native
+    // assets always come directly from the APK instead of a stale web cache.
+    if ('serviceWorker' in navigator) {
+        void navigator.serviceWorker.getRegistrations()
+            .then(registrations => Promise.all(registrations.map(registration => registration.unregister())))
+            .catch(() => {});
+    }
 }
 
 // Robust Service Worker Registration — browser/PWA only. Capacitor already
