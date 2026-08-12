@@ -21,6 +21,8 @@ interface Props {
     onRequestDelete: () => void;
     t: any;
     lang: 'en' | 'es';
+    // Kept optional for compatibility with older card call sites; intentionally unused.
+    supersetStyle?: any;
 }
 
 export const ExerciseCardMenu: React.FC<Props> = React.memo(({
