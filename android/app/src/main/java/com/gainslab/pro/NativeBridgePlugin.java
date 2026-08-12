@@ -3,6 +3,7 @@ package com.gainslab.pro;
 import android.Manifest;
 import android.app.ActivityManager;
 import android.app.AlarmManager;
+import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -17,9 +18,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
-
-import androidx.core.app.NotificationCompat;
-import androidx.core.content.ContextCompat;
 
 import com.getcapacitor.PermissionState;
 import com.getcapacitor.Plugin;
@@ -167,12 +165,18 @@ public class NativeBridgePlugin extends Plugin {
             contentIntent = PendingIntent.getActivity(context, TIMER_REQUEST_CODE + 1, launchIntent, flags);
         }
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, TIMER_CHANNEL)
-                .setSmallIcon(R.mipmap.ic_launcher)
+        Notification.Builder builder;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            builder = new Notification.Builder(context, TIMER_CHANNEL);
+        } else {
+            builder = new Notification.Builder(context)
+                    .setPriority(Notification.PRIORITY_HIGH);
+        }
+
+        builder.setSmallIcon(R.mipmap.ic_launcher)
                 .setContentTitle(title)
                 .setContentText(body)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setCategory(NotificationCompat.CATEGORY_ALARM)
+                .setCategory(Notification.CATEGORY_ALARM)
                 .setAutoCancel(true)
                 .setOnlyAlertOnce(true);
         if (contentIntent != null) builder.setContentIntent(contentIntent);
@@ -190,7 +194,7 @@ public class NativeBridgePlugin extends Plugin {
 
     private static boolean canPostNotifications(Context context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return true;
-        return ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+        return context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
                 == PackageManager.PERMISSION_GRANTED;
     }
 
