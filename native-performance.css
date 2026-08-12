@@ -1,0 +1,66 @@
+/*
+ * Capacitor/Android-only performance profile.
+ *
+ * The PWA keeps the richer blur-heavy presentation. Installed builds add the
+ * `native-shell` class in index.tsx and use cheaper compositing choices that are
+ * much friendlier to Android System WebView while scrolling a live workout.
+ */
+
+html.native-shell,
+html.native-shell body,
+html.native-shell #root {
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+}
+
+html.native-shell button,
+html.native-shell [role='button'],
+html.native-shell input,
+html.native-shell textarea {
+    touch-action: manipulation;
+}
+
+/* Backdrop blur is one of the most expensive effects in a scrolling WebView.
+   Keep the same dark hierarchy with near-opaque surfaces instead. */
+html.native-shell .glass {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background-color: rgba(0, 0, 0, 0.96) !important;
+}
+
+html.native-shell .glass-island,
+html.native-shell .glass-card,
+html.native-shell .glass-panel,
+html.native-shell [class*='backdrop-blur'] {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+}
+
+/* Preserve visual separation after dropping blur. */
+html.native-shell .glass-island,
+html.native-shell .glass-card,
+html.native-shell .glass-panel {
+    background-color: rgba(18, 18, 20, 0.97);
+}
+
+/* Exercise cards can be very tall and calculation-heavy. Let Chromium skip
+   layout/paint work for cards far outside the visible workout viewport. The
+   intrinsic size prevents scroll jumps while a skipped card is off-screen. */
+@supports (content-visibility: auto) {
+    html.native-shell #tut-exercise-list [class~='dark:glass-card'] {
+        content-visibility: auto;
+        contain-intrinsic-size: auto 560px;
+    }
+}
+
+/* View Transition snapshots are disabled in index.tsx for the native shell;
+   these rules are a fallback for WebViews where the method cannot be shadowed. */
+html.native-shell::view-transition-old(root),
+html.native-shell::view-transition-new(root) {
+    animation: none !important;
+}
+
+/* Avoid costly animated shadows while a finger is actively interacting. */
+html.native-shell button:active {
+    box-shadow: none !important;
+}
