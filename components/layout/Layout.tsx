@@ -93,7 +93,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
     const handleShellClickCapture = (event: React.MouseEvent<HTMLDivElement>) => {
         if (view !== 'home' || !activeMeso) return;
         const target = event.target as Element | null;
-        const planButton = target?.closest?.('.scroll-container #tut-settings-btn');
+        const planButton = target?.closest?.('.scroll-container #tut-plan-actions-btn, .scroll-container #tut-settings-btn');
         if (!planButton) return;
 
         if (bypassPlanCapture.current) {
@@ -109,7 +109,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
     const openExistingPlanSettings = () => {
         setShowPlanActions(false);
         window.setTimeout(() => {
-            const button = document.querySelector('.scroll-container #tut-settings-btn') as HTMLElement | null;
+            const button = document.querySelector('.scroll-container #tut-plan-actions-btn, .scroll-container #tut-settings-btn') as HTMLElement | null;
             if (!button) return;
             bypassPlanCapture.current = true;
             button.click();
@@ -184,7 +184,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
                             <button
                                 onClick={onOpenCommandPalette}
                                 aria-label={lang === 'es' ? 'Iniciar entreno' : 'Start workout'}
-                                className="mx-2 flex h-12 w-12 shrink-0 -translate-y-3 items-center justify-center rounded-full border border-primary-400/20 bg-primary-500 text-black shadow-lg shadow-primary-500/20 transition-transform duration-200 active:scale-95 animate-pulse-glow-green"
+                                className="mx-2 flex h-12 w-12 shrink-0 -translate-y-3 items-center justify-center rounded-full border border-primary-400/20 bg-primary-500 text-black shadow-lg shadow-primary-500/20 transition-transform duration-200 active:scale-95"
                             >
                                 <Icon name="Plus" size={24} strokeWidth={2.5} />
                             </button>
