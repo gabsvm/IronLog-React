@@ -28,20 +28,19 @@ const EMPTY_SUMMARY: ExerciseHistorySummary = {
     latestCompletedSets: null,
 };
 
-type CacheEntry = {
-    fallbackBodyWeight?: number;
-    index: Map<string, ExerciseHistorySummary>;
-};
+type CacheBucket = Map<string, Map<string, ExerciseHistorySummary>>;
 
-// Logs are immutable-by-replacement in AppContext. WeakMap gives one O(history)
-// build per logs reference and lets old versions be garbage-collected naturally.
-const historyCache = new WeakMap<Log[], CacheEntry>();
+// Logs are immutable-by-replacement in AppContext. Keep a small bucket per logs
+// reference so card history (no fallback BW) and PR history (with fallback BW)
+// can coexist without invalidating/rebuilding each other.
+const historyCache = new WeakMap<Log[], CacheBucket>();
 
 const normalizeBodyWeight = (value?: number) => {
     const parsed = Number(value);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
 };
 
+const cacheKeyForBodyWeight = (value?: number) => value == null ? 'bw:none' : `bw:${value}`;
 const createSummary = (): ExerciseHistorySummary => ({ ...EMPTY_SUMMARY });
 
 export const buildExerciseHistoryIndex = (
@@ -49,8 +48,10 @@ export const buildExerciseHistoryIndex = (
     fallbackBodyWeight?: number,
 ): Map<string, ExerciseHistorySummary> => {
     const normalizedFallback = normalizeBodyWeight(fallbackBodyWeight);
-    const cached = historyCache.get(logs);
-    if (cached && cached.fallbackBodyWeight === normalizedFallback) return cached.index;
+    const cacheKey = cacheKeyForBodyWeight(normalizedFallback);
+    const bucket = historyCache.get(logs);
+    const cached = bucket?.get(cacheKey);
+    if (cached) return cached;
 
     const result = new Map<string, ExerciseHistorySummary>();
     const validLogs = (Array.isArray(logs) ? logs : [])
@@ -124,7 +125,9 @@ export const buildExerciseHistoryIndex = (
         }
     }
 
-    historyCache.set(logs, { fallbackBodyWeight: normalizedFallback, index: result });
+    const nextBucket = bucket || new Map<string, Map<string, ExerciseHistorySummary>>();
+    nextBucket.set(cacheKey, result);
+    if (!bucket) historyCache.set(logs, nextBucket);
     return result;
 };
 
