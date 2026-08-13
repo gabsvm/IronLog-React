@@ -45,41 +45,16 @@ export const CommandPalette: React.FC<Props> = ({ isOpen, onClose, actions, titl
         }
     }, [isOpen]);
 
-    const effectiveActions = useMemo<CommandAction[]>(() => {
-        const ids = new Set(actions.map(action => action.id));
-        const extras: CommandAction[] = [
-            {
-                id: 'freestyle',
-                label: { en: 'Freestyle / WOD / Skill', es: 'Sesión libre / WOD / Skill' },
-                description: { en: 'Free gym, CrossFit benchmark or calisthenics skill', es: 'Gym libre, WOD CrossFit o skill de calistenia' },
-                icon: 'Dumbbell',
-                accent: 'primary',
-                keywords: ['crossfit', 'calisthenics', 'libre', 'wod', 'skill'],
-                onSelect: () => window.dispatchEvent(new CustomEvent('gainslab:open-freestyle')),
-            },
-            {
-                id: 'two_block',
-                label: { en: 'Two Block Mass', es: 'Two Block Mass' },
-                description: { en: 'Nick Nilsson protocols and focused mass sessions', es: 'Protocolos de Nick Nilsson y sesiones de masa' },
-                icon: 'Layers',
-                accent: 'primary',
-                keywords: ['nilsson', 'two block', 'mass', 'masa', 'protocol'],
-                onSelect: () => window.dispatchEvent(new CustomEvent('gainslab:open-two-block')),
-            },
-        ];
-        return [...actions, ...extras.filter(action => !ids.has(action.id))];
-    }, [actions]);
-
     const filtered = useMemo(() => {
         const q = query.trim().toLowerCase();
-        if (!q) return effectiveActions;
-        return effectiveActions.filter(a => {
+        if (!q) return actions;
+        return actions.filter(a => {
             const label = a.label[lang].toLowerCase();
             const desc = a.description?.[lang].toLowerCase() || '';
             const kws = (a.keywords || []).join(' ').toLowerCase();
             return label.includes(q) || desc.includes(q) || kws.includes(q);
         });
-    }, [effectiveActions, query, lang]);
+    }, [actions, query, lang]);
 
     useEffect(() => {
         if (activeIdx >= filtered.length) setActiveIdx(Math.max(0, filtered.length - 1));
