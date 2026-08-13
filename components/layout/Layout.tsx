@@ -11,6 +11,9 @@ import { ProfileSheet } from '../profile/ProfileSheet';
 import { PlanActionsSheet } from '../home/PlanActionsSheet';
 import './ux-navigation.css';
 
+const FreestyleSessionModal = React.lazy(() => import('../workout/FreestyleSessionModal').then(m => ({ default: m.FreestyleSessionModal })));
+const TwoBlockMassModal = React.lazy(() => import('../workout/TwoBlockMassModal').then(m => ({ default: m.TwoBlockMassModal })));
+
 interface LayoutProps {
     children: React.ReactNode;
     view: 'home' | 'workout' | 'history' | 'stats' | 'nutrition';
@@ -25,10 +28,24 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
     const { user } = useAuth();
     const { isPro } = usePro();
     const activeMeso = useStore(state => state.activeMeso);
+    const setActiveSession = useStore(state => state.setActiveSession);
     const t = TRANSLATIONS[lang];
     const [showProfile, setShowProfile] = React.useState(false);
     const [showPlanActions, setShowPlanActions] = React.useState(false);
+    const [showFreestyle, setShowFreestyle] = React.useState(false);
+    const [showTwoBlock, setShowTwoBlock] = React.useState(false);
     const bypassPlanCapture = React.useRef(false);
+
+    React.useEffect(() => {
+        const openFreestyle = () => setShowFreestyle(true);
+        const openTwoBlock = () => setShowTwoBlock(true);
+        window.addEventListener('gainslab:open-freestyle', openFreestyle);
+        window.addEventListener('gainslab:open-two-block', openTwoBlock);
+        return () => {
+            window.removeEventListener('gainslab:open-freestyle', openFreestyle);
+            window.removeEventListener('gainslab:open-two-block', openTwoBlock);
+        };
+    }, []);
 
     const NavBtn = ({ id, label, icon }: { id: typeof view, label: string, icon: any }) => {
         const isActive = view === id;
@@ -89,6 +106,13 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
     const editProgram = () => {
         setShowPlanActions(false);
         setView('program');
+    };
+
+    const startDetachedSession = (session: any) => {
+        setActiveSession(session);
+        setShowFreestyle(false);
+        setShowTwoBlock(false);
+        setView('workout');
     };
 
     return (
@@ -182,6 +206,19 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
                 onConfigure={openExistingPlanSettings}
                 onEditProgram={editProgram}
             />
+
+            <React.Suspense fallback={null}>
+                <FreestyleSessionModal
+                    isOpen={showFreestyle}
+                    onClose={() => setShowFreestyle(false)}
+                    onStart={startDetachedSession}
+                />
+                <TwoBlockMassModal
+                    isOpen={showTwoBlock}
+                    onClose={() => setShowTwoBlock(false)}
+                    onStart={startDetachedSession}
+                />
+            </React.Suspense>
         </div>
     );
 };
