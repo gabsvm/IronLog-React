@@ -18,11 +18,11 @@ export const PhilosophyModal: React.FC<Props> = ({ isOpen, onClose, lang }) => {
         >
             <div className="p-5 space-y-4 text-sm text-zinc-300 dark:text-zinc-400 overflow-y-auto max-h-[70vh]">
                 
-                <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl flex gap-3 items-center mb-6">
-                    <Icon name="Heart" size={24} className="text-red-400 shrink-0" />
+                <div className="bg-primary-500/10 border border-primary-500/20 p-4 rounded-xl flex gap-3 items-center mb-6">
+                    <Icon name="Heart" size={24} className="text-primary-400 shrink-0" />
                     <div>
-                        <p className="font-bold text-red-200">Credits to Natural Hypertrophy</p>
-                        <p className="text-xs text-red-300/80">
+                        <p className="font-bold text-primary-700 dark:text-primary-200">Credits to Natural Hypertrophy</p>
+                        <p className="text-xs text-primary-700/80 dark:text-primary-300/80">
                             The following philosophy and the vast majority of the training templates included in this application 
                             are the brilliant work of <strong>Natural Hypertrophy</strong> (NH). All credit goes to him for these principles.
                         </p>

@@ -87,7 +87,7 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, onA
     const tabStyle = (active: boolean) =>
         `flex-1 py-2.5 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${
             active
-                ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30'
+                ? 'bg-primary-500 text-black shadow-lg shadow-primary-500/30'
                 : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
         }`;
 
@@ -109,7 +109,7 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, onA
                         type="button"
                         onClick={tab === 'search' ? handleSubmitSearch : handleSubmitManual}
                         disabled={!canSubmit}
-                        className="flex-1 py-3.5 rounded-2xl font-black text-sm text-white bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/30 transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="flex-1 py-3.5 rounded-2xl font-black text-sm text-black bg-primary-500 hover:bg-primary-400 shadow-lg shadow-primary-500/30 transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                         {lang === 'es' ? 'Guardar' : 'Save'}
                     </button>
@@ -150,7 +150,7 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, onA
                                 setSelectedFood(null);
                             }}
                             placeholder={lang === 'es' ? 'Buscar "arroz", "pollo", "banana"...' : 'Search "rice", "chicken", "banana"...'}
-                            className="w-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 rounded-2xl pl-10 pr-4 py-4 text-sm font-medium text-zinc-900 dark:text-white focus:border-orange-500 outline-none transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
+                            className="w-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 rounded-2xl pl-10 pr-4 py-4 text-sm font-medium text-zinc-900 dark:text-white focus:border-primary-500 outline-none transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
                             autoFocus
                         />
                         {query.length > 0 && (
@@ -170,7 +170,7 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, onA
                                 <button
                                     key={food.id}
                                     onClick={() => handleSelectFood(food)}
-                                    className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-orange-500/5 dark:hover:bg-orange-500/10 transition-colors active:scale-[0.99] ${idx < results.length - 1 ? 'border-b border-zinc-100 dark:border-white/5' : ''}`}
+                                    className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-primary-500/5 dark:hover:bg-primary-500/10 transition-colors active:scale-[0.99] ${idx < results.length - 1 ? 'border-b border-zinc-100 dark:border-white/5' : ''}`}
                                 >
                                     <span className="text-2xl flex-shrink-0 w-9 text-center">{food.emoji}</span>
                                     <div className="flex-1 min-w-0">
@@ -196,7 +196,7 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, onA
                             </p>
                             <button
                                 onClick={() => setTab('manual')}
-                                className="mt-2 text-xs text-orange-500 font-bold hover:text-orange-600"
+                                className="mt-2 text-xs text-primary-600 dark:text-primary-400 font-bold hover:text-primary-500"
                             >
                                 {lang === 'es' ? 'Ingresar manualmente →' : 'Enter manually →'}
                             </button>
@@ -214,7 +214,7 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, onA
                                     <button
                                         key={s}
                                         onClick={() => setQuery(s.split(' ')[1])}
-                                        className="px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800 hover:bg-orange-500/10 dark:hover:bg-orange-500/10 border border-zinc-200 dark:border-white/10 rounded-xl text-xs font-bold text-zinc-600 dark:text-zinc-300 transition-all active:scale-95"
+                                        className="px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800 hover:bg-primary-500/10 border border-zinc-200 dark:border-white/10 rounded-xl text-xs font-bold text-zinc-600 dark:text-zinc-300 transition-all active:scale-95"
                                     >
                                         {s}
                                     </button>
@@ -225,7 +225,7 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, onA
 
                     {/* Selected food – quick adjust servings */}
                     {selectedFood && (
-                        <div className="bg-gradient-to-br from-orange-500/5 to-orange-500/0 border border-orange-500/20 rounded-2xl p-5 space-y-4">
+                        <div className="bg-gradient-to-br from-primary-500/5 to-primary-500/0 border border-primary-500/20 rounded-2xl p-5 space-y-4">
                             <div className="flex items-center gap-3">
                                 <span className="text-3xl">{selectedFood.emoji}</span>
                                 <div>
@@ -256,7 +256,7 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, onA
                                         type="number"
                                         value={servings}
                                         onChange={e => setServings(e.target.value)}
-                                        className="flex-1 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-center text-2xl font-black text-zinc-900 dark:text-white outline-none focus:border-orange-500"
+                                        className="flex-1 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-center text-2xl font-black text-zinc-900 dark:text-white outline-none focus:border-primary-500"
                                         step="0.5"
                                         min="0.5"
                                     />
@@ -270,7 +270,7 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, onA
                             {/* Macro preview */}
                             {scaledMacros && (
                                 <div className="grid grid-cols-4 gap-2">
-                                    <MacroPill label={lang === 'es' ? 'Kcal' : 'Kcal'} value={scaledMacros.calories} color="text-orange-500" bgColor="bg-orange-500/10" unit="" />
+                                    <MacroPill label={lang === 'es' ? 'Kcal' : 'Kcal'} value={scaledMacros.calories} color="text-primary-500" bgColor="bg-primary-500/10" unit="" />
                                     <MacroPill label={lang === 'es' ? 'Prot' : 'Prot'} value={scaledMacros.protein} color="text-red-500" bgColor="bg-red-500/10" unit="g" />
                                     <MacroPill label={lang === 'es' ? 'Carb' : 'Carb'} value={scaledMacros.carbs} color="text-blue-500" bgColor="bg-blue-500/10" unit="g" />
                                     <MacroPill label={lang === 'es' ? 'Grasa' : 'Fat'} value={scaledMacros.fats} color="text-yellow-500" bgColor="bg-yellow-500/10" unit="g" />
@@ -293,10 +293,10 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, onA
                                 value={calories}
                                 onChange={e => setCalories(e.target.value)}
                                 placeholder="0"
-                                className="w-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 rounded-2xl px-6 pr-16 py-5 text-3xl font-black text-zinc-900 dark:text-white focus:border-orange-500 outline-none transition-all placeholder:text-zinc-300 dark:placeholder:text-zinc-600"
+                                className="w-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 rounded-2xl px-6 pr-16 py-5 text-3xl font-black text-zinc-900 dark:text-white focus:border-primary-500 outline-none transition-all placeholder:text-zinc-300 dark:placeholder:text-zinc-600"
                                 autoFocus
                             />
-                            <div className="absolute right-5 top-1/2 -translate-y-1/2 text-orange-500/70 font-black uppercase tracking-tighter text-xs bg-orange-500/10 px-2 py-1 rounded-lg">kcal</div>
+                            <div className="absolute right-5 top-1/2 -translate-y-1/2 text-primary-600 dark:text-primary-400 font-black uppercase tracking-tighter text-xs bg-primary-500/10 px-2 py-1 rounded-lg">kcal</div>
                         </div>
                     </div>
                     <div>

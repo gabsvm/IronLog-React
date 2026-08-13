@@ -40,6 +40,18 @@ html.native-shell .glass-panel {
     background-color: rgba(18, 18, 20, 0.97);
 }
 
+/* The native performance profile must not undo the user's light theme. */
+html.native-shell.light .glass {
+    background-color: rgb(var(--surface-app) / 0.96) !important;
+}
+
+html.native-shell.light .glass-island,
+html.native-shell.light .glass-card,
+html.native-shell.light .glass-panel {
+    background-color: rgb(var(--surface-raised) / 0.97) !important;
+    border-color: rgb(var(--border-subtle));
+}
+
 /* EXPERIMENTAL already puts content-visibility/contain inline on each sortable
    exercise card. Native mode additionally drops expensive long shadows. DnD and
    SortableContext do not add DOM wrappers, so cards are direct list children. */

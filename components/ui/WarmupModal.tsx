@@ -38,7 +38,7 @@ export const WarmupModal: React.FC<WarmupModalProps> = ({ targetWeight, exercise
                 open={true}
                 onOpenChange={(o) => { if (!o) onClose(); }}
                 title={t.warmupTitle}
-                accent="amber"
+                accent="primary"
             >
                 <div className="p-6 text-center space-y-4">
                     <Icon name="CloudOff" size={48} className="mx-auto text-zinc-300" />
@@ -59,16 +59,16 @@ export const WarmupModal: React.FC<WarmupModalProps> = ({ targetWeight, exercise
             onOpenChange={(o) => { if (!o) onClose(); }}
             title={exerciseName}
             description={`${t.warmupTitle} for ${exerciseName}`}
-            accent="amber"
+            accent="primary"
             footer={
-                <Button onClick={onClose} fullWidth size="lg" className="bg-orange-600 hover:bg-orange-500 shadow-orange-600/20">
+                <Button onClick={onClose} fullWidth size="lg">
                     {t.close}
                 </Button>
             }
         >
             <div className="p-5 space-y-4">
                 <div className="flex justify-between items-start">
-                    <div className="text-[10px] font-bold text-orange-500 uppercase tracking-widest flex items-center gap-1">
+                    <div className="text-[10px] font-bold text-primary-500 uppercase tracking-widest flex items-center gap-1">
                         <Icon name="Zap" size={10} /> {t.warmupTitle}
                     </div>
                     <div className="text-right">
@@ -90,21 +90,21 @@ export const WarmupModal: React.FC<WarmupModalProps> = ({ targetWeight, exercise
                                 aria-label={`${step.label} — ${weight} kg, ${step.reps} reps`}
                                 className={`w-full flex items-center p-3 rounded-xl border transition-colors duration-base ease-natural cursor-pointer text-left
                                     ${isChecked
-                                        ? 'bg-orange-50 dark:bg-orange-900/10 border-orange-200 dark:border-orange-900/30'
+                                        ? 'bg-primary-500/10 border-primary-500/30'
                                         : 'bg-zinc-50 dark:bg-white/5 border-transparent hover:bg-zinc-100 dark:hover:bg-white/10'
                                     }
                                 `}
                             >
-                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mr-4 transition-colors duration-fast ease-natural ${isChecked ? 'bg-orange-500 border-orange-500 text-white' : 'border-zinc-300 dark:border-zinc-600'}`}>
+                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mr-4 transition-colors duration-fast ease-natural ${isChecked ? 'bg-primary-500 border-primary-500 text-black' : 'border-zinc-300 dark:border-zinc-600'}`}>
                                     {isChecked && <Icon name="Check" size={14} strokeWidth={3} />}
                                 </div>
 
                                 <div className="flex-1">
                                     <div className="flex justify-between items-center mb-0.5">
-                                        <span className={`text-sm font-bold ${isChecked ? 'text-orange-700 dark:text-orange-400' : 'text-zinc-700 dark:text-zinc-200'}`}>
+                                        <span className={`text-sm font-bold ${isChecked ? 'text-primary-700 dark:text-primary-400' : 'text-zinc-700 dark:text-zinc-200'}`}>
                                             {weight} <span className="text-[10px] text-zinc-400">KG</span>
                                         </span>
-                                        <span className={`font-mono font-bold text-sm ${isChecked ? 'text-orange-700 dark:text-orange-400' : 'text-zinc-900 dark:text-white'}`}>
+                                        <span className={`font-mono font-bold text-sm ${isChecked ? 'text-primary-700 dark:text-primary-400' : 'text-zinc-900 dark:text-white'}`}>
                                             {step.reps} <span className="text-[10px] text-zinc-400">REPS</span>
                                         </span>
                                     </div>

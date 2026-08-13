@@ -102,7 +102,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                             <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider block mb-2">{t.name || "Name"}</label>
                             <input 
                                 type="text" 
-                                className="w-full bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white rounded-xl p-3 outline-none focus:ring-2 focus:ring-red-500"
+                                className="w-full bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white rounded-xl p-3 outline-none focus:ring-2 focus:ring-primary-500"
                                 value={name}
                                 onChange={e => setName(e.target.value)}
                                 placeholder="John Doe"
@@ -114,7 +114,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                         <input 
                             type="email" 
                             required
-                            className="w-full bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white rounded-xl p-3 outline-none focus:ring-2 focus:ring-red-500"
+                            className="w-full bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white rounded-xl p-3 outline-none focus:ring-2 focus:ring-primary-500"
                             value={email}
                             onChange={e => { setEmail(e.target.value); clearError(); }}
                             placeholder="you@example.com"
@@ -127,7 +127,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                                 <button 
                                     type="button" 
                                     onClick={handleResetPassword}
-                                    className="text-[10px] font-bold text-red-600 hover:underline"
+                                    className="text-[10px] font-bold text-primary-600 dark:text-primary-400 hover:underline"
                                 >
                                     {t.forgotPassword || "Forgot password?"}
                                 </button>
@@ -138,7 +138,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                                 type={showPass ? "text" : "password"} 
                                 required
                                 minLength={6}
-                                className="w-full bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white rounded-xl p-3 outline-none focus:ring-2 focus:ring-red-500 pr-10"
+                                className="w-full bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white rounded-xl p-3 outline-none focus:ring-2 focus:ring-primary-500 pr-10"
                                 value={pass}
                                 onChange={e => { setPass(e.target.value); clearError(); }}
                                 placeholder="••••••"
@@ -160,7 +160,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                                 type="password" 
                                 required
                                 minLength={6}
-                                className={`w-full bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white rounded-xl p-3 outline-none focus:ring-2 ${pass && confirmPass && pass !== confirmPass ? 'ring-2 ring-red-500' : 'focus:ring-red-500'}`}
+                                className={`w-full bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white rounded-xl p-3 outline-none focus:ring-2 ${pass && confirmPass && pass !== confirmPass ? 'ring-2 ring-red-500' : 'focus:ring-primary-500'}`}
                                 value={confirmPass}
                                 onChange={e => setConfirmPass(e.target.value)}
                                 placeholder="••••••"
@@ -196,7 +196,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                     <Button variant="secondary" fullWidth onClick={handleGuest} className="dark:bg-zinc-800 dark:border-zinc-700 text-xs">
                         {t.continueGuest}
                     </Button>
-                    <Button variant="secondary" fullWidth onClick={handleStartDemo} className="dark:bg-zinc-800 dark:border-zinc-700 text-xs text-orange-500">
+                    <Button variant="secondary" fullWidth onClick={handleStartDemo} className="dark:bg-zinc-800 dark:border-zinc-700 text-xs text-primary-600 dark:text-primary-400">
                         {t.startDemo || "Try 7 Days Free"}
                     </Button>
                 </div>
@@ -206,7 +206,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                         {isLogin ? `${t.noAccount} ` : `${t.hasAccount} `}
                         <button 
                             onClick={() => { setIsLogin(!isLogin); clearError(); }}
-                            className="text-red-600 font-bold hover:underline"
+                            className="text-primary-600 dark:text-primary-400 font-bold hover:underline"
                         >
                             {isLogin ? t.signUpBtn : t.signInBtn}
                         </button>

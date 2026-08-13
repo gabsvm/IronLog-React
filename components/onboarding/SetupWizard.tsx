@@ -132,9 +132,9 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                         icon="Zap"
                     />
                     {w.expNote && (
-                        <div className="mt-4 bg-blue-50 dark:bg-blue-900/10 p-3 rounded-xl flex gap-3 items-start border border-blue-100 dark:border-blue-900/20">
-                            <Icon name="Info" size={16} className="text-blue-500 mt-0.5 shrink-0" />
-                            <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed font-medium">{w.expNote}</p>
+                        <div className="mt-4 bg-primary-500/10 p-3 rounded-xl flex gap-3 items-start border border-primary-500/20">
+                            <Icon name="Info" size={16} className="text-primary-500 mt-0.5 shrink-0" />
+                            <p className="text-xs text-primary-700 dark:text-primary-300 leading-relaxed font-medium">{w.expNote}</p>
                         </div>
                     )}
                 </div>
@@ -237,12 +237,12 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
 
                         <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-2xl p-4 space-y-3">
                             <div className="flex gap-3 items-start">
-                                <Icon name="Info" size={16} className="text-blue-500 mt-0.5 shrink-0" />
+                                <Icon name="Info" size={16} className="text-primary-500 mt-0.5 shrink-0" />
                                 <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">{reasonText}</p>
                             </div>
                             {recommendation.adjustedVolume && (
                                 <div className="flex gap-3 items-start">
-                                    <Icon name="Clock" size={16} className="text-orange-500 mt-0.5 shrink-0" />
+                                    <Icon name="Clock" size={16} className="text-primary-500 mt-0.5 shrink-0" />
                                     <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">{w.adjusted}</p>
                                 </div>
                             )}

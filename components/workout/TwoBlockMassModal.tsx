@@ -117,7 +117,7 @@ export const TwoBlockMassModal: React.FC<Props> = ({ isOpen, onClose, onStart })
             open={isOpen}
             onOpenChange={(o) => { if (!o) onClose(); }}
             variant="full"
-            accent="amber"
+            accent="primary"
             title={selected ? `${t(selected.name)} · ${PHASE_LABELS[selected.phase][lang]} B${selected.blockNumber}` : phil.title}
             onBack={selected ? () => setSelectedId(null) : undefined}
             description={selected ? `${PHASE_LABELS[selected.phase][lang]} block ${selected.blockNumber}` : 'Two Block Mass protocol picker'}

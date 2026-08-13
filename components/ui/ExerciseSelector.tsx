@@ -150,13 +150,13 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
                 below collapses to 0px and the exercise list renders empty. */}
             <div className="flex flex-col h-full">
             {/* Custom Header (search input replaces the default Sheet title slot) */}
-            <div className={`glass px-4 h-16 shrink-0 flex items-center gap-3 border-b border-zinc-200 dark:border-white/5 ${persistToGlobal ? 'bg-purple-900/10' : ''}`}>
+            <div className={`glass px-4 h-16 shrink-0 flex items-center gap-3 border-b border-zinc-200 dark:border-white/5 ${persistToGlobal ? 'bg-primary-500/10' : ''}`}>
                 <button onClick={onClose} className="p-2 -ml-2 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white" aria-label="Close">
                     <Icon name="X" size={24} />
                 </button>
                 {isCreating ? (
                     <div className="flex-1 font-bold text-lg dark:text-white">
-                        {t.addEx} {persistToGlobal && <span className="text-xs bg-purple-600 text-white px-2 py-0.5 rounded ml-2">GLOBAL</span>}
+                        {t.addEx} {persistToGlobal && <span className="text-xs bg-primary-600 text-white px-2 py-0.5 rounded ml-2">GLOBAL</span>}
                     </div>
                 ) : (
                     <div className="flex-1 flex gap-2">

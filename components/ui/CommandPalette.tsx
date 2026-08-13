@@ -23,10 +23,10 @@ interface Props {
 
 const ACCENT: Record<string, string> = {
     primary: 'from-primary-500 to-primary-700',
-    amber: 'from-amber-500 to-orange-600',
-    violet: 'from-violet-500 to-indigo-600',
-    emerald: 'from-emerald-500 to-teal-600',
-    zinc: 'from-zinc-600 to-zinc-800',
+    amber: 'from-primary-500 to-primary-700',
+    violet: 'from-primary-500 to-primary-700',
+    emerald: 'from-primary-500 to-primary-700',
+    zinc: 'from-zinc-500 to-zinc-700',
 };
 
 /**
@@ -96,7 +96,7 @@ export const CommandPalette: React.FC<Props> = ({ isOpen, onClose, actions, titl
                 animate={{ y: 0, opacity: 1, scale: 1 }}
                 exit={{ y: 20, opacity: 0, scale: 0.98 }}
                 transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                className="w-full sm:max-w-lg sm:mx-4 bg-zinc-900 border border-white/10 rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden mb-[88px] sm:mb-0"
+                className="modal-surface w-full sm:max-w-lg sm:mx-4 border rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden mb-[88px] sm:mb-0"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Drag handle (mobile only) */}

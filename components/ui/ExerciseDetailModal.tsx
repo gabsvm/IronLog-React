@@ -290,13 +290,13 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                                     </div>
                                 </div>
 
-                                <div className="bg-blue-500/10 rounded-xl p-4 border border-blue-500/15">
+                                <div className="bg-primary-500/10 rounded-xl p-4 border border-primary-500/15">
                                     <div className="flex gap-3">
-                                        <div className="bg-blue-500/20 p-1.5 rounded-lg h-fit shrink-0">
-                                            <Icon name="Info" size={16} className="text-blue-400" />
+                                        <div className="bg-primary-500/20 p-1.5 rounded-lg h-fit shrink-0">
+                                            <Icon name="Info" size={16} className="text-primary-400" />
                                         </div>
-                                        <div className="text-sm text-blue-100">
-                                            <p className="font-bold mb-1 text-blue-300">{t.executionTipTitle}</p>
+                                        <div className="text-sm text-primary-900 dark:text-primary-100">
+                                            <p className="font-bold mb-1 text-primary-700 dark:text-primary-300">{t.executionTipTitle}</p>
                                             <p className="opacity-70 text-xs leading-relaxed">{t.executionTipText}</p>
                                         </div>
                                     </div>

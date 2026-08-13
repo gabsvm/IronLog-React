@@ -715,8 +715,11 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     useEffect(() => {
         const root = window.document.documentElement;
         root.classList.remove('light', 'dark');
-        if (theme === 'system') root.classList.add(window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-        else root.classList.add(theme);
+        const resolvedTheme = theme === 'system'
+            ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+            : theme;
+        root.classList.add(resolvedTheme);
+        root.style.colorScheme = resolvedTheme;
     }, [theme]);
 
     useEffect(() => { window.document.documentElement.setAttribute('data-theme', colorTheme); }, [colorTheme]);

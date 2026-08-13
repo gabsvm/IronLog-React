@@ -26,10 +26,12 @@ interface SheetProps {
 
 const ACCENT_HANDLE: Record<string, string> = {
     primary: 'bg-primary-500/50',
-    amber: 'bg-amber-500/50',
-    violet: 'bg-violet-500/50',
-    emerald: 'bg-emerald-500/50',
-    zinc: 'bg-white/20',
+    // Legacy callers may still pass a semantic accent, but sheet chrome
+    // follows the selected app accent instead of hard-coding a second color.
+    amber: 'bg-primary-500/50',
+    violet: 'bg-primary-500/50',
+    emerald: 'bg-primary-500/50',
+    zinc: 'bg-zinc-400/50 dark:bg-white/20',
 };
 
 /**
@@ -63,13 +65,13 @@ export const Sheet: React.FC<SheetProps> = ({
     return (
         <Drawer.Root open={open} onOpenChange={onOpenChange} shouldScaleBackground={false}>
             <Drawer.Portal>
-                <Drawer.Overlay className="fixed inset-0 z-sheet bg-black/70 backdrop-blur-sm" />
+                <Drawer.Overlay className="modal-backdrop fixed inset-0 z-sheet backdrop-blur-sm" />
                 <Drawer.Content
                     aria-describedby={description ? 'sheet-desc' : undefined}
                     className={`
                         fixed bottom-0 left-0 right-0 z-sheet flex flex-col
-                        bg-zinc-50 dark:bg-zinc-950 outline-none
-                        border-t border-zinc-200 dark:border-white/10
+                        modal-surface outline-none
+                        border-t
                         ${isFull
                             ? 'top-0 h-full rounded-none'
                             : 'max-h-[92vh] rounded-t-[1.75rem] shadow-2xl'}
@@ -127,7 +129,7 @@ export const Sheet: React.FC<SheetProps> = ({
 
                     {/* Sticky footer */}
                     {footer && (
-                        <div className="shrink-0 px-5 py-4 border-t border-zinc-200 dark:border-white/5 bg-zinc-50 dark:bg-zinc-950 pb-safe">
+                        <div className="modal-footer shrink-0 px-5 py-4 border-t pb-safe">
                             {footer}
                         </div>
                     )}

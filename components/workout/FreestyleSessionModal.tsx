@@ -99,7 +99,7 @@ const CAL_SKILLS = [
         description: { en: 'Chest · Shoulders · Triceps', es: 'Pecho · Hombros · Tríceps' },
         exercises: ['cal_pu_std', 'cal_archer_pu', 'cal_pike_pu', 'cal_dip_std', 'cal_diamond_pu'],
         icon: 'ChevronUp',
-        color: 'bg-red-500'
+        color: 'bg-primary-500'
     },
     {
         id: 'pull_full',
@@ -107,7 +107,7 @@ const CAL_SKILLS = [
         description: { en: 'Back · Biceps · Rear Delt', es: 'Espalda · Bíceps · Deltoides Posterior' },
         exercises: ['cal_scap_pull', 'cal_au_pullup', 'cal_pullup', 'cal_chinup', 'cal_comm_pullup'],
         icon: 'ChevronDown',
-        color: 'bg-blue-500'
+        color: 'bg-primary-500'
     },
     {
         id: 'core_full',
@@ -115,7 +115,7 @@ const CAL_SKILLS = [
         description: { en: 'Abs · Anti-extension · Compression', es: 'Abdomen · Anti-extensión · Compresión' },
         exercises: ['cal_plank', 'cal_tuck_lsit', 'cal_hanging_lraise', 'cal_dragon_flag', 'cal_ab_wheel'],
         icon: 'Circle',
-        color: 'bg-amber-500'
+        color: 'bg-primary-500'
     },
     {
         id: 'legs_full',
@@ -123,7 +123,7 @@ const CAL_SKILLS = [
         description: { en: 'Quads · Hamstrings · Glutes', es: 'Cuádriceps · Isquios · Glúteos' },
         exercises: ['cal_squat_bw', 'cal_bulgariansq', 'cal_pistol', 'cal_nordic_curl', 'cal_glute_bridge_bw'],
         icon: 'Footprints',
-        color: 'bg-emerald-500'
+        color: 'bg-primary-500'
     },
     {
         id: 'full_upper',
@@ -131,7 +131,7 @@ const CAL_SKILLS = [
         description: { en: 'Push + Pull + Shoulders', es: 'Empuje + Tracción + Hombros' },
         exercises: ['cal_pullup', 'cal_pu_std', 'cal_dip_std', 'cal_pike_pu', 'cal_l_pullup'],
         icon: 'Award',
-        color: 'bg-violet-500'
+        color: 'bg-primary-500'
     },
 ];
 
@@ -279,13 +279,12 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
             open={isOpen}
             onOpenChange={(o) => { if (!o) onClose(); }}
             title={lang === 'es' ? 'Nueva Sesión' : 'New Session'}
-            accent={discipline === 'crossfit' ? 'emerald' : discipline === 'calisthenics' ? 'violet' : 'primary'}
+            accent="primary"
             footer={
                 <button
                     onClick={handleStart}
                     disabled={!canStart}
-                    className="w-full py-4 rounded-2xl font-black text-sm text-white transition-all duration-fast ease-natural active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-lg"
-                    style={{ background: discipline === 'crossfit' ? '#10b981' : discipline === 'calisthenics' ? '#8b5cf6' : '#ef4444' }}
+                    className="w-full py-4 rounded-2xl font-black text-sm text-black bg-primary-500 hover:bg-primary-400 transition-all duration-fast ease-natural active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-primary-500/20"
                 >
                     {startLabel}
                 </button>
@@ -304,7 +303,7 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
                     </span>
                 </button>
                 <button
-                    className={tabStyle(discipline === 'crossfit', 'bg-emerald-500 shadow-emerald-500/30')}
+                    className={tabStyle(discipline === 'crossfit', 'bg-primary-500 shadow-primary-500/30 text-black')}
                     onClick={() => setDiscipline('crossfit')}
                 >
                     <span className="flex items-center justify-center gap-1">
@@ -313,7 +312,7 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
                     </span>
                 </button>
                 <button
-                    className={tabStyle(discipline === 'calisthenics', 'bg-violet-500 shadow-violet-500/30')}
+                    className={tabStyle(discipline === 'calisthenics', 'bg-primary-500 shadow-primary-500/30 text-black')}
                     onClick={() => setDiscipline('calisthenics')}
                 >
                     <span className="flex items-center justify-center gap-1">
@@ -349,7 +348,7 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
                             lang === 'es' ? 'Configurar pesos, reps y RPE al instante' : 'Track weights, reps and RPE instantly',
                         ].map((tip, i) => (
                             <div key={i} className="flex items-start gap-2 py-1.5">
-                                <div className="w-1.5 h-1.5 rounded-full bg-red-500 mt-1.5 flex-shrink-0" />
+                                <div className="w-1.5 h-1.5 rounded-full bg-primary-500 mt-1.5 flex-shrink-0" />
                                 <span className="text-xs text-zinc-600 dark:text-zinc-300">{tip}</span>
                             </div>
                         ))}
@@ -363,14 +362,14 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
                     {/* Blank CrossFit option */}
                     <button
                         onClick={() => handleStartBlank(lang === 'es' ? 'Sesión CrossFit Libre' : 'Open CrossFit Session')}
-                        className="w-full text-left p-4 rounded-2xl border-2 border-dashed border-emerald-500/40 bg-emerald-500/5 hover:border-emerald-500/60 transition-all active:scale-[0.98]"
+                        className="w-full text-left p-4 rounded-2xl border-2 border-dashed border-primary-500/40 bg-primary-500/5 hover:border-primary-500/60 transition-all active:scale-[0.98]"
                     >
                         <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0">
-                                <Icon name="Plus" size={18} className="text-emerald-400" />
+                            <div className="w-9 h-9 rounded-xl bg-primary-500/20 flex items-center justify-center shrink-0">
+                                <Icon name="Plus" size={18} className="text-primary-400" />
                             </div>
                             <div>
-                                <p className="font-black text-sm text-emerald-400">
+                                <p className="font-black text-sm text-primary-400">
                                     {lang === 'es' ? 'Sesión Libre' : 'Open Session'}
                                 </p>
                                 <p className="text-[10px] text-zinc-500 mt-0.5">
@@ -388,27 +387,27 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
                             onClick={() => setSelectedWodId(wod.id === selectedWodId ? null : wod.id)}
                             className={`w-full text-left p-4 rounded-2xl border-2 transition-all active:scale-[0.98] ${
                                 selectedWodId === wod.id
-                                    ? 'border-emerald-500 bg-emerald-500/5'
+                                    ? 'border-primary-500 bg-primary-500/5'
                                     : 'border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-900 hover:border-zinc-300 dark:hover:border-white/20'
                             }`}
                         >
                             <div className="flex items-start gap-3">
                                 <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-base shrink-0 font-black ${
-                                    selectedWodId === wod.id ? 'bg-emerald-500 text-white' : 'bg-zinc-100 dark:bg-zinc-800'
+                                    selectedWodId === wod.id ? 'bg-primary-500 text-black' : 'bg-zinc-100 dark:bg-zinc-800'
                                 }`}>
                                     {wod.name[0]}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <div className={`font-black text-sm ${selectedWodId === wod.id ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-900 dark:text-white'}`}>
+                                    <div className={`font-black text-sm ${selectedWodId === wod.id ? 'text-primary-700 dark:text-primary-400' : 'text-zinc-900 dark:text-white'}`}>
                                         {wod.name}
                                     </div>
                                     <div className="text-[10px] text-zinc-400 mt-0.5 font-medium">{wod.description}</div>
-                                    <div className={`text-[9px] font-black uppercase tracking-wider mt-1 ${selectedWodId === wod.id ? 'text-emerald-500' : 'text-zinc-300 dark:text-zinc-600'}`}>
+                                    <div className={`text-[9px] font-black uppercase tracking-wider mt-1 ${selectedWodId === wod.id ? 'text-primary-500' : 'text-zinc-300 dark:text-zinc-600'}`}>
                                         {wod.schema}
                                     </div>
                                 </div>
                                 {selectedWodId === wod.id && (
-                                    <Icon name="Check" size={16} className="text-emerald-500 flex-shrink-0 mt-1" />
+                                    <Icon name="Check" size={16} className="text-primary-500 flex-shrink-0 mt-1" />
                                 )}
                             </div>
                         </button>
@@ -425,14 +424,14 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
                     {/* Blank calisthenics option */}
                     <button
                         onClick={() => handleStartBlank(lang === 'es' ? 'Sesión Calistenia Libre' : 'Open Calisthenics Session')}
-                        className="w-full text-left p-4 rounded-2xl border-2 border-dashed border-violet-500/40 bg-violet-500/5 hover:border-violet-500/60 transition-all active:scale-[0.98]"
+                        className="w-full text-left p-4 rounded-2xl border-2 border-dashed border-primary-500/40 bg-primary-500/5 hover:border-primary-500/60 transition-all active:scale-[0.98]"
                     >
                         <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-xl bg-violet-500/20 flex items-center justify-center shrink-0">
-                                <Icon name="Plus" size={18} className="text-violet-400" />
+                            <div className="w-9 h-9 rounded-xl bg-primary-500/20 flex items-center justify-center shrink-0">
+                                <Icon name="Plus" size={18} className="text-primary-400" />
                             </div>
                             <div>
-                                <p className="font-black text-sm text-violet-400">
+                                <p className="font-black text-sm text-primary-400">
                                     {lang === 'es' ? 'Sesión Libre' : 'Open Session'}
                                 </p>
                                 <p className="text-[10px] text-zinc-500 mt-0.5">
@@ -447,7 +446,7 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
                         <button
                             onClick={() => { setCalTab('skills'); setSelectedSkillFamilyId(null); }}
                             className={`flex-1 py-2 text-[11px] font-black uppercase tracking-wider rounded-lg transition-all ${
-                                calTab === 'skills' ? 'bg-violet-600 text-white shadow' : 'text-zinc-500 hover:text-zinc-300'
+                                calTab === 'skills' ? 'bg-primary-600 text-black shadow' : 'text-zinc-500 hover:text-zinc-300'
                             }`}
                         >
                             {lang === 'es' ? '🎯 Por Habilidad' : '🎯 By Skill'}
@@ -455,7 +454,7 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
                         <button
                             onClick={() => { setCalTab('templates'); setSelectedSkillId(null); setSelectedSkillFamilyId(null); }}
                             className={`flex-1 py-2 text-[11px] font-black uppercase tracking-wider rounded-lg transition-all ${
-                                calTab === 'templates' ? 'bg-violet-600 text-white shadow' : 'text-zinc-500 hover:text-zinc-300'
+                                calTab === 'templates' ? 'bg-primary-600 text-black shadow' : 'text-zinc-500 hover:text-zinc-300'
                             }`}
                         >
                             {lang === 'es' ? '📋 Plantillas' : '📋 Templates'}
@@ -472,14 +471,14 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
                                 {Object.values(SKILL_PROGRESSION_MAP).map(family => {
                                     const isSelected = selectedSkillFamilyId === family.id;
                                     const colorMap: Record<string, string> = {
-                                        'bg-violet-500': 'border-violet-500 bg-violet-500/10 text-violet-400',
-                                        'bg-blue-500': 'border-blue-500 bg-blue-500/10 text-blue-400',
-                                        'bg-amber-500': 'border-amber-500 bg-amber-500/10 text-amber-400',
-                                        'bg-emerald-500': 'border-emerald-500 bg-emerald-500/10 text-emerald-400',
-                                        'bg-rose-500': 'border-rose-500 bg-rose-500/10 text-rose-400',
-                                        'bg-cyan-500': 'border-cyan-500 bg-cyan-500/10 text-cyan-400',
+                                        'bg-violet-500': 'border-primary-500 bg-primary-500/10 text-primary-400',
+                                        'bg-blue-500': 'border-primary-500 bg-primary-500/10 text-primary-400',
+                                        'bg-amber-500': 'border-primary-500 bg-primary-500/10 text-primary-400',
+                                        'bg-emerald-500': 'border-primary-500 bg-primary-500/10 text-primary-400',
+                                        'bg-rose-500': 'border-primary-500 bg-primary-500/10 text-primary-400',
+                                        'bg-cyan-500': 'border-primary-500 bg-primary-500/10 text-primary-400',
                                     };
-                                    const selectedClass = colorMap[family.color] ?? 'border-violet-500 bg-violet-500/10 text-violet-400';
+                                    const selectedClass = colorMap[family.color] ?? 'border-primary-500 bg-primary-500/10 text-primary-400';
                                     return (
                                         <button
                                             key={family.id}
@@ -506,7 +505,7 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
                                             <div className="flex gap-0.5 mt-1.5">
                                                 {family.levels.map((_, i) => (
                                                     <div key={i} className={`w-2 h-1.5 rounded-full ${
-                                                        isSelected ? family.color : 'bg-zinc-700'
+                                                        isSelected ? 'bg-primary-500' : 'bg-zinc-700'
                                                     }`} />
                                                 ))}
                                             </div>
@@ -518,13 +517,13 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
                                 const fam = SKILL_PROGRESSION_MAP[selectedSkillFamilyId];
                                 if (!fam) return null;
                                 return (
-                                    <div className="bg-violet-500/5 border border-violet-500/20 rounded-2xl p-3 space-y-1.5">
-                                        <p className="text-[10px] font-black uppercase text-violet-400 tracking-wider">
+                                    <div className="bg-primary-500/5 border border-primary-500/20 rounded-2xl p-3 space-y-1.5">
+                                        <p className="text-[10px] font-black uppercase text-primary-400 tracking-wider">
                                             {lang === 'es' ? 'Ejercicios en esta sesión:' : 'Exercises in this session:'}
                                         </p>
                                         {fam.levels.map((lvl, i) => (
                                             <div key={i} className="flex items-center gap-2 text-[11px]">
-                                                <div className="w-1 h-1 rounded-full bg-violet-400 shrink-0" />
+                                                <div className="w-1 h-1 rounded-full bg-primary-400 shrink-0" />
                                                 <span className="text-zinc-300">
                                                     {lang === 'es' ? lvl.name.es : lvl.name.en}
                                                 </span>
@@ -555,7 +554,7 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
                                         onClick={() => { setSelectedSkillId(isSelected ? null : skill.id); setSelectedSkillFamilyId(null); }}
                                         className={`w-full text-left p-4 rounded-2xl border-2 transition-all active:scale-[0.98] ${
                                             isSelected
-                                                ? 'border-violet-500 bg-violet-500/5'
+                                                ? 'border-primary-500 bg-primary-500/5'
                                                 : 'border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-900 hover:border-zinc-300 dark:hover:border-white/20'
                                         }`}
                                     >
@@ -567,7 +566,7 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className={`font-black text-sm ${
-                                                    isSelected ? 'text-violet-400' : 'text-zinc-900 dark:text-white'
+                                                    isSelected ? 'text-primary-400' : 'text-zinc-900 dark:text-white'
                                                 }`}>
                                                     {lang === 'es' ? skill.name.es : skill.name.en}
                                                 </div>
@@ -579,7 +578,7 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
                                                 <span className="text-[9px] font-bold text-zinc-500">
                                                     {skill.exercises.length} {lang === 'es' ? 'ej.' : 'ex.'}
                                                 </span>
-                                                {isSelected && <Icon name="Check" size={14} className="text-violet-500" />}
+                                                {isSelected && <Icon name="Check" size={14} className="text-primary-500" />}
                                             </div>
                                         </div>
                                     </button>

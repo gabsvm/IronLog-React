@@ -18,25 +18,25 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onClose }) => 
             icon: "Dumbbell",
             title: t.onb.s1_title,
             desc: t.onb.s1_desc,
-            color: "text-red-500 bg-red-100 dark:bg-red-500/10"
+            color: "text-primary-600 bg-primary-100 dark:text-primary-400 dark:bg-primary-500/10"
         },
         {
             icon: "Layout",
             title: t.onb.s2_title,
             desc: t.onb.s2_desc,
-            color: "text-blue-500 bg-blue-100 dark:bg-blue-500/10"
+            color: "text-primary-600 bg-primary-100 dark:text-primary-400 dark:bg-primary-500/10"
         },
         {
             icon: "Activity",
             title: t.onb.s3_title,
             desc: t.onb.s3_desc,
-            color: "text-green-500 bg-green-100 dark:bg-green-500/10"
+            color: "text-primary-600 bg-primary-100 dark:text-primary-400 dark:bg-primary-500/10"
         },
         {
             icon: "TrendingUp",
             title: t.onb.s4_title,
             desc: t.onb.s4_desc,
-            color: "text-purple-500 bg-purple-100 dark:bg-purple-500/10"
+            color: "text-primary-600 bg-primary-100 dark:text-primary-400 dark:bg-primary-500/10"
         }
     ];
 
@@ -101,7 +101,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onClose }) => 
                         {steps.map((_, idx) => (
                             <div 
                                 key={idx} 
-                                className={`h-1.5 rounded-full transition-all duration-300 ${idx === step ? 'w-6 bg-red-600' : 'w-1.5 bg-zinc-200 dark:bg-zinc-800'}`}
+                                className={`h-1.5 rounded-full transition-all duration-300 ${idx === step ? 'w-6 bg-primary-500' : 'w-1.5 bg-zinc-200 dark:bg-zinc-800'}`}
                             ></div>
                         ))}
                     </div>

@@ -28,14 +28,14 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
     return (
         <div
-            className="fixed inset-0 z-confirm bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-base"
+            className="modal-backdrop fixed inset-0 z-confirm backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-base"
             onClick={onCancel}
             role="dialog"
             aria-modal="true"
             aria-labelledby="confirm-modal-title"
             aria-describedby="confirm-modal-desc"
         >
-            <div className="glass-panel w-full max-w-sm rounded-2xl p-6 shadow-2xl text-center" onClick={e => e.stopPropagation()}>
+            <div className="modal-surface w-full max-w-sm rounded-2xl border p-6 shadow-2xl text-center" onClick={e => e.stopPropagation()}>
                 <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse ${variant === 'danger' ? 'bg-red-500/10 text-red-500' : 'bg-primary-500/10 text-primary-500'}`}>
                     <Icon name={variant === 'danger' ? "AlertTriangle" : "Info"} size={32} />
                 </div>

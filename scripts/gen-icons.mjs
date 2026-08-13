@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url';
 import { join, dirname } from 'path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const srcPath = join('C:\\Users\\SHOMER WORLD\\.gemini\\antigravity\\brain\\02dc54e4-7a90-4c94-9a29-56ef202741f1', 'ironlog_icon_512_1772824572505.png');
+const srcPath = join(__dirname, '..', 'public', 'assets', 'branding', 'gainslab-icon-clean.png');
 const out512 = join(__dirname, '..', 'public', 'icon-512.png');
 const out192 = join(__dirname, '..', 'public', 'icon-192.png');
 

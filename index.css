@@ -8,6 +8,21 @@
   --safe-area-top: env(safe-area-inset-top, 20px);
   --safe-area-bottom: env(safe-area-inset-bottom, 20px);
 
+  /* Shared surfaces/text tokens. Components can keep their existing utility
+     classes while the selected light/dark mode changes the whole shell. */
+  --surface-app: 0 0 0;
+  --surface-base: 9 9 11;
+  --surface-raised: 24 24 27;
+  --surface-elevated: 39 39 42;
+  --text-primary: 244 244 245;
+  --text-secondary: 161 161 170;
+  --text-muted: 113 113 122;
+  --border-subtle: 39 39 42;
+  --border-strong: 63 63 70;
+  --modal-surface: 15 15 15;
+  --modal-footer: 15 15 15;
+  --modal-border: 255 255 255;
+
   /* --- DEFAULT THEME: HYPERTROPHY (RP LIME-GREEN) --- */
   /* Brand color is the RP lime #C1F13B (193 241 59) anchored at 500.
      Lower numbers MUST be lighter, higher numbers MUST be darker — the previous
@@ -22,6 +37,26 @@
   --primary-700: 132 174  22;
   --primary-800: 101 134  15;
   --primary-900:  77 101  12;
+}
+
+html.light {
+  color-scheme: light;
+  --surface-app: 248 250 252;
+  --surface-base: 255 255 255;
+  --surface-raised: 244 244 245;
+  --surface-elevated: 228 228 231;
+  --text-primary: 24 24 27;
+  --text-secondary: 82 82 91;
+  --text-muted: 113 113 122;
+  --border-subtle: 228 228 231;
+  --border-strong: 212 212 216;
+  --modal-surface: 255 255 255;
+  --modal-footer: 250 250 250;
+  --modal-border: 212 212 216;
+}
+
+html.dark {
+  color-scheme: dark;
 }
 
 /* --- THEME OVERRIDES --- */
@@ -99,11 +134,13 @@ html, body, #root {
   overflow: hidden;
   user-select: none; 
   -webkit-user-select: none;
-  background-color: #000000; /* OLED Black Base */
+  background-color: rgb(var(--surface-app));
 }
 
 body {
-  @apply bg-black text-zinc-100 font-sans antialiased;
+  @apply font-sans antialiased;
+  background-color: rgb(var(--surface-app));
+  color: rgb(var(--text-primary));
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -114,7 +151,9 @@ body {
     .pb-safe { padding-bottom: var(--safe-area-bottom); }
     
     .glow-input-neon {
-        @apply bg-[#1A1A1A] border-transparent shadow-none;
+        @apply border-transparent shadow-none;
+        background-color: rgb(var(--surface-raised));
+        color: rgb(var(--text-primary));
     }
     
     .glow-btn-success {
@@ -122,11 +161,28 @@ body {
     }
     
     .glass {
-        @apply bg-black/80 backdrop-blur-xl border-b border-white/10;
+        @apply backdrop-blur-xl border-b border-white/10;
+        background-color: rgb(var(--surface-app) / 0.8);
     }
-    
+
     .glass-island {
-        @apply bg-zinc-900/90 backdrop-blur-2xl border border-white/10 shadow-2xl;
+        @apply backdrop-blur-2xl border border-white/10 shadow-2xl;
+        background-color: rgb(var(--surface-raised) / 0.9);
+    }
+
+    .modal-surface {
+        background-color: rgb(var(--modal-surface));
+        color: rgb(var(--text-primary));
+        border-color: rgb(var(--modal-border) / 0.12);
+    }
+
+    .modal-footer {
+        background-color: rgb(var(--modal-footer));
+        border-color: rgb(var(--modal-border) / 0.12);
+    }
+
+    .modal-backdrop {
+        background-color: rgb(0 0 0 / 0.72);
     }
 
     .text-balance { text-wrap: balance; }
@@ -277,17 +333,17 @@ input, textarea {
 
 /* Revamp Glassmorphism & Neon Glow Styles */
 .glass-card {
-  background: rgba(14, 14, 18, 0.85);
+  background: rgb(var(--surface-raised) / 0.85);
   backdrop-filter: blur(20px) saturate(160%);
   -webkit-backdrop-filter: blur(20px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgb(var(--modal-border) / 0.05);
 }
 
 .glass-panel {
-  background: rgba(10, 10, 12, 0.95);
+  background: rgb(var(--surface-base) / 0.95);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgb(var(--modal-border) / 0.06);
 }
 
 [data-effects='reduced'] .glass,
@@ -296,7 +352,7 @@ input, textarea {
 [data-effects='reduced'] .glass-island {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
-  background: rgba(12, 12, 14, 0.96) !important;
+  background: rgb(var(--surface-base) / 0.96) !important;
   box-shadow: none !important;
 }
 
@@ -354,4 +410,53 @@ input, textarea {
 
 .calendar-timeline::-webkit-scrollbar {
   display: none;
+}
+
+/* Light mode compatibility for legacy utility-heavy views. These selectors
+   intentionally cover only neutral surfaces/text/borders; semantic accents
+   (primary, danger, success, info) keep their meaning. */
+html.light .bg-black { background-color: rgb(var(--surface-app)) !important; }
+html.light .bg-zinc-950,
+html.light .bg-zinc-950\/95 { background-color: rgb(var(--surface-base)) !important; }
+html.light .bg-zinc-900,
+html.light .bg-zinc-900\/80,
+html.light .bg-zinc-900\/90,
+html.light .bg-zinc-900\/95 { background-color: rgb(var(--surface-raised)) !important; }
+html.light .bg-zinc-800,
+html.light .bg-zinc-800\/50 { background-color: rgb(var(--surface-elevated)) !important; }
+html.light .bg-zinc-700 { background-color: rgb(161 161 170) !important; }
+html.light [class~="bg-[#131316]"],
+html.light [class~="bg-[#17171B]/95"],
+html.light [class~="bg-[#202024]"] { background-color: rgb(var(--surface-raised)) !important; }
+html.light [class~="bg-white/5"] { background-color: rgb(var(--surface-raised) / 0.85) !important; }
+html.light [class~="bg-white/10"] { background-color: rgb(var(--surface-elevated) / 0.75) !important; }
+
+html.light .text-zinc-100,
+html.light .text-zinc-200,
+html.light .text-zinc-300,
+html.light .text-zinc-400 { color: rgb(var(--text-secondary)) !important; }
+html.light .text-zinc-500,
+html.light .text-zinc-600 { color: rgb(var(--text-muted)) !important; }
+html.light [class~="text-white"] { color: rgb(var(--text-primary)) !important; }
+html.light [class*="bg-red-"][class~="text-white"],
+html.light [class*="bg-blue-"][class~="text-white"],
+html.light [class*="bg-green-"][class~="text-white"],
+html.light [class*="bg-purple-"][class~="text-white"],
+html.light [class*="bg-orange-"][class~="text-white"],
+html.light [class*="bg-amber-"][class~="text-white"] { color: #fff !important; }
+
+html.light .border-zinc-700,
+html.light .border-zinc-800,
+html.light .border-zinc-900,
+html.light [class~="border-white/5"],
+html.light [class~="border-white/10"] { border-color: rgb(var(--border-subtle)) !important; }
+html.light input,
+html.light textarea,
+html.light select { color-scheme: light; }
+
+html.light .glass,
+html.light .glass-card,
+html.light .glass-panel,
+html.light .glass-island {
+  color: rgb(var(--text-primary));
 }

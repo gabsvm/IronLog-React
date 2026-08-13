@@ -25,15 +25,15 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
         <div className="fixed inset-0 z-confirm flex items-end sm:items-center justify-center animate-in fade-in duration-300">
             {/* Backdrop */}
             <div 
-                className="absolute inset-0 bg-black/75 backdrop-blur-sm"
+                className="modal-backdrop absolute inset-0 backdrop-blur-sm"
                 onClick={onClose}
             />
             
             {/* Bottom-sheet panel — mb-[88px] clears the floating nav island on mobile */}
             <div className={`
-                relative bg-zinc-50 dark:bg-[#0f0f0f] w-full mb-[88px] sm:mb-0
+                modal-surface relative w-full mb-[88px] sm:mb-0
                 ${fullScreen ? 'h-full mb-0' : 'max-h-[78vh] sm:max-h-[90vh] sm:max-w-lg rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl'}
-                border-t sm:border border-zinc-200/50 dark:border-white/10
+                border-t sm:border
                 flex flex-col overflow-hidden animate-in slide-in-from-bottom-8 duration-400
             `}>
                 {/* Drag Handle – mobile only */}
@@ -61,7 +61,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
 
                 {/* Sticky Footer – always visible, renders at the bottom of the panel */}
                 {footer && (
-                    <div className="flex-shrink-0 px-8 py-5 bg-zinc-50 dark:bg-[#0f0f0f] border-t border-zinc-100 dark:border-white/5">
+                    <div className="modal-footer flex-shrink-0 px-8 py-5 border-t">
                         {footer}
                     </div>
                 )}
