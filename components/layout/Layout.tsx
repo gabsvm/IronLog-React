@@ -60,11 +60,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
     const openProfile = () => {
         if (showProfile) return;
         try {
-            window.history.pushState(
-                { ...(window.history.state || {}), view, settings: false, profile: true },
-                '',
-                '#profile'
-            );
+            window.history.pushState({ ...(window.history.state || {}), view, settings: false, profile: true }, '', '#profile');
         } catch { }
         setShowProfile(true);
     };
@@ -153,7 +149,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
                                 </div>
                             )}
                         </div>
-                        <div id="tut-settings-btn">
+                        <div id="tut-profile-btn">
                             <Avatar email={user?.email} photoURL={(user as any)?.photoURL} isPro={isPro} onClick={openProfile} ariaLabel={lang === 'es' ? 'Abrir perfil' : 'Open profile'} />
                         </div>
                     </div>
@@ -178,16 +174,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
 
             <ProfileSheet open={showProfile} onClose={closeProfile} onOpenSettings={onOpenSettings} />
             <PlanActionsSheet open={showPlanActions} onClose={() => setShowPlanActions(false)} lang={lang} planName={activeMeso?.name} week={activeMeso?.week} totalWeeks={activeMeso?.targetWeeks || activeMeso?.duration} onConfigure={openExistingPlanSettings} onEditProgram={editProgram} />
-            <QuickStartSheet
-                open={showQuickStart}
-                onClose={() => setShowQuickStart(false)}
-                lang={lang}
-                onResume={() => setView('workout')}
-                onToday={() => setView('home')}
-                onFreestyle={() => setShowFreestyle(true)}
-                onTwoBlock={() => setShowTwoBlock(true)}
-                onEditProgram={editProgram}
-            />
+            <QuickStartSheet open={showQuickStart} onClose={() => setShowQuickStart(false)} lang={lang} onResume={() => setView('workout')} onToday={() => setView('home')} onFreestyle={() => setShowFreestyle(true)} onTwoBlock={() => setShowTwoBlock(true)} onEditProgram={editProgram} />
 
             {showFreestyle && (
                 <React.Suspense fallback={null}>
