@@ -1,0 +1,23 @@
+/* Mobile information-architecture polish.
+ * Keep Settings as the existing component, but present it as a native full-screen
+ * destination on phones instead of a narrow desktop drawer.
+ */
+@media (max-width: 639px) {
+  [aria-labelledby="settings-modal-title"] {
+    background: rgb(var(--surface-app));
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  [aria-labelledby="settings-modal-title"] > div {
+    width: 100vw !important;
+    max-width: none !important;
+    height: 100dvh !important;
+    border-left: 0 !important;
+    background: rgb(var(--surface-base)) !important;
+  }
+
+  [aria-labelledby="settings-modal-title"] > div > div:first-child {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 1rem) !important;
+  }
+}
