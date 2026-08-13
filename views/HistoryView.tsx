@@ -91,7 +91,7 @@ const HistoryCard = memo(({ log, lang, id, onOpen }: HistoryCardProps) => {
             id={id}
             type="button"
             onClick={onOpen}
-            className="mx-4 mb-3 block w-[calc(100%-2rem)] rounded-[1.3rem] border border-[rgb(var(--border-subtle)/0.72)] bg-[rgb(var(--surface-raised)/0.72)] p-4 text-left shadow-sm transition-all active:scale-[0.99] active:bg-[rgb(var(--surface-raised))]"
+            className="mx-4 mb-3 block rounded-[1.3rem] border border-[rgb(var(--border-subtle)/0.72)] bg-[rgb(var(--surface-raised)/0.72)] p-4 text-left shadow-sm transition-all active:scale-[0.99] active:bg-[rgb(var(--surface-raised))]"
         >
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
@@ -125,6 +125,7 @@ const HistoryCard = memo(({ log, lang, id, onOpen }: HistoryCardProps) => {
 
 export const HistoryView: React.FC = () => {
     const { logs, setLogs, lang, tutorialProgress, markTutorialSeen } = useApp();
+    const activeSession = useStore(state => state.activeSession);
     const setActiveSession = useStore(state => state.setActiveSession);
     const t = TRANSLATIONS[lang];
     const { isPro, showPaywall, setShowPaywall, checkPro } = usePro();
@@ -178,6 +179,7 @@ export const HistoryView: React.FC = () => {
     }, []);
 
     const repeatWorkout = useCallback((log: Log) => {
+        if (activeSession) return;
         const now = Date.now();
         const repeated = {
             ...log,
@@ -207,7 +209,7 @@ export const HistoryView: React.FC = () => {
             window.history.replaceState({ ...(window.history.state || {}), historyDetail: undefined }, '', '#history');
         } catch { }
         window.dispatchEvent(new CustomEvent('gainslab:navigate', { detail: { view: 'workout' } }));
-    }, [setActiveSession]);
+    }, [activeSession, setActiveSession]);
 
     const handleExportCSV = useCallback(() => {
         if (!checkPro('csv_export')) return;
@@ -274,6 +276,7 @@ export const HistoryView: React.FC = () => {
                     onBack={closeDetail}
                     onRepeat={() => repeatWorkout(selectedLog)}
                     onDelete={() => setDeletingLogId(selectedLog.id)}
+                    repeatBlocked={!!activeSession}
                 />
             )}
 
