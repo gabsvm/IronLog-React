@@ -47,8 +47,6 @@ export const useTimer = (lang: Lang) => {
         const blobUrl = URL.createObjectURL(blob);
         workerRef.current = new Worker(blobUrl);
 
-        // Browser/PWA only. Installed Android uses NativeBridge permissions and
-        // AlarmManager instead of the browser Notification API.
         if (!isNative && 'Notification' in window && Notification.permission === 'default') {
             void Notification.requestPermission().catch(() => {});
         }
@@ -72,7 +70,7 @@ export const useTimer = (lang: Lang) => {
         }
     }, [isNative, timer.active, timer.endAt, lang]);
 
-    const handleTick = useCallback(() => {
+    const handleTick = useCallback((suppressFeedback = false) => {
         setTimer(prev => {
             if (!prev || !prev.active) return prev;
 
@@ -86,10 +84,15 @@ export const useTimer = (lang: Lang) => {
             }
 
             if (secondsLeft <= 0) {
-                // Foreground JS feedback. If Android has suspended the WebView,
-                // RestTimerReceiver handles sound/haptics/notification natively.
-                playTimerFinishSound();
-                triggerHaptic('success');
+                // Visible JS owns immediate feedback. When native Android is in
+                // background, RestTimerReceiver owns it instead. A visibility
+                // resync passes suppressFeedback=true so reopening the app after
+                // a native alarm does not beep/vibrate a second time.
+                const shouldEmitFeedback = !suppressFeedback && (!isNative || document.visibilityState === 'visible');
+                if (shouldEmitFeedback) {
+                    playTimerFinishSound();
+                    triggerHaptic('success');
+                }
 
                 if (!isNative && 'Notification' in window && Notification.permission === 'granted') {
                     const currentLang = langRef.current;
@@ -139,7 +142,7 @@ export const useTimer = (lang: Lang) => {
 
     useEffect(() => {
         if (!workerRef.current) return;
-        workerRef.current.onmessage = handleTick;
+        workerRef.current.onmessage = () => handleTick(false);
 
         if (timer.active) {
             workerRef.current.postMessage('start');
@@ -149,15 +152,15 @@ export const useTimer = (lang: Lang) => {
         }
     }, [timer.active, handleTick, isNative]);
 
-    // Recalculate immediately when returning from background to self-correct any
-    // WebView timer throttling.
+    // Recalculate immediately after returning from background. Native resync is
+    // state-only because AlarmManager already owns background completion feedback.
     useEffect(() => {
         const onVisibilityChange = () => {
-            if (document.visibilityState === 'visible') handleTick();
+            if (document.visibilityState === 'visible') handleTick(isNative);
         };
         document.addEventListener('visibilitychange', onVisibilityChange);
         return () => document.removeEventListener('visibilitychange', onVisibilityChange);
-    }, [handleTick]);
+    }, [handleTick, isNative]);
 
     return { restTimer: timer, setRestTimer: setTimer };
 };
