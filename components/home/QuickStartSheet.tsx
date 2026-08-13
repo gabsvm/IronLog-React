@@ -49,53 +49,61 @@ export const QuickStartSheet: React.FC<Props> = ({ open, onClose, lang, onResume
     return (
         <Sheet open={open} onOpenChange={(next) => { if (!next) onClose(); }} title={lang === 'es' ? 'Iniciar entrenamiento' : 'Start training'} accent="primary">
             <div className="space-y-2.5 px-4 pb-8 pt-1">
-                {activeSession && (
-                    <Row
-                        icon="Play"
-                        primary
-                        badge={lang === 'es' ? 'EN CURSO' : 'LIVE'}
-                        title={lang === 'es' ? 'Reanudar sesión' : 'Resume session'}
-                        description={activeSession.name}
-                        onClick={() => run(onResume)}
-                    />
+                {activeSession ? (
+                    <>
+                        <Row
+                            icon="Play"
+                            primary
+                            badge={lang === 'es' ? 'EN CURSO' : 'LIVE'}
+                            title={lang === 'es' ? 'Reanudar sesión' : 'Resume session'}
+                            description={activeSession.name}
+                            onClick={() => run(onResume)}
+                        />
+                        <div className="rounded-2xl border border-amber-500/15 bg-amber-500/[0.06] px-4 py-3 text-[11px] leading-relaxed text-amber-600 dark:text-amber-300">
+                            {lang === 'es'
+                                ? 'Finaliza o descarta la sesión activa antes de iniciar otra.'
+                                : 'Finish or discard the active session before starting another one.'}
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        {activeMeso && (
+                            <Row
+                                icon="Calendar"
+                                primary
+                                title={lang === 'es' ? 'Entreno programado' : 'Scheduled workout'}
+                                description={`${activeMeso.name} · ${lang === 'es' ? 'Semana' : 'Week'} ${activeMeso.week}`}
+                                onClick={() => run(onToday)}
+                            />
+                        )}
+
+                        <div className="pt-1 text-[9px] font-black uppercase tracking-[0.17em] text-zinc-500">
+                            {lang === 'es' ? 'Entrenar sin plan fijo' : 'Train without a fixed plan'}
+                        </div>
+                        <Row
+                            icon="Dumbbell"
+                            title={lang === 'es' ? 'Sesión libre / WOD / Skill' : 'Freestyle / WOD / Skill'}
+                            description={lang === 'es' ? 'Gym libre, CrossFit o progresiones de calistenia.' : 'Free gym, CrossFit or calisthenics progressions.'}
+                            onClick={() => run(onFreestyle)}
+                        />
+                        <Row
+                            icon="Layers"
+                            title="Two Block Mass"
+                            description={lang === 'es' ? 'Protocolos de Nick Nilsson y sesiones por bloque.' : 'Nick Nilsson protocols and block-based sessions.'}
+                            onClick={() => run(onTwoBlock)}
+                        />
+
+                        <div className="pt-1 text-[9px] font-black uppercase tracking-[0.17em] text-zinc-500">
+                            {lang === 'es' ? 'Gestionar' : 'Manage'}
+                        </div>
+                        <Row
+                            icon="Edit"
+                            title={lang === 'es' ? 'Editar rutina' : 'Edit routine'}
+                            description={lang === 'es' ? 'Días, ejercicios, series y estructura del plan.' : 'Days, exercises, sets and plan structure.'}
+                            onClick={() => run(onEditProgram)}
+                        />
+                    </>
                 )}
-
-                {activeMeso && !activeSession && (
-                    <Row
-                        icon="Calendar"
-                        primary
-                        title={lang === 'es' ? 'Entreno programado' : 'Scheduled workout'}
-                        description={`${activeMeso.name} · ${lang === 'es' ? 'Semana' : 'Week'} ${activeMeso.week}`}
-                        onClick={() => run(onToday)}
-                    />
-                )}
-
-                <div className="pt-1 text-[9px] font-black uppercase tracking-[0.17em] text-zinc-500">
-                    {lang === 'es' ? 'Entrenar sin plan fijo' : 'Train without a fixed plan'}
-                </div>
-
-                <Row
-                    icon="Dumbbell"
-                    title={lang === 'es' ? 'Sesión libre / WOD / Skill' : 'Freestyle / WOD / Skill'}
-                    description={lang === 'es' ? 'Gym libre, CrossFit o progresiones de calistenia.' : 'Free gym, CrossFit or calisthenics progressions.'}
-                    onClick={() => run(onFreestyle)}
-                />
-                <Row
-                    icon="Layers"
-                    title="Two Block Mass"
-                    description={lang === 'es' ? 'Protocolos de Nick Nilsson y sesiones por bloque.' : 'Nick Nilsson protocols and block-based sessions.'}
-                    onClick={() => run(onTwoBlock)}
-                />
-
-                <div className="pt-1 text-[9px] font-black uppercase tracking-[0.17em] text-zinc-500">
-                    {lang === 'es' ? 'Gestionar' : 'Manage'}
-                </div>
-                <Row
-                    icon="Edit"
-                    title={lang === 'es' ? 'Editar rutina' : 'Edit routine'}
-                    description={lang === 'es' ? 'Días, ejercicios, series y estructura del plan.' : 'Days, exercises, sets and plan structure.'}
-                    onClick={() => run(onEditProgram)}
-                />
             </div>
         </Sheet>
     );
