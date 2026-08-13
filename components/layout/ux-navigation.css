@@ -21,3 +21,22 @@
     padding-top: calc(env(safe-area-inset-top, 0px) + 1rem) !important;
   }
 }
+
+/* Home has a plan-specific settings button that historically used the same
+ * gear affordance as global Settings. Keep its existing behavior but present
+ * it as an overflow/menu action so the two concepts are no longer confused.
+ */
+.scroll-container #tut-settings-btn > svg {
+  display: none;
+}
+
+.scroll-container #tut-settings-btn::before {
+  content: '•••';
+  display: block;
+  margin-top: -3px;
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  line-height: 1;
+  color: currentColor;
+}
