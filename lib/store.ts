@@ -34,11 +34,11 @@ export const useStore = create<AppStateStore>((set, get) => ({
     setActiveSession: (val) => {
         set((state) => {
             const nextVal = typeof val === 'function' ? val(state.activeSession) : val;
-            
-            // Persist to IDB
+
             if (sessionTimeout) clearTimeout(sessionTimeout);
             sessionTimeout = setTimeout(() => {
-                db.set('il_session_v16', nextVal);
+                sessionTimeout = null;
+                void db.set('il_session_v16', nextVal);
             }, 500);
 
             return { activeSession: nextVal };
@@ -47,11 +47,11 @@ export const useStore = create<AppStateStore>((set, get) => ({
     setActiveMeso: (val) => {
         set((state) => {
             const nextVal = typeof val === 'function' ? val(state.activeMeso) : val;
-            
-            // Persist to IDB
+
             if (mesoTimeout) clearTimeout(mesoTimeout);
             mesoTimeout = setTimeout(() => {
-                db.set('il_meso_v16', nextVal);
+                mesoTimeout = null;
+                void db.set('il_meso_v16', nextVal);
             }, 500);
 
             return { activeMeso: nextVal };
@@ -59,5 +59,36 @@ export const useStore = create<AppStateStore>((set, get) => ({
     }
 }));
 
+/**
+ * Commit the latest in-memory workout/mesocycle immediately. Android can pause
+ * or kill a WebView after it backgrounds; waiting for the 500 ms debounce at
+ * that boundary risks losing the very last set edit.
+ */
+export const flushStorePersistence = () => {
+    const { activeSession, activeMeso } = useStore.getState();
+
+    if (sessionTimeout) {
+        clearTimeout(sessionTimeout);
+        sessionTimeout = null;
+    }
+    if (mesoTimeout) {
+        clearTimeout(mesoTimeout);
+        mesoTimeout = null;
+    }
+
+    void db.set('il_session_v16', activeSession);
+    void db.set('il_meso_v16', activeMeso);
+};
+
 // Auto-initialize
-useStore.getState()._init();
+void useStore.getState()._init();
+
+if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') flushStorePersistence();
+    });
+}
+
+if (typeof window !== 'undefined') {
+    window.addEventListener('pagehide', flushStorePersistence);
+}
