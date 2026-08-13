@@ -30,6 +30,36 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
     const [showPlanActions, setShowPlanActions] = React.useState(false);
     const bypassPlanCapture = React.useRef(false);
 
+    React.useEffect(() => {
+        const handlePop = (event: PopStateEvent) => {
+            if (!event.state?.profile) setShowProfile(false);
+        };
+        window.addEventListener('popstate', handlePop);
+        return () => window.removeEventListener('popstate', handlePop);
+    }, []);
+
+    const openProfile = () => {
+        if (showProfile) return;
+        try {
+            window.history.pushState(
+                { ...(window.history.state || {}), view, settings: false, profile: true },
+                '',
+                '#profile'
+            );
+        } catch { }
+        setShowProfile(true);
+    };
+
+    const closeProfile = () => {
+        try {
+            if (window.history.state?.profile) {
+                window.history.back();
+                return;
+            }
+        } catch { }
+        setShowProfile(false);
+    };
+
     const NavBtn = ({ id, label, icon }: { id: typeof view, label: string, icon: any }) => {
         const isActive = view === id;
         return (
@@ -132,7 +162,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
                                 email={user?.email}
                                 photoURL={(user as any)?.photoURL}
                                 isPro={isPro}
-                                onClick={() => setShowProfile(true)}
+                                onClick={openProfile}
                                 ariaLabel={lang === 'es' ? 'Abrir perfil' : 'Open profile'}
                             />
                         </div>
@@ -168,7 +198,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
 
             <ProfileSheet
                 open={showProfile}
-                onClose={() => setShowProfile(false)}
+                onClose={closeProfile}
                 onOpenSettings={onOpenSettings}
             />
 
