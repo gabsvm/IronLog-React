@@ -2,17 +2,19 @@ import React from 'react';
 import { useApp, useAppPreferences } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { usePro } from '../../hooks/usePro';
+import { useStore } from '../../lib/store';
 import { TRANSLATIONS } from '../../constants';
 import { Icon } from '../ui/Icon';
 import { Logo } from '../ui/Logo';
 import { Avatar } from '../ui/Avatar';
 import { ProfileSheet } from '../profile/ProfileSheet';
+import { PlanActionsSheet } from '../home/PlanActionsSheet';
 import './ux-navigation.css';
 
 interface LayoutProps {
     children: React.ReactNode;
     view: 'home' | 'workout' | 'history' | 'stats' | 'nutrition';
-    setView: (v: 'home' | 'workout' | 'history' | 'stats' | 'nutrition') => void;
+    setView: (v: 'home' | 'workout' | 'history' | 'stats' | 'nutrition' | 'program') => void;
     onOpenSettings: () => void;
     onOpenCommandPalette?: () => void;
 }
@@ -22,8 +24,11 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
     const { isOnline, syncStatus } = useApp();
     const { user } = useAuth();
     const { isPro } = usePro();
+    const activeMeso = useStore(state => state.activeMeso);
     const t = TRANSLATIONS[lang];
     const [showProfile, setShowProfile] = React.useState(false);
+    const [showPlanActions, setShowPlanActions] = React.useState(false);
+    const bypassPlanCapture = React.useRef(false);
 
     const NavBtn = ({ id, label, icon }: { id: typeof view, label: string, icon: any }) => {
         const isActive = view === id;
@@ -55,8 +60,42 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
 
     const isVirtualized = view === 'history';
 
+    const handleShellClickCapture = (event: React.MouseEvent<HTMLDivElement>) => {
+        if (view !== 'home' || !activeMeso) return;
+        const target = event.target as Element | null;
+        const planButton = target?.closest?.('.scroll-container #tut-settings-btn');
+        if (!planButton) return;
+
+        if (bypassPlanCapture.current) {
+            bypassPlanCapture.current = false;
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        setShowPlanActions(true);
+    };
+
+    const openExistingPlanSettings = () => {
+        setShowPlanActions(false);
+        window.setTimeout(() => {
+            const button = document.querySelector('.scroll-container #tut-settings-btn') as HTMLElement | null;
+            if (!button) return;
+            bypassPlanCapture.current = true;
+            button.click();
+        }, 120);
+    };
+
+    const editProgram = () => {
+        setShowPlanActions(false);
+        setView('program');
+    };
+
     return (
-        <div className="flex h-full w-full flex-col overflow-hidden bg-[rgb(var(--surface-app))] font-sans text-[rgb(var(--text-primary))]">
+        <div
+            className="flex h-full w-full flex-col overflow-hidden bg-[rgb(var(--surface-app))] font-sans text-[rgb(var(--text-primary))]"
+            onClickCapture={handleShellClickCapture}
+        >
             {view !== 'workout' && (
                 <div className="pointer-events-none absolute left-0 right-0 top-0 z-20 bg-gradient-to-b from-[rgb(var(--surface-app))] via-[rgb(var(--surface-app)/0.9)] to-transparent px-6 pb-2 pt-safe">
                     <div className="pointer-events-auto flex h-14 items-center justify-between">
@@ -131,6 +170,17 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
                 open={showProfile}
                 onClose={() => setShowProfile(false)}
                 onOpenSettings={onOpenSettings}
+            />
+
+            <PlanActionsSheet
+                open={showPlanActions}
+                onClose={() => setShowPlanActions(false)}
+                lang={lang}
+                planName={activeMeso?.name}
+                week={activeMeso?.week}
+                totalWeeks={activeMeso?.targetWeeks || activeMeso?.duration}
+                onConfigure={openExistingPlanSettings}
+                onEditProgram={editProgram}
             />
         </div>
     );
