@@ -18,10 +18,15 @@ html.light .workout-reorder-launcher {
   color: rgb(var(--text-muted)) !important;
 }
 
-/* Virtuoso item wrappers may size their child from intrinsic content. Force every
-   HistoryCard to consume the same viewport width regardless of title/preview length. */
-button[class~="mx-4"][class~="mb-3"][class~="block"][class*="rounded-[1.3rem]"] {
+/* Keep all virtualized History rows on one consistent width rail. */
+div[data-item-index] {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+button[class~="mx-4"][class~="mb-3"][class~="block"] {
   width: calc(100% - 2rem) !important;
   max-width: calc(100% - 2rem) !important;
+  min-width: 0 !important;
   box-sizing: border-box;
 }
