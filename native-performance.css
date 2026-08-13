@@ -1,9 +1,9 @@
 /*
- * Capacitor/Android-only performance profile.
+ * Capacitor/Android-only performance profile for EXPERIMENTAL.
  *
- * The PWA keeps the richer blur-heavy presentation. Installed builds add the
- * `native-shell` class in index.tsx and use cheaper compositing choices that are
- * much friendlier to Android System WebView while scrolling a live workout.
+ * The production PWA keeps its richer blur-heavy presentation. Installed builds
+ * add `native-shell` in index.tsx and use cheaper compositing choices that are
+ * friendlier to Android System WebView during a live workout.
  */
 
 html.native-shell,
@@ -40,13 +40,21 @@ html.native-shell .glass-panel {
     background-color: rgba(18, 18, 20, 0.97);
 }
 
-@supports (content-visibility: auto) {
-    html.native-shell #tut-exercise-list [class~='dark:glass-card'] {
-        content-visibility: auto;
-        contain-intrinsic-size: auto 560px;
-        contain: layout paint style;
-    }
+/* EXPERIMENTAL already puts content-visibility/contain inline on each sortable
+   exercise card. Native mode additionally drops expensive long shadows. DnD and
+   SortableContext do not add DOM wrappers, so cards are direct list children. */
+html.native-shell #tut-exercise-list > div {
+    box-shadow: none !important;
+}
 
+html.native-shell #tut-exercise-list > div .animate-pulse,
+html.native-shell #tut-exercise-list > div .animate-bounce,
+html.native-shell #tut-exercise-list > div .animate-pulse-glow-green,
+html.native-shell #tut-exercise-list > div .animate-bounce-cta {
+    animation: none !important;
+}
+
+@supports (content-visibility: auto) {
     html.native-shell .glass-card:has(canvas),
     html.native-shell .glass-panel:has(canvas) {
         content-visibility: auto;
@@ -55,20 +63,9 @@ html.native-shell .glass-panel {
     }
 }
 
-html.native-shell #tut-exercise-list [class~='dark:glass-card'] {
-    box-shadow: none !important;
-}
-
-html.native-shell #tut-exercise-list .animate-pulse,
-html.native-shell #tut-exercise-list .animate-bounce,
-html.native-shell #tut-exercise-list .animate-pulse-glow-green,
-html.native-shell #tut-exercise-list .animate-bounce-cta {
-    animation: none !important;
-}
-
-/* The large circular rest timer updates every second. Its browser drop-shadow
-   looks good but creates an extra filter/compositing pass in Android WebView. */
-html.native-shell .rest-timer-ring {
+/* CircularTimer uses an inline SVG filter. !important removes that extra filter
+   pass only in the installed shell without changing the PWA. */
+html.native-shell [role='dialog'] svg[width='152'] {
     filter: none !important;
 }
 
