@@ -1,0 +1,27 @@
+/* Focused polish for the explicit workout reorder mode and History list. */
+
+/* Reordering is now a session-level action. The old per-card drag handle is
+   intentionally hidden so scrolling/editing a workout never starts a card drag. */
+.product-workout-polish .cursor-grab {
+  display: none !important;
+}
+
+/* Sits immediately to the left of the existing Add (+) action in the workout header. */
+.workout-reorder-launcher {
+  top: calc(env(safe-area-inset-top, 0px) + 6px);
+  right: 48px;
+}
+
+html.light .workout-reorder-launcher {
+  border-color: rgb(var(--border-subtle)) !important;
+  background: rgb(var(--surface-elevated) / 0.96) !important;
+  color: rgb(var(--text-muted)) !important;
+}
+
+/* Virtuoso item wrappers may size their child from intrinsic content. Force every
+   HistoryCard to consume the same viewport width regardless of title/preview length. */
+button[class~="mx-4"][class~="mb-3"][class~="block"][class*="rounded-[1.3rem]"] {
+  width: calc(100% - 2rem) !important;
+  max-width: calc(100% - 2rem) !important;
+  box-sizing: border-box;
+}
