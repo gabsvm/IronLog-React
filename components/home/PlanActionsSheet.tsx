@@ -74,7 +74,7 @@ export const PlanActionsSheet: React.FC<PlanActionsSheetProps> = ({
 
             <div className="space-y-2.5">
                 <ActionRow
-                    icon="SlidersHorizontal"
+                    icon="Settings"
                     title={lang === 'es' ? 'Configurar plan' : 'Configure plan'}
                     description={lang === 'es' ? 'Duración, deload, notas y opciones del mesociclo.' : 'Duration, deload, notes and mesocycle options.'}
                     onClick={onConfigure}
