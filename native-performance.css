@@ -1,0 +1,98 @@
+/*
+ * Capacitor/Android-only performance profile.
+ *
+ * The PWA keeps the richer blur-heavy presentation. Installed builds add the
+ * `native-shell` class in index.tsx and use cheaper compositing choices that are
+ * much friendlier to Android System WebView while scrolling a live workout.
+ */
+
+html.native-shell,
+html.native-shell body,
+html.native-shell #root {
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+}
+
+html.native-shell button,
+html.native-shell [role='button'],
+html.native-shell input,
+html.native-shell textarea {
+    touch-action: manipulation;
+}
+
+html.native-shell .glass {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background-color: rgba(0, 0, 0, 0.96) !important;
+}
+
+html.native-shell .glass-island,
+html.native-shell .glass-card,
+html.native-shell .glass-panel,
+html.native-shell [class*='backdrop-blur'] {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+}
+
+html.native-shell .glass-island,
+html.native-shell .glass-card,
+html.native-shell .glass-panel {
+    background-color: rgba(18, 18, 20, 0.97);
+}
+
+@supports (content-visibility: auto) {
+    html.native-shell #tut-exercise-list [class~='dark:glass-card'] {
+        content-visibility: auto;
+        contain-intrinsic-size: auto 560px;
+        contain: layout paint style;
+    }
+
+    html.native-shell .glass-card:has(canvas),
+    html.native-shell .glass-panel:has(canvas) {
+        content-visibility: auto;
+        contain-intrinsic-size: auto 360px;
+        contain: layout paint style;
+    }
+}
+
+html.native-shell #tut-exercise-list [class~='dark:glass-card'] {
+    box-shadow: none !important;
+}
+
+html.native-shell #tut-exercise-list .animate-pulse,
+html.native-shell #tut-exercise-list .animate-bounce,
+html.native-shell #tut-exercise-list .animate-pulse-glow-green,
+html.native-shell #tut-exercise-list .animate-bounce-cta {
+    animation: none !important;
+}
+
+/* The large circular rest timer updates every second. Its browser drop-shadow
+   looks good but creates an extra filter/compositing pass in Android WebView. */
+html.native-shell .rest-timer-ring {
+    filter: none !important;
+}
+
+html.native-shell [class*='transition-all'] {
+    transition-property: transform, opacity, color, background-color, border-color !important;
+}
+
+html.native-shell .scroll-container,
+html.native-shell .calendar-timeline {
+    scroll-behavior: auto !important;
+}
+
+html.native-shell::view-transition-old(root),
+html.native-shell::view-transition-new(root) {
+    animation: none !important;
+}
+
+html.native-shell button:active {
+    box-shadow: none !important;
+}
+
+html.native-shell input[type='number'],
+html.native-shell input[inputmode='decimal'],
+html.native-shell input[inputmode='numeric'] {
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+}
