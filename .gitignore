@@ -29,6 +29,12 @@ dist-ssr
 *.sw?
 dist/
 
+# Local Android release signing material and generated release artifacts
+android/key.properties
+android/**/*.jks
+android/**/*.keystore
+/release/
+
 # Android / Kotlin Multiplatform build artifacts and machine-specific SDK paths
 ironlog-kmp/.gradle/
 ironlog-kmp/**/build/
