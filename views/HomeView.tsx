@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { HomeView as HomeViewImpl } from './HomeViewImpl';
 import { useAppPreferences } from '../context/AppContext';
 import './product-polish.css';
+import './reorder-history-polish.css';
 
 interface HomeViewProps {
     startSession: (dayIdx: number) => void;
