@@ -1,6 +1,11 @@
-
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { playTimerFinishSound } from '../utils/audio';
+import { Capacitor } from '@capacitor/core';
+import {
+    cancelNativeRestTimer,
+    playTimerFinishSound,
+    scheduleNativeRestTimer,
+    triggerHaptic,
+} from '../utils/audio';
 import { TRANSLATIONS } from '../constants';
 import { Lang } from '../types';
 
@@ -15,14 +20,15 @@ export const useTimer = (lang: Lang) => {
     const [timer, setTimer] = useState<TimerState>({ active: false, timeLeft: 0, duration: 120, endAt: 0 });
     const workerRef = useRef<Worker | null>(null);
     const langRef = useRef(lang);
+    const isNative = Capacitor.isNativePlatform();
 
-    // Keep lang ref current for the callback
     useEffect(() => {
         langRef.current = lang;
     }, [lang]);
 
     useEffect(() => {
-        // Blob for inline worker to avoid external file issues
+        // The countdown is timestamp-based and only renders whole seconds, so a
+        // 1 Hz wakeup is enough. This replaces the old 250 ms worker cadence.
         const workerCode = `
             let interval = null;
             self.onmessage = function(e) {
@@ -30,7 +36,7 @@ export const useTimer = (lang: Lang) => {
                     if (interval) clearInterval(interval);
                     interval = setInterval(() => {
                         self.postMessage('tick');
-                    }, 250); 
+                    }, 1000);
                 } else if (e.data === 'stop') {
                     if (interval) clearInterval(interval);
                     interval = null;
@@ -41,39 +47,53 @@ export const useTimer = (lang: Lang) => {
         const blobUrl = URL.createObjectURL(blob);
         workerRef.current = new Worker(blobUrl);
 
-        // Request Notification Permission
-        if ("Notification" in window && Notification.permission === "default") {
-            Notification.requestPermission();
+        // Browser/PWA only. Installed Android uses NativeBridge permissions and
+        // AlarmManager instead of the browser Notification API.
+        if (!isNative && 'Notification' in window && Notification.permission === 'default') {
+            void Notification.requestPermission().catch(() => {});
         }
 
         return () => {
             workerRef.current?.terminate();
-            // Revoke the blob URL — the worker holds its own copy of the code,
-            // so it's safe to free the URL immediately after the worker terminates.
-            // Previously this leaked one blob URL per provider mount (small but real).
             URL.revokeObjectURL(blobUrl);
         };
-    }, []);
+    }, [isNative]);
+
+    // Schedule/cancel the Android OS alarm only when the timer identity changes,
+    // not on every displayed second.
+    useEffect(() => {
+        if (!isNative) return;
+
+        if (timer.active && timer.endAt > Date.now()) {
+            const t = TRANSLATIONS[lang]?.timer || TRANSLATIONS.en.timer;
+            scheduleNativeRestTimer(timer.endAt, t.finished, t.getBack);
+        } else {
+            cancelNativeRestTimer();
+        }
+    }, [isNative, timer.active, timer.endAt, lang]);
 
     const handleTick = useCallback(() => {
         setTimer(prev => {
             if (!prev || !prev.active) return prev;
-            
-            const now = Date.now();
-            const remainingMs = Math.max(0, (prev.endAt || 0) - now);
+
+            const remainingMs = Math.max(0, (prev.endAt || 0) - Date.now());
             const secondsLeft = Math.ceil(remainingMs / 1000);
-            
-            // Update Title
-            document.title = secondsLeft > 0 ? `(${Math.floor(secondsLeft/60)}:${(secondsLeft%60).toString().padStart(2,'0')}) Resting...` : "GainsLab Pro";
+
+            if (!isNative) {
+                document.title = secondsLeft > 0
+                    ? `(${Math.floor(secondsLeft / 60)}:${(secondsLeft % 60).toString().padStart(2, '0')}) Resting...`
+                    : 'GainsLab Pro';
+            }
 
             if (secondsLeft <= 0) {
-                // FINISHED
+                // Foreground JS feedback. If Android has suspended the WebView,
+                // RestTimerReceiver handles sound/haptics/notification natively.
                 playTimerFinishSound();
-                
-                // Safe Notification Logic with Localization and Tagging
-                if ("Notification" in window && Notification.permission === "granted") {
+                triggerHaptic('success');
+
+                if (!isNative && 'Notification' in window && Notification.permission === 'granted') {
                     const currentLang = langRef.current;
-                    const t = TRANSLATIONS[currentLang]?.timer || TRANSLATIONS['en'].timer;
+                    const t = TRANSLATIONS[currentLang]?.timer || TRANSLATIONS.en.timer;
                     const title = t.finished;
                     const body = t.getBack;
 
@@ -81,42 +101,41 @@ export const useTimer = (lang: Lang) => {
                         if ('serviceWorker' in navigator) {
                             navigator.serviceWorker.ready.then(registration => {
                                 registration.showNotification(title, {
-                                    body: body,
-                                    icon: "/icon-192.png",
-                                    tag: 'gainslab-timer', // Consolidate notifications
+                                    body,
+                                    icon: '/icon-192.png',
+                                    tag: 'gainslab-timer',
                                     vibrate: [200, 100, 200]
                                 } as any);
                             }).catch(() => {
-                                // Silent fail or fallback
                                 try {
                                     new Notification(title, {
-                                        body: body,
-                                        icon: "/icon-192.png",
-                                        tag: 'gainslab-timer' // Consolidate
+                                        body,
+                                        icon: '/icon-192.png',
+                                        tag: 'gainslab-timer'
                                     });
-                                } catch(e) {}
+                                } catch (e) {}
                             });
                         } else {
                             new Notification(title, {
-                                body: body,
-                                icon: "/icon-192.png",
-                                tag: 'gainslab-timer' // Consolidate
+                                body,
+                                icon: '/icon-192.png',
+                                tag: 'gainslab-timer'
                             });
                         }
                     } catch (e) {
-                        console.warn("Notification failed", e);
+                        console.warn('Notification failed', e);
                     }
                 }
 
-                document.title = "GainsLab Pro";
+                if (!isNative) document.title = 'GainsLab Pro';
                 workerRef.current?.postMessage('stop');
                 return { ...prev, active: false, timeLeft: 0, endAt: 0 };
             }
-            
+
             if (secondsLeft === prev.timeLeft) return prev;
             return { ...prev, timeLeft: secondsLeft };
         });
-    }, []);
+    }, [isNative]);
 
     useEffect(() => {
         if (!workerRef.current) return;
@@ -126,9 +145,19 @@ export const useTimer = (lang: Lang) => {
             workerRef.current.postMessage('start');
         } else {
             workerRef.current.postMessage('stop');
-            document.title = "GainsLab Pro";
+            if (!isNative) document.title = 'GainsLab Pro';
         }
-    }, [timer.active, handleTick]);
+    }, [timer.active, handleTick, isNative]);
+
+    // Recalculate immediately when returning from background to self-correct any
+    // WebView timer throttling.
+    useEffect(() => {
+        const onVisibilityChange = () => {
+            if (document.visibilityState === 'visible') handleTick();
+        };
+        document.addEventListener('visibilitychange', onVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+    }, [handleTick]);
 
     return { restTimer: timer, setRestTimer: setTimer };
 };
