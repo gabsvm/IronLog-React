@@ -1,8 +1,11 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { WorkoutView as WorkoutViewImpl } from './WorkoutViewImpl';
 import { useApp } from '../context/AppContext';
 import { useTimerActions } from '../context/TimerContext';
 import { useStore } from '../lib/store';
+import { ReorderExercisesSheet } from '../components/workout/ReorderExercisesSheet';
+import { Icon } from '../components/ui/Icon';
+import type { SessionExercise } from '../types';
 import './product-polish.css';
 
 interface WorkoutViewProps {
@@ -11,30 +14,22 @@ interface WorkoutViewProps {
     onBack: () => void;
 }
 
-/**
- * Product shell around the proven workout implementation.
- * Adds detached-session completion without changing the workout controller itself.
- */
 export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, onBack }) => {
-    const { setLogs } = useApp();
+    const { setLogs, lang } = useApp();
     const activeSession = useStore(state => state.activeSession);
     const activeMeso = useStore(state => state.activeMeso);
     const setActiveSession = useStore(state => state.setActiveSession);
     const { setRestTimer } = useTimerActions();
+    const [reorderOpen, setReorderOpen] = useState(false);
 
     const handleFinish = useCallback(() => {
         if (!activeSession) return;
-
         const isDetached = activeSession.mesoId < 0 || activeSession.dayIdx < 0 || activeSession.week < 0;
-
-        // Only true program sessions enter App.tsx's week/mesocycle advancement lifecycle.
         if (!isDetached && activeMeso) {
             onFinish();
             return;
         }
 
-        // Freestyle, WOD, calisthenics, Two Block and repeated-history sessions
-        // are first-class workouts, but must never mutate mesocycle progress.
         const endTime = Date.now();
         const duration = activeSession.startTime ? (endTime - activeSession.startTime) / 1000 : 0;
         const log = {
@@ -51,9 +46,35 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
         onBack();
     }, [activeMeso, activeSession, onBack, onFinish, setActiveSession, setLogs, setRestTimer]);
 
+    const commitExerciseOrder = useCallback((ordered: SessionExercise[]) => {
+        setActiveSession(prev => prev ? { ...prev, exercises: ordered } : prev);
+    }, [setActiveSession]);
+
     return (
         <div className="product-workout-polish contents">
             <WorkoutViewImpl onFinish={handleFinish} onDiscard={onDiscard} onBack={onBack} />
+
+            {activeSession && activeSession.exercises.length > 1 && (
+                <button
+                    type="button"
+                    onClick={() => setReorderOpen(true)}
+                    className="workout-reorder-launcher fixed z-[45] flex h-9 w-9 items-center justify-center rounded-full border border-zinc-700/80 bg-zinc-900/95 text-zinc-400 shadow-lg transition-transform active:scale-90 active:text-primary-400"
+                    aria-label={lang === 'es' ? 'Ordenar ejercicios' : 'Reorder exercises'}
+                    title={lang === 'es' ? 'Ordenar ejercicios' : 'Reorder exercises'}
+                >
+                    <Icon name="GripVertical" size={18} strokeWidth={2.5} />
+                </button>
+            )}
+
+            {activeSession && (
+                <ReorderExercisesSheet
+                    open={reorderOpen}
+                    onOpenChange={setReorderOpen}
+                    exercises={activeSession.exercises || []}
+                    lang={lang}
+                    onCommit={commitExerciseOrder}
+                />
+            )}
         </div>
     );
 };
