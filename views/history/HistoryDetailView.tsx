@@ -9,6 +9,7 @@ interface Props {
     onBack: () => void;
     onRepeat: () => void;
     onDelete: () => void;
+    repeatBlocked?: boolean;
 }
 
 const displayDuration = (val: string | number | undefined) => {
@@ -17,7 +18,7 @@ const displayDuration = (val: string | number | undefined) => {
     return `${val}s`;
 };
 
-export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat, onDelete }) => {
+export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat, onDelete, repeatBlocked = false }) => {
     const summary = useMemo(() => {
         let sets = 0;
         let volume = 0;
@@ -138,10 +139,13 @@ export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat
                 <button
                     type="button"
                     onClick={onRepeat}
-                    className="mx-auto flex h-13 w-full max-w-md items-center justify-center gap-2 rounded-2xl bg-primary-500 px-5 py-4 text-sm font-black text-black shadow-lg shadow-primary-500/20 transition-transform active:scale-[0.98]"
+                    disabled={repeatBlocked}
+                    className="mx-auto flex min-h-[52px] w-full max-w-md items-center justify-center gap-2 rounded-2xl bg-primary-500 px-5 py-4 text-sm font-black text-black shadow-lg shadow-primary-500/20 transition-transform active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:text-zinc-500 disabled:shadow-none dark:disabled:bg-zinc-800 dark:disabled:text-zinc-400"
                 >
-                    <Icon name="Repeat" size={18} />
-                    {lang === 'es' ? 'Repetir entrenamiento' : 'Repeat workout'}
+                    <Icon name={repeatBlocked ? 'Lock' : 'Repeat'} size={18} />
+                    {repeatBlocked
+                        ? (lang === 'es' ? 'Finaliza la sesión activa para repetir' : 'Finish active session to repeat')
+                        : (lang === 'es' ? 'Repetir entrenamiento' : 'Repeat workout')}
                 </button>
             </div>
         </div>
