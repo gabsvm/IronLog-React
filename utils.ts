@@ -31,6 +31,7 @@ export const formatSeconds = (s: number) => {
 
 export const formatHoursMinutes = (s: number) => {
     const sec = Math.max(0, Math.floor(Number(s) || 0));
+    if (sec < 60) return `${sec}s`;
     const totalMin = Math.floor(sec / 60);
     const h = Math.floor(totalMin / 60);
     const m = totalMin % 60;

@@ -22,6 +22,13 @@
   }
 }
 
+/* Capacitor is already an installed standalone application. `isStandalone`
+ * describes PWA display-mode and can be false inside a WebView, so the web-only
+ * install banner must never be shown in the native shell. */
+html.native-shell [aria-labelledby="settings-modal-title"] .scroll-container > .bg-gradient-to-r.from-primary-500.to-primary-600 {
+  display: none !important;
+}
+
 /* Home has a plan-specific settings button that historically used the same
  * gear affordance as global Settings. Keep its existing behavior but present
  * it as an overflow/menu action so the two concepts are no longer confused.

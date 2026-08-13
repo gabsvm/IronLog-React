@@ -18,12 +18,48 @@
   animation: none !important;
 }
 
-.product-home-polish .product-internal-plan-id {
+/* Internal plan/template identifiers are implementation details, never UI. */
+.product-internal-plan-id {
   font-size: 0 !important;
 }
-.product-home-polish .product-internal-plan-id::after {
+.product-internal-plan-id::after {
   content: attr(data-product-label);
   font-size: 10px;
+}
+
+/* Four-day programs fit on common 360dp-class phones; longer schedules still scroll. */
+.product-home-polish .calendar-timeline > button {
+  width: clamp(64px, 18.2vw, 76px) !important;
+  scroll-snap-align: start;
+}
+.product-home-polish .calendar-timeline {
+  scroll-snap-type: x proximity;
+}
+
+/* Week progress must follow the selected accent instead of leaking the old orange theme. */
+.product-home-polish [role="progressbar"] > div[class*="bg-gradient-to-r"] {
+  background-image: linear-gradient(to right, rgb(var(--primary-600)), rgb(var(--primary-400))) !important;
+  box-shadow: 0 0 8px rgb(var(--primary-500) / 0.22) !important;
+}
+
+/* The primary session card and no-plan hero were authored as dark-only blocks.
+   Use theme tokens in light mode instead of keeping a black island with dark text. */
+html.light .product-home-polish [class~="bg-[#1A1A1A]"],
+html.light .product-home-polish [class~="bg-[#121212]"] {
+  background-color: rgb(var(--surface-base)) !important;
+  border-color: rgb(var(--border-subtle)) !important;
+  box-shadow: 0 10px 30px -24px rgb(15 23 42 / 0.28) !important;
+}
+
+/* Opacity variants such as bg-zinc-950/40 are emitted as distinct utility
+   classes and were not covered by the old compatibility layer. */
+html.light .product-home-polish [class*="bg-zinc-950/"],
+html.light .product-home-polish [class*="bg-zinc-900/"] {
+  background-color: rgb(var(--surface-raised) / 0.78) !important;
+}
+html.light .product-home-polish [class*="border-zinc-800"],
+html.light .product-home-polish [class*="border-zinc-700"] {
+  border-color: rgb(var(--border-subtle)) !important;
 }
 
 /* WORKOUT ---------------------------------------------------------------- */
@@ -85,6 +121,73 @@
   animation: none !important;
 }
 
+/* Light workout theme: replace dark-only card/row/input islands with real surface
+   tokens while preserving semantic protocol tints. */
+html.light .product-workout-polish [class~="bg-[#141416]"] {
+  background-color: rgb(var(--surface-base)) !important;
+  border-color: rgb(var(--border-subtle)) !important;
+  box-shadow: 0 10px 28px -24px rgb(15 23 42 / 0.25) !important;
+}
+html.light .product-workout-polish [class~="bg-[#17171b]"],
+html.light .product-workout-polish [class~="bg-[#17171B]"] {
+  background-color: rgb(var(--surface-raised)) !important;
+}
+html.light .product-workout-polish [class~="bg-[#18181c]"] {
+  background-color: rgb(245 158 11 / 0.055) !important;
+}
+html.light .product-workout-polish [class~="bg-[#1c1816]"] {
+  background-color: rgb(249 115 22 / 0.055) !important;
+}
+html.light .product-workout-polish [class~="bg-[#18141f]"] {
+  background-color: rgb(217 70 239 / 0.05) !important;
+}
+html.light .product-workout-polish [class~="bg-[#131b1f]"] {
+  background-color: rgb(6 182 212 / 0.055) !important;
+}
+html.light .product-workout-polish [class~="bg-[#1A1A1A]"],
+html.light .product-workout-polish [class~="bg-[#121212]"] {
+  background-color: rgb(var(--surface-elevated)) !important;
+  color: rgb(var(--text-secondary)) !important;
+}
+html.light .product-workout-polish [class~="bg-[#202024]"] {
+  background-color: rgb(var(--surface-base)) !important;
+  border-color: rgb(var(--border-strong)) !important;
+  color: rgb(var(--text-primary)) !important;
+}
+html.light .product-workout-polish [class*="bg-zinc-900/"] {
+  background-color: rgb(var(--surface-raised) / 0.92) !important;
+}
+html.light .product-workout-polish [class*="bg-zinc-800/"] {
+  background-color: rgb(var(--surface-elevated) / 0.76) !important;
+}
+html.light .product-workout-polish [class*="border-zinc-800"] {
+  border-color: rgb(var(--border-subtle)) !important;
+}
+html.light .product-workout-polish [class*="border-zinc-700"] {
+  border-color: rgb(var(--border-strong)) !important;
+}
+html.light .product-workout-polish .divide-white\/10 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgb(var(--border-subtle)) !important;
+}
+html.light .product-workout-polish #tut-exercise-list > div > div:last-child {
+  background-color: rgb(var(--surface-raised) / 0.72) !important;
+  border-color: rgb(var(--border-subtle)) !important;
+}
+html.light .product-workout-polish > .fixed.inset-0 > .fixed.bottom-0.left-0.right-0.z-30 {
+  background: linear-gradient(to top, rgb(var(--surface-app)), rgb(var(--surface-app) / 0.97), transparent) !important;
+}
+
+/* HISTORY ---------------------------------------------------------------- */
+/* CSV belongs to the History header, not floating over workout cards while scrolling. */
+button[aria-label="Download CSV"] {
+  top: 10px !important;
+  bottom: auto !important;
+  right: 18px !important;
+  min-height: 36px;
+  box-shadow: none !important;
+  z-index: 4;
+}
+
 /* STATS ------------------------------------------------------------------ */
 .product-stats-shell {
   min-height: 100%;
@@ -122,4 +225,11 @@
 .product-stats-segment[data-active="true"] {
   background: rgb(var(--primary-500));
   color: #090909;
+}
+
+/* StatsViewImpl still owns all expensive charts/calculations. Its legacy heading and
+   mixed-scope summary are hidden because the wrapper now renders a consistent scoped summary. */
+.product-stats-impl > .relative > :nth-child(1),
+.product-stats-impl > .relative > :nth-child(2) {
+  display: none !important;
 }

@@ -1,18 +1,23 @@
 import React, { useMemo } from 'react';
 import { Log } from '../../types';
+import { useAppPreferences } from '../../context/AppContext';
 
 interface ActivityHeatmapProps {
     logs: Log[];
 }
 
 export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ logs }) => {
+    const { lang } = useAppPreferences();
+
     const data = useMemo(() => {
         const today = new Date();
         const map: Record<string, number> = {};
         logs.forEach(log => {
             if (log.skipped) return;
-            const date = new Date(log.endTime).toISOString().split('T')[0];
-            const volume = (log.exercises || []).reduce((acc, ex) => acc + (ex.sets?.filter(s => s.completed).length || 0), 0);
+            const timestamp = log.endTime || log.startTime;
+            if (!timestamp) return;
+            const date = new Date(timestamp).toISOString().split('T')[0];
+            const volume = (log.exercises || []).reduce((acc, ex) => acc + (ex.sets?.filter(s => s.completed && !s.skipped).length || 0), 0);
             map[date] = (map[date] || 0) + volume;
         });
 
@@ -38,17 +43,21 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ logs }) => {
         <div className="w-full overflow-hidden">
             <div className="flex flex-wrap justify-center gap-1 sm:justify-start">
                 {data.map(day => (
-                    <div key={day.date} title={`${day.date}: ${day.value} sets`} className={`h-2.5 w-2.5 rounded-sm transition-colors duration-300 sm:h-3 sm:w-3 ${getLevelColor(day.value)}`} />
+                    <div
+                        key={day.date}
+                        title={`${day.date}: ${day.value} ${lang === 'es' ? 'series' : 'sets'}`}
+                        className={`h-2.5 w-2.5 rounded-sm transition-colors duration-300 sm:h-3 sm:w-3 ${getLevelColor(day.value)}`}
+                    />
                 ))}
             </div>
             <div className="mt-2 flex items-center justify-between px-1 text-[9px] font-bold uppercase tracking-widest text-zinc-400">
                 <span>4M</span>
                 <div className="flex items-center gap-1">
-                    <span>Less</span>
+                    <span>{lang === 'es' ? 'Menos' : 'Less'}</span>
                     <div className="h-2 w-2 rounded-sm bg-zinc-200 dark:bg-zinc-800" />
                     <div className="h-2 w-2 rounded-sm bg-primary-500/35" />
                     <div className="h-2 w-2 rounded-sm bg-primary-500" />
-                    <span>More</span>
+                    <span>{lang === 'es' ? 'Más' : 'More'}</span>
                 </div>
             </div>
         </div>
