@@ -23,10 +23,6 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
         if (!root) return;
 
         const normalizeProductLabels = () => {
-            // The plan-specific menu is not global Settings. Give it its own tutorial/DOM id.
-            const planActions = root.querySelector<HTMLElement>('#tut-settings-btn');
-            if (planActions) planActions.id = 'tut-plan-actions-btn';
-
             // Internal template IDs such as TPL_178... must never leak into customer-facing UI.
             const label = lang === 'es' ? 'PERSONALIZADO' : 'CUSTOM';
             root.querySelectorAll<HTMLElement>('span').forEach((node) => {
