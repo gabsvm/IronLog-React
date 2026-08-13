@@ -5,13 +5,17 @@ import { triggerHaptic, playTimerFinishSound } from '../../utils/audio';
 const fmt = (s: number) =>
     s >= 60 ? `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}` : `${s}s`;
 
+// The UI displays whole seconds. 500 ms is enough to cross a second boundary
+// reliably while cutting the previous 200 ms wakeup cadence by 60%.
+const TICK_MS = 500;
+
 interface EMOMTimerProps {
     totalSets: number;
     lang: 'en' | 'es';
     onMinuteChange: (minute: number) => void;
 }
 
-export const EMOMTimer: React.FC<EMOMTimerProps> = ({ totalSets, lang, onMinuteChange }) => {
+export const EMOMTimer: React.FC<EMOMTimerProps> = React.memo(({ totalSets, lang, onMinuteChange }) => {
     const [state, setState] = useState<'idle' | 'running' | 'done'>('idle');
     const [timeLeft, setTimeLeft] = useState(60);
     const [minute, setMinute] = useState(0);
@@ -22,17 +26,17 @@ export const EMOMTimer: React.FC<EMOMTimerProps> = ({ totalSets, lang, onMinuteC
     const totalSetsRef = useRef(totalSets);
     totalSetsRef.current = totalSets;
 
-    const clear = () => {
+    const clear = useCallback(() => {
         if (intervalRef.current) {
             clearInterval(intervalRef.current);
             intervalRef.current = null;
         }
-    };
+    }, []);
 
     const tick = useCallback(() => {
         const elapsed = Math.floor((Date.now() - phaseStartRef.current) / 1000);
         const rem = Math.max(0, 60 - elapsed);
-        setTimeLeft(rem);
+        setTimeLeft(prev => prev === rem ? prev : rem);
         if (rem > 0) return;
 
         const next = minuteRef.current + 1;
@@ -47,10 +51,11 @@ export const EMOMTimer: React.FC<EMOMTimerProps> = ({ totalSets, lang, onMinuteC
 
         minuteRef.current = next;
         setMinute(next);
+        setTimeLeft(60);
         phaseStartRef.current = Date.now();
         onMinuteChange(next);
         triggerHaptic('heavy');
-    }, [onMinuteChange]);
+    }, [clear, onMinuteChange]);
 
     const start = useCallback(() => {
         setState('running');
@@ -61,8 +66,8 @@ export const EMOMTimer: React.FC<EMOMTimerProps> = ({ totalSets, lang, onMinuteC
         onMinuteChange(1);
         triggerHaptic('success');
         clear();
-        intervalRef.current = setInterval(tick, 200);
-    }, [tick, onMinuteChange]);
+        intervalRef.current = setInterval(tick, TICK_MS);
+    }, [tick, onMinuteChange, clear]);
 
     const stop = useCallback(() => {
         clear();
@@ -72,9 +77,9 @@ export const EMOMTimer: React.FC<EMOMTimerProps> = ({ totalSets, lang, onMinuteC
         minuteRef.current = 0;
         onMinuteChange(0);
         triggerHaptic('light');
-    }, [onMinuteChange]);
+    }, [onMinuteChange, clear]);
 
-    useEffect(() => () => clear(), []);
+    useEffect(() => () => clear(), [clear]);
 
     const l = (en: string, es: string) => (lang === 'en' ? en : es);
     const pct = ((60 - timeLeft) / 60) * 100;
@@ -148,7 +153,9 @@ export const EMOMTimer: React.FC<EMOMTimerProps> = ({ totalSets, lang, onMinuteC
             </div>
         </div>
     );
-};
+});
+
+EMOMTimer.displayName = 'EMOMTimer';
 
 interface TabataTimerProps {
     totalRounds: number;
@@ -158,7 +165,7 @@ interface TabataTimerProps {
 const WORK_SEC = 20;
 const REST_SEC = 10;
 
-export const TabataTimer: React.FC<TabataTimerProps> = ({ totalRounds, lang }) => {
+export const TabataTimer: React.FC<TabataTimerProps> = React.memo(({ totalRounds, lang }) => {
     const [state, setState] = useState<'idle' | 'running' | 'done'>('idle');
     const [phase, setPhase] = useState<'work' | 'rest'>('work');
     const [timeLeft, setTimeLeft] = useState(WORK_SEC);
@@ -171,23 +178,24 @@ export const TabataTimer: React.FC<TabataTimerProps> = ({ totalRounds, lang }) =
     const totalRoundsRef = useRef(totalRounds);
     totalRoundsRef.current = totalRounds;
 
-    const clear = () => {
+    const clear = useCallback(() => {
         if (intervalRef.current) {
             clearInterval(intervalRef.current);
             intervalRef.current = null;
         }
-    };
+    }, []);
 
     const tick = useCallback(() => {
         const dur = phaseRef.current === 'work' ? WORK_SEC : REST_SEC;
         const elapsed = Math.floor((Date.now() - phaseStartRef.current) / 1000);
         const rem = Math.max(0, dur - elapsed);
-        setTimeLeft(rem);
+        setTimeLeft(prev => prev === rem ? prev : rem);
         if (rem > 0) return;
 
         if (phaseRef.current === 'work') {
             phaseRef.current = 'rest';
             setPhase('rest');
+            setTimeLeft(REST_SEC);
             phaseStartRef.current = Date.now();
             triggerHaptic('medium');
             return;
@@ -206,9 +214,10 @@ export const TabataTimer: React.FC<TabataTimerProps> = ({ totalRounds, lang }) =
         setRound(next);
         phaseRef.current = 'work';
         setPhase('work');
+        setTimeLeft(WORK_SEC);
         phaseStartRef.current = Date.now();
         triggerHaptic('heavy');
-    }, []);
+    }, [clear]);
 
     const start = useCallback(() => {
         setState('running');
@@ -220,8 +229,8 @@ export const TabataTimer: React.FC<TabataTimerProps> = ({ totalRounds, lang }) =
         phaseStartRef.current = Date.now();
         triggerHaptic('success');
         clear();
-        intervalRef.current = setInterval(tick, 200);
-    }, [tick]);
+        intervalRef.current = setInterval(tick, TICK_MS);
+    }, [tick, clear]);
 
     const stop = useCallback(() => {
         clear();
@@ -232,9 +241,9 @@ export const TabataTimer: React.FC<TabataTimerProps> = ({ totalRounds, lang }) =
         phaseRef.current = 'work';
         roundRef.current = 1;
         triggerHaptic('light');
-    }, []);
+    }, [clear]);
 
-    useEffect(() => () => clear(), []);
+    useEffect(() => () => clear(), [clear]);
 
     const l = (en: string, es: string) => (lang === 'en' ? en : es);
     const isWork = phase === 'work';
@@ -307,4 +316,6 @@ export const TabataTimer: React.FC<TabataTimerProps> = ({ totalRounds, lang }) =
             </div>
         </div>
     );
-};
+});
+
+TabataTimer.displayName = 'TabataTimer';
