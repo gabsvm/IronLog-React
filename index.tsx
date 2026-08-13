@@ -1,10 +1,35 @@
 import React, { StrictMode, ReactNode, Component } from 'react';
 import { createRoot } from 'react-dom/client';
+import { Capacitor } from '@capacitor/core';
 import './index.css';
+import './native-performance.css';
 import App from './App';
 import { requestBackgroundSync, requestPeriodicSync } from './services/backgroundSync';
 
 console.log("Starting App Initialization...");
+
+const isNativeShell = Capacitor.isNativePlatform();
+
+// The installed Capacitor build has a different performance envelope from the
+// browser PWA. Mark it once so CSS and navigation can use cheaper compositing.
+if (isNativeShell) {
+  document.documentElement.classList.add('native-shell');
+  document.documentElement.dataset.effects = 'reduced';
+  try {
+    (document as any).startViewTransition = undefined;
+  } catch (_) {
+    // Some WebView versions expose it as a non-writable property. App.tsx also
+    // checks the reduced-effects dataset before attempting a transition.
+  }
+
+  // Clean up a Service Worker that may have been registered by an older build.
+  // Capacitor serves packaged assets locally and does not need an extra SW cache.
+  if ('serviceWorker' in navigator) {
+    void navigator.serviceWorker.getRegistrations()
+      .then(registrations => Promise.all(registrations.map(registration => registration.unregister())))
+      .catch(() => {});
+  }
+}
 
 const notifyUpdateAvailable = (registration: ServiceWorkerRegistration) => {
   window.dispatchEvent(new CustomEvent('ironlog:update-available', {
@@ -13,7 +38,7 @@ const notifyUpdateAvailable = (registration: ServiceWorkerRegistration) => {
 };
 
 const registerServiceWorker = () => {
-  if (!('serviceWorker' in navigator)) return;
+  if (isNativeShell || !('serviceWorker' in navigator)) return;
 
   window.addEventListener('load', () => {
     setTimeout(() => {
@@ -49,7 +74,7 @@ const registerServiceWorker = () => {
 
 registerServiceWorker();
 
-if ('serviceWorker' in navigator) {
+if (!isNativeShell && 'serviceWorker' in navigator) {
   let refreshing = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (refreshing) return;
@@ -58,17 +83,19 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-window.addEventListener('online', () => {
-  void requestBackgroundSync();
-  void requestPeriodicSync();
-});
-
-window.addEventListener('ironlog:sync-queue-changed', (event) => {
-  const pending = Number((event as CustomEvent).detail?.pending ?? 0);
-  if (pending > 0) {
+if (!isNativeShell) {
+  window.addEventListener('online', () => {
     void requestBackgroundSync();
-  }
-});
+    void requestPeriodicSync();
+  });
+
+  window.addEventListener('ironlog:sync-queue-changed', (event) => {
+    const pending = Number((event as CustomEvent).detail?.pending ?? 0);
+    if (pending > 0) {
+      void requestBackgroundSync();
+    }
+  });
+}
 
 interface ErrorBoundaryProps {
   children?: ReactNode;
