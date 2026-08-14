@@ -157,6 +157,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
             setProgram(editableProgram);
             setActiveMeso(prev => prev ? {
                 ...prev,
+                id: Date.now(),
                 name: lang === 'es' ? 'KONG · Rutina personal' : 'KONG · Personal routine',
                 mesoType: 'personal',
                 targetWeeks: 4,
