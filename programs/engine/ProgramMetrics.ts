@@ -21,7 +21,10 @@ export function calculateProgramMetrics(
 ): ProgramMetrics {
   const relevant = logs.filter((log) => log.mesoId === mesoId && !log.skipped);
   const setsCompleted = relevant.reduce((sum, log) => sum + log.exercises.reduce((exerciseSum, exercise) => exerciseSum + exercise.sets.filter((set) => set.completed).length, 0), 0);
-  const totalVolume = relevant.reduce((sum, log) => sum + log.exercises.reduce((exerciseSum, exercise) => exerciseSum + exercise.sets.reduce((setSum, set) => setSum + (Number(set.weight) || 0) * (Number(set.reps) || 0), 0), 0);
+  const totalVolume = relevant.reduce((sum, log) => sum + log.exercises.reduce((exerciseSum, exercise) => exerciseSum + exercise.sets.reduce((setSum, set) => {
+    if (!set.completed) return setSum;
+    return setSum + (Number(set.weight) || 0) * (Number(set.reps) || 0);
+  }, 0), 0), 0);
   const totalSeconds = relevant.reduce((sum, log) => sum + (Number(log.duration) || 0), 0);
 
   // A week is complete only when every scheduled day has a completed session.
