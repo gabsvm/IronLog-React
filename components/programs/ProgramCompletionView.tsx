@@ -3,6 +3,7 @@ import type { GlobalTemplate, Log, MesoCycle } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { calculateProgramMetrics } from '../../programs/engine/ProgramMetrics';
 import { resolveProgramWeek } from '../../programs/engine/ProgramResolver';
+import { toEditableProgram } from '../../programs/engine/ProgramConversion';
 import { KONG_4DAY_V1 } from '../../programs/kong/kong4Day';
 import { getKongDayDisplay } from '../../programs/kong/kongDisplay';
 import { triggerHaptic } from '../../utils/audio';
@@ -19,14 +20,14 @@ export const ProgramCompletionView: React.FC<Props> = ({ meso, logs, onFinish, o
   const { setPersonalTemplates } = useApp();
   const metrics = calculateProgramMetrics(logs, meso.id, 48, meso.programSystem?.startedBodyWeight, KONG_4DAY_V1.daysPerWeek);
 
-  const finalRoutine = useMemo(() => resolveProgramWeek(
+  const finalRoutine = useMemo(() => toEditableProgram(resolveProgramWeek(
     KONG_4DAY_V1,
     12,
     meso.programSystem?.substitutions || {},
   ).map((day, dayIndex) => ({
     ...day,
     dayName: getKongDayDisplay(3, dayIndex),
-  })), [meso.programSystem?.substitutions]);
+  }))), [meso.programSystem?.substitutions]);
 
   const saveAsPersonal = () => {
     const now = Date.now();
@@ -38,8 +39,8 @@ export const ProgramCompletionView: React.FC<Props> = ({ meso, logs, onFinish, o
         es: 'KONG · Bloque 3 Personal',
       },
       description: {
-        en: 'Personal routine created from your completed KONG Block 3 structure.',
-        es: 'Rutina personal creada desde la estructura final de tu Bloque 3 de KONG.',
+        en: 'Editable personal routine created from your completed KONG Block 3 structure.',
+        es: 'Rutina personal editable creada desde la estructura final de tu Bloque 3 de KONG.',
       },
       isPro: false,
       program: finalRoutine,
