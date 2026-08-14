@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../../context/AppContext';
+import { useStore } from '../../lib/store';
+import { KONG_4DAY_V1 } from '../../programs/kong/kong4Day';
 import { Icon } from './Icon';
 
 export interface CommandAction {
@@ -35,8 +37,18 @@ const ACCENT: Record<string, string> = {
  */
 export const CommandPalette: React.FC<Props> = ({ isOpen, onClose, actions, title }) => {
     const { lang } = useApp();
+    const activeMeso = useStore(state => state.activeMeso);
     const [query, setQuery] = useState('');
     const [activeIdx, setActiveIdx] = useState(0);
+    const isStructuredKong = activeMeso?.programSystem?.systemId === KONG_4DAY_V1.id;
+
+    // The generic editor mutates the projected `program` array. While KONG is
+    // active that array is only a resolved view of an immutable Program System,
+    // so exposing "Edit my program" here would silently bypass KONG safeguards.
+    const visibleActions = useMemo(
+        () => isStructuredKong ? actions.filter(action => action.id !== 'program') : actions,
+        [actions, isStructuredKong],
+    );
 
     useEffect(() => {
         if (!isOpen) {
@@ -47,14 +59,14 @@ export const CommandPalette: React.FC<Props> = ({ isOpen, onClose, actions, titl
 
     const filtered = useMemo(() => {
         const q = query.trim().toLowerCase();
-        if (!q) return actions;
-        return actions.filter(a => {
+        if (!q) return visibleActions;
+        return visibleActions.filter(a => {
             const label = a.label[lang].toLowerCase();
             const desc = a.description?.[lang].toLowerCase() || '';
             const kws = (a.keywords || []).join(' ').toLowerCase();
             return label.includes(q) || desc.includes(q) || kws.includes(q);
         });
-    }, [actions, query, lang]);
+    }, [visibleActions, query, lang]);
 
     useEffect(() => {
         if (activeIdx >= filtered.length) setActiveIdx(Math.max(0, filtered.length - 1));
