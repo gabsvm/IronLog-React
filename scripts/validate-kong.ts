@@ -45,18 +45,12 @@ assert(getProgramBlockForWeek(KONG_4DAY_V1, 5).block.number === 2 && getProgramB
 const substitution = resolveProgramDay(KONG_4DAY_V1, 1, 0, { b1d1_jm_press: 'tri_ext' }).slots[0];
 assert(substitution.exerciseId === 'tri_ext' && substitution.programSourceName === 'JM Press', 'persistent substitution did not resolve without mutating source metadata');
 
-// Leaving a Program System must create a genuinely editable legacy routine.
-// Hidden prescription metadata would otherwise continue to override the SETS /
-// REPS controls shown by ProgramEditView.
 const editableW12 = toEditableProgram(resolveProgramWeek(KONG_4DAY_V1, 12));
 const editableSlots = editableW12.flatMap((day) => day.slots);
 assert(editableSlots.every((slot) => !slot.prescription && !slot.programSlotId && !slot.substitutionGroup && !slot.programSourceName && !slot.targetMuscle), 'editable conversion leaked Program System metadata');
 assert(editableW12[3].slots[0].setTarget === 5, 'editable Week 12 squat should preserve five visible sets');
 assert(editableW12[3].slots[0].reps === '1 · 6 · 6 · 6 · 10', 'editable Week 12 squat should preserve the visible rep sequence');
 
-// Program metrics: duplicate/repeated workouts are real activity but must not
-// inflate adherence, incomplete sets must not add volume, and a week only
-// becomes complete after four distinct scheduled days.
 const makeMetricLog = (id: number, dayIdx: number, completed: boolean, weight = 10, reps = 10) => ({
   id,
   dayIdx,
@@ -77,16 +71,39 @@ const makeMetricLog = (id: number, dayIdx: number, completed: boolean, weight = 
 });
 const metricLogs = [
   makeMetricLog(1, 0, true),
-  makeMetricLog(2, 0, true), // repeated Day 1: counts as a session, not extra adherence
+  makeMetricLog(2, 0, true),
   makeMetricLog(3, 1, true),
   makeMetricLog(4, 2, true),
-  makeMetricLog(5, 3, false, 999, 999), // incomplete set: no volume, but session slot exists
+  makeMetricLog(5, 3, false, 999, 999),
 ] as any;
 const metricResult = calculateProgramMetrics(metricLogs, 777, 4, undefined, 4);
 assert(metricResult.sessionsCompleted === 5, 'metric sessions should keep real repeated sessions');
-assert(metricResult.weeksCompleted === 1, 'four distinct scheduled days should complete the week');
+assert(metricResult.weeksCompleted === 1, 'four distinct non-skipped scheduled days should complete the week');
 assert(metricResult.adherence === 1, 'repeated sessions must not inflate adherence beyond unique scheduled slots');
 assert(metricResult.setsCompleted === 4, 'only completed sets should count');
 assert(metricResult.totalVolume === 400, 'incomplete sets must not contribute volume');
 
-console.log('KONG validation passed: exact program data, safe editable conversion, and schedule-aware progress metrics.');
+const skippedDay = {
+  id: 9,
+  dayIdx: 3,
+  name: 'Day 4',
+  startTime: 9000,
+  endTime: 9000,
+  duration: 0,
+  mesoId: 778,
+  week: 1,
+  skipped: true,
+  exercises: [],
+};
+const skippedWeekLogs = [
+  { ...makeMetricLog(10, 0, true), mesoId: 778 },
+  { ...makeMetricLog(11, 1, true), mesoId: 778 },
+  { ...makeMetricLog(12, 2, true), mesoId: 778 },
+  skippedDay,
+] as any;
+const skippedWeekMetrics = calculateProgramMetrics(skippedWeekLogs, 778, 4, undefined, 4);
+assert(skippedWeekMetrics.sessionsCompleted === 3, 'a skipped day must not count as a completed session');
+assert(skippedWeekMetrics.weeksCompleted === 0, 'a week with a skipped scheduled day is not a fully completed week');
+assert(skippedWeekMetrics.adherence === 0.75, 'three completed days plus one skipped day should be 75% adherence');
+
+console.log('KONG validation passed: exact program data, safe editable conversion, schedule-aware metrics, and skipped-day semantics.');
