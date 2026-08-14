@@ -97,6 +97,7 @@ const HistoryCard = memo(({ log, lang, id, onOpen }: HistoryCardProps) => {
                 <div className="min-w-0 flex-1">
                     <div className="mb-1 text-[9px] font-black uppercase tracking-[0.16em] text-zinc-500">{formatDate(log.endTime, lang)}</div>
                     <h3 className="truncate text-base font-black tracking-tight text-zinc-950 dark:text-white">{log.name}</h3>
+                    {log.programSystem && <span className="mt-1 inline-flex rounded-full bg-primary-500/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-primary-600 dark:text-primary-300">KONG · B{log.programSystem.blockNumber} · W{log.week}</span>}
                 </div>
                 <div className="flex shrink-0 items-center gap-1 rounded-full bg-zinc-100 px-2 py-1 text-[10px] font-bold text-zinc-500 dark:bg-white/5">
                     <Icon name="Clock" size={11} />

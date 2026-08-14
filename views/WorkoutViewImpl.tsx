@@ -110,6 +110,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
     const { tutorialProgress, markTutorialSeen } = useTutorial();
     const activeSession = useStore(state => state.activeSession);
     const activeMeso = useStore(state => state.activeMeso);
+    const setActiveMeso = useStore(state => state.setActiveMeso);
     const { setRestTimer } = useTimerActions();
     const t = TRANSLATIONS[lang];
 
@@ -118,6 +119,10 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
 
     const [showAdvancedSetTypes, setShowAdvancedSetTypes] = useState(false);
     const [manualRestPreset, setManualRestPreset] = useState<number>(90);
+    useEffect(() => {
+        const recommended = activeSession?.exercises?.find((exercise) => exercise.recommendedRestSeconds)?.recommendedRestSeconds;
+        if (recommended) setManualRestPreset(recommended);
+    }, [activeSession?.id]);
 
     // Set type modal: apply-to-all toggle defaults ON when all sets share the same type
     const [applyToAll, setApplyToAll] = useState(true);
@@ -209,10 +214,12 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
         const safeLogs = Array.isArray(logs) ? logs : [];
         const lastSets = getLastLogForExercise(newExId, safeLogs);
 
+        let replacedSlotId: string | undefined;
         ctrl.updateSession(prev => !prev ? null : {
             ...prev,
             exercises: (prev.exercises || []).map(ex => {
                 if (ex.instanceId !== ctrl.replacingExId) return ex;
+                replacedSlotId = ex.programSlotId;
 
                 const resetSets = (ex.sets || []).map((s, i) => {
                     const historySet = lastSets && lastSets[i] ? lastSets[i] : null;
@@ -237,10 +244,32 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                 };
             })
         });
+        if (activeMeso?.programSystem?.systemId === 'kong_4day' && replacedSlotId) {
+            const persist = window.confirm(lang === 'es'
+                ? '¿Mantener este reemplazo durante todo KONG? Aceptar = todo KONG · Cancelar = solo hoy.'
+                : 'Keep this replacement for all KONG? OK = all KONG · Cancel = today only.');
+            if (persist) setActiveMeso(prev => prev?.programSystem ? {
+                ...prev,
+                programSystem: {
+                    ...prev.programSystem,
+                    substitutions: { ...prev.programSystem.substitutions, [replacedSlotId!]: newExId },
+                },
+            } : prev);
+        }
         ctrl.setReplacingExId(null);
         ctrl.setReplaceFilter(null);
         ctrl.setOpenMenuId(null);
     };
+
+    const handleReorder = useCallback((oldIndex: number, newIndex: number) => {
+        if (activeMeso?.programSystem?.systemId === 'kong_4day') {
+            const proceed = window.confirm(lang === 'es'
+                ? 'El orden de ejercicios forma parte de la metodología KONG. Weak Points First y Fatigued Strength dependen del orden. ¿Reordenar solo hoy?'
+                : 'Exercise order is part of KONG methodology. Weak Points First and Fatigued Strength depend on order. Reorder today only?');
+            if (!proceed) return;
+        }
+        ctrl.reorderSessionExercises(oldIndex, newIndex);
+    }, [activeMeso?.programSystem?.systemId, ctrl, lang]);
 
     const workoutStats = useMemo(() => {
         let completedSets = 0;
@@ -428,7 +457,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
             <div className="flex-1 overflow-hidden flex flex-col">
                 <div id="tut-exercise-list" className="flex-1 overflow-y-auto scroll-container px-4 pb-24 pt-2.5 space-y-2.5">
                     <Suspense fallback={null}>
-                        <WorkoutSortableList itemIds={sortableItems} onReorder={ctrl.reorderSessionExercises}>
+                        <WorkoutSortableList itemIds={sortableItems} onReorder={handleReorder}>
                             {sessionExercises.map((ex, idx) => {
                                 const supersetColorIndex = ex.supersetId ? supersetColorIndexes[ex.supersetId] : undefined;
                                 const isLinkingTarget = !!ctrl.linkingId && ctrl.linkingId !== ex.instanceId;

@@ -55,6 +55,8 @@ export interface ExerciseDef {
 
 export type SetType = 'regular' | 'myorep' | 'myorep_match' | 'cluster' | 'top' | 'backoff' | 'giant' | 'warmup' | 'avt_hop' | 'emom' | 'drop' | 'rest_pause' | 'time_volume' | 'triple_add';
 
+import type { ProgramRunState, SetPrescription, ProgramSetRole } from './programs/types';
+
 export interface WorkoutSet {
   id: number;
   weight: string | number;
@@ -71,6 +73,10 @@ export interface WorkoutSet {
   duration?: string | number;
   workSeconds?: number;
   restSeconds?: number;
+  prescribedReps?: number | 'FAILURE';
+  targetRpe?: number;
+  prescriptionRole?: ProgramSetRole;
+  programSetIndex?: number;
   avtRoundId?: number;  // ID compartido entre todos los hops de un mismo round AVT
   isLastHop?: boolean;  // true en el hop donde se llegó al fallo
 }
@@ -86,6 +92,11 @@ export interface SessionExercise extends ExerciseDef {
   supersetId?: string;
   isPlaceholder?: boolean;
   cardioType?: CardioType;
+  programSlotId?: string;
+  recommendedRestSeconds?: number;
+  substitutionGroup?: string;
+  programSourceName?: string;
+  targetMuscle?: MuscleGroup;
 }
 
 export interface ActiveSession {
@@ -116,6 +127,12 @@ export interface ProgramSlot {
   avtHops?: string;
   restBetweenHopsSec?: number;
   restBetweenRoundsSec?: number;
+  prescription?: SetPrescription[];
+  programSlotId?: string;
+  recommendedRestSeconds?: number;
+  substitutionGroup?: string;
+  programSourceName?: string;
+  targetMuscle?: MuscleGroup;
 }
 
 export interface ProgramDay {
@@ -150,6 +167,7 @@ export interface MesoCycle {
   isDeload?: boolean;
   note?: string; // NEW: General mesocycle notes
   duration: number;
+  programSystem?: ProgramRunState;
 }
 
 export interface Log {
@@ -165,6 +183,12 @@ export interface Log {
   week: number;
   exercises: SessionExercise[];
   note?: string;            // Freeform session journal note
+  programSystem?: {
+    systemId: string;
+    systemVersion: number;
+    blockNumber: number;
+    blockWeek: number;
+  };
 }
 
 export interface FeedbackEntry {

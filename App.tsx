@@ -14,6 +14,10 @@ import { syncService } from './services/syncService';
 import { usePro } from './hooks/usePro';
 import type { CommandAction } from './components/ui/CommandPalette';
 import { SessionBuilder } from './services/SessionBuilder';
+import { KONG_4DAY_V1 } from './programs/kong/kong4Day';
+import { resolveProgramDay } from './programs/engine/ProgramResolver';
+import { getProgramBlockForWeek } from './programs/engine/ProgramResolver';
+const ProgramCompletionView = React.lazy(() => import('./components/programs/ProgramCompletionView').then((module) => ({ default: module.ProgramCompletionView })));
 import { useStore } from './lib/store';
 
 // Lazy Load views — keeps initial bundle small
@@ -382,11 +386,22 @@ const AppContent = () => {
 
                                     // 1. Log the session
                                     const duration = activeSession.startTime ? (Date.now() - activeSession.startTime) / 1000 : 0;
+                                    const kongResolution = activeMeso.programSystem?.systemId === KONG_4DAY_V1.id
+                                        ? getProgramBlockForWeek(KONG_4DAY_V1, activeMeso.week)
+                                        : null;
                                     const log = {
                                         ...activeSession,
                                         endTime: Date.now(),
                                         duration,
-                                        bodyWeightSnapshot: userProfile?.bodyWeight
+                                        bodyWeightSnapshot: userProfile?.bodyWeight,
+                                        ...(kongResolution && activeMeso.programSystem ? {
+                                            programSystem: {
+                                                systemId: activeMeso.programSystem.systemId,
+                                                systemVersion: activeMeso.programSystem.systemVersion,
+                                                blockNumber: kongResolution.block.number,
+                                                blockWeek: kongResolution.blockWeek,
+                                            }
+                                        } : {})
                                     };
                                     const newLogs = [log, ...(Array.isArray(logs) ? logs : [])];
                                     setLogs(newLogs);
@@ -450,7 +465,9 @@ const AppContent = () => {
                                     }
 
                                     const safeProgram = Array.isArray(program) ? program : [];
-                                    const dayDef = safeProgram[idx];
+                                    const dayDef = activeMeso.programSystem?.systemId === KONG_4DAY_V1.id
+                                        ? resolveProgramDay(KONG_4DAY_V1, activeMeso.week, idx, activeMeso.programSystem.substitutions)
+                                        : safeProgram[idx];
                                     if (!dayDef) return;
 
                                     const newSession = SessionBuilder.buildFromProgramDay(
@@ -469,7 +486,16 @@ const AppContent = () => {
                                         setView('workout');
                                     }
                                 }}
-                                onEditProgram={() => setView('program')}
+                                onEditProgram={() => {
+                                    if (activeMeso?.programSystem?.systemId === KONG_4DAY_V1.id) {
+                                        const convert = window.confirm(lang === 'es'
+                                            ? 'La definición oficial de KONG no se edita. ¿Convertir esta estructura en una rutina personalizada?'
+                                            : 'The official KONG definition cannot be edited. Convert this structure into a personal routine?');
+                                        if (!convert) return;
+                                        setActiveMeso(prev => prev ? { ...prev, name: 'KONG · Personal', mesoType: 'personal', programSystem: undefined } : prev);
+                                    }
+                                    setView('program');
+                                }}
                                 onSkipSession={handleSkipSession}
                             />}
                             {view === 'history' && (
@@ -551,6 +577,7 @@ const AppContent = () => {
 
             {/* Standard Modal Overlays */}
             {showMesoCompleteModal && (
+                activeMeso?.programSystem?.systemId === KONG_4DAY_V1.id ? <Suspense fallback={null}><ProgramCompletionView meso={activeMeso} logs={logs} lang={lang} onFinish={() => { setActiveMeso(null); setShowMesoCompleteModal(false); }} onKeep={() => { setActiveMeso(null); setShowMesoCompleteModal(false); }} /></Suspense> :
                 <Suspense fallback={null}>
                     <ConfirmModal
                         isOpen={true}

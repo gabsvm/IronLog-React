@@ -17,9 +17,15 @@ import { TemplateSelector } from './home/TemplateSelector';
 import { WeekProgress } from './home/WeekProgress';
 import { WeeklyRecapCard } from './home/WeeklyRecapCard';
 import { NextSessionCard } from './home/NextSessionCard';
+import { ProgramBlockTransition } from '../components/programs/ProgramBlockTransition';
+const ProgramHub = React.lazy(() => import('../components/programs/ProgramHub').then((module) => ({ default: module.ProgramHub })));
 
 
 import { useStore } from '../lib/store';
+import { KONG_4DAY_V1 } from '../programs/kong/kong4Day';
+import { resolveProgramWeek } from '../programs/engine/ProgramResolver';
+import { startProgramRun } from '../programs/engine/ProgramRunHelpers';
+import { getProgramBlockForWeek } from '../programs/engine/ProgramResolver';
 
 const PaywallModal = React.lazy(() => import('../components/pro/PaywallModal').then(m => ({ default: m.PaywallModal })));
 const ConfirmModal = React.lazy(() => import('../components/ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
@@ -34,13 +40,14 @@ interface HomeViewProps {
 }
 
 export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram, onSkipSession, onStartFreeSession }) => {
-    const { program, logs, isAppLoading, setProgram, globalTemplates, personalTemplates } = useApp();
+    const { program, logs, isAppLoading, setProgram, globalTemplates, personalTemplates, userProfile } = useApp();
     const { lang } = useAppPreferences();
     const { tutorialProgress, markTutorialSeen } = useTutorial();
     const activeSession = useStore(state => state.activeSession);
     const activeMeso = useStore(state => state.activeMeso);
     const setActiveMeso = useStore(state => state.setActiveMeso);
     const t = TRANSLATIONS[lang] || TRANSLATIONS['en'];
+    const kongBlock = activeMeso?.programSystem?.systemId === KONG_4DAY_V1.id ? getProgramBlockForWeek(KONG_4DAY_V1, activeMeso.week) : null;
 
     const { isPro, checkPro, showPaywall, setShowPaywall, featureAttempted } = usePro();
 
@@ -55,9 +62,26 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
     const [skipConfirmationId, setSkipConfirmationId] = useState<number | null>(null);
     const [showTemplateSelector, setShowTemplateSelector] = useState(false);
     const [showGuidelines, setShowGuidelines] = useState(false);
+    const [transitionBlock, setTransitionBlock] = useState<number | null>(null);
+    const [showKongHub, setShowKongHub] = useState(false);
 
     // --- MESO SETTINGS LOCAL STATE ---
     const [editWeeks, setEditWeeks] = useState(4);
+
+    useEffect(() => {
+        if (activeMeso?.programSystem?.systemId !== KONG_4DAY_V1.id) return;
+        const block = activeMeso.week === 5 ? 2 : activeMeso.week === 9 ? 3 : null;
+        if (!block) return;
+        const key = `${KONG_4DAY_V1.id}:block:${block}`;
+        if (!(activeMeso.programSystem.seenBlockIntros || []).includes(key)) setTransitionBlock(block);
+    }, [activeMeso?.week, activeMeso?.programSystem]);
+
+    const closeTransition = () => {
+        if (!activeMeso || !transitionBlock) return;
+        const key = `${KONG_4DAY_V1.id}:block:${transitionBlock}`;
+        setActiveMeso(prev => prev?.programSystem ? { ...prev, programSystem: { ...prev.programSystem, seenBlockIntros: [...(prev.programSystem.seenBlockIntros || []), key] } } : prev);
+        setTransitionBlock(null);
+    };
     const [editDeload, setEditDeload] = useState(false);
     const [editNote, setEditNote] = useState('');
 
@@ -225,6 +249,26 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
         triggerHaptic('success');
     };
 
+    const handleSelectProgram = (programId: string) => {
+        if (programId !== KONG_4DAY_V1.id) return;
+        const firstWeek = resolveProgramWeek(KONG_4DAY_V1, 1);
+        setProgram(firstWeek);
+        const plan = firstWeek.map((day) => (day.slots || []).map((slot) => slot.exerciseId || null));
+        setActiveMeso({
+            id: Date.now(),
+            name: 'KONG · Savage Size',
+            mesoType: KONG_4DAY_V1.id,
+            week: 1,
+            targetWeeks: KONG_4DAY_V1.durationWeeks,
+            isDeload: false,
+            plan,
+            duration: KONG_4DAY_V1.durationWeeks,
+            programSystem: startProgramRun(KONG_4DAY_V1, userProfile?.bodyWeight),
+        });
+        setShowTemplateSelector(false);
+        triggerHaptic('success');
+    };
+
     const handleCreateCustom = () => {
         // Clear program and go to editor
         setProgram([]); // Start empty
@@ -309,6 +353,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                         templates={[...personalTemplates, ...globalTemplates]}
                         t={t}
                         lang={lang}
+                        onSelectProgram={handleSelectProgram}
                     />
                 )}
                 {showPaywall && (
@@ -336,11 +381,10 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                                 <Icon name="Info" size={12} /> GUIDELINES {!isPro && <Icon name="Lock" size={10} className="text-yellow-500 ml-1" />}
                             </button>
                         ) : (
-                            <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded bg-zinc-800 text-zinc-400 border border-zinc-700`}>
-                                {t.phases?.[activeMeso.mesoType] || activeMeso.mesoType}
-                            </span>
+                            kongBlock ? <button onClick={() => setShowKongHub(true)} className="min-h-8 rounded bg-zinc-800 px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-primary-400 border border-zinc-700">KONG · BLOCK {kongBlock.block.number}</button> : <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded bg-zinc-800 text-zinc-400 border border-zinc-700">{t.phases?.[activeMeso.mesoType] || activeMeso.mesoType}</span>
                         )}
                         <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">{t.week} {activeMeso.week} / {activeMeso.targetWeeks}</span>
+                        {kongBlock && <span className="text-[10px] text-primary-400 font-bold uppercase tracking-wider">{lang === 'es' ? `Semana del bloque ${kongBlock.blockWeek}/4` : `Block week ${kongBlock.blockWeek}/4`}</span>}
                     </div>
                 </div>
 
@@ -744,6 +788,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                     </div>
                 </div>
             )}
+            {transitionBlock && <ProgramBlockTransition blockNumber={transitionBlock} onClose={closeTransition} lang={lang} />}
+            {showKongHub && activeMeso && <Suspense fallback={null}><ProgramHub meso={activeMeso} logs={logs} lang={lang} onClose={() => setShowKongHub(false)} /></Suspense>}
         </div>
     );
 };

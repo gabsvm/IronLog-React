@@ -81,5 +81,40 @@ export const DEFAULT_LIBRARY: ExerciseDef[] = [
     // Neck
     { id: 'neck_curl', name: { en: 'Neck Curls (Plate)', es: 'Flexión de Cuello (Disco)' }, muscle: 'NECK', instructions: { en: "Lying on bench, plate on forehead. Control.", es: "Tumbado en banco, disco en la frente. Controla." }, videoId: "wJ8s3s7_2s" },
     { id: 'neck_ext', name: { en: 'Neck Extension', es: 'Extensión de Cuello' }, muscle: 'NECK', instructions: { en: "Use harness or plate. Look up.", es: "Usa arnés o disco. Mira hacia arriba." }, videoId: "wJ8s3s7_2s" }
+    , // separator after the legacy neck exercise
+    // KONG 4-Day stable exercise IDs. Additive: existing template IDs remain unchanged.
+    { id: 'front_raise_db', name: { en: 'Front Raise w/ Dumbbells', es: 'Elevacion frontal con mancuernas' }, muscle: 'SHOULDERS' },
+    { id: 'upright_row', name: { en: 'Upright Row', es: 'Remo al menton' }, muscle: 'SHOULDERS' },
+    { id: 'cable_crossover', name: { en: 'Cable Crossover', es: 'Cruce de poleas' }, muscle: 'CHEST' },
+    { id: 'rope_pressdown', name: { en: 'Rope Pressdown', es: 'Extension de triceps con cuerda' }, muscle: 'TRICEPS' },
+    { id: 'wide_bench_press', name: { en: 'Wide Grip Bench Press', es: 'Press banca agarre ancho' }, muscle: 'CHEST' },
+    { id: 'behind_neck_press', name: { en: 'Behind the Neck Press', es: 'Press tras nuca' }, muscle: 'SHOULDERS' },
+    { id: 'back_extension', name: { en: 'Weighted Back Extension', es: 'Extension lumbar lastrada' }, muscle: 'HAMSTRINGS' },
+    { id: 'single_leg_press', name: { en: 'Single Leg Press', es: 'Prensa a una pierna' }, muscle: 'QUADS' },
+    { id: 'high_machine_row', name: { en: 'High Machine Row', es: 'Remo alto en maquina' }, muscle: 'BACK' },
+    { id: 'bent_barbell_row', name: { en: 'Bent Barbell Row', es: 'Remo con barra inclinado' }, muscle: 'BACK' },
+    { id: 'bulgarian_split_squat', name: { en: 'Bulgarian Split Squat', es: 'Sentadilla bulgara' }, muscle: 'QUADS' },
+    { id: 'one_arm_lat_pulldown', name: { en: 'One Arm Lat Pulldown', es: 'Jalon unilateral' }, muscle: 'BACK' },
+    { id: 'close_grip_bench', name: { en: 'Close Grip Bench Press', es: 'Press banca agarre cerrado' }, muscle: 'CHEST' },
+    { id: 'db_fly', name: { en: 'Dumbbell Fly', es: 'Aperturas con mancuernas' }, muscle: 'CHEST' },
+    { id: 'dip_machine', name: { en: 'Seated Dip Machine', es: 'Fondos en maquina sentado' }, muscle: 'TRICEPS' },
+    { id: 'db_overhead_tri', name: { en: 'Two Hand Dumbbell Overhead Tricep Extension', es: 'Extension de triceps sobre cabeza' }, muscle: 'TRICEPS' },
+    { id: 'high_bar_close_squat', name: { en: 'High Bar Close-Stance Squat', es: 'Sentadilla high bar stance cerrado' }, muscle: 'QUADS' },
+    { id: 'step_up_db', name: { en: 'Step Up w/ Dumbbells', es: 'Subida al cajon con mancuernas' }, muscle: 'QUADS' },
+    { id: 'close_grip_lat_pulldown', name: { en: 'Close Grip Lat Pulldown', es: 'Jalon agarre cerrado' }, muscle: 'BACK' },
+    { id: 'wide_grip_cable_row', name: { en: 'Wide Grip Cable Row', es: 'Remo en polea agarre ancho' }, muscle: 'BACK' },
+    { id: 'push_press', name: { en: 'Push Press', es: 'Push press' }, muscle: 'SHOULDERS' },
+    { id: 'incline_db_curl', name: { en: 'Incline Dumbbell Curl', es: 'Curl inclinado con mancuernas' }, muscle: 'BICEPS' },
+    { id: 'close_grip_cable_curl', name: { en: 'Close Grip Cable Curl', es: 'Curl en polea agarre cerrado' }, muscle: 'BICEPS' },
+    { id: 'deadlift_13in', name: { en: '13 Inch Deadlift', es: 'Peso muerto desde 13 pulgadas' }, muscle: 'BACK' },
+    { id: 'good_morning_pause', name: { en: 'Good Morning w/ Pause (2 count)', es: 'Buenos dias con pausa' }, muscle: 'HAMSTRINGS' },
+    { id: 'tbar_row_chest_supported', name: { en: 'Chest Supported T-Bar Row', es: 'Remo T con pecho apoyado' }, muscle: 'BACK' },
+    { id: 'behind_neck_pulldown', name: { en: 'Behind the Neck Pulldown', es: 'Jalon tras nuca' }, muscle: 'BACK' },
+    { id: 'close_grip_floor_press', name: { en: 'Close Grip Floor Press', es: 'Press en el suelo agarre cerrado' }, muscle: 'CHEST' },
+    { id: 'neutral_db_press', name: { en: 'Neutral Grip Dumbbell Press', es: 'Press con mancuernas agarre neutro' }, muscle: 'CHEST' },
+    { id: 'rope_cable_curl', name: { en: 'Rope Cable Curl', es: 'Curl en polea con cuerda' }, muscle: 'BICEPS' },
+    { id: 'low_bar_wide_squat', name: { en: 'Low Bar Wide-Stance Squat', es: 'Sentadilla low bar stance ancho' }, muscle: 'QUADS' },
+    { id: 'front_squat', name: { en: 'Front Squat', es: 'Sentadilla frontal' }, muscle: 'QUADS' },
+    { id: 'single_leg_extension', name: { en: 'Single Leg Extension', es: 'Extension de cuádriceps a una pierna' }, muscle: 'QUADS' }
 ];
 

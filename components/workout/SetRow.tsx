@@ -359,6 +359,11 @@ export const SetRow = React.memo(({
     // not as a disabled em dash. Falls back to '0' so the input reads clearly as empty & tappable.
     const weightPlaceholder = set.hintWeight ? String(set.hintWeight) : '0';
     const repsPlaceholder = set.hintReps ? String(set.hintReps) : '0';
+    const prescriptionHint = set.prescribedReps !== undefined
+        ? (set.prescribedReps === 'FAILURE'
+            ? (lang === 'es' ? 'OBJ: AL FALLO' : 'TARGET: FAILURE')
+            : `OBJ: ${set.prescribedReps}${set.targetRpe !== undefined ? ` · RPE ${set.targetRpe}` : ''}`)
+        : null;
 
     const BadgeEl = disableTypeChange || isDone ? 'div' : 'button';
     const badgeProps = (!disableTypeChange && !isDone)
@@ -510,6 +515,11 @@ export const SetRow = React.memo(({
                 </div>
 
                 {/* Prev performance hint */}
+                {prescriptionHint && !isDone && (
+                    <div className="flex justify-center pb-1 -mt-0.5">
+                        <span className="text-[9px] font-black tracking-wide text-primary-400/90">{prescriptionHint}</span>
+                    </div>
+                )}
                 {!isDone && set.prevReps && (
                     <div className="flex justify-center pb-1 -mt-0.5">
                         <div className="inline-flex items-center gap-1 rounded-full bg-zinc-800/70 px-2 py-0.5 border border-zinc-700/40">
@@ -592,6 +602,11 @@ export const SetRow = React.memo(({
         </div>
 
         {/* Prev performance hint */}
+        {prescriptionHint && !isDone && (
+            <div className="flex justify-center pb-1 -mt-0.5">
+                <span className="text-[9px] font-black tracking-wide text-primary-400/90">{prescriptionHint}</span>
+            </div>
+        )}
         {!isDone && !isCardio && (set.prevWeight || set.prevReps) && (
             <div className="flex justify-center pb-1 -mt-0.5">
                 <div className="inline-flex items-center gap-1 rounded-full bg-zinc-800/70 px-2 py-0.5 border border-zinc-700/40">

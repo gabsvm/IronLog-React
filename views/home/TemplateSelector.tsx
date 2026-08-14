@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, Suspense } from 'react';
 import { Icon } from '../../components/ui/Icon';
 import { GlobalTemplate } from '../../types';
 import { getTranslated } from '../../utils';
+const ProgramDetailView = React.lazy(() => import('../../components/programs/ProgramDetailView').then((module) => ({ default: module.ProgramDetailView })));
 
 interface Props {
     onClose: () => void;
@@ -10,6 +11,7 @@ interface Props {
     templates: GlobalTemplate[];
     t: any;
     lang: string;
+    onSelectProgram?: (programId: string) => void;
 }
 
 const getTemplateAuthor = (tpl: GlobalTemplate, lang: string): string => {
@@ -43,7 +45,9 @@ export const TemplateSelector: React.FC<Props> = ({
     templates,
     t,
     lang,
+    onSelectProgram,
 }) => {
+    const [showKongDetail, setShowKongDetail] = useState(false);
     // Keep NH expanded by default as requested to highlight the new features
     const [expandedAuthors, setExpandedAuthors] = useState<Record<string, boolean>>({
         'Natural Hypertrophy': true,
@@ -79,6 +83,16 @@ export const TemplateSelector: React.FC<Props> = ({
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4 scroll-container">
+                <div className="rounded-2xl border border-primary-500/30 bg-primary-500/10 p-4">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary-400">PROGRAMAS</p>
+                    <button onClick={() => setShowKongDetail(true)} className="mt-2 w-full rounded-xl border border-primary-500/30 bg-zinc-900/80 p-4 text-left">
+                        <p className="text-xl font-black text-white">KONG</p>
+                        <p className="text-xs font-bold text-primary-300">SAVAGE SIZE · Alexander Bromley</p>
+                        <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-zinc-500">12 SEMANAS · 4 DÍAS · 3 BLOQUES</p>
+                        <span className="mt-3 inline-flex min-h-10 items-center rounded-lg bg-primary-500 px-3 text-xs font-black text-black">VER PROGRAMA</span>
+                    </button>
+                </div>
+                <p className="px-1 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">PLANTILLAS</p>
                 {/* Option 1: Scratch */}
                 <button
                     onClick={onCreateCustom}
@@ -170,6 +184,7 @@ export const TemplateSelector: React.FC<Props> = ({
                     })}
                 </div>
             </div>
+            {showKongDetail && <Suspense fallback={null}><ProgramDetailView lang={lang as 'en' | 'es'} onBack={() => setShowKongDetail(false)} onStart={() => { setShowKongDetail(false); onSelectProgram?.('kong_4day'); }} /></Suspense>}
         </div>
     );
 };

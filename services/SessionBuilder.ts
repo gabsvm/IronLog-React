@@ -1,5 +1,7 @@
 import { ProgramDay, MesoCycle, ExerciseDef, Log, ActiveSession, SessionExercise } from '../types';
 import { getLastLogForExercise, uid } from '../utils';
+import { KONG_4DAY_V1 } from '../programs/kong/kong4Day';
+import { resolveProgramDay } from '../programs/engine/ProgramResolver';
 
 export class SessionBuilder {
     static buildFromProgramDay(
@@ -14,8 +16,14 @@ export class SessionBuilder {
     ): ActiveSession | null {
         if (!programDay) return null;
 
-        const dayNameSafe = programDay.dayName
-            ? (typeof programDay.dayName === 'object' ? programDay.dayName[lang as 'en'|'es'] : programDay.dayName)
+        // Structured programs resolve their immutable definition at build time;
+        // normal templates continue through the legacy path unchanged.
+        const resolvedDay = activeMeso.programSystem?.systemId === KONG_4DAY_V1.id
+            ? resolveProgramDay(KONG_4DAY_V1, activeMeso.week, dayIdx, activeMeso.programSystem.substitutions)
+            : programDay;
+
+        const dayNameSafe = resolvedDay.dayName
+            ? (typeof resolvedDay.dayName === 'object' ? resolvedDay.dayName[lang as 'en'|'es'] : resolvedDay.dayName)
             : `Day ${dayIdx + 1}`;
 
         const mesoPlan = Array.isArray(activeMeso.plan) ? activeMeso.plan : [];
@@ -24,9 +32,9 @@ export class SessionBuilder {
         const safeLogs = Array.isArray(logs) ? logs : [];
         const isDeload = !!activeMeso.isDeload;
 
-        const sessionExs = (programDay.slots || []).map((slotDef, sIdx) => {
+        const sessionExs = (resolvedDay.slots || []).map((slotDef, sIdx) => {
             if (!slotDef) return null;
-            const exId = dayPlan[sIdx];
+            const exId = slotDef.exerciseId || dayPlan[sIdx];
             // Priority: exact ID match → same-muscle fallback → typed placeholder (never random index 0)
             let exDef = exId ? safeExercises.find(e => e.id === exId) : null;
             if (!exDef) exDef = safeExercises.find(e => e.muscle === slotDef.muscle) ?? null;
@@ -35,7 +43,7 @@ export class SessionBuilder {
             let setTarget = slotDef.setTarget || 3;
             
             // RP Feedback adjustments
-            if (config.rpEnabled && activeMeso && activeMeso.week > 1) {
+            if (!slotDef.prescription && config.rpEnabled && activeMeso && activeMeso.week > 1) {
                 let accumulatedAdjustment = 0;
                 const fbForMeso = rpFeedback[activeMeso.id];
                 if (fbForMeso) {
@@ -48,17 +56,21 @@ export class SessionBuilder {
                 }
                 setTarget = Math.max(1, setTarget + accumulatedAdjustment);
             }
-            if (isDeload) setTarget = Math.max(1, Math.ceil(setTarget / 2));
+            if (!slotDef.prescription && isDeload) setTarget = Math.max(1, Math.ceil(setTarget / 2));
 
             const lastSets = getLastLogForExercise(exDef.id, safeLogs);
 
-            const initialSets = Array(setTarget).fill(null).map((_, i) => ({
+            const initialSets = (slotDef.prescription || Array.from({ length: setTarget }, () => undefined)).map((prescription, i) => ({
                 id: uid(),
                 weight: '',
                 reps: '',
                 rpe: '',
                 completed: false,
-                type: slotDef.setType || 'regular',
+                type: prescription?.role === 'top' ? 'top' : prescription?.role === 'backoff' || prescription?.role === 'high_rep_backoff' ? 'backoff' : slotDef.setType || 'regular',
+                prescribedReps: prescription?.reps,
+                targetRpe: prescription?.targetRpe,
+                prescriptionRole: prescription?.role,
+                programSetIndex: slotDef.prescription ? i : undefined,
                 hintWeight: lastSets?.[i]?.weight,
                 hintReps: lastSets?.[i]?.reps,
                 prevWeight: lastSets?.[i]?.weight,
@@ -72,6 +84,11 @@ export class SessionBuilder {
                 targetReps: slotDef.reps,
                 note: slotDef.notes,
                 supersetId: slotDef.supersetId,
+                programSlotId: slotDef.programSlotId,
+                recommendedRestSeconds: slotDef.recommendedRestSeconds,
+                substitutionGroup: slotDef.substitutionGroup,
+                programSourceName: slotDef.programSourceName,
+                targetMuscle: slotDef.targetMuscle,
                 sets: initialSets as any
             };
         }).filter(Boolean);
