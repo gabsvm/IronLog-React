@@ -31,11 +31,6 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
         [activeMeso?.programSystem?.substitutions],
     );
 
-    useEffect(() => {
-        document.documentElement.classList.toggle('kong-program-active', !!isKong);
-        return () => document.documentElement.classList.remove('kong-program-active');
-    }, [isKong]);
-
     // KONG is a dynamic 12-week system. Keep the legacy `program` projection in
     // sync with the current global week so Home, skip labels, estimates and any
     // legacy consumers never remain stuck on Block 1 after the resolver advances.
