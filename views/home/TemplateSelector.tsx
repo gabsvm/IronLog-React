@@ -1,8 +1,12 @@
-import React, { useState, useMemo, Suspense } from 'react';
+import React, { Suspense, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Icon } from '../../components/ui/Icon';
 import { GlobalTemplate } from '../../types';
 import { getTranslated } from '../../utils';
-const ProgramDetailView = React.lazy(() => import('../../components/programs/ProgramDetailView').then((module) => ({ default: module.ProgramDetailView })));
+
+const ProgramDetailView = React.lazy(() =>
+    import('../../components/programs/ProgramDetailView').then((module) => ({ default: module.ProgramDetailView }))
+);
 
 interface Props {
     onClose: () => void;
@@ -15,29 +19,15 @@ interface Props {
 }
 
 const getTemplateAuthor = (tpl: GlobalTemplate, lang: string): string => {
-    if (tpl.scope === 'personal') {
-        return lang === 'es' ? 'Mis plantillas' : 'My templates';
-    }
+    if (tpl.scope === 'personal') return lang === 'es' ? 'Mis plantillas' : 'My templates';
     const id = tpl.id;
-    if (id.startsWith('nh_') || id === 'toji_fushiguro' || id === 'tokita') {
-        return 'Natural Hypertrophy';
-    }
-    if (id === 'ji3') {
-        return 'Paul Carter';
-    }
-    if (id === 'full_body') {
-        return 'Dr. Mike Israetel (RP)';
-    }
-    if (id.startsWith('cal_')) {
-        return lang === 'es' ? 'Calistenia / Peso Corporal' : 'Calisthenics / Bodyweight';
-    }
+    if (id.startsWith('nh_') || id === 'toji_fushiguro' || id === 'tokita') return 'Natural Hypertrophy';
+    if (id === 'ji3') return 'Paul Carter';
+    if (id === 'full_body') return 'Dr. Mike Israetel (RP)';
+    if (id.startsWith('cal_')) return lang === 'es' ? 'Calistenia / Peso Corporal' : 'Calisthenics / Bodyweight';
     return lang === 'es' ? 'Básicos & Especiales de la App' : 'Base & App Specials';
 };
 
-/**
- * Full-screen template picker shown when starting a new mesocycle.
- * Offers "design from scratch" + the list of global templates cataloged by author.
- */
 export const TemplateSelector: React.FC<Props> = ({
     onClose,
     onSelectTemplate,
@@ -48,14 +38,13 @@ export const TemplateSelector: React.FC<Props> = ({
     onSelectProgram,
 }) => {
     const [showKongDetail, setShowKongDetail] = useState(false);
-    // Keep NH expanded by default as requested to highlight the new features
     const [expandedAuthors, setExpandedAuthors] = useState<Record<string, boolean>>({
         'Natural Hypertrophy': true,
     });
 
     const grouped = useMemo(() => {
         const groups: Record<string, GlobalTemplate[]> = {};
-        templates.forEach(tpl => {
+        templates.forEach((tpl) => {
             const author = getTemplateAuthor(tpl, lang);
             if (!groups[author]) groups[author] = [];
             groups[author].push(tpl);
@@ -63,128 +52,167 @@ export const TemplateSelector: React.FC<Props> = ({
         return groups;
     }, [templates, lang]);
 
-    return (
+    const selector = (
         <div
-            className="fixed inset-0 z-modal bg-black/90 backdrop-blur-md flex flex-col animate-in fade-in duration-base"
+            className="fixed inset-0 z-modal flex flex-col bg-[rgb(var(--surface-app))] text-[rgb(var(--text-primary))]"
             role="dialog"
             aria-modal="true"
             aria-label={t.startMeso}
         >
-            {/* Header */}
-            <div className="p-4 border-b border-white/10 flex justify-between items-center bg-zinc-900/50">
-                <h2 className="text-xl font-black text-white">{t.startMeso}</h2>
-                <button
-                    onClick={onClose}
-                    aria-label="Close"
-                    className="p-2 bg-zinc-800 rounded-full text-zinc-400 hover:text-white"
-                >
-                    <Icon name="X" size={20} />
-                </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 scroll-container">
-                <div className="rounded-2xl border border-primary-500/30 bg-primary-500/10 p-4">
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary-400">PROGRAMAS</p>
-                    <button onClick={() => setShowKongDetail(true)} className="mt-2 w-full rounded-xl border border-primary-500/30 bg-zinc-900/80 p-4 text-left">
-                        <p className="text-xl font-black text-white">KONG</p>
-                        <p className="text-xs font-bold text-primary-300">SAVAGE SIZE · Alexander Bromley</p>
-                        <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-zinc-500">12 SEMANAS · 4 DÍAS · 3 BLOQUES</p>
-                        <span className="mt-3 inline-flex min-h-10 items-center rounded-lg bg-primary-500 px-3 text-xs font-black text-black">VER PROGRAMA</span>
+            <header className="shrink-0 border-b border-[rgb(var(--border-subtle)/0.75)] bg-[rgb(var(--surface-app)/0.98)] px-4 pt-safe">
+                <div className="mx-auto flex h-16 w-full max-w-xl items-center justify-between gap-4">
+                    <div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary-500">
+                            {lang === 'es' ? 'PLAN DE ENTRENAMIENTO' : 'TRAINING PLAN'}
+                        </p>
+                        <h2 className="mt-0.5 text-2xl font-black">{t.startMeso}</h2>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        aria-label={lang === 'es' ? 'Cerrar' : 'Close'}
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] text-[rgb(var(--text-secondary))] active:scale-95"
+                    >
+                        <Icon name="X" size={21} />
                     </button>
                 </div>
-                <p className="px-1 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">PLANTILLAS</p>
-                {/* Option 1: Scratch */}
-                <button
-                    onClick={onCreateCustom}
-                    className="w-full p-5 rounded-2xl border-2 border-dashed border-zinc-700 bg-zinc-900/50 hover:bg-zinc-800 hover:border-zinc-500 transition-all group text-left flex items-center gap-4"
-                >
-                    <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-colors">
-                        <Icon name="Edit" size={20} />
-                    </div>
-                    <div>
-                        <h3 className="font-bold text-white text-lg">
-                            {lang === 'en' ? 'Design from Scratch' : 'Crear desde Cero'}
-                        </h3>
-                        <p className="text-xs text-zinc-500">
-                            {lang === 'en' ? 'Empty canvas. You choose the exercises.' : 'Lienzo vacío. Tú eliges los ejercicios.'}
-                        </p>
-                    </div>
-                </button>
+            </header>
 
-                <div className="flex items-center gap-4 py-2">
-                    <div className="h-px bg-zinc-800 flex-1" />
-                    <span className="text-xs font-bold text-zinc-600 uppercase tracking-widest">
-                        {lang === 'en' ? 'OR CHOOSE BY AUTHOR' : 'O ELIGE POR AUTOR'}
-                    </span>
-                    <div className="h-px bg-zinc-800 flex-1" />
-                </div>
+            <div className="flex-1 overflow-y-auto scroll-container">
+                <div className="mx-auto w-full max-w-xl space-y-5 p-4 pb-[calc(env(safe-area-inset-bottom)+2rem)]">
+                    <section className="rounded-3xl border border-primary-500/30 bg-primary-500/10 p-4">
+                        <div className="mb-3 flex items-center justify-between">
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary-500">
+                                {lang === 'es' ? 'PROGRAMAS' : 'PROGRAMS'}
+                            </p>
+                            <span className="rounded-full bg-primary-500/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-primary-500">
+                                {lang === 'es' ? 'SISTEMA COMPLETO' : 'FULL SYSTEM'}
+                            </span>
+                        </div>
 
-                {/* Templates Grouped List */}
-                <div className="space-y-4">
-                    {Object.entries(grouped).map(([author, groupTemplates]) => {
-                        const isExpanded = !!expandedAuthors[author];
-                        return (
-                            <div key={author} className="border border-zinc-200/5 dark:border-white/5 rounded-2xl bg-zinc-900/10 overflow-hidden">
-                                {/* Accordion Trigger */}
-                                <button
-                                    onClick={() => setExpandedAuthors(prev => ({ ...prev, [author]: !prev[author] }))}
-                                    className="w-full px-5 py-4 flex items-center justify-between bg-zinc-900/30 hover:bg-zinc-900/50 transition-colors"
-                                >
-                                    <div className="flex items-center gap-3 text-left">
-                                        <div className="w-9 h-9 rounded-xl bg-primary-500/10 flex items-center justify-center">
-                                            <Icon name="User" size={16} className="text-primary-500" />
-                                        </div>
-                                        <div>
-                                            <h3 className="font-bold text-white text-sm">{author}</h3>
-                                            <p className="text-[9px] text-zinc-500 uppercase tracking-widest mt-0.5">
-                                                {groupTemplates.length} {groupTemplates.length === 1 ? (lang === 'en' ? 'Program' : 'Programa') : (lang === 'en' ? 'Programs' : 'Programas')}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <Icon 
-                                        name={isExpanded ? "ChevronUp" : "ChevronDown"} 
-                                        size={18} 
-                                        className="text-zinc-500" 
-                                    />
-                                </button>
-
-                                {/* Accordion Content */}
-                                {isExpanded && (
-                                    <div className="p-3 grid gap-3 border-t border-white/5 bg-black/20 animate-in slide-in-from-top-2 duration-fast">
-                                        {groupTemplates.map((tpl) => (
-                                            <button
-                                                key={tpl.id}
-                                                onClick={() => onSelectTemplate(tpl)}
-                                                className="w-full bg-zinc-900/80 border border-zinc-800/80 p-4 rounded-xl text-left hover:border-primary-600/50 hover:bg-zinc-900 transition-all duration-fast relative overflow-hidden group"
-                                            >
-                                                {tpl.isPro && (
-                                                    <div className="absolute top-3 right-3 bg-yellow-500/20 text-yellow-500 text-[9px] font-black px-2 py-0.5 rounded border border-yellow-500/30 uppercase tracking-wider">
-                                                        PRO
-                                                    </div>
-                                                )}
-
-                                                <h4 className="font-bold text-white text-base pr-8">
-                                                    {getTranslated(tpl.title, lang as any)}
-                                                </h4>
-                                                <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-                                                    {getTranslated(tpl.description, lang as any)}
-                                                </p>
-
-                                                <div className="mt-3 flex gap-2">
-                                                    <span className="text-[10px] font-bold bg-zinc-800 text-zinc-500 px-2 py-1 rounded">
-                                                        {tpl.program.length} {lang === 'en' ? 'Days' : 'Días'}
-                                                    </span>
-                                                </div>
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
+                        <button
+                            type="button"
+                            onClick={() => setShowKongDetail(true)}
+                            className="w-full rounded-2xl border border-primary-500/30 bg-[rgb(var(--surface-raised))] p-5 text-left transition-transform active:scale-[0.99]"
+                        >
+                            <div className="flex items-start justify-between gap-4">
+                                <div>
+                                    <p className="text-2xl font-black">KONG</p>
+                                    <p className="mt-1 text-sm font-bold text-primary-500">SAVAGE SIZE · Alexander Bromley</p>
+                                </div>
+                                <Icon name="ChevronRight" size={20} className="mt-1 shrink-0 text-primary-500" />
                             </div>
-                        );
-                    })}
+                            <p className="mt-4 text-[10px] font-black uppercase tracking-[0.16em] text-[rgb(var(--text-muted))]">
+                                12 {lang === 'es' ? 'SEMANAS' : 'WEEKS'} · 4 {lang === 'es' ? 'DÍAS' : 'DAYS'} · 3 {lang === 'es' ? 'BLOQUES' : 'BLOCKS'}
+                            </p>
+                            <span className="mt-4 inline-flex min-h-11 items-center rounded-xl bg-primary-500 px-4 text-xs font-black text-black">
+                                {lang === 'es' ? 'VER PROGRAMA' : 'VIEW PROGRAM'}
+                            </span>
+                        </button>
+                    </section>
+
+                    <div className="flex items-center gap-4 px-1">
+                        <div className="h-px flex-1 bg-[rgb(var(--border-subtle))]" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[rgb(var(--text-muted))]">
+                            {lang === 'es' ? 'PLANTILLAS' : 'TEMPLATES'}
+                        </span>
+                        <div className="h-px flex-1 bg-[rgb(var(--border-subtle))]" />
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={onCreateCustom}
+                        className="flex w-full items-center gap-4 rounded-2xl border-2 border-dashed border-[rgb(var(--border-strong))] bg-[rgb(var(--surface-raised))] p-5 text-left transition-transform active:scale-[0.99]"
+                    >
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[rgb(var(--surface-base))] text-primary-500">
+                            <Icon name="Edit" size={21} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                            <h3 className="text-lg font-black">{lang === 'en' ? 'Design from Scratch' : 'Crear desde Cero'}</h3>
+                            <p className="mt-1 text-sm text-[rgb(var(--text-secondary))]">
+                                {lang === 'en' ? 'Empty canvas. You choose the exercises.' : 'Lienzo vacío. Tú eliges los ejercicios.'}
+                            </p>
+                        </div>
+                        <Icon name="ChevronRight" size={19} className="shrink-0 text-[rgb(var(--text-muted))]" />
+                    </button>
+
+                    <p className="px-1 text-[10px] font-black uppercase tracking-[0.2em] text-[rgb(var(--text-muted))]">
+                        {lang === 'en' ? 'CHOOSE BY AUTHOR' : 'ELIGE POR AUTOR'}
+                    </p>
+
+                    <div className="space-y-3">
+                        {Object.entries(grouped).map(([author, groupTemplates]) => {
+                            const isExpanded = !!expandedAuthors[author];
+                            return (
+                                <section key={author} className="overflow-hidden rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))]">
+                                    <button
+                                        type="button"
+                                        onClick={() => setExpandedAuthors((prev) => ({ ...prev, [author]: !prev[author] }))}
+                                        className="flex min-h-16 w-full items-center justify-between gap-3 px-5 py-4 text-left"
+                                    >
+                                        <div className="flex min-w-0 items-center gap-3">
+                                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-500/10 text-primary-500">
+                                                <Icon name="User" size={17} />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <h3 className="truncate text-sm font-black">{author}</h3>
+                                                <p className="mt-0.5 text-[9px] font-bold uppercase tracking-widest text-[rgb(var(--text-muted))]">
+                                                    {groupTemplates.length} {groupTemplates.length === 1 ? (lang === 'en' ? 'Program' : 'Programa') : (lang === 'en' ? 'Programs' : 'Programas')}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <Icon name={isExpanded ? 'ChevronUp' : 'ChevronDown'} size={18} className="shrink-0 text-[rgb(var(--text-muted))]" />
+                                    </button>
+
+                                    {isExpanded && (
+                                        <div className="grid gap-3 border-t border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base)/0.55)] p-3">
+                                            {groupTemplates.map((tpl) => (
+                                                <button
+                                                    key={tpl.id}
+                                                    type="button"
+                                                    onClick={() => onSelectTemplate(tpl)}
+                                                    className="relative w-full rounded-xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4 text-left transition-transform active:scale-[0.99]"
+                                                >
+                                                    {tpl.isPro && (
+                                                        <div className="absolute right-3 top-3 rounded border border-yellow-500/30 bg-yellow-500/20 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-yellow-500">
+                                                            PRO
+                                                        </div>
+                                                    )}
+                                                    <h4 className="pr-12 text-base font-black">{getTranslated(tpl.title, lang as any)}</h4>
+                                                    <p className="mt-1 pr-2 text-xs leading-relaxed text-[rgb(var(--text-secondary))]">
+                                                        {getTranslated(tpl.description, lang as any)}
+                                                    </p>
+                                                    <div className="mt-3 flex gap-2">
+                                                        <span className="rounded bg-[rgb(var(--surface-base))] px-2 py-1 text-[10px] font-bold text-[rgb(var(--text-muted))]">
+                                                            {tpl.program.length} {lang === 'en' ? 'Days' : 'Días'}
+                                                        </span>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </section>
+                            );
+                        })}
+                    </div>
                 </div>
             </div>
-            {showKongDetail && <Suspense fallback={null}><ProgramDetailView lang={lang as 'en' | 'es'} onBack={() => setShowKongDetail(false)} onStart={() => { setShowKongDetail(false); onSelectProgram?.('kong_4day'); }} /></Suspense>}
+
+            {showKongDetail && (
+                <Suspense fallback={null}>
+                    <ProgramDetailView
+                        lang={lang as 'en' | 'es'}
+                        onBack={() => setShowKongDetail(false)}
+                        onStart={() => {
+                            setShowKongDetail(false);
+                            onSelectProgram?.('kong_4day');
+                        }}
+                    />
+                </Suspense>
+            )}
         </div>
     );
+
+    if (typeof document === 'undefined') return selector;
+    return createPortal(selector, document.body);
 };
