@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { HomeView as HomeViewImpl } from './HomeViewImpl';
 import { useApp, useAppPreferences } from '../context/AppContext';
 import { useStore } from '../lib/store';
 import { KONG_4DAY_V1 } from '../programs/kong/kong4Day';
 import { getProgramBlockForWeek, resolveProgramWeek } from '../programs/engine/ProgramResolver';
 import { getKongDayDisplay } from '../programs/kong/kongDisplay';
+import { ProgramCompletionView } from '../components/programs/ProgramCompletionView';
 import './product-polish.css';
 import './reorder-history-polish.css';
 import './kong-final-polish.css';
@@ -22,9 +23,12 @@ interface HomeViewProps {
  */
 export const HomeView: React.FC<HomeViewProps> = (props) => {
     const { lang } = useAppPreferences();
-    const { setProgram } = useApp();
+    const { setProgram, logs } = useApp();
     const activeMeso = useStore(state => state.activeMeso);
+    const activeSession = useStore(state => state.activeSession);
+    const setActiveMeso = useStore(state => state.setActiveMeso);
     const rootRef = useRef<HTMLDivElement>(null);
+    const [showSkippedFinalCompletion, setShowSkippedFinalCompletion] = useState(false);
     const isKong = activeMeso?.programSystem?.systemId === KONG_4DAY_V1.id;
     const substitutionSignature = useMemo(
         () => JSON.stringify(activeMeso?.programSystem?.substitutions || {}),
@@ -48,6 +52,36 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
 
         setProgram(prev => JSON.stringify(prev) === JSON.stringify(resolved) ? prev : resolved);
     }, [activeMeso?.week, isKong, setProgram, substitutionSignature]);
+
+    // Legacy week completion only auto-advances after four non-skipped workouts.
+    // In KONG, a deliberate Skip resolves that scheduled slot but should reduce
+    // adherence rather than trap the user on a week with no remaining day.
+    useEffect(() => {
+        if (!isKong || !activeMeso || activeSession) return;
+        const safeLogs = Array.isArray(logs) ? logs : [];
+        const currentWeekLogs = safeLogs.filter(log => log.mesoId === activeMeso.id && log.week === activeMeso.week);
+        if (!currentWeekLogs.some(log => log.skipped)) return;
+
+        const resolvedDays = new Set(
+            currentWeekLogs
+                .map(log => log.dayIdx)
+                .filter(dayIdx => dayIdx >= 0 && dayIdx < KONG_4DAY_V1.daysPerWeek),
+        );
+        if (resolvedDays.size < KONG_4DAY_V1.daysPerWeek) return;
+
+        if (activeMeso.week >= KONG_4DAY_V1.durationWeeks) {
+            setShowSkippedFinalCompletion(true);
+            return;
+        }
+
+        const mesoId = activeMeso.id;
+        const completedWeek = activeMeso.week;
+        setActiveMeso(prev => (
+            prev && prev.id === mesoId && prev.week === completedWeek
+                ? { ...prev, week: prev.week + 1, isDeload: false }
+                : prev
+        ));
+    }, [activeMeso, activeSession, isKong, logs, setActiveMeso]);
 
     useEffect(() => {
         const root = rootRef.current;
@@ -82,6 +116,21 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
     return (
         <div ref={rootRef} className={`product-home-polish ${isKong ? 'kong-active' : ''} contents`}>
             <HomeViewImpl {...props} />
+            {showSkippedFinalCompletion && activeMeso && isKong && (
+                <ProgramCompletionView
+                    meso={activeMeso}
+                    logs={Array.isArray(logs) ? logs : []}
+                    lang={lang}
+                    onFinish={() => {
+                        setShowSkippedFinalCompletion(false);
+                        setActiveMeso(null);
+                    }}
+                    onKeep={() => {
+                        setShowSkippedFinalCompletion(false);
+                        setActiveMeso(null);
+                    }}
+                />
+            )}
         </div>
     );
 };
