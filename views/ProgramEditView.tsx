@@ -2,6 +2,7 @@
 import React, { useState, useCallback, Suspense } from 'react';
 import { useApp } from '../context/AppContext';
 import { TRANSLATIONS, MUSCLE_GROUPS } from '../constants';
+import { KONG_4DAY_V1 } from '../programs/kong/kong4Day';
 import { Icon } from '../components/ui/Icon';
 import { Button } from '../components/ui/Button';
 import { MuscleGroup, MesoType } from '../types';
@@ -19,23 +20,27 @@ interface ProgramEditViewProps {
 
 export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
     const { program, setProgram, lang, exercises } = useApp();
+    const activeMeso = useStore(state => state.activeMeso);
     const setActiveMeso = useStore(state => state.setActiveMeso);
     const t = TRANSLATIONS[lang];
+    const isStructuredKong = activeMeso?.programSystem?.systemId === KONG_4DAY_V1.id;
     
     const [pickingForSlot, setPickingForSlot] = useState<{dayId: string, slotIdx: number} | null>(null);
     const [showStartModal, setShowStartModal] = useState(false);
     const [dayToDelete, setDayToDelete] = useState<string | null>(null);
 
-    // New Meso Config State
+    // Prefill the editor from the current editable cycle when one exists. This
+    // keeps name/type/duration coherent after converting a Program System and is
+    // also less surprising for normal routine edits.
     const [mesoConfig, setMesoConfig] = useState<{
         name: string,
         type: MesoType,
         weeks: number
-    }>({
-        name: lang === 'en' ? "Custom Cycle" : "Ciclo Personalizado",
-        type: 'hyp_1',
-        weeks: 4
-    });
+    }>(() => ({
+        name: activeMeso?.name || (lang === 'en' ? 'Custom Cycle' : 'Ciclo Personalizado'),
+        type: activeMeso?.mesoType || 'hyp_1',
+        weeks: activeMeso?.targetWeeks || activeMeso?.duration || 4,
+    }));
 
     const handleUpdateDayName = useCallback((id: string, name: string) => {
         setProgram(prev => prev.map(d => d.id === id ? { ...d, dayName: { en: name, es: name } } : d));
@@ -44,7 +49,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
     const handleAddDay = useCallback(() => {
         const newDay = {
             id: `d_${Date.now()}`,
-            dayName: { en: "New Day", es: "Nuevo Día" },
+            dayName: { en: 'New Day', es: 'Nuevo Día' },
             slots: []
         };
         setProgram(prev => [...prev, newDay]);
@@ -76,7 +81,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
             return { ...d, slots: newSlots };
         }));
         triggerHaptic('light');
-    }, [setProgram]);
+    }, [dayToDelete, setProgram]);
 
     const handleUpdateSlot = useCallback((dayId: string, idx: number, field: string, val: any) => {
         setProgram(prev => prev.map(d => {
@@ -88,37 +93,59 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
         }));
     }, [setProgram]);
 
-    // Exercise Picker handling
     const handleSelectExercise = useCallback((exId: string) => {
         if (!pickingForSlot) return;
         handleUpdateSlot(pickingForSlot.dayId, pickingForSlot.slotIdx, 'exerciseId', exId);
         setPickingForSlot(null);
     }, [pickingForSlot, handleUpdateSlot]);
 
-    // --- Start Mesocycle Logic ---
     const handleStartMeso = () => {
-        // Create plan from current program state
         const plan = program.map(day => (day.slots || []).map(slot => slot.exerciseId || null));
-        
         setActiveMeso({
             id: Date.now(),
             name: mesoConfig.name,
             mesoType: mesoConfig.type,
             week: 1,
             targetWeeks: mesoConfig.weeks,
-            plan: plan,
+            plan,
             isDeload: false,
             duration: mesoConfig.weeks
         });
-        
         triggerHaptic('success');
-        // Return to home (which will now show the active meso)
         onBack();
     };
 
+    if (isStructuredKong) {
+        return (
+            <div className="flex h-full flex-col bg-[rgb(var(--surface-app))] text-[rgb(var(--text-primary))]">
+                <div className="flex h-14 shrink-0 items-center border-b border-[rgb(var(--border-subtle))] px-4">
+                    <button onClick={onBack} className="flex min-h-11 items-center gap-2 text-sm font-bold text-[rgb(var(--text-secondary))]" aria-label={t.back}>
+                        <Icon name="ChevronLeft" size={20} /> {t.back}
+                    </button>
+                </div>
+                <div className="flex flex-1 items-center justify-center p-6">
+                    <div className="w-full max-w-sm rounded-3xl border border-primary-500/25 bg-[rgb(var(--surface-raised))] p-6 text-center shadow-xl">
+                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-500/10 text-primary-500">
+                            <Icon name="Lock" size={24} />
+                        </div>
+                        <p className="mt-5 text-[10px] font-black uppercase tracking-[0.2em] text-primary-500">KONG</p>
+                        <h1 className="mt-2 text-2xl font-black">{lang === 'es' ? 'Programa estructurado' : 'Structured program'}</h1>
+                        <p className="mt-3 text-sm leading-6 text-[rgb(var(--text-secondary))]">
+                            {lang === 'es'
+                                ? 'La definición oficial de KONG no se edita desde el editor genérico. Vuelve y usa Opciones del plan → Editar rutina para convertir la semana actual en una copia personal editable.'
+                                : 'The official KONG definition is not edited in the generic editor. Go back and use Plan options → Edit routine to convert the current week into an editable personal copy.'}
+                        </p>
+                        <Button onClick={onBack} fullWidth className="mt-6">
+                            {lang === 'es' ? 'Volver al plan' : 'Back to plan'}
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="h-full flex flex-col bg-gray-50 dark:bg-zinc-950 relative">
-             {/* Header */}
              <div className="glass px-4 h-14 shrink-0 flex items-center justify-between z-10">
                 <button onClick={onBack} className="flex items-center gap-2 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white" aria-label="Previous"> <Icon name="ChevronLeft" size={20} />
                     <span className="font-bold text-sm">{t.back}</span>
@@ -134,7 +161,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 scroll-container space-y-6 pb-24">
-                {program.map((day, i) => (
+                {program.map((day) => (
                     <div key={day.id} className="glass-card rounded-2xl overflow-hidden shadow-lg transition-all hover:border-white/10">
                         <div className="bg-zinc-100/80 dark:bg-white/5 p-4 border-b border-zinc-200 dark:border-white/5 flex justify-between items-center">
                             <input 
@@ -153,7 +180,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
                                 <div key={idx} className="p-3 flex flex-col gap-2">
                                     <div className="flex items-center gap-3">
                                         <div className="flex-1 space-y-2">
-                                            <div className="flex gap-2 items-center">                                                 {/* Muscle Select */}
+                                            <div className="flex gap-2 items-center">
                                                 <select 
                                                     className="bg-zinc-100 dark:bg-white/5 hover:bg-zinc-200 dark:hover:bg-white/10 text-xs font-bold rounded-lg px-2 py-1.5 border-none outline-none text-zinc-900 dark:text-zinc-200 max-w-[100px] transition-colors"
                                                     value={slot.muscle}
@@ -164,7 +191,6 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
                                                     ))}
                                                 </select>
 
-                                                {/* Sets Input */}
                                                 <div className="flex items-center gap-1 bg-zinc-100 dark:bg-white/5 rounded-lg px-2 py-1 border border-zinc-200 dark:border-white/5">
                                                     <span className="text-[9px] font-bold text-zinc-400">SETS</span>
                                                     <input 
@@ -175,7 +201,6 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
                                                     />
                                                 </div>
 
-                                                {/* Reps Input */}
                                                 <div className="flex items-center gap-1 bg-zinc-100 dark:bg-white/5 rounded-lg px-2 py-1 flex-1 border border-zinc-200 dark:border-white/5">
                                                     <span className="text-[9px] font-bold text-zinc-400 whitespace-nowrap">REPS</span>
                                                     <input 
@@ -188,7 +213,6 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
                                                 </div>
                                             </div>
 
-                                            {/* Specific Exercise (Optional Override) */}
                                             <button 
                                                 onClick={() => setPickingForSlot({dayId: day.id, slotIdx: idx})}
                                                 className={`text-sm font-medium w-full text-left truncate ${slot.exerciseId ? 'text-zinc-900 dark:text-white' : 'text-zinc-400 italic'}`}
@@ -219,7 +243,6 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
                 </Button>
             </div>
 
-            {/* Exercise Selector Modal */}
             {pickingForSlot && (
                 <Suspense fallback={null}>
                     <ExerciseSelector 
@@ -229,7 +252,6 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
                 </Suspense>
             )}
 
-            {/* Start Mesocycle Config Modal */}
             <Sheet
                 open={showStartModal}
                 onOpenChange={setShowStartModal}
@@ -243,7 +265,6 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
             >
                 <div className="p-5 space-y-6">
                     <p className="text-xs text-zinc-500 -mt-2">{t.saveAsMeso}</p>
-                    {/* Rename */}
                     <div>
                         <label className="text-[10px] font-black uppercase text-zinc-500 tracking-widest block mb-2 px-1">{t.mesoName}</label>
                         <input 
@@ -254,7 +275,6 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
                         />
                     </div>
                     
-                    {/* Type */}
                     <div>
                         <label className="text-[10px] font-black uppercase text-zinc-500 tracking-widest block mb-2 px-1">{t.mesoType}</label>
                         <select 
@@ -268,7 +288,6 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
                         </select>
                     </div>
 
-                    {/* Duration */}
                     <div>
                         <label className="text-[10px] font-black uppercase text-zinc-500 tracking-widest block mb-2 px-1">{t.targetWeeks}</label>
                         <div className="flex items-center gap-4">
