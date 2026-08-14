@@ -1,5 +1,6 @@
 import { KONG_4DAY_V1 } from '../programs/kong/kong4Day.ts';
-import { resolveProgramDay, getProgramBlockForWeek } from '../programs/engine/ProgramResolver.ts';
+import { resolveProgramDay, resolveProgramWeek, getProgramBlockForWeek } from '../programs/engine/ProgramResolver.ts';
+import { toEditableProgram } from '../programs/engine/ProgramConversion.ts';
 import { readFileSync } from 'node:fs';
 
 const fail = (message: string): never => { throw new Error(`[validate-kong] ${message}`); };
@@ -42,4 +43,14 @@ assert(chin?.prescription?.every((set) => set.reps === 'FAILURE'), 'Chin Ups fai
 assert(getProgramBlockForWeek(KONG_4DAY_V1, 5).block.number === 2 && getProgramBlockForWeek(KONG_4DAY_V1, 9).block.number === 3, 'block transitions mismatch');
 const substitution = resolveProgramDay(KONG_4DAY_V1, 1, 0, { b1d1_jm_press: 'tri_ext' }).slots[0];
 assert(substitution.exerciseId === 'tri_ext' && substitution.programSourceName === 'JM Press', 'persistent substitution did not resolve without mutating source metadata');
-console.log('KONG validation passed: 12 weeks, 4 days, 3 blocks, exact prescriptions and exercise IDs.');
+
+// Leaving a Program System must create a genuinely editable legacy routine.
+// Hidden prescription metadata would otherwise continue to override the SETS /
+// REPS controls shown by ProgramEditView.
+const editableW12 = toEditableProgram(resolveProgramWeek(KONG_4DAY_V1, 12));
+const editableSlots = editableW12.flatMap((day) => day.slots);
+assert(editableSlots.every((slot) => !slot.prescription && !slot.programSlotId && !slot.substitutionGroup && !slot.programSourceName && !slot.targetMuscle), 'editable conversion leaked Program System metadata');
+assert(editableW12[3].slots[0].setTarget === 5, 'editable Week 12 squat should preserve five visible sets');
+assert(editableW12[3].slots[0].reps === '1 · 6 · 6 · 6 · 10', 'editable Week 12 squat should preserve the visible rep sequence');
+
+console.log('KONG validation passed: 12 weeks, 4 days, 3 blocks, exact prescriptions, exercise IDs, and safe editable conversion.');
