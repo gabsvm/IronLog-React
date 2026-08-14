@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Log, MesoCycle } from '../../types';
 import { Icon } from '../ui/Icon';
@@ -49,6 +49,41 @@ export const ProgramHub: React.FC<Props> = ({ meso, logs, onClose, lang }) => {
   const [selectedWeek, setSelectedWeek] = useState(Math.max(1, Math.min(12, meso.week || 1)));
   const [selectedDay, setSelectedDay] = useState(0);
   const [openPrinciple, setOpenPrinciple] = useState<string>('weak-points');
+  const onCloseRef = useRef(onClose);
+  const handlingPopState = useRef(false);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const currentState = window.history.state || {};
+    window.history.pushState({ ...currentState, kongHub: true, kongPanel: 'home' }, '', '#kong');
+
+    const handlePopState = (event: PopStateEvent) => {
+      if (event.state?.kongHub) {
+        handlingPopState.current = true;
+        setPanel(event.state.kongPanel || 'home');
+        return;
+      }
+      onCloseRef.current();
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (handlingPopState.current) {
+      handlingPopState.current = false;
+      return;
+    }
+    const currentState = window.history.state;
+    if (!currentState?.kongHub || currentState.kongPanel === panel) return;
+    window.history.pushState({ ...currentState, kongPanel: panel }, '', `#kong-${panel}`);
+  }, [panel]);
 
   const { block, blockWeek } = getProgramBlockForWeek(KONG_4DAY_V1, meso.week);
   const expectedThroughCurrentWeek = Math.max(1, Math.min(48, meso.week * 4));
@@ -128,14 +163,28 @@ export const ProgramHub: React.FC<Props> = ({ meso, logs, onClose, lang }) => {
     },
   ];
 
-  const goHome = () => setPanel('home');
+  const goHome = () => {
+    if (typeof window !== 'undefined' && window.history.state?.kongHub && panel !== 'home') {
+      window.history.back();
+      return;
+    }
+    setPanel('home');
+  };
+
+  const closeHub = () => {
+    if (typeof window !== 'undefined' && window.history.state?.kongHub) {
+      window.history.back();
+      return;
+    }
+    onCloseRef.current();
+  };
 
   const Header = () => (
     <header className="shrink-0 border-b border-[rgb(var(--border-subtle)/0.75)] bg-[rgb(var(--surface-app)/0.98)] px-4 pt-safe">
       <div className="mx-auto flex h-14 w-full max-w-xl items-center gap-3">
         <button
           type="button"
-          onClick={panel === 'home' ? onClose : goHome}
+          onClick={panel === 'home' ? closeHub : goHome}
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] text-[rgb(var(--text-secondary))] active:scale-95"
           aria-label={panel === 'home' ? (lang === 'es' ? 'Cerrar' : 'Close') : (lang === 'es' ? 'Volver' : 'Back')}
         >
