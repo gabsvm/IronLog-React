@@ -86,8 +86,18 @@ export const ProgramHub: React.FC<Props> = ({ meso, logs, onClose, lang }) => {
   }, [panel]);
 
   const { block, blockWeek } = getProgramBlockForWeek(KONG_4DAY_V1, meso.week);
-  const expectedThroughCurrentWeek = Math.max(1, Math.min(48, meso.week * 4));
-  const metrics = calculateProgramMetrics(logs, meso.id, expectedThroughCurrentWeek, meso.programSystem?.startedBodyWeight);
+  const scheduleProgress = useMemo(() => {
+    const resolved = new Set<string>();
+    const completed = new Set<string>();
+    logs.forEach((log) => {
+      if (log.mesoId !== meso.id || log.week < 1 || log.week > meso.week || log.dayIdx < 0 || log.dayIdx >= KONG_4DAY_V1.daysPerWeek) return;
+      const key = `${log.week}:${log.dayIdx}`;
+      resolved.add(key);
+      if (!log.skipped) completed.add(key);
+    });
+    return { resolved: resolved.size, completed: completed.size };
+  }, [logs, meso.id, meso.week]);
+  const metrics = calculateProgramMetrics(logs, meso.id, scheduleProgress.resolved, meso.programSystem?.startedBodyWeight, KONG_4DAY_V1.daysPerWeek);
   const title = (text: { en: string; es: string }) => text[lang];
   const blockName = (blockNumber: number) => lang === 'es'
     ? ES_BLOCK_COPY[blockNumber]?.name || title(KONG_4DAY_V1.blocks[blockNumber - 1].name)
@@ -461,14 +471,19 @@ export const ProgramHub: React.FC<Props> = ({ meso, logs, onClose, lang }) => {
       <section className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-5">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-xs font-black uppercase tracking-wider text-[rgb(var(--text-muted))]">{lang === 'es' ? 'Sesiones esperadas hasta hoy' : 'Expected sessions through now'}</p>
-            <p className="mt-1 text-2xl font-black">{metrics.sessionsCompleted} / {expectedThroughCurrentWeek}</p>
+            <p className="text-xs font-black uppercase tracking-wider text-[rgb(var(--text-muted))]">{lang === 'es' ? 'Sesiones programadas resueltas' : 'Resolved scheduled sessions'}</p>
+            <p className="mt-1 text-2xl font-black">{scheduleProgress.completed} / {scheduleProgress.resolved}</p>
           </div>
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-500/10 text-lg font-black text-primary-500">{Math.round(metrics.adherence * 100)}%</div>
         </div>
         <div className="mt-4 h-2 overflow-hidden rounded-full bg-[rgb(var(--surface-elevated))]">
           <div className="h-full rounded-full bg-primary-500" style={{ width: `${Math.min(100, metrics.adherence * 100)}%` }} />
         </div>
+        <p className="mt-3 text-[11px] leading-5 text-[rgb(var(--text-muted))]">
+          {lang === 'es'
+            ? 'Las sesiones repetidas suman tiempo, volumen y trabajo, pero no inflan la adherencia. Un día saltado sí reduce este porcentaje.'
+            : 'Repeated sessions add time, volume and work, but do not inflate adherence. A skipped scheduled day lowers this percentage.'}
+        </p>
       </section>
       <div className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4 text-sm text-[rgb(var(--text-secondary))]">
         {metrics.initialBodyWeight || metrics.currentBodyWeight
