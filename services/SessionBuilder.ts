@@ -1,7 +1,8 @@
 import { ProgramDay, MesoCycle, ExerciseDef, Log, ActiveSession, SessionExercise } from '../types';
 import { getLastLogForExercise, uid } from '../utils';
 import { KONG_4DAY_V1 } from '../programs/kong/kong4Day';
-import { resolveProgramDay } from '../programs/engine/ProgramResolver';
+import { getProgramBlockForWeek, resolveProgramDay } from '../programs/engine/ProgramResolver';
+import { getKongDayDisplay } from '../programs/kong/kongDisplay';
 
 export class SessionBuilder {
     static buildFromProgramDay(
@@ -16,15 +17,21 @@ export class SessionBuilder {
     ): ActiveSession | null {
         if (!programDay) return null;
 
+        const isKong = activeMeso.programSystem?.systemId === KONG_4DAY_V1.id;
+
         // Structured programs resolve their immutable definition at build time;
         // normal templates continue through the legacy path unchanged.
-        const resolvedDay = activeMeso.programSystem?.systemId === KONG_4DAY_V1.id
-            ? resolveProgramDay(KONG_4DAY_V1, activeMeso.week, dayIdx, activeMeso.programSystem.substitutions)
+        const resolvedDay = isKong
+            ? resolveProgramDay(KONG_4DAY_V1, activeMeso.week, dayIdx, activeMeso.programSystem?.substitutions || {})
             : programDay;
 
-        const dayNameSafe = resolvedDay.dayName
-            ? (typeof resolvedDay.dayName === 'object' ? resolvedDay.dayName[lang as 'en'|'es'] : resolvedDay.dayName)
-            : `Day ${dayIdx + 1}`;
+        const kongBlock = isKong ? getProgramBlockForWeek(KONG_4DAY_V1, activeMeso.week).block : null;
+        const localizedKongDay = kongBlock ? getKongDayDisplay(kongBlock.number, dayIdx) : null;
+        const dayNameSafe = localizedKongDay
+            ? localizedKongDay[(lang === 'es' ? 'es' : 'en')]
+            : resolvedDay.dayName
+                ? (typeof resolvedDay.dayName === 'object' ? resolvedDay.dayName[lang as 'en'|'es'] : resolvedDay.dayName)
+                : `Day ${dayIdx + 1}`;
 
         const mesoPlan = Array.isArray(activeMeso.plan) ? activeMeso.plan : [];
         const dayPlan = Array.isArray(mesoPlan[dayIdx]) ? mesoPlan[dayIdx] : [];
@@ -41,7 +48,7 @@ export class SessionBuilder {
             if (!exDef) exDef = { id: `placeholder_${slotDef.muscle}_${sIdx}`, name: slotDef.muscle || 'Unknown', muscle: slotDef.muscle || 'CHEST' };
 
             let setTarget = slotDef.setTarget || 3;
-            
+
             // RP Feedback adjustments
             if (!slotDef.prescription && config.rpEnabled && activeMeso && activeMeso.week > 1) {
                 let accumulatedAdjustment = 0;
@@ -96,7 +103,7 @@ export class SessionBuilder {
         return {
             id: Date.now(),
             dayIdx: dayIdx,
-            name: `${activeMeso.week} • ${dayNameSafe}`,
+            name: isKong ? dayNameSafe : `${activeMeso.week} • ${dayNameSafe}`,
             exercises: sessionExs as SessionExercise[],
             startTime: Date.now(),
             mesoId: activeMeso.id,
