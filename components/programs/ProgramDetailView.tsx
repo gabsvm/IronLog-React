@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Icon } from '../ui/Icon';
 import { KONG_4DAY_V1 } from '../../programs/kong/kong4Day';
 import { KONG_GUIDE } from '../../programs/kong/kongGuide';
+import { getProgramBlockForWeek, resolveProgramDay } from '../../programs/engine/ProgramResolver';
 
 interface Props {
   lang: 'en' | 'es';
@@ -26,6 +27,8 @@ const ES_DAY_COPY: Record<number, string[]> = {
 export const ProgramDetailView: React.FC<Props> = ({ lang, onBack, onStart }) => {
   const [tab, setTab] = useState<Tab>('overview');
   const [openGuideId, setOpenGuideId] = useState<string>('what-is-kong');
+  const [selectedWeek, setSelectedWeek] = useState(1);
+  const [selectedDay, setSelectedDay] = useState(0);
   const title = (text: { en: string; es: string }) => text[lang];
 
   const blockName = (block: (typeof KONG_4DAY_V1.blocks)[number]) =>
@@ -33,6 +36,9 @@ export const ProgramDetailView: React.FC<Props> = ({ lang, onBack, onStart }) =>
 
   const blockGoal = (block: (typeof KONG_4DAY_V1.blocks)[number]) =>
     lang === 'es' ? ES_BLOCK_COPY[block.number]?.goal || title(block.goal) : title(block.goal);
+
+  const selectedResolution = getProgramBlockForWeek(KONG_4DAY_V1, selectedWeek);
+  const selectedResolvedDay = resolveProgramDay(KONG_4DAY_V1, selectedWeek, selectedDay, {});
 
   return (
     <div
@@ -106,44 +112,115 @@ export const ProgramDetailView: React.FC<Props> = ({ lang, onBack, onStart }) =>
             <div className="mt-5 space-y-4">
               <p className="px-1 text-sm leading-6 text-[rgb(var(--text-secondary))]">
                 {lang === 'es'
-                  ? 'Cada bloque dura 4 semanas y conserva 4 días de entrenamiento. La prescripción de series, reps y RPE cambia automáticamente con la semana.'
-                  : 'Each block lasts 4 weeks with 4 training days. Sets, reps and RPE prescriptions change automatically with the week.'}
+                  ? 'Selecciona una semana y un día para inspeccionar la prescripción exacta antes de empezar el programa.'
+                  : 'Select a week and day to inspect the exact prescription before starting the program.'}
               </p>
+
               {KONG_4DAY_V1.blocks.map((block) => (
-                <article key={block.id} className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-5">
-                  <div className="flex items-start justify-between gap-3">
+                <section key={block.id} className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4">
+                  <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-xs font-black uppercase tracking-wider text-primary-500">
+                      <p className="text-[10px] font-black uppercase tracking-wider text-primary-500">
                         {lang === 'es' ? 'BLOQUE' : 'BLOCK'} {block.number}
                       </p>
-                      <h2 className="mt-1 text-lg font-black">{blockName(block)}</h2>
+                      <h2 className="mt-1 text-sm font-black">{blockName(block)}</h2>
                     </div>
-                    <span className="rounded-full bg-primary-500/10 px-3 py-1 text-[10px] font-black text-primary-500">
-                      {lang === 'es' ? 'SEM.' : 'WK'} {block.globalWeekStart}-{block.globalWeekEnd}
-                    </span>
+                    <span className="text-[10px] font-bold text-[rgb(var(--text-muted))]">{block.globalWeekStart}-{block.globalWeekEnd}</span>
                   </div>
-
-                  <div className="mt-4 grid grid-cols-4 gap-2">
-                    {Array.from({ length: 4 }, (_, index) => block.globalWeekStart + index).map((week) => (
-                      <div key={week} className="rounded-xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base))] py-2 text-center">
-                        <span className="text-[9px] font-bold uppercase text-[rgb(var(--text-muted))]">{lang === 'es' ? 'Semana' : 'Week'}</span>
-                        <strong className="block text-sm">{week}</strong>
-                      </div>
-                    ))}
+                  <div className="mt-3 grid grid-cols-4 gap-2">
+                    {Array.from({ length: 4 }, (_, index) => block.globalWeekStart + index).map((week) => {
+                      const selected = selectedWeek === week;
+                      return (
+                        <button
+                          key={week}
+                          type="button"
+                          onClick={() => { setSelectedWeek(week); setSelectedDay(0); }}
+                          className={`min-h-11 rounded-xl border text-xs font-black ${selected ? 'border-primary-500 bg-primary-500 text-black' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base))] text-[rgb(var(--text-secondary))]'}`}
+                        >
+                          {lang === 'es' ? 'S' : 'W'}{week}
+                        </button>
+                      );
+                    })}
                   </div>
-
-                  <div className="mt-4 space-y-2">
-                    {block.days.map((day, index) => (
-                      <div key={day.id} className="flex items-center gap-3 rounded-xl bg-[rgb(var(--surface-base))] px-3 py-3">
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-500/10 text-xs font-black text-primary-500">{index + 1}</span>
-                        <span className="min-w-0 text-sm font-bold">
-                          {lang === 'es' ? ES_DAY_COPY[block.number]?.[index] || title(day.name) : title(day.name)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </article>
+                </section>
               ))}
+
+              <section className="rounded-3xl border border-primary-500/25 bg-[rgb(var(--surface-raised))] p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary-500">
+                      {lang === 'es' ? `SEMANA ${selectedWeek} · BLOQUE ${selectedResolution.block.number}` : `WEEK ${selectedWeek} · BLOCK ${selectedResolution.block.number}`}
+                    </p>
+                    <h2 className="mt-1 text-lg font-black">{blockName(selectedResolution.block)}</h2>
+                  </div>
+                  <span className="rounded-full bg-primary-500/10 px-3 py-1 text-[10px] font-black text-primary-500">
+                    {lang === 'es' ? `SEM. BLOQUE ${selectedResolution.blockWeek}/4` : `BLOCK WK ${selectedResolution.blockWeek}/4`}
+                  </span>
+                </div>
+
+                <div className="mt-4 grid grid-cols-4 gap-2">
+                  {selectedResolution.block.days.map((day, index) => (
+                    <button
+                      key={day.id}
+                      type="button"
+                      onClick={() => setSelectedDay(index)}
+                      className={`min-h-12 rounded-xl border text-xs font-black ${selectedDay === index ? 'border-primary-500 bg-primary-500/15 text-primary-500' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base))] text-[rgb(var(--text-secondary))]'}`}
+                    >
+                      {lang === 'es' ? 'DÍA' : 'DAY'} {index + 1}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="mt-4 rounded-2xl bg-[rgb(var(--surface-base))] p-4">
+                  <h3 className="font-black">
+                    {lang === 'es'
+                      ? ES_DAY_COPY[selectedResolution.block.number]?.[selectedDay] || title(selectedResolvedDay.dayName)
+                      : title(selectedResolvedDay.dayName)}
+                  </h3>
+                  <p className="mt-1 text-xs text-[rgb(var(--text-muted))]">
+                    {selectedResolvedDay.slots.length} {lang === 'es' ? 'ejercicios' : 'exercises'}
+                  </p>
+                </div>
+
+                <div className="mt-3 space-y-2">
+                  {selectedResolvedDay.slots.map((slot, index) => {
+                    const prescription = slot.prescription || [];
+                    const repsText = prescription
+                      .map((set) => set.reps === 'FAILURE' ? (lang === 'es' ? 'FALLO' : 'FAIL') : String(set.reps))
+                      .join(' · ');
+                    const rpes = prescription
+                      .map((set) => set.targetRpe)
+                      .filter((value): value is number => typeof value === 'number');
+                    const uniqueRpes = Array.from(new Set(rpes));
+                    const rpeText = uniqueRpes.length === 1
+                      ? `RPE ${uniqueRpes[0]}`
+                      : uniqueRpes.length > 1
+                        ? `RPE ${rpes.join('/')}`
+                        : '';
+
+                    return (
+                      <div key={slot.programSlotId || `${slot.exerciseId}-${index}`} className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base))] p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-[10px] font-black uppercase tracking-wider text-[rgb(var(--text-muted))]">#{index + 1}</span>
+                              {slot.supersetId && (
+                                <span className="rounded-full bg-primary-500/10 px-2 py-0.5 text-[9px] font-black uppercase text-primary-500">SUPERSET</span>
+                              )}
+                            </div>
+                            <h4 className="mt-1 text-sm font-black">{slot.programSourceName || slot.exerciseId || slot.muscle}</h4>
+                          </div>
+                          <span className="shrink-0 rounded-lg bg-[rgb(var(--surface-raised))] px-2 py-1 text-[9px] font-black uppercase text-[rgb(var(--text-muted))]">{slot.muscle}</span>
+                        </div>
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                          <span className="rounded-lg bg-primary-500/10 px-2.5 py-1.5 text-xs font-black text-primary-500">{repsText}</span>
+                          {rpeText && <span className="rounded-lg bg-[rgb(var(--surface-raised))] px-2.5 py-1.5 text-xs font-bold text-[rgb(var(--text-secondary))]">{rpeText}</span>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
             </div>
           )}
 
