@@ -4,6 +4,10 @@ import { useAuth } from '../../context/AuthContext';
 import { usePro } from '../../hooks/usePro';
 import { useStore } from '../../lib/store';
 import { TRANSLATIONS } from '../../constants';
+import { KONG_4DAY_V1 } from '../../programs/kong/kong4Day';
+import { getProgramBlockForWeek, resolveProgramWeek } from '../../programs/engine/ProgramResolver';
+import { toEditableProgram } from '../../programs/engine/ProgramConversion';
+import { getKongDayDisplay } from '../../programs/kong/kongDisplay';
 import { Icon } from '../ui/Icon';
 import { Logo } from '../ui/Logo';
 import { Avatar } from '../ui/Avatar';
@@ -25,7 +29,7 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenSettings, onOpenCommandPalette }) => {
     const { lang } = useAppPreferences();
-    const { isOnline, syncStatus } = useApp();
+    const { isOnline, syncStatus, setProgram } = useApp();
     const { user } = useAuth();
     const { isPro } = usePro();
     const activeMeso = useStore(state => state.activeMeso);
@@ -38,7 +42,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
     const [showFreestyle, setShowFreestyle] = React.useState(false);
     const [showTwoBlock, setShowTwoBlock] = React.useState(false);
     const bypassPlanCapture = React.useRef(false);
-    const isKong = activeMeso?.programSystem?.systemId === 'kong_4day';
+    const isKong = activeMeso?.programSystem?.systemId === KONG_4DAY_V1.id;
 
     React.useEffect(() => {
         document.documentElement.classList.toggle('kong-program-active', !!isKong);
@@ -125,11 +129,24 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
         setShowPlanActions(false);
         setShowQuickStart(false);
 
-        if (isKong) {
+        if (isKong && activeMeso) {
             const convert = window.confirm(lang === 'es'
                 ? 'KONG es un programa estructurado de 12 semanas. Para editar libremente la semana actual debes convertirla en una rutina personal. KONG finalizará y la copia quedará editable. ¿Continuar?'
                 : 'KONG is a structured 12-week program. To freely edit the current week, convert it to a personal routine. KONG will end and the copy will become editable. Continue?');
             if (!convert) return;
+
+            const { block } = getProgramBlockForWeek(KONG_4DAY_V1, activeMeso.week);
+            const editableProgram = toEditableProgram(resolveProgramWeek(
+                KONG_4DAY_V1,
+                activeMeso.week,
+                activeMeso.programSystem?.substitutions || {},
+            ).map((day, dayIndex) => ({
+                ...day,
+                dayName: getKongDayDisplay(block.number, dayIndex),
+            })));
+            const editablePlan = editableProgram.map((day) => (day.slots || []).map((slot) => slot.exerciseId || null));
+
+            setProgram(editableProgram);
             setActiveMeso(prev => prev ? {
                 ...prev,
                 name: lang === 'es' ? 'KONG · Rutina personal' : 'KONG · Personal routine',
@@ -137,6 +154,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
                 targetWeeks: 4,
                 duration: 4,
                 week: 1,
+                plan: editablePlan,
                 isDeload: false,
                 programSystem: undefined,
             } : prev);
