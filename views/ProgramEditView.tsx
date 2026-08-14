@@ -29,9 +29,6 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
     const [showStartModal, setShowStartModal] = useState(false);
     const [dayToDelete, setDayToDelete] = useState<string | null>(null);
 
-    // Prefill the editor from the current editable cycle when one exists. This
-    // keeps name/type/duration coherent after converting a Program System and is
-    // also less surprising for normal routine edits.
     const [mesoConfig, setMesoConfig] = useState<{
         name: string,
         type: MesoType,
@@ -41,6 +38,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
         type: activeMeso?.mesoType || 'hyp_1',
         weeks: activeMeso?.targetWeeks || activeMeso?.duration || 4,
     }));
+    const hasKnownPhase = Object.prototype.hasOwnProperty.call(t.phases, mesoConfig.type);
 
     const handleUpdateDayName = useCallback((id: string, name: string) => {
         setProgram(prev => prev.map(d => d.id === id ? { ...d, dayName: { en: name, es: name } } : d));
@@ -81,7 +79,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
             return { ...d, slots: newSlots };
         }));
         triggerHaptic('light');
-    }, [dayToDelete, setProgram]);
+    }, [setProgram]);
 
     const handleUpdateSlot = useCallback((dayId: string, idx: number, field: string, val: any) => {
         setProgram(prev => prev.map(d => {
@@ -282,6 +280,9 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
                             value={mesoConfig.type}
                             onChange={(e) => setMesoConfig({ ...mesoConfig, type: e.target.value as MesoType })}
                         >
+                            {!hasKnownPhase && (
+                                <option value={mesoConfig.type}>{lang === 'es' ? 'Personalizado' : 'Custom'}</option>
+                            )}
                             {Object.entries(t.phases).map(([key, label]) => (
                                 <option key={key} value={key}>{label}</option>
                             ))}
