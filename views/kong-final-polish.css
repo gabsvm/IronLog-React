@@ -30,7 +30,14 @@
   display: none !important;
 }
 
-/* With the structured controls hidden, avoid an oversized empty modal. */
 .product-home-polish.kong-active #tut-meso-notes {
   margin-top: 0.25rem;
+}
+
+/* Global Settings renders outside Home. When KONG is active the document-level
+   marker hides only the generic Program Editor and "save current projection"
+   actions. Exercise library and all actual preferences remain accessible. */
+html.kong-program-active [aria-labelledby="settings-modal-title"] .scroll-container > div:first-child > .space-y-3 > button:first-child,
+html.kong-program-active [aria-labelledby="settings-modal-title"] .scroll-container > div:first-child > .space-y-3 > button:nth-child(3) {
+  display: none !important;
 }
