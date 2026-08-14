@@ -108,7 +108,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
             targetWeeks: mesoConfig.weeks,
             plan: plan,
             isDeload: false,
-	    duration: 5
+            duration: mesoConfig.weeks
         });
         
         triggerHaptic('success');
@@ -136,7 +136,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
             <div className="flex-1 overflow-y-auto p-4 scroll-container space-y-6 pb-24">
                 {program.map((day, i) => (
                     <div key={day.id} className="glass-card rounded-2xl overflow-hidden shadow-lg transition-all hover:border-white/10">
-                        <div className="bg-white/5 p-4 border-b border-white/5 flex justify-between items-center">
+                        <div className="bg-zinc-100/80 dark:bg-white/5 p-4 border-b border-zinc-200 dark:border-white/5 flex justify-between items-center">
                             <input 
                                 className="bg-transparent font-bold text-zinc-900 dark:text-white outline-none w-full"
                                 value={day.dayName[lang]}
@@ -155,7 +155,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
                                         <div className="flex-1 space-y-2">
                                             <div className="flex gap-2 items-center">                                                 {/* Muscle Select */}
                                                 <select 
-                                                    className="bg-white/5 hover:bg-white/10 text-xs font-bold rounded-lg px-2 py-1.5 border-none outline-none text-zinc-900 dark:text-zinc-200 max-w-[100px] transition-colors"
+                                                    className="bg-zinc-100 dark:bg-white/5 hover:bg-zinc-200 dark:hover:bg-white/10 text-xs font-bold rounded-lg px-2 py-1.5 border-none outline-none text-zinc-900 dark:text-zinc-200 max-w-[100px] transition-colors"
                                                     value={slot.muscle}
                                                     onChange={(e) => handleUpdateSlot(day.id, idx, 'muscle', e.target.value)}
                                                 >
@@ -165,7 +165,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
                                                 </select>
 
                                                 {/* Sets Input */}
-                                                <div className="flex items-center gap-1 bg-white/5 rounded-lg px-2 py-1 border border-white/5">
+                                                <div className="flex items-center gap-1 bg-zinc-100 dark:bg-white/5 rounded-lg px-2 py-1 border border-zinc-200 dark:border-white/5">
                                                     <span className="text-[9px] font-bold text-zinc-400">SETS</span>
                                                     <input 
                                                         type="number" 
@@ -176,7 +176,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
                                                 </div>
 
                                                 {/* Reps Input */}
-                                                <div className="flex items-center gap-1 bg-white/5 rounded-lg px-2 py-1 flex-1 border border-white/5">
+                                                <div className="flex items-center gap-1 bg-zinc-100 dark:bg-white/5 rounded-lg px-2 py-1 flex-1 border border-zinc-200 dark:border-white/5">
                                                     <span className="text-[9px] font-bold text-zinc-400 whitespace-nowrap">REPS</span>
                                                     <input 
                                                         type="text" 
@@ -248,7 +248,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
                         <label className="text-[10px] font-black uppercase text-zinc-500 tracking-widest block mb-2 px-1">{t.mesoName}</label>
                         <input 
                             type="text" 
-                            className="w-full bg-zinc-800 border border-zinc-700/50 text-zinc-900 dark:text-white rounded-xl p-3 font-bold outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all glow-input-neon"
+                            className="w-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-xl p-3 font-bold outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all glow-input-neon"
                             value={mesoConfig.name}
                             onChange={(e) => setMesoConfig({ ...mesoConfig, name: e.target.value })}
                         />
@@ -258,7 +258,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
                     <div>
                         <label className="text-[10px] font-black uppercase text-zinc-500 tracking-widest block mb-2 px-1">{t.mesoType}</label>
                         <select 
-                            className="w-full bg-zinc-800 border border-zinc-700/50 text-zinc-900 dark:text-white rounded-xl p-3 font-bold outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all"
+                            className="w-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-xl p-3 font-bold outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all"
                             value={mesoConfig.type}
                             onChange={(e) => setMesoConfig({ ...mesoConfig, type: e.target.value as MesoType })}
                         >
@@ -274,14 +274,14 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
                         <div className="flex items-center gap-4">
                             <button 
                                 onClick={() => setMesoConfig(prev => ({ ...prev, weeks: Math.max(1, prev.weeks - 1) }))}
-                                className="w-10 h-10 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/50 flex items-center justify-center text-zinc-300 hover:text-white active:scale-95 transition-all"
+                                className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700/50 flex items-center justify-center text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white active:scale-95 transition-all"
                             >
                                 <Icon name="Minus" size={16} />
                             </button>
                             <span className="font-mono text-2xl font-bold w-12 text-center text-zinc-900 dark:text-white">{mesoConfig.weeks}</span>
                             <button 
                                 onClick={() => setMesoConfig(prev => ({ ...prev, weeks: prev.weeks + 1 }))}
-                                className="w-10 h-10 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/50 flex items-center justify-center text-zinc-300 hover:text-white active:scale-95 transition-all"
+                                className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700/50 flex items-center justify-center text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white active:scale-95 transition-all"
                             >
                                 <Icon name="Plus" size={16} />
                             </button>
