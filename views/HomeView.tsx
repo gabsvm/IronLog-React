@@ -1,14 +1,17 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { HomeView as HomeViewImpl } from './HomeViewImpl';
 import { useApp, useAppPreferences } from '../context/AppContext';
 import { useStore } from '../lib/store';
 import { KONG_4DAY_V1 } from '../programs/kong/kong4Day';
 import { getProgramBlockForWeek, resolveProgramWeek } from '../programs/engine/ProgramResolver';
 import { getKongDayDisplay } from '../programs/kong/kongDisplay';
-import { ProgramCompletionView } from '../components/programs/ProgramCompletionView';
 import './product-polish.css';
 import './reorder-history-polish.css';
 import './kong-final-polish.css';
+
+const ProgramCompletionView = React.lazy(() =>
+    import('../components/programs/ProgramCompletionView').then((module) => ({ default: module.ProgramCompletionView })),
+);
 
 interface HomeViewProps {
     startSession: (dayIdx: number) => void;
@@ -117,19 +120,21 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
         <div ref={rootRef} className={`product-home-polish ${isKong ? 'kong-active' : ''} contents`}>
             <HomeViewImpl {...props} />
             {showSkippedFinalCompletion && activeMeso && isKong && (
-                <ProgramCompletionView
-                    meso={activeMeso}
-                    logs={Array.isArray(logs) ? logs : []}
-                    lang={lang}
-                    onFinish={() => {
-                        setShowSkippedFinalCompletion(false);
-                        setActiveMeso(null);
-                    }}
-                    onKeep={() => {
-                        setShowSkippedFinalCompletion(false);
-                        setActiveMeso(null);
-                    }}
-                />
+                <Suspense fallback={null}>
+                    <ProgramCompletionView
+                        meso={activeMeso}
+                        logs={Array.isArray(logs) ? logs : []}
+                        lang={lang}
+                        onFinish={() => {
+                            setShowSkippedFinalCompletion(false);
+                            setActiveMeso(null);
+                        }}
+                        onKeep={() => {
+                            setShowSkippedFinalCompletion(false);
+                            setActiveMeso(null);
+                        }}
+                    />
+                </Suspense>
             )}
         </div>
     );
