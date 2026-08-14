@@ -6,6 +6,7 @@ import { useStore } from '../lib/store';
 import { ReorderExercisesSheet } from '../components/workout/ReorderExercisesSheet';
 import { Icon } from '../components/ui/Icon';
 import type { SessionExercise } from '../types';
+import { KONG_4DAY_V1 } from '../programs/kong/kong4Day';
 import './product-polish.css';
 
 interface WorkoutViewProps {
@@ -21,6 +22,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
     const setActiveSession = useStore(state => state.setActiveSession);
     const { setRestTimer } = useTimerActions();
     const [reorderOpen, setReorderOpen] = useState(false);
+    const isKong = activeMeso?.programSystem?.systemId === KONG_4DAY_V1.id;
 
     const handleFinish = useCallback(() => {
         if (!activeSession) return;
@@ -50,6 +52,12 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
         setActiveSession(prev => prev ? { ...prev, exercises: ordered } : prev);
     }, [setActiveSession]);
 
+    const methodologyWarning = isKong
+        ? (lang === 'es'
+            ? 'El orden forma parte de KONG: Puntos Débiles Primero y Fuerza Fatigada dependen de la secuencia. Este cambio afecta solo esta sesión; no modifica el programa oficial.'
+            : 'Exercise order is part of KONG: Weak Points First and Fatigued Strength depend on sequence. This change affects this session only and does not alter the official program.')
+        : undefined;
+
     return (
         <div className="product-workout-polish contents">
             <WorkoutViewImpl onFinish={handleFinish} onDiscard={onDiscard} onBack={onBack} />
@@ -73,6 +81,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                     exercises={activeSession.exercises || []}
                     lang={lang}
                     onCommit={commitExerciseOrder}
+                    methodologyWarning={methodologyWarning}
                 />
             )}
         </div>
