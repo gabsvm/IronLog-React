@@ -1,6 +1,7 @@
 import { KONG_4DAY_V1 } from '../programs/kong/kong4Day.ts';
 import { resolveProgramDay, resolveProgramWeek, getProgramBlockForWeek } from '../programs/engine/ProgramResolver.ts';
 import { toEditableProgram } from '../programs/engine/ProgramConversion.ts';
+import { calculateProgramMetrics } from '../programs/engine/ProgramMetrics.ts';
 import { readFileSync } from 'node:fs';
 
 const fail = (message: string): never => { throw new Error(`[validate-kong] ${message}`); };
@@ -53,4 +54,39 @@ assert(editableSlots.every((slot) => !slot.prescription && !slot.programSlotId &
 assert(editableW12[3].slots[0].setTarget === 5, 'editable Week 12 squat should preserve five visible sets');
 assert(editableW12[3].slots[0].reps === '1 · 6 · 6 · 6 · 10', 'editable Week 12 squat should preserve the visible rep sequence');
 
-console.log('KONG validation passed: 12 weeks, 4 days, 3 blocks, exact prescriptions, exercise IDs, and safe editable conversion.');
+// Program metrics: duplicate/repeated workouts are real activity but must not
+// inflate adherence, incomplete sets must not add volume, and a week only
+// becomes complete after four distinct scheduled days.
+const makeMetricLog = (id: number, dayIdx: number, completed: boolean, weight = 10, reps = 10) => ({
+  id,
+  dayIdx,
+  name: `Day ${dayIdx + 1}`,
+  startTime: id * 1000,
+  endTime: id * 1000 + 60000,
+  duration: 60,
+  mesoId: 777,
+  week: 1,
+  skipped: false,
+  exercises: [{
+    id: 'metric_exercise',
+    instanceId: id,
+    name: 'Metric',
+    muscle: 'CHEST',
+    sets: [{ id, weight, reps, rpe: '', completed, type: 'regular' }],
+  }],
+});
+const metricLogs = [
+  makeMetricLog(1, 0, true),
+  makeMetricLog(2, 0, true), // repeated Day 1: counts as a session, not extra adherence
+  makeMetricLog(3, 1, true),
+  makeMetricLog(4, 2, true),
+  makeMetricLog(5, 3, false, 999, 999), // incomplete set: no volume, but session slot exists
+] as any;
+const metricResult = calculateProgramMetrics(metricLogs, 777, 4, undefined, 4);
+assert(metricResult.sessionsCompleted === 5, 'metric sessions should keep real repeated sessions');
+assert(metricResult.weeksCompleted === 1, 'four distinct scheduled days should complete the week');
+assert(metricResult.adherence === 1, 'repeated sessions must not inflate adherence beyond unique scheduled slots');
+assert(metricResult.setsCompleted === 4, 'only completed sets should count');
+assert(metricResult.totalVolume === 400, 'incomplete sets must not contribute volume');
+
+console.log('KONG validation passed: exact program data, safe editable conversion, and schedule-aware progress metrics.');
