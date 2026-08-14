@@ -5,6 +5,12 @@ export default defineConfig(() => {
   return {
     base: './',
     plugins: [react()],
+    // Keep React's runtime identity stable when framer-motion is optimized in
+    // dev. Without this, Vite can load React through two module paths and the
+    // hidden CommandPalette AnimatePresence reports an invalid hook call.
+    resolve: {
+      dedupe: ['react', 'react-dom'],
+    },
     build: {
       outDir: 'dist',
       emptyOutDir: true,
