@@ -29,6 +29,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
     const { user } = useAuth();
     const { isPro } = usePro();
     const activeMeso = useStore(state => state.activeMeso);
+    const setActiveMeso = useStore(state => state.setActiveMeso);
     const setActiveSession = useStore(state => state.setActiveSession);
     const t = TRANSLATIONS[lang];
     const [showProfile, setShowProfile] = React.useState(false);
@@ -37,6 +38,12 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
     const [showFreestyle, setShowFreestyle] = React.useState(false);
     const [showTwoBlock, setShowTwoBlock] = React.useState(false);
     const bypassPlanCapture = React.useRef(false);
+    const isKong = activeMeso?.programSystem?.systemId === 'kong_4day';
+
+    React.useEffect(() => {
+        document.documentElement.classList.toggle('kong-program-active', !!isKong);
+        return () => document.documentElement.classList.remove('kong-program-active');
+    }, [isKong]);
 
     React.useEffect(() => {
         const handlePop = (event: PopStateEvent) => {
@@ -117,6 +124,24 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
     const editProgram = () => {
         setShowPlanActions(false);
         setShowQuickStart(false);
+
+        if (isKong) {
+            const convert = window.confirm(lang === 'es'
+                ? 'KONG es un programa estructurado de 12 semanas. Para editar libremente la semana actual debes convertirla en una rutina personal. KONG finalizará y la copia quedará editable. ¿Continuar?'
+                : 'KONG is a structured 12-week program. To freely edit the current week, convert it to a personal routine. KONG will end and the copy will become editable. Continue?');
+            if (!convert) return;
+            setActiveMeso(prev => prev ? {
+                ...prev,
+                name: lang === 'es' ? 'KONG · Rutina personal' : 'KONG · Personal routine',
+                mesoType: 'personal',
+                targetWeeks: 4,
+                duration: 4,
+                week: 1,
+                isDeload: false,
+                programSystem: undefined,
+            } : prev);
+        }
+
         setView('program');
     };
 
