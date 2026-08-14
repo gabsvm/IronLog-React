@@ -29,11 +29,21 @@ export function calculateProgramMetrics(
   // made the KONG Hub show "1 week" after Day 1.
   const daysByWeek = new Map<number, Set<number>>();
   relevant.forEach((log) => {
+    if (log.week < 1 || log.dayIdx < 0 || log.dayIdx >= daysPerWeek) return;
     const set = daysByWeek.get(log.week) || new Set<number>();
     set.add(log.dayIdx);
     daysByWeek.set(log.week, set);
   });
   const weeksCompleted = Array.from(daysByWeek.values()).filter((days) => days.size >= daysPerWeek).length;
+
+  // Repeating the same scheduled day is a real session and remains included in
+  // sessionsCompleted, volume, time and density, but it must not inflate plan
+  // adherence. Adherence measures unique scheduled slots completed.
+  const completedScheduledSlots = new Set(
+    relevant
+      .filter((log) => log.week >= 1 && log.dayIdx >= 0 && log.dayIdx < daysPerWeek)
+      .map((log) => `${log.week}:${log.dayIdx}`),
+  ).size;
 
   const latestBodyWeightLog = relevant.reduce<Log | null>((latest, log) => {
     if (!Number.isFinite(log.bodyWeightSnapshot)) return latest;
@@ -49,7 +59,7 @@ export function calculateProgramMetrics(
     totalSeconds,
     totalVolume,
     averageDensity: totalSeconds > 0 ? setsCompleted / (totalSeconds / 60) : 0,
-    adherence: expectedSessions > 0 ? Math.min(1, relevant.length / expectedSessions) : 0,
+    adherence: expectedSessions > 0 ? Math.min(1, completedScheduledSlots / expectedSessions) : 0,
     initialBodyWeight,
     currentBodyWeight,
   };
