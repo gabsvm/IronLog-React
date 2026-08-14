@@ -20,10 +20,6 @@ interface HomeViewProps {
     onStartFreeSession?: () => void;
 }
 
-/**
- * Product-polish shell around the proven Home implementation.
- * Keeps the training logic untouched while tightening information hierarchy.
- */
 export const HomeView: React.FC<HomeViewProps> = (props) => {
     const { lang } = useAppPreferences();
     const { setProgram, logs } = useApp();
@@ -65,6 +61,17 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
         const currentWeekLogs = safeLogs.filter(log => log.mesoId === activeMeso.id && log.week === activeMeso.week);
         if (!currentWeekLogs.some(log => log.skipped)) return;
 
+        // If all four days were eventually trained, App's normal completion path
+        // owns the transition. The wrapper only compensates for a genuinely
+        // skipped scheduled slot, preventing duplicate completion modals.
+        const completedDays = new Set(
+            currentWeekLogs
+                .filter(log => !log.skipped)
+                .map(log => log.dayIdx)
+                .filter(dayIdx => dayIdx >= 0 && dayIdx < KONG_4DAY_V1.daysPerWeek),
+        );
+        if (completedDays.size >= KONG_4DAY_V1.daysPerWeek) return;
+
         const resolvedDays = new Set(
             currentWeekLogs
                 .map(log => log.dayIdx)
@@ -91,7 +98,6 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
         if (!root) return;
 
         const normalizeProductLabels = () => {
-            // Internal template IDs such as TPL_178... must never leak into customer-facing UI.
             const label = lang === 'es' ? 'PERSONALIZADO' : 'CUSTOM';
             root.querySelectorAll<HTMLElement>('span').forEach((node) => {
                 const text = (node.textContent || '').trim();
