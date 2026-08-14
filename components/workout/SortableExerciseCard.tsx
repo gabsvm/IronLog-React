@@ -20,16 +20,24 @@ const makeCompletedSet = (patch: Partial<WorkoutSet>): WorkoutSet => ({
  *
  * The implementation historically scans `logs` for its PR badge and overload
  * suggestion. Instead of rewriting that large, fast-moving UI component, build
- * one cached history index and feed it at most two synthetic log entries:
- *   1. the all-time best set needed by the PR badge
- *   2. the latest working sets needed by progressive-overload logic
- *
- * Visual behavior and the implementation itself stay unchanged, while every
- * card stops rescanning the complete workout history on render.
+ * one cached history index and feed it at most two synthetic log entries.
  */
 export const SortableExerciseCard = React.memo((props: SortableExerciseCardProps) => {
     const { logs, exercise } = props;
 
+    const programTargetSummary = useMemo(() => {
+        if (!exercise?.programSlotId || !Array.isArray(exercise.sets) || exercise.sets.length === 0) return null;
+        const prescribed = exercise.sets.map(set => set.prescribedReps);
+        if (prescribed.some(value => value == null)) return null;
+        const labels = prescribed.map(value => value === 'FAILURE' ? 'F' : String(value));
+        return labels.every(label => label === labels[0])
+            ? `${labels.length}×${labels[0]}`
+            : labels.join('·');
+    }, [exercise?.programSlotId, exercise?.sets]);
+
+    // KONG already prescribes effort via reps + target RPE. Keep historical PR
+    // context, but do not surface the generic "+2.5 kg" rule on top of an RPE-
+    // based structured program. It can conflict with the method's intended load.
     const compactHistory = useMemo<Log[]>(() => {
         if (!Array.isArray(logs) || logs.length === 0 || exercise?.id == null) return [];
 
@@ -70,9 +78,9 @@ export const SortableExerciseCard = React.memo((props: SortableExerciseCardProps
             });
         }
 
-        // Keep the latest-working-set entry LAST. The unchanged implementation
-        // searches from logs.length - 1 backwards for its overload suggestion.
-        if (summary.latestWorkingSets && summary.latestWorkingSets.length > 0) {
+        // Generic progressive-overload suggestions are useful for normal plans,
+        // but structured Program Systems own their progression rules.
+        if (!exercise.programSlotId && summary.latestWorkingSets && summary.latestWorkingSets.length > 0) {
             synthetic.push({
                 id: -2,
                 dayIdx: -1,
@@ -88,7 +96,12 @@ export const SortableExerciseCard = React.memo((props: SortableExerciseCardProps
         }
 
         return synthetic as Log[];
-    }, [logs, exercise.id, exercise.isBodyweight, exercise.isIsometric]);
+    }, [logs, exercise.id, exercise.isBodyweight, exercise.isIsometric, exercise.programSlotId]);
 
-    return <SortableExerciseCardImpl {...props} logs={compactHistory} />;
+    const displayExercise = useMemo(
+        () => programTargetSummary ? { ...exercise, targetReps: programTargetSummary } : exercise,
+        [exercise, programTargetSummary],
+    );
+
+    return <SortableExerciseCardImpl {...props} exercise={displayExercise} logs={compactHistory} />;
 });
