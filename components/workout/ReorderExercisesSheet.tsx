@@ -29,6 +29,7 @@ interface ReorderExercisesSheetProps {
     exercises: SessionExercise[];
     lang: 'en' | 'es';
     onCommit: (exercises: SessionExercise[]) => void;
+    methodologyWarning?: string;
 }
 
 interface SortableExerciseRowProps {
@@ -69,8 +70,13 @@ const SortableExerciseRow: React.FC<SortableExerciseRowProps> = ({ exercise, ind
             </div>
 
             <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-black tracking-tight text-zinc-950 dark:text-white">
-                    {getTranslated(exercise.name, lang)}
+                <div className="flex min-w-0 items-center gap-2">
+                    <div className="truncate text-sm font-black tracking-tight text-zinc-950 dark:text-white">
+                        {getTranslated(exercise.name, lang)}
+                    </div>
+                    {exercise.supersetId && (
+                        <span className="shrink-0 rounded-full border border-primary-500/20 bg-primary-500/10 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-primary-500">SS</span>
+                    )}
                 </div>
                 <div className="mt-1 flex min-w-0 items-center gap-2 text-[10px] font-bold uppercase tracking-[0.12em] text-zinc-500">
                     <span className="truncate">{String(exercise.slotLabel || exercise.muscle || '')}</span>
@@ -102,6 +108,7 @@ export const ReorderExercisesSheet: React.FC<ReorderExercisesSheetProps> = ({
     exercises,
     lang,
     onCommit,
+    methodologyWarning,
 }) => {
     const [draft, setDraft] = useState<SessionExercise[]>(exercises);
 
@@ -164,10 +171,16 @@ export const ReorderExercisesSheet: React.FC<ReorderExercisesSheetProps> = ({
             )}
         >
             <div className="px-4 pb-8 pt-2">
+                {methodologyWarning && (
+                    <div className="mb-3 flex gap-3 rounded-2xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-xs leading-relaxed text-amber-700 dark:text-amber-200">
+                        <Icon name="AlertTriangle" size={17} className="mt-0.5 shrink-0" />
+                        <span>{methodologyWarning}</span>
+                    </div>
+                )}
                 <div className="mb-4 rounded-2xl bg-primary-500/8 px-4 py-3 text-xs font-medium leading-relaxed text-zinc-500">
                     {lang === 'es'
-                        ? 'Mantén el asa ≡ y arrastra cada ejercicio a su nueva posición. Los pesos, series y superseries no cambian.'
-                        : 'Hold the ≡ handle and drag each exercise to its new position. Weights, sets and supersets stay unchanged.'}
+                        ? 'Mantén el asa ≡ y arrastra cada ejercicio. Pesos y series no cambian. Si ves SS, mantén juntos los ejercicios de esa superserie.'
+                        : 'Hold the ≡ handle and drag each exercise. Weights and sets stay unchanged. Keep exercises marked SS together.'}
                 </div>
 
                 <DndContext
