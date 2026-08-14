@@ -33,6 +33,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
     const { user } = useAuth();
     const { isPro } = usePro();
     const activeMeso = useStore(state => state.activeMeso);
+    const activeSession = useStore(state => state.activeSession);
     const setActiveMeso = useStore(state => state.setActiveMeso);
     const setActiveSession = useStore(state => state.setActiveSession);
     const t = TRANSLATIONS[lang];
@@ -128,6 +129,13 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
     const editProgram = () => {
         setShowPlanActions(false);
         setShowQuickStart(false);
+
+        if (activeSession) {
+            window.alert(lang === 'es'
+                ? 'Finaliza o descarta la sesión activa antes de editar o convertir la rutina.'
+                : 'Finish or discard the active session before editing or converting the routine.');
+            return;
+        }
 
         if (isKong && activeMeso) {
             const convert = window.confirm(lang === 'es'
