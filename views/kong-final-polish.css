@@ -1,0 +1,36 @@
+/* Final KONG UX polish. Scoped so normal mesocycles remain unchanged. */
+
+.product-home-polish.kong-active .kong-home-header > div:first-child {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.product-home-polish.kong-active .kong-home-header h2 {
+  max-width: min(100%, 26rem);
+  font-size: clamp(1.75rem, 8vw, 2.35rem);
+  line-height: 0.98;
+  text-wrap: balance;
+}
+
+.product-home-polish.kong-active .kong-home-header h2 + div {
+  flex-wrap: wrap;
+  gap: 0.4rem 0.65rem;
+}
+
+.product-home-polish.kong-active .kong-home-header h2 + div > * {
+  white-space: nowrap;
+}
+
+/* KONG owns its duration, block progression and deload logic. Keep the legacy
+   mesocycle sheet available for notes/finish, but do not expose controls that
+   can silently break the 12-week program definition. */
+.product-home-polish.kong-active #tut-meso-duration,
+.product-home-polish.kong-active #tut-meso-deload,
+.product-home-polish.kong-active #tut-meso-edit {
+  display: none !important;
+}
+
+/* With the structured controls hidden, avoid an oversized empty modal. */
+.product-home-polish.kong-active #tut-meso-notes {
+  margin-top: 0.25rem;
+}
