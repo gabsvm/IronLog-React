@@ -45,10 +45,20 @@ export const CommandPalette: React.FC<Props> = ({ isOpen, onClose, actions, titl
     // The generic editor mutates the projected `program` array. While KONG is
     // active that array is only a resolved view of an immutable Program System,
     // so exposing "Edit my program" here would silently bypass KONG safeguards.
-    const visibleActions = useMemo(
-        () => isStructuredKong ? actions.filter(action => action.id !== 'program') : actions,
-        [actions, isStructuredKong],
-    );
+    // Also replace the internal mesoType id with product-facing KONG copy.
+    const visibleActions = useMemo(() => {
+        const filtered = isStructuredKong ? actions.filter(action => action.id !== 'program') : actions;
+        if (!isStructuredKong || !activeMeso) return filtered;
+        return filtered.map(action => action.id === 'meso_today'
+            ? {
+                ...action,
+                description: {
+                    en: `KONG · Week ${activeMeso.week}`,
+                    es: `KONG · Semana ${activeMeso.week}`,
+                },
+            }
+            : action);
+    }, [actions, activeMeso, isStructuredKong]);
 
     useEffect(() => {
         if (!isOpen) {
