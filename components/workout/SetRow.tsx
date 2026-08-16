@@ -434,6 +434,8 @@ export const SetRow = React.memo(({
                                 ? 'bg-primary-500 text-black border-transparent shadow-[0_0_15px] shadow-primary-500/20'
                                 : 'border border-zinc-700/80 bg-zinc-900/80 text-zinc-500 hover:border-zinc-500/70 hover:text-white active:bg-primary-500 active:text-black'}
                         `}
+                        aria-pressed={Boolean(isDone)}
+                        aria-label={lang === 'es' ? (isDone ? 'Serie completada' : 'Completar serie') : (isDone ? 'Set completed' : 'Complete set')}
                     >
                         <Icon name="Check" size={18} strokeWidth={3} />
                     </button>
@@ -512,6 +514,8 @@ export const SetRow = React.memo(({
                                     ? 'bg-primary-500 text-black border-transparent shadow-[0_0_15px] shadow-primary-500/20'
                                     : 'border border-zinc-700/80 bg-zinc-900/80 text-zinc-500 hover:border-zinc-500/70 hover:text-white active:bg-primary-500 active:text-black'}
                             `}
+                            aria-pressed={Boolean(isDone)}
+                            aria-label={lang === 'es' ? (isDone ? 'Serie completada' : 'Completar serie') : (isDone ? 'Set completed' : 'Complete set')}
                         >
                             <Icon name="Check" size={18} strokeWidth={3} />
                         </button>
@@ -599,6 +603,8 @@ export const SetRow = React.memo(({
                             : 'border border-zinc-700/80 bg-zinc-900/80 text-zinc-500 hover:border-zinc-500/70 hover:text-white active:bg-primary-500 active:text-black'
                         }
                     `}
+                    aria-pressed={Boolean(isDone)}
+                    aria-label={lang === 'es' ? (isDone ? 'Serie completada' : 'Completar serie') : (isDone ? 'Set completed' : 'Complete set')}
                 >
                     <Icon name="Check" size={18} strokeWidth={3} />
                 </button>
