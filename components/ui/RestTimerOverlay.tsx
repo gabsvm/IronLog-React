@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTimerActions, useTimerState } from '../../context/TimerContext';
 import { useApp } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
@@ -22,14 +22,10 @@ const CircularTimer: React.FC<{ percentage: number; timeLeft: number; label: str
         tone === 'primary' ? 'rgb(var(--primary-500))' :
         tone === 'amber' ? '#f59e0b' :
         '#ef4444';
-    const glow =
-        tone === 'primary' ? 'drop-shadow(0 0 12px rgb(var(--primary-500) / 0.45))' :
-        tone === 'amber' ? 'drop-shadow(0 0 12px rgba(245, 158, 11, 0.45))' :
-        'drop-shadow(0 0 14px rgba(239, 68, 68, 0.5))';
 
     return (
         <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
-            <svg width={size} height={size} className="-rotate-90" style={{ filter: glow }}>
+            <svg width={size} height={size} className="-rotate-90">
                 <circle
                     cx={size / 2}
                     cy={size / 2}
@@ -48,7 +44,7 @@ const CircularTimer: React.FC<{ percentage: number; timeLeft: number; label: str
                     strokeLinecap="round"
                     strokeDasharray={circumference}
                     strokeDashoffset={dashOffset}
-                    style={{ transition: 'stroke-dashoffset 1s linear, stroke 0.4s ease' }}
+                    style={{ transition: 'stroke-dashoffset 180ms linear, stroke 180ms ease' }}
                 />
             </svg>
             <div className="absolute flex flex-col items-center justify-center">
@@ -68,9 +64,13 @@ export const RestTimerOverlay: React.FC = () => {
     const { setRestTimer } = useTimerActions();
     const { lang } = useApp();
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-    const [minimized, setMinimized] = useState(false);
+    // Progressive disclosure: an automatically-started rest timer should never
+    // cover the workout. The lightweight chip is the default; the large controls
+    // are mounted only after an explicit tap.
+    const [minimized, setMinimized] = useState(true);
     const [autoMinimized, setAutoMinimized] = useState(false);
     const [keyboardOffset, setKeyboardOffset] = useState(0);
+    const lastFreshStartRef = useRef(0);
 
     const isEditableElement = (node: Element | null) => {
         if (!(node instanceof HTMLElement)) return false;
@@ -80,21 +80,35 @@ export const RestTimerOverlay: React.FC = () => {
 
     useEffect(() => {
         if (!restTimer?.active) {
-            setMinimized(false);
+            setMinimized(true);
             setAutoMinimized(false);
             setKeyboardOffset(0);
+            lastFreshStartRef.current = 0;
+            return;
         }
-    }, [restTimer?.active]);
+
+        // A fresh timer starts with timeLeft ~= duration. Tracking its endAt lets
+        // us also catch a new rest that replaces a still-running one, without
+        // collapsing the panel on each normal 1 Hz countdown tick.
+        const looksLikeFreshStart = restTimer.duration > 0 && restTimer.timeLeft >= restTimer.duration - 1;
+        if (looksLikeFreshStart && restTimer.endAt !== lastFreshStartRef.current) {
+            lastFreshStartRef.current = restTimer.endAt;
+            setMinimized(true);
+            setAutoMinimized(false);
+        }
+    }, [restTimer?.active, restTimer?.duration, restTimer?.endAt, restTimer?.timeLeft]);
 
     useEffect(() => {
         const handleFocusIn = (event: FocusEvent) => {
             const target = event.target as HTMLElement | null;
-            if (!target) return;
+            if (!target || !isEditableElement(target) || minimized) return;
 
-            if (isEditableElement(target)) {
-                setMinimized(true);
-                setAutoMinimized(true);
-            }
+            // Only mark this as an automatic minimize when we actually collapse
+            // an expanded timer. That lets us restore the user's explicit state
+            // after the keyboard closes without expanding a timer that was already
+            // compact by default.
+            setMinimized(true);
+            setAutoMinimized(true);
         };
 
         const handleFocusOut = () => {
@@ -113,7 +127,7 @@ export const RestTimerOverlay: React.FC = () => {
             document.removeEventListener('focusin', handleFocusIn);
             document.removeEventListener('focusout', handleFocusOut);
         };
-    }, [autoMinimized, keyboardOffset]);
+    }, [autoMinimized, keyboardOffset, minimized]);
 
     useEffect(() => {
         if (!window.visualViewport) return;
@@ -122,7 +136,7 @@ export const RestTimerOverlay: React.FC = () => {
         const syncViewportOffset = () => {
             const offset = Math.max(0, Math.round(window.innerHeight - viewport.height - viewport.offsetTop));
             setKeyboardOffset(offset);
-            if (offset > 120) {
+            if (offset > 120 && !minimized) {
                 setMinimized(true);
                 setAutoMinimized(true);
             } else if (offset <= 24 && autoMinimized && !isEditableElement(document.activeElement)) {
@@ -139,7 +153,7 @@ export const RestTimerOverlay: React.FC = () => {
             viewport.removeEventListener('resize', syncViewportOffset);
             viewport.removeEventListener('scroll', syncViewportOffset);
         };
-    }, [autoMinimized]);
+    }, [autoMinimized, minimized]);
 
     if (!restTimer || !restTimer.active) return null;
 
@@ -185,7 +199,7 @@ export const RestTimerOverlay: React.FC = () => {
     if (minimized) {
         return (
             <div
-                className="fixed right-4 z-sheet animate-in fade-in slide-in-from-bottom-2 duration-base"
+                className="fixed right-3 z-sheet"
                 style={{ bottom: `${floatingBottom}px` }}
             >
                 <button
@@ -194,40 +208,20 @@ export const RestTimerOverlay: React.FC = () => {
                         setMinimized(false);
                         setAutoMinimized(false);
                     }}
-                    className={`group flex items-center gap-3 rounded-full border py-2 pl-2 pr-4 shadow-2xl shadow-black/40 backdrop-blur-2xl transition-all duration-base active:scale-95 ${
+                    className={`group flex h-10 items-center gap-2 rounded-full border px-3 shadow-lg shadow-black/30 transition-colors duration-150 active:scale-[0.98] ${
                         isCritical
-                            ? 'border-red-500/40 bg-red-950/80'
-                            : 'border-white/10 bg-black/70 hover:border-primary-500/40'
+                            ? 'border-red-500/35 bg-red-950/95'
+                            : 'border-white/10 bg-black/95 hover:border-primary-500/35'
                     }`}
                     aria-label={`${t.resting}: ${formatSeconds(restTimer.timeLeft)}`}
                 >
-                    <div className="relative h-9 w-9">
-                        <svg width="36" height="36" className="-rotate-90">
-                            <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3" />
-                            <circle
-                                cx="18"
-                                cy="18"
-                                r="15"
-                                fill="none"
-                                stroke={isCritical ? '#ef4444' : 'rgb(var(--primary-500))'}
-                                strokeWidth="3"
-                                strokeLinecap="round"
-                                strokeDasharray={2 * Math.PI * 15}
-                                strokeDashoffset={2 * Math.PI * 15 * (1 - percentage / 100)}
-                                style={{ transition: 'stroke-dashoffset 1s linear' }}
-                            />
-                        </svg>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                            <Icon name="Clock" size={12} className={isCritical ? 'text-red-300' : 'text-primary-400'} />
-                        </div>
-                    </div>
-                    <span className="font-mono text-base font-black text-white tabular-nums">
+                    <span className={`flex h-6 w-6 items-center justify-center rounded-full ${isCritical ? 'bg-red-500/15 text-red-300' : 'bg-primary-500/10 text-primary-400'}`}>
+                        <Icon name="Clock" size={13} />
+                    </span>
+                    <span className="font-mono text-[15px] font-black leading-none text-white tabular-nums">
                         {formatSeconds(restTimer.timeLeft)}
                     </span>
-                    <span className="hidden text-[10px] font-bold uppercase tracking-[0.16em] text-zinc-500 sm:inline">
-                        {lang === 'es' ? 'descanso' : 'rest'}
-                    </span>
-                    <Icon name="ChevronUp" size={14} className="text-zinc-500 transition-colors group-hover:text-zinc-300" />
+                    <Icon name="ChevronUp" size={12} className="text-zinc-500 transition-colors group-hover:text-zinc-300" />
                 </button>
             </div>
         );
@@ -235,19 +229,19 @@ export const RestTimerOverlay: React.FC = () => {
 
     return (
         <div
-            className="fixed left-0 right-0 z-sheet animate-in slide-in-from-bottom duration-sheet ease-natural will-change-transform"
+            className="fixed left-0 right-0 z-sheet animate-in fade-in duration-150"
             style={{ bottom: `${keyboardOffset}px` }}
             role="dialog"
             aria-modal="false"
             aria-label={t.resting}
         >
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/55 via-black/15 to-transparent" />
 
             <div
-                className={`relative mx-auto max-w-md rounded-t-[28px] border-x border-t pb-safe shadow-[0_-24px_60px_rgba(0,0,0,0.7)] backdrop-blur-xl transition-colors duration-slow ${
+                className={`relative mx-auto max-w-md rounded-t-[28px] border-x border-t pb-safe shadow-[0_-18px_46px_rgba(0,0,0,0.55)] transition-colors duration-150 ${
                     isCritical
-                        ? 'border-red-500/30 bg-red-950/70'
-                        : 'border-white/10 bg-black/85'
+                        ? 'border-red-500/30 bg-red-950/95'
+                        : 'border-white/10 bg-black/95'
                 }`}
             >
                 <div className="flex justify-center pb-1 pt-3">
@@ -257,7 +251,7 @@ export const RestTimerOverlay: React.FC = () => {
                 <div className="px-6 pb-6 pt-3">
                     <div className="mb-5 flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <span className={`h-1.5 w-1.5 animate-pulse rounded-full ${isCritical ? 'bg-red-400' : 'bg-primary-500'}`} />
+                            <span className={`h-1.5 w-1.5 rounded-full ${isCritical ? 'bg-red-400' : 'bg-primary-500'}`} />
                             <span className="text-[10px] font-black uppercase tracking-[0.22em] text-zinc-300">
                                 {t.resting}
                             </span>
@@ -288,7 +282,7 @@ export const RestTimerOverlay: React.FC = () => {
                                     <button
                                         key={seconds}
                                         onClick={() => setQuickTimer(seconds)}
-                                        className="rounded-2xl border border-white/5 bg-white/5 py-2 text-xs font-bold text-zinc-300 transition-all hover:bg-white/10 active:scale-95"
+                                        className="rounded-2xl border border-white/5 bg-white/5 py-2 text-xs font-bold text-zinc-300 transition-colors hover:bg-white/10 active:scale-95"
                                     >
                                         {seconds}s
                                     </button>
@@ -296,21 +290,21 @@ export const RestTimerOverlay: React.FC = () => {
                             </div>
                             <button
                                 onClick={() => adjustTimer(30)}
-                                className="flex items-center justify-center gap-1.5 rounded-2xl border border-white/5 bg-white/5 py-3 text-sm font-bold text-zinc-200 transition-all hover:bg-white/10 active:scale-95"
+                                className="flex items-center justify-center gap-1.5 rounded-2xl border border-white/5 bg-white/5 py-3 text-sm font-bold text-zinc-200 transition-colors hover:bg-white/10 active:scale-95"
                                 aria-label="Add 30 seconds"
                             >
                                 <Icon name="Plus" size={14} /> 30s
                             </button>
                             <button
                                 onClick={() => adjustTimer(-10)}
-                                className="flex items-center justify-center gap-1.5 rounded-2xl border border-white/5 bg-white/5 py-3 text-sm font-bold text-zinc-200 transition-all hover:bg-white/10 active:scale-95"
+                                className="flex items-center justify-center gap-1.5 rounded-2xl border border-white/5 bg-white/5 py-3 text-sm font-bold text-zinc-200 transition-colors hover:bg-white/10 active:scale-95"
                                 aria-label="Subtract 10 seconds"
                             >
                                 <Icon name="Minus" size={14} /> 10s
                             </button>
                             <button
                                 onClick={skipTimer}
-                                className="flex items-center justify-center gap-1.5 rounded-2xl bg-primary-500 py-3 text-sm font-black uppercase tracking-wider text-black shadow-lg shadow-primary-500/20 transition-all hover:bg-primary-400 active:scale-95"
+                                className="flex items-center justify-center gap-1.5 rounded-2xl bg-primary-500 py-3 text-sm font-black uppercase tracking-wider text-black shadow-lg shadow-primary-500/20 transition-colors hover:bg-primary-400 active:scale-95"
                                 aria-label={lang === 'es' ? 'Saltar descanso' : 'Skip rest'}
                             >
                                 <Icon name="SkipForward" size={14} /> {lang === 'es' ? 'Listo' : 'Done'}
