@@ -14,7 +14,7 @@ interface SetRowProps {
     isCardio?: boolean;
     isBodyweight?: boolean;
     isIsometric?: boolean;
-    isometricTargetSecs?: number;
+    isometricTargetSecs?: number;  // countdown mode for isometric
     setIndex?: number;
     badgeLabel?: string;
     tutorialId?: string;
@@ -26,17 +26,17 @@ interface SetRowProps {
 const getTypeColor = (type: SetType) => {
     switch (type) {
         case 'warmup':       return 'bg-zinc-800 text-zinc-400 border-zinc-700';
-        case 'myorep':
-        case 'myorep_match':
-        case 'top':
-        case 'backoff':
-        case 'cluster':
-        case 'giant':
-        case 'avt_hop':
-        case 'emom':
-        case 'drop':
-        case 'rest_pause':
-        case 'time_volume':
+        case 'myorep':       
+        case 'myorep_match': 
+        case 'top':          
+        case 'backoff':      
+        case 'cluster':      
+        case 'giant':        
+        case 'avt_hop':      
+        case 'emom':         
+        case 'drop':         
+        case 'rest_pause':   
+        case 'time_volume':  
         case 'triple_add':   return 'bg-[#1A1A1A] text-zinc-300 border-zinc-700/70';
         default:             return 'bg-[#121212] text-zinc-400 border-zinc-800';
     }
@@ -84,9 +84,10 @@ const getTypeLabel = (type: SetType) => {
     return map[type] || '•';
 };
 
+// Hold timer
 const HoldTimer: React.FC<{
     initialSeconds: number;
-    targetSeconds?: number;
+    targetSeconds?: number;   // If set -> countdown mode
     onSave: (seconds: number) => void;
     lang: 'en' | 'es';
     isDone: boolean;
@@ -137,6 +138,7 @@ const HoldTimer: React.FC<{
         return m > 0 ? `${m}:${sec.toString().padStart(2, '0')}` : `${sec}s`;
     };
 
+    // Countdown display: timeRemaining counts down from target
     const timeRemaining = targetSeconds ? Math.max(0, targetSeconds - elapsed) : null;
     const countdownPct = targetSeconds ? Math.min(100, (elapsed / targetSeconds) * 100) : 0;
     const countdownUrgent = timeRemaining !== null && timeRemaining <= 5 && running;
@@ -153,6 +155,7 @@ const HoldTimer: React.FC<{
 
     return (
         <div className="flex items-center gap-1.5 w-full">
+            {/* Time Display */}
             <div className={`min-w-[52px] text-center text-xl font-black tabular-nums transition-colors ${
                 countdownUrgent ? 'text-orange-400 animate-pulse'
                 : running ? 'text-violet-400 animate-pulse'
@@ -160,12 +163,15 @@ const HoldTimer: React.FC<{
             }`}>
                 {timeRemaining !== null ? formatTime(timeRemaining) : formatTime(elapsed)}
             </div>
+            {/* Countdown progress bar */}
             {targetSeconds && (
                 <div className="flex-1 h-1.5 bg-zinc-700 rounded-full overflow-hidden">
                     <div className={`h-full rounded-full transition-all duration-200 ${countdownUrgent ? 'bg-orange-400' : 'bg-violet-500'}`}
                         style={{ width: `${countdownPct}%` }} />
                 </div>
             )}
+
+            {/* Controls */}
             <div className="flex gap-1">
                 {!running ? (
                     <button
@@ -197,6 +203,7 @@ const HoldTimer: React.FC<{
     );
 };
 
+// Main SetRow
 export const SetRow = React.memo(({
     set, exInstanceId,
     onUpdate, onToggleComplete, onChangeType,
@@ -205,6 +212,9 @@ export const SetRow = React.memo(({
 }: SetRowProps) => {
     const isDone = set.completed;
     const setType = set.type || 'regular';
+    // For regular sets: show the set number (1-based index) instead of the
+    // opaque bullet glyph gives instant orientation ("I'm on set 2 of 3").
+    // For typed sets (warmup, myorep, drop...): keep the type letter badge.
     const effectiveBadgeLabel = badgeLabel
         ?? (setType === 'regular' && setIndex != null
             ? String(setIndex + 1)
@@ -222,6 +232,7 @@ export const SetRow = React.memo(({
     const [showExtraWeight, setShowExtraWeight] = useState(
         isBodyweight && (Number(set.weight) > 0 || Number(set.hintWeight) > 0)
     );
+    // Swipe-to-complete
     const [swipePct, setSwipePct] = useState(0);
     const swipeRef = useRef({ startX: 0, startY: 0, tracking: false, locked: false });
 
@@ -233,6 +244,7 @@ export const SetRow = React.memo(({
 
     useEffect(() => { if (activeFieldRef.current !== 'weight') setLocalWeight(set.weight ?? ''); }, [set.weight]);
     useEffect(() => { if (activeFieldRef.current !== 'reps') setLocalReps(set.reps ?? ''); }, [set.reps]);
+    // Reset swipe when set state changes
     useEffect(() => { setSwipePct(0); swipeRef.current.tracking = false; swipeRef.current.locked = false; }, [set.completed]);
     useEffect(() => () => {
         Object.values(commitTimersRef.current).forEach((timer) => {
@@ -274,7 +286,7 @@ export const SetRow = React.memo(({
         activeFieldRef.current = null;
         flushScheduledCommit(field as 'weight' | 'reps', value);
     };
-
+    // Swipe-to-complete handlers
     const onSwipeTouchStart = useCallback((e: React.TouchEvent) => {
         if (isDone) return;
         swipeRef.current = { startX: e.touches[0].clientX, startY: e.touches[0].clientY, tracking: true, locked: false };
@@ -285,6 +297,7 @@ export const SetRow = React.memo(({
         if (!s.tracking || isDone || s.locked) return;
         const dx = e.touches[0].clientX - s.startX;
         const dy = e.touches[0].clientY - s.startY;
+        // Cancel if vertical gesture dominates (user is scrolling)
         if (Math.abs(dy) > Math.abs(dx) * 1.3 && Math.abs(dx) < 15) {
             s.tracking = false;
             setSwipePct(0);
@@ -342,6 +355,8 @@ export const SetRow = React.memo(({
     const inputBase = "w-full rounded-[0.95rem] border border-zinc-700/70 bg-[#202024] px-2 py-1.5 text-center text-[15px] font-bold text-white outline-none transition-all tabular-nums placeholder-zinc-600 focus:border-primary-500/25 focus:ring-2 focus:ring-primary-500/15";
     const doneInput = "border-transparent bg-transparent text-white/90 pointer-events-none";
 
+    // Show previous session value as placeholder so the field reads as "editable with context",
+    // not as a disabled em dash. Falls back to '0' so the input reads clearly as empty & tappable.
     const weightPlaceholder = set.hintWeight ? String(set.hintWeight) : '0';
     const repsPlaceholder = set.hintReps ? String(set.hintReps) : '0';
     const prescriptionHint = set.prescribedReps !== undefined
@@ -360,6 +375,7 @@ export const SetRow = React.memo(({
             : getTypeColor(setType)
     } ${!disableTypeChange && !isDone ? 'cursor-pointer active:scale-90' : 'cursor-default'}`;
 
+    // Difficulty picker (shown after completing a set with no RPE)
     const DifficultyPicker = !isDone ? null : (set.rpe === '' || set.rpe === null || set.rpe === undefined) ? (
         <div className="flex gap-1 px-2 pb-1 -mt-0.5 animate-in fade-in duration-300">
             {([{ emoji: 'Easy', label: lang === 'es' ? 'Facil' : 'Easy', val: '3' }, { emoji: 'OK', label: 'OK', val: '6' }, { emoji: 'Hard', label: lang === 'es' ? 'Duro' : 'Hard', val: '9' }] as const).map(d => (
@@ -372,6 +388,7 @@ export const SetRow = React.memo(({
         </div>
     ) : null;
 
+    // Swipe overlay - shared across all branches
     const SwipeOverlay = swipePct > 0 ? (
         <div className="absolute inset-y-0 left-0 rounded-xl bg-green-500/20 pointer-events-none transition-none flex items-center justify-start pl-3"
             style={{ width: `${swipePct}%` }}>
@@ -379,18 +396,21 @@ export const SetRow = React.memo(({
         </div>
     ) : null;
 
+    // ISOMETRIC MODE
     if (isIsometric) {
         return (
             <div id={`set-row-${set.id}`}
                 onTouchStart={onSwipeTouchStart} onTouchMove={onSwipeTouchMove} onTouchEnd={onSwipeTouchEnd}
                 className={`relative grid grid-cols-12 gap-2 items-center rounded-[0.95rem] px-2 py-1.5 transition-colors duration-200 ${getBorderAccent(setType)} ${rowAccent} ${isDone ? 'opacity-80' : ''}`}>
                 {SwipeOverlay}
+                {/* Set Type Badge */}
                 <div className="col-span-2 flex justify-center">
                     <BadgeEl {...badgeProps as any} className={badgeClass}>
                         {effectiveBadgeLabel}
                     </BadgeEl>
                 </div>
 
+                {/* Hold Timer - takes up the weight+reps cols */}
                 <div className="col-span-8 flex items-center justify-center">
                     <HoldTimer
                         initialSeconds={Number(set.duration) || 0}
@@ -401,6 +421,7 @@ export const SetRow = React.memo(({
                     />
                 </div>
 
+                {/* Complete Button */}
                 <div className="col-span-2 flex justify-center">
                     <button
                         onClick={() => {
@@ -421,6 +442,7 @@ export const SetRow = React.memo(({
         );
     }
 
+    // BODYWEIGHT MODE
     if (isBodyweight && !isCardio) {
         return (
             <div id={`set-row-${set.id}`}
@@ -429,12 +451,14 @@ export const SetRow = React.memo(({
             className={`relative rounded-[0.95rem] transition-colors duration-200 ${getBorderAccent(setType)} ${rowAccent} ${isDone ? 'opacity-80' : ''}`}>
                 {SwipeOverlay}
                 <div className="grid grid-cols-12 items-center gap-2 px-2 py-1.5">
+                    {/* Set Type Badge */}
                     <div className="col-span-2 flex justify-center">
                         <BadgeEl {...badgeProps as any} className={badgeClass}>
                             {effectiveBadgeLabel}
                         </BadgeEl>
                     </div>
 
+                    {/* Reps (main field for BW) - prominent */}
                     <div className="col-span-6">
                         <input
                             ref={repsRef}
@@ -449,6 +473,7 @@ export const SetRow = React.memo(({
                         />
                     </div>
 
+                    {/* Extra Weight Toggle or RIR */}
                     <div className="col-span-2 flex justify-center">
                         {!showExtraWeight ? (
                             <button
@@ -474,6 +499,7 @@ export const SetRow = React.memo(({
                         )}
                     </div>
 
+                    {/* Complete Button */}
                     <div className="col-span-2 flex justify-center">
                         <button
                             onClick={() => {
@@ -492,6 +518,7 @@ export const SetRow = React.memo(({
                     </div>
                 </div>
 
+                {/* Prev performance hint */}
                 {prescriptionHint && !isDone && (
                     <div className="flex justify-center pb-1 -mt-0.5">
                         <span className="text-[9px] font-black tracking-wide text-primary-400/90">{prescriptionHint}</span>
@@ -512,6 +539,7 @@ export const SetRow = React.memo(({
         );
     }
 
+    // STANDARD GYM / CARDIO MODE
     return (
         <div id={`set-row-${set.id}`}
             onTouchStart={onSwipeTouchStart} onTouchMove={onSwipeTouchMove} onTouchEnd={onSwipeTouchEnd}
@@ -519,12 +547,15 @@ export const SetRow = React.memo(({
             className={`relative rounded-[0.95rem] transition-colors duration-200 ${getBorderAccent(setType)} ${rowAccent} ${isDone ? 'opacity-80' : ''}`}>
             {SwipeOverlay}
         <div className="grid grid-cols-12 items-center gap-2 px-2 py-1.5">
+
+            {/* Set Type / Number Badge */}
             <div className="col-span-2 flex justify-center">
                 <BadgeEl {...badgeProps as any} className={badgeClass}>
                     {effectiveBadgeLabel}
                 </BadgeEl>
             </div>
 
+            {/* Weight Input */}
             <div className="col-span-4">
                 <input
                     ref={weightRef}
@@ -539,6 +570,7 @@ export const SetRow = React.memo(({
                 />
             </div>
 
+            {/* Reps Input */}
             <div className="col-span-4">
                 <input
                     ref={repsRef}
@@ -553,6 +585,7 @@ export const SetRow = React.memo(({
                 />
             </div>
 
+            {/* Complete Button */}
             <div className="col-span-2 flex justify-center">
                 <button
                     onClick={() => {
@@ -572,6 +605,7 @@ export const SetRow = React.memo(({
             </div>
         </div>
 
+        {/* Prev performance hint */}
         {prescriptionHint && !isDone && (
             <div className="flex justify-center pb-1 -mt-0.5">
                 <span className="text-[9px] font-black tracking-wide text-primary-400/90">{prescriptionHint}</span>
