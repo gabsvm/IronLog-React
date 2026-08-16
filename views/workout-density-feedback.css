@@ -1,0 +1,55 @@
+/*
+ * RP-inspired information-density pass.
+ *
+ * Keep GainsLab's visual hierarchy and explicit completion controls, but remove
+ * vertical noise that is not needed while the user is actually logging sets.
+ * Everything is scoped to WorkoutView so Home/History/Stats remain unchanged.
+ */
+
+.product-workout-polish.workout-density-pass #tut-exercise-list {
+  padding-left: 0.75rem !important;
+  padding-right: 0.75rem !important;
+  padding-top: 0.5rem !important;
+}
+
+.product-workout-polish.workout-density-pass #tut-exercise-list > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.4rem !important;
+}
+
+/*
+ * The old per-set Easy / OK / Hard strip made every completed set taller and
+ * mixed adaptation feedback into the logging surface. Keep it available only
+ * for people who explicitly enable per-set RIR tracking.
+ */
+.product-workout-polish.workout-density-pass:not(.workout-rir-enabled) [id^="set-row-"] > .flex.gap-1 {
+  display: none !important;
+}
+
+/* Prescription and previous-performance hints are both context for the same
+ * row. Let them share one visual line whenever both exist instead of stacking
+ * two miniature rows underneath the inputs. */
+.product-workout-polish.workout-density-pass [id^="set-row-"] {
+  text-align: center;
+}
+
+.product-workout-polish.workout-density-pass [id^="set-row-"] > .grid ~ .flex:not(.gap-1) {
+  display: inline-flex;
+  width: auto;
+  margin-top: -0.1rem !important;
+  margin-left: 0.2rem;
+  margin-right: 0.2rem;
+  padding-bottom: 0.25rem !important;
+  vertical-align: middle;
+}
+
+/* Slightly tighten the repeated set stack without shrinking the actual input
+ * controls or completion affordance. */
+.product-workout-polish.workout-density-pass [id^="set-row-"] + [id^="set-row-"] {
+  margin-top: 0.25rem !important;
+}
+
+/* The exercise-level add/remove actions are secondary, but still need a
+ * comfortable full-width target. Density comes from spacing, not tiny taps. */
+.product-workout-polish.workout-density-pass #tut-exercise-list button {
+  -webkit-tap-highlight-color: transparent;
+}
