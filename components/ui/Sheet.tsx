@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Drawer } from 'vaul';
 import { Icon } from './Icon';
 
@@ -61,19 +61,98 @@ export const Sheet: React.FC<SheetProps> = ({
     contentId,
 }) => {
     const isFull = variant === 'full';
+    const [fullViewport, setFullViewport] = useState<{ height: number; top: number } | null>(null);
+    const delayedViewportReadsRef = useRef<number[]>([]);
+    const viewportRafRef = useRef<number | null>(null);
+
+    const clearViewportRefresh = useCallback(() => {
+        delayedViewportReadsRef.current.forEach(id => window.clearTimeout(id));
+        delayedViewportReadsRef.current = [];
+        if (viewportRafRef.current !== null) {
+            window.cancelAnimationFrame(viewportRafRef.current);
+            viewportRafRef.current = null;
+        }
+    }, []);
+
+    const syncFullViewport = useCallback(() => {
+        if (!isFull || typeof window === 'undefined') return;
+        clearViewportRefresh();
+
+        const readViewport = () => {
+            const viewport = window.visualViewport;
+            const height = Math.max(1, Math.round(viewport?.height ?? window.innerHeight));
+            const top = Math.max(0, Math.round(viewport?.offsetTop ?? 0));
+            setFullViewport(prev => (
+                prev && prev.height === height && prev.top === top
+                    ? prev
+                    : { height, top }
+            ));
+        };
+
+        // Android WebView can report the pre-keyboard geometry for a frame (and
+        // occasionally for part of the keyboard close animation). Read now, on
+        // the next paint, and twice after the IME animation has had time to settle.
+        readViewport();
+        viewportRafRef.current = window.requestAnimationFrame(() => {
+            viewportRafRef.current = null;
+            readViewport();
+        });
+        delayedViewportReadsRef.current = [
+            window.setTimeout(readViewport, 120),
+            window.setTimeout(readViewport, 320),
+        ];
+    }, [clearViewportRefresh, isFull]);
+
+    useEffect(() => {
+        if (!isFull || !open || typeof window === 'undefined') return;
+
+        const viewport = window.visualViewport;
+        syncFullViewport();
+        viewport?.addEventListener('resize', syncFullViewport);
+        viewport?.addEventListener('scroll', syncFullViewport);
+        window.addEventListener('resize', syncFullViewport);
+        document.addEventListener('focusin', syncFullViewport);
+        document.addEventListener('focusout', syncFullViewport);
+
+        return () => {
+            viewport?.removeEventListener('resize', syncFullViewport);
+            viewport?.removeEventListener('scroll', syncFullViewport);
+            window.removeEventListener('resize', syncFullViewport);
+            document.removeEventListener('focusin', syncFullViewport);
+            document.removeEventListener('focusout', syncFullViewport);
+            clearViewportRefresh();
+        };
+    }, [clearViewportRefresh, isFull, open, syncFullViewport]);
+
+    const fullViewportStyle: React.CSSProperties | undefined = isFull
+        ? fullViewport
+            ? {
+                top: `${fullViewport.top}px`,
+                bottom: 'auto',
+                height: `${fullViewport.height}px`,
+                maxHeight: `${fullViewport.height}px`,
+            }
+            : { height: '100dvh', maxHeight: '100dvh' }
+        : undefined;
 
     return (
-        <Drawer.Root open={open} onOpenChange={onOpenChange} shouldScaleBackground={false}>
+        <Drawer.Root
+            open={open}
+            onOpenChange={onOpenChange}
+            shouldScaleBackground={false}
+            repositionInputs={!isFull}
+        >
             <Drawer.Portal>
                 <Drawer.Overlay className="modal-backdrop fixed inset-0 z-sheet backdrop-blur-sm" />
                 <Drawer.Content
                     aria-describedby={description ? 'sheet-desc' : undefined}
+                    style={fullViewportStyle}
                     className={`
                         fixed bottom-0 left-0 right-0 z-sheet flex flex-col
                         modal-surface outline-none
                         border-t
                         ${isFull
-                            ? 'top-0 h-full rounded-none'
+                            ? 'top-0 min-h-0 rounded-none'
                             : 'max-h-[92vh] rounded-t-[1.75rem] shadow-2xl'}
                     `}
                 >
@@ -123,7 +202,7 @@ export const Sheet: React.FC<SheetProps> = ({
                     )}
 
                     {/* Scrollable body */}
-                    <div id={contentId} className="flex-1 overflow-y-auto scroll-container">
+                    <div id={contentId} className="flex-1 min-h-0 overflow-y-auto scroll-container">
                         {children}
                     </div>
 
