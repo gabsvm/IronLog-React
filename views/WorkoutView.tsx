@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { WorkoutView as WorkoutViewImpl } from './WorkoutViewImpl';
-import { useApp } from '../context/AppContext';
+import { useApp, useAppConfig } from '../context/AppContext';
 import { useTimerActions } from '../context/TimerContext';
 import { useStore } from '../lib/store';
 import { ReorderExercisesSheet } from '../components/workout/ReorderExercisesSheet';
@@ -8,6 +8,7 @@ import { Icon } from '../components/ui/Icon';
 import type { SessionExercise } from '../types';
 import { KONG_4DAY_V1 } from '../programs/kong/kong4Day';
 import './product-polish.css';
+import './workout-density-feedback.css';
 
 interface WorkoutViewProps {
     onFinish: () => void;
@@ -17,6 +18,7 @@ interface WorkoutViewProps {
 
 export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, onBack }) => {
     const { setLogs, lang } = useApp();
+    const { config } = useAppConfig();
     const activeSession = useStore(state => state.activeSession);
     const activeMeso = useStore(state => state.activeMeso);
     const setActiveSession = useStore(state => state.setActiveSession);
@@ -59,7 +61,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
         : undefined;
 
     return (
-        <div className="product-workout-polish contents">
+        <div className={`product-workout-polish workout-density-pass contents ${config.showRIR ? 'workout-rir-enabled' : ''}`}>
             <WorkoutViewImpl onFinish={handleFinish} onDiscard={onDiscard} onBack={onBack} />
 
             {activeSession && activeSession.exercises.length > 1 && (
