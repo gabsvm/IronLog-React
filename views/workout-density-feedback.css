@@ -176,6 +176,18 @@
   display: none !important;
 }
 
+/* ContextualRestDock is the single source of truth while a rest is running.
+   Keep the inactive manual-rest preset in the header, but hide the legacy active
+   countdown there and the older global RestTimerOverlay (compact or expanded). */
+.product-workout-polish.workout-density-pass > .fixed.inset-0 > .glass.z-30 > .flex.h-10 > .flex > button[class*="bg-primary-500/20"] {
+  display: none !important;
+}
+
+body:has(.contextual-rest-dock) #root .fixed.right-3.z-sheet,
+body:has(.contextual-rest-dock) #root .fixed.left-0.right-0.z-sheet[role="dialog"][aria-modal="false"] {
+  display: none !important;
+}
+
 /* Reorder remains available but is deliberately tertiary. */
 .product-workout-polish.workout-density-pass .workout-reorder-launcher {
   right: 0.72rem;
