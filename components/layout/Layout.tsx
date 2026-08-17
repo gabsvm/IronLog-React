@@ -50,6 +50,23 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
         return () => document.documentElement.classList.remove('kong-program-active');
     }, [isKong]);
 
+    // The new onboarding asks intent first. Once the main shell mounts, consume
+    // the one-shot destination so users land exactly where they asked to go.
+    React.useEffect(() => {
+        let intent: string | null = null;
+        try {
+            intent = window.sessionStorage.getItem('gainslab.onboarding.intent');
+            if (intent) window.sessionStorage.removeItem('gainslab.onboarding.intent');
+        } catch { }
+        if (intent === 'custom') {
+            setShowQuickStart(false);
+            setView('program');
+        } else if (intent === 'freestyle') {
+            setView('home');
+            setShowQuickStart(true);
+        }
+    }, [setView]);
+
     React.useEffect(() => {
         const handlePop = (event: PopStateEvent) => {
             if (!event.state?.profile) setShowProfile(false);
