@@ -7,11 +7,11 @@
 }
 
 .product-home-polish > .px-6.space-y-8 > :not([hidden]) ~ :not([hidden]) {
-  margin-top: 1rem !important;
+  margin-top: 0.85rem !important;
 }
 
 .product-home-polish .flex.justify-between.items-start.pt-2 h2.text-3xl {
-  font-size: 1.55rem !important;
+  font-size: 1.45rem !important;
   line-height: 1.08 !important;
   letter-spacing: -0.035em !important;
 }
@@ -20,55 +20,70 @@
   align-items: center !important;
 }
 
+/* KONG already has ProgramProgressStrip. Do not repeat its title/week/block state
+   or render a second progress bar immediately underneath it. */
+.product-home-polish.kong-active .kong-home-header,
+.product-home-polish.kong-active .kong-legacy-week-progress {
+  display: none !important;
+}
+
+.product-home-polish.kong-active > .px-6.space-y-8 {
+  padding-top: 0.15rem !important;
+}
+
 /* The weekly selector should behave like a compact strip, not a carousel of cards. */
 .product-home-polish .calendar-timeline {
-  gap: 0.4rem !important;
+  gap: 0.35rem !important;
   padding-left: 0 !important;
   padding-right: 0 !important;
 }
 
 .product-home-polish .calendar-timeline > button {
-  width: 3.25rem !important;
-  min-height: 3.45rem !important;
-  padding: 0.45rem 0.3rem !important;
-  border-radius: 0.75rem !important;
+  width: 3.05rem !important;
+  min-height: 3.15rem !important;
+  padding: 0.35rem 0.25rem !important;
+  border-radius: 0.7rem !important;
   box-shadow: none !important;
 }
 
 .product-home-polish .calendar-timeline > button > div {
-  margin-top: 0.35rem !important;
+  margin-top: 0.28rem !important;
 }
 
 .product-home-polish .calendar-timeline > button [class*="w-6"][class*="h-6"] {
-  width: 1.2rem !important;
-  height: 1.2rem !important;
+  width: 1.05rem !important;
+  height: 1.05rem !important;
+}
+
+.product-home-polish .calendar-timeline > button span[class*="text-[10px]"] {
+  font-size: 9px !important;
 }
 
 /* Today card: keep one dominant CTA but reduce billboard-like height/chrome. */
 .product-home-polish #tut-up-next {
-  min-height: 10.5rem !important;
-  padding: 1rem !important;
-  border-radius: 1rem !important;
+  min-height: 9.35rem !important;
+  padding: 0.9rem !important;
+  border-radius: 0.95rem !important;
   box-shadow: none !important;
   background: rgb(var(--surface-raised) / 0.72) !important;
   border-color: rgb(var(--border-subtle) / 0.8) !important;
 }
 
 .product-home-polish #tut-up-next .mt-6.mb-8 {
-  margin-top: 0.75rem !important;
-  margin-bottom: 1rem !important;
+  margin-top: 0.62rem !important;
+  margin-bottom: 0.78rem !important;
 }
 
 .product-home-polish #tut-up-next h3.text-4xl {
-  font-size: 1.85rem !important;
-  line-height: 1 !important;
-  letter-spacing: -0.04em !important;
-  margin-bottom: 0.6rem !important;
+  font-size: 1.68rem !important;
+  line-height: 1.02 !important;
+  letter-spacing: -0.038em !important;
+  margin-bottom: 0.5rem !important;
 }
 
 .product-home-polish #tut-up-next .w-14.h-14 {
-  width: 2.6rem !important;
-  height: 2.6rem !important;
+  width: 2.35rem !important;
+  height: 2.35rem !important;
   box-shadow: none !important;
 }
 
@@ -76,10 +91,20 @@
   backdrop-filter: none !important;
 }
 
+.product-home-polish #tut-up-next .flex.flex-wrap.gap-2 {
+  gap: 0.3rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.product-home-polish #tut-up-next .flex.flex-wrap.gap-2 > span {
+  padding: 0.22rem 0.45rem !important;
+  font-size: 8.5px !important;
+}
+
 /* Calm metadata typography; repeated all-caps labels should not dominate the page. */
 .product-home-polish h4.text-xs.uppercase,
 .product-home-polish [class*="tracking-widest"] {
-  letter-spacing: 0.08em !important;
+  letter-spacing: 0.07em !important;
 }
 
 /* No dark-only no-plan island in light mode or system theme. */
@@ -91,4 +116,74 @@
 .product-home-polish .animate-bounce-cta,
 .product-home-polish .animate-pulse:not([aria-busy="true"]) {
   animation: none !important;
+}
+
+/* HISTORY ---------------------------------------------------------------
+   Calendar + search + cards already have the right IA; tighten the vertical
+   rhythm and demote CSV so daily history browsing remains the primary task. */
+#root div.relative.flex.h-full.w-full.flex-col:has(#tut-history-search) > .shrink-0 {
+  padding-top: 0.65rem !important;
+  padding-bottom: 0.45rem !important;
+}
+
+#root div.relative.flex.h-full.w-full.flex-col:has(#tut-history-search) h2 {
+  font-size: 1.65rem !important;
+  line-height: 1.05 !important;
+  letter-spacing: -0.035em !important;
+}
+
+#root div.relative.flex.h-full.w-full.flex-col:has(#tut-history-search) h2 + p {
+  margin-top: 0.2rem !important;
+  font-size: 9px !important;
+  font-weight: 650 !important;
+  opacity: 0.78;
+}
+
+#root div.relative.flex.h-full.w-full.flex-col:has(#tut-history-search) button[aria-label="Download CSV"] {
+  min-height: 2rem !important;
+  padding-left: 0.55rem !important;
+  padding-right: 0.55rem !important;
+  border-radius: 0.65rem !important;
+  font-size: 10px !important;
+  color: rgb(var(--text-muted)) !important;
+}
+
+#root div.relative.flex.h-full.w-full.flex-col:has(#tut-history-search) #tut-history-search {
+  margin-top: 0.6rem !important;
+}
+
+#root div.relative.flex.h-full.w-full.flex-col:has(#tut-history-search) #tut-history-search input {
+  height: 2.5rem !important;
+  border-radius: 0.75rem !important;
+  font-size: 13px !important;
+}
+
+#root div.relative.flex.h-full.w-full.flex-col:has(#tut-history-search) > section.mx-4 {
+  margin-bottom: 0.55rem !important;
+  padding: 0.65rem !important;
+  border-radius: 0.9rem !important;
+}
+
+#root div.relative.flex.h-full.w-full.flex-col:has(#tut-history-search) > section.mx-4 > .mb-3 {
+  margin-bottom: 0.45rem !important;
+}
+
+#root div.relative.flex.h-full.w-full.flex-col:has(#tut-history-search) > section.mx-4 button.h-9,
+#root div.relative.flex.h-full.w-full.flex-col:has(#tut-history-search) > section.mx-4 div.h-9 {
+  height: 2rem !important;
+  min-height: 2rem !important;
+}
+
+#root div.relative.flex.h-full.w-full.flex-col:has(#tut-history-search) > section.mx-4 .grid.grid-cols-7 {
+  gap: 0.08rem !important;
+}
+
+#root div.relative.flex.h-full.w-full.flex-col:has(#tut-history-search) > section.mx-4 .grid.grid-cols-7 button {
+  border-radius: 0.55rem !important;
+}
+
+@media (max-width: 370px) {
+  #root div.relative.flex.h-full.w-full.flex-col:has(#tut-history-search) h2 + p {
+    display: none;
+  }
 }
