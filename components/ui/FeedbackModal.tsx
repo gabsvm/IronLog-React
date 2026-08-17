@@ -33,6 +33,7 @@ type DraftFeedback = Record<string, {
 export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm, onCancel }) => {
     const { lang } = useApp();
     const activeMeso = useStore(state => state.activeMeso);
+    const activeSession = useStore(state => state.activeSession);
     const t = TRANSLATIONS[lang];
     const uniqueMuscles = useMemo(() => Array.from(new Set(muscles.filter(m => m && m !== 'CARDIO'))) as MuscleGroup[], [muscles]);
     const [feedback, setFeedback] = useState<DraftFeedback>({});
@@ -46,7 +47,10 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
     const jointPain = current?.jointPain ?? false;
     const currentComplete = recovery !== null && performance !== null && stimulus !== null;
     const isLast = step >= uniqueMuscles.length - 1;
-    const isStructuredProgram = !!activeMeso?.programSystem;
+    // A structured program only owns feedback when the session actually belongs
+    // to that active program. Detached/freestyle work while KONG is active must
+    // not inherit KONG's "fixed prescription" behavior by accident.
+    const isStructuredProgram = !!activeMeso?.programSystem && activeSession?.mesoId === activeMeso.id;
 
     const updateCurrent = (patch: Partial<DraftFeedback[string]>) => {
         if (!currentMuscle) return;
