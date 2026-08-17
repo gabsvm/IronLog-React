@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { WorkoutView as WorkoutViewImpl } from './WorkoutViewImpl';
 import { useApp, useAppConfig } from '../context/AppContext';
 import { useTimerActions } from '../context/TimerContext';
@@ -17,6 +17,12 @@ interface WorkoutViewProps {
     onBack: () => void;
 }
 
+const completedWorkingSets = (exercise: SessionExercise) =>
+    (exercise.sets || []).filter(set => set.completed && !set.skipped && set.type !== 'warmup' && set.type !== 'avt_hop').length;
+
+const nextWorkingSetId = (exercise: SessionExercise) =>
+    (exercise.sets || []).find(set => !set.completed && !set.skipped && set.type !== 'warmup' && set.type !== 'avt_hop')?.id;
+
 export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, onBack }) => {
     const { setLogs, lang } = useApp();
     const { config } = useAppConfig();
@@ -26,6 +32,45 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
     const { setRestTimer } = useTimerActions();
     const [reorderOpen, setReorderOpen] = useState(false);
     const isKong = activeMeso?.programSystem?.systemId === KONG_4DAY_V1.id;
+    const completionSnapshotRef = useRef<{ sessionId: number | null; counts: Map<number, number> }>({ sessionId: null, counts: new Map() });
+
+    // Hevy-style smart superset flow. We watch only completed-working-set counts,
+    // so typing weight/reps never causes navigation. Completing A1 scrolls to the
+    // pending set on its partner; the existing card logic still handles normal sets.
+    useEffect(() => {
+        if (!activeSession) {
+            completionSnapshotRef.current = { sessionId: null, counts: new Map() };
+            return;
+        }
+
+        const currentCounts = new Map<number, number>();
+        (activeSession.exercises || []).forEach(exercise => currentCounts.set(exercise.instanceId, completedWorkingSets(exercise)));
+        const previous = completionSnapshotRef.current;
+
+        if (previous.sessionId !== activeSession.id) {
+            completionSnapshotRef.current = { sessionId: activeSession.id, counts: currentCounts };
+            return;
+        }
+
+        const advancedExercise = (activeSession.exercises || []).find(exercise =>
+            (currentCounts.get(exercise.instanceId) || 0) > (previous.counts.get(exercise.instanceId) || 0)
+        );
+        completionSnapshotRef.current = { sessionId: activeSession.id, counts: currentCounts };
+
+        if (!advancedExercise?.supersetId) return;
+        const partners = (activeSession.exercises || []).filter(exercise =>
+            exercise.instanceId !== advancedExercise.instanceId && exercise.supersetId === advancedExercise.supersetId
+        );
+        const target = partners
+            .map(exercise => ({ exercise, setId: nextWorkingSetId(exercise) }))
+            .find(item => item.setId != null);
+        if (!target?.setId) return;
+
+        const timer = window.setTimeout(() => {
+            document.getElementById(`set-row-${target.setId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 170);
+        return () => window.clearTimeout(timer);
+    }, [activeSession]);
 
     const handleFinish = useCallback(() => {
         if (!activeSession) return;
