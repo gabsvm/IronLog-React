@@ -1,55 +1,87 @@
 /*
- * RP-inspired information-density pass.
- *
- * Keep GainsLab's visual hierarchy and explicit completion controls, but remove
- * vertical noise that is not needed while the user is actually logging sets.
- * Everything is scoped to WorkoutView so Home/History/Stats remain unchanged.
+ * Benchmark pass inspired by Strong/Hevy/RP ergonomics.
+ * Keep GainsLab intelligence, but make the live workout behave like a logger
+ * first: flat exercise sections, dense set tables, contextual rest controls.
  */
 
 .product-workout-polish.workout-density-pass #tut-exercise-list {
-  padding-left: 0.75rem !important;
-  padding-right: 0.75rem !important;
-  padding-top: 0.5rem !important;
+  padding-left: 0.65rem !important;
+  padding-right: 0.65rem !important;
+  padding-top: 0.45rem !important;
+  padding-bottom: 8.25rem !important;
 }
 
-.product-workout-polish.workout-density-pass #tut-exercise-list > :not([hidden]) ~ :not([hidden]) {
-  margin-top: 0.4rem !important;
+.product-workout-polish.workout-density-pass .workout-sortable-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
 }
 
-/*
- * The old per-set Easy / OK / Hard strip made every completed set taller and
- * mixed adaptation feedback into the logging surface. Keep it available only
- * for people who explicitly enable per-set RIR tracking.
- */
-.product-workout-polish.workout-density-pass:not(.workout-rir-enabled) [id^="set-row-"] > .flex.gap-1 {
-  display: none !important;
+/* Exercise sections should read as compact logging surfaces, not marketing cards. */
+.product-workout-polish.workout-density-pass .workout-sortable-stack > div {
+  border-radius: 0.9rem !important;
+  border-color: rgb(var(--border-subtle) / 0.78) !important;
+  background: rgb(var(--surface-raised) / 0.72) !important;
+  box-shadow: none !important;
 }
 
-/* Prescription and previous-performance hints are both context for the same
- * row. Let them share one visual line whenever both exist instead of stacking
- * two miniature rows underneath the inputs. */
-.product-workout-polish.workout-density-pass [id^="set-row-"] {
-  text-align: center;
+.product-workout-polish.workout-density-pass .workout-sortable-stack > div > div:first-child {
+  padding-left: 0.72rem !important;
+  padding-right: 0.72rem !important;
+  padding-top: 0.55rem !important;
+  padding-bottom: 0.45rem !important;
+  background: transparent !important;
 }
 
-.product-workout-polish.workout-density-pass [id^="set-row-"] > .grid ~ .flex:not(.gap-1) {
-  display: inline-flex;
-  width: auto;
-  margin-top: -0.1rem !important;
-  margin-left: 0.2rem;
-  margin-right: 0.2rem;
-  padding-bottom: 0.25rem !important;
-  vertical-align: middle;
+/* Smaller repeated controls: hierarchy comes from title + set table. */
+.product-workout-polish.workout-density-pass .workout-sortable-stack > div > div:first-child h3 {
+  font-size: 1rem !important;
+  line-height: 1.1 !important;
+  letter-spacing: -0.025em !important;
 }
 
-/* Slightly tighten the repeated set stack without shrinking the actual input
- * controls or completion affordance. */
-.product-workout-polish.workout-density-pass [id^="set-row-"] + [id^="set-row-"] {
-  margin-top: 0.25rem !important;
+/* Remove excessive vertical gaps around exercise meta/protocol rows. */
+.product-workout-polish.workout-density-pass .workout-sortable-stack > div > div:first-child > .mt-2 {
+  margin-top: 0.35rem !important;
 }
 
-/* The exercise-level add/remove actions are secondary, but still need a
- * comfortable full-width target. Density comes from spacing, not tiny taps. */
-.product-workout-polish.workout-density-pass #tut-exercise-list button {
+/* Set rows are a table: separators replace mini-card borders and shadows. */
+.product-workout-polish.workout-density-pass .gainslab-set-table [id^="set-row-"] {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.product-workout-polish.workout-density-pass .gainslab-set-table input {
+  min-width: 0;
+}
+
+/* Exercise-level add/remove remain reachable but visually tertiary. */
+.product-workout-polish.workout-density-pass .workout-sortable-stack > div > .grid:last-child {
+  background: transparent !important;
+  border-top-color: rgb(var(--border-subtle) / 0.62) !important;
+}
+
+.product-workout-polish.workout-density-pass .workout-sortable-stack > div > .grid:last-child button {
+  min-height: 2.35rem;
+  font-size: 0.58rem !important;
+  letter-spacing: 0.08em !important;
+}
+
+/* Do not let the floating reorder affordance collide with the rest dock. */
+.product-workout-polish.workout-density-pass .workout-reorder-launcher {
+  right: 0.8rem;
+  bottom: calc(env(safe-area-inset-bottom) + 6.5rem);
+}
+
+/* The whole workout should feel calmer: no repeated hover lift/glow. */
+.product-workout-polish.workout-density-pass .workout-sortable-stack button,
+.product-workout-polish.workout-density-pass .workout-sortable-stack input {
   -webkit-tap-highlight-color: transparent;
+}
+
+@media (min-width: 640px) {
+  .product-workout-polish.workout-density-pass #tut-exercise-list {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
 }
