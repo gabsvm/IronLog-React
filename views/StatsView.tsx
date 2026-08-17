@@ -3,6 +3,7 @@ import { StatsView as StatsViewImpl } from './StatsViewImpl';
 import { useApp, useAppPreferences } from '../context/AppContext';
 import { ActivityHeatmap } from '../components/stats/ActivityHeatmap';
 import { StatsDashboardWidgets } from '../components/stats/StatsDashboardWidgets';
+import { BodyProgressCard } from '../components/stats/BodyProgressCard';
 import { Icon } from '../components/ui/Icon';
 import { useStore } from '../lib/store';
 import { TRANSLATIONS } from '../constants';
@@ -81,6 +82,8 @@ export const StatsView: React.FC = () => {
                     <ActivityHeatmap logs={safeLogs} />
                 </div>
             )}
+
+            <BodyProgressCard />
 
             <div className="product-stats-impl"><StatsViewImpl /></div>
         </div>
