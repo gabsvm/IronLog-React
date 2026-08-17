@@ -1,0 +1,94 @@
+/* Today/Home benchmark pass: one dominant question — what do I train now? */
+
+.product-home-polish > .px-6.space-y-8 {
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
+  padding-bottom: 7.25rem !important;
+}
+
+.product-home-polish > .px-6.space-y-8 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 1rem !important;
+}
+
+.product-home-polish .flex.justify-between.items-start.pt-2 h2.text-3xl {
+  font-size: 1.55rem !important;
+  line-height: 1.08 !important;
+  letter-spacing: -0.035em !important;
+}
+
+.product-home-polish .flex.justify-between.items-start.pt-2 {
+  align-items: center !important;
+}
+
+/* The weekly selector should behave like a compact strip, not a carousel of cards. */
+.product-home-polish .calendar-timeline {
+  gap: 0.4rem !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.product-home-polish .calendar-timeline > button {
+  width: 3.25rem !important;
+  min-height: 3.45rem !important;
+  padding: 0.45rem 0.3rem !important;
+  border-radius: 0.75rem !important;
+  box-shadow: none !important;
+}
+
+.product-home-polish .calendar-timeline > button > div {
+  margin-top: 0.35rem !important;
+}
+
+.product-home-polish .calendar-timeline > button [class*="w-6"][class*="h-6"] {
+  width: 1.2rem !important;
+  height: 1.2rem !important;
+}
+
+/* Today card: keep one dominant CTA but reduce billboard-like height/chrome. */
+.product-home-polish #tut-up-next {
+  min-height: 10.5rem !important;
+  padding: 1rem !important;
+  border-radius: 1rem !important;
+  box-shadow: none !important;
+  background: rgb(var(--surface-raised) / 0.72) !important;
+  border-color: rgb(var(--border-subtle) / 0.8) !important;
+}
+
+.product-home-polish #tut-up-next .mt-6.mb-8 {
+  margin-top: 0.75rem !important;
+  margin-bottom: 1rem !important;
+}
+
+.product-home-polish #tut-up-next h3.text-4xl {
+  font-size: 1.85rem !important;
+  line-height: 1 !important;
+  letter-spacing: -0.04em !important;
+  margin-bottom: 0.6rem !important;
+}
+
+.product-home-polish #tut-up-next .w-14.h-14 {
+  width: 2.6rem !important;
+  height: 2.6rem !important;
+  box-shadow: none !important;
+}
+
+.product-home-polish #tut-up-next [class*="backdrop-blur"] {
+  backdrop-filter: none !important;
+}
+
+/* Calm metadata typography; repeated all-caps labels should not dominate the page. */
+.product-home-polish h4.text-xs.uppercase,
+.product-home-polish [class*="tracking-widest"] {
+  letter-spacing: 0.08em !important;
+}
+
+/* No dark-only no-plan island in light mode or system theme. */
+.product-home-polish .bg-black {
+  background-color: rgb(var(--surface-app)) !important;
+}
+
+/* Avoid decorative perpetual motion. */
+.product-home-polish .animate-bounce-cta,
+.product-home-polish .animate-pulse:not([aria-busy="true"]) {
+  animation: none !important;
+}
