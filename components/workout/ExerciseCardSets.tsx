@@ -54,7 +54,7 @@ export const ExerciseCardSets: React.FC<Props> = React.memo(({
     tutorialId,
 }) => {
     const previousLabel = lang === 'es' ? 'Anterior' : 'Previous';
-    const showRIR = !!config?.showRIR && !isCardio && !ex.isIsometric;
+    const showDifficultyFeedback = !!config?.showRIR && !isCardio && !ex.isIsometric;
 
     return (
         <div className="gainslab-set-table border-t border-[rgb(var(--border-subtle)/0.72)]">
@@ -74,23 +74,21 @@ export const ExerciseCardSets: React.FC<Props> = React.memo(({
                     <div />
                 </div>
             ) : ex.isBodyweight ? (
-                <div className={`grid ${showRIR ? 'grid-cols-[32px_minmax(68px,1fr)_minmax(48px,.72fr)_48px_42px_38px]' : 'grid-cols-[34px_minmax(76px,1.15fr)_minmax(58px,0.8fr)_52px_40px]'} items-center gap-2 px-2 py-2`}>
+                <div className="grid grid-cols-[34px_minmax(76px,1.15fr)_minmax(58px,0.8fr)_52px_40px] items-center gap-2 px-2 py-2">
                     <div className={headerLabel}>{isMyorep ? 'Set' : '#'}</div>
                     <div className={headerLabel}>{previousLabel}</div>
                     <div className={headerLabel}>{String(t.reps)}</div>
                     <div className={`${headerLabel} text-violet-400/75`}>+KG</div>
-                    {showRIR && <div className={headerLabel}>RIR</div>}
                     <div />
                 </div>
             ) : (
-                <div className={`grid ${showRIR ? 'grid-cols-[32px_minmax(70px,1.1fr)_minmax(52px,.78fr)_minmax(48px,.72fr)_42px_38px]' : 'grid-cols-[34px_minmax(78px,1.2fr)_minmax(60px,0.85fr)_minmax(54px,0.75fr)_40px]'} items-center gap-2 px-2 py-2`}>
+                <div className="grid grid-cols-[34px_minmax(78px,1.2fr)_minmax(60px,0.85fr)_minmax(54px,0.75fr)_40px] items-center gap-2 px-2 py-2">
                     <div className={`${headerLabel} ${isEMOM ? 'text-cyan-500' : isMyorep ? 'text-purple-500' : isCluster ? 'text-emerald-500' : ''}`}>
                         {isEMOM ? 'Min' : isMyorep ? 'Set' : '#'}
                     </div>
                     <div className={headerLabel}>{previousLabel}</div>
                     <div className={headerLabel}>{unitLabel}</div>
                     <div className={headerLabel}>{String(t.reps)}</div>
-                    {showRIR && <div className={headerLabel}>RIR</div>}
                     <div />
                 </div>
             )}
@@ -116,7 +114,7 @@ export const ExerciseCardSets: React.FC<Props> = React.memo(({
                         disableTypeChange={isSpecialProtocol}
                         isActiveProtocolSet={isEMOM && activeEmomMinute === idx + 1}
                         isNextSet={nextSetIdx === idx}
-                        showRIR={showRIR}
+                        showRIR={showDifficultyFeedback}
                     />
                 ))}
             </div>
