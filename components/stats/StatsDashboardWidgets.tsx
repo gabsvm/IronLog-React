@@ -7,10 +7,36 @@ interface Props {
     lang: 'en' | 'es';
 }
 
-type WidgetId = 'sessions' | 'week' | 'sets' | 'adherence' | 'duration' | 'exercises' | 'muscles';
+type WidgetId = 'sessions' | 'week' | 'sets' | 'adherence' | 'duration' | 'exercises' | 'muscles' | 'consistency';
 
-const DEFAULT_WIDGETS: WidgetId[] = ['week', 'adherence', 'sessions', 'sets'];
+const DEFAULT_WIDGETS: WidgetId[] = ['week', 'adherence', 'consistency', 'sets'];
 const STORAGE_KEY = 'gainslab.stats.dashboard.widgets';
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+const startOfLocalWeek = (timestamp: number) => {
+    const date = new Date(timestamp);
+    const day = date.getDay();
+    // Monday-based week: training apps should reward weekly consistency rather
+    // than dangerous day-by-day streak pressure that can encourage overtraining.
+    const diff = (day + 6) % 7;
+    date.setHours(0, 0, 0, 0);
+    date.setDate(date.getDate() - diff);
+    return date.getTime();
+};
+
+const getWeeklyConsistency = (completed: any[]) => {
+    if (!completed.length) return 0;
+    const activeWeeks = new Set<number>();
+    completed.forEach(log => activeWeeks.add(startOfLocalWeek(Number(log.endTime || log.startTime || 0))));
+    const currentWeek = startOfLocalWeek(Date.now());
+    let cursor = activeWeeks.has(currentWeek) ? currentWeek : currentWeek - WEEK_MS;
+    let streak = 0;
+    while (activeWeeks.has(cursor)) {
+        streak += 1;
+        cursor -= WEEK_MS;
+    }
+    return streak;
+};
 
 export const StatsDashboardWidgets: React.FC<Props> = ({ logs, activeMesoId, lang }) => {
     const [editing, setEditing] = useState(false);
@@ -26,7 +52,7 @@ export const StatsDashboardWidgets: React.FC<Props> = ({ logs, activeMesoId, lan
         const scoped = activeMesoId != null ? logs.filter(log => log.mesoId === activeMesoId) : logs;
         const completed = scoped.filter(log => !log.skipped);
         const now = Date.now();
-        const weekSessions = completed.filter(log => now - Number(log.endTime || log.startTime || 0) <= 7 * 24 * 60 * 60 * 1000).length;
+        const weekSessions = completed.filter(log => now - Number(log.endTime || log.startTime || 0) <= WEEK_MS).length;
         const resolved = scoped.filter(log => log.skipped || (log.exercises || []).some((ex: any) => (ex.sets || []).some((set: any) => set.completed)));
         const adherence = resolved.length ? Math.round((completed.length / resolved.length) * 100) : 0;
         const avgDuration = completed.length ? Math.round(completed.reduce((sum, log) => sum + Number(log.duration || 0), 0) / completed.length / 60) : 0;
@@ -49,12 +75,14 @@ export const StatsDashboardWidgets: React.FC<Props> = ({ logs, activeMesoId, lan
             duration: avgDuration,
             exercises: exercises.size,
             muscles: muscles.size,
+            consistency: getWeeklyConsistency(completed),
         };
     }, [activeMesoId, logs]);
 
     const definitions: Array<{ id: WidgetId; label: string; value: string; hint: string; icon: string }> = [
         { id: 'week', label: lang === 'es' ? 'Últimos 7 días' : 'Last 7 days', value: String(metrics.week), hint: lang === 'es' ? 'sesiones' : 'sessions', icon: 'Calendar' },
         { id: 'adherence', label: lang === 'es' ? 'Adherencia' : 'Adherence', value: `${metrics.adherence}%`, hint: lang === 'es' ? 'sesiones resueltas' : 'resolved sessions', icon: 'Target' },
+        { id: 'consistency', label: lang === 'es' ? 'Constancia' : 'Consistency', value: String(metrics.consistency), hint: lang === 'es' ? 'semanas consecutivas' : 'consecutive weeks', icon: 'Flame' },
         { id: 'sessions', label: lang === 'es' ? 'Sesiones' : 'Sessions', value: String(metrics.sessions), hint: activeMesoId != null ? (lang === 'es' ? 'plan actual' : 'current plan') : (lang === 'es' ? 'historial' : 'history'), icon: 'Dumbbell' },
         { id: 'sets', label: lang === 'es' ? 'Series' : 'Sets', value: String(metrics.sets), hint: lang === 'es' ? 'completadas' : 'completed', icon: 'Layers' },
         { id: 'duration', label: lang === 'es' ? 'Duración media' : 'Avg duration', value: `${metrics.duration}m`, hint: lang === 'es' ? 'por sesión' : 'per session', icon: 'Clock' },
