@@ -22,17 +22,10 @@
   }
 }
 
-/* Capacitor is already an installed standalone application. `isStandalone`
- * describes PWA display-mode and can be false inside a WebView, so the web-only
- * install banner must never be shown in the native shell. */
 html.native-shell [aria-labelledby="settings-modal-title"] .scroll-container > .bg-gradient-to-r.from-primary-500.to-primary-600 {
   display: none !important;
 }
 
-/* Home has a plan-specific settings button that historically used the same
- * gear affordance as global Settings. Keep its existing behavior but present
- * it as an overflow/menu action so the two concepts are no longer confused.
- */
 .scroll-container #tut-settings-btn > svg {
   display: none;
 }
@@ -46,4 +39,101 @@ html.native-shell [aria-labelledby="settings-modal-title"] .scroll-container > .
   letter-spacing: 1.5px;
   line-height: 1;
   color: currentColor;
+}
+
+/* -----------------------------------------------------------------------
+ * Benchmark design-system pass.
+ * Strong is the reference for calm hierarchy: elevation means something,
+ * repeated content is flatter, and accent color is reserved for state/action.
+ */
+
+#root .glass-card,
+#root .glass-island {
+  border-color: rgb(var(--border-subtle) / 0.82) !important;
+  background-color: rgb(var(--surface-raised) / 0.64) !important;
+  box-shadow: none !important;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+#root .glass-card {
+  border-radius: 1rem !important;
+}
+
+#root [class*="rounded-[1.7rem]"],
+#root [class*="rounded-[1.5rem]"],
+#root [class*="rounded-[1.35rem]"] {
+  border-radius: 1rem !important;
+}
+
+#root .shadow-md,
+#root .shadow-lg {
+  box-shadow: none !important;
+}
+
+/* Keep lime as action/state, not ambient decoration. */
+#root [class*="shadow-primary-500/"] {
+  box-shadow: none !important;
+}
+
+/* Light mode must be a real mode, not a white shell around black islands. */
+html.light #root .bg-black,
+html.light #root [class~="bg-[#121212]"],
+html.light #root [class~="bg-[#141416]"],
+html.light #root [class~="bg-[#17171b]"],
+html.light #root [class~="bg-[#17171B]"],
+html.light #root [class~="bg-[#1A1A1A]"],
+html.light #root [class~="bg-[#202024]"] {
+  background-color: rgb(var(--surface-raised)) !important;
+  color: rgb(var(--text-primary)) !important;
+}
+
+html.light #root .text-white {
+  color: rgb(var(--text-primary)) !important;
+}
+
+html.light #root [class*="border-zinc-8"],
+html.light #root [class*="border-zinc-7"] {
+  border-color: rgb(var(--border-subtle)) !important;
+}
+
+/* Use blur only for persistent system chrome (nav/header), not every card. */
+#root main [class*="backdrop-blur"],
+#root .scroll-container [class*="backdrop-blur"] {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* Repeated metadata is calmer and easier to scan. */
+#root .tracking-widest {
+  letter-spacing: 0.09em !important;
+}
+
+#root [class*="tracking-[0.2em]"],
+#root [class*="tracking-[0.18em]"],
+#root [class*="tracking-[0.16em]"] {
+  letter-spacing: 0.1em !important;
+}
+
+/* Icon-only controls stay compact visually while retaining mobile hit targets. */
+#root button[aria-label] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Avoid perpetual attention-seeking motion; state transitions still animate. */
+#root .animate-bounce-cta,
+#root .animate-pulse-glow-green {
+  animation: none !important;
+}
+
+/* Sheets/modal content should share one surface hierarchy. */
+#root .modal-surface {
+  border-radius: 1rem 1rem 0 0;
+  box-shadow: 0 -12px 40px rgb(0 0 0 / 0.18);
+}
+
+@media (min-width: 640px) {
+  #root .modal-surface {
+    border-radius: 1rem;
+  }
 }
