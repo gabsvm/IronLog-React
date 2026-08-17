@@ -96,6 +96,15 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
         onBack();
     }, [activeMeso, activeSession, onBack, onFinish, setActiveSession, setLogs, setRestTimer]);
 
+    const triggerFinishFlow = useCallback(() => {
+        const existingFinishButton = document.getElementById('tut-finish-btn') as HTMLButtonElement | null;
+        if (existingFinishButton) {
+            existingFinishButton.click();
+            return;
+        }
+        handleFinish();
+    }, [handleFinish]);
+
     const commitExerciseOrder = useCallback((ordered: SessionExercise[]) => {
         setActiveSession(prev => prev ? { ...prev, exercises: ordered } : prev);
     }, [setActiveSession]);
@@ -109,6 +118,17 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
     return (
         <div className={`product-workout-polish workout-density-pass contents ${config.showRIR ? 'workout-rir-enabled' : ''}`}>
             <WorkoutViewImpl onFinish={handleFinish} onDiscard={onDiscard} onBack={onBack} />
+
+            {activeSession && (
+                <button
+                    type="button"
+                    onClick={triggerFinishFlow}
+                    className="workout-header-finish fixed z-[47] min-h-9 rounded-lg bg-primary-500 px-3 text-[11px] font-black text-black shadow-sm transition-transform active:scale-95"
+                >
+                    {lang === 'es' ? 'Finalizar' : 'Finish'}
+                </button>
+            )}
+
             <ContextualRestDock session={activeSession} lang={lang} />
 
             {activeSession && activeSession.exercises.length > 1 && (
