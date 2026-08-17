@@ -5,9 +5,11 @@ import { useStore } from '../lib/store';
 import { KONG_4DAY_V1 } from '../programs/kong/kong4Day';
 import { getProgramBlockForWeek, resolveProgramWeek } from '../programs/engine/ProgramResolver';
 import { getKongDayDisplay } from '../programs/kong/kongDisplay';
+import { ProgramProgressStrip } from '../components/programs/ProgramProgressStrip';
 import './product-polish.css';
 import './reorder-history-polish.css';
 import './kong-final-polish.css';
+import './today-benchmark.css';
 
 const ProgramCompletionView = React.lazy(() =>
     import('../components/programs/ProgramCompletionView').then((module) => ({ default: module.ProgramCompletionView })),
@@ -34,9 +36,6 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
         [activeMeso?.programSystem?.substitutions],
     );
 
-    // KONG is a dynamic 12-week system. Keep the legacy `program` projection in
-    // sync with the current global week so Home, skip labels, estimates and any
-    // legacy consumers never remain stuck on Block 1 after the resolver advances.
     useEffect(() => {
         if (!isKong || !activeMeso) return;
         const { block } = getProgramBlockForWeek(KONG_4DAY_V1, activeMeso.week);
@@ -52,18 +51,12 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
         setProgram(prev => JSON.stringify(prev) === JSON.stringify(resolved) ? prev : resolved);
     }, [activeMeso?.week, isKong, setProgram, substitutionSignature]);
 
-    // Legacy week completion only auto-advances after four non-skipped workouts.
-    // In KONG, a deliberate Skip resolves that scheduled slot but should reduce
-    // adherence rather than trap the user on a week with no remaining day.
     useEffect(() => {
         if (!isKong || !activeMeso || activeSession) return;
         const safeLogs = Array.isArray(logs) ? logs : [];
         const currentWeekLogs = safeLogs.filter(log => log.mesoId === activeMeso.id && log.week === activeMeso.week);
         if (!currentWeekLogs.some(log => log.skipped)) return;
 
-        // If all four days were eventually trained, App's normal completion path
-        // owns the transition. The wrapper only compensates for a genuinely
-        // skipped scheduled slot, preventing duplicate completion modals.
         const completedDays = new Set(
             currentWeekLogs
                 .filter(log => !log.skipped)
@@ -124,9 +117,17 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
 
     return (
         <div ref={rootRef} className={`product-home-polish ${isKong ? 'kong-active' : ''} contents`}>
+            {isKong && activeMeso && (
+                <ProgramProgressStrip
+                    week={activeMeso.week}
+                    totalWeeks={KONG_4DAY_V1.durationWeeks}
+                    lang={lang}
+                    name={activeMeso.name || 'KONG · Savage Size'}
+                />
+            )}
             <HomeViewImpl {...props} />
             {showSkippedFinalCompletion && activeMeso && isKong && (
-                <Suspense fallback={null}>
+                <Suspense fallback={<div className="fixed inset-0 z-modal bg-[rgb(var(--surface-app))]" />}>
                     <ProgramCompletionView
                         meso={activeMeso}
                         logs={Array.isArray(logs) ? logs : []}
