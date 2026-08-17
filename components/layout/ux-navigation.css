@@ -132,6 +132,21 @@ html.light #root [class*="border-zinc-7"] {
   box-shadow: 0 -12px 40px rgb(0 0 0 / 0.18);
 }
 
+/* Bottom nav: inactive destinations stay secondary, but no longer disappear into
+   OLED black. The central Quick Start keeps full emphasis. */
+#root .fixed.bottom-0.left-0.right-0.z-30 button:not([aria-current]):not([aria-label]) {
+  opacity: 0.86;
+}
+
+#root .fixed.bottom-0.left-0.right-0.z-30 button[aria-current="page"] {
+  opacity: 1;
+}
+
+#root .fixed.bottom-0.left-0.right-0.z-30 button:not([aria-current]):not([aria-label]) span,
+#root .fixed.bottom-0.left-0.right-0.z-30 button:not([aria-current]):not([aria-label]) svg {
+  color: rgb(var(--text-muted) / 0.94) !important;
+}
+
 @media (min-width: 640px) {
   #root .modal-surface {
     border-radius: 1rem;
