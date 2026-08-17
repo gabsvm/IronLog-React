@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Capacitor } from '@capacitor/core';
 import {
     cancelNativeRestTimer,
@@ -8,6 +8,8 @@ import {
 } from '../utils/audio';
 import { TRANSLATIONS } from '../constants';
 import { Lang } from '../types';
+import { useStore } from '../lib/store';
+import { getTranslated } from '../utils';
 
 export interface TimerState {
     active: boolean;
@@ -21,6 +23,28 @@ export const useTimer = (lang: Lang) => {
     const workerRef = useRef<Worker | null>(null);
     const langRef = useRef(lang);
     const isNative = Capacitor.isNativePlatform();
+    const activeSession = useStore(state => state.activeSession);
+
+    const nextSetContext = useMemo(() => {
+        if (!activeSession) return '';
+        for (const exercise of activeSession.exercises || []) {
+            const pendingIndex = (exercise.sets || []).findIndex(set =>
+                !set.completed && !set.skipped && set.type !== 'warmup' && set.type !== 'avt_hop'
+            );
+            if (pendingIndex < 0) continue;
+            const set = exercise.sets[pendingIndex];
+            const name = String(getTranslated(exercise.name, lang));
+            const previousParts = [
+                Number(set.prevWeight || 0) > 0 ? `${set.prevWeight}kg` : null,
+                Number(set.prevReps || 0) > 0 ? `${set.prevReps} reps` : null,
+            ].filter(Boolean);
+            const previous = previousParts.length
+                ? `${lang === 'es' ? 'anterior' : 'previous'} ${previousParts.join(' × ')}`
+                : '';
+            return `${lang === 'es' ? 'Siguiente' : 'Next'}: ${name} · ${lang === 'es' ? 'serie' : 'set'} ${pendingIndex + 1}${previous ? ` · ${previous}` : ''}`;
+        }
+        return lang === 'es' ? 'Últimas series de la sesión' : 'Final sets of the session';
+    }, [activeSession, lang]);
 
     useEffect(() => {
         langRef.current = lang;
@@ -57,18 +81,25 @@ export const useTimer = (lang: Lang) => {
         };
     }, [isNative]);
 
-    // Schedule/cancel the Android OS alarm only when the timer identity changes,
-    // not on every displayed second.
+    // Schedule/cancel the Android OS alarm only when the timer identity or the
+    // next actionable set changes, not on every displayed second. Android owns
+    // an ongoing low-priority countdown card plus the final high-priority alert.
     useEffect(() => {
         if (!isNative) return;
 
         if (timer.active && timer.endAt > Date.now()) {
             const t = TRANSLATIONS[lang]?.timer || TRANSLATIONS.en.timer;
-            scheduleNativeRestTimer(timer.endAt, t.finished, t.getBack);
+            scheduleNativeRestTimer(
+                timer.endAt,
+                t.finished,
+                t.getBack,
+                lang === 'es' ? 'Descanso en curso' : 'Rest in progress',
+                nextSetContext,
+            );
         } else {
             cancelNativeRestTimer();
         }
-    }, [isNative, timer.active, timer.endAt, lang]);
+    }, [isNative, timer.active, timer.endAt, lang, nextSetContext]);
 
     const handleTick = useCallback((suppressFeedback = false) => {
         setTimer(prev => {
