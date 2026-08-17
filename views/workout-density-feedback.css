@@ -67,6 +67,22 @@
   letter-spacing: 0.08em !important;
 }
 
+/* Strong-style completion: Finish lives in the header, not as a permanent
+ * bottom billboard. The hidden legacy button still owns the existing controller
+ * and confirmation flow; the header button triggers it programmatically. */
+.product-workout-polish.workout-density-pass .workout-header-finish {
+  top: calc(env(safe-area-inset-top, 0px) + 2.9rem);
+  right: 0.75rem;
+}
+
+.product-workout-polish.workout-density-pass h1.text-\[1\.35rem\] {
+  padding-right: 5.4rem;
+}
+
+.product-workout-polish.workout-density-pass div:has(> div > #tut-finish-btn) {
+  display: none !important;
+}
+
 /* Do not let the floating reorder affordance collide with the rest dock. */
 .product-workout-polish.workout-density-pass .workout-reorder-launcher {
   right: 0.8rem;
