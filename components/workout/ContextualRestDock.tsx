@@ -62,7 +62,7 @@ export const ContextualRestDock: React.FC<Props> = ({ session, lang }) => {
     };
 
     return (
-        <div className="fixed inset-x-0 bottom-0 z-[46] px-3 pb-[calc(env(safe-area-inset-bottom)+0.6rem)] pointer-events-none">
+        <div className="contextual-rest-dock fixed inset-x-0 bottom-0 z-[46] px-3 pb-[calc(env(safe-area-inset-bottom)+0.6rem)] pointer-events-none">
             <div className="pointer-events-auto mx-auto max-w-md overflow-hidden rounded-2xl border border-primary-500/20 bg-[rgb(var(--surface-raised)/0.97)] shadow-[0_16px_45px_rgba(0,0,0,0.45)] backdrop-blur-xl">
                 <div className="flex items-center gap-3 px-3 py-2.5">
                     <div className="flex h-11 min-w-[72px] items-center justify-center rounded-xl bg-primary-500/10 px-3 text-xl font-black tabular-nums tracking-[-0.04em] text-primary-500">
