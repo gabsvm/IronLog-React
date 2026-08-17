@@ -21,6 +21,7 @@ interface SetRowProps {
     disableTypeChange?: boolean;
     isActiveProtocolSet?: boolean;
     isNextSet?: boolean;
+    showRIR?: boolean;
 }
 
 const getTypeLabel = (type: SetType) => {
@@ -33,10 +34,10 @@ const getTypeLabel = (type: SetType) => {
 };
 
 const typeTone = (type: SetType) => {
-    if (type === 'warmup') return 'border-amber-500/20 bg-amber-500/8 text-amber-300';
-    if (type === 'myorep' || type === 'myorep_match') return 'border-fuchsia-500/20 bg-fuchsia-500/8 text-fuchsia-300';
-    if (type === 'emom') return 'border-cyan-500/20 bg-cyan-500/8 text-cyan-300';
-    if (type === 'drop') return 'border-orange-500/20 bg-orange-500/8 text-orange-300';
+    if (type === 'warmup') return 'border-amber-500/20 bg-amber-500/10 text-amber-300';
+    if (type === 'myorep' || type === 'myorep_match') return 'border-fuchsia-500/20 bg-fuchsia-500/10 text-fuchsia-300';
+    if (type === 'emom') return 'border-cyan-500/20 bg-cyan-500/10 text-cyan-300';
+    if (type === 'drop') return 'border-orange-500/20 bg-orange-500/10 text-orange-300';
     return 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base))] text-[rgb(var(--text-secondary))]';
 };
 
@@ -98,9 +99,7 @@ const HoldTimer: React.FC<{
         return m ? `${m}:${String(s).padStart(2, '0')}` : `${s}s`;
     };
 
-    if (isDone) {
-        return <div className="text-center text-sm font-black tabular-nums text-emerald-400">{display(elapsed)}</div>;
-    }
+    if (isDone) return <div className="text-center text-sm font-black tabular-nums text-emerald-400">{display(elapsed)}</div>;
 
     const remaining = targetSeconds ? Math.max(0, targetSeconds - elapsed) : null;
     return (
@@ -108,9 +107,7 @@ const HoldTimer: React.FC<{
             <button type="button" onClick={running ? stop : start} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-primary-500 active:scale-95" aria-label={running ? (lang === 'es' ? 'Detener' : 'Stop') : (lang === 'es' ? 'Iniciar' : 'Start')}>
                 <Icon name={running ? 'Square' : 'Play'} size={15} fill="currentColor" />
             </button>
-            <div className="min-w-0 flex-1 text-center text-base font-black tabular-nums text-[rgb(var(--text-primary))]">
-                {display(remaining ?? elapsed)}
-            </div>
+            <div className="min-w-0 flex-1 text-center text-base font-black tabular-nums text-[rgb(var(--text-primary))]">{display(remaining ?? elapsed)}</div>
             {elapsed > 0 && !running && (
                 <button type="button" onClick={reset} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[rgb(var(--text-muted))] active:scale-95" aria-label={lang === 'es' ? 'Reiniciar' : 'Reset'}>
                     <Icon name="RotateCcw" size={14} />
@@ -138,6 +135,7 @@ export const SetRow = React.memo(({
     disableTypeChange,
     isActiveProtocolSet,
     isNextSet,
+    showRIR,
 }: SetRowProps) => {
     const isDone = !!set.completed;
     const setType = set.type || 'regular';
@@ -237,33 +235,32 @@ export const SetRow = React.memo(({
                 : 'bg-transparent';
 
     const badge = (
-        <button
-            id={tutorialId}
-            type="button"
-            disabled={disableTypeChange || isDone}
-            onClick={() => onChangeType(exInstanceId, set.id, setType)}
-            className={`flex h-8 w-8 items-center justify-center rounded-lg border text-[10px] font-black transition-transform active:scale-95 disabled:cursor-default ${isDone ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400' : typeTone(setType)}`}
-            aria-label={lang === 'es' ? `Serie ${effectiveBadgeLabel}` : `Set ${effectiveBadgeLabel}`}
-        >
+        <button id={tutorialId} type="button" disabled={disableTypeChange || isDone} onClick={() => onChangeType(exInstanceId, set.id, setType)} className={`flex h-8 w-8 items-center justify-center rounded-lg border text-[10px] font-black transition-transform active:scale-95 disabled:cursor-default ${isDone ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400' : typeTone(setType)}`} aria-label={lang === 'es' ? `Serie ${effectiveBadgeLabel}` : `Set ${effectiveBadgeLabel}`}>
             {effectiveBadgeLabel}
         </button>
     );
 
     const check = (
-        <button
-            type="button"
-            onClick={toggleComplete}
-            className={`flex h-10 w-10 items-center justify-center rounded-xl border transition-all active:scale-90 ${isDone ? 'border-primary-500 bg-primary-500 text-black' : 'border-[rgb(var(--border-strong))] bg-[rgb(var(--surface-base))] text-[rgb(var(--text-muted))]'}`}
-            aria-pressed={isDone}
-            aria-label={lang === 'es' ? (isDone ? 'Serie completada' : 'Completar serie') : (isDone ? 'Set completed' : 'Complete set')}
-        >
+        <button type="button" onClick={toggleComplete} className={`flex h-10 w-10 items-center justify-center rounded-xl border transition-all active:scale-90 ${isDone ? 'border-primary-500 bg-primary-500 text-black' : 'border-[rgb(var(--border-strong))] bg-[rgb(var(--surface-base))] text-[rgb(var(--text-muted))]'}`} aria-pressed={isDone} aria-label={lang === 'es' ? (isDone ? 'Serie completada' : 'Completar serie') : (isDone ? 'Set completed' : 'Complete set')}>
             <Icon name="Check" size={18} strokeWidth={3} />
         </button>
     );
 
-    const swipeOverlay = swipePct > 0 && !isDone ? (
-        <div className="pointer-events-none absolute inset-y-0 left-0 z-0 bg-emerald-500/12" style={{ width: `${swipePct}%` }} />
+    const difficultyPicker = showRIR && isDone && (set.rpe === '' || set.rpe === null || set.rpe === undefined) ? (
+        <div className="grid grid-cols-3 gap-1.5 px-2 pb-2 pt-0.5">
+            {([
+                { value: '3', label: lang === 'es' ? 'Fácil' : 'Easy', tone: 'text-emerald-400' },
+                { value: '6', label: 'OK', tone: 'text-[rgb(var(--text-secondary))]' },
+                { value: '9', label: lang === 'es' ? 'Duro' : 'Hard', tone: 'text-amber-400' },
+            ] as const).map(option => (
+                <button key={option.value} type="button" onClick={() => onUpdate(exInstanceId, set.id, 'rpe', option.value)} className={`min-h-8 rounded-lg bg-[rgb(var(--surface-base))] text-[10px] font-bold ${option.tone} active:scale-[0.98]`}>
+                    {option.label}
+                </button>
+            ))}
+        </div>
     ) : null;
+
+    const swipeOverlay = swipePct > 0 && !isDone ? <div className="pointer-events-none absolute inset-y-0 left-0 z-0 bg-emerald-500/10" style={{ width: `${swipePct}%` }} /> : null;
 
     if (isCardio) {
         const interval = cardioMode === 'hiit' || cardioMode === 'tabata';
@@ -282,11 +279,7 @@ export const SetRow = React.memo(({
                         <>
                             <input type="number" inputMode="decimal" className={inputClass} value={set.duration ?? ''} placeholder="0" onChange={e => onUpdate(exInstanceId, set.id, 'duration', e.target.value)} aria-label={lang === 'es' ? 'Tiempo' : 'Time'} />
                             <input type="number" inputMode="decimal" className={inputClass} value={set.distance ?? ''} placeholder="0" onChange={e => onUpdate(exInstanceId, set.id, 'distance', e.target.value)} aria-label={lang === 'es' ? 'Distancia' : 'Distance'} />
-                            <div className="text-center text-xs font-bold tabular-nums text-[rgb(var(--text-muted))]">
-                                {Number(set.duration || 0) > 0 && Number(set.distance || 0) > 0
-                                    ? (Number(set.distance) / (Number(set.duration) / 60)).toFixed(1)
-                                    : '—'}
-                            </div>
+                            <div className="text-center text-xs font-bold tabular-nums text-[rgb(var(--text-muted))]">{Number(set.duration || 0) > 0 && Number(set.distance || 0) > 0 ? (Number(set.distance) / (Number(set.duration) / 60)).toFixed(1) : '—'}</div>
                         </>
                     )}
                     {check}
@@ -316,20 +309,13 @@ export const SetRow = React.memo(({
                 {swipeOverlay}
                 <div className="relative z-10 grid grid-cols-[34px_minmax(76px,1.15fr)_minmax(58px,0.8fr)_52px_40px] items-center gap-2 px-2 py-1.5">
                     {badge}
-                    <button type="button" onClick={copyPrevious} disabled={previousText === '—' || isDone} className="min-h-10 truncate rounded-lg px-1 text-center text-[11px] font-bold tabular-nums text-[rgb(var(--text-muted))] transition-colors enabled:active:bg-primary-500/10 enabled:active:text-primary-500 disabled:opacity-70" title={previousText === '—' ? undefined : (lang === 'es' ? 'Toca para copiar' : 'Tap to copy')}>
-                        {previousText}
-                    </button>
+                    <button type="button" onClick={copyPrevious} disabled={previousText === '—' || isDone} className="min-h-10 truncate rounded-lg px-1 text-center text-[11px] font-bold tabular-nums text-[rgb(var(--text-muted))] transition-colors enabled:active:bg-primary-500/10 enabled:active:text-primary-500 disabled:opacity-70" title={previousText === '—' ? undefined : (lang === 'es' ? 'Toca para copiar' : 'Tap to copy')}>{previousText}</button>
                     <input ref={repsRef} type="number" inputMode="numeric" className={inputClass} value={localReps} placeholder={set.hintReps ? String(set.hintReps) : '0'} onChange={e => setLocalReps(e.target.value)} onBlur={() => commit('reps', localReps)} enterKeyHint="done" disabled={isDone} />
-                    {showExtraWeight ? (
-                        <input ref={weightRef} type="number" inputMode="decimal" className={`${inputClass} text-violet-300`} value={localWeight} placeholder="0" onChange={e => setLocalWeight(e.target.value)} onBlur={() => commit('weight', localWeight)} enterKeyHint="done" disabled={isDone} />
-                    ) : (
-                        <button type="button" onClick={() => setShowExtraWeight(true)} disabled={isDone} className="flex h-10 items-center justify-center rounded-lg text-[10px] font-bold text-[rgb(var(--text-muted))] active:bg-[rgb(var(--surface-base))]">
-                            +KG
-                        </button>
-                    )}
+                    {showExtraWeight ? <input ref={weightRef} type="number" inputMode="decimal" className={`${inputClass} text-violet-300`} value={localWeight} placeholder="0" onChange={e => setLocalWeight(e.target.value)} onBlur={() => commit('weight', localWeight)} enterKeyHint="done" disabled={isDone} /> : <button type="button" onClick={() => setShowExtraWeight(true)} disabled={isDone} className="flex h-10 items-center justify-center rounded-lg text-[10px] font-bold text-[rgb(var(--text-muted))] active:bg-[rgb(var(--surface-base))]">+KG</button>}
                     {check}
                 </div>
                 {prescriptionHint && !isDone && <div className="pb-1 pl-[44px] text-[9px] font-bold text-primary-500/80">{prescriptionHint}</div>}
+                {difficultyPicker}
             </div>
         );
     }
@@ -339,14 +325,13 @@ export const SetRow = React.memo(({
             {swipeOverlay}
             <div className="relative z-10 grid grid-cols-[34px_minmax(78px,1.2fr)_minmax(60px,0.85fr)_minmax(54px,0.75fr)_40px] items-center gap-2 px-2 py-1.5">
                 {badge}
-                <button type="button" onClick={copyPrevious} disabled={previousText === '—' || isDone} className="min-h-10 truncate rounded-lg px-1 text-center text-[11px] font-bold tabular-nums text-[rgb(var(--text-muted))] transition-colors enabled:active:bg-primary-500/10 enabled:active:text-primary-500 disabled:opacity-70" title={previousText === '—' ? undefined : (lang === 'es' ? 'Toca para copiar' : 'Tap to copy')}>
-                    {previousText}
-                </button>
+                <button type="button" onClick={copyPrevious} disabled={previousText === '—' || isDone} className="min-h-10 truncate rounded-lg px-1 text-center text-[11px] font-bold tabular-nums text-[rgb(var(--text-muted))] transition-colors enabled:active:bg-primary-500/10 enabled:active:text-primary-500 disabled:opacity-70" title={previousText === '—' ? undefined : (lang === 'es' ? 'Toca para copiar' : 'Tap to copy')}>{previousText}</button>
                 <input ref={weightRef} type="number" inputMode="decimal" className={inputClass} value={localWeight} placeholder={set.hintWeight ? String(set.hintWeight) : '0'} onChange={e => setLocalWeight(e.target.value)} onBlur={() => { commit('weight', localWeight); if (!isDone) window.setTimeout(() => repsRef.current?.focus(), 60); }} enterKeyHint="next" disabled={isDone} />
                 <input ref={repsRef} type="number" inputMode="numeric" className={inputClass} value={localReps} placeholder={set.hintReps ? String(set.hintReps) : '0'} onChange={e => setLocalReps(e.target.value)} onBlur={() => commit('reps', localReps)} enterKeyHint="done" disabled={isDone} />
                 {check}
             </div>
             {prescriptionHint && !isDone && <div className="pb-1 pl-[44px] text-[9px] font-bold text-primary-500/80">{prescriptionHint}</div>}
+            {difficultyPicker}
         </div>
     );
 });
