@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
-import { UserProfile, ProgramDay, AppState } from '../../types';
+import { UserProfile } from '../../types';
 import { Icon } from '../ui/Icon';
 import { Logo } from '../ui/Logo';
 import { recommendProgram, RecommendationResult } from '../../utils/recommendationEngine';
@@ -11,432 +11,266 @@ interface SetupWizardProps {
     onComplete: () => void;
 }
 
-type Mode = 'suggested' | 'custom' | 'freestyle';
+type Intent = 'program' | 'custom' | 'freestyle';
+
+const intentStorageKey = 'gainslab.onboarding.intent';
 
 export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
-    const { lang, setLang, setProgram } = useApp();
+    const { lang, setLang, setProgram, setUserProfile } = useApp();
     const setActiveMeso = useStore(state => state.setActiveMeso);
     const t = TRANSLATIONS[lang];
     const w = t.wizard;
 
-    // 0–3: profile steps, 4: recommendation, 5: launch mode picker
+    const [intent, setIntent] = useState<Intent | null>(null);
     const [step, setStep] = useState(0);
     const [profile, setProfile] = useState<UserProfile>({
         experience: 'intermediate',
         daysPerWeek: 4,
         goal: 'hypertrophy',
-        sessionDuration: 'medium'
+        sessionDuration: 'medium',
     });
-
     const [recommendation, setRecommendation] = useState<RecommendationResult | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
 
-    // ── Navigation ────────────────────────────────────────────────────
-    const handleNext = () => {
-        if (step === 3) {
-            setIsGenerating(true);
-            setTimeout(() => {
-                const rec = recommendProgram(profile);
-                setRecommendation(rec);
-                setIsGenerating(false);
-                setStep(4); // recommendation screen
-            }, 1500);
-        } else if (step < 3) {
-            setStep(prev => prev + 1);
-        }
+    const persistIntentAndFinish = (nextIntent: Intent) => {
+        try { window.sessionStorage.setItem(intentStorageKey, nextIntent); } catch { }
+        if (nextIntent === 'custom') setProgram([]);
+        onComplete();
     };
 
-    const handleApply = (mode: Mode) => {
-        if (mode === 'freestyle') {
-            // No program, no meso — just log freely
-            onComplete();
+    const chooseIntent = (nextIntent: Intent) => {
+        if (nextIntent === 'program') {
+            setIntent('program');
+            setStep(0);
             return;
         }
+        persistIntentAndFinish(nextIntent);
+    };
 
-        if (mode === 'custom') {
-            // Skip to blank program editor
-            onComplete();
+    const handleNext = () => {
+        if (step < 3) {
+            setStep(prev => prev + 1);
             return;
         }
+        setIsGenerating(true);
+        window.setTimeout(() => {
+            const rec = recommendProgram(profile);
+            setRecommendation(rec);
+            setIsGenerating(false);
+            setStep(4);
+        }, 450);
+    };
 
-        // 'suggested' — apply wizard recommendation
+    const applyRecommendation = () => {
         if (!recommendation) return;
+        setUserProfile(profile);
         setProgram(recommendation.template);
-        const plan = recommendation.template.map(day =>
-            (day.slots || []).map(slot => slot.exerciseId || null)
-        );
+        const plan = recommendation.template.map(day => (day.slots || []).map(slot => slot.exerciseId || null));
         setActiveMeso({
             id: Date.now(),
-            name: String(t.phases[recommendation.mesoType] || 'Recommended Plan'),
+            name: String(t.phases[recommendation.mesoType] || (lang === 'es' ? 'Programa recomendado' : 'Recommended program')),
             mesoType: recommendation.mesoType,
             week: 1,
             targetWeeks: 5,
             isDeload: false,
             plan,
-            duration: 5
+            duration: 5,
         });
         onComplete();
     };
 
-    // ── Sub-components ────────────────────────────────────────────────
-    const OptionBtn = ({ label, description, selected, onClick, icon }: any) => (
+    const Option = ({ icon, title, description, selected, onClick }: {
+        icon: string;
+        title: string;
+        description: string;
+        selected?: boolean;
+        onClick: () => void;
+    }) => (
         <button
+            type="button"
             onClick={onClick}
-            className={`w-full p-4 rounded-2xl border-2 flex items-start gap-4 transition-all duration-200 active:scale-[0.98] text-left ${
-                selected
-                    ? 'border-primary-600 bg-primary-50 dark:bg-primary-900/20'
-                    : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-zinc-300 dark:hover:border-zinc-700'
-            }`}
+            className={`flex min-h-[76px] w-full items-center gap-3 rounded-2xl border p-3.5 text-left transition-colors active:scale-[0.99] ${selected ? 'border-primary-500/35 bg-primary-500/8' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised)/0.62)]'}`}
         >
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
-                selected ? 'bg-primary-600 text-white' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400'
-            }`}>
-                <Icon name={icon} size={20} />
-            </div>
-            <div className="flex-1 min-w-0">
-                <div className={`font-black text-sm ${selected ? 'text-primary-700 dark:text-primary-400' : 'text-zinc-900 dark:text-white'}`}>{label}</div>
-                {description && (
-                    <div className={`text-xs mt-1 leading-relaxed font-medium ${selected ? 'text-primary-600/70 dark:text-primary-400/70' : 'text-zinc-500 dark:text-zinc-400'}`}>
-                        {description}
-                    </div>
-                )}
-            </div>
-            {selected && <Icon name="Check" size={18} className="text-primary-600 mt-1 flex-shrink-0" />}
+            <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${selected ? 'bg-primary-500 text-black' : 'bg-[rgb(var(--surface-base))] text-[rgb(var(--text-muted))]'}`}>
+                <Icon name={icon} size={19} />
+            </span>
+            <span className="min-w-0 flex-1">
+                <span className="block text-sm font-black text-[rgb(var(--text-primary))]">{title}</span>
+                <span className="mt-1 block text-xs leading-relaxed text-[rgb(var(--text-muted))]">{description}</span>
+            </span>
+            {selected ? <Icon name="Check" size={17} className="shrink-0 text-primary-500" /> : <Icon name="ChevronRight" size={17} className="shrink-0 text-[rgb(var(--text-muted))]" />}
         </button>
     );
 
-    // ── Step renderers ────────────────────────────────────────────────
-    const renderStep = () => {
-        switch (step) {
-            case 0: return (
-                <div className="space-y-3 animate-in slide-in-from-right-4 duration-300">
-                    <OptionBtn
-                        label={w.expOptions.beginner}
-                        description={w.expDesc?.beginner}
-                        selected={profile.experience === 'beginner'}
-                        onClick={() => setProfile({ ...profile, experience: 'beginner' })}
-                        icon="Star"
-                    />
-                    <OptionBtn
-                        label={w.expOptions.intermediate}
-                        description={w.expDesc?.intermediate}
-                        selected={profile.experience === 'intermediate'}
-                        onClick={() => setProfile({ ...profile, experience: 'intermediate' })}
-                        icon="TrendingUp"
-                    />
-                    <OptionBtn
-                        label={w.expOptions.advanced}
-                        description={w.expDesc?.advanced}
-                        selected={profile.experience === 'advanced'}
-                        onClick={() => setProfile({ ...profile, experience: 'advanced' })}
-                        icon="Zap"
-                    />
-                    {w.expNote && (
-                        <div className="mt-4 bg-primary-500/10 p-3 rounded-xl flex gap-3 items-start border border-primary-500/20">
-                            <Icon name="Info" size={16} className="text-primary-500 mt-0.5 shrink-0" />
-                            <p className="text-xs text-primary-700 dark:text-primary-300 leading-relaxed font-medium">{w.expNote}</p>
+    const languageToggle = (
+        <div className="flex rounded-lg bg-[rgb(var(--surface-raised))] p-1">
+            {(['en', 'es'] as const).map(value => (
+                <button
+                    key={value}
+                    type="button"
+                    onClick={() => setLang(value)}
+                    className={`min-h-8 rounded-md px-2.5 text-[10px] font-black uppercase ${lang === value ? 'bg-[rgb(var(--surface-base))] text-[rgb(var(--text-primary))]' : 'text-[rgb(var(--text-muted))]'}`}
+                >
+                    {value}
+                </button>
+            ))}
+        </div>
+    );
+
+    if (!intent) {
+        return (
+            <div className="fixed inset-0 z-modal flex flex-col bg-[rgb(var(--surface-app))] text-[rgb(var(--text-primary))]">
+                <header className="flex items-center justify-between border-b border-[rgb(var(--border-subtle)/0.7)] px-5 pb-3 pt-safe">
+                    <Logo size={34} showText />
+                    {languageToggle}
+                </header>
+
+                <main className="flex-1 overflow-y-auto px-5 py-7 scroll-container">
+                    <div className="mx-auto max-w-md">
+                        <p className="text-[10px] font-black uppercase tracking-[0.1em] text-primary-500">{lang === 'es' ? 'Empecemos por lo importante' : 'Start with what matters'}</p>
+                        <h1 className="mt-2 text-3xl font-black tracking-[-0.045em]">{lang === 'es' ? '¿Cómo querés entrenar?' : 'How do you want to train?'}</h1>
+                        <p className="mt-2 max-w-sm text-sm leading-relaxed text-[rgb(var(--text-muted))]">{lang === 'es' ? 'No hace falta aprender la app antes de usarla. Elegí tu intención y GainsLab te lleva al flujo correcto.' : 'You do not need to learn the app before using it. Pick your intent and GainsLab takes you to the right flow.'}</p>
+
+                        <div className="mt-7 space-y-2.5">
+                            <Option
+                                icon="BookOpen"
+                                title={lang === 'es' ? 'Seguir un programa' : 'Follow a program'}
+                                description={lang === 'es' ? 'Te recomendamos una estructura según experiencia, frecuencia, objetivo y tiempo.' : 'Get a structure recommended from your experience, frequency, goal and available time.'}
+                                onClick={() => chooseIntent('program')}
+                            />
+                            <Option
+                                icon="FilePlus"
+                                title={lang === 'es' ? 'Crear mi rutina' : 'Create my routine'}
+                                description={lang === 'es' ? 'Abrí el editor con un lienzo vacío y armá tus propios días.' : 'Open a blank editor and build your own training days.'}
+                                onClick={() => chooseIntent('custom')}
+                            />
+                            <Option
+                                icon="Shuffle"
+                                title={lang === 'es' ? 'Entrenar ahora' : 'Train now'}
+                                description={lang === 'es' ? 'Sin programa fijo. Abrí Inicio rápido y registrá una sesión libre.' : 'No fixed program. Open Quick Start and log a freestyle session.'}
+                                onClick={() => chooseIntent('freestyle')}
+                            />
                         </div>
-                    )}
-                </div>
-            );
-            case 1: return (
-                <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
-                    <div className="grid grid-cols-5 gap-2">
-                        {[2, 3, 4, 5, 6].map(d => (
-                            <button
-                                key={d}
-                                onClick={() => setProfile({ ...profile, daysPerWeek: d })}
-                                className={`aspect-square rounded-2xl font-black text-xl transition-all active:scale-90 ${
-                                    profile.daysPerWeek === d
-                                        ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/30 scale-110'
-                                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
-                                }`}
-                            >
-                                {d}
-                            </button>
-                        ))}
+
+                        <button type="button" onClick={onComplete} className="mt-6 min-h-11 w-full text-xs font-bold text-[rgb(var(--text-muted))]">
+                            {lang === 'es' ? 'Explorar la app por mi cuenta' : 'Explore the app on my own'}
+                        </button>
                     </div>
-                    <div className="text-center">
-                        <p className="text-3xl font-black text-zinc-900 dark:text-white">
-                            {profile.daysPerWeek}
-                            <span className="text-base font-medium text-zinc-400 ml-2">
-                                {lang === 'es' ? 'días / semana' : 'days / week'}
-                            </span>
-                        </p>
-                    </div>
-                </div>
-            );
-            case 2: return (
-                <div className="space-y-3 animate-in slide-in-from-right-4 duration-300">
-                    <OptionBtn
-                        label={w.goalOptions.hypertrophy}
-                        description={lang === 'es' ? 'Ganar masa muscular y tamaño.' : 'Build muscle mass and size.'}
-                        selected={profile.goal === 'hypertrophy'}
-                        onClick={() => setProfile({ ...profile, goal: 'hypertrophy' })}
-                        icon="Dumbbell"
-                    />
-                    <OptionBtn
-                        label={w.goalOptions.strength}
-                        description={lang === 'es' ? 'Aumentar 1RM en levantamientos principales.' : 'Increase 1RM on main lifts.'}
-                        selected={profile.goal === 'strength'}
-                        onClick={() => setProfile({ ...profile, goal: 'strength' })}
-                        icon="Shield"
-                    />
-                    <OptionBtn
-                        label={w.goalOptions.endurance}
-                        description={lang === 'es' ? 'Mejorar resistencia y condición física.' : 'Improve endurance and conditioning.'}
-                        selected={profile.goal === 'endurance'}
-                        onClick={() => setProfile({ ...profile, goal: 'endurance' })}
-                        icon="Activity"
-                    />
-                </div>
-            );
-            case 3: return (
-                <div className="space-y-3 animate-in slide-in-from-right-4 duration-300">
-                    <OptionBtn
-                        label={w.timeOptions.short}
-                        description={lang === 'es' ? '45 min o menos. Entrenos compactos y eficientes.' : '45 min or less. Compact and efficient sessions.'}
-                        selected={profile.sessionDuration === 'short'}
-                        onClick={() => setProfile({ ...profile, sessionDuration: 'short' })}
-                        icon="Clock"
-                    />
-                    <OptionBtn
-                        label={w.timeOptions.medium}
-                        description={lang === 'es' ? '60–75 min. La duración ideal para la mayoría.' : '60–75 min. The ideal duration for most.'}
-                        selected={profile.sessionDuration === 'medium'}
-                        onClick={() => setProfile({ ...profile, sessionDuration: 'medium' })}
-                        icon="Clock"
-                    />
-                    <OptionBtn
-                        label={w.timeOptions.long}
-                        description={lang === 'es' ? '90+ min. Para quienes tienen tiempo y capacidad.' : '90+ min. For those with time and capacity.'}
-                        selected={profile.sessionDuration === 'long'}
-                        onClick={() => setProfile({ ...profile, sessionDuration: 'long' })}
-                        icon="Clock"
-                    />
-                </div>
-            );
-            case 4: {
-                if (!recommendation) return null;
-                const recTitle = t.phases[recommendation.mesoType] || 'Plan';
-                const recDesc = (t.phaseDesc as any)[recommendation.mesoType] || '';
-                const reasonText = (w.reason as any)[recommendation.reasonKey] || '';
-                return (
-                    <div className="space-y-6 animate-in zoom-in-95 duration-500">
-                        {/* Result card */}
-                        <div className="bg-gradient-to-br from-green-500/10 to-green-500/0 border border-green-500/20 rounded-3xl p-6 text-center">
-                            <div className="w-16 h-16 bg-green-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                <Icon name="Check" size={32} className="text-green-500" strokeWidth={3} />
-                            </div>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-green-500 mb-2">
-                                {lang === 'es' ? 'Tu programa recomendado' : 'Your recommended program'}
-                            </p>
-                            <h2 className="text-2xl font-black text-zinc-900 dark:text-white mb-2">{String(recTitle)}</h2>
-                            <p className="text-sm text-zinc-500 dark:text-zinc-400 italic">"{recDesc}"</p>
-                        </div>
+                </main>
+            </div>
+        );
+    }
 
-                        <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-2xl p-4 space-y-3">
-                            <div className="flex gap-3 items-start">
-                                <Icon name="Info" size={16} className="text-primary-500 mt-0.5 shrink-0" />
-                                <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">{reasonText}</p>
-                            </div>
-                            {recommendation.adjustedVolume && (
-                                <div className="flex gap-3 items-start">
-                                    <Icon name="Clock" size={16} className="text-primary-500 mt-0.5 shrink-0" />
-                                    <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">{w.adjusted}</p>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* ── Launch Mode Picker ── */}
-                        <div className="space-y-3">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 px-1">
-                                {lang === 'es' ? '¿Cómo quieres comenzar?' : 'How do you want to start?'}
-                            </p>
-
-                            <button
-                                onClick={() => handleApply('suggested')}
-                                className="w-full p-4 bg-primary-600 hover:bg-primary-500 rounded-2xl flex items-center gap-4 transition-all active:scale-[0.98] group shadow-lg shadow-primary-600/30"
-                            >
-                                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
-                                    <Icon name="Zap" size={20} className="text-white" />
-                                </div>
-                                <div className="flex-1 text-left">
-                                    <div className="font-black text-white text-sm">
-                                        {lang === 'es' ? 'Comenzar con rutina sugerida' : 'Start with suggested routine'}
-                                    </div>
-                                    <div className="text-xs text-white/70 mt-0.5">
-                                        {lang === 'es' ? `Aplicar "${String(recTitle)}" ahora mismo` : `Apply "${String(recTitle)}" right now`}
-                                    </div>
-                                </div>
-                                <Icon name="ArrowRight" size={18} className="text-white/80 group-hover:translate-x-1 transition-transform" />
-                            </button>
-
-                            <button
-                                onClick={() => handleApply('custom')}
-                                className="w-full p-4 bg-white dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 rounded-2xl flex items-center gap-4 transition-all active:scale-[0.98] group"
-                            >
-                                <div className="w-10 h-10 bg-zinc-100 dark:bg-zinc-800 rounded-xl flex items-center justify-center shrink-0">
-                                    <Icon name="FilePlus" size={20} className="text-zinc-600 dark:text-zinc-300" />
-                                </div>
-                                <div className="flex-1 text-left">
-                                    <div className="font-black text-zinc-900 dark:text-white text-sm">
-                                        {lang === 'es' ? 'Crear mi propia plantilla' : 'Create my own template'}
-                                    </div>
-                                    <div className="text-xs text-zinc-400 mt-0.5">
-                                        {lang === 'es' ? 'Diseña tu rutina desde cero' : 'Design your routine from scratch'}
-                                    </div>
-                                </div>
-                                <Icon name="ChevronRight" size={18} className="text-zinc-300 group-hover:translate-x-1 transition-transform" />
-                            </button>
-
-                            <button
-                                onClick={() => handleApply('freestyle')}
-                                className="w-full p-4 bg-white dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 rounded-2xl flex items-center gap-4 transition-all active:scale-[0.98] group"
-                            >
-                                <div className="w-10 h-10 bg-zinc-100 dark:bg-zinc-800 rounded-xl flex items-center justify-center shrink-0">
-                                    <Icon name="Shuffle" size={20} className="text-zinc-600 dark:text-zinc-300" />
-                                </div>
-                                <div className="flex-1 text-left">
-                                    <div className="font-black text-zinc-900 dark:text-white text-sm">
-                                        {lang === 'es' ? 'Registrar sesiones libres' : 'Log freestyle sessions'}
-                                    </div>
-                                    <div className="text-xs text-zinc-400 mt-0.5">
-                                        {lang === 'es' ? 'Sin programa fijo, entrena lo que quieras' : 'No fixed program, train whatever you like'}
-                                    </div>
-                                </div>
-                                <Icon name="ChevronRight" size={18} className="text-zinc-300 group-hover:translate-x-1 transition-transform" />
-                            </button>
-                        </div>
-                    </div>
-                );
-            }
-            default: return null;
-        }
-    };
-
-    // ── Loading screen ────────────────────────────────────────────────
     if (isGenerating) {
         return (
-            <div className="fixed inset-0 z-modal bg-white dark:bg-zinc-950 flex flex-col items-center justify-center gap-6 p-8">
-                <div className="relative">
-                    <div className="w-20 h-20 border-4 border-zinc-100 dark:border-zinc-800 border-t-primary-600 rounded-full animate-spin" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <Icon name="Dumbbell" size={28} className="text-primary-600" />
-                    </div>
-                </div>
+            <div className="fixed inset-0 z-modal flex items-center justify-center bg-[rgb(var(--surface-app))] p-8 text-[rgb(var(--text-primary))]">
                 <div className="text-center">
-                    <h3 className="text-xl font-black text-zinc-900 dark:text-white">{w.generating}</h3>
-                    <p className="text-sm text-zinc-400 mt-2">{lang === 'es' ? 'Analizando tu perfil...' : 'Analyzing your profile...'}</p>
+                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-500/10 text-primary-500"><Icon name="RefreshCw" size={22} className="animate-spin" /></div>
+                    <h2 className="mt-4 text-lg font-black">{w.generating}</h2>
+                    <p className="mt-1 text-xs text-[rgb(var(--text-muted))]">{lang === 'es' ? 'Cruzando tu perfil con la biblioteca…' : 'Matching your profile with the library…'}</p>
                 </div>
             </div>
         );
     }
 
     const stepTitles = [w.steps.exp, w.steps.freq, w.steps.goal, w.steps.time];
-    const totalSteps = 4;
-    const progress = step < totalSteps ? ((step + 1) / totalSteps) * 100 : 100;
+    const progress = step < 4 ? ((step + 1) / 4) * 100 : 100;
+    const titleByStep = [
+        lang === 'es' ? '¿Cuál es tu nivel?' : "What's your level?",
+        lang === 'es' ? '¿Cuántos días por semana?' : 'How many days per week?',
+        lang === 'es' ? '¿Cuál es tu objetivo?' : "What's your goal?",
+        lang === 'es' ? '¿Cuánto tiempo tenés?' : 'How much time do you have?',
+    ];
+    const descriptionByStep = [
+        lang === 'es' ? 'Solo lo usamos para elegir una estructura razonable.' : 'We only use this to choose a sensible structure.',
+        lang === 'es' ? 'Elegí una frecuencia que puedas sostener y recuperar.' : 'Choose a frequency you can sustain and recover from.',
+        lang === 'es' ? 'Esto orienta la recomendación inicial.' : 'This guides the initial recommendation.',
+        lang === 'es' ? 'Tiempo aproximado por sesión.' : 'Approximate time per session.',
+    ];
 
-    // ── Main render ───────────────────────────────────────────────────
+    const profileStep = useMemo(() => {
+        if (step === 0) return (
+            <div className="space-y-2.5">
+                <Option icon="Star" title={w.expOptions.beginner} description={w.expDesc?.beginner || ''} selected={profile.experience === 'beginner'} onClick={() => setProfile(prev => ({ ...prev, experience: 'beginner' }))} />
+                <Option icon="TrendingUp" title={w.expOptions.intermediate} description={w.expDesc?.intermediate || ''} selected={profile.experience === 'intermediate'} onClick={() => setProfile(prev => ({ ...prev, experience: 'intermediate' }))} />
+                <Option icon="Zap" title={w.expOptions.advanced} description={w.expDesc?.advanced || ''} selected={profile.experience === 'advanced'} onClick={() => setProfile(prev => ({ ...prev, experience: 'advanced' }))} />
+            </div>
+        );
+        if (step === 1) return (
+            <div>
+                <div className="grid grid-cols-5 gap-2">
+                    {[2, 3, 4, 5, 6].map(days => (
+                        <button key={days} type="button" onClick={() => setProfile(prev => ({ ...prev, daysPerWeek: days }))} className={`aspect-square rounded-xl text-lg font-black transition-colors active:scale-95 ${profile.daysPerWeek === days ? 'bg-primary-500 text-black' : 'bg-[rgb(var(--surface-raised))] text-[rgb(var(--text-muted))]'}`}>{days}</button>
+                    ))}
+                </div>
+                <p className="mt-4 text-center text-sm font-bold text-[rgb(var(--text-secondary))]">{profile.daysPerWeek} {lang === 'es' ? 'días / semana' : 'days / week'}</p>
+            </div>
+        );
+        if (step === 2) return (
+            <div className="space-y-2.5">
+                <Option icon="Dumbbell" title={w.goalOptions.hypertrophy} description={lang === 'es' ? 'Priorizar masa muscular y tamaño.' : 'Prioritize muscle mass and size.'} selected={profile.goal === 'hypertrophy'} onClick={() => setProfile(prev => ({ ...prev, goal: 'hypertrophy' }))} />
+                <Option icon="Shield" title={w.goalOptions.strength} description={lang === 'es' ? 'Priorizar fuerza en levantamientos principales.' : 'Prioritize strength on main lifts.'} selected={profile.goal === 'strength'} onClick={() => setProfile(prev => ({ ...prev, goal: 'strength' }))} />
+                <Option icon="Activity" title={w.goalOptions.endurance} description={lang === 'es' ? 'Priorizar resistencia y condición física.' : 'Prioritize endurance and conditioning.'} selected={profile.goal === 'endurance'} onClick={() => setProfile(prev => ({ ...prev, goal: 'endurance' }))} />
+            </div>
+        );
+        if (step === 3) return (
+            <div className="space-y-2.5">
+                <Option icon="Clock" title={w.timeOptions.short} description={lang === 'es' ? '45 min o menos.' : '45 min or less.'} selected={profile.sessionDuration === 'short'} onClick={() => setProfile(prev => ({ ...prev, sessionDuration: 'short' }))} />
+                <Option icon="Clock" title={w.timeOptions.medium} description={lang === 'es' ? '60–75 min.' : '60–75 min.'} selected={profile.sessionDuration === 'medium'} onClick={() => setProfile(prev => ({ ...prev, sessionDuration: 'medium' }))} />
+                <Option icon="Clock" title={w.timeOptions.long} description={lang === 'es' ? '90 min o más.' : '90 min or more.'} selected={profile.sessionDuration === 'long'} onClick={() => setProfile(prev => ({ ...prev, sessionDuration: 'long' }))} />
+            </div>
+        );
+        return null;
+    }, [lang, profile, step, w.expDesc, w.expOptions, w.goalOptions, w.timeOptions]);
+
+    if (step === 4 && recommendation) {
+        const recTitle = String(t.phases[recommendation.mesoType] || (lang === 'es' ? 'Programa recomendado' : 'Recommended program'));
+        const recDesc = String((t.phaseDesc as any)?.[recommendation.mesoType] || '');
+        const reasonText = String((w.reason as any)?.[recommendation.reasonKey] || '');
+        return (
+            <div className="fixed inset-0 z-modal flex flex-col bg-[rgb(var(--surface-app))] text-[rgb(var(--text-primary))]">
+                <header className="flex items-center justify-between border-b border-[rgb(var(--border-subtle)/0.7)] px-5 pb-3 pt-safe"><Logo size={34} showText />{languageToggle}</header>
+                <main className="flex-1 overflow-y-auto p-5 scroll-container">
+                    <div className="mx-auto max-w-md space-y-4 py-4">
+                        <div className="rounded-2xl border border-primary-500/25 bg-primary-500/[0.055] p-5">
+                            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-500/10 text-primary-500"><Icon name="CheckCircle" size={21} /></div>
+                            <p className="mt-4 text-[10px] font-black uppercase tracking-[0.1em] text-primary-500">{lang === 'es' ? 'Tu recomendación' : 'Your recommendation'}</p>
+                            <h1 className="mt-1 text-2xl font-black tracking-[-0.04em]">{recTitle}</h1>
+                            {recDesc && <p className="mt-2 text-sm leading-relaxed text-[rgb(var(--text-secondary))]">{recDesc}</p>}
+                        </div>
+
+                        {reasonText && <div className="flex gap-3 rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised)/0.6)] p-4"><Icon name="Info" size={16} className="mt-0.5 shrink-0 text-primary-500" /><p className="text-sm leading-relaxed text-[rgb(var(--text-secondary))]">{reasonText}</p></div>}
+
+                        <button type="button" onClick={applyRecommendation} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary-500 px-4 text-sm font-black text-black active:scale-[0.99]">{lang === 'es' ? 'Usar este programa' : 'Use this program'} <Icon name="ArrowRight" size={16} /></button>
+                        <button type="button" onClick={() => { setRecommendation(null); setStep(0); }} className="min-h-11 w-full text-xs font-bold text-[rgb(var(--text-muted))]">{lang === 'es' ? 'Cambiar mis respuestas' : 'Change my answers'}</button>
+                    </div>
+                </main>
+            </div>
+        );
+    }
+
     return (
-        <div className="fixed inset-0 z-modal bg-white dark:bg-zinc-950 flex flex-col">
-            {/* Header */}
-            <div className="px-6 pt-safe py-4 border-b border-zinc-100 dark:border-zinc-900">
-                <div className="flex justify-between items-center mb-4">
-                    <div className="flex items-center gap-2">
-                        <Logo size={32} showText />
-                    </div>
-                    <div className="flex items-center gap-3">
-                        {/* Language Toggle */}
-                        <div className="flex bg-zinc-100 dark:bg-zinc-800 rounded-xl p-1">
-                            {(['en', 'es'] as const).map(l => (
-                                <button
-                                    key={l}
-                                    onClick={() => setLang(l)}
-                                    className={`px-3 py-1 rounded-lg text-[10px] font-black transition-all uppercase ${
-                                        lang === l ? 'bg-white dark:bg-zinc-600 shadow-sm text-zinc-900 dark:text-white' : 'text-zinc-400 hover:text-zinc-600 dark:hover:text-white'
-                                    }`}
-                                >
-                                    {l}
-                                </button>
-                            ))}
-                        </div>
-                        {step < 4 && (
-                            <button onClick={onComplete} className="text-[10px] font-black uppercase tracking-wider text-zinc-400 hover:text-zinc-700 dark:hover:text-white">
-                                {w.manual}
-                            </button>
-                        )}
-                    </div>
+        <div className="fixed inset-0 z-modal flex flex-col bg-[rgb(var(--surface-app))] text-[rgb(var(--text-primary))]">
+            <header className="border-b border-[rgb(var(--border-subtle)/0.7)] px-5 pb-3 pt-safe">
+                <div className="flex items-center justify-between"><Logo size={34} showText />{languageToggle}</div>
+                <div className="mt-3 h-1 overflow-hidden rounded-full bg-[rgb(var(--surface-elevated))]"><div className="h-full rounded-full bg-primary-500 transition-all duration-200" style={{ width: `${progress}%` }} /></div>
+                <div className="mt-2 grid grid-cols-4 gap-1">{stepTitles.map((title, index) => <span key={String(title)} className={`truncate text-center text-[8px] font-bold ${index <= step ? 'text-primary-500' : 'text-[rgb(var(--text-muted))]'}`}>{String(title)}</span>)}</div>
+            </header>
+
+            <main className="flex-1 overflow-y-auto px-5 py-6 scroll-container">
+                <div className="mx-auto max-w-md">
+                    <h1 className="text-2xl font-black tracking-[-0.04em]">{titleByStep[step]}</h1>
+                    <p className="mt-1 text-sm text-[rgb(var(--text-muted))]">{descriptionByStep[step]}</p>
+                    <div className="mt-6">{profileStep}</div>
                 </div>
+            </main>
 
-                {/* Progress bar */}
-                {step < totalSteps && (
-                    <div className="space-y-2">
-                        <div className="h-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                            <div
-                                className="h-full bg-primary-600 rounded-full transition-all duration-500"
-                                style={{ width: `${progress}%` }}
-                            />
-                        </div>
-                        <div className="flex justify-between">
-                            {stepTitles.map((title, i) => (
-                                <span
-                                    key={i}
-                                    className={`text-[9px] font-black uppercase tracking-wider transition-colors ${
-                                        i <= step ? 'text-primary-600' : 'text-zinc-300 dark:text-zinc-700'
-                                    }`}
-                                >
-                                    {title}
-                                </span>
-                            ))}
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            {/* Step title */}
-            {step < totalSteps && (
-                <div className="px-6 pt-8 pb-4">
-                    <h2 className="text-2xl font-black text-zinc-900 dark:text-white">
-                        {step === 0 && (lang === 'es' ? '¿Cuál es tu nivel?' : "What's your level?")}
-                        {step === 1 && (lang === 'es' ? '¿Cuántos días por semana?' : 'How many days per week?')}
-                        {step === 2 && (lang === 'es' ? '¿Cuál es tu objetivo?' : "What's your goal?")}
-                        {step === 3 && (lang === 'es' ? '¿Cuánto tiempo tienes?' : 'How much time do you have?')}
-                    </h2>
-                    <p className="text-sm text-zinc-400 dark:text-zinc-500 mt-1">
-                        {step === 0 && (lang === 'es' ? 'Sé honesto, esto personalizará tu rutina.' : 'Be honest, this personalizes your routine.')}
-                        {step === 1 && (lang === 'es' ? 'Considera compromisos y descanso.' : 'Consider your commitments and recovery.')}
-                        {step === 2 && (lang === 'es' ? 'Puedes cambiar esto más adelante.' : 'You can change this later.')}
-                        {step === 3 && (lang === 'es' ? 'Por sesión de entrenamiento.' : 'Per training session.')}
-                    </p>
+            <footer className="border-t border-[rgb(var(--border-subtle)/0.7)] bg-[rgb(var(--surface-base)/0.96)] p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+                <div className="mx-auto flex max-w-md gap-2">
+                    <button type="button" onClick={() => step === 0 ? setIntent(null) : setStep(prev => prev - 1)} className="flex h-12 w-12 items-center justify-center rounded-xl bg-[rgb(var(--surface-raised))] text-[rgb(var(--text-muted))] active:scale-95"><Icon name="ChevronLeft" size={20} /></button>
+                    <button type="button" onClick={handleNext} className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-primary-500 text-sm font-black text-black active:scale-[0.99]">{step === 3 ? (lang === 'es' ? 'Ver recomendación' : 'See recommendation') : (lang === 'es' ? 'Siguiente' : 'Next')} <Icon name="ArrowRight" size={16} /></button>
                 </div>
-            )}
-
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto px-6 pb-6 scroll-container">
-                {renderStep()}
-            </div>
-
-            {/* Footer – only shown on steps 0–3 */}
-            {step < 4 && (
-                <div className="px-6 py-5 border-t border-zinc-100 dark:border-zinc-900 bg-white dark:bg-zinc-950 flex gap-3">
-                    <button
-                        onClick={() => setStep(Math.max(0, step - 1))}
-                        disabled={step === 0}
-                        className="w-14 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-500 dark:text-zinc-400 disabled:opacity-30 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all active:scale-90"
-                    >
-                        <Icon name="ChevronLeft" size={22} />
-                    </button>
-                    <button
-                        onClick={handleNext}
-                        className="flex-1 h-12 rounded-2xl bg-primary-600 hover:bg-primary-500 text-white font-black text-sm shadow-lg shadow-primary-600/30 transition-all active:scale-95 flex items-center justify-center gap-2"
-                    >
-                        {step === 3
-                            ? (lang === 'es' ? 'Analizar mi perfil →' : 'Analyze my profile →')
-                            : (lang === 'es' ? 'Siguiente →' : 'Next →')}
-                    </button>
-                </div>
-            )}
+            </footer>
         </div>
     );
 };
