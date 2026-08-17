@@ -9,7 +9,7 @@ import {
     Trash2, X, CornerDownRight, Share2, AlertTriangle, Play, ChevronRight, Bot, Lock, Crown, Copy,
     ChevronUp, ChevronDown, Anchor, EyeOff, CheckCircle, Flame, Heart, Apple, UtensilsCrossed, Bike, Timer, Utensils, Droplet, Scale,
     Trophy, Pencil, Target, RotateCcw, CirclePlus, Circle, Repeat, Repeat2, Grid3X3,
-    BookOpen, AlertCircle, ArrowLeft, Shield
+    BookOpen, AlertCircle, ArrowLeft, Shield, List, SlidersHorizontal
 } from 'lucide-react';
 
 // Static Map of icons used in the app
@@ -20,12 +20,13 @@ const ICON_MAP: Record<string, React.ElementType> = {
     GripVertical, MoreVertical, ExternalLink, VideoOff, Layers, Zap, Calendar, Home, User, LogOut,
     Trash2, X, CornerDownRight, Share2, AlertTriangle, Play, ChevronRight, Lock, Crown, Copy,
     ChevronUp, ChevronDown, Anchor, EyeOff, CheckCircle, Flame, Heart, Apple, UtensilsCrossed, Bike, Timer, Utensils, Droplet, Scale,
-    Trophy, Pencil, Target, RotateCcw, Circle, Repeat, Repeat2,
+    Trophy, Pencil, Target, RotateCcw, Circle, Repeat, Repeat2, List,
     BookOpen, AlertCircle, ArrowLeft, Shield,
     // Renamed in lucide-react v0.376+
     PlusCircle: CirclePlus,
     // Grid3X3 lucide naming vs Grid3x3 usage alias
     Grid3x3: Grid3X3,
+    Sliders: SlidersHorizontal,
     // Aliases for backward compatibility or logical mapping
     BrainCircuit: Activity,
     Sparkles: Star,
