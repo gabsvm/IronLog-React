@@ -4,6 +4,7 @@ import { useApp, useAppConfig } from '../context/AppContext';
 import { useTimerActions } from '../context/TimerContext';
 import { useStore } from '../lib/store';
 import { ReorderExercisesSheet } from '../components/workout/ReorderExercisesSheet';
+import { ContextualRestDock } from '../components/workout/ContextualRestDock';
 import { Icon } from '../components/ui/Icon';
 import type { SessionExercise } from '../types';
 import { KONG_4DAY_V1 } from '../programs/kong/kong4Day';
@@ -63,12 +64,13 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
     return (
         <div className={`product-workout-polish workout-density-pass contents ${config.showRIR ? 'workout-rir-enabled' : ''}`}>
             <WorkoutViewImpl onFinish={handleFinish} onDiscard={onDiscard} onBack={onBack} />
+            <ContextualRestDock session={activeSession} lang={lang} />
 
             {activeSession && activeSession.exercises.length > 1 && (
                 <button
                     type="button"
                     onClick={() => setReorderOpen(true)}
-                    className="workout-reorder-launcher fixed z-[45] flex h-9 w-9 items-center justify-center rounded-full border border-zinc-700/80 bg-zinc-900/95 text-zinc-400 shadow-lg transition-transform active:scale-90 active:text-primary-400"
+                    className="workout-reorder-launcher fixed z-[45] flex h-9 w-9 items-center justify-center rounded-full border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised)/0.95)] text-[rgb(var(--text-muted))] shadow-lg transition-transform active:scale-90 active:text-primary-500"
                     aria-label={lang === 'es' ? 'Ordenar ejercicios' : 'Reorder exercises'}
                     title={lang === 'es' ? 'Ordenar ejercicios' : 'Reorder exercises'}
                 >
