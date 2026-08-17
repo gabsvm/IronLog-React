@@ -32,6 +32,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
     const { setRestTimer } = useTimerActions();
     const [reorderOpen, setReorderOpen] = useState(false);
     const isKong = activeMeso?.programSystem?.systemId === KONG_4DAY_V1.id;
+    const rootRef = useRef<HTMLDivElement>(null);
     const completionSnapshotRef = useRef<{ sessionId: number | null; counts: Map<number, number> }>({ sessionId: null, counts: new Map() });
 
     // Hevy-style smart superset flow. We watch only completed-working-set counts,
@@ -71,6 +72,45 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
         }, 170);
         return () => window.clearTimeout(timer);
     }, [activeSession]);
+
+    useEffect(() => {
+        const root = rootRef.current;
+        if (!root || !activeSession) return;
+
+        const normalizeWorkoutLabels = () => {
+            const header = root.querySelector<HTMLElement>('.glass.z-30');
+            header?.querySelectorAll<HTMLElement>('div, span').forEach(node => {
+                const text = (node.textContent || '').trim();
+                const remaining = text.match(/^(\d+)\s+(left|restantes)$/i);
+                if (remaining && node.children.length === 0) {
+                    node.textContent = lang === 'es' ? `${remaining[1]} series` : `${remaining[1]} sets`;
+                }
+            });
+
+            const cards = Array.from(root.querySelectorAll<HTMLElement>('.workout-sortable-stack > div'));
+            cards.forEach((card, index) => {
+                const exercise = activeSession.exercises?.[index];
+                if (!exercise) return;
+                const workingSets = (exercise.sets || []).filter(set => set.type !== 'warmup' && set.type !== 'avt_hop');
+                if (!workingSets.some(set => set.prescribedReps !== undefined || set.targetRpe !== undefined)) return;
+
+                const cardHeader = card.firstElementChild as HTMLElement | null;
+                cardHeader?.querySelectorAll<HTMLElement>('span').forEach(node => {
+                    const text = (node.textContent || '').trim();
+                    if (/\bREPS$/i.test(text) && !/^TARGET/i.test(text)) {
+                        node.textContent = lang === 'es'
+                            ? `${workingSets.length} SERIES`
+                            : `${workingSets.length} SETS`;
+                    }
+                });
+            });
+        };
+
+        normalizeWorkoutLabels();
+        const observer = new MutationObserver(normalizeWorkoutLabels);
+        observer.observe(root, { childList: true, subtree: true, characterData: true });
+        return () => observer.disconnect();
+    }, [activeSession, lang]);
 
     const handleFinish = useCallback(() => {
         if (!activeSession) return;
@@ -116,7 +156,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
         : undefined;
 
     return (
-        <div className={`product-workout-polish workout-density-pass contents ${config.showRIR ? 'workout-rir-enabled' : ''}`}>
+        <div ref={rootRef} className={`product-workout-polish workout-density-pass contents ${config.showRIR ? 'workout-rir-enabled' : ''}`}>
             <WorkoutViewImpl onFinish={handleFinish} onDiscard={onDiscard} onBack={onBack} />
 
             {activeSession && (
