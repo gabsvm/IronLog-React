@@ -47,6 +47,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
     const jointPain = current?.jointPain ?? false;
     const currentComplete = recovery !== null && performance !== null && stimulus !== null;
     const isLast = step >= uniqueMuscles.length - 1;
+    const remainingMuscles = Math.max(0, uniqueMuscles.length - step - 1);
     // A structured program only owns feedback when the session actually belongs
     // to that active program. Detached/freestyle work while KONG is active must
     // not inherit KONG's "fixed prescription" behavior by accident.
@@ -75,10 +76,10 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
                 ? Math.min(rawAdjustment, 0)
                 : rawAdjustment;
 
-    const buildResult = () => {
+    const buildResult = (source: DraftFeedback = feedback) => {
         const result: Record<string, FeedbackPayload> = {};
         uniqueMuscles.forEach(muscle => {
-            const item = feedback[muscle];
+            const item = source[muscle];
             if (item?.recovery == null || item?.performance == null || item?.stimulus == null) return;
             const base = calculateVolumeAdjustment(item.recovery, item.performance);
             const adjustment = isStructuredProgram ? 0 : item.jointPain ? Math.min(base, 0) : base;
@@ -101,6 +102,23 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
             return;
         }
         setStep(prev => Math.min(prev + 1, uniqueMuscles.length - 1));
+    };
+
+    const applyToRemainingAndFinish = () => {
+        if (!currentComplete || !currentMuscle || isLast) return;
+        const seed = {
+            recovery,
+            performance,
+            stimulus,
+            jointPain,
+        } as DraftFeedback[string];
+        const nextDraft: DraftFeedback = { ...feedback, [currentMuscle]: seed };
+        uniqueMuscles.slice(step + 1).forEach(muscle => {
+            // Pain is deliberately NOT copied to other muscles. The fast path only
+            // duplicates the subjective performance/stimulus/recovery ratings.
+            nextDraft[muscle] = { ...seed, jointPain: false };
+        });
+        onConfirm(buildResult(nextDraft));
     };
 
     const skipAndFinish = () => onConfirm({});
@@ -167,6 +185,15 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
                         <Button variant="secondary" onClick={skipAndFinish}>{lang === 'es' ? 'Omitir' : 'Skip'}</Button>
                         <Button onClick={continueFlow} disabled={!currentComplete}>{isLast ? (lang === 'es' ? 'Guardar y finalizar' : 'Save & finish') : (lang === 'es' ? 'Siguiente' : 'Next')}</Button>
                     </div>
+                    {!isLast && currentComplete && (
+                        <button
+                            type="button"
+                            onClick={applyToRemainingAndFinish}
+                            className="flex min-h-11 w-full items-center justify-center rounded-xl border border-primary-500/20 bg-primary-500/[0.06] px-3 text-xs font-black text-primary-500 active:scale-[0.99]"
+                        >
+                            {lang === 'es' ? `Aplicar al resto (${remainingMuscles}) y finalizar` : `Apply to remaining (${remainingMuscles}) & finish`}
+                        </button>
+                    )}
                     {step > 0 && <button type="button" onClick={() => setStep(prev => Math.max(0, prev - 1))} className="min-h-10 w-full text-xs font-bold text-[rgb(var(--text-muted))]">{lang === 'es' ? 'Volver al músculo anterior' : 'Back to previous muscle'}</button>}
                 </div>
             }
