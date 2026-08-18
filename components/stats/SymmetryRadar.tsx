@@ -1,10 +1,32 @@
-
 import React from 'react';
 import { Radar } from 'react-chartjs-2';
-import { ChartData, ChartOptions } from 'chart.js/auto';
+import {
+    Chart as ChartJS,
+    RadialLinearScale,
+    PointElement,
+    LineElement,
+    Filler,
+    Tooltip,
+    Legend,
+    type ChartData,
+    type ChartOptions,
+} from 'chart.js';
 import { useApp } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
 import { MuscleGroup } from '../../types';
+
+// Keep the radar self-contained. This component used to rely on StatsViewImpl
+// registering Chart.js primitives as a side effect; once that legacy view was
+// removed, opening Progress > Volume could crash with
+// `"radialLinear" is not a registered scale`.
+ChartJS.register(
+    RadialLinearScale,
+    PointElement,
+    LineElement,
+    Filler,
+    Tooltip,
+    Legend,
+);
 
 interface SymmetryRadarProps {
     volumeData: Record<string, number>;
@@ -24,9 +46,6 @@ export const SymmetryRadar: React.FC<SymmetryRadarProps> = ({ volumeData }) => {
 
     const dataValues = RADAR_ORDER.map(m => volumeData[m] || 0);
     const labels = RADAR_ORDER.map(m => TRANSLATIONS[lang].muscle[m]);
-
-    // Normalize data slightly to avoid ugly charts if volume is 0
-    // We add a small buffer or purely show raw relative data. Raw is more honest.
 
     const data: ChartData<'radar'> = {
         labels,
@@ -63,11 +82,10 @@ export const SymmetryRadar: React.FC<SymmetryRadarProps> = ({ volumeData }) => {
                     }
                 },
                 ticks: {
-                    display: false, // Hide concentric numbers for cleaner look
+                    display: false,
                     backdropColor: 'transparent'
                 },
                 suggestedMin: 0,
-                // Add a bit of headroom to the chart so points don't clip text
                 suggestedMax: Math.max(...dataValues, 10) + 2
             }
         },
