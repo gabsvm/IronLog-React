@@ -1,9 +1,32 @@
-
 import React from 'react';
 import { Line } from 'react-chartjs-2';
-import { ChartOptions, ScriptableContext } from 'chart.js/auto';
+import {
+    Chart as ChartJS,
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    Filler,
+    Tooltip,
+    Legend,
+    type ChartOptions,
+    type ScriptableContext,
+} from 'chart.js';
 import { formatDate } from '../../utils';
 import { useApp } from '../../context/AppContext';
+
+// Keep this chart independent from other screens. Type-only imports from
+// `chart.js/auto` can be erased by TypeScript, so relying on them for the
+// registration side effect is unsafe after the legacy Stats view was removed.
+ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    Filler,
+    Tooltip,
+    Legend,
+);
 
 export interface ChartDataPoint {
     date: number;
@@ -39,7 +62,7 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ dataPoints, metric
                 label: getLabel(metric),
                 data: dataPoints.map(d => d.value),
                 borderColor: 'rgb(var(--primary-500))',
-                backgroundColor: (context: ScriptableContext<"line">) => {
+                backgroundColor: (context: ScriptableContext<'line'>) => {
                     const ctx = context.chart.ctx;
                     const gradient = ctx.createLinearGradient(0, 0, 0, 200);
                     gradient.addColorStop(0, 'rgba(196, 255, 38, 0.32)');
@@ -53,7 +76,7 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ dataPoints, metric
                 pointRadius: 4,
                 pointHoverRadius: 6,
                 fill: true,
-                tension: 0.4, // Smooth curves
+                tension: 0.4,
             }
         ]
     };
@@ -77,7 +100,7 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ dataPoints, metric
                     label: (item) => {
                         const point = dataPoints[item.dataIndex];
                         if (metric === '1rm') {
-                             return `Est. 1RM: ${item.formattedValue}kg (${point.weight}x${point.reps})`;
+                            return `Est. 1RM: ${item.formattedValue}kg (${point.weight}x${point.reps})`;
                         } else if (metric === 'duration') {
                             return `Time: ${item.formattedValue} min`;
                         } else if (metric === 'distance') {
@@ -121,7 +144,7 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ dataPoints, metric
                 border: {
                     display: false
                 },
-                beginAtZero: false // Better dynamics for 1RM
+                beginAtZero: false
             }
         }
     };
