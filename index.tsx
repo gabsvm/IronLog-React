@@ -124,6 +124,20 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
+  private reloadApp = () => {
+    window.location.reload();
+  };
+
+  private resetLocalAppData = () => {
+    const confirmed = window.confirm(
+      'This removes local GainsLab app data from this device and reloads the app. Use it only if reloading does not fix the problem. Continue?'
+    );
+    if (!confirmed) return;
+    localStorage.clear();
+    sessionStorage.clear();
+    window.location.reload();
+  };
+
   render() {
     if (this.state.hasError) {
       return (
@@ -140,29 +154,56 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
           textAlign: 'center',
           zIndex: 99999
         }}>
-          <h1 style={{ color: '#ef4444', fontSize: '24px', marginBottom: '16px' }}>CRITICAL ERROR</h1>
-          <p style={{ opacity: 0.8, marginBottom: '24px' }}>The application failed to initialize.</p>
+          <h1 style={{ color: '#ef4444', fontSize: '24px', marginBottom: '16px' }}>APP ERROR</h1>
+          <p style={{ opacity: 0.8, marginBottom: '8px', maxWidth: '520px' }}>
+            A screen failed to render. Reload the app first; your local data will be kept.
+          </p>
+          <p style={{ opacity: 0.52, marginBottom: '24px', maxWidth: '520px', fontSize: '12px' }}>
+            Una pantalla falló al renderizar. Primero recargá la app; tus datos locales se conservarán.
+          </p>
 
           <button
-            onClick={() => { localStorage.clear(); window.location.reload(); }}
+            onClick={this.reloadApp}
             style={{
+              minWidth: '240px',
               padding: '12px 24px',
-              backgroundColor: '#dc2626',
-              color: 'white',
+              backgroundColor: '#b9ff24',
+              color: '#09090b',
               border: 'none',
-              borderRadius: '8px',
+              borderRadius: '10px',
+              fontWeight: 'bold',
+              marginBottom: '12px'
+            }}
+          >
+            Reload App · Recargar
+          </button>
+
+          <button
+            onClick={this.resetLocalAppData}
+            style={{
+              minWidth: '240px',
+              padding: '10px 18px',
+              backgroundColor: 'transparent',
+              color: '#a1a1aa',
+              border: '1px solid #3f3f46',
+              borderRadius: '10px',
               fontWeight: 'bold',
               marginBottom: '32px'
             }}
           >
-            Factory Reset App
+            Reset local data · Restablecer datos
           </button>
 
-          <div style={{ width: '100%', maxWidth: '500px', textAlign: 'left', background: '#000', padding: '16px', borderRadius: '8px', overflowX: 'auto' }}>
-            <pre style={{ color: '#f87171', fontSize: '11px', margin: 0 }}>
-              {String(this.state.error)}
-            </pre>
-          </div>
+          <details style={{ width: '100%', maxWidth: '500px', textAlign: 'left' }}>
+            <summary style={{ cursor: 'pointer', color: '#71717a', fontSize: '12px', marginBottom: '10px' }}>
+              Error details · Detalles
+            </summary>
+            <div style={{ background: '#000', padding: '16px', borderRadius: '8px', overflowX: 'auto' }}>
+              <pre style={{ color: '#f87171', fontSize: '11px', margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                {String(this.state.error)}
+              </pre>
+            </div>
+          </details>
         </div>
       );
     }

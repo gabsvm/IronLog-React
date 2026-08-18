@@ -56,7 +56,9 @@ const WorkoutSortableListComponent: React.FC<WorkoutSortableListProps> = ({
             onDragEnd={handleDragEnd}
         >
             <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
-                {children}
+                <div className="workout-sortable-stack space-y-2.5">
+                    {children}
+                </div>
             </SortableContext>
         </DndContext>
     );

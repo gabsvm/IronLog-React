@@ -50,6 +50,23 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
         return () => document.documentElement.classList.remove('kong-program-active');
     }, [isKong]);
 
+    // The new onboarding asks intent first. Once the main shell mounts, consume
+    // the one-shot destination so users land exactly where they asked to go.
+    React.useEffect(() => {
+        let intent: string | null = null;
+        try {
+            intent = window.sessionStorage.getItem('gainslab.onboarding.intent');
+            if (intent) window.sessionStorage.removeItem('gainslab.onboarding.intent');
+        } catch { }
+        if (intent === 'custom') {
+            setShowQuickStart(false);
+            setView('program');
+        } else if (intent === 'freestyle') {
+            setView('home');
+            setShowQuickStart(true);
+        }
+    }, [setView]);
+
     React.useEffect(() => {
         const handlePop = (event: PopStateEvent) => {
             if (!event.state?.profile) setShowProfile(false);
@@ -90,12 +107,20 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
     const NavBtn = ({ id, label, icon }: { id: typeof view, label: string, icon: any }) => {
         const isActive = view === id;
         return (
-            <button onClick={() => setView(id)} className="group relative flex h-full flex-1 flex-col items-center justify-center gap-0.5 transition-all duration-200 active:scale-90">
-                <div className={`relative flex items-center justify-center transition-all duration-200 ${isActive ? '-translate-y-1' : 'translate-y-0'}`}>
-                    <Icon name={icon} size={22} strokeWidth={isActive ? 2.5 : 2} fill={isActive ? 'currentColor' : 'none'} className={`transition-colors duration-200 ${isActive ? 'text-primary-500' : 'text-zinc-500 group-hover:text-zinc-300'}`} />
-                </div>
-                <span className={`text-[9px] font-bold uppercase tracking-wider transition-all duration-200 leading-none ${isActive ? 'text-primary-500 opacity-100' : 'text-zinc-600 group-hover:text-zinc-400 opacity-80'}`}>{label}</span>
-                {isActive && <div className="absolute bottom-2 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-primary-500 shadow-[0_0_9px_1px] shadow-primary-500/40" />}
+            <button
+                onClick={() => setView(id)}
+                aria-current={isActive ? 'page' : undefined}
+                className="group relative flex h-full flex-1 flex-col items-center justify-center gap-1 transition-transform active:scale-95"
+            >
+                <Icon
+                    name={icon}
+                    size={21}
+                    strokeWidth={isActive ? 2.5 : 2}
+                    className={`transition-colors ${isActive ? 'text-primary-500' : 'text-[rgb(var(--text-muted))] group-hover:text-[rgb(var(--text-secondary))]'}`}
+                />
+                <span className={`text-[11px] font-semibold leading-none transition-colors ${isActive ? 'text-primary-500' : 'text-[rgb(var(--text-muted))]'}`}>
+                    {label}
+                </span>
             </button>
         );
     };
@@ -190,12 +215,12 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
     return (
         <div className="flex h-full w-full flex-col overflow-hidden bg-[rgb(var(--surface-app))] font-sans text-[rgb(var(--text-primary))]" onClickCapture={handleShellClickCapture}>
             {view !== 'workout' && (
-                <div className="pointer-events-none absolute left-0 right-0 top-0 z-20 bg-gradient-to-b from-[rgb(var(--surface-app))] via-[rgb(var(--surface-app)/0.9)] to-transparent px-6 pb-2 pt-safe">
+                <div className="pointer-events-none absolute left-0 right-0 top-0 z-20 bg-gradient-to-b from-[rgb(var(--surface-app))] via-[rgb(var(--surface-app)/0.9)] to-transparent px-5 pb-2 pt-safe">
                     <div className="pointer-events-auto flex h-14 items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <Logo className="h-10 w-10" showText />
+                            <Logo className="h-9 w-9" showText />
                             {(!isOnline || syncStatus.pending > 0 || syncStatus.isSyncing) && (
-                                <div className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] ${!isOnline ? 'border-amber-500/25 bg-amber-500/10 text-amber-500' : syncStatus.isSyncing ? 'border-cyan-500/25 bg-cyan-500/10 text-cyan-500' : 'border-zinc-700/40 bg-zinc-900/10 text-zinc-500 dark:bg-zinc-900/85 dark:text-zinc-300'}`}>
+                                <div className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-[9px] font-bold ${!isOnline ? 'border-amber-500/25 bg-amber-500/10 text-amber-500' : syncStatus.isSyncing ? 'border-cyan-500/25 bg-cyan-500/10 text-cyan-500' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] text-[rgb(var(--text-muted))]'}`}>
                                     <span className={`h-1.5 w-1.5 rounded-full ${!isOnline ? 'bg-amber-400' : syncStatus.isSyncing ? 'bg-cyan-400' : 'bg-zinc-400'}`} />
                                     <span>{!isOnline ? 'offline' : syncStatus.isSyncing ? 'sync' : `${lang === 'es' ? 'cola' : 'queue'} ${syncStatus.pending}`}</span>
                                 </div>
@@ -208,18 +233,22 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
                 </div>
             )}
 
-            <div className={`relative z-0 flex-1 ${isVirtualized ? 'overflow-hidden' : 'overflow-y-auto scroll-container'} ${view !== 'workout' ? 'pt-[calc(env(safe-area-inset-top)+60px)] pb-32' : 'pt-safe pb-0'}`}>{children}</div>
+            <div className={`relative z-0 flex-1 ${isVirtualized ? 'overflow-hidden' : 'overflow-y-auto scroll-container'} ${view !== 'workout' ? 'pt-[calc(env(safe-area-inset-top)+60px)] pb-28' : 'pt-safe pb-0'}`}>{children}</div>
 
             {view !== 'workout' && (
-                <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-[rgb(var(--border-subtle)/0.7)] bg-[rgb(var(--surface-base)/0.96)] pb-safe backdrop-blur-xl">
-                    <div className="mx-auto flex h-16 w-full max-w-lg items-center justify-between px-2">
-                        <NavBtn id="home" label={lang === 'es' ? 'Entreno' : 'Train'} icon="Layout" />
+                <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-[rgb(var(--border-subtle)/0.72)] bg-[rgb(var(--surface-base)/0.96)] pb-safe backdrop-blur-xl">
+                    <div className="mx-auto flex h-[66px] w-full max-w-lg items-center justify-between px-2">
+                        <NavBtn id="home" label={lang === 'es' ? 'Hoy' : 'Today'} icon="Layout" />
                         <NavBtn id="history" label={t.history} icon="Calendar" />
-                        <button onClick={openPrimaryAction} aria-label={lang === 'es' ? 'Iniciar entreno' : 'Start workout'} className="mx-2 flex h-12 w-12 shrink-0 -translate-y-3 items-center justify-center rounded-full border border-primary-400/20 bg-primary-500 text-black shadow-lg shadow-primary-500/20 transition-transform duration-200 active:scale-95">
-                            <Icon name="Plus" size={24} strokeWidth={2.5} />
+                        <button
+                            onClick={openPrimaryAction}
+                            aria-label={lang === 'es' ? 'Inicio rápido' : 'Quick start'}
+                            className="mx-2 flex h-12 w-12 shrink-0 -translate-y-2 items-center justify-center rounded-2xl bg-primary-500 text-black shadow-[0_8px_24px_-12px_rgb(var(--primary-500)/0.75)] transition-transform active:scale-95"
+                        >
+                            <Icon name="Plus" size={23} strokeWidth={2.7} />
                         </button>
                         <NavBtn id="nutrition" label={lang === 'es' ? 'Dieta' : 'Diet'} icon="Utensils" />
-                        <NavBtn id="stats" label="Stats" icon="BarChart2" />
+                        <NavBtn id="stats" label={lang === 'es' ? 'Progreso' : 'Progress'} icon="BarChart2" />
                     </div>
                 </div>
             )}
@@ -229,12 +258,12 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
             <QuickStartSheet open={showQuickStart} onClose={() => setShowQuickStart(false)} lang={lang} onResume={() => setView('workout')} onToday={() => setView('home')} onFreestyle={() => setShowFreestyle(true)} onTwoBlock={() => setShowTwoBlock(true)} onEditProgram={editProgram} />
 
             {showFreestyle && (
-                <React.Suspense fallback={null}>
+                <React.Suspense fallback={<div className="fixed inset-0 z-modal bg-[rgb(var(--surface-app))]" />}>
                     <FreestyleSessionModal isOpen={showFreestyle} onClose={() => setShowFreestyle(false)} onStart={startDetached} />
                 </React.Suspense>
             )}
             {showTwoBlock && (
-                <React.Suspense fallback={null}>
+                <React.Suspense fallback={<div className="fixed inset-0 z-modal bg-[rgb(var(--surface-app))]" />}>
                     <TwoBlockMassModal isOpen={showTwoBlock} onClose={() => setShowTwoBlock(false)} onStart={startDetached} />
                 </React.Suspense>
             )}

@@ -4,7 +4,13 @@ export type HapticType = 'light' | 'medium' | 'heavy' | 'success' | 'warning';
 
 interface NativeBridgePlugin {
     haptic(options: { type: HapticType }): Promise<void>;
-    scheduleRestTimer(options: { endAt: number; title: string; body: string }): Promise<void>;
+    scheduleRestTimer(options: {
+        endAt: number;
+        title: string;
+        body: string;
+        progressTitle?: string;
+        progressBody?: string;
+    }): Promise<void>;
     cancelRestTimer(): Promise<void>;
 }
 
@@ -73,10 +79,18 @@ export const triggerHaptic = (type: HapticType = 'light') => {
 /**
  * Schedule the rest timer at the Android OS layer. AlarmManager remains useful
  * when the WebView is throttled, the app is backgrounded, or the screen locks.
+ * The optional progress strings feed the low-priority ongoing lock-screen card;
+ * the final title/body are reserved for the completion alert.
  */
-export const scheduleNativeRestTimer = (endAt: number, title: string, body: string) => {
+export const scheduleNativeRestTimer = (
+    endAt: number,
+    title: string,
+    body: string,
+    progressTitle?: string,
+    progressBody?: string,
+) => {
     if (!Capacitor.isNativePlatform()) return;
-    void NativeBridge.scheduleRestTimer({ endAt, title, body }).catch((error) => {
+    void NativeBridge.scheduleRestTimer({ endAt, title, body, progressTitle, progressBody }).catch((error) => {
         console.warn('Native rest timer schedule failed', error);
     });
 };

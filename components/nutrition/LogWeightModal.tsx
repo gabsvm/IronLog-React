@@ -16,87 +16,38 @@ export const LogWeightModal: React.FC<LogWeightModalProps> = ({ isOpen, onClose,
     const [notes, setNotes] = useState<string>('');
 
     const handleSubmit = () => {
-        onLog({
-            weight: Number(weight) || 0,
-            bodyFat: bodyFat ? Number(bodyFat) : undefined,
-            notes: notes || undefined
-        });
+        onLog({ weight: Number(weight) || 0, bodyFat: bodyFat ? Number(bodyFat) : undefined, notes: notes || undefined });
         setNotes('');
         onClose();
     };
 
     const t = {
-        title: lang === 'es' ? 'Registrar Peso' : 'Log Weight',
-        currentWeight: lang === 'es' ? 'Peso Actual' : 'Current Weight',
-        bodyFat: lang === 'es' ? 'Grasa Corporal' : 'Body Fat',
-        notes: lang === 'es' ? 'Notas' : 'Notes',
+        title: lang === 'es' ? 'Registrar composición' : 'Log body composition',
+        currentWeight: lang === 'es' ? 'Peso actual' : 'Current weight',
+        bodyFat: lang === 'es' ? 'Grasa corporal' : 'Body fat',
+        notes: lang === 'es' ? 'Nota opcional' : 'Optional note',
         save: lang === 'es' ? 'Guardar' : 'Save',
         cancel: lang === 'es' ? 'Cancelar' : 'Cancel',
     };
 
+    const inputClass = 'w-full rounded-xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base))] px-4 text-[rgb(var(--text-primary))] outline-none transition-colors placeholder:text-[rgb(var(--text-muted))] focus:border-primary-500/45 focus:ring-2 focus:ring-primary-500/10';
+
     return (
-        <Sheet
-            open={isOpen}
-            onOpenChange={(open) => !open && onClose()}
-            title={t.title}
-            accent="primary"
-            footer={
-                <div className="flex gap-3">
-                    <Button variant="secondary" onClick={onClose} fullWidth>
-                        {t.cancel}
-                    </Button>
-                    <Button onClick={handleSubmit} fullWidth>
-                        {t.save}
-                    </Button>
-                </div>
-            }
-        >
-            <div className="p-5 space-y-5">
+        <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()} title={t.title} accent="primary" footer={<div className="grid grid-cols-2 gap-3"><Button variant="secondary" onClick={onClose}>{t.cancel}</Button><Button onClick={handleSubmit} disabled={!Number(weight)}>{t.save}</Button></div>}>
+            <div className="space-y-5 p-5">
                 <div>
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-2 px-1">
-                        {t.currentWeight}
-                    </label>
-                    <div className="relative">
-                        <input
-                            type="number"
-                            inputMode="decimal"
-                            value={weight}
-                            onChange={(e) => setWeight(e.target.value)}
-                            placeholder="0.0"
-                            className="w-full bg-zinc-800 border border-zinc-700/50 rounded-2xl px-6 pr-20 py-5 text-3xl font-black text-white focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all placeholder:text-zinc-600 glow-input-neon"
-                            autoFocus
-                        />
-                        <div className="absolute right-5 top-1/2 -translate-y-1/2 text-zinc-300 font-black uppercase tracking-tighter text-sm bg-zinc-700/50 px-2.5 py-1 rounded-lg">kg</div>
-                    </div>
+                    <label className="mb-2 block px-1 text-[10px] font-bold uppercase tracking-[0.09em] text-[rgb(var(--text-muted))]">{t.currentWeight}</label>
+                    <div className="relative"><input type="number" inputMode="decimal" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="0.0" className={`${inputClass} h-14 pr-16 text-2xl font-black tabular-nums`} autoFocus /><div className="absolute right-4 top-1/2 -translate-y-1/2 rounded-lg bg-[rgb(var(--surface-raised))] px-2 py-1 text-xs font-bold text-[rgb(var(--text-muted))]">kg</div></div>
                 </div>
 
                 <div>
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-2 px-1">
-                        {t.bodyFat} (%)
-                    </label>
-                    <div className="relative">
-                        <input
-                            type="number"
-                            inputMode="decimal"
-                            value={bodyFat}
-                            onChange={(e) => setBodyFat(e.target.value)}
-                            placeholder="0.0"
-                            className="w-full bg-zinc-800 border border-zinc-700/50 rounded-2xl px-6 pr-16 py-4 text-xl font-bold text-white focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all placeholder:text-zinc-600 glow-input-neon"
-                        />
-                        <div className="absolute right-5 top-1/2 -translate-y-1/2 text-zinc-300 font-black text-sm bg-zinc-700/50 px-2.5 py-1 rounded-lg">%</div>
-                    </div>
+                    <label className="mb-2 block px-1 text-[10px] font-bold uppercase tracking-[0.09em] text-[rgb(var(--text-muted))]">{t.bodyFat}</label>
+                    <div className="relative"><input type="number" inputMode="decimal" value={bodyFat} onChange={(e) => setBodyFat(e.target.value)} placeholder="0.0" className={`${inputClass} h-12 pr-14 text-lg font-bold tabular-nums`} /><div className="absolute right-4 top-1/2 -translate-y-1/2 rounded-lg bg-[rgb(var(--surface-raised))] px-2 py-1 text-xs font-bold text-[rgb(var(--text-muted))]">%</div></div>
                 </div>
 
                 <div>
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-2 px-1">
-                        {t.notes}
-                    </label>
-                    <textarea
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                        placeholder={lang === 'es' ? 'Añade una nota...' : 'Add a note...'}
-                        className="w-full bg-zinc-800 border border-zinc-700/50 rounded-2xl px-4 py-4 min-h-[90px] text-sm font-medium text-white focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all resize-none placeholder:text-zinc-600 glow-input-neon"
-                    />
+                    <label className="mb-2 block px-1 text-[10px] font-bold uppercase tracking-[0.09em] text-[rgb(var(--text-muted))]">{t.notes}</label>
+                    <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={lang === 'es' ? 'Ej.: misma hora, ayunas…' : 'e.g. same time, fasted…'} className={`${inputClass} min-h-[86px] resize-none py-3 text-sm`} />
                 </div>
             </div>
         </Sheet>

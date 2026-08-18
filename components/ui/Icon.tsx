@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 // Import ONLY used icons to allow Tree Shaking (Drastic bundle size reduction)
 import {
@@ -9,7 +8,7 @@ import {
     Trash2, X, CornerDownRight, Share2, AlertTriangle, Play, ChevronRight, Bot, Lock, Crown, Copy,
     ChevronUp, ChevronDown, Anchor, EyeOff, CheckCircle, Flame, Heart, Apple, UtensilsCrossed, Bike, Timer, Utensils, Droplet, Scale,
     Trophy, Pencil, Target, RotateCcw, CirclePlus, Circle, Repeat, Repeat2, Grid3X3,
-    BookOpen, AlertCircle, ArrowLeft, Shield
+    BookOpen, AlertCircle, ArrowLeft, Shield, List, SlidersHorizontal, FilePlus, Shuffle
 } from 'lucide-react';
 
 // Static Map of icons used in the app
@@ -20,12 +19,13 @@ const ICON_MAP: Record<string, React.ElementType> = {
     GripVertical, MoreVertical, ExternalLink, VideoOff, Layers, Zap, Calendar, Home, User, LogOut,
     Trash2, X, CornerDownRight, Share2, AlertTriangle, Play, ChevronRight, Lock, Crown, Copy,
     ChevronUp, ChevronDown, Anchor, EyeOff, CheckCircle, Flame, Heart, Apple, UtensilsCrossed, Bike, Timer, Utensils, Droplet, Scale,
-    Trophy, Pencil, Target, RotateCcw, Circle, Repeat, Repeat2,
+    Trophy, Pencil, Target, RotateCcw, Circle, Repeat, Repeat2, List, FilePlus, Shuffle,
     BookOpen, AlertCircle, ArrowLeft, Shield,
     // Renamed in lucide-react v0.376+
     PlusCircle: CirclePlus,
     // Grid3X3 lucide naming vs Grid3x3 usage alias
     Grid3x3: Grid3X3,
+    Sliders: SlidersHorizontal,
     // Aliases for backward compatibility or logical mapping
     BrainCircuit: Activity,
     Sparkles: Star,
@@ -40,21 +40,20 @@ interface IconProps extends React.SVGProps<SVGSVGElement> {
     strokeWidth?: number | string;
 }
 
-// Optimization: Memoize the Icon component to prevent re-rendering identical SVGs 
+// Optimization: Memoize the Icon component to prevent re-rendering identical SVGs
 // during parent updates (like timer ticks or drag operations).
 export const Icon: React.FC<IconProps> = React.memo(({ name, size = 20, className, ...props }) => {
-    
     const LucideIcon = useMemo(() => {
         // Direct lookup is O(1) and safe
         const icon = ICON_MAP[name];
-        
+
         // Fallback for case-insensitive matches (less performant but robust)
         if (!icon) {
             const lowerName = name.toLowerCase();
             const key = Object.keys(ICON_MAP).find(k => k.toLowerCase() === lowerName);
             if (key) return ICON_MAP[key];
         }
-        
+
         return icon;
     }, [name]);
 
