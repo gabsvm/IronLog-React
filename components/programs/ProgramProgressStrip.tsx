@@ -26,7 +26,7 @@ export const ProgramProgressStrip: React.FC<Props> = ({ week, totalWeeks = 12, l
             <button
                 type="button"
                 onClick={() => activeMeso && setShowHub(true)}
-                className="mx-4 mb-2 block w-[calc(100%-2rem)] rounded-2xl border border-[rgb(var(--border-subtle)/0.72)] bg-[rgb(var(--surface-raised)/0.58)] px-3.5 py-3 text-left transition-colors active:bg-[rgb(var(--surface-elevated)/0.82)]"
+                className="mx-4 mb-2 block rounded-2xl border border-[rgb(var(--border-subtle)/0.72)] bg-[rgb(var(--surface-raised)/0.58)] px-3.5 py-3 text-left transition-colors active:bg-[rgb(var(--surface-elevated)/0.82)]"
                 aria-label={lang === 'es' ? 'Abrir guía, filosofía y programa KONG' : 'Open KONG guide, philosophy and program'}
             >
                 <div className="mb-2 flex items-center justify-between gap-3">
