@@ -4,7 +4,10 @@ const formatPrescriptionReps = (slot: ProgramSlot): string | undefined => {
   const prescription = slot.prescription;
   if (!prescription || prescription.length === 0) return slot.reps;
 
-  const labels = prescription.map((set) => set.reps === 'FAILURE' ? 'F' : String(set.reps));
+  const labels = prescription.map((set) => {
+    if (set.repRange) return `${set.repRange.min}-${set.repRange.max}`;
+    return set.reps === 'FAILURE' ? 'F' : String(set.reps);
+  });
   if (labels.every((label) => label === labels[0])) return labels[0];
   return labels.join(' · ');
 };
