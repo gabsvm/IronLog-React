@@ -1,6 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { PERFORMANCE_UPPER_LOWER_V1 } from '../programs/performance/performanceUpperLower.ts';
 import { PERFORMANCE_GUIDE } from '../programs/performance/performanceGuide.ts';
+import {
+  calculatePerformanceVolumeAdjustment,
+  PERFORMANCE_VOLUME_ADAPTIVE_SLOT_BY_MUSCLE,
+} from '../programs/performance/performanceProgression.ts';
 import { getProgramBlockForWeek, resolveProgramDay, resolveProgramWeek } from '../programs/engine/ProgramResolver.ts';
 import { toEditableProgram } from '../programs/engine/ProgramConversion.ts';
 
@@ -10,6 +14,7 @@ const assert = (condition: unknown, message: string): void => { if (!condition) 
 const librarySource = readFileSync(new URL('../data/defaultLibrary.ts', import.meta.url), 'utf8');
 const validIds = new Set(Array.from(librarySource.matchAll(/id:\s*'([^']+)'/g), (match) => match[1]));
 const allSlots = PERFORMANCE_UPPER_LOWER_V1.blocks.flatMap(block => block.days.flatMap(day => day.exercises));
+const programSlotIds = new Set(allSlots.map(slot => slot.slotId));
 
 assert(PERFORMANCE_UPPER_LOWER_V1.id === 'performance_upper_lower', 'system id changed unexpectedly');
 assert(PERFORMANCE_UPPER_LOWER_V1.version === 1, 'v1 system version changed unexpectedly');
@@ -72,6 +77,19 @@ assert(getProgramBlockForWeek(PERFORMANCE_UPPER_LOWER_V1, 1).block.id === 'perfo
 assert(getProgramBlockForWeek(PERFORMANCE_UPPER_LOWER_V1, 3).block.id === 'performance-build', 'cycle 3 must be Productive Build');
 assert(getProgramBlockForWeek(PERFORMANCE_UPPER_LOWER_V1, 8).block.id === 'performance-pivot', 'cycle 8 must be Pivot');
 
+// Conservative volume adaptation invariants.
+assert(calculatePerformanceVolumeAdjustment({ cycle: 1, recovery: 1, performance: 2, stimulus: 2, jointPain: false }) === 0, 'Calibration must not add volume');
+assert(calculatePerformanceVolumeAdjustment({ cycle: 3, recovery: 1, performance: 2, stimulus: 2, jointPain: false }) === 1, 'flat + fresh + good stimulus must add exactly one set');
+assert(calculatePerformanceVolumeAdjustment({ cycle: 3, recovery: 1, performance: 3, stimulus: 2, jointPain: false }) === 0, 'better performance must keep volume stable');
+assert(calculatePerformanceVolumeAdjustment({ cycle: 3, recovery: 3, performance: 2, stimulus: 2, jointPain: false }) === -1, 'poor recovery must reduce one set');
+assert(calculatePerformanceVolumeAdjustment({ cycle: 3, recovery: 1, performance: 2, stimulus: 2, jointPain: true }) === -1, 'joint discomfort must reduce one set');
+assert(calculatePerformanceVolumeAdjustment({ cycle: 8, recovery: 1, performance: 2, stimulus: 2, jointPain: false }) === 0, 'Pivot must ignore automatic volume changes');
+
+const adaptiveSlotIds = Object.values(PERFORMANCE_VOLUME_ADAPTIVE_SLOT_BY_MUSCLE).filter(Boolean) as string[];
+assert(adaptiveSlotIds.length > 0, 'no adaptive volume slots are configured');
+assert(new Set(adaptiveSlotIds).size === adaptiveSlotIds.length, 'adaptive volume slots must be unique per muscle');
+assert(adaptiveSlotIds.every(slotId => programSlotIds.has(slotId)), 'an adaptive volume slot does not exist in PERFORMANCE');
+
 const requiredGuideSections = [
   'what-is-performance',
   'fatigue-budget',
@@ -87,4 +105,4 @@ const requiredGuideSections = [
 const guideIds = new Set(PERFORMANCE_GUIDE.map(section => section.id));
 assert(requiredGuideSections.every(id => guideIds.has(id)), 'a required philosophy/progression guide section is missing');
 
-console.log('PERFORMANCE validation passed: 8 rolling cycles, 4 sessions, valid exercise IDs, ranged double progression, RPE phases, pivot, editable conversion and philosophy guide.');
+console.log('PERFORMANCE validation passed: 8 rolling cycles, 4 sessions, valid exercise IDs, ranged double progression, conservative ±1 volume adaptation, RPE phases, pivot, editable conversion and philosophy guide.');
