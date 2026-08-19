@@ -5,6 +5,7 @@ import { useStore } from '../lib/store';
 import { KONG_4DAY_V1 } from '../programs/kong/kong4Day';
 import { getProgramBlockForWeek, resolveProgramWeek } from '../programs/engine/ProgramResolver';
 import { getKongDayDisplay } from '../programs/kong/kongDisplay';
+import { getProgramDefinition } from '../programs/registry';
 import { ProgramProgressStrip } from '../components/programs/ProgramProgressStrip';
 import { TRANSLATIONS } from '../constants';
 import './product-polish.css';
@@ -31,73 +32,81 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
     const setActiveMeso = useStore(state => state.setActiveMeso);
     const rootRef = useRef<HTMLDivElement>(null);
     const [showSkippedFinalCompletion, setShowSkippedFinalCompletion] = useState(false);
-    const isKong = activeMeso?.programSystem?.systemId === KONG_4DAY_V1.id;
+    const structuredDefinition = useMemo(() => activeMeso?.programSystem
+        ? getProgramDefinition(activeMeso.programSystem.systemId, activeMeso.programSystem.systemVersion)
+        : null,
+    [activeMeso?.programSystem?.systemId, activeMeso?.programSystem?.systemVersion]);
+    const isStructured = !!structuredDefinition;
+    const isKong = structuredDefinition?.id === KONG_4DAY_V1.id;
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
     const safeProgram = useMemo(() => Array.isArray(program) ? program : [], [program]);
     const substitutionSignature = useMemo(
         () => JSON.stringify(activeMeso?.programSystem?.substitutions || {}),
         [activeMeso?.programSystem?.substitutions],
     );
-    const kongWeekResolvedCount = useMemo(() => {
-        if (!isKong || !activeMeso) return 0;
+    const structuredCycleResolvedCount = useMemo(() => {
+        if (!isStructured || !structuredDefinition || !activeMeso) return 0;
         const safeLogs = Array.isArray(logs) ? logs : [];
         return new Set(
             safeLogs
                 .filter(log => log.mesoId === activeMeso.id && log.week === activeMeso.week)
                 .map(log => log.dayIdx)
-                .filter(dayIdx => dayIdx >= 0 && dayIdx < KONG_4DAY_V1.daysPerWeek),
+                .filter(dayIdx => dayIdx >= 0 && dayIdx < structuredDefinition.daysPerWeek),
         ).size;
-    }, [activeMeso, isKong, logs]);
+    }, [activeMeso, isStructured, logs, structuredDefinition]);
 
     useEffect(() => {
-        if (!isKong || !activeMeso) return;
-        const { block } = getProgramBlockForWeek(KONG_4DAY_V1, activeMeso.week);
-        const resolved = resolveProgramWeek(
-            KONG_4DAY_V1,
+        if (!structuredDefinition || !activeMeso) return;
+        const { block } = getProgramBlockForWeek(structuredDefinition, activeMeso.week);
+        const resolvedBase = resolveProgramWeek(
+            structuredDefinition,
             activeMeso.week,
             activeMeso.programSystem?.substitutions || {},
-        ).map((day, dayIndex) => ({
-            ...day,
-            dayName: getKongDayDisplay(block.number, dayIndex),
-        }));
+        );
+        const resolved = isKong
+            ? resolvedBase.map((day, dayIndex) => ({
+                ...day,
+                dayName: getKongDayDisplay(block.number, dayIndex),
+            }))
+            : resolvedBase;
 
         setProgram(prev => JSON.stringify(prev) === JSON.stringify(resolved) ? prev : resolved);
-    }, [activeMeso?.week, isKong, setProgram, substitutionSignature]);
+    }, [activeMeso?.week, isKong, setProgram, structuredDefinition, substitutionSignature]);
 
     useEffect(() => {
-        if (!isKong || !activeMeso || activeSession) return;
+        if (!structuredDefinition || !activeMeso || activeSession) return;
         const safeLogs = Array.isArray(logs) ? logs : [];
-        const currentWeekLogs = safeLogs.filter(log => log.mesoId === activeMeso.id && log.week === activeMeso.week);
-        if (!currentWeekLogs.some(log => log.skipped)) return;
+        const currentCycleLogs = safeLogs.filter(log => log.mesoId === activeMeso.id && log.week === activeMeso.week);
+        if (!currentCycleLogs.some(log => log.skipped)) return;
 
         const completedDays = new Set(
-            currentWeekLogs
+            currentCycleLogs
                 .filter(log => !log.skipped)
                 .map(log => log.dayIdx)
-                .filter(dayIdx => dayIdx >= 0 && dayIdx < KONG_4DAY_V1.daysPerWeek),
+                .filter(dayIdx => dayIdx >= 0 && dayIdx < structuredDefinition.daysPerWeek),
         );
-        if (completedDays.size >= KONG_4DAY_V1.daysPerWeek) return;
+        if (completedDays.size >= structuredDefinition.daysPerWeek) return;
 
         const resolvedDays = new Set(
-            currentWeekLogs
+            currentCycleLogs
                 .map(log => log.dayIdx)
-                .filter(dayIdx => dayIdx >= 0 && dayIdx < KONG_4DAY_V1.daysPerWeek),
+                .filter(dayIdx => dayIdx >= 0 && dayIdx < structuredDefinition.daysPerWeek),
         );
-        if (resolvedDays.size < KONG_4DAY_V1.daysPerWeek) return;
+        if (resolvedDays.size < structuredDefinition.daysPerWeek) return;
 
-        if (activeMeso.week >= KONG_4DAY_V1.durationWeeks) {
+        if (activeMeso.week >= structuredDefinition.durationWeeks) {
             setShowSkippedFinalCompletion(true);
             return;
         }
 
         const mesoId = activeMeso.id;
-        const completedWeek = activeMeso.week;
+        const completedCycle = activeMeso.week;
         setActiveMeso(prev => (
-            prev && prev.id === mesoId && prev.week === completedWeek
+            prev && prev.id === mesoId && prev.week === completedCycle
                 ? { ...prev, week: prev.week + 1, isDeload: false }
                 : prev
         ));
-    }, [activeMeso, activeSession, isKong, logs, setActiveMeso]);
+    }, [activeMeso, activeSession, logs, setActiveMeso, structuredDefinition]);
 
     useEffect(() => {
         const root = rootRef.current;
@@ -114,26 +123,28 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
                 if (isKong && lang === 'es' && /^KONG\s*·\s*BLOCK\s+\d+$/i.test(text)) {
                     node.textContent = text.replace(/BLOCK/i, 'BLOQUE');
                 }
-                if (isKong && /^\d+%\s+(DONE|COMPLETADO)$/i.test(text)) {
+                if (isStructured && structuredDefinition && /^\d+%\s+(DONE|COMPLETADO)$/i.test(text)) {
                     node.textContent = lang === 'es'
-                        ? `${kongWeekResolvedCount} / ${KONG_4DAY_V1.daysPerWeek} sesiones`
-                        : `${kongWeekResolvedCount} / ${KONG_4DAY_V1.daysPerWeek} workouts`;
+                        ? `${structuredCycleResolvedCount} / ${structuredDefinition.daysPerWeek} sesiones`
+                        : `${structuredCycleResolvedCount} / ${structuredDefinition.daysPerWeek} workouts`;
                 }
                 if (text === String(t.tapToStart || '')) {
                     node.textContent = lang === 'es' ? 'Empezar' : 'Start workout';
                 }
             });
 
-            if (isKong) {
+            if (isStructured && structuredDefinition) {
                 const settingsButton = root.querySelector<HTMLElement>('#tut-settings-btn');
-                settingsButton?.closest('.flex.justify-between.items-start.pt-2')?.classList.add('kong-home-header');
+                if (isKong) settingsButton?.closest('.flex.justify-between.items-start.pt-2')?.classList.add('kong-home-header');
 
-                root.querySelector<HTMLElement>('[role="progressbar"][aria-label="Week progress"]')?.classList.add('kong-legacy-week-progress');
+                if (isKong) root.querySelector<HTMLElement>('[role="progressbar"][aria-label="Week progress"]')?.classList.add('kong-legacy-week-progress');
 
                 root.querySelectorAll<HTMLElement>('h4').forEach(node => {
                     const text = (node.textContent || '').trim();
                     if (/^(Weekly Timeline|Cronograma Semanal)$/i.test(text)) {
-                        node.textContent = lang === 'es' ? 'Esta semana' : 'This week';
+                        node.textContent = structuredDefinition.cadence?.unit === 'cycle'
+                            ? (lang === 'es' ? 'Este ciclo' : 'This cycle')
+                            : (lang === 'es' ? 'Esta semana' : 'This week');
                     }
                 });
 
@@ -179,16 +190,16 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
         const observer = new MutationObserver(normalizeProductLabels);
         observer.observe(root, { childList: true, subtree: true, characterData: true });
         return () => observer.disconnect();
-    }, [isKong, kongWeekResolvedCount, lang, safeProgram, t.tapToStart]);
+    }, [isKong, isStructured, lang, safeProgram, structuredCycleResolvedCount, structuredDefinition, t.tapToStart]);
 
     return (
-        <div ref={rootRef} className={`product-home-polish ${isKong ? 'kong-active' : ''} contents`}>
-            {isKong && activeMeso && (
+        <div ref={rootRef} className={`product-home-polish ${isKong ? 'kong-active' : ''} ${isStructured ? 'structured-program-active' : ''} contents`}>
+            {isStructured && activeMeso && structuredDefinition && (
                 <ProgramProgressStrip
                     week={activeMeso.week}
-                    totalWeeks={KONG_4DAY_V1.durationWeeks}
+                    totalWeeks={structuredDefinition.durationWeeks}
                     lang={lang}
-                    name={activeMeso.name || 'KONG · Savage Size'}
+                    name={activeMeso.name || structuredDefinition.title}
                 />
             )}
             <HomeViewImpl {...props} />
