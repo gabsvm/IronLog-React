@@ -18,7 +18,8 @@
     "validate-android-env": "node scripts/validate-android-env.mjs",
     "validate-kong": "node --experimental-strip-types scripts/validate-kong.ts",
     "validate-performance": "node --experimental-strip-types scripts/validate-performance.ts",
-    "validate-programs": "npm run validate-kong && npm run validate-performance",
+    "validate-guts": "node --experimental-strip-types scripts/validate-guts.ts",
+    "validate-programs": "npm run validate-kong && npm run validate-performance && npm run validate-guts",
     "build-android": "npm run validate-android-env && npm run build && npx cap sync android",
     "build-ios": "npm run build && npx cap sync ios",
     "android-debug-apk": "npm run build-android && cd android && gradlew.bat assembleDebug"
