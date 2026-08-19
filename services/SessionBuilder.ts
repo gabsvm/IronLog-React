@@ -2,6 +2,7 @@ import { ProgramDay, MesoCycle, ExerciseDef, Log, ActiveSession, SessionExercise
 import { getLastLogForExercise, uid } from '../utils';
 import { KONG_4DAY_V1 } from '../programs/kong/kong4Day';
 import { PERFORMANCE_UPPER_LOWER_V1 } from '../programs/performance/performanceUpperLower';
+import { GUTS_BLACK_SWORDSMAN_V1 } from '../programs/naturalHypertrophy/gutsBlackSwordsman';
 import { getPerformanceAdaptiveSlot } from '../programs/performance/performanceProgression';
 import { consumePendingPerformanceRecoveryMode } from '../programs/performance/performanceRecovery';
 import { getProgramBlockForWeek, resolveProgramDay } from '../programs/engine/ProgramResolver';
@@ -26,10 +27,9 @@ export class SessionBuilder {
             : null;
         const isKong = structuredDefinition?.id === KONG_4DAY_V1.id;
         const isPerformance = structuredDefinition?.id === PERFORMANCE_UPPER_LOWER_V1.id;
+        const isGuts = structuredDefinition?.id === GUTS_BLACK_SWORDSMAN_V1.id;
         const performanceRecoveryMode = isPerformance ? consumePendingPerformanceRecoveryMode() : 'green';
 
-        // Structured programs resolve their definition at build time; normal
-        // templates continue through the legacy path unchanged.
         const resolvedDay = structuredDefinition
             ? resolveProgramDay(
                 structuredDefinition,
@@ -61,17 +61,24 @@ export class SessionBuilder {
         const sessionSlots = isPerformance && performanceRecoveryMode === 'yellow'
             ? resolvedSlots.slice(0, Math.max(1, resolvedSlots.length - 2))
             : resolvedSlots;
-        const performanceProgressionPolicy: 'double' | 'hold' | 'pivot' | undefined = isPerformance
+        const structuredProgressionPolicy: 'double' | 'hold' | 'pivot' | 'evolving' | undefined = isPerformance
             ? performanceRecoveryMode === 'yellow'
                 ? 'hold'
                 : structuredBlock?.id === 'performance-pivot'
                     ? 'pivot'
                     : 'double'
-            : undefined;
+            : isGuts
+                ? 'evolving'
+                : undefined;
 
-        const performanceLogsNewestFirst = isPerformance
+        const slotHistorySystemId = isPerformance
+            ? PERFORMANCE_UPPER_LOWER_V1.id
+            : isGuts
+                ? GUTS_BLACK_SWORDSMAN_V1.id
+                : null;
+        const structuredLogsNewestFirst = slotHistorySystemId
             ? safeLogs
-                .filter(log => !log.skipped && log.programSystem?.systemId === PERFORMANCE_UPPER_LOWER_V1.id)
+                .filter(log => !log.skipped && log.programSystem?.systemId === slotHistorySystemId)
                 .slice()
                 .sort((a, b) => (b.endTime || b.startTime || 0) - (a.endTime || a.startTime || 0))
             : [];
@@ -79,15 +86,12 @@ export class SessionBuilder {
         const sessionExs = sessionSlots.map((slotDef, sIdx) => {
             if (!slotDef) return null;
             const exId = slotDef.exerciseId || dayPlan[sIdx];
-            // Priority: exact ID match → same-muscle fallback → typed placeholder (never random index 0)
             let exDef = exId ? safeExercises.find(e => e.id === exId) : null;
             if (!exDef) exDef = safeExercises.find(e => e.muscle === slotDef.muscle) ?? null;
             if (!exDef) exDef = { id: `placeholder_${slotDef.muscle}_${sIdx}`, name: slotDef.muscle || 'Unknown', muscle: slotDef.muscle || 'CHEST' };
 
             let setTarget = slotDef.setTarget || 3;
 
-            // Legacy RP/adaptive templates keep their historical cumulative
-            // behavior. KONG and unknown structured systems remain immutable.
             if (!slotDef.prescription && config.rpEnabled && activeMeso && activeMeso.week > 1) {
                 let accumulatedAdjustment = 0;
                 const fbForMeso = rpFeedback[activeMeso.id];
@@ -103,11 +107,6 @@ export class SessionBuilder {
             }
             if (!slotDef.prescription && isDeload) setTarget = Math.max(1, Math.ceil(setTarget / 2));
 
-            // PERFORMANCE has its own deliberately conservative volume rule:
-            // only cycles 3-7 may read the immediately previous cycle, only one
-            // low-cost slot per muscle can change, and the delta is clamped to
-            // one set. A yellow Recovery Gate suppresses any planned increase/
-            // decrease because that session is already being reduced live.
             let performanceVolumeDelta = 0;
             if (
                 isPerformance &&
@@ -132,12 +131,12 @@ export class SessionBuilder {
                 effectivePrescription = effectivePrescription.slice(0, effectivePrescription.length - 1);
             }
 
-            // PERFORMANCE owns a stable slot identity. Previous values must come
-            // from that same slot inside PERFORMANCE, never from KONG or an
-            // unrelated custom routine that happens to use the same exercise.
-            let lastSets = isPerformance ? null : getLastLogForExercise(exDef.id, safeLogs);
-            if (isPerformance && slotDef.programSlotId) {
-                for (const previousLog of performanceLogsNewestFirst) {
+            // Programs with their own progression model compare Previous against
+            // the same stable slot inside the same system. This prevents a KONG,
+            // freestyle or unrelated-routine exposure from driving the cue.
+            let lastSets = slotHistorySystemId ? null : getLastLogForExercise(exDef.id, safeLogs);
+            if (slotHistorySystemId && slotDef.programSlotId) {
+                for (const previousLog of structuredLogsNewestFirst) {
                     const previousExercise = (previousLog.exercises || []).find(item =>
                         String(item.id) === String(exDef.id) && item.programSlotId === slotDef.programSlotId
                     );
@@ -184,7 +183,7 @@ export class SessionBuilder {
                 substitutionGroup: slotDef.substitutionGroup,
                 programSourceName: slotDef.programSourceName,
                 targetMuscle: slotDef.targetMuscle,
-                ...(performanceProgressionPolicy ? { progressionPolicy: performanceProgressionPolicy } : {}),
+                ...(structuredProgressionPolicy ? { progressionPolicy: structuredProgressionPolicy } : {}),
                 ...(performanceVolumeDelta !== 0 ? { performanceVolumeDelta } : {}),
                 sets: initialSets as any
             };
