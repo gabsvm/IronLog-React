@@ -9,6 +9,7 @@ type SortableExerciseCardProps = React.ComponentProps<typeof SortableExerciseCar
 type RangedWorkoutSet = WorkoutSet & { prescribedRepRange?: { min: number; max: number } };
 type PerformanceExercise = SortableExerciseCardProps['exercise'] & {
     progressionPolicy?: 'double' | 'hold' | 'pivot';
+    performanceVolumeDelta?: number;
 };
 
 const makeCompletedSet = (patch: Partial<WorkoutSet>): WorkoutSet => ({
@@ -214,8 +215,20 @@ export const SortableExerciseCard = React.memo((props: SortableExerciseCardProps
         [exercise, programTargetSummary],
     );
 
+    const volumeDelta = Number(performanceExercise.performanceVolumeDelta || 0);
+
     return (
-        <div className={progressionCue ? 'space-y-1.5' : undefined}>
+        <div className={progressionCue || volumeDelta !== 0 ? 'space-y-1.5' : undefined}>
+            {volumeDelta !== 0 && (
+                <div className={`mx-1 flex items-center gap-1.5 rounded-lg px-2 py-1 text-[10px] font-bold ${volumeDelta > 0 ? 'bg-emerald-500/[0.08] text-emerald-400' : 'bg-amber-500/[0.08] text-amber-400'}`}>
+                    <Icon name={volumeDelta > 0 ? 'Plus' : 'Minus'} size={12} />
+                    <span className="truncate">
+                        {volumeDelta > 0
+                            ? (lang === 'es' ? 'Check-in previo · +1 serie en este slot' : 'Previous check-in · +1 set on this slot')
+                            : (lang === 'es' ? 'Check-in previo · −1 serie en este slot' : 'Previous check-in · −1 set on this slot')}
+                    </span>
+                </div>
+            )}
             {progressionCue && (
                 <div className={`mx-1 flex items-center gap-1.5 rounded-lg px-2 py-1 text-[10px] font-bold ${progressionCue.ready ? 'bg-primary-500/[0.08] text-primary-400' : 'bg-[rgb(var(--surface-raised)/0.65)] text-[rgb(var(--text-muted))]'}`}>
                     <Icon name={progressionCue.ready ? 'TrendingUp' : 'Target'} size={12} />
