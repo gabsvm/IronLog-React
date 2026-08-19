@@ -69,6 +69,13 @@ export class SessionBuilder {
                     : 'double'
             : undefined;
 
+        const performanceLogsNewestFirst = isPerformance
+            ? safeLogs
+                .filter(log => !log.skipped && log.programSystem?.systemId === PERFORMANCE_UPPER_LOWER_V1.id)
+                .slice()
+                .sort((a, b) => (b.endTime || b.startTime || 0) - (a.endTime || a.startTime || 0))
+            : [];
+
         const sessionExs = sessionSlots.map((slotDef, sIdx) => {
             if (!slotDef) return null;
             const exId = slotDef.exerciseId || dayPlan[sIdx];
@@ -125,7 +132,24 @@ export class SessionBuilder {
                 effectivePrescription = effectivePrescription.slice(0, effectivePrescription.length - 1);
             }
 
-            const lastSets = getLastLogForExercise(exDef.id, safeLogs);
+            // PERFORMANCE owns a stable slot identity. Previous values must come
+            // from that same slot inside PERFORMANCE, never from KONG or an
+            // unrelated custom routine that happens to use the same exercise.
+            let lastSets = isPerformance ? null : getLastLogForExercise(exDef.id, safeLogs);
+            if (isPerformance && slotDef.programSlotId) {
+                for (const previousLog of performanceLogsNewestFirst) {
+                    const previousExercise = (previousLog.exercises || []).find(item =>
+                        String(item.id) === String(exDef.id) && item.programSlotId === slotDef.programSlotId
+                    );
+                    if (!previousExercise) continue;
+                    const workingSets = (previousExercise.sets || []).filter(set => set.type !== 'warmup' && set.type !== 'avt_hop');
+                    if (workingSets.length > 0) {
+                        lastSets = workingSets;
+                        break;
+                    }
+                }
+            }
+
             const prescriptionForSession = effectivePrescription || Array.from({ length: setTarget }, () => undefined);
 
             const initialSets = prescriptionForSession.map((prescription, i) => ({
