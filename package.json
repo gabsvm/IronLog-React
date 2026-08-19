@@ -17,6 +17,8 @@
     "cap-open-ios": "npx cap open ios",
     "validate-android-env": "node scripts/validate-android-env.mjs",
     "validate-kong": "node --experimental-strip-types scripts/validate-kong.ts",
+    "validate-performance": "node --experimental-strip-types scripts/validate-performance.ts",
+    "validate-programs": "npm run validate-kong && npm run validate-performance",
     "build-android": "npm run validate-android-env && npm run build && npx cap sync android",
     "build-ios": "npm run build && npx cap sync ios",
     "android-debug-apk": "npm run build-android && cd android && gradlew.bat assembleDebug"
@@ -53,7 +55,7 @@
     "autoprefixer": "^10.4.18",
     "eslint": "^9.39.4",
     "eslint-plugin-jsx-a11y": "^6.10.2",
-    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-hooks": "^5.2.0",
     "globals": "^17.6.0",
     "postcss": "^8.4.35",
     "sharp": "^0.32.6",
