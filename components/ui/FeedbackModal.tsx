@@ -7,6 +7,9 @@ import { Sheet } from './Sheet';
 import { calculateVolumeAdjustment } from '../../utils';
 import { useStore } from '../../lib/store';
 import { Icon } from './Icon';
+import { KONG_4DAY_V1 } from '../../programs/kong/kong4Day';
+import { PERFORMANCE_UPPER_LOWER_V1 } from '../../programs/performance/performanceUpperLower';
+import { calculatePerformanceVolumeAdjustment } from '../../programs/performance/performanceProgression';
 
 interface FeedbackPayload {
     soreness: number;
@@ -48,10 +51,15 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
     const currentComplete = recovery !== null && performance !== null && stimulus !== null;
     const isLast = step >= uniqueMuscles.length - 1;
     const remainingMuscles = Math.max(0, uniqueMuscles.length - step - 1);
-    // A structured program only owns feedback when the session actually belongs
-    // to that active program. Detached/freestyle work while KONG is active must
-    // not inherit KONG's "fixed prescription" behavior by accident.
-    const isStructuredProgram = !!activeMeso?.programSystem && activeSession?.mesoId === activeMeso.id;
+
+    // A program only owns feedback when the session actually belongs to the
+    // active run. Freestyle work while a structured program is active must not
+    // inherit its progression behavior by accident.
+    const sessionBelongsToActiveProgram = !!activeMeso?.programSystem && activeSession?.mesoId === activeMeso.id;
+    const activeProgramId = sessionBelongsToActiveProgram ? activeMeso?.programSystem?.systemId : null;
+    const isKongProgram = activeProgramId === KONG_4DAY_V1.id;
+    const isPerformanceProgram = activeProgramId === PERFORMANCE_UPPER_LOWER_V1.id;
+    const isStructuredProgram = !!activeProgramId;
 
     const updateCurrent = (patch: Partial<DraftFeedback[string]>) => {
         if (!currentMuscle) return;
@@ -67,22 +75,37 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
         }));
     };
 
-    const rawAdjustment = currentComplete ? calculateVolumeAdjustment(recovery!, performance!) : null;
-    const displayedAdjustment = rawAdjustment == null
-        ? null
-        : isStructuredProgram
-            ? 0
-            : jointPain
-                ? Math.min(rawAdjustment, 0)
-                : rawAdjustment;
+    const calculateAdjustmentFor = (item: DraftFeedback[string]): number => {
+        if (item.recovery == null || item.performance == null || item.stimulus == null) return 0;
+        if (isKongProgram) return 0;
+        if (isPerformanceProgram) {
+            return calculatePerformanceVolumeAdjustment({
+                cycle: activeMeso?.week || 1,
+                recovery: item.recovery,
+                performance: item.performance,
+                stimulus: item.stimulus,
+                jointPain: item.jointPain,
+            });
+        }
+
+        // Unknown future structured systems stay immutable unless they opt into
+        // their own progression rule explicitly.
+        if (isStructuredProgram) return 0;
+
+        const base = calculateVolumeAdjustment(item.recovery, item.performance);
+        return item.jointPain ? Math.min(base, 0) : base;
+    };
+
+    const displayedAdjustment = currentComplete && current
+        ? calculateAdjustmentFor(current)
+        : null;
 
     const buildResult = (source: DraftFeedback = feedback) => {
         const result: Record<string, FeedbackPayload> = {};
         uniqueMuscles.forEach(muscle => {
             const item = source[muscle];
             if (item?.recovery == null || item?.performance == null || item?.stimulus == null) return;
-            const base = calculateVolumeAdjustment(item.recovery, item.performance);
-            const adjustment = isStructuredProgram ? 0 : item.jointPain ? Math.min(base, 0) : base;
+            const adjustment = calculateAdjustmentFor(item);
             result[muscle] = {
                 soreness: item.recovery,
                 recovery: item.recovery,
@@ -115,7 +138,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
         const nextDraft: DraftFeedback = { ...feedback, [currentMuscle]: seed };
         uniqueMuscles.slice(step + 1).forEach(muscle => {
             // Pain is deliberately NOT copied to other muscles. The fast path only
-            // duplicates the subjective performance/stimulus/recovery ratings.
+            // duplicates subjective performance/stimulus/recovery ratings.
             nextDraft[muscle] = { ...seed, jointPain: false };
         });
         onConfirm(buildResult(nextDraft));
@@ -155,9 +178,36 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
 
     const explanation = (() => {
         if (!currentComplete) return null;
+
+        if (isKongProgram) return lang === 'es'
+            ? 'Se registra tu respuesta, pero KONG mantiene su receta oficial. El check-in no modifica su volumen ni su progresión.'
+            : 'Your response is recorded, but KONG keeps its official prescription. The check-in does not modify its volume or progression.';
+
+        if (isPerformanceProgram) {
+            const cycle = activeMeso?.week || 1;
+            if (cycle <= 2) return lang === 'es'
+                ? 'Calibración: los dos primeros ciclos no aumentan ni reducen volumen. Primero establecemos cargas, RPE y respuesta real.'
+                : 'Calibration: the first two cycles do not add or remove volume. First establish honest loads, RPE and response.';
+            if (cycle >= 8) return lang === 'es'
+                ? 'Pivote: el ciclo 8 ya reduce la fatiga por diseño. Este check-in se registra, pero no cambia las series del pivote.'
+                : 'Pivot: cycle 8 already reduces fatigue by design. This check-in is recorded but does not alter pivot sets.';
+            if ((displayedAdjustment || 0) > 0) return lang === 'es'
+                ? 'Próximo ciclo: +1 serie en un único ejercicio adaptativo de este músculo. Solo se añade porque el rendimiento quedó igual y llegaste claramente fresco.'
+                : 'Next cycle: +1 set on one adaptive exercise for this muscle. It is added only because performance was flat while recovery was clearly fresh.';
+            if ((displayedAdjustment || 0) < 0) return lang === 'es'
+                ? 'Próximo ciclo: −1 serie en un único ejercicio adaptativo de este músculo. PERFORMANCE prioriza recuperar margen antes de volver a empujar volumen.'
+                : 'Next cycle: −1 set on one adaptive exercise for this muscle. PERFORMANCE restores recovery margin before pushing volume again.';
+            if (performance === 3) return lang === 'es'
+                ? 'Estás progresando: mantener volumen. PERFORMANCE no añade series a una dosis que ya está funcionando.'
+                : 'You are progressing: keep volume. PERFORMANCE does not add sets to a dose that is already working.';
+            return lang === 'es'
+                ? 'Mantener volumen: todavía no hay una razón clara para cambiar la dosis.'
+                : 'Keep volume: there is not a clear reason to change the dose yet.';
+        }
+
         if (isStructuredProgram) return lang === 'es'
-            ? 'Se registra tu respuesta, pero este programa mantiene su receta oficial. No se modifica KONG ni su progresión.'
-            : 'Your response is recorded, but this structured program keeps its official prescription. KONG and its progression are not modified.';
+            ? 'Se registra tu respuesta, pero este programa estructurado no declaró una regla automática de ajuste de volumen.'
+            : 'Your response is recorded, but this structured program has not declared an automatic volume-adjustment rule.';
         if (jointPain) return lang === 'es'
             ? 'Marcaste molestia articular: GainsLab no aumentará automáticamente el volumen de este músculo a partir de este check-in.'
             : 'You flagged joint discomfort: GainsLab will not automatically increase volume for this muscle from this check-in.';
@@ -171,6 +221,14 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
             ? `Ajuste futuro: ${displayedAdjustment} serie(s). La recuperación sugiere bajar carga de trabajo.`
             : `Future adjustment: ${displayedAdjustment} set(s). Recovery suggests reducing workload.`;
     })();
+
+    const explanationIcon = isKongProgram
+        ? 'Shield'
+        : (displayedAdjustment || 0) > 0
+            ? 'TrendingUp'
+            : (displayedAdjustment || 0) < 0
+                ? 'TrendingDown'
+                : 'CheckCircle';
 
     return (
         <Sheet
@@ -226,7 +284,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
                         <span className={`h-5 w-9 rounded-full p-0.5 transition-colors ${jointPain ? 'bg-amber-500' : 'bg-[rgb(var(--surface-elevated))]'}`}><span className={`block h-4 w-4 rounded-full bg-white transition-transform ${jointPain ? 'translate-x-4' : ''}`} /></span>
                     </button>
 
-                    {explanation && <div className="flex items-start gap-3 rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] px-4 py-3 text-xs leading-relaxed text-[rgb(var(--text-secondary))]"><Icon name={isStructuredProgram ? 'Shield' : displayedAdjustment && displayedAdjustment !== 0 ? 'TrendingUp' : 'CheckCircle'} size={16} className="mt-0.5 shrink-0 text-primary-500" /><span>{explanation}</span></div>}
+                    {explanation && <div className="flex items-start gap-3 rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] px-4 py-3 text-xs leading-relaxed text-[rgb(var(--text-secondary))]"><Icon name={explanationIcon} size={16} className="mt-0.5 shrink-0 text-primary-500" /><span>{explanation}</span></div>}
                 </div>
             </div>
         </Sheet>
