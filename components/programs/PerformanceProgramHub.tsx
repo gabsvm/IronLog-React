@@ -29,7 +29,16 @@ export const PerformanceProgramHub: React.FC<Props> = ({ meso, logs, onClose, la
     () => resolveProgramWeek(PERFORMANCE_UPPER_LOWER_V1, meso.week, meso.programSystem?.substitutions || {}),
     [meso.programSystem?.substitutions, meso.week],
   );
-  const expectedResolved = Math.max(0, (meso.week - 1) * PERFORMANCE_UPPER_LOWER_V1.daysPerWeek);
+  const resolvedInCurrentCycle = useMemo(() => new Set(
+    logs
+      .filter(log => log.mesoId === meso.id && log.week === meso.week)
+      .map(log => log.dayIdx)
+      .filter(dayIdx => dayIdx >= 0 && dayIdx < PERFORMANCE_UPPER_LOWER_V1.daysPerWeek),
+  ).size, [logs, meso.id, meso.week]);
+  const expectedResolved = Math.max(
+    1,
+    ((meso.week - 1) * PERFORMANCE_UPPER_LOWER_V1.daysPerWeek) + resolvedInCurrentCycle,
+  );
   const metrics = calculateProgramMetrics(
     logs,
     meso.id,
