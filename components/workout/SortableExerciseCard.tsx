@@ -1,14 +1,15 @@
 import React, { useMemo } from 'react';
 import type { Log, WorkoutSet } from '../../types';
 import { PERFORMANCE_UPPER_LOWER_V1 } from '../../programs/performance/performanceUpperLower';
+import { GUTS_BLACK_SWORDSMAN_V1 } from '../../programs/naturalHypertrophy/gutsBlackSwordsman';
 import { getExerciseHistorySummary } from '../../utils/exerciseHistoryIndex';
 import { Icon } from '../ui/Icon';
 import { SortableExerciseCard as SortableExerciseCardImpl } from './SortableExerciseCardImpl';
 
 type SortableExerciseCardProps = React.ComponentProps<typeof SortableExerciseCardImpl>;
 type RangedWorkoutSet = WorkoutSet & { prescribedRepRange?: { min: number; max: number } };
-type PerformanceExercise = SortableExerciseCardProps['exercise'] & {
-    progressionPolicy?: 'double' | 'hold' | 'pivot';
+type StructuredProgressExercise = SortableExerciseCardProps['exercise'] & {
+    progressionPolicy?: 'double' | 'hold' | 'pivot' | 'evolving';
     performanceVolumeDelta?: number;
 };
 
@@ -22,16 +23,9 @@ const makeCompletedSet = (patch: Partial<WorkoutSet>): WorkoutSet => ({
     ...patch,
 });
 
-/**
- * Performance wrapper around the current EXPERIMENTAL card implementation.
- *
- * The implementation historically scans `logs` for its PR badge and overload
- * suggestion. Instead of rewriting that large, fast-moving UI component, build
- * one cached history index and feed it at most two synthetic log entries.
- */
 export const SortableExerciseCard = React.memo((props: SortableExerciseCardProps) => {
     const { logs, exercise, lang } = props;
-    const performanceExercise = exercise as PerformanceExercise;
+    const structuredExercise = exercise as StructuredProgressExercise;
 
     const programTargetSummary = useMemo(() => {
         if (!exercise?.programSlotId || !Array.isArray(exercise.sets) || exercise.sets.length === 0) return null;
@@ -53,13 +47,16 @@ export const SortableExerciseCard = React.memo((props: SortableExerciseCardProps
         return getExerciseHistorySummary(logs, String(exercise.id));
     }, [logs, exercise?.id]);
 
-    // PERFORMANCE owns a stable slot identity, so progression must compare the
-    // same exercise in the same slot of PERFORMANCE—not an unrelated routine or
-    // an old KONG exposure that happens to share the exercise id.
-    const previousPerformanceSets = useMemo(() => {
-        if (!exercise?.programSlotId || exercise?.id == null || !Array.isArray(logs)) return null;
+    const progressionSystemId = structuredExercise.progressionPolicy === 'evolving'
+        ? GUTS_BLACK_SWORDSMAN_V1.id
+        : structuredExercise.progressionPolicy
+            ? PERFORMANCE_UPPER_LOWER_V1.id
+            : null;
+
+    const previousStructuredSets = useMemo(() => {
+        if (!progressionSystemId || !exercise?.programSlotId || exercise?.id == null || !Array.isArray(logs)) return null;
         const ordered = logs
-            .filter(log => !log.skipped && log.programSystem?.systemId === PERFORMANCE_UPPER_LOWER_V1.id)
+            .filter(log => !log.skipped && log.programSystem?.systemId === progressionSystemId)
             .slice()
             .sort((a, b) => (b.endTime || b.startTime || 0) - (a.endTime || a.startTime || 0));
 
@@ -72,87 +69,72 @@ export const SortableExerciseCard = React.memo((props: SortableExerciseCardProps
             if (working.length > 0) return working;
         }
         return null;
-    }, [exercise?.id, exercise?.programSlotId, logs]);
+    }, [exercise?.id, exercise?.programSlotId, logs, progressionSystemId]);
 
     const progressionCue = useMemo(() => {
-        if (!exercise?.programSlotId || !Array.isArray(exercise.sets) || exercise.sets.length === 0) return null;
+        if (!structuredExercise.progressionPolicy || !exercise?.programSlotId || !Array.isArray(exercise.sets) || exercise.sets.length === 0) return null;
         const rangedSets = exercise.sets as RangedWorkoutSet[];
-        if (!rangedSets.every(set => !!set.prescribedRepRange)) return null; // PERFORMANCE uses explicit ranges; KONG does not.
+        if (!rangedSets.every(set => !!set.prescribedRepRange)) return null;
 
-        if (performanceExercise.progressionPolicy === 'pivot') {
-            return {
-                ready: false,
-                label: lang === 'es' ? 'Pivote · mantené la carga y no busques PR' : 'Pivot · hold load and do not chase PRs',
-            };
+        if (structuredExercise.progressionPolicy === 'pivot') {
+            return { ready: false, label: lang === 'es' ? 'Pivote · mantené la carga y no busques PR' : 'Pivot · hold load and do not chase PRs' };
         }
-        if (performanceExercise.progressionPolicy === 'hold') {
-            return {
-                ready: false,
-                label: lang === 'es' ? 'Recovery amarillo · mantené la carga hoy' : 'Yellow recovery · hold load today',
-            };
+        if (structuredExercise.progressionPolicy === 'hold') {
+            return { ready: false, label: lang === 'es' ? 'Recovery amarillo · mantené la carga hoy' : 'Yellow recovery · hold load today' };
         }
 
-        const maxTarget = Math.max(...rangedSets.map(set => set.prescribedRepRange!.max));
-        const targetRpe = rangedSets.find(set => Number.isFinite(Number(set.targetRpe)))?.targetRpe;
-        if (!previousPerformanceSets) {
-            return {
-                ready: false,
-                label: lang === 'es'
-                    ? `Primera referencia · elegí carga para RPE ${targetRpe ?? 'objetivo'}`
-                    : `First reference · choose load for RPE ${targetRpe ?? 'target'}`,
-            };
+        const ranges = rangedSets.map(set => set.prescribedRepRange!);
+        const minTarget = Math.min(...ranges.map(range => range.min));
+        const maxTarget = Math.max(...ranges.map(range => range.max));
+
+        if (!previousStructuredSets) {
+            if (structuredExercise.progressionPolicy === 'evolving') {
+                return { ready: false, label: lang === 'es' ? `Primera referencia · elegí una carga limpia para ${minTarget}–${maxTarget}` : `First reference · choose a clean ${minTarget}–${maxTarget} load` };
+            }
+            const targetRpe = rangedSets.find(set => Number.isFinite(Number(set.targetRpe)))?.targetRpe;
+            return { ready: false, label: lang === 'es' ? `Primera referencia · elegí carga para RPE ${targetRpe ?? 'objetivo'}` : `First reference · choose load for RPE ${targetRpe ?? 'target'}` };
         }
 
-        const latest = previousPerformanceSets
+        const latest = previousStructuredSets
             .filter(set => set.completed && !set.skipped && set.type !== 'warmup' && set.type !== 'avt_hop')
             .slice(0, rangedSets.length);
 
-        if (latest.length < rangedSets.length) {
-            return {
-                ready: false,
-                label: lang === 'es' ? 'Construí reps · mantené la carga' : 'Build reps · hold the load',
-            };
+        if (structuredExercise.progressionPolicy === 'evolving') {
+            if (latest.length < rangedSets.length) {
+                return { ready: false, label: lang === 'es' ? 'Evolving reps · completá el trabajo y mantené carga' : 'Evolving reps · complete the work and hold load' };
+            }
+            const reps = latest.map(set => Number(set.reps || 0));
+            const allAtCeiling = reps.every(rep => rep >= maxTarget);
+            const rangeMature = reps.every(rep => rep >= Math.max(minTarget, maxTarget - 1)) && reps.some(rep => rep >= maxTarget);
+            if (allAtCeiling) {
+                return { ready: true, label: lang === 'es' ? 'Rango dominado · considerá el aumento mínimo práctico' : 'Range mastered · consider the smallest practical load increase' };
+            }
+            if (rangeMature) {
+                return { ready: true, label: lang === 'es' ? 'Rango alto · subí solo si la técnica y recuperación lo justifican' : 'High in range · add load only if technique and recovery justify it' };
+            }
+            return { ready: false, label: lang === 'es' ? 'Evolving reps · mantené carga y acumulá reps' : 'Evolving reps · hold load and accumulate reps' };
         }
 
+        const targetRpe = rangedSets.find(set => Number.isFinite(Number(set.targetRpe)))?.targetRpe;
+        if (latest.length < rangedSets.length) {
+            return { ready: false, label: lang === 'es' ? 'Construí reps · mantené la carga' : 'Build reps · hold the load' };
+        }
         const hitCeiling = latest.every(set => Number(set.reps || 0) >= maxTarget);
         if (!hitCeiling) {
-            return {
-                ready: false,
-                label: lang === 'es' ? 'Construí reps · mantené la carga' : 'Build reps · hold the load',
-            };
+            return { ready: false, label: lang === 'es' ? 'Construí reps · mantené la carga' : 'Build reps · hold the load' };
         }
-
-        const recordedRpe = latest
-            .map(set => Number(set.rpe))
-            .filter(value => Number.isFinite(value) && value > 0);
+        const recordedRpe = latest.map(set => Number(set.rpe)).filter(value => Number.isFinite(value) && value > 0);
         if (targetRpe !== undefined && recordedRpe.length === latest.length) {
-            const maxObservedRpe = Math.max(...recordedRpe);
-            if (maxObservedRpe <= targetRpe) {
-                return {
-                    ready: true,
-                    label: lang === 'es' ? 'Techo logrado · subí el mínimo práctico' : 'Rep ceiling earned · add the smallest practical load',
-                };
+            if (Math.max(...recordedRpe) <= targetRpe) {
+                return { ready: true, label: lang === 'es' ? 'Techo logrado · subí el mínimo práctico' : 'Rep ceiling earned · add the smallest practical load' };
             }
-            return {
-                ready: false,
-                label: lang === 'es' ? 'Techo de reps, esfuerzo alto · mantené carga' : 'Rep ceiling reached, effort high · hold load',
-            };
+            return { ready: false, label: lang === 'es' ? 'Techo de reps, esfuerzo alto · mantené carga' : 'Rep ceiling reached, effort high · hold load' };
         }
+        return { ready: true, label: lang === 'es' ? `Techo de reps · si fue ≤RPE ${targetRpe ?? 'objetivo'}, subí el mínimo` : `Rep ceiling · if ≤RPE ${targetRpe ?? 'target'}, add the minimum` };
+    }, [exercise?.programSlotId, exercise?.sets, lang, previousStructuredSets, structuredExercise.progressionPolicy]);
 
-        return {
-            ready: true,
-            label: lang === 'es'
-                ? `Techo de reps · si fue ≤RPE ${targetRpe ?? 'objetivo'}, subí el mínimo`
-                : `Rep ceiling · if ≤RPE ${targetRpe ?? 'target'}, add the minimum`,
-        };
-    }, [exercise?.programSlotId, exercise?.sets, lang, performanceExercise.progressionPolicy, previousPerformanceSets]);
-
-    // KONG already prescribes effort via reps + target RPE. Keep historical PR
-    // context, but do not surface the generic "+2.5 kg" rule on top of an RPE-
-    // based structured program. It can conflict with the method's intended load.
     const compactHistory = useMemo<Log[]>(() => {
         if (!historySummary || exercise?.id == null) return [];
-
         const summary = historySummary;
         const synthetic: any[] = [];
         let bestSet: WorkoutSet | null = null;
@@ -160,53 +142,17 @@ export const SortableExerciseCard = React.memo((props: SortableExerciseCardProps
         if (exercise.isIsometric && summary.bestHoldSeconds > 0) {
             bestSet = makeCompletedSet({ duration: summary.bestHoldSeconds });
         } else if (exercise.isBodyweight && summary.bestBodyweightReps > 0) {
-            bestSet = makeCompletedSet({
-                reps: summary.bestBodyweightReps,
-                weight: summary.bestBodyweightWeight,
-            });
-        } else if (
-            summary.bestWeighted1RM > 0 &&
-            summary.bestWeightedWeight != null &&
-            summary.bestWeightedReps != null
-        ) {
-            bestSet = makeCompletedSet({
-                weight: summary.bestWeightedWeight,
-                reps: summary.bestWeightedReps,
-            });
+            bestSet = makeCompletedSet({ reps: summary.bestBodyweightReps, weight: summary.bestBodyweightWeight });
+        } else if (summary.bestWeighted1RM > 0 && summary.bestWeightedWeight != null && summary.bestWeightedReps != null) {
+            bestSet = makeCompletedSet({ weight: summary.bestWeightedWeight, reps: summary.bestWeightedReps });
         }
 
         if (bestSet) {
-            synthetic.push({
-                id: -1,
-                dayIdx: -1,
-                name: 'history-best',
-                startTime: 0,
-                endTime: 0,
-                duration: 0,
-                mesoId: -1,
-                week: 0,
-                skipped: false,
-                exercises: [{ id: exercise.id, sets: [bestSet] }],
-            });
+            synthetic.push({ id: -1, dayIdx: -1, name: 'history-best', startTime: 0, endTime: 0, duration: 0, mesoId: -1, week: 0, skipped: false, exercises: [{ id: exercise.id, sets: [bestSet] }] });
         }
-
-        // Generic progressive-overload suggestions are useful for normal plans,
-        // but structured Program Systems own their progression rules.
         if (!exercise.programSlotId && summary.latestWorkingSets && summary.latestWorkingSets.length > 0) {
-            synthetic.push({
-                id: -2,
-                dayIdx: -1,
-                name: 'history-latest',
-                startTime: 1,
-                endTime: 1,
-                duration: 0,
-                mesoId: -1,
-                week: 0,
-                skipped: false,
-                exercises: [{ id: exercise.id, sets: summary.latestWorkingSets }],
-            });
+            synthetic.push({ id: -2, dayIdx: -1, name: 'history-latest', startTime: 1, endTime: 1, duration: 0, mesoId: -1, week: 0, skipped: false, exercises: [{ id: exercise.id, sets: summary.latestWorkingSets }] });
         }
-
         return synthetic as Log[];
     }, [historySummary, exercise.id, exercise.isBodyweight, exercise.isIsometric, exercise.programSlotId]);
 
@@ -214,19 +160,14 @@ export const SortableExerciseCard = React.memo((props: SortableExerciseCardProps
         () => programTargetSummary ? { ...exercise, targetReps: programTargetSummary } : exercise,
         [exercise, programTargetSummary],
     );
-
-    const volumeDelta = Number(performanceExercise.performanceVolumeDelta || 0);
+    const volumeDelta = Number(structuredExercise.performanceVolumeDelta || 0);
 
     return (
         <div className={progressionCue || volumeDelta !== 0 ? 'space-y-1.5' : undefined}>
             {volumeDelta !== 0 && (
                 <div className={`mx-1 flex items-center gap-1.5 rounded-lg px-2 py-1 text-[10px] font-bold ${volumeDelta > 0 ? 'bg-emerald-500/[0.08] text-emerald-400' : 'bg-amber-500/[0.08] text-amber-400'}`}>
                     <Icon name={volumeDelta > 0 ? 'Plus' : 'Minus'} size={12} />
-                    <span className="truncate">
-                        {volumeDelta > 0
-                            ? (lang === 'es' ? 'Check-in previo · +1 serie en este slot' : 'Previous check-in · +1 set on this slot')
-                            : (lang === 'es' ? 'Check-in previo · −1 serie en este slot' : 'Previous check-in · −1 set on this slot')}
-                    </span>
+                    <span className="truncate">{volumeDelta > 0 ? (lang === 'es' ? 'Check-in previo · +1 serie en este slot' : 'Previous check-in · +1 set on this slot') : (lang === 'es' ? 'Check-in previo · −1 serie en este slot' : 'Previous check-in · −1 set on this slot')}</span>
                 </div>
             )}
             {progressionCue && (
