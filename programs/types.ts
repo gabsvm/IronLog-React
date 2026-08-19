@@ -74,7 +74,7 @@ export interface ProgramSystemDefinition {
   blocks: ProgramBlockDefinition[];
   guideId: string;
   cadence?: ProgramCadence;
-  progressionModel?: 'prescribed' | 'double_progression';
+  progressionModel?: 'prescribed' | 'double_progression' | 'evolving_rep_range';
 }
 
 export interface ProgramRunState {
