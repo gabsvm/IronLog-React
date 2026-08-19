@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import type { Log, WorkoutSet } from '../../types';
+import { PERFORMANCE_UPPER_LOWER_V1 } from '../../programs/performance/performanceUpperLower';
 import { getExerciseHistorySummary } from '../../utils/exerciseHistoryIndex';
 import { Icon } from '../ui/Icon';
 import { SortableExerciseCard as SortableExerciseCardImpl } from './SortableExerciseCardImpl';
@@ -51,6 +52,27 @@ export const SortableExerciseCard = React.memo((props: SortableExerciseCardProps
         return getExerciseHistorySummary(logs, String(exercise.id));
     }, [logs, exercise?.id]);
 
+    // PERFORMANCE owns a stable slot identity, so progression must compare the
+    // same exercise in the same slot of PERFORMANCE—not an unrelated routine or
+    // an old KONG exposure that happens to share the exercise id.
+    const previousPerformanceSets = useMemo(() => {
+        if (!exercise?.programSlotId || exercise?.id == null || !Array.isArray(logs)) return null;
+        const ordered = logs
+            .filter(log => !log.skipped && log.programSystem?.systemId === PERFORMANCE_UPPER_LOWER_V1.id)
+            .slice()
+            .sort((a, b) => (b.endTime || b.startTime || 0) - (a.endTime || a.startTime || 0));
+
+        for (const log of ordered) {
+            const pastExercise = (log.exercises || []).find(item =>
+                String(item.id) === String(exercise.id) && item.programSlotId === exercise.programSlotId
+            );
+            if (!pastExercise) continue;
+            const working = (pastExercise.sets || []).filter(set => set.type !== 'warmup' && set.type !== 'avt_hop');
+            if (working.length > 0) return working;
+        }
+        return null;
+    }, [exercise?.id, exercise?.programSlotId, logs]);
+
     const progressionCue = useMemo(() => {
         if (!exercise?.programSlotId || !Array.isArray(exercise.sets) || exercise.sets.length === 0) return null;
         const rangedSets = exercise.sets as RangedWorkoutSet[];
@@ -69,11 +91,20 @@ export const SortableExerciseCard = React.memo((props: SortableExerciseCardProps
             };
         }
 
-        const latest = (historySummary?.latestWorkingSets || [])
-            .filter(set => set.completed && !set.skipped && set.type !== 'warmup' && set.type !== 'avt_hop')
-            .slice(0, rangedSets.length);
         const maxTarget = Math.max(...rangedSets.map(set => set.prescribedRepRange!.max));
         const targetRpe = rangedSets.find(set => Number.isFinite(Number(set.targetRpe)))?.targetRpe;
+        if (!previousPerformanceSets) {
+            return {
+                ready: false,
+                label: lang === 'es'
+                    ? `Primera referencia · elegí carga para RPE ${targetRpe ?? 'objetivo'}`
+                    : `First reference · choose load for RPE ${targetRpe ?? 'target'}`,
+            };
+        }
+
+        const latest = previousPerformanceSets
+            .filter(set => set.completed && !set.skipped && set.type !== 'warmup' && set.type !== 'avt_hop')
+            .slice(0, rangedSets.length);
 
         if (latest.length < rangedSets.length) {
             return {
@@ -113,7 +144,7 @@ export const SortableExerciseCard = React.memo((props: SortableExerciseCardProps
                 ? `Techo de reps · si fue ≤RPE ${targetRpe ?? 'objetivo'}, subí el mínimo`
                 : `Rep ceiling · if ≤RPE ${targetRpe ?? 'target'}, add the minimum`,
         };
-    }, [exercise?.programSlotId, exercise?.sets, historySummary?.latestWorkingSets, lang, performanceExercise.progressionPolicy]);
+    }, [exercise?.programSlotId, exercise?.sets, lang, performanceExercise.progressionPolicy, previousPerformanceSets]);
 
     // KONG already prescribes effort via reps + target RPE. Keep historical PR
     // context, but do not surface the generic "+2.5 kg" rule on top of an RPE-
