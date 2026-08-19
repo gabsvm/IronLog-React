@@ -1,6 +1,8 @@
 import { ProgramDay, MesoCycle, ExerciseDef, Log, ActiveSession, SessionExercise } from '../types';
 import { getLastLogForExercise, uid } from '../utils';
 import { KONG_4DAY_V1 } from '../programs/kong/kong4Day';
+import { PERFORMANCE_UPPER_LOWER_V1 } from '../programs/performance/performanceUpperLower';
+import { consumePendingPerformanceRecoveryMode } from '../programs/performance/performanceRecovery';
 import { getProgramBlockForWeek, resolveProgramDay } from '../programs/engine/ProgramResolver';
 import { getKongDayDisplay } from '../programs/kong/kongDisplay';
 import { getProgramDefinition } from '../programs/registry';
@@ -22,6 +24,8 @@ export class SessionBuilder {
             ? getProgramDefinition(activeMeso.programSystem.systemId, activeMeso.programSystem.systemVersion)
             : null;
         const isKong = structuredDefinition?.id === KONG_4DAY_V1.id;
+        const isPerformance = structuredDefinition?.id === PERFORMANCE_UPPER_LOWER_V1.id;
+        const performanceRecoveryMode = isPerformance ? consumePendingPerformanceRecoveryMode() : 'green';
 
         // Structured programs resolve their immutable definition at build time;
         // normal templates continue through the legacy path unchanged.
@@ -34,9 +38,10 @@ export class SessionBuilder {
             )
             : programDay;
 
-        const structuredBlock = structuredDefinition
-            ? getProgramBlockForWeek(structuredDefinition, activeMeso.week).block
+        const structuredBlockResolution = structuredDefinition
+            ? getProgramBlockForWeek(structuredDefinition, activeMeso.week)
             : null;
+        const structuredBlock = structuredBlockResolution?.block || null;
         const localizedKongDay = isKong && structuredBlock
             ? getKongDayDisplay(structuredBlock.number, dayIdx)
             : null;
@@ -51,8 +56,12 @@ export class SessionBuilder {
         const safeExercises = Array.isArray(exercises) ? exercises.filter(e => !!e) : [];
         const safeLogs = Array.isArray(logs) ? logs : [];
         const isDeload = !!activeMeso.isDeload;
+        const resolvedSlots = resolvedDay.slots || [];
+        const sessionSlots = isPerformance && performanceRecoveryMode === 'yellow'
+            ? resolvedSlots.slice(0, Math.max(1, resolvedSlots.length - 2))
+            : resolvedSlots;
 
-        const sessionExs = (resolvedDay.slots || []).map((slotDef, sIdx) => {
+        const sessionExs = sessionSlots.map((slotDef, sIdx) => {
             if (!slotDef) return null;
             const exId = slotDef.exerciseId || dayPlan[sIdx];
             // Priority: exact ID match → same-muscle fallback → typed placeholder (never random index 0)
@@ -90,7 +99,9 @@ export class SessionBuilder {
                 type: prescription?.role === 'top' ? 'top' : prescription?.role === 'backoff' || prescription?.role === 'high_rep_backoff' ? 'backoff' : slotDef.setType || 'regular',
                 prescribedReps: prescription?.reps,
                 prescribedRepRange: prescription?.repRange,
-                targetRpe: prescription?.targetRpe,
+                targetRpe: prescription?.targetRpe !== undefined && isPerformance && performanceRecoveryMode === 'yellow'
+                    ? Math.max(1, prescription.targetRpe - 1)
+                    : prescription?.targetRpe,
                 prescriptionRole: prescription?.role,
                 programSetIndex: slotDef.prescription ? i : undefined,
                 hintWeight: lastSets?.[i]?.weight,
@@ -115,6 +126,17 @@ export class SessionBuilder {
             };
         }).filter(Boolean);
 
+        const structuredMeta = structuredDefinition && activeMeso.programSystem && structuredBlockResolution
+            ? {
+                programSystem: {
+                    systemId: activeMeso.programSystem.systemId,
+                    systemVersion: activeMeso.programSystem.systemVersion,
+                    blockNumber: structuredBlockResolution.block.number,
+                    blockWeek: structuredBlockResolution.blockWeek,
+                }
+            }
+            : {};
+
         return {
             id: Date.now(),
             dayIdx: dayIdx,
@@ -122,7 +144,9 @@ export class SessionBuilder {
             exercises: sessionExs as SessionExercise[],
             startTime: Date.now(),
             mesoId: activeMeso.id,
-            week: activeMeso.week
-        };
+            week: activeMeso.week,
+            ...(isPerformance ? { note: `PERFORMANCE Recovery Gate: ${performanceRecoveryMode.toUpperCase()}` } : {}),
+            ...structuredMeta,
+        } as ActiveSession;
     }
 }
