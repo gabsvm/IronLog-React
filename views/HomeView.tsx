@@ -3,10 +3,13 @@ import { HomeView as HomeViewImpl } from './HomeViewImpl';
 import { useApp, useAppPreferences } from '../context/AppContext';
 import { useStore } from '../lib/store';
 import { KONG_4DAY_V1 } from '../programs/kong/kong4Day';
+import { PERFORMANCE_UPPER_LOWER_V1 } from '../programs/performance/performanceUpperLower';
+import { setPendingPerformanceRecoveryMode } from '../programs/performance/performanceRecovery';
 import { getProgramBlockForWeek, resolveProgramWeek } from '../programs/engine/ProgramResolver';
 import { getKongDayDisplay } from '../programs/kong/kongDisplay';
 import { getProgramDefinition } from '../programs/registry';
 import { ProgramProgressStrip } from '../components/programs/ProgramProgressStrip';
+import { PerformanceRecoveryGate } from '../components/programs/PerformanceRecoveryGate';
 import { TRANSLATIONS } from '../constants';
 import './product-polish.css';
 import './reorder-history-polish.css';
@@ -32,12 +35,14 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
     const setActiveMeso = useStore(state => state.setActiveMeso);
     const rootRef = useRef<HTMLDivElement>(null);
     const [showSkippedFinalCompletion, setShowSkippedFinalCompletion] = useState(false);
+    const [pendingPerformanceDay, setPendingPerformanceDay] = useState<number | null>(null);
     const structuredDefinition = useMemo(() => activeMeso?.programSystem
         ? getProgramDefinition(activeMeso.programSystem.systemId, activeMeso.programSystem.systemVersion)
         : null,
     [activeMeso?.programSystem?.systemId, activeMeso?.programSystem?.systemVersion]);
     const isStructured = !!structuredDefinition;
     const isKong = structuredDefinition?.id === KONG_4DAY_V1.id;
+    const isPerformance = structuredDefinition?.id === PERFORMANCE_UPPER_LOWER_V1.id;
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
     const safeProgram = useMemo(() => Array.isArray(program) ? program : [], [program]);
     const substitutionSignature = useMemo(
@@ -192,6 +197,19 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
         return () => observer.disconnect();
     }, [isKong, isStructured, lang, safeProgram, structuredCycleResolvedCount, structuredDefinition, t.tapToStart]);
 
+    const startSessionWithRecovery = (dayIdx: number) => {
+        if (!isPerformance) {
+            props.startSession(dayIdx);
+            return;
+        }
+        setPendingPerformanceDay(dayIdx);
+    };
+
+    const pendingDay = pendingPerformanceDay !== null ? safeProgram[pendingPerformanceDay] : null;
+    const pendingDayName = pendingDay?.dayName
+        ? (typeof pendingDay.dayName === 'object' ? pendingDay.dayName[lang] : pendingDay.dayName)
+        : undefined;
+
     return (
         <div ref={rootRef} className={`product-home-polish ${isKong ? 'kong-active' : ''} ${isStructured ? 'structured-program-active' : ''} contents`}>
             {isStructured && activeMeso && structuredDefinition && (
@@ -202,7 +220,20 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
                     name={activeMeso.name || structuredDefinition.title}
                 />
             )}
-            <HomeViewImpl {...props} />
+            <HomeViewImpl {...props} startSession={startSessionWithRecovery} />
+            {pendingPerformanceDay !== null && isPerformance && (
+                <PerformanceRecoveryGate
+                    lang={lang}
+                    sessionName={pendingDayName}
+                    onCancel={() => setPendingPerformanceDay(null)}
+                    onStart={(mode) => {
+                        const dayIdx = pendingPerformanceDay;
+                        setPendingPerformanceRecoveryMode(mode);
+                        setPendingPerformanceDay(null);
+                        props.startSession(dayIdx);
+                    }}
+                />
+            )}
             {showSkippedFinalCompletion && activeMeso && isKong && (
                 <Suspense fallback={<div className="fixed inset-0 z-modal bg-[rgb(var(--surface-app))]" />}>
                     <ProgramCompletionView
