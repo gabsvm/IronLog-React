@@ -28,11 +28,14 @@ export function resolveProgramSlot(
   if (!prescription || prescription.sets.length === 0) {
     throw new Error(`Missing prescription for ${slot.slotId} block week ${blockWeek}`);
   }
+  const setLabel = (set: typeof prescription.sets[number]) => set.repRange
+    ? `${set.repRange.min}-${set.repRange.max}`
+    : String(set.reps);
   return {
     muscle: slot.muscle,
     targetMuscle: slot.muscle,
     setTarget: prescription.sets.length,
-    reps: prescription.sets.map((set) => String(set.reps)).join(','),
+    reps: prescription.sets.map(setLabel).join(','),
     prescription: prescription.sets.map((set) => ({ ...set })),
     exerciseId: substitutions[slot.slotId] || slot.exerciseId,
     supersetId: slot.supersetId,
