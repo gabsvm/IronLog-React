@@ -60,6 +60,13 @@ export class SessionBuilder {
         const sessionSlots = isPerformance && performanceRecoveryMode === 'yellow'
             ? resolvedSlots.slice(0, Math.max(1, resolvedSlots.length - 2))
             : resolvedSlots;
+        const performanceProgressionPolicy: 'double' | 'hold' | 'pivot' | undefined = isPerformance
+            ? performanceRecoveryMode === 'yellow'
+                ? 'hold'
+                : structuredBlock?.id === 'performance-pivot'
+                    ? 'pivot'
+                    : 'double'
+            : undefined;
 
         const sessionExs = sessionSlots.map((slotDef, sIdx) => {
             if (!slotDef) return null;
@@ -122,6 +129,7 @@ export class SessionBuilder {
                 substitutionGroup: slotDef.substitutionGroup,
                 programSourceName: slotDef.programSourceName,
                 targetMuscle: slotDef.targetMuscle,
+                ...(performanceProgressionPolicy ? { progressionPolicy: performanceProgressionPolicy } : {}),
                 sets: initialSets as any
             };
         }).filter(Boolean);
