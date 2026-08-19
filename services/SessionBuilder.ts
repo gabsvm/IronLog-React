@@ -3,6 +3,7 @@ import { getLastLogForExercise, uid } from '../utils';
 import { KONG_4DAY_V1 } from '../programs/kong/kong4Day';
 import { getProgramBlockForWeek, resolveProgramDay } from '../programs/engine/ProgramResolver';
 import { getKongDayDisplay } from '../programs/kong/kongDisplay';
+import { getProgramDefinition } from '../programs/registry';
 
 export class SessionBuilder {
     static buildFromProgramDay(
@@ -17,16 +18,28 @@ export class SessionBuilder {
     ): ActiveSession | null {
         if (!programDay) return null;
 
-        const isKong = activeMeso.programSystem?.systemId === KONG_4DAY_V1.id;
+        const structuredDefinition = activeMeso.programSystem
+            ? getProgramDefinition(activeMeso.programSystem.systemId, activeMeso.programSystem.systemVersion)
+            : null;
+        const isKong = structuredDefinition?.id === KONG_4DAY_V1.id;
 
         // Structured programs resolve their immutable definition at build time;
         // normal templates continue through the legacy path unchanged.
-        const resolvedDay = isKong
-            ? resolveProgramDay(KONG_4DAY_V1, activeMeso.week, dayIdx, activeMeso.programSystem?.substitutions || {})
+        const resolvedDay = structuredDefinition
+            ? resolveProgramDay(
+                structuredDefinition,
+                activeMeso.week,
+                dayIdx,
+                activeMeso.programSystem?.substitutions || {},
+            )
             : programDay;
 
-        const kongBlock = isKong ? getProgramBlockForWeek(KONG_4DAY_V1, activeMeso.week).block : null;
-        const localizedKongDay = kongBlock ? getKongDayDisplay(kongBlock.number, dayIdx) : null;
+        const structuredBlock = structuredDefinition
+            ? getProgramBlockForWeek(structuredDefinition, activeMeso.week).block
+            : null;
+        const localizedKongDay = isKong && structuredBlock
+            ? getKongDayDisplay(structuredBlock.number, dayIdx)
+            : null;
         const dayNameSafe = localizedKongDay
             ? localizedKongDay[(lang === 'es' ? 'es' : 'en')]
             : resolvedDay.dayName
@@ -49,7 +62,8 @@ export class SessionBuilder {
 
             let setTarget = slotDef.setTarget || 3;
 
-            // RP Feedback adjustments
+            // RP Feedback adjustments apply only to legacy/adaptive templates.
+            // Structured program prescriptions are intentionally immutable here.
             if (!slotDef.prescription && config.rpEnabled && activeMeso && activeMeso.week > 1) {
                 let accumulatedAdjustment = 0;
                 const fbForMeso = rpFeedback[activeMeso.id];
@@ -75,6 +89,7 @@ export class SessionBuilder {
                 completed: false,
                 type: prescription?.role === 'top' ? 'top' : prescription?.role === 'backoff' || prescription?.role === 'high_rep_backoff' ? 'backoff' : slotDef.setType || 'regular',
                 prescribedReps: prescription?.reps,
+                prescribedRepRange: prescription?.repRange,
                 targetRpe: prescription?.targetRpe,
                 prescriptionRole: prescription?.role,
                 programSetIndex: slotDef.prescription ? i : undefined,
@@ -103,7 +118,7 @@ export class SessionBuilder {
         return {
             id: Date.now(),
             dayIdx: dayIdx,
-            name: isKong ? dayNameSafe : `${activeMeso.week} • ${dayNameSafe}`,
+            name: structuredDefinition ? dayNameSafe : `${activeMeso.week} • ${dayNameSafe}`,
             exercises: sessionExs as SessionExercise[],
             startTime: Date.now(),
             mesoId: activeMeso.id,
