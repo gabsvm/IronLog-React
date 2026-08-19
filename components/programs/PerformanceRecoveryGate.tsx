@@ -9,20 +9,22 @@ interface Props {
   onStart: (mode: PerformanceRecoveryMode) => void;
 }
 
-type SignalId = 'sleep' | 'energy' | 'focus' | 'vitality' | 'body';
+type SignalId = 'sleep' | 'energy' | 'focus' | 'vitality' | 'muscle' | 'joint';
 
-const SIGNALS: Array<{ id: SignalId; icon: string; en: string; es: string; enHelp: string; esHelp: string }> = [
+const SIGNALS: Array<{ id: SignalId; icon: string; en: string; es: string; enHelp: string; esHelp: string; critical?: boolean }> = [
   { id: 'sleep', icon: 'Moon', en: 'Sleep', es: 'Sueño', enHelp: 'Clearly worse than your normal?', esHelp: '¿Claramente peor que lo normal?' },
   { id: 'energy', icon: 'Battery', en: 'Energy', es: 'Energía', enHelp: 'Unusually low today?', esHelp: '¿Inusualmente baja hoy?' },
   { id: 'focus', icon: 'Brain', en: 'Concentration', es: 'Concentración', enHelp: 'Noticeably harder to focus?', esHelp: '¿Notablemente más difícil concentrarte?' },
   { id: 'vitality', icon: 'Heart', en: 'Vitality / libido', es: 'Vitalidad / libido', enHelp: 'Clearly below your own baseline?', esHelp: '¿Claramente por debajo de tu nivel habitual?' },
-  { id: 'body', icon: 'Activity', en: 'Muscle / joints', es: 'Músculos / articulaciones', enHelp: 'Not recovered or meaningfully irritated?', esHelp: '¿Sin recuperar o con molestia relevante?' },
+  { id: 'muscle', icon: 'Activity', en: 'Muscle recovery', es: 'Recuperación muscular', enHelp: 'Still unusually fatigued or sore?', esHelp: '¿Seguís inusualmente fatigado o adolorido?' },
+  { id: 'joint', icon: 'AlertTriangle', en: 'Joint warning', es: 'Advertencia articular', enHelp: 'Meaningful pain or irritation, not normal training discomfort?', esHelp: '¿Dolor o irritación relevante, no la incomodidad normal de entrenar?', critical: true },
 ];
 
 export const PerformanceRecoveryGate: React.FC<Props> = ({ lang, sessionName, onCancel, onStart }) => {
-  const [worse, setWorse] = useState<Record<SignalId, boolean>>({ sleep: false, energy: false, focus: false, vitality: false, body: false });
-  const score = useMemo(() => Object.values(worse).filter(Boolean).length, [worse]);
-  const status = score >= 3 ? 'red' : score === 2 ? 'yellow' : 'green';
+  const [worse, setWorse] = useState<Record<SignalId, boolean>>({ sleep: false, energy: false, focus: false, vitality: false, muscle: false, joint: false });
+  const nonCriticalScore = useMemo(() => SIGNALS.filter(signal => !signal.critical && worse[signal.id]).length, [worse]);
+  const hasJointWarning = worse.joint;
+  const status = hasJointWarning || nonCriticalScore >= 3 ? 'red' : nonCriticalScore === 2 ? 'yellow' : 'green';
 
   const copy = status === 'green'
     ? {
@@ -36,7 +38,9 @@ export const PerformanceRecoveryGate: React.FC<Props> = ({ lang, sessionName, on
       }
       : {
         label: lang === 'es' ? 'ROJO · Recuperá primero' : 'RED · Recover first',
-        body: lang === 'es' ? 'No conviene forzar hoy. Posponé la sesión unas 24 h y volvé a evaluar. Una señal aislada no decide nada; acá el patrón completo está comprometido.' : 'Do not force the session today. Delay it about 24 hours and reassess. One signal alone decides nothing; here the overall pattern is compromised.',
+        body: hasJointWarning
+          ? (lang === 'es' ? 'Marcaste una advertencia articular relevante. No fuerces la sesión: posponela o elegí atención profesional si la molestia lo amerita.' : 'You marked a meaningful joint warning. Do not force the session: delay it or seek professional care if the issue warrants it.')
+          : (lang === 'es' ? 'El patrón general de recuperación está comprometido. Posponé la sesión unas 24 h y volvé a evaluar.' : 'Your overall recovery pattern is compromised. Delay the session about 24 hours and reassess.'),
       };
 
   return (
@@ -51,17 +55,18 @@ export const PerformanceRecoveryGate: React.FC<Props> = ({ lang, sessionName, on
             </div>
             <button type="button" onClick={onCancel} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[rgb(var(--surface-base))] text-[rgb(var(--text-muted))]" aria-label={lang === 'es' ? 'Cerrar' : 'Close'}><Icon name="X" size={18} /></button>
           </div>
-          <p className="mt-3 text-xs leading-5 text-[rgb(var(--text-secondary))]">{lang === 'es' ? 'Marcá solo lo que esté claramente peor que tu nivel habitual. No hace falta sentirse perfecto para entrenar.' : 'Mark only what is clearly worse than your normal baseline. You do not need to feel perfect to train.'}</p>
+          <p className="mt-3 text-xs leading-5 text-[rgb(var(--text-secondary))]">{lang === 'es' ? 'Marcá solo lo que esté claramente peor que tu nivel habitual. No hace falta sentirse perfecto para entrenar. Una advertencia articular relevante sí se trata aparte.' : 'Mark only what is clearly worse than your normal baseline. You do not need to feel perfect to train. A meaningful joint warning is treated separately.'}</p>
         </div>
 
         <div className="space-y-2 p-4">
           {SIGNALS.map(signal => {
             const active = worse[signal.id];
+            const critical = !!signal.critical;
             return (
-              <button key={signal.id} type="button" onClick={() => setWorse(prev => ({ ...prev, [signal.id]: !prev[signal.id] }))} className={`flex min-h-[58px] w-full items-center gap-3 rounded-2xl border px-3 text-left transition-colors ${active ? 'border-amber-500/35 bg-amber-500/[0.08]' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base)/0.55)]'}`} aria-pressed={active}>
-                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${active ? 'bg-amber-500/15 text-amber-400' : 'bg-[rgb(var(--surface-elevated))] text-[rgb(var(--text-muted))]'}`}><Icon name={signal.icon} size={16} /></span>
+              <button key={signal.id} type="button" onClick={() => setWorse(prev => ({ ...prev, [signal.id]: !prev[signal.id] }))} className={`flex min-h-[58px] w-full items-center gap-3 rounded-2xl border px-3 text-left transition-colors ${active ? (critical ? 'border-rose-500/35 bg-rose-500/[0.08]' : 'border-amber-500/35 bg-amber-500/[0.08]') : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base)/0.55)]'}`} aria-pressed={active}>
+                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${active ? (critical ? 'bg-rose-500/15 text-rose-400' : 'bg-amber-500/15 text-amber-400') : 'bg-[rgb(var(--surface-elevated))] text-[rgb(var(--text-muted))]'}`}><Icon name={signal.icon} size={16} /></span>
                 <span className="min-w-0 flex-1"><span className="block text-sm font-black">{lang === 'es' ? signal.es : signal.en}</span><span className="mt-0.5 block text-[10px] text-[rgb(var(--text-muted))]">{lang === 'es' ? signal.esHelp : signal.enHelp}</span></span>
-                <span className={`flex h-6 w-6 items-center justify-center rounded-lg border ${active ? 'border-amber-500 bg-amber-500 text-black' : 'border-[rgb(var(--border-strong))]'}`}>{active && <Icon name="Check" size={14} strokeWidth={3} />}</span>
+                <span className={`flex h-6 w-6 items-center justify-center rounded-lg border ${active ? (critical ? 'border-rose-500 bg-rose-500 text-white' : 'border-amber-500 bg-amber-500 text-black') : 'border-[rgb(var(--border-strong))]'}`}>{active && <Icon name="Check" size={14} strokeWidth={3} />}</span>
               </button>
             );
           })}
