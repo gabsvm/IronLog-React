@@ -4,6 +4,10 @@ import { Icon } from '../../components/ui/Icon';
 import { GlobalTemplate } from '../../types';
 import { getTranslated } from '../../utils';
 import { useApp } from '../../context/AppContext';
+import { useStore } from '../../lib/store';
+import { PERFORMANCE_UPPER_LOWER_V1 } from '../../programs/performance/performanceUpperLower';
+import { resolveProgramWeek } from '../../programs/engine/ProgramResolver';
+import { startProgramRun } from '../../programs/engine/ProgramRunHelpers';
 
 const ProgramDetailView = React.lazy(() =>
     import('../../components/programs/ProgramDetailView').then((module) => ({ default: module.ProgramDetailView }))
@@ -54,7 +58,8 @@ export const TemplateSelector: React.FC<Props> = ({
     lang,
     onSelectProgram,
 }) => {
-    const { setPersonalTemplates } = useApp();
+    const { setPersonalTemplates, setProgram, userProfile } = useApp();
+    const setActiveMeso = useStore(state => state.setActiveMeso);
     const [showKongDetail, setShowKongDetail] = useState(false);
     const [showPerformanceDetail, setShowPerformanceDetail] = useState(false);
     const [tab, setTab] = useState<LibraryTab>('programs');
@@ -112,6 +117,25 @@ export const TemplateSelector: React.FC<Props> = ({
         }
         const created = window.prompt(lang === 'es' ? 'Nombre de la nueva carpeta' : 'New folder name');
         if (created?.trim()) assignFolder(templateId, created);
+    };
+
+    const startPerformance = () => {
+        const firstCycle = resolveProgramWeek(PERFORMANCE_UPPER_LOWER_V1, 1);
+        setProgram(firstCycle);
+        const plan = firstCycle.map(day => (day.slots || []).map(slot => slot.exerciseId || null));
+        setActiveMeso({
+            id: Date.now(),
+            name: 'GainsLab PERFORMANCE',
+            mesoType: PERFORMANCE_UPPER_LOWER_V1.id,
+            week: 1,
+            targetWeeks: PERFORMANCE_UPPER_LOWER_V1.durationWeeks,
+            isDeload: false,
+            plan,
+            duration: PERFORMANCE_UPPER_LOWER_V1.durationWeeks,
+            programSystem: startProgramRun(PERFORMANCE_UPPER_LOWER_V1, userProfile?.bodyWeight),
+        });
+        setShowPerformanceDetail(false);
+        onClose();
     };
 
     const selector = (
@@ -252,7 +276,7 @@ export const TemplateSelector: React.FC<Props> = ({
 
             {showPerformanceDetail && (
                 <Suspense fallback={<div className="fixed inset-0 z-modal bg-[rgb(var(--surface-app))]" />}>
-                    <PerformanceProgramDetailView lang={lang as 'en' | 'es'} onBack={() => setShowPerformanceDetail(false)} onStart={() => { setShowPerformanceDetail(false); onSelectProgram?.('performance_upper_lower'); }} />
+                    <PerformanceProgramDetailView lang={lang as 'en' | 'es'} onBack={() => setShowPerformanceDetail(false)} onStart={startPerformance} />
                 </Suspense>
             )}
 
