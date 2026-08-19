@@ -9,8 +9,14 @@ export type ProgramSetRole =
   | 'high_rep_backoff'
   | 'failure';
 
+export interface RepRange {
+  min: number;
+  max: number;
+}
+
 export interface SetPrescription {
   reps: number | 'FAILURE';
+  repRange?: RepRange;
   targetRpe?: number;
   role?: ProgramSetRole;
 }
@@ -51,6 +57,12 @@ export interface ProgramBlockDefinition {
   days: ProgramDayDefinition[];
 }
 
+export interface ProgramCadence {
+  unit: 'week' | 'cycle';
+  rolling?: boolean;
+  recommendedRestDaysBetweenSessions?: number;
+}
+
 export interface ProgramSystemDefinition {
   id: string;
   version: number;
@@ -61,6 +73,8 @@ export interface ProgramSystemDefinition {
   daysPerWeek: number;
   blocks: ProgramBlockDefinition[];
   guideId: string;
+  cadence?: ProgramCadence;
+  progressionModel?: 'prescribed' | 'double_progression';
 }
 
 export interface ProgramRunState {
