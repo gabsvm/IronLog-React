@@ -220,10 +220,12 @@ export const SetRow = React.memo(({
         return `${prevW || '—'} × ${prevR || '—'}`;
     })();
 
-    const prescriptionHint = set.prescribedReps !== undefined
-        ? set.prescribedReps === 'FAILURE'
+    const prescribedRange = (set as WorkoutSet & { prescribedRepRange?: { min: number; max: number } }).prescribedRepRange;
+    const prescribedTarget = prescribedRange ? `${prescribedRange.min}–${prescribedRange.max}` : set.prescribedReps;
+    const prescriptionHint = prescribedTarget !== undefined
+        ? prescribedTarget === 'FAILURE'
             ? (lang === 'es' ? 'Objetivo: al fallo' : 'Target: failure')
-            : `${lang === 'es' ? 'Objetivo' : 'Target'}: ${set.prescribedReps}${set.targetRpe !== undefined ? ` · RPE ${set.targetRpe}` : ''}`
+            : `${lang === 'es' ? 'Objetivo' : 'Target'}: ${prescribedTarget}${set.targetRpe !== undefined ? ` · RPE ${set.targetRpe}` : ''}`
         : null;
 
     const rowTone = isDone
