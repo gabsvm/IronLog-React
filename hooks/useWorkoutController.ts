@@ -1,4 +1,3 @@
-
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { useTimerActions } from '../context/TimerContext';
@@ -339,7 +338,12 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
         const isPR = detectPRs();
         setHasNewPR(isPR);
 
-        if (config?.rpEnabled) {
+        // PERFORMANCE owns a post-workout check-in as part of its progression
+        // model. It must not depend on the user's global RP-feedback toggle.
+        const performanceCheckInRequired = activeMeso?.programSystem?.systemId === 'performance_upper_lower'
+            && activeSession?.mesoId === activeMeso.id;
+
+        if (config?.rpEnabled || performanceCheckInRequired) {
             setShowFeedbackModal(true);
         } else {
             if (isPR) {
