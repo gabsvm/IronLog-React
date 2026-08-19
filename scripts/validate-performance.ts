@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { PERFORMANCE_UPPER_LOWER_V1 } from '../programs/performance/performanceUpperLower.ts';
 import { PERFORMANCE_GUIDE } from '../programs/performance/performanceGuide.ts';
 import { getProgramBlockForWeek, resolveProgramDay, resolveProgramWeek } from '../programs/engine/ProgramResolver.ts';
+import { toEditableProgram } from '../programs/engine/ProgramConversion.ts';
 
 const fail = (message: string): never => { throw new Error(`[validate-performance] ${message}`); };
 const assert = (condition: unknown, message: string): void => { if (!condition) fail(message); };
@@ -61,6 +62,12 @@ assert(
 const upperARanges = resolveProgramDay(PERFORMANCE_UPPER_LOWER_V1, 3, 0).slots.map(slot => slot.prescription?.[0].repRange ? `${slot.prescription[0].repRange?.min}-${slot.prescription[0].repRange?.max}` : '');
 assert(upperARanges[0] === '6-10' && upperARanges[4] === '12-20', 'Upper A progression ranges changed unexpectedly');
 
+const editableBuild = toEditableProgram(resolveProgramWeek(PERFORMANCE_UPPER_LOWER_V1, 3));
+assert(editableBuild[0]?.slots[0]?.reps === '6-10', 'editable PERFORMANCE snapshot must preserve the 6-10 rep range');
+assert(editableBuild[0]?.slots[0]?.setTarget === 3, 'editable PERFORMANCE snapshot must preserve work-set count');
+assert(!editableBuild[0]?.slots[0]?.prescription, 'editable PERFORMANCE snapshot must strip structured prescription metadata');
+assert(!editableBuild[0]?.slots[0]?.programSlotId, 'editable PERFORMANCE snapshot must strip structured slot identity');
+
 assert(getProgramBlockForWeek(PERFORMANCE_UPPER_LOWER_V1, 1).block.id === 'performance-calibration', 'cycle 1 must be Calibration');
 assert(getProgramBlockForWeek(PERFORMANCE_UPPER_LOWER_V1, 3).block.id === 'performance-build', 'cycle 3 must be Productive Build');
 assert(getProgramBlockForWeek(PERFORMANCE_UPPER_LOWER_V1, 8).block.id === 'performance-pivot', 'cycle 8 must be Pivot');
@@ -80,4 +87,4 @@ const requiredGuideSections = [
 const guideIds = new Set(PERFORMANCE_GUIDE.map(section => section.id));
 assert(requiredGuideSections.every(id => guideIds.has(id)), 'a required philosophy/progression guide section is missing');
 
-console.log('PERFORMANCE validation passed: 8 rolling cycles, 4 sessions, valid exercise IDs, ranged double progression, RPE phases, pivot and philosophy guide.');
+console.log('PERFORMANCE validation passed: 8 rolling cycles, 4 sessions, valid exercise IDs, ranged double progression, RPE phases, pivot, editable conversion and philosophy guide.');
