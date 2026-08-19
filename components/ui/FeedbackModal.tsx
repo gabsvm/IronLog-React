@@ -100,12 +100,17 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
         ? calculateAdjustmentFor(current)
         : null;
 
-    const buildResult = (source: DraftFeedback = feedback) => {
+    const buildResult = (source: DraftFeedback = feedback, zeroAdjustmentMuscles: Set<string> = new Set()) => {
         const result: Record<string, FeedbackPayload> = {};
         uniqueMuscles.forEach(muscle => {
             const item = source[muscle];
             if (item?.recovery == null || item?.performance == null || item?.stimulus == null) return;
-            const adjustment = calculateAdjustmentFor(item);
+            // The fast "apply to remaining" path is useful for recording broad
+            // subjective state, but a copied answer is not strong enough evidence
+            // to automatically alter PERFORMANCE volume for that muscle.
+            const adjustment = isPerformanceProgram && zeroAdjustmentMuscles.has(muscle)
+                ? 0
+                : calculateAdjustmentFor(item);
             result[muscle] = {
                 soreness: item.recovery,
                 recovery: item.recovery,
@@ -136,12 +141,13 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
             jointPain,
         } as DraftFeedback[string];
         const nextDraft: DraftFeedback = { ...feedback, [currentMuscle]: seed };
-        uniqueMuscles.slice(step + 1).forEach(muscle => {
+        const copiedMuscles = uniqueMuscles.slice(step + 1);
+        copiedMuscles.forEach(muscle => {
             // Pain is deliberately NOT copied to other muscles. The fast path only
             // duplicates subjective performance/stimulus/recovery ratings.
             nextDraft[muscle] = { ...seed, jointPain: false };
         });
-        onConfirm(buildResult(nextDraft));
+        onConfirm(buildResult(nextDraft, new Set(copiedMuscles)));
     };
 
     const skipAndFinish = () => onConfirm({});
