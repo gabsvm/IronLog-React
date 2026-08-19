@@ -8,6 +8,9 @@ import { useApp } from '../../context/AppContext';
 const ProgramDetailView = React.lazy(() =>
     import('../../components/programs/ProgramDetailView').then((module) => ({ default: module.ProgramDetailView }))
 );
+const PerformanceProgramDetailView = React.lazy(() =>
+    import('../../components/programs/PerformanceProgramDetailView').then((module) => ({ default: module.PerformanceProgramDetailView }))
+);
 
 interface Props {
     onClose: () => void;
@@ -53,6 +56,7 @@ export const TemplateSelector: React.FC<Props> = ({
 }) => {
     const { setPersonalTemplates } = useApp();
     const [showKongDetail, setShowKongDetail] = useState(false);
+    const [showPerformanceDetail, setShowPerformanceDetail] = useState(false);
     const [tab, setTab] = useState<LibraryTab>('programs');
     const [search, setSearch] = useState('');
     const [dayFilter, setDayFilter] = useState<DayFilter>('all');
@@ -82,7 +86,7 @@ export const TemplateSelector: React.FC<Props> = ({
     }, [authorFilter, dayFilter, folderFilter, globalTemplates, lang, personalTemplates, search, tab]);
 
     const tabs: Array<{ id: LibraryTab; label: string; count?: number }> = [
-        { id: 'programs', label: lang === 'es' ? 'Programas' : 'Programs', count: 1 },
+        { id: 'programs', label: lang === 'es' ? 'Programas' : 'Programs', count: 2 },
         { id: 'routines', label: lang === 'es' ? 'Rutinas' : 'Routines', count: globalTemplates.length },
         { id: 'mine', label: lang === 'es' ? 'Mías' : 'Mine', count: personalTemplates.length },
     ];
@@ -137,19 +141,32 @@ export const TemplateSelector: React.FC<Props> = ({
                 <div className="mx-auto w-full max-w-xl space-y-4 p-4 pb-[calc(env(safe-area-inset-bottom)+2rem)]">
                     {tab === 'programs' ? (
                         <>
-                            <div className="rounded-2xl border border-primary-500/24 bg-primary-500/[0.055] p-4">
+                            <div className="rounded-2xl border border-primary-500/30 bg-gradient-to-br from-primary-500/[0.10] to-[rgb(var(--surface-raised))] p-4">
                                 <div className="flex items-start justify-between gap-4">
                                     <div>
-                                        <div className="text-[9px] font-bold uppercase tracking-[0.14em] text-primary-500">{lang === 'es' ? 'Programa estructurado' : 'Structured program'}</div>
+                                        <div className="text-[9px] font-bold uppercase tracking-[0.14em] text-primary-500">GainsLab · {lang === 'es' ? 'Hipertrofia sostenible' : 'Sustainable hypertrophy'}</div>
+                                        <h3 className="mt-1 text-2xl font-black tracking-tight">PERFORMANCE</h3>
+                                        <p className="mt-1 text-sm font-bold text-[rgb(var(--text-secondary))]">Upper / Lower · GainsLab</p>
+                                    </div>
+                                    <span className="rounded-lg bg-primary-500/10 px-2 py-1 text-[9px] font-black text-primary-500">8C · 4D</span>
+                                </div>
+                                <p className="mt-3 text-sm leading-relaxed text-[rgb(var(--text-secondary))]">{lang === 'es' ? 'Doble progresión, RPE 7–8.5 y un ciclo rodante con descanso entre sesiones. Diseñado para progresar sin convertir la fatiga en la meta del programa.' : 'Double progression, RPE 7–8.5 and a rolling cycle with rest between sessions. Built to progress without making fatigue the goal of the program.'}</p>
+                                <div className="mt-3 flex flex-wrap gap-1.5 text-[9px] font-bold text-[rgb(var(--text-muted))]"><span className="rounded-lg bg-[rgb(var(--surface-base))] px-2 py-1">Recovery Gate</span><span className="rounded-lg bg-[rgb(var(--surface-base))] px-2 py-1">1–3 RIR</span><span className="rounded-lg bg-[rgb(var(--surface-base))] px-2 py-1">{lang === 'es' ? 'Volumen moderado' : 'Moderate volume'}</span></div>
+                                <button type="button" onClick={() => setShowPerformanceDetail(true)} className="mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary-500 px-4 text-sm font-black text-black active:scale-[0.99]">{lang === 'es' ? 'Ver PERFORMANCE' : 'View PERFORMANCE'} <Icon name="ChevronRight" size={17} /></button>
+                            </div>
+
+                            <div className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised)/0.72)] p-4">
+                                <div className="flex items-start justify-between gap-4">
+                                    <div>
+                                        <div className="text-[9px] font-bold uppercase tracking-[0.14em] text-[rgb(var(--text-muted))]">{lang === 'es' ? 'Alta capacidad de trabajo' : 'High work capacity'}</div>
                                         <h3 className="mt-1 text-2xl font-black tracking-tight">KONG</h3>
                                         <p className="mt-1 text-sm font-bold text-[rgb(var(--text-secondary))]">Savage Size · Alexander Bromley</p>
                                     </div>
                                     <span className="rounded-lg bg-primary-500/10 px-2 py-1 text-[9px] font-black text-primary-500">12W · 4D</span>
                                 </div>
                                 <p className="mt-3 text-sm leading-relaxed text-[rgb(var(--text-secondary))]">{lang === 'es' ? '12 semanas, 3 bloques y progresión prescrita. GainsLab mantiene la estructura oficial durante toda la ejecución.' : '12 weeks, 3 blocks and prescribed progression. GainsLab preserves the official structure throughout the run.'}</p>
-                                <button type="button" onClick={() => setShowKongDetail(true)} className="mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary-500 px-4 text-sm font-black text-black active:scale-[0.99]">{lang === 'es' ? 'Ver programa' : 'View program'} <Icon name="ChevronRight" size={17} /></button>
+                                <button type="button" onClick={() => setShowKongDetail(true)} className="mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[rgb(var(--border-strong))] bg-[rgb(var(--surface-base))] px-4 text-sm font-black active:scale-[0.99]">{lang === 'es' ? 'Ver KONG' : 'View KONG'} <Icon name="ChevronRight" size={17} /></button>
                             </div>
-                            <div className="rounded-2xl border border-dashed border-[rgb(var(--border-strong))] p-5 text-center text-sm text-[rgb(var(--text-muted))]">{lang === 'es' ? 'Los próximos sistemas estructurados aparecerán aquí. Las rutinas sueltas viven en la pestaña Rutinas.' : 'Future structured systems will appear here. Standalone routines live under Routines.'}</div>
                         </>
                     ) : (
                         <>
@@ -232,6 +249,12 @@ export const TemplateSelector: React.FC<Props> = ({
                     )}
                 </div>
             </div>
+
+            {showPerformanceDetail && (
+                <Suspense fallback={<div className="fixed inset-0 z-modal bg-[rgb(var(--surface-app))]" />}>
+                    <PerformanceProgramDetailView lang={lang as 'en' | 'es'} onBack={() => setShowPerformanceDetail(false)} onStart={() => { setShowPerformanceDetail(false); onSelectProgram?.('performance_upper_lower'); }} />
+                </Suspense>
+            )}
 
             {showKongDetail && (
                 <Suspense fallback={<div className="fixed inset-0 z-modal bg-[rgb(var(--surface-app))]" />}>
