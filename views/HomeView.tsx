@@ -204,6 +204,15 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
             props.startSession(dayIdx);
             return;
         }
+
+        // Recovery Gate applies when a PERFORMANCE session is created. Once a
+        // session already exists, Today is only resuming that exact session and
+        // must not ask readiness again or leave a mode pending for the future.
+        if (activeSession && activeMeso && activeSession.mesoId === activeMeso.id) {
+            props.startSession(activeSession.dayIdx);
+            return;
+        }
+
         setPendingPerformanceDay(dayIdx);
     };
 
