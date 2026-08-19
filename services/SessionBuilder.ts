@@ -2,6 +2,7 @@ import { ProgramDay, MesoCycle, ExerciseDef, Log, ActiveSession, SessionExercise
 import { getLastLogForExercise, uid } from '../utils';
 import { KONG_4DAY_V1 } from '../programs/kong/kong4Day';
 import { PERFORMANCE_UPPER_LOWER_V1 } from '../programs/performance/performanceUpperLower';
+import { getPerformanceAdaptiveSlot } from '../programs/performance/performanceProgression';
 import { consumePendingPerformanceRecoveryMode } from '../programs/performance/performanceRecovery';
 import { getProgramBlockForWeek, resolveProgramDay } from '../programs/engine/ProgramResolver';
 import { getKongDayDisplay } from '../programs/kong/kongDisplay';
@@ -27,8 +28,8 @@ export class SessionBuilder {
         const isPerformance = structuredDefinition?.id === PERFORMANCE_UPPER_LOWER_V1.id;
         const performanceRecoveryMode = isPerformance ? consumePendingPerformanceRecoveryMode() : 'green';
 
-        // Structured programs resolve their immutable definition at build time;
-        // normal templates continue through the legacy path unchanged.
+        // Structured programs resolve their definition at build time; normal
+        // templates continue through the legacy path unchanged.
         const resolvedDay = structuredDefinition
             ? resolveProgramDay(
                 structuredDefinition,
@@ -78,8 +79,8 @@ export class SessionBuilder {
 
             let setTarget = slotDef.setTarget || 3;
 
-            // RP Feedback adjustments apply only to legacy/adaptive templates.
-            // Structured program prescriptions are intentionally immutable here.
+            // Legacy RP/adaptive templates keep their historical cumulative
+            // behavior. KONG and unknown structured systems remain immutable.
             if (!slotDef.prescription && config.rpEnabled && activeMeso && activeMeso.week > 1) {
                 let accumulatedAdjustment = 0;
                 const fbForMeso = rpFeedback[activeMeso.id];
@@ -95,9 +96,39 @@ export class SessionBuilder {
             }
             if (!slotDef.prescription && isDeload) setTarget = Math.max(1, Math.ceil(setTarget / 2));
 
-            const lastSets = getLastLogForExercise(exDef.id, safeLogs);
+            // PERFORMANCE has its own deliberately conservative volume rule:
+            // only cycles 3-7 may read the immediately previous cycle, only one
+            // low-cost slot per muscle can change, and the delta is clamped to
+            // one set. A yellow Recovery Gate suppresses any planned increase/
+            // decrease because that session is already being reduced live.
+            let performanceVolumeDelta = 0;
+            if (
+                isPerformance &&
+                performanceRecoveryMode === 'green' &&
+                activeMeso.week >= 3 &&
+                activeMeso.week <= 7 &&
+                slotDef.prescription &&
+                getPerformanceAdaptiveSlot(slotDef.muscle) === slotDef.programSlotId
+            ) {
+                const previousCycleFeedback = rpFeedback[activeMeso.id]?.[activeMeso.week - 1]
+                    || rpFeedback[activeMeso.id]?.[String(activeMeso.week - 1)];
+                const storedDelta = Number(previousCycleFeedback?.[slotDef.muscle]?.adjustment || 0);
+                performanceVolumeDelta = storedDelta > 0 ? 1 : storedDelta < 0 ? -1 : 0;
+            }
 
-            const initialSets = (slotDef.prescription || Array.from({ length: setTarget }, () => undefined)).map((prescription, i) => ({
+            let effectivePrescription = slotDef.prescription
+                ? slotDef.prescription.map(prescription => ({ ...prescription }))
+                : undefined;
+            if (effectivePrescription && performanceVolumeDelta > 0 && effectivePrescription.length > 0) {
+                effectivePrescription.push({ ...effectivePrescription[effectivePrescription.length - 1] });
+            } else if (effectivePrescription && performanceVolumeDelta < 0 && effectivePrescription.length > 1) {
+                effectivePrescription = effectivePrescription.slice(0, effectivePrescription.length - 1);
+            }
+
+            const lastSets = getLastLogForExercise(exDef.id, safeLogs);
+            const prescriptionForSession = effectivePrescription || Array.from({ length: setTarget }, () => undefined);
+
+            const initialSets = prescriptionForSession.map((prescription, i) => ({
                 id: uid(),
                 weight: '',
                 reps: '',
@@ -130,6 +161,7 @@ export class SessionBuilder {
                 programSourceName: slotDef.programSourceName,
                 targetMuscle: slotDef.targetMuscle,
                 ...(performanceProgressionPolicy ? { progressionPolicy: performanceProgressionPolicy } : {}),
+                ...(performanceVolumeDelta !== 0 ? { performanceVolumeDelta } : {}),
                 sets: initialSets as any
             };
         }).filter(Boolean);
