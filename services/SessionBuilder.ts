@@ -31,21 +31,12 @@ export class SessionBuilder {
         const performanceRecoveryMode = isPerformance ? consumePendingPerformanceRecoveryMode() : 'green';
 
         const resolvedDay = structuredDefinition
-            ? resolveProgramDay(
-                structuredDefinition,
-                activeMeso.week,
-                dayIdx,
-                activeMeso.programSystem?.substitutions || {},
-            )
+            ? resolveProgramDay(structuredDefinition, activeMeso.week, dayIdx, activeMeso.programSystem?.substitutions || {})
             : programDay;
 
-        const structuredBlockResolution = structuredDefinition
-            ? getProgramBlockForWeek(structuredDefinition, activeMeso.week)
-            : null;
+        const structuredBlockResolution = structuredDefinition ? getProgramBlockForWeek(structuredDefinition, activeMeso.week) : null;
         const structuredBlock = structuredBlockResolution?.block || null;
-        const localizedKongDay = isKong && structuredBlock
-            ? getKongDayDisplay(structuredBlock.number, dayIdx)
-            : null;
+        const localizedKongDay = isKong && structuredBlock ? getKongDayDisplay(structuredBlock.number, dayIdx) : null;
         const dayNameSafe = localizedKongDay
             ? localizedKongDay[(lang === 'es' ? 'es' : 'en')]
             : resolvedDay.dayName
@@ -64,43 +55,44 @@ export class SessionBuilder {
         const structuredProgressionPolicy: 'double' | 'hold' | 'pivot' | 'evolving' | undefined = isPerformance
             ? performanceRecoveryMode === 'yellow'
                 ? 'hold'
-                : structuredBlock?.id === 'performance-pivot'
-                    ? 'pivot'
-                    : 'double'
-            : isGuts
-                ? 'evolving'
-                : undefined;
+                : structuredBlock?.id === 'performance-pivot' ? 'pivot' : 'double'
+            : isGuts ? 'evolving' : undefined;
 
         const slotHistorySystemId = isPerformance
             ? PERFORMANCE_UPPER_LOWER_V1.id
-            : isGuts
-                ? GUTS_BLACK_SWORDSMAN_V1.id
-                : null;
+            : isGuts ? GUTS_BLACK_SWORDSMAN_V1.id : null;
         const structuredLogsNewestFirst = slotHistorySystemId
-            ? safeLogs
-                .filter(log => !log.skipped && log.programSystem?.systemId === slotHistorySystemId)
-                .slice()
-                .sort((a, b) => (b.endTime || b.startTime || 0) - (a.endTime || a.startTime || 0))
+            ? safeLogs.filter(log => !log.skipped && log.programSystem?.systemId === slotHistorySystemId).slice().sort((a, b) => (b.endTime || b.startTime || 0) - (a.endTime || a.startTime || 0))
             : [];
 
         const sessionExs = sessionSlots.map((slotDef, sIdx) => {
             if (!slotDef) return null;
             const exId = slotDef.exerciseId || dayPlan[sIdx];
             let exDef = exId ? safeExercises.find(e => e.id === exId) : null;
+
+            // A structured program must never silently swap a missing exact ID
+            // for a random same-muscle movement. Keep the source identity intact
+            // even if an older persisted library has not merged the additive
+            // exercise definition yet.
+            if (!exDef && structuredDefinition && exId) {
+                const sourceName = slotDef.programSourceName || slotDef.label || String(exId);
+                exDef = {
+                    id: String(exId),
+                    name: { en: sourceName, es: sourceName },
+                    muscle: slotDef.muscle || 'CHEST',
+                } as ExerciseDef;
+            }
             if (!exDef) exDef = safeExercises.find(e => e.muscle === slotDef.muscle) ?? null;
             if (!exDef) exDef = { id: `placeholder_${slotDef.muscle}_${sIdx}`, name: slotDef.muscle || 'Unknown', muscle: slotDef.muscle || 'CHEST' };
 
             let setTarget = slotDef.setTarget || 3;
-
             if (!slotDef.prescription && config.rpEnabled && activeMeso && activeMeso.week > 1) {
                 let accumulatedAdjustment = 0;
                 const fbForMeso = rpFeedback[activeMeso.id];
                 if (fbForMeso) {
                     for (let w = 1; w < activeMeso.week; w++) {
                         const weekFb = fbForMeso[w] || fbForMeso[String(w)];
-                        if (weekFb && weekFb[slotDef.muscle]) {
-                            accumulatedAdjustment += weekFb[slotDef.muscle].adjustment || 0;
-                        }
+                        if (weekFb && weekFb[slotDef.muscle]) accumulatedAdjustment += weekFb[slotDef.muscle].adjustment || 0;
                     }
                 }
                 setTarget = Math.max(1, setTarget + accumulatedAdjustment);
@@ -109,60 +101,35 @@ export class SessionBuilder {
 
             let performanceVolumeDelta = 0;
             if (
-                isPerformance &&
-                performanceRecoveryMode === 'green' &&
-                activeMeso.week >= 3 &&
-                activeMeso.week <= 7 &&
-                slotDef.prescription &&
-                getPerformanceAdaptiveSlot(slotDef.muscle) === slotDef.programSlotId
+                isPerformance && performanceRecoveryMode === 'green' && activeMeso.week >= 3 && activeMeso.week <= 7 &&
+                slotDef.prescription && getPerformanceAdaptiveSlot(slotDef.muscle) === slotDef.programSlotId
             ) {
-                const previousCycleFeedback = rpFeedback[activeMeso.id]?.[activeMeso.week - 1]
-                    || rpFeedback[activeMeso.id]?.[String(activeMeso.week - 1)];
+                const previousCycleFeedback = rpFeedback[activeMeso.id]?.[activeMeso.week - 1] || rpFeedback[activeMeso.id]?.[String(activeMeso.week - 1)];
                 const storedDelta = Number(previousCycleFeedback?.[slotDef.muscle]?.adjustment || 0);
                 performanceVolumeDelta = storedDelta > 0 ? 1 : storedDelta < 0 ? -1 : 0;
             }
 
-            let effectivePrescription = slotDef.prescription
-                ? slotDef.prescription.map(prescription => ({ ...prescription }))
-                : undefined;
-            if (effectivePrescription && performanceVolumeDelta > 0 && effectivePrescription.length > 0) {
-                effectivePrescription.push({ ...effectivePrescription[effectivePrescription.length - 1] });
-            } else if (effectivePrescription && performanceVolumeDelta < 0 && effectivePrescription.length > 1) {
-                effectivePrescription = effectivePrescription.slice(0, effectivePrescription.length - 1);
-            }
+            let effectivePrescription = slotDef.prescription ? slotDef.prescription.map(prescription => ({ ...prescription })) : undefined;
+            if (effectivePrescription && performanceVolumeDelta > 0 && effectivePrescription.length > 0) effectivePrescription.push({ ...effectivePrescription[effectivePrescription.length - 1] });
+            else if (effectivePrescription && performanceVolumeDelta < 0 && effectivePrescription.length > 1) effectivePrescription = effectivePrescription.slice(0, effectivePrescription.length - 1);
 
-            // Programs with their own progression model compare Previous against
-            // the same stable slot inside the same system. This prevents a KONG,
-            // freestyle or unrelated-routine exposure from driving the cue.
             let lastSets = slotHistorySystemId ? null : getLastLogForExercise(exDef.id, safeLogs);
             if (slotHistorySystemId && slotDef.programSlotId) {
                 for (const previousLog of structuredLogsNewestFirst) {
-                    const previousExercise = (previousLog.exercises || []).find(item =>
-                        String(item.id) === String(exDef.id) && item.programSlotId === slotDef.programSlotId
-                    );
+                    const previousExercise = (previousLog.exercises || []).find(item => String(item.id) === String(exDef.id) && item.programSlotId === slotDef.programSlotId);
                     if (!previousExercise) continue;
                     const workingSets = (previousExercise.sets || []).filter(set => set.type !== 'warmup' && set.type !== 'avt_hop');
-                    if (workingSets.length > 0) {
-                        lastSets = workingSets;
-                        break;
-                    }
+                    if (workingSets.length > 0) { lastSets = workingSets; break; }
                 }
             }
 
             const prescriptionForSession = effectivePrescription || Array.from({ length: setTarget }, () => undefined);
-
             const initialSets = prescriptionForSession.map((prescription, i) => ({
-                id: uid(),
-                weight: '',
-                reps: '',
-                rpe: '',
-                completed: false,
+                id: uid(), weight: '', reps: '', rpe: '', completed: false,
                 type: prescription?.role === 'top' ? 'top' : prescription?.role === 'backoff' || prescription?.role === 'high_rep_backoff' ? 'backoff' : slotDef.setType || 'regular',
                 prescribedReps: prescription?.reps,
                 prescribedRepRange: prescription?.repRange,
-                targetRpe: prescription?.targetRpe !== undefined && isPerformance && performanceRecoveryMode === 'yellow'
-                    ? Math.max(1, prescription.targetRpe - 1)
-                    : prescription?.targetRpe,
+                targetRpe: prescription?.targetRpe !== undefined && isPerformance && performanceRecoveryMode === 'yellow' ? Math.max(1, prescription.targetRpe - 1) : prescription?.targetRpe,
                 prescriptionRole: prescription?.role,
                 programSetIndex: slotDef.prescription ? i : undefined,
                 hintWeight: lastSets?.[i]?.weight,
@@ -183,6 +150,7 @@ export class SessionBuilder {
                 substitutionGroup: slotDef.substitutionGroup,
                 programSourceName: slotDef.programSourceName,
                 targetMuscle: slotDef.targetMuscle,
+                ...(isGuts && slotDef.recommendedRestSeconds ? { defaultRestSeconds: slotDef.recommendedRestSeconds } : {}),
                 ...(structuredProgressionPolicy ? { progressionPolicy: structuredProgressionPolicy } : {}),
                 ...(performanceVolumeDelta !== 0 ? { performanceVolumeDelta } : {}),
                 sets: initialSets as any
@@ -190,24 +158,12 @@ export class SessionBuilder {
         }).filter(Boolean);
 
         const structuredMeta = structuredDefinition && activeMeso.programSystem && structuredBlockResolution
-            ? {
-                programSystem: {
-                    systemId: activeMeso.programSystem.systemId,
-                    systemVersion: activeMeso.programSystem.systemVersion,
-                    blockNumber: structuredBlockResolution.block.number,
-                    blockWeek: structuredBlockResolution.blockWeek,
-                }
-            }
+            ? { programSystem: { systemId: activeMeso.programSystem.systemId, systemVersion: activeMeso.programSystem.systemVersion, blockNumber: structuredBlockResolution.block.number, blockWeek: structuredBlockResolution.blockWeek } }
             : {};
 
         return {
-            id: Date.now(),
-            dayIdx: dayIdx,
-            name: structuredDefinition ? dayNameSafe : `${activeMeso.week} • ${dayNameSafe}`,
-            exercises: sessionExs as SessionExercise[],
-            startTime: Date.now(),
-            mesoId: activeMeso.id,
-            week: activeMeso.week,
+            id: Date.now(), dayIdx, name: structuredDefinition ? dayNameSafe : `${activeMeso.week} • ${dayNameSafe}`,
+            exercises: sessionExs as SessionExercise[], startTime: Date.now(), mesoId: activeMeso.id, week: activeMeso.week,
             ...(isPerformance ? { note: `PERFORMANCE Recovery Gate: ${performanceRecoveryMode.toUpperCase()}` } : {}),
             ...structuredMeta,
         } as ActiveSession;
