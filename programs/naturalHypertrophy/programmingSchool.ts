@@ -5,7 +5,7 @@ import {
   NH_TRANSCRIPT_LESSONS,
   type NhSourceEvidenceKind,
   type NhSourceLevel,
-} from './nhVerifiedKnowledge';
+} from './nhVerifiedKnowledge.ts';
 
 export type NhEvidenceKind = NhSourceEvidenceKind;
 export type NhProgrammingLevel = NhSourceLevel;
