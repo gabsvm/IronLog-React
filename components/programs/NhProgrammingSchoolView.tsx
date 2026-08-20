@@ -1,11 +1,14 @@
 import React, { useMemo, useState } from 'react';
+import { useApp } from '../../context/AppContext';
 import type { GlobalTemplate, MuscleGroup, ProgramDay } from '../../types';
 import { getTranslated } from '../../utils';
 import { Icon } from '../ui/Icon';
 import { NhLogbookCoachView } from './NhLogbookCoachView';
 import {
+  NH_MASSTERPLAN_GUIDES,
   NH_PROGRAMMING_TEACHING_POINTS,
   NH_ROLE_LIBRARY,
+  NH_SELF_PROGRAMMING_PATH,
   auditNhProgram,
   buildNhTeachingDraft,
   makeNhSchoolTemplate,
@@ -13,7 +16,7 @@ import {
   type NhProgrammingLevel,
 } from '../../programs/naturalHypertrophy/programmingSchool';
 
-type Screen = 'home' | 'learn' | 'analyze' | 'audit' | 'create' | 'preview' | 'selfcoach';
+type Screen = 'home' | 'learn' | 'path' | 'massterplans' | 'analyze' | 'audit' | 'create' | 'preview' | 'selfcoach';
 
 interface Props {
   lang: 'en' | 'es';
@@ -23,6 +26,13 @@ interface Props {
 }
 
 const MUSCLES: MuscleGroup[] = ['CHEST','BACK','QUADS','HAMSTRINGS','SHOULDERS','BICEPS','TRICEPS','CALVES','ABS','NECK'];
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const normalizeLogTime = (value: unknown) => {
+  const numeric = Number(value || 0);
+  if (!Number.isFinite(numeric) || numeric <= 0) return 0;
+  return numeric < 10_000_000_000 ? numeric * 1000 : numeric;
+};
 
 const muscleLabel = (muscle: MuscleGroup, lang: 'en' | 'es') => {
   const map: Record<MuscleGroup, { en: string; es: string }> = {
@@ -61,6 +71,7 @@ const LevelCard = ({ icon, title, subtitle, onClick }: { icon: string; title: st
 );
 
 export const NhProgrammingSchoolView: React.FC<Props> = ({ lang, templates, onBack, onSaveTemplate }) => {
+  const { logs } = useApp();
   const [screen, setScreen] = useState<Screen>('home');
   const [lessonLevel, setLessonLevel] = useState<NhProgrammingLevel>('understand');
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
@@ -68,11 +79,33 @@ export const NhProgrammingSchoolView: React.FC<Props> = ({ lang, templates, onBa
   const [priorities, setPriorities] = useState<MuscleGroup[]>([]);
   const [draft, setDraft] = useState<ProgramDay[] | null>(null);
 
+  const experiencedExerciseIds = useMemo(() => {
+    const history = new Map<string, number[]>();
+    (Array.isArray(logs) ? logs : []).filter(log => !log.skipped).forEach(log => {
+      const time = normalizeLogTime(log.endTime || log.startTime);
+      if (!time) return;
+      (log.exercises || []).forEach(exercise => {
+        const hasWork = (exercise.sets || []).some(set => set.completed && !set.skipped && set.type !== 'warmup' && set.type !== 'avt_hop');
+        if (!hasWork || exercise.id == null) return;
+        const id = String(exercise.id);
+        const list = history.get(id) || [];
+        list.push(time);
+        history.set(id, list);
+      });
+    });
+
+    return Array.from(history.entries()).filter(([, times]) => {
+      const ordered = times.slice().sort((a,b) => a-b);
+      const span = ordered.length > 1 ? ordered[ordered.length - 1] - ordered[0] : 0;
+      return ordered.length >= 6 && span >= 90 * DAY_MS;
+    }).map(([id]) => id);
+  }, [logs]);
+
   const selectedTemplate = useMemo(() => templates.find(item => item.id === selectedTemplateId) || null, [templates, selectedTemplateId]);
   const selectedAudit = useMemo(() => selectedTemplate ? auditNhProgram(selectedTemplate.program) : null, [selectedTemplate]);
   const draftAudit = useMemo(() => draft ? auditNhProgram(draft) : null, [draft]);
-
   const lessons = useMemo(() => NH_PROGRAMMING_TEACHING_POINTS.filter(item => item.level === lessonLevel), [lessonLevel]);
+
   const levelNames: Array<{ id: NhProgrammingLevel; label: string }> = [
     { id: 'understand', label: lang === 'es' ? '1 · Entender' : '1 · Understand' },
     { id: 'modify', label: lang === 'es' ? '2 · Modificar' : '2 · Modify' },
@@ -85,7 +118,8 @@ export const NhProgrammingSchoolView: React.FC<Props> = ({ lang, templates, onBa
   };
 
   const createPreview = () => {
-    setDraft(buildNhTeachingDraft({ days, priorities }));
+    const pool = experiencedExerciseIds.length > 0 ? experiencedExerciseIds : ['__no_experienced_lifts__'];
+    setDraft(buildNhTeachingDraft({ days, priorities, experiencedExerciseIds: pool }));
     setScreen('preview');
   };
 
@@ -96,8 +130,10 @@ export const NhProgrammingSchoolView: React.FC<Props> = ({ lang, templates, onBa
 
   const headerTitle = screen === 'home' ? 'Programming School'
     : screen === 'learn' ? (lang === 'es' ? 'Aprender el método' : 'Learn the method')
+    : screen === 'path' ? (lang === 'es' ? 'Programarte vos mismo' : 'Program for yourself')
+    : screen === 'massterplans' ? 'MASSterplans'
     : screen === 'analyze' || screen === 'audit' ? (lang === 'es' ? 'Analizar una rutina' : 'Analyze a routine')
-    : screen === 'selfcoach' ? (lang === 'es' ? 'Self-Coach · Logbook' : 'Self-Coach · Logbook')
+    : screen === 'selfcoach' ? 'Self-Coach · Logbook'
     : (lang === 'es' ? 'Crear desde cero' : 'Build from scratch');
 
   const goBack = () => {
@@ -114,21 +150,23 @@ export const NhProgrammingSchoolView: React.FC<Props> = ({ lang, templates, onBa
         <h1 className="mt-2 text-3xl font-black">Programming School</h1>
         <p className="mt-3 text-sm leading-6 text-[rgb(var(--text-secondary))]">
           {lang === 'es'
-            ? 'El objetivo no es darte otra rutina para copiar. Es enseñarte a entender qué función cumple cada decisión, modificar sin romper la lógica y terminar programando para vos mismo.'
-            : 'The goal is not to hand you another routine to copy. It is to teach what each decision does, how to modify without breaking the logic, and eventually how to program for yourself.'}
+            ? 'El objetivo no es darte otra rutina para copiar. Es enseñarte qué función cumple cada decisión, cómo leer tu logbook y cómo terminar programando para vos mismo.'
+            : 'The goal is not to hand you another routine to copy. It is to teach what each decision does, how to read your logbook, and how to eventually program for yourself.'}
         </p>
         <div className="mt-4 flex flex-wrap gap-2"><EvidenceBadge kind="nh_principle" lang={lang}/><EvidenceBadge kind="inference" lang={lang}/><EvidenceBadge kind="gainslab_rule" lang={lang}/></div>
       </section>
 
       <div className="space-y-2">
-        <LevelCard icon="BookOpen" title={lang === 'es' ? 'Aprender los 4 niveles' : 'Learn the 4 levels'} subtitle={lang === 'es' ? 'Funciones, evolving reps, volumen ganado, frecuencia y regla del 85%.' : 'Functions, evolving reps, earned volume, frequency and the 85% rule.'} onClick={() => setScreen('learn')}/>
-        <LevelCard icon="Search" title={lang === 'es' ? 'Analizar / modificar una rutina' : 'Analyze / modify a routine'} subtitle={lang === 'es' ? 'Desarma una rutina existente y descubre cobertura, redundancia, interferencia y costo.' : 'Break an existing routine apart and inspect coverage, redundancy, interference and cost.'} onClick={() => setScreen('analyze')}/>
-        <LevelCard icon="Plus" title={lang === 'es' ? 'Crear desde cero' : 'Build from scratch'} subtitle={lang === 'es' ? 'Elegí días y prioridades; GainsLab construye un borrador didáctico que después tenés que revisar y editar.' : 'Choose days and priorities; GainsLab builds a teaching scaffold that you must review and edit.'} onClick={() => setScreen('create')}/>
-        <LevelCard icon="BarChart2" title={lang === 'es' ? 'Autoentrenarme con mi logbook' : 'Self-coach with my logbook'} subtitle={lang === 'es' ? 'Aprendé a distinguir “estoy progresando” de “hay algo que revisar” usando exposiciones reales.' : 'Learn to distinguish “I am progressing” from “something needs review” using real exposures.'} onClick={() => setScreen('selfcoach')}/>
+        <LevelCard icon="BookOpen" title={lang === 'es' ? 'Aprender los 4 niveles' : 'Learn the 4 levels'} subtitle={lang === 'es' ? '85%, evolving reps/sets, frecuencia, deloads, plateaus, variantes y selección de ejercicios.' : '85%, evolving reps/sets, frequency, deloads, plateaus, variations and exercise selection.'} onClick={() => setScreen('learn')}/>
+        <LevelCard icon="BookOpen" title={lang === 'es' ? 'Ruta: programarte vos mismo' : 'Path: program for yourself'} subtitle={lang === 'es' ? 'Del inventario de ejercicios al borrador, lanzamiento, beta y sistema personal maduro.' : 'From lift inventory to draft, launch, beta and a mature personal system.'} onClick={() => setScreen('path')}/>
+        <LevelCard icon="BarChart2" title="MASSterplans" subtitle={lang === 'es' ? 'Espalda, hombros y antebrazos como marcos progresivos, no rutinas para copiar.' : 'Back, shoulders and forearms as progressive frameworks, not routines to copy.'} onClick={() => setScreen('massterplans')}/>
+        <LevelCard icon="Search" title={lang === 'es' ? 'Analizar / modificar una rutina' : 'Analyze / modify a routine'} subtitle={lang === 'es' ? 'Desarma una rutina existente y revisa cobertura, redundancia, interferencia y costo.' : 'Break an existing routine apart and inspect coverage, redundancy, interference and cost.'} onClick={() => setScreen('analyze')}/>
+        <LevelCard icon="Plus" title={lang === 'es' ? 'Crear un borrador propio' : 'Build your own draft'} subtitle={lang === 'es' ? 'GainsLab usa primero ejercicios con historial suficiente en tu logbook y deja placeholders cuando no hay experiencia demostrada.' : 'GainsLab first uses exercises with enough history in your logbook and leaves placeholders when experience is not demonstrated.'} onClick={() => setScreen('create')}/>
+        <LevelCard icon="BarChart2" title={lang === 'es' ? 'Autoentrenarme con mi logbook' : 'Self-coach with my logbook'} subtitle={lang === 'es' ? 'Distingue progreso, trabajo difícil normal y un plateau que sí merece intervención.' : 'Distinguish progress, normal hard work and a plateau that actually deserves intervention.'} onClick={() => setScreen('selfcoach')}/>
       </div>
 
       <section className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.06] p-4">
-        <div className="flex items-start gap-3"><Icon name="AlertTriangle" size={17} className="mt-0.5 shrink-0 text-amber-400"/><div><p className="text-xs font-black text-amber-300">{lang === 'es' ? 'Trazabilidad primero' : 'Traceability first'}</p><p className="mt-1 text-xs leading-5 text-[rgb(var(--text-muted))]">{lang === 'es' ? 'Cuando GainsLab necesita convertir una idea de NH en una regla concreta de software, esa regla se etiqueta como propia. Nunca se presenta como una cita o ley de NH.' : 'When GainsLab must turn an NH idea into a concrete software rule, that rule is labeled as ours. It is never presented as an NH quote or law.'}</p></div></div>
+        <div className="flex items-start gap-3"><Icon name="AlertTriangle" size={17} className="mt-0.5 shrink-0 text-amber-400"/><div><p className="text-xs font-black text-amber-300">{lang === 'es' ? 'Trazabilidad primero' : 'Traceability first'}</p><p className="mt-1 text-xs leading-5 text-[rgb(var(--text-muted))]">{lang === 'es' ? 'Cuando GainsLab convierte una idea de NH en una regla concreta de software, la etiqueta como propia. Las prescripciones de NH tampoco se presentan como leyes científicas universales.' : 'When GainsLab turns an NH idea into a concrete software rule, it labels that rule as its own. NH prescriptions are also not presented as universal scientific laws.'}</p></div></div>
       </section>
     </div>
   );
@@ -138,6 +176,24 @@ export const NhProgrammingSchoolView: React.FC<Props> = ({ lang, templates, onBa
       <div className="flex gap-1.5 overflow-x-auto pb-1 scroll-container">{levelNames.map(item => <button key={item.id} type="button" onClick={() => setLessonLevel(item.id)} className={`min-h-9 shrink-0 rounded-xl px-3 text-[10px] font-black ${lessonLevel === item.id ? 'bg-primary-500 text-black' : 'bg-[rgb(var(--surface-raised))] text-[rgb(var(--text-muted))]'}`}>{item.label}</button>)}</div>
       {lessons.map(item => <section key={item.id} className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4"><EvidenceBadge kind={item.kind} lang={lang}/><h3 className="mt-3 text-base font-black">{item.title[lang]}</h3><p className="mt-2 text-xs leading-5 text-[rgb(var(--text-secondary))]">{item.summary[lang]}</p>{item.sourceScope && <p className="mt-3 text-[9px] font-bold uppercase tracking-[0.08em] text-[rgb(var(--text-muted))]">{lang === 'es' ? 'Ámbito de la fuente' : 'Source scope'} · {item.sourceScope}</p>}</section>)}
       <section className="rounded-2xl border border-primary-500/20 bg-primary-500/[0.05] p-4"><p className="text-xs font-black">{lang === 'es' ? 'La pregunta que querés aprender a hacer' : 'The question you want to learn to ask'}</p><p className="mt-2 text-sm font-black leading-6">{lang === 'es' ? '“¿Qué necesita cambiar mi programa y qué evidencia tengo de que necesita cambiar?”' : '“What needs to change in my program, and what evidence do I have that it needs to change?”'}</p></section>
+    </div>
+  );
+
+  const renderPath = () => (
+    <div className="space-y-3">
+      <section className="rounded-3xl border border-primary-500/25 bg-primary-500/[0.06] p-5">
+        <p className="text-[9px] font-black uppercase tracking-[0.14em] text-primary-500">NH · SELF PROGRAMMING</p>
+        <h2 className="mt-2 text-xl font-black">{lang === 'es' ? 'De copiar rutinas a construir la tuya' : 'From copying routines to building your own'}</h2>
+        <p className="mt-2 text-xs leading-5 text-[rgb(var(--text-muted))]">{lang === 'es' ? 'La Parte 2 que tenemos describe cómo escribir el programa. El protocolo detallado de alpha/beta test pertenece explícitamente a una Parte 3 que todavía falta; GainsLab no inventa esa sección.' : 'The Part 2 source we have explains how to write the program. The detailed alpha/beta protocol explicitly belongs to a Part 3 we do not yet have; GainsLab does not invent that section.'}</p>
+      </section>
+      {NH_SELF_PROGRAMMING_PATH.map(stage => <section key={stage.id} className={`rounded-2xl border p-4 ${stage.sourceStatus === 'missing_followup' ? 'border-amber-500/20 bg-amber-500/[0.05]' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))]'}`}><div className="flex items-start justify-between gap-3"><h3 className="text-sm font-black">{stage.title[lang]}</h3><span className={`rounded-lg px-2 py-1 text-[8px] font-black uppercase tracking-[0.08em] ${stage.sourceStatus === 'missing_followup' ? 'bg-amber-500/10 text-amber-400' : 'bg-primary-500/10 text-primary-400'}`}>{stage.sourceStatus === 'missing_followup' ? (lang === 'es' ? 'FUENTE PENDIENTE' : 'SOURCE PENDING') : (lang === 'es' ? 'VERIFICADO' : 'VERIFIED')}</span></div><p className="mt-2 text-xs font-bold leading-5 text-[rgb(var(--text-secondary))]">{stage.action[lang]}</p><p className="mt-2 text-[10px] leading-4 text-[rgb(var(--text-muted))]">{stage.reason[lang]}</p></section>)}
+    </div>
+  );
+
+  const renderMassterplans = () => (
+    <div className="space-y-4">
+      <section className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.05] p-4"><p className="text-xs font-black text-amber-300">{lang === 'es' ? 'No son límites científicos universales' : 'Not universal scientific limits'}</p><p className="mt-1 text-[10px] leading-4 text-[rgb(var(--text-muted))]">{lang === 'es' ? 'Son marcos y prescripciones de Natural Hypertrophy. GainsLab conserva el contexto y evita convertirlos en “MEV/MRV” universales.' : 'These are Natural Hypertrophy frameworks and prescriptions. GainsLab preserves context rather than turning them into universal MEV/MRV numbers.'}</p></section>
+      {NH_MASSTERPLAN_GUIDES.map(guide => <section key={guide.id} className="rounded-3xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4"><h2 className="text-base font-black">{guide.title[lang]}</h2><p className="mt-2 text-xs leading-5 text-[rgb(var(--text-secondary))]">{guide.principle[lang]}</p><div className="mt-4 space-y-2">{guide.stages.map(stage => <div key={stage.id} className="rounded-2xl bg-[rgb(var(--surface-base))] p-3"><p className="text-xs font-black">{stage.title[lang]}</p><p className="mt-1 text-[10px] leading-4 text-[rgb(var(--text-secondary))]">{stage.prescription[lang]}</p><p className="mt-2 text-[9px] font-bold leading-4 text-primary-400">{stage.graduation[lang]}</p></div>)}</div><p className="mt-3 text-[9px] leading-4 text-[rgb(var(--text-muted))]">{guide.caveat[lang]}</p></section>)}
     </div>
   );
 
@@ -161,7 +217,7 @@ export const NhProgrammingSchoolView: React.FC<Props> = ({ lang, templates, onBa
 
   const renderCreate = () => (
     <div className="space-y-5">
-      <section className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4"><EvidenceBadge kind="gainslab_rule" lang={lang}/><h2 className="mt-3 text-base font-black">{lang === 'es' ? 'Un borrador, no una receta oficial' : 'A scaffold, not an official recipe'}</h2><p className="mt-2 text-xs leading-5 text-[rgb(var(--text-muted))]">{lang === 'es' ? 'GainsLab distribuye funciones para darte algo editable. El valor pedagógico está en revisar por qué existe cada slot y decidir qué conservar.' : 'GainsLab distributes movement functions to give you something editable. The teaching value is reviewing why each slot exists and deciding what to keep.'}</p></section>
+      <section className="rounded-2xl border border-primary-500/20 bg-primary-500/[0.05] p-4"><EvidenceBadge kind="nh_principle" lang={lang}/><h2 className="mt-3 text-base font-black">{lang === 'es' ? 'Primero: ejercicios que ya conocés' : 'First: lifts you already know'}</h2><p className="mt-2 text-xs leading-5 text-[rgb(var(--text-muted))]">{lang === 'es' ? `NH dice que el primer programa propio debe construirse desde ejercicios practicados regularmente durante unos 3 meses. Tu logbook tiene ${experiencedExerciseIds.length} ejercicios que pasan la heurística actual de GainsLab.` : `NH says the first self-written program should be built from exercises practiced regularly for about 3 months. Your logbook has ${experiencedExerciseIds.length} exercises that pass the current GainsLab heuristic.`}</p><p className="mt-2 text-[9px] leading-4 text-amber-400">{lang === 'es' ? 'GAINSLAB RULE · “regularmente” no viene con un número exacto: usamos ≥6 exposiciones distribuidas en ≥90 días. Si una familia no tiene un ejercicio con ese historial, el borrador deja un placeholder en vez de inventar experiencia.' : 'GAINSLAB RULE · “regularly” has no exact count in the source: we use ≥6 exposures spread across ≥90 days. If a movement family has no exercise with that history, the draft leaves a placeholder instead of inventing experience.'}</p></section>
       <section><p className="mb-2 text-[10px] font-black uppercase tracking-[0.12em] text-[rgb(var(--text-muted))]">{lang === 'es' ? '1 · Días reales disponibles' : '1 · Real days available'}</p><div className="grid grid-cols-3 gap-2">{([3,4,5] as const).map(value => <button key={value} type="button" onClick={() => setDays(value)} className={`min-h-14 rounded-2xl border text-lg font-black ${days === value ? 'border-primary-500/30 bg-primary-500/10 text-primary-400' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))]'}`}>{value}</button>)}</div></section>
       <section><div className="mb-2 flex items-center justify-between"><p className="text-[10px] font-black uppercase tracking-[0.12em] text-[rgb(var(--text-muted))]">{lang === 'es' ? '2 · Prioridades' : '2 · Priorities'}</p><span className="text-[9px] font-bold text-[rgb(var(--text-muted))]">{priorities.length}/2</span></div><div className="grid grid-cols-2 gap-2">{MUSCLES.map(muscle => <button key={muscle} type="button" onClick={() => togglePriority(muscle)} className={`min-h-11 rounded-xl border px-3 text-left text-xs font-bold ${priorities.includes(muscle) ? 'border-primary-500/30 bg-primary-500/10 text-primary-400' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] text-[rgb(var(--text-secondary))]'}`}>{muscleLabel(muscle, lang)}</button>)}</div><p className="mt-2 text-[10px] leading-4 text-[rgb(var(--text-muted))]">{lang === 'es' ? 'Priorizar significa asignar recursos. No intentamos especializar todo a la vez.' : 'Prioritizing means allocating resources. We do not try to specialize everything at once.'}</p></section>
       <section><p className="mb-2 text-[10px] font-black uppercase tracking-[0.12em] text-[rgb(var(--text-muted))]">{lang === 'es' ? '3 · Funciones que estás aprendiendo' : '3 · Functions you are learning'}</p><div className="grid grid-cols-2 gap-2">{NH_ROLE_LIBRARY.slice(0,10).map(item => <div key={item.id} className="rounded-xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-3"><p className="text-[10px] font-black">{item.title[lang]}</p><p className="mt-1 text-[9px] text-[rgb(var(--text-muted))]">{item.defaultRepRange} · {item.systemicCost.toUpperCase()}</p></div>)}</div></section>
@@ -171,10 +227,11 @@ export const NhProgrammingSchoolView: React.FC<Props> = ({ lang, templates, onBa
 
   const renderPreview = () => {
     if (!draft || !draftAudit) return null;
+    const placeholders = draft.reduce((sum, day) => sum + day.slots.filter(slot => !slot.exerciseId).length, 0);
     return <div className="space-y-4">
-      <section className="rounded-3xl border border-primary-500/25 bg-primary-500/[0.06] p-5"><p className="text-[9px] font-black uppercase tracking-[0.14em] text-primary-500">NH TEACHING DRAFT</p><h2 className="mt-1 text-xl font-black">{days} {lang === 'es' ? 'días' : 'days'}{priorities.length ? ` · ${priorities.map(item => muscleLabel(item, lang)).join(' + ')}` : ''}</h2><p className="mt-2 text-xs leading-5 text-[rgb(var(--text-muted))]">{lang === 'es' ? 'Esto es el inicio de la conversación con tu logbook, no el final del proceso de programación.' : 'This is the start of the conversation with your logbook, not the end of programming.'}</p></section>
-      {draft.map((day, dayIndex) => <section key={day.id} className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4"><div className="flex items-center justify-between"><h3 className="text-sm font-black">{getTranslated(day.dayName, lang)}</h3><span className="text-[9px] font-black text-[rgb(var(--text-muted))]">{day.slots.length} SLOTS</span></div><div className="mt-3 divide-y divide-[rgb(var(--border-subtle)/0.6)]">{day.slots.map((slot,index) => <div key={`${dayIndex}-${index}`} className="grid grid-cols-[1fr_auto] gap-3 py-2.5"><div><p className="text-xs font-bold">{slot.label || slot.muscle}</p><p className="mt-0.5 text-[9px] text-[rgb(var(--text-muted))]">{slot.exerciseId || (lang === 'es' ? 'Elegir ejercicio' : 'Choose exercise')}</p></div><p className="text-xs font-black tabular-nums">{slot.setTarget}×{slot.reps}</p></div>)}</div></section>)}
-      <section className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4"><div className="flex items-center justify-between"><h3 className="text-sm font-black">{lang === 'es' ? 'Auditoría del borrador' : 'Scaffold audit'}</h3><span className="text-lg font-black text-primary-400">{draftAudit.score}</span></div><p className="mt-2 text-[10px] leading-4 text-[rgb(var(--text-muted))]">{lang === 'es' ? `${draftAudit.findings.length} observaciones. Abrí el editor y cuestioná cada una antes de considerar la rutina terminada.` : `${draftAudit.findings.length} findings. Open the editor and question each one before calling the routine finished.`}</p></section>
+      <section className="rounded-3xl border border-primary-500/25 bg-primary-500/[0.06] p-5"><p className="text-[9px] font-black uppercase tracking-[0.14em] text-primary-500">NH TEACHING DRAFT</p><h2 className="mt-1 text-xl font-black">{days} {lang === 'es' ? 'días' : 'days'}{priorities.length ? ` · ${priorities.map(item => muscleLabel(item, lang)).join(' + ')}` : ''}</h2><p className="mt-2 text-xs leading-5 text-[rgb(var(--text-muted))]">{lang === 'es' ? `Usamos tu historial cuando existe. Quedaron ${placeholders} placeholders porque GainsLab no encontró un ejercicio con historial suficiente para esas funciones.` : `Your history is used where available. ${placeholders} placeholders remain because GainsLab did not find an exercise with enough history for those functions.`}</p></section>
+      {draft.map((day, dayIndex) => <section key={day.id} className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4"><div className="flex items-center justify-between"><h3 className="text-sm font-black">{getTranslated(day.dayName, lang)}</h3><span className="text-[9px] font-black text-[rgb(var(--text-muted))]">{day.slots.length} SLOTS</span></div><div className="mt-3 divide-y divide-[rgb(var(--border-subtle)/0.6)]">{day.slots.map((slot,index) => <div key={`${dayIndex}-${index}`} className="grid grid-cols-[1fr_auto] gap-3 py-2.5"><div><p className="text-xs font-bold">{slot.label || slot.muscle}</p><p className={`mt-0.5 text-[9px] ${slot.exerciseId ? 'text-[rgb(var(--text-muted))]' : 'font-bold text-amber-400'}`}>{slot.exerciseId || (lang === 'es' ? 'PLACEHOLDER · elegí un ejercicio que ya conozcas' : 'PLACEHOLDER · choose a lift you already know')}</p></div><p className="text-xs font-black tabular-nums">{slot.setTarget}×{slot.reps}</p></div>)}</div></section>)}
+      <section className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4"><div className="flex items-center justify-between"><h3 className="text-sm font-black">{lang === 'es' ? 'Auditoría del borrador' : 'Scaffold audit'}</h3><span className="text-lg font-black text-primary-400">{draftAudit.score}</span></div><p className="mt-2 text-[10px] leading-4 text-[rgb(var(--text-muted))]">{lang === 'es' ? `${draftAudit.findings.length} observaciones. El score no convierte este borrador en “tu programa final”. La fuente de NH habla de meses/años de refinamiento.` : `${draftAudit.findings.length} findings. The score does not turn this scaffold into your “final program”. NH's source describes months/years of refinement.`}</p></section>
       <button type="button" onClick={() => saveDraft(draft, lang === 'es' ? 'Mi programa' : 'My program', true)} className="min-h-12 w-full rounded-2xl bg-primary-500 px-4 text-sm font-black text-black">{lang === 'es' ? 'Guardar en Mías y abrir editor' : 'Save to Mine and open editor'}</button>
       <button type="button" onClick={() => saveDraft(draft, lang === 'es' ? 'Mi programa' : 'My program', false)} className="min-h-11 w-full rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] px-4 text-xs font-bold">{lang === 'es' ? 'Guardar borrador sin editar' : 'Save scaffold without editing'}</button>
     </div>;
@@ -182,6 +239,8 @@ export const NhProgrammingSchoolView: React.FC<Props> = ({ lang, templates, onBa
 
   const body = screen === 'home' ? renderHome()
     : screen === 'learn' ? renderLearn()
+    : screen === 'path' ? renderPath()
+    : screen === 'massterplans' ? renderMassterplans()
     : screen === 'analyze' ? renderAnalyze()
     : screen === 'audit' ? renderAudit()
     : screen === 'create' ? renderCreate()
