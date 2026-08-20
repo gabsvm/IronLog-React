@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import type { Log, WorkoutSet } from '../../types';
 import { PERFORMANCE_UPPER_LOWER_V1 } from '../../programs/performance/performanceUpperLower';
 import { GUTS_BLACK_SWORDSMAN_V1 } from '../../programs/naturalHypertrophy/gutsBlackSwordsman';
+import { evaluateNhEvolvingRepCue } from '../../programs/naturalHypertrophy/nhVerifiedKnowledge';
 import { getExerciseHistorySummary } from '../../utils/exerciseHistoryIndex';
 import { Icon } from '../ui/Icon';
 import { SortableExerciseCard as SortableExerciseCardImpl } from './SortableExerciseCardImpl';
@@ -101,18 +102,11 @@ export const SortableExerciseCard = React.memo((props: SortableExerciseCardProps
 
         if (structuredExercise.progressionPolicy === 'evolving') {
             if (latest.length < rangedSets.length) {
-                return { ready: false, label: lang === 'es' ? 'Evolving reps · completá el trabajo y mantené carga' : 'Evolving reps · complete the work and hold load' };
+                return { ready: false, label: lang === 'es' ? 'Evolving reps · completá el trabajo antes de evaluar la transición' : 'Evolving reps · complete the work before evaluating the transition' };
             }
             const reps = latest.map(set => Number(set.reps || 0));
-            const allAtCeiling = reps.every(rep => rep >= maxTarget);
-            const rangeMature = reps.every(rep => rep >= Math.max(minTarget, maxTarget - 1)) && reps.some(rep => rep >= maxTarget);
-            if (allAtCeiling) {
-                return { ready: true, label: lang === 'es' ? 'Rango dominado · considerá el aumento mínimo práctico' : 'Range mastered · consider the smallest practical load increase' };
-            }
-            if (rangeMature) {
-                return { ready: true, label: lang === 'es' ? 'Rango alto · subí solo si la técnica y recuperación lo justifican' : 'High in range · add load only if technique and recovery justify it' };
-            }
-            return { ready: false, label: lang === 'es' ? 'Evolving reps · mantené carga y acumulá reps' : 'Evolving reps · hold load and accumulate reps' };
+            const cue = evaluateNhEvolvingRepCue(reps, minTarget, maxTarget);
+            return { ready: cue.ready, label: cue.label[lang === 'es' ? 'es' : 'en'] };
         }
 
         const targetRpe = rangedSets.find(set => Number.isFinite(Number(set.targetRpe)))?.targetRpe;
