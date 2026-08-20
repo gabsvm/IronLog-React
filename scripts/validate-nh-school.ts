@@ -3,28 +3,37 @@ import {
   NH_MASSTERPLAN_GUIDES,
   NH_PROGRAMMING_TEACHING_POINTS,
   NH_ROLE_LIBRARY,
+  NH_SELF_PROGRAMMING_PATH,
   auditNhProgram,
   buildNhTeachingDraft,
   getNhMovementRole,
   makeNhSchoolTemplate,
 } from '../programs/naturalHypertrophy/programmingSchool.ts';
-import { evaluateNhEvolvingRepCue } from '../programs/naturalHypertrophy/nhVerifiedKnowledge.ts';
+import { evaluateNhEvolvingRepCue, evaluateNhPlateauTrend } from '../programs/naturalHypertrophy/nhVerifiedKnowledge.ts';
 
-assert.ok(NH_PROGRAMMING_TEACHING_POINTS.length >= 18, 'Programming School needs the expanded transcript-grounded lesson set');
+assert.ok(NH_PROGRAMMING_TEACHING_POINTS.length >= 30, 'Programming School needs the expanded transcript-grounded lesson set');
 assert.ok(NH_PROGRAMMING_TEACHING_POINTS.some(item => item.kind === 'nh_principle'), 'Must distinguish verified NH principles');
 assert.ok(NH_PROGRAMMING_TEACHING_POINTS.some(item => item.kind === 'inference'), 'Must distinguish inference');
 assert.ok(NH_PROGRAMMING_TEACHING_POINTS.some(item => item.kind === 'gainslab_rule'), 'Must distinguish GainsLab operational rules');
 
-const operational = NH_PROGRAMMING_TEACHING_POINTS.find(item => item.id === 'three-exposure-flag');
-assert.equal(operational?.kind, 'gainslab_rule', 'Three-exposure flag must never be attributed to NH');
 const eightyFive = NH_PROGRAMMING_TEACHING_POINTS.find(item => item.id === '85-rule');
 assert.equal(eightyFive?.kind, 'nh_principle', '85% rule must remain an NH principle');
+assert.ok(eightyFive?.sourceScope?.includes('How to Get Bigger by Doing Less'), '85% card must point to the uploaded full transcript');
 const ceiling = NH_PROGRAMMING_TEACHING_POINTS.find(item => item.id === 'evolving-ceiling-not-target');
 assert.equal(ceiling?.kind, 'nh_principle', 'Evolving ceiling rule is directly supported by the NH transcript');
 const programFirst = NH_PROGRAMMING_TEACHING_POINTS.find(item => item.id === 'program-before-running');
 assert.equal(programFirst?.kind, 'nh_principle', 'Rare/small in-run changes are directly supported by the NH programming transcript');
 const compoundBalance = NH_PROGRAMMING_TEACHING_POINTS.find(item => item.id === 'compound-and-precision-balance');
 assert.equal(compoundBalance?.kind, 'nh_principle', 'Compound + precision balance must remain sourced to NH');
+const plateauPatience = NH_PROGRAMMING_TEACHING_POINTS.find(item => item.id === 'plateau-two-three-exposures');
+assert.equal(plateauPatience?.kind, 'nh_principle', '2–3 repeated exposures before escalating is now directly source-grounded');
+const deloadBoundary = NH_PROGRAMMING_TEACHING_POINTS.find(item => item.id === 'deload-safety-boundary');
+assert.equal(deloadBoundary?.kind, 'gainslab_rule', 'Never-deload safety boundary must remain a GainsLab rule');
+const selfProgramming = NH_PROGRAMMING_TEACHING_POINTS.find(item => item.id === 'self-program-own-program');
+assert.equal(selfProgramming?.kind, 'nh_principle', 'Self-programming goal is explicitly stated by NH');
+
+assert.equal(NH_SELF_PROGRAMMING_PATH.length, 8, 'Self-programming path must represent the verified Part 2 process');
+assert.equal(NH_SELF_PROGRAMMING_PATH.find(item => item.id === 'alpha-beta')?.sourceStatus, 'missing_followup', 'Alpha/beta details must remain explicitly unresolved until Part 3 is supplied');
 
 assert.equal(NH_MASSTERPLAN_GUIDES.length, 3, 'Back, shoulders and forearms MASSterplans must be represented');
 assert.ok(NH_MASSTERPLAN_GUIDES.some(item => item.id === 'back' && item.stages.length === 4));
@@ -48,16 +57,38 @@ assert.equal(evolvingLate.status, 'late_transition', 'Repeated ceiling sets shou
 const evolvingBelow = evaluateNhEvolvingRepCue([6,5,4,4], 6, 10);
 assert.equal(evolvingBelow.status, 'below_range', 'A failed post-jump range must trigger review');
 
+const hardWork = evaluateNhPlateauTrend([
+  { maxWeight: 100, totalReps: 24 },
+  { maxWeight: 100, totalReps: 24 },
+  { maxWeight: 100, totalReps: 23 },
+]);
+assert.equal(hardWork.status, 'hard_work', 'Three flat-ish exposures should not automatically be called a plateau');
+const plateau = evaluateNhPlateauTrend([
+  { maxWeight: 100, totalReps: 24 },
+  { maxWeight: 100, totalReps: 24 },
+  { maxWeight: 100, totalReps: 23 },
+  { maxWeight: 100, totalReps: 24 },
+]);
+assert.equal(plateau.status, 'plateau_candidate', 'A fourth comparable exposure can become a plateau candidate');
+
 for (const days of [3,4,5] as const) {
   const draft = buildNhTeachingDraft({ days, priorities: ['BACK','BICEPS'] });
   assert.equal(draft.length, days, `${days}-day draft must contain ${days} days`);
   assert.ok(draft.every(day => day.slots.length > 0), `${days}-day draft cannot contain empty days`);
   const audit = auditNhProgram(draft);
-  assert.ok(audit.rolesPresent.includes('vertical_pull'), `${days}-day draft must teach vertical pulling`);
-  assert.ok(audit.rolesPresent.includes('horizontal_pull'), `${days}-day draft must teach horizontal pulling`);
-  assert.ok(audit.rolesPresent.includes('hinge'), `${days}-day draft must teach a hinge`);
+  assert.ok(audit.rolesPresent.includes('vertical_pull'), `${days}-day illustrative draft must teach vertical pulling`);
+  assert.ok(audit.rolesPresent.includes('horizontal_pull'), `${days}-day illustrative draft must teach horizontal pulling`);
+  assert.ok(audit.rolesPresent.includes('hinge'), `${days}-day illustrative draft must teach a hinge`);
   assert.ok(audit.score >= 0 && audit.score <= 100, 'Audit score must be bounded');
 }
+
+const experiencedPool = ['bp_bar','row_cable','pullup','rdl','sq_bar','leg_ext','curl_ez','tri_push','lat_raise','calf_raise','abs_cable'];
+const experiencedDraft = buildNhTeachingDraft({ days: 4, priorities: ['BACK'], experiencedExerciseIds: experiencedPool });
+experiencedDraft.flatMap(day => day.slots).forEach(slot => {
+  if (slot.exerciseId) assert.ok(experiencedPool.includes(String(slot.exerciseId)), `Unexpected unpracticed exercise ${slot.exerciseId}`);
+});
+const emptyPoolDraft = buildNhTeachingDraft({ days: 3, priorities: [], experiencedExerciseIds: ['__none__'] });
+assert.ok(emptyPoolDraft.flatMap(day => day.slots).some(slot => !slot.exerciseId), 'A supplied pool with no matching lifts must create placeholders instead of inventing experience');
 
 const incompleteBack = [{
   id: 'one',
