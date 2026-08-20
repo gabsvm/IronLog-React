@@ -20,6 +20,9 @@ const PerformanceProgramDetailView = React.lazy(() =>
 const GutsProgramDetailView = React.lazy(() =>
     import('../../components/programs/GutsProgramDetailView').then(module => ({ default: module.GutsProgramDetailView }))
 );
+const NhProgrammingSchoolView = React.lazy(() =>
+    import('../../components/programs/NhProgrammingSchoolView').then(module => ({ default: module.NhProgrammingSchoolView }))
+);
 
 interface Props {
     onClose: () => void;
@@ -68,6 +71,7 @@ export const TemplateSelector: React.FC<Props> = ({
     const [showKongDetail, setShowKongDetail] = useState(false);
     const [showPerformanceDetail, setShowPerformanceDetail] = useState(false);
     const [showGutsDetail, setShowGutsDetail] = useState(false);
+    const [showProgrammingSchool, setShowProgrammingSchool] = useState(false);
     const [tab, setTab] = useState<LibraryTab>('programs');
     const [search, setSearch] = useState('');
     const [dayFilter, setDayFilter] = useState<DayFilter>('all');
@@ -125,6 +129,23 @@ export const TemplateSelector: React.FC<Props> = ({
         if (created?.trim()) assignFolder(templateId, created);
     };
 
+    const handleSchoolSave = (template: GlobalTemplate, openEditor: boolean) => {
+        setPersonalTemplates(prev => {
+            const withoutDuplicate = prev.filter(item => item.id !== template.id);
+            return [template, ...withoutDuplicate];
+        });
+        if (openEditor) {
+            // HomeViewImpl's custom path clears the current program before opening
+            // the editor. Calling setProgram afterwards deliberately makes the
+            // teaching draft the final batched value while reusing that navigation.
+            onCreateCustom();
+            setProgram(template.program);
+            return;
+        }
+        setShowProgrammingSchool(false);
+        selectTab('mine');
+    };
+
     const startStructuredProgram = (definition: typeof PERFORMANCE_UPPER_LOWER_V1 | typeof GUTS_BLACK_SWORDSMAN_V1, displayName: string) => {
         const firstWeek = resolveProgramWeek(definition, 1);
         setProgram(firstWeek);
@@ -149,8 +170,6 @@ export const TemplateSelector: React.FC<Props> = ({
     };
 
     const startGuts = () => {
-        // Older installs may have a persisted exercise library created before
-        // GUTS existed. Merge exact missing movements before SessionBuilder runs.
         setExercises(prev => {
             const base = Array.isArray(prev) ? prev : [];
             const byId = new Map(base.map(exercise => [exercise.id, exercise]));
@@ -161,7 +180,9 @@ export const TemplateSelector: React.FC<Props> = ({
         startStructuredProgram(GUTS_BLACK_SWORDSMAN_V1, 'GUTS · Black Swordsman');
     };
 
-    const ProgramCard = ({ eyebrow, title, subtitle, badge, description, tags = [], primary = false, onClick }: { eyebrow: string; title: string; subtitle: string; badge: string; description: string; tags?: string[]; primary?: boolean; onClick: () => void }) => (
+    const ProgramCard = ({ eyebrow, title, subtitle, badge, description, tags = [], primary = false, onClick }: {
+        eyebrow: string; title: string; subtitle: string; badge: string; description: string; tags?: string[]; primary?: boolean; onClick: () => void;
+    }) => (
         <div className={`rounded-2xl border p-4 ${primary ? 'border-primary-500/30 bg-gradient-to-br from-primary-500/[0.10] to-[rgb(var(--surface-raised))]' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised)/0.72)]'}`}>
             <div className="flex items-start justify-between gap-4">
                 <div><div className={`text-[9px] font-bold uppercase tracking-[0.14em] ${primary ? 'text-primary-500' : 'text-[rgb(var(--text-muted))]'}`}>{eyebrow}</div><h3 className="mt-1 text-2xl font-black tracking-tight">{title}</h3><p className="mt-1 text-sm font-bold text-[rgb(var(--text-secondary))]">{subtitle}</p></div>
@@ -188,6 +209,13 @@ export const TemplateSelector: React.FC<Props> = ({
                 <div className="mx-auto w-full max-w-xl space-y-4 p-4 pb-[calc(env(safe-area-inset-bottom)+2rem)]">
                     {tab === 'programs' ? (
                         <>
+                            <button type="button" onClick={() => setShowProgrammingSchool(true)} className="w-full rounded-3xl border border-violet-500/25 bg-gradient-to-br from-violet-500/[0.10] to-[rgb(var(--surface-raised))] p-5 text-left active:scale-[0.99]">
+                                <div className="flex items-start gap-4">
+                                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-400"><Icon name="Brain" size={22}/></span>
+                                    <span className="min-w-0 flex-1"><span className="block text-[9px] font-black uppercase tracking-[0.14em] text-violet-400">Natural Hypertrophy · {lang === 'es' ? 'Aprender a programar' : 'Learn programming'}</span><span className="mt-1 block text-xl font-black">Programming School</span><span className="mt-2 block text-xs leading-5 text-[rgb(var(--text-secondary))]">{lang === 'es' ? 'Entender → analizar → modificar → crear → aprender de tu logbook. No te entrega una caja negra: te enseña a tomar decisiones.' : 'Understand → analyze → modify → build → learn from your logbook. Not a black-box generator: it teaches you to make decisions.'}</span></span>
+                                    <Icon name="ChevronRight" size={18} className="mt-1 shrink-0 text-[rgb(var(--text-muted))]"/>
+                                </div>
+                            </button>
                             <ProgramCard primary eyebrow={`GainsLab · ${lang === 'es' ? 'Hipertrofia sostenible' : 'Sustainable hypertrophy'}`} title="PERFORMANCE" subtitle="Upper / Lower · GainsLab" badge="8C · 4D" description={lang === 'es' ? 'Doble progresión, RPE 7–8.5 y ciclo rodante con Recovery Gate. Fatiga controlada como principio de diseño.' : 'Double progression, RPE 7–8.5 and a rolling cycle with Recovery Gate. Controlled fatigue by design.'} tags={['Recovery Gate', '1–3 RIR', lang === 'es' ? 'Volumen moderado' : 'Moderate volume']} onClick={() => setShowPerformanceDetail(true)}/>
                             <ProgramCard eyebrow="Natural Hypertrophy · Black Swordsman" title="GUTS" subtitle="4-day Gentleman Split · Natural Hypertrophy" badge="12W · 4D" description={lang === 'es' ? 'Torso dominante, brazos y espalda; compuestos pesados, superseries y rangos evolutivos. Implementado con la filosofía del 85% de Natural Hypertrophy.' : 'Upper-body dominant physique work: heavy compounds, supersets and evolving rep ranges, implemented with Natural Hypertrophy’s 85% philosophy.'} tags={['Evolving reps', '85% rule', 'Supersets']} onClick={() => setShowGutsDetail(true)}/>
                             <ProgramCard eyebrow={lang === 'es' ? 'Alta capacidad de trabajo' : 'High work capacity'} title="KONG" subtitle="Savage Size · Alexander Bromley" badge="12W · 4D" description={lang === 'es' ? '12 semanas, 3 bloques y progresión prescrita. GainsLab mantiene la estructura oficial durante toda la ejecución.' : '12 weeks, 3 blocks and prescribed progression. GainsLab preserves the official structure throughout the run.'} onClick={() => setShowKongDetail(true)}/>
@@ -210,6 +238,7 @@ export const TemplateSelector: React.FC<Props> = ({
                 </div>
             </div>
 
+            {showProgrammingSchool && <Suspense fallback={<div className="fixed inset-0 z-modal bg-[rgb(var(--surface-app))]"/>}><NhProgrammingSchoolView lang={lang as 'en'|'es'} templates={templates} onBack={() => setShowProgrammingSchool(false)} onSaveTemplate={handleSchoolSave}/></Suspense>}
             {showPerformanceDetail && <Suspense fallback={<div className="fixed inset-0 z-modal bg-[rgb(var(--surface-app))]"/>}><PerformanceProgramDetailView lang={lang as 'en'|'es'} onBack={() => setShowPerformanceDetail(false)} onStart={startPerformance}/></Suspense>}
             {showGutsDetail && <Suspense fallback={<div className="fixed inset-0 z-modal bg-[rgb(var(--surface-app))]"/>}><GutsProgramDetailView lang={lang as 'en'|'es'} onBack={() => setShowGutsDetail(false)} onStart={startGuts}/></Suspense>}
             {showKongDetail && <Suspense fallback={<div className="fixed inset-0 z-modal bg-[rgb(var(--surface-app))]"/>}><ProgramDetailView lang={lang as 'en'|'es'} onBack={() => setShowKongDetail(false)} onStart={() => { setShowKongDetail(false); onSelectProgram?.('kong_4day'); }}/></Suspense>}
