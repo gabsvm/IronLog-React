@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import type { GlobalTemplate, MuscleGroup, ProgramDay } from '../../types';
 import { getTranslated } from '../../utils';
 import { Icon } from '../ui/Icon';
+import { NhLogbookCoachView } from './NhLogbookCoachView';
 import {
   NH_PROGRAMMING_TEACHING_POINTS,
   NH_ROLE_LIBRARY,
@@ -12,7 +13,7 @@ import {
   type NhProgrammingLevel,
 } from '../../programs/naturalHypertrophy/programmingSchool';
 
-type Screen = 'home' | 'learn' | 'analyze' | 'audit' | 'create' | 'preview';
+type Screen = 'home' | 'learn' | 'analyze' | 'audit' | 'create' | 'preview' | 'selfcoach';
 
 interface Props {
   lang: 'en' | 'es';
@@ -96,6 +97,7 @@ export const NhProgrammingSchoolView: React.FC<Props> = ({ lang, templates, onBa
   const headerTitle = screen === 'home' ? 'Programming School'
     : screen === 'learn' ? (lang === 'es' ? 'Aprender el método' : 'Learn the method')
     : screen === 'analyze' || screen === 'audit' ? (lang === 'es' ? 'Analizar una rutina' : 'Analyze a routine')
+    : screen === 'selfcoach' ? (lang === 'es' ? 'Self-Coach · Logbook' : 'Self-Coach · Logbook')
     : (lang === 'es' ? 'Crear desde cero' : 'Build from scratch');
 
   const goBack = () => {
@@ -122,6 +124,7 @@ export const NhProgrammingSchoolView: React.FC<Props> = ({ lang, templates, onBa
         <LevelCard icon="BookOpen" title={lang === 'es' ? 'Aprender los 4 niveles' : 'Learn the 4 levels'} subtitle={lang === 'es' ? 'Funciones, evolving reps, volumen ganado, frecuencia y regla del 85%.' : 'Functions, evolving reps, earned volume, frequency and the 85% rule.'} onClick={() => setScreen('learn')}/>
         <LevelCard icon="Search" title={lang === 'es' ? 'Analizar / modificar una rutina' : 'Analyze / modify a routine'} subtitle={lang === 'es' ? 'Desarma una rutina existente y descubre cobertura, redundancia, interferencia y costo.' : 'Break an existing routine apart and inspect coverage, redundancy, interference and cost.'} onClick={() => setScreen('analyze')}/>
         <LevelCard icon="Plus" title={lang === 'es' ? 'Crear desde cero' : 'Build from scratch'} subtitle={lang === 'es' ? 'Elegí días y prioridades; GainsLab construye un borrador didáctico que después tenés que revisar y editar.' : 'Choose days and priorities; GainsLab builds a teaching scaffold that you must review and edit.'} onClick={() => setScreen('create')}/>
+        <LevelCard icon="BarChart2" title={lang === 'es' ? 'Autoentrenarme con mi logbook' : 'Self-coach with my logbook'} subtitle={lang === 'es' ? 'Aprendé a distinguir “estoy progresando” de “hay algo que revisar” usando exposiciones reales.' : 'Learn to distinguish “I am progressing” from “something needs review” using real exposures.'} onClick={() => setScreen('selfcoach')}/>
       </div>
 
       <section className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.06] p-4">
@@ -177,7 +180,13 @@ export const NhProgrammingSchoolView: React.FC<Props> = ({ lang, templates, onBa
     </div>;
   };
 
-  const body = screen === 'home' ? renderHome() : screen === 'learn' ? renderLearn() : screen === 'analyze' ? renderAnalyze() : screen === 'audit' ? renderAudit() : screen === 'create' ? renderCreate() : renderPreview();
+  const body = screen === 'home' ? renderHome()
+    : screen === 'learn' ? renderLearn()
+    : screen === 'analyze' ? renderAnalyze()
+    : screen === 'audit' ? renderAudit()
+    : screen === 'create' ? renderCreate()
+    : screen === 'selfcoach' ? <NhLogbookCoachView lang={lang}/>
+    : renderPreview();
 
   return (
     <div className="fixed inset-0 z-modal flex flex-col bg-[rgb(var(--surface-app))] text-[rgb(var(--text-primary))]">
