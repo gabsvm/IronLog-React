@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { buildNhTeachingDraft, auditNhProgram, makeNhSchoolTemplate } from '../programs/naturalHypertrophy/programmingSchool.ts';
 import { buildNhCoachTrends, collectNhExerciseHistory } from '../programs/naturalHypertrophy/nhLogbookAnalysis.ts';
 import { localizeNhTeachingDraft, summarizeNhAudit } from '../programs/naturalHypertrophy/nhSchoolProductLogic.ts';
@@ -9,6 +10,16 @@ import {
   nhLabNextPhase,
   transitionNhLabPhase,
 } from '../programs/naturalHypertrophy/nhLabLifecycle.ts';
+
+const schoolUi = readFileSync(new URL('../components/programs/NhProgrammingSchoolView.tsx', import.meta.url), 'utf8');
+const coachUi = readFileSync(new URL('../components/programs/NhLogbookCoachView.tsx', import.meta.url), 'utf8');
+assert.ok(!schoolUi.includes('selectedAudit.score') && !schoolUi.includes('draftAudit.score'), 'Programming School must not regress to a visible 0–100 audit grade');
+assert.ok(schoolUi.includes('Sin nota 0–100'), 'Audit UI must explain why it uses categories instead of a grade');
+assert.ok(schoolUi.includes('¿Qué problema querés resolver?'), 'Modify flow must require a reason before creating a teaching copy');
+assert.ok(schoolUi.includes("experiencedExerciseIds: ['__manual_choice_required__']"), 'Guided builder must create function placeholders instead of auto-picking exercises');
+assert.ok(schoolUi.includes('exerciseReadiness'), 'Builder experience/fit confirmations must persist with the NH Lab template');
+assert.ok(schoolUi.includes('Draft → Alpha → Beta'), 'Lifecycle must be visible as a first-class Programming School path');
+assert.ok(coachUi.includes('CONTEXTO CAMBIÓ') && coachUi.includes('CONTEXT CHANGED'), 'Self-Coach must surface context changes explicitly');
 
 const scaffold = buildNhTeachingDraft({ days: 4, priorities: ['BACK'], experiencedExerciseIds: ['__manual_choice_required__'] });
 assert.equal(scaffold.length, 4);
