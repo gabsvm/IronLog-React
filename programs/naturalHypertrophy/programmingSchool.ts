@@ -1,7 +1,13 @@
 import type { GlobalTemplate, MuscleGroup, ProgramDay, ProgramSlot } from '../../types';
+import {
+  NH_MASSTERPLAN_GUIDES,
+  NH_TRANSCRIPT_LESSONS,
+  type NhSourceEvidenceKind,
+  type NhSourceLevel,
+} from './nhVerifiedKnowledge';
 
-export type NhEvidenceKind = 'nh_principle' | 'inference' | 'gainslab_rule';
-export type NhProgrammingLevel = 'understand' | 'modify' | 'build' | 'self_coach';
+export type NhEvidenceKind = NhSourceEvidenceKind;
+export type NhProgrammingLevel = NhSourceLevel;
 export type NhMovementRole =
   | 'horizontal_press'
   | 'vertical_press'
@@ -59,7 +65,7 @@ export interface NhDraftOptions {
   name?: string;
 }
 
-export const NH_PROGRAMMING_TEACHING_POINTS: NhTeachingPoint[] = [
+const BASE_TEACHING_POINTS: NhTeachingPoint[] = [
   {
     id: 'minimum-before-more',
     level: 'understand',
@@ -69,7 +75,7 @@ export const NH_PROGRAMMING_TEACHING_POINTS: NhTeachingPoint[] = [
       en: 'NH repeatedly builds MASSterplans by starting with a small number of movement categories and adding work only as the trainee outgrows the previous step.',
       es: 'NH construye repetidamente sus MASSterplans empezando con pocas categorías de movimiento y añadiendo trabajo sólo cuando el atleta supera la etapa anterior.',
     },
-    sourceScope: 'Compendium MASSterplans; Big Back and Big Arms progression.',
+    sourceScope: 'Compendium MASSterplans; Big Back / Shoulders / Forearms transcripts.',
   },
   {
     id: 'functions-before-exercises',
@@ -77,8 +83,8 @@ export const NH_PROGRAMMING_TEACHING_POINTS: NhTeachingPoint[] = [
     kind: 'nh_principle',
     title: { en: 'Program functions before favorite exercises', es: 'Programa funciones antes que ejercicios favoritos' },
     summary: {
-      en: 'The Big Back MASSterplan starts with categories such as hinge, vertical pull and horizontal pull, while the exact exercise is left to the trainee.',
-      es: 'El MASSterplan de espalda empieza por categorías como hinge, tirón vertical y tirón horizontal; el ejercicio exacto queda en manos del atleta.',
+      en: 'The Big Back MASSterplan begins with movement families — hinge, vertical pull and horizontal pull — while the exact exercise remains individualized.',
+      es: 'El MASSterplan de espalda empieza por familias — hinge, tirón vertical y tirón horizontal — mientras el ejercicio exacto se individualiza.',
     },
     sourceScope: 'Big Back MASSterplan Step 1.',
   },
@@ -88,21 +94,10 @@ export const NH_PROGRAMMING_TEACHING_POINTS: NhTeachingPoint[] = [
     kind: 'nh_principle',
     title: { en: 'The exercise has to fit you', es: 'El ejercicio tiene que servirte a vos' },
     summary: {
-      en: 'NH explicitly allows the trainee to choose movements they enjoy and can perform without discomfort instead of forcing one canonical lift.',
-      es: 'NH permite explícitamente elegir movimientos que disfrutes y puedas ejecutar sin molestias, en vez de imponer un levantamiento canónico.',
+      en: 'NH repeatedly tells trainees to choose movements they enjoy, can perform comfortably and can keep long enough to build real progression instead of chasing a supposedly optimal exercise.',
+      es: 'NH repite que el atleta debe elegir movimientos que disfrute, pueda ejecutar cómodamente y mantener el tiempo suficiente para construir progresión real, en vez de perseguir un ejercicio supuestamente óptimo.',
     },
-    sourceScope: 'Arm and Back MASSterplans.',
-  },
-  {
-    id: 'evolving-reps',
-    level: 'build',
-    kind: 'nh_principle',
-    title: { en: 'Progress inside a range', es: 'Progresa dentro de un rango' },
-    summary: {
-      en: 'Evolving rep ranges let individual sets move inside a range. Progress is not restricted to identical reps on every set or adding load every session.',
-      es: 'Los evolving rep ranges permiten que cada serie evolucione dentro de un rango. Progresar no exige repetir el mismo número en todas las series ni subir carga cada sesión.',
-    },
-    sourceScope: 'NH evolving rep-range method; Compendium instructions.',
+    sourceScope: 'Big Back, Big Shoulders and Forearms MASSterplans.',
   },
   {
     id: 'volume-earned',
@@ -110,10 +105,10 @@ export const NH_PROGRAMMING_TEACHING_POINTS: NhTeachingPoint[] = [
     kind: 'nh_principle',
     title: { en: 'Do not add volume to a dose that works', es: 'No añadas volumen a una dosis que funciona' },
     summary: {
-      en: 'The arm MASSterplan tells the trainee to stay at the current step while load can keep progressing; extra exercises and sets arrive later.',
-      es: 'El MASSterplan de brazos indica permanecer en la etapa actual mientras la carga siga progresando; más ejercicios y series aparecen después.',
+      en: 'Across MASSterplans NH repeatedly tells the trainee to milk a step while progression continues, then add work only when the current structure is no longer enough and recovery capacity can support it.',
+      es: 'En sus MASSterplans NH repite que hay que exprimir una etapa mientras exista progresión y añadir trabajo sólo cuando la estructura actual deje de alcanzar y la recuperación pueda soportarlo.',
     },
-    sourceScope: 'Big Arms MASSterplan novice/intermediate stages.',
+    sourceScope: 'Big Back, Arms, Shoulders and Forearms MASSterplans.',
   },
   {
     id: 'recovery-calendar',
@@ -121,10 +116,10 @@ export const NH_PROGRAMMING_TEACHING_POINTS: NhTeachingPoint[] = [
     kind: 'nh_principle',
     title: { en: 'Frequency is a recovery calendar', es: 'La frecuencia es un calendario de recuperación' },
     summary: {
-      en: 'NH places similar movements far enough apart to preserve performance and recovery, then allows denser scheduling as work capacity grows.',
-      es: 'NH separa movimientos similares lo suficiente para preservar rendimiento y recuperación, y permite mayor densidad cuando aumenta la capacidad de trabajo.',
+      en: 'NH places similar demanding movements far enough apart to protect performance, then allows denser scheduling only as work capacity rises.',
+      es: 'NH separa movimientos similares demandantes para proteger rendimiento y permite mayor densidad sólo cuando sube la capacidad de trabajo.',
     },
-    sourceScope: 'Big Back MASSterplan frequency examples.',
+    sourceScope: 'Big Back and Big Shoulders scheduling examples.',
   },
   {
     id: '85-rule',
@@ -132,10 +127,10 @@ export const NH_PROGRAMMING_TEACHING_POINTS: NhTeachingPoint[] = [
     kind: 'nh_principle',
     title: { en: 'Seek stimulus, not fatigue', es: 'Busca estímulo, no fatiga' },
     summary: {
-      en: 'The 85% rule is not 85% of 1RM. It is a programming philosophy: capture most of the productive stimulus without systematically extracting every unit of fatigue available.',
+      en: 'The 85% rule is not 85% of 1RM. It is a programming philosophy: capture most productive stimulus without systematically extracting every possible unit of fatigue.',
       es: 'La regla del 85% no es 85% del 1RM. Es una filosofía: capturar la mayor parte del estímulo productivo sin extraer sistemáticamente toda la fatiga posible.',
     },
-    sourceScope: 'The 85% Rule.',
+    sourceScope: 'The 85% Rule. Full transcript still desired for deeper implementation.',
   },
   {
     id: 'hypothesis-logbook',
@@ -143,8 +138,8 @@ export const NH_PROGRAMMING_TEACHING_POINTS: NhTeachingPoint[] = [
     kind: 'inference',
     title: { en: 'Your routine is a hypothesis', es: 'Tu rutina es una hipótesis' },
     summary: {
-      en: 'Taken together, NH principles imply that a program should be kept stable long enough to judge it, then changed in response to progression, recovery and weak points.',
-      es: 'Tomados en conjunto, los principios de NH implican mantener una rutina estable el tiempo suficiente para evaluarla y cambiarla según progresión, recuperación y puntos débiles.',
+      en: 'Taken together, NH principles imply keeping a program stable long enough to test it, then changing small variables in response to progression, recovery and weak points.',
+      es: 'Tomados en conjunto, los principios de NH implican mantener el programa estable el tiempo suficiente para probarlo y luego cambiar variables pequeñas según progresión, recuperación y puntos débiles.',
     },
   },
   {
@@ -159,19 +154,26 @@ export const NH_PROGRAMMING_TEACHING_POINTS: NhTeachingPoint[] = [
   },
 ];
 
+export const NH_PROGRAMMING_TEACHING_POINTS: NhTeachingPoint[] = [
+  ...BASE_TEACHING_POINTS,
+  ...NH_TRANSCRIPT_LESSONS.map(item => ({ ...item })),
+];
+
+export { NH_MASSTERPLAN_GUIDES };
+
 export const NH_ROLE_LIBRARY: NhRoleDefinition[] = [
   { id: 'horizontal_press', muscle: 'CHEST', title: { en: 'Horizontal press', es: 'Press horizontal' }, purpose: { en: 'Chest/triceps pressing base.', es: 'Base de empuje para pecho/tríceps.' }, defaultRepRange: '6-10', candidateExerciseIds: ['bp_bar','bp_inc','bp_inc_bar','bp_inc_wide','bp_flat','bp_mach_inc','close_grip_bench','guts_db_bench','dips'], systemicCost: 'medium' },
-  { id: 'vertical_press', muscle: 'SHOULDERS', title: { en: 'Vertical press', es: 'Press vertical' }, purpose: { en: 'Shoulder pressing strength and size.', es: 'Fuerza y masa de empuje para hombros.' }, defaultRepRange: '6-10', candidateExerciseIds: ['ohp','ohp_db','neutral_db_press','behind_neck_press'], systemicCost: 'medium' },
-  { id: 'vertical_pull', muscle: 'BACK', title: { en: 'Vertical pull', es: 'Tirón vertical' }, purpose: { en: 'Lat/upper-back width.', es: 'Dorsal y amplitud de espalda.' }, defaultRepRange: '6-12', candidateExerciseIds: ['pullup','chinup','lat_pull','lat_pull_supine','one_arm_lat_pulldown','close_grip_lat_pulldown','behind_neck_pulldown'], systemicCost: 'medium' },
-  { id: 'horizontal_pull', muscle: 'BACK', title: { en: 'Horizontal pull', es: 'Tirón horizontal' }, purpose: { en: 'Upper-back thickness with less hinge overlap when supported.', es: 'Espesor de espalda alta con menor solapamiento de hinge si hay apoyo.' }, defaultRepRange: '8-12', candidateExerciseIds: ['row_mach','row_cable','row_db','tbar_row_chest_supported','wide_grip_cable_row'], systemicCost: 'low' },
-  { id: 'hinge', muscle: 'HAMSTRINGS', title: { en: 'Hip hinge', es: 'Bisagra de cadera' }, purpose: { en: 'Posterior chain and hip extension.', es: 'Cadena posterior y extensión de cadera.' }, defaultRepRange: '6-10', candidateExerciseIds: ['rdl','deadlift','sldl','good_morning','good_morning_pause','back_extension','rack_pull','deadlift_13in','bent_barbell_row','pendlay_row'], systemicCost: 'high' },
+  { id: 'vertical_press', muscle: 'SHOULDERS', title: { en: 'Vertical press', es: 'Press vertical' }, purpose: { en: 'Primary direct shoulder compound.', es: 'Compuesto directo principal de hombro.' }, defaultRepRange: '6-10', candidateExerciseIds: ['ohp','ohp_db','neutral_db_press','behind_neck_press'], systemicCost: 'medium' },
+  { id: 'vertical_pull', muscle: 'BACK', title: { en: 'Vertical pull', es: 'Tirón vertical' }, purpose: { en: 'Lat/upper-back pulling family.', es: 'Familia de tirón para dorsal/espalda alta.' }, defaultRepRange: '6-12', candidateExerciseIds: ['pullup','chinup','lat_pull','lat_pull_supine','one_arm_lat_pulldown','close_grip_lat_pulldown','behind_neck_pulldown'], systemicCost: 'medium' },
+  { id: 'horizontal_pull', muscle: 'BACK', title: { en: 'Horizontal pull', es: 'Tirón horizontal' }, purpose: { en: 'Upper-back thickness; support can reduce hinge overlap.', es: 'Espesor de espalda alta; el apoyo puede reducir solapamiento con hinges.' }, defaultRepRange: '8-12', candidateExerciseIds: ['row_mach','row_cable','row_db','tbar_row_chest_supported','wide_grip_cable_row'], systemicCost: 'low' },
+  { id: 'hinge', muscle: 'HAMSTRINGS', title: { en: 'Hip hinge', es: 'Bisagra de cadera' }, purpose: { en: 'Posterior chain and global back contribution.', es: 'Cadena posterior y contribución global a espalda.' }, defaultRepRange: '6-10', candidateExerciseIds: ['rdl','deadlift','sldl','good_morning','good_morning_pause','back_extension','rack_pull','deadlift_13in','bent_barbell_row','pendlay_row'], systemicCost: 'high' },
   { id: 'knee_flexion', muscle: 'QUADS', title: { en: 'Squat / knee-flexion pattern', es: 'Sentadilla / patrón dominante de rodilla' }, purpose: { en: 'Primary quad compound.', es: 'Compuesto principal de cuádriceps.' }, defaultRepRange: '6-12', candidateExerciseIds: ['sq_bar','sq_paused','sq_hack','front_squat','high_bar_close_squat','low_bar_wide_squat','leg_press','single_leg_press','bulgarian_split_squat','lunges','lunge_reverse','guts_smith_squat'], systemicCost: 'high' },
   { id: 'knee_extension', muscle: 'QUADS', title: { en: 'Knee extension', es: 'Extensión de rodilla' }, purpose: { en: 'Low-systemic-cost direct quad work.', es: 'Trabajo directo de cuádriceps con bajo costo sistémico.' }, defaultRepRange: '10-15', candidateExerciseIds: ['leg_ext','single_leg_extension'], systemicCost: 'low' },
   { id: 'biceps', muscle: 'BICEPS', title: { en: 'Biceps isolation', es: 'Aislamiento de bíceps' }, purpose: { en: 'Direct elbow-flexor work.', es: 'Trabajo directo de flexores del codo.' }, defaultRepRange: '6-12', candidateExerciseIds: ['curl_ez','curl_bar','curl_db','curl_hammer','curl_cable','curl_preacher','incline_db_curl','close_grip_cable_curl','rope_cable_curl'], systemicCost: 'low' },
   { id: 'triceps', muscle: 'TRICEPS', title: { en: 'Triceps isolation / biased press', es: 'Aislamiento / press sesgado a tríceps' }, purpose: { en: 'Direct triceps work.', es: 'Trabajo directo de tríceps.' }, defaultRepRange: '8-15', candidateExerciseIds: ['tri_push','tri_ext','skull_crusher','db_tri_ext','db_overhead_tri','rope_pressdown','jm_press','dip_machine'], systemicCost: 'low' },
-  { id: 'lateral_delt', muscle: 'SHOULDERS', title: { en: 'Lateral / rear delt', es: 'Deltoide lateral / posterior' }, purpose: { en: 'Shoulder width with low systemic cost.', es: 'Anchura de hombros con bajo costo sistémico.' }, defaultRepRange: '10-20', candidateExerciseIds: ['lat_raise','lat_raise_cable','lat_raise_mach','lat_raise_seat','rear_delt_fly','face_pull','upright_row'], systemicCost: 'low' },
+  { id: 'lateral_delt', muscle: 'SHOULDERS', title: { en: 'Shoulder elevation / isolation', es: 'Elevación / aislamiento de hombro' }, purpose: { en: 'Direct shoulder work with relatively low systemic cost.', es: 'Trabajo directo de hombro con costo sistémico relativamente bajo.' }, defaultRepRange: '10-15', candidateExerciseIds: ['lat_raise','lat_raise_cable','lat_raise_mach','lat_raise_seat','rear_delt_fly','face_pull','upright_row'], systemicCost: 'low' },
   { id: 'calves', muscle: 'CALVES', title: { en: 'Calves', es: 'Gemelos' }, purpose: { en: 'Direct calf work.', es: 'Trabajo directo de gemelos.' }, defaultRepRange: '10-20', candidateExerciseIds: ['calf_raise','guts_seated_calf'], systemicCost: 'low' },
-  { id: 'abs', muscle: 'ABS', title: { en: 'Trunk', es: 'Abdomen / tronco' }, purpose: { en: 'Trunk flexion or leg-raise pattern.', es: 'Flexión de tronco o elevación de piernas.' }, defaultRepRange: '8-15', candidateExerciseIds: ['abs_cable','leg_raise','knee_raise','guts_landmine_twist'], systemicCost: 'low' },
+  { id: 'abs', muscle: 'ABS', title: { en: 'Trunk', es: 'Abdomen / tronco' }, purpose: { en: 'Direct trunk work.', es: 'Trabajo directo de tronco.' }, defaultRepRange: '8-15', candidateExerciseIds: ['abs_cable','leg_raise','knee_raise','guts_landmine_twist'], systemicCost: 'low' },
   { id: 'neck', muscle: 'NECK', title: { en: 'Neck', es: 'Cuello' }, purpose: { en: 'Direct neck development.', es: 'Desarrollo directo del cuello.' }, defaultRepRange: '10-20', candidateExerciseIds: ['neck_curl','neck_ext'], systemicCost: 'low' },
 ];
 
@@ -182,6 +184,8 @@ export function getNhMovementRole(exerciseId?: string | null): NhMovementRole | 
   if (!exerciseId) return null;
   return roleByExercise.get(exerciseId) || null;
 }
+
+const roleDefinition = (roleId: NhMovementRole) => NH_ROLE_LIBRARY.find(item => item.id === roleId)!;
 
 const countDirectSets = (program: ProgramDay[]): Partial<Record<MuscleGroup, number>> => {
   const totals: Partial<Record<MuscleGroup, number>> = {};
@@ -200,15 +204,22 @@ export function auditNhProgram(program: ProgramDay[]): NhProgramAudit {
   const directSets = countDirectSets(safeProgram);
   const roles = new Set<NhMovementRole>();
   const findings: NhAuditFinding[] = [];
+  let knownSlots = 0;
+  let mediumOrHighCostSlots = 0;
 
   safeProgram.forEach((day, dayIndex) => {
     const roleCounts = new Map<NhMovementRole, number>();
     const supersetMuscles = new Map<string, MuscleGroup[]>();
+    let backExerciseCount = 0;
+
     (day.slots || []).forEach(slot => {
-      const role = getNhMovementRole(slot.exerciseId);
-      if (role) {
-        roles.add(role);
-        roleCounts.set(role, (roleCounts.get(role) || 0) + 1);
+      const movementRole = getNhMovementRole(slot.exerciseId);
+      if (movementRole) {
+        roles.add(movementRole);
+        roleCounts.set(movementRole, (roleCounts.get(movementRole) || 0) + 1);
+        knownSlots += 1;
+        if (roleDefinition(movementRole).systemicCost !== 'low') mediumOrHighCostSlots += 1;
+        if (movementRole === 'hinge' || movementRole === 'vertical_pull' || movementRole === 'horizontal_pull') backExerciseCount += 1;
       }
       if (slot.supersetId) {
         const list = supersetMuscles.get(slot.supersetId) || [];
@@ -217,20 +228,41 @@ export function auditNhProgram(program: ProgramDay[]): NhProgramAudit {
       }
     });
 
-    roleCounts.forEach((count, role) => {
+    roleCounts.forEach((count, movementRole) => {
       if (count <= 2) return;
+      const isBackFamily = movementRole === 'hinge' || movementRole === 'vertical_pull' || movementRole === 'horizontal_pull';
       addFinding(findings, {
-        id: `redundancy-${dayIndex}-${role}`,
+        id: `redundancy-${dayIndex}-${movementRole}`,
         severity: 'watch',
-        kind: 'gainslab_rule',
+        kind: isBackFamily ? 'nh_principle' : 'gainslab_rule',
         dayIndex,
         title: { en: 'Possible same-day redundancy', es: 'Posible redundancia en el mismo día' },
-        detail: {
-          en: `This day contains ${count} slots from the ${role} family. GainsLab flags this for review; NH does not prescribe a universal “two per day” ceiling.`,
-          es: `Este día contiene ${count} slots de la familia ${role}. GainsLab lo marca para revisión; NH no prescribe un límite universal de “dos por día”.`,
-        },
+        detail: isBackFamily
+          ? {
+              en: `This day contains ${count} exercises from the same back family. NH's Big Back progression explicitly avoids stacking three same-family back movements together.`,
+              es: `Este día contiene ${count} ejercicios de la misma familia de espalda. La progresión Big Back de NH evita explícitamente apilar tres movimientos de la misma familia.`,
+            }
+          : {
+              en: `This day contains ${count} slots from the ${movementRole} family. GainsLab flags this for review; NH does not prescribe a universal “two per day” ceiling.`,
+              es: `Este día contiene ${count} slots de la familia ${movementRole}. GainsLab lo marca para revisión; NH no prescribe un límite universal de “dos por día”.`,
+            },
       });
     });
+
+    if (backExerciseCount > 3) {
+      addFinding(findings, {
+        id: `back-daily-density-${dayIndex}`,
+        severity: 'change',
+        kind: 'nh_principle',
+        dayIndex,
+        muscle: 'BACK',
+        title: { en: 'Too much back work concentrated in one day', es: 'Demasiada espalda concentrada en un día' },
+        detail: {
+          en: `This day contains ${backExerciseCount} back-family movements. In Big Back Step 4, NH gives three back exercises in one day as the upper scheduling limit and argues that later exercises lose quality when everything is crammed together.`,
+          es: `Este día contiene ${backExerciseCount} movimientos de familias de espalda. En Big Back Step 4, NH usa tres ejercicios de espalda en un día como límite superior de distribución y argumenta que la calidad cae cuando se concentra todo.`,
+        },
+      });
+    }
 
     supersetMuscles.forEach((muscles, id) => {
       const duplicates = muscles.filter((muscle, index) => muscles.indexOf(muscle) !== index);
@@ -251,26 +283,26 @@ export function auditNhProgram(program: ProgramDay[]): NhProgramAudit {
 
   const hasBackWork = safeProgram.some(day => (day.slots || []).some(slot => slot.muscle === 'BACK' || getNhMovementRole(slot.exerciseId) === 'hinge'));
   if (hasBackWork) {
-    (['hinge','vertical_pull','horizontal_pull'] as NhMovementRole[]).forEach(role => {
-      if (roles.has(role)) return;
+    (['hinge','vertical_pull','horizontal_pull'] as NhMovementRole[]).forEach(movementRole => {
+      if (roles.has(movementRole)) return;
       addFinding(findings, {
-        id: `back-missing-${role}`,
+        id: `back-missing-${movementRole}`,
         severity: 'watch',
         kind: 'nh_principle',
         muscle: 'BACK',
         title: { en: 'Back family missing', es: 'Falta una familia de espalda' },
         detail: {
-          en: `NH's Big Back Step 1 starts with one hinge, one vertical pull and one horizontal pull. This routine has no ${role.replace('_',' ')} role.`,
-          es: `El Step 1 de Big Back de NH empieza con un hinge, un tirón vertical y uno horizontal. Esta rutina no tiene el rol ${role.replace('_',' ')}.`,
+          en: `NH's Big Back Step 1 starts with one hinge, one vertical pull and one horizontal pull. This routine has no ${movementRole.replace('_',' ')} role.`,
+          es: `El Step 1 de Big Back de NH empieza con un hinge, un tirón vertical y uno horizontal. Esta rutina no tiene el rol ${movementRole.replace('_',' ')}.`,
         },
       });
     });
   }
 
   for (let dayIndex = 0; dayIndex < safeProgram.length - 1; dayIndex++) {
-    const aHasHighHinge = (safeProgram[dayIndex].slots || []).some(slot => getNhMovementRole(slot.exerciseId) === 'hinge');
-    const bHasHighHinge = (safeProgram[dayIndex + 1].slots || []).some(slot => getNhMovementRole(slot.exerciseId) === 'hinge');
-    if (aHasHighHinge && bHasHighHinge) {
+    const aHasHinge = (safeProgram[dayIndex].slots || []).some(slot => getNhMovementRole(slot.exerciseId) === 'hinge');
+    const bHasHinge = (safeProgram[dayIndex + 1].slots || []).some(slot => getNhMovementRole(slot.exerciseId) === 'hinge');
+    if (aHasHinge && bHasHinge) {
       addFinding(findings, {
         id: `adjacent-hinges-${dayIndex}`,
         severity: 'change',
@@ -278,11 +310,24 @@ export function auditNhProgram(program: ProgramDay[]): NhProgramAudit {
         dayIndex,
         title: { en: 'Hinges on adjacent training days', es: 'Hinges en días de entrenamiento consecutivos' },
         detail: {
-          en: 'NH often separates similar high-fatigue movement families to protect recovery and performance. Consider moving one farther away or consolidating the stress.',
-          es: 'NH suele separar familias similares de alta fatiga para proteger recuperación y rendimiento. Considerá alejar una o consolidar el estrés.',
+          en: 'NH repeatedly separates similar high-fatigue families to protect recovery. Because GainsLab does not know the actual rest days between these template positions, this remains an inference rather than a hard rule.',
+          es: 'NH separa repetidamente familias similares de alta fatiga para proteger recuperación. Como GainsLab no conoce los descansos reales entre estas posiciones de la plantilla, esto sigue siendo una inferencia y no una regla rígida.',
         },
       });
     }
+  }
+
+  if (knownSlots >= 6 && mediumOrHighCostSlots === 0) {
+    addFinding(findings, {
+      id: 'precision-only-bias',
+      severity: 'watch',
+      kind: 'nh_principle',
+      title: { en: 'Precision-only exercise bias', es: 'Sesgo hacia ejercicios sólo de precisión' },
+      detail: {
+        en: 'NH argues against optimizing stimulus-to-fatigue so aggressively that demanding mass-building movements disappear. Low-cost precise work is useful, but he presents it as complementary to larger movements rather than a total replacement.',
+        es: 'NH critica optimizar estímulo/fatiga hasta hacer desaparecer los movimientos demandantes que construyen masa global. El trabajo preciso y barato es útil, pero lo presenta como complemento y no reemplazo total.',
+      },
+    });
   }
 
   (['BICEPS','TRICEPS'] as MuscleGroup[]).forEach(muscle => {
@@ -301,6 +346,21 @@ export function auditNhProgram(program: ProgramDay[]): NhProgramAudit {
     });
   });
 
+  const shoulderSets = directSets.SHOULDERS || 0;
+  if (shoulderSets > 20) {
+    addFinding(findings, {
+      id: 'shoulder-specialization-volume',
+      severity: 'watch',
+      kind: 'nh_principle',
+      muscle: 'SHOULDERS',
+      title: { en: 'Shoulder work exceeds the MASSterplan working range', es: 'El trabajo de hombro supera el rango del MASSterplan' },
+      detail: {
+        en: `${shoulderSets} direct sets exceed the flexible 12–20 total-set range discussed in NH's shoulder specialization framework. This is not a universal cap; it is a prompt to verify that the extra work is still progressive and recoverable.`,
+        es: `${shoulderSets} series directas superan el rango flexible de 12–20 comentado por NH en su especialización de hombros. No es un límite universal; es una invitación a verificar que el trabajo extra siga siendo progresable y recuperable.`,
+      },
+    });
+  }
+
   if (safeProgram.length === 0) {
     addFinding(findings, {
       id: 'empty', severity: 'change', kind: 'gainslab_rule',
@@ -318,9 +378,8 @@ export function auditNhProgram(program: ProgramDay[]): NhProgramAudit {
   };
 }
 
-const role = (id: NhMovementRole) => NH_ROLE_LIBRARY.find(item => item.id === id)!;
 const slotFromRole = (id: NhMovementRole, setTarget = 3, supersetId?: string): ProgramSlot => {
-  const definition = role(id);
+  const definition = roleDefinition(id);
   return {
     muscle: definition.muscle,
     setTarget,
@@ -332,28 +391,21 @@ const slotFromRole = (id: NhMovementRole, setTarget = 3, supersetId?: string): P
   };
 };
 
-const prioritySlots = (priorities: MuscleGroup[], dayTag: string): ProgramSlot[] => {
-  const selected = priorities.slice(0, 2);
-  return selected.flatMap((muscle, index) => {
-    if (muscle === 'BICEPS') return [slotFromRole('biceps', 2, `${dayTag}-priority-${index}`)];
-    if (muscle === 'TRICEPS') return [slotFromRole('triceps', 2, `${dayTag}-priority-${index}`)];
-    if (muscle === 'SHOULDERS') return [slotFromRole('lateral_delt', 2, `${dayTag}-priority-${index}`)];
-    if (muscle === 'BACK') return [slotFromRole('horizontal_pull', 2, `${dayTag}-priority-${index}`)];
-    if (muscle === 'CHEST') return [slotFromRole('horizontal_press', 2, `${dayTag}-priority-${index}`)];
-    if (muscle === 'QUADS') return [slotFromRole('knee_extension', 2, `${dayTag}-priority-${index}`)];
-    if (muscle === 'HAMSTRINGS') return [slotFromRole('hinge', 2, `${dayTag}-priority-${index}`)];
-    if (muscle === 'CALVES') return [slotFromRole('calves', 2, `${dayTag}-priority-${index}`)];
-    if (muscle === 'ABS') return [slotFromRole('abs', 2, `${dayTag}-priority-${index}`)];
-    if (muscle === 'NECK') return [slotFromRole('neck', 2, `${dayTag}-priority-${index}`)];
-    return [];
-  });
-};
+const prioritySlots = (priorities: MuscleGroup[], dayTag: string): ProgramSlot[] => priorities.slice(0, 2).flatMap((muscle, index) => {
+  if (muscle === 'BICEPS') return [slotFromRole('biceps', 2, `${dayTag}-priority-${index}`)];
+  if (muscle === 'TRICEPS') return [slotFromRole('triceps', 2, `${dayTag}-priority-${index}`)];
+  if (muscle === 'SHOULDERS') return [slotFromRole('lateral_delt', 2, `${dayTag}-priority-${index}`)];
+  if (muscle === 'BACK') return [slotFromRole('horizontal_pull', 2, `${dayTag}-priority-${index}`)];
+  if (muscle === 'CHEST') return [slotFromRole('horizontal_press', 2, `${dayTag}-priority-${index}`)];
+  if (muscle === 'QUADS') return [slotFromRole('knee_extension', 2, `${dayTag}-priority-${index}`)];
+  if (muscle === 'HAMSTRINGS') return [slotFromRole('hinge', 2, `${dayTag}-priority-${index}`)];
+  if (muscle === 'CALVES') return [slotFromRole('calves', 2, `${dayTag}-priority-${index}`)];
+  if (muscle === 'ABS') return [slotFromRole('abs', 2, `${dayTag}-priority-${index}`)];
+  if (muscle === 'NECK') return [slotFromRole('neck', 2, `${dayTag}-priority-${index}`)];
+  return [];
+});
 
-/**
- * GainsLab teaching scaffold, not an “official Natural Hypertrophy routine”.
- * The roles and sequencing are chosen to demonstrate NH principles; the user is
- * expected to edit the resulting draft and learn why each slot exists.
- */
+/** GainsLab teaching scaffold, never an official Natural Hypertrophy routine. */
 export function buildNhTeachingDraft(options: NhDraftOptions): ProgramDay[] {
   const p = options.priorities.slice(0, 2);
   if (options.days === 3) {
