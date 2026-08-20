@@ -49,7 +49,11 @@ export function nhExposureFromLog(log: Log, exercise: SessionExercise): NhCoachE
   const completedSets = sets.length;
   const targetReps = String(exercise.targetReps || '').trim();
   const programSlotId = String(exercise.programSlotId || '').trim();
-  const contextKey = `${programSlotId || 'no-slot'}|${targetReps || 'no-range'}|${completedSets}`;
+  const programSystemId = String(log.programSystem?.systemId || '').trim();
+  const trainingContext = programSlotId
+    ? `${programSystemId || 'structured'}:slot:${programSlotId}`
+    : `meso:${String(log.mesoId ?? 'unknown')}:day:${String(log.dayIdx ?? 'unknown')}`;
+  const contextKey = `${trainingContext}|${targetReps || 'no-range'}|sets:${completedSets}`;
   return {
     time: normalizeTime(log.endTime || log.startTime),
     maxWeight: weights.length ? Math.max(...weights) : 0,
@@ -84,7 +88,7 @@ export function buildNhCoachTrends(logs: Log[]): NhCoachTrend[] {
         exposures: [],
         allRecent: [],
         state: 'learning' as const,
-        label: { en: 'More exposures are needed.', es: 'Faltan más exposiciones.' },
+        label: { en: 'More comparable exposures are needed.', es: 'Todavía faltan exposiciones comparables.' },
         excludedForContext: 0,
       };
     }
@@ -99,8 +103,8 @@ export function buildNhCoachTrends(logs: Log[]): NhCoachTrend[] {
         allRecent,
         state: 'context_changed' as const,
         label: {
-          en: 'Context changed · recent exposures use a different slot, rep target or number of work sets.',
-          es: 'Cambió el contexto · las exposiciones recientes usan otro slot, rango objetivo o número de series efectivas.',
+          en: 'Context changed · recent exposures use a different program/slot, rep target or number of work sets.',
+          es: 'Cambió el contexto · las exposiciones recientes usan otro programa/slot, rango objetivo o número de series efectivas.',
         },
         excludedForContext,
       };
