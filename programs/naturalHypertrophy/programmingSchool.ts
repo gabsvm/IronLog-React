@@ -1,6 +1,7 @@
 import type { GlobalTemplate, MuscleGroup, ProgramDay, ProgramSlot } from '../../types';
 import {
   NH_MASSTERPLAN_GUIDES,
+  NH_SELF_PROGRAMMING_PATH,
   NH_TRANSCRIPT_LESSONS,
   type NhSourceEvidenceKind,
   type NhSourceLevel,
@@ -63,6 +64,7 @@ export interface NhDraftOptions {
   days: 3 | 4 | 5;
   priorities: MuscleGroup[];
   name?: string;
+  experiencedExerciseIds?: string[];
 }
 
 const BASE_TEACHING_POINTS: NhTeachingPoint[] = [
@@ -97,7 +99,7 @@ const BASE_TEACHING_POINTS: NhTeachingPoint[] = [
       en: 'NH repeatedly tells trainees to choose movements they enjoy, can perform comfortably and can keep long enough to build real progression instead of chasing a supposedly optimal exercise.',
       es: 'NH repite que el atleta debe elegir movimientos que disfrute, pueda ejecutar cómodamente y mantener el tiempo suficiente para construir progresión real, en vez de perseguir un ejercicio supuestamente óptimo.',
     },
-    sourceScope: 'Big Back, Big Shoulders and Forearms MASSterplans.',
+    sourceScope: 'Big Back, Big Shoulders, Forearms and self-programming transcripts.',
   },
   {
     id: 'volume-earned',
@@ -105,10 +107,10 @@ const BASE_TEACHING_POINTS: NhTeachingPoint[] = [
     kind: 'nh_principle',
     title: { en: 'Do not add volume to a dose that works', es: 'No añadas volumen a una dosis que funciona' },
     summary: {
-      en: 'Across MASSterplans NH repeatedly tells the trainee to milk a step while progression continues, then add work only when the current structure is no longer enough and recovery capacity can support it.',
-      es: 'En sus MASSterplans NH repite que hay que exprimir una etapa mientras exista progresión y añadir trabajo sólo cuando la estructura actual deje de alcanzar y la recuperación pueda soportarlo.',
+      en: 'Across MASSterplans and the 85% framework NH repeatedly says to milk a dose while progression continues, then add work only when the current structure is no longer enough and recovery can support it.',
+      es: 'En sus MASSterplans y en el marco del 85%, NH repite que hay que exprimir una dosis mientras exista progresión y añadir trabajo sólo cuando la estructura actual deje de alcanzar y la recuperación pueda soportarlo.',
     },
-    sourceScope: 'Big Back, Arms, Shoulders and Forearms MASSterplans.',
+    sourceScope: 'Big Back / Arms / Shoulders / Forearms MASSterplans; 85% Rule.',
   },
   {
     id: 'recovery-calendar',
@@ -116,21 +118,21 @@ const BASE_TEACHING_POINTS: NhTeachingPoint[] = [
     kind: 'nh_principle',
     title: { en: 'Frequency is a recovery calendar', es: 'La frecuencia es un calendario de recuperación' },
     summary: {
-      en: 'NH places similar demanding movements far enough apart to protect performance, then allows denser scheduling only as work capacity rises.',
-      es: 'NH separa movimientos similares demandantes para proteger rendimiento y permite mayor densidad sólo cuando sube la capacidad de trabajo.',
+      en: 'NH treats frequency as a recovery schedule: demanding work must fit the time available before the next relevant exposure. More frequency is not automatically better and more rest is not automatically better.',
+      es: 'NH trata la frecuencia como un calendario de recuperación: el trabajo demandante debe encajar con el tiempo disponible antes de la próxima exposición relevante. Más frecuencia no es automáticamente mejor y más descanso tampoco.',
     },
-    sourceScope: 'Big Back and Big Shoulders scheduling examples.',
+    sourceScope: '85% Rule; Big Back and Big Shoulders scheduling examples.',
   },
   {
     id: '85-rule',
-    level: 'self_coach',
+    level: 'understand',
     kind: 'nh_principle',
-    title: { en: 'Seek stimulus, not fatigue', es: 'Busca estímulo, no fatiga' },
+    title: { en: 'The 85% Rule is balance, not a literal load', es: 'La Regla del 85% es equilibrio, no una carga literal' },
     summary: {
-      en: 'The 85% rule is not 85% of 1RM. It is a programming philosophy: capture most productive stimulus without systematically extracting every possible unit of fatigue.',
-      es: 'La regla del 85% no es 85% del 1RM. Es una filosofía: capturar la mayor parte del estímulo productivo sin extraer sistemáticamente toda la fatiga posible.',
+      en: 'NH explicitly says 85 is not 85% of 1RM and not a command to train at one fixed intensity. It is his framework for keeping volume, intensity, frequency and recovery close to a productive middle while cutting superfluous work.',
+      es: 'NH dice explícitamente que 85 no es 85% del 1RM ni una orden de entrenar siempre a una intensidad fija. Es su marco para mantener volumen, intensidad, frecuencia y recuperación cerca de un punto medio productivo eliminando trabajo superfluo.',
     },
-    sourceScope: 'The 85% Rule. Full transcript still desired for deeper implementation.',
+    sourceScope: 'How to Get Bigger by Doing Less (The 85% Rule).',
   },
   {
     id: 'hypothesis-logbook',
@@ -142,16 +144,6 @@ const BASE_TEACHING_POINTS: NhTeachingPoint[] = [
       es: 'Tomados en conjunto, los principios de NH implican mantener el programa estable el tiempo suficiente para probarlo y luego cambiar variables pequeñas según progresión, recuperación y puntos débiles.',
     },
   },
-  {
-    id: 'three-exposure-flag',
-    level: 'self_coach',
-    kind: 'gainslab_rule',
-    title: { en: 'Three-exposure diagnostic flag', es: 'Alerta diagnóstica de tres exposiciones' },
-    summary: {
-      en: 'GainsLab may flag three comparable exposures without progress for review. This is a product rule for teaching, not a number prescribed by NH.',
-      es: 'GainsLab puede marcar tres exposiciones comparables sin progreso para revisión. Es una regla del producto para enseñar, no un número prescrito por NH.',
-    },
-  },
 ];
 
 export const NH_PROGRAMMING_TEACHING_POINTS: NhTeachingPoint[] = [
@@ -159,7 +151,7 @@ export const NH_PROGRAMMING_TEACHING_POINTS: NhTeachingPoint[] = [
   ...NH_TRANSCRIPT_LESSONS.map(item => ({ ...item })),
 ];
 
-export { NH_MASSTERPLAN_GUIDES };
+export { NH_MASSTERPLAN_GUIDES, NH_SELF_PROGRAMMING_PATH };
 
 export const NH_ROLE_LIBRARY: NhRoleDefinition[] = [
   { id: 'horizontal_press', muscle: 'CHEST', title: { en: 'Horizontal press', es: 'Press horizontal' }, purpose: { en: 'Chest/triceps pressing base.', es: 'Base de empuje para pecho/tríceps.' }, defaultRepRange: '6-10', candidateExerciseIds: ['bp_bar','bp_inc','bp_inc_bar','bp_inc_wide','bp_flat','bp_mach_inc','close_grip_bench','guts_db_bench','dips'], systemicCost: 'medium' },
@@ -378,57 +370,77 @@ export function auditNhProgram(program: ProgramDay[]): NhProgramAudit {
   };
 }
 
-const slotFromRole = (id: NhMovementRole, setTarget = 3, supersetId?: string): ProgramSlot => {
+const pickExerciseForRole = (definition: NhRoleDefinition, experiencedExerciseIds?: string[]) => {
+  if (!experiencedExerciseIds || experiencedExerciseIds.length === 0) return definition.candidateExerciseIds[0] || null;
+  const experienced = new Set(experiencedExerciseIds.map(String));
+  return definition.candidateExerciseIds.find(id => experienced.has(String(id))) || null;
+};
+
+const slotFromRole = (id: NhMovementRole, setTarget = 3, supersetId?: string, experiencedExerciseIds?: string[]): ProgramSlot => {
   const definition = roleDefinition(id);
+  const exerciseId = pickExerciseForRole(definition, experiencedExerciseIds);
   return {
     muscle: definition.muscle,
     setTarget,
     reps: definition.defaultRepRange,
-    exerciseId: definition.candidateExerciseIds[0] || null,
+    exerciseId,
     label: definition.title.en,
-    notes: `NH School role: ${id}. Exercise choice is editable; preserve the function unless you intentionally redesign the routine.`,
+    notes: exerciseId
+      ? `NH School role: ${id}. Exercise selected from the supplied experienced-lift pool when available; preserve the function unless you intentionally redesign the routine.`
+      : `NH School role: ${id}. No experienced exercise from this family was supplied; choose a movement you have actually practiced and tolerated before treating this as your program.`,
     ...(supersetId ? { supersetId } : {}),
   };
 };
 
-const prioritySlots = (priorities: MuscleGroup[], dayTag: string): ProgramSlot[] => priorities.slice(0, 2).flatMap((muscle, index) => {
-  if (muscle === 'BICEPS') return [slotFromRole('biceps', 2, `${dayTag}-priority-${index}`)];
-  if (muscle === 'TRICEPS') return [slotFromRole('triceps', 2, `${dayTag}-priority-${index}`)];
-  if (muscle === 'SHOULDERS') return [slotFromRole('lateral_delt', 2, `${dayTag}-priority-${index}`)];
-  if (muscle === 'BACK') return [slotFromRole('horizontal_pull', 2, `${dayTag}-priority-${index}`)];
-  if (muscle === 'CHEST') return [slotFromRole('horizontal_press', 2, `${dayTag}-priority-${index}`)];
-  if (muscle === 'QUADS') return [slotFromRole('knee_extension', 2, `${dayTag}-priority-${index}`)];
-  if (muscle === 'HAMSTRINGS') return [slotFromRole('hinge', 2, `${dayTag}-priority-${index}`)];
-  if (muscle === 'CALVES') return [slotFromRole('calves', 2, `${dayTag}-priority-${index}`)];
-  if (muscle === 'ABS') return [slotFromRole('abs', 2, `${dayTag}-priority-${index}`)];
-  if (muscle === 'NECK') return [slotFromRole('neck', 2, `${dayTag}-priority-${index}`)];
+const prioritySlots = (priorities: MuscleGroup[], dayTag: string, experiencedExerciseIds?: string[]): ProgramSlot[] => priorities.slice(0, 2).flatMap((muscle, index) => {
+  const make = (id: NhMovementRole, setTarget: number) => slotFromRole(id, setTarget, `${dayTag}-priority-${index}`, experiencedExerciseIds);
+  if (muscle === 'BICEPS') return [make('biceps', 2)];
+  if (muscle === 'TRICEPS') return [make('triceps', 2)];
+  if (muscle === 'SHOULDERS') return [make('lateral_delt', 2)];
+  if (muscle === 'BACK') return [make('horizontal_pull', 2)];
+  if (muscle === 'CHEST') return [make('horizontal_press', 2)];
+  if (muscle === 'QUADS') return [make('knee_extension', 2)];
+  if (muscle === 'HAMSTRINGS') return [make('hinge', 2)];
+  if (muscle === 'CALVES') return [make('calves', 2)];
+  if (muscle === 'ABS') return [make('abs', 2)];
+  if (muscle === 'NECK') return [make('neck', 2)];
   return [];
 });
 
-/** GainsLab teaching scaffold, never an official Natural Hypertrophy routine. */
+/**
+ * GainsLab teaching scaffold, never an official Natural Hypertrophy routine.
+ * If experiencedExerciseIds are supplied, slots only select exercises from that pool;
+ * otherwise the historical behavior remains as an illustrative scaffold.
+ */
 export function buildNhTeachingDraft(options: NhDraftOptions): ProgramDay[] {
   const p = options.priorities.slice(0, 2);
+  const pool = options.experiencedExerciseIds;
+  const s = (id: NhMovementRole, sets = 3, supersetId?: string) => slotFromRole(id, sets, supersetId, pool);
+  const prioritiesFor = (tag: string) => prioritySlots(p, tag, pool);
+
   if (options.days === 3) {
     return [
-      { id: 'nh_school_d1', dayName: { en: 'Day 1 · Push / Pull / Quads', es: 'Día 1 · Empuje / Tirón / Cuádriceps' }, slots: [slotFromRole('horizontal_press', 3, 'd1-a'), slotFromRole('horizontal_pull', 3, 'd1-a'), slotFromRole('knee_flexion', 3, 'd1-b'), slotFromRole('biceps', 2, 'd1-b'), ...prioritySlots(p, 'd1')] },
-      { id: 'nh_school_d2', dayName: { en: 'Day 2 · Vertical / Hinge', es: 'Día 2 · Vertical / Hinge' }, slots: [slotFromRole('vertical_press', 3, 'd2-a'), slotFromRole('vertical_pull', 3, 'd2-a'), slotFromRole('hinge', 2, 'd2-b'), slotFromRole('triceps', 2, 'd2-b'), slotFromRole('abs', 2)] },
-      { id: 'nh_school_d3', dayName: { en: 'Day 3 · Hypertrophy / Accessories', es: 'Día 3 · Hipertrofia / Accesorios' }, slots: [slotFromRole('knee_extension', 3, 'd3-a'), slotFromRole('horizontal_press', 3, 'd3-a'), slotFromRole('vertical_pull', 3, 'd3-b'), slotFromRole('lateral_delt', 3, 'd3-b'), slotFromRole('calves', 2)] },
+      { id: 'nh_school_d1', dayName: { en: 'Day 1 · Push / Pull / Quads', es: 'Día 1 · Empuje / Tirón / Cuádriceps' }, slots: [s('horizontal_press', 3, 'd1-a'), s('horizontal_pull', 3, 'd1-a'), s('knee_flexion', 3, 'd1-b'), s('biceps', 2, 'd1-b'), ...prioritiesFor('d1')] },
+      { id: 'nh_school_d2', dayName: { en: 'Day 2 · Vertical / Hinge', es: 'Día 2 · Vertical / Hinge' }, slots: [s('vertical_press', 3, 'd2-a'), s('vertical_pull', 3, 'd2-a'), s('hinge', 2, 'd2-b'), s('triceps', 2, 'd2-b'), s('abs', 2)] },
+      { id: 'nh_school_d3', dayName: { en: 'Day 3 · Hypertrophy / Accessories', es: 'Día 3 · Hipertrofia / Accesorios' }, slots: [s('knee_extension', 3, 'd3-a'), s('horizontal_press', 3, 'd3-a'), s('vertical_pull', 3, 'd3-b'), s('lateral_delt', 3, 'd3-b'), s('calves', 2)] },
     ];
   }
+
   if (options.days === 4) {
     return [
-      { id: 'nh_school_d1', dayName: { en: 'Upper A', es: 'Torso A' }, slots: [slotFromRole('horizontal_press', 3, 'u1-a'), slotFromRole('horizontal_pull', 3, 'u1-a'), slotFromRole('vertical_press', 3, 'u1-b'), slotFromRole('biceps', 2, 'u1-b'), ...prioritySlots(p, 'u1')] },
-      { id: 'nh_school_d2', dayName: { en: 'Lower A', es: 'Pierna A' }, slots: [slotFromRole('knee_flexion', 3, 'l1-a'), slotFromRole('calves', 3, 'l1-a'), slotFromRole('hinge', 2, 'l1-b'), slotFromRole('abs', 2, 'l1-b')] },
-      { id: 'nh_school_d3', dayName: { en: 'Upper B', es: 'Torso B' }, slots: [slotFromRole('vertical_pull', 3, 'u2-a'), slotFromRole('horizontal_press', 3, 'u2-a'), slotFromRole('horizontal_pull', 3, 'u2-b'), slotFromRole('triceps', 2, 'u2-b'), slotFromRole('lateral_delt', 2)] },
-      { id: 'nh_school_d4', dayName: { en: 'Lower B', es: 'Pierna B' }, slots: [slotFromRole('hinge', 2, 'l2-a'), slotFromRole('knee_extension', 3, 'l2-a'), slotFromRole('knee_flexion', 3, 'l2-b'), slotFromRole('calves', 2, 'l2-b'), slotFromRole('abs', 2)] },
+      { id: 'nh_school_d1', dayName: { en: 'Upper A', es: 'Torso A' }, slots: [s('horizontal_press', 3, 'u1-a'), s('horizontal_pull', 3, 'u1-a'), s('vertical_press', 3, 'u1-b'), s('biceps', 2, 'u1-b'), ...prioritiesFor('u1')] },
+      { id: 'nh_school_d2', dayName: { en: 'Lower A', es: 'Pierna A' }, slots: [s('knee_flexion', 3, 'l1-a'), s('calves', 3, 'l1-a'), s('hinge', 2, 'l1-b'), s('abs', 2, 'l1-b')] },
+      { id: 'nh_school_d3', dayName: { en: 'Upper B', es: 'Torso B' }, slots: [s('vertical_pull', 3, 'u2-a'), s('horizontal_press', 3, 'u2-a'), s('horizontal_pull', 3, 'u2-b'), s('triceps', 2, 'u2-b'), s('lateral_delt', 2)] },
+      { id: 'nh_school_d4', dayName: { en: 'Lower B', es: 'Pierna B' }, slots: [s('hinge', 2, 'l2-a'), s('knee_extension', 3, 'l2-a'), s('knee_flexion', 3, 'l2-b'), s('calves', 2, 'l2-b'), s('abs', 2)] },
     ];
   }
+
   return [
-    { id: 'nh_school_d1', dayName: { en: 'Upper', es: 'Torso' }, slots: [slotFromRole('horizontal_press', 3, 'd1-a'), slotFromRole('horizontal_pull', 3, 'd1-a'), slotFromRole('vertical_press', 3, 'd1-b'), slotFromRole('biceps', 2, 'd1-b')] },
-    { id: 'nh_school_d2', dayName: { en: 'Lower', es: 'Pierna' }, slots: [slotFromRole('knee_flexion', 3, 'd2-a'), slotFromRole('calves', 3, 'd2-a'), slotFromRole('hinge', 2, 'd2-b'), slotFromRole('abs', 2, 'd2-b')] },
-    { id: 'nh_school_d3', dayName: { en: 'Arms / Delts', es: 'Brazos / Hombros' }, slots: [slotFromRole('biceps', 3, 'd3-a'), slotFromRole('triceps', 3, 'd3-a'), slotFromRole('lateral_delt', 3, 'd3-b'), slotFromRole('abs', 2, 'd3-b'), ...prioritySlots(p, 'd3')] },
-    { id: 'nh_school_d4', dayName: { en: 'Upper 2', es: 'Torso 2' }, slots: [slotFromRole('vertical_pull', 3, 'd4-a'), slotFromRole('horizontal_press', 3, 'd4-a'), slotFromRole('horizontal_pull', 3, 'd4-b'), slotFromRole('triceps', 2, 'd4-b')] },
-    { id: 'nh_school_d5', dayName: { en: 'Lower 2', es: 'Pierna 2' }, slots: [slotFromRole('hinge', 2, 'd5-a'), slotFromRole('knee_extension', 3, 'd5-a'), slotFromRole('knee_flexion', 3, 'd5-b'), slotFromRole('calves', 2, 'd5-b')] },
+    { id: 'nh_school_d1', dayName: { en: 'Upper', es: 'Torso' }, slots: [s('horizontal_press', 3, 'd1-a'), s('horizontal_pull', 3, 'd1-a'), s('vertical_press', 3, 'd1-b'), s('biceps', 2, 'd1-b')] },
+    { id: 'nh_school_d2', dayName: { en: 'Lower', es: 'Pierna' }, slots: [s('knee_flexion', 3, 'd2-a'), s('calves', 3, 'd2-a'), s('hinge', 2, 'd2-b'), s('abs', 2, 'd2-b')] },
+    { id: 'nh_school_d3', dayName: { en: 'Arms / Delts', es: 'Brazos / Hombros' }, slots: [s('biceps', 3, 'd3-a'), s('triceps', 3, 'd3-a'), s('lateral_delt', 3, 'd3-b'), s('abs', 2, 'd3-b'), ...prioritiesFor('d3')] },
+    { id: 'nh_school_d4', dayName: { en: 'Upper 2', es: 'Torso 2' }, slots: [s('vertical_pull', 3, 'd4-a'), s('horizontal_press', 3, 'd4-a'), s('horizontal_pull', 3, 'd4-b'), s('triceps', 2, 'd4-b')] },
+    { id: 'nh_school_d5', dayName: { en: 'Lower 2', es: 'Pierna 2' }, slots: [s('hinge', 2, 'd5-a'), s('knee_extension', 3, 'd5-a'), s('knee_flexion', 3, 'd5-b'), s('calves', 2, 'd5-b')] },
   ];
 }
 
