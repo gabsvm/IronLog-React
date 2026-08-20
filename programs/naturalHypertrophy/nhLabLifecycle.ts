@@ -14,6 +14,11 @@ export type NhLabChangeReason =
   | 'exercise_fit'
   | 'other';
 
+export interface NhLabExerciseReadiness {
+  experienced: boolean;
+  fit: 'works' | 'irritates' | 'unsure';
+}
+
 export interface NhLabChangeEntry {
   id: string;
   at: number;
@@ -29,6 +34,7 @@ export interface NhLabMeta {
   phaseStartedAt: number;
   sourceTemplateId?: string;
   sourceTemplateName?: string;
+  exerciseReadiness?: Record<string, NhLabExerciseReadiness>;
   changeLog: NhLabChangeEntry[];
 }
 
@@ -42,6 +48,7 @@ export function createNhLabMeta(options: {
   sourceTemplateName?: string;
   initialReason?: NhLabChangeReason;
   initialNote?: string;
+  exerciseReadiness?: Record<string, NhLabExerciseReadiness>;
 } = {}): NhLabMeta {
   const now = options.now ?? Date.now();
   const changeLog: NhLabChangeEntry[] = [];
@@ -61,6 +68,7 @@ export function createNhLabMeta(options: {
     phaseStartedAt: now,
     sourceTemplateId: options.sourceTemplateId,
     sourceTemplateName: options.sourceTemplateName,
+    exerciseReadiness: options.exerciseReadiness,
     changeLog,
   };
 }
@@ -128,9 +136,16 @@ export function nhLabDaysInPhase(template: GlobalTemplate, now = Date.now()): nu
 }
 
 export function nhLabCanStartAlpha(template: GlobalTemplate): boolean {
-  return template.program.length > 0 && template.program.every(day =>
+  const structurallyReady = template.program.length > 0 && template.program.every(day =>
     Array.isArray(day.slots) && day.slots.length > 0 && day.slots.every(slot => !!slot.exerciseId && Number(slot.setTarget) > 0 && !!slot.reps)
   );
+  if (!structurallyReady) return false;
+  if (!isNhLabTemplate(template) || !template.nhLab.exerciseReadiness) return true;
+  return template.program.every(day => day.slots.every(slot => {
+    const id = String(slot.exerciseId || '');
+    const readiness = template.nhLab.exerciseReadiness?.[id];
+    return !!readiness && readiness.experienced && readiness.fit === 'works';
+  }));
 }
 
 export function nhLabNextPhase(phase: NhLabPhase): NhLabPhase | null {
