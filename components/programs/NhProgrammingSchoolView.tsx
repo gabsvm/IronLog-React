@@ -110,7 +110,9 @@ export const NhProgrammingSchoolView: React.FC<Props> = ({ lang, templates, onBa
   const selectedAudit = useMemo(() => selectedTemplate ? auditNhProgram(selectedTemplate.program) : null, [selectedTemplate]);
   const draftAudit = useMemo(() => draft ? auditNhProgram(draft) : null, [draft]);
   const lessons = useMemo(() => [
-    ...NH_PROGRAMMING_TEACHING_POINTS,
+    ...NH_PROGRAMMING_TEACHING_POINTS.map(item => item.id === 'program-before-running'
+      ? { ...item, sourceScope: 'How to program evolving rep ranges; How to never have to buy a training program again in your life; How to program your training yourself Part 2; AlphaBeta testing your program.' }
+      : item),
     ...NH_SELF_PROGRAMMING_SOURCE_LESSONS,
   ].filter(item => item.level === lessonLevel), [lessonLevel]);
 
