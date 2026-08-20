@@ -1,11 +1,12 @@
 
-import React, { useState, useCallback, Suspense } from 'react';
+import React, { useState, useCallback, Suspense, useEffect, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { TRANSLATIONS, MUSCLE_GROUPS } from '../constants';
 import { KONG_4DAY_V1 } from '../programs/kong/kong4Day';
+import { isNhLabTemplate, nhLabCanStartAlpha } from '../programs/naturalHypertrophy/nhLabLifecycle';
 import { Icon } from '../components/ui/Icon';
 import { Button } from '../components/ui/Button';
-import { MuscleGroup, MesoType } from '../types';
+import { MesoType } from '../types';
 import { getTranslated } from '../utils';
 import { triggerHaptic } from '../utils/audio';
 import { Sheet } from '../components/ui/Sheet';
@@ -18,13 +19,30 @@ interface ProgramEditViewProps {
     onBack: () => void;
 }
 
+const programFingerprint = (program: unknown) => {
+    try { return JSON.stringify(program); } catch { return ''; }
+};
+
 export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
-    const { program, setProgram, lang, exercises } = useApp();
+    const { program, setProgram, lang, exercises, personalTemplates, setPersonalTemplates } = useApp();
     const activeMeso = useStore(state => state.activeMeso);
     const setActiveMeso = useStore(state => state.setActiveMeso);
     const t = TRANSLATIONS[lang];
     const isStructuredKong = activeMeso?.programSystem?.systemId === KONG_4DAY_V1.id;
-    
+
+    const [editingNhLabId] = useState(() => {
+        const current = programFingerprint(program);
+        if (!current) return '';
+        const match = (Array.isArray(personalTemplates) ? personalTemplates : [])
+            .find(template => isNhLabTemplate(template) && programFingerprint(template.program) === current);
+        return match?.id || '';
+    });
+    const editingNhLabTemplate = useMemo(() => {
+        if (!editingNhLabId) return null;
+        return (Array.isArray(personalTemplates) ? personalTemplates : [])
+            .find(template => template.id === editingNhLabId && isNhLabTemplate(template)) || null;
+    }, [editingNhLabId, personalTemplates]);
+
     const [pickingForSlot, setPickingForSlot] = useState<{dayId: string, slotIdx: number} | null>(null);
     const [showStartModal, setShowStartModal] = useState(false);
     const [dayToDelete, setDayToDelete] = useState<string | null>(null);
@@ -39,6 +57,47 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
         weeks: activeMeso?.targetWeeks || activeMeso?.duration || 4,
     }));
     const hasKnownPhase = Object.prototype.hasOwnProperty.call(t.phases, mesoConfig.type);
+
+    // If Programming School opened this exact NH Lab draft, keep the personal
+    // template synchronized with the generic editor. New exercise IDs are not
+    // assumed to be known/tolerated: they enter readiness as unverified.
+    useEffect(() => {
+        if (!editingNhLabId) return;
+        const usedExerciseIds = Array.from(new Set(program.flatMap(day => (day.slots || [])
+            .map(slot => String(slot.exerciseId || '').trim())
+            .filter(Boolean))));
+        setPersonalTemplates(prev => prev.map(template => {
+            if (template.id !== editingNhLabId || !isNhLabTemplate(template)) return template;
+            const previousReadiness = template.nhLab.exerciseReadiness || {};
+            const nextReadiness = { ...previousReadiness };
+            usedExerciseIds.forEach(id => {
+                if (!nextReadiness[id]) nextReadiness[id] = { experienced: false, fit: 'unsure' };
+            });
+            const sameProgram = programFingerprint(template.program) === programFingerprint(program);
+            const sameReadiness = programFingerprint(previousReadiness) === programFingerprint(nextReadiness);
+            if (sameProgram && sameReadiness) return template;
+            return {
+                ...template,
+                program: program.map(day => ({ ...day, slots: (day.slots || []).map(slot => ({ ...slot })) })),
+                nhLab: { ...template.nhLab, exerciseReadiness: nextReadiness },
+            };
+        }));
+    }, [editingNhLabId, program, setPersonalTemplates]);
+
+    const confirmNhLabReadiness = useCallback(() => {
+        if (!editingNhLabId) return;
+        const usedExerciseIds = Array.from(new Set(program.flatMap(day => (day.slots || [])
+            .map(slot => String(slot.exerciseId || '').trim())
+            .filter(Boolean))));
+        if (usedExerciseIds.length === 0) return;
+        setPersonalTemplates(prev => prev.map(template => {
+            if (template.id !== editingNhLabId || !isNhLabTemplate(template)) return template;
+            const readiness = { ...(template.nhLab.exerciseReadiness || {}) };
+            usedExerciseIds.forEach(id => { readiness[id] = { experienced: true, fit: 'works' }; });
+            return { ...template, nhLab: { ...template.nhLab, exerciseReadiness: readiness } };
+        }));
+        triggerHaptic('success');
+    }, [editingNhLabId, program, setPersonalTemplates]);
 
     const handleUpdateDayName = useCallback((id: string, name: string) => {
         setProgram(prev => prev.map(d => d.id === id ? { ...d, dayName: { en: name, es: name } } : d));
@@ -159,6 +218,20 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 scroll-container space-y-6 pb-24">
+                {editingNhLabTemplate?.nhLab && (
+                    <section className="rounded-2xl border border-violet-500/25 bg-violet-500/[0.07] p-4 text-zinc-800 dark:text-zinc-100">
+                        <div className="flex items-start gap-3">
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-500"><Icon name="Brain" size={17}/></span>
+                            <div className="min-w-0 flex-1">
+                                <div className="flex flex-wrap items-center gap-2"><p className="text-xs font-black">NH Lab · {editingNhLabTemplate.nhLab.phase.toUpperCase()}</p><span className={`rounded-lg px-2 py-1 text-[8px] font-black ${nhLabCanStartAlpha(editingNhLabTemplate) ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>{nhLabCanStartAlpha(editingNhLabTemplate) ? (lang === 'es' ? 'READINESS OK' : 'READINESS OK') : (lang === 'es' ? 'READINESS PENDIENTE' : 'READINESS PENDING')}</span></div>
+                                <p className="mt-1 text-[10px] leading-4 text-zinc-500 dark:text-zinc-400">{lang === 'es' ? 'Los cambios de estructura se sincronizan con este mismo template de Mías. El changelog sigue siendo manual: registrá el motivo en Programming School para conservar el razonamiento, no cada pulsación.' : 'Structural edits sync to this same Mine template. The changelog stays manual: record the reason in Programming School so it captures reasoning, not every keystroke.'}</p>
+                            </div>
+                        </div>
+                        <button type="button" onClick={confirmNhLabReadiness} className="mt-3 min-h-10 w-full rounded-xl border border-violet-500/30 bg-violet-500/10 px-3 text-[10px] font-black text-violet-600 dark:text-violet-300">{lang === 'es' ? 'Confirmo: conozco y tolero todos los ejercicios actuales' : 'I confirm: I know and tolerate every current exercise'}</button>
+                        <p className="mt-2 text-[9px] leading-4 text-zinc-500">{lang === 'es' ? 'GAINSLAB RULE · no pulses esto si alguno te molesta, es nuevo para vos o todavía no sabés si te funciona.' : 'GAINSLAB RULE · do not press this if any movement irritates you, is new to you, or you do not yet know whether it fits.'}</p>
+                    </section>
+                )}
+
                 {program.map((day) => (
                     <div key={day.id} className="glass-card rounded-2xl overflow-hidden shadow-lg transition-all hover:border-white/10">
                         <div className="bg-zinc-100/80 dark:bg-white/5 p-4 border-b border-zinc-200 dark:border-white/5 flex justify-between items-center">
