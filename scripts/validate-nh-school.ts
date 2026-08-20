@@ -3,13 +3,18 @@ import {
   NH_MASSTERPLAN_GUIDES,
   NH_PROGRAMMING_TEACHING_POINTS,
   NH_ROLE_LIBRARY,
-  NH_SELF_PROGRAMMING_PATH,
   auditNhProgram,
   buildNhTeachingDraft,
   getNhMovementRole,
   makeNhSchoolTemplate,
 } from '../programs/naturalHypertrophy/programmingSchool.ts';
 import { evaluateNhEvolvingRepCue, evaluateNhPlateauTrend } from '../programs/naturalHypertrophy/nhVerifiedKnowledge.ts';
+import {
+  NH_ALPHA_BETA_PROTOCOL,
+  NH_ICEBERG_CURRICULUM,
+  NH_SELF_PROGRAMMING_PATH_VERIFIED,
+  NH_SELF_PROGRAMMING_SOURCE_LESSONS,
+} from '../programs/naturalHypertrophy/nhSelfProgrammingProtocol.ts';
 
 assert.ok(NH_PROGRAMMING_TEACHING_POINTS.length >= 30, 'Programming School needs the expanded transcript-grounded lesson set');
 assert.ok(NH_PROGRAMMING_TEACHING_POINTS.some(item => item.kind === 'nh_principle'), 'Must distinguish verified NH principles');
@@ -32,8 +37,34 @@ assert.equal(deloadBoundary?.kind, 'gainslab_rule', 'Never-deload safety boundar
 const selfProgramming = NH_PROGRAMMING_TEACHING_POINTS.find(item => item.id === 'self-program-own-program');
 assert.equal(selfProgramming?.kind, 'nh_principle', 'Self-programming goal is explicitly stated by NH');
 
-assert.equal(NH_SELF_PROGRAMMING_PATH.length, 8, 'Self-programming path must represent the verified Part 2 process');
-assert.equal(NH_SELF_PROGRAMMING_PATH.find(item => item.id === 'alpha-beta')?.sourceStatus, 'missing_followup', 'Alpha/beta details must remain explicitly unresolved until Part 3 is supplied');
+assert.equal(NH_SELF_PROGRAMMING_PATH_VERIFIED.length, 8, 'Self-programming path must have eight verified stages');
+assert.ok(NH_SELF_PROGRAMMING_PATH_VERIFIED.every(stage => stage.sourceStatus === 'verified'), 'No self-programming stage may remain source-pending');
+assert.equal(NH_SELF_PROGRAMMING_PATH_VERIFIED.find(item => item.id === 'alpha-beta')?.sourceStatus, 'verified', 'Alpha/beta must be fully sourced from Part 3');
+assert.ok(NH_SELF_PROGRAMMING_PATH_VERIFIED.find(item => item.id === 'alpha-beta')?.sourceScope.includes('AlphaBeta testing your program'));
+
+assert.ok(NH_SELF_PROGRAMMING_SOURCE_LESSONS.some(item => item.id === 'self-coaching-is-the-destination' && item.kind === 'nh_principle'));
+assert.ok(NH_SELF_PROGRAMMING_SOURCE_LESSONS.some(item => item.id === 'novice-discovery-before-authorship' && item.kind === 'nh_principle'));
+assert.ok(NH_SELF_PROGRAMMING_SOURCE_LESSONS.some(item => item.id === 'progressive-overload-is-multivariable' && item.kind === 'nh_principle'));
+assert.ok(NH_SELF_PROGRAMMING_SOURCE_LESSONS.some(item => item.id === 'conscious-load-increments' && item.kind === 'nh_principle'));
+assert.ok(NH_SELF_PROGRAMMING_SOURCE_LESSONS.some(item => item.id === 'programming-literacy-is-progressive' && item.kind === 'nh_principle'));
+assert.ok(NH_SELF_PROGRAMMING_SOURCE_LESSONS.some(item => item.id === 'alpha-subtract-before-adding' && item.kind === 'nh_principle'));
+assert.ok(NH_SELF_PROGRAMMING_SOURCE_LESSONS.some(item => item.id === 'beta-tweak-before-rebuild' && item.kind === 'nh_principle'));
+
+assert.equal(NH_ALPHA_BETA_PROTOCOL.length, 3, 'Alpha/beta protocol must include alpha, beta and mature phases');
+const alpha = NH_ALPHA_BETA_PROTOCOL.find(item => item.id === 'alpha');
+const beta = NH_ALPHA_BETA_PROTOCOL.find(item => item.id === 'beta');
+const mature = NH_ALPHA_BETA_PROTOCOL.find(item => item.id === 'mature');
+assert.ok(alpha?.timing.en.includes('2–3 months'), 'Alpha timing should preserve NH roughly 2–3 month guidance');
+assert.ok(alpha?.avoid.some(item => item.en.includes('mostly subtraction')), 'Alpha must teach subtraction over new brainstorming');
+assert.ok(beta?.timing.en.includes('year'), 'Beta should preserve NH long testing horizon');
+assert.ok(beta?.avoid.some(item => item.en.includes('major compound')), 'Beta must guard against casually adding major compounds');
+assert.ok(mature?.goal.en.includes('without requiring constant wholesale program replacement'), 'Mature program must be defined by flexible stability');
+
+assert.equal(NH_ICEBERG_CURRICULUM.length, 5, 'Iceberg curriculum must include sky, tip, surface, depths and abyss');
+assert.deepEqual(NH_ICEBERG_CURRICULUM.map(item => item.id), ['sky','tip','surface','depths','abyss']);
+assert.ok(NH_ICEBERG_CURRICULUM.find(item => item.id === 'surface')?.concepts.some(item => item.en.includes('Evolving rep ranges')));
+assert.ok(NH_ICEBERG_CURRICULUM.find(item => item.id === 'depths')?.concepts.some(item => item.en.includes('Programming')));
+assert.ok(NH_ICEBERG_CURRICULUM.find(item => item.id === 'abyss')?.note.en.includes('not a scientific hierarchy'));
 
 assert.equal(NH_MASSTERPLAN_GUIDES.length, 3, 'Back, shoulders and forearms MASSterplans must be represented');
 assert.ok(NH_MASSTERPLAN_GUIDES.some(item => item.id === 'back' && item.stages.length === 4));
