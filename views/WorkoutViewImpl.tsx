@@ -122,7 +122,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
     useEffect(() => {
         const recommended = activeSession?.exercises?.find((exercise) => exercise.recommendedRestSeconds)?.recommendedRestSeconds;
         if (recommended) setManualRestPreset(recommended);
-    }, [activeSession?.id]);
+    }, [activeSession?.exercises, activeSession?.id]);
 
     // Set type modal: apply-to-all toggle defaults ON when all sets share the same type
     const [applyToAll, setApplyToAll] = useState(true);

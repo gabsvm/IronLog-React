@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
 import { UserProfile } from '../../types';
@@ -188,7 +188,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
         lang === 'es' ? 'Tiempo aproximado por sesión.' : 'Approximate time per session.',
     ];
 
-    const profileStep = useMemo(() => {
+    const profileStep = (() => {
         if (step === 0) return (
             <div className="space-y-2.5">
                 <Option icon="Star" title={w.expOptions.beginner} description={w.expDesc?.beginner || ''} selected={profile.experience === 'beginner'} onClick={() => setProfile(prev => ({ ...prev, experience: 'beginner' }))} />
@@ -221,7 +221,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
             </div>
         );
         return null;
-    }, [lang, profile, step, w.expDesc, w.expOptions, w.goalOptions, w.timeOptions]);
+    })();
 
     if (step === 4 && recommendation) {
         const recTitle = String(t.phases[recommendation.mesoType] || (lang === 'es' ? 'Programa recomendado' : 'Recommended program'));

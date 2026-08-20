@@ -34,15 +34,16 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
     const { lang } = useAppPreferences();
     const { setProgram, logs, program } = useApp();
     const activeMeso = useStore(state => state.activeMeso);
+    const activeProgramSystem = activeMeso?.programSystem;
     const activeSession = useStore(state => state.activeSession);
     const setActiveMeso = useStore(state => state.setActiveMeso);
     const rootRef = useRef<HTMLDivElement>(null);
     const [showSkippedFinalCompletion, setShowSkippedFinalCompletion] = useState(false);
     const [pendingPerformanceDay, setPendingPerformanceDay] = useState<number | null>(null);
-    const structuredDefinition = useMemo(() => activeMeso?.programSystem
-        ? getProgramDefinition(activeMeso.programSystem.systemId, activeMeso.programSystem.systemVersion)
+    const structuredDefinition = useMemo(() => activeProgramSystem
+        ? getProgramDefinition(activeProgramSystem.systemId, activeProgramSystem.systemVersion)
         : null,
-    [activeMeso?.programSystem?.systemId, activeMeso?.programSystem?.systemVersion]);
+    [activeProgramSystem]);
     const isStructured = !!structuredDefinition;
     const isKong = structuredDefinition?.id === KONG_4DAY_V1.id;
     const isPerformance = structuredDefinition?.id === PERFORMANCE_UPPER_LOWER_V1.id;
@@ -50,8 +51,8 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
     const safeProgram = useMemo(() => Array.isArray(program) ? program : [], [program]);
     const substitutionSignature = useMemo(
-        () => JSON.stringify(activeMeso?.programSystem?.substitutions || {}),
-        [activeMeso?.programSystem?.substitutions],
+        () => JSON.stringify(activeProgramSystem?.substitutions || {}),
+        [activeProgramSystem?.substitutions],
     );
     const structuredCycleResolvedCount = useMemo(() => {
         if (!isStructured || !structuredDefinition || !activeMeso) return 0;
@@ -67,12 +68,12 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
     useEffect(() => {
         if (!structuredDefinition || !activeMeso) return;
         const { block } = getProgramBlockForWeek(structuredDefinition, activeMeso.week);
-        const resolvedBase = resolveProgramWeek(structuredDefinition, activeMeso.week, activeMeso.programSystem?.substitutions || {});
+        const resolvedBase = resolveProgramWeek(structuredDefinition, activeMeso.week, activeProgramSystem?.substitutions || {});
         const resolved = isKong
             ? resolvedBase.map((day, dayIndex) => ({ ...day, dayName: getKongDayDisplay(block.number, dayIndex) }))
             : resolvedBase;
         setProgram(prev => JSON.stringify(prev) === JSON.stringify(resolved) ? prev : resolved);
-    }, [activeMeso?.week, isKong, setProgram, structuredDefinition, substitutionSignature]);
+    }, [activeMeso, activeProgramSystem, isKong, setProgram, structuredDefinition, substitutionSignature]);
 
     useEffect(() => {
         if (!structuredDefinition || !activeMeso || activeSession) return;

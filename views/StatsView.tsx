@@ -55,8 +55,8 @@ export const StatsView: React.FC = () => {
     const [section, setSection] = useState<StatsSection>('overview');
     const [exerciseSearch, setExerciseSearch] = useState('');
     const [selectedExercise, setSelectedExercise] = useState<ExerciseDef | null>(null);
-    const safeLogs = Array.isArray(logs) ? logs : [];
-    const safeExercises = Array.isArray(exercises) ? exercises : [];
+    const safeLogs = useMemo(() => Array.isArray(logs) ? logs : [], [logs]);
+    const safeExercises = useMemo(() => Array.isArray(exercises) ? exercises : [], [exercises]);
     const t = TRANSLATIONS[lang];
 
     const publicPlanLabel = useMemo(() => {

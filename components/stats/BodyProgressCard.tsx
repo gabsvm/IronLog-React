@@ -6,9 +6,10 @@ import { LogWeightModal } from '../nutrition/LogWeightModal';
 export const BodyProgressCard: React.FC = () => {
     const { lang, bodyLogs, setBodyLogs, userProfile, setUserProfile } = useApp();
     const [open, setOpen] = useState(false);
-    const safeLogs = Array.isArray(bodyLogs) ? bodyLogs : [];
-
-    const sorted = useMemo(() => [...safeLogs].sort((a, b) => b.date - a.date), [safeLogs]);
+    const sorted = useMemo(
+        () => [...(Array.isArray(bodyLogs) ? bodyLogs : [])].sort((a, b) => b.date - a.date),
+        [bodyLogs],
+    );
     const latest = sorted[0];
     const previous = sorted[1];
     const currentWeight = latest?.weight ?? userProfile?.bodyWeight;

@@ -3,7 +3,7 @@ import React, { useState, useCallback, Suspense, useEffect, useMemo } from 'reac
 import { useApp } from '../context/AppContext';
 import { TRANSLATIONS, MUSCLE_GROUPS } from '../constants';
 import { KONG_4DAY_V1 } from '../programs/kong/kong4Day';
-import { isNhLabTemplate, nhLabCanStartAlpha } from '../programs/naturalHypertrophy/nhLabLifecycle';
+import { isNhLabTemplate, nhLabCanStartAlpha, type NhLabTemplate } from '../programs/naturalHypertrophy/nhLabLifecycle';
 import { Icon } from '../components/ui/Icon';
 import { Button } from '../components/ui/Button';
 import { MesoType } from '../types';
@@ -37,7 +37,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
             .find(template => isNhLabTemplate(template) && programFingerprint(template.program) === current);
         return match?.id || '';
     });
-    const editingNhLabTemplate = useMemo(() => {
+    const editingNhLabTemplate = useMemo<NhLabTemplate | null>(() => {
         if (!editingNhLabId) return null;
         return (Array.isArray(personalTemplates) ? personalTemplates : [])
             .find(template => template.id === editingNhLabId && isNhLabTemplate(template)) || null;

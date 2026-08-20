@@ -1,5 +1,5 @@
 import type { Log, SessionExercise, WorkoutSet } from '../../types';
-import { evaluateNhPlateauTrend, type NhPlateauStatus } from './nhVerifiedKnowledge';
+import { evaluateNhPlateauTrend, type NhPlateauStatus } from './nhVerifiedKnowledge.ts';
 
 export interface NhCoachExposure {
   time: number;

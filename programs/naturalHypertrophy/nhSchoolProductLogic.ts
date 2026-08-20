@@ -4,7 +4,7 @@ import {
   getNhMovementRole,
   type NhMovementRole,
   type NhProgramAudit,
-} from './programmingSchool';
+} from './programmingSchool.ts';
 
 export type NhAuditCategoryId = 'coverage' | 'recovery' | 'redundancy' | 'balance';
 export type NhAuditCategoryState = 'clear' | 'review' | 'change';

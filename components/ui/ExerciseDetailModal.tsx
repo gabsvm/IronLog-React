@@ -68,7 +68,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
     useEffect(() => {
         setVolumeCountingMode(exercise.volumeCountingMode || 'total');
         setUserNote(String((exercise as any).userNote || ''));
-    }, [exercise.id, exercise.volumeCountingMode]);
+    }, [exercise]);
 
     const exerciseHistory = useMemo(() => safeLogs
         .filter(log => !log.skipped)

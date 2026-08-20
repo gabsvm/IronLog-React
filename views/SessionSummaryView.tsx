@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Log, MuscleGroup } from '../types';
 import { Icon } from '../components/ui/Icon';
 import { Button } from '../components/ui/Button';
@@ -46,10 +46,10 @@ const formatNumber = (value: number) => Number.isInteger(value) ? String(value) 
 
 export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onClose }) => {
     const { lang, userProfile, logs } = useApp();
-    const safeLogs = Array.isArray(logs) ? logs : [];
+    const safeLogs = useMemo(() => Array.isArray(logs) ? logs : [], [logs]);
     const t = TRANSLATIONS[lang];
 
-    const summarize = (entry: Log) => {
+    const summarize = useCallback((entry: Log) => {
         let volume = 0;
         let sets = 0;
         const muscles = new Set<string>();
@@ -63,9 +63,9 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
             });
         });
         return { volume, sets, muscles: Array.from(muscles), duration: Number(entry.duration || 0) };
-    };
+    }, [userProfile?.bodyWeight]);
 
-    const stats = useMemo(() => summarize(log), [log, userProfile?.bodyWeight]);
+    const stats = useMemo(() => summarize(log), [log, summarize]);
 
     const previous = useMemo(() => {
         return safeLogs
@@ -74,7 +74,7 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
             .sort((a, b) => Number(b.endTime || b.startTime || 0) - Number(a.endTime || a.startTime || 0))[0] || null;
     }, [log.dayIdx, log.id, log.mesoId, log.name, safeLogs]);
 
-    const previousStats = useMemo(() => previous ? summarize(previous) : null, [previous, userProfile?.bodyWeight]);
+    const previousStats = useMemo(() => previous ? summarize(previous) : null, [previous, summarize]);
     const volumeDelta = previousStats?.volume ? Math.round(((stats.volume - previousStats.volume) / previousStats.volume) * 100) : null;
     const setDelta = previousStats ? stats.sets - previousStats.sets : null;
 
