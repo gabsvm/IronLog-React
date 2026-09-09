@@ -1,12 +1,20 @@
 import { create } from 'zustand';
 import { db } from '../utils/db';
-import { ActiveSession, MesoCycle } from '../types';
+import { ActiveSession, MesoCycle, WorkoutSet } from '../types';
+import {
+    denormalizeActiveSession,
+    normalizeActiveSession,
+    NormalizedWorkoutState,
+    updateNormalizedWorkoutSet,
+} from './workout/workoutPersistenceAdapter';
 
 interface AppStateStore {
     activeSession: ActiveSession | null;
+    normalizedWorkout: NormalizedWorkoutState | null;
     activeMeso: MesoCycle | null;
     isStoreLoading: boolean;
     setActiveSession: (val: ActiveSession | null | ((prev: ActiveSession | null) => ActiveSession | null)) => void;
+    updateWorkoutSet: <K extends keyof WorkoutSet>(exerciseId: number, setId: number, field: K, value: WorkoutSet[K]) => void;
     setActiveMeso: (val: MesoCycle | null | ((prev: MesoCycle | null) => MesoCycle | null)) => void;
     _init: () => Promise<void>;
 }
@@ -17,6 +25,7 @@ let mesoTimeout: ReturnType<typeof setTimeout> | null = null;
 
 export const useStore = create<AppStateStore>((set, get) => ({
     activeSession: null,
+    normalizedWorkout: null,
     activeMeso: null,
     isStoreLoading: true,
     _init: async () => {
@@ -25,7 +34,7 @@ export const useStore = create<AppStateStore>((set, get) => ({
                 db.get<ActiveSession | null>('il_session_v16', null),
                 db.get<MesoCycle | null>('il_meso_v16', null)
             ]);
-            set({ activeSession: session, activeMeso: meso, isStoreLoading: false });
+            set({ activeSession: session, normalizedWorkout: normalizeActiveSession(session), activeMeso: meso, isStoreLoading: false });
         } catch (e) {
             console.error('[Store] IndexedDB init failed — defaulting to empty state:', e);
             set({ isStoreLoading: false });
@@ -41,7 +50,25 @@ export const useStore = create<AppStateStore>((set, get) => ({
                 void db.set('il_session_v16', nextVal);
             }, 500);
 
-            return { activeSession: nextVal };
+            return { activeSession: nextVal, normalizedWorkout: normalizeActiveSession(nextVal) };
+        });
+    },
+    updateWorkoutSet: (exerciseId, setId, field, value) => {
+        set((state) => {
+            const current = state.normalizedWorkout ?? normalizeActiveSession(state.activeSession);
+            if (!current) return state;
+
+            const nextWorkout = updateNormalizedWorkoutSet(current, exerciseId, setId, field, value);
+            if (nextWorkout === current) return state;
+
+            const nextSession = denormalizeActiveSession(nextWorkout);
+            if (sessionTimeout) clearTimeout(sessionTimeout);
+            sessionTimeout = setTimeout(() => {
+                sessionTimeout = null;
+                void db.set('il_session_v16', nextSession);
+            }, 500);
+
+            return { activeSession: nextSession, normalizedWorkout: nextWorkout };
         });
     },
     setActiveMeso: (val) => {

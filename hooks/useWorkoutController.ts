@@ -42,6 +42,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
     const activeSession = useStore(state => state.activeSession);
     const activeMeso = useStore(state => state.activeMeso);
     const setActiveSession = useStore(state => state.setActiveSession);
+    const updateWorkoutSet = useStore(state => state.updateWorkoutSet);
     const setActiveMeso = useStore(state => state.setActiveMeso);
     const { setRestTimer } = useTimerActions();
     const { calculateAllBest1RMs } = useStatsWorker();
@@ -102,21 +103,9 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
     }, [logs, calculateAllBest1RMs]);
 
     // Data Mutations
-    const handleSetUpdate = useCallback((exInstanceId: number, setId: number, field: keyof WorkoutSet, value: any) => {
-        setActiveSession(prev => {
-            if (!prev) return null;
-            return {
-                ...prev,
-                exercises: (prev.exercises || []).map(ex => {
-                    if (ex.instanceId !== exInstanceId) return ex;
-                    return {
-                        ...ex,
-                        sets: (ex.sets || []).map(s => s.id === setId ? { ...s, [field]: value } : s)
-                    };
-                })
-            };
-        });
-    }, [setActiveSession]);
+    const handleSetUpdate = useCallback((exInstanceId: number, setId: number, field: keyof WorkoutSet, value: WorkoutSet[keyof WorkoutSet]) => {
+        updateWorkoutSet(exInstanceId, setId, field, value);
+    }, [updateWorkoutSet]);
 
     // Implement Logic for Add Set
     const handleAddSet = useCallback((exInstanceId: number) => {
