@@ -122,7 +122,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
     useEffect(() => {
         const recommended = activeSession?.exercises?.find((exercise) => exercise.recommendedRestSeconds)?.recommendedRestSeconds;
         if (recommended) setManualRestPreset(recommended);
-    }, [activeSession?.id]);
+    }, [activeSession?.id, activeSession?.exercises]);
 
     // Set type modal: apply-to-all toggle defaults ON when all sets share the same type
     const [applyToAll, setApplyToAll] = useState(true);
@@ -154,6 +154,22 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
         [activeMeso]
     );
     const sessionExercises = ctrl.sessionExercises as SessionExercise[];
+    const [activeExerciseId, setActiveExerciseId] = useState<number | null>(null);
+    useEffect(() => {
+        const ids = new Set(sessionExercises.map(ex => ex.instanceId));
+        setActiveExerciseId(current => {
+            if (current !== null && ids.has(current)) return current;
+            return sessionExercises.find(ex => ex.sets.some(set => !set.completed && set.type !== 'warmup'))?.instanceId
+                ?? sessionExercises[0]?.instanceId
+                ?? null;
+        });
+    }, [activeSession?.id, sessionExercises]);
+    const activeExerciseIds = useMemo(() => {
+        const active = sessionExercises.find(ex => ex.instanceId === activeExerciseId);
+        if (!active) return new Set<number>();
+        if (!active.supersetId) return new Set([active.instanceId]);
+        return new Set(sessionExercises.filter(ex => ex.supersetId === active.supersetId).map(ex => ex.instanceId));
+    }, [activeExerciseId, sessionExercises]);
     const isCalisthenicsSession = useMemo(() => 
         sessionExercises.length > 0 && sessionExercises.every(ex => ex.isBodyweight), 
     [sessionExercises]);
@@ -489,6 +505,8 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                         dragEnabled={true}
                                         logs={logs}
                                         tutorialId={idx === 0 ? 'tut-set-type' : undefined}
+                                        isCompact={!activeExerciseIds.has(ex.instanceId)}
+                                        onActivate={() => setActiveExerciseId(ex.instanceId)}
                                     />
                                 );
                             })}

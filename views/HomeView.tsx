@@ -50,7 +50,7 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
         }));
 
         setProgram(prev => JSON.stringify(prev) === JSON.stringify(resolved) ? prev : resolved);
-    }, [activeMeso?.week, isKong, setProgram, substitutionSignature]);
+    }, [activeMeso, activeMeso?.week, isKong, setProgram, substitutionSignature]);
 
     // Legacy week completion only auto-advances after four non-skipped workouts.
     // In KONG, a deliberate Skip resolves that scheduled slot but should reduce

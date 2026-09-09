@@ -99,6 +99,27 @@ html.native-shell button:active {
     box-shadow: none !important;
 }
 
+/* Keep the live workout on opaque, cheap surfaces. Secondary PWA views retain
+   their richer presentation outside this scoped native hot path. */
+html.native-shell .product-workout-polish [class*='backdrop-blur'],
+html.native-shell .product-workout-polish .glass,
+html.native-shell .product-workout-polish .glass-card,
+html.native-shell .product-workout-polish .glass-panel {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background-image: none !important;
+}
+
+html.native-shell .product-workout-polish [class*='shadow-'] {
+    box-shadow: none !important;
+}
+
+html.native-shell .product-workout-polish .animate-pulse,
+html.native-shell .product-workout-polish .animate-pulse-glow-green,
+html.native-shell .product-workout-polish .animate-bounce-cta {
+    animation: none !important;
+}
+
 html.native-shell input[type='number'],
 html.native-shell input[inputmode='decimal'],
 html.native-shell input[inputmode='numeric'] {

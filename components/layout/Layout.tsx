@@ -21,8 +21,8 @@ const TwoBlockMassModal = React.lazy(() => import('../workout/TwoBlockMassModal'
 
 interface LayoutProps {
     children: React.ReactNode;
-    view: 'home' | 'workout' | 'history' | 'stats' | 'nutrition';
-    setView: (v: 'home' | 'workout' | 'history' | 'stats' | 'nutrition' | 'program') => void;
+    view: 'home' | 'workout' | 'history' | 'stats' | 'nutrition' | 'exercises' | 'program';
+    setView: (v: 'home' | 'workout' | 'history' | 'stats' | 'nutrition' | 'exercises' | 'program') => void;
     onOpenSettings: () => void;
     onOpenCommandPalette?: () => void;
 }
@@ -61,7 +61,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
     React.useEffect(() => {
         const handleNavigate = (event: Event) => {
             const target = (event as CustomEvent<{ view?: string }>).detail?.view;
-            if (target === 'home' || target === 'workout' || target === 'history' || target === 'stats' || target === 'nutrition' || target === 'program') {
+            if (target === 'home' || target === 'workout' || target === 'history' || target === 'stats' || target === 'nutrition' || target === 'exercises' || target === 'program') {
                 setView(target);
             }
         };
@@ -87,10 +87,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
         setShowProfile(false);
     };
 
-    const NavBtn = ({ id, label, icon }: { id: typeof view, label: string, icon: any }) => {
-        const isActive = view === id;
+    const NavBtn = ({ id, label, icon, onClick }: { id: typeof view | 'profile', label: string, icon: any, onClick?: () => void }) => {
+        const isActive = id === 'profile' ? showProfile : view === id;
         return (
-            <button onClick={() => setView(id)} className="group relative flex h-full flex-1 flex-col items-center justify-center gap-0.5 transition-all duration-200 active:scale-90">
+            <button onClick={onClick || (() => setView(id === 'profile' ? view : id))} className="group relative flex h-full flex-1 flex-col items-center justify-center gap-0.5 transition-all duration-200 active:scale-90">
                 <div className={`relative flex items-center justify-center transition-all duration-200 ${isActive ? '-translate-y-1' : 'translate-y-0'}`}>
                     <Icon name={icon} size={22} strokeWidth={isActive ? 2.5 : 2} fill={isActive ? 'currentColor' : 'none'} className={`transition-colors duration-200 ${isActive ? 'text-primary-500' : 'text-zinc-500 group-hover:text-zinc-300'}`} />
                 </div>
@@ -213,13 +213,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
             {view !== 'workout' && (
                 <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-[rgb(var(--border-subtle)/0.7)] bg-[rgb(var(--surface-base)/0.96)] pb-safe backdrop-blur-xl">
                     <div className="mx-auto flex h-16 w-full max-w-lg items-center justify-between px-2">
-                        <NavBtn id="home" label={lang === 'es' ? 'Entreno' : 'Train'} icon="Layout" />
+                        <NavBtn id="home" label={lang === 'es' ? 'Entreno' : 'Workout'} icon="Dumbbell" />
                         <NavBtn id="history" label={t.history} icon="Calendar" />
-                        <button onClick={openPrimaryAction} aria-label={lang === 'es' ? 'Iniciar entreno' : 'Start workout'} className="mx-2 flex h-12 w-12 shrink-0 -translate-y-3 items-center justify-center rounded-full border border-primary-400/20 bg-primary-500 text-black shadow-lg shadow-primary-500/20 transition-transform duration-200 active:scale-95">
-                            <Icon name="Plus" size={24} strokeWidth={2.5} />
-                        </button>
-                        <NavBtn id="nutrition" label={lang === 'es' ? 'Dieta' : 'Diet'} icon="Utensils" />
-                        <NavBtn id="stats" label="Stats" icon="BarChart2" />
+                        <NavBtn id="exercises" label={lang === 'es' ? 'Ejercicios' : 'Exercises'} icon="Dumbbell" />
+                        <NavBtn id="profile" label={lang === 'es' ? 'Perfil' : 'Profile'} icon="User" onClick={openProfile} />
                     </div>
                 </div>
             )}

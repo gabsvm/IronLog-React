@@ -36,6 +36,8 @@ interface SortableExerciseCardProps {
     dragEnabled?: boolean;
     logs: import('../../types').Log[];
     tutorialId?: string;
+    isCompact?: boolean;
+    onActivate?: () => void;
 }
 
 export const SortableExerciseCard = React.memo(({
@@ -63,6 +65,8 @@ export const SortableExerciseCard = React.memo(({
     dragEnabled = true,
     logs,
     tutorialId,
+    isCompact = false,
+    onActivate,
 }: SortableExerciseCardProps) => {
     const [exDoneFlash, setExDoneFlash] = useState(false);
     const [activeEmomMinute, setActiveEmomMinute] = useState(0);
@@ -247,6 +251,33 @@ export const SortableExerciseCard = React.memo(({
         }
         return regularSets.map(() => undefined);
     }, [isEMOM, isMyorep, hasTopBackoff, regularSets]);
+
+    if (isCompact) {
+        return (
+            <div
+                ref={setNodeRef}
+                style={style}
+                role="button"
+                tabIndex={0}
+                onClick={onActivate}
+                onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') onActivate?.();
+                }}
+                className={`flex items-center gap-2 rounded-xl border border-zinc-800 bg-[#141416] px-3 py-2.5 text-left transition-colors hover:border-zinc-700 ${allDone ? 'opacity-70' : ''}`}
+                aria-label={lang === 'es' ? `Activar ${String(getTranslated(ex.name, lang))}` : `Activate ${String(getTranslated(ex.name, lang))}`}
+            >
+                {dragEnabled && (
+                    <div className="shrink-0 rounded-full p-1 text-zinc-600 touch-none cursor-grab" {...attributes} {...listeners}>
+                        <Icon name="GripVertical" size={14} />
+                    </div>
+                )}
+                <MuscleTag label={String(ex.slotLabel || ex.muscle || 'CHEST')} />
+                <span className="min-w-0 flex-1 truncate text-sm font-bold text-white">{String(getTranslated(ex.name, lang))}</span>
+                <span className="shrink-0 text-[10px] font-bold tabular-nums text-zinc-500">{completedCount}/{regularSets.length}</span>
+                {allDone && <Icon name="Check" size={15} className="shrink-0 text-emerald-400" strokeWidth={3} />}
+            </div>
+        );
+    }
 
     const handleInjectWarmup = () => {
         const firstRegularSet = sets.find((set) => set.type === 'regular');

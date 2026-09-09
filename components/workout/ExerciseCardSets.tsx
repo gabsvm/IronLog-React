@@ -119,6 +119,7 @@ export const ExerciseCardSets: React.FC<Props> = React.memo(({
                     isIsometric={ex.isIsometric}
                     isometricTargetSecs={ex.isIsometric ? (ex as any).isometricTargetSecs : undefined}
                     setIndex={idx}
+                    allSets={regularSets}
                     badgeLabel={setBadgeLabels[idx]}
                     tutorialId={idx === 0 ? tutorialId : undefined}
                     disableTypeChange={isSpecialProtocol}

@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { WorkoutSet, SetType } from '../../types';
 import { Icon } from '../ui/Icon';
 import { triggerHaptic } from '../../utils/audio';
+import { getNextWorkoutFieldFocus } from '../../lib/workout/workoutAutofocusPolicy';
 
 interface SetRowProps {
     set: WorkoutSet;
@@ -16,6 +17,7 @@ interface SetRowProps {
     isIsometric?: boolean;
     isometricTargetSecs?: number;  // countdown mode for isometric
     setIndex?: number;
+    allSets: WorkoutSet[];
     badgeLabel?: string;
     tutorialId?: string;
     disableTypeChange?: boolean;
@@ -208,7 +210,7 @@ export const SetRow = React.memo(({
     set, exInstanceId,
     onUpdate, onToggleComplete, onChangeType,
     lang, isCardio, isBodyweight, isIsometric, isometricTargetSecs,
-    setIndex, badgeLabel, tutorialId, disableTypeChange, isActiveProtocolSet, isNextSet
+    setIndex, allSets, badgeLabel, tutorialId, disableTypeChange, isActiveProtocolSet, isNextSet
 }: SetRowProps) => {
     const isDone = set.completed;
     const setType = set.type || 'regular';
@@ -233,7 +235,9 @@ export const SetRow = React.memo(({
         isBodyweight && (Number(set.weight) > 0 || Number(set.hintWeight) > 0)
     );
     // Swipe-to-complete
-    const [swipePct, setSwipePct] = useState(0);
+    const swipePctRef = useRef(0);
+    const swipeFrameRef = useRef<number | null>(null);
+    const swipeOverlayRef = useRef<HTMLDivElement>(null);
     const swipeRef = useRef({ startX: 0, startY: 0, tracking: false, locked: false });
 
     const activeFieldRef = useRef<string | null>(null);
@@ -244,12 +248,23 @@ export const SetRow = React.memo(({
 
     useEffect(() => { if (activeFieldRef.current !== 'weight') setLocalWeight(set.weight ?? ''); }, [set.weight]);
     useEffect(() => { if (activeFieldRef.current !== 'reps') setLocalReps(set.reps ?? ''); }, [set.reps]);
+    const setSwipeProgress = useCallback((pct: number) => {
+        swipePctRef.current = pct;
+        const overlay = swipeOverlayRef.current;
+        if (!overlay) return;
+        overlay.style.width = `${pct}%`;
+        overlay.style.opacity = pct > 0 ? '1' : '0';
+        const check = overlay.querySelector<HTMLElement>('[data-swipe-check]');
+        if (check) check.style.opacity = pct > 50 ? '1' : '0';
+    }, []);
+
     // Reset swipe when set state changes
-    useEffect(() => { setSwipePct(0); swipeRef.current.tracking = false; swipeRef.current.locked = false; }, [set.completed]);
+    useEffect(() => { setSwipeProgress(0); swipeRef.current.tracking = false; swipeRef.current.locked = false; }, [set.completed, setSwipeProgress]);
     useEffect(() => () => {
         Object.values(commitTimersRef.current).forEach((timer) => {
             if (timer) clearTimeout(timer);
         });
+        if (swipeFrameRef.current !== null) cancelAnimationFrame(swipeFrameRef.current);
     }, []);
 
     const commitChange = useCallback((field: string, value: any) => {
@@ -286,11 +301,33 @@ export const SetRow = React.memo(({
         activeFieldRef.current = null;
         flushScheduledCommit(field as 'weight' | 'reps', value);
     };
+    const handleToggleComplete = useCallback((hapticOverride?: 'light' | 'medium' | 'success') => {
+        triggerHaptic(hapticOverride || (isDone ? 'light' : 'medium'));
+        const focus = getNextWorkoutFieldFocus({
+            wasCompleted: isDone,
+            isCompleted: !isDone,
+            currentSetIndex: setIndex ?? -1,
+            sets: allSets,
+            isBodyweight: Boolean(isBodyweight && !isCardio),
+            isIsometric: Boolean(isIsometric),
+        });
+        onToggleComplete(exInstanceId, set.id);
+        if (!focus || setIndex == null) return;
+        const nextSet = allSets.slice(setIndex + 1).find(candidate => !candidate.completed && !candidate.skipped);
+        if (!nextSet) return;
+        requestAnimationFrame(() => {
+            document.getElementById(`set-row-${nextSet.id}`)
+                ?.querySelector<HTMLInputElement>(`[data-workout-field="${focus}"]`)
+                ?.focus();
+        });
+    }, [allSets, exInstanceId, isBodyweight, isCardio, isDone, isIsometric, onToggleComplete, set.id, setIndex]);
+
     // Swipe-to-complete handlers
     const onSwipeTouchStart = useCallback((e: React.TouchEvent) => {
         if (isDone) return;
         swipeRef.current = { startX: e.touches[0].clientX, startY: e.touches[0].clientY, tracking: true, locked: false };
-    }, [isDone]);
+        setSwipeProgress(0);
+    }, [isDone, setSwipeProgress]);
 
     const onSwipeTouchMove = useCallback((e: React.TouchEvent) => {
         const s = swipeRef.current;
@@ -300,24 +337,31 @@ export const SetRow = React.memo(({
         // Cancel if vertical gesture dominates (user is scrolling)
         if (Math.abs(dy) > Math.abs(dx) * 1.3 && Math.abs(dx) < 15) {
             s.tracking = false;
-            setSwipePct(0);
+            setSwipeProgress(0);
             return;
         }
         if (dx > 0) {
             const pct = Math.min(100, (dx / 90) * 100);
-            setSwipePct(pct);
+            if (swipeFrameRef.current !== null) cancelAnimationFrame(swipeFrameRef.current);
+            swipeFrameRef.current = requestAnimationFrame(() => {
+                swipeFrameRef.current = null;
+                setSwipeProgress(pct);
+            });
         }
-    }, [isDone]);
+    }, [isDone, setSwipeProgress]);
 
     const onSwipeTouchEnd = useCallback(() => {
-        if (swipePct >= 85 && !isDone) {
-            swipeRef.current.locked = true;
-            triggerHaptic('success');
-            onToggleComplete(exInstanceId, set.id);
+        if (swipeFrameRef.current !== null) {
+            cancelAnimationFrame(swipeFrameRef.current);
+            swipeFrameRef.current = null;
         }
-        setSwipePct(0);
+        if (swipePctRef.current >= 85 && !isDone) {
+            swipeRef.current.locked = true;
+            handleToggleComplete('success');
+        }
+        setSwipeProgress(0);
         swipeRef.current.tracking = false;
-    }, [swipePct, isDone, exInstanceId, set.id, onToggleComplete]);
+    }, [handleToggleComplete, isDone, setSwipeProgress]);
 
     const handleHoldSave = useCallback((seconds: number) => {
         onUpdate(exInstanceId, set.id, 'duration', seconds);
@@ -389,12 +433,12 @@ export const SetRow = React.memo(({
     ) : null;
 
     // Swipe overlay - shared across all branches
-    const SwipeOverlay = swipePct > 0 ? (
-        <div className="absolute inset-y-0 left-0 rounded-xl bg-green-500/20 pointer-events-none transition-none flex items-center justify-start pl-3"
-            style={{ width: `${swipePct}%` }}>
-            {swipePct > 50 && <Icon name="Check" size={16} className="text-green-400" strokeWidth={3} />}
+    const SwipeOverlay = (
+        <div ref={swipeOverlayRef} className="absolute inset-y-0 left-0 z-10 rounded-xl bg-green-500/20 pointer-events-none transition-none flex items-center justify-start pl-3 opacity-0"
+            style={{ width: '0%' }}>
+            <span data-swipe-check="true" className="opacity-0"><Icon name="Check" size={16} className="text-green-400" strokeWidth={3} /></span>
         </div>
-    ) : null;
+    );
 
     // ISOMETRIC MODE
     if (isIsometric) {
@@ -423,11 +467,8 @@ export const SetRow = React.memo(({
 
                 {/* Complete Button */}
                 <div className="col-span-2 flex justify-center">
-                    <button
-                        onClick={() => {
-                            triggerHaptic(isDone ? 'light' : 'medium');
-                            onToggleComplete(exInstanceId, set.id);
-                        }}
+                        <button
+                        onClick={() => handleToggleComplete()}
                         className={`
                             flex h-8 w-8 items-center justify-center rounded-full transition-all duration-150 active:scale-90
                             ${isDone
@@ -464,6 +505,7 @@ export const SetRow = React.memo(({
                     <div className="col-span-6">
                         <input
                             ref={repsRef}
+                            data-workout-field="reps"
                             type="number" inputMode="numeric"
                             className={isDone ? inputBase + " " + doneInput : inputBase}
                             placeholder={repsPlaceholder}
@@ -489,6 +531,7 @@ export const SetRow = React.memo(({
                         ) : (
                             <input
                                 ref={extraWeightRef}
+                                data-workout-field="weight"
                                 type="number" inputMode="decimal"
                                 className="w-full rounded-[0.9rem] border border-zinc-700/70 bg-[#202024] px-1 py-1.5 text-center text-xs font-bold text-violet-300 outline-none transition-all tabular-nums placeholder-zinc-600 focus:border-violet-500/30 focus:ring-2 focus:ring-violet-500/15"
                                 placeholder="0"
@@ -504,10 +547,7 @@ export const SetRow = React.memo(({
                     {/* Complete Button */}
                     <div className="col-span-2 flex justify-center">
                         <button
-                            onClick={() => {
-                                triggerHaptic(isDone ? 'light' : 'medium');
-                                onToggleComplete(exInstanceId, set.id);
-                            }}
+                            onClick={() => handleToggleComplete()}
                             className={`
                                 flex h-8 w-8 items-center justify-center rounded-full transition-all duration-150 active:scale-90
                                 ${isDone
@@ -563,6 +603,7 @@ export const SetRow = React.memo(({
             <div className="col-span-4">
                 <input
                     ref={weightRef}
+                    data-workout-field="weight"
                     type="number" inputMode="decimal"
                     className={isDone ? inputBase + " " + doneInput : inputBase}
                     placeholder={weightPlaceholder}
@@ -578,6 +619,7 @@ export const SetRow = React.memo(({
             <div className="col-span-4">
                 <input
                     ref={repsRef}
+                    data-workout-field="reps"
                     type="number" inputMode="numeric"
                     className={isDone ? inputBase + " " + doneInput : inputBase}
                     placeholder={repsPlaceholder}
@@ -592,10 +634,7 @@ export const SetRow = React.memo(({
             {/* Complete Button */}
             <div className="col-span-2 flex justify-center">
                 <button
-                    onClick={() => {
-                        triggerHaptic(isDone ? 'light' : 'medium');
-                        onToggleComplete(exInstanceId, set.id);
-                    }}
+                    onClick={() => handleToggleComplete()}
                     className={`
                         flex h-8 w-8 items-center justify-center rounded-full transition-all duration-150 active:scale-90
                         ${isDone

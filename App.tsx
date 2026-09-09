@@ -444,9 +444,11 @@ const AppContent = () => {
                             />
                         </Suspense>
                     ) : view === 'exercises' ? (
-                        <Suspense fallback={<LoadingSpinner />}>
-                            <ExercisesView onBack={() => { setView('home'); setShowSettings(true); }} />
-                        </Suspense>
+                        <Layout view={view} setView={setView} onOpenSettings={() => setShowSettings(true)} onOpenCommandPalette={() => setShowCommandPalette(true)}>
+                            <Suspense fallback={<LoadingSpinner />}>
+                                <ExercisesView onBack={() => setView('home')} />
+                            </Suspense>
+                        </Layout>
                     ) : view === 'program' ? (
                         <Suspense fallback={<LoadingSpinner />}>
                             <ProgramEditView onBack={() => setView('home')} />
