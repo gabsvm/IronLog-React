@@ -21,7 +21,7 @@ export const StatsView: React.FC = () => {
     const activeMeso = useStore(state => state.activeMeso);
     const rootRef = useRef<HTMLDivElement>(null);
     const [section, setSection] = useState<StatsSection>('overview');
-    const safeLogs = Array.isArray(logs) ? logs : [];
+    const safeLogs = useMemo(() => Array.isArray(logs) ? logs : [], [logs]);
     const t = TRANSLATIONS[lang];
 
     const scopedSummary = useMemo(() => {

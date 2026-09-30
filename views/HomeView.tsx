@@ -50,6 +50,7 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
         }));
 
         setProgram(prev => JSON.stringify(prev) === JSON.stringify(resolved) ? prev : resolved);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeMeso?.week, isKong, setProgram, substitutionSignature]);
 
     // Legacy week completion only auto-advances after four non-skipped workouts.

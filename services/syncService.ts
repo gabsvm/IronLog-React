@@ -12,43 +12,7 @@ const sanitizeForFirestore = <T>(data: T): T => {
     return JSON.parse(JSON.stringify(data));
 };
 
-const buildSectionSyncMeta = (sections: DirtySyncSection[] | undefined, lastUpdated: number): SectionSyncMeta => {
-    if (!sections || sections.length === 0) return {};
-    return sections.reduce<SectionSyncMeta>((acc, section) => {
-        acc[section] = lastUpdated;
-        return acc;
-    }, {});
-};
-
-const serializeMeso = (meso: any) => {
-    if (!meso || !Array.isArray(meso.plan)) return meso;
-
-    const planMap: Record<string, any[]> = {};
-    meso.plan.forEach((daySlot: any[], idx: number) => {
-        planMap[String(idx)] = daySlot || [];
-    });
-
-    return { ...meso, plan: planMap };
-};
-
-const deserializeMeso = (meso: any) => {
-    if (!meso) return null;
-    if (Array.isArray(meso.plan)) return meso;
-
-    if (meso.plan && typeof meso.plan === 'object') {
-        const planArray: any[][] = [];
-        const keys = Object.keys(meso.plan).map(Number).sort((a, b) => a - b);
-        const maxIdx = keys.length > 0 ? keys[keys.length - 1] : -1;
-
-        for (let i = 0; i <= maxIdx; i++) {
-            planArray[i] = meso.plan[String(i)] || [];
-        }
-
-        return { ...meso, plan: planArray };
-    }
-
-    return meso;
-};
+import { buildSectionSyncMeta, serializeMeso, deserializeMeso } from "./syncHelpers";
 
 const uploadUserIdentityNow = async (userId: string, email: string) => {
     const { db, firestoreApi } = await getFirebaseFirestoreServices();

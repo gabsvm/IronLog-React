@@ -1,6 +1,7 @@
 import { NutritionLog, FoodEntry } from '../../types';
+import { todayLocalDateKey, addLocalDays } from '../../utils/localDate';
 
-export const todayStr = () => new Date().toISOString().split('T')[0];
+export const todayStr = () => todayLocalDateKey();
 
 export const getTodayLog = (logs: NutritionLog[]): NutritionLog => {
     const today = todayStr();
@@ -38,17 +39,16 @@ export const WATER_PRESETS = [200, 300, 500];
 /**
  * Consecutive-day streak of nutrition logging.
  * Tolerant: today counts even if not logged yet.
+ * Uses local calendar days to prevent UTC rollover bugs.
  */
 export const calcStreak = (logs: NutritionLog[]): number => {
     const loggedDates = new Set(logs.filter((l) => l.entries.length > 0).map((l) => l.date));
     const today = todayStr();
     const startOffset = loggedDates.has(today) ? 0 : 1;
     let streak = 0;
-    const d = new Date();
     for (let i = startOffset; i < 365; i++) {
-        const check = new Date(d);
-        check.setDate(d.getDate() - i);
-        if (!loggedDates.has(check.toISOString().split('T')[0])) break;
+        const checkKey = addLocalDays(today, -i);
+        if (!loggedDates.has(checkKey)) break;
         streak++;
     }
     return streak;

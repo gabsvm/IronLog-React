@@ -1,4 +1,4 @@
-﻿
+
 import React, { useMemo, useState, useCallback, useEffect, Suspense } from 'react';
 import { useApp, useAppConfig, useAppPreferences, useTutorial } from '../context/AppContext';
 import { TRANSLATIONS } from '../constants';
@@ -122,6 +122,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
     useEffect(() => {
         const recommended = activeSession?.exercises?.find((exercise) => exercise.recommendedRestSeconds)?.recommendedRestSeconds;
         if (recommended) setManualRestPreset(recommended);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeSession?.id]);
 
     // Set type modal: apply-to-all toggle defaults ON when all sets share the same type
