@@ -106,7 +106,6 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
                 }
             } catch (e) {
                 console.error("Failed to save global exercise:", e);
-                alert("Failed to save to global DB. Check console.");
             }
         }
 

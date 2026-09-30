@@ -119,6 +119,8 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
 
     const [showAdvancedSetTypes, setShowAdvancedSetTypes] = useState(false);
     const [manualRestPreset, setManualRestPreset] = useState<number>(90);
+    const [kongSubPrompt, setKongSubPrompt] = useState<{ slotId: string; exId: string } | null>(null);
+    const [kongReorderPrompt, setKongReorderPrompt] = useState<{ oldIndex: number; newIndex: number } | null>(null);
     useEffect(() => {
         const recommended = activeSession?.exercises?.find((exercise) => exercise.recommendedRestSeconds)?.recommendedRestSeconds;
         if (recommended) setManualRestPreset(recommended);
@@ -246,16 +248,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
             })
         });
         if (activeMeso?.programSystem?.systemId === 'kong_4day' && replacedSlotId) {
-            const persist = window.confirm(lang === 'es'
-                ? '¿Mantener este reemplazo durante todo KONG? Aceptar = todo KONG · Cancelar = solo hoy.'
-                : 'Keep this replacement for all KONG? OK = all KONG · Cancel = today only.');
-            if (persist) setActiveMeso(prev => prev?.programSystem ? {
-                ...prev,
-                programSystem: {
-                    ...prev.programSystem,
-                    substitutions: { ...prev.programSystem.substitutions, [replacedSlotId!]: newExId },
-                },
-            } : prev);
+            setKongSubPrompt({ slotId: replacedSlotId, exId: newExId });
         }
         ctrl.setReplacingExId(null);
         ctrl.setReplaceFilter(null);
@@ -264,13 +257,11 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
 
     const handleReorder = useCallback((oldIndex: number, newIndex: number) => {
         if (activeMeso?.programSystem?.systemId === 'kong_4day') {
-            const proceed = window.confirm(lang === 'es'
-                ? 'El orden de ejercicios forma parte de la metodología KONG. Weak Points First y Fatigued Strength dependen del orden. ¿Reordenar solo hoy?'
-                : 'Exercise order is part of KONG methodology. Weak Points First and Fatigued Strength depend on order. Reorder today only?');
-            if (!proceed) return;
+            setKongReorderPrompt({ oldIndex, newIndex });
+            return;
         }
         ctrl.reorderSessionExercises(oldIndex, newIndex);
-    }, [activeMeso?.programSystem?.systemId, ctrl, lang]);
+    }, [activeMeso?.programSystem?.systemId, ctrl]);
 
     const workoutStats = useMemo(() => {
         let completedSets = 0;
@@ -714,6 +705,52 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                     variant="danger"
                 />
             </Suspense>
+
+            {/* KONG Substitution Persistence Modal */}
+            {kongSubPrompt && (
+                <Suspense fallback={null}>
+                    <ConfirmModal
+                        isOpen={true}
+                        title={lang === 'es' ? 'Sustitución en KONG' : 'KONG Substitution'}
+                        description={lang === 'es'
+                            ? '¿Deseas mantener este reemplazo durante todo el programa KONG o aplicarlo solo para la sesión de hoy?'
+                            : 'Keep this replacement for all of KONG, or apply it only for today?'}
+                        confirmText={lang === 'es' ? 'Todo KONG' : 'All KONG'}
+                        cancelText={lang === 'es' ? 'Solo hoy' : 'Today only'}
+                        onConfirm={() => {
+                            setActiveMeso(prev => prev?.programSystem ? {
+                                ...prev,
+                                programSystem: {
+                                    ...prev.programSystem,
+                                    substitutions: { ...prev.programSystem.substitutions, [kongSubPrompt.slotId]: kongSubPrompt.exId },
+                                },
+                            } : prev);
+                            setKongSubPrompt(null);
+                        }}
+                        onCancel={() => setKongSubPrompt(null)}
+                    />
+                </Suspense>
+            )}
+
+            {/* KONG Reorder Warning Modal */}
+            {kongReorderPrompt && (
+                <Suspense fallback={null}>
+                    <ConfirmModal
+                        isOpen={true}
+                        title={lang === 'es' ? 'Reordenar ejercicios KONG' : 'Reorder KONG exercises'}
+                        description={lang === 'es'
+                            ? 'El orden de ejercicios forma parte de la metodología KONG. Weak Points First y Fatigued Strength dependen del orden. ¿Reordenar solo para la sesión de hoy?'
+                            : 'Exercise order is part of KONG methodology. Weak Points First and Fatigued Strength depend on order. Reorder for today only?'}
+                        confirmText={lang === 'es' ? 'Reordenar hoy' : 'Reorder today'}
+                        cancelText={t.cancel}
+                        onConfirm={() => {
+                            ctrl.reorderSessionExercises(kongReorderPrompt.oldIndex, kongReorderPrompt.newIndex);
+                            setKongReorderPrompt(null);
+                        }}
+                        onCancel={() => setKongReorderPrompt(null)}
+                    />
+                </Suspense>
+            )}
 
             {ctrl.showPRSuccess && (
                 <Suspense fallback={null}>

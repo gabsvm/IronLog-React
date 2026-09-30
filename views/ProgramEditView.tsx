@@ -1,5 +1,4 @@
-
-import React, { useState, useCallback, Suspense } from 'react';
+import React, { useState, useCallback, Suspense, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { TRANSLATIONS, MUSCLE_GROUPS } from '../constants';
 import { KONG_4DAY_V1 } from '../programs/kong/kong4Day';
@@ -18,27 +17,48 @@ interface ProgramEditViewProps {
     onBack: () => void;
 }
 
+interface UnresolvedSlot {
+    dayName: string;
+    slotIdx: number;
+    muscle: string;
+}
+
 export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
     const { program, setProgram, lang, exercises } = useApp();
     const activeMeso = useStore(state => state.activeMeso);
     const setActiveMeso = useStore(state => state.setActiveMeso);
     const t = TRANSLATIONS[lang];
     const isStructuredKong = activeMeso?.programSystem?.systemId === KONG_4DAY_V1.id;
-    
-    const [pickingForSlot, setPickingForSlot] = useState<{dayId: string, slotIdx: number} | null>(null);
+    const isEditingActiveRoutine = !!activeMeso;
+
+    const [pickingForSlot, setPickingForSlot] = useState<{ dayId: string; slotIdx: number } | null>(null);
     const [showStartModal, setShowStartModal] = useState(false);
+    const [unresolvedSlots, setUnresolvedSlots] = useState<UnresolvedSlot[]>([]);
     const [dayToDelete, setDayToDelete] = useState<string | null>(null);
+    const [saveStatus, setSaveStatus] = useState<'saved' | 'saving'>('saved');
 
     const [mesoConfig, setMesoConfig] = useState<{
-        name: string,
-        type: MesoType,
-        weeks: number
+        name: string;
+        type: MesoType;
+        weeks: number;
     }>(() => ({
         name: activeMeso?.name || (lang === 'en' ? 'Custom Cycle' : 'Ciclo Personalizado'),
         type: activeMeso?.mesoType || 'hyp_1',
         weeks: activeMeso?.targetWeeks || activeMeso?.duration || 4,
     }));
     const hasKnownPhase = Object.prototype.hasOwnProperty.call(t.phases, mesoConfig.type);
+
+    // Sync active meso plan if editing routine and program slots change
+    useEffect(() => {
+        if (!activeMeso) return;
+        setSaveStatus('saving');
+        const timer = setTimeout(() => {
+            const updatedPlan = program.map(day => (day.slots || []).map(s => s.exerciseId || null));
+            setActiveMeso(prev => prev ? { ...prev, plan: updatedPlan } : prev);
+            setSaveStatus('saved');
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [program, activeMeso, setActiveMeso]);
 
     const handleUpdateDayName = useCallback((id: string, name: string) => {
         setProgram(prev => prev.map(d => d.id === id ? { ...d, dayName: { en: name, es: name } } : d));
@@ -55,7 +75,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
     }, [setProgram]);
 
     const handleDeleteDay = useCallback(() => {
-        if(dayToDelete) {
+        if (dayToDelete) {
             setProgram(prev => prev.filter(d => d.id !== dayToDelete));
             setDayToDelete(null);
             triggerHaptic('medium');
@@ -96,6 +116,30 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
         handleUpdateSlot(pickingForSlot.dayId, pickingForSlot.slotIdx, 'exerciseId', exId);
         setPickingForSlot(null);
     }, [pickingForSlot, handleUpdateSlot]);
+
+    const handleValidateAndOpenStartModal = () => {
+        const unresolved: UnresolvedSlot[] = [];
+        program.forEach((day, dIdx) => {
+            const dayLabel = getTranslated(day.dayName, lang) || (lang === 'es' ? `Día ${dIdx + 1}` : `Day ${dIdx + 1}`);
+            (day.slots || []).forEach((slot, sIdx) => {
+                if (!slot.exerciseId) {
+                    unresolved.push({
+                        dayName: dayLabel,
+                        slotIdx: sIdx + 1,
+                        muscle: TRANSLATIONS[lang].muscle[slot.muscle] || slot.muscle,
+                    });
+                }
+            });
+        });
+
+        if (unresolved.length > 0) {
+            setUnresolvedSlots(unresolved);
+            triggerHaptic('warning');
+            return;
+        }
+
+        setShowStartModal(true);
+    };
 
     const handleStartMeso = () => {
         const plan = program.map(day => (day.slots || []).map(slot => slot.exerciseId || null));
@@ -144,17 +188,38 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
 
     return (
         <div className="h-full flex flex-col bg-gray-50 dark:bg-zinc-950 relative">
-             <div className="glass px-4 h-14 shrink-0 flex items-center justify-between z-10">
-                <button onClick={onBack} className="flex items-center gap-2 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white" aria-label="Previous"> <Icon name="ChevronLeft" size={20} />
+            {/* Header: clearly distinguishes Edit vs Create */}
+            <div className="glass px-4 h-14 shrink-0 flex items-center justify-between z-10 border-b border-zinc-200 dark:border-white/5">
+                <button
+                    onClick={onBack}
+                    className="flex items-center gap-2 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
+                    aria-label={t.back}
+                >
+                    <Icon name="ChevronLeft" size={20} />
                     <span className="font-bold text-sm">{t.back}</span>
                 </button>
+
+                <h1 className="font-bold text-sm text-zinc-900 dark:text-white truncate max-w-[180px]">
+                    {isEditingActiveRoutine
+                        ? (lang === 'es' ? 'Editar Rutina Activa' : 'Edit Active Routine')
+                        : (lang === 'es' ? 'Nueva Rutina' : 'New Routine')}
+                </h1>
+
                 <div className="flex items-center gap-2">
-                    <button 
-                        onClick={() => setShowStartModal(true)}
-                        className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-3 py-1.5 rounded-full text-xs font-black shadow-lg shadow-primary-500/25 active:scale-95 transition-all"
-                    >
-                        <Icon name="Play" size={12} fill="currentColor" /> {t.startNow}
-                    </button>
+                    {isEditingActiveRoutine ? (
+                        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
+                            <Icon name="Check" size={12} strokeWidth={3} />
+                            <span>{saveStatus === 'saved' ? (lang === 'es' ? 'Guardado' : 'Saved') : (lang === 'es' ? 'Guardando...' : 'Saving...')}</span>
+                        </div>
+                    ) : (
+                        <button
+                            onClick={handleValidateAndOpenStartModal}
+                            className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-black px-3.5 py-1.5 rounded-full text-xs font-black shadow-lg shadow-primary-500/25 active:scale-95 transition-all"
+                        >
+                            <Icon name="Play" size={12} fill="currentColor" />
+                            {lang === 'es' ? 'Comenzar' : 'Start'}
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -162,25 +227,29 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
                 {program.map((day) => (
                     <div key={day.id} className="glass-card rounded-2xl overflow-hidden shadow-lg transition-all hover:border-white/10">
                         <div className="bg-zinc-100/80 dark:bg-white/5 p-4 border-b border-zinc-200 dark:border-white/5 flex justify-between items-center">
-                            <input 
+                            <input
                                 className="bg-transparent font-bold text-zinc-900 dark:text-white outline-none w-full"
-                                value={day.dayName[lang]}
+                                value={day.dayName[lang] || ''}
                                 onChange={e => handleUpdateDayName(day.id, e.target.value)}
-                                placeholder="Day Name"
+                                placeholder={lang === 'es' ? 'Nombre del día' : 'Day Name'}
                             />
-                            <button onClick={() => setDayToDelete(day.id)} className="text-zinc-400 hover:text-red-500 ml-2">
+                            <button
+                                onClick={() => setDayToDelete(day.id)}
+                                className="text-zinc-400 hover:text-red-500 ml-2"
+                                aria-label={t.delete}
+                            >
                                 <Icon name="Trash2" size={18} />
                             </button>
                         </div>
-                        
+
                         <div className="divide-y divide-zinc-100 dark:divide-white/5">
                             {(day.slots || []).map((slot, idx) => (
                                 <div key={idx} className="p-3 flex flex-col gap-2">
                                     <div className="flex items-center gap-3">
                                         <div className="flex-1 space-y-2">
-                                            <div className="flex gap-2 items-center">
-                                                <select 
-                                                    className="bg-zinc-100 dark:bg-white/5 hover:bg-zinc-200 dark:hover:bg-white/10 text-xs font-bold rounded-lg px-2 py-1.5 border-none outline-none text-zinc-900 dark:text-zinc-200 max-w-[100px] transition-colors"
+                                            <div className="flex gap-2 items-center flex-wrap">
+                                                <select
+                                                    className="bg-zinc-100 dark:bg-white/5 hover:bg-zinc-200 dark:hover:bg-white/10 text-xs font-bold rounded-lg px-2 py-1.5 border-none outline-none text-zinc-900 dark:text-zinc-200 max-w-[110px] transition-colors"
                                                     value={slot.muscle}
                                                     onChange={(e) => handleUpdateSlot(day.id, idx, 'muscle', e.target.value)}
                                                 >
@@ -191,18 +260,18 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
 
                                                 <div className="flex items-center gap-1 bg-zinc-100 dark:bg-white/5 rounded-lg px-2 py-1 border border-zinc-200 dark:border-white/5">
                                                     <span className="text-[9px] font-bold text-zinc-400">SETS</span>
-                                                    <input 
-                                                        type="number" 
+                                                    <input
+                                                        type="number"
                                                         className="w-6 bg-transparent text-xs font-bold text-center outline-none text-zinc-900 dark:text-white"
                                                         value={slot.setTarget || ''}
                                                         onChange={e => handleUpdateSlot(day.id, idx, 'setTarget', Number(e.target.value))}
                                                     />
                                                 </div>
 
-                                                <div className="flex items-center gap-1 bg-zinc-100 dark:bg-white/5 rounded-lg px-2 py-1 flex-1 border border-zinc-200 dark:border-white/5">
+                                                <div className="flex items-center gap-1 bg-zinc-100 dark:bg-white/5 rounded-lg px-2 py-1 flex-1 min-w-[80px] border border-zinc-200 dark:border-white/5">
                                                     <span className="text-[9px] font-bold text-zinc-400 whitespace-nowrap">REPS</span>
-                                                    <input 
-                                                        type="text" 
+                                                    <input
+                                                        type="text"
                                                         className="w-full bg-transparent text-xs font-bold text-center outline-none text-zinc-900 dark:text-white"
                                                         value={slot.reps || ''}
                                                         placeholder="8-12"
@@ -211,17 +280,25 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
                                                 </div>
                                             </div>
 
-                                            <button 
-                                                onClick={() => setPickingForSlot({dayId: day.id, slotIdx: idx})}
-                                                className={`text-sm font-medium w-full text-left truncate ${slot.exerciseId ? 'text-zinc-900 dark:text-white' : 'text-zinc-400 italic'}`}
+                                            <button
+                                                onClick={() => setPickingForSlot({ dayId: day.id, slotIdx: idx })}
+                                                className={`text-sm font-medium w-full text-left truncate flex items-center justify-between p-2 rounded-xl bg-zinc-100/50 dark:bg-white/5 hover:bg-zinc-200/50 dark:hover:bg-white/10 transition-colors ${
+                                                    slot.exerciseId ? 'text-zinc-900 dark:text-white font-semibold' : 'text-amber-500 dark:text-amber-400 font-bold'
+                                                }`}
                                             >
-                                                {slot.exerciseId 
-                                                    ? getTranslated(exercises.find(e => e.id === slot.exerciseId)?.name, lang)
-                                                    : t.selectExBtn
-                                                }
+                                                <span>
+                                                    {slot.exerciseId
+                                                        ? getTranslated(exercises.find(e => e.id === slot.exerciseId)?.name, lang)
+                                                        : (lang === 'es' ? '⚠ Seleccionar ejercicio...' : '⚠ Select exercise...')}
+                                                </span>
+                                                <Icon name="ChevronRight" size={14} className="text-zinc-400 shrink-0 ml-2" />
                                             </button>
                                         </div>
-                                        <button onClick={() => handleRemoveSlot(day.id, idx)} className="text-zinc-300 hover:text-red-500 p-2">
+                                        <button
+                                            onClick={() => handleRemoveSlot(day.id, idx)}
+                                            className="text-zinc-300 hover:text-red-500 p-2"
+                                            aria-label={t.delete}
+                                        >
                                             <Icon name="X" size={16} />
                                         </button>
                                     </div>
@@ -229,7 +306,10 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
                             ))}
                         </div>
                         <div className="p-2 border-t border-zinc-100 dark:border-white/5">
-                            <button onClick={() => handleAddSlot(day.id)} className="w-full py-2 flex items-center justify-center gap-2 text-xs font-bold text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200">
+                            <button
+                                onClick={() => handleAddSlot(day.id)}
+                                className="w-full py-2 flex items-center justify-center gap-2 text-xs font-bold text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+                            >
                                 <Icon name="Plus" size={14} /> {t.addSlot}
                             </button>
                         </div>
@@ -243,11 +323,68 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
 
             {pickingForSlot && (
                 <Suspense fallback={null}>
-                    <ExerciseSelector 
+                    <ExerciseSelector
                         onClose={() => setPickingForSlot(null)}
                         onSelect={handleSelectExercise}
                     />
                 </Suspense>
+            )}
+
+            {/* Unresolved Slots Validation Dialog */}
+            {unresolvedSlots.length > 0 && (
+                <div
+                    className="fixed inset-0 z-confirm bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-fast"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="unresolved-title"
+                >
+                    <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+                        <div className="flex items-center gap-3 text-amber-500">
+                            <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center">
+                                <Icon name="AlertTriangle" size={22} />
+                            </div>
+                            <div>
+                                <h3 id="unresolved-title" className="text-base font-bold text-zinc-900 dark:text-white">
+                                    {lang === 'es' ? 'Faltan ejercicios por asignar' : 'Unassigned exercises'}
+                                </h3>
+                                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                                    {lang === 'es'
+                                        ? `${unresolvedSlots.length} slot(s) sin ejercicio seleccionado`
+                                        : `${unresolvedSlots.length} slot(s) without selected exercise`}
+                                </p>
+                            </div>
+                        </div>
+
+                        <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed">
+                            {lang === 'es'
+                                ? 'Cada slot debe tener un ejercicio concreto asignado antes de iniciar el ciclo para evitar sustituciones genéricas imprecisas.'
+                                : 'Each slot must have a specific exercise assigned before starting the cycle to prevent imprecise generic fallbacks.'}
+                        </p>
+
+                        <div className="max-h-40 overflow-y-auto space-y-1.5 p-3 rounded-xl bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200 dark:border-white/5 text-xs">
+                            {unresolvedSlots.map((item, idx) => (
+                                <div key={idx} className="flex items-center justify-between text-zinc-700 dark:text-zinc-300 py-0.5">
+                                    <span>
+                                        <strong className="font-semibold">{item.dayName}</strong> · Slot #{item.slotIdx}
+                                    </span>
+                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-amber-500/20 text-amber-400">
+                                        {item.muscle}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="pt-2">
+                            <Button
+                                fullWidth
+                                variant="primary"
+                                onClick={() => setUnresolvedSlots([])}
+                            >
+                                {lang === 'es' ? 'Asignar ejercicios' : 'Assign exercises'}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
             )}
 
             <Sheet
@@ -265,17 +402,17 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
                     <p className="text-xs text-zinc-500 -mt-2">{t.saveAsMeso}</p>
                     <div>
                         <label className="text-[10px] font-black uppercase text-zinc-500 tracking-widest block mb-2 px-1">{t.mesoName}</label>
-                        <input 
-                            type="text" 
+                        <input
+                            type="text"
                             className="w-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-xl p-3 font-bold outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all glow-input-neon"
                             value={mesoConfig.name}
                             onChange={(e) => setMesoConfig({ ...mesoConfig, name: e.target.value })}
                         />
                     </div>
-                    
+
                     <div>
                         <label className="text-[10px] font-black uppercase text-zinc-500 tracking-widest block mb-2 px-1">{t.mesoType}</label>
-                        <select 
+                        <select
                             className="w-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-xl p-3 font-bold outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all"
                             value={mesoConfig.type}
                             onChange={(e) => setMesoConfig({ ...mesoConfig, type: e.target.value as MesoType })}
@@ -292,16 +429,18 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
                     <div>
                         <label className="text-[10px] font-black uppercase text-zinc-500 tracking-widest block mb-2 px-1">{t.targetWeeks}</label>
                         <div className="flex items-center gap-4">
-                            <button 
+                            <button
                                 onClick={() => setMesoConfig(prev => ({ ...prev, weeks: Math.max(1, prev.weeks - 1) }))}
                                 className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700/50 flex items-center justify-center text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white active:scale-95 transition-all"
+                                aria-label="Disminuir semanas"
                             >
                                 <Icon name="Minus" size={16} />
                             </button>
                             <span className="font-mono text-2xl font-bold w-12 text-center text-zinc-900 dark:text-white">{mesoConfig.weeks}</span>
-                            <button 
+                            <button
                                 onClick={() => setMesoConfig(prev => ({ ...prev, weeks: prev.weeks + 1 }))}
                                 className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700/50 flex items-center justify-center text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white active:scale-95 transition-all"
+                                aria-label="Aumentar semanas"
                             >
                                 <Icon name="Plus" size={16} />
                             </button>
@@ -312,7 +451,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
             </Sheet>
 
             <Suspense fallback={null}>
-                <ConfirmModal 
+                <ConfirmModal
                     isOpen={!!dayToDelete}
                     title={t.delete}
                     description={t.deleteConfirm}

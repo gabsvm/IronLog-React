@@ -18,6 +18,7 @@ import './ux-navigation.css';
 
 const FreestyleSessionModal = React.lazy(() => import('../workout/FreestyleSessionModal').then(m => ({ default: m.FreestyleSessionModal })));
 const TwoBlockMassModal = React.lazy(() => import('../workout/TwoBlockMassModal').then(m => ({ default: m.TwoBlockMassModal })));
+const ConfirmModal = React.lazy(() => import('../ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
 
 interface LayoutProps {
     children: React.ReactNode;
@@ -42,6 +43,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
     const [showQuickStart, setShowQuickStart] = React.useState(false);
     const [showFreestyle, setShowFreestyle] = React.useState(false);
     const [showTwoBlock, setShowTwoBlock] = React.useState(false);
+    const [showActiveSessionAlert, setShowActiveSessionAlert] = React.useState(false);
+    const [showKongConvertConfirm, setShowKongConvertConfirm] = React.useState(false);
     const bypassPlanCapture = React.useRef(false);
     const isKong = activeMeso?.programSystem?.systemId === KONG_4DAY_V1.id;
 
@@ -131,44 +134,47 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
         setShowQuickStart(false);
 
         if (activeSession) {
-            window.alert(lang === 'es'
-                ? 'Finaliza o descarta la sesión activa antes de editar o convertir la rutina.'
-                : 'Finish or discard the active session before editing or converting the routine.');
+            setShowActiveSessionAlert(true);
             return;
         }
 
         if (isKong && activeMeso) {
-            const convert = window.confirm(lang === 'es'
-                ? 'KONG es un programa estructurado de 12 semanas. Para editar libremente la semana actual debes convertirla en una rutina personal. KONG finalizará y la copia quedará editable. ¿Continuar?'
-                : 'KONG is a structured 12-week program. To freely edit the current week, convert it to a personal routine. KONG will end and the copy will become editable. Continue?');
-            if (!convert) return;
-
-            const { block } = getProgramBlockForWeek(KONG_4DAY_V1, activeMeso.week);
-            const editableProgram = toEditableProgram(resolveProgramWeek(
-                KONG_4DAY_V1,
-                activeMeso.week,
-                activeMeso.programSystem?.substitutions || {},
-            ).map((day, dayIndex) => ({
-                ...day,
-                dayName: getKongDayDisplay(block.number, dayIndex),
-            })));
-            const editablePlan = editableProgram.map((day) => (day.slots || []).map((slot) => slot.exerciseId || null));
-
-            setProgram(editableProgram);
-            setActiveMeso(prev => prev ? {
-                ...prev,
-                id: Date.now(),
-                name: lang === 'es' ? 'KONG · Rutina personal' : 'KONG · Personal routine',
-                mesoType: 'personal',
-                targetWeeks: 4,
-                duration: 4,
-                week: 1,
-                plan: editablePlan,
-                isDeload: false,
-                programSystem: undefined,
-            } : prev);
+            setShowKongConvertConfirm(true);
+            return;
         }
 
+        setView('program');
+    };
+
+    const handleConfirmKongConvert = () => {
+        if (!activeMeso) return;
+
+        const { block } = getProgramBlockForWeek(KONG_4DAY_V1, activeMeso.week);
+        const editableProgram = toEditableProgram(resolveProgramWeek(
+            KONG_4DAY_V1,
+            activeMeso.week,
+            activeMeso.programSystem?.substitutions || {},
+        ).map((day, dayIndex) => ({
+            ...day,
+            dayName: getKongDayDisplay(block.number, dayIndex),
+        })));
+        const editablePlan = editableProgram.map((day) => (day.slots || []).map((slot) => slot.exerciseId || null));
+
+        setProgram(editableProgram);
+        setActiveMeso(prev => prev ? {
+            ...prev,
+            id: Date.now(),
+            name: lang === 'es' ? 'KONG · Rutina personal' : 'KONG · Personal routine',
+            mesoType: 'personal',
+            targetWeeks: 4,
+            duration: 4,
+            week: 1,
+            plan: editablePlan,
+            isDeload: false,
+            programSystem: undefined,
+        } : prev);
+
+        setShowKongConvertConfirm(false);
         setView('program');
     };
 
@@ -236,6 +242,41 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
             {showTwoBlock && (
                 <React.Suspense fallback={null}>
                     <TwoBlockMassModal isOpen={showTwoBlock} onClose={() => setShowTwoBlock(false)} onStart={startDetached} />
+                </React.Suspense>
+            )}
+
+            {/* Active Session Warning Modal */}
+            {showActiveSessionAlert && (
+                <React.Suspense fallback={null}>
+                    <ConfirmModal
+                        isOpen={true}
+                        title={lang === 'es' ? 'Sesión en curso' : 'Session in progress'}
+                        description={lang === 'es'
+                            ? 'Tienes una sesión de entrenamiento activa. Finaliza o descarta la sesión antes de editar o convertir la rutina.'
+                            : 'You have an active workout in progress. Finish or discard it before editing or converting routines.'}
+                        confirmText={lang === 'es' ? 'Entendido' : 'Understood'}
+                        cancelText=""
+                        variant="primary"
+                        onConfirm={() => setShowActiveSessionAlert(false)}
+                        onCancel={() => setShowActiveSessionAlert(false)}
+                    />
+                </React.Suspense>
+            )}
+
+            {/* KONG Convert Confirmation Modal */}
+            {showKongConvertConfirm && (
+                <React.Suspense fallback={null}>
+                    <ConfirmModal
+                        isOpen={true}
+                        title={lang === 'es' ? 'Convertir KONG en Rutina Personal' : 'Convert KONG to Personal Routine'}
+                        description={lang === 'es'
+                            ? 'KONG es un programa estructurado de 12 semanas. Para editar libremente la semana actual debes convertirla en una rutina personal. KONG finalizará y la copia quedará editable. ¿Continuar?'
+                            : 'KONG is a structured 12-week program. To freely edit the current week, convert it to a personal routine. KONG will end and the copy will become editable. Continue?'}
+                        confirmText={lang === 'es' ? 'Convertir y Editar' : 'Convert & Edit'}
+                        cancelText={t.cancel}
+                        onConfirm={handleConfirmKongConvert}
+                        onCancel={() => setShowKongConvertConfirm(false)}
+                    />
                 </React.Suspense>
             )}
         </div>

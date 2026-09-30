@@ -120,6 +120,7 @@ const AppContent = () => {
     const [backupSummary, setBackupSummary] = useState<BackupDomainSummary | null>(null);
     const [importError, setImportError] = useState<string | null>(null);
     const [showForceSyncModal, setShowForceSyncModal] = useState(false);
+    const [showKongConvertModal, setShowKongConvertModal] = useState(false);
 
     // Sync truncation warning — fires when cloud history is capped at 200 entries
     const [syncTruncatedWarning, setSyncTruncatedWarning] = useState<{ kept: number; total: number } | null>(null);
@@ -581,11 +582,8 @@ const AppContent = () => {
                                 }}
                                 onEditProgram={() => {
                                     if (activeMeso?.programSystem?.systemId === KONG_4DAY_V1.id) {
-                                        const convert = window.confirm(lang === 'es'
-                                            ? 'La definición oficial de KONG no se edita. ¿Convertir esta estructura en una rutina personalizada?'
-                                            : 'The official KONG definition cannot be edited. Convert this structure into a personal routine?');
-                                        if (!convert) return;
-                                        setActiveMeso(prev => prev ? { ...prev, name: 'KONG · Personal', mesoType: 'personal', programSystem: undefined } : prev);
+                                        setShowKongConvertModal(true);
+                                        return;
                                     }
                                     setView('program');
                                 }}
@@ -772,6 +770,32 @@ const AppContent = () => {
                             window.location.reload();
                         }}
                         onCancel={() => setShowResetModal(false)}
+                    />
+                </Suspense>
+            )}
+
+            {/* KONG CONVERSION MODAL */}
+            {showKongConvertModal && (
+                <Suspense fallback={null}>
+                    <ConfirmModal
+                        isOpen={true}
+                        title={lang === 'es' ? 'Convertir KONG en Rutina Personal' : 'Convert KONG to Personal Routine'}
+                        description={lang === 'es'
+                            ? 'La definición oficial de KONG no se edita directamente para preservar la metodología original. ¿Deseas convertir tu ciclo actual en una rutina editable?'
+                            : 'The official KONG definition cannot be edited directly to preserve the original methodology. Do you want to convert this cycle into an editable personal routine?'}
+                        confirmText={lang === 'es' ? 'Convertir y Editar' : 'Convert & Edit'}
+                        cancelText={t.cancel}
+                        onConfirm={() => {
+                            setActiveMeso(prev => prev ? {
+                                ...prev,
+                                name: lang === 'es' ? 'KONG · Personal' : 'KONG · Personal',
+                                mesoType: 'personal',
+                                programSystem: undefined,
+                            } : prev);
+                            setShowKongConvertModal(false);
+                            setView('program');
+                        }}
+                        onCancel={() => setShowKongConvertModal(false)}
                     />
                 </Suspense>
             )}

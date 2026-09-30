@@ -13,6 +13,7 @@ import { useStore } from '../../lib/store';
 import { GlobalTemplate } from '../../types';
 
 const PaywallModal = React.lazy(() => import('../pro/PaywallModal').then(m => ({ default: m.PaywallModal })));
+const ConfirmModal = React.lazy(() => import('../ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
 
 interface SettingsModalProps {
     onClose: () => void;
@@ -56,15 +57,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         return Math.ceil(diff / (1000 * 60 * 60 * 24));
     }, [expiryDate]);
 
+    const [installInstructions, setInstallInstructions] = useState<string | null>(null);
+
     const handleInstallClick = () => {
         if (deferredPrompt) {
             installApp();
         } else {
             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
             if (isIOS) {
-                alert(t.iosInstall);
+                setInstallInstructions(t.iosInstall);
             } else {
-                alert(t.androidInstall || "Tap the browser menu (⋮) and select 'Install App' or 'Add to Home Screen'.");
+                setInstallInstructions(t.androidInstall || "Tap the browser menu (⋮) and select 'Install App' or 'Add to Home Screen'.");
             }
         }
     };
@@ -474,6 +477,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     </div>
                 </div>
             </Sheet>
+
+            {installInstructions && (
+                <Suspense fallback={null}>
+                    <ConfirmModal
+                        isOpen={true}
+                        title={lang === 'es' ? 'Cómo instalar GainsLab' : 'How to install GainsLab'}
+                        description={installInstructions}
+                        confirmText={lang === 'es' ? 'Entendido' : 'Got it'}
+                        cancelText=""
+                        variant="primary"
+                        onConfirm={() => setInstallInstructions(null)}
+                        onCancel={() => setInstallInstructions(null)}
+                    />
+                </Suspense>
+            )}
         </div>
     );
 };
