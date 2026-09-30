@@ -7,26 +7,32 @@ import { Logo } from '../ui/Logo';
 import { recommendProgram, RecommendationResult } from '../../utils/recommendationEngine';
 import { useStore } from '../../lib/store';
 
+export interface OnboardingOutcome {
+    mode: Mode;
+    template?: ProgramDay[];
+}
+
 interface SetupWizardProps {
-    onComplete: () => void;
+    onComplete: (outcome: OnboardingOutcome) => void;
 }
 
 type Mode = 'suggested' | 'custom' | 'freestyle';
 
 export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
-    const { lang, setLang, setProgram } = useApp();
+    const { lang, setLang, setProgram, userProfile, setUserProfile } = useApp();
     const setActiveMeso = useStore(state => state.setActiveMeso);
     const t = TRANSLATIONS[lang];
     const w = t.wizard;
 
     // 0–3: profile steps, 4: recommendation, 5: launch mode picker
     const [step, setStep] = useState(0);
-    const [profile, setProfile] = useState<UserProfile>({
-        experience: 'intermediate',
-        daysPerWeek: 4,
-        goal: 'hypertrophy',
-        sessionDuration: 'medium'
-    });
+    const [profile, setProfile] = useState<UserProfile>(() => ({
+        experience: userProfile?.experience || 'intermediate',
+        daysPerWeek: userProfile?.daysPerWeek || 4,
+        goal: userProfile?.goal || 'hypertrophy',
+        sessionDuration: userProfile?.sessionDuration || 'medium',
+        ...userProfile,
+    }));
 
     const [recommendation, setRecommendation] = useState<RecommendationResult | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
@@ -34,28 +40,39 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
     // ── Navigation ────────────────────────────────────────────────────
     const handleNext = () => {
         if (step === 3) {
-            setIsGenerating(true);
-            setTimeout(() => {
-                const rec = recommendProgram(profile);
-                setRecommendation(rec);
-                setIsGenerating(false);
-                setStep(4); // recommendation screen
-            }, 1500);
+            const rec = recommendProgram(profile);
+            setRecommendation(rec);
+            setStep(4); // recommendation screen
         } else if (step < 3) {
             setStep(prev => prev + 1);
         }
     };
 
     const handleApply = (mode: Mode) => {
+        // Persist onboarding answers into userProfile without losing existing body-profile fields
+        setUserProfile(prev => ({
+            ...prev,
+            experience: profile.experience,
+            daysPerWeek: profile.daysPerWeek,
+            goal: profile.goal,
+            sessionDuration: profile.sessionDuration,
+        }));
+
         if (mode === 'freestyle') {
-            // No program, no meso — just log freely
-            onComplete();
+            setActiveMeso(null);
+            onComplete({ mode: 'freestyle' });
             return;
         }
 
         if (mode === 'custom') {
-            // Skip to blank program editor
-            onComplete();
+            const blankProgram: ProgramDay[] = [{
+                id: `d_${Date.now()}`,
+                dayName: { en: 'Day 1', es: 'Día 1' },
+                slots: []
+            }];
+            setProgram(blankProgram);
+            setActiveMeso(null);
+            onComplete({ mode: 'custom', template: blankProgram });
             return;
         }
 
@@ -75,7 +92,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
             plan,
             duration: 5
         });
-        onComplete();
+        onComplete({ mode: 'suggested', template: recommendation.template });
     };
 
     // ── Sub-components ────────────────────────────────────────────────
@@ -362,7 +379,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                             ))}
                         </div>
                         {step < 4 && (
-                            <button onClick={onComplete} className="text-[10px] font-black uppercase tracking-wider text-zinc-400 hover:text-zinc-700 dark:hover:text-white">
+                            <button onClick={() => handleApply('custom')} className="text-[10px] font-black uppercase tracking-wider text-zinc-400 hover:text-zinc-700 dark:hover:text-white">
                                 {w.manual}
                             </button>
                         )}

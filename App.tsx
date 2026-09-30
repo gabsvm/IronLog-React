@@ -389,7 +389,28 @@ const AppContent = () => {
                             onLogin={() => setShowAuthModal(true)}
                         />
                     ) : (
-                        <SetupWizard onComplete={() => setHasSeenOnboarding(true)} />
+                        <SetupWizard
+                            onComplete={(outcome) => {
+                                setHasSeenOnboarding(true);
+                                if (outcome.mode === 'custom') {
+                                    setViewState('program');
+                                } else if (outcome.mode === 'freestyle') {
+                                    const freeSession = {
+                                        id: Date.now(),
+                                        dayIdx: -1,
+                                        name: lang === 'es' ? 'Sesión Libre' : 'Freestyle Session',
+                                        startTime: Date.now(),
+                                        mesoId: -1,
+                                        week: -1,
+                                        exercises: [],
+                                    };
+                                    setActiveSession(freeSession);
+                                    setViewState('workout');
+                                } else {
+                                    setViewState('home');
+                                }
+                            }}
+                        />
                     )}
                 </Suspense>
             )}
