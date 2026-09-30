@@ -3,7 +3,7 @@ import type { User } from 'firebase/auth';
 import { SubscriptionTier, UserSubscription } from '../types';
 import { getFirebaseAuthServices, getFirebaseFirestoreServices, isFirebaseConfigured } from '../lib/firebaseLoader';
 import { scheduleWhenIdle } from '../lib/idle';
-import { DEFAULT_FREE_SUBSCRIPTION, createLocalDemoSubscription } from '../services/entitlementService';
+import { DEFAULT_FREE_SUBSCRIPTION, createLocalDemoSubscription, resolveAuthoritativeSubscription, canGrantDemo } from '../services/entitlementService';
 
 interface AuthContextType {
     user: User | null;
@@ -16,7 +16,8 @@ interface AuthContextType {
     error: string | null;
     clearError: () => void;
     subscription: UserSubscription;
-    upgradeToPro: (tier: SubscriptionTier) => Promise<void>;
+    upgradeToPro: (tier?: SubscriptionTier) => Promise<void>;
+    refreshSubscription: () => Promise<UserSubscription>;
     startDemo: () => Promise<void>;
     resetPassword: (email: string) => Promise<void>;
 }
@@ -59,7 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                             const subRef = firestoreApi.doc(db, 'users', currentUser.uid, 'data', 'subscription');
                             const subSnap = await firestoreApi.getDoc(subRef);
                             if (!cancelled) {
-                                setSubscription(subSnap.exists() ? subSnap.data() as UserSubscription : DEFAULT_FREE_SUBSCRIPTION);
+                                setSubscription(subSnap.exists() ? resolveAuthoritativeSubscription(subSnap.data()) : DEFAULT_FREE_SUBSCRIPTION);
                             }
                         }
                     } catch (e) {
@@ -106,6 +107,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const startDemo = async () => {
         setError(null);
+        if (!canGrantDemo(import.meta.env.DEV)) {
+            console.warn('startDemo is disabled in production environments.');
+            setError('Demo mode is only available in development.');
+            return;
+        }
         setLoading(true);
         const [{ auth, authApi }, { db, firestoreApi }] = await Promise.all([
             getFirebaseAuthServices(),
@@ -182,22 +188,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSubscription(DEFAULT_FREE_SUBSCRIPTION);
     };
 
-    const upgradeToPro = async (tier: SubscriptionTier) => {
+    const refreshSubscription = async (): Promise<UserSubscription> => {
+        if (!user || !isFirebaseConfigured()) {
+            setSubscription(DEFAULT_FREE_SUBSCRIPTION);
+            return DEFAULT_FREE_SUBSCRIPTION;
+        }
+
+        try {
+            const { db, firestoreApi } = await getFirebaseFirestoreServices();
+            if (db) {
+                const subRef = firestoreApi.doc(db, 'users', user.uid, 'data', 'subscription');
+                const subSnap = await firestoreApi.getDoc(subRef);
+                const authoritativeSub = subSnap.exists() ? resolveAuthoritativeSubscription(subSnap.data()) : DEFAULT_FREE_SUBSCRIPTION;
+                setSubscription(authoritativeSub);
+                return authoritativeSub;
+            }
+        } catch (e) {
+            console.error('Error refreshing subscription from server', e);
+        }
+
+        return DEFAULT_FREE_SUBSCRIPTION;
+    };
+
+    const upgradeToPro = async (_tier?: SubscriptionTier) => {
         // Subscriptions are server-authoritative and provisioned via webhook/backend.
-        // Direct client writes to users/{uid}/data/subscription are forbidden by Firestore rules.
-        console.warn('upgradeToPro: Subscription is server-authoritative.');
-        const newSub: UserSubscription = {
-            isPro: true,
-            tier,
-            expiryDate: tier === 'lifetime' ? null : Date.now() + (tier === 'monthly' ? 2592000000 : 31536000000),
-        };
-        setSubscription(newSub);
+        // Direct client granting is forbidden; we refresh from the server instead.
+        console.warn('upgradeToPro: Subscriptions are server-authoritative. Refreshing from server...');
+        await refreshSubscription();
     };
 
     const clearError = () => setError(null);
 
     return (
-        <AuthContext.Provider value={{ user, isGuest, loading, login, register, logout, continueAsGuest, error, clearError, subscription, upgradeToPro, startDemo, resetPassword }}>
+        <AuthContext.Provider value={{ user, isGuest, loading, login, register, logout, continueAsGuest, error, clearError, subscription, upgradeToPro, refreshSubscription, startDemo, resetPassword }}>
             {children}
         </AuthContext.Provider>
     );

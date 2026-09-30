@@ -6,6 +6,8 @@ import {
   isProUser,
   isDemoUser,
   getEntitlementTier,
+  canGrantDemo,
+  resolveAuthoritativeSubscription,
 } from '../../services/entitlementService';
 import { UserSubscription } from '../../types';
 
@@ -100,5 +102,59 @@ describe('entitlementService', () => {
     };
     expect(isProUser(mismatchedSub, FIXED_NOW)).toBe(false);
     expect(getEntitlementTier(mismatchedSub, FIXED_NOW)).toBe('free');
+  });
+
+  describe('server-authoritative subscription enforcement', () => {
+    it('disallows local demo creation in production environment', () => {
+      expect(canGrantDemo(false)).toBe(false); // In production (DEV=false)
+      expect(canGrantDemo(true)).toBe(true);   // In development (DEV=true)
+    });
+
+    it('resolveAuthoritativeSubscription returns default free for null, undefined, or empty server data', () => {
+      expect(resolveAuthoritativeSubscription(null, FIXED_NOW)).toEqual(DEFAULT_FREE_SUBSCRIPTION);
+      expect(resolveAuthoritativeSubscription(undefined, FIXED_NOW)).toEqual(DEFAULT_FREE_SUBSCRIPTION);
+      expect(resolveAuthoritativeSubscription({}, FIXED_NOW)).toEqual(DEFAULT_FREE_SUBSCRIPTION);
+      expect(resolveAuthoritativeSubscription({ isPro: false }, FIXED_NOW)).toEqual(DEFAULT_FREE_SUBSCRIPTION);
+    });
+
+    it('resolveAuthoritativeSubscription rejects expired server documents', () => {
+      const expiredDoc = {
+        isPro: true,
+        tier: 'monthly',
+        expiryDate: FIXED_NOW - 5000,
+      };
+      expect(resolveAuthoritativeSubscription(expiredDoc, FIXED_NOW)).toEqual(DEFAULT_FREE_SUBSCRIPTION);
+    });
+
+    it('resolveAuthoritativeSubscription rejects unauthorized or forged tier strings', () => {
+      const forgedDoc = {
+        isPro: true,
+        tier: 'super_admin_bypass',
+        expiryDate: FIXED_NOW + 100000,
+      };
+      expect(resolveAuthoritativeSubscription(forgedDoc, FIXED_NOW)).toEqual(DEFAULT_FREE_SUBSCRIPTION);
+    });
+
+    it('resolveAuthoritativeSubscription accepts valid authoritative active subscriptions', () => {
+      const validMonthlyDoc = {
+        isPro: true,
+        tier: 'monthly',
+        expiryDate: FIXED_NOW + 100000,
+      };
+      const resolvedMonthly = resolveAuthoritativeSubscription(validMonthlyDoc, FIXED_NOW);
+      expect(resolvedMonthly.isPro).toBe(true);
+      expect(resolvedMonthly.tier).toBe('monthly');
+      expect(resolvedMonthly.expiryDate).toBe(FIXED_NOW + 100000);
+
+      const validLifetimeDoc = {
+        isPro: true,
+        tier: 'lifetime',
+        expiryDate: null,
+      };
+      const resolvedLifetime = resolveAuthoritativeSubscription(validLifetimeDoc, FIXED_NOW);
+      expect(resolvedLifetime.isPro).toBe(true);
+      expect(resolvedLifetime.tier).toBe('lifetime');
+      expect(resolvedLifetime.expiryDate).toBeNull();
+    });
   });
 });

@@ -192,13 +192,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                     <div className="flex-grow border-t border-zinc-200 dark:border-zinc-800"></div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className={import.meta.env.DEV ? "grid grid-cols-2 gap-3" : "flex flex-col gap-3"}>
                     <Button variant="secondary" fullWidth onClick={handleGuest} className="dark:bg-zinc-800 dark:border-zinc-700 text-xs">
                         {t.continueGuest}
                     </Button>
-                    <Button variant="secondary" fullWidth onClick={handleStartDemo} className="dark:bg-zinc-800 dark:border-zinc-700 text-xs text-primary-600 dark:text-primary-400">
-                        {t.startDemo || "Try 7 Days Free"}
-                    </Button>
+                    {import.meta.env.DEV && (
+                        <Button variant="secondary" fullWidth onClick={handleStartDemo} className="dark:bg-zinc-800 dark:border-zinc-700 text-xs text-primary-600 dark:text-primary-400">
+                            {t.startDemo || "Try 7 Days Free"}
+                        </Button>
+                    )}
                 </div>
 
                 <div className="mt-6 text-center">

@@ -49,3 +49,30 @@ export const getEntitlementTier = (subscription?: UserSubscription | null, now =
   if (!isProUser(subscription, now)) return 'free';
   return subscription?.tier || 'free';
 };
+
+export const canGrantDemo = (isDev: boolean): boolean => {
+  return Boolean(isDev);
+};
+
+export const resolveAuthoritativeSubscription = (serverDoc: any, now = Date.now()): UserSubscription => {
+  if (!serverDoc || typeof serverDoc !== 'object') {
+    return DEFAULT_FREE_SUBSCRIPTION;
+  }
+  const isPro = Boolean(serverDoc.isPro);
+  const tier = (['monthly', 'yearly', 'lifetime', 'demo'].includes(serverDoc.tier) ? serverDoc.tier : 'free') as SubscriptionTier;
+  const expiryDate = parseExpiryTimestamp(serverDoc.expiryDate);
+
+  if (!isPro || tier === 'free') {
+    return DEFAULT_FREE_SUBSCRIPTION;
+  }
+
+  if (expiryDate !== null && expiryDate <= now) {
+    return DEFAULT_FREE_SUBSCRIPTION;
+  }
+
+  return {
+    isPro: true,
+    tier,
+    expiryDate,
+  };
+};

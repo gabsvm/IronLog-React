@@ -11,7 +11,7 @@ interface PaywallModalProps {
 }
 
 export const PaywallModal: React.FC<PaywallModalProps> = ({ onClose, feature }) => {
-    const { upgradeToPro, user } = useAuth();
+    const { user } = useAuth();
     const { lang } = useApp();
     const [loading, setLoading] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
