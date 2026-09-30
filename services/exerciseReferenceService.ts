@@ -1,7 +1,13 @@
 import { ExerciseDef, ProgramDay, MesoCycle, GlobalTemplate } from '../types';
 import { DEFAULT_LIBRARY } from '../data/defaultLibrary';
+import { CROSSFIT_EXERCISES, CALISTHENICS_EXERCISES, NILSSON_BW_EXERCISES } from '../data/disciplineExercises';
 
-const BUILTIN_EXERCISE_IDS = new Set(DEFAULT_LIBRARY.map((e) => e.id));
+const BUILTIN_EXERCISE_IDS = new Set<string>([
+  ...DEFAULT_LIBRARY.map((e) => e.id),
+  ...CROSSFIT_EXERCISES.map((e) => e.id),
+  ...CALISTHENICS_EXERCISES.map((e) => e.id),
+  ...NILSSON_BW_EXERCISES.map((e) => e.id),
+]);
 
 export interface ExerciseReferenceLocation {
   type: 'program' | 'activeMeso' | 'personalTemplate';
@@ -28,14 +34,16 @@ export interface ExerciseAnalysisContext {
 /**
  * Checks whether an exercise is a built-in catalog exercise
  * (cannot be destructively deleted by users).
+ * Recognizes default library, CrossFit, Calisthenics, and Nilsson bodyweight exercises.
  */
 export const isBuiltInExercise = (exerciseId: string, exercises?: ExerciseDef[] | null): boolean => {
   if (BUILTIN_EXERCISE_IDS.has(exerciseId)) return true;
+  if (exerciseId.startsWith('cf_') || exerciseId.startsWith('cal_') || exerciseId.startsWith('nil_')) return true;
   const def = exercises?.find((e) => e.id === exerciseId);
   if (def?.source === 'nilsson_bw') return true;
-  // Custom exercises created by users always have id prefixed with 'custom_' or explicitly marked
   if (def?.isCustom) return false;
-  return !exerciseId.startsWith('custom_') && BUILTIN_EXERCISE_IDS.has(exerciseId);
+  if (exerciseId.startsWith('custom_')) return false;
+  return BUILTIN_EXERCISE_IDS.has(exerciseId);
 };
 
 /**
@@ -241,5 +249,69 @@ export const deleteCustomExercise = (
   return {
     success: true,
     updatedExercises: exercises.filter((e) => e.id !== exerciseId),
+  };
+};
+
+export interface ExecuteReplacementParams {
+  oldExerciseId: string;
+  newExerciseId: string;
+  deleteOldExercise?: boolean;
+  exercises: ExerciseDef[];
+  program: ProgramDay[];
+  activeMeso: MesoCycle | null;
+  personalTemplates: GlobalTemplate[];
+}
+
+export interface ExecuteReplacementResult {
+  updatedExercises: ExerciseDef[];
+  updatedProgram: ProgramDay[];
+  updatedActiveMeso: MesoCycle | null;
+  updatedPersonalTemplates: GlobalTemplate[];
+}
+
+/**
+ * Executes a safe, atomic exercise reference replacement across all active routine
+ * domains (program, activeMeso, personalTemplates) without mutating historical workout logs.
+ * If deleteOldExercise is true and the old exercise now has 0 references, deletes it.
+ */
+export const executeExerciseReplacement = (
+  params: ExecuteReplacementParams
+): ExecuteReplacementResult => {
+  const {
+    oldExerciseId,
+    newExerciseId,
+    deleteOldExercise = false,
+    exercises,
+    program,
+    activeMeso,
+    personalTemplates,
+  } = params;
+
+  const { updatedProgram, updatedActiveMeso, updatedPersonalTemplates } = replaceExerciseReferences({
+    oldExerciseId,
+    newExerciseId,
+    program,
+    activeMeso,
+    personalTemplates,
+  });
+
+  let updatedExercises = exercises;
+  if (deleteOldExercise && !isBuiltInExercise(oldExerciseId, exercises)) {
+    const reportAfter = analyzeExerciseReferences(oldExerciseId, {
+      exercises,
+      program: updatedProgram,
+      activeMeso: updatedActiveMeso,
+      personalTemplates: updatedPersonalTemplates,
+    });
+    if (reportAfter.totalReferences === 0) {
+      updatedExercises = exercises.filter((e) => e.id !== oldExerciseId);
+    }
+  }
+
+  return {
+    updatedExercises,
+    updatedProgram,
+    updatedActiveMeso,
+    updatedPersonalTemplates,
   };
 };

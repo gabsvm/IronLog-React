@@ -15,18 +15,21 @@ import {
     unarchiveExercise,
     deleteCustomExercise,
     isBuiltInExercise,
+    executeExerciseReplacement,
     ExerciseReferenceReport,
 } from '../services/exerciseReferenceService';
 
 const ConfirmModal = React.lazy(() => import('../components/ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
+const ExerciseSelector = React.lazy(() => import('../components/ui/ExerciseSelector').then(m => ({ default: m.ExerciseSelector })));
 
 interface ExercisesViewProps {
     onBack: () => void;
 }
 
 export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
-    const { exercises, setExercises, lang, program, personalTemplates } = useApp();
+    const { exercises, setExercises, lang, program, setProgram, personalTemplates, setPersonalTemplates } = useApp();
     const activeMeso = useStore(state => state.activeMeso);
+    const setActiveMeso = useStore(state => state.setActiveMeso);
     const t = TRANSLATIONS[lang];
 
     const [mode, setMode] = useState<'list' | 'create'>('list');
@@ -37,9 +40,11 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
     // Detail Modal State
     const [detailEx, setDetailEx] = useState<ExerciseDef | null>(null);
 
-    // Delete / Archive Modal State
+    // Delete / Archive / Replace Modal State
     const [pendingDeleteReport, setPendingDeleteReport] = useState<ExerciseReferenceReport | null>(null);
     const [unreferencedDeleteId, setUnreferencedDeleteId] = useState<string | null>(null);
+    const [replacingExerciseId, setReplacingExerciseId] = useState<string | null>(null);
+    const [pendingReplacementCandidate, setPendingReplacementCandidate] = useState<ExerciseDef | null>(null);
 
     // Create State
     const [newName, setNewName] = useState('');
@@ -94,6 +99,34 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
         setExercises(prev => archiveExercise(prev, exId));
         setPendingDeleteReport(null);
         triggerHaptic('medium');
+    };
+
+    const handleStartReplaceFlow = (exId: string) => {
+        setReplacingExerciseId(exId);
+        setPendingDeleteReport(null);
+    };
+
+    const handleExecuteReplacement = (oldExId: string, newExId: string) => {
+        const result = executeExerciseReplacement({
+            oldExerciseId: oldExId,
+            newExerciseId: newExId,
+            deleteOldExercise: true,
+            exercises,
+            program,
+            activeMeso,
+            personalTemplates,
+        });
+
+        setExercises(result.updatedExercises);
+        setProgram(result.updatedProgram);
+        if (result.updatedActiveMeso) {
+            setActiveMeso(result.updatedActiveMeso);
+        }
+        setPersonalTemplates(result.updatedPersonalTemplates);
+
+        setPendingReplacementCandidate(null);
+        setReplacingExerciseId(null);
+        triggerHaptic('success');
     };
 
     const handleUnarchive = (exId: string) => {
@@ -469,6 +502,15 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
                                 {lang === 'es' ? 'Archivar Ejercicio' : 'Archive Exercise'}
                             </Button>
                             <Button
+                                onClick={() => handleStartReplaceFlow(pendingDeleteReport.exerciseId)}
+                                fullWidth
+                                variant="secondary"
+                                className="border border-primary-500/40 text-primary-600 dark:text-primary-400 font-bold"
+                            >
+                                <Icon name="RefreshCw" size={16} className="mr-2" />
+                                {lang === 'es' ? 'Reemplazar referencias' : 'Replace references'}
+                            </Button>
+                            <Button
                                 onClick={() => setPendingDeleteReport(null)}
                                 fullWidth
                                 variant="secondary"
@@ -478,6 +520,42 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Exercise Selector for Reference Replacement */}
+            {replacingExerciseId && (
+                <Suspense fallback={null}>
+                    <ExerciseSelector
+                        excludeIds={[replacingExerciseId]}
+                        onSelect={(newExId, newExDef) => {
+                            const candidate = newExDef || exercises.find(e => e.id === newExId);
+                            if (candidate) {
+                                setPendingReplacementCandidate(candidate);
+                            }
+                        }}
+                        onClose={() => setReplacingExerciseId(null)}
+                    />
+                </Suspense>
+            )}
+
+            {/* Confirm Replacement Modal */}
+            {replacingExerciseId && pendingReplacementCandidate && (
+                <Suspense fallback={null}>
+                    <ConfirmModal
+                        isOpen={true}
+                        title={lang === 'es' ? '¿Confirmar reemplazo?' : 'Confirm replacement?'}
+                        description={
+                            lang === 'es'
+                                ? `Se actualizarán todas las referencias de "${getTranslated(exercises.find(e => e.id === replacingExerciseId)?.name || 'Personalizado', lang)}" por "${getTranslated(pendingReplacementCandidate.name, lang)}" en tus rutinas y plantillas activas. El historial anterior no se alterará y el ejercicio antiguo será eliminado.`
+                                : `All active routine and template references to "${getTranslated(exercises.find(e => e.id === replacingExerciseId)?.name || 'Custom', lang)}" will be replaced with "${getTranslated(pendingReplacementCandidate.name, lang)}". Historical logs remain intact, and the old exercise will be deleted.`
+                        }
+                        onConfirm={() => handleExecuteReplacement(replacingExerciseId, pendingReplacementCandidate.id)}
+                        onCancel={() => setPendingReplacementCandidate(null)}
+                        confirmText={lang === 'es' ? 'Reemplazar y eliminar' : 'Replace & delete'}
+                        cancelText={t.cancel}
+                        variant="primary"
+                    />
+                </Suspense>
             )}
         </div>
     );
