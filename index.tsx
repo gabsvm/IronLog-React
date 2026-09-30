@@ -103,6 +103,8 @@ interface ErrorBoundaryProps {
 interface ErrorBoundaryState {
   hasError: boolean;
   error: any;
+  confirmReset: boolean;
+  isResetting: boolean;
 }
 
 class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
@@ -111,12 +113,12 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 
   constructor(props: ErrorBoundaryProps) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, confirmReset: false, isResetting: false };
     this.props = props;
   }
 
   static getDerivedStateFromError(error: any): ErrorBoundaryState {
-    return { hasError: true, error };
+    return { hasError: true, error, confirmReset: false, isResetting: false };
   }
 
   componentDidCatch(error: any, errorInfo: any) {
@@ -142,6 +144,72 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
           <h1 style={{ color: '#ef4444', fontSize: '24px', marginBottom: '16px' }}>CRITICAL ERROR</h1>
           <p style={{ opacity: 0.8, marginBottom: '24px' }}>The application failed to initialize.</p>
 
+          {this.state.confirmReset && (
+            <div style={{
+              backgroundColor: '#18181b',
+              border: '1px solid #dc2626',
+              borderRadius: '12px',
+              padding: '20px',
+              maxWidth: '440px',
+              width: '100%',
+              marginBottom: '24px',
+              textAlign: 'center',
+            }}>
+              <h2 style={{ color: '#ef4444', fontSize: '15px', margin: '0 0 10px 0', fontWeight: 'bold' }}>
+                Reset Local Data / Reiniciar Datos
+              </h2>
+              <p style={{ color: '#d4d4d8', fontSize: '12px', margin: '0 0 16px 0', lineHeight: 1.5 }}>
+                Resetting local data will clear cached sessions and offline state. This action is permanent and cannot be undone.
+                <br />
+                <span style={{ opacity: 0.7, fontSize: '11px' }}>
+                  Esto borrará las sesiones en caché y el estado offline. Esta acción es permanente.
+                </span>
+              </p>
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                <button
+                  type="button"
+                  disabled={this.state.isResetting}
+                  onClick={() => {
+                    this.setState({ isResetting: true });
+                    void resetLocalData().finally(() => {
+                      window.location.reload();
+                    });
+                  }}
+                  style={{
+                    padding: '10px 18px',
+                    backgroundColor: '#dc2626',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontWeight: 'bold',
+                    fontSize: '12px',
+                    cursor: this.state.isResetting ? 'wait' : 'pointer',
+                    opacity: this.state.isResetting ? 0.7 : 1,
+                  }}
+                >
+                  {this.state.isResetting ? 'Resetting...' : 'Confirm Reset / Confirmar'}
+                </button>
+                <button
+                  type="button"
+                  disabled={this.state.isResetting}
+                  onClick={() => this.setState({ confirmReset: false })}
+                  style={{
+                    padding: '10px 18px',
+                    backgroundColor: '#27272a',
+                    color: '#e4e4e7',
+                    border: '1px solid #3f3f46',
+                    borderRadius: '8px',
+                    fontWeight: 'bold',
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Cancel / Cancelar
+                </button>
+              </div>
+            </div>
+          )}
+
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '32px' }}>
             <button
               onClick={() => {
@@ -159,26 +227,24 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
             >
               Reload App / Recargar
             </button>
-            <button
-              onClick={() => {
-                if (window.confirm('Resetting local data will clear cached sessions and offline state. Continue?')) {
-                  void resetLocalData().finally(() => {
-                    window.location.reload();
-                  });
-                }
-              }}
-              style={{
-                padding: '12px 24px',
-                backgroundColor: '#dc2626',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-              }}
-            >
-              Reset Local Data / Reiniciar Datos
-            </button>
+            {!this.state.confirmReset && (
+              <button
+                onClick={() => {
+                  this.setState({ confirmReset: true });
+                }}
+                style={{
+                  padding: '12px 24px',
+                  backgroundColor: '#27272a',
+                  color: '#f87171',
+                  border: '1px solid #dc2626',
+                  borderRadius: '8px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                }}
+              >
+                Reset Local Data / Reiniciar Datos
+              </button>
+            )}
           </div>
 
           <div style={{ width: '100%', maxWidth: '500px', textAlign: 'left', background: '#000', padding: '16px', borderRadius: '8px', overflowX: 'auto' }}>

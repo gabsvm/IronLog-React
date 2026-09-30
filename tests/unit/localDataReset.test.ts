@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
 import { resetLocalData } from '../../services/localDataReset';
 import { db } from '../../utils/db';
 import { useStore, resetStorePersistence } from '../../lib/store';
@@ -92,5 +94,12 @@ describe('localDataReset', () => {
         expect(dbSetSpy).not.toHaveBeenCalledWith('il_session_v16', mockSession);
         expect(useStore.getState().activeSession).toBeNull();
         expect(useStore.getState().activeMeso).toBeNull();
+    });
+
+    it('proves ErrorBoundary and production entry point do not call native window.confirm or window.alert', () => {
+        const indexPath = path.resolve(__dirname, '../../index.tsx');
+        const indexContent = fs.readFileSync(indexPath, 'utf-8');
+        expect(indexContent.includes('window.confirm(')).toBe(false);
+        expect(indexContent.includes('window.alert(')).toBe(false);
     });
 });
