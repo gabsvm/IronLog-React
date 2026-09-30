@@ -75,7 +75,7 @@ const RestTimerControl: React.FC<{
                     if (restTimer.active) onStop();
                     else onStart(preset);
                 }}
-                className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold tabular-nums transition-colors ${
+                className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold tabular-nums transition-colors ${
                     restTimer.active ? 'bg-primary-500/20 text-primary-300' : 'bg-zinc-900 text-zinc-400'
                 }`}
                 title={restTimer.active
@@ -92,7 +92,7 @@ const RestTimerControl: React.FC<{
                         event.stopPropagation();
                         onCyclePreset();
                     }}
-                    className="inline-flex items-center gap-1 rounded-full bg-zinc-900 px-2 py-1 text-[10px] font-semibold text-zinc-400 transition-colors hover:text-white"
+                    className="inline-flex items-center gap-1 rounded-full bg-zinc-900 px-2 py-1 text-[11px] font-semibold text-zinc-400 transition-colors hover:text-white"
                     title={lang === 'es' ? 'Cambiar preset de descanso' : 'Change rest preset'}
                 >
                     <Icon name="RotateCcw" size={11} />
