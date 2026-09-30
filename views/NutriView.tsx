@@ -13,6 +13,7 @@ import { triggerHaptic } from '../utils/audio';
 
 // Extracted in Phase 6.3 to views/nutri/ for clarity
 import { todayStr, getTodayLog, sumMacros, MEAL_ORDER, MEAL_META, ACTIVITY_EMOJI, WATER_GOAL_ML, calcStreak, calcTDEE } from './nutri/nutritionHelpers';
+import { formatLocalDateKey, addLocalDays } from '../utils/localDate';
 import { MacroBar } from './nutri/MacroBar';
 import { WaterTracker } from './nutri/WaterTracker';
 import { TodayTab } from './nutri/TodayTab';
@@ -64,9 +65,10 @@ export const NutriView: React.FC = () => {
   // Last 14 days for history (show more data)
   const last14Days = useMemo(() => {
     const days = [];
+    const todayKey = todayStr();
     for (let i = 13; i >= 0; i--) {
+      const dateStr = addLocalDays(todayKey, -i);
       const d = new Date(); d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split('T')[0];
       const log = nutritionLogs.find(l => l.date === dateStr);
       const macros = log ? sumMacros(log.entries) : { calories: 0, protein: 0, carbs: 0, fat: 0 };
       days.push({
@@ -191,7 +193,7 @@ export const NutriView: React.FC = () => {
     const now = Date.now();
     const today = todayStr();
     const entry: BodyLog = { id: now, date: now, weight: data.weight, bodyFat: data.bodyFat, notes: data.notes };
-    setBodyLogs(prev => [entry, ...prev.filter(l => new Date(l.date).toISOString().split('T')[0] !== today)]);
+    setBodyLogs(prev => [entry, ...prev.filter(l => formatLocalDateKey(new Date(l.date)) !== today)]);
   }, [setBodyLogs]);
 
   const saveGoal = useCallback(() => {

@@ -17,6 +17,15 @@ import { SessionBuilder } from './services/SessionBuilder';
 import { KONG_4DAY_V1 } from './programs/kong/kong4Day';
 import { resolveProgramDay } from './programs/engine/ProgramResolver';
 import { getProgramBlockForWeek } from './programs/engine/ProgramResolver';
+import { resetLocalData } from './services/localDataReset';
+import {
+    createBackupEnvelope,
+    validateAndMigrateBackup,
+    restoreBackupToStorage,
+    getBackupDownloadFilename,
+    type GainsLabBackupV1,
+    type BackupDomainSummary
+} from './services/backupService';
 const ProgramCompletionView = React.lazy(() => import('./components/programs/ProgramCompletionView').then((module) => ({ default: module.ProgramCompletionView })));
 import { useStore } from './lib/store';
 
@@ -79,7 +88,8 @@ const AppContent = () => {
         config, rpFeedback, hasSeenOnboarding, setHasSeenOnboarding,
         isAppLoading,
         pendingCloudData, pendingCloudSections, confirmCloudSync, cancelCloudSync,
-        userProfile, nutritionLogs, cardioSessions, bodyLogs, macroGoals, nutritionGoal
+        userProfile, nutritionLogs, cardioSessions, bodyLogs, macroGoals, nutritionGoal,
+        personalTemplates, customFoods
     } = useApp();
     const activeSession = useStore(state => state.activeSession);
     const activeMeso = useStore(state => state.activeMeso);
@@ -105,7 +115,9 @@ const AppContent = () => {
     const [dismissedUpdate, setDismissedUpdate] = useState(false);
 
     // Custom Modals State
-    const [importData, setImportData] = useState<any>(null);
+    const [validatedBackup, setValidatedBackup] = useState<GainsLabBackupV1 | null>(null);
+    const [backupSummary, setBackupSummary] = useState<BackupDomainSummary | null>(null);
+    const [importError, setImportError] = useState<string | null>(null);
     const [showForceSyncModal, setShowForceSyncModal] = useState(false);
 
     // Sync truncation warning — fires when cloud history is capped at 200 entries
@@ -259,17 +271,18 @@ const AppContent = () => {
 
     // --- DATA MANAGEMENT ---
     const handleExport = () => {
-        const data = {
+        const envelope = createBackupEnvelope({
             program, exercises, logs, activeMeso, activeSession,
             userProfile, nutritionLogs, cardioSessions, bodyLogs, macroGoals, nutritionGoal,
-            version: '4.0.3'
-        };
-        const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+            personalTemplates, customFoods, rpFeedback, config
+        });
+        const blob = new Blob([JSON.stringify(envelope, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `gainslab_backup_${new Date().toISOString().split('T')[0]}.json`;
+        a.download = getBackupDownloadFilename();
         a.click();
+        URL.revokeObjectURL(url);
     };
 
     const handleForceSync = async () => {
@@ -309,30 +322,36 @@ const AppContent = () => {
         const reader = new FileReader();
         reader.onload = (ev) => {
             try {
-                const data = JSON.parse(ev.target?.result as string);
-                // Basic shape guard: must have at least one recognisable array field
-                if (!data || typeof data !== 'object' ||
-                    (!Array.isArray(data.program) && !Array.isArray(data.exercises) && !Array.isArray(data.logs))) {
-                    console.error("Import rejected: unrecognised backup format");
+                const parsed = JSON.parse(ev.target?.result as string);
+                const result = validateAndMigrateBackup(parsed);
+                if (result.valid === false) {
+                    const details = result.errorDetails || '';
+                    const msg = lang === 'en'
+                        ? `Import rejected: ${details || 'Invalid backup format'}`
+                        : `Importación rechazada: ${details || 'Formato de copia de seguridad no válido'}`;
+                    setImportError(msg);
                     return;
                 }
-                setImportData(data);
-            } catch (err) {
-                console.error("Import rejected: invalid JSON");
+                setValidatedBackup(result.backup);
+                setBackupSummary(result.summary);
+            } catch (_) {
+                const msg = lang === 'en' ? 'Invalid JSON file' : 'Archivo JSON inválido';
+                setImportError(msg);
             }
         };
         reader.readAsText(file);
     };
 
-    const confirmImport = () => {
-        if (importData) {
-            if (importData.program) setProgram(importData.program);
-            if (importData.exercises) setExercises(importData.exercises);
-            if (importData.logs) setLogs(importData.logs);
-            if (importData.activeMeso) setActiveMeso(importData.activeMeso);
-            if (importData.activeSession) setActiveSession(importData.activeSession);
-            setImportData(null);
+    const confirmImport = async () => {
+        if (!validatedBackup) return;
+        try {
+            await restoreBackupToStorage(validatedBackup);
+            setValidatedBackup(null);
+            setBackupSummary(null);
             window.location.reload();
+        } catch (err) {
+            console.error('Failed to restore backup:', err);
+            setImportError(lang === 'en' ? 'Failed to restore backup data' : 'Error al restaurar copia de seguridad');
         }
     };
 
@@ -622,16 +641,36 @@ const AppContent = () => {
             {/* IMPORT CONFIRM MODAL */}
             <Suspense fallback={null}>
                 <ConfirmModal
-                isOpen={!!importData}
-                title={t.import}
-                description={t.importConfirm}
-                confirmText={t.import}
-                cancelText={t.cancel}
-                onConfirm={confirmImport}
-                onCancel={() => setImportData(null)}
-                variant="danger"
+                    isOpen={!!validatedBackup}
+                    title={t.import}
+                    description={backupSummary ? (
+                        lang === 'en'
+                            ? `Restore ${backupSummary.programsCount} routines, ${backupSummary.exercisesCount} exercises, ${backupSummary.logsCount} logs, and ${backupSummary.nutritionDaysCount} nutrition days? This will overwrite local data.`
+                            : `¿Restaurar ${backupSummary.programsCount} rutinas, ${backupSummary.exercisesCount} ejercicios, ${backupSummary.logsCount} entrenamientos y ${backupSummary.nutritionDaysCount} días de nutrición? Esto sobrescribirá los datos locales.`
+                    ) : t.importConfirm}
+                    confirmText={t.import}
+                    cancelText={t.cancel}
+                    onConfirm={confirmImport}
+                    onCancel={() => { setValidatedBackup(null); setBackupSummary(null); }}
+                    variant="danger"
                 />
             </Suspense>
+
+            {/* IMPORT ERROR MODAL */}
+            {importError && (
+                <Suspense fallback={null}>
+                    <ConfirmModal
+                        isOpen={true}
+                        title={lang === 'en' ? 'Import Error' : 'Error de Importación'}
+                        description={importError}
+                        confirmText={lang === 'en' ? 'OK' : 'Entendido'}
+                        cancelText=""
+                        variant="primary"
+                        onConfirm={() => setImportError(null)}
+                        onCancel={() => setImportError(null)}
+                    />
+                </Suspense>
+            )}
 
             {/* FORCE SYNC MODAL */}
             <ConfirmModal
@@ -654,8 +693,8 @@ const AppContent = () => {
                         confirmText={t.delete}
                         cancelText={t.cancel}
                         variant="danger"
-                        onConfirm={() => {
-                            localStorage.clear();
+                        onConfirm={async () => {
+                            await resetLocalData();
                             window.location.reload();
                         }}
                         onCancel={() => setShowResetModal(false)}

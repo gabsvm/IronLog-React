@@ -1,5 +1,5 @@
 
-import { get, set, del } from 'idb-keyval';
+import { get, set, del, clear } from 'idb-keyval';
 
 /**
  * Storage utility that prefers IndexedDB via idb-keyval.
@@ -48,5 +48,13 @@ export const db = {
 
     del: async (key: string): Promise<void> => {
         await del(key);
+    },
+
+    clear: async (): Promise<void> => {
+        try {
+            await clear();
+        } catch (err) {
+            console.error('DB Clear Error:', err);
+        }
     }
 };

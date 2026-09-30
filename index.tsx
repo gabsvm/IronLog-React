@@ -5,6 +5,7 @@ import './index.css';
 import './native-performance.css';
 import App from './App';
 import { requestBackgroundSync, requestPeriodicSync } from './services/backgroundSync';
+import { resetLocalData } from './services/localDataReset';
 
 console.log("Starting App Initialization...");
 
@@ -144,7 +145,11 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
           <p style={{ opacity: 0.8, marginBottom: '24px' }}>The application failed to initialize.</p>
 
           <button
-            onClick={() => { localStorage.clear(); window.location.reload(); }}
+            onClick={() => {
+              void resetLocalData().finally(() => {
+                window.location.reload();
+              });
+            }}
             style={{
               padding: '12px 24px',
               backgroundColor: '#dc2626',

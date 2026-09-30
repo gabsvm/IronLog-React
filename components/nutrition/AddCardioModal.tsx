@@ -4,6 +4,7 @@ import { useApp } from '../../context/AppContext';
 import { Icon } from '../ui/Icon';
 import { Button } from '../ui/Button';
 import { Sheet } from '../ui/Sheet';
+import { todayLocalDateKey } from '../../utils/localDate';
 
 interface AddCardioModalProps {
   isOpen: boolean;
@@ -35,7 +36,7 @@ const getCalEstimate = (type: CardioActivityType, durationMin: number, bodyWeigh
 export const AddCardioModal: React.FC<AddCardioModalProps> = ({ isOpen, onClose, onAdd, lang }) => {
   const { userProfile } = useApp();
   const bodyWeight = userProfile?.bodyWeight ?? 75;
-  const today = new Date().toISOString().split('T')[0];
+  const today = todayLocalDateKey();
   const [activity, setActivity]   = useState<CardioActivityType>('running');
   const [duration, setDuration]   = useState('');
   const [distance, setDistance]   = useState('');

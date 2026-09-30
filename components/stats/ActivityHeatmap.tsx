@@ -2,6 +2,8 @@ import React, { useMemo } from 'react';
 import { Log } from '../../types';
 import { useAppPreferences } from '../../context/AppContext';
 
+import { formatLocalDateKey, addLocalDays, todayLocalDateKey } from '../../utils/localDate';
+
 interface ActivityHeatmapProps {
     logs: Log[];
 }
@@ -10,22 +12,20 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ logs }) => {
     const { lang } = useAppPreferences();
 
     const data = useMemo(() => {
-        const today = new Date();
+        const todayKey = todayLocalDateKey();
         const map: Record<string, number> = {};
         logs.forEach(log => {
             if (log.skipped) return;
             const timestamp = log.endTime || log.startTime;
             if (!timestamp) return;
-            const date = new Date(timestamp).toISOString().split('T')[0];
+            const date = formatLocalDateKey(new Date(timestamp));
             const volume = (log.exercises || []).reduce((acc, ex) => acc + (ex.sets?.filter(s => s.completed && !s.skipped).length || 0), 0);
             map[date] = (map[date] || 0) + volume;
         });
 
         const days = [];
         for (let i = 111; i >= 0; i--) {
-            const d = new Date();
-            d.setDate(today.getDate() - i);
-            const dateStr = d.toISOString().split('T')[0];
+            const dateStr = addLocalDays(todayKey, -i);
             days.push({ date: dateStr, value: map[dateStr] || 0 });
         }
         return days;
