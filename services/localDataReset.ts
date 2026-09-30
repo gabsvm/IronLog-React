@@ -1,5 +1,5 @@
 import { db } from '../utils/db';
-import { useStore } from '../lib/store';
+import { useStore, resetStorePersistence } from '../lib/store';
 import { dirtySyncState } from './dirtySyncState';
 
 export interface ResetOptions {
@@ -7,7 +7,7 @@ export interface ResetOptions {
 }
 
 const GAINSLAB_KEY_PREFIXES = ['il_', 'ironlog_', 'active_session'];
-const PREFERENCE_KEYS = ['il_theme', 'il_lang', 'il_color_theme', 'il_effects_mode'];
+const PREFERENCE_KEYS = ['il_theme_v1', 'il_lang_v1', 'il_color_theme_v1', 'il_effects_mode'];
 
 /**
  * Canonical service to perform a real, complete local data reset for GainsLab.
@@ -15,12 +15,8 @@ const PREFERENCE_KEYS = ['il_theme', 'il_lang', 'il_color_theme', 'il_effects_mo
  */
 export const resetLocalData = async (options: ResetOptions = {}): Promise<void> => {
     try {
-        // 1. Reset in-memory Zustand store
-        useStore.setState({
-            activeSession: null,
-            activeMeso: null,
-            isStoreLoading: false,
-        });
+        // 1. Cancel pending debounce timers and reset in-memory Zustand store
+        resetStorePersistence();
 
         // 2. Clear IndexedDB (idb-keyval store)
         await db.clear();
@@ -64,7 +60,7 @@ export const resetLocalData = async (options: ResetOptions = {}): Promise<void> 
 
             allKeys.forEach(key => {
                 const isGainsLabKey = GAINSLAB_KEY_PREFIXES.some(prefix => key.startsWith(prefix));
-                if (isGainsLabKey || !options.preservePreferences) {
+                if (isGainsLabKey) {
                     window.localStorage.removeItem(key);
                 }
             });

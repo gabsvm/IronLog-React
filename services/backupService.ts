@@ -201,12 +201,6 @@ export const validateAndMigrateBackup = (raw: unknown): BackupValidationResult =
 export const restoreBackupToStorage = async (backup: GainsLabBackupV1): Promise<void> => {
     const s = backup.state;
 
-    // Apply active workout & meso in Zustand store
-    useStore.setState({
-        activeSession: s.activeSession ?? null,
-        activeMeso: s.activeMeso ?? null,
-    });
-
     const writeTasks: Promise<void>[] = [];
 
     if (s.program !== undefined) writeTasks.push(db.set('il_prog_v16', s.program));
@@ -226,11 +220,35 @@ export const restoreBackupToStorage = async (backup: GainsLabBackupV1): Promise<
 
     // Ensure onboarding is marked complete if data was restored
     writeTasks.push(db.set('il_onboarded_v2', true));
+
+    // Restore configuration using actual production localStorage keys
+    if (s.config && typeof window !== 'undefined' && window.localStorage) {
+        if (s.config.showRIR !== undefined) {
+            window.localStorage.setItem('il_cfg_rir', JSON.stringify(s.config.showRIR));
+        }
+        if (s.config.rpEnabled !== undefined) {
+            window.localStorage.setItem('il_cfg_rp', JSON.stringify(s.config.rpEnabled));
+        }
+        if (s.config.rpTargetRIR !== undefined) {
+            window.localStorage.setItem('il_cfg_rp_rir', JSON.stringify(s.config.rpTargetRIR));
+        }
+        if (s.config.keepScreenOn !== undefined) {
+            window.localStorage.setItem('il_cfg_screen', JSON.stringify(s.config.keepScreenOn));
+        }
+    }
+
     if (typeof window !== 'undefined' && window.localStorage) {
         window.localStorage.setItem('il_has_seen_onboarding_v1', 'true');
     }
 
+    // Await all storage writes to ensure no false success on write failure
     await Promise.all(writeTasks);
+
+    // Apply active workout & meso in Zustand store only after persistent writes succeed
+    useStore.setState({
+        activeSession: s.activeSession ?? null,
+        activeMeso: s.activeMeso ?? null,
+    });
 };
 
 /**

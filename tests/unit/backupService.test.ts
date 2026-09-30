@@ -1,11 +1,14 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
     createBackupEnvelope,
     validateAndMigrateBackup,
     summarizeBackup,
+    restoreBackupToStorage,
     BACKUP_SCHEMA,
     CURRENT_BACKUP_VERSION,
 } from '../../services/backupService';
+import { db } from '../../utils/db';
+import { useStore } from '../../lib/store';
 
 describe('backupService', () => {
     const sampleState = {
@@ -79,5 +82,81 @@ describe('backupService', () => {
         expect(validateAndMigrateBackup('string').valid).toBe(false);
         expect(validateAndMigrateBackup({}).valid).toBe(false);
         expect(validateAndMigrateBackup({ schema: BACKUP_SCHEMA, version: 999, state: {} }).valid).toBe(false);
+    });
+
+    it('executes a complete 15-domain round trip: state A -> export -> clear -> restore -> read storage -> match A', async () => {
+        const memoryStorage = new Map<string, any>();
+        vi.spyOn(db, 'set').mockImplementation(async (key, val) => {
+            memoryStorage.set(key, val);
+        });
+        vi.spyOn(db, 'get').mockImplementation(async (key, defaultVal) => {
+            return memoryStorage.has(key) ? memoryStorage.get(key) : defaultVal;
+        });
+
+        const stateA = {
+            program: [{ id: 'p1', dayName: { en: 'Push', es: 'Empuje' }, slots: [] }],
+            exercises: [{ id: 'bench', name: 'Bench Press', muscle: 'CHEST' as const }],
+            logs: [{ id: 101, dayIdx: 0, name: 'Push A', startTime: 1000, endTime: 2000, duration: 60, mesoId: 1, week: 1, exercises: [] }],
+            activeMeso: { id: 77, name: 'Meso Hypertrophy', week: 2, duration: 6, mesoType: 'hyp_1', plan: [] },
+            activeSession: { id: 88, name: 'Chest Day', startTime: 12345, mesoId: 77, week: 2, exercises: [], dayIdx: 0 },
+            userProfile: { experience: 'intermediate' as const, daysPerWeek: 4, goal: 'hypertrophy' as const, sessionDuration: 'medium' as const },
+            nutritionLogs: [{ date: '2026-09-30', entries: [], waterMl: 1500 }],
+            cardioSessions: [{ id: 'c1', date: '2026-09-30', activityType: 'running' as const, durationMin: 30, timestamp: 1000 }],
+            bodyLogs: [{ id: 1, date: 1700000000, weight: 75.5 }],
+            macroGoals: { calories: 2500, protein: 180, carbs: 250, fats: 70 },
+            nutritionGoal: { calories: 2500, protein: 180, carbs: 250, fat: 70 },
+            personalTemplates: [{ id: 'pt1', name: 'My Split', title: { en: 'My Split', es: 'Mi Rutina' }, description: { en: '', es: '' }, isPro: false, order: 0, program: [] }],
+            customFoods: [{ id: 'f1', name: 'Protein Bar', calories: 200, protein: 20, carbs: 15, fat: 5, createdAt: 1000 }],
+            rpFeedback: { 'bench': { pump: 2, soreness: 1, workload: 0 } },
+            config: {
+                showRIR: true,
+                rpEnabled: true,
+                rpTargetRIR: 3,
+                keepScreenOn: true,
+            },
+        };
+
+        // 1. Export state A into backup envelope
+        const envelope = createBackupEnvelope(stateA);
+        expect(envelope.schema).toBe(BACKUP_SCHEMA);
+
+        // 2. Validate envelope before restore
+        const validation = validateAndMigrateBackup(envelope);
+        expect(validation.valid).toBe(true);
+        if (!validation.valid) return;
+
+        // 3. Clear/reset storage completely
+        localStorage.clear();
+        memoryStorage.clear();
+        useStore.setState({ activeSession: null, activeMeso: null });
+
+        // 4. Restore backup to storage
+        await restoreBackupToStorage(validation.backup);
+
+        // 5. Read every domain back from storage and compare with state A
+        expect(await db.get('il_prog_v16', null)).toEqual(stateA.program);
+        expect(await db.get('il_ex_v16', null)).toEqual(stateA.exercises);
+        expect(await db.get('il_logs_v16', null)).toEqual(stateA.logs);
+        expect(await db.get('il_meso_v16', null)).toEqual(stateA.activeMeso);
+        expect(await db.get('il_session_v16', null)).toEqual(stateA.activeSession);
+        expect(await db.get('il_profile_v1', null)).toEqual(stateA.userProfile);
+        expect(await db.get('il_nutrition_v1', null)).toEqual(stateA.nutritionLogs);
+        expect(await db.get('il_cardio_v1', null)).toEqual(stateA.cardioSessions);
+        expect(await db.get('il_body_v1', null)).toEqual(stateA.bodyLogs);
+        expect(await db.get('il_macros_v1', null)).toEqual(stateA.macroGoals);
+        expect(await db.get('il_nut_goal_v1', null)).toEqual(stateA.nutritionGoal);
+        expect(await db.get('il_personal_templates_v1', null)).toEqual(stateA.personalTemplates);
+        expect(await db.get('il_custom_foods_v1', null)).toEqual(stateA.customFoods);
+        expect(await db.get('il_rp_fb_v1', null)).toEqual(stateA.rpFeedback);
+
+        // Config domains from production localStorage keys
+        expect(JSON.parse(localStorage.getItem('il_cfg_rir')!)).toBe(stateA.config.showRIR);
+        expect(JSON.parse(localStorage.getItem('il_cfg_rp')!)).toBe(stateA.config.rpEnabled);
+        expect(JSON.parse(localStorage.getItem('il_cfg_rp_rir')!)).toBe(stateA.config.rpTargetRIR);
+        expect(JSON.parse(localStorage.getItem('il_cfg_screen')!)).toBe(stateA.config.keepScreenOn);
+
+        // In-memory active session & meso state
+        expect(useStore.getState().activeSession).toEqual(stateA.activeSession);
+        expect(useStore.getState().activeMeso).toEqual(stateA.activeMeso);
     });
 });

@@ -65,8 +65,6 @@ export const useStore = create<AppStateStore>((set, get) => ({
  * that boundary risks losing the very last set edit.
  */
 export const flushStorePersistence = () => {
-    const { activeSession, activeMeso } = useStore.getState();
-
     if (sessionTimeout) {
         clearTimeout(sessionTimeout);
         sessionTimeout = null;
@@ -76,8 +74,34 @@ export const flushStorePersistence = () => {
         mesoTimeout = null;
     }
 
-    void db.set('il_session_v16', activeSession);
-    void db.set('il_meso_v16', activeMeso);
+    const { activeSession, activeMeso } = useStore.getState();
+    if (activeSession !== null) {
+        void db.set('il_session_v16', activeSession);
+    }
+    if (activeMeso !== null) {
+        void db.set('il_meso_v16', activeMeso);
+    }
+};
+
+/**
+ * Cancels pending IndexedDB debounce timers and resets active session/meso state
+ * to null, preventing timer race conditions during local data reset.
+ */
+export const resetStorePersistence = () => {
+    if (sessionTimeout) {
+        clearTimeout(sessionTimeout);
+        sessionTimeout = null;
+    }
+    if (mesoTimeout) {
+        clearTimeout(mesoTimeout);
+        mesoTimeout = null;
+    }
+
+    useStore.setState({
+        activeSession: null,
+        activeMeso: null,
+        isStoreLoading: false,
+    });
 };
 
 // Auto-initialize
