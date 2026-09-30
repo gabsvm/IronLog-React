@@ -98,20 +98,22 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ onClose, feature }) 
                         ))}
                     </div>
 
-                    <p className="text-center text-[10px] text-zinc-600 mt-4 leading-relaxed">
+                    <p className="text-center text-[11px] text-zinc-500 dark:text-zinc-400 mt-4 leading-relaxed">
                         {lang === 'en' 
-                            ? 'Send a WhatsApp message and we\'ll activate your account within 24hs.' 
-                            : 'Envianos un mensaje por WhatsApp y activamos tu cuenta en menos de 24hs.'}
+                            ? 'Send a WhatsApp message to request early access. We will activate your account within 24 hours.' 
+                            : 'Envíanos un mensaje por WhatsApp para solicitar acceso temprano. Activamos tu cuenta en menos de 24 hs.'}
                     </p>
 
                     {/* Footer */}
-                    <div className="text-center space-y-2">
-                        <p className="text-[10px] text-zinc-400 font-medium">
+                    <div className="text-center space-y-2 mt-4">
+                        <p className="text-[11px] text-zinc-400 font-medium">
                             {t.guarantee}
                         </p>
-                        <button onClick={onClose} className="text-[10px] text-zinc-300 hover:text-zinc-500 underline">
-                            {lang === 'en' ? "Restore Purchases" : "Restaurar Compras"}
-                        </button>
+                        <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                            {lang === 'en'
+                                ? 'Already have an approved account? Sign in with your email to sync Pro entitlement.'
+                                : '¿Ya tienes una cuenta aprobada? Inicia sesión con tu email para sincronizar tu acceso Pro.'}
+                        </p>
                     </div>
                 </div>
             </div>

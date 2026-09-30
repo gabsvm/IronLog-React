@@ -144,24 +144,44 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
           <h1 style={{ color: '#ef4444', fontSize: '24px', marginBottom: '16px' }}>CRITICAL ERROR</h1>
           <p style={{ opacity: 0.8, marginBottom: '24px' }}>The application failed to initialize.</p>
 
-          <button
-            onClick={() => {
-              void resetLocalData().finally(() => {
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '32px' }}>
+            <button
+              onClick={() => {
                 window.location.reload();
-              });
-            }}
-            style={{
-              padding: '12px 24px',
-              backgroundColor: '#dc2626',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontWeight: 'bold',
-              marginBottom: '32px'
-            }}
-          >
-            Factory Reset App
-          </button>
+              }}
+              style={{
+                padding: '12px 24px',
+                backgroundColor: '#2563eb',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+              }}
+            >
+              Reload App / Recargar
+            </button>
+            <button
+              onClick={() => {
+                if (window.confirm('Resetting local data will clear cached sessions and offline state. Continue?')) {
+                  void resetLocalData().finally(() => {
+                    window.location.reload();
+                  });
+                }
+              }}
+              style={{
+                padding: '12px 24px',
+                backgroundColor: '#dc2626',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+              }}
+            >
+              Reset Local Data / Reiniciar Datos
+            </button>
+          </div>
 
           <div style={{ width: '100%', maxWidth: '500px', textAlign: 'left', background: '#000', padding: '16px', borderRadius: '8px', overflowX: 'auto' }}>
             <pre style={{ color: '#f87171', fontSize: '11px', margin: 0 }}>

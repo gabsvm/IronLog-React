@@ -103,14 +103,6 @@
       ]
     }
   ],
-  "related_applications": [
-    {
-      "platform": "play",
-      "id": "app.vercel.gainslab_pro.twa",
-      "url": "https://play.google.com/store/apps/details?id=app.vercel.gainslab_pro.twa"
-    }
-  ],
-  "prefer_related_applications": false,
   "edge_side_panel": {
     "preferred_width": 400
   },
@@ -120,6 +112,5 @@
       "navigate-existing",
       "auto"
     ]
-  },
-  "iarc_rating_id": ""
+  }
 }

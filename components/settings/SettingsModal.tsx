@@ -67,9 +67,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         } else {
             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
             if (isIOS) {
-                setInstallInstructions(t.iosInstall);
+                setInstallInstructions(
+                    lang === 'es'
+                        ? 'En Safari, toca el botón Compartir (icono cuadrado con flecha hacia arriba) y selecciona "Agregar al inicio" (+) para instalar GainsLab.'
+                        : 'In Safari, tap the Share button (square icon with upward arrow) and select "Add to Home Screen" (+) to install GainsLab.'
+                );
             } else {
-                setInstallInstructions(t.androidInstall || "Tap the browser menu (⋮) and select 'Install App' or 'Add to Home Screen'.");
+                setInstallInstructions(
+                    lang === 'es'
+                        ? 'Toca el menú del navegador (⋮) y selecciona "Instalar app" o "Agregar a la pantalla principal".'
+                        : 'Tap the browser menu (⋮) and select "Install app" or "Add to Home Screen".'
+                );
             }
         }
     };
@@ -224,7 +232,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                         <Icon name="Download" size={16} className="animate-bounce" />
                                         {t.installApp}
                                     </h3>
-                                    <p className="text-[10px] opacity-90 font-medium mt-1 max-w-[130px] leading-tight">
+                                    <p className="text-[11px] opacity-90 font-medium mt-1 max-w-[140px] leading-tight">
                                         {t.installDesc}
                                     </p>
                                 </div>
