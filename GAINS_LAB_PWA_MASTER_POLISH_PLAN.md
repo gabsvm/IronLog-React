@@ -1,8 +1,8 @@
 # GainsLab PWA — Master Product Polish Plan
 
-> Repository: \`gabsvm/IronLog-React\`  
-> Baseline audited: \`main\` @ \`eec57454c7cebee6553340e1ad41f283a8b21931\`  
-> Product version at audit: \`4.0.3\`  
+> Repository: `gabsvm/IronLog-React`  
+> Baseline audited: `main` @ `eec57454c7cebee6553340e1ad41f283a8b21931`  
+> Product version at audit: `4.0.3`  
 > Primary target: PWA / browser-installed app  
 > Secondary target: Capacitor Android shell using the same React product  
 > Performance floor: Redmi Note 10 class hardware, 4 GB RAM  
@@ -52,13 +52,13 @@ These rules apply to every phase.
 6. **Do not reduce workout touch targets to gain density.**
 7. **Do not remove existing KONG, Two Block Mass, CrossFit, calisthenics, nutrition, history or stats capability unless the item is proven dead/duplicate legacy code and not part of the live runtime.**
 8. **Do not silently substitute exercises when user intent can be validated earlier.**
-9. **Do not use native \`alert()\` / \`confirm()\` for production flows after P1.**
+9. **Do not use native `alert()` / `confirm()` for production flows after P1.**
 10. **Do not use DOM querying / MutationObserver / click interception as a new integration technique.**
 11. **Do not globally force reduced effects based only on 4 GB RAM, hardwareConcurrency <= 4, or Capacitor.**
-12. Honor \`prefers-reduced-motion\`.
+12. Honor `prefers-reduced-motion`.
 13. Every destructive action needs explicit confirmation; recoverable actions should prefer Undo where practical.
 14. Every implementation checkpoint must keep:
-    - \`npm run build:strict\` passing;
+    - `npm run build:strict` passing;
     - TypeScript clean;
     - no new a11y lint errors;
     - app booting with old persisted data;
@@ -83,13 +83,13 @@ Do not redesign these away:
 - Lazy loading of secondary views.
 - Lazy Firebase loading.
 - Chart/Stats worker strategy.
-- \`content-visibility\` / containment optimizations.
-- unified \`Sheet\` primitive built on Vaul.
+- `content-visibility` / containment optimizations.
+- unified `Sheet` primitive built on Vaul.
 - haptic feedback.
 - theme tokens and primary accent system.
 - safe-area handling.
 - light/dark support.
-- existing \`prefers-reduced-motion\` support.
+- existing `prefers-reduced-motion` support.
 
 ---
 
@@ -97,26 +97,26 @@ Do not redesign these away:
 
 Create a single branch:
 
-\`agent/gainslab-pwa-master-polish-v1\`
+`agent/gainslab-pwa-master-polish-v1`
 
 Do not make a new branch for every phase.
 
 Use the following checkpoint commit structure. Small supporting commits are allowed, but these checkpoint boundaries must remain recognizable:
 
-1. \`test: establish GainsLab critical-flow safety net\`
-2. \`fix: harden local dates reset and backup restore\`
-3. \`fix: make onboarding outcomes truthful and persistent\`
-4. \`fix: harden entitlements exercise deletion and PWA actions\`
-5. \`refactor: unify workout completion pipeline\`
-6. \`refactor: clarify program and exercise management flows\`
-7. \`refactor: simplify settings stats profile and modal navigation\`
-8. \`refactor: remove DOM hacks and legacy runtime ambiguity\`
-9. \`feat: add explicit adaptive effects profiles\`
-10. \`style: unify GainsLab product surfaces typography and motion\`
-11. \`perf: validate and tune Redmi Note 10 performance floor\`
-12. \`chore: harden public PWA release and remove prototype commerce\`
-13. \`test: complete release regression coverage\`
-14. \`docs: record release checklist and architecture decisions\`
+1. `test: establish GainsLab critical-flow safety net`
+2. `fix: harden local dates reset and backup restore`
+3. `fix: make onboarding outcomes truthful and persistent`
+4. `fix: harden entitlements exercise deletion and PWA actions`
+5. `refactor: unify workout completion pipeline`
+6. `refactor: clarify program and exercise management flows`
+7. `refactor: simplify settings stats profile and modal navigation`
+8. `refactor: remove DOM hacks and legacy runtime ambiguity`
+9. `feat: add explicit adaptive effects profiles`
+10. `style: unify GainsLab product surfaces typography and motion`
+11. `perf: validate and tune Redmi Note 10 performance floor`
+12. `chore: harden public PWA release and remove prototype commerce`
+13. `test: complete release regression coverage`
+14. `docs: record release checklist and architecture decisions`
 
 Do not squash away useful checkpoint boundaries until final review.
 
@@ -132,8 +132,8 @@ Add Vitest + React Testing Library where appropriate, and Playwright for critica
 
 Minimum unit/integration coverage:
 
-- \`recommendProgram()\`
-- \`SessionBuilder.buildFromProgramDay()\`
+- `recommendProgram()`
+- `SessionBuilder.buildFromProgramDay()`
 - local date helpers
 - backup serialization/deserialization
 - reset storage service
@@ -164,10 +164,10 @@ Do not require GitHub Actions for this plan. The suite must be runnable locally 
 
 Add scripts such as:
 
-- \`test\`
-- \`test:run\`
-- \`test:e2e\`
-- \`verify\` = strict build + unit tests
+- `test`
+- `test:run`
+- `test:e2e`
+- `verify` = strict build + unit tests
 
 Do not make Playwright mandatory for every tiny local edit if it causes excessive iteration cost; make it mandatory at checkpoints.
 
@@ -175,15 +175,15 @@ Do not make Playwright mandatory for every tiny local edit if it causes excessiv
 
 ## P0.2 — Fix local-calendar dates
 
-Current nutrition date generation uses UTC via \`toISOString().split('T')[0]\`, which can roll the day at ~21:00 in Argentina.
+Current nutrition date generation uses UTC via `toISOString().split('T')[0]`, which can roll the day at ~21:00 in Argentina.
 
 Create one shared local calendar utility, e.g.:
 
-- \`utils/localDate.ts\`
+- `utils/localDate.ts`
 
 It must provide deterministic local-calendar helpers such as:
 
-- today local \`YYYY-MM-DD\`
+- today local `YYYY-MM-DD`
 - date-to-local-key
 - add/subtract local days without UTC rollover bugs
 - parse local date key safely
@@ -200,11 +200,11 @@ Replace UTC-derived “today” usage in nutrition and any other user-facing dai
 
 ## P0.3 — Implement a real full local reset
 
-Replace every “factory reset” path that only calls \`localStorage.clear()\`.
+Replace every “factory reset” path that only calls `localStorage.clear()`.
 
 Create one canonical service, e.g.:
 
-\`services/localDataReset.ts\`
+`services/localDataReset.ts`
 
 It must clear GainsLab-owned:
 
@@ -241,7 +241,7 @@ Introduce a versioned backup schema.
 
 Suggested envelope:
 
-\`\`\`ts
+```ts
 {
   schema: 'gainslab-backup',
   version: 1,
@@ -249,7 +249,7 @@ Suggested envelope:
   appVersion: string,
   state: { ... }
 }
-\`\`\`
+```
 
 Export and import the same supported domains:
 
@@ -291,7 +291,7 @@ Fix all three onboarding outcome paths.
 
 ### Persist answers
 
-The setup wizard must persist relevant answers to \`userProfile\` instead of using a disposable internal profile only.
+The setup wizard must persist relevant answers to `userProfile` instead of using a disposable internal profile only.
 
 At minimum preserve:
 
@@ -385,7 +385,7 @@ Audit and either implement or remove unsupported manifest declarations.
 
 Current declarations include action/deep-entry concepts such as:
 
-- \`?action=start\`
+- `?action=start`
 - share target
 - JSON file handler
 - custom protocol
@@ -396,7 +396,7 @@ At minimum implement the genuinely useful:
 
 ### Start Workout shortcut
 
-\`/?action=start&source=shortcut\`
+`/?action=start&source=shortcut`
 
 must route to the appropriate action:
 
@@ -439,7 +439,7 @@ The pipeline should:
 
 Session Summary adapts by session type.
 
-Do not duplicate finish logic in \`App.tsx\` and \`WorkoutView.tsx\`.
+Do not duplicate finish logic in `App.tsx` and `WorkoutView.tsx`.
 
 ### Celebration policy
 
@@ -485,7 +485,7 @@ KONG conversion remains explicit and must use GainsLab modal/sheet UI, not brows
 
 ## P1.3 — Rebuild Exercise Management using proven picker infrastructure
 
-Bring \`ExercisesView\` up to the quality of \`ExerciseSelector\`.
+Bring `ExercisesView` up to the quality of `ExerciseSelector`.
 
 Required:
 
@@ -579,13 +579,13 @@ Avoid duplicating the same summary controls in multiple locations.
 
 Remove production UX dependence on:
 
-- \`window.alert\`
-- \`window.confirm\`
+- `window.alert`
+- `window.confirm`
 
 Use:
 
-- \`ConfirmModal\`
-- \`Sheet\`
+- `ConfirmModal`
+- `Sheet`
 - toast/banner/inline errors
 
 for:
@@ -605,8 +605,8 @@ All user-facing messages must support ES/EN.
 Replace runtime behavior based on:
 
 - MutationObserver label rewriting;
-- \`querySelector\` to locate another React component;
-- synthetic \`.click()\`;
+- `querySelector` to locate another React component;
+- synthetic `.click()`;
 - click-capture interception based on CSS selectors;
 
 with explicit props/events/state.
@@ -638,7 +638,7 @@ Replace automatic binary full/reduced behavior with an explicit profile.
 
 Suggested persisted setting:
 
-\`effectsMode: 'system' | 'full' | 'balanced' | 'reduced'\`
+`effectsMode: 'system' | 'full' | 'balanced' | 'reduced'`
 
 ### System
 Honor accessibility and choose a sane default, but do not reduce merely because deviceMemory reports 4.
@@ -658,10 +658,10 @@ Accessibility/minimal motion.
 
 Rules:
 
-- \`prefers-reduced-motion\` always wins for motion safety.
-- \`saveData\` may influence network/media behavior, not automatically erase UI animation.
-- \`hardwareConcurrency <= 4\` alone must not force reduced.
-- \`deviceMemory <= 4\` alone must not force reduced.
+- `prefers-reduced-motion` always wins for motion safety.
+- `saveData` may influence network/media behavior, not automatically erase UI animation.
+- `hardwareConcurrency <= 4` alone must not force reduced.
+- `deviceMemory <= 4` alone must not force reduced.
 - Capacitor must not automatically force reduced.
 
 ---
@@ -758,7 +758,7 @@ Prioritize live product files:
 - Session Summary
 - onboarding/auth
 
-Goal: reduce dependence on selectors such as exact hard-coded background classes and \`:has()\`-based hiding.
+Goal: reduce dependence on selectors such as exact hard-coded background classes and `:has()`-based hiding.
 
 Do not attempt a risky one-shot Tailwind/design-system rewrite.
 
@@ -978,7 +978,7 @@ After runtime parity is verified:
 - remove dead duplicate view implementations;
 - remove obsolete CSS patches superseded by tokenized components;
 - remove unused imports/state;
-- document why \`ironlog-kmp/\` remains in the repository if it remains;
+- document why `ironlog-kmp/` remains in the repository if it remains;
 - prevent agents from confusing the KMP experiment with the production React/PWA path.
 
 Do not delete KMP or historical implementation code merely for aesthetics without confirming repository intent.
@@ -991,12 +991,12 @@ The goal is not a giant architecture rewrite, but these extractions are encourag
 
 Suggested services/helpers:
 
-- \`utils/localDate.ts\`
-- \`services/backupService.ts\`
-- \`services/localDataReset.ts\`
-- \`services/workoutCompletionService.ts\` or equivalent controller
-- \`services/exerciseReferenceService.ts\`
-- \`utils/deepLinkAction.ts\`
+- `utils/localDate.ts`
+- `services/backupService.ts`
+- `services/localDataReset.ts`
+- `services/workoutCompletionService.ts` or equivalent controller
+- `services/exerciseReferenceService.ts`
+- `utils/deepLinkAction.ts`
 - pure sync-conflict helpers where possible
 
 Suggested shared product primitives:
@@ -1041,10 +1041,10 @@ For exercise archival:
 Before declaring this plan complete, verify all of the following.
 
 ## Build
-- [ ] \`npm run build:strict\`
+- [ ] `npm run build:strict`
 - [ ] unit/integration tests
 - [ ] Playwright critical journeys
-- [ ] \`npm run validate-kong\`
+- [ ] `npm run validate-kong`
 - [ ] Capacitor Android sync/build validation when environment permits
 
 ## Onboarding
@@ -1109,12 +1109,12 @@ The master polish is complete only when:
 9. Exercise management has modern search/filter UX.
 10. Program creation/editing has a clear mental model.
 11. Settings/Profile/Stats navigation has correct semantics.
-12. No production journey relies on browser \`alert/confirm\`.
+12. No production journey relies on browser `alert/confirm`.
 13. Product behavior no longer depends on brittle DOM-query/MutationObserver integration.
 14. Redmi Note 10 class hardware can use a visually rich mode without automatic “4 GB = reduced” downgrade.
 15. Capacitor no longer globally looks worse just because it is native.
 16. Critical flows have automated regression coverage.
-17. \`npm run build:strict\` and verification suite pass.
+17. `npm run build:strict` and verification suite pass.
 18. The PWA can be sent to an unfamiliar user and used without explaining where core actions are hidden.
 
 ---
@@ -1125,9 +1125,9 @@ Before editing:
 
 1. Read this file completely.
 2. Inspect the live implementation of every file named in the relevant phase.
-3. Verify whether the baseline has changed since \`eec57454c7cebee6553340e1ad41f283a8b21931\`.
+3. Verify whether the baseline has changed since `eec57454c7cebee6553340e1ad41f283a8b21931`.
 4. If newer code already solves an item, validate it and mark the plan item satisfied instead of reimplementing it.
-5. Create/use one branch: \`agent/gainslab-pwa-master-polish-v1\`.
+5. Create/use one branch: `agent/gainslab-pwa-master-polish-v1`.
 
 During implementation:
 
@@ -1155,7 +1155,7 @@ At each checkpoint report:
 
 Use this from the implementation branch:
 
-\`\`\`text
+```text
 /goal Implement the complete GainsLab PWA master product polish defined in GAINS_LAB_PWA_MASTER_POLISH_PLAN.md.
 
 Treat that markdown as the source of truth. Work on ONE branch only: agent/gainslab-pwa-master-polish-v1. Do not create a branch per phase.
@@ -1200,7 +1200,7 @@ Final handoff must include:
 - concise before/after product behavior summary;
 - explicit confirmation of RN10 effects/performance behavior;
 - explicit confirmation that planned, freestyle, WOD, calisthenics, Two Block and KONG sessions all use the intended completion path.
-\`\`\`
+```
 
 ---
 
