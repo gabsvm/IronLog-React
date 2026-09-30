@@ -346,6 +346,20 @@ input, textarea {
   border: 1px solid rgb(var(--modal-border) / 0.06);
 }
 
+/* Balanced profile: keeps transitions and contextual glass, disables continuous loop animations and heavy background blurs */
+[data-effects='balanced'] .blur-2xl,
+[data-effects='balanced'] .blur-3xl,
+[data-effects='balanced'] [class*='blur-['] {
+  filter: none !important;
+}
+
+[data-effects='balanced'] .animate-bounce,
+[data-effects='balanced'] .animate-pulse,
+[data-effects='balanced'] .animate-bounce-cta,
+[data-effects='balanced'] .animate-pulse-glow-green {
+  animation: none !important;
+}
+
 [data-effects='reduced'] .glass,
 [data-effects='reduced'] .glass-card,
 [data-effects='reduced'] .glass-panel,

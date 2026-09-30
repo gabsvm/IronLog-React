@@ -2,6 +2,8 @@
 export type Lang = 'en' | 'es';
 export type Theme = 'light' | 'dark' | 'system';
 export type ColorTheme = 'iron' | 'ocean' | 'forest' | 'royal' | 'sunset' | 'monochrome';
+export type EffectsMode = 'system' | 'full' | 'balanced' | 'reduced';
+export type ResolvedEffects = 'full' | 'balanced' | 'reduced';
 
 export interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];

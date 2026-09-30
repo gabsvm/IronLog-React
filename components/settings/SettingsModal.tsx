@@ -32,6 +32,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 }) => {
     const {
         lang, setLang, theme, setTheme, colorTheme, setColorTheme,
+        effectsMode, setEffectsMode, resolvedEffects,
         config, setConfig, deferredPrompt, installApp, isStandalone,
         userProfile, setUserProfile, syncStatus, isOnline, localLastUpdated, localSectionSyncMeta, pendingCloudSections,
         program, personalTemplates, setPersonalTemplates
@@ -403,6 +404,57 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                     <ColorPill color="bg-orange-500" label="Sunset" active={colorTheme === 'sunset'} onClick={() => setColorTheme('sunset')} />
                                     <ColorPill color="bg-zinc-500" label="Mono" active={colorTheme === 'monochrome'} onClick={() => setColorTheme('monochrome')} />
                                 </div>
+                            </div>
+
+                            <div className="bg-zinc-50 dark:bg-white/5 p-4 rounded-2xl border border-zinc-100 dark:border-white/5 mb-5 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">
+                                        {lang === 'es' ? 'Efectos y Rendimiento' : 'Effects & Performance'}
+                                    </label>
+                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">
+                                        {resolvedEffects.toUpperCase()}
+                                    </span>
+                                </div>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setEffectsMode('system')}
+                                        className={`py-2.5 px-2 rounded-xl text-xs font-bold border flex flex-col items-center justify-center gap-1 transition-all ${effectsMode === 'system' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 border-primary-500 shadow-sm' : 'bg-white dark:bg-zinc-800/40 text-zinc-500 border-transparent hover:text-zinc-700 dark:hover:text-zinc-300'}`}
+                                    >
+                                        <Icon name="Cpu" size={14} />
+                                        <span>{lang === 'es' ? 'Auto' : 'System'}</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setEffectsMode('full')}
+                                        className={`py-2.5 px-2 rounded-xl text-xs font-bold border flex flex-col items-center justify-center gap-1 transition-all ${effectsMode === 'full' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 border-primary-500 shadow-sm' : 'bg-white dark:bg-zinc-800/40 text-zinc-500 border-transparent hover:text-zinc-700 dark:hover:text-zinc-300'}`}
+                                    >
+                                        <Icon name="Zap" size={14} />
+                                        <span>{lang === 'es' ? 'Completo' : 'Full'}</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setEffectsMode('balanced')}
+                                        className={`py-2.5 px-2 rounded-xl text-xs font-bold border flex flex-col items-center justify-center gap-1 transition-all ${effectsMode === 'balanced' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 border-primary-500 shadow-sm' : 'bg-white dark:bg-zinc-800/40 text-zinc-500 border-transparent hover:text-zinc-700 dark:hover:text-zinc-300'}`}
+                                    >
+                                        <Icon name="Layers" size={14} />
+                                        <span>{lang === 'es' ? 'Equilibrado' : 'Balanced'}</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setEffectsMode('reduced')}
+                                        className={`py-2.5 px-2 rounded-xl text-xs font-bold border flex flex-col items-center justify-center gap-1 transition-all ${effectsMode === 'reduced' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 border-primary-500 shadow-sm' : 'bg-white dark:bg-zinc-800/40 text-zinc-500 border-transparent hover:text-zinc-700 dark:hover:text-zinc-300'}`}
+                                    >
+                                        <Icon name="EyeOff" size={14} />
+                                        <span>{lang === 'es' ? 'Reducido' : 'Reduced'}</span>
+                                    </button>
+                                </div>
+                                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-snug">
+                                    {effectsMode === 'system' && (lang === 'es' ? 'Equilibrado en móvil, completo en escritorio. Respeta la configuración de accesibilidad del sistema.' : 'Balanced on mobile, full on desktop. Honors system accessibility settings.')}
+                                    {effectsMode === 'full' && (lang === 'es' ? 'Máxima fidelidad visual con desenfoques de vidrio completos y todas las animaciones.' : 'Full visual polish with rich backdrop blurs and complete animations.')}
+                                    {effectsMode === 'balanced' && (lang === 'es' ? 'Recomendado para entrenar: transiciones suaves y vidrio contextual sin animaciones continuas de fondo.' : 'Recommended for workouts: smooth transitions and contextual glass without continuous background animation.')}
+                                    {effectsMode === 'reduced' && (lang === 'es' ? 'Accesibilidad: elimina desenfoques pesados y minimiza el movimiento para ahorrar batería.' : 'Accessibility: disables backdrop blurs and minimizes motion for battery saving.')}
+                                </p>
                             </div>
 
                             <div>

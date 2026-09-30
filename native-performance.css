@@ -20,37 +20,6 @@ html.native-shell textarea {
     touch-action: manipulation;
 }
 
-html.native-shell .glass {
-    -webkit-backdrop-filter: none !important;
-    backdrop-filter: none !important;
-    background-color: rgba(0, 0, 0, 0.96) !important;
-}
-
-html.native-shell .glass-island,
-html.native-shell .glass-card,
-html.native-shell .glass-panel,
-html.native-shell [class*='backdrop-blur'] {
-    -webkit-backdrop-filter: none !important;
-    backdrop-filter: none !important;
-}
-
-html.native-shell .glass-island,
-html.native-shell .glass-card,
-html.native-shell .glass-panel {
-    background-color: rgba(18, 18, 20, 0.97);
-}
-
-/* The native performance profile must not undo the user's light theme. */
-html.native-shell.light .glass {
-    background-color: rgb(var(--surface-app) / 0.96) !important;
-}
-
-html.native-shell.light .glass-island,
-html.native-shell.light .glass-card,
-html.native-shell.light .glass-panel {
-    background-color: rgb(var(--surface-raised) / 0.97) !important;
-    border-color: rgb(var(--border-subtle));
-}
 
 /* EXPERIMENTAL already puts content-visibility/contain inline on each sortable
    exercise card. Native mode additionally drops expensive long shadows. DnD and
@@ -90,10 +59,6 @@ html.native-shell .calendar-timeline {
     scroll-behavior: auto !important;
 }
 
-html.native-shell::view-transition-old(root),
-html.native-shell::view-transition-new(root) {
-    animation: none !important;
-}
 
 html.native-shell button:active {
     box-shadow: none !important;

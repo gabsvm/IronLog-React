@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useEffect, useRef, ReactNode, useState, PropsWithChildren, useMemo, useCallback } from 'react';
-import { AppState, Lang, Theme, ColorTheme, ExerciseDef, ActiveSession, MesoCycle, Log, ProgramDay, TutorialState, GlobalTemplate, UserProfile, BeforeInstallPromptEvent, NutritionLog, CardioSession, NutritionGoal, MacroGoals, DailyNutrition, BodyLog, CustomFood, DirtySyncSection, SectionSyncMeta } from '../types';
+import { AppState, Lang, Theme, ColorTheme, EffectsMode, ResolvedEffects, ExerciseDef, ActiveSession, MesoCycle, Log, ProgramDay, TutorialState, GlobalTemplate, UserProfile, BeforeInstallPromptEvent, NutritionLog, CardioSession, NutritionGoal, MacroGoals, DailyNutrition, BodyLog, CustomFood, DirtySyncSection, SectionSyncMeta } from '../types';
+import { resolveEffectsMode } from '../utils/effectsProfile';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { usePersistedState } from '../hooks/usePersistedState';
 import { Icon } from '../components/ui/Icon';
@@ -36,10 +37,13 @@ interface AppContextType extends Omit<AppState, 'activeSession' | 'activeMeso'> 
     lang: Lang;
     theme: Theme;
     colorTheme: ColorTheme;
+    effectsMode: EffectsMode;
+    resolvedEffects: ResolvedEffects;
     reducedEffects: boolean;
     setLang: (l: Lang) => void;
     setTheme: (t: Theme) => void;
     setColorTheme: (t: ColorTheme) => void;
+    setEffectsMode: (m: EffectsMode) => void;
 
     setProgram: (val: ProgramDay[] | ((prev: ProgramDay[]) => ProgramDay[])) => void;
     setExercises: (val: ExerciseDef[] | ((prev: ExerciseDef[]) => ExerciseDef[])) => void;
@@ -96,7 +100,7 @@ interface AppContextType extends Omit<AppState, 'activeSession' | 'activeMeso'> 
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
-type AppPreferencesContextType = Pick<AppContextType, 'lang' | 'setLang' | 'theme' | 'setTheme' | 'colorTheme' | 'setColorTheme' | 'deferredPrompt' | 'installApp' | 'isStandalone' | 'reducedEffects'>;
+type AppPreferencesContextType = Pick<AppContextType, 'lang' | 'setLang' | 'theme' | 'setTheme' | 'colorTheme' | 'setColorTheme' | 'deferredPrompt' | 'installApp' | 'isStandalone' | 'reducedEffects' | 'effectsMode' | 'setEffectsMode' | 'resolvedEffects'>;
 type AppConfigContextType = Pick<AppContextType, 'config' | 'setConfig'>;
 type TutorialContextType = Pick<AppContextType, 'tutorialProgress' | 'markTutorialSeen' | 'resetTutorials'>;
 
@@ -173,6 +177,8 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     // Initialize with global if available (captured in index.html)
     const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(window.deferredPrompt || null);
     const [isStandalone, setIsStandalone] = useState(false);
+    const [effectsMode, setEffectsMode] = useLocalStorage<EffectsMode>('il_effects_mode', 'system');
+    const [resolvedEffects, setResolvedEffects] = useState<ResolvedEffects>('balanced');
     const [reducedEffects, setReducedEffects] = useState(false);
 
     const isStoreLoading = useStore(state => state.isStoreLoading);
@@ -441,14 +447,19 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     useEffect(() => {
         const media = window.matchMedia('(prefers-reduced-motion: reduce)');
         const updateEffectsMode = () => {
-            const connection = (navigator as any).connection;
-            const saveData = !!connection?.saveData;
-            const lowCpu = typeof navigator.hardwareConcurrency === 'number' && navigator.hardwareConcurrency <= 4;
-            const lowMemory = typeof (navigator as any).deviceMemory === 'number' && (navigator as any).deviceMemory <= 4;
-            const shouldReduce = media.matches || saveData || lowCpu || lowMemory;
+            const isMobile = window.matchMedia('(max-width: 768px)').matches || ('ontouchstart' in window);
+            const resolved = resolveEffectsMode({
+                effectsMode,
+                prefersReducedMotion: media.matches,
+                isMobileOrTouch: isMobile,
+                hardwareConcurrency: navigator.hardwareConcurrency,
+                deviceMemory: (navigator as any).deviceMemory,
+                saveData: !!(navigator as any).connection?.saveData,
+            });
 
-            setReducedEffects(shouldReduce);
-            document.documentElement.dataset.effects = shouldReduce ? 'reduced' : 'full';
+            setResolvedEffects(resolved);
+            setReducedEffects(resolved === 'reduced');
+            document.documentElement.dataset.effects = resolved;
         };
 
         updateEffectsMode();
@@ -458,7 +469,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
             media.removeEventListener('change', updateEffectsMode);
             window.removeEventListener('pageshow', updateEffectsMode);
         };
-    }, []);
+    }, [effectsMode]);
 
     trackDirtySection('program', [program, isAppLoading, hasCheckedSync]);
     trackDirtySection('activeMeso', [activeMeso, isAppLoading, hasCheckedSync]);
@@ -753,8 +764,9 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     const configState = useMemo(() => ({ showRIR, rpEnabled, rpTargetRIR, keepScreenOn }), [showRIR, rpEnabled, rpTargetRIR, keepScreenOn]);
     const preferencesValue = useMemo(() => ({
         lang, setLang, theme, setTheme, colorTheme, setColorTheme,
+        effectsMode, setEffectsMode, resolvedEffects,
         deferredPrompt, installApp, isStandalone, reducedEffects,
-    }), [lang, setLang, theme, setTheme, colorTheme, setColorTheme, deferredPrompt, installApp, isStandalone, reducedEffects]);
+    }), [lang, setLang, theme, setTheme, colorTheme, setColorTheme, effectsMode, setEffectsMode, resolvedEffects, deferredPrompt, installApp, isStandalone, reducedEffects]);
     const configValue = useMemo(() => ({
         config: configState,
         setConfig,
@@ -767,6 +779,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
 
     const contextValue = useMemo(() => ({
         lang, setLang, theme, setTheme, colorTheme, setColorTheme,
+        effectsMode, setEffectsMode, resolvedEffects,
         reducedEffects,
         program, setProgram,
         exercises, setExercises,
@@ -791,6 +804,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         customFoods, setCustomFoods,
     }), [
         lang, setLang, theme, setTheme, colorTheme, setColorTheme,
+        effectsMode, setEffectsMode, resolvedEffects,
         reducedEffects,
         program, setProgram,
         exercises, setExercises,
