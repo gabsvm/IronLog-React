@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { KONG_4DAY_V1 } from '../../programs/kong/kong4Day';
 import { resolveProgramDay, resolveProgramWeek, getProgramBlockForWeek } from '../../programs/engine/ProgramResolver';
-import { toEditableProgram } from '../../programs/engine/ProgramConversion';
+import { toEditableProgram, convertKongToPersonalRoutine } from '../../programs/engine/ProgramConversion';
 
 describe('KONG resolver and progression invariants', () => {
     it('has valid structure with 3 blocks and 12 weeks total', () => {
@@ -76,5 +76,66 @@ describe('KONG resolver and progression invariants', () => {
                 expect(slot.targetMuscle).toBeUndefined();
             });
         });
+    });
+
+    it('convertKongToPersonalRoutine canonically transforms active KONG meso into personal routine', () => {
+        const mockActiveMeso: any = {
+            id: 111111,
+            name: 'KONG · 4 Días V1',
+            mesoType: 'structured',
+            week: 3,
+            targetWeeks: 12,
+            duration: 12,
+            isDeload: false,
+            plan: [],
+            programSystem: {
+                systemId: KONG_4DAY_V1.id,
+                substitutions: {
+                    b1d1_jm_press: 'tri_pushdown',
+                },
+            },
+        };
+
+        const timestamp = 222222;
+        const resultEs = convertKongToPersonalRoutine(mockActiveMeso, 'es', timestamp);
+        const resultEn = convertKongToPersonalRoutine(mockActiveMeso, 'en', timestamp);
+
+        // 1. New identity and personal meso semantics
+        expect(resultEs.convertedMeso.id).toBe(timestamp);
+        expect(resultEs.convertedMeso.mesoType).toBe('personal');
+        expect(resultEs.convertedMeso.week).toBe(1);
+        expect(resultEs.convertedMeso.targetWeeks).toBe(4);
+        expect(resultEs.convertedMeso.duration).toBe(4);
+        expect(resultEs.convertedMeso.programSystem).toBeUndefined();
+        expect(resultEs.convertedMeso.name).toBe('KONG · Rutina personal');
+        expect(resultEn.convertedMeso.name).toBe('KONG · Personal routine');
+
+        // 2. Program days and plan are rebuilt
+        expect(resultEs.editableProgram.length).toBe(4);
+        expect(resultEs.convertedMeso.plan.length).toBe(4);
+        resultEs.convertedMeso.plan.forEach((dayPlan, dIdx) => {
+            expect(dayPlan.length).toBe(resultEs.editableProgram[dIdx].slots.length);
+        });
+
+        // 3. Exercise substitutions are preserved in the converted program
+        const day1Slot0 = resultEs.editableProgram[0].slots[0];
+        expect(day1Slot0.exerciseId).toBe('tri_pushdown');
+
+        // 4. KONG internal metadata is stripped
+        resultEs.editableProgram.forEach(day => {
+            day.slots.forEach(slot => {
+                expect(slot.programSlotId).toBeUndefined();
+                expect(slot.prescription).toBeUndefined();
+                expect(slot.substitutionGroup).toBeUndefined();
+                expect(slot.programSourceName).toBeUndefined();
+            });
+        });
+
+        // 5. Calling again with identical input produces structurally identical data
+        const secondCall = convertKongToPersonalRoutine(mockActiveMeso, 'es', timestamp);
+        expect(secondCall).toEqual(resultEs);
+
+        // 6. Source KONG_4DAY_V1 remains unmutated
+        expect(KONG_4DAY_V1.blocks[0].days[0].exercises[0].exerciseId).toBe('jm_press');
     });
 });

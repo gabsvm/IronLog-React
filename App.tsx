@@ -16,8 +16,8 @@ import type { CommandAction } from './components/ui/CommandPalette';
 import { SessionBuilder } from './services/SessionBuilder';
 import { KONG_4DAY_V1 } from './programs/kong/kong4Day';
 import { resolveProgramDay } from './programs/engine/ProgramResolver';
-import { getProgramBlockForWeek } from './programs/engine/ProgramResolver';
 import { resetLocalData } from './services/localDataReset';
+import { convertKongToPersonalRoutine } from './programs/engine/ProgramConversion';
 import { completeWorkoutPipeline } from './services/workoutCompletionService';
 import {
     createBackupEnvelope,
@@ -786,12 +786,10 @@ const AppContent = () => {
                         confirmText={lang === 'es' ? 'Convertir y Editar' : 'Convert & Edit'}
                         cancelText={t.cancel}
                         onConfirm={() => {
-                            setActiveMeso(prev => prev ? {
-                                ...prev,
-                                name: lang === 'es' ? 'KONG · Personal' : 'KONG · Personal',
-                                mesoType: 'personal',
-                                programSystem: undefined,
-                            } : prev);
+                            if (!activeMeso) return;
+                            const { editableProgram, convertedMeso } = convertKongToPersonalRoutine(activeMeso, lang);
+                            setProgram(editableProgram);
+                            setActiveMeso(convertedMeso);
                             setShowKongConvertModal(false);
                             setView('program');
                         }}

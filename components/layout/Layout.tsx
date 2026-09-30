@@ -5,9 +5,7 @@ import { usePro } from '../../hooks/usePro';
 import { useStore } from '../../lib/store';
 import { TRANSLATIONS } from '../../constants';
 import { KONG_4DAY_V1 } from '../../programs/kong/kong4Day';
-import { getProgramBlockForWeek, resolveProgramWeek } from '../../programs/engine/ProgramResolver';
-import { toEditableProgram } from '../../programs/engine/ProgramConversion';
-import { getKongDayDisplay } from '../../programs/kong/kongDisplay';
+import { convertKongToPersonalRoutine } from '../../programs/engine/ProgramConversion';
 import { Icon } from '../ui/Icon';
 import { Logo } from '../ui/Logo';
 import { Avatar } from '../ui/Avatar';
@@ -121,30 +119,9 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
     const handleConfirmKongConvert = () => {
         if (!activeMeso) return;
 
-        const { block } = getProgramBlockForWeek(KONG_4DAY_V1, activeMeso.week);
-        const editableProgram = toEditableProgram(resolveProgramWeek(
-            KONG_4DAY_V1,
-            activeMeso.week,
-            activeMeso.programSystem?.substitutions || {},
-        ).map((day, dayIndex) => ({
-            ...day,
-            dayName: getKongDayDisplay(block.number, dayIndex),
-        })));
-        const editablePlan = editableProgram.map((day) => (day.slots || []).map((slot) => slot.exerciseId || null));
-
+        const { editableProgram, convertedMeso } = convertKongToPersonalRoutine(activeMeso, lang);
         setProgram(editableProgram);
-        setActiveMeso(prev => prev ? {
-            ...prev,
-            id: Date.now(),
-            name: lang === 'es' ? 'KONG · Rutina personal' : 'KONG · Personal routine',
-            mesoType: 'personal',
-            targetWeeks: 4,
-            duration: 4,
-            week: 1,
-            plan: editablePlan,
-            isDeload: false,
-            programSystem: undefined,
-        } : prev);
+        setActiveMeso(convertedMeso);
 
         setShowKongConvertConfirm(false);
         setView('program');

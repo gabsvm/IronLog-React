@@ -1,4 +1,7 @@
-import type { ProgramDay, ProgramSlot } from '../../types';
+import type { ProgramDay, ProgramSlot, MesoCycle } from '../../types';
+import { KONG_4DAY_V1 } from '../kong/kong4Day.ts';
+import { getKongDayDisplay } from '../kong/kongDisplay.ts';
+import { getProgramBlockForWeek, resolveProgramWeek } from './ProgramResolver.ts';
 
 const formatPrescriptionReps = (slot: ProgramSlot): string | undefined => {
   const prescription = slot.prescription;
@@ -36,4 +39,50 @@ export function toEditableProgram(program: ProgramDay[]): ProgramDay[] {
       };
     }),
   }));
+}
+
+export interface KongConversionResult {
+  editableProgram: ProgramDay[];
+  convertedMeso: MesoCycle;
+}
+
+/**
+ * Canonical conversion of an active structured KONG mesocycle into an editable personal routine.
+ * Resolves current week with active substitutions, strips prescription tags, rebuilds plan,
+ * and resets duration/week semantics into an editable 4-week personal mesocycle.
+ */
+export function convertKongToPersonalRoutine(
+  activeMeso: MesoCycle,
+  lang: 'en' | 'es' = 'es',
+  now: number = Date.now()
+): KongConversionResult {
+  const week = activeMeso.week || 1;
+  const substitutions = activeMeso.programSystem?.substitutions || {};
+  const { block } = getProgramBlockForWeek(KONG_4DAY_V1, week);
+
+  const resolvedDays = resolveProgramWeek(KONG_4DAY_V1, week, substitutions).map((day, dayIndex) => ({
+    ...day,
+    dayName: getKongDayDisplay(block.number, dayIndex),
+  }));
+
+  const editableProgram = toEditableProgram(resolvedDays);
+  const editablePlan = editableProgram.map((day) => (day.slots || []).map((slot) => slot.exerciseId || null));
+
+  const convertedMeso: MesoCycle = {
+    ...activeMeso,
+    id: now,
+    name: lang === 'es' ? 'KONG · Rutina personal' : 'KONG · Personal routine',
+    mesoType: 'personal',
+    targetWeeks: 4,
+    duration: 4,
+    week: 1,
+    plan: editablePlan,
+    isDeload: false,
+    programSystem: undefined,
+  };
+
+  return {
+    editableProgram,
+    convertedMeso,
+  };
 }
