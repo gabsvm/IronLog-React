@@ -18,14 +18,7 @@
   animation: none !important;
 }
 
-/* Internal plan/template identifiers are implementation details, never UI. */
-.product-internal-plan-id {
-  font-size: 0 !important;
-}
-.product-internal-plan-id::after {
-  content: attr(data-product-label);
-  font-size: 10px;
-}
+
 
 /* Four-day programs fit on common 360dp-class phones; longer schedules still scroll. */
 .product-home-polish .calendar-timeline > button {

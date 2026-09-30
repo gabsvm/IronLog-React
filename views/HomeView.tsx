@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { HomeView as HomeViewImpl } from './HomeViewImpl';
 import { useApp, useAppPreferences } from '../context/AppContext';
 import { useStore } from '../lib/store';
@@ -26,7 +26,6 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
     const activeMeso = useStore(state => state.activeMeso);
     const activeSession = useStore(state => state.activeSession);
     const setActiveMeso = useStore(state => state.setActiveMeso);
-    const rootRef = useRef<HTMLDivElement>(null);
     const [showSkippedFinalCompletion, setShowSkippedFinalCompletion] = useState(false);
     const isKong = activeMeso?.programSystem?.systemId === KONG_4DAY_V1.id;
     const substitutionSignature = useMemo(
@@ -94,37 +93,8 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
         ));
     }, [activeMeso, activeSession, isKong, logs, setActiveMeso]);
 
-    useEffect(() => {
-        const root = rootRef.current;
-        if (!root) return;
-
-        const normalizeProductLabels = () => {
-            const label = lang === 'es' ? 'PERSONALIZADO' : 'CUSTOM';
-            root.querySelectorAll<HTMLElement>('span').forEach((node) => {
-                const text = (node.textContent || '').trim();
-                if (/^(tpl_|personal_)/i.test(text)) {
-                    node.classList.add('product-internal-plan-id');
-                    node.dataset.productLabel = label;
-                }
-                if (isKong && lang === 'es' && /^KONG\s*·\s*BLOCK\s+\d+$/i.test(text)) {
-                    node.textContent = text.replace(/BLOCK/i, 'BLOQUE');
-                }
-            });
-
-            if (isKong) {
-                const settingsButton = root.querySelector<HTMLElement>('#tut-settings-btn');
-                settingsButton?.closest('.flex.justify-between.items-start.pt-2')?.classList.add('kong-home-header');
-            }
-        };
-
-        normalizeProductLabels();
-        const observer = new MutationObserver(normalizeProductLabels);
-        observer.observe(root, { childList: true, subtree: true, characterData: true });
-        return () => observer.disconnect();
-    }, [isKong, lang]);
-
     return (
-        <div ref={rootRef} className={`product-home-polish ${isKong ? 'kong-active' : ''} contents`}>
+        <div className={`product-home-polish ${isKong ? 'kong-active' : ''} contents`}>
             <HomeViewImpl {...props} />
             {showSkippedFinalCompletion && activeMeso && isKong && (
                 <Suspense fallback={null}>

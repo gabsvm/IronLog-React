@@ -12,7 +12,6 @@ import { Icon } from '../ui/Icon';
 import { Logo } from '../ui/Logo';
 import { Avatar } from '../ui/Avatar';
 import { ProfileSheet } from '../profile/ProfileSheet';
-import { PlanActionsSheet } from '../home/PlanActionsSheet';
 import { QuickStartSheet } from '../home/QuickStartSheet';
 import './ux-navigation.css';
 
@@ -39,13 +38,11 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
     const setActiveSession = useStore(state => state.setActiveSession);
     const t = TRANSLATIONS[lang];
     const [showProfile, setShowProfile] = React.useState(false);
-    const [showPlanActions, setShowPlanActions] = React.useState(false);
     const [showQuickStart, setShowQuickStart] = React.useState(false);
     const [showFreestyle, setShowFreestyle] = React.useState(false);
     const [showTwoBlock, setShowTwoBlock] = React.useState(false);
     const [showActiveSessionAlert, setShowActiveSessionAlert] = React.useState(false);
     const [showKongConvertConfirm, setShowKongConvertConfirm] = React.useState(false);
-    const bypassPlanCapture = React.useRef(false);
     const isKong = activeMeso?.programSystem?.systemId === KONG_4DAY_V1.id;
 
     React.useEffect(() => {
@@ -105,32 +102,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
 
     const isVirtualized = view === 'history';
 
-    const handleShellClickCapture = (event: React.MouseEvent<HTMLDivElement>) => {
-        if (view !== 'home' || !activeMeso) return;
-        const target = event.target as Element | null;
-        const planButton = target?.closest?.('.scroll-container #tut-plan-actions-btn, .scroll-container #tut-settings-btn');
-        if (!planButton) return;
-        if (bypassPlanCapture.current) {
-            bypassPlanCapture.current = false;
-            return;
-        }
-        event.preventDefault();
-        event.stopPropagation();
-        setShowPlanActions(true);
-    };
-
-    const openExistingPlanSettings = () => {
-        setShowPlanActions(false);
-        window.setTimeout(() => {
-            const button = document.querySelector('.scroll-container #tut-plan-actions-btn, .scroll-container #tut-settings-btn') as HTMLElement | null;
-            if (!button) return;
-            bypassPlanCapture.current = true;
-            button.click();
-        }, 120);
-    };
-
     const editProgram = () => {
-        setShowPlanActions(false);
         setShowQuickStart(false);
 
         if (activeSession) {
@@ -194,7 +166,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
     };
 
     return (
-        <div className="flex h-full w-full flex-col overflow-hidden bg-[rgb(var(--surface-app))] font-sans text-[rgb(var(--text-primary))]" onClickCapture={handleShellClickCapture}>
+        <div className="flex h-full w-full flex-col overflow-hidden bg-[rgb(var(--surface-app))] font-sans text-[rgb(var(--text-primary))]">
             {view !== 'workout' && (
                 <div className="pointer-events-none absolute left-0 right-0 top-0 z-20 bg-gradient-to-b from-[rgb(var(--surface-app))] via-[rgb(var(--surface-app)/0.9)] to-transparent px-6 pb-2 pt-safe">
                     <div className="pointer-events-auto flex h-14 items-center justify-between">
@@ -231,7 +203,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
             )}
 
             <ProfileSheet open={showProfile} onClose={closeProfile} onOpenSettings={onOpenSettings} />
-            <PlanActionsSheet open={showPlanActions} onClose={() => setShowPlanActions(false)} lang={lang} planName={activeMeso?.name} week={activeMeso?.week} totalWeeks={activeMeso?.targetWeeks || activeMeso?.duration} onConfigure={openExistingPlanSettings} onEditProgram={editProgram} />
             <QuickStartSheet open={showQuickStart} onClose={() => setShowQuickStart(false)} lang={lang} onResume={() => setView('workout')} onToday={() => setView('home')} onFreestyle={() => setShowFreestyle(true)} onTwoBlock={() => setShowTwoBlock(true)} onEditProgram={editProgram} />
 
             {showFreestyle && (

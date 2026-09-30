@@ -18,6 +18,7 @@ import { WeekProgress } from './home/WeekProgress';
 import { WeeklyRecapCard } from './home/WeeklyRecapCard';
 import { NextSessionCard } from './home/NextSessionCard';
 import { ProgramBlockTransition } from '../components/programs/ProgramBlockTransition';
+import { PlanActionsSheet } from '../components/home/PlanActionsSheet';
 const ProgramHub = React.lazy(() => import('../components/programs/ProgramHub').then((module) => ({ default: module.ProgramHub })));
 
 
@@ -59,6 +60,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
 
     const [showCompleteModal, setShowCompleteModal] = useState<'week' | 'meso' | null>(null);
     const [showMesoSettings, setShowMesoSettings] = useState(false);
+    const [showPlanActions, setShowPlanActions] = useState(false);
     const [skipConfirmationId, setSkipConfirmationId] = useState<number | null>(null);
     const [showTemplateSelector, setShowTemplateSelector] = useState(false);
     const [showGuidelines, setShowGuidelines] = useState(false);
@@ -368,7 +370,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
     return (
         <div className="px-6 space-y-8 pb-40">
             {/* Header Info */}
-            <div className="flex justify-between items-start pt-2">
+            <div className={`flex justify-between items-start pt-2 ${kongBlock ? 'kong-home-header' : ''}`}>
                 <div>
                     <h2 className="text-3xl font-bold text-white tracking-tight">{activeMeso.name}</h2>
                     <div className="flex items-center gap-3 mt-2">
@@ -381,7 +383,17 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                                 <Icon name="Info" size={12} /> GUIDELINES {!isPro && <Icon name="Lock" size={10} className="text-yellow-500 ml-1" />}
                             </button>
                         ) : (
-                            kongBlock ? <button onClick={() => setShowKongHub(true)} className="min-h-8 rounded bg-zinc-800 px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-primary-400 border border-zinc-700">KONG · BLOCK {kongBlock.block.number}</button> : <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded bg-zinc-800 text-zinc-400 border border-zinc-700">{t.phases?.[activeMeso.mesoType] || activeMeso.mesoType}</span>
+                            kongBlock ? (
+                                <button onClick={() => setShowKongHub(true)} className="min-h-8 rounded bg-zinc-800 px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-primary-400 border border-zinc-700">
+                                    {lang === 'es' ? `KONG · BLOQUE ${kongBlock.block.number}` : `KONG · BLOCK ${kongBlock.block.number}`}
+                                </button>
+                            ) : (
+                                <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded bg-zinc-800 text-zinc-400 border border-zinc-700">
+                                    {/^(tpl_|personal_)/i.test(String(activeMeso.mesoType))
+                                        ? (lang === 'es' ? 'PERSONALIZADO' : 'CUSTOM')
+                                        : (t.phases?.[activeMeso.mesoType] || activeMeso.mesoType)}
+                                </span>
+                            )
                         )}
                         <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">{t.week} {activeMeso.week} / {activeMeso.targetWeeks}</span>
                         {kongBlock && <span className="text-[10px] text-primary-400 font-bold uppercase tracking-wider">{lang === 'es' ? `Semana del bloque ${kongBlock.blockWeek}/4` : `Block week ${kongBlock.blockWeek}/4`}</span>}
@@ -389,7 +401,12 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                 </div>
 
                 <div className="flex gap-2">
-                    <button id="tut-settings-btn" onClick={() => setShowMesoSettings(true)} className="w-10 h-10 flex items-center justify-center rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-colors">
+                    <button
+                        id="tut-settings-btn"
+                        onClick={() => setShowPlanActions(true)}
+                        aria-label={lang === 'es' ? 'Opciones del plan' : 'Plan options'}
+                        className="w-10 h-10 flex items-center justify-center rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-colors"
+                    >
                         <Icon name="Settings" size={20} />
                     </button>
                 </div>
@@ -672,6 +689,24 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                     variant="danger"
                 />
             </Suspense>
+
+            {/* Plan Actions Sheet */}
+            <PlanActionsSheet
+                open={showPlanActions}
+                onClose={() => setShowPlanActions(false)}
+                lang={lang}
+                planName={activeMeso?.name}
+                week={activeMeso?.week}
+                totalWeeks={activeMeso?.targetWeeks || activeMeso?.duration}
+                onConfigure={() => {
+                    setShowPlanActions(false);
+                    setShowMesoSettings(true);
+                }}
+                onEditProgram={() => {
+                    setShowPlanActions(false);
+                    onEditProgram();
+                }}
+            />
 
             {/* MESO SETTINGS MODAL */}
             {showMesoSettings && (
