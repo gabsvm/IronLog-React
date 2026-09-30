@@ -44,7 +44,7 @@ const Row = ({ icon, title, description, badge, primary, onClick }: {
 export const QuickStartSheet: React.FC<Props> = ({ open, onClose, lang, onResume, onToday, onFreestyle, onTwoBlock, onEditProgram }) => {
     const activeSession = useStore(state => state.activeSession);
     const activeMeso = useStore(state => state.activeMeso);
-    const run = (fn: () => void) => { onClose(); window.setTimeout(fn, 80); };
+    const run = (fn: () => void) => { onClose(); window.setTimeout(fn, 300); };
 
     return (
         <Sheet open={open} onOpenChange={(next) => { if (!next) onClose(); }} title={lang === 'es' ? 'Iniciar entrenamiento' : 'Start training'} accent="primary">

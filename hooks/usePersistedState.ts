@@ -13,6 +13,7 @@ export function usePersistedState<T>(key: string, initialValue: T, debounceMs = 
     const [isLoading, setIsLoading] = useState(true);
     const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const pendingRef = useRef<{ value: T } | null>(null);
+    const hasMutatedRef = useRef(false);
 
     useEffect(() => {
         let isMounted = true;
@@ -20,6 +21,10 @@ export function usePersistedState<T>(key: string, initialValue: T, debounceMs = 
 
         db.get<T>(key, initialValue).then((val) => {
             if (isMounted) {
+                if (hasMutatedRef.current) {
+                    setIsLoading(false);
+                    return;
+                }
                 setState(val);
                 setIsLoading(false);
             }
@@ -56,6 +61,7 @@ export function usePersistedState<T>(key: string, initialValue: T, debounceMs = 
     }, [flush]);
 
     const setPersistedState = useCallback((value: T | ((val: T) => T)) => {
+        hasMutatedRef.current = true;
         setState((prev) => {
             const newValue = value instanceof Function ? value(prev) : value;
 

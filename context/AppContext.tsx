@@ -15,6 +15,11 @@ import { getFirebaseFirestoreServices, isFirebaseConfigured } from '../lib/fireb
 import { scheduleWhenIdle } from '../lib/idle';
 import { offlineSyncQueue } from '../services/offlineSyncQueue';
 import { dirtySyncState } from '../services/dirtySyncState';
+import { isMeaningfullyEmptyLocalState } from '../services/syncHelpers';
+
+if (typeof window !== 'undefined') {
+    (window as any).__ironlog_isMeaningfullyEmptyLocalState = isMeaningfullyEmptyLocalState;
+}
 
 const FULL_SYNC_SECTIONS: DirtySyncSection[] = [
     'program',
@@ -516,7 +521,18 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                 const cloudData = await syncService.downloadState(user.uid);
                 if (cloudData && cloudData.lastUpdated) {
                     const cloudSyncMeta = cloudData.syncMeta || {};
-                    const isLocalEmpty = !activeMeso && (!logs || logs.length === 0);
+                    const isLocalEmpty = isMeaningfullyEmptyLocalState({
+                        activeSession,
+                        activeMeso,
+                        logs,
+                        nutritionLogs,
+                        cardioSessions,
+                        bodyLogs,
+                        customFoods,
+                        personalTemplates,
+                        exercises,
+                        userProfile,
+                    });
                     const isCachedSnapshot = cloudData.source === 'cache';
 
                     if (isLocalEmpty) {
@@ -573,7 +589,8 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
 
         checkCloudData();
     }, [
-        user, isOnline, isAppLoading, pendingCloudData, hasCheckedSync, activeMeso, logs, localLastUpdated, localSectionSyncMeta,
+        user, isOnline, isAppLoading, pendingCloudData, hasCheckedSync, activeSession, activeMeso, logs, nutritionLogs,
+        cardioSessions, bodyLogs, customFoods, personalTemplates, exercises, userProfile, localLastUpdated, localSectionSyncMeta,
         setProgram, setExercises, setLogs, setRpFeedback, setShowRIR, setRpEnabled, setLocalLastUpdated,
         setHasSeenOnboarding, setBodyLogs, setCustomFoods, setPersonalTemplates, setKeepScreenOn, setMacroGoals, setNutritionLogs, setLocalSectionSyncMeta,
         setRpTargetRIR, setUserProfile, setCardioSessions, setNutritionGoal
@@ -709,18 +726,24 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     }, [pendingCloudData, pendingCloudSections, setProgram, setExercises, setLogs, setRpFeedback, setShowRIR, setRpEnabled, setLocalLastUpdated, setHasSeenOnboarding, setBodyLogs, setCustomFoods, setPersonalTemplates, setKeepScreenOn, setMacroGoals, setNutritionLogs, setRpTargetRIR, setUserProfile, setLocalSectionSyncMeta, setCardioSessions, setNutritionGoal]);
 
     const cancelCloudSync = useCallback(() => {
+        // "Keep Local": user explicitly decided to retain their local state for the conflicting sections.
+        // We only mark the disputed sections as dirty/preferred, rather than arbitrarily marking all 14 domains dirty.
+        const sectionsToPreserve = pendingCloudSections.length > 0 ? pendingCloudSections : [];
         setPendingCloudData(null);
         setPendingCloudSections([]);
-        setLocalLastUpdated(Date.now());
-        setLocalSectionSyncMeta(prev => {
+        if (sectionsToPreserve.length > 0) {
             const now = Date.now();
-            return FULL_SYNC_SECTIONS.reduce<SectionSyncMeta>((acc, section) => {
-                acc[section] = now;
-                return acc;
-            }, { ...prev });
-        });
-        void dirtySyncState.mark(FULL_SYNC_SECTIONS);
-    }, [setLocalLastUpdated, setLocalSectionSyncMeta]);
+            setLocalLastUpdated(now);
+            setLocalSectionSyncMeta(prev => {
+                const next = { ...prev };
+                sectionsToPreserve.forEach(section => {
+                    next[section] = now;
+                });
+                return next;
+            });
+            void dirtySyncState.mark(sectionsToPreserve);
+        }
+    }, [pendingCloudSections, setLocalLastUpdated, setLocalSectionSyncMeta]);
 
     // --- THEME & WAKELOCK ---
     useEffect(() => {

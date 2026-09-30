@@ -59,3 +59,86 @@ export const deserializeMeso = (meso: any) => {
 
     return meso;
 };
+
+export interface MeaningfulLocalStateInput {
+    activeSession?: any | null;
+    activeMeso?: any | null;
+    logs?: any[] | null;
+    nutritionLogs?: any[] | null;
+    cardioSessions?: any[] | null;
+    bodyLogs?: any[] | null;
+    customFoods?: any[] | null;
+    personalTemplates?: any[] | null;
+    exercises?: any[] | null;
+    userProfile?: any | null;
+}
+
+/**
+ * Pure classifier to determine whether local storage contains meaningful user data.
+ * Prevents unsafe "empty device" automatic cloud overwrite when local user data
+ * exists (such as nutrition logs, body logs, custom foods, personal templates, or custom exercises),
+ * even if there is currently no active workout mesocycle or historical workout logs.
+ * Deterministic bundled catalog seed data is NOT counted as user-owned state.
+ */
+export const isMeaningfullyEmptyLocalState = (state: MeaningfulLocalStateInput | null | undefined): boolean => {
+    if (!state) return true;
+
+    // 1. Active workout session with exercises
+    if (state.activeSession && Array.isArray(state.activeSession.exercises) && state.activeSession.exercises.length > 0) {
+        return false;
+    }
+
+    // 2. Active mesocycle (has a title or scheduled days)
+    if (state.activeMeso && (state.activeMeso.name || (Array.isArray(state.activeMeso.plan) && state.activeMeso.plan.length > 0))) {
+        return false;
+    }
+
+    // 3. Historical workout logs
+    if (Array.isArray(state.logs) && state.logs.length > 0) {
+        return false;
+    }
+
+    // 4. Daily nutrition tracking logs
+    if (Array.isArray(state.nutritionLogs) && state.nutritionLogs.length > 0) {
+        return false;
+    }
+
+    // 5. Cardio workout sessions
+    if (Array.isArray(state.cardioSessions) && state.cardioSessions.length > 0) {
+        return false;
+    }
+
+    // 6. Body composition logs
+    if (Array.isArray(state.bodyLogs) && state.bodyLogs.length > 0) {
+        return false;
+    }
+
+    // 7. Custom food items created by user
+    if (Array.isArray(state.customFoods) && state.customFoods.length > 0) {
+        return false;
+    }
+
+    // 8. Personal routines / templates created by user
+    if (Array.isArray(state.personalTemplates) && state.personalTemplates.length > 0) {
+        return false;
+    }
+
+    // 9. Custom exercises created by user (ignore built-in library exercises)
+    if (Array.isArray(state.exercises)) {
+        const hasCustom = state.exercises.some((e) =>
+            Boolean(e?.isCustom) || (typeof e?.id === 'string' && e.id.startsWith('custom_'))
+        );
+        if (hasCustom) return false;
+    }
+
+    // 10. Meaningful user profile answers (non-empty onboarding responses or customized goals)
+    if (state.userProfile && typeof state.userProfile === 'object') {
+        const p = state.userProfile;
+        if (p.experience || p.goal || p.daysPerWeek || p.targetWeight || p.currentWeight) {
+            return false;
+        }
+    }
+
+    return true;
+};
+
