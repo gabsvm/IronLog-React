@@ -1,7 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { WorkoutView as WorkoutViewImpl } from './WorkoutViewImpl';
 import { useApp, useAppConfig } from '../context/AppContext';
-import { useTimerActions } from '../context/TimerContext';
 import { useStore } from '../lib/store';
 import { ReorderExercisesSheet } from '../components/workout/ReorderExercisesSheet';
 import { Icon } from '../components/ui/Icon';
@@ -17,38 +16,17 @@ interface WorkoutViewProps {
 }
 
 export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, onBack }) => {
-    const { setLogs, lang } = useApp();
+    const { lang } = useApp();
     const { config } = useAppConfig();
     const activeSession = useStore(state => state.activeSession);
     const activeMeso = useStore(state => state.activeMeso);
     const setActiveSession = useStore(state => state.setActiveSession);
-    const { setRestTimer } = useTimerActions();
     const [reorderOpen, setReorderOpen] = useState(false);
     const isKong = activeMeso?.programSystem?.systemId === KONG_4DAY_V1.id;
 
     const handleFinish = useCallback(() => {
-        if (!activeSession) return;
-        const isDetached = activeSession.mesoId < 0 || activeSession.dayIdx < 0 || activeSession.week < 0;
-        if (!isDetached && activeMeso) {
-            onFinish();
-            return;
-        }
-
-        const endTime = Date.now();
-        const duration = activeSession.startTime ? (endTime - activeSession.startTime) / 1000 : 0;
-        const log = {
-            ...activeSession,
-            endTime,
-            duration,
-            mesoId: activeSession.mesoId ?? -1,
-            week: activeSession.week ?? -1,
-        };
-
-        setLogs(prev => [log as any, ...(Array.isArray(prev) ? prev : [])]);
-        setActiveSession(null);
-        setRestTimer({ active: false, timeLeft: 0, duration: 0, endAt: 0 });
-        onBack();
-    }, [activeMeso, activeSession, onBack, onFinish, setActiveSession, setLogs, setRestTimer]);
+        onFinish();
+    }, [onFinish]);
 
     const commitExerciseOrder = useCallback((ordered: SessionExercise[]) => {
         setActiveSession(prev => prev ? { ...prev, exercises: ordered } : prev);

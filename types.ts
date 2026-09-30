@@ -185,6 +185,7 @@ export interface Log {
   week: number;
   exercises: SessionExercise[];
   note?: string;            // Freeform session journal note
+  discipline?: string;      // Optional discipline tag (e.g. crossfit, calisthenics, twoblock)
   programSystem?: {
     systemId: string;
     systemVersion: number;

@@ -18,6 +18,7 @@ import { KONG_4DAY_V1 } from './programs/kong/kong4Day';
 import { resolveProgramDay } from './programs/engine/ProgramResolver';
 import { getProgramBlockForWeek } from './programs/engine/ProgramResolver';
 import { resetLocalData } from './services/localDataReset';
+import { completeWorkoutPipeline } from './services/workoutCompletionService';
 import {
     createBackupEnvelope,
     validateAndMigrateBackup,
@@ -495,48 +496,27 @@ const AppContent = () => {
                         <Suspense fallback={<LoadingSpinner />}>
                             <WorkoutView
                                 onFinish={() => {
-                                    if (!activeSession || !activeMeso) return;
+                                    if (!activeSession) return;
 
-                                    // 1. Log the session
-                                    const duration = activeSession.startTime ? (Date.now() - activeSession.startTime) / 1000 : 0;
-                                    const kongResolution = activeMeso.programSystem?.systemId === KONG_4DAY_V1.id
-                                        ? getProgramBlockForWeek(KONG_4DAY_V1, activeMeso.week)
-                                        : null;
-                                    const log = {
-                                        ...activeSession,
-                                        endTime: Date.now(),
-                                        duration,
-                                        bodyWeightSnapshot: userProfile?.bodyWeight,
-                                        ...(kongResolution && activeMeso.programSystem ? {
-                                            programSystem: {
-                                                systemId: activeMeso.programSystem.systemId,
-                                                systemVersion: activeMeso.programSystem.systemVersion,
-                                                blockNumber: kongResolution.block.number,
-                                                blockWeek: kongResolution.blockWeek,
-                                            }
-                                        } : {})
-                                    };
-                                    const newLogs = [log, ...(Array.isArray(logs) ? logs : [])];
-                                    setLogs(newLogs);
+                                    const result = completeWorkoutPipeline({
+                                        activeSession,
+                                        activeMeso,
+                                        program: Array.isArray(program) ? program : [],
+                                        logs: Array.isArray(logs) ? logs : [],
+                                        userProfile,
+                                    });
 
-                                    // 2. Check for week / meso completion
-                                    const workoutsThisWeek = newLogs.filter(l =>
-                                        l.mesoId === activeMeso.id && l.week === activeMeso.week && !l.skipped
-                                    );
-                                    const completedDaysThisWeek = new Set(workoutsThisWeek.map(l => l.dayIdx));
-                                    const programDays = program.filter(day => (day.slots || []).length > 0).length;
+                                    setLogs(result.updatedLogs);
 
-                                    if (completedDaysThisWeek.size >= programDays) {
-                                        if (activeMeso.week >= activeMeso.duration) {
-                                            setShowMesoCompleteModal(true);
-                                        } else {
-                                            setActiveMeso(prev => prev ? { ...prev, week: prev.week + 1, isDeload: false } : null);
-                                        }
+                                    if (result.isMesoComplete) {
+                                        setShowMesoCompleteModal(true);
+                                    } else if (!result.isDetached && result.updatedMeso && result.updatedMeso !== activeMeso) {
+                                        setActiveMeso(result.updatedMeso);
                                     }
 
                                     setActiveSession(null);
                                     setRestTimer({ active: false, timeLeft: 0, duration: 0, endAt: 0 });
-                                    setCompletedWorkoutLog(log);
+                                    setCompletedWorkoutLog(result.log);
                                     setView('summary');
                                 }}
                                 onDiscard={() => {

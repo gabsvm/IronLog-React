@@ -1,29 +1,9 @@
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { Log } from '../types';
 import { Icon } from '../components/ui/Icon';
 import { Button } from '../components/ui/Button';
-import { TRANSLATIONS } from '../constants';
 import { useApp } from '../context/AppContext';
 import { getLogBodyWeight, getSetLoadVolume } from '../utils/trainingMetrics';
-
-// Simple confetti fallback if utility is missing
-const fireConfetti = async () => {
-    try {
-        const confetti = (await import('canvas-confetti')).default as any;
-        const count = 200;
-        const defaults = { origin: { y: 0.7 }, zIndex: 9999 };
-        function fire(particleRatio: number, opts: any) {
-            confetti({ ...defaults, ...opts, particleCount: Math.floor(count * particleRatio) });
-        }
-        fire(0.25, { spread: 26, startVelocity: 55 });
-        fire(0.2, { spread: 60 });
-        fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
-        fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
-        fire(0.1, { spread: 120, startVelocity: 45 });
-    } catch (e) {
-        console.warn('Confetti failed to load');
-    }
-};
 
 interface SessionSummaryViewProps {
     log: Log;
@@ -32,13 +12,9 @@ interface SessionSummaryViewProps {
 
 export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onClose }) => {
     const { lang, userProfile } = useApp();
-    const t = TRANSLATIONS[lang];
 
-    useEffect(() => {
-        if (!log.skipped) {
-            fireConfetti();
-        }
-    }, [log.skipped]);
+    const isDetached = log.mesoId < 0 || log.dayIdx < 0 || log.week < 0;
+    const discipline = (log as any).discipline;
 
     const stats = useMemo(() => {
         let volume = 0;
@@ -46,7 +22,7 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
         const muscles = new Set<string>();
         const logBodyWeight = getLogBodyWeight(log, userProfile?.bodyWeight);
 
-        log.exercises.forEach(ex => {
+        (log.exercises || []).forEach(ex => {
             if (ex.muscle && ex.muscle !== 'CARDIO') {
                 muscles.add(ex.muscle);
             }
@@ -68,52 +44,96 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
         return `${m}m`;
     };
 
+    const getSessionTypeBadge = () => {
+        if (discipline === 'crossfit') {
+            return {
+                label: lang === 'es' ? 'WOD · Funcional' : 'WOD · Functional',
+                color: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+            };
+        }
+        if (discipline === 'calisthenics') {
+            return {
+                label: lang === 'es' ? 'Calistenia · Skill' : 'Calisthenics · Skill',
+                color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+            };
+        }
+        if (discipline === 'twoblock') {
+            return {
+                label: 'Two Block Mass',
+                color: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+            };
+        }
+        if (isDetached) {
+            return {
+                label: lang === 'es' ? 'Sesión Libre' : 'Freestyle Session',
+                color: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+            };
+        }
+        return {
+            label: lang === 'es' ? `Semana ${log.week}` : `Week ${log.week}`,
+            color: 'bg-primary-500/20 text-primary-400 border-primary-500/30',
+        };
+    };
+
+    const badge = getSessionTypeBadge();
+
     return (
         <div className="flex flex-col h-full bg-zinc-950 text-white animate-in fade-in duration-300">
-            <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-8 overflow-y-auto">
-                {/* Header */}
+            <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-6 overflow-y-auto">
+                {/* Header with restrained trophy animation */}
                 <div className="text-center space-y-2">
-                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary-500/20 text-primary-500 mb-4 animate-in zoom-in-50 delay-100 duration-500">
-                        <Icon name="Trophy" size={40} />
+                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary-500/10 text-primary-400 mb-2 border border-primary-500/20 shadow-lg shadow-primary-500/10 animate-in zoom-in-75 duration-300">
+                        <Icon name="Trophy" size={36} />
                     </div>
-                    <h1 className="text-3xl font-black uppercase tracking-tight text-white leading-tight">
+                    <div>
+                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border mb-2 ${badge.color}`}>
+                            {badge.label}
+                        </span>
+                    </div>
+                    <h1 className="text-2xl font-black uppercase tracking-tight text-white leading-tight">
                         {lang === 'en' ? 'Workout Complete!' : '¡Entrenamiento Completado!'}
                     </h1>
-                    <p className="text-zinc-400 font-medium">
+                    <p className="text-zinc-400 font-medium text-sm">
                         {log.name}
                     </p>
                 </div>
 
                 {/* Stats Grid */}
-                <div className="grid grid-cols-2 gap-4 w-full max-w-sm">
-                    <div className="glass-card rounded-2xl p-4 flex flex-col items-center justify-center animate-in slide-in-from-bottom-4 delay-200 fade-in duration-500">
-                        <Icon name="Clock" size={20} className="text-blue-400 mb-2" />
-                        <div className="text-2xl font-black">{formatDuration(log.duration)}</div>
-                        <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">{lang === 'en' ? 'Time' : 'Tiempo'}</div>
+                <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
+                    <div className="glass-card rounded-2xl p-4 flex flex-col items-center justify-center border border-zinc-800 bg-zinc-900/60 shadow-sm">
+                        <Icon name="Clock" size={18} className="text-blue-400 mb-1.5" />
+                        <div className="text-xl font-black">{formatDuration(log.duration)}</div>
+                        <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                            {lang === 'en' ? 'Time' : 'Tiempo'}
+                        </div>
                     </div>
 
-                    <div className="glass-card rounded-2xl p-4 flex flex-col items-center justify-center animate-in slide-in-from-bottom-4 delay-300 fade-in duration-500">
-                        <Icon name="CheckCircle" size={20} className="text-green-400 mb-2" />
-                        <div className="text-2xl font-black">{stats.sets}</div>
-                        <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">{lang === 'en' ? 'Sets' : 'Series'}</div>
+                    <div className="glass-card rounded-2xl p-4 flex flex-col items-center justify-center border border-zinc-800 bg-zinc-900/60 shadow-sm">
+                        <Icon name="CheckCircle" size={18} className="text-green-400 mb-1.5" />
+                        <div className="text-xl font-black">{stats.sets}</div>
+                        <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                            {lang === 'en' ? 'Sets' : 'Series'}
+                        </div>
                     </div>
 
-                    <div className="col-span-2 glass-card rounded-2xl p-4 flex flex-col items-center justify-center animate-in slide-in-from-bottom-4 delay-400 fade-in duration-500">
-                        <Icon name="Dumbbell" size={20} className="text-amber-400 mb-2" />
-                        <div className="text-2xl font-black">{stats.volume.toLocaleString()} kg</div>
-                        <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">{lang === 'en' ? 'Total Volume' : 'Volumen Total'}</div>
+                    <div className="col-span-2 glass-card rounded-2xl p-4 flex flex-col items-center justify-center border border-zinc-800 bg-zinc-900/60 shadow-sm">
+                        <Icon name="Dumbbell" size={18} className="text-amber-400 mb-1.5" />
+                        <div className="text-xl font-black">{stats.volume.toLocaleString()} kg</div>
+                        <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                            {lang === 'en' ? 'Total Volume' : 'Volumen Total'}
+                        </div>
                     </div>
                 </div>
 
                 {/* Muscles Hit */}
                 {stats.muscles.length > 0 && (
-                    <div className="w-full max-w-sm animate-in slide-in-from-bottom-4 delay-500 fade-in duration-500">
-                        <p className="text-center text-xs font-bold text-zinc-500 mb-3 uppercase tracking-wider">
+                    <div className="w-full max-w-sm">
+                        <p className="text-center text-[10px] font-bold text-zinc-500 mb-2 uppercase tracking-wider">
                             {lang === 'en' ? 'Muscles Hit' : 'Músculos Trabajados'}
                         </p>
-                        <div className="flex flex-wrap justify-center gap-2">
+                        <div className="flex flex-wrap justify-center gap-1.5">
                             {stats.muscles.map(m => (
-                                <span key={m} className="px-3 py-1 bg-zinc-800 rounded-full text-xs font-bold text-zinc-300">
+                                <span key={m} className="px-2.5 py-0.5 bg-zinc-800/80 border border-zinc-700/50 rounded-full text-[11px] font-bold text-zinc-300">
                                     {m}
                                 </span>
                             ))}
@@ -123,8 +143,8 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
             </div>
 
             {/* Footer */}
-            <div className="p-4 bg-zinc-950 pb-[env(safe-area-inset-bottom)] animate-in slide-in-from-bottom-10 delay-700 duration-500">
-                <Button fullWidth onClick={onClose} className="h-14 text-lg">
+            <div className="p-4 bg-zinc-950 pb-[env(safe-area-inset-bottom)]">
+                <Button fullWidth onClick={onClose} className="h-12 text-base font-bold">
                     {lang === 'en' ? 'Finish & Go Home' : 'Finalizar y Volver'}
                 </Button>
             </div>
