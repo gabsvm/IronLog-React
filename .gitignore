@@ -39,3 +39,7 @@ android/**/*.keystore
 ironlog-kmp/.gradle/
 ironlog-kmp/**/build/
 ironlog-kmp/local.properties
+
+# Playwright artifacts
+test-results/
+playwright-report/
