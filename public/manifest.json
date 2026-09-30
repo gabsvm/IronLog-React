@@ -96,22 +96,13 @@
       "url": "/?action=start&source=shortcut",
       "icons": [
         {
-          "src": "/icon-192.png",
+          "src": "assets/icons/icon-192.png",
           "sizes": "192x192",
           "type": "image/png"
         }
       ]
     }
   ],
-  "share_target": {
-    "action": "/?action=share_target",
-    "method": "GET",
-    "params": {
-      "title": "title",
-      "text": "text",
-      "url": "url"
-    }
-  },
   "related_applications": [
     {
       "platform": "play",
@@ -130,38 +121,5 @@
       "auto"
     ]
   },
-  "protocol_handlers": [
-    {
-      "protocol": "web+gainslab",
-      "url": "/?action=%s"
-    }
-  ],
-  "file_handlers": [
-    {
-      "action": "/?action=import_workout",
-      "accept": {
-        "application/x-www-form-urlencoded": [
-          ".json"
-        ]
-      }
-    }
-  ],
-  "note_taking": {
-    "new_note_url": "/?action=new_note"
-  },
-  "widgets": [
-    {
-      "name": "GainsLab Active Routine",
-      "short_name": "Routine",
-      "description": "View your active workout routine",
-      "tag": "workout",
-      "template_url": "https://gainslab-pro.vercel.app/widgets/workout.json",
-      "ms_ac_template": "https://gainslab-pro.vercel.app/widgets/workout.json",
-      "data": "https://gainslab-pro.vercel.app/widgets/data.json",
-      "type": "application/x-www-form-urlencoded",
-      "auth": false,
-      "update": 86400
-    }
-  ],
   "iarc_rating_id": ""
 }

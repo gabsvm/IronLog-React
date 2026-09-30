@@ -1,6 +1,7 @@
 
 import { useState, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { isProUser, getEntitlementTier } from '../services/entitlementService';
 
 export const usePro = () => {
     const { subscription } = useAuth();
@@ -8,11 +9,11 @@ export const usePro = () => {
     const [featureAttempted, setFeatureAttempted] = useState<string>('');
 
     const isCurrentlyPro = useMemo(() => {
-        if (!subscription.isPro) return false;
-        // If expiryDate is null, it's a lifetime subscription.
-        if (subscription.expiryDate === null) return true;
-        // Otherwise, check if the expiry date is in the future.
-        return new Date(subscription.expiryDate) > new Date();
+        return isProUser(subscription);
+    }, [subscription]);
+
+    const currentTier = useMemo(() => {
+        return getEntitlementTier(subscription);
     }, [subscription]);
 
     const checkPro = (featureName: string = "Pro Feature") => {
@@ -25,7 +26,7 @@ export const usePro = () => {
 
     return {
         isPro: isCurrentlyPro,
-        tier: subscription.tier,
+        tier: currentTier,
         expiryDate: subscription.expiryDate, // Expose expiry date
         checkPro,
         showPaywall,

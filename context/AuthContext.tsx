@@ -3,6 +3,7 @@ import type { User } from 'firebase/auth';
 import { SubscriptionTier, UserSubscription } from '../types';
 import { getFirebaseAuthServices, getFirebaseFirestoreServices, isFirebaseConfigured } from '../lib/firebaseLoader';
 import { scheduleWhenIdle } from '../lib/idle';
+import { DEFAULT_FREE_SUBSCRIPTION, createLocalDemoSubscription } from '../services/entitlementService';
 
 interface AuthContextType {
     user: User | null;
@@ -22,14 +23,12 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const DEFAULT_SUB: UserSubscription = { isPro: false, tier: 'free', expiryDate: null };
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
     const [isGuest, setIsGuest] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [subscription, setSubscription] = useState<UserSubscription>(DEFAULT_SUB);
+    const [subscription, setSubscription] = useState<UserSubscription>(DEFAULT_FREE_SUBSCRIPTION);
 
     useEffect(() => {
         if (!isFirebaseConfigured()) {
@@ -60,14 +59,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                             const subRef = firestoreApi.doc(db, 'users', currentUser.uid, 'data', 'subscription');
                             const subSnap = await firestoreApi.getDoc(subRef);
                             if (!cancelled) {
-                                setSubscription(subSnap.exists() ? subSnap.data() as UserSubscription : DEFAULT_SUB);
+                                setSubscription(subSnap.exists() ? subSnap.data() as UserSubscription : DEFAULT_FREE_SUBSCRIPTION);
                             }
                         }
                     } catch (e) {
                         console.error('Error fetching subscription', e);
                     }
                 } else {
-                    setSubscription(DEFAULT_SUB);
+                    setSubscription(DEFAULT_FREE_SUBSCRIPTION);
                 }
                 if (!cancelled) setLoading(false);
             });
@@ -121,18 +120,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
             const demoEmail = `demo_${Date.now()}@gainslab.app`;
             const demoPass = Math.random().toString(36).substring(2, 10);
-            const userCredential = await authApi.createUserWithEmailAndPassword(auth, demoEmail, demoPass);
-            const newUser = userCredential.user;
+            await authApi.createUserWithEmailAndPassword(auth, demoEmail, demoPass);
 
-            const expiryDate = Date.now() + 7 * 24 * 60 * 60 * 1000;
-            const demoSubscription: UserSubscription = {
-                isPro: true,
-                tier: 'demo',
-                expiryDate,
-            };
-
-            const subRef = firestoreApi.doc(db, 'users', newUser.uid, 'data', 'subscription');
-            await firestoreApi.setDoc(subRef, demoSubscription);
+            const demoSubscription = createLocalDemoSubscription(7);
             setSubscription(demoSubscription);
             setLoading(false);
         } catch (err: any) {
@@ -144,7 +134,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const register = async (email: string, pass: string, name?: string) => {
         setError(null);
-        const [{ auth, authApi }, { db, firestoreApi }] = await Promise.all([
+        const [{ auth, authApi }] = await Promise.all([
             getFirebaseAuthServices(),
             getFirebaseFirestoreServices(),
         ]);
@@ -156,11 +146,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const cred = await authApi.createUserWithEmailAndPassword(auth, email, pass);
             if (name) {
                 await authApi.updateProfile(cred.user, { displayName: name });
-            }
-
-            if (db) {
-                const subRef = firestoreApi.doc(db, 'users', cred.user.uid, 'data', 'subscription');
-                await firestoreApi.setDoc(subRef, DEFAULT_SUB);
             }
         } catch (err: any) {
             console.error('Register Error:', err);
@@ -188,33 +173,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         setUser(null);
         setIsGuest(false);
-        setSubscription(DEFAULT_SUB);
+        setSubscription(DEFAULT_FREE_SUBSCRIPTION);
     };
 
     const continueAsGuest = () => {
         setIsGuest(true);
         setLoading(false);
-        setSubscription(DEFAULT_SUB);
+        setSubscription(DEFAULT_FREE_SUBSCRIPTION);
     };
 
     const upgradeToPro = async (tier: SubscriptionTier) => {
-        const { db, firestoreApi } = await getFirebaseFirestoreServices();
-        if (!user || !db) return;
-
+        // Subscriptions are server-authoritative and provisioned via webhook/backend.
+        // Direct client writes to users/{uid}/data/subscription are forbidden by Firestore rules.
+        console.warn('upgradeToPro: Subscription is server-authoritative.');
         const newSub: UserSubscription = {
             isPro: true,
             tier,
             expiryDate: tier === 'lifetime' ? null : Date.now() + (tier === 'monthly' ? 2592000000 : 31536000000),
         };
-
         setSubscription(newSub);
-
-        try {
-            const subRef = firestoreApi.doc(db, 'users', user.uid, 'data', 'subscription');
-            await firestoreApi.setDoc(subRef, newSub, { merge: true });
-        } catch (e) {
-            console.error('Failed to save subscription', e);
-        }
     };
 
     const clearError = () => setError(null);

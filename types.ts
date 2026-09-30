@@ -51,6 +51,8 @@ export interface ExerciseDef {
   progressionPrev?: string;      // ID of previous-level exercise in progression
   defaultRestSeconds?: number;   // Per-exercise rest timer override
   source?: 'nilsson_bw';         // Origin tag (e.g. Nick Nilsson Best Bodyweight Exercises)
+  isCustom?: boolean;            // User-created exercise
+  archived?: boolean;            // Archived exercise (hidden from selectors, preserved for references)
 }
 
 export type SetType = 'regular' | 'myorep' | 'myorep_match' | 'cluster' | 'top' | 'backoff' | 'giant' | 'warmup' | 'avt_hop' | 'emom' | 'drop' | 'rest_pause' | 'time_volume' | 'triple_add';

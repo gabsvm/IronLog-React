@@ -37,6 +37,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
     const filtered = useMemo(() => {
         return exercises
             .filter(ex => !excludeIds.includes(ex.id))
+            .filter(ex => !ex.archived)
             .filter(ex => {
                 if (sourceFilter) {
                     return (ex as any).source === sourceFilter;
