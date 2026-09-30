@@ -145,7 +145,7 @@ export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat
                     <Icon name={repeatBlocked ? 'Lock' : 'Repeat'} size={18} />
                     {repeatBlocked
                         ? (lang === 'es' ? 'Finaliza la sesión activa para repetir' : 'Finish active session to repeat')
-                        : (lang === 'es' ? 'Repetir entrenamiento' : 'Repeat workout')}
+                        : (lang === 'es' ? 'Repetir sesión histórica' : 'Repeat historical session')}
                 </button>
             </div>
         </div>

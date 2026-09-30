@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useApp, useAppPreferences } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { usePro } from '../../hooks/usePro';
@@ -6,6 +6,7 @@ import { useStore } from '../../lib/store';
 import { Avatar } from '../ui/Avatar';
 import { Icon } from '../ui/Icon';
 import { Sheet } from '../ui/Sheet';
+import { BodyMetricsModal } from './BodyMetricsModal';
 
 interface ProfileSheetProps {
     open: boolean;
@@ -23,11 +24,12 @@ const Metric = ({ label, value, suffix }: { label: string; value?: number | null
 );
 
 export const ProfileSheet: React.FC<ProfileSheetProps> = ({ open, onClose, onOpenSettings }) => {
-    const { userProfile, logs } = useApp();
+    const { userProfile, setUserProfile, logs } = useApp();
     const { lang } = useAppPreferences();
     const { user } = useAuth();
     const { isPro, tier } = usePro();
     const activeMeso = useStore(state => state.activeMeso);
+    const [showBodyModal, setShowBodyModal] = useState(false);
 
     const stats = useMemo(() => {
         const safeLogs = Array.isArray(logs) ? logs : [];
@@ -104,7 +106,7 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({ open, onClose, onOpe
                 <section className="mt-6">
                     <div className="mb-3 flex items-center justify-between px-1">
                         <h3 className="text-[11px] font-black uppercase tracking-[0.18em] text-zinc-500">{lang === 'es' ? 'Tu cuerpo' : 'Your body'}</h3>
-                        <button onClick={openSettings} className="text-[10px] font-black uppercase tracking-wider text-primary-600 dark:text-primary-400">
+                        <button onClick={() => setShowBodyModal(true)} className="text-[10px] font-black uppercase tracking-wider text-primary-600 dark:text-primary-400">
                             {lang === 'es' ? 'Editar' : 'Edit'}
                         </button>
                     </div>
@@ -147,6 +149,18 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({ open, onClose, onOpe
                     </div>
                 </section>
             </div>
+
+            <BodyMetricsModal
+                open={showBodyModal}
+                onClose={() => setShowBodyModal(false)}
+                userProfile={userProfile || null}
+                onSave={(updated) => {
+                    if (setUserProfile) {
+                        setUserProfile((prev: any) => ({ ...prev, ...updated }));
+                    }
+                }}
+                lang={lang}
+            />
         </Sheet>
     );
 };

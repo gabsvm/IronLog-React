@@ -557,7 +557,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                                         {isSelectedActive 
                                             ? (lang === 'en' ? 'Resume Workout' : 'Reanudar') 
                                             : isDone 
-                                                ? (lang === 'en' ? 'Repeat Workout' : 'Repetir Sesión')
+                                                ? (lang === 'en' ? 'Train this day again' : 'Entrenar este día de nuevo')
                                                 : String(t.tapToStart)}
                                     </span>
                                 </div>
@@ -617,7 +617,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                         </div>
                         <div className="flex-1 text-left min-w-0">
                             <div className="text-sm font-bold text-white">
-                                {lang === 'es' ? 'Repetir Última Sesión' : 'Repeat Last Session'}
+                                {lang === 'es' ? 'Volver a entrenar último día' : 'Train last scheduled day again'}
                             </div>
                             <div className="text-[10px] text-zinc-500 mt-0.5 truncate">
                                 {exNames || logName}

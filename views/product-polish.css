@@ -227,9 +227,3 @@ button[aria-label="Download CSV"] {
   color: #090909;
 }
 
-/* StatsViewImpl still owns all expensive charts/calculations. Its legacy heading and
-   mixed-scope summary are hidden because the wrapper now renders a consistent scoped summary. */
-.product-stats-impl > .relative > :nth-child(1),
-.product-stats-impl > .relative > :nth-child(2) {
-  display: none !important;
-}

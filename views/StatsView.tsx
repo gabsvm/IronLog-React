@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { StatsView as StatsViewImpl } from './StatsViewImpl';
 import { useApp, useAppPreferences } from '../context/AppContext';
 import { ActivityHeatmap } from '../components/stats/ActivityHeatmap';
@@ -10,16 +10,14 @@ import './product-polish.css';
 type StatsSection = 'overview' | 'progress' | 'volume';
 
 /**
- * Product-facing IA over the existing Stats implementation.
- * The worker/charts stay inside StatsViewImpl; this shell owns navigation,
- * consistency and a single-scope summary so global/current-meso numbers are
- * never mixed in the same row.
+ * Product-facing IA over the Stats implementation.
+ * Provides semantic, honest mobile tabs (Overview, Progress, Volume)
+ * and mounts only the panel needed for the active tab to preserve performance.
  */
 export const StatsView: React.FC = () => {
     const { lang } = useAppPreferences();
     const { logs } = useApp();
     const activeMeso = useStore(state => state.activeMeso);
-    const rootRef = useRef<HTMLDivElement>(null);
     const [section, setSection] = useState<StatsSection>('overview');
     const safeLogs = useMemo(() => Array.isArray(logs) ? logs : [], [logs]);
     const t = TRANSLATIONS[lang];
@@ -62,16 +60,6 @@ export const StatsView: React.FC = () => {
         return raw.replace(/[_-]+/g, ' ').trim().toUpperCase();
     }, [activeMeso?.mesoType, lang, t.phases]);
 
-    const goTo = (next: StatsSection) => {
-        setSection(next);
-        const root = rootRef.current;
-        if (!root) return;
-        const target = next === 'overview'
-            ? root
-            : root.querySelector<HTMLElement>(next === 'progress' ? '#tut-progress-chart' : '#tut-vol-bar');
-        target?.scrollIntoView({ behavior: 'smooth', block: next === 'overview' ? 'start' : 'center' });
-    };
-
     const items: Array<{ id: StatsSection; es: string; en: string }> = [
         { id: 'overview', es: 'Resumen', en: 'Overview' },
         { id: 'progress', es: 'Progreso', en: 'Progress' },
@@ -86,18 +74,20 @@ export const StatsView: React.FC = () => {
     ];
 
     return (
-        <div ref={rootRef} className="product-stats-shell">
+        <div className="product-stats-shell">
             <div className="product-stats-segments" role="tablist" aria-label={lang === 'es' ? 'Secciones de estadísticas' : 'Stats sections'}>
                 <div className="product-stats-segments-inner">
                     {items.map(item => (
                         <button
                             key={item.id}
+                            id={`stats-tab-${item.id}`}
                             type="button"
                             role="tab"
                             aria-selected={section === item.id}
+                            aria-controls={`stats-panel-${item.id}`}
                             data-active={section === item.id}
                             className="product-stats-segment"
-                            onClick={() => goTo(item.id)}
+                            onClick={() => setSection(item.id)}
                         >
                             {lang === 'es' ? item.es : item.en}
                         </button>
@@ -132,21 +122,26 @@ export const StatsView: React.FC = () => {
                 </div>
             </section>
 
-            {safeLogs.length > 0 && (
-                <div className="mx-4 mb-3 rounded-[1.35rem] border border-[rgb(var(--border-subtle)/0.7)] bg-[rgb(var(--surface-raised)/0.65)] p-4">
-                    <div className="mb-3 flex items-center gap-2">
-                        <Icon name="Activity" size={14} className="text-primary-500" />
-                        <div>
-                            <div className="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500">{lang === 'es' ? 'Consistencia' : 'Consistency'}</div>
-                            <div className="text-[10px] text-zinc-500">{lang === 'es' ? 'Últimos 4 meses' : 'Last 4 months'}</div>
+            <div
+                id={`stats-panel-${section}`}
+                role="tabpanel"
+                aria-labelledby={`stats-tab-${section}`}
+                className="product-stats-impl"
+            >
+                {section === 'overview' && safeLogs.length > 0 && (
+                    <div className="mx-4 mb-3 rounded-[1.35rem] border border-[rgb(var(--border-subtle)/0.7)] bg-[rgb(var(--surface-raised)/0.65)] p-4">
+                        <div className="mb-3 flex items-center gap-2">
+                            <Icon name="Activity" size={14} className="text-primary-500" />
+                            <div>
+                                <div className="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500">{lang === 'es' ? 'Consistencia' : 'Consistency'}</div>
+                                <div className="text-[10px] text-zinc-500">{lang === 'es' ? 'Últimos 4 meses' : 'Last 4 months'}</div>
+                            </div>
                         </div>
+                        <ActivityHeatmap logs={safeLogs} />
                     </div>
-                    <ActivityHeatmap logs={safeLogs} />
-                </div>
-            )}
+                )}
 
-            <div className="product-stats-impl">
-                <StatsViewImpl />
+                <StatsViewImpl activeTab={section} hideHeader={true} />
             </div>
         </div>
     );

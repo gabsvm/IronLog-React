@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { TRANSLATIONS } from '../constants';
 import { MuscleGroup } from '../types';
@@ -127,7 +127,12 @@ const getBodyweightLevel = (profile: string, reps: number, addedLoad: number, sk
     return 'beginner';
 };
 
-export const StatsView: React.FC = () => {
+export interface StatsViewImplProps {
+    activeTab?: 'overview' | 'progress' | 'volume';
+    hideHeader?: boolean;
+}
+
+export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader = false }) => {
     const { logs, lang, exercises, tutorialProgress, markTutorialSeen, userProfile } = useApp();
     const activeMeso = useStore(state => state.activeMeso);
     const t = TRANSLATIONS[lang];
@@ -298,7 +303,7 @@ export const StatsView: React.FC = () => {
     }, [isWorkerReady, safeLogs, activeMeso?.id, exerciseMetaById, selectedExId, calculateOverview, logsSignature]);
 
     useEffect(() => {
-        if (!isWorkerReady || !selectedExId) return;
+        if (!isWorkerReady || !selectedExId || (activeTab && activeTab !== 'progress')) return;
 
         let cancelled = false;
 
@@ -321,7 +326,7 @@ export const StatsView: React.FC = () => {
         return () => {
             cancelled = true;
         };
-    }, [isWorkerReady, selectedExId, chartMetric, safeLogs, calculateChartData, logsSignature]);
+    }, [isWorkerReady, selectedExId, chartMetric, safeLogs, calculateChartData, logsSignature, activeTab]);
 
     const filteredExercises = useMemo(() => {
         return availableExercises.filter(ex =>
@@ -502,34 +507,40 @@ export const StatsView: React.FC = () => {
 
     return (
         <div className="relative space-y-4 px-4 pb-24 pt-3">
-            <div className="px-1">
-                <div className="flex items-center justify-between gap-3">
-                    <div>
-                        <h2 className="text-[1.7rem] font-black tracking-[-0.05em] text-white">Stats</h2>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
-                            {activeMeso
-                                ? `${lang === 'es' ? 'Meso activo' : 'Active meso'} · ${t.week} ${activeMeso.week}`
-                                : (lang === 'es' ? 'Historial global' : 'All-time history')}
-                        </p>
-                    </div>
-                    {activeMeso && (
-                        <div className="rounded-full border border-primary-500/15 bg-primary-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-primary-300">
-                            {activeMeso.isDeload ? 'DELOAD' : activeMeso.mesoType}
+            {!hideHeader && (
+                <>
+                    <div className="px-1">
+                        <div className="flex items-center justify-between gap-3">
+                            <div>
+                                <h2 className="text-[1.7rem] font-black tracking-[-0.05em] text-white">Stats</h2>
+                                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
+                                    {activeMeso
+                                        ? `${lang === 'es' ? 'Meso activo' : 'Active meso'} · ${t.week} ${activeMeso.week}`
+                                        : (lang === 'es' ? 'Historial global' : 'All-time history')}
+                                </p>
+                            </div>
+                            {activeMeso && (
+                                <div className="rounded-full border border-primary-500/15 bg-primary-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-primary-300">
+                                    {activeMeso.isDeload ? 'DELOAD' : activeMeso.mesoType}
+                                </div>
+                            )}
                         </div>
-                    )}
-                </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {overviewPills.map(pill => (
-                    <div key={pill.label} className="rounded-2xl border border-white/6 bg-white/[0.03] px-3 py-3">
-                        <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-zinc-500">{pill.label}</div>
-                        <div className="mt-1 text-xl font-black tracking-[-0.04em] text-white">{pill.value}</div>
                     </div>
-                ))}
-            </div>
 
-            <div id="tut-progress-chart" className="glass-card overflow-hidden rounded-[1.7rem] border border-white/6 p-5 shadow-md">
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                        {overviewPills.map(pill => (
+                            <div key={pill.label} className="rounded-2xl border border-white/6 bg-white/[0.03] px-3 py-3">
+                                <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-zinc-500">{pill.label}</div>
+                                <div className="mt-1 text-xl font-black tracking-[-0.04em] text-white">{pill.value}</div>
+                            </div>
+                        ))}
+                    </div>
+                </>
+            )}
+
+            {(!activeTab || activeTab === 'progress') && (
+                <>
+                    <div id="tut-progress-chart" className="glass-card overflow-hidden rounded-[1.7rem] border border-white/6 p-5 shadow-md">
                 <div className="mb-5 flex flex-col gap-3">
                     <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-2">
@@ -651,123 +662,6 @@ export const StatsView: React.FC = () => {
                 </div>
             )}
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div id="tut-radar-chart" className="glass-card flex min-h-[320px] h-full flex-col overflow-hidden rounded-[1.7rem] border border-white/6 p-5 shadow-md">
-                    <h3 className="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-500">
-                        <Icon name="Activity" size={14} /> {t.statsBalance}
-                    </h3>
-                    <div className="relative flex flex-1 items-center justify-center">
-                        <ProLock featureName="Radar Analysis">
-                            <div className="h-64 w-full">
-                                <SymmetryRadar volumeData={rawMuscleCounts} />
-                            </div>
-                        </ProLock>
-                    </div>
-                </div>
-
-                <div className="glass-card flex min-h-[320px] h-full flex-col rounded-[1.7rem] border border-white/6 p-5 shadow-md">
-                    <h3 className="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-500">
-                        <Icon name="Layers" size={14} /> {t.statsIntensity}
-                    </h3>
-                    <div className="relative flex flex-1 flex-col items-center justify-center">
-                        <ProLock featureName="Intensity Dist.">
-                            {hasData ? (
-                                <div className="relative h-48 w-48">
-                                    <Doughnut
-                                        data={doughnutData}
-                                        options={{
-                                            responsive: true,
-                                            maintainAspectRatio: false,
-                                            cutout: '75%',
-                                            plugins: { legend: { display: false } },
-                                            elements: { arc: { borderWidth: 0 } }
-                                        }}
-                                    />
-                                    <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                                        <span className="text-3xl font-black tracking-[-0.05em] text-white">{totalSets}</span>
-                                        <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-500">{t.statsSets}</span>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="space-y-3 opacity-60 flex flex-col items-center justify-center">
-                                    <div className="flex h-32 w-32 items-center justify-center rounded-full border-[12px] border-zinc-800">
-                                        <Icon name="CloudOff" size={24} className="text-zinc-600" />
-                                    </div>
-                                    <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-500">{t.statsNoData}</span>
-                                </div>
-                            )}
-                        </ProLock>
-                    </div>
-                </div>
-            </div>
-
-            <div className="glass-card relative overflow-hidden rounded-[1.7rem] border border-white/6 p-5 shadow-md">
-                <div className="pointer-events-none absolute right-0 top-0 h-64 w-64 rounded-full bg-primary-500/5 blur-[80px]"></div>
-                <div className="relative z-10 mb-5 flex items-center justify-between">
-                    <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-500">
-                        <Icon name="Grid3x3" size={14} />
-                        {lang === 'es' ? 'Mapa de Calor Muscular' : 'Muscle Heatmap'}
-                    </h3>
-                </div>
-
-                {loadingOverview ? (
-                    <div className="h-48 animate-pulse rounded-2xl bg-zinc-800/50"></div>
-                ) : (
-                    <div className="relative z-10">
-                        <MuscleHeatmapGrid volumeData={volumeData} lang={lang} />
-                    </div>
-                )}
-            </div>
-
-            <div id="tut-vol-bar" className="glass-card rounded-[1.7rem] border border-white/6 p-5 shadow-md">
-                <div className="mb-5 flex items-center justify-between gap-3">
-                    <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-500">
-                        <Icon name="BarChart2" size={14} />
-                        {t.volPerCycle}
-                    </h3>
-                    <div className="flex gap-2">
-                        {['MV', 'MEV', 'MAV'].map(label => (
-                            <div key={label} className="flex items-center gap-1">
-                                <div className={`h-2 w-2 rounded-full ${label === 'MV' ? 'bg-yellow-500' : label === 'MEV' ? 'bg-green-500' : 'bg-blue-500'}`}></div>
-                                <span className="text-[9px] font-bold text-zinc-400">{label}</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {loadingOverview ? (
-                    <div className="space-y-4 animate-pulse">
-                        {[1, 2, 3, 4].map(i => (
-                            <div key={i} className="flex items-center gap-3">
-                                <div className="h-4 w-24 rounded bg-zinc-800"></div>
-                                <div className="h-4 flex-1 rounded-full bg-zinc-800"></div>
-                                <div className="h-4 w-6 rounded bg-zinc-800"></div>
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="space-y-3.5">
-                        {volumeData.map(([muscle, count]) => {
-                            const zone = getVolumeZone(count);
-                            return (
-                                <div key={muscle} className="group flex items-center gap-3">
-                                    <div className="w-24 truncate text-right text-xs font-bold text-zinc-500">
-                                        {TRANSLATIONS[lang].muscle[muscle as MuscleGroup]}
-                                    </div>
-                                    <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-white/5">
-                                        <div
-                                            className={`h-full rounded-full transition-all duration-1000 ${zone.color}`}
-                                            style={{ width: `${Math.min(100, (count / maxVal) * 100)}%` }}
-                                        />
-                                    </div>
-                                    <div className={`w-8 text-right text-xs font-mono font-bold ${zone.textColor}`}>{count}</div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                )}
-            </div>
-
             {prHistory.length > 0 && (
                 <div className="glass-card rounded-[1.7rem] border border-white/6 p-5 shadow-md">
                     <div className="mb-5 flex items-center justify-between">
@@ -816,6 +710,131 @@ export const StatsView: React.FC = () => {
                                 ? (lang === 'es' ? '↑ Ver menos' : '↑ Show less')
                                 : (lang === 'es' ? `↓ Ver todos (${prHistory.length})` : `↓ Show all (${prHistory.length})`)}
                         </button>
+                    )}
+                </div>
+            )}
+                </>
+            )}
+
+            {(!activeTab || activeTab === 'overview') && (
+                <>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div id="tut-radar-chart" className="glass-card flex min-h-[320px] h-full flex-col overflow-hidden rounded-[1.7rem] border border-white/6 p-5 shadow-md">
+                            <h3 className="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-500">
+                                <Icon name="Activity" size={14} /> {t.statsBalance}
+                            </h3>
+                            <div className="relative flex flex-1 items-center justify-center">
+                                <ProLock featureName="Radar Analysis">
+                                    <div className="h-64 w-full">
+                                        <SymmetryRadar volumeData={rawMuscleCounts} />
+                                    </div>
+                                </ProLock>
+                            </div>
+                        </div>
+
+                        <div className="glass-card flex min-h-[320px] h-full flex-col rounded-[1.7rem] border border-white/6 p-5 shadow-md">
+                            <h3 className="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-500">
+                                <Icon name="Layers" size={14} /> {t.statsIntensity}
+                            </h3>
+                            <div className="relative flex flex-1 flex-col items-center justify-center">
+                                <ProLock featureName="Intensity Dist.">
+                                    {hasData ? (
+                                        <div className="relative h-48 w-48">
+                                            <Doughnut
+                                                data={doughnutData}
+                                                options={{
+                                                    responsive: true,
+                                                    maintainAspectRatio: false,
+                                                    cutout: '75%',
+                                                    plugins: { legend: { display: false } },
+                                                    elements: { arc: { borderWidth: 0 } }
+                                                }}
+                                            />
+                                            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                                                <span className="text-3xl font-black tracking-[-0.05em] text-white">{totalSets}</span>
+                                                <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-500">{t.statsSets}</span>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-3 opacity-60 flex flex-col items-center justify-center">
+                                            <div className="flex h-32 w-32 items-center justify-center rounded-full border-[12px] border-zinc-800">
+                                                <Icon name="CloudOff" size={24} className="text-zinc-600" />
+                                            </div>
+                                            <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-500">{t.statsNoData}</span>
+                                        </div>
+                                    )}
+                                </ProLock>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="glass-card relative overflow-hidden rounded-[1.7rem] border border-white/6 p-5 shadow-md">
+                        <div className="pointer-events-none absolute right-0 top-0 h-64 w-64 rounded-full bg-primary-500/5 blur-[80px]"></div>
+                        <div className="relative z-10 mb-5 flex items-center justify-between">
+                            <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-500">
+                                <Icon name="Grid3x3" size={14} />
+                                {lang === 'es' ? 'Mapa de Calor Muscular' : 'Muscle Heatmap'}
+                            </h3>
+                        </div>
+
+                        {loadingOverview ? (
+                            <div className="h-48 animate-pulse rounded-2xl bg-zinc-800/50"></div>
+                        ) : (
+                            <div className="relative z-10">
+                                <MuscleHeatmapGrid volumeData={volumeData} lang={lang} />
+                            </div>
+                        )}
+                    </div>
+                </>
+            )}
+
+            {(!activeTab || activeTab === 'volume') && (
+                <div id="tut-vol-bar" className="glass-card rounded-[1.7rem] border border-white/6 p-5 shadow-md">
+                    <div className="mb-5 flex items-center justify-between gap-3">
+                        <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-500">
+                            <Icon name="BarChart2" size={14} />
+                            {t.volPerCycle}
+                        </h3>
+                        <div className="flex gap-2">
+                            {['MV', 'MEV', 'MAV'].map(label => (
+                                <div key={label} className="flex items-center gap-1">
+                                    <div className={`h-2 w-2 rounded-full ${label === 'MV' ? 'bg-yellow-500' : label === 'MEV' ? 'bg-green-500' : 'bg-blue-500'}`}></div>
+                                    <span className="text-[9px] font-bold text-zinc-400">{label}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {loadingOverview ? (
+                        <div className="space-y-4 animate-pulse">
+                            {[1, 2, 3, 4].map(i => (
+                                <div key={i} className="flex items-center gap-3">
+                                    <div className="h-4 w-24 rounded bg-zinc-800"></div>
+                                    <div className="h-4 flex-1 rounded-full bg-zinc-800"></div>
+                                    <div className="h-4 w-6 rounded bg-zinc-800"></div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="space-y-3.5">
+                            {volumeData.map(([muscle, count]) => {
+                                const zone = getVolumeZone(count);
+                                return (
+                                    <div key={muscle} className="group flex items-center gap-3">
+                                        <div className="w-24 truncate text-right text-xs font-bold text-zinc-500">
+                                            {TRANSLATIONS[lang].muscle[muscle as MuscleGroup]}
+                                        </div>
+                                        <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-white/5">
+                                            <div
+                                                className={`h-full rounded-full transition-all duration-1000 ${zone.color}`}
+                                                style={{ width: `${Math.min(100, (count / maxVal) * 100)}%` }}
+                                            />
+                                        </div>
+                                        <div className={`w-8 text-right text-xs font-mono font-bold ${zone.textColor}`}>{count}</div>
+                                    </div>
+                                );
+                            })}
+                        </div>
                     )}
                 </div>
             )}
