@@ -64,4 +64,50 @@ describe('resolveEffectsMode', () => {
       expect(result).toBe('full');
     });
   });
+
+  describe('Capacitor / native-shell profile', () => {
+    const capacitorMobileSpecs = {
+      isMobileOrTouch: true,
+      hardwareConcurrency: 8,
+      deviceMemory: 8,
+    };
+
+    it('resolves system mode on Capacitor to balanced, NOT reduced', () => {
+      expect(resolveEffectsMode({
+        effectsMode: 'system',
+        prefersReducedMotion: false,
+        ...capacitorMobileSpecs,
+      })).toBe('balanced');
+    });
+
+    it('allows explicit full effects mode inside Capacitor', () => {
+      expect(resolveEffectsMode({
+        effectsMode: 'full',
+        prefersReducedMotion: false,
+        ...capacitorMobileSpecs,
+      })).toBe('full');
+    });
+
+    it('allows explicit reduced effects mode inside Capacitor', () => {
+      expect(resolveEffectsMode({
+        effectsMode: 'reduced',
+        prefersReducedMotion: false,
+        ...capacitorMobileSpecs,
+      })).toBe('reduced');
+    });
+
+    it('forces reduced mode if prefers-reduced-motion is true regardless of platform', () => {
+      expect(resolveEffectsMode({
+        effectsMode: 'full',
+        prefersReducedMotion: true,
+        ...capacitorMobileSpecs,
+      })).toBe('reduced');
+
+      expect(resolveEffectsMode({
+        effectsMode: 'system',
+        prefersReducedMotion: true,
+        ...capacitorMobileSpecs,
+      })).toBe('reduced');
+    });
+  });
 });

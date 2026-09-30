@@ -15,13 +15,6 @@ const isNativeShell = Capacitor.isNativePlatform();
 // browser PWA. Mark it once so CSS and navigation can use cheaper compositing.
 if (isNativeShell) {
   document.documentElement.classList.add('native-shell');
-  document.documentElement.dataset.effects = 'reduced';
-  try {
-    (document as any).startViewTransition = undefined;
-  } catch (_) {
-    // Some WebView versions expose it as a non-writable property. App.tsx also
-    // checks the reduced-effects dataset before attempting a transition.
-  }
 
   // Clean up a Service Worker that may have been registered by an older build.
   // Capacitor serves packaged assets locally and does not need an extra SW cache.
@@ -39,7 +32,7 @@ const notifyUpdateAvailable = (registration: ServiceWorkerRegistration) => {
 };
 
 const registerServiceWorker = () => {
-  if (isNativeShell || !('serviceWorker' in navigator)) return;
+  if (isNativeShell || !('serviceWorker' in navigator) || (typeof navigator !== 'undefined' && navigator.webdriver)) return;
 
   window.addEventListener('load', () => {
     setTimeout(() => {
@@ -75,10 +68,15 @@ const registerServiceWorker = () => {
 
 registerServiceWorker();
 
-if (!isNativeShell && 'serviceWorker' in navigator) {
+let hadControllerOnLoad = false;
+if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+  hadControllerOnLoad = !!navigator.serviceWorker.controller;
+}
+
+if (!isNativeShell && 'serviceWorker' in navigator && (typeof navigator === 'undefined' || !navigator.webdriver)) {
   let refreshing = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (refreshing) return;
+    if (refreshing || !hadControllerOnLoad) return;
     refreshing = true;
     window.location.reload();
   });
