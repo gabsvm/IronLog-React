@@ -520,7 +520,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                                 </p>
                             </div>
                             {activeMeso && (
-                                <div className="rounded-full border border-primary-500/15 bg-primary-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-primary-300">
+                                <div className="rounded-full border border-primary-500/15 bg-primary-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-primary-300">
                                     {activeMeso.isDeload ? 'DELOAD' : activeMeso.mesoType}
                                 </div>
                             )}
@@ -530,7 +530,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                         {overviewPills.map(pill => (
                             <div key={pill.label} className="rounded-2xl border border-white/6 bg-white/[0.03] px-3 py-3">
-                                <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-zinc-500">{pill.label}</div>
+                                <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-zinc-500">{pill.label}</div>
                                 <div className="mt-1 text-xl font-black tracking-[-0.04em] text-white">{pill.value}</div>
                             </div>
                         ))}
@@ -549,7 +549,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                             </div>
                             <div>
                                 <h3 className="font-bold text-white">{t.statsProgress}</h3>
-                                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-500">
+                                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-zinc-500">
                                     {hasExerciseHistory
                                         ? `${availableExercises.length} ${lang === 'es' ? 'ejercicios con historial' : 'tracked exercises'}`
                                         : (lang === 'es' ? 'Sin historial cargado' : 'No history loaded')}
@@ -562,7 +562,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                                 <button
                                     key={metric}
                                     onClick={() => setChartMetric(metric)}
-                                    className={`rounded-md px-3 py-1 text-[10px] font-black transition-all ${
+                                    className={`rounded-md px-3 py-1 text-[11px] font-black transition-all ${
                                         chartMetric === metric
                                             ? 'bg-primary-500 text-white shadow-[0_2px_8px] shadow-primary-500/25'
                                             : 'text-zinc-500 hover:text-zinc-300'
@@ -622,7 +622,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                         </p>
                         {selectedExerciseInsight.totalVolume > 0 && (
                             <div className="mt-4 rounded-2xl border border-white/6 bg-white/[0.03] px-4 py-3">
-                                <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-zinc-500">
+                                <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-zinc-500">
                                     {lang === 'es' ? 'Carga total acumulada' : 'Accumulated load volume'}
                                 </div>
                                 <div className="mt-1 text-2xl font-black tracking-[-0.04em] text-white">
@@ -647,13 +647,13 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                                 </p>
                             </div>
                             <div className="rounded-2xl border border-white/6 bg-white/[0.03] px-4 py-3 text-right">
-                                <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-zinc-500">
+                                <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-zinc-500">
                                     {lang === 'es' ? 'Series semanales del musculo' : 'Weekly muscle sets'}
                                 </div>
                                 <div className="mt-1 text-xl font-black text-white">
                                     {selectedExerciseInsight.muscleWeeklySets}
                                 </div>
-                                <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-primary-300">
+                                <div className="mt-1 text-[11px] font-bold uppercase tracking-[0.16em] text-primary-300">
                                     {selectedExerciseInsight.volumeStatus.label}
                                 </div>
                             </div>
@@ -669,7 +669,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                             <Icon name="Trophy" size={14} />
                             {lang === 'es' ? 'Records Personales' : 'Personal Records'}
                         </h3>
-                        <span className="text-[10px] font-bold uppercase text-zinc-600">{lang === 'es' ? 'e1RM estimado' : 'est. e1RM'}</span>
+                        <span className="text-[11px] font-bold uppercase text-zinc-600">{lang === 'es' ? 'e1RM estimado' : 'est. e1RM'}</span>
                     </div>
 
                     <div className="space-y-2">
@@ -684,15 +684,15 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-yellow-500/10 text-yellow-500 text-sm">T</div>
                                     <div className="min-w-0 flex-1">
                                         <p className="truncate text-sm font-bold text-white">{pr.name}</p>
-                                        <p className="text-[10px] font-bold uppercase tracking-wide text-zinc-500">
+                                        <p className="text-[11px] font-bold uppercase tracking-wide text-zinc-500">
                                             {TRANSLATIONS[lang].muscle[pr.muscle as MuscleGroup]} · {dateStr}
                                         </p>
                                     </div>
                                     <div className="shrink-0 text-right">
                                         <p className="text-sm font-black text-white">
-                                            {pr.weight}<span className="ml-0.5 text-[10px] text-zinc-500">kg</span>
+                                            {pr.weight}<span className="ml-0.5 text-[11px] text-zinc-500">kg</span>
                                         </p>
-                                        <p className="text-[10px] text-zinc-500">
+                                        <p className="text-[11px] text-zinc-500">
                                             x{pr.reps} · <span className="font-bold text-yellow-500">{Math.round(pr.e1rm)}kg</span>
                                         </p>
                                     </div>
@@ -752,7 +752,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                                             />
                                             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
                                                 <span className="text-3xl font-black tracking-[-0.05em] text-white">{totalSets}</span>
-                                                <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-500">{t.statsSets}</span>
+                                                <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">{t.statsSets}</span>
                                             </div>
                                         </div>
                                     ) : (
@@ -760,7 +760,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                                             <div className="flex h-32 w-32 items-center justify-center rounded-full border-[12px] border-zinc-800">
                                                 <Icon name="CloudOff" size={24} className="text-zinc-600" />
                                             </div>
-                                            <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-500">{t.statsNoData}</span>
+                                            <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">{t.statsNoData}</span>
                                         </div>
                                     )}
                                 </ProLock>
@@ -797,9 +797,9 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                         </h3>
                         <div className="flex gap-2">
                             {['MV', 'MEV', 'MAV'].map(label => (
-                                <div key={label} className="flex items-center gap-1">
-                                    <div className={`h-2 w-2 rounded-full ${label === 'MV' ? 'bg-yellow-500' : label === 'MEV' ? 'bg-green-500' : 'bg-blue-500'}`}></div>
-                                    <span className="text-[9px] font-bold text-zinc-400">{label}</span>
+                                <div key={label} className="flex items-center gap-1.5">
+                                    <div className={`h-2.5 w-2.5 rounded-full ${label === 'MV' ? 'bg-yellow-500' : label === 'MEV' ? 'bg-green-500' : 'bg-blue-500'}`}></div>
+                                    <span className="text-[11px] font-bold text-zinc-300">{label}</span>
                                 </div>
                             ))}
                         </div>
@@ -877,7 +877,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                                         <div className={`text-sm font-bold ${selectedExId === String(ex.id) ? 'text-primary-400' : 'text-zinc-100'}`}>
                                             {getTranslated(ex.name, lang)}
                                         </div>
-                                        <div className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                                        <div className="mt-0.5 text-[11px] font-bold uppercase tracking-wider text-zinc-400">
                                             {TRANSLATIONS[lang].muscle[ex.muscle]}
                                         </div>
                                     </div>

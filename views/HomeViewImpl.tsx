@@ -289,18 +289,17 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
         { targetId: 'tut-up-next', title: t.tutorial.home[0].title, text: t.tutorial.home[0].text, position: 'bottom' as const },
         ...(currentGuidelineImages && currentGuidelineImages.length > 0 ? [{ targetId: 'tut-guidelines', title: t.tutorial.home[1].title, text: t.tutorial.home[1].text, position: 'bottom' as const }] : []),
         { targetId: 'tut-settings-btn', title: t.tutorial.home[2].title, text: t.tutorial.home[2].text, position: 'bottom' as const },
-        { targetId: 'tut-nav-bar', title: t.tutorial.home[3].title, text: t.tutorial.home[3].text, position: 'top' as const },
-        ...(onStartFreeSession ? [{ targetId: 'home-freestyle-btn', title: lang === 'es' ? '🏅 Sin Programa Fijo' : '🏅 No Fixed Program', text: lang === 'es' ? 'Aquí puedes iniciar sesiones de CrossFit (WODs), Calistenia (progressions) o entrenar libremente sin un mesociclo activo.' : 'Here you can start CrossFit (WODs), Calisthenics (progressions) or train freely without an active mesocycle.', position: 'top' as const }] : [])
+        { targetId: 'tut-nav-bar', title: t.tutorial.home[3].title, text: t.tutorial.home[3].text, position: 'top' as const }
     ];
 
     if (!activeMeso) {
         return (
-            <div className="flex flex-col items-center justify-center h-full p-6 text-center space-y-8 bg-black">
+            <div className="flex flex-col items-center justify-center h-full p-6 text-center space-y-8 bg-[rgb(var(--surface-app))]">
                 <div className="relative z-10 w-full max-w-sm">
                     {/* Hero Card Container */}
                     <div
                         onClick={handleOpenTemplateSelector}
-                        className="group w-full aspect-square rounded-[1.5rem] relative overflow-hidden cursor-pointer bg-[#121212] active:scale-[0.98] transition-all duration-300 border border-white/5 flex flex-col items-center justify-center p-8 gap-4"
+                        className="group w-full aspect-square rounded-[1.5rem] relative overflow-hidden cursor-pointer bg-[rgb(var(--surface-raised))] active:scale-[0.98] transition-all duration-300 border border-[rgb(var(--border-subtle))] flex flex-col items-center justify-center p-8 gap-4"
                     >
                         {/* Clean minimal UI replacing abstract art */}
                         <div className="w-16 h-16 rounded-full bg-zinc-800/50 flex items-center justify-center text-primary-500 mb-2">
@@ -378,25 +377,25 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                             <button
                                 id="tut-guidelines"
                                 onClick={() => checkPro("Guidelines") && setShowGuidelines(true)}
-                                className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded bg-zinc-800 text-blue-400 border border-zinc-700 hover:bg-zinc-700 hover:text-white transition-colors flex items-center gap-1.5 active:scale-95"
+                                className="text-[11px] font-bold uppercase tracking-widest px-2.5 py-1 rounded bg-zinc-800 text-blue-400 border border-zinc-700 hover:bg-zinc-700 hover:text-white transition-colors flex items-center gap-1.5 active:scale-95"
                             >
-                                <Icon name="Info" size={12} /> GUIDELINES {!isPro && <Icon name="Lock" size={10} className="text-yellow-500 ml-1" />}
+                                <Icon name="Info" size={13} /> GUIDELINES {!isPro && <Icon name="Lock" size={11} className="text-yellow-500 ml-1" />}
                             </button>
                         ) : (
                             kongBlock ? (
-                                <button onClick={() => setShowKongHub(true)} className="min-h-8 rounded bg-zinc-800 px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-primary-400 border border-zinc-700">
+                                <button onClick={() => setShowKongHub(true)} className="min-h-8 rounded bg-zinc-800 px-2.5 py-1 text-[11px] font-bold uppercase tracking-widest text-primary-400 border border-zinc-700">
                                     {lang === 'es' ? `KONG · BLOQUE ${kongBlock.block.number}` : `KONG · BLOCK ${kongBlock.block.number}`}
                                 </button>
                             ) : (
-                                <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded bg-zinc-800 text-zinc-400 border border-zinc-700">
+                                <span className="text-[11px] font-bold uppercase tracking-widest px-2.5 py-1 rounded bg-zinc-800 text-zinc-400 border border-zinc-700">
                                     {/^(tpl_|personal_)/i.test(String(activeMeso.mesoType))
                                         ? (lang === 'es' ? 'PERSONALIZADO' : 'CUSTOM')
                                         : (t.phases?.[activeMeso.mesoType] || activeMeso.mesoType)}
                                 </span>
                             )
                         )}
-                        <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">{t.week} {activeMeso.week} / {activeMeso.targetWeeks}</span>
-                        {kongBlock && <span className="text-[10px] text-primary-400 font-bold uppercase tracking-wider">{lang === 'es' ? `Semana del bloque ${kongBlock.blockWeek}/4` : `Block week ${kongBlock.blockWeek}/4`}</span>}
+                        <span className="text-[11px] text-zinc-500 font-bold uppercase tracking-wider">{t.week} {activeMeso.week} / {activeMeso.targetWeeks}</span>
+                        {kongBlock && <span className="text-[11px] text-primary-400 font-bold uppercase tracking-wider">{lang === 'es' ? `Semana del bloque ${kongBlock.blockWeek}/4` : `Block week ${kongBlock.blockWeek}/4`}</span>}
                     </div>
                 </div>
 
@@ -421,7 +420,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                         <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest">
                             {lang === 'en' ? 'Weekly Timeline' : 'Cronograma Semanal'}
                         </h4>
-                        <span className="text-[10px] text-zinc-500 font-bold">
+                        <span className="text-[11px] text-zinc-500 font-bold">
                             {safeProgram.length > 0 ? Math.round((uniqueDaysDone.size / safeProgram.length) * 100) : 0}% {lang === 'en' ? 'DONE' : 'COMPLETADO'}
                         </span>
                     </div>
@@ -458,7 +457,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                                     }}
                                     className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border ${cardBorderClass} ${cardBgClass} w-20 shrink-0 transition-all active:scale-95`}
                                 >
-                                    <span className={`text-[10px] tracking-wide uppercase font-bold ${textClass}`}>
+                                    <span className={`text-[11px] tracking-wide uppercase font-bold ${textClass}`}>
                                         {lang === 'en' ? `Day ${idx + 1}` : `Día ${idx + 1}`}
                                     </span>
                                     <div className="mt-2.5 flex items-center justify-center">
@@ -472,7 +471,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                                             </div>
                                         ) : (
                                             <div className="w-6 h-6 rounded-full bg-zinc-800/20 text-zinc-600 flex items-center justify-center border border-zinc-800">
-                                                <span className="text-[10px] font-bold font-mono">{idx + 1}</span>
+                                                <span className="text-[11px] font-bold font-mono">{idx + 1}</span>
                                             </div>
                                         )}
                                     </div>
@@ -500,7 +499,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                             onClick={() => startSession(selectedDayIdx)}
                             role="button"
                             tabIndex={0}
-                            className="group relative w-full rounded-[1.5rem] p-6 cursor-pointer active:scale-[0.98] transition-all duration-300 bg-[#1A1A1A] border border-white/5 shadow-lg flex flex-col justify-between min-h-[220px] overflow-hidden"
+                            className="group relative w-full rounded-[1.5rem] p-6 cursor-pointer active:scale-[0.98] transition-all duration-300 bg-[rgb(var(--surface-raised))] border border-[rgb(var(--border-subtle))] shadow-lg flex flex-col justify-between min-h-[220px] overflow-hidden"
                         >
                             <div className="relative z-10 flex justify-between items-start">
                                     <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md border border-white/5 ${
@@ -509,7 +508,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                                         : 'bg-white/5 text-zinc-300'
                                     }`}>
                                         {isSelectedActive && <span className="w-2 h-2 rounded-full bg-primary-500 animate-pulse" />}
-                                        <span className="text-[10px] font-bold uppercase tracking-widest">
+                                        <span className="text-[11px] font-bold uppercase tracking-widest">
                                             {isSelectedActive ? (lang === 'en' ? 'IN PROGRESS' : 'EN CURSO') 
                                             : isDone ? (lang === 'en' ? 'COMPLETED' : 'COMPLETADO') 
                                             : isNext ? (lang === 'en' ? 'UP NEXT' : 'SIGUIENTE') 
@@ -536,13 +535,13 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                                         {(dayDef.slots || []).slice(0, 3).map((slot: any, sIdx: number) => (
                                             <span
                                                 key={sIdx}
-                                                className="text-[10px] font-bold uppercase bg-white/10 text-zinc-300 px-2 py-1 rounded-md border border-white/5"
+                                                className="text-[11px] font-bold uppercase bg-white/10 text-zinc-300 px-2.5 py-1 rounded-md border border-white/5"
                                             >
                                                 {String(tm(slot.muscle))}
                                             </span>
                                         ))}
                                         {(dayDef.slots || []).length > 3 && (
-                                            <span className="text-[10px] font-bold uppercase bg-white/10 text-zinc-300 px-2 py-1 rounded-md border border-white/5">
+                                            <span className="text-[11px] font-bold uppercase bg-white/10 text-zinc-300 px-2.5 py-1 rounded-md border border-white/5">
                                                 +{(dayDef.slots || []).length - 3}
                                             </span>
                                         )}
@@ -550,15 +549,15 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
 
                                     <div className="flex items-center gap-3">
                                         {dayEstimatedMin > 0 && (
-                                            <div className="flex items-center gap-1 text-zinc-400">
-                                                <Icon name="Clock" size={11} />
-                                                <span className="text-[10px] font-bold">~{dayEstimatedMin} MIN</span>
+                                            <div className="flex items-center gap-1.5 text-zinc-400">
+                                                <Icon name="Clock" size={13} />
+                                                <span className="text-[11px] font-bold">~{dayEstimatedMin} MIN</span>
                                             </div>
                                         )}
                                         {adherencePct !== null && isNext && (
-                                            <div className="flex items-center gap-1 text-zinc-400">
-                                                <Icon name="TrendingUp" size={11} />
-                                                <span className="text-[10px] font-bold">
+                                            <div className="flex items-center gap-1.5 text-zinc-400">
+                                                <Icon name="TrendingUp" size={13} />
+                                                <span className="text-[11px] font-bold">
                                                     {adherencePct}% {lang === 'es' ? 'adherencia' : 'adherence'}
                                                 </span>
                                             </div>
@@ -567,7 +566,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                                 </div>
 
                                 <div className="relative z-10 flex items-center gap-3">
-                                    <div className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-transform active:scale-90 ${isDone ? 'bg-zinc-800 text-zinc-300 shadow-zinc-800/10' : 'bg-primary-500 text-black shadow-primary-500/20 animate-bounce-cta'}`}>
+                                    <div className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-transform active:scale-90 ${isDone ? 'bg-zinc-800 text-zinc-300 shadow-zinc-800/10' : 'bg-primary-500 text-black shadow-primary-500/20'}`}>
                                         <Icon name={isSelectedActive ? 'Play' : isDone ? 'Repeat' : 'ArrowRight'} size={26} fill="currentColor" />
                                     </div>
                                     <span className="text-sm font-bold text-white">
@@ -581,77 +580,6 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                         </div>
                     );
                 })()}
-            </div>
-
-            {/* Freestyle / CrossFit / Calisthenics quick launcher */}
-            {onStartFreeSession && (
-                <button
-                    id="home-freestyle-btn"
-                    onClick={onStartFreeSession}
-                    className="w-full flex items-center gap-4 glass-card rounded-2xl p-4 hover:border-white/10 active:scale-[0.98] transition-all group"
-                >
-                    <div className="flex gap-1.5">
-                        <div className="w-8 h-8 rounded-xl bg-primary-500/10 text-primary-500 flex items-center justify-center">
-                            <Icon name="Dumbbell" size={16} />
-                        </div>
-                        <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
-                            <Icon name="Zap" size={16} />
-                        </div>
-                        <div className="w-8 h-8 rounded-xl bg-violet-500/10 text-violet-500 flex items-center justify-center">
-                            <Icon name="User" size={16} />
-                        </div>
-                    </div>
-                    <div className="flex-1 text-left">
-                        <div className="text-sm font-bold text-white">
-                            {lang === 'es' ? 'Sesión Libre / CrossFit / Calistenia' : 'Freestyle / CrossFit / Calisthenics'}
-                        </div>
-                        <div className="text-[10px] text-zinc-500 mt-0.5">
-                            {lang === 'es' ? 'Sin programa fijo · WODs · Progressions' : 'No fixed program · WODs · Progressions'}
-                        </div>
-                    </div>
-                    <Icon name="ChevronRight" size={18} className="text-zinc-650 group-hover:text-zinc-300 transition-colors" />
-                </button>
-            )}
-
-            {/* Copy Last Session */}
-            {(() => {
-                // logs are stored newest-first ([newest, ..., oldest]), so [0] is the most recent
-                const lastLog = safeLogs
-                    .filter((l: any) => !l.skipped && l.mesoId === activeMeso.id && l.dayIdx < safeProgram.length)[0];
-                if (!lastLog) return null;
-                const logName = lastLog.name || (lang === 'es' ? 'Última Sesión' : 'Last Session');
-                const exNames = (lastLog.exercises || []).slice(0, 3).map((e: any) => {
-                    const n = e.name;
-                    return typeof n === 'object' ? (n[lang] || n.en || '') : (n || '');
-                }).filter(Boolean).join(' · ');
-                return (
-                    <button
-                        onClick={() => startSession(lastLog.dayIdx)}
-                        className="w-full flex items-center gap-4 glass-card rounded-2xl p-4 hover:border-primary-500/30 active:scale-[0.98] transition-all group"
-                    >
-                        <div className="w-10 h-10 rounded-xl bg-primary-500/10 text-primary-400 flex items-center justify-center shrink-0">
-                            <Icon name="Repeat" size={18} />
-                        </div>
-                        <div className="flex-1 text-left min-w-0">
-                            <div className="text-sm font-bold text-white">
-                                {lang === 'es' ? 'Volver a entrenar último día' : 'Train last scheduled day again'}
-                            </div>
-                            <div className="text-[10px] text-zinc-500 mt-0.5 truncate">
-                                {exNames || logName}
-                            </div>
-                        </div>
-                        <Icon name="ChevronRight" size={18} className="text-zinc-650 group-hover:text-zinc-300 transition-colors shrink-0" />
-                    </button>
-                );
-            })()}
-
-            {/* Consistency Heatmap */}
-            <div className="glass-card rounded-3xl p-6">
-                <div className="flex items-center gap-2 mb-4">
-                    <Icon name="Activity" size={16} className="text-zinc-500" />
-                    <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">{t.consistency}</h3>
-                </div>
-                <ActivityHeatmap logs={safeLogs} />
             </div>
 
 

@@ -29,7 +29,7 @@ const VirtuosoHeader = ({ context }: { context?: HistoryVirtuosoContext }) => {
         <div className="space-y-3 px-5 pb-4 pt-4">
             <div>
                 <h2 className="text-2xl font-black tracking-tight text-zinc-950 dark:text-white">{lang === 'en' ? 'History' : 'Historial'}</h2>
-                <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.16em] text-zinc-500">
+                <p className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.16em] text-zinc-500">
                     {lang === 'es' ? 'Tus entrenamientos completados' : 'Your completed workouts'}
                 </p>
             </div>
@@ -95,12 +95,12 @@ const HistoryCard = memo(({ log, lang, id, onOpen }: HistoryCardProps) => {
         >
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                    <div className="mb-1 text-[9px] font-black uppercase tracking-[0.16em] text-zinc-500">{formatDate(log.endTime, lang)}</div>
+                    <div className="mb-1 text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">{formatDate(log.endTime, lang)}</div>
                     <h3 className="truncate text-base font-black tracking-tight text-zinc-950 dark:text-white">{log.name}</h3>
-                    {log.programSystem && <span className="mt-1 inline-flex rounded-full bg-primary-500/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-primary-600 dark:text-primary-300">KONG · B{log.programSystem.blockNumber} · W{log.week}</span>}
+                    {log.programSystem && <span className="mt-1 inline-flex rounded-full bg-primary-500/10 px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wider text-primary-600 dark:text-primary-300">KONG · B{log.programSystem.blockNumber} · W{log.week}</span>}
                 </div>
-                <div className="flex shrink-0 items-center gap-1 rounded-full bg-zinc-100 px-2 py-1 text-[10px] font-bold text-zinc-500 dark:bg-white/5">
-                    <Icon name="Clock" size={11} />
+                <div className="flex shrink-0 items-center gap-1.5 rounded-full bg-zinc-100 px-2.5 py-1 text-[11px] font-bold text-zinc-500 dark:bg-white/5">
+                    <Icon name="Clock" size={12} />
                     {formatHoursMinutes(log.duration)}
                 </div>
             </div>
@@ -115,7 +115,7 @@ const HistoryCard = memo(({ log, lang, id, onOpen }: HistoryCardProps) => {
             </div>
 
             <div className="mt-3 flex items-center justify-between border-t border-[rgb(var(--border-subtle)/0.45)] pt-3">
-                <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-500">
+                <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-zinc-500">
                     {(log.exercises || []).length} {lang === 'es' ? 'ejercicios' : 'exercises'}
                 </span>
                 <Icon name="ChevronRight" size={16} className="text-zinc-400" />
@@ -132,11 +132,18 @@ export const HistoryView: React.FC = () => {
     const { isPro, showPaywall, setShowPaywall, checkPro } = usePro();
     const [selectedLogId, setSelectedLogId] = useState<number | null>(null);
     const [deletingLogId, setDeletingLogId] = useState<number | null>(null);
+    const [deletedLogBackup, setDeletedLogBackup] = useState<{ log: Log; index: number } | null>(null);
     const [search, setSearch] = useState('');
     const deferredSearch = useDeferredValue(search);
 
     const safeLogs = useMemo(() => Array.isArray(logs) ? logs : [], [logs]);
     const selectedLog = useMemo(() => safeLogs.find(log => log.id === selectedLogId) || null, [safeLogs, selectedLogId]);
+
+    useEffect(() => {
+        if (!deletedLogBackup) return;
+        const timer = window.setTimeout(() => setDeletedLogBackup(null), 5500);
+        return () => window.clearTimeout(timer);
+    }, [deletedLogBackup]);
 
     useEffect(() => {
         const onPop = (event: PopStateEvent) => {
@@ -292,6 +299,11 @@ export const HistoryView: React.FC = () => {
                         confirmText={lang === 'en' ? 'Delete' : 'Eliminar'}
                         cancelText={t.cancel}
                         onConfirm={() => {
+                            const idx = safeLogs.findIndex(l => l.id === deletingLogId);
+                            const logToDelete = safeLogs[idx];
+                            if (logToDelete) {
+                                setDeletedLogBackup({ log: logToDelete, index: idx });
+                            }
                             setLogs(prev => prev.filter(log => log.id !== deletingLogId));
                             setDeletingLogId(null);
                             setSelectedLogId(null);
@@ -301,6 +313,28 @@ export const HistoryView: React.FC = () => {
                         variant="danger"
                     />
                 </Suspense>
+            )}
+
+            {deletedLogBackup && (
+                <div className="fixed bottom-24 left-4 right-4 z-50 flex items-center justify-between rounded-2xl bg-zinc-900 border border-zinc-700/80 px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-4 duration-200">
+                    <span className="text-xs font-semibold text-white">
+                        {lang === 'es' ? 'Entrenamiento eliminado' : 'Workout deleted'}
+                    </span>
+                    <button
+                        onClick={() => {
+                            setLogs(prev => {
+                                const next = [...prev];
+                                next.splice(deletedLogBackup.index, 0, deletedLogBackup.log);
+                                return next;
+                            });
+                            setDeletedLogBackup(null);
+                        }}
+                        className="flex items-center gap-1.5 text-xs font-bold text-primary-400 hover:text-primary-300 active:scale-95 transition-transform"
+                    >
+                        <Icon name="RotateCcw" size={14} />
+                        <span>{lang === 'es' ? 'Deshacer' : 'Undo'}</span>
+                    </button>
+                </div>
             )}
         </div>
     );

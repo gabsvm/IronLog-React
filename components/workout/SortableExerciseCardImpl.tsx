@@ -345,7 +345,7 @@ export const SortableExerciseCard = React.memo(({
             ref={setNodeRef}
             style={style}
             className={`
-                flex flex-col overflow-hidden rounded-[1.2rem] border border-zinc-800 bg-[#141416] shadow-[0_14px_32px_-24px_rgba(0,0,0,0.9)] transition-all
+                flex flex-col overflow-hidden rounded-[1.2rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#141416] shadow-sm dark:shadow-[0_14px_32px_-24px_rgba(0,0,0,0.9)] transition-all
                 ${ssStyle ? `border-l-4 ${ssStyle.border}` : ''}
                 ${isDragging ? 'scale-[1.02] shadow-2xl ring-2 ring-red-500/20' : ''}
                 ${isLinkSource ? 'ring-2 ring-amber-400/40 shadow-[0_0_0_1px_rgba(251,191,36,0.15)]' : ''}

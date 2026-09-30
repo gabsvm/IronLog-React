@@ -109,18 +109,18 @@ export const BodyTab: React.FC<Props> = ({
                 <div className="grid grid-cols-3 gap-3">
                     <div className="text-center">
                         <p className="text-xl font-black text-white">{nutritionGoal.calories}</p>
-                        <p className="text-[9px] text-zinc-500 uppercase">{l('Goal', 'Meta')}</p>
+                        <p className="text-[11px] font-bold text-zinc-400 uppercase">{l('Goal', 'Meta')}</p>
                     </div>
                     <div className="text-center">
                         <p className={`text-xl font-black ${todayCalories > nutritionGoal.calories ? 'text-orange-400' : 'text-green-400'}`}>
                             {todayCalories}
                         </p>
-                        <p className="text-[9px] text-zinc-500 uppercase">{l('Eaten', 'Consumido')}</p>
+                        <p className="text-[11px] font-bold text-zinc-400 uppercase">{l('Eaten', 'Consumido')}</p>
                     </div>
                     {tdee && (
                         <div className="text-center">
                             <p className="text-xl font-black text-zinc-300">{tdee}</p>
-                            <p className="text-[9px] text-zinc-500 uppercase">TDEE</p>
+                            <p className="text-[11px] font-bold text-zinc-400 uppercase">{l('TDEE (Est.)', 'TDEE (Est.)')}</p>
                         </div>
                     )}
                 </div>

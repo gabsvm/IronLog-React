@@ -78,7 +78,7 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
     const badge = getSessionTypeBadge();
 
     return (
-        <div className="flex flex-col h-full bg-zinc-950 text-white animate-in fade-in duration-300">
+        <div className="flex flex-col h-full bg-[rgb(var(--surface-app))] text-zinc-900 dark:text-white animate-in fade-in duration-200">
             <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-6 overflow-y-auto">
                 {/* Header with restrained trophy animation */}
                 <div className="text-center space-y-2">
@@ -86,40 +86,40 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
                         <Icon name="Trophy" size={36} />
                     </div>
                     <div>
-                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border mb-2 ${badge.color}`}>
+                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider border mb-2 ${badge.color}`}>
                             {badge.label}
                         </span>
                     </div>
-                    <h1 className="text-2xl font-black uppercase tracking-tight text-white leading-tight">
+                    <h1 className="text-2xl font-black uppercase tracking-tight text-zinc-950 dark:text-white leading-tight">
                         {lang === 'en' ? 'Workout Complete!' : '¡Entrenamiento Completado!'}
                     </h1>
-                    <p className="text-zinc-400 font-medium text-sm">
+                    <p className="text-zinc-500 dark:text-zinc-400 font-medium text-sm">
                         {log.name}
                     </p>
                 </div>
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
-                    <div className="glass-card rounded-2xl p-4 flex flex-col items-center justify-center border border-zinc-800 bg-zinc-900/60 shadow-sm">
-                        <Icon name="Clock" size={18} className="text-blue-400 mb-1.5" />
+                    <div className="glass-card rounded-2xl p-4 flex flex-col items-center justify-center border border-zinc-200 dark:border-zinc-800 bg-[rgb(var(--surface-raised))] shadow-sm">
+                        <Icon name="Clock" size={18} className="text-blue-500 dark:text-blue-400 mb-1.5" />
                         <div className="text-xl font-black">{formatDuration(log.duration)}</div>
-                        <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                        <div className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
                             {lang === 'en' ? 'Time' : 'Tiempo'}
                         </div>
                     </div>
 
-                    <div className="glass-card rounded-2xl p-4 flex flex-col items-center justify-center border border-zinc-800 bg-zinc-900/60 shadow-sm">
-                        <Icon name="CheckCircle" size={18} className="text-green-400 mb-1.5" />
+                    <div className="glass-card rounded-2xl p-4 flex flex-col items-center justify-center border border-zinc-200 dark:border-zinc-800 bg-[rgb(var(--surface-raised))] shadow-sm">
+                        <Icon name="CheckCircle" size={18} className="text-green-500 dark:text-green-400 mb-1.5" />
                         <div className="text-xl font-black">{stats.sets}</div>
-                        <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                        <div className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
                             {lang === 'en' ? 'Sets' : 'Series'}
                         </div>
                     </div>
 
-                    <div className="col-span-2 glass-card rounded-2xl p-4 flex flex-col items-center justify-center border border-zinc-800 bg-zinc-900/60 shadow-sm">
-                        <Icon name="Dumbbell" size={18} className="text-amber-400 mb-1.5" />
+                    <div className="col-span-2 glass-card rounded-2xl p-4 flex flex-col items-center justify-center border border-zinc-200 dark:border-zinc-800 bg-[rgb(var(--surface-raised))] shadow-sm">
+                        <Icon name="Dumbbell" size={18} className="text-amber-500 dark:text-amber-400 mb-1.5" />
                         <div className="text-xl font-black">{stats.volume.toLocaleString()} kg</div>
-                        <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                        <div className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
                             {lang === 'en' ? 'Total Volume' : 'Volumen Total'}
                         </div>
                     </div>
@@ -128,12 +128,12 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
                 {/* Muscles Hit */}
                 {stats.muscles.length > 0 && (
                     <div className="w-full max-w-sm">
-                        <p className="text-center text-[10px] font-bold text-zinc-500 mb-2 uppercase tracking-wider">
+                        <p className="text-center text-[11px] font-bold text-zinc-500 mb-2 uppercase tracking-wider">
                             {lang === 'en' ? 'Muscles Hit' : 'Músculos Trabajados'}
                         </p>
                         <div className="flex flex-wrap justify-center gap-1.5">
                             {stats.muscles.map(m => (
-                                <span key={m} className="px-2.5 py-0.5 bg-zinc-800/80 border border-zinc-700/50 rounded-full text-[11px] font-bold text-zinc-300">
+                                <span key={m} className="px-2.5 py-0.5 bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/50 rounded-full text-[11px] font-bold text-zinc-700 dark:text-zinc-300">
                                     {m}
                                 </span>
                             ))}
@@ -143,7 +143,7 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
             </div>
 
             {/* Footer */}
-            <div className="p-4 bg-zinc-950 pb-[env(safe-area-inset-bottom)]">
+            <div className="p-4 bg-[rgb(var(--surface-app))] pb-[env(safe-area-inset-bottom)] border-t border-[rgb(var(--border-subtle)/0.4)]">
                 <Button fullWidth onClick={onClose} className="h-12 text-base font-bold">
                     {lang === 'en' ? 'Finish & Go Home' : 'Finalizar y Volver'}
                 </Button>

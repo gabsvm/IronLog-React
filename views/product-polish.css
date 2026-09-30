@@ -5,13 +5,6 @@
   min-height: 100%;
 }
 
-/* Secondary destinations now live in + / History / Stats instead of competing
-   with the primary "what do I train now?" hierarchy on Home. */
-.product-home-polish #home-freestyle-btn,
-.product-home-polish button.glass-card:has(.lucide-repeat),
-.product-home-polish .glass-card.rounded-3xl:has(.lucide-activity) {
-  display: none !important;
-}
 
 .product-home-polish .animate-bounce-cta,
 .product-home-polish .animate-pulse:not([aria-busy="true"]) {

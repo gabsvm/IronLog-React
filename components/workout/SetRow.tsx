@@ -1,4 +1,4 @@
-﻿
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { WorkoutSet, SetType } from '../../types';
 import { Icon } from '../ui/Icon';
@@ -352,7 +352,7 @@ export const SetRow = React.memo(({
         focusPrimaryField();
     }, [focusPrimaryField]);
 
-    const inputBase = "w-full rounded-[0.95rem] border border-zinc-700/70 bg-[#202024] px-2 py-1.5 text-center text-[15px] font-bold text-white outline-none transition-all tabular-nums placeholder-zinc-600 focus:border-primary-500/25 focus:ring-2 focus:ring-primary-500/15";
+    const inputBase = "w-full rounded-[0.95rem] border border-zinc-300 dark:border-zinc-700/70 bg-zinc-100 dark:bg-[#202024] px-2 py-1.5 text-center text-[15px] font-bold text-zinc-900 dark:text-white outline-none transition-all tabular-nums placeholder-zinc-400 dark:placeholder-zinc-600 focus:border-primary-500/25 focus:ring-2 focus:ring-primary-500/15";
     const doneInput = "border-transparent bg-transparent text-white/90 pointer-events-none";
 
     // Show previous session value as placeholder so the field reads as "editable with context",
@@ -377,11 +377,11 @@ export const SetRow = React.memo(({
 
     // Difficulty picker (shown after completing a set with no RPE)
     const DifficultyPicker = !isDone ? null : (set.rpe === '' || set.rpe === null || set.rpe === undefined) ? (
-        <div className="flex gap-1 px-2 pb-1 -mt-0.5 animate-in fade-in duration-300">
-            {([{ emoji: 'Easy', label: lang === 'es' ? 'Facil' : 'Easy', val: '3' }, { emoji: 'OK', label: 'OK', val: '6' }, { emoji: 'Hard', label: lang === 'es' ? 'Duro' : 'Hard', val: '9' }] as const).map(d => (
+        <div className="flex gap-1.5 px-2 pb-1.5 -mt-0.5 animate-in fade-in duration-200">
+            {([{ emoji: 'Easy', label: lang === 'es' ? 'Fácil' : 'Easy', val: '3' }, { emoji: 'OK', label: 'OK', val: '6' }, { emoji: 'Hard', label: lang === 'es' ? 'Duro' : 'Hard', val: '9' }] as const).map(d => (
                 <button key={d.val}
                     onClick={() => onUpdate(exInstanceId, set.id, 'rpe', d.val)}
-                    className="flex-1 rounded-lg bg-zinc-800/60 py-1 text-[10px] font-bold text-zinc-400 transition-all hover:bg-zinc-700 hover:text-white active:scale-95">
+                    className="flex-1 rounded-lg bg-zinc-800/80 py-1.5 text-[11px] font-bold text-zinc-300 transition-all hover:bg-zinc-700 hover:text-white active:scale-95">
                     {d.emoji} {d.label}
                 </button>
             ))}
@@ -480,17 +480,17 @@ export const SetRow = React.memo(({
                         {!showExtraWeight ? (
                             <button
                                 onClick={() => setShowExtraWeight(true)}
-                                className="flex h-8 w-8 flex-col items-center justify-center text-zinc-600 transition-colors hover:text-zinc-300"
+                                className="flex h-8 w-8 flex-col items-center justify-center text-zinc-500 transition-colors hover:text-zinc-300"
                                 title={lang === 'es' ? '+ Peso Extra' : '+ Extra Weight'}
                             >
                                 <Icon name="PlusCircle" size={14} />
-                                <span className="text-[7px] font-bold mt-0.5 uppercase tracking-wide">+KG</span>
+                                <span className="text-[10px] font-bold mt-0.5 uppercase tracking-wide">+KG</span>
                             </button>
                         ) : (
                             <input
                                 ref={extraWeightRef}
                                 type="number" inputMode="decimal"
-                                className="w-full rounded-[0.9rem] border border-zinc-700/70 bg-[#202024] px-1 py-1.5 text-center text-xs font-bold text-violet-300 outline-none transition-all tabular-nums placeholder-zinc-600 focus:border-violet-500/30 focus:ring-2 focus:ring-violet-500/15"
+                                className="w-full rounded-[0.9rem] border border-violet-500/30 bg-violet-950/20 px-1 py-1.5 text-center text-xs font-bold text-violet-300 outline-none transition-all tabular-nums placeholder-zinc-500 focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20"
                                 placeholder="0"
                                 value={localWeight}
                                 onChange={e => setLocalWeight(e.target.value)}
@@ -525,14 +525,14 @@ export const SetRow = React.memo(({
                 {/* Prev performance hint */}
                 {prescriptionHint && !isDone && (
                     <div className="flex justify-center pb-1 -mt-0.5">
-                        <span className="text-[9px] font-black tracking-wide text-primary-400/90">{prescriptionHint}</span>
+                        <span className="text-[11px] font-bold tracking-wide text-primary-400">{prescriptionHint}</span>
                     </div>
                 )}
                 {!isDone && set.prevReps && (
                     <div className="flex justify-center pb-1 -mt-0.5">
-                        <div className="inline-flex items-center gap-1 rounded-full bg-zinc-800/70 px-2 py-0.5 border border-zinc-700/40">
-                            <Icon name="Clock" size={9} className="text-zinc-500 shrink-0" />
-                            <span className="text-[8px] font-bold text-zinc-500 tabular-nums">
+                        <div className="inline-flex items-center gap-1.5 rounded-full bg-zinc-800/80 px-2.5 py-0.5 border border-zinc-700/60">
+                            <Icon name="Clock" size={11} className="text-zinc-400 shrink-0" />
+                            <span className="text-[11px] font-semibold text-zinc-300 tabular-nums">
                                 {set.prevReps} reps{set.prevWeight && Number(set.prevWeight) > 0 ? ` +${set.prevWeight}kg` : ''}
                             </span>
                         </div>
@@ -614,18 +614,18 @@ export const SetRow = React.memo(({
         {/* Prev performance hint */}
         {prescriptionHint && !isDone && (
             <div className="flex justify-center pb-1 -mt-0.5">
-                <span className="text-[9px] font-black tracking-wide text-primary-400/90">{prescriptionHint}</span>
+                <span className="text-[11px] font-bold tracking-wide text-primary-400">{prescriptionHint}</span>
             </div>
         )}
         {!isDone && !isCardio && (set.prevWeight || set.prevReps) && (
             <div className="flex justify-center pb-1 -mt-0.5">
-                <div className="inline-flex items-center gap-1 rounded-full bg-zinc-800/70 px-2 py-0.5 border border-zinc-700/40">
-                    <Icon name="Clock" size={9} className="text-zinc-500 shrink-0" />
-                    <span className="text-[8px] font-bold text-zinc-500 tabular-nums">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-zinc-800/80 px-2.5 py-0.5 border border-zinc-700/60">
+                    <Icon name="Clock" size={11} className="text-zinc-400 shrink-0" />
+                    <span className="text-[11px] font-semibold text-zinc-300 tabular-nums">
                         {[
                             set.prevWeight && Number(set.prevWeight) > 0 ? `${set.prevWeight}kg` : null,
                             set.prevReps && Number(set.prevReps) > 0 ? `${set.prevReps} reps` : null,
-                        ].filter(Boolean).join(' x ')}
+                        ].filter(Boolean).join(' × ')}
                     </span>
                 </div>
             </div>
