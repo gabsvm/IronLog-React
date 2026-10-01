@@ -30,6 +30,7 @@ describe('A3: accessible names and semantics', () => {
             type: 'regular',
             weight: '80',
             reps: '10',
+            rpe: '',
             completed: false,
         };
 
@@ -48,7 +49,7 @@ describe('A3: accessible names and semantics', () => {
             );
 
             expect(screen.getByLabelText('Peso')).toBeInTheDocument();
-            expect(screen.getByLabelText('Repeticiones')).toBeInTheDocument();
+            expect(screen.getByLabelText('Reps')).toBeInTheDocument();
             expect(screen.getByLabelText('RIR')).toBeInTheDocument();
             expect(screen.getByLabelText('Serie 1, cambiar tipo')).toBeInTheDocument();
         });

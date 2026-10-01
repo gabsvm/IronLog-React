@@ -2,6 +2,7 @@ export const TRANSLATIONS = {
     en: {
         startMeso: "Start New Mesocycle",
         finishWorkout: "Finish Workout",
+        finish: "Finish",
         finishConfirm: "Finish workout?",
         finishMesoTitle: "Complete Mesocycle?",
         finishMesoDesc: "You've completed the final week. Great work! Conclude the mesocycle now?",
@@ -510,6 +511,7 @@ export const TRANSLATIONS = {
     es: {
         startMeso: "Nuevo Mesociclo",
         finishWorkout: "Terminar",
+        finish: "Terminar",
         finishConfirm: "¿Terminar entreno?",
         finishMesoTitle: "¿Completar Mesociclo?",
         finishMesoDesc: "Has completado la última semana. ¡Gran trabajo! ¿Concluir el mesociclo ahora?",

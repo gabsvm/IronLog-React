@@ -74,6 +74,7 @@ const RestTimerControl: React.FC<{
     lang: 'en' | 'es';
 }> = React.memo(({ preset, onStart, onStop, onCyclePreset, lang }) => {
     const restTimer = useTimerState();
+    const t = TRANSLATIONS[lang];
 
     return (
         <>
