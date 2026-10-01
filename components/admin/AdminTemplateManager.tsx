@@ -301,7 +301,7 @@ export const AdminTemplateManager: React.FC<{ onClose: () => void }> = ({ onClos
                         </div>
                         <div>
                             <h2 className="text-base font-black tracking-tight">Template Manager</h2>
-                            <p className="text-[10px] text-zinc-500 font-medium">{globalTemplates.length} plans · {firestoreIds.size} persisted</p>
+                            <p className="text-xs text-muted font-medium">{globalTemplates.length} plans · {firestoreIds.size} persisted</p>
                         </div>
                     </div>
                     <button onClick={onClose} className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors" aria-label="Close">
@@ -328,7 +328,7 @@ export const AdminTemplateManager: React.FC<{ onClose: () => void }> = ({ onClos
                                             {tpl.isPro && <span className="text-[9px] bg-amber-500/15 text-amber-400 border border-amber-500/30 font-black px-2 py-0.5 rounded uppercase tracking-widest">PRO</span>}
                                         </div>
                                         <div className="font-bold text-sm text-white truncate">{tpl.title.en}</div>
-                                        <div className="text-[10px] text-zinc-500 font-mono mt-0.5">{tpl.id} · {tpl.program.length} days</div>
+                                        <div className="text-xs text-muted font-mono mt-0.5">{tpl.id} · {tpl.program.length} days</div>
                                     </div>
                                     <div className="flex gap-1.5 shrink-0">
                                         <button

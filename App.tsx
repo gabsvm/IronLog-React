@@ -279,12 +279,20 @@ const AppContent = () => {
             const state = e.state;
             if (state) {
                 withTransition('back', () => {
-                    if (state.view) { targetViewRef.current = state.view; setViewState(state.view); }
-                    setShowSettings(Boolean(state.settings));
+                    flushSync(() => {
+                        if (state.view) { targetViewRef.current = state.view; setViewState(state.view); }
+                        setShowSettings(Boolean(state.settings));
+                    });
                 });
             } else {
-                setView('home');
-                setShowSettings(false);
+                // 'home' needs no preload: flip view + settings atomically like setView does.
+                targetViewRef.current = 'home';
+                withTransition('back', () => {
+                    flushSync(() => {
+                        setViewState('home');
+                        setShowSettings(false);
+                    });
+                });
             }
             window.dispatchEvent(new CustomEvent('ironlog:popstate', { detail: state }));
         };

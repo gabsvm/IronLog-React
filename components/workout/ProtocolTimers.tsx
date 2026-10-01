@@ -116,7 +116,7 @@ export const EMOMTimer: React.FC<EMOMTimerProps> = React.memo(({ totalSets, lang
                 <p className="flex-1 text-[10px] font-black uppercase tracking-wider text-green-400">
                     EMOM {l('complete', 'completo')} - {totalSets} {l('rounds done', 'rondas')}
                 </p>
-                <button onClick={stop} className="px-2 py-1 text-[10px] font-bold text-zinc-500 transition-colors hover:text-white">
+                <button onClick={stop} className="px-2 py-1 text-xs font-bold text-muted transition-colors hover:text-white">
                     {l('Reset', 'Reiniciar')}
                 </button>
             </div>
@@ -135,7 +135,7 @@ export const EMOMTimer: React.FC<EMOMTimerProps> = React.memo(({ totalSets, lang
                 </span>
                 <button
                     onClick={stop}
-                    className="ml-1 rounded-lg bg-zinc-800/80 px-2 py-0.5 text-[10px] font-bold text-zinc-600 transition-colors hover:text-white"
+                    className="ml-1 rounded-lg bg-zinc-800/80 px-2 py-0.5 text-xs font-bold text-muted transition-colors hover:text-white"
                 >
                     {l('Stop', 'Detener')}
                 </button>
@@ -280,7 +280,7 @@ export const TabataTimer: React.FC<TabataTimerProps> = React.memo(({ totalRounds
                 <p className="flex-1 text-[10px] font-black uppercase tracking-wider text-green-400">
                     Tabata {l('complete', 'completo')} - {totalRounds} {l('rounds done', 'rondas')}
                 </p>
-                <button onClick={stop} className="px-2 py-1 text-[10px] font-bold text-zinc-500 transition-colors hover:text-white">
+                <button onClick={stop} className="px-2 py-1 text-xs font-bold text-muted transition-colors hover:text-white">
                     {l('Reset', 'Reiniciar')}
                 </button>
             </div>
@@ -298,7 +298,7 @@ export const TabataTimer: React.FC<TabataTimerProps> = React.memo(({ totalRounds
                 </span>
                 <button
                     onClick={stop}
-                    className="rounded-lg bg-zinc-800/80 px-2 py-0.5 text-[10px] font-bold text-zinc-600 transition-colors hover:text-white"
+                    className="rounded-lg bg-zinc-800/80 px-2 py-0.5 text-xs font-bold text-muted transition-colors hover:text-white"
                 >
                     {l('Stop', 'Detener')}
                 </button>

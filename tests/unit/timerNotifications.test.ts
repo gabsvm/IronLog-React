@@ -51,7 +51,7 @@ describe('Task U2: Rest Timer Notification Permission and Visibility Scoping', (
         expect(mockRequestPermission).not.toHaveBeenCalled();
     });
 
-    it('requests notification permission when timer becomes active for the first time', async () => {
+    it('does NOT request notification permission when the timer starts (Settings-only)', async () => {
         const { result } = renderHook(() => useTimer('es'));
 
         expect(mockRequestPermission).not.toHaveBeenCalled();
@@ -68,7 +68,7 @@ describe('Task U2: Rest Timer Notification Permission and Visibility Scoping', (
 
         // Microtask to allow async request
         await Promise.resolve();
-        expect(mockRequestPermission).toHaveBeenCalledTimes(1);
+        expect(mockRequestPermission).not.toHaveBeenCalled();
     });
 
     it('requestTimerNotificationPermission respects Capacitor native platform and skips web Notification', async () => {

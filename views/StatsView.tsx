@@ -134,7 +134,7 @@ export const StatsView: React.FC = () => {
                             <Icon name="Activity" size={14} className="text-primary-500" />
                             <div>
                                 <div className="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500">{lang === 'es' ? 'Consistencia' : 'Consistency'}</div>
-                                <div className="text-[10px] text-zinc-500">{lang === 'es' ? 'Últimos 4 meses' : 'Last 4 months'}</div>
+                                <div className="text-xs text-muted">{lang === 'es' ? 'Últimos 4 meses' : 'Last 4 months'}</div>
                             </div>
                         </div>
                         <ActivityHeatmap logs={safeLogs} />

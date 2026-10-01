@@ -94,7 +94,7 @@ export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat
                                             {completed.length} {lang === 'es' ? 'series completadas' : 'completed sets'}
                                         </div>
                                     </div>
-                                    {ex.note && <span className="max-w-[42%] truncate text-[10px] italic text-zinc-500">{ex.note}</span>}
+                                    {ex.note && <span className="max-w-[42%] truncate text-xs italic text-muted">{ex.note}</span>}
                                 </div>
 
                                 <div className="border-t border-[rgb(var(--border-subtle)/0.55)] px-3 py-2">
@@ -123,7 +123,7 @@ export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat
                                                     )}
                                                 </div>
                                                 {set.rpe !== '' && set.rpe != null && (
-                                                    <div className="text-[10px] font-bold text-zinc-500">RIR {set.rpe}</div>
+                                                    <div className="text-xs font-bold text-muted">RIR {set.rpe}</div>
                                                 )}
                                             </div>
                                         );

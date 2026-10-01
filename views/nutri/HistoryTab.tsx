@@ -113,7 +113,7 @@ export const HistoryTab: React.FC<Props> = ({ lang, last14Days, historyDayList, 
                         );
                     })}
                 </div>
-                <p className="text-[9px] text-zinc-600 mt-2 text-right">{l('Goal', 'Meta')}: {nutritionGoal.protein}g</p>
+                <p className="text-xs text-muted mt-2 text-right">{l('Goal', 'Meta')}: {nutritionGoal.protein}g</p>
             </div>
 
             {/* Day log list */}

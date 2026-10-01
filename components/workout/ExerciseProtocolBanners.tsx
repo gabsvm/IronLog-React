@@ -108,7 +108,7 @@ export const ExerciseProtocolBanners: React.FC<Props> = ({
                 <span className="rounded bg-red-500/15 px-1.5 py-0.5 text-[9px] font-black text-red-400">T</span>
                 <Icon name="ArrowRight" size={10} className="text-zinc-600" />
                 <span className="rounded bg-blue-500/15 px-1.5 py-0.5 text-[9px] font-black text-blue-400">B</span>
-                <span className="ml-1 text-[10px] font-bold text-zinc-500">
+                <span className="ml-1 text-xs font-bold text-muted">
                     {lang === 'es' ? 'Top / Back-off' : 'Top / Back-off Protocol'}
                 </span>
             </div>

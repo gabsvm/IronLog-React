@@ -21,7 +21,7 @@ export const ExerciseCardStats: React.FC<Props> = ({
                     style={{ width: `${(completedCount / totalSets) * 100}%` }}
                 />
             </div>
-            <span className={`text-[9px] font-black tabular-nums tracking-tight ${allDone ? 'text-green-500' : 'text-zinc-500'}`}>
+            <span className={`text-xs font-black tabular-nums tracking-tight ${allDone ? 'text-green-500' : 'text-muted'}`}>
                 {completedCount}/{totalSets}
             </span>
         </div>

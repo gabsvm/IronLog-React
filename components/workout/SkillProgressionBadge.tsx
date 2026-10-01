@@ -90,7 +90,7 @@ export const SkillProgressionBadge: React.FC<SkillProgressionBadgeProps> = ({ ex
                     <span className="text-[9px] font-black text-green-400 uppercase tracking-wider">
                         {lang === 'es' ? '¡Listo para avanzar!' : 'Ready to progress!'}
                     </span>
-                    <span className="text-[9px] text-zinc-500 truncate">
+                    <span className="text-xs text-muted truncate">
                         → {lang === 'es' ? nextLevel.name.es : nextLevel.name.en}
                     </span>
                 </div>
@@ -100,7 +100,7 @@ export const SkillProgressionBadge: React.FC<SkillProgressionBadgeProps> = ({ ex
             {!isReadyToProgress && nextLevel?.unlockAt && (
                 <div className="mt-1 flex items-center gap-1.5 px-2.5">
                     <Icon name="Target" size={10} className="text-zinc-600 shrink-0" />
-                    <span className="text-[9px] text-zinc-600 truncate">
+                    <span className="text-xs text-muted truncate">
                         {lang === 'es' ? 'Siguiente: ' : 'Next: '}
                         <span className="font-bold text-zinc-500">
                             {nextLevel.unlockAt.value}{nextLevel.unlockAt.unit === 'sec' ? 's' : ' reps'}

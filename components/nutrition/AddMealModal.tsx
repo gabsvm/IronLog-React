@@ -68,7 +68,7 @@ const FoodCard: React.FC<{
     <div className="flex items-center gap-3 rounded-2xl p-3 glass-card transition-all active:scale-[0.98]">
       <button onClick={() => onSelect(food)} className="min-w-0 flex-1 text-left">
         <p className="truncate text-sm font-semibold text-white">{food.name}</p>
-        <p className="mt-0.5 text-[10px] text-zinc-500">
+        <p className="mt-0.5 text-xs text-muted">
           <span className="text-zinc-300">{calories}</span> kcal
           {' · '}
           <span className="text-blue-400">{protein}g P</span>
@@ -443,7 +443,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                   </div>
                   <div className="text-left">
                     <p className="text-sm font-bold text-white">{l('Save to My Foods', 'Guardar en Mis Alimentos')}</p>
-                    <p className="text-[10px] text-zinc-500">
+                    <p className="text-xs text-muted">
                       {l('Add to your personal food database', 'Agregar a tu base de datos personal')}
                     </p>
                   </div>

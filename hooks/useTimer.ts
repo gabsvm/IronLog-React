@@ -21,8 +21,8 @@ export interface TimerState {
 }
 
 /**
- * Request notification permission safely when the user actually initiates a rest timer
- * or from user settings, rather than unconditionally on app mount.
+ * Request notification permission safely, only from explicit user action
+ * (the Settings notifications row), rather than unconditionally on app mount.
  *
  * NOTE FOR TEAM: In mobile PWA / browsers, background workers get suspended when the device
  * screen is locked or app is deeply frozen, making web background notifications best-effort.
@@ -80,15 +80,6 @@ export const useTimer = (lang: Lang) => {
         };
     }, [isNative]);
 
-    const hasRequestedPermissionRef = useRef(false);
-
-    // Request notification permission lazily when user starts a rest timer, not on startup
-    useEffect(() => {
-        if (!isNative && timer.active && !hasRequestedPermissionRef.current) {
-            hasRequestedPermissionRef.current = true;
-            void requestTimerNotificationPermission();
-        }
-    }, [isNative, timer.active]);
 
     // Schedule/cancel the Android OS alarm only when the timer identity changes,
     // not on every displayed second.

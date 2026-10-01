@@ -83,7 +83,7 @@ export const BodyTab: React.FC<Props> = ({
                         .join(' ');
                     return (
                         <div className="mt-3 pt-3 border-t border-zinc-800">
-                            <p className="text-[10px] text-zinc-600 mb-2">{l('Last 30 days', 'Últimos 30 días')}</p>
+                            <p className="text-xs text-muted mb-2">{l('Last 30 days', 'Últimos 30 días')}</p>
                             <svg viewBox="0 0 100 40" className="w-full h-10" preserveAspectRatio="none" aria-hidden="true">
                                 <polyline
                                     points={points}
@@ -173,7 +173,7 @@ export const BodyTab: React.FC<Props> = ({
                                 </span>
                                 <div className="text-right">
                                     <span className="text-sm font-bold text-white">{entry.weight} kg</span>
-                                    {entry.bodyFat && <span className="text-[10px] text-zinc-500 ml-2">{entry.bodyFat}% BF</span>}
+                                    {entry.bodyFat && <span className="text-xs text-muted ml-2">{entry.bodyFat}% BF</span>}
                                 </div>
                             </div>
                         ))}

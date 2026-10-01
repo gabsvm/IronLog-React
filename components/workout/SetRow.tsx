@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { WorkoutSet, SetType } from '../../types';
 import { Icon } from '../ui/Icon';
-import { triggerHaptic } from '../../utils/audio';
+import { playTimerFinishSound, triggerHaptic } from '../../utils/audio';
 import { TRANSLATIONS } from '../../constants/translations';
 
 interface SetRowProps {
@@ -138,23 +138,7 @@ const HoldTimer: React.FC<{
         if (targetSeconds && running && elapsed >= targetSeconds && !hasTriggeredZeroAlertRef.current) {
             hasTriggeredZeroAlertRef.current = true;
             triggerHaptic('success');
-            try {
-                if (typeof window !== 'undefined') {
-                    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-                    if (AudioCtx) {
-                        const ctx = new AudioCtx();
-                        const osc = ctx.createOscillator();
-                        const gain = ctx.createGain();
-                        osc.connect(gain);
-                        gain.connect(ctx.destination);
-                        osc.frequency.setValueAtTime(880, ctx.currentTime);
-                        gain.gain.setValueAtTime(0.2, ctx.currentTime);
-                        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-                        osc.start();
-                        osc.stop(ctx.currentTime + 0.3);
-                    }
-                }
-            } catch { }
+            playTimerFinishSound();
         }
     }, [elapsed, running, targetSeconds]);
 
@@ -207,7 +191,7 @@ const HoldTimer: React.FC<{
                     <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); start(); }}
-                        className="w-9 h-9 rounded-xl bg-violet-500/20 text-violet-400 flex items-center justify-center active:scale-90 transition-transform border border-violet-500/30"
+                        className="min-w-[44px] min-h-[44px] rounded-xl bg-violet-500/20 text-violet-400 flex items-center justify-center active:scale-90 transition-transform border border-violet-500/30"
                         aria-label={t.startTimer}
                     >
                         <Icon name="Play" size={15} fill="currentColor" />
@@ -216,7 +200,7 @@ const HoldTimer: React.FC<{
                     <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); stop(); }}
-                        className="w-9 h-9 rounded-xl bg-violet-500 text-white flex items-center justify-center active:scale-90 transition-transform animate-pulse-slow"
+                        className="min-w-[44px] min-h-[44px] rounded-xl bg-violet-500 text-white flex items-center justify-center active:scale-90 transition-transform animate-pulse-slow"
                         aria-label={t.stopTimer}
                     >
                         <Icon name="Square" size={14} fill="currentColor" />

@@ -16,9 +16,9 @@ export const MacroBar: React.FC<Props> = React.memo(({ value, goal, color, label
     const over = goal > 0 && value > goal;
     return (
         <div className="flex-1">
-            <div className="flex justify-between text-[10px] mb-1">
+            <div className="flex justify-between text-xs mb-1">
                 <span className={`font-bold ${color}`}>{label}</span>
-                <span className="text-zinc-500">
+                <span className="text-muted">
                     {Math.round(value)}
                     <span className="text-zinc-700">/{goal}g</span>
                 </span>

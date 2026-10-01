@@ -125,7 +125,7 @@ export const TodayTab: React.FC<Props> = ({
 
                 <button
                     onClick={onEditGoals}
-                    className="mt-3 w-full text-center text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors duration-fast ease-natural"
+                    className="mt-3 w-full text-center text-xs text-muted hover:text-zinc-400 transition-colors duration-fast ease-natural"
                 >
                     {l('Edit Goals', 'Editar Metas')} →
                 </button>
@@ -208,7 +208,7 @@ export const TodayTab: React.FC<Props> = ({
                                 <span className="text-xl" aria-hidden="true">{meta.emoji}</span>
                                 <div className="text-left">
                                     <p className="font-bold text-white text-sm">{lang === 'en' ? meta.en : meta.es}</p>
-                                    <p className="text-[10px] text-zinc-500">{entries.length} {l('items', 'alimentos')}</p>
+                                    <p className="text-xs text-muted">{entries.length} {l('items', 'alimentos')}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
@@ -225,7 +225,7 @@ export const TodayTab: React.FC<Props> = ({
                                     <div key={entry.id} className="flex items-center justify-between px-4 py-3">
                                         <div className="flex-1 min-w-0 pr-2">
                                             <p className="text-sm text-white font-medium truncate">{entry.name}</p>
-                                            <p className="text-[10px] text-zinc-500 mt-0.5">
+                                            <p className="text-xs text-muted mt-0.5">
                                                 <span className="text-blue-400">{entry.protein}g P</span>{' · '}
                                                 <span className="text-amber-400">{entry.carbs}g C</span>{' · '}
                                                 <span className="text-pink-400">{entry.fat}g F</span>

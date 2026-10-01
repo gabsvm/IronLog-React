@@ -372,7 +372,7 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
                                 <p className="font-black text-sm text-primary-400">
                                     {lang === 'es' ? 'Sesión Libre' : 'Open Session'}
                                 </p>
-                                <p className="text-[10px] text-zinc-500 mt-0.5">
+                                <p className="text-xs text-muted mt-0.5">
                                     {lang === 'es' ? 'Sin plantilla — agrega ejercicios sobre la marcha' : 'No template — add exercises as you go'}
                                 </p>
                             </div>
@@ -434,7 +434,7 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
                                 <p className="font-black text-sm text-primary-400">
                                     {lang === 'es' ? 'Sesión Libre' : 'Open Session'}
                                 </p>
-                                <p className="text-[10px] text-zinc-500 mt-0.5">
+                                <p className="text-xs text-muted mt-0.5">
                                     {lang === 'es' ? 'Sin plantilla — agrega ejercicios sobre la marcha' : 'No template — add exercises as you go'}
                                 </p>
                             </div>
@@ -498,7 +498,7 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
                                                     {lang === 'es' ? family.name.es : family.name.en}
                                                 </span>
                                             </div>
-                                            <div className="text-[9px] text-zinc-500">
+                                            <div className="text-xs text-muted">
                                                 {family.levels.length} {lang === 'es' ? 'niveles' : 'levels'}
                                             </div>
                                             {/* Level dots */}
@@ -575,7 +575,7 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
                                                 </div>
                                             </div>
                                             <div className="flex flex-col items-end shrink-0 gap-1">
-                                                <span className="text-[9px] font-bold text-zinc-500">
+                                                <span className="text-xs font-bold text-muted">
                                                     {skill.exercises.length} {lang === 'es' ? 'ej.' : 'ex.'}
                                                 </span>
                                                 {isSelected && <Icon name="Check" size={14} className="text-primary-500" />}

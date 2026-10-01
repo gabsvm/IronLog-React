@@ -381,7 +381,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                             <span className="block font-bold text-sm text-zinc-700 dark:text-zinc-200">
                                                 {lang === 'es' ? 'Guardar rutina como plantilla' : 'Save routine as template'}
                                             </span>
-                                            <span className="block text-[10px] text-zinc-500 mt-0.5">
+                                            <span className="block text-xs text-muted mt-0.5">
                                                 {activeMeso && program.length > 0
                                                     ? (lang === 'es' ? 'Privada: solo visible en tu cuenta' : 'Private: visible only in your account')
                                                     : (lang === 'es' ? 'Inicia una rutina para poder guardarla' : 'Start a routine to save it')}
@@ -390,7 +390,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                     </div>
                                     <Icon name="ChevronRight" size={16} className="text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-white" />
                                 </button>
-                                <p className="text-[10px] text-zinc-500 leading-snug px-1">
+                                <p className="text-xs text-muted leading-snug px-1">
                                     {lang === 'es'
                                         ? '💡 Two Block Mass se inicia desde el botón (+) en la barra inferior.'
                                         : '💡 Start Two Block Mass from the (+) button in the bottom bar.'}
@@ -658,7 +658,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                     <span className="font-bold text-zinc-500">{lang === 'es' ? 'Estado' : 'Status'}</span>
                                     <span className="font-black text-zinc-900 dark:text-white">{syncStatus.isSyncing ? 'SYNCING' : 'IDLE'}</span>
                                 </div>
-                                <div className="text-[10px] text-zinc-500">
+                                <div className="text-xs text-muted">
                                     {lang === 'es' ? 'Último cambio local:' : 'Last local change:'} {localLastUpdated ? new Date(localLastUpdated).toLocaleString() : 'n/a'}
                                 </div>
                                 {pendingCloudSections.length > 0 && (

@@ -657,7 +657,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                         </span>
                                         <div className="flex-1">
                                             <div className="text-sm font-bold text-white">{t.types[type]}</div>
-                                            <div className="text-[10px] text-zinc-500 leading-tight mt-0.5">{t.typeDesc[type]}</div>
+                                            <div className="text-xs text-muted leading-tight mt-0.5">{t.typeDesc[type]}</div>
                                         </div>
                                         {isSelected && <Icon name="CheckCircle" size={16} className="text-primary-500 shrink-0" />}
                                     </button>
