@@ -131,9 +131,19 @@ html, body, #root {
   margin: 0;
   padding: 0;
   overflow: hidden;
+  overscroll-behavior: contain;
   user-select: none; 
   -webkit-user-select: none;
   background-color: rgb(var(--surface-app));
+}
+
+button,
+[role='button'],
+a,
+input,
+select,
+textarea {
+  touch-action: manipulation;
 }
 
 body {
@@ -193,6 +203,7 @@ body {
     .scroll-container {
         -ms-overflow-style: none;  /* IE and Edge */
         scrollbar-width: none;  /* Firefox */
+        overscroll-behavior: contain;
     }
 
     /* Reference primitives from GAINS_LAB_VISUAL_REFERENCE_REDESIGN_PASS */
