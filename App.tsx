@@ -796,6 +796,7 @@ const AppContent = () => {
             )}
 
             {/* SYNC CONFLICT MODAL */}
+            <Suspense fallback={null}>
             <ConfirmModal
                 isOpen={!!pendingCloudData}
                 title={lang === 'en' ? "Cloud Sync" : "Sincronización Nube"}
@@ -814,6 +815,8 @@ const AppContent = () => {
                 onCancel={cancelCloudSync}
                 variant="primary"
             />
+
+            </Suspense>
 
             {/* IMPORT CONFIRM MODAL */}
             <Suspense fallback={null}>
@@ -850,6 +853,7 @@ const AppContent = () => {
             )}
 
             {/* FORCE SYNC MODAL */}
+            <Suspense fallback={null}>
             <ConfirmModal
                 isOpen={showForceSyncModal}
                 title={t.forceSyncTitle}
@@ -859,6 +863,8 @@ const AppContent = () => {
                 onConfirm={executeForceSync}
                 onCancel={() => setShowForceSyncModal(false)}
             />
+
+            </Suspense>
 
             {/* FORCE SYNC FEEDBACK MODAL */}
             {forceSyncFeedback && (
