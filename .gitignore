@@ -50,3 +50,6 @@ docs/design-reference/extracted/
 
 # Vercel CLI local project linkage (machine-specific)
 .vercel/
+
+# Local secrets file without dot (never commit)
+/env
