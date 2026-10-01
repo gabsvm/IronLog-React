@@ -20,6 +20,7 @@ import { CSS } from '@dnd-kit/utilities';
 import type { SessionExercise } from '../../types';
 import { getTranslated } from '../../utils';
 import { triggerHaptic } from '../../utils/audio';
+import { isWorkingSet } from '../../utils/workoutProgress';
 import { Icon } from '../ui/Icon';
 import { Sheet } from '../ui/Sheet';
 
@@ -58,8 +59,8 @@ const SortableExerciseRow: React.FC<SortableExerciseRowProps> = ({
         isDragging,
     } = useSortable({ id: exercise.instanceId });
 
-    const completed = (exercise.sets || []).filter(set => set.completed && !set.skipped).length;
-    const total = (exercise.sets || []).filter(set => set.type !== 'avt_hop').length;
+    const completed = (exercise.sets || []).filter(set => isWorkingSet(set) && set.completed && !set.skipped).length;
+    const total = (exercise.sets || []).filter(set => isWorkingSet(set)).length;
 
     return (
         <div>
@@ -126,6 +127,54 @@ const SortableExerciseRow: React.FC<SortableExerciseRowProps> = ({
     );
 };
 
+export function buildSupersetLetterMap(exercises: SessionExercise[]): Map<string, string> {
+    const map = new Map<string, string>();
+    let currentCode = 65; // 'A'
+    for (const ex of exercises) {
+        if (ex.supersetId && !map.has(ex.supersetId)) {
+            map.set(ex.supersetId, String.fromCharCode(currentCode));
+            currentCode++;
+        }
+    }
+    return map;
+}
+
+export function reorderSupersetExercises(
+    current: SessionExercise[],
+    activeId: number | string,
+    overId: number | string
+): SessionExercise[] {
+    const oldIndex = current.findIndex(exercise => exercise.instanceId === activeId);
+    const newIndex = current.findIndex(exercise => exercise.instanceId === overId);
+    if (oldIndex < 0 || newIndex < 0) return current;
+
+    const activeItem = current[oldIndex];
+    // If the item belongs to a superset, keep that superset contiguous
+    if (activeItem.supersetId) {
+        const ssId = activeItem.supersetId;
+        const ssIndices = current
+            .map((ex, idx) => (ex.supersetId === ssId ? idx : -1))
+            .filter(idx => idx !== -1);
+
+        const isContiguous = ssIndices.every((val, i, arr) => i === 0 || val === arr[i - 1] + 1);
+        if (isContiguous && ssIndices.length > 1) {
+            const ssItems = current.filter(ex => ex.supersetId === ssId);
+            const remaining = current.filter(ex => ex.supersetId !== ssId);
+            let insertIndex = remaining.findIndex(ex => ex.instanceId === overId);
+            if (insertIndex < 0) {
+                insertIndex = newIndex > oldIndex ? remaining.length : 0;
+            } else if (newIndex > oldIndex) {
+                insertIndex += 1;
+            }
+            const next = [...remaining];
+            next.splice(insertIndex, 0, ...ssItems);
+            return next;
+        }
+    }
+
+    return arrayMove(current, oldIndex, newIndex);
+}
+
 export const ReorderExercisesSheet: React.FC<ReorderExercisesSheetProps> = ({
     open,
     onOpenChange,
@@ -151,17 +200,7 @@ export const ReorderExercisesSheet: React.FC<ReorderExercisesSheetProps> = ({
 
     const ids = useMemo(() => draft.map(exercise => exercise.instanceId), [draft]);
 
-    const supersetLetterMap = useMemo(() => {
-        const map = new Map<string, string>();
-        let currentCode = 65; // 'A'
-        for (const ex of draft) {
-            if (ex.supersetId && !map.has(ex.supersetId)) {
-                map.set(ex.supersetId, String.fromCharCode(currentCode));
-                currentCode++;
-            }
-        }
-        return map;
-    }, [draft]);
+    const supersetLetterMap = useMemo(() => buildSupersetLetterMap(draft), [draft]);
 
     const handleDragStart = (_event: DragStartEvent) => {
         triggerHaptic('light');
@@ -171,37 +210,7 @@ export const ReorderExercisesSheet: React.FC<ReorderExercisesSheetProps> = ({
         const { active, over } = event;
         if (!over || active.id === over.id) return;
 
-        setDraft(current => {
-            const oldIndex = current.findIndex(exercise => exercise.instanceId === active.id);
-            const newIndex = current.findIndex(exercise => exercise.instanceId === over.id);
-            if (oldIndex < 0 || newIndex < 0) return current;
-
-            const activeItem = current[oldIndex];
-            // If the item belongs to a superset, keep that superset contiguous
-            if (activeItem.supersetId) {
-                const ssId = activeItem.supersetId;
-                const ssIndices = current
-                    .map((ex, idx) => (ex.supersetId === ssId ? idx : -1))
-                    .filter(idx => idx !== -1);
-
-                const isContiguous = ssIndices.every((val, i, arr) => i === 0 || val === arr[i - 1] + 1);
-                if (isContiguous && ssIndices.length > 1) {
-                    const ssItems = current.filter(ex => ex.supersetId === ssId);
-                    const remaining = current.filter(ex => ex.supersetId !== ssId);
-                    let insertIndex = remaining.findIndex(ex => ex.instanceId === over.id);
-                    if (insertIndex < 0) {
-                        insertIndex = newIndex > oldIndex ? remaining.length : 0;
-                    } else if (newIndex > oldIndex) {
-                        insertIndex += 1;
-                    }
-                    const next = [...remaining];
-                    next.splice(insertIndex, 0, ...ssItems);
-                    return next;
-                }
-            }
-
-            return arrayMove(current, oldIndex, newIndex);
-        });
+        setDraft(current => reorderSupersetExercises(current, active.id, over.id));
         triggerHaptic('medium');
     };
 

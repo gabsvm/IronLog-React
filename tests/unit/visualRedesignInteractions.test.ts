@@ -1,21 +1,46 @@
 import { describe, it, expect } from 'vitest';
-import type { SessionExercise } from '../../types';
+import type { SessionExercise, WorkoutSet } from '../../types';
+import {
+    isWorkingSet,
+    countWorkingSets,
+    isTemplateUpdateEligible,
+    resolveInitialActiveExerciseId,
+    toggleExerciseCardExpansion,
+    advanceActiveExerciseOnCompletion,
+} from '../../utils/workoutProgress';
+import {
+    reorderSupersetExercises,
+    buildSupersetLetterMap,
+} from '../../components/workout/ReorderExercisesSheet';
+import {
+    calculateTimerPercentage,
+    calculateRingDashOffset,
+    TIMER_RING_RADIUS,
+    TIMER_RING_CIRCUMFERENCE,
+    applyEffortRatingToExercises,
+    resolveRestNextAction,
+} from '../../components/ui/RestTimerOverlay';
+import { ICON_MAP } from '../../components/ui/Icon';
 
-describe('Visual Redesign Critical Interactions', () => {
-    describe('Reorder & Superset Grouping Integrity', () => {
-        const createExercise = (instanceId: number, supersetId?: string): SessionExercise => ({
-            id: `ex_${instanceId}`,
-            instanceId,
-            name: `Exercise ${instanceId}`,
-            muscle: 'CHEST',
-            sets: [
-                { id: 1, type: 'regular', weight: 80, reps: 10, rpe: 8, completed: false },
-                { id: 2, type: 'regular', weight: 80, reps: 10, rpe: 8, completed: false },
-            ],
-            supersetId,
-        });
+describe('Visual Redesign Critical Interactions & Corrective Logic', () => {
+    const createExercise = (
+        instanceId: number,
+        supersetId?: string,
+        sets?: Partial<WorkoutSet>[]
+    ): SessionExercise => ({
+        id: `ex_${instanceId}`,
+        instanceId,
+        name: `Exercise ${instanceId}`,
+        muscle: 'CHEST',
+        sets: (sets || [
+            { id: 1, type: 'regular', weight: 80, reps: 10, rpe: '8', completed: false },
+            { id: 2, type: 'regular', weight: 80, reps: 10, rpe: '8', completed: false },
+        ]) as WorkoutSet[],
+        supersetId,
+    });
 
-        it('moves superset exercises together as a contiguous block', () => {
+    describe('Reorder & Superset Grouping Integrity (Production Helpers)', () => {
+        it('moves superset exercises together as a contiguous block via reorderSupersetExercises', () => {
             const list: SessionExercise[] = [
                 createExercise(1),
                 createExercise(2, 'ss_1'),
@@ -23,52 +48,16 @@ describe('Visual Redesign Critical Interactions', () => {
                 createExercise(4),
             ];
 
-            // Reorder algorithm from ReorderExercisesSheet
-            const moveSuperset = (current: SessionExercise[], activeId: number, overId: number) => {
-                const oldIndex = current.findIndex(e => e.instanceId === activeId);
-                const newIndex = current.findIndex(e => e.instanceId === overId);
-                if (oldIndex < 0 || newIndex < 0) return current;
-
-                const activeItem = current[oldIndex];
-                if (activeItem.supersetId) {
-                    const ssId = activeItem.supersetId;
-                    const ssIndices = current
-                        .map((ex, idx) => (ex.supersetId === ssId ? idx : -1))
-                        .filter(idx => idx !== -1);
-
-                    const isContiguous = ssIndices.every((val, i, arr) => i === 0 || val === arr[i - 1] + 1);
-                    if (isContiguous && ssIndices.length > 1) {
-                        const ssItems = current.filter(ex => ex.supersetId === ssId);
-                        const remaining = current.filter(ex => ex.supersetId !== ssId);
-                        let insertIndex = remaining.findIndex(ex => ex.instanceId === overId);
-                        if (insertIndex < 0) {
-                            insertIndex = newIndex > oldIndex ? remaining.length : 0;
-                        } else if (newIndex > oldIndex) {
-                            insertIndex += 1;
-                        }
-                        const next = [...remaining];
-                        next.splice(insertIndex, 0, ...ssItems);
-                        return next;
-                    }
-                }
-                const copy = [...current];
-                const [moved] = copy.splice(oldIndex, 1);
-                copy.splice(newIndex, 0, moved);
-                return copy;
-            };
-
             // Move instanceId 2 (part of ss_1) to bottom (after instanceId 4)
-            const resultDown = moveSuperset(list, 2, 4);
+            const resultDown = reorderSupersetExercises(list, 2, 4);
             expect(resultDown.map(e => e.instanceId)).toEqual([1, 4, 2, 3]);
-            // instanceId 2 and 3 remain strictly adjacent
 
             // Move instanceId 3 (part of ss_1) to top (before instanceId 1)
-            const resultUp = moveSuperset(list, 3, 1);
+            const resultUp = reorderSupersetExercises(list, 3, 1);
             expect(resultUp.map(e => e.instanceId)).toEqual([2, 3, 1, 4]);
-            // instanceId 2 and 3 remain strictly adjacent
         });
 
-        it('assigns sequential superset letters A, B, C for distinct supersets', () => {
+        it('assigns sequential superset letters A, B, C via buildSupersetLetterMap', () => {
             const list: SessionExercise[] = [
                 createExercise(1, 'ss_alpha'),
                 createExercise(2, 'ss_alpha'),
@@ -77,132 +66,299 @@ describe('Visual Redesign Critical Interactions', () => {
                 createExercise(5, 'ss_beta'),
             ];
 
-            const map = new Map<string, string>();
-            let currentCode = 65;
-            for (const ex of list) {
-                if (ex.supersetId && !map.has(ex.supersetId)) {
-                    map.set(ex.supersetId, String.fromCharCode(currentCode));
-                    currentCode++;
-                }
-            }
-
-            expect(map.get('ss_alpha')).toBe('A');
-            expect(map.get('ss_beta')).toBe('B');
+            const letterMap = buildSupersetLetterMap(list);
+            expect(letterMap.get('ss_alpha')).toBe('A');
+            expect(letterMap.get('ss_beta')).toBe('B');
+            expect(letterMap.get('non_existent')).toBeUndefined();
         });
     });
 
-    describe('Finish Session Sheet & KONG Protection', () => {
-        it('strictly forbids "Actualizar plantilla" mutation for official KONG programs', () => {
-            const isKongProgram = (programId?: string, programName?: string) => {
-                const id = String(programId || '').toLowerCase();
-                const name = String(programName || '').toLowerCase();
-                return id.includes('kong') || name.includes('kong') || id.includes('two_block') || name.includes('two block');
-            };
-
-            const canUpdateTemplate = (isKong: boolean, completedSets: number) => {
-                return !isKong && completedSets > 0;
-            };
-
-            expect(canUpdateTemplate(isKongProgram('kong_savage_v1', 'KONG: Savage'), 10)).toBe(false);
-            expect(canUpdateTemplate(isKongProgram('custom_123', 'My Custom Push'), 10)).toBe(true);
-            expect(canUpdateTemplate(isKongProgram('custom_123', 'My Custom Push'), 0)).toBe(false);
+    describe('Finish Session Sheet & Template Update Eligibility (Production Helper)', () => {
+        const createSession = (overrides?: any): any => ({
+            id: 1,
+            dayIdx: 0,
+            date: new Date().toISOString(),
+            completed: false,
+            dayTitle: 'Push Day',
+            mesoId: 100,
+            exercises: [
+                createExercise(1, undefined, [
+                    { id: 1, type: 'regular', weight: 80, reps: 10, completed: true },
+                    { id: 2, type: 'regular', weight: 80, reps: 10, completed: false },
+                ]),
+            ],
+            ...overrides,
         });
 
-        it('correctly calculates completed series and duration for summary cards', () => {
+        const createMeso = (overrides?: any): any => ({
+            id: 100,
+            name: 'Hypertrophy Meso',
+            weeks: 4,
+            daysPerWeek: 3,
+            plan: [
+                { dayIdx: 0, title: 'Push Day', exercises: [] },
+                { dayIdx: 1, title: 'Pull Day', exercises: [] },
+                { dayIdx: 2, title: 'Leg Day', exercises: [] },
+            ],
+            ...overrides,
+        });
+
+        it('allows template update for valid editable personal programs with completed working sets', () => {
+            const session = createSession();
+            const meso = createMeso();
+            expect(isTemplateUpdateEligible(session, meso)).toBe(true);
+        });
+
+        it('denies template update for official KONG programs', () => {
+            const session = createSession({ mesoId: 'kong_savage_v1' });
+            const meso = createMeso({ id: 'kong_savage_v1', name: 'KONG: Savage Hypertrophy' });
+            expect(isTemplateUpdateEligible(session, meso)).toBe(false);
+        });
+
+        it('denies template update for detached sessions (freestyle, wod, calisthenics, two_block)', () => {
+            const meso = createMeso();
+
+            // Freestyle / detached dayIdx = -1
+            expect(isTemplateUpdateEligible(createSession({ dayIdx: -1 }), meso)).toBe(false);
+            expect(isTemplateUpdateEligible(createSession({ dayIdx: undefined }), meso)).toBe(false);
+
+            // Detached program types
+            expect(isTemplateUpdateEligible(createSession({ mesoId: 'wod' }), meso)).toBe(false);
+            expect(isTemplateUpdateEligible(createSession({ mesoId: 'calisthenics' }), meso)).toBe(false);
+            expect(isTemplateUpdateEligible(createSession({ mesoId: 'two_block' }), meso)).toBe(false);
+        });
+
+        it('denies template update when dayIdx is out of bounds or mesocycle does not match', () => {
+            const session = createSession({ dayIdx: 99 });
+            const meso = createMeso();
+            expect(isTemplateUpdateEligible(session, meso)).toBe(false);
+
+            const mismatchedSession = createSession({ mesoId: 'other_meso' });
+            expect(isTemplateUpdateEligible(mismatchedSession, meso)).toBe(false);
+        });
+
+        it('denies template update when no working sets are completed', () => {
+            const session = createSession({
+                exercises: [
+                    createExercise(1, undefined, [
+                        { id: 1, type: 'warmup', weight: 40, reps: 15, completed: true },
+                        { id: 2, type: 'avt_hop', weight: 0, reps: 20, completed: true },
+                        { id: 3, type: 'regular', weight: 80, reps: 10, completed: false },
+                    ]),
+                ],
+            });
+            const meso = createMeso();
+            expect(isTemplateUpdateEligible(session, meso)).toBe(false);
+        });
+    });
+
+    describe('Working-Set Progress & Domain Classification (Production Helpers)', () => {
+        it('correctly classifies working vs non-working sets via isWorkingSet', () => {
+            // Non-working
+            expect(isWorkingSet({ type: 'warmup' })).toBe(false);
+            expect(isWorkingSet({ type: 'avt_hop' })).toBe(false);
+
+            // Working types
+            expect(isWorkingSet({ type: 'regular' })).toBe(true);
+            expect(isWorkingSet({ type: 'myorep' })).toBe(true);
+            expect(isWorkingSet({ type: 'myorep_match' })).toBe(true);
+            expect(isWorkingSet({ type: 'top' })).toBe(true);
+            expect(isWorkingSet({ type: 'backoff' })).toBe(true);
+            expect(isWorkingSet({ type: 'drop' })).toBe(true);
+            expect(isWorkingSet({ type: 'giant' })).toBe(true);
+            expect(isWorkingSet({ type: 'cluster' })).toBe(true);
+            expect(isWorkingSet({ type: 'emom' })).toBe(true);
+            expect(isWorkingSet({ type: 'rest_pause' })).toBe(true);
+            expect(isWorkingSet({ type: 'time_volume' })).toBe(true);
+            expect(isWorkingSet({ type: 'triple_add' })).toBe(true);
+            expect(isWorkingSet({})).toBe(true); // default type is regular
+        });
+
+        it('calculates unified set progress via countWorkingSets', () => {
             const exercises: SessionExercise[] = [
-                {
-                    id: 'ex1',
-                    instanceId: 1,
-                    name: 'Bench Press',
-                    muscle: 'CHEST',
-                    sets: [
-                        { id: 1, type: 'regular', weight: 80, reps: 10, rpe: 8, completed: true },
-                        { id: 2, type: 'regular', weight: 80, reps: 10, rpe: 8, completed: true },
-                        { id: 3, type: 'avt_hop', weight: 80, reps: 10, rpe: 8, completed: true }, // should not inflate regular set count
-                    ],
-                },
-                {
-                    id: 'ex2',
-                    instanceId: 2,
-                    name: 'Incline Dumbbell Press',
-                    muscle: 'CHEST',
-                    sets: [
-                        { id: 4, type: 'regular', weight: 30, reps: 12, rpe: 8, completed: true },
-                        { id: 5, type: 'regular', weight: 30, reps: 12, rpe: 8, completed: false },
-                    ],
-                },
+                createExercise(1, undefined, [
+                    { id: 1, type: 'warmup', completed: true }, // ignored
+                    { id: 2, type: 'regular', completed: true },
+                    { id: 3, type: 'regular', completed: true },
+                ]),
+                createExercise(2, undefined, [
+                    { id: 4, type: 'avt_hop', completed: true }, // ignored
+                    { id: 5, type: 'myorep', completed: true },
+                    { id: 6, type: 'drop', completed: false, skipped: true }, // skipped not counted as completed
+                    { id: 7, type: 'regular', completed: false },
+                ]),
             ];
 
-            const completedSets = exercises.reduce((acc, ex) =>
-                acc + (ex.sets || []).filter(s => s.completed && !s.skipped && s.type !== 'avt_hop').length, 0);
-
-            expect(completedSets).toBe(3);
+            const counts = countWorkingSets(exercises);
+            expect(counts.totalWorkingSets).toBe(5); // sets 2, 3, 5, 6, 7
+            expect(counts.completedWorkingSets).toBe(3); // sets 2, 3, 5
+            expect(counts.remainingWorkingSets).toBe(2); // sets 6, 7
+            expect(counts.progressPct).toBe(60);
         });
     });
 
-    describe('Rest Timer Calculations', () => {
+    describe('Rest Timer Calculations & Theme Compliance (Production Helpers)', () => {
         it('computes circular SVG progress circumference and stroke dashoffset correctly', () => {
-            const radius = 52;
-            const circumference = 2 * Math.PI * radius; // ~326.725
-            expect(circumference).toBeCloseTo(326.73, 1);
+            expect(TIMER_RING_RADIUS).toBe(52);
+            expect(TIMER_RING_CIRCUMFERENCE).toBeCloseTo(326.73, 1);
 
-            const calculateOffset = (remaining: number, total: number) => {
-                const progress = total > 0 ? Math.max(0, Math.min(1, (total - remaining) / total)) : 0;
-                return circumference * (1 - progress);
-            };
+            // 100% time left: full ring visible -> dashOffset is 0
+            expect(calculateRingDashOffset(100)).toBe(0);
 
-            // At start (0 elapsed): offset equals full circumference
-            expect(calculateOffset(90, 90)).toBeCloseTo(circumference);
-            // Halfway (45s elapsed of 90s): offset equals half circumference
-            expect(calculateOffset(45, 90)).toBeCloseTo(circumference / 2);
-            // Complete (90s elapsed of 90s): offset equals 0
-            expect(calculateOffset(0, 90)).toBe(0);
+            // 50% time left: half ring -> dashOffset is circumference * 0.5
+            expect(calculateRingDashOffset(50)).toBeCloseTo(TIMER_RING_CIRCUMFERENCE * 0.5, 2);
+
+            // 0% time left: ring empty -> dashOffset is circumference
+            expect(calculateRingDashOffset(0)).toBeCloseTo(TIMER_RING_CIRCUMFERENCE, 2);
         });
 
-        it('quick adjustment clamps time correctly above 0', () => {
-            const adjust = (current: number, delta: number) => Math.max(0, current + delta);
-
-            expect(adjust(30, 30)).toBe(60);
-            expect(adjust(30, -10)).toBe(20);
-            expect(adjust(5, -10)).toBe(0);
+        it('clamps timer percentage correctly via calculateTimerPercentage', () => {
+            expect(calculateTimerPercentage(90, 90)).toBe(100);
+            expect(calculateTimerPercentage(45, 90)).toBe(50);
+            expect(calculateTimerPercentage(0, 90)).toBe(0);
+            expect(calculateTimerPercentage(-5, 90)).toBe(0);
+            expect(calculateTimerPercentage(120, 90)).toBe(100);
+            expect(calculateTimerPercentage(30, 0)).toBe(0);
         });
     });
 
-    describe('Workout Active Card & Progress Header', () => {
-        it('calculates total remaining sets accurately across exercises', () => {
+    describe('Rest Source Context & Effort Rating (Production Helpers)', () => {
+        it('updates ONLY the exact source set via applyEffortRatingToExercises', () => {
             const exercises: SessionExercise[] = [
-                {
-                    id: 'ex1',
-                    instanceId: 1,
-                    name: 'Squat',
-                    muscle: 'QUADS',
-                    sets: [
-                        { id: 1, type: 'regular', weight: 100, reps: 5, rpe: 8, completed: true },
-                        { id: 2, type: 'regular', weight: 100, reps: 5, rpe: 8, completed: true },
-                        { id: 3, type: 'regular', weight: 100, reps: 5, rpe: 8, completed: false },
-                    ],
-                },
-                {
-                    id: 'ex2',
-                    instanceId: 2,
-                    name: 'Leg Extension',
-                    muscle: 'QUADS',
-                    sets: [
-                        { id: 4, type: 'regular', weight: 50, reps: 15, rpe: 8, completed: false },
-                        { id: 5, type: 'regular', weight: 50, reps: 15, rpe: 8, completed: false },
-                    ],
-                },
+                createExercise(10, undefined, [
+                    { id: 1, type: 'regular', weight: 80, reps: 10, rpe: '7', completed: true },
+                    { id: 2, type: 'regular', weight: 80, reps: 10, rpe: '8', completed: true },
+                ]),
+                createExercise(20, undefined, [
+                    { id: 101, type: 'regular', weight: 30, reps: 12, rpe: '8', completed: true },
+                ]),
             ];
 
-            const totalSets = exercises.reduce((acc, ex) =>
-                acc + (ex.sets || []).filter(s => s.type !== 'avt_hop').length, 0);
-            const completedSets = exercises.reduce((acc, ex) =>
-                acc + (ex.sets || []).filter(s => s.completed && !s.skipped && s.type !== 'avt_hop').length, 0);
-            const remainingSets = Math.max(0, totalSets - completedSets);
+            // Rate effort 'hard' (RPE 10) for exerciseInstanceId 10, setId 2
+            const updated = applyEffortRatingToExercises(exercises, 10, 2, 'hard');
 
-            expect(totalSets).toBe(5);
-            expect(completedSets).toBe(2);
-            expect(remainingSets).toBe(3);
+            // Exact set is updated
+            const targetSet = updated.find(e => e.instanceId === 10)?.sets.find(s => s.id === 2);
+            expect(targetSet?.rpe).toBe('10');
+
+            // Sibling set is untouched
+            const siblingSet = updated.find(e => e.instanceId === 10)?.sets.find(s => s.id === 1);
+            expect(siblingSet?.rpe).toBe('7');
+
+            // Other exercise set is untouched
+            const otherExSet = updated.find(e => e.instanceId === 20)?.sets.find(s => s.id === 101);
+            expect(otherExSet?.rpe).toBe('8');
+
+            // Test 'easy' (RPE 6) and 'ok' (RPE 8)
+            const easyUpdated = applyEffortRatingToExercises(exercises, 10, 2, 'easy');
+            expect(easyUpdated.find(e => e.instanceId === 10)?.sets.find(s => s.id === 2)?.rpe).toBe('6');
+
+            const okUpdated = applyEffortRatingToExercises(exercises, 10, 2, 'ok');
+            expect(okUpdated.find(e => e.instanceId === 10)?.sets.find(s => s.id === 2)?.rpe).toBe('8');
+        });
+
+        it('resolves truthful next action based on source and workout state via resolveRestNextAction', () => {
+            const exercises: SessionExercise[] = [
+                createExercise(1, undefined, [
+                    { id: 1, type: 'regular', weight: 100, reps: 5, completed: true },
+                    { id: 2, type: 'regular', weight: 100, reps: 5, completed: false },
+                ]),
+                createExercise(2, undefined, [
+                    { id: 3, type: 'regular', weight: 50, reps: 12, completed: false },
+                ]),
+            ];
+
+            // Source is ex 1, set 1 -> next action is ex 1, set 2 ("Siguiente serie")
+            const nextActionSameEx = resolveRestNextAction(exercises, { exerciseInstanceId: 1, setId: 1 }, 'es');
+            expect(nextActionSameEx).not.toBeNull();
+            expect(nextActionSameEx?.category).toBe('Siguiente serie');
+            expect(nextActionSameEx?.name).toBe('Exercise 1');
+            expect(nextActionSameEx?.target).toBe('100 kg × 5');
+
+            // Source is ex 1, set 2 completed -> ex 1 is done, next action advances to ex 2 ("Siguiente ejercicio")
+            const ex1DoneExercises: SessionExercise[] = [
+                createExercise(1, undefined, [
+                    { id: 1, type: 'regular', weight: 100, reps: 5, completed: true },
+                    { id: 2, type: 'regular', weight: 100, reps: 5, completed: true },
+                ]),
+                createExercise(2, undefined, [
+                    { id: 3, type: 'regular', weight: 50, reps: 12, completed: false },
+                ]),
+            ];
+            const nextActionAdvance = resolveRestNextAction(ex1DoneExercises, { exerciseInstanceId: 1, setId: 2 }, 'es');
+            expect(nextActionAdvance).not.toBeNull();
+            expect(nextActionAdvance?.category).toBe('Siguiente ejercicio');
+            expect(nextActionAdvance?.name).toBe('Exercise 2');
+            expect(nextActionAdvance?.target).toBe('50 kg × 12');
+
+            // Superset partner resolution
+            const ssExercises: SessionExercise[] = [
+                createExercise(10, 'ss_ab', [
+                    { id: 1, type: 'regular', weight: 40, reps: 10, completed: true },
+                ]),
+                createExercise(20, 'ss_ab', [
+                    { id: 2, type: 'regular', weight: 20, reps: 15, completed: false },
+                ]),
+            ];
+            const nextActionSuperset = resolveRestNextAction(ssExercises, { exerciseInstanceId: 10, setId: 1 }, 'es');
+            expect(nextActionSuperset).not.toBeNull();
+            expect(nextActionSuperset?.category).toBe('Siguiente en superserie');
+            expect(nextActionSuperset?.name).toBe('Exercise 20');
+            expect(nextActionSuperset?.isSuperset).toBe(true);
+
+            // All exercises complete -> returns null
+            const allDoneExercises: SessionExercise[] = [
+                createExercise(1, undefined, [{ id: 1, type: 'regular', completed: true }]),
+            ];
+            expect(resolveRestNextAction(allDoneExercises, { exerciseInstanceId: 1, setId: 1 })).toBeNull();
+        });
+    });
+
+    describe('Active Exercise Card Collapse & Navigation (Production Helpers)', () => {
+        it('allows toggling active exercise card to genuinely stay collapsed via toggleExerciseCardExpansion', () => {
+            // Clicking currently active card collapses it to null
+            expect(toggleExerciseCardExpansion(1, 1)).toBeNull();
+
+            // Clicking another card expands that card
+            expect(toggleExerciseCardExpansion(1, 2)).toBe(2);
+
+            // Clicking a card when none is expanded expands that card
+            expect(toggleExerciseCardExpansion(null, 1)).toBe(1);
+        });
+
+        it('resolves initial active exercise to first incomplete exercise via resolveInitialActiveExerciseId', () => {
+            const exercises: SessionExercise[] = [
+                createExercise(1, undefined, [{ id: 1, type: 'regular', completed: true }]),
+                createExercise(2, undefined, [{ id: 2, type: 'regular', completed: false }]),
+                createExercise(3, undefined, [{ id: 3, type: 'regular', completed: false }]),
+            ];
+
+            expect(resolveInitialActiveExerciseId(exercises)).toBe(2);
+        });
+
+        it('advances active exercise upon completion via advanceActiveExerciseOnCompletion', () => {
+            const exercises: SessionExercise[] = [
+                createExercise(1, undefined, [{ id: 1, type: 'regular', completed: true }]),
+                createExercise(2, undefined, [{ id: 2, type: 'regular', completed: false }]),
+            ];
+
+            expect(advanceActiveExerciseOnCompletion(1, 1, exercises)).toBe(2);
+
+            // If active exercise is not complete, stays on current
+            const inProgressExercises: SessionExercise[] = [
+                createExercise(1, undefined, [{ id: 1, type: 'regular', completed: false }]),
+                createExercise(2, undefined, [{ id: 2, type: 'regular', completed: false }]),
+            ];
+            expect(advanceActiveExerciseOnCompletion(1, 1, inProgressExercises)).toBe(1);
+        });
+    });
+
+    describe('Icon System Registry Integrity', () => {
+        it('registers critical icons MoreHorizontal and ArrowUpDown in ICON_MAP', () => {
+            expect(ICON_MAP['MoreHorizontal']).toBeDefined();
+            expect(ICON_MAP['ArrowUpDown']).toBeDefined();
+            expect(ICON_MAP['GripVertical']).toBeDefined();
+            expect(ICON_MAP['Clock']).toBeDefined();
         });
     });
 });
