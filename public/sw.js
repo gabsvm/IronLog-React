@@ -164,11 +164,7 @@ self.addEventListener('fetch', (event) => {
     (url.pathname.startsWith('/assets/') ||
      /\.(png|svg|webp|ico|json|woff2?|css|js)$/i.test(url.pathname));
 
-  const isExternalStatic =
-    url.hostname.includes('fonts.gstatic.com') ||
-    url.hostname.includes('fonts.googleapis.com');
-
-  if (isSameOriginStatic || isExternalStatic) {
+  if (isSameOriginStatic) {
     event.respondWith(staleWhileRevalidate(request));
   }
 });

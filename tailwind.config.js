@@ -44,7 +44,7 @@ export default {
         secondary: "rgb(var(--text-secondary) / <alpha-value>)",
       },
       fontFamily: {
-        sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+        sans: ["'Inter Variable'", "Inter", "system-ui", "-apple-system", "BlinkMacSystemFont", "'Segoe UI'", "Roboto", "sans-serif"],
       },
       // ── Motion tokens (Fase 1) ─────────────────────────────────────────────
       // Use these instead of raw duration-100/200/300/400/500.

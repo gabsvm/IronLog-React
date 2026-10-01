@@ -1,6 +1,7 @@
 import React, { StrictMode, ReactNode, Component } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Capacitor } from '@capacitor/core';
+import '@fontsource-variable/inter';
 import './index.css';
 import './native-performance.css';
 import App from './App';
