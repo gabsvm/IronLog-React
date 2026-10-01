@@ -615,7 +615,16 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                     >
                         {hasMultipleSets && (
                             <button
+                                type="button"
+                                role="switch"
+                                aria-checked={applyToAll}
                                 onClick={() => setApplyToAll(v => !v)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        setApplyToAll(v => !v);
+                                    }
+                                }}
                                 className="w-full flex items-center justify-between border-b border-white/5 bg-zinc-950 px-5 py-3 hover:bg-zinc-900 transition-colors"
                             >
                                 <span className="text-xs font-bold text-zinc-300">
@@ -723,9 +732,19 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
 
                             {/* Update Template Switch (Protected for KONG) */}
                             {canUpdateTemplate && (
-                                <div 
-                                    className="card-reference p-3 flex items-center justify-between gap-3 cursor-pointer hover:border-zinc-500 transition-colors"
+                                <button
+                                    type="button"
+                                    role="switch"
+                                    aria-checked={updateTemplate}
+                                    aria-label={t.updateRoutine}
+                                    className="w-full card-reference p-3 flex items-center justify-between gap-3 cursor-pointer hover:border-zinc-500 transition-colors text-left"
                                     onClick={() => setUpdateTemplate(!updateTemplate)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' || e.key === ' ') {
+                                            e.preventDefault();
+                                            setUpdateTemplate(!updateTemplate);
+                                        }
+                                    }}
                                 >
                                     <div className="flex-1 min-w-0">
                                         <div className="text-sm font-semibold text-white">{t.updateRoutine}</div>
@@ -736,7 +755,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                     <div className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${updateTemplate ? 'bg-primary-500' : 'bg-surface-elevated border border-border-strong'}`}>
                                         <span className={`absolute top-0.5 w-5 h-5 rounded-full shadow transition-all ${updateTemplate ? 'left-[22px] bg-zinc-950' : 'left-0.5 bg-zinc-400'}`} />
                                     </div>
-                                </div>
+                                </button>
                             )}
 
                             {/* Session Note */}

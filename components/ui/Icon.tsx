@@ -42,7 +42,7 @@ interface IconProps extends React.SVGProps<SVGSVGElement> {
 
 // Optimization: Memoize the Icon component to prevent re-rendering identical SVGs 
 // during parent updates (like timer ticks or drag operations).
-export const Icon: React.FC<IconProps> = React.memo(({ name, size = 20, className, ...props }) => {
+export const Icon: React.FC<IconProps> = React.memo(({ name, size = 20, className, 'aria-hidden': ariaHiddenProp, ...props }) => {
     
     const LucideIcon = useMemo(() => {
         // Direct lookup is O(1) and safe
@@ -76,5 +76,8 @@ export const Icon: React.FC<IconProps> = React.memo(({ name, size = 20, classNam
         return <div style={{ width: size, height: size, background: 'currentColor', opacity: 0.1, borderRadius: 4 }} className={className} />;
     }
 
-    return <LucideIcon size={size as number} className={className} {...(props as any)} />;
+    const isExplicitlyLabeled = Boolean(props['aria-label'] || props['aria-labelledby']);
+    const ariaHidden = isExplicitlyLabeled ? ariaHiddenProp : (ariaHiddenProp ?? 'true');
+
+    return <LucideIcon size={size as number} className={className} aria-hidden={ariaHidden} {...(props as any)} />;
 });

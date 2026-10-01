@@ -504,10 +504,15 @@ export const SetRow = React.memo(({
         return '—';
     }, [isBodyweight, isIsometric, set.duration, set.hintReps, set.hintWeight, set.prevReps, set.prevWeight]);
 
+    const setNumber = (setIndex ?? 0) + 1;
+    const badgeAriaLabel = (!disableTypeChange && !isDone)
+        ? (lang === 'es' ? `Serie ${setNumber}, cambiar tipo` : `Set ${setNumber}, change type`)
+        : (lang === 'es' ? `Serie ${setNumber}` : `Set ${setNumber}`);
     const BadgeEl = disableTypeChange || isDone ? 'div' : 'button';
     const badgeProps = (!disableTypeChange && !isDone)
-        ? { id: tutorialId, onClick: () => onChangeType(exInstanceId, set.id, setType) }
-        : { id: tutorialId };
+        ? { id: tutorialId, onClick: () => onChangeType(exInstanceId, set.id, setType), 'aria-label': badgeAriaLabel }
+        : { id: tutorialId, 'aria-label': badgeAriaLabel };
+    const completeSetAriaLabel = lang === 'es' ? 'Completar serie' : 'Complete set';
     const badgeClass = `relative flex h-7 w-7 after:absolute after:-inset-2 after:content-[''] items-center justify-center rounded-full text-[11px] font-bold transition-all ${
         isDone
             ? 'bg-primary-500 text-zinc-950'
@@ -559,7 +564,7 @@ export const SetRow = React.memo(({
                             onClick={handleToggleComplete}
                             className={checkBtnClass}
                             aria-pressed={Boolean(isDone)}
-                            aria-label={lang === 'es' ? (isDone ? 'Serie completada' : 'Completar serie') : (isDone ? 'Set completed' : 'Complete set')}
+                            aria-label={completeSetAriaLabel}
                         >
                             <Icon name="Check" size={17} strokeWidth={isDone ? 3 : 2.5} />
                         </button>
@@ -597,6 +602,7 @@ export const SetRow = React.memo(({
                             type="number" inputMode="decimal"
                             className={currentInputClass}
                             placeholder={weightPlaceholder}
+                            aria-label={lang === 'es' ? 'Peso' : 'Weight'}
                             value={localWeight}
                             onChange={e => {
                                 setLocalWeight(e.target.value);
@@ -614,6 +620,7 @@ export const SetRow = React.memo(({
                             type="number" inputMode="numeric"
                             className={currentInputClass}
                             placeholder={repsPlaceholder}
+                            aria-label={lang === 'es' ? 'Repeticiones' : 'Reps'}
                             value={localReps}
                             onChange={e => {
                                 setLocalReps(e.target.value);
@@ -630,6 +637,7 @@ export const SetRow = React.memo(({
                                 type="number" inputMode="decimal"
                                 className={currentInputClass}
                                 placeholder="RIR"
+                                aria-label="RIR"
                                 value={localRpe}
                                 onChange={e => {
                                     setLocalRpe(e.target.value);
@@ -645,7 +653,7 @@ export const SetRow = React.memo(({
                             onClick={handleToggleComplete}
                             className={checkBtnClass}
                             aria-pressed={Boolean(isDone)}
-                            aria-label={lang === 'es' ? (isDone ? 'Serie completada' : 'Completar serie') : (isDone ? 'Set completed' : 'Complete set')}
+                            aria-label={completeSetAriaLabel}
                         >
                             <Icon name="Check" size={17} strokeWidth={isDone ? 3 : 2.5} />
                         </button>
@@ -682,6 +690,7 @@ export const SetRow = React.memo(({
                         type="number" inputMode="decimal"
                         className={currentInputClass}
                         placeholder={weightPlaceholder}
+                        aria-label={lang === 'es' ? 'Peso' : 'Weight'}
                         value={localWeight}
                         onChange={e => {
                             setLocalWeight(e.target.value);
@@ -699,6 +708,7 @@ export const SetRow = React.memo(({
                         type="number" inputMode="numeric"
                         className={currentInputClass}
                         placeholder={repsPlaceholder}
+                        aria-label={lang === 'es' ? 'Repeticiones' : 'Reps'}
                         value={localReps}
                         onChange={e => {
                             setLocalReps(e.target.value);
@@ -715,6 +725,7 @@ export const SetRow = React.memo(({
                             type="number" inputMode="decimal"
                             className={currentInputClass}
                             placeholder="RIR"
+                            aria-label="RIR"
                             value={localRpe}
                             onChange={e => {
                                 setLocalRpe(e.target.value);
@@ -730,7 +741,7 @@ export const SetRow = React.memo(({
                         onClick={handleToggleComplete}
                         className={checkBtnClass}
                         aria-pressed={Boolean(isDone)}
-                        aria-label={lang === 'es' ? (isDone ? 'Serie completada' : 'Completar serie') : (isDone ? 'Set completed' : 'Complete set')}
+                        aria-label={completeSetAriaLabel}
                     >
                         <Icon name="Check" size={17} strokeWidth={isDone ? 3 : 2.5} />
                     </button>

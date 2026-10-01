@@ -290,7 +290,7 @@ test.describe('GainsLab Critical Journeys', () => {
         await expect(resumedWeightInput).toHaveValue('92.5');
 
         // Completed set status survived
-        const completedBtnAfterResume = page.locator('button[aria-label*="Serie completada" i], button[aria-label*="Set completed" i]').first();
+        const completedBtnAfterResume = page.locator('button[aria-pressed="true"], button[aria-label*="Serie completada" i], button[aria-label*="Set completed" i]').first();
         await expect(completedBtnAfterResume).toBeVisible({ timeout: 5000 });
     });
 

@@ -692,7 +692,7 @@ const AppContent = () => {
 
             {syncTruncatedWarning && (
                 <div className="fixed top-safe left-0 right-0 z-[200] flex justify-center px-4 pt-3 pointer-events-none">
-                    <div className="pointer-events-auto flex items-center gap-3 bg-amber-950/90 border border-amber-500/40 text-amber-200 text-xs font-semibold px-4 py-3 rounded-2xl shadow-xl backdrop-blur-md max-w-sm w-full">
+                    <div role="status" aria-live="polite" className="pointer-events-auto flex items-center gap-3 bg-amber-950/90 border border-amber-500/40 text-amber-200 text-xs font-semibold px-4 py-3 rounded-2xl shadow-xl backdrop-blur-md max-w-sm w-full">
                         <Icon name="AlertTriangle" size={16} className="text-amber-400 shrink-0" />
                         <span className="flex-1">
                             {lang === 'es'
@@ -708,7 +708,7 @@ const AppContent = () => {
 
             {updateRegistration && !dismissedUpdate && (
                 <div className="fixed top-safe left-0 right-0 z-[210] flex justify-center px-4 pt-3 pointer-events-none">
-                    <div className="pointer-events-auto flex items-center gap-3 bg-zinc-950/95 border border-primary-500/30 text-zinc-100 text-xs font-semibold px-4 py-3 rounded-2xl shadow-xl backdrop-blur-md max-w-md w-full">
+                    <div role="status" aria-live="polite" className="pointer-events-auto flex items-center gap-3 bg-zinc-950/95 border border-primary-500/30 text-zinc-100 text-xs font-semibold px-4 py-3 rounded-2xl shadow-xl backdrop-blur-md max-w-md w-full">
                         <Icon name="Download" size={16} className="text-primary-400 shrink-0" />
                         <span className="flex-1">
                             {t.updateBannerReady}
