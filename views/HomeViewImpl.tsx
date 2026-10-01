@@ -41,7 +41,7 @@ interface HomeViewProps {
 }
 
 export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram, onSkipSession, onStartFreeSession }) => {
-    const { program, logs, isAppLoading, setProgram, globalTemplates, personalTemplates, userProfile } = useApp();
+    const { program, logs, isAppLoading, setProgram, globalTemplates, personalTemplates, userProfile, exercises } = useApp();
     const { lang } = useAppPreferences();
     const { tutorialProgress, markTutorialSeen } = useTutorial();
     const activeSession = useStore(state => state.activeSession);
@@ -367,219 +367,238 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
     }
 
     return (
-        <div className="px-6 space-y-8 pb-40">
-            {/* Header Info */}
-            <div className={`flex justify-between items-start pt-2 ${kongBlock ? 'kong-home-header' : ''}`}>
-                <div>
-                    <h2 className="text-3xl font-bold text-white tracking-tight">{activeMeso.name}</h2>
-                    <div className="flex items-center gap-3 mt-2">
-                        {currentGuidelineImages && currentGuidelineImages.length > 0 ? (
-                            <button
-                                id="tut-guidelines"
-                                onClick={() => checkPro("Guidelines") && setShowGuidelines(true)}
-                                className="text-[11px] font-bold uppercase tracking-widest px-2.5 py-1 rounded bg-zinc-800 text-blue-400 border border-zinc-700 hover:bg-zinc-700 hover:text-white transition-colors flex items-center gap-1.5 active:scale-95"
-                            >
-                                <Icon name="Info" size={13} /> GUIDELINES {!isPro && <Icon name="Lock" size={11} className="text-yellow-500 ml-1" />}
-                            </button>
-                        ) : (
-                            kongBlock ? (
-                                <button onClick={() => setShowKongHub(true)} className="min-h-8 rounded bg-zinc-800 px-2.5 py-1 text-[11px] font-bold uppercase tracking-widest text-primary-400 border border-zinc-700">
-                                    {lang === 'es' ? `KONG · BLOQUE ${kongBlock.block.number}` : `KONG · BLOCK ${kongBlock.block.number}`}
-                                </button>
-                            ) : (
-                                <span className="text-[11px] font-bold uppercase tracking-widest px-2.5 py-1 rounded bg-zinc-800 text-zinc-400 border border-zinc-700">
-                                    {/^(tpl_|personal_)/i.test(String(activeMeso.mesoType))
-                                        ? (lang === 'es' ? 'PERSONALIZADO' : 'CUSTOM')
-                                        : (t.phases?.[activeMeso.mesoType] || activeMeso.mesoType)}
-                                </span>
-                            )
-                        )}
-                        <span className="text-[11px] text-zinc-500 font-bold uppercase tracking-wider">{t.week} {activeMeso.week} / {activeMeso.targetWeeks}</span>
-                        {kongBlock && <span className="text-[11px] text-primary-400 font-bold uppercase tracking-wider">{lang === 'es' ? `Semana del bloque ${kongBlock.blockWeek}/4` : `Block week ${kongBlock.blockWeek}/4`}</span>}
+        <div className="px-4 space-y-4 pb-28 pt-2">
+            {/* 1. Brand & Profile Header */}
+            <div className={`flex items-center justify-between ${kongBlock ? 'kong-home-header' : ''}`}>
+                <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-primary-500 text-zinc-950 flex items-center justify-center font-bold text-sm shadow-sm">
+                        <Icon name="Activity" size={16} />
                     </div>
+                    <span className="text-base font-semibold text-white tracking-tight">GainsLab</span>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
+                    {currentGuidelineImages && currentGuidelineImages.length > 0 && (
+                        <button
+                            id="tut-guidelines"
+                            onClick={() => checkPro("Guidelines") && setShowGuidelines(true)}
+                            className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full bg-surface-raised text-blue-400 border border-border-subtle hover:text-white transition-colors flex items-center gap-1 active:scale-95"
+                        >
+                            <Icon name="Info" size={12} /> GUIDELINES {!isPro && <Icon name="Lock" size={10} className="text-yellow-500 ml-0.5" />}
+                        </button>
+                    )}
+                    {kongBlock && (
+                        <button
+                            onClick={() => setShowKongHub(true)}
+                            className="rounded-full bg-surface-raised px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-primary-400 border border-border-subtle"
+                        >
+                            {lang === 'es' ? `KONG · B${kongBlock.block.number}` : `KONG · B${kongBlock.block.number}`}
+                        </button>
+                    )}
                     <button
                         id="tut-settings-btn"
                         onClick={() => setShowPlanActions(true)}
                         aria-label={lang === 'es' ? 'Opciones del plan' : 'Plan options'}
-                        className="w-10 h-10 flex items-center justify-center rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-colors"
+                        className="w-8 h-8 flex items-center justify-center rounded-full bg-surface-raised border border-border-subtle text-zinc-400 hover:text-white transition-colors"
                     >
-                        <Icon name="Settings" size={20} />
+                        <Icon name="Settings" size={16} />
                     </button>
+                    <div className="w-8 h-8 rounded-full bg-surface-raised border-1.5 border-amber-400/80 flex items-center justify-center font-semibold text-xs text-white">
+                        G
+                    </div>
                 </div>
             </div>
 
-            <div className="space-y-6">
-                <WeekProgress program={safeProgram} logsForWeek={logsForWeek} />
-
-                {/* Horizontal Timeline of Days */}
-                <div className="space-y-3">
-                    <div className="flex items-center justify-between px-1">
-                        <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest">
-                            {lang === 'en' ? 'Weekly Timeline' : 'Cronograma Semanal'}
-                        </h4>
-                        <span className="text-[11px] text-zinc-500 font-bold">
-                            {safeProgram.length > 0 ? Math.round((uniqueDaysDone.size / safeProgram.length) * 100) : 0}% {lang === 'en' ? 'DONE' : 'COMPLETADO'}
-                        </span>
-                    </div>
-                    <div className="calendar-timeline gap-3 py-1 px-1">
-                        {safeProgram.map((day, idx) => {
-                            const isDone = uniqueDaysDone.has(idx);
-                            const isNext = idx === nextWorkoutIdx;
-                            const isSelected = idx === selectedDayIdx;
-
-                            let cardBorderClass = 'border-zinc-800';
-                            let cardBgClass = 'bg-zinc-950/40';
-                            let textClass = 'text-zinc-500';
-
-                            if (isSelected) {
-                                cardBorderClass = 'border-primary-500/40 ring-1 ring-primary-500/20';
-                                cardBgClass = 'bg-primary-500/5 shadow-[0_0_15px] shadow-primary-500/10';
-                                textClass = 'text-white font-bold';
-                            } else if (isDone) {
-                                cardBorderClass = 'border-green-500/20';
-                                cardBgClass = 'bg-green-950/5';
-                                textClass = 'text-zinc-400';
-                            } else if (isNext) {
-                                cardBorderClass = 'border-zinc-700';
-                                cardBgClass = 'bg-zinc-900/40';
-                                textClass = 'text-zinc-300';
-                            }
-
-                            return (
-                                <button
-                                    key={idx}
-                                    onClick={() => {
-                                        triggerHaptic('light');
-                                        setSelectedDayIdx(idx);
-                                    }}
-                                    className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border ${cardBorderClass} ${cardBgClass} w-20 shrink-0 transition-all active:scale-95`}
-                                >
-                                    <span className={`text-[11px] tracking-wide uppercase font-bold ${textClass}`}>
-                                        {lang === 'en' ? `Day ${idx + 1}` : `Día ${idx + 1}`}
-                                    </span>
-                                    <div className="mt-2.5 flex items-center justify-center">
-                                        {isDone ? (
-                                            <div className="w-6 h-6 rounded-full bg-green-500/10 text-green-500 flex items-center justify-center border border-green-500/20">
-                                                <Icon name="Check" size={12} strokeWidth={3} />
-                                            </div>
-                                        ) : isNext ? (
-                                            <div className="w-6 h-6 rounded-full bg-primary-500/10 text-primary-500 flex items-center justify-center border border-primary-500/20 animate-pulse">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-primary-500" />
-                                            </div>
-                                        ) : (
-                                            <div className="w-6 h-6 rounded-full bg-zinc-800/20 text-zinc-600 flex items-center justify-center border border-zinc-800">
-                                                <span className="text-[11px] font-bold font-mono">{idx + 1}</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </button>
-                            );
-                        })}
+            {/* 2. Program Name & Progress Subtitle */}
+            <div className="flex items-end justify-between pt-1">
+                <div className="min-w-0 flex-1">
+                    <h2 className="text-lg font-semibold text-white tracking-tight truncate">{activeMeso.name}</h2>
+                    <div className="text-xs text-muted mt-0.5">
+                        {t.week} {activeMeso.week} de {activeMeso.targetWeeks || activeMeso.duration} · {uniqueDaysDone.size} de {safeProgram.length} {lang === 'es' ? 'días' : 'days'}
                     </div>
                 </div>
+                <button
+                    type="button"
+                    onClick={() => setShowPlanActions(true)}
+                    className="text-zinc-400 hover:text-white p-1"
+                    aria-label={lang === 'es' ? 'Más opciones' : 'More options'}
+                >
+                    <Icon name="MoreHorizontal" size={20} />
+                </button>
+            </div>
 
-                {/* Dynamic Selected Day Detail Card */}
-                {(() => {
-                    const dayDef = safeProgram[selectedDayIdx];
-                    if (!dayDef) return null;
-
-                    const isDone = uniqueDaysDone.has(selectedDayIdx);
-                    const isNext = selectedDayIdx === nextWorkoutIdx;
-                    const isSelectedActive = activeSession && activeSession.mesoId === activeMeso.id && activeSession.dayIdx === selectedDayIdx;
-
-                    // Estimate duration for this day — pre-memoized below the IIFE
-                    const dayEstimatedMin = selectedDayEstimatedMin;
+            {/* 3. Compact Day Selector */}
+            <div
+                className={`grid gap-1.5 ${safeProgram.length <= 5 ? '' : 'overflow-x-auto scroll-container'}`}
+                style={{
+                    gridTemplateColumns: safeProgram.length <= 5
+                        ? `repeat(${safeProgram.length}, minmax(0, 1fr))`
+                        : `repeat(${safeProgram.length}, minmax(70px, 1fr))`
+                }}
+            >
+                {safeProgram.map((day, idx) => {
+                    const isDone = uniqueDaysDone.has(idx);
+                    const isTodayOrNext = idx === nextWorkoutIdx;
+                    const isSelected = idx === selectedDayIdx;
 
                     return (
-                        <div 
-                            id="tut-up-next"
-                            onClick={() => startSession(selectedDayIdx)}
-                            role="button"
-                            tabIndex={0}
-                            className="group relative w-full rounded-[1.5rem] p-6 cursor-pointer active:scale-[0.98] transition-all duration-300 bg-[rgb(var(--surface-raised))] border border-[rgb(var(--border-subtle))] shadow-lg flex flex-col justify-between min-h-[220px] overflow-hidden"
+                        <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                                triggerHaptic('light');
+                                setSelectedDayIdx(idx);
+                            }}
+                            className={`py-2 px-1 text-center rounded-xl transition-all active:scale-95 ${
+                                isSelected
+                                    ? 'border-1.5 border-primary-500 bg-primary-500/10 text-white font-medium shadow-sm'
+                                    : isDone
+                                    ? 'card-reference bg-surface-raised/40 text-muted'
+                                    : 'card-reference bg-surface-raised text-zinc-300'
+                            }`}
                         >
-                            <div className="relative z-10 flex justify-between items-start">
-                                    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md border border-white/5 ${
-                                        isSelectedActive ? 'bg-primary-500/20 text-primary-400' 
-                                        : isDone ? 'bg-green-500/10 text-green-400 border-green-500/20' 
-                                        : 'bg-white/5 text-zinc-300'
-                                    }`}>
-                                        {isSelectedActive && <span className="w-2 h-2 rounded-full bg-primary-500 animate-pulse" />}
-                                        <span className="text-[11px] font-bold uppercase tracking-widest">
-                                            {isSelectedActive ? (lang === 'en' ? 'IN PROGRESS' : 'EN CURSO') 
-                                            : isDone ? (lang === 'en' ? 'COMPLETED' : 'COMPLETADO') 
-                                            : isNext ? (lang === 'en' ? 'UP NEXT' : 'SIGUIENTE') 
-                                            : (lang === 'en' ? 'SCHEDULED' : 'PROGRAMADO')}
-                                        </span>
-                                    </div>
+                            <div className="text-[10px] font-semibold tracking-wide h-4 flex items-center justify-center">
+                                {isTodayOrNext ? (
+                                    <span className="text-primary-400 font-bold">{lang === 'es' ? 'Hoy' : 'Today'}</span>
+                                ) : isDone ? (
+                                    <span className="text-muted"><Icon name="Check" size={11} strokeWidth={3} /></span>
+                                ) : (
+                                    <span>&nbsp;</span>
+                                )}
+                            </div>
+                            <div className="text-xs font-semibold mt-0.5 truncate">
+                                {lang === 'es' ? `Día ${idx + 1}` : `Day ${idx + 1}`}
+                            </div>
+                        </button>
+                    );
+                })}
+            </div>
 
-                                    {!isDone && !isSelectedActive && (
-                                        <button
-                                            onClick={(e) => handleSkipClick(e, selectedDayIdx)}
-                                            className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-colors duration-fast"
-                                            title={t.skipDay}
-                                        >
-                                            <Icon name="SkipForward" size={20} />
-                                        </button>
+            {/* 4. Dominant Selected Day Hero Card */}
+            {(() => {
+                const dayDef = safeProgram[selectedDayIdx];
+                if (!dayDef) return null;
+
+                const isDone = uniqueDaysDone.has(selectedDayIdx);
+                const isNext = selectedDayIdx === nextWorkoutIdx;
+                const isSelectedActive = activeSession && activeSession.mesoId === activeMeso.id && activeSession.dayIdx === selectedDayIdx;
+                const dayEstimatedMin = selectedDayEstimatedMin;
+                const slots = dayDef.slots || [];
+                const totalSets = slots.reduce((s: number, slot: any) => s + (slot.setTarget || 3), 0);
+                const previewSlots = slots.slice(0, 3);
+                const extraSlotsCount = Math.max(0, slots.length - 3);
+
+                return (
+                    <div
+                        id="tut-up-next"
+                        onClick={() => startSession(selectedDayIdx)}
+                        role="button"
+                        tabIndex={0}
+                        className="card-reference p-4 cursor-pointer transition-all active:scale-[0.99] shadow-lg"
+                    >
+                        <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                                <h3 className="text-2xl font-bold text-white tracking-tight truncate">
+                                    {String(getTranslated(dayDef.dayName, lang))}
+                                </h3>
+                                <div className="flex flex-wrap gap-1.5 mt-2 mb-2">
+                                    {slots.slice(0, 3).map((slot: any, sIdx: number) => (
+                                        <span key={sIdx} className="chip-reference">
+                                            {String(tm(slot.muscle))}
+                                        </span>
+                                    ))}
+                                    {extraSlotsCount > 0 && (
+                                        <span className="chip-reference text-muted">
+                                            +{extraSlotsCount}
+                                        </span>
                                     )}
                                 </div>
-
-                                <div className="relative z-10 mt-6 mb-8">
-                                    <h3 className="text-4xl font-bold text-white leading-[0.95] tracking-tight mb-3 text-balance">
-                                        {String(getTranslated(dayDef.dayName, lang))}
-                                    </h3>
-                                    <div className="flex flex-wrap gap-2 mb-3">
-                                        {(dayDef.slots || []).slice(0, 3).map((slot: any, sIdx: number) => (
-                                            <span
-                                                key={sIdx}
-                                                className="text-[11px] font-bold uppercase bg-white/10 text-zinc-300 px-2.5 py-1 rounded-md border border-white/5"
-                                            >
-                                                {String(tm(slot.muscle))}
-                                            </span>
-                                        ))}
-                                        {(dayDef.slots || []).length > 3 && (
-                                            <span className="text-[11px] font-bold uppercase bg-white/10 text-zinc-300 px-2.5 py-1 rounded-md border border-white/5">
-                                                +{(dayDef.slots || []).length - 3}
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    <div className="flex items-center gap-3">
-                                        {dayEstimatedMin > 0 && (
-                                            <div className="flex items-center gap-1.5 text-zinc-400">
-                                                <Icon name="Clock" size={13} />
-                                                <span className="text-[11px] font-bold">~{dayEstimatedMin} MIN</span>
-                                            </div>
-                                        )}
-                                        {adherencePct !== null && isNext && (
-                                            <div className="flex items-center gap-1.5 text-zinc-400">
-                                                <Icon name="TrendingUp" size={13} />
-                                                <span className="text-[11px] font-bold">
-                                                    {adherencePct}% {lang === 'es' ? 'adherencia' : 'adherence'}
-                                                </span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="relative z-10 flex items-center gap-3">
-                                    <div className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-transform active:scale-90 ${isDone ? 'bg-zinc-800 text-zinc-300 shadow-zinc-800/10' : 'bg-primary-500 text-black shadow-primary-500/20'}`}>
-                                        <Icon name={isSelectedActive ? 'Play' : isDone ? 'Repeat' : 'ArrowRight'} size={26} fill="currentColor" />
-                                    </div>
-                                    <span className="text-sm font-bold text-white">
-                                        {isSelectedActive 
-                                            ? (lang === 'en' ? 'Resume Workout' : 'Reanudar') 
-                                            : isDone 
-                                                ? (lang === 'en' ? 'Train this day again' : 'Entrenar este día de nuevo')
-                                                : String(t.tapToStart)}
-                                    </span>
-                                </div>
+                            </div>
+                            {!isDone && !isSelectedActive && (
+                                <button
+                                    type="button"
+                                    onClick={(e) => handleSkipClick(e, selectedDayIdx)}
+                                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-zinc-400 hover:text-white transition-colors"
+                                    title={t.skipDay}
+                                >
+                                    <Icon name="SkipForward" size={16} />
+                                </button>
+                            )}
                         </div>
-                    );
-                })()}
+
+                        <div className="text-xs text-muted flex items-center gap-1.5 mt-1 mb-3">
+                            <Icon name="Clock" size={12} />
+                            <span>~{dayEstimatedMin > 0 ? dayEstimatedMin : 45} min</span>
+                            <span>·</span>
+                            <span>{slots.length} {lang === 'es' ? 'ejercicios' : 'exercises'}</span>
+                            <span>·</span>
+                            <span>{totalSets} {lang === 'es' ? 'series' : 'sets'}</span>
+                        </div>
+
+                        {previewSlots.length > 0 && (
+                            <div className="border-t border-border-subtle pt-2.5 text-xs space-y-1.5 leading-relaxed">
+                                {previewSlots.map((slot: any, sIdx: number) => {
+                                    const exDef = exercises?.find((e: any) => e.id === slot.exerciseId);
+                                    const name = exDef ? getTranslated(exDef.name, lang) : slot.exerciseId || tm(slot.muscle);
+                                    const repsStr = slot.reps || '8–12';
+                                    const setsCount = slot.setTarget || 3;
+                                    return (
+                                        <div key={sIdx} className="flex justify-between items-center text-zinc-300">
+                                            <span className="truncate pr-2 font-medium">{String(name)}</span>
+                                            <span className="text-muted tabular-nums shrink-0">{setsCount} × {repsStr}</span>
+                                        </div>
+                                    );
+                                })}
+                                {extraSlotsCount > 0 && (
+                                    <div className="text-xs text-muted pt-0.5">
+                                        {lang === 'es' ? `y ${extraSlotsCount} ejercicios más` : `and ${extraSlotsCount} more exercises`}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                startSession(selectedDayIdx);
+                            }}
+                            className="btn-primary-reference w-full h-11.5 mt-3.5 rounded-xl bg-primary-500 text-zinc-950 font-semibold text-sm flex items-center justify-center gap-2 hover:bg-primary-400 active:scale-98 transition-all shadow-sm"
+                        >
+                            <Icon name={isSelectedActive ? 'Play' : isDone ? 'Repeat' : 'ArrowRight'} size={18} fill="currentColor" />
+                            <span>
+                                {isSelectedActive
+                                    ? (lang === 'en' ? 'Resume Workout' : 'Reanudar entreno')
+                                    : isDone
+                                    ? (lang === 'en' ? 'Train this day again' : 'Entrenar este día de nuevo')
+                                    : `${lang === 'es' ? 'Empezar' : 'Start'} ${String(getTranslated(dayDef.dayName, lang))}`}
+                            </span>
+                        </button>
+                    </div>
+                );
+            })()}
+
+            {/* 5. Secondary Quick Start & Program Progress */}
+            <div className="space-y-3 pt-2">
+                <WeekProgress program={safeProgram} logsForWeek={logsForWeek} />
+
+                {onStartFreeSession && (
+                    <button
+                        type="button"
+                        onClick={onStartFreeSession}
+                        className="w-full flex items-center gap-3 card-reference p-3.5 hover:border-zinc-500 active:scale-[0.99] transition-all"
+                    >
+                        <div className="flex gap-1 shrink-0">
+                            <div className="w-7 h-7 rounded-lg bg-primary-500/10 text-primary-500 flex items-center justify-center"><Icon name="Dumbbell" size={14} /></div>
+                            <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center"><Icon name="Zap" size={14} /></div>
+                            <div className="w-7 h-7 rounded-lg bg-violet-500/10 text-violet-500 flex items-center justify-center"><Icon name="User" size={14} /></div>
+                        </div>
+                        <span className="flex-1 text-left text-xs font-semibold text-zinc-300">
+                            {lang === 'es' ? 'Gym · CrossFit · Calistenia (Libre)' : 'Gym · CrossFit · Calisthenics (Free)'}
+                        </span>
+                        <Icon name="ChevronRight" size={16} className="text-muted shrink-0" />
+                    </button>
+                )}
             </div>
 
 
