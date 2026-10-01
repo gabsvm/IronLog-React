@@ -408,18 +408,18 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
         },
         {
             targetId: 'tut-set-type',
-            title: "Set Types",
-            text: lang === 'en'
+            title: (t.tutorial as any)?.setTypesTitle || "Set Types",
+            text: (t.tutorial as any)?.setTypesText || (lang === 'en'
                 ? "Tap this icon to change the set type (Warmup, Myo-reps, Dropset, etc)."
-                : "Toca este icono para cambiar el tipo de serie (Calentamiento, Myo-reps, Dropset, etc).",
+                : "Toca este icono para cambiar el tipo de serie (Calentamiento, Myo-reps, Dropset, etc)."),
             position: 'bottom' as const
         },
         {
             targetId: 'tut-warmup-btn',
             title: t.warmup,
-            text: lang === 'en'
+            text: (t.tutorial as any)?.smartWarmupText || (lang === 'en'
                 ? "Smart Warmup Calc. Automatically calculates progressive warmup sets based on Set 1 weight."
-                : "Calc. Calentamiento Inteligente. Calcula automáticamente las series de aproximación según el peso del Set 1.",
+                : "Calc. Calentamiento Inteligente. Calcula automáticamente las series de aproximación según el peso del Set 1."),
             position: 'bottom' as const
         },
         {
@@ -454,7 +454,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                         type="button"
                         onClick={onBack}
                         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-zinc-400 transition-colors active:bg-surface-raised hover:text-white"
-                        aria-label="Previous"
+                        aria-label={lang === 'es' ? 'Volver' : 'Back'}
                     >
                         <Icon name="ChevronLeft" size={22} strokeWidth={2.5} />
                     </button>

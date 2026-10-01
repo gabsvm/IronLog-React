@@ -661,13 +661,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                 </div>
                                 {pendingCloudSections.length > 0 && (
                                     <div className="text-[10px] text-amber-500">
-                                        {lang === 'es' ? 'Secciones más nuevas en nube:' : 'Cloud-newer sections:'} {pendingCloudSections.join(', ')}
+                                        {lang === 'es' ? 'Secciones más nuevas en nube:' : 'Cloud-newer sections:'}{' '}
+                                        {pendingCloudSections.map(s => ((t.syncSections as any)?.[s]) || s).join(', ')}
                                     </div>
                                 )}
                                 <div className="flex flex-wrap gap-1 pt-1">
                                     {Object.entries(localSectionSyncMeta).slice(0, 8).map(([section]) => (
                                         <span key={section} className="rounded-full bg-zinc-200 px-2 py-0.5 text-[9px] font-bold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-                                            {section}
+                                            {((t.syncSections as any)?.[section]) || section}
                                         </span>
                                     ))}
                                 </div>

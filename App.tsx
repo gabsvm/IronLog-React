@@ -141,6 +141,8 @@ const AppContent = () => {
     const [backupSummary, setBackupSummary] = useState<BackupDomainSummary | null>(null);
     const [importError, setImportError] = useState<string | null>(null);
     const [showForceSyncModal, setShowForceSyncModal] = useState(false);
+    const [forceSyncFeedback, setForceSyncFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+    const [skippedSessionToast, setSkippedSessionToast] = useState<{ id: number; name: string } | null>(null);
     const [showKongConvertModal, setShowKongConvertModal] = useState(false);
 
     // Sync truncation warning — fires when cloud history is capped at 200 entries
@@ -437,8 +439,16 @@ const AppContent = () => {
                 email: user.email || null,
                 lastUpdated: Date.now(),
             });
+            setForceSyncFeedback({
+                type: 'success',
+                message: t.forceSyncSuccess || (lang === 'en' ? 'Data synced to cloud successfully.' : 'Datos sincronizados con la nube correctamente.')
+            });
         } catch (e: any) {
             console.error(e);
+            setForceSyncFeedback({
+                type: 'error',
+                message: (t.forceSyncError || (lang === 'en' ? 'Failed to sync to cloud.' : 'Error al sincronizar con la nube.')) + (e?.message ? ` (${e.message})` : '')
+            });
         } finally {
             setIsSyncing(false);
         }
@@ -488,13 +498,16 @@ const AppContent = () => {
         const safeProgram = Array.isArray(program) ? program : [];
         const dayDef = safeProgram[dayIdx];
 
+        const logId = Date.now();
+        const sessionName = dayDef ? (typeof dayDef.dayName === 'object' ? dayDef.dayName[lang] : dayDef.dayName) : `Day ${dayIdx + 1}`;
+
         // Create a log entry marked as skipped
         const skippedLog: any = {
-            id: Date.now(),
+            id: logId,
             dayIdx: dayIdx,
-            name: dayDef ? (typeof dayDef.dayName === 'object' ? dayDef.dayName[lang] : dayDef.dayName) : `Day ${dayIdx + 1}`,
-            startTime: Date.now(),
-            endTime: Date.now(),
+            name: sessionName,
+            startTime: logId,
+            endTime: logId,
             duration: 0,
             bodyWeightSnapshot: userProfile?.bodyWeight,
             mesoId: activeMeso.id,
@@ -504,7 +517,22 @@ const AppContent = () => {
         };
 
         setLogs([skippedLog, ...(Array.isArray(logs) ? logs : [])]);
+        setSkippedSessionToast({ id: logId, name: sessionName });
     };
+
+    const handleUndoSkip = () => {
+        if (!skippedSessionToast) return;
+        setLogs(prev => Array.isArray(prev) ? prev.filter(l => l.id !== skippedSessionToast.id) : []);
+        setSkippedSessionToast(null);
+    };
+
+    useEffect(() => {
+        if (!skippedSessionToast) return;
+        const timer = setTimeout(() => {
+            setSkippedSessionToast(null);
+        }, 6000);
+        return () => clearTimeout(timer);
+    }, [skippedSessionToast]);
 
     return (
         <>
@@ -758,9 +786,15 @@ const AppContent = () => {
             <ConfirmModal
                 isOpen={!!pendingCloudData}
                 title={lang === 'en' ? "Cloud Sync" : "Sincronización Nube"}
-                description={lang === 'en'
-                    ? `Newer cloud data found${pendingCloudSections.length > 0 ? ` in: ${pendingCloudSections.join(', ')}` : ''}. Download it? This will overwrite those local sections.`
-                    : `Se encontraron datos más nuevos en la nube${pendingCloudSections.length > 0 ? ` en: ${pendingCloudSections.join(', ')}` : ''}. ¿Descargar? Esto sobrescribirá esas secciones locales.`}
+                description={(() => {
+                    const friendlySections = pendingCloudSections.map(sec => ((t.syncSections as any)?.[sec]) || sec);
+                    const sectionsText = friendlySections.length > 0
+                        ? (lang === 'en' ? ` in: ${friendlySections.join(', ')}` : ` en: ${friendlySections.join(', ')}`)
+                        : '';
+                    return lang === 'en'
+                        ? `Newer cloud data found${sectionsText}. Download it? This will overwrite those local sections.`
+                        : `Se encontraron datos más nuevos en la nube${sectionsText}. ¿Descargar? Esto sobrescribirá esas secciones locales.`;
+                })()}
                 confirmText={lang === 'en' ? "Download" : "Descargar"}
                 cancelText={lang === 'en' ? "Keep Local" : "Mantener Local"}
                 onConfirm={confirmCloudSync}
@@ -805,13 +839,49 @@ const AppContent = () => {
             {/* FORCE SYNC MODAL */}
             <ConfirmModal
                 isOpen={showForceSyncModal}
-                title={lang === 'en' ? "Force Sync" : "Forzar Sincronización"}
+                title={t.forceSyncTitle || (lang === 'en' ? "Force Sync" : "Forzar Sincronización")}
                 description={lang === 'en' ? "Upload current local data to cloud? This will overwrite cloud data." : "¿Subir datos locales a la nube? Esto sobrescribirá los datos de la nube."}
                 confirmText={lang === 'en' ? "Upload" : "Subir"}
                 cancelText={t.cancel}
                 onConfirm={executeForceSync}
                 onCancel={() => setShowForceSyncModal(false)}
             />
+
+            {/* FORCE SYNC FEEDBACK MODAL */}
+            {forceSyncFeedback && (
+                <Suspense fallback={null}>
+                    <ConfirmModal
+                        isOpen={true}
+                        title={forceSyncFeedback.type === 'success' 
+                            ? (lang === 'en' ? 'Sync Complete' : 'Sincronización Completada')
+                            : (lang === 'en' ? 'Sync Error' : 'Error de Sincronización')}
+                        description={forceSyncFeedback.message}
+                        confirmText={lang === 'en' ? 'OK' : 'Entendido'}
+                        cancelText=""
+                        variant={forceSyncFeedback.type === 'success' ? 'primary' : 'danger'}
+                        onConfirm={() => setForceSyncFeedback(null)}
+                        onCancel={() => setForceSyncFeedback(null)}
+                    />
+                </Suspense>
+            )}
+
+            {/* SKIPPED SESSION TOAST WITH UNDO */}
+            {skippedSessionToast && (
+                <div 
+                    role="status"
+                    aria-live="polite"
+                    className="fixed bottom-24 left-1/2 -translate-x-1/2 z-toast flex items-center gap-3 px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-700 shadow-2xl text-sm text-white animate-in fade-in slide-in-from-bottom-2"
+                >
+                    <span>{skippedSessionToast.name}: {t.skipped || (lang === 'en' ? 'Skipped' : 'Saltado')}</span>
+                    <button
+                        type="button"
+                        onClick={handleUndoSkip}
+                        className="px-2.5 py-1 rounded-lg bg-primary-500/20 text-primary-400 font-semibold text-xs hover:bg-primary-500/30 transition-colors"
+                    >
+                        {t.undo || (lang === 'en' ? 'Undo' : 'Deshacer')}
+                    </button>
+                </div>
+            )}
 
             {/* FACTORY RESET MODAL */}
             {showResetModal && (
