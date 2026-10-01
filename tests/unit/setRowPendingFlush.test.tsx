@@ -78,11 +78,11 @@ describe('SetRow Pending Flush (D2)', () => {
         expect(row).toBeTruthy();
 
         fireEvent.touchStart(row, {
-            touches: [{ clientX: 10, clientY: 20 }]
+            touches: [{ clientX: 50, clientY: 20 }]
         });
         // Swipe > 90px horizontally
         fireEvent.touchMove(row, {
-            touches: [{ clientX: 110, clientY: 20 }]
+            touches: [{ clientX: 150, clientY: 20 }]
         });
         fireEvent.touchEnd(row);
 

@@ -98,9 +98,11 @@ const HoldTimer: React.FC<{
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const startTimeRef = useRef<number | null>(null);
     const baseElapsedRef = useRef(initialSeconds);
+    const hasTriggeredZeroAlertRef = useRef(false);
 
     const start = useCallback(() => {
         if (running) return;
+        hasTriggeredZeroAlertRef.current = false;
         triggerHaptic('medium');
         setRunning(true);
         startTimeRef.current = Date.now();
@@ -123,11 +125,36 @@ const HoldTimer: React.FC<{
 
     const reset = useCallback(() => {
         if (intervalRef.current) clearInterval(intervalRef.current);
+        hasTriggeredZeroAlertRef.current = false;
         setRunning(false);
         setElapsed(0);
         baseElapsedRef.current = 0;
         onSave(0);
     }, [onSave]);
+
+    useEffect(() => {
+        if (targetSeconds && running && elapsed >= targetSeconds && !hasTriggeredZeroAlertRef.current) {
+            hasTriggeredZeroAlertRef.current = true;
+            triggerHaptic('success');
+            try {
+                if (typeof window !== 'undefined') {
+                    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+                    if (AudioCtx) {
+                        const ctx = new AudioCtx();
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.frequency.setValueAtTime(880, ctx.currentTime);
+                        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+                        osc.start();
+                        osc.stop(ctx.currentTime + 0.3);
+                    }
+                }
+            } catch { }
+        }
+    }, [elapsed, running, targetSeconds]);
 
     useEffect(() => {
         return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
@@ -239,8 +266,9 @@ export const SetRow = React.memo(({
         isBodyweight && (Number(set.weight) > 0 || Number(set.hintWeight) > 0)
     );
     // Swipe-to-complete
-    const [swipePct, setSwipePct] = useState(0);
-    const swipeRef = useRef({ startX: 0, startY: 0, tracking: false, locked: false });
+    const swipeOverlayRef = useRef<HTMLDivElement>(null);
+    const checkIconRef = useRef<HTMLSpanElement>(null);
+    const swipeRef = useRef({ startX: 0, startY: 0, tracking: false, locked: false, currentPct: 0 });
 
     const activeFieldRef = useRef<string | null>(null);
     const weightRef = useRef<HTMLInputElement>(null);
@@ -252,7 +280,18 @@ export const SetRow = React.memo(({
     useEffect(() => { if (activeFieldRef.current !== 'reps') setLocalReps(set.reps ?? ''); }, [set.reps]);
     useEffect(() => { if (activeFieldRef.current !== 'rpe') setLocalRpe(set.rpe ?? ''); }, [set.rpe]);
     // Reset swipe when set state changes
-    useEffect(() => { setSwipePct(0); swipeRef.current.tracking = false; swipeRef.current.locked = false; }, [set.completed]);
+    useEffect(() => {
+        swipeRef.current.tracking = false;
+        swipeRef.current.locked = false;
+        swipeRef.current.currentPct = 0;
+        if (swipeOverlayRef.current) {
+            swipeOverlayRef.current.style.display = 'none';
+            swipeOverlayRef.current.style.width = '0%';
+        }
+        if (checkIconRef.current) {
+            checkIconRef.current.style.display = 'none';
+        }
+    }, [set.completed]);
     useEffect(() => () => {
         Object.values(commitTimersRef.current).forEach((timer) => {
             if (timer) clearTimeout(timer);
@@ -325,7 +364,10 @@ export const SetRow = React.memo(({
     // Swipe-to-complete handlers
     const onSwipeTouchStart = useCallback((e: React.TouchEvent) => {
         if (isDone || !e.touches?.[0]) return;
-        swipeRef.current = { startX: e.touches[0].clientX, startY: e.touches[0].clientY, tracking: true, locked: false };
+        const touch = e.touches[0];
+        // Ignore swipes starting < 24px from left edge to avoid conflict with OS back gesture
+        if (touch.clientX < 24) return;
+        swipeRef.current = { startX: touch.clientX, startY: touch.clientY, tracking: true, locked: false, currentPct: 0 };
     }, [isDone]);
 
     const onSwipeTouchMove = useCallback((e: React.TouchEvent) => {
@@ -333,28 +375,53 @@ export const SetRow = React.memo(({
         if (!s.tracking || isDone || s.locked || !e.touches?.[0]) return;
         const dx = e.touches[0].clientX - s.startX;
         const dy = e.touches[0].clientY - s.startY;
-        // Cancel if vertical gesture dominates (user is scrolling)
-        if (Math.abs(dy) > Math.abs(dx) * 1.3 && Math.abs(dx) < 15) {
+
+        // Cancel swipe if vertical movement dominates or user scrolls diagonally
+        if (Math.abs(dy) > Math.abs(dx) || (Math.abs(dy) > 10 && dx < 20)) {
             s.tracking = false;
-            setSwipePct(0);
+            s.currentPct = 0;
+            if (swipeOverlayRef.current) {
+                swipeOverlayRef.current.style.display = 'none';
+                swipeOverlayRef.current.style.width = '0%';
+            }
+            if (checkIconRef.current) {
+                checkIconRef.current.style.display = 'none';
+            }
             return;
         }
-        if (dx > 0) {
-            const pct = Math.min(100, (dx / 90) * 100);
-            setSwipePct(pct);
+
+        // Require clear horizontal dominance: dx > 10 and dx > 1.8 * |dy|
+        if (dx > 10 && dx > Math.abs(dy) * 1.8) {
+            const pct = Math.min(100, ((dx - 10) / 80) * 100);
+            s.currentPct = pct;
+            if (swipeOverlayRef.current) {
+                swipeOverlayRef.current.style.display = 'flex';
+                swipeOverlayRef.current.style.width = `${pct}%`;
+            }
+            if (checkIconRef.current) {
+                checkIconRef.current.style.display = pct > 50 ? 'inline-flex' : 'none';
+            }
         }
     }, [isDone]);
 
     const onSwipeTouchEnd = useCallback(() => {
-        if (swipePct >= 85 && !isDone) {
-            swipeRef.current.locked = true;
+        const s = swipeRef.current;
+        if (s.currentPct >= 85 && !isDone && s.tracking) {
+            s.locked = true;
             flushPendingFields();
             triggerHaptic('success');
             onToggleComplete(exInstanceId, set.id);
         }
-        setSwipePct(0);
-        swipeRef.current.tracking = false;
-    }, [swipePct, isDone, flushPendingFields, exInstanceId, set.id, onToggleComplete]);
+        s.currentPct = 0;
+        s.tracking = false;
+        if (swipeOverlayRef.current) {
+            swipeOverlayRef.current.style.display = 'none';
+            swipeOverlayRef.current.style.width = '0%';
+        }
+        if (checkIconRef.current) {
+            checkIconRef.current.style.display = 'none';
+        }
+    }, [isDone, flushPendingFields, exInstanceId, set.id, onToggleComplete]);
 
     const handleHoldSave = useCallback((seconds: number) => {
         onUpdate(exInstanceId, set.id, 'duration', seconds);
@@ -449,10 +516,16 @@ export const SetRow = React.memo(({
             : 'bg-surface-elevated text-muted border border-border-subtle'
     } ${!disableTypeChange && !isDone ? 'cursor-pointer active:scale-90' : 'cursor-default'}`;
 
-    const SwipeOverlay = swipePct > 0 ? (
-        <div className="absolute inset-y-0 left-0 rounded-xl bg-green-500/20 pointer-events-none transition-none flex items-center justify-start pl-3"
-            style={{ width: `${swipePct}%` }}>
-            {swipePct > 50 && <Icon name="Check" size={16} className="text-green-400" strokeWidth={3} />}
+    const SwipeOverlay = !isDone ? (
+        <div
+            ref={swipeOverlayRef}
+            data-testid="swipe-overlay"
+            className="absolute inset-y-0 left-0 rounded-xl bg-green-500/20 pointer-events-none transition-none flex items-center justify-start pl-3"
+            style={{ width: '0%', display: 'none' }}
+        >
+            <span ref={checkIconRef} style={{ display: 'none' }}>
+                <Icon name="Check" size={16} className="text-green-400" strokeWidth={3} />
+            </span>
         </div>
     ) : null;
 
