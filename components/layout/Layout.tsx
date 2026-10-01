@@ -9,10 +9,11 @@ import { convertKongToPersonalRoutine } from '../../programs/engine/ProgramConve
 import { Icon } from '../ui/Icon';
 import { Logo } from '../ui/Logo';
 import { Avatar } from '../ui/Avatar';
-import { ProfileSheet } from '../profile/ProfileSheet';
-import { QuickStartSheet } from '../home/QuickStartSheet';
+import { scheduleWhenIdle } from '../../lib/idle';
 import './ux-navigation.css';
 
+const ProfileSheet = React.lazy(() => import('../profile/ProfileSheet').then(m => ({ default: m.ProfileSheet })));
+const QuickStartSheet = React.lazy(() => import('../home/QuickStartSheet').then(m => ({ default: m.QuickStartSheet })));
 const FreestyleSessionModal = React.lazy(() => import('../workout/FreestyleSessionModal').then(m => ({ default: m.FreestyleSessionModal })));
 const TwoBlockMassModal = React.lazy(() => import('../workout/TwoBlockMassModal').then(m => ({ default: m.TwoBlockMassModal })));
 const ConfirmModal = React.lazy(() => import('../ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
@@ -110,6 +111,20 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
     const [showTwoBlock, setShowTwoBlock] = React.useState(false);
     const [showActiveSessionAlert, setShowActiveSessionAlert] = React.useState(false);
     const [showKongConvertConfirm, setShowKongConvertConfirm] = React.useState(false);
+    const hasOpenedProfileRef = React.useRef(false);
+    const hasOpenedQuickStartRef = React.useRef(false);
+
+    if (showProfile) hasOpenedProfileRef.current = true;
+    if (showQuickStart) hasOpenedQuickStartRef.current = true;
+
+    React.useEffect(() => {
+        const cancel = scheduleWhenIdle(() => {
+            void import('../profile/ProfileSheet');
+            void import('../home/QuickStartSheet');
+        });
+        return cancel;
+    }, []);
+
     const isKong = activeMeso?.programSystem?.systemId === KONG_4DAY_V1.id;
 
     React.useEffect(() => {
@@ -224,8 +239,16 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
                 </nav>
             )}
 
-            <ProfileSheet open={showProfile} onClose={closeProfile} onOpenSettings={onOpenSettings} />
-            <QuickStartSheet open={showQuickStart} onClose={() => setShowQuickStart(false)} lang={lang} onResume={() => setView('workout')} onToday={() => setView('home')} onFreestyle={() => setShowFreestyle(true)} onTwoBlock={() => setShowTwoBlock(true)} onEditProgram={editProgram} />
+            {(showProfile || hasOpenedProfileRef.current) && (
+                <React.Suspense fallback={null}>
+                    <ProfileSheet open={showProfile} onClose={closeProfile} onOpenSettings={onOpenSettings} />
+                </React.Suspense>
+            )}
+            {(showQuickStart || hasOpenedQuickStartRef.current) && (
+                <React.Suspense fallback={null}>
+                    <QuickStartSheet open={showQuickStart} onClose={() => setShowQuickStart(false)} lang={lang} onResume={() => setView('workout')} onToday={() => setView('home')} onFreestyle={() => setShowFreestyle(true)} onTwoBlock={() => setShowTwoBlock(true)} onEditProgram={editProgram} />
+                </React.Suspense>
+            )}
 
             {showFreestyle && (
                 <React.Suspense fallback={null}>
