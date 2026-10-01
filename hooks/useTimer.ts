@@ -22,6 +22,8 @@ export interface TimerState {
 
 export const useTimer = (lang: Lang) => {
     const [timer, setTimer] = useState<TimerState>({ active: false, timeLeft: 0, duration: 120, endAt: 0 });
+    const timerRef = useRef<TimerState>(timer);
+    timerRef.current = timer;
     const workerRef = useRef<Worker | null>(null);
     const langRef = useRef(lang);
     const isNative = Capacitor.isNativePlatform();
@@ -75,73 +77,77 @@ export const useTimer = (lang: Lang) => {
     }, [isNative, timer.active, timer.endAt, lang]);
 
     const handleTick = useCallback((suppressFeedback = false) => {
-        setTimer(prev => {
-            if (!prev || !prev.active) return prev;
+        const current = timerRef.current;
+        if (!current || !current.active) return;
 
-            const remainingMs = Math.max(0, (prev.endAt || 0) - Date.now());
-            const secondsLeft = Math.ceil(remainingMs / 1000);
+        const remainingMs = Math.max(0, (current.endAt || 0) - Date.now());
+        const secondsLeft = Math.ceil(remainingMs / 1000);
 
-            if (!isNative) {
-                document.title = secondsLeft > 0
-                    ? `(${Math.floor(secondsLeft / 60)}:${(secondsLeft % 60).toString().padStart(2, '0')}) Resting...`
-                    : 'GainsLab Pro';
+        if (!isNative) {
+            document.title = secondsLeft > 0
+                ? `(${Math.floor(secondsLeft / 60)}:${(secondsLeft % 60).toString().padStart(2, '0')}) Resting...`
+                : 'GainsLab Pro';
+        }
+
+        if (secondsLeft <= 0) {
+            // Visible JS owns immediate feedback. When native Android is in
+            // background, RestTimerReceiver owns it instead. A visibility
+            // resync passes suppressFeedback=true so reopening the app after
+            // a native alarm does not beep/vibrate a second time.
+            const shouldEmitFeedback = !suppressFeedback && (!isNative || document.visibilityState === 'visible');
+            if (shouldEmitFeedback) {
+                playTimerFinishSound();
+                triggerHaptic('success');
             }
 
-            if (secondsLeft <= 0) {
-                // Visible JS owns immediate feedback. When native Android is in
-                // background, RestTimerReceiver owns it instead. A visibility
-                // resync passes suppressFeedback=true so reopening the app after
-                // a native alarm does not beep/vibrate a second time.
-                const shouldEmitFeedback = !suppressFeedback && (!isNative || document.visibilityState === 'visible');
-                if (shouldEmitFeedback) {
-                    playTimerFinishSound();
-                    triggerHaptic('success');
-                }
+            if (!isNative && 'Notification' in window && Notification.permission === 'granted') {
+                const currentLang = langRef.current;
+                const t = TRANSLATIONS[currentLang]?.timer || TRANSLATIONS.en.timer;
+                const title = t.finished;
+                const body = t.getBack;
 
-                if (!isNative && 'Notification' in window && Notification.permission === 'granted') {
-                    const currentLang = langRef.current;
-                    const t = TRANSLATIONS[currentLang]?.timer || TRANSLATIONS.en.timer;
-                    const title = t.finished;
-                    const body = t.getBack;
-
-                    try {
-                        if ('serviceWorker' in navigator) {
-                            navigator.serviceWorker.ready.then(registration => {
-                                registration.showNotification(title, {
-                                    body,
-                                    icon: '/icon-192.png',
-                                    tag: 'gainslab-timer',
-                                    vibrate: [200, 100, 200]
-                                } as any);
-                            }).catch(() => {
-                                try {
-                                    new Notification(title, {
-                                        body,
-                                        icon: '/icon-192.png',
-                                        tag: 'gainslab-timer'
-                                    });
-                                } catch (e) {}
-                            });
-                        } else {
-                            new Notification(title, {
+                try {
+                    if ('serviceWorker' in navigator) {
+                        navigator.serviceWorker.ready.then(registration => {
+                            registration.showNotification(title, {
                                 body,
                                 icon: '/icon-192.png',
-                                tag: 'gainslab-timer'
-                            });
-                        }
-                    } catch (e) {
-                        console.warn('Notification failed', e);
+                                tag: 'gainslab-timer',
+                                vibrate: [200, 100, 200]
+                            } as any);
+                        }).catch(() => {
+                            try {
+                                new Notification(title, {
+                                    body,
+                                    icon: '/icon-192.png',
+                                    tag: 'gainslab-timer'
+                                });
+                            } catch (e) {}
+                        });
+                    } else {
+                        new Notification(title, {
+                            body,
+                            icon: '/icon-192.png',
+                            tag: 'gainslab-timer'
+                        });
                     }
+                } catch (e) {
+                    console.warn('Notification failed', e);
                 }
-
-                if (!isNative) document.title = 'GainsLab Pro';
-                workerRef.current?.postMessage('stop');
-                return { ...prev, active: false, timeLeft: 0, endAt: 0, source: undefined };
             }
 
-            if (secondsLeft === prev.timeLeft) return prev;
-            return { ...prev, timeLeft: secondsLeft };
-        });
+            if (!isNative) document.title = 'GainsLab Pro';
+            workerRef.current?.postMessage('stop');
+            const nextState: TimerState = { ...current, active: false, timeLeft: 0, endAt: 0, source: undefined };
+            timerRef.current = nextState;
+            setTimer(nextState);
+            return;
+        }
+
+        if (secondsLeft === current.timeLeft) return;
+        const nextState: TimerState = { ...current, timeLeft: secondsLeft };
+        timerRef.current = nextState;
+        setTimer(nextState);
     }, [isNative]);
 
     useEffect(() => {
@@ -166,5 +172,13 @@ export const useTimer = (lang: Lang) => {
         return () => document.removeEventListener('visibilitychange', onVisibilityChange);
     }, [handleTick, isNative]);
 
-    return { restTimer: timer, setRestTimer: setTimer };
+    const setRestTimer = useCallback((action: React.SetStateAction<TimerState>) => {
+        setTimer(prev => {
+            const next = typeof action === 'function' ? (action as (p: TimerState) => TimerState)(prev) : action;
+            timerRef.current = next;
+            return next;
+        });
+    }, []);
+
+    return { restTimer: timer, setRestTimer };
 };
