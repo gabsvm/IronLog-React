@@ -292,6 +292,7 @@ if (rootElement) {
       </ErrorBoundary>
     </StrictMode>
   );
+  (window as any).__appMounted = true;
 } else {
   console.error("Root element not found");
   document.body.innerHTML = '<h1 style="color:red">FATAL: #root missing</h1>';
