@@ -14,6 +14,8 @@ interface AppStateStore {
 // Debounce helpers for IndexedDB
 let sessionTimeout: ReturnType<typeof setTimeout> | null = null;
 let mesoTimeout: ReturnType<typeof setTimeout> | null = null;
+let sessionDirty = false;
+let mesoDirty = false;
 
 export const useStore = create<AppStateStore>((set, get) => ({
     activeSession: null,
@@ -34,10 +36,12 @@ export const useStore = create<AppStateStore>((set, get) => ({
     setActiveSession: (val) => {
         set((state) => {
             const nextVal = typeof val === 'function' ? val(state.activeSession) : val;
+            sessionDirty = true;
 
             if (sessionTimeout) clearTimeout(sessionTimeout);
             sessionTimeout = setTimeout(() => {
                 sessionTimeout = null;
+                sessionDirty = false;
                 void db.set('il_session_v16', nextVal);
             }, 500);
 
@@ -47,10 +51,12 @@ export const useStore = create<AppStateStore>((set, get) => ({
     setActiveMeso: (val) => {
         set((state) => {
             const nextVal = typeof val === 'function' ? val(state.activeMeso) : val;
+            mesoDirty = true;
 
             if (mesoTimeout) clearTimeout(mesoTimeout);
             mesoTimeout = setTimeout(() => {
                 mesoTimeout = null;
+                mesoDirty = false;
                 void db.set('il_meso_v16', nextVal);
             }, 500);
 
@@ -65,6 +71,8 @@ export const useStore = create<AppStateStore>((set, get) => ({
  * that boundary risks losing the very last set edit.
  */
 export const flushStorePersistence = () => {
+    if (useStore.getState().isStoreLoading) return;
+
     if (sessionTimeout) {
         clearTimeout(sessionTimeout);
         sessionTimeout = null;
@@ -75,10 +83,12 @@ export const flushStorePersistence = () => {
     }
 
     const { activeSession, activeMeso } = useStore.getState();
-    if (activeSession !== null) {
+    if (sessionDirty) {
+        sessionDirty = false;
         void db.set('il_session_v16', activeSession);
     }
-    if (activeMeso !== null) {
+    if (mesoDirty) {
+        mesoDirty = false;
         void db.set('il_meso_v16', activeMeso);
     }
 };
@@ -96,6 +106,8 @@ export const resetStorePersistence = () => {
         clearTimeout(mesoTimeout);
         mesoTimeout = null;
     }
+    sessionDirty = false;
+    mesoDirty = false;
 
     useStore.setState({
         activeSession: null,
