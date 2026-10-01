@@ -10,6 +10,7 @@ describe('SetRow Focus Transition (D3)', () => {
         type: 'regular',
         weight: 60,
         reps: 10,
+        rpe: 8,
         completed: false,
     };
 

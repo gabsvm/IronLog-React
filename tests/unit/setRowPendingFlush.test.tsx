@@ -10,6 +10,7 @@ describe('SetRow Pending Flush (D2)', () => {
         type: 'regular',
         weight: 60,
         reps: 10,
+        rpe: 8,
         completed: false,
     };
 

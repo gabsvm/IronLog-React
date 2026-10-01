@@ -16,6 +16,9 @@ describe('HoldTimer (D4)', () => {
     const mockIsometricSet: WorkoutSet = {
         id: 201,
         type: 'regular',
+        weight: 0,
+        reps: 0,
+        rpe: 8,
         duration: 0,
         completed: false,
     };
