@@ -714,64 +714,103 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                 );
             })()}
 
-            {ctrl.showFinishModal && (
-                <Sheet
-                    open={ctrl.showFinishModal}
-                    onOpenChange={(open) => !open && ctrl.setShowFinishModal(false)}
-                    title={completedSets > 0 ? t.finishWorkout : t.emptyWorkoutTitle}
-                    accent="primary"
-                    footer={
-                        <div className="space-y-3">
-                            <div className="grid grid-cols-2 gap-3">
-                                <Button variant="secondary" onClick={() => ctrl.setShowFinishModal(false)}>{t.cancel}</Button>
-                                <Button variant="primary" onClick={ctrl.handleConfirmFinish}>{t.finishWorkout}</Button>
+            {ctrl.showFinishModal && (() => {
+                const elapsedSecs = activeSession.startTime ? Math.max(0, Math.floor((Date.now() - activeSession.startTime) / 1000)) : 0;
+                const isKong = activeMeso?.programSystem?.systemId === 'kong_4day';
+                const canUpdateTemplate = !isKong && completedSets > 0;
+
+                return (
+                    <Sheet
+                        open={ctrl.showFinishModal}
+                        onOpenChange={(open) => !open && ctrl.setShowFinishModal(false)}
+                        title={lang === 'es' ? 'Terminar sesión' : 'Finish session'}
+                        accent="primary"
+                    >
+                        <div className="p-4 space-y-3.5">
+                            {/* Summary Cards */}
+                            <div className="grid grid-cols-2 gap-2.5">
+                                <div className="rounded-xl border border-border-subtle bg-surface-raised p-3">
+                                    <div className="text-xs text-muted">{lang === 'es' ? 'Duración' : 'Duration'}</div>
+                                    <div className="text-xl font-semibold text-white mt-0.5 tabular-nums">
+                                        {formatSeconds(elapsedSecs)}
+                                    </div>
+                                </div>
+                                <div className="rounded-xl border border-border-subtle bg-surface-raised p-3">
+                                    <div className="text-xs text-muted">{lang === 'es' ? 'Series' : 'Sets'}</div>
+                                    <div className="text-xl font-semibold text-white mt-0.5 tabular-nums">
+                                        {completedSets} / {totalWorkingSets}
+                                    </div>
+                                </div>
                             </div>
-                            {/* Discard Session Option */}
-                            <div className="text-center pt-1">
+
+                            {/* Update Template Switch (Protected for KONG) */}
+                            {canUpdateTemplate && (
+                                <div 
+                                    className="card-reference p-3 flex items-center justify-between gap-3 cursor-pointer hover:border-zinc-500 transition-colors"
+                                    onClick={() => ctrl.setUpdateTemplate(!ctrl.updateTemplate)}
+                                >
+                                    <div className="flex-1 min-w-0">
+                                        <div className="text-sm font-semibold text-white">{t.updateRoutine}</div>
+                                        <div className="text-xs text-muted mt-0.5">
+                                            {lang === 'es' ? 'Guarda ejercicios, orden y series para próximos entrenos.' : 'Save exercises, order, and sets for upcoming workouts.'}
+                                        </div>
+                                    </div>
+                                    <div className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${ctrl.updateTemplate ? 'bg-primary-500' : 'bg-surface-elevated border border-border-strong'}`}>
+                                        <span className={`absolute top-0.5 w-5 h-5 rounded-full shadow transition-all ${ctrl.updateTemplate ? 'left-[22px] bg-zinc-950' : 'left-0.5 bg-zinc-400'}`} />
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Session Note */}
+                            <div>
+                                <label className="block text-[11px] font-semibold uppercase tracking-wider text-muted mb-1 px-0.5">
+                                    {lang === 'es' ? 'Nota de sesión' : 'Session note'}
+                                </label>
+                                <textarea
+                                    placeholder={lang === 'es' ? 'Cómo te has sentido hoy...' : 'How did you feel today...'}
+                                    value={activeSession.note || ''}
+                                    onChange={e => ctrl.updateSession(prev => prev ? { ...prev, note: e.target.value } : null)}
+                                    rows={3}
+                                    className="w-full rounded-xl border border-border-subtle bg-surface-raised px-3.5 py-2.5 text-sm text-white placeholder-zinc-500 outline-none resize-none transition-all focus:border-zinc-600"
+                                />
+                            </div>
+
+                            {/* Primary & Secondary Actions */}
+                            <div className="space-y-2 pt-1">
                                 <button
+                                    type="button"
+                                    onClick={ctrl.handleConfirmFinish}
+                                    className="w-full h-11 rounded-xl bg-primary-500 text-zinc-950 font-semibold text-sm hover:bg-primary-400 active:scale-98 transition-all shadow-sm"
+                                >
+                                    {lang === 'es' ? 'Guardar y terminar' : 'Save and finish'}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => ctrl.setShowFinishModal(false)}
+                                    className="w-full h-11 rounded-xl bg-surface-elevated text-zinc-200 font-semibold text-sm hover:bg-zinc-800 active:scale-98 transition-all"
+                                >
+                                    {lang === 'es' ? 'Seguir entrenando' : 'Continue training'}
+                                </button>
+                            </div>
+
+                            {/* Destructive Discard Session */}
+                            <div className="text-center pt-3 border-t border-border-subtle mt-2">
+                                <button
+                                    type="button"
                                     onClick={() => {
                                         ctrl.setShowFinishModal(false);
                                         ctrl.setShowDiscardConfirm(true);
                                     }}
-                                    className="text-xs font-bold text-primary-500 hover:text-primary-400 transition-colors uppercase tracking-widest"
+                                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-400 hover:text-red-300 transition-colors uppercase tracking-wider active:scale-95"
                                 >
-                                    {t.resetSession || "Discard / Reset"}
+                                    <Icon name="Trash2" size={13} />
+                                    {t.discardSession || (lang === 'es' ? 'Descartar sesión' : 'Discard session')}
                                 </button>
                             </div>
                         </div>
-                    }
-                >
-                    <div className="p-5 space-y-5">
-                        {/* Update Template Option */}
-                        {completedSets > 0 && (
-                            <div 
-                                className="flex items-start gap-3 rounded-2xl border border-zinc-800 bg-zinc-950 p-4 cursor-pointer hover:bg-zinc-900 transition-colors" 
-                                onClick={() => ctrl.setUpdateTemplate(!ctrl.updateTemplate)}
-                            >
-                                <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center mt-0.5 transition-colors ${ctrl.updateTemplate ? 'bg-primary-500 border-primary-500' : 'border-zinc-700'}`}>
-                                    {ctrl.updateTemplate && <Icon name="Check" size={14} className="text-white" strokeWidth={3} />}
-                                </div>
-                                <div className="flex-1">
-                                    <p className="text-sm font-bold text-white">{t.updateRoutine}</p>
-                                    <p className="text-xs text-zinc-400 leading-tight mt-0.5">{t.updateRoutineDesc}</p>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Session Journal Note */}
-                        <div className="space-y-1.5">
-                            <label className="block text-[10px] font-semibold uppercase tracking-wider text-zinc-500 px-1">{lang === 'es' ? 'Nota de sesion' : 'Session note'}</label>
-                            <textarea
-                                placeholder="..."
-                                value={activeSession.note || ''}
-                                onChange={e => ctrl.updateSession(prev => prev ? { ...prev, note: e.target.value } : null)}
-                                rows={3}
-                                className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-white placeholder-zinc-500 outline-none resize-none transition-all focus:border-zinc-700"
-                            />
-                        </div>
-                    </div>
-                </Sheet>
-            )}
+                    </Sheet>
+                );
+            })()}
 
             {/* NEW: Discard Confirmation Modal */}
             <Suspense fallback={null}>
