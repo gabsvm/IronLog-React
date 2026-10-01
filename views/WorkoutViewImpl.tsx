@@ -17,6 +17,7 @@ interface WorkoutViewProps {
     onFinish: () => void;
     onDiscard: () => void;
     onBack: () => void;
+    onOpenReorder?: () => void;
 }
 
 import { useStore } from '../lib/store';
@@ -163,7 +164,7 @@ const WorkoutRestWidget: React.FC<{
 });
 
 // Container Component
-export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, onBack }) => {
+export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, onBack, onOpenReorder }) => {
     const { exercises, logs } = useApp();
     const { lang } = useAppPreferences();
     const { config } = useAppConfig();
@@ -505,10 +506,22 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                         </div>
                     </div>
 
-                    <div className="chip-reference text-zinc-100 font-mono text-xs shrink-0">
-                        <Icon name="Clock" size={12} className="text-muted" />
-                        <WorkoutTimer startTime={activeSession.startTime} />
-                    </div>
+                    <WorkoutTimer startTime={activeSession.startTime} />
+
+                    {onOpenReorder && sessionExercises.length > 1 && (
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onOpenReorder();
+                            }}
+                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:text-white active:bg-surface-raised"
+                            title={lang === 'es' ? 'Ordenar ejercicios' : 'Reorder exercises'}
+                            aria-label={lang === 'es' ? 'Ordenar ejercicios' : 'Reorder exercises'}
+                        >
+                            <Icon name="ArrowUpDown" size={16} strokeWidth={2} />
+                        </button>
+                    )}
 
                     <button
                         type="button"
@@ -516,8 +529,9 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                             e.stopPropagation();
                             ctrl.setAddingExercise(true);
                         }}
-                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-zinc-400 transition-colors hover:text-white active:bg-surface-raised"
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:text-white active:bg-surface-raised"
                         title={t.addExercise}
+                        aria-label={t.addExercise}
                     >
                         <Icon name="Plus" size={18} strokeWidth={2.5} />
                     </button>

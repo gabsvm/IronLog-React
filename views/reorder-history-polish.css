@@ -5,19 +5,6 @@
 .product-workout-polish .cursor-grab {
   display: none !important;
 }
-
-/* Sits immediately to the left of the existing Add (+) action in the workout header. */
-.workout-reorder-launcher {
-  top: calc(env(safe-area-inset-top, 0px) + 6px);
-  right: 48px;
-}
-
-html.light .workout-reorder-launcher {
-  border-color: rgb(var(--border-subtle)) !important;
-  background: rgb(var(--surface-elevated) / 0.96) !important;
-  color: rgb(var(--text-muted)) !important;
-}
-
 /* Keep all virtualized History rows on one consistent width rail. */
 div[data-item-index] {
   max-width: 100%;

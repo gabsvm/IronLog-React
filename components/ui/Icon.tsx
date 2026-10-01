@@ -5,11 +5,11 @@ import {
     Cpu, Activity, Star, Square, Pause, Menu, Layout, FileText, BarChart2, Edit, Plus, Check,
     SkipForward, ArrowRight, TrendingUp, TrendingDown, RefreshCw, Settings, DownloadCloud, Minus, Dumbbell,
     ChevronLeft, Eye, Link, Unlink, Sun, Moon, Info, Download, Upload, CloudOff, Clock, Search,
-    GripVertical, MoreVertical, ExternalLink, VideoOff, Layers, Zap, Calendar, Home, User, LogOut,
+    GripVertical, MoreVertical, MoreHorizontal, ExternalLink, VideoOff, Layers, Zap, Calendar, Home, User, LogOut,
     Trash2, X, CornerDownRight, Share2, AlertTriangle, Play, ChevronRight, Bot, Lock, Crown, Copy,
     ChevronUp, ChevronDown, Anchor, EyeOff, CheckCircle, Flame, Heart, Apple, UtensilsCrossed, Bike, Timer, Utensils, Droplet, Scale,
     Trophy, Pencil, Target, RotateCcw, CirclePlus, Circle, Repeat, Repeat2, Grid3X3,
-    BookOpen, AlertCircle, ArrowLeft, Shield
+    BookOpen, AlertCircle, ArrowLeft, ArrowUpDown, Shield
 } from 'lucide-react';
 
 // Static Map of icons used in the app
@@ -17,11 +17,11 @@ const ICON_MAP: Record<string, React.ElementType> = {
     Bot, Cpu, Activity, Star, Square, Pause, Menu, Layout, FileText, BarChart2, Edit, Plus, Check,
     SkipForward, ArrowRight, TrendingUp, TrendingDown, RefreshCw, Settings, DownloadCloud, Minus, Dumbbell,
     ChevronLeft, Eye, Link, Unlink, Sun, Moon, Info, Download, Upload, CloudOff, Clock, Search,
-    GripVertical, MoreVertical, ExternalLink, VideoOff, Layers, Zap, Calendar, Home, User, LogOut,
+    GripVertical, MoreVertical, MoreHorizontal, ExternalLink, VideoOff, Layers, Zap, Calendar, Home, User, LogOut,
     Trash2, X, CornerDownRight, Share2, AlertTriangle, Play, ChevronRight, Lock, Crown, Copy,
     ChevronUp, ChevronDown, Anchor, EyeOff, CheckCircle, Flame, Heart, Apple, UtensilsCrossed, Bike, Timer, Utensils, Droplet, Scale,
     Trophy, Pencil, Target, RotateCcw, Circle, Repeat, Repeat2,
-    BookOpen, AlertCircle, ArrowLeft, Shield,
+    BookOpen, AlertCircle, ArrowLeft, ArrowUpDown, Shield,
     // Renamed in lucide-react v0.376+
     PlusCircle: CirclePlus,
     // Grid3X3 lucide naming vs Grid3x3 usage alias

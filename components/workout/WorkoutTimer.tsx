@@ -67,9 +67,9 @@ export const WorkoutTimer: React.FC<{ startTime: number | null }> = ({ startTime
     const elapsed = startTime ? Math.floor((now - startTime) / 1000) : 0;
 
     return (
-        <div className="flex items-center gap-1.5 bg-zinc-100 dark:bg-white/10 px-2 py-1 rounded text-[10px] font-mono font-bold text-zinc-600 dark:text-zinc-300">
-            <Icon name="Clock" size={12} />
-            {formatWorkoutElapsed(elapsed)}
+        <div className="chip-reference text-zinc-100 font-mono text-xs shrink-0">
+            <Icon name="Clock" size={12} className="text-muted" />
+            <span>{formatWorkoutElapsed(elapsed)}</span>
         </div>
     );
 };
