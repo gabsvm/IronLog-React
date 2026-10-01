@@ -147,4 +147,45 @@ describe('Task U2: Rest Timer Notification Permission and Visibility Scoping', (
 
         expect(notificationSpy).toHaveBeenCalled();
     });
+
+    it('announces natural completion with ironlog:rest-completed (skips do not)', async () => {
+        const completions: Event[] = [];
+        const onCompleted = (event: Event) => completions.push(event);
+        window.addEventListener('ironlog:rest-completed', onCompleted);
+
+        try {
+            const { result } = renderHook(() => useTimer('es'));
+
+            // A running rest that reaches zero announces completion.
+            act(() => {
+                result.current.setRestTimer({
+                    active: true,
+                    duration: 1,
+                    timeLeft: 1,
+                    endAt: Date.now() - 1000,
+                });
+            });
+            act(() => {
+                activeWorker?.onmessage?.();
+            });
+            expect(result.current.restTimer.active).toBe(false);
+            expect(completions).toHaveLength(1);
+
+            // A fresh running rest that is skipped (not completed) stays silent.
+            act(() => {
+                result.current.setRestTimer({
+                    active: true,
+                    duration: 60,
+                    timeLeft: 60,
+                    endAt: Date.now() + 60000,
+                });
+            });
+            act(() => {
+                result.current.setRestTimer((prev) => ({ ...prev, active: false, timeLeft: 0, endAt: 0 }));
+            });
+            expect(completions).toHaveLength(1);
+        } finally {
+            window.removeEventListener('ironlog:rest-completed', onCompleted);
+        }
+    });
 });

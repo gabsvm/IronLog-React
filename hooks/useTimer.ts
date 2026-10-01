@@ -160,6 +160,11 @@ export const useTimer = (lang: Lang) => {
             const nextState: TimerState = { ...current, active: false, timeLeft: 0, endAt: 0, source: undefined };
             timerRef.current = nextState;
             setTimer(nextState);
+            // Announce natural completion (skips never reach this branch, so
+            // listeners can tell a finished rest from a dismissed one).
+            if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('ironlog:rest-completed'));
+            }
             return;
         }
 

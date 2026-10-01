@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { useTimerActions, useTimerState } from '../../context/TimerContext';
+import { requestTimerNotificationPermission } from '../../hooks/useTimer';
 import { useAppConfig, useAppPreferences } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
 import { Icon } from './Icon';
@@ -209,6 +211,7 @@ export const RestTimerOverlay: React.FC = () => {
     const initialMode = config?.restTimerDisplay === 'expanded' ? 'expanded' : 'compact';
     const [mode, setMode] = useState<'compact' | 'expanded'>(initialMode);
     const [keyboardOffset, setKeyboardOffset] = useState(0);
+    const [showNotifPrompt, setShowNotifPrompt] = useState(false);
     const lastFreshStartRef = useRef(0);
     const pillRef = useRef<HTMLElement>(null);
 
@@ -271,6 +274,28 @@ export const RestTimerOverlay: React.FC = () => {
         };
     }, [restTimer?.active, mode]);
 
+    // One-time, non-blocking notification opt-in (web/PWA only): after the
+    // first naturally completed rest, offer the finish alert once. Never
+    // shown on native (AlarmManager owns it), when permission is already
+    // decided, or when the API is missing. The flag is set at show time, so
+    // "later" never resurfaces the prompt.
+    useEffect(() => {
+        const onRestCompleted = () => {
+            try {
+                if (Capacitor.isNativePlatform()) return;
+                if (typeof Notification === 'undefined') return;
+                if (Notification.permission !== 'default') return;
+                if (window.localStorage.getItem('il_notif_prompted')) return;
+                window.localStorage.setItem('il_notif_prompted', '1');
+                setShowNotifPrompt(true);
+            } catch {
+                // Private-mode storage (or exotic shells): stay silent.
+            }
+        };
+        window.addEventListener('ironlog:rest-completed', onRestCompleted);
+        return () => window.removeEventListener('ironlog:rest-completed', onRestCompleted);
+    }, []);
+
     // Derived: Current source set for effort feedback
     const currentSourceSet = useMemo(() => {
         if (!restTimer?.source || !activeSession?.exercises) return null;
@@ -298,7 +323,38 @@ export const RestTimerOverlay: React.FC = () => {
         return resolveRestNextAction(activeSession?.exercises, restTimer?.source, lang);
     }, [activeSession?.exercises, lang, restTimer?.source]);
 
-    if (!restTimer || !restTimer.active) return null;
+    const dismissNotifPrompt = () => setShowNotifPrompt(false);
+    const enableNotifFromPrompt = () => {
+        setShowNotifPrompt(false);
+        // Called from the click handler: a real user gesture.
+        void requestTimerNotificationPermission();
+    };
+
+    const notifPrompt = showNotifPrompt ? (
+        <div role="status" className="fixed inset-x-0 bottom-24 z-sheet mx-auto max-w-md px-3">
+            <div className="pointer-events-auto rounded-2xl border border-border-strong bg-surface-raised/95 p-3 shadow-xl backdrop-blur-md">
+                <p className="text-xs font-medium text-zinc-100">{t.notifPromptTitle}</p>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                    <button
+                        type="button"
+                        onClick={dismissNotifPrompt}
+                        className="min-h-[44px] rounded-xl border border-border-subtle bg-surface-elevated text-xs font-semibold text-muted hover:text-white active:scale-95 transition-all"
+                    >
+                        {t.notifPromptLater}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={enableNotifFromPrompt}
+                        className="min-h-[44px] rounded-xl bg-primary-500 text-xs font-bold text-black hover:bg-primary-400 active:scale-95 transition-all"
+                    >
+                        {t.notifPromptEnable}
+                    </button>
+                </div>
+            </div>
+        </div>
+    ) : null;
+
+    if (!restTimer || !restTimer.active) return notifPrompt;
 
     const formatSeconds = (seconds: number) => {
         const safe = Math.max(0, Math.floor(Number(seconds) || 0));
@@ -347,6 +403,7 @@ export const RestTimerOverlay: React.FC = () => {
 
     if (mode === 'compact') {
         return (
+            <>
             <aside
                 ref={pillRef}
                 className="fixed inset-x-0 mx-auto max-w-md px-3 z-sheet pointer-events-none transition-all duration-base ease-natural"
@@ -456,10 +513,13 @@ export const RestTimerOverlay: React.FC = () => {
                     )}
                 </div>
             </aside>
+            {notifPrompt}
+            </>
         );
     }
 
     return (
+        <>
         <div
             className="fixed inset-x-0 bottom-0 z-sheet animate-in fade-in duration-150"
             style={{ bottom: `${keyboardOffset}px` }}
@@ -607,5 +667,7 @@ export const RestTimerOverlay: React.FC = () => {
                 </button>
             </div>
         </div>
+        {notifPrompt}
+        </>
     );
 };
