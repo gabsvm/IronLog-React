@@ -453,7 +453,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                     <button
                         type="button"
                         onClick={onBack}
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-zinc-400 transition-colors active:bg-surface-raised hover:text-white"
+                        className="relative flex h-9 w-9 after:absolute after:-inset-1 after:content-[''] shrink-0 items-center justify-center rounded-full text-zinc-400 transition-colors active:bg-surface-raised hover:text-white"
                         aria-label={lang === 'es' ? 'Volver' : 'Back'}
                     >
                         <Icon name="ChevronLeft" size={22} strokeWidth={2.5} />
@@ -482,7 +482,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                 e.stopPropagation();
                                 onOpenReorder();
                             }}
-                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:text-white active:bg-surface-raised"
+                            className="relative flex h-8 w-8 after:absolute after:-inset-1.5 after:content-[''] shrink-0 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:text-white active:bg-surface-raised"
                             title={lang === 'es' ? 'Ordenar ejercicios' : 'Reorder exercises'}
                             aria-label={lang === 'es' ? 'Ordenar ejercicios' : 'Reorder exercises'}
                         >
@@ -496,7 +496,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                             e.stopPropagation();
                             setAddingExercise(true);
                         }}
-                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:text-white active:bg-surface-raised"
+                        className="relative flex h-8 w-8 after:absolute after:-inset-1.5 after:content-[''] shrink-0 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:text-white active:bg-surface-raised"
                         title={t.addExercise}
                         aria-label={t.addExercise}
                     >
@@ -510,7 +510,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                             e.stopPropagation();
                             setShowFinishModal(true);
                         }}
-                        className="h-8 shrink-0 rounded-lg bg-primary-500 px-3.5 text-xs font-semibold text-zinc-950 transition-all hover:bg-primary-400 active:scale-95 shadow-sm"
+                        className="relative flex h-8 after:absolute after:-inset-y-1.5 after:-inset-x-1 after:content-[''] shrink-0 items-center justify-center rounded-lg bg-primary-500 px-3.5 text-xs font-semibold text-zinc-950 transition-all hover:bg-primary-400 active:scale-95 shadow-sm"
                     >
                         {lang === 'es' ? 'Terminar' : 'Finish'}
                     </button>
