@@ -61,6 +61,31 @@ const KongConvertConfirmModal: React.FC<KongConvertConfirmModalProps> = ({
     );
 };
 
+export interface NavBtnProps {
+    id: 'home' | 'workout' | 'history' | 'stats' | 'nutrition' | 'program';
+    label: string;
+    icon: any;
+    isActive: boolean;
+    onSelect: (id: any) => void;
+}
+
+export const NavBtn: React.FC<NavBtnProps> = React.memo(({ id, label, icon, isActive, onSelect }) => {
+    return (
+        <button
+            onClick={() => onSelect(id)}
+            aria-current={isActive ? 'page' : undefined}
+            className="group relative flex h-full flex-1 flex-col items-center justify-center gap-0.5 transition-all duration-200 active:scale-90"
+        >
+            <div className={`relative flex items-center justify-center transition-all duration-200 ${isActive ? '-translate-y-1' : 'translate-y-0'}`}>
+                <Icon name={icon} size={22} strokeWidth={isActive ? 2.5 : 2} fill={isActive ? 'currentColor' : 'none'} className={`transition-colors duration-200 ${isActive ? 'text-primary-500' : 'text-zinc-500 group-hover:text-zinc-300'}`} />
+            </div>
+            <span className={`text-[9px] font-bold uppercase tracking-wider transition-all duration-200 leading-none ${isActive ? 'text-primary-500 opacity-100' : 'text-zinc-600 group-hover:text-zinc-400 opacity-80'}`}>{label}</span>
+            {isActive && <div className="absolute bottom-2 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-primary-500 shadow-[0_0_9px_1px] shadow-primary-500/40" />}
+        </button>
+    );
+});
+NavBtn.displayName = 'NavBtn';
+
 interface LayoutProps {
     children: React.ReactNode;
     view: 'home' | 'workout' | 'history' | 'stats' | 'nutrition';
@@ -129,19 +154,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
         setShowProfile(false);
     };
 
-    const NavBtn = ({ id, label, icon }: { id: typeof view, label: string, icon: any }) => {
-        const isActive = view === id;
-        return (
-            <button onClick={() => setView(id)} className="group relative flex h-full flex-1 flex-col items-center justify-center gap-0.5 transition-all duration-200 active:scale-90">
-                <div className={`relative flex items-center justify-center transition-all duration-200 ${isActive ? '-translate-y-1' : 'translate-y-0'}`}>
-                    <Icon name={icon} size={22} strokeWidth={isActive ? 2.5 : 2} fill={isActive ? 'currentColor' : 'none'} className={`transition-colors duration-200 ${isActive ? 'text-primary-500' : 'text-zinc-500 group-hover:text-zinc-300'}`} />
-                </div>
-                <span className={`text-[9px] font-bold uppercase tracking-wider transition-all duration-200 leading-none ${isActive ? 'text-primary-500 opacity-100' : 'text-zinc-600 group-hover:text-zinc-400 opacity-80'}`}>{label}</span>
-                {isActive && <div className="absolute bottom-2 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-primary-500 shadow-[0_0_9px_1px] shadow-primary-500/40" />}
-            </button>
-        );
-    };
-
     const isVirtualized = view === 'history';
 
     const editProgram = () => {
@@ -201,13 +213,13 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
             {view !== 'workout' && (
                 <nav aria-label="Main navigation" className="fixed bottom-0 left-0 right-0 z-30 border-t border-[rgb(var(--border-subtle)/0.7)] bg-[rgb(var(--surface-base)/0.96)] pb-safe backdrop-blur-xl">
                     <div className="mx-auto flex h-16 w-full max-w-lg items-center justify-between px-2">
-                        <NavBtn id="home" label={lang === 'es' ? 'Entreno' : 'Train'} icon="Layout" />
-                        <NavBtn id="history" label={t.history} icon="Calendar" />
+                        <NavBtn id="home" label={lang === 'es' ? 'Entreno' : 'Train'} icon="Layout" isActive={view === 'home'} onSelect={setView} />
+                        <NavBtn id="history" label={t.history} icon="Calendar" isActive={view === 'history'} onSelect={setView} />
                         <button onClick={openPrimaryAction} aria-label={lang === 'es' ? 'Iniciar entreno' : 'Start workout'} className="mx-2 flex h-12 w-12 shrink-0 -translate-y-3 items-center justify-center rounded-full border border-primary-400/20 bg-primary-500 text-black shadow-lg shadow-primary-500/20 transition-transform duration-200 active:scale-95">
                             <Icon name="Plus" size={24} strokeWidth={2.5} />
                         </button>
-                        <NavBtn id="nutrition" label={lang === 'es' ? 'Dieta' : 'Diet'} icon="Utensils" />
-                        <NavBtn id="stats" label="Stats" icon="BarChart2" />
+                        <NavBtn id="nutrition" label={lang === 'es' ? 'Dieta' : 'Diet'} icon="Utensils" isActive={view === 'nutrition'} onSelect={setView} />
+                        <NavBtn id="stats" label="Stats" icon="BarChart2" isActive={view === 'stats'} onSelect={setView} />
                     </div>
                 </nav>
             )}
