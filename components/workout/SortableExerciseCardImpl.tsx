@@ -10,6 +10,7 @@ import { ExerciseCardSets } from './ExerciseCardSets';
 import { ExerciseProtocolBanners } from './ExerciseProtocolBanners';
 import { getTranslated, roundWeight } from '../../utils';
 import { triggerHaptic, playTimerFinishSound } from '../../utils/audio';
+import { isWorkingSet } from '../../utils/workoutProgress';
 
 interface SortableExerciseCardProps {
     exercise: SessionExercise;
@@ -368,18 +369,32 @@ export const SortableExerciseCard = React.memo(({
                                     {String(ex.targetReps)} Reps
                                 </span>
                             ) : null}
+                            {ex.isBodyweight && (
+                                <span className="chip-reference text-blue-300">
+                                    BW
+                                </span>
+                            )}
+                        </div>
+                        <div className="mt-1 flex items-center gap-2 min-w-0">
+                            <h3 className="truncate text-[15px] font-semibold text-white">
+                                {String(getTranslated(ex.name, lang))}
+                            </h3>
                             {isSuperseted && (
-                                <span className="chip-reference text-violet-300">
+                                <span className="chip-reference text-violet-300 shrink-0 text-[9px] px-1.5 py-0.5">
                                     SS
                                 </span>
                             )}
                         </div>
-                        <h3 className="mt-1 truncate text-[15px] font-semibold text-white">
-                            {String(getTranslated(ex.name, lang))}
-                        </h3>
                         <div className="mt-1 flex items-center gap-2 text-xs text-muted">
                             <span>
-                                {sets.filter(s => s.completed).length}/{sets.length} {lang === 'es' ? 'series' : 'sets'}
+                                {(() => {
+                                    const working = sets.filter(s => isWorkingSet(s));
+                                    const totalCount = working.length > 0 ? working.length : sets.length;
+                                    const completedCount = working.length > 0
+                                        ? working.filter(s => s.completed).length
+                                        : sets.filter(s => s.completed).length;
+                                    return `${completedCount}/${totalCount} ${lang === 'es' ? 'series' : 'sets'}`;
+                                })()}
                             </span>
                             {allDone && (
                                 <span className="text-primary-400 font-semibold flex items-center gap-1">
@@ -480,22 +495,24 @@ export const SortableExerciseCard = React.memo(({
                                 </span>
                             )}
 
+                        </div>
+
+                        <div className="flex items-center gap-2 min-w-0">
+                            <h3
+                                onClick={(event) => {
+                                    event.stopPropagation();
+                                    if (onOpenDetail) onOpenDetail(ex);
+                                }}
+                                className="cursor-pointer truncate pl-0.5 text-[1.06rem] font-black leading-none tracking-[-0.04em] text-white transition-colors hover:text-primary-400"
+                            >
+                                {String(getTranslated(ex.name, lang))}
+                            </h3>
                             {isSuperseted && (
-                                <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em] ${ssStyle?.badge || 'border-violet-500/20 bg-violet-500/10 text-violet-300'}`}>
+                                <span className={`inline-flex shrink-0 items-center rounded-full border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em] ${ssStyle?.badge || 'border-violet-500/20 bg-violet-500/10 text-violet-300'}`}>
                                     SS
                                 </span>
                             )}
                         </div>
-
-                        <h3
-                            onClick={(event) => {
-                                event.stopPropagation();
-                                if (onOpenDetail) onOpenDetail(ex);
-                            }}
-                            className="cursor-pointer truncate pl-0.5 text-[1.06rem] font-black leading-none tracking-[-0.04em] text-white transition-colors hover:text-primary-400"
-                        >
-                            {String(getTranslated(ex.name, lang))}
-                        </h3>
 
                         {((heroMetric && !allDone) || isLinkSource || isLinkingTarget) && (
                             <div className="flex flex-wrap items-center gap-1 pl-0.5">

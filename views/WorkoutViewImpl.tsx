@@ -1,5 +1,5 @@
 
-import React, { useMemo, useState, useCallback, useEffect, Suspense } from 'react';
+import React, { useMemo, useState, useCallback, useEffect, useRef, Suspense } from 'react';
 import { useApp, useAppConfig, useAppPreferences, useTutorial } from '../context/AppContext';
 import { TRANSLATIONS } from '../constants';
 import { Icon } from '../components/ui/Icon';
@@ -12,6 +12,13 @@ import { SortableExerciseCard } from '../components/workout/SortableExerciseCard
 import { WorkoutTimer } from '../components/workout/WorkoutTimer';
 import { useTimerActions, useTimerState } from '../context/TimerContext';
 import { formatSeconds } from '../utils';
+import {
+    countWorkingSets,
+    isTemplateUpdateEligible,
+    resolveInitialActiveExerciseId,
+    toggleExerciseCardExpansion,
+    advanceActiveExerciseOnCompletion
+} from '../utils/workoutProgress';
 
 interface WorkoutViewProps {
     onFinish: () => void;
@@ -103,66 +110,6 @@ const RestTimerControl: React.FC<{
     );
 });
 
-const WorkoutRestWidget: React.FC<{
-    onRateEffort?: (effort: 'easy' | 'ok' | 'hard') => void;
-    lang: 'en' | 'es';
-}> = React.memo(({ onRateEffort, lang }) => {
-    const restTimer = useTimerState();
-    const { setRestTimer } = useTimerActions();
-
-    if (!restTimer.active) return null;
-
-    const stopRest = () => {
-        setRestTimer(prev => ({ ...prev, active: false, timeLeft: 0, endAt: 0 }));
-    };
-
-    return (
-        <div className="card-reference p-3 flex flex-col gap-2.5 border-primary-500/30 bg-surface-raised my-2 shadow-sm">
-            <div className="flex items-center gap-2">
-                <Icon name="Timer" size={17} className="text-primary-400" />
-                <span className="text-sm font-semibold text-white">
-                    {lang === 'es' ? 'Descanso' : 'Rest'} {formatSeconds(restTimer.timeLeft)}
-                </span>
-                <span className="text-xs text-muted flex-1">
-                    {lang === 'es' ? `de ${restTimer.duration} s` : `of ${restTimer.duration}s`}
-                </span>
-                <button
-                    type="button"
-                    onClick={stopRest}
-                    className="text-xs font-semibold text-muted hover:text-white transition-colors"
-                >
-                    {lang === 'es' ? 'Saltar' : 'Skip'}
-                </button>
-            </div>
-            {onRateEffort && (
-                <div className="flex gap-2">
-                    <button
-                        type="button"
-                        onClick={() => onRateEffort('easy')}
-                        className="flex-1 h-8 rounded-lg border border-border-subtle bg-surface-elevated text-xs font-medium text-zinc-300 hover:border-zinc-500 hover:text-white transition-colors active:scale-95"
-                    >
-                        {lang === 'es' ? 'Fácil' : 'Easy'}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => onRateEffort('ok')}
-                        className="flex-1 h-8 rounded-lg border border-border-subtle bg-surface-elevated text-xs font-medium text-zinc-300 hover:border-zinc-500 hover:text-white transition-colors active:scale-95"
-                    >
-                        OK
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => onRateEffort('hard')}
-                        className="flex-1 h-8 rounded-lg border border-border-subtle bg-surface-elevated text-xs font-medium text-zinc-300 hover:border-zinc-500 hover:text-white transition-colors active:scale-95"
-                    >
-                        {lang === 'es' ? 'Duro' : 'Hard'}
-                    </button>
-                </div>
-            )}
-        </div>
-    );
-});
-
 // Container Component
 export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, onBack, onOpenReorder }) => {
     const { exercises, logs } = useApp();
@@ -239,19 +186,26 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
     }, [ctrl.setChangingSetType]);
     const sortableItems = useMemo(() => sessionExercises.map(ex => ex.instanceId), [sessionExercises]);
 
-    const [manualActiveId, setManualActiveId] = useState<number | null>(null);
+    const initialResolvedRef = useRef(sessionExercises.length > 0);
 
-    const defaultActiveId = useMemo(() => {
-        const firstIncomplete = sessionExercises.find(ex => (ex.sets || []).some(s => !s.completed));
-        return firstIncomplete ? firstIncomplete.instanceId : (sessionExercises[0]?.instanceId ?? null);
-    }, [sessionExercises]);
+    const [activeExerciseId, setActiveExerciseId] = useState<number | null>(() => {
+        return resolveInitialActiveExerciseId(sessionExercises);
+    });
 
-    const activeExerciseId = manualActiveId !== null && sessionExercises.some(e => e.instanceId === manualActiveId)
-        ? manualActiveId
-        : defaultActiveId;
+    useEffect(() => {
+        if (!initialResolvedRef.current && sessionExercises.length > 0) {
+            initialResolvedRef.current = true;
+            setActiveExerciseId(resolveInitialActiveExerciseId(sessionExercises));
+            return;
+        }
+
+        if (activeExerciseId !== null && !sessionExercises.some(e => e.instanceId === activeExerciseId)) {
+            setActiveExerciseId(resolveInitialActiveExerciseId(sessionExercises));
+        }
+    }, [sessionExercises, activeExerciseId]);
 
     const handleToggleExpand = useCallback((instanceId: number) => {
-        setManualActiveId(prev => (prev === instanceId ? null : instanceId));
+        setActiveExerciseId(prev => toggleExerciseCardExpansion(prev, instanceId));
     }, []);
 
     const handleSetComplete = useCallback((exInstanceId: number, setId: number) => {
@@ -266,20 +220,8 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
             if (otherPending.length === 0) {
                 const nextEx = sessionExercises.find(e => e.instanceId !== exInstanceId && (e.sets || []).some(s => !s.completed));
                 if (nextEx) {
-                    setManualActiveId(nextEx.instanceId);
+                    setActiveExerciseId(prev => (prev !== null ? nextEx.instanceId : null));
                 }
-            }
-        }
-    }, [ctrl, sessionExercises]);
-
-    const handleRateEffort = useCallback((effort: 'easy' | 'ok' | 'hard') => {
-        for (let i = sessionExercises.length - 1; i >= 0; i--) {
-            const ex = sessionExercises[i];
-            const lastCompleted = [...(ex.sets || [])].reverse().find(s => s.completed);
-            if (lastCompleted) {
-                const rpeVal = effort === 'easy' ? '6' : effort === 'ok' ? '8' : '10';
-                ctrl.handleSetUpdate(ex.instanceId, lastCompleted.id, 'rpe', rpeVal);
-                break;
             }
         }
     }, [ctrl, sessionExercises]);
@@ -313,6 +255,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
             exercises: [...(prev.exercises || []), { ...newDef, instanceId: newInstanceId, slotLabel: newDef.muscle, sets: initialSets as any }]
         });
         ctrl.setAddingExercise(false);
+        setActiveExerciseId(newInstanceId);
     };
 
     const handleReplace = (newExId: string, customDef?: ExerciseDef) => {
@@ -370,26 +313,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
     }, [activeMeso?.programSystem?.systemId, ctrl]);
 
     const workoutStats = useMemo(() => {
-        let completedSets = 0;
-        let completedWorkingSets = 0;
-        let totalWorkingSets = 0;
-
-        sessionExercises.forEach((exercise) => {
-            (exercise.sets || []).forEach((set) => {
-                if (set.completed) completedSets += 1;
-                if (set.type !== 'warmup') {
-                    totalWorkingSets += 1;
-                    if (set.completed) completedWorkingSets += 1;
-                }
-            });
-        });
-
-        return {
-            completedSets,
-            totalWorkingSets,
-            remainingSets: totalWorkingSets - completedWorkingSets,
-            progressPct: totalWorkingSets > 0 ? (completedWorkingSets / totalWorkingSets) * 100 : 0,
-        };
+        return countWorkingSets(sessionExercises);
     }, [sessionExercises]);
 
     const hasWorkoutProgress = useMemo(() => {
@@ -407,7 +331,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
         );
     }, [activeSession?.note, sessionExercises]);
 
-    const { completedSets, totalWorkingSets, remainingSets, progressPct } = workoutStats;
+    const { completedWorkingSets, totalWorkingSets, remainingWorkingSets: remainingSets, progressPct } = workoutStats;
     const quickAccessExercise = useMemo(() => {
         return sessionExercises.find(ex => ex.sets.some(set => !set.completed && set.type !== 'warmup')) || sessionExercises[0] || null;
     }, [sessionExercises]);
@@ -601,8 +525,6 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                         </WorkoutSortableList>
                     </Suspense>
 
-                    <WorkoutRestWidget onRateEffort={handleRateEffort} lang={lang} />
-
                     <button
                         type="button"
                         onClick={() => ctrl.setAddingExercise(true)}
@@ -730,8 +652,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
 
             {ctrl.showFinishModal && (() => {
                 const elapsedSecs = activeSession.startTime ? Math.max(0, Math.floor((Date.now() - activeSession.startTime) / 1000)) : 0;
-                const isKong = activeMeso?.programSystem?.systemId === 'kong_4day';
-                const canUpdateTemplate = !isKong && completedSets > 0;
+                const canUpdateTemplate = isTemplateUpdateEligible(activeSession, activeMeso);
 
                 return (
                     <Sheet
@@ -752,7 +673,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                 <div className="rounded-xl border border-border-subtle bg-surface-raised p-3">
                                     <div className="text-xs text-muted">{lang === 'es' ? 'Series' : 'Sets'}</div>
                                     <div className="text-xl font-semibold text-white mt-0.5 tabular-nums">
-                                        {completedSets} / {totalWorkingSets}
+                                        {completedWorkingSets} / {totalWorkingSets}
                                     </div>
                                 </div>
                             </div>
