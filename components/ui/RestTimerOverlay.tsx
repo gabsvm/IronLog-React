@@ -142,12 +142,13 @@ export function resolveRestNextAction(
     return null;
 }
 
-const CircularTimer: React.FC<{
+export const CircularTimer: React.FC<{
     percentage: number;
     timeLeft: number;
     totalDuration: number;
     lang: 'en' | 'es';
-}> = ({ percentage, timeLeft, totalDuration, lang }) => {
+    reducedEffects?: boolean;
+}> = ({ percentage, timeLeft, totalDuration, lang, reducedEffects }) => {
     const size = 170;
     const strokeWidth = 7;
     const radius = TIMER_RING_RADIUS;
@@ -181,7 +182,7 @@ const CircularTimer: React.FC<{
                     strokeDasharray={circumference}
                     strokeDashoffset={dashOffset}
                     transform="rotate(-90 60 60)"
-                    style={{ transition: 'stroke-dashoffset 200ms linear' }}
+                    style={{ transition: reducedEffects ? 'none' : 'stroke-dashoffset 1s linear' }}
                 />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -199,7 +200,7 @@ const CircularTimer: React.FC<{
 export const RestTimerOverlay: React.FC = () => {
     const restTimer = useTimerState();
     const { setRestTimer } = useTimerActions();
-    const { lang } = useAppPreferences();
+    const { lang, reducedEffects } = useAppPreferences();
     const { config } = useAppConfig();
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
     const activeSession = useStore(state => state.activeSession);
@@ -421,6 +422,7 @@ export const RestTimerOverlay: React.FC = () => {
                     timeLeft={restTimer.timeLeft}
                     totalDuration={restTimer.duration}
                     lang={lang}
+                    reducedEffects={reducedEffects}
                 />
 
                 {/* Next exercise / Superset context card */}
