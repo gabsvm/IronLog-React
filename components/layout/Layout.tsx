@@ -133,11 +133,12 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
     }, [isKong]);
 
     React.useEffect(() => {
-        const handlePop = (event: PopStateEvent) => {
-            if (!event.state?.profile) setShowProfile(false);
+        const handlePop = (event: Event) => {
+            const detail = (event as CustomEvent).detail;
+            if (!detail?.profile) setShowProfile(false);
         };
-        window.addEventListener('popstate', handlePop);
-        return () => window.removeEventListener('popstate', handlePop);
+        window.addEventListener('ironlog:popstate', handlePop);
+        return () => window.removeEventListener('ironlog:popstate', handlePop);
     }, []);
 
     React.useEffect(() => {

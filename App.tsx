@@ -236,8 +236,11 @@ const AppContent = () => {
         return actions;
     }, [activeSession, activeMeso, lang, setView]);
 
-    // History management logic
+    // History management logic: nav tabs use replaceState to keep a clean history stack;
+    // depth 2 views (workout, program, exercises) and sheets (settings, profile) use pushState.
+    const isFirstMountRef = useRef(true);
     const isPopping = useRef(false);
+
     useEffect(() => {
         try {
             if (typeof window !== 'undefined' && window.history) {
@@ -247,33 +250,44 @@ const AppContent = () => {
 
         const handlePop = (e: PopStateEvent) => {
             isPopping.current = true;
-            if (e.state) {
+            const state = e.state;
+            if (state) {
                 withTransition('back', () => {
-                    if (e.state?.view) setViewState(e.state.view);
-                    setShowSettings(!!e.state?.settings);
+                    if (state.view) setViewState(state.view);
+                    setShowSettings(Boolean(state.settings));
                 });
             } else {
                 setView('home');
                 setShowSettings(false);
             }
+            window.dispatchEvent(new CustomEvent('ironlog:popstate', { detail: state }));
         };
         window.addEventListener('popstate', handlePop);
         return () => window.removeEventListener('popstate', handlePop);
-        // Intentional: mount-once popstate listener. `setView` would change every
-        // render and re-binding the listener serves no purpose.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [setView]);
 
     useEffect(() => {
+        if (isFirstMountRef.current) {
+            isFirstMountRef.current = false;
+            return;
+        }
+
         if (isPopping.current) {
             isPopping.current = false;
             return;
         }
+
         const state = { view, settings: showSettings };
         const hash = showSettings ? 'settings' : view;
+        const isNav = (view === 'home' || view === 'history' || view === 'stats' || view === 'nutrition') && !showSettings;
+
         try {
             if (typeof window !== 'undefined' && window.history) {
-                window.history.pushState(state, '', `#${hash}`);
+                if (isNav) {
+                    window.history.replaceState(state, '', `#${hash}`);
+                } else {
+                    window.history.pushState(state, '', `#${hash}`);
+                }
             }
         } catch (e) { }
     }, [view, showSettings]);
