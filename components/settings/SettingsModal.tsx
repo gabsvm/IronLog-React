@@ -404,6 +404,33 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             <div className="space-y-2.5">
                                 <ProToggle label={t.showRIR} value={config.showRIR} onChange={(val: boolean) => setConfig({ ...config, showRIR: val })} featureName="RIR Tracking" />
                                 <ProToggle label={t.keepScreen} value={config.keepScreenOn} onChange={(val: boolean) => setConfig({ ...config, keepScreenOn: val })} featureName="Screen Settings" />
+                                <div className="flex items-center justify-between p-3.5 bg-zinc-50 dark:bg-white/5 rounded-2xl border border-zinc-100 dark:border-white/5">
+                                    <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">{t.restTimerDisplay}</span>
+                                    <div className="flex gap-1 bg-zinc-200/50 dark:bg-zinc-800/80 p-0.5 rounded-xl border border-border-subtle">
+                                        <button
+                                            type="button"
+                                            onClick={() => setConfig({ ...config, restTimerDisplay: 'compact' })}
+                                            className={`px-2.5 py-1 text-xs rounded-lg font-semibold transition-all ${
+                                                (config.restTimerDisplay || 'compact') === 'compact'
+                                                    ? 'bg-surface-elevated text-white shadow-sm'
+                                                    : 'text-muted hover:text-white'
+                                            }`}
+                                        >
+                                            {t.restTimerCompact}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setConfig({ ...config, restTimerDisplay: 'expanded' })}
+                                            className={`px-2.5 py-1 text-xs rounded-lg font-semibold transition-all ${
+                                                config.restTimerDisplay === 'expanded'
+                                                    ? 'bg-surface-elevated text-white shadow-sm'
+                                                    : 'text-muted hover:text-white'
+                                            }`}
+                                        >
+                                            {t.restTimerExpanded}
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </>)}

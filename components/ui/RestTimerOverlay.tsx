@@ -206,22 +206,15 @@ export const RestTimerOverlay: React.FC = () => {
     const activeSession = useStore(state => state.activeSession);
     const setActiveSession = useStore(state => state.setActiveSession);
 
-    const [minimized, setMinimized] = useState(false);
-    const [autoMinimized, setAutoMinimized] = useState(false);
+    const initialMode = config?.restTimerDisplay === 'expanded' ? 'expanded' : 'compact';
+    const [mode, setMode] = useState<'compact' | 'expanded'>(initialMode);
     const [keyboardOffset, setKeyboardOffset] = useState(0);
     const lastFreshStartRef = useRef(0);
 
-    const isEditableElement = (node: Element | null) => {
-        if (!(node instanceof HTMLElement)) return false;
-        const tag = node.tagName;
-        return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || node.isContentEditable;
-    };
-
+    // Reset to user preference when a new rest begins
     useEffect(() => {
         if (!restTimer?.active) {
-            setMinimized(true);
-            setAutoMinimized(false);
-            setKeyboardOffset(0);
+            setMode(config?.restTimerDisplay === 'expanded' ? 'expanded' : 'compact');
             lastFreshStartRef.current = 0;
             return;
         }
@@ -229,39 +222,11 @@ export const RestTimerOverlay: React.FC = () => {
         const looksLikeFreshStart = restTimer.duration > 0 && restTimer.timeLeft >= restTimer.duration - 1;
         if (looksLikeFreshStart && restTimer.endAt !== lastFreshStartRef.current) {
             lastFreshStartRef.current = restTimer.endAt;
-            const hasFocusedInput = isEditableElement(document.activeElement);
-            setMinimized(hasFocusedInput);
-            setAutoMinimized(hasFocusedInput);
+            setMode(config?.restTimerDisplay === 'expanded' ? 'expanded' : 'compact');
         }
-    }, [restTimer?.active, restTimer?.duration, restTimer?.endAt, restTimer?.timeLeft]);
+    }, [restTimer?.active, restTimer?.duration, restTimer?.endAt, restTimer?.timeLeft, config?.restTimerDisplay]);
 
-    useEffect(() => {
-        const handleFocusIn = (event: FocusEvent) => {
-            const target = event.target as HTMLElement | null;
-            if (!target || !isEditableElement(target) || minimized) return;
-
-            setMinimized(true);
-            setAutoMinimized(true);
-        };
-
-        const handleFocusOut = () => {
-            window.setTimeout(() => {
-                const noFocusedEditable = !isEditableElement(document.activeElement);
-                if (autoMinimized && keyboardOffset <= 24 && noFocusedEditable) {
-                    setMinimized(false);
-                    setAutoMinimized(false);
-                }
-            }, 30);
-        };
-
-        document.addEventListener('focusin', handleFocusIn);
-        document.addEventListener('focusout', handleFocusOut);
-        return () => {
-            document.removeEventListener('focusin', handleFocusIn);
-            document.removeEventListener('focusout', handleFocusOut);
-        };
-    }, [autoMinimized, keyboardOffset, minimized]);
-
+    // Keyboard avoidance via visualViewport only
     useEffect(() => {
         if (!window.visualViewport) return;
 
@@ -269,13 +234,6 @@ export const RestTimerOverlay: React.FC = () => {
         const syncViewportOffset = () => {
             const offset = Math.max(0, Math.round(window.innerHeight - viewport.height - viewport.offsetTop));
             setKeyboardOffset(offset);
-            if (offset > 120 && !minimized) {
-                setMinimized(true);
-                setAutoMinimized(true);
-            } else if (offset <= 24 && autoMinimized && !isEditableElement(document.activeElement)) {
-                setMinimized(false);
-                setAutoMinimized(false);
-            }
         };
 
         syncViewportOffset();
@@ -286,7 +244,7 @@ export const RestTimerOverlay: React.FC = () => {
             viewport.removeEventListener('resize', syncViewportOffset);
             viewport.removeEventListener('scroll', syncViewportOffset);
         };
-    }, [autoMinimized, minimized]);
+    }, []);
 
     // Derived: Current source set for effort feedback
     const currentSourceSet = useMemo(() => {
@@ -355,29 +313,64 @@ export const RestTimerOverlay: React.FC = () => {
         }));
     };
 
-    if (minimized) {
+    if (mode === 'compact') {
         return (
-            <div
-                className="fixed right-3 z-sheet"
+            <aside
+                className="fixed inset-x-0 mx-auto max-w-md px-3 z-sheet pointer-events-none transition-all duration-base ease-natural"
                 style={{ bottom: `${floatingBottom}px` }}
+                aria-label={t.resting}
             >
-                <button
-                    type="button"
-                    onClick={() => {
-                        triggerHaptic('light');
-                        setMinimized(false);
-                        setAutoMinimized(false);
-                    }}
-                    className="flex h-10 items-center gap-2 rounded-full border border-border-subtle bg-surface-base/95 px-3.5 shadow-lg backdrop-blur-md transition-all hover:border-zinc-500 active:scale-95"
-                    aria-label={`${t.resting}: ${formatSeconds(restTimer.timeLeft)}`}
-                >
-                    <span className="h-2 w-2 rounded-full bg-primary-500 animate-pulse" />
-                    <span className="font-mono text-sm font-semibold text-white tabular-nums">
-                        {formatSeconds(restTimer.timeLeft)}
-                    </span>
-                    <Icon name="ChevronUp" size={14} className="text-muted" />
-                </button>
-            </div>
+                <div className="pointer-events-auto flex items-center justify-between gap-2 rounded-full border border-border-strong bg-surface-raised/95 px-3 py-1.5 shadow-xl backdrop-blur-md">
+                    {/* Time display & tap to expand */}
+                    <button
+                        type="button"
+                        onClick={() => {
+                            triggerHaptic('light');
+                            setMode('expanded');
+                        }}
+                        className="flex items-center gap-2 pr-1 min-w-0 transition-opacity hover:opacity-85 active:scale-95 text-left"
+                        aria-label={`${t.resting}: ${formatSeconds(restTimer.timeLeft)}. ${lang === 'es' ? 'Tocar para expandir' : 'Tap to expand'}`}
+                    >
+                        <span className="relative flex h-2 w-2 shrink-0">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75" />
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-primary-500" />
+                        </span>
+                        <span className="font-mono text-sm font-black text-white tabular-nums tracking-tight">
+                            {formatSeconds(restTimer.timeLeft)}
+                        </span>
+                        <Icon name="ChevronUp" size={14} className="text-muted shrink-0" />
+                    </button>
+
+                    {/* Quick controls: -10s, +30s, skip */}
+                    <div className="flex items-center gap-1 shrink-0">
+                        <button
+                            type="button"
+                            onClick={() => adjustTimer(-10)}
+                            className="flex h-7 px-2 items-center justify-center rounded-full bg-surface-elevated border border-border-subtle text-[11px] font-bold text-zinc-200 hover:text-white active:scale-90 transition-all"
+                            aria-label="-10s"
+                        >
+                            -10s
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => adjustTimer(30)}
+                            className="flex h-7 px-2 items-center justify-center rounded-full bg-surface-elevated border border-border-subtle text-[11px] font-bold text-zinc-200 hover:text-white active:scale-90 transition-all"
+                            aria-label="+30s"
+                        >
+                            +30s
+                        </button>
+                        <button
+                            type="button"
+                            onClick={skipTimer}
+                            className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-elevated border border-border-subtle text-muted hover:text-white active:scale-90 transition-all"
+                            aria-label={lang === 'es' ? 'Saltar descanso' : 'Skip rest'}
+                            title={lang === 'es' ? 'Saltar descanso' : 'Skip rest'}
+                        >
+                            <Icon name="FastForward" size={13} />
+                        </button>
+                    </div>
+                </div>
+            </aside>
         );
     }
 
@@ -389,7 +382,7 @@ export const RestTimerOverlay: React.FC = () => {
             aria-modal="false"
             aria-label={t.resting}
         >
-            <div className="fixed inset-0 top-16 bg-black/60 backdrop-blur-sm -z-10" onClick={() => setMinimized(true)} />
+            <div className="fixed inset-0 top-16 bg-black/60 backdrop-blur-sm -z-10" onClick={() => setMode('compact')} />
             <div className="mx-auto max-w-md rounded-t-2xl border-t border-x border-border-subtle bg-surface-base p-4 pb-safe shadow-2xl backdrop-blur-xl">
                 {/* Drag Handle */}
                 <div className="w-9 h-1 rounded-full bg-border-strong mx-auto mb-3" />
@@ -406,8 +399,7 @@ export const RestTimerOverlay: React.FC = () => {
                         type="button"
                         onClick={() => {
                             triggerHaptic('light');
-                            setMinimized(true);
-                            setAutoMinimized(false);
+                            setMode('compact');
                         }}
                         className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-400 hover:text-white transition-colors"
                         aria-label={lang === 'es' ? 'Minimizar' : 'Minimize'}

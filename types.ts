@@ -270,6 +270,7 @@ export interface AppState {
     rpEnabled: boolean;
     rpTargetRIR: number;
     keepScreenOn: boolean;
+    restTimerDisplay?: 'compact' | 'expanded';
   };
   rpFeedback: Record<string, Record<string, Record<string, FeedbackEntry>>>;
   hasSeenOnboarding: boolean;

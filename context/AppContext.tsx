@@ -152,6 +152,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
 
     const [rpTargetRIR, setRpTargetRIR] = useLocalStorage('il_cfg_rp_rir', 2);
     const [keepScreenOn, setKeepScreenOn] = useLocalStorage('il_cfg_screen', false);
+    const [restTimerDisplay, setRestTimerDisplay] = useLocalStorage<'compact' | 'expanded'>('il_cfg_rest_display', 'compact');
     const [tutorialProgress, setTutorialProgress] = useLocalStorage<TutorialState>('il_tutorial_v2', INITIAL_TUTORIAL_STATE);
 
     // --- Heavy Data (IndexedDB) ---
@@ -805,13 +806,20 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         if (newConfig.rpEnabled !== undefined) setRpEnabled(newConfig.rpEnabled);
         if (newConfig.rpTargetRIR !== undefined) setRpTargetRIR(newConfig.rpTargetRIR);
         if (newConfig.keepScreenOn !== undefined) setKeepScreenOn(newConfig.keepScreenOn);
-    }, [setShowRIR, setRpEnabled, setRpTargetRIR, setKeepScreenOn]);
+        if (newConfig.restTimerDisplay !== undefined) setRestTimerDisplay(newConfig.restTimerDisplay);
+    }, [setShowRIR, setRpEnabled, setRpTargetRIR, setKeepScreenOn, setRestTimerDisplay]);
 
     const markTutorialSeen = useCallback((section: keyof TutorialState) => setTutorialProgress(prev => ({ ...prev, [section]: true })), [setTutorialProgress]);
     const resetTutorials = useCallback(() => setTutorialProgress(INITIAL_TUTORIAL_STATE), [setTutorialProgress]);
 
 
-    const configState = useMemo(() => ({ showRIR, rpEnabled, rpTargetRIR, keepScreenOn }), [showRIR, rpEnabled, rpTargetRIR, keepScreenOn]);
+    const configState = useMemo(() => ({
+        showRIR,
+        rpEnabled,
+        rpTargetRIR,
+        keepScreenOn,
+        restTimerDisplay,
+    }), [showRIR, rpEnabled, rpTargetRIR, keepScreenOn, restTimerDisplay]);
     const preferencesValue = useMemo(() => ({
         lang, setLang, theme, setTheme, colorTheme, setColorTheme,
         effectsMode, setEffectsMode, resolvedEffects,
