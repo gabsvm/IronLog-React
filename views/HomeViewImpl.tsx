@@ -368,60 +368,42 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
 
     return (
         <div className="px-4 space-y-4 pb-28 pt-2">
-            {/* 1. Brand & Profile Header */}
-            <div className={`flex items-center justify-between ${kongBlock ? 'kong-home-header' : ''}`}>
-                <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-primary-500 text-zinc-950 flex items-center justify-center font-bold text-sm shadow-sm">
-                        <Icon name="Activity" size={16} />
-                    </div>
-                    <span className="text-base font-semibold text-white tracking-tight">GainsLab</span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                    {currentGuidelineImages && currentGuidelineImages.length > 0 && (
-                        <button
-                            id="tut-guidelines"
-                            onClick={() => checkPro("Guidelines") && setShowGuidelines(true)}
-                            className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full bg-surface-raised text-blue-400 border border-border-subtle hover:text-white transition-colors flex items-center gap-1 active:scale-95"
-                        >
-                            <Icon name="Info" size={12} /> GUIDELINES {!isPro && <Icon name="Lock" size={10} className="text-yellow-500 ml-0.5" />}
-                        </button>
-                    )}
-                    {kongBlock && (
-                        <button
-                            onClick={() => setShowKongHub(true)}
-                            className="rounded-full bg-surface-raised px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-primary-400 border border-border-subtle"
-                        >
-                            {lang === 'es' ? `KONG · B${kongBlock.block.number}` : `KONG · B${kongBlock.block.number}`}
-                        </button>
-                    )}
-                    <button
-                        id="tut-settings-btn"
-                        onClick={() => setShowPlanActions(true)}
-                        aria-label={lang === 'es' ? 'Opciones del plan' : 'Plan options'}
-                        className="w-8 h-8 flex items-center justify-center rounded-full bg-surface-raised border border-border-subtle text-zinc-400 hover:text-white transition-colors"
-                    >
-                        <Icon name="Settings" size={16} />
-                    </button>
-                    <div className="w-8 h-8 rounded-full bg-surface-raised border-1.5 border-amber-400/80 flex items-center justify-center font-semibold text-xs text-white">
-                        G
-                    </div>
-                </div>
-            </div>
-
-            {/* 2. Program Name & Progress Subtitle */}
-            <div className="flex items-end justify-between pt-1">
+            {/* 1. Program Name, Badges & Plan Actions */}
+            <div className={`flex items-start justify-between gap-3 pt-1 ${kongBlock ? 'kong-home-header' : ''}`}>
                 <div className="min-w-0 flex-1">
-                    <h2 className="text-lg font-semibold text-white tracking-tight truncate">{activeMeso.name}</h2>
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <h2 className="text-lg font-semibold text-white tracking-tight truncate">{activeMeso.name}</h2>
+                        {kongBlock && (
+                            <button
+                                type="button"
+                                onClick={() => setShowKongHub(true)}
+                                className="rounded-full bg-surface-raised px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary-400 border border-border-subtle"
+                            >
+                                {`KONG · B${kongBlock.block.number}`}
+                            </button>
+                        )}
+                        {currentGuidelineImages && currentGuidelineImages.length > 0 && (
+                            <button
+                                id="tut-guidelines"
+                                type="button"
+                                onClick={() => checkPro("Guidelines") && setShowGuidelines(true)}
+                                className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-surface-raised text-blue-400 border border-border-subtle hover:text-white transition-colors flex items-center gap-1 active:scale-95"
+                            >
+                                <Icon name="Info" size={12} /> GUIDELINES {!isPro && <Icon name="Lock" size={10} className="text-yellow-500 ml-0.5" />}
+                            </button>
+                        )}
+                    </div>
                     <div className="text-xs text-muted mt-0.5">
                         {t.week} {activeMeso.week} de {activeMeso.targetWeeks || activeMeso.duration} · {uniqueDaysDone.size} de {safeProgram.length} {lang === 'es' ? 'días' : 'days'}
                     </div>
                 </div>
                 <button
+                    id="tut-settings-btn"
                     type="button"
                     onClick={() => setShowPlanActions(true)}
-                    className="text-zinc-400 hover:text-white p-1"
-                    aria-label={lang === 'es' ? 'Más opciones' : 'More options'}
+                    className="text-zinc-400 hover:text-white p-1.5 rounded-lg active:bg-surface-raised transition-colors shrink-0"
+                    aria-label={lang === 'es' ? 'Opciones del plan' : 'Plan options'}
+                    title={lang === 'es' ? 'Opciones del plan' : 'Plan options'}
                 >
                     <Icon name="MoreHorizontal" size={20} />
                 </button>
