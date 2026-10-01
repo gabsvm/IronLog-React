@@ -177,8 +177,13 @@ const AppContent = () => {
     // stale async preloads can be discarded. Overwriting it on every render
     // cancels in-flight transitions whenever anything else re-renders.
 
-    const setView = useCallback((newView: typeof view) => {
-        if (newView === view) return;
+    // `after` runs atomically with the view flip (same flushSync) so callers can
+    // clear the session without exposing the intermediate view-without-session state.
+    const setView = useCallback((newView: typeof view, after?: () => void) => {
+        if (newView === view) {
+            after?.();
+            return;
+        }
         targetViewRef.current = newView;
         const currentDepth = VIEW_DEPTH[view] || 1;
         const nextDepth = VIEW_DEPTH[newView] || 1;
@@ -190,6 +195,7 @@ const AppContent = () => {
             withTransition(direction, () => {
                 flushSync(() => {
                     setViewState(newView);
+                    after?.();
                 });
             });
         };
@@ -600,14 +606,14 @@ const AppContent = () => {
                                         setActiveMeso(result.updatedMeso);
                                     }
 
-                                    setActiveSession(null);
                                     setRestTimer({ active: false, timeLeft: 0, duration: 0, endAt: 0 });
                                     setCompletedWorkoutLog(result.log);
-                                    setView('summary');
+                                    // Cleared atomically with the view flip: clearing before the async
+                                    // transition exposes view==='workout' with no session (blank Layout).
+                                    setView('summary', () => setActiveSession(null));
                                 }}
                                 onDiscard={() => {
-                                    setActiveSession(null);
-                                    setView('home');
+                                    setView('home', () => setActiveSession(null));
                                 }}
                                 onBack={() => setView('home')}
                             />
