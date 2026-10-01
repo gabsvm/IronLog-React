@@ -1,5 +1,6 @@
 
-import React, { useState, useEffect, useRef, Suspense, useCallback, useMemo, startTransition } from 'react';
+import React, { useState, useEffect, useRef, Suspense, useCallback, useMemo } from 'react';
+import { flushSync } from 'react-dom';
 import { AppProvider, useApp } from './context/AppContext';
 import { useTimerActions } from './context/TimerContext';
 import { Layout } from './components/layout/Layout';
@@ -46,6 +47,16 @@ const CommandPalette = React.lazy(() => import('./components/ui/CommandPalette')
 const ConfirmModal = React.lazy(() => import('./components/ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
 const PaywallModal = React.lazy(() => import('./components/pro/PaywallModal').then(m => ({ default: m.PaywallModal })));
 
+export const VIEW_LOADERS: Partial<Record<string, () => Promise<any>>> = {
+    workout: () => import('./views/WorkoutView'),
+    history: () => import('./views/HistoryView'),
+    stats: () => import('./views/StatsView'),
+    nutrition: () => import('./views/NutriView'),
+    exercises: () => import('./views/ExercisesView'),
+    program: () => import('./views/ProgramEditView'),
+    summary: () => import('./views/SessionSummaryView'),
+};
+
 const LoadingSpinner = () => (
     <div className="h-full flex items-center justify-center text-zinc-400">
         <Icon name="RefreshCw" size={24} className="animate-spin" />
@@ -59,12 +70,22 @@ const FullScreenLoading = () => (
 );
 
 // Wraps a DOM mutation in a View Transition (graceful fallback when unsupported).
-const withTransition = (direction: string, callback: () => void) => {
+export const withTransition = (direction: string, callback: () => void) => {
     document.documentElement.dataset.transition = direction;
     const reducedEffects = document.documentElement.dataset.effects === 'reduced';
-    if (!reducedEffects && (document as any).startViewTransition) {
-        (document as any).startViewTransition(callback)
-            .finished.finally(() => { document.documentElement.dataset.transition = ''; });
+    if (!reducedEffects && typeof (document as any).startViewTransition === 'function') {
+        try {
+            const transition = (document as any).startViewTransition(callback);
+            if (transition?.finished && typeof transition.finished.finally === 'function') {
+                transition.finished.finally(() => { document.documentElement.dataset.transition = ''; });
+            } else {
+                document.documentElement.dataset.transition = '';
+            }
+            return transition;
+        } catch {
+            callback();
+            document.documentElement.dataset.transition = '';
+        }
     } else {
         callback();
         document.documentElement.dataset.transition = '';
@@ -72,7 +93,7 @@ const withTransition = (direction: string, callback: () => void) => {
 };
 
 // View Hierarchy for Directional Animations
-const VIEW_DEPTH: Record<string, number> = {
+export const VIEW_DEPTH: Record<string, number> = {
     'home': 1,
     'history': 1,
     'stats': 1,
@@ -148,16 +169,31 @@ const AppContent = () => {
         return () => window.removeEventListener('ironlog:update-available', handleUpdateAvailable);
     }, []);
 
+    const targetViewRef = useRef(view);
+    targetViewRef.current = view;
+
     const setView = useCallback((newView: typeof view) => {
         if (newView === view) return;
+        targetViewRef.current = newView;
         const currentDepth = VIEW_DEPTH[view] || 1;
         const nextDepth = VIEW_DEPTH[newView] || 1;
         const direction = nextDepth > currentDepth ? 'forward' : nextDepth < currentDepth ? 'back' : 'fade';
-        withTransition(direction, () => {
-            startTransition(() => {
-                setViewState(newView);
+
+        const preload = VIEW_LOADERS[newView];
+        const executeTransition = () => {
+            if (targetViewRef.current !== newView) return;
+            withTransition(direction, () => {
+                flushSync(() => {
+                    setViewState(newView);
+                });
             });
-        });
+        };
+
+        if (preload) {
+            preload().then(executeTransition, executeTransition);
+        } else {
+            executeTransition();
+        }
     }, [view]);
 
     // Command Palette actions — memoized so the array+5 object literals aren't
