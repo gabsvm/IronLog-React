@@ -53,53 +53,7 @@ html.light .product-home-polish [class*="border-zinc-700"] {
   min-height: 100%;
 }
 
-/* Turn the old two-row utility header into a calmer native-style title bar:
-   title first, compact live metrics below, navigation controls anchored at the sides. */
-.product-workout-polish > .fixed.inset-0 > .glass.z-30 {
-  display: flex;
-  flex-direction: column;
-  position: relative;
-}
 
-.product-workout-polish > .fixed.inset-0 > .glass.z-30 > .px-4.pb-2.pt-1 {
-  order: 1;
-  padding: 8px 54px 2px !important;
-  text-align: center;
-}
-
-.product-workout-polish > .fixed.inset-0 > .glass.z-30 > .px-4.pb-2.pt-1 h1 {
-  margin: 0 !important;
-  font-size: 1rem !important;
-  line-height: 1.2 !important;
-  letter-spacing: -0.025em !important;
-}
-
-.product-workout-polish > .fixed.inset-0 > .glass.z-30 > .px-4.pb-2.pt-1 > .flex {
-  justify-content: center;
-  margin-top: 3px;
-}
-
-.product-workout-polish > .fixed.inset-0 > .glass.z-30 > .flex.h-10 {
-  order: 2;
-  min-height: 34px;
-  height: 34px !important;
-  padding: 0 48px !important;
-  justify-content: center !important;
-}
-
-.product-workout-polish > .fixed.inset-0 > .glass.z-30 > .flex.h-10 > button:first-child,
-.product-workout-polish > .fixed.inset-0 > .glass.z-30 > .flex.h-10 > button:last-child {
-  position: absolute;
-  top: calc(env(safe-area-inset-top, 0px) + 6px);
-  z-index: 2;
-}
-.product-workout-polish > .fixed.inset-0 > .glass.z-30 > .flex.h-10 > button:first-child { left: 10px; }
-.product-workout-polish > .fixed.inset-0 > .glass.z-30 > .flex.h-10 > button:last-child { right: 10px; }
-
-.product-workout-polish > .fixed.inset-0 > .glass.z-30 > .flex.h-10 > .flex {
-  gap: 4px !important;
-  flex-wrap: nowrap !important;
-}
 
 /* Remove decorative looping motion while training; keep interaction feedback. */
 .product-workout-polish .animate-pulse:not([aria-busy="true"]),
@@ -155,13 +109,7 @@ html.light .product-workout-polish [class*="border-zinc-700"] {
 html.light .product-workout-polish .divide-white\/10 > :not([hidden]) ~ :not([hidden]) {
   border-color: rgb(var(--border-subtle)) !important;
 }
-html.light .product-workout-polish #tut-exercise-list > div > div:last-child {
-  background-color: rgb(var(--surface-raised) / 0.72) !important;
-  border-color: rgb(var(--border-subtle)) !important;
-}
-html.light .product-workout-polish > .fixed.inset-0 > .fixed.bottom-0.left-0.right-0.z-30 {
-  background: linear-gradient(to top, rgb(var(--surface-app)), rgb(var(--surface-app) / 0.97), transparent) !important;
-}
+
 
 /* HISTORY ---------------------------------------------------------------- */
 /* CSV belongs to the History header, not floating over workout cards while scrolling. */
