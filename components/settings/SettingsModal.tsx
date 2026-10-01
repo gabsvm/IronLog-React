@@ -1,5 +1,5 @@
 import React, { useState, useMemo, Suspense } from 'react';
-import { useApp } from '../../context/AppContext';
+import { useApp, useSyncMeta } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { TRANSLATIONS } from '../../constants';
 import { Icon } from '../ui/Icon';
@@ -34,9 +34,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         lang, setLang, theme, setTheme, colorTheme, setColorTheme,
         effectsMode, setEffectsMode, resolvedEffects,
         config, setConfig, deferredPrompt, installApp, isStandalone,
-        userProfile, setUserProfile, syncStatus, isOnline, localLastUpdated, localSectionSyncMeta, pendingCloudSections,
+        userProfile, setUserProfile, syncStatus, isOnline, pendingCloudSections,
         program, personalTemplates, setPersonalTemplates
     } = useApp();
+    const { localLastUpdated, localSectionSyncMeta } = useSyncMeta();
 
     const { user, logout } = useAuth();
     const { isPro, tier, expiryDate, checkPro, showPaywall, setShowPaywall, featureAttempted } = usePro();

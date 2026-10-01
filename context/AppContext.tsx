@@ -89,8 +89,8 @@ interface AppContextType extends Omit<AppState, 'activeSession' | 'activeMeso'> 
     pendingCloudSections: DirtySyncSection[];
     confirmCloudSync: () => void;
     cancelCloudSync: () => void;
-    localLastUpdated: number;
-    localSectionSyncMeta: SectionSyncMeta;
+    getLocalLastUpdated: () => number;
+    getLocalSectionSyncMeta: () => SectionSyncMeta;
     isOnline: boolean;
     syncStatus: {
         pending: number;
@@ -104,7 +104,16 @@ interface AppContextType extends Omit<AppState, 'activeSession' | 'activeMeso'> 
     isStandalone: boolean;
 }
 
+export interface SyncMetaContextType {
+    localLastUpdated: number;
+    localSectionSyncMeta: SectionSyncMeta;
+    getLocalLastUpdated: () => number;
+    getLocalSectionSyncMeta: () => SectionSyncMeta;
+    setLocalLastUpdated: React.Dispatch<React.SetStateAction<number>>;
+}
+
 const AppContext = createContext<AppContextType | undefined>(undefined);
+const SyncMetaContext = createContext<SyncMetaContextType | undefined>(undefined);
 type AppPreferencesContextType = Pick<AppContextType, 'lang' | 'setLang' | 'theme' | 'setTheme' | 'colorTheme' | 'setColorTheme' | 'deferredPrompt' | 'installApp' | 'isStandalone' | 'reducedEffects' | 'effectsMode' | 'setEffectsMode' | 'resolvedEffects'>;
 type AppConfigContextType = Pick<AppContextType, 'config' | 'setConfig'>;
 type TutorialContextType = Pick<AppContextType, 'tutorialProgress' | 'markTutorialSeen' | 'resetTutorials'>;
@@ -161,8 +170,16 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     const [defaultsLoading, setDefaultsLoading] = useState(true);
     const [rpFeedback, setRpFeedback, fbLoading] = usePersistedState<AppState['rpFeedback']>('il_rp_fb_v1', {}, 1000);
     const [hasSeenOnboarding, setHasSeenOnboarding, onboardingLoading] = usePersistedState<boolean>('il_onboarded_v2', false, 1000);
-    const [localLastUpdated, setLocalLastUpdated] = usePersistedState<number>('il_last_sync_ts', 0, 0);
-    const [localSectionSyncMeta, setLocalSectionSyncMeta] = usePersistedState<SectionSyncMeta>('il_section_sync_meta_v1', {}, 0);
+    const [localLastUpdated, setLocalLastUpdated] = usePersistedState<number>('il_last_sync_ts', 0, 1000);
+    const [localSectionSyncMeta, setLocalSectionSyncMeta] = usePersistedState<SectionSyncMeta>('il_section_sync_meta_v1', {}, 1000);
+
+    const localLastUpdatedRef = useRef(localLastUpdated);
+    localLastUpdatedRef.current = localLastUpdated;
+    const localSectionSyncMetaRef = useRef(localSectionSyncMeta);
+    localSectionSyncMetaRef.current = localSectionSyncMeta;
+
+    const getLocalLastUpdated = useCallback(() => localLastUpdatedRef.current, []);
+    const getLocalSectionSyncMeta = useCallback(() => localSectionSyncMetaRef.current, []);
 
     // NEW: Nutrition & Body Tracking Persistence
     const [bodyLogs, setBodyLogs, bodyLoading] = usePersistedState<BodyLog[]>('il_body_v1', [], 1000);
@@ -568,9 +585,9 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                             setHasSeenOnboarding(true);
                             await dirtySyncState.clear();
                         });
-                    } else if (!isCachedSnapshot && cloudData.lastUpdated > (localLastUpdated || 0)) {
+                    } else if (!isCachedSnapshot && cloudData.lastUpdated > (localLastUpdatedRef.current || 0)) {
                         const newerSections = Object.entries(cloudSyncMeta)
-                            .filter(([section, ts]) => typeof ts === 'number' && ts > (localSectionSyncMeta[section as DirtySyncSection] || 0))
+                            .filter(([section, ts]) => typeof ts === 'number' && ts > (localSectionSyncMetaRef.current[section as DirtySyncSection] || 0))
                             .map(([section]) => section as DirtySyncSection);
 
                         if (newerSections.length === 0) return;
@@ -590,7 +607,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         checkCloudData();
     }, [
         user, isOnline, isAppLoading, pendingCloudData, hasCheckedSync, activeSession, activeMeso, logs, nutritionLogs,
-        cardioSessions, bodyLogs, customFoods, personalTemplates, exercises, userProfile, localLastUpdated, localSectionSyncMeta,
+        cardioSessions, bodyLogs, customFoods, personalTemplates, exercises, userProfile,
         setProgram, setExercises, setLogs, setRpFeedback, setShowRIR, setRpEnabled, setLocalLastUpdated,
         setHasSeenOnboarding, setBodyLogs, setCustomFoods, setPersonalTemplates, setKeepScreenOn, setMacroGoals, setNutritionLogs, setLocalSectionSyncMeta,
         setRpTargetRIR, setUserProfile, setCardioSessions, setNutritionGoal
@@ -812,7 +829,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         hasSeenOnboarding, setHasSeenOnboarding,
         tutorialProgress, markTutorialSeen, resetTutorials,
         isAppLoading,
-        pendingCloudData, pendingCloudSections, confirmCloudSync, cancelCloudSync, localLastUpdated, localSectionSyncMeta,
+        pendingCloudData, pendingCloudSections, confirmCloudSync, cancelCloudSync, getLocalLastUpdated, getLocalSectionSyncMeta,
         isOnline,
         syncStatus,
         deferredPrompt, installApp, isStandalone,
@@ -837,7 +854,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         hasSeenOnboarding, setHasSeenOnboarding,
         tutorialProgress, markTutorialSeen, resetTutorials,
         isAppLoading,
-        pendingCloudData, pendingCloudSections, confirmCloudSync, cancelCloudSync, localLastUpdated, localSectionSyncMeta,
+        pendingCloudData, pendingCloudSections, confirmCloudSync, cancelCloudSync, getLocalLastUpdated, getLocalSectionSyncMeta,
         isOnline,
         syncStatus,
         deferredPrompt, installApp, isStandalone,
@@ -852,19 +869,29 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         customFoods, setCustomFoods,
     ]);
 
+    const syncMetaValue = useMemo(() => ({
+        localLastUpdated,
+        localSectionSyncMeta,
+        getLocalLastUpdated,
+        getLocalSectionSyncMeta,
+        setLocalLastUpdated,
+    }), [localLastUpdated, localSectionSyncMeta, getLocalLastUpdated, getLocalSectionSyncMeta, setLocalLastUpdated]);
+
     if (isAppLoading) return <HomeSkeleton />;
 
     return (
         <AppContext.Provider value={contextValue}>
-            <AppPreferencesContext.Provider value={preferencesValue}>
-                <AppConfigContext.Provider value={configValue}>
-                    <TutorialContext.Provider value={tutorialValue}>
-                        <TimerProvider>
-                            {children}
-                        </TimerProvider>
-                    </TutorialContext.Provider>
-                </AppConfigContext.Provider>
-            </AppPreferencesContext.Provider>
+            <SyncMetaContext.Provider value={syncMetaValue}>
+                <AppPreferencesContext.Provider value={preferencesValue}>
+                    <AppConfigContext.Provider value={configValue}>
+                        <TutorialContext.Provider value={tutorialValue}>
+                            <TimerProvider>
+                                {children}
+                            </TimerProvider>
+                        </TutorialContext.Provider>
+                    </AppConfigContext.Provider>
+                </AppPreferencesContext.Provider>
+            </SyncMetaContext.Provider>
         </AppContext.Provider>
     );
 };
@@ -872,6 +899,12 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
 export const useApp = () => {
     const context = useContext(AppContext);
     if (!context) throw new Error('useApp must be used within an AppProvider');
+    return context;
+};
+
+export const useSyncMeta = () => {
+    const context = useContext(SyncMetaContext);
+    if (!context) throw new Error('useSyncMeta must be used within an AppProvider');
     return context;
 };
 
