@@ -124,6 +124,34 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
 
     // Use the Custom Controller Hook - Pass both callbacks
     const ctrl = useWorkoutController(onFinish, onDiscard);
+    const {
+        sessionExercises,
+        openMenuId, setOpenMenuId,
+        showFinishModal, setShowFinishModal,
+        showFeedbackModal, setShowFeedbackModal,
+        replacingExId, setReplacingExId,
+        replaceFilter, setReplaceFilter,
+        addingExercise, setAddingExercise,
+        linkingId, setLinkingId,
+        editingMuscleId, setEditingMuscleId,
+        warmupExId, setWarmupExId,
+        changingSetType, setChangingSetType,
+        showPRSuccess, dismissPRSuccess,
+        detailExercise, setDetailExercise,
+        handleSetUpdate,
+        handleSetTypeAll,
+        handleAddSet,
+        handleDeleteSet,
+        handleNoteUpdate,
+        toggleSetComplete,
+        handleConfirmFinish,
+        handleDiscardSession,
+        showDiscardConfirm, setShowDiscardConfirm,
+        handleSaveFeedback,
+        reorderSessionExercises,
+        updateSession,
+        updateTemplate, setUpdateTemplate
+    } = ctrl;
 
     const [showAdvancedSetTypes, setShowAdvancedSetTypes] = useState(false);
     const [manualRestPreset, setManualRestPreset] = useState<number>(90);
@@ -138,8 +166,8 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
     // Set type modal: apply-to-all toggle defaults ON when all sets share the same type
     const [applyToAll, setApplyToAll] = useState(true);
     useEffect(() => {
-        if (!ctrl.changingSetType) return;
-        const ex = sessionExercises.find(e => e.instanceId === ctrl.changingSetType!.exId);
+        if (!changingSetType) return;
+        const ex = sessionExercises.find(e => e.instanceId === changingSetType.exId);
         const pending = (ex?.sets || []).filter(s => !s.completed);
         setApplyToAll(pending.length > 1 && pending.every(s => s.type === pending[0].type));
         setShowAdvancedSetTypes(false);
@@ -147,16 +175,16 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
         // for a different set, NOT every time sessionExercises changes (which
         // would clobber the user's manual toggle while editing).
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [ctrl.changingSetType]);
+    }, [changingSetType]);
 
     // Hide lazy-import latency behind the finish confirmation. By the time the
     // user confirms (or dismisses a PR), both destination overlays are already
     // in the browser module cache instead of showing a blank transition.
     useEffect(() => {
-        if (!ctrl.showFinishModal) return;
+        if (!showFinishModal) return;
         void import('../components/ui/PRCelebrationOverlay');
         void import('./SessionSummaryView');
-    }, [ctrl.showFinishModal]);
+    }, [showFinishModal]);
 
     // Derived State - memoized so its reference is stable across keystroke re-renders,
     // otherwise it defeats React.memo on every SortableExerciseCard.
@@ -164,26 +192,27 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
         () => activeMeso ? getMesoStageConfig(activeMeso.mesoType || 'hyp_1', activeMeso.week, !!activeMeso.isDeload) : null,
         [activeMeso]
     );
-    const sessionExercises = ctrl.sessionExercises as SessionExercise[];
     const isCalisthenicsSession = useMemo(() => 
         sessionExercises.length > 0 && sessionExercises.every(ex => ex.isBodyweight), 
     [sessionExercises]);
 
     const accentTextClass = isCalisthenicsSession ? 'text-violet-400' : 'text-primary-400';
 
+    const supersetSignature = useMemo(() => {
+        return sessionExercises.map(e => `${e.instanceId}:${e.supersetId || ''}`).join(';');
+    }, [sessionExercises]);
+
     const supersetColorIndexes = useMemo(() => {
         const uniqueIds = Array.from(new Set(sessionExercises.map(e => e.supersetId).filter((id): id is string => typeof id === 'string' && !!id)));
         const map: Record<string, number> = {};
         uniqueIds.forEach((id, idx) => { map[id] = idx % 4; });
         return map;
-    }, [sessionExercises]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [supersetSignature]);
 
     const handleSetTypeChange = useCallback((exId: number, setId: number, type: SetType) => {
-        ctrl.setChangingSetType({ exId, setId, currentType: type });
-        // Intentional: only depend on the setter (stable). Adding `ctrl` would
-        // recreate this callback on every controller update and defeat memoization.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [ctrl.setChangingSetType]);
+        setChangingSetType({ exId, setId, currentType: type });
+    }, [setChangingSetType]);
     const sortableItems = useMemo(() => sessionExercises.map(ex => ex.instanceId), [sessionExercises]);
 
     const initialResolvedRef = useRef(sessionExercises.length > 0);
@@ -209,22 +238,24 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
     }, []);
 
     const handleSetComplete = useCallback((exInstanceId: number, setId: number) => {
-        const ex = sessionExercises.find(e => e.instanceId === exInstanceId);
+        const session = useStore.getState().activeSession;
+        const currentExercises = session?.exercises || [];
+        const ex = currentExercises.find(e => e.instanceId === exInstanceId);
         const thisSet = ex?.sets?.find(s => s.id === setId);
         const isCompleting = thisSet && !thisSet.completed;
 
-        ctrl.toggleSetComplete(exInstanceId, setId);
+        toggleSetComplete(exInstanceId, setId);
 
         if (isCompleting && ex) {
             const otherPending = (ex.sets || []).filter(s => s.id !== setId && !s.completed);
             if (otherPending.length === 0) {
-                const nextEx = sessionExercises.find(e => e.instanceId !== exInstanceId && (e.sets || []).some(s => !s.completed));
+                const nextEx = currentExercises.find(e => e.instanceId !== exInstanceId && (e.sets || []).some(s => !s.completed));
                 if (nextEx) {
                     setActiveExerciseId(prev => (prev !== null ? nextEx.instanceId : null));
                 }
             }
         }
-    }, [ctrl, sessionExercises]);
+    }, [toggleSetComplete]);
 
     const handleAddExercise = (newExId: string, customDef?: ExerciseDef) => {
         const newDef = customDef || exercises.find(e => e.id === newExId);
@@ -250,16 +281,16 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
             };
         });
 
-        ctrl.updateSession(prev => !prev ? null : {
+        updateSession(prev => !prev ? null : {
             ...prev,
             exercises: [...(prev.exercises || []), { ...newDef, instanceId: newInstanceId, slotLabel: newDef.muscle, sets: initialSets as any }]
         });
-        ctrl.setAddingExercise(false);
+        setAddingExercise(false);
         setActiveExerciseId(newInstanceId);
     };
 
     const handleReplace = (newExId: string, customDef?: ExerciseDef) => {
-        if (!ctrl.replacingExId) return;
+        if (!replacingExId) return;
         const newDef = customDef || exercises.find(e => e.id === newExId);
         if (!newDef) return;
 
@@ -267,10 +298,10 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
         const lastSets = getLastLogForExercise(newExId, safeLogs);
 
         let replacedSlotId: string | undefined;
-        ctrl.updateSession(prev => !prev ? null : {
+        updateSession(prev => !prev ? null : {
             ...prev,
             exercises: (prev.exercises || []).map(ex => {
-                if (ex.instanceId !== ctrl.replacingExId) return ex;
+                if (ex.instanceId !== replacingExId) return ex;
                 replacedSlotId = ex.programSlotId;
 
                 const resetSets = (ex.sets || []).map((s, i) => {
@@ -299,9 +330,9 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
         if (activeMeso?.programSystem?.systemId === 'kong_4day' && replacedSlotId) {
             setKongSubPrompt({ slotId: replacedSlotId, exId: newExId });
         }
-        ctrl.setReplacingExId(null);
-        ctrl.setReplaceFilter(null);
-        ctrl.setOpenMenuId(null);
+        setReplacingExId(null);
+        setReplaceFilter(null);
+        setOpenMenuId(null);
     };
 
     const handleReorder = useCallback((oldIndex: number, newIndex: number) => {
@@ -309,8 +340,8 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
             setKongReorderPrompt({ oldIndex, newIndex });
             return;
         }
-        ctrl.reorderSessionExercises(oldIndex, newIndex);
-    }, [activeMeso?.programSystem?.systemId, ctrl]);
+        reorderSessionExercises(oldIndex, newIndex);
+    }, [activeMeso?.programSystem?.systemId, reorderSessionExercises]);
 
     const workoutStats = useMemo(() => {
         return countWorkingSets(sessionExercises);
@@ -402,7 +433,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
     if (!activeSession) return null;
 
     return (
-        <div className="fixed inset-0 z-40 flex flex-col bg-surface-app font-sans" onClick={() => ctrl.setOpenMenuId(null)}>
+        <div className="fixed inset-0 z-40 flex flex-col bg-surface-app font-sans" onClick={() => setOpenMenuId(null)}>
 
             {/* --- Reference-driven Compact Header --- */}
             <div className="z-30 border-b border-border-subtle pt-safe bg-surface-base/95 backdrop-blur-md">
@@ -451,7 +482,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                         type="button"
                         onClick={(e) => {
                             e.stopPropagation();
-                            ctrl.setAddingExercise(true);
+                            setAddingExercise(true);
                         }}
                         className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:text-white active:bg-surface-raised"
                         title={t.addExercise}
@@ -465,7 +496,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                         type="button"
                         onClick={(e) => {
                             e.stopPropagation();
-                            ctrl.setShowFinishModal(true);
+                            setShowFinishModal(true);
                         }}
                         className="h-8 shrink-0 rounded-lg bg-primary-500 px-3.5 text-xs font-semibold text-zinc-950 transition-all hover:bg-primary-400 active:scale-95 shadow-sm"
                     >
@@ -488,7 +519,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                         <WorkoutSortableList itemIds={sortableItems} onReorder={handleReorder}>
                             {sessionExercises.map((ex, idx) => {
                                 const supersetColorIndex = ex.supersetId ? supersetColorIndexes[ex.supersetId] : undefined;
-                                const isLinkingTarget = !!ctrl.linkingId && ctrl.linkingId !== ex.instanceId;
+                                const isLinkingTarget = !!linkingId && linkingId !== ex.instanceId;
 
                                 return (
                                     <SortableExerciseCard
@@ -496,20 +527,20 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                         exercise={ex}
                                         isExpanded={ex.instanceId === activeExerciseId}
                                         onToggleExpand={handleToggleExpand}
-                                        onSetUpdate={ctrl.handleSetUpdate}
+                                        onSetUpdate={handleSetUpdate}
                                         onSetComplete={handleSetComplete}
                                         onSetTypeChange={handleSetTypeChange}
-                                        onAddSet={ctrl.handleAddSet}
-                                        onDeleteSet={ctrl.handleDeleteSet}
-                                        onOpenDetail={ctrl.setDetailExercise}
-                                        onLink={ctrl.setLinkingId}
-                                        onReplace={ctrl.setReplacingExId}
-                                        onEditMuscle={ctrl.setEditingMuscleId}
-                                        onUpdateSession={ctrl.updateSession}
-                                        onOpenWarmup={ctrl.setWarmupExId}
-                                        openMenuId={ctrl.openMenuId}
-                                        setOpenMenuId={ctrl.setOpenMenuId}
-                                        linkingId={ctrl.linkingId}
+                                        onAddSet={handleAddSet}
+                                        onDeleteSet={handleDeleteSet}
+                                        onOpenDetail={setDetailExercise}
+                                        onLink={setLinkingId}
+                                        onReplace={setReplacingExId}
+                                        onEditMuscle={setEditingMuscleId}
+                                        onUpdateSession={updateSession}
+                                        onOpenWarmup={setWarmupExId}
+                                        openMenuId={openMenuId}
+                                        setOpenMenuId={setOpenMenuId}
+                                        linkingId={linkingId}
                                         t={t}
                                         lang={lang}
                                         supersetColorIndex={supersetColorIndex}
@@ -527,7 +558,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
 
                     <button
                         type="button"
-                        onClick={() => ctrl.setAddingExercise(true)}
+                        onClick={() => setAddingExercise(true)}
                         className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl border border-dashed border-border-strong bg-surface-raised/40 text-xs font-semibold text-muted hover:text-white hover:border-zinc-500 transition-colors active:scale-98"
                     >
                         <Icon name="Plus" size={15} />
@@ -548,25 +579,25 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
             </Suspense>
 
             {/* Modals remain the same... */}
-            {ctrl.detailExercise && (
+            {detailExercise && (
                 <Suspense fallback={null}>
                     <ExerciseDetailModal
-                        exercise={ctrl.detailExercise}
-                        onClose={() => ctrl.setDetailExercise(null)}
+                        exercise={detailExercise}
+                        onClose={() => setDetailExercise(null)}
                     />
                 </Suspense>
             )}
 
-            {ctrl.changingSetType && (() => {
+            {changingSetType && (() => {
                 const colors = SET_TYPE_COLORS;
                 const icons = SET_TYPE_ICONS;
-                const exForModal = sessionExercises.find(e => e.instanceId === ctrl.changingSetType!.exId);
+                const exForModal = sessionExercises.find(e => e.instanceId === changingSetType.exId);
                 const pendingSets = (exForModal?.sets || []).filter(s => !s.completed);
                 const hasMultipleSets = pendingSets.length > 1;
                 return (
                     <Sheet
-                        open={!!ctrl.changingSetType}
-                        onOpenChange={(open) => !open && ctrl.setChangingSetType(null)}
+                        open={!!changingSetType}
+                        onOpenChange={(open) => !open && setChangingSetType(null)}
                         title={t.setType}
                         accent="primary"
                     >
@@ -585,17 +616,17 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                         )}
                         <div className="p-4 grid grid-cols-1 gap-1.5 max-h-[60vh] overflow-y-auto">
                             {CORE_SET_TYPES.map(type => {
-                                const isSelected = ctrl.changingSetType?.currentType === type;
+                                const isSelected = changingSetType?.currentType === type;
                                 return (
                                     <button
                                         key={type}
                                         onClick={() => {
                                             if (applyToAll && hasMultipleSets) {
-                                                ctrl.handleSetTypeAll(ctrl.changingSetType!.exId, type);
+                                                handleSetTypeAll(changingSetType.exId, type);
                                             } else {
-                                                ctrl.handleSetUpdate(ctrl.changingSetType!.exId, ctrl.changingSetType!.setId, 'type', type);
+                                                handleSetUpdate(changingSetType.exId, changingSetType.setId, 'type', type);
                                             }
-                                            ctrl.setChangingSetType(null);
+                                            setChangingSetType(null);
                                         }}
                                         className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-all active:scale-98 ${isSelected ? 'border-primary-500/50 bg-primary-500/5' : 'border-zinc-800 bg-zinc-950 hover:border-zinc-700 hover:bg-zinc-900'}`}
                                     >
@@ -620,17 +651,17 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                             </button>
 
                             {showAdvancedSetTypes && ADVANCED_SET_TYPES.map(type => {
-                                const isSelected = ctrl.changingSetType?.currentType === type;
+                                const isSelected = changingSetType?.currentType === type;
                                 return (
                                     <button
                                         key={type}
                                         onClick={() => {
                                             if (applyToAll && hasMultipleSets) {
-                                                ctrl.handleSetTypeAll(ctrl.changingSetType!.exId, type);
+                                                handleSetTypeAll(changingSetType.exId, type);
                                             } else {
-                                                ctrl.handleSetUpdate(ctrl.changingSetType!.exId, ctrl.changingSetType!.setId, 'type', type);
+                                                handleSetUpdate(changingSetType.exId, changingSetType.setId, 'type', type);
                                             }
-                                            ctrl.setChangingSetType(null);
+                                            setChangingSetType(null);
                                         }}
                                         className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-all active:scale-98 ${isSelected ? 'border-primary-500/50 bg-primary-500/5' : 'border-zinc-800 bg-zinc-950 hover:border-zinc-700 hover:bg-zinc-900'}`}
                                     >
@@ -650,14 +681,14 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                 );
             })()}
 
-            {ctrl.showFinishModal && (() => {
+            {showFinishModal && (() => {
                 const elapsedSecs = activeSession.startTime ? Math.max(0, Math.floor((Date.now() - activeSession.startTime) / 1000)) : 0;
                 const canUpdateTemplate = isTemplateUpdateEligible(activeSession, activeMeso);
 
                 return (
                     <Sheet
-                        open={ctrl.showFinishModal}
-                        onOpenChange={(open) => !open && ctrl.setShowFinishModal(false)}
+                        open={showFinishModal}
+                        onOpenChange={(open) => !open && setShowFinishModal(false)}
                         title={lang === 'es' ? 'Terminar sesión' : 'Finish session'}
                         accent="primary"
                     >
@@ -682,7 +713,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                             {canUpdateTemplate && (
                                 <div 
                                     className="card-reference p-3 flex items-center justify-between gap-3 cursor-pointer hover:border-zinc-500 transition-colors"
-                                    onClick={() => ctrl.setUpdateTemplate(!ctrl.updateTemplate)}
+                                    onClick={() => setUpdateTemplate(!updateTemplate)}
                                 >
                                     <div className="flex-1 min-w-0">
                                         <div className="text-sm font-semibold text-white">{t.updateRoutine}</div>
@@ -690,8 +721,8 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                             {lang === 'es' ? 'Guarda ejercicios, orden y series para próximos entrenos.' : 'Save exercises, order, and sets for upcoming workouts.'}
                                         </div>
                                     </div>
-                                    <div className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${ctrl.updateTemplate ? 'bg-primary-500' : 'bg-surface-elevated border border-border-strong'}`}>
-                                        <span className={`absolute top-0.5 w-5 h-5 rounded-full shadow transition-all ${ctrl.updateTemplate ? 'left-[22px] bg-zinc-950' : 'left-0.5 bg-zinc-400'}`} />
+                                    <div className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${updateTemplate ? 'bg-primary-500' : 'bg-surface-elevated border border-border-strong'}`}>
+                                        <span className={`absolute top-0.5 w-5 h-5 rounded-full shadow transition-all ${updateTemplate ? 'left-[22px] bg-zinc-950' : 'left-0.5 bg-zinc-400'}`} />
                                     </div>
                                 </div>
                             )}
@@ -704,7 +735,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                 <textarea
                                     placeholder={lang === 'es' ? 'Cómo te has sentido hoy...' : 'How did you feel today...'}
                                     value={activeSession.note || ''}
-                                    onChange={e => ctrl.updateSession(prev => prev ? { ...prev, note: e.target.value } : null)}
+                                    onChange={e => updateSession(prev => prev ? { ...prev, note: e.target.value } : null)}
                                     rows={3}
                                     className="w-full rounded-xl border border-border-subtle bg-surface-raised px-3.5 py-2.5 text-sm text-white placeholder-zinc-500 outline-none resize-none transition-all focus:border-zinc-600"
                                 />
@@ -714,14 +745,14 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                             <div className="space-y-2 pt-1">
                                 <button
                                     type="button"
-                                    onClick={ctrl.handleConfirmFinish}
+                                    onClick={handleConfirmFinish}
                                     className="w-full h-11 rounded-xl bg-primary-500 text-zinc-950 font-semibold text-sm hover:bg-primary-400 active:scale-98 transition-all shadow-sm"
                                 >
                                     {lang === 'es' ? 'Guardar y terminar' : 'Save and finish'}
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => ctrl.setShowFinishModal(false)}
+                                    onClick={() => setShowFinishModal(false)}
                                     className="w-full h-11 rounded-xl bg-surface-elevated text-zinc-200 font-semibold text-sm hover:bg-zinc-800 active:scale-98 transition-all"
                                 >
                                     {lang === 'es' ? 'Seguir entrenando' : 'Continue training'}
@@ -733,8 +764,8 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                 <button
                                     type="button"
                                     onClick={() => {
-                                        ctrl.setShowFinishModal(false);
-                                        ctrl.setShowDiscardConfirm(true);
+                                        setShowFinishModal(false);
+                                        setShowDiscardConfirm(true);
                                     }}
                                     className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-400 hover:text-red-300 transition-colors uppercase tracking-wider active:scale-95"
                                 >
@@ -750,13 +781,13 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
             {/* NEW: Discard Confirmation Modal */}
             <Suspense fallback={null}>
                 <ConfirmModal
-                    isOpen={ctrl.showDiscardConfirm}
+                    isOpen={showDiscardConfirm}
                     title={t.discardSession || "Discard Session"}
                     description={t.discardConfirm || "Discard current session data? This cannot be undone."}
                     confirmText={t.delete}
                     cancelText={t.cancel}
-                    onConfirm={ctrl.handleDiscardSession}
-                    onCancel={() => ctrl.setShowDiscardConfirm(false)}
+                    onConfirm={handleDiscardSession}
+                    onCancel={() => setShowDiscardConfirm(false)}
                     variant="danger"
                 />
             </Suspense>
@@ -799,7 +830,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                         confirmText={lang === 'es' ? 'Reordenar hoy' : 'Reorder today'}
                         cancelText={t.cancel}
                         onConfirm={() => {
-                            ctrl.reorderSessionExercises(kongReorderPrompt.oldIndex, kongReorderPrompt.newIndex);
+                            reorderSessionExercises(kongReorderPrompt.oldIndex, kongReorderPrompt.newIndex);
                             setKongReorderPrompt(null);
                         }}
                         onCancel={() => setKongReorderPrompt(null)}
@@ -807,30 +838,30 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                 </Suspense>
             )}
 
-            {ctrl.showPRSuccess && (
+            {showPRSuccess && (
                 <Suspense fallback={null}>
-                    <PRCelebrationOverlay onDismiss={ctrl.dismissPRSuccess} />
+                    <PRCelebrationOverlay onDismiss={dismissPRSuccess} />
                 </Suspense>
             )}
 
-            {ctrl.showFeedbackModal && activeSession && (
+            {showFeedbackModal && activeSession && (
                 <Suspense fallback={null}>
-                    <FeedbackModal muscles={sessionExercises.map(e => e?.muscle || 'CHEST')} onCancel={() => ctrl.setShowFeedbackModal(false)} onConfirm={ctrl.handleSaveFeedback} />
+                    <FeedbackModal muscles={sessionExercises.map(e => e?.muscle || 'CHEST')} onCancel={() => setShowFeedbackModal(false)} onConfirm={handleSaveFeedback} />
                 </Suspense>
             )}
-            {ctrl.replacingExId && (
+            {replacingExId && (
                 <Suspense fallback={null}>
-                    <ExerciseSelector onSelect={handleReplace} onClose={() => { ctrl.setReplacingExId(null); ctrl.setReplaceFilter(null); }} presetMuscle={ctrl.replaceFilter?.muscle} sourceFilter={ctrl.replaceFilter?.source} />
+                    <ExerciseSelector onSelect={handleReplace} onClose={() => { setReplacingExId(null); setReplaceFilter(null); }} presetMuscle={replaceFilter?.muscle} sourceFilter={replaceFilter?.source} />
                 </Suspense>
             )}
-            {ctrl.addingExercise && (
+            {addingExercise && (
                 <Suspense fallback={null}>
-                    <ExerciseSelector onSelect={handleAddExercise} onClose={() => ctrl.setAddingExercise(false)} />
+                    <ExerciseSelector onSelect={handleAddExercise} onClose={() => setAddingExercise(false)} />
                 </Suspense>
             )}
-            {ctrl.warmupExId && activeSession && (
+            {warmupExId && activeSession && (
                 <Suspense fallback={null}>
-                    <WarmupModal targetWeight={Number(sessionExercises.find(e => e.instanceId === ctrl.warmupExId)?.sets?.[0]?.weight || 0)} exerciseName={getTranslated(sessionExercises.find(e => e.instanceId === ctrl.warmupExId)?.name, lang)} onClose={() => ctrl.setWarmupExId(null)} />
+                    <WarmupModal targetWeight={Number(sessionExercises.find(e => e.instanceId === warmupExId)?.sets?.[0]?.weight || 0)} exerciseName={getTranslated(sessionExercises.find(e => e.instanceId === warmupExId)?.name, lang)} onClose={() => setWarmupExId(null)} />
                 </Suspense>
             )}
         </div>

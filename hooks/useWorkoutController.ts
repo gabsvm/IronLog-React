@@ -196,14 +196,27 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
     }, [setActiveSession]);
 
     const toggleSetComplete = useCallback((exInstanceId: number, setId: number) => {
+        const state = useStore.getState();
+        const currentSession = state.activeSession;
+        const currentMeso = state.activeMeso;
+        if (!currentSession) return;
+
+        const ex = (currentSession.exercises || []).find(e => e.instanceId === exInstanceId);
+        const set = ex?.sets?.find(s => s.id === setId);
+        // Guard: skipped sets must not trigger the rest timer (the state mutation
+        // already returns early above, but sessionExercises here is still pre-mutation).
+        if (!set || set.skipped) return;
+
+        const willComplete = !set.completed;
+
         setActiveSession(prev => {
             if (!prev) return null;
 
-            const ex = prev.exercises.find(e => e.instanceId === exInstanceId);
-            const set = ex?.sets?.find(s => s.id === setId);
-            if (!set || set.skipped) return prev;
+            const targetEx = (prev.exercises || []).find(e => e.instanceId === exInstanceId);
+            const targetSet = targetEx?.sets?.find(s => s.id === setId);
+            if (!targetSet || targetSet.skipped) return prev;
 
-            const completing = !set.completed;
+            const completing = !targetSet.completed;
 
             let startTime = prev.startTime;
             if (completing && !startTime) startTime = Date.now();
@@ -215,19 +228,12 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
                     ...e,
                     sets: (e.sets || []).map(s => s.id === setId ? { ...s, completed: completing } : s)
                 } : e)
-            }
+            };
         });
 
-        const ex = sessionExercises.find(e => e.instanceId === exInstanceId);
-        const set = ex?.sets.find(s => s.id === setId);
-        // Guard: skipped sets must not trigger the rest timer (the state mutation
-        // already returns early above, but sessionExercises here is still pre-mutation).
-        if (!set || set.skipped) return;
-
-        const willComplete = !set.completed;
         if (willComplete) {
             triggerHaptic('success');
-            const isMetabolite = activeMeso?.mesoType === 'metabolite';
+            const isMetabolite = currentMeso?.mesoType === 'metabolite';
             let dur = isMetabolite ? 60 : 120;
 
             // Per-exercise custom rest preset takes highest priority
@@ -261,7 +267,8 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
             // Superset: only start rest timer after BOTH sides of the superset complete
             // the same round (i.e. both have the same number of completed working sets).
             if (ex?.supersetId) {
-                const partners = sessionExercises.filter(e => e.supersetId === ex.supersetId && e.instanceId !== exInstanceId);
+                const currentExercises = currentSession.exercises || [];
+                const partners = currentExercises.filter(e => e.supersetId === ex.supersetId && e.instanceId !== exInstanceId);
                 if (partners.length > 0) {
                     // How many working sets will this exercise have completed after this one?
                     const thisCompletedAfter = (ex.sets || []).filter(s => s.type !== 'warmup' && s.type !== 'avt_hop' && s.completed).length + 1;
@@ -299,11 +306,12 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
             });
         }
 
-    }, [activeMeso, sessionExercises, setActiveSession, setRestTimer]);
+    }, [setActiveSession, setRestTimer]);
 
     const detectPRs = useCallback((): boolean => {
         if (!historicalReady) return false;
-        for (const ex of sessionExercises) {
+        const currentExercises = useStore.getState().activeSession?.exercises || [];
+        for (const ex of currentExercises) {
             let currentBest1RM = 0;
             for (const s of (ex.sets || [])) {
                 if (s.completed && (s.weight || s.weight === 0 || s.weight === '0') && s.reps) {
@@ -317,7 +325,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
             }
         }
         return false;
-    }, [historicalReady, sessionExercises, historicalBest1RM, userProfile]);
+    }, [historicalReady, historicalBest1RM, userProfile]);
 
     const fireConfetti = useCallback(async () => {
         try {
@@ -341,14 +349,17 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
         triggerHaptic('medium');
         setShowFinishModal(false);
 
+        const currentActiveSession = useStore.getState().activeSession;
+        const currentActiveMeso = useStore.getState().activeMeso;
+
         // --- UPDATE TEMPLATE LOGIC ---
-        if (updateTemplate && activeMeso && activeSession && isTemplateUpdateEligible(activeSession, activeMeso)) {
+        if (updateTemplate && currentActiveMeso && currentActiveSession && isTemplateUpdateEligible(currentActiveSession, currentActiveMeso)) {
             // 2. Update Global Program
             setProgram(prev => {
                 const newProg = [...prev];
-                if (newProg[activeSession.dayIdx]) {
-                    newProg[activeSession.dayIdx] = {
-                        ...newProg[activeSession.dayIdx],
+                if (newProg[currentActiveSession.dayIdx]) {
+                    newProg[currentActiveSession.dayIdx] = {
+                        ...newProg[currentActiveSession.dayIdx],
                         slots: normalizedTemplateSlots
                     };
                 }
@@ -359,7 +370,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
             setActiveMeso(prev => {
                 if (!prev) return null;
                 const newPlan = [...(prev.plan || [])];
-                newPlan[activeSession.dayIdx] = normalizedTemplatePlan;
+                newPlan[currentActiveSession.dayIdx] = normalizedTemplatePlan;
                 return { ...prev, plan: newPlan };
             });
         }
@@ -380,7 +391,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
                 onFinishCallback();
             }
         }
-    }, [onFinishCallback, config, detectPRs, fireConfetti, updateTemplate, activeMeso, activeSession, normalizedTemplateSlots, normalizedTemplatePlan, setProgram, setActiveMeso, setRestTimer]);
+    }, [onFinishCallback, config, detectPRs, fireConfetti, updateTemplate, normalizedTemplateSlots, normalizedTemplatePlan, setProgram, setActiveMeso, setRestTimer]);
 
     // --- NEW: Handle Discard/Reset Session ---
     const handleDiscardSession = useCallback(() => {
@@ -397,12 +408,13 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
     }, [setRestTimer, onDiscardCallback]);
 
     const handleSaveFeedback = useCallback((feedbackData: Record<string, any>) => {
-        if (!activeSession) return;
+        const session = useStore.getState().activeSession;
+        if (!session) return;
         triggerHaptic('success');
 
         setRestTimer({ active: false, timeLeft: 0, duration: 0, endAt: 0 }); // Fix timer leak (failsafe)
 
-        const { mesoId, week } = activeSession;
+        const { mesoId, week } = session;
         setRpFeedback(prev => {
             const newFb = { ...prev };
             if (!newFb[mesoId]) newFb[mesoId] = {};
@@ -421,7 +433,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
         } else {
             onFinishCallback();
         }
-    }, [activeSession, setRpFeedback, onFinishCallback, hasNewPR, fireConfetti, setRestTimer]);
+    }, [setRpFeedback, onFinishCallback, hasNewPR, fireConfetti, setRestTimer]);
 
     const dismissPRSuccess = useCallback(() => {
         setRestTimer({ active: false, timeLeft: 0, duration: 0, endAt: 0 }); // Extra failsafe
@@ -431,10 +443,12 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
 
     const reorderSessionExercises = useCallback((oldIndex: number, newIndex: number) => {
         triggerHaptic('medium');
-        if (!activeSession?.exercises) return;
-        const newExercises = reorderList(activeSession.exercises, oldIndex, newIndex);
-        setActiveSession(prev => prev ? { ...prev, exercises: newExercises } : null);
-    }, [activeSession, setActiveSession]);
+        setActiveSession(prev => {
+            if (!prev?.exercises) return prev;
+            const newExercises = reorderList(prev.exercises, oldIndex, newIndex);
+            return { ...prev, exercises: newExercises };
+        });
+    }, [setActiveSession]);
 
     const handleSetTypeAll = useCallback((exInstanceId: number, type: SetType) => {
         setActiveSession(prev => {
@@ -455,7 +469,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
         triggerHaptic('success');
     }, [setActiveSession]);
 
-    return {
+    return useMemo(() => ({
         sessionExercises,
         openMenuId, setOpenMenuId,
         showFinishModal, setShowFinishModal,
@@ -486,5 +500,36 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
         exercisesLibrary: exercises,
         activeSession,
         updateTemplate, setUpdateTemplate
-    };
+    }), [
+        sessionExercises,
+        openMenuId,
+        showFinishModal,
+        showFeedbackModal,
+        replacingExId,
+        replaceFilter,
+        addingExercise,
+        linkingId,
+        editingMuscleId,
+        warmupExId,
+        changingSetType,
+        showPRSuccess, dismissPRSuccess,
+        detailExercise,
+        historicalReady,
+        detectPRs,
+        handleSetUpdate,
+        handleSetTypeAll,
+        handleAddSet,
+        handleDeleteSet,
+        handleNoteUpdate,
+        toggleSetComplete,
+        handleConfirmFinish,
+        handleDiscardSession,
+        showDiscardConfirm,
+        handleSaveFeedback,
+        reorderSessionExercises,
+        setActiveSession,
+        exercises,
+        activeSession,
+        updateTemplate
+    ]);
 };
