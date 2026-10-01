@@ -11,6 +11,7 @@ import { Sheet } from '../ui/Sheet';
 import { useStore } from '../../lib/store';
 import { BodyMetricsModal } from '../profile/BodyMetricsModal';
 import { requestTimerNotificationPermission } from '../../hooks/useTimer';
+import { GlobalTemplate } from '../../types';
 
 const PaywallModal = React.lazy(() => import('../pro/PaywallModal').then(m => ({ default: m.PaywallModal })));
 const ConfirmModal = React.lazy(() => import('../ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));

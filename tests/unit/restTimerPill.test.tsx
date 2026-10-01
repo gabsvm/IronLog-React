@@ -41,9 +41,12 @@ describe('Task U1: RestTimerOverlay as non-modal compact floating pill by defaul
         vi.clearAllMocks();
         useStore.setState({
             activeSession: {
-                id: 'sess-1',
+                id: 1,
                 name: 'Chest Day',
                 startTime: Date.now(),
+                dayIdx: 0,
+                mesoId: 1,
+                week: 1,
                 exercises: mockExercises as any,
             },
         });

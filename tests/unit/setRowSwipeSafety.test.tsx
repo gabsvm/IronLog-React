@@ -9,6 +9,7 @@ describe('U8: Swipe-to-complete safety and isometric alerts', () => {
         id: 101,
         weight: 80,
         reps: 10,
+        rpe: 8,
         completed: false,
         type: 'regular'
     };
@@ -112,6 +113,9 @@ describe('U8: Swipe-to-complete safety and isometric alerts', () => {
 
         const isometricSet: WorkoutSet = {
             id: 202,
+            weight: 0,
+            reps: 0,
+            rpe: 0,
             duration: 0,
             completed: false,
             type: 'regular'
