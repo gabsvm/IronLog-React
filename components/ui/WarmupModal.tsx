@@ -43,9 +43,7 @@ export const WarmupModal: React.FC<WarmupModalProps> = ({ targetWeight, exercise
                 <div className="p-6 text-center space-y-4">
                     <Icon name="CloudOff" size={48} className="mx-auto text-zinc-300" />
                     <p className="text-sm text-zinc-500">
-                        {lang === 'en'
-                            ? 'Please enter a weight in your first working set to calculate warmup sets.'
-                            : 'Introduce un peso en tu primera serie efectiva para calcular el calentamiento.'}
+                        {t.warmupRequiresWeight}
                     </p>
                     <Button onClick={onClose} fullWidth>{t.close}</Button>
                 </div>

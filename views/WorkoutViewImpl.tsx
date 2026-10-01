@@ -418,8 +418,8 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
             targetId: 'tut-warmup-btn',
             title: t.warmup,
             text: lang === 'en'
-                ? "Smart Warmup Calc. IMPORTANT: You must enter the weight for your first working set (Set 1) BEFORE tapping this."
-                : "Calc. Calentamiento. IMPORTANTE: Debes ingresar el peso en tu primera serie efectiva (Set 1) ANTES de tocar aqui.",
+                ? "Smart Warmup Calc. Automatically calculates progressive warmup sets based on Set 1 weight."
+                : "Calc. Calentamiento Inteligente. Calcula automáticamente las series de aproximación según el peso del Set 1.",
             position: 'bottom' as const
         },
         {

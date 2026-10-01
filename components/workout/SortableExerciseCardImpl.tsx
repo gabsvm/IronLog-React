@@ -555,21 +555,33 @@ export const SortableExerciseCard = React.memo(({
                     </div>
 
                     <div className="flex items-center gap-1.5">
-                        {onOpenWarmup && canWarmup && (
-                            <button
-                                id={tutorialId ? 'tut-warmup-btn' : undefined}
-                                type="button"
-                                onClick={(event) => {
-                                    event.stopPropagation();
-                                    onOpenWarmup(ex.instanceId);
-                                }}
-                                className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-700/80 bg-zinc-900/80 text-amber-400 hover:border-amber-400/60 hover:bg-zinc-800 transition-colors"
-                                title={t.warmup}
-                                aria-label={t.warmup}
-                            >
-                                <Icon name="Zap" size={15} />
-                            </button>
-                        )}
+                        {onOpenWarmup && canWarmup && (() => {
+                            const firstSetWeight = Number(ex.sets?.[0]?.weight || 0);
+                            const hasFirstSetWeight = firstSetWeight > 0;
+                            return (
+                                <button
+                                    id={tutorialId ? 'tut-warmup-btn' : undefined}
+                                    type="button"
+                                    disabled={!hasFirstSetWeight}
+                                    onClick={(event) => {
+                                        event.stopPropagation();
+                                        if (hasFirstSetWeight) {
+                                            onOpenWarmup(ex.instanceId);
+                                        }
+                                    }}
+                                    className={`flex h-8 w-8 items-center justify-center rounded-full border transition-colors ${
+                                        hasFirstSetWeight
+                                            ? 'border-zinc-700/80 bg-zinc-900/80 text-amber-400 hover:border-amber-400/60 hover:bg-zinc-800'
+                                            : 'border-zinc-800 bg-zinc-900/40 text-zinc-600 opacity-50 cursor-not-allowed'
+                                    }`}
+                                    title={hasFirstSetWeight ? t.warmup : t.warmupRequiresWeight}
+                                    aria-label={hasFirstSetWeight ? t.warmup : `${t.warmup}: ${t.warmupRequiresWeight}`}
+                                    aria-disabled={!hasFirstSetWeight}
+                                >
+                                    <Icon name="Zap" size={15} />
+                                </button>
+                            );
+                        })()}
 
                         <button
                             type="button"
