@@ -1,11 +1,146 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTimerActions, useTimerState } from '../../context/TimerContext';
-import { useApp } from '../../context/AppContext';
+import { useApp, useAppConfig } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
 import { Icon } from './Icon';
 import { triggerHaptic } from '../../utils/audio';
 import { useStore } from '../../lib/store';
 import { getTranslated } from '../../utils';
+import type { SessionExercise } from '../../types';
+
+export const TIMER_RING_RADIUS = 52;
+export const TIMER_RING_CIRCUMFERENCE = 2 * Math.PI * TIMER_RING_RADIUS; // ~326.7256...
+
+export const calculateTimerPercentage = (timeLeft: number, duration: number): number => {
+    if (!duration || duration <= 0) return 0;
+    return Math.min(100, Math.max(0, (timeLeft / duration) * 100));
+};
+
+export const calculateRingDashOffset = (percentage: number, circumference: number = TIMER_RING_CIRCUMFERENCE): number => {
+    const clampedPct = Math.min(100, Math.max(0, percentage));
+    return circumference * (1 - clampedPct / 100);
+};
+
+export interface RestNextAction {
+    category: string;
+    name: string;
+    isSuperset: boolean;
+    target: string | null;
+}
+
+export function applyEffortRatingToExercises(
+    exercises: SessionExercise[],
+    exerciseInstanceId: number,
+    setId: number,
+    effort: 'easy' | 'ok' | 'hard'
+): SessionExercise[] {
+    const rpeVal = effort === 'easy' ? '6' : effort === 'ok' ? '8' : '10';
+    return exercises.map(ex => {
+        if (ex.instanceId !== exerciseInstanceId) return ex;
+        return {
+            ...ex,
+            sets: (ex.sets || []).map(s => s.id === setId ? { ...s, rpe: rpeVal } : s)
+        };
+    });
+}
+
+export function resolveRestNextAction(
+    exercises: SessionExercise[] | undefined,
+    source?: { exerciseInstanceId: number; setId: number },
+    lang: 'es' | 'en' = 'es'
+): RestNextAction | null {
+    if (!exercises || exercises.length === 0) return null;
+
+    // If rest was triggered by an exact source set
+    if (source) {
+        const sourceExIndex = exercises.findIndex(e => e.instanceId === source.exerciseInstanceId);
+        if (sourceExIndex >= 0) {
+            const sourceEx = exercises[sourceExIndex];
+
+            // If this is a superset
+            if (sourceEx.supersetId) {
+                const supersetPartners = exercises.filter(e => e.supersetId === sourceEx.supersetId);
+                const nextPartner = supersetPartners.find(p => (p.sets || []).some(s => !s.completed));
+                if (nextPartner) {
+                    const nextSet = (nextPartner.sets || []).find(s => !s.completed);
+                    const target = nextSet?.weight && nextSet?.reps
+                        ? `${nextSet.weight} kg × ${nextSet.reps}`
+                        : nextSet?.reps
+                        ? `${nextSet.reps} reps`
+                        : null;
+                    return {
+                        category: lang === 'es' ? 'Siguiente en superserie' : 'Next in superset',
+                        name: getTranslated(nextPartner.name, lang),
+                        isSuperset: true,
+                        target,
+                    };
+                }
+            } else {
+                // Regular exercise: prefer the next incomplete set in the same exercise
+                const nextSetInSameEx = (sourceEx.sets || []).find(s => !s.completed);
+                if (nextSetInSameEx) {
+                    const target = nextSetInSameEx.weight && nextSetInSameEx.reps
+                        ? `${nextSetInSameEx.weight} kg × ${nextSetInSameEx.reps}`
+                        : nextSetInSameEx.reps
+                        ? `${nextSetInSameEx.reps} reps`
+                        : null;
+                    return {
+                        category: lang === 'es' ? 'Siguiente serie' : 'Next set',
+                        name: getTranslated(sourceEx.name, lang),
+                        isSuperset: false,
+                        target,
+                    };
+                }
+            }
+
+            // If source exercise has no more incomplete sets, find the next incomplete exercise after it
+            const totalExercises = exercises.length;
+            for (let offset = 1; offset < totalExercises; offset++) {
+                const candidateIndex = (sourceExIndex + offset) % totalExercises;
+                const candidate = exercises[candidateIndex];
+                const nextSet = (candidate.sets || []).find(s => !s.completed);
+                if (nextSet) {
+                    const isSuperset = !!candidate.supersetId;
+                    const target = nextSet.weight && nextSet.reps
+                        ? `${nextSet.weight} kg × ${nextSet.reps}`
+                        : nextSet.reps
+                        ? `${nextSet.reps} reps`
+                        : null;
+                    return {
+                        category: isSuperset
+                            ? (lang === 'es' ? 'Siguiente en superserie' : 'Next in superset')
+                            : (lang === 'es' ? 'Siguiente ejercicio' : 'Next exercise'),
+                        name: getTranslated(candidate.name, lang),
+                        isSuperset,
+                        target,
+                    };
+                }
+            }
+        }
+    }
+
+    // Fallback when no source or when rest started manually: scan from beginning
+    for (const ex of exercises) {
+        const nextSet = (ex.sets || []).find(s => !s.completed);
+        if (nextSet) {
+            const isSuperset = !!ex.supersetId;
+            const target = nextSet.weight && nextSet.reps
+                ? `${nextSet.weight} kg × ${nextSet.reps}`
+                : nextSet.reps
+                ? `${nextSet.reps} reps`
+                : null;
+            return {
+                category: isSuperset
+                    ? (lang === 'es' ? 'Siguiente en superserie' : 'Next in superset')
+                    : (lang === 'es' ? 'Siguiente ejercicio' : 'Next exercise'),
+                name: getTranslated(ex.name, lang),
+                isSuperset,
+                target,
+            };
+        }
+    }
+    return null;
+}
 
 const CircularTimer: React.FC<{
     percentage: number;
@@ -15,9 +150,9 @@ const CircularTimer: React.FC<{
 }> = ({ percentage, timeLeft, totalDuration, lang }) => {
     const size = 170;
     const strokeWidth = 7;
-    const radius = 52;
-    const circumference = 2 * Math.PI * radius; // ~326.72
-    const dashOffset = circumference * (1 - Math.min(100, Math.max(0, percentage)) / 100);
+    const radius = TIMER_RING_RADIUS;
+    const circumference = TIMER_RING_CIRCUMFERENCE;
+    const dashOffset = calculateRingDashOffset(percentage, circumference);
 
     const formatSeconds = (seconds: number) => {
         const safe = Math.max(0, Math.floor(Number(seconds) || 0));
@@ -40,7 +175,7 @@ const CircularTimer: React.FC<{
                     cy="60"
                     r={radius}
                     fill="none"
-                    stroke="var(--primary-500, #c4f13a)"
+                    stroke="rgb(var(--primary-500))"
                     strokeWidth={strokeWidth}
                     strokeLinecap="round"
                     strokeDasharray={circumference}
@@ -65,10 +200,12 @@ export const RestTimerOverlay: React.FC = () => {
     const restTimer = useTimerState();
     const { setRestTimer } = useTimerActions();
     const { lang } = useApp();
+    const { config } = useAppConfig();
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
     const activeSession = useStore(state => state.activeSession);
+    const setActiveSession = useStore(state => state.setActiveSession);
 
-    const [minimized, setMinimized] = useState(true);
+    const [minimized, setMinimized] = useState(false);
     const [autoMinimized, setAutoMinimized] = useState(false);
     const [keyboardOffset, setKeyboardOffset] = useState(0);
     const lastFreshStartRef = useRef(0);
@@ -91,8 +228,9 @@ export const RestTimerOverlay: React.FC = () => {
         const looksLikeFreshStart = restTimer.duration > 0 && restTimer.timeLeft >= restTimer.duration - 1;
         if (looksLikeFreshStart && restTimer.endAt !== lastFreshStartRef.current) {
             lastFreshStartRef.current = restTimer.endAt;
-            setMinimized(true);
-            setAutoMinimized(false);
+            const hasFocusedInput = isEditableElement(document.activeElement);
+            setMinimized(hasFocusedInput);
+            setAutoMinimized(hasFocusedInput);
         }
     }, [restTimer?.active, restTimer?.duration, restTimer?.endAt, restTimer?.timeLeft]);
 
@@ -149,26 +287,32 @@ export const RestTimerOverlay: React.FC = () => {
         };
     }, [autoMinimized, minimized]);
 
+    // Derived: Current source set for effort feedback
+    const currentSourceSet = useMemo(() => {
+        if (!restTimer?.source || !activeSession?.exercises) return null;
+        const ex = activeSession.exercises.find(e => e.instanceId === restTimer.source?.exerciseInstanceId);
+        return ex?.sets?.find(s => s.id === restTimer.source?.setId) || null;
+    }, [activeSession?.exercises, restTimer?.source]);
+
+    const showEffortFeedback = Boolean(config?.showRIR || config?.rpEnabled);
+
+    const handleRateEffort = (effort: 'easy' | 'ok' | 'hard') => {
+        if (!restTimer?.source) return;
+        const { exerciseInstanceId, setId } = restTimer.source;
+        triggerHaptic('light');
+        setActiveSession(prev => {
+            if (!prev) return null;
+            return {
+                ...prev,
+                exercises: applyEffortRatingToExercises(prev.exercises || [], exerciseInstanceId, setId, effort)
+            };
+        });
+    };
+
+    // Truthful next exercise / superset context resolution
     const nextExerciseInfo = useMemo(() => {
-        if (!activeSession?.exercises) return null;
-        for (const ex of activeSession.exercises) {
-            const nextSet = (ex.sets || []).find(s => !s.completed);
-            if (nextSet) {
-                const isSuperset = !!ex.supersetId;
-                const target = nextSet.weight && nextSet.reps
-                    ? `${nextSet.weight} kg × ${nextSet.reps}`
-                    : nextSet.reps
-                    ? `${nextSet.reps} reps`
-                    : null;
-                return {
-                    name: getTranslated(ex.name, lang),
-                    isSuperset,
-                    target,
-                };
-            }
-        }
-        return null;
-    }, [activeSession, lang]);
+        return resolveRestNextAction(activeSession?.exercises, restTimer?.source, lang);
+    }, [activeSession?.exercises, lang, restTimer?.source]);
 
     if (!restTimer || !restTimer.active) return null;
 
@@ -177,7 +321,7 @@ export const RestTimerOverlay: React.FC = () => {
         return `${Math.floor(safe / 60)}:${(safe % 60).toString().padStart(2, '0')}`;
     };
 
-    const percentage = Math.min(100, Math.max(0, (restTimer.timeLeft / restTimer.duration) * 100));
+    const percentage = calculateTimerPercentage(restTimer.timeLeft, restTimer.duration);
     const floatingBottom = 80 + keyboardOffset;
 
     const adjustTimer = (deltaSeconds: number) => {
@@ -196,7 +340,7 @@ export const RestTimerOverlay: React.FC = () => {
 
     const skipTimer = () => {
         triggerHaptic('medium');
-        setRestTimer((prev) => ({ ...prev, active: false, timeLeft: 0, endAt: 0 }));
+        setRestTimer((prev) => ({ ...prev, active: false, timeLeft: 0, endAt: 0, source: undefined }));
     };
 
     const setQuickTimer = (seconds: number) => {
@@ -244,7 +388,7 @@ export const RestTimerOverlay: React.FC = () => {
             aria-modal="false"
             aria-label={t.resting}
         >
-            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm -z-10" onClick={() => setMinimized(true)} />
+            <div className="fixed inset-0 top-16 bg-black/60 backdrop-blur-sm -z-10" onClick={() => setMinimized(true)} />
             <div className="mx-auto max-w-md rounded-t-2xl border-t border-x border-border-subtle bg-surface-base p-4 pb-safe shadow-2xl backdrop-blur-xl">
                 {/* Drag Handle */}
                 <div className="w-9 h-1 rounded-full bg-border-strong mx-auto mb-3" />
@@ -285,13 +429,55 @@ export const RestTimerOverlay: React.FC = () => {
                         <Icon name="ArrowRight" size={18} className="text-primary-400 shrink-0" />
                         <div className="min-w-0 flex-1">
                             <div className="text-[10px] font-semibold uppercase tracking-wider text-muted">
-                                {nextExerciseInfo.isSuperset
-                                    ? (lang === 'es' ? 'Siguiente en la superserie' : 'Next in superset')
-                                    : (lang === 'es' ? 'Siguiente ejercicio' : 'Next exercise')}
+                                {nextExerciseInfo.category}
                             </div>
                             <div className="truncate text-sm font-semibold text-white">
                                 {nextExerciseInfo.name}{nextExerciseInfo.target ? ` · ${nextExerciseInfo.target}` : ''}
                             </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Effort Rating Buttons (Easy / OK / Hard) - only when enabled and source set exists */}
+                {showEffortFeedback && currentSourceSet && (
+                    <div className="card-reference p-3 mt-2 text-left">
+                        <div className="text-[10px] font-semibold uppercase tracking-wider text-muted mb-2">
+                            {lang === 'es' ? '¿Cómo se sintió la serie?' : 'How did the set feel?'}
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                type="button"
+                                onClick={() => handleRateEffort('easy')}
+                                className={`flex-1 h-9 rounded-lg border text-xs font-semibold transition-all active:scale-95 ${
+                                    currentSourceSet.rpe === '6'
+                                        ? 'border-emerald-500 bg-emerald-500/20 text-emerald-400 shadow-sm'
+                                        : 'border-border-subtle bg-surface-elevated text-zinc-300 hover:text-white hover:border-zinc-500'
+                                }`}
+                            >
+                                {lang === 'es' ? 'Fácil' : 'Easy'}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleRateEffort('ok')}
+                                className={`flex-1 h-9 rounded-lg border text-xs font-semibold transition-all active:scale-95 ${
+                                    currentSourceSet.rpe === '8'
+                                        ? 'border-primary-500 bg-primary-500/20 text-primary-400 shadow-sm'
+                                        : 'border-border-subtle bg-surface-elevated text-zinc-300 hover:text-white hover:border-zinc-500'
+                                }`}
+                            >
+                                OK
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleRateEffort('hard')}
+                                className={`flex-1 h-9 rounded-lg border text-xs font-semibold transition-all active:scale-95 ${
+                                    currentSourceSet.rpe === '10'
+                                        ? 'border-rose-500 bg-rose-500/20 text-rose-400 shadow-sm'
+                                        : 'border-border-subtle bg-surface-elevated text-zinc-300 hover:text-white hover:border-zinc-500'
+                                }`}
+                            >
+                                {lang === 'es' ? 'Duro' : 'Hard'}
+                            </button>
                         </div>
                     </div>
                 )}

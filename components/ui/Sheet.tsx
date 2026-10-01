@@ -143,12 +143,12 @@ export const Sheet: React.FC<SheetProps> = ({
             repositionInputs={!isFull}
         >
             <Drawer.Portal>
-                <Drawer.Overlay className="modal-backdrop fixed inset-0 z-sheet backdrop-blur-sm" />
+                <Drawer.Overlay className="modal-backdrop fixed inset-0 z-modal backdrop-blur-sm" />
                 <Drawer.Content
                     aria-describedby={description ? 'sheet-desc' : undefined}
                     style={fullViewportStyle}
                     className={`
-                        fixed bottom-0 left-0 right-0 z-sheet flex flex-col
+                        fixed bottom-0 left-0 right-0 z-modal flex flex-col
                         modal-surface outline-none
                         border-t
                         ${isFull

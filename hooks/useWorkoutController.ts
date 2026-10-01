@@ -7,6 +7,7 @@ import { triggerHaptic } from '../utils/audio';
 import { getLastLogForExercise, uid, estimate1RM } from '../utils';
 import { useStatsWorker } from './useStatsWorker';
 import { getEffectiveSetLoad } from '../utils/trainingMetrics';
+import { isTemplateUpdateEligible } from '../utils/workoutProgress';
 
 import { useStore } from '../lib/store';
 
@@ -263,10 +264,25 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
             // rest sheet. This prevents both updates competing for the same
             // frame on lower-end devices.
             requestAnimationFrame(() => {
-                setRestTimer({ active: true, duration: dur, timeLeft: dur, endAt: Date.now() + (dur * 1000) });
+                setRestTimer({
+                    active: true,
+                    duration: dur,
+                    timeLeft: dur,
+                    endAt: Date.now() + (dur * 1000),
+                    source: {
+                        exerciseInstanceId: exInstanceId,
+                        setId,
+                    },
+                });
             });
         } else {
             triggerHaptic('light');
+            setRestTimer(prev => {
+                if (prev.active && prev.source?.exerciseInstanceId === exInstanceId && prev.source?.setId === setId) {
+                    return { ...prev, active: false, timeLeft: 0, endAt: 0, source: undefined };
+                }
+                return prev;
+            });
         }
 
     }, [activeMeso, sessionExercises, setActiveSession, setRestTimer]);
@@ -311,7 +327,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
         setShowFinishModal(false);
 
         // --- UPDATE TEMPLATE LOGIC ---
-        if (updateTemplate && activeMeso && activeSession) {
+        if (updateTemplate && activeMeso && activeSession && isTemplateUpdateEligible(activeSession, activeMeso)) {
             // 2. Update Global Program
             setProgram(prev => {
                 const newProg = [...prev];

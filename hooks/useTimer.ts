@@ -14,6 +14,10 @@ export interface TimerState {
     timeLeft: number;
     duration: number;
     endAt: number;
+    source?: {
+        exerciseInstanceId: number;
+        setId: number;
+    };
 }
 
 export const useTimer = (lang: Lang) => {
@@ -132,7 +136,7 @@ export const useTimer = (lang: Lang) => {
 
                 if (!isNative) document.title = 'GainsLab Pro';
                 workerRef.current?.postMessage('stop');
-                return { ...prev, active: false, timeLeft: 0, endAt: 0 };
+                return { ...prev, active: false, timeLeft: 0, endAt: 0, source: undefined };
             }
 
             if (secondsLeft === prev.timeLeft) return prev;
