@@ -11,7 +11,7 @@
     "test:run": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "verify": "npm run build:strict && npm run test:run && npm run validate-kong",
+    "verify": "node scripts/check-no-secrets.mjs && npm run build:strict && npm run test:run && npm run validate-kong",
     "preview": "vite preview",
     "lint:a11y": "npx eslint \"{components,views}/**/*.{ts,tsx}\" App.tsx",
     "static-build": "vite build && node scripts/generate-sw-precache.mjs",
