@@ -302,10 +302,16 @@ export const SetRow = React.memo(({
         onToggleComplete(exInstanceId, set.id);
     }, [flushPendingFields, isDone, onToggleComplete, exInstanceId, set.id]);
 
+    const handleWeightKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            repsRef.current?.focus();
+        }
+    };
+
     const handleWeightBlur = (value: any) => {
         activeFieldRef.current = null;
         flushScheduledCommit('weight', value);
-        if (!isIsometric) setTimeout(() => repsRef.current?.focus(), 80);
     };
 
     const handleBlur = (field: string, value: any) => {
@@ -519,6 +525,7 @@ export const SetRow = React.memo(({
                                 setLocalWeight(e.target.value);
                                 scheduleCommit('weight', e.target.value, 180);
                             }}
+                            onKeyDown={handleWeightKeyDown}
                             onBlur={() => handleWeightBlur(localWeight)}
                             onFocus={() => activeFieldRef.current = 'weight'}
                             enterKeyHint="next"
@@ -603,6 +610,7 @@ export const SetRow = React.memo(({
                             setLocalWeight(e.target.value);
                             scheduleCommit('weight', e.target.value, 180);
                         }}
+                        onKeyDown={handleWeightKeyDown}
                         onBlur={() => handleWeightBlur(localWeight)}
                         onFocus={() => activeFieldRef.current = 'weight'}
                         enterKeyHint="next"
