@@ -210,6 +210,7 @@ export const RestTimerOverlay: React.FC = () => {
     const [mode, setMode] = useState<'compact' | 'expanded'>(initialMode);
     const [keyboardOffset, setKeyboardOffset] = useState(0);
     const lastFreshStartRef = useRef(0);
+    const pillRef = useRef<HTMLElement>(null);
 
     // Reset to user preference when a new rest begins
     useEffect(() => {
@@ -245,6 +246,30 @@ export const RestTimerOverlay: React.FC = () => {
             viewport.removeEventListener('scroll', syncViewportOffset);
         };
     }, []);
+
+    // Expose the compact pill height as --rest-pill-height so scrollable
+    // content (workout exercise list) can pad its bottom and never slide
+    // under the pill. '0px' whenever the pill is not mounted.
+    useEffect(() => {
+        const root = document.documentElement;
+        if (!restTimer?.active || mode !== 'compact') {
+            root.style.setProperty('--rest-pill-height', '0px');
+            return;
+        }
+        const pill = pillRef.current;
+        if (!pill) return;
+        const applyHeight = () => {
+            root.style.setProperty('--rest-pill-height', `${Math.ceil(pill.getBoundingClientRect().height)}px`);
+        };
+        applyHeight();
+        if (typeof ResizeObserver === 'undefined') return;
+        const observer = new ResizeObserver(applyHeight);
+        observer.observe(pill);
+        return () => {
+            observer.disconnect();
+            root.style.setProperty('--rest-pill-height', '0px');
+        };
+    }, [restTimer?.active, mode]);
 
     // Derived: Current source set for effort feedback
     const currentSourceSet = useMemo(() => {
@@ -323,6 +348,7 @@ export const RestTimerOverlay: React.FC = () => {
     if (mode === 'compact') {
         return (
             <aside
+                ref={pillRef}
                 className="fixed inset-x-0 mx-auto max-w-md px-3 z-sheet pointer-events-none transition-all duration-base ease-natural"
                 style={pillPositionStyle}
                 aria-label={t.resting}
@@ -394,7 +420,7 @@ export const RestTimerOverlay: React.FC = () => {
                                     <button
                                         type="button"
                                         onClick={() => handleRateEffort('easy')}
-                                        className={`flex-1 h-9 rounded-lg border text-xs font-semibold transition-all active:scale-95 ${
+                                        className={`flex-1 min-h-[44px] rounded-lg border text-xs font-semibold transition-all active:scale-95 ${
                                             currentSourceSet.rpe === '6'
                                                 ? 'border-emerald-500 bg-emerald-500/20 text-emerald-400 shadow-sm'
                                                 : 'border-border-subtle bg-surface-elevated text-zinc-300 hover:text-white hover:border-zinc-500'
@@ -405,7 +431,7 @@ export const RestTimerOverlay: React.FC = () => {
                                     <button
                                         type="button"
                                         onClick={() => handleRateEffort('ok')}
-                                        className={`flex-1 h-9 rounded-lg border text-xs font-semibold transition-all active:scale-95 ${
+                                        className={`flex-1 min-h-[44px] rounded-lg border text-xs font-semibold transition-all active:scale-95 ${
                                             currentSourceSet.rpe === '8'
                                                 ? 'border-primary-500 bg-primary-500/20 text-primary-400 shadow-sm'
                                                 : 'border-border-subtle bg-surface-elevated text-zinc-300 hover:text-white hover:border-zinc-500'
@@ -416,7 +442,7 @@ export const RestTimerOverlay: React.FC = () => {
                                     <button
                                         type="button"
                                         onClick={() => handleRateEffort('hard')}
-                                        className={`flex-1 h-9 rounded-lg border text-xs font-semibold transition-all active:scale-95 ${
+                                        className={`flex-1 min-h-[44px] rounded-lg border text-xs font-semibold transition-all active:scale-95 ${
                                             currentSourceSet.rpe === '10'
                                                 ? 'border-rose-500 bg-rose-500/20 text-rose-400 shadow-sm'
                                                 : 'border-border-subtle bg-surface-elevated text-zinc-300 hover:text-white hover:border-zinc-500'
@@ -501,7 +527,7 @@ export const RestTimerOverlay: React.FC = () => {
                             <button
                                 type="button"
                                 onClick={() => handleRateEffort('easy')}
-                                className={`flex-1 h-9 rounded-lg border text-xs font-semibold transition-all active:scale-95 ${
+                                className={`flex-1 min-h-[44px] rounded-lg border text-xs font-semibold transition-all active:scale-95 ${
                                     currentSourceSet.rpe === '6'
                                         ? 'border-emerald-500 bg-emerald-500/20 text-emerald-400 shadow-sm'
                                         : 'border-border-subtle bg-surface-elevated text-zinc-300 hover:text-white hover:border-zinc-500'
@@ -512,7 +538,7 @@ export const RestTimerOverlay: React.FC = () => {
                             <button
                                 type="button"
                                 onClick={() => handleRateEffort('ok')}
-                                className={`flex-1 h-9 rounded-lg border text-xs font-semibold transition-all active:scale-95 ${
+                                className={`flex-1 min-h-[44px] rounded-lg border text-xs font-semibold transition-all active:scale-95 ${
                                     currentSourceSet.rpe === '8'
                                         ? 'border-primary-500 bg-primary-500/20 text-primary-400 shadow-sm'
                                         : 'border-border-subtle bg-surface-elevated text-zinc-300 hover:text-white hover:border-zinc-500'
@@ -523,7 +549,7 @@ export const RestTimerOverlay: React.FC = () => {
                             <button
                                 type="button"
                                 onClick={() => handleRateEffort('hard')}
-                                className={`flex-1 h-9 rounded-lg border text-xs font-semibold transition-all active:scale-95 ${
+                                className={`flex-1 min-h-[44px] rounded-lg border text-xs font-semibold transition-all active:scale-95 ${
                                     currentSourceSet.rpe === '10'
                                         ? 'border-rose-500 bg-rose-500/20 text-rose-400 shadow-sm'
                                         : 'border-border-subtle bg-surface-elevated text-zinc-300 hover:text-white hover:border-zinc-500'

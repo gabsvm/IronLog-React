@@ -527,7 +527,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
             </div>
 
             <div className="flex-1 overflow-hidden flex flex-col">
-                <div id="tut-exercise-list" className="flex-1 overflow-y-auto scroll-container px-3 pb-12 pt-2.5 space-y-2.5">
+                <div id="tut-exercise-list" className="flex-1 overflow-y-auto scroll-container px-3 pt-2.5 space-y-2.5" style={{ paddingBottom: 'calc(3rem + var(--rest-pill-height, 0px) + 16px)' }}>
                     <Suspense fallback={null}>
                         <WorkoutSortableList itemIds={sortableItems} onReorder={handleReorder}>
                             {sessionExercises.map((ex, idx) => {
