@@ -102,6 +102,66 @@ const RestTimerControl: React.FC<{
     );
 });
 
+const WorkoutRestWidget: React.FC<{
+    onRateEffort?: (effort: 'easy' | 'ok' | 'hard') => void;
+    lang: 'en' | 'es';
+}> = React.memo(({ onRateEffort, lang }) => {
+    const restTimer = useTimerState();
+    const { setRestTimer } = useTimerActions();
+
+    if (!restTimer.active) return null;
+
+    const stopRest = () => {
+        setRestTimer(prev => ({ ...prev, active: false, timeLeft: 0, endAt: 0 }));
+    };
+
+    return (
+        <div className="card-reference p-3 flex flex-col gap-2.5 border-primary-500/30 bg-surface-raised my-2 shadow-sm">
+            <div className="flex items-center gap-2">
+                <Icon name="Timer" size={17} className="text-primary-400" />
+                <span className="text-sm font-semibold text-white">
+                    {lang === 'es' ? 'Descanso' : 'Rest'} {formatSeconds(restTimer.timeLeft)}
+                </span>
+                <span className="text-xs text-muted flex-1">
+                    {lang === 'es' ? `de ${restTimer.duration} s` : `of ${restTimer.duration}s`}
+                </span>
+                <button
+                    type="button"
+                    onClick={stopRest}
+                    className="text-xs font-semibold text-muted hover:text-white transition-colors"
+                >
+                    {lang === 'es' ? 'Saltar' : 'Skip'}
+                </button>
+            </div>
+            {onRateEffort && (
+                <div className="flex gap-2">
+                    <button
+                        type="button"
+                        onClick={() => onRateEffort('easy')}
+                        className="flex-1 h-8 rounded-lg border border-border-subtle bg-surface-elevated text-xs font-medium text-zinc-300 hover:border-zinc-500 hover:text-white transition-colors active:scale-95"
+                    >
+                        {lang === 'es' ? 'Fácil' : 'Easy'}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => onRateEffort('ok')}
+                        className="flex-1 h-8 rounded-lg border border-border-subtle bg-surface-elevated text-xs font-medium text-zinc-300 hover:border-zinc-500 hover:text-white transition-colors active:scale-95"
+                    >
+                        OK
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => onRateEffort('hard')}
+                        className="flex-1 h-8 rounded-lg border border-border-subtle bg-surface-elevated text-xs font-medium text-zinc-300 hover:border-zinc-500 hover:text-white transition-colors active:scale-95"
+                    >
+                        {lang === 'es' ? 'Duro' : 'Hard'}
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+});
+
 // Container Component
 export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, onBack }) => {
     const { exercises, logs } = useApp();
@@ -177,6 +237,51 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [ctrl.setChangingSetType]);
     const sortableItems = useMemo(() => sessionExercises.map(ex => ex.instanceId), [sessionExercises]);
+
+    const [manualActiveId, setManualActiveId] = useState<number | null>(null);
+
+    const defaultActiveId = useMemo(() => {
+        const firstIncomplete = sessionExercises.find(ex => (ex.sets || []).some(s => !s.completed));
+        return firstIncomplete ? firstIncomplete.instanceId : (sessionExercises[0]?.instanceId ?? null);
+    }, [sessionExercises]);
+
+    const activeExerciseId = manualActiveId !== null && sessionExercises.some(e => e.instanceId === manualActiveId)
+        ? manualActiveId
+        : defaultActiveId;
+
+    const handleToggleExpand = useCallback((instanceId: number) => {
+        setManualActiveId(prev => (prev === instanceId ? null : instanceId));
+    }, []);
+
+    const handleSetComplete = useCallback((exInstanceId: number, setId: number) => {
+        const ex = sessionExercises.find(e => e.instanceId === exInstanceId);
+        const thisSet = ex?.sets?.find(s => s.id === setId);
+        const isCompleting = thisSet && !thisSet.completed;
+
+        ctrl.toggleSetComplete(exInstanceId, setId);
+
+        if (isCompleting && ex) {
+            const otherPending = (ex.sets || []).filter(s => s.id !== setId && !s.completed);
+            if (otherPending.length === 0) {
+                const nextEx = sessionExercises.find(e => e.instanceId !== exInstanceId && (e.sets || []).some(s => !s.completed));
+                if (nextEx) {
+                    setManualActiveId(nextEx.instanceId);
+                }
+            }
+        }
+    }, [ctrl, sessionExercises]);
+
+    const handleRateEffort = useCallback((effort: 'easy' | 'ok' | 'hard') => {
+        for (let i = sessionExercises.length - 1; i >= 0; i--) {
+            const ex = sessionExercises[i];
+            const lastCompleted = [...(ex.sets || [])].reverse().find(s => s.completed);
+            if (lastCompleted) {
+                const rpeVal = effort === 'easy' ? '6' : effort === 'ok' ? '8' : '10';
+                ctrl.handleSetUpdate(ex.instanceId, lastCompleted.id, 'rpe', rpeVal);
+                break;
+            }
+        }
+    }, [ctrl, sessionExercises]);
 
     const handleAddExercise = (newExId: string, customDef?: ExerciseDef) => {
         const newDef = customDef || exercises.find(e => e.id === newExId);
@@ -353,7 +458,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
             targetId: 'tut-finish-btn',
             title: t.tutorial.workout[3].title,
             text: t.tutorial.workout[3].text,
-            position: 'top' as const
+            position: 'bottom' as const
         }
     ];
 
@@ -372,82 +477,75 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
     if (!activeSession) return null;
 
     return (
-        <div className="fixed inset-0 z-40 flex flex-col bg-black font-sans" onClick={() => ctrl.setOpenMenuId(null)}>
+        <div className="fixed inset-0 z-40 flex flex-col bg-surface-app font-sans" onClick={() => ctrl.setOpenMenuId(null)}>
 
-            {/* --- Compact Header --- */}
-            <div className="glass z-30 border-b border-white/5 pt-safe bg-black/92">
-                <div className="flex h-10 items-center justify-between px-4">
-                    <button onClick={onBack} className="flex h-9 w-9 items-center justify-center rounded-full text-zinc-400 transition-colors active:bg-zinc-800 hover:text-white" aria-label="Previous">
+            {/* --- Reference-driven Compact Header --- */}
+            <div className="z-30 border-b border-border-subtle pt-safe bg-surface-base/95 backdrop-blur-md">
+                <div className="flex h-14 items-center justify-between gap-2.5 px-3">
+                    <button
+                        type="button"
+                        onClick={onBack}
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-zinc-400 transition-colors active:bg-surface-raised hover:text-white"
+                        aria-label="Previous"
+                    >
                         <Icon name="ChevronLeft" size={22} strokeWidth={2.5} />
                     </button>
 
-                    <div className="flex min-w-0 flex-wrap items-center justify-center gap-1.5">
-                        <div className="rounded-full border border-zinc-700/80 bg-zinc-900/90 px-2.5 py-1">
-                            <WorkoutTimer startTime={activeSession.startTime} />
+                    <div className="flex-1 min-w-0">
+                        <h1 className="truncate text-base font-semibold leading-tight text-white">
+                            {isCalisthenicsSession
+                                ? (lang === 'es' ? 'Sesión de Calistenia' : 'Calisthenics Session')
+                                : activeSession.name}
+                        </h1>
+                        <div className="truncate text-xs text-muted">
+                            {activeSession.week >= 1 ? `${t.week} ${activeSession.week} · ` : ''}
+                            {remainingSets === 0
+                                ? (lang === 'es' ? 'Todo listo' : 'All done')
+                                : `${remainingSets} ${lang === 'es' ? 'series restantes' : 'sets left'}`}
                         </div>
-                        <RestTimerControl
-                            preset={manualRestPreset}
-                            onStart={startManualRest}
-                            onStop={stopRest}
-                            onCyclePreset={cycleManualRestPreset}
-                            lang={lang}
-                        />
-                        {totalWorkingSets > 0 && (
-                            <div className={`rounded-full px-2 py-1 text-[10px] font-semibold tabular-nums transition-colors ${remainingSets === 0 ? 'bg-green-500/20 text-green-400' : 'bg-zinc-800 text-zinc-300'}`}>
-                                {remainingSets === 0
-                                    ? (lang === 'es' ? 'listo' : 'done')
-                                    : `${remainingSets} ${lang === 'es' ? 'restantes' : 'left'}`}
-                            </div>
-                        )}
+                    </div>
+
+                    <div className="chip-reference text-zinc-100 font-mono text-xs shrink-0">
+                        <Icon name="Clock" size={12} className="text-muted" />
+                        <WorkoutTimer startTime={activeSession.startTime} />
                     </div>
 
                     <button
+                        type="button"
                         onClick={(e) => {
                             e.stopPropagation();
                             ctrl.setAddingExercise(true);
                         }}
-                        className="flex h-9 w-9 items-center justify-center rounded-full text-zinc-400 transition-colors active:bg-zinc-800 hover:text-white"
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-zinc-400 transition-colors hover:text-white active:bg-surface-raised"
                         title={t.addExercise}
                     >
-                        <Icon name="Plus" size={20} strokeWidth={2.5} />
+                        <Icon name="Plus" size={18} strokeWidth={2.5} />
+                    </button>
+
+                    <button
+                        id="tut-finish-btn"
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            ctrl.setShowFinishModal(true);
+                        }}
+                        className="h-8 shrink-0 rounded-lg bg-primary-500 px-3.5 text-xs font-semibold text-zinc-950 transition-all hover:bg-primary-400 active:scale-95 shadow-sm"
+                    >
+                        {lang === 'es' ? 'Terminar' : 'Finish'}
                     </button>
                 </div>
 
-                <div className="px-4 pb-2 pt-1">
-                    <h1 className="mb-1 truncate text-[1.35rem] font-black leading-[0.98] tracking-[-0.05em] text-white">
-                        {isCalisthenicsSession
-                            ? (lang === 'es' ? 'Sesion de Calistenia' : 'Calisthenics Session')
-                            : activeSession.name}
-                    </h1>
-
-                    <div className="flex flex-wrap items-center gap-1.5">
-                        {activeSession.week >= 1 && (
-                            <div className="flex items-center gap-1.5 rounded-full bg-zinc-900/80 px-2 py-1">
-                                <Icon name="Calendar" size={11} className="text-zinc-500" />
-                                <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-400">
-                                    {t.week} {activeSession.week}
-                                </span>
-                            </div>
-                        )}
-
-                        {showStageInfo && (
-                            <div className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-[0.16em] ${stageConfig.label === 'recovery' ? 'bg-blue-900/30 text-blue-400' : 'bg-primary-900/20 ' + accentTextClass}`}>
-                                {stageConfig.label === 'recovery' ? 'DELOAD' : <>{t.target}: {stageConfig.rir} RIR</>}
-                            </div>
-                        )}
-                    </div>
+                {/* Progress bar line */}
+                <div className="h-[3px] w-full bg-border-subtle">
+                    <div
+                        className="h-[3px] bg-primary-500 transition-all duration-300 ease-out"
+                        style={{ width: `${Math.min(100, Math.max(0, progressPct))}%` }}
+                    />
                 </div>
             </div>
 
-            <div className="relative h-1 overflow-hidden bg-zinc-900">
-                <div
-                    className={`h-full rounded-full bg-gradient-to-r ${isCalisthenicsSession ? 'from-violet-600 to-indigo-500' : 'from-primary-400 to-primary-600'} transition-all duration-500 ease-out`}
-                    style={{ width: `${progressPct}%` }}
-                />
-            </div>
-
             <div className="flex-1 overflow-hidden flex flex-col">
-                <div id="tut-exercise-list" className="flex-1 overflow-y-auto scroll-container px-4 pb-24 pt-2.5 space-y-2.5">
+                <div id="tut-exercise-list" className="flex-1 overflow-y-auto scroll-container px-3 pb-12 pt-2.5 space-y-2.5">
                     <Suspense fallback={null}>
                         <WorkoutSortableList itemIds={sortableItems} onReorder={handleReorder}>
                             {sessionExercises.map((ex, idx) => {
@@ -458,8 +556,10 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                     <SortableExerciseCard
                                         key={ex.instanceId}
                                         exercise={ex}
+                                        isExpanded={ex.instanceId === activeExerciseId}
+                                        onToggleExpand={handleToggleExpand}
                                         onSetUpdate={ctrl.handleSetUpdate}
-                                        onSetComplete={ctrl.toggleSetComplete}
+                                        onSetComplete={handleSetComplete}
                                         onSetTypeChange={handleSetTypeChange}
                                         onAddSet={ctrl.handleAddSet}
                                         onDeleteSet={ctrl.handleDeleteSet}
@@ -486,38 +586,19 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                             })}
                         </WorkoutSortableList>
                     </Suspense>
-                    <div className="h-8" />
-                </div>
-            </div>
 
-            <div className="fixed bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-black via-black/95 to-transparent pb-safe pt-5 px-4 pointer-events-none">
-                <div className="mx-auto flex max-w-md items-center gap-2 pb-4 pointer-events-auto">
+                    <WorkoutRestWidget onRateEffort={handleRateEffort} lang={lang} />
+
                     <button
-                        id="tut-finish-btn"
-                        onClick={(e) => { e.stopPropagation(); ctrl.setShowFinishModal(true); }}
-                        className={`flex-1 h-[52px] rounded-2xl bg-gradient-to-r ${isCalisthenicsSession ? 'from-violet-600 to-indigo-600 shadow-violet-600/30' : 'from-primary-500 to-primary-600 shadow-primary-500/30'} text-white font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-[0_8px_24px_-4px]`}
+                        type="button"
+                        onClick={() => ctrl.setAddingExercise(true)}
+                        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl border border-dashed border-border-strong bg-surface-raised/40 text-xs font-semibold text-muted hover:text-white hover:border-zinc-500 transition-colors active:scale-98"
                     >
-                        <Icon name="CheckCircle" size={19} strokeWidth={2.5} />
-                        <span className="text-xs uppercase tracking-wide">{t.finishWorkout}</span>
+                        <Icon name="Plus" size={15} />
+                        {t.addExercise}
                     </button>
 
-                    {(() => {
-                        if (!quickAccessExercise) return null;
-                        const canWarmupQuickAccess = !quickAccessExercise.isBodyweight && !quickAccessExercise.isIsometric && quickAccessExercise.muscle !== 'CARDIO';
-                        if (!canWarmupQuickAccess) return null;
-                        return (
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    ctrl.setWarmupExId(quickAccessExercise.instanceId);
-                                }}
-                                className="flex h-[52px] w-[52px] items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-900/95 text-zinc-300 shadow-lg transition-transform active:scale-90 hover:text-white"
-                                title={t.warmup}
-                            >
-                                <Icon name="Zap" size={20} />
-                            </button>
-                        );
-                    })()}
+                    <div className="h-6" />
                 </div>
             </div>
 

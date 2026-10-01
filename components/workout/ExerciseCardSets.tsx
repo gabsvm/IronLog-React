@@ -63,45 +63,55 @@ export const ExerciseCardSets: React.FC<Props> = React.memo(({
 }) => (
     <>
         {/* Column header row */}
-        <div className="grid grid-cols-12 items-center gap-2 border-b border-white/5 px-3 py-1.5 text-center text-[9px] font-bold uppercase tracking-[0.16em] text-zinc-500">
-            <div className={`col-span-2 ${isEMOM ? 'text-cyan-500' : isMyorep ? 'text-purple-500' : isCluster ? 'text-emerald-500' : ''}`}>
-                {isEMOM ? 'Min' : isMyorep ? 'Set' : '#'}
-            </div>
-            {isCardio ? (
-                isInterval ? (
+        {isCardio ? (
+            <div className="grid grid-cols-[28px_44px_1fr_1fr_1fr_36px] items-center gap-1.5 border-b border-border-subtle px-2.5 py-1.5 text-center text-[10px] font-bold uppercase tracking-wider text-muted">
+                <div className={isEMOM ? 'text-cyan-400' : ''}>#</div>
+                <div>{lang === 'es' ? 'Ant.' : 'Prev'}</div>
+                {isInterval ? (
                     <>
-                        <div className="col-span-4 pl-2 text-left text-green-600 dark:text-green-400">{String(t.cardioWork)}</div>
-                        <div className="col-span-4 text-blue-500 dark:text-blue-400">{String(t.cardioRest)}</div>
-                        <div className="col-span-2">{String(t.cardioRounds)}</div>
+                        <div className="text-green-400">{String(t.cardioWork)}</div>
+                        <div className="text-blue-400">{String(t.cardioRest)}</div>
+                        <div>{String(t.cardioRounds)}</div>
                     </>
                 ) : (
                     <>
-                        <div className="col-span-4 text-center">{String(t.cardioTime)}</div>
-                        <div className="col-span-4 text-center">{String(t.cardioDist)}</div>
-                        <div className="col-span-2 text-center">{String(t.cardioSpeed)}</div>
+                        <div>{String(t.cardioTime)}</div>
+                        <div>{String(t.cardioDist)}</div>
+                        <div>{String(t.cardioSpeed)}</div>
                     </>
-                )
-            ) : ex.isIsometric ? (
-                <>
-                    <div className="col-span-6 text-center text-violet-400">
-                        HOLD TIME
-                    </div>
-                    <div className="col-span-2"></div>
-                </>
-            ) : ex.isBodyweight ? (
-                <>
-                    <div className="col-span-6 text-center">{String(t.reps)}</div>
-                    <div className="col-span-2 text-center text-violet-400/60">+KG</div>
-                </>
-            ) : (
-                <>
-                    <div className="col-span-4 text-center">{`${String(t.weight)} (${unitLabel})`}</div>
-                    <div className="col-span-4 text-center">{String(t.reps)}</div>
-                    {config.showRIR ? <div className="col-span-2 text-center">{String(t.rir)}</div> : <div className="col-span-2" />}
-                </>
-            )}
-            <div className="col-span-2"></div>
-        </div>
+                )}
+                <div></div>
+            </div>
+        ) : ex.isIsometric ? (
+            <div className="grid grid-cols-[28px_44px_1fr_36px] items-center gap-2 border-b border-border-subtle px-2.5 py-1.5 text-center text-[10px] font-bold uppercase tracking-wider text-muted">
+                <div>#</div>
+                <div>{lang === 'es' ? 'Ant.' : 'Prev'}</div>
+                <div className="text-violet-400">HOLD TIME</div>
+                <div></div>
+            </div>
+        ) : ex.isBodyweight ? (
+            <div className={`grid ${config?.showRIR ? 'grid-cols-[28px_38px_1fr_1fr_38px_36px]' : 'grid-cols-[28px_44px_1fr_1fr_36px]'} items-center gap-2 border-b border-border-subtle px-2.5 py-1.5 text-center text-[10px] font-bold uppercase tracking-wider text-muted`}>
+                <div className={isEMOM ? 'text-cyan-400' : isMyorep ? 'text-purple-400' : isCluster ? 'text-emerald-400' : ''}>
+                    {isEMOM ? 'Min' : isMyorep ? 'Set' : '#'}
+                </div>
+                <div>{lang === 'es' ? 'Ant.' : 'Prev'}</div>
+                <div className="text-violet-400/90">+KG</div>
+                <div>{String(t.reps)}</div>
+                {config?.showRIR && <div>{String(t.rir)}</div>}
+                <div></div>
+            </div>
+        ) : (
+            <div className={`grid ${config?.showRIR ? 'grid-cols-[28px_38px_1fr_1fr_38px_36px]' : 'grid-cols-[28px_44px_1fr_1fr_36px]'} items-center gap-2 border-b border-border-subtle px-2.5 py-1.5 text-center text-[10px] font-bold uppercase tracking-wider text-muted`}>
+                <div className={isEMOM ? 'text-cyan-400' : isMyorep ? 'text-purple-400' : isCluster ? 'text-emerald-400' : ''}>
+                    {isEMOM ? 'Min' : isMyorep ? 'Set' : '#'}
+                </div>
+                <div>{lang === 'es' ? 'Ant.' : 'Prev'}</div>
+                <div>{`${String(t.weight)} (${unitLabel})`}</div>
+                <div>{String(t.reps)}</div>
+                {config?.showRIR && <div>{String(t.rir)}</div>}
+                <div></div>
+            </div>
+        )}
 
         {/* Sets list */}
         <div className="space-y-1.5 px-2 py-2">
@@ -124,6 +134,7 @@ export const ExerciseCardSets: React.FC<Props> = React.memo(({
                     disableTypeChange={isSpecialProtocol}
                     isActiveProtocolSet={isEMOM && activeEmomMinute === idx + 1}
                     isNextSet={nextSetIdx === idx}
+                    showRIR={Boolean(config?.showRIR)}
                 />
             ))}
         </div>

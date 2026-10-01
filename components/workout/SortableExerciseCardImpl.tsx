@@ -36,6 +36,8 @@ interface SortableExerciseCardProps {
     dragEnabled?: boolean;
     logs: import('../../types').Log[];
     tutorialId?: string;
+    isExpanded?: boolean;
+    onToggleExpand?: (id: number) => void;
 }
 
 export const SortableExerciseCard = React.memo(({
@@ -63,6 +65,8 @@ export const SortableExerciseCard = React.memo(({
     dragEnabled = true,
     logs,
     tutorialId,
+    isExpanded = true,
+    onToggleExpand,
 }: SortableExerciseCardProps) => {
     const [exDoneFlash, setExDoneFlash] = useState(false);
     const [activeEmomMinute, setActiveEmomMinute] = useState(0);
@@ -224,6 +228,7 @@ export const SortableExerciseCard = React.memo(({
     }, [completedCount, regularSets]);
 
     const isProtocol = !isCardio && !ex.isIsometric;
+    const canWarmup = !ex.isBodyweight && !ex.isIsometric && !isCardio;
     const isEMOM = isProtocol && regularSets.length > 0 && regularSets.every((set) => set.type === 'emom');
     const isMyorep = isProtocol && regularSets.length > 0 && regularSets.every((set) => set.type === 'myorep' || set.type === 'myorep_match');
     const isCluster = isProtocol && regularSets.length > 0 && regularSets.every((set) => set.type === 'cluster');
@@ -340,21 +345,110 @@ export const SortableExerciseCard = React.memo(({
             ? { icon: 'Trophy', label: historicalBest, tone: 'text-amber-300' }
             : null;
 
+    if (!isExpanded) {
+        return (
+            <div
+                ref={setNodeRef}
+                style={style}
+                onClick={() => onToggleExpand?.(ex.instanceId)}
+                className={`card-reference cursor-pointer p-3 transition-colors hover:border-zinc-500/60 ${
+                    ssStyle ? `border-l-4 ${ssStyle.border}` : ''
+                } ${isDragging ? 'scale-[1.02] shadow-2xl' : ''}`}
+            >
+                <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                            <MuscleTag label={String(ex.slotLabel || ex.muscle || 'CHEST')} />
+                            {isCardio ? (
+                                <span className="chip-reference text-cyan-300">
+                                    {String(t.cardioModes?.[cardioMode] || cardioMode)}
+                                </span>
+                            ) : ex.targetReps ? (
+                                <span className="chip-reference text-zinc-300">
+                                    {String(ex.targetReps)} Reps
+                                </span>
+                            ) : null}
+                            {isSuperseted && (
+                                <span className="chip-reference text-violet-300">
+                                    SS
+                                </span>
+                            )}
+                        </div>
+                        <h3 className="mt-1 truncate text-[15px] font-semibold text-white">
+                            {String(getTranslated(ex.name, lang))}
+                        </h3>
+                        <div className="mt-1 flex items-center gap-2 text-xs text-muted">
+                            <span>
+                                {sets.filter(s => s.completed).length}/{sets.length} {lang === 'es' ? 'series' : 'sets'}
+                            </span>
+                            {allDone && (
+                                <span className="text-primary-400 font-semibold flex items-center gap-1">
+                                    <Icon name="Check" size={12} strokeWidth={3} />
+                                    {lang === 'es' ? 'Listo' : 'Done'}
+                                </span>
+                            )}
+                        </div>
+                        {heroMetric && !allDone && (
+                            <div className="mt-1.5">
+                                <span className={`chip-reference ${heroMetric.tone}`}>
+                                    <Icon name={heroMetric.icon} size={11} />
+                                    {heroMetric.label}
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <button
+                            type="button"
+                            onClick={(event) => {
+                                event.stopPropagation();
+                                setOpenMenuId(openMenuId === ex.instanceId ? null : ex.instanceId);
+                            }}
+                            className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-400 hover:text-white"
+                            aria-label={lang === 'es' ? 'Más opciones' : 'More options'}
+                        >
+                            <Icon name="MoreVertical" size={16} />
+                        </button>
+                        <div className="flex h-8 w-8 items-center justify-center text-zinc-400">
+                            <Icon name="ChevronDown" size={18} />
+                        </div>
+                    </div>
+                </div>
+                <ExerciseCardMenu
+                    ex={ex}
+                    isOpen={openMenuId === ex.instanceId}
+                    onClose={() => setOpenMenuId(null)}
+                    isCardio={isCardio}
+                    cardioMode={cardioMode}
+                    hasSuperset={!!ssStyle}
+                    isLinking={isLinkSource}
+                    onOpenDetail={onOpenDetail}
+                    onCardioModeChange={handleCardioModeChange}
+                    onInjectWarmup={handleInjectWarmup}
+                    onSupersetAction={handleSupersetAction}
+                    onReplace={onReplace}
+                    onRequestDelete={confirmDelete}
+                    t={t}
+                    lang={lang}
+                />
+            </div>
+        );
+    }
+
     return (
         <div
             ref={setNodeRef}
             style={style}
             className={`
-                flex flex-col overflow-hidden rounded-[1.2rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#141416] shadow-sm dark:shadow-[0_14px_32px_-24px_rgba(0,0,0,0.9)] transition-all
+                card-reference flex flex-col overflow-hidden transition-all
                 ${ssStyle ? `border-l-4 ${ssStyle.border}` : ''}
                 ${isDragging ? 'scale-[1.02] shadow-2xl ring-2 ring-red-500/20' : ''}
                 ${isLinkSource ? 'ring-2 ring-amber-400/40 shadow-[0_0_0_1px_rgba(251,191,36,0.15)]' : ''}
                 ${isLinkingTarget ? 'ring-2 ring-cyan-400/30 shadow-[0_0_0_1px_rgba(34,211,238,0.12)]' : ''}
                 ${allDone ? 'shadow-[0_20px_50px_-24px_rgba(34,197,94,0.32)]' : ''}
-                
             `}
         >
-            <div className="border-b border-white/5 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.04),_transparent_55%)] px-3 pb-1.5 pt-1.5">
+            <div className="border-b border-border-subtle bg-surface-elevated/40 px-3 pb-2 pt-2">
                 <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 space-y-1">
                         <div className="flex flex-wrap items-center gap-1">
@@ -444,6 +538,22 @@ export const SortableExerciseCard = React.memo(({
                     </div>
 
                     <div className="flex items-center gap-1.5">
+                        {onOpenWarmup && canWarmup && (
+                            <button
+                                id={tutorialId ? 'tut-warmup-btn' : undefined}
+                                type="button"
+                                onClick={(event) => {
+                                    event.stopPropagation();
+                                    onOpenWarmup(ex.instanceId);
+                                }}
+                                className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-700/80 bg-zinc-900/80 text-amber-400 hover:border-amber-400/60 hover:bg-zinc-800 transition-colors"
+                                title={t.warmup}
+                                aria-label={t.warmup}
+                            >
+                                <Icon name="Zap" size={15} />
+                            </button>
+                        )}
+
                         <button
                             type="button"
                             onClick={(event) => {
@@ -488,6 +598,20 @@ export const SortableExerciseCard = React.memo(({
                                 lang={lang}
                             />
                         </div>
+
+                        {onToggleExpand && (
+                            <button
+                                type="button"
+                                onClick={(event) => {
+                                    event.stopPropagation();
+                                    onToggleExpand(ex.instanceId);
+                                }}
+                                className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-700/80 bg-zinc-900/80 text-zinc-400 hover:border-zinc-500/70 hover:bg-zinc-800 hover:text-white transition-colors"
+                                aria-label={lang === 'es' ? 'Colapsar ejercicio' : 'Collapse exercise'}
+                            >
+                                <Icon name="ChevronUp" size={17} />
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -554,17 +678,19 @@ export const SortableExerciseCard = React.memo(({
                 </div>
             )}
 
-            <div className="grid shrink-0 grid-cols-2 divide-x divide-white/10 border-t border-white/5 bg-black/20">
+            <div className="flex items-center justify-between px-3 py-2 border-t border-border-subtle bg-surface-base/30 text-xs text-muted">
                 <button
+                    type="button"
                     onClick={() => sets.length > 0 && onDeleteSet(ex.instanceId, sets[sets.length - 1].id)}
                     disabled={sets.length <= 1}
-                    className="flex w-full items-center justify-center gap-1.5 py-1.5 text-[9px] font-bold uppercase tracking-[0.12em] text-zinc-500 transition-colors active:scale-95 hover:text-red-400 disabled:opacity-25"
+                    className="flex items-center gap-1.5 py-1 text-muted transition-colors hover:text-red-400 active:scale-95 disabled:opacity-25"
                 >
                     <Icon name="Minus" size={13} /> {String(t.removeSetBtn)}
                 </button>
                 <button
+                    type="button"
                     onClick={() => onAddSet(ex.instanceId)}
-                    className="flex w-full items-center justify-center gap-1.5 py-1.5 text-[9px] font-bold uppercase tracking-[0.12em] text-zinc-500 transition-colors active:scale-95 hover:text-white"
+                    className="flex items-center gap-1.5 py-1 text-primary-400 font-semibold transition-colors hover:text-primary-300 active:scale-95"
                 >
                     <Icon name="Plus" size={13} /> {t.addSetBtn}
                 </button>

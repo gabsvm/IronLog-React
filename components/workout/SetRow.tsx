@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { WorkoutSet, SetType } from '../../types';
 import { Icon } from '../ui/Icon';
 import { triggerHaptic } from '../../utils/audio';
@@ -21,6 +21,7 @@ interface SetRowProps {
     disableTypeChange?: boolean;
     isActiveProtocolSet?: boolean;
     isNextSet?: boolean;
+    showRIR?: boolean;
 }
 
 const getTypeColor = (type: SetType) => {
@@ -208,7 +209,7 @@ export const SetRow = React.memo(({
     set, exInstanceId,
     onUpdate, onToggleComplete, onChangeType,
     lang, isCardio, isBodyweight, isIsometric, isometricTargetSecs,
-    setIndex, badgeLabel, tutorialId, disableTypeChange, isActiveProtocolSet, isNextSet
+    setIndex, badgeLabel, tutorialId, disableTypeChange, isActiveProtocolSet, isNextSet, showRIR = false
 }: SetRowProps) => {
     const isDone = set.completed;
     const setType = set.type || 'regular';
@@ -229,6 +230,7 @@ export const SetRow = React.memo(({
 
     const [localWeight, setLocalWeight] = useState(set.weight ?? '');
     const [localReps, setLocalReps] = useState(set.reps ?? '');
+    const [localRpe, setLocalRpe] = useState(set.rpe ?? '');
     const [showExtraWeight, setShowExtraWeight] = useState(
         isBodyweight && (Number(set.weight) > 0 || Number(set.hintWeight) > 0)
     );
@@ -244,6 +246,7 @@ export const SetRow = React.memo(({
 
     useEffect(() => { if (activeFieldRef.current !== 'weight') setLocalWeight(set.weight ?? ''); }, [set.weight]);
     useEffect(() => { if (activeFieldRef.current !== 'reps') setLocalReps(set.reps ?? ''); }, [set.reps]);
+    useEffect(() => { if (activeFieldRef.current !== 'rpe') setLocalRpe(set.rpe ?? ''); }, [set.rpe]);
     // Reset swipe when set state changes
     useEffect(() => { setSwipePct(0); swipeRef.current.tracking = false; swipeRef.current.locked = false; }, [set.completed]);
     useEffect(() => () => {
@@ -352,11 +355,25 @@ export const SetRow = React.memo(({
         focusPrimaryField();
     }, [focusPrimaryField]);
 
-    const inputBase = "w-full rounded-[0.95rem] border border-zinc-300 dark:border-zinc-700/70 bg-zinc-100 dark:bg-[#202024] px-2 py-1.5 text-center text-[15px] font-bold text-zinc-900 dark:text-white outline-none transition-all tabular-nums placeholder-zinc-400 dark:placeholder-zinc-600 focus:border-primary-500/25 focus:ring-2 focus:ring-primary-500/15";
-    const doneInput = "border-transparent bg-transparent text-white/90 pointer-events-none";
+    const inputBaseClass = "h-[38px] w-full rounded-[9px] bg-surface-elevated text-center text-[15px] font-semibold text-zinc-200 outline-none transition-colors border border-transparent focus:border-primary-500 focus:bg-surface-raised tabular-nums";
+    const inputActiveClass = "h-[38px] w-full rounded-[9px] bg-surface-raised border border-primary-500/70 text-center text-[15px] font-semibold text-white outline-none focus:border-primary-500 tabular-nums shadow-sm";
+    const inputDoneClass = "h-[38px] w-full rounded-[9px] bg-transparent text-center text-[15px] font-semibold text-primary-400 outline-none tabular-nums";
+    const currentInputClass = isDone ? inputDoneClass : isNextSet ? inputActiveClass : inputBaseClass;
 
-    // Show previous session value as placeholder so the field reads as "editable with context",
-    // not as a disabled em dash. Falls back to '0' so the input reads clearly as empty & tappable.
+    const rowClass = `relative rounded-[12px] transition-all duration-150 ${
+        isDone
+            ? 'bg-primary-500/10 border border-primary-500/25'
+            : isNextSet
+            ? 'bg-[#1b1b20] border border-primary-500/50 shadow-sm'
+            : 'bg-surface-raised border border-border-subtle'
+    }`;
+
+    const checkBtnClass = `flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full transition-all duration-150 active:scale-90 ${
+        isDone
+            ? 'bg-primary-500 text-zinc-950 font-black shadow-sm'
+            : 'border border-zinc-700 bg-surface-elevated text-zinc-500 hover:border-zinc-500 hover:text-white'
+    }`;
+
     const weightPlaceholder = set.hintWeight ? String(set.hintWeight) : '0';
     const repsPlaceholder = set.hintReps ? String(set.hintReps) : '0';
     const prescriptionHint = set.prescribedReps !== undefined
@@ -365,30 +382,39 @@ export const SetRow = React.memo(({
             : `OBJ: ${set.prescribedReps}${set.targetRpe !== undefined ? ` · RPE ${set.targetRpe}` : ''}`)
         : null;
 
+    const prevText = useMemo(() => {
+        if (isIsometric) {
+            if (set.duration) return `${set.duration}s`;
+            return '—';
+        }
+        if (isBodyweight) {
+            if (set.prevReps) {
+                return set.prevWeight && Number(set.prevWeight) > 0 ? `+${set.prevWeight}k` : `${set.prevReps}`;
+            }
+            return set.hintReps ? String(set.hintReps) : '—';
+        }
+        if (set.prevReps || set.prevWeight) {
+            if (set.prevReps && set.prevWeight) return `${set.prevWeight}k`;
+            return String(set.prevReps || set.prevWeight);
+        }
+        if (set.hintReps || set.hintWeight) {
+            return String(set.hintReps || set.hintWeight);
+        }
+        return '—';
+    }, [isBodyweight, isIsometric, set.duration, set.hintReps, set.hintWeight, set.prevReps, set.prevWeight]);
+
     const BadgeEl = disableTypeChange || isDone ? 'div' : 'button';
     const badgeProps = (!disableTypeChange && !isDone)
         ? { id: tutorialId, onClick: () => onChangeType(exInstanceId, set.id, setType) }
         : { id: tutorialId };
-    const badgeClass = `flex h-8 w-8 items-center justify-center rounded-full border font-black text-[11px] transition-all ${
+    const badgeClass = `flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-bold transition-all ${
         isDone
-            ? 'border-emerald-400/25 bg-emerald-500/10 text-emerald-300'
-            : getTypeColor(setType)
+            ? 'bg-primary-500 text-zinc-950'
+            : isNextSet
+            ? 'bg-surface-elevated text-white border border-primary-500/60'
+            : 'bg-surface-elevated text-muted border border-border-subtle'
     } ${!disableTypeChange && !isDone ? 'cursor-pointer active:scale-90' : 'cursor-default'}`;
 
-    // Difficulty picker (shown after completing a set with no RPE)
-    const DifficultyPicker = !isDone ? null : (set.rpe === '' || set.rpe === null || set.rpe === undefined) ? (
-        <div className="flex gap-1.5 px-2 pb-1.5 -mt-0.5 animate-in fade-in duration-200">
-            {([{ emoji: 'Easy', label: lang === 'es' ? 'Fácil' : 'Easy', val: '3' }, { emoji: 'OK', label: 'OK', val: '6' }, { emoji: 'Hard', label: lang === 'es' ? 'Duro' : 'Hard', val: '9' }] as const).map(d => (
-                <button key={d.val}
-                    onClick={() => onUpdate(exInstanceId, set.id, 'rpe', d.val)}
-                    className="flex-1 rounded-lg bg-zinc-800/80 py-1.5 text-[11px] font-bold text-zinc-300 transition-all hover:bg-zinc-700 hover:text-white active:scale-95">
-                    {d.emoji} {d.label}
-                </button>
-            ))}
-        </div>
-    ) : null;
-
-    // Swipe overlay - shared across all branches
     const SwipeOverlay = swipePct > 0 ? (
         <div className="absolute inset-y-0 left-0 rounded-xl bg-green-500/20 pointer-events-none transition-none flex items-center justify-start pl-3"
             style={{ width: `${swipePct}%` }}>
@@ -401,45 +427,45 @@ export const SetRow = React.memo(({
         return (
             <div id={`set-row-${set.id}`}
                 onTouchStart={onSwipeTouchStart} onTouchMove={onSwipeTouchMove} onTouchEnd={onSwipeTouchEnd}
-                className={`relative grid grid-cols-12 gap-2 items-center rounded-[0.95rem] px-2 py-1.5 transition-colors duration-200 ${getBorderAccent(setType)} ${rowAccent} ${isDone ? 'opacity-80' : ''}`}>
+                className={rowClass}>
                 {SwipeOverlay}
-                {/* Set Type Badge */}
-                <div className="col-span-2 flex justify-center">
-                    <BadgeEl {...badgeProps as any} className={badgeClass}>
-                        {effectiveBadgeLabel}
-                    </BadgeEl>
+                <div className="grid grid-cols-[28px_44px_1fr_36px] gap-2 items-center px-2.5 py-1.5">
+                    <div className="flex justify-center">
+                        <BadgeEl {...badgeProps as any} className={badgeClass}>
+                            {effectiveBadgeLabel}
+                        </BadgeEl>
+                    </div>
+                    <div className="text-center text-[12px] text-muted tabular-nums truncate font-medium">
+                        {prevText}
+                    </div>
+                    <div className="flex items-center justify-center">
+                        <HoldTimer
+                            initialSeconds={Number(set.duration) || 0}
+                            targetSeconds={isometricTargetSecs}
+                            onSave={handleHoldSave}
+                            lang={lang}
+                            isDone={isDone}
+                        />
+                    </div>
+                    <div className="flex justify-center">
+                        <button
+                            onClick={() => {
+                                triggerHaptic(isDone ? 'light' : 'medium');
+                                onToggleComplete(exInstanceId, set.id);
+                            }}
+                            className={checkBtnClass}
+                            aria-pressed={Boolean(isDone)}
+                            aria-label={lang === 'es' ? (isDone ? 'Serie completada' : 'Completar serie') : (isDone ? 'Set completed' : 'Complete set')}
+                        >
+                            <Icon name="Check" size={17} strokeWidth={isDone ? 3 : 2.5} />
+                        </button>
+                    </div>
                 </div>
-
-                {/* Hold Timer - takes up the weight+reps cols */}
-                <div className="col-span-8 flex items-center justify-center">
-                    <HoldTimer
-                        initialSeconds={Number(set.duration) || 0}
-                        targetSeconds={isometricTargetSecs}
-                        onSave={handleHoldSave}
-                        lang={lang}
-                        isDone={isDone}
-                    />
-                </div>
-
-                {/* Complete Button */}
-                <div className="col-span-2 flex justify-center">
-                    <button
-                        onClick={() => {
-                            triggerHaptic(isDone ? 'light' : 'medium');
-                            onToggleComplete(exInstanceId, set.id);
-                        }}
-                        className={`
-                            flex h-8 w-8 items-center justify-center rounded-full transition-all duration-150 active:scale-90
-                            ${isDone
-                                ? 'bg-primary-500 text-black border-transparent shadow-[0_0_15px] shadow-primary-500/20'
-                                : 'border border-zinc-700/80 bg-zinc-900/80 text-zinc-500 hover:border-zinc-500/70 hover:text-white active:bg-primary-500 active:text-black'}
-                        `}
-                        aria-pressed={Boolean(isDone)}
-                        aria-label={lang === 'es' ? (isDone ? 'Serie completada' : 'Completar serie') : (isDone ? 'Set completed' : 'Complete set')}
-                    >
-                        <Icon name="Check" size={18} strokeWidth={3} />
-                    </button>
-                </div>
+                {prescriptionHint && !isDone && (
+                    <div className="flex justify-center pb-1 -mt-0.5">
+                        <span className="text-[10px] font-bold tracking-wide text-primary-400">{prescriptionHint}</span>
+                    </div>
+                )}
             </div>
         );
     }
@@ -450,22 +476,35 @@ export const SetRow = React.memo(({
             <div id={`set-row-${set.id}`}
                 onTouchStart={onSwipeTouchStart} onTouchMove={onSwipeTouchMove} onTouchEnd={onSwipeTouchEnd}
                 onClick={handleRowClick}
-            className={`relative rounded-[0.95rem] transition-colors duration-200 ${getBorderAccent(setType)} ${rowAccent} ${isDone ? 'opacity-80' : ''}`}>
+                className={rowClass}>
                 {SwipeOverlay}
-                <div className="grid grid-cols-12 items-center gap-2 px-2 py-1.5">
-                    {/* Set Type Badge */}
-                    <div className="col-span-2 flex justify-center">
+                <div className={`grid ${showRIR ? 'grid-cols-[28px_38px_1fr_1fr_38px_36px]' : 'grid-cols-[28px_44px_1fr_1fr_36px]'} items-center gap-2 px-2.5 py-1.5`}>
+                    <div className="flex justify-center">
                         <BadgeEl {...badgeProps as any} className={badgeClass}>
                             {effectiveBadgeLabel}
                         </BadgeEl>
                     </div>
-
-                    {/* Reps (main field for BW) - prominent */}
-                    <div className="col-span-6">
+                    <div className="text-center text-[12px] text-muted tabular-nums truncate font-medium">
+                        {prevText}
+                    </div>
+                    <div>
+                        <input
+                            ref={extraWeightRef}
+                            type="number" inputMode="decimal"
+                            className={currentInputClass}
+                            placeholder={weightPlaceholder}
+                            value={localWeight}
+                            onChange={e => setLocalWeight(e.target.value)}
+                            onBlur={() => handleWeightBlur(localWeight)}
+                            onFocus={() => activeFieldRef.current = 'weight'}
+                            enterKeyHint="next"
+                        />
+                    </div>
+                    <div>
                         <input
                             ref={repsRef}
                             type="number" inputMode="numeric"
-                            className={isDone ? inputBase + " " + doneInput : inputBase}
+                            className={currentInputClass}
                             placeholder={repsPlaceholder}
                             value={localReps}
                             onChange={e => setLocalReps(e.target.value)}
@@ -474,71 +513,38 @@ export const SetRow = React.memo(({
                             enterKeyHint="done"
                         />
                     </div>
-
-                    {/* Extra Weight Toggle or RIR */}
-                    <div className="col-span-2 flex justify-center">
-                        {!showExtraWeight ? (
-                            <button
-                                onClick={() => setShowExtraWeight(true)}
-                                className="flex h-8 w-8 flex-col items-center justify-center text-zinc-500 transition-colors hover:text-zinc-300"
-                                title={lang === 'es' ? '+ Peso Extra' : '+ Extra Weight'}
-                            >
-                                <Icon name="PlusCircle" size={14} />
-                                <span className="text-[10px] font-bold mt-0.5 uppercase tracking-wide">+KG</span>
-                            </button>
-                        ) : (
+                    {showRIR && (
+                        <div>
                             <input
-                                ref={extraWeightRef}
                                 type="number" inputMode="decimal"
-                                className="w-full rounded-[0.9rem] border border-violet-500/30 bg-violet-950/20 px-1 py-1.5 text-center text-xs font-bold text-violet-300 outline-none transition-all tabular-nums placeholder-zinc-500 focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20"
-                                placeholder="0"
-                                value={localWeight}
-                                onChange={e => setLocalWeight(e.target.value)}
-                                onBlur={() => handleWeightBlur(localWeight)}
-                                onFocus={() => activeFieldRef.current = 'weight'}
-                                enterKeyHint="next"
+                                className={currentInputClass}
+                                placeholder="RIR"
+                                value={localRpe}
+                                onChange={e => setLocalRpe(e.target.value)}
+                                onBlur={() => handleBlur('rpe', localRpe)}
+                                enterKeyHint="done"
                             />
-                        )}
-                    </div>
-
-                    {/* Complete Button */}
-                    <div className="col-span-2 flex justify-center">
+                        </div>
+                    )}
+                    <div className="flex justify-center">
                         <button
                             onClick={() => {
                                 triggerHaptic(isDone ? 'light' : 'medium');
                                 onToggleComplete(exInstanceId, set.id);
                             }}
-                            className={`
-                                flex h-8 w-8 items-center justify-center rounded-full transition-all duration-150 active:scale-90
-                                ${isDone
-                                    ? 'bg-primary-500 text-black border-transparent shadow-[0_0_15px] shadow-primary-500/20'
-                                    : 'border border-zinc-700/80 bg-zinc-900/80 text-zinc-500 hover:border-zinc-500/70 hover:text-white active:bg-primary-500 active:text-black'}
-                            `}
+                            className={checkBtnClass}
                             aria-pressed={Boolean(isDone)}
                             aria-label={lang === 'es' ? (isDone ? 'Serie completada' : 'Completar serie') : (isDone ? 'Set completed' : 'Complete set')}
                         >
-                            <Icon name="Check" size={18} strokeWidth={3} />
+                            <Icon name="Check" size={17} strokeWidth={isDone ? 3 : 2.5} />
                         </button>
                     </div>
                 </div>
-
-                {/* Prev performance hint */}
                 {prescriptionHint && !isDone && (
                     <div className="flex justify-center pb-1 -mt-0.5">
-                        <span className="text-[11px] font-bold tracking-wide text-primary-400">{prescriptionHint}</span>
+                        <span className="text-[10px] font-bold tracking-wide text-primary-400">{prescriptionHint}</span>
                     </div>
                 )}
-                {!isDone && set.prevReps && (
-                    <div className="flex justify-center pb-1 -mt-0.5">
-                        <div className="inline-flex items-center gap-1.5 rounded-full bg-zinc-800/80 px-2.5 py-0.5 border border-zinc-700/60">
-                            <Icon name="Clock" size={11} className="text-zinc-400 shrink-0" />
-                            <span className="text-[11px] font-semibold text-zinc-300 tabular-nums">
-                                {set.prevReps} reps{set.prevWeight && Number(set.prevWeight) > 0 ? ` +${set.prevWeight}kg` : ''}
-                            </span>
-                        </div>
-                    </div>
-                )}
-                {DifficultyPicker}
             </div>
         );
     }
@@ -548,89 +554,75 @@ export const SetRow = React.memo(({
         <div id={`set-row-${set.id}`}
             onTouchStart={onSwipeTouchStart} onTouchMove={onSwipeTouchMove} onTouchEnd={onSwipeTouchEnd}
             onClick={handleRowClick}
-            className={`relative rounded-[0.95rem] transition-colors duration-200 ${getBorderAccent(setType)} ${rowAccent} ${isDone ? 'opacity-80' : ''}`}>
+            className={rowClass}>
             {SwipeOverlay}
-        <div className="grid grid-cols-12 items-center gap-2 px-2 py-1.5">
-
-            {/* Set Type / Number Badge */}
-            <div className="col-span-2 flex justify-center">
-                <BadgeEl {...badgeProps as any} className={badgeClass}>
-                    {effectiveBadgeLabel}
-                </BadgeEl>
-            </div>
-
-            {/* Weight Input */}
-            <div className="col-span-4">
-                <input
-                    ref={weightRef}
-                    type="number" inputMode="decimal"
-                    className={isDone ? inputBase + " " + doneInput : inputBase}
-                    placeholder={weightPlaceholder}
-                    value={localWeight}
-                    onChange={e => setLocalWeight(e.target.value)}
-                    onBlur={() => handleWeightBlur(localWeight)}
-                    onFocus={() => activeFieldRef.current = 'weight'}
-                    enterKeyHint="next"
-                />
-            </div>
-
-            {/* Reps Input */}
-            <div className="col-span-4">
-                <input
-                    ref={repsRef}
-                    type="number" inputMode="numeric"
-                    className={isDone ? inputBase + " " + doneInput : inputBase}
-                    placeholder={repsPlaceholder}
-                    value={localReps}
-                    onChange={e => setLocalReps(e.target.value)}
-                    onBlur={() => handleBlur('reps', localReps)}
-                    onFocus={() => activeFieldRef.current = 'reps'}
-                    enterKeyHint="done"
-                />
-            </div>
-
-            {/* Complete Button */}
-            <div className="col-span-2 flex justify-center">
-                <button
-                    onClick={() => {
-                        triggerHaptic(isDone ? 'light' : 'medium');
-                        onToggleComplete(exInstanceId, set.id);
-                    }}
-                    className={`
-                        flex h-8 w-8 items-center justify-center rounded-full transition-all duration-150 active:scale-90
-                        ${isDone
-                            ? 'bg-primary-500 text-black border-transparent shadow-[0_0_15px] shadow-primary-500/20'
-                            : 'border border-zinc-700/80 bg-zinc-900/80 text-zinc-500 hover:border-zinc-500/70 hover:text-white active:bg-primary-500 active:text-black'
-                        }
-                    `}
-                    aria-pressed={Boolean(isDone)}
-                    aria-label={lang === 'es' ? (isDone ? 'Serie completada' : 'Completar serie') : (isDone ? 'Set completed' : 'Complete set')}
-                >
-                    <Icon name="Check" size={18} strokeWidth={3} />
-                </button>
-            </div>
-        </div>
-
-        {/* Prev performance hint */}
-        {prescriptionHint && !isDone && (
-            <div className="flex justify-center pb-1 -mt-0.5">
-                <span className="text-[11px] font-bold tracking-wide text-primary-400">{prescriptionHint}</span>
-            </div>
-        )}
-        {!isDone && !isCardio && (set.prevWeight || set.prevReps) && (
-            <div className="flex justify-center pb-1 -mt-0.5">
-                <div className="inline-flex items-center gap-1.5 rounded-full bg-zinc-800/80 px-2.5 py-0.5 border border-zinc-700/60">
-                    <Icon name="Clock" size={11} className="text-zinc-400 shrink-0" />
-                    <span className="text-[11px] font-semibold text-zinc-300 tabular-nums">
-                        {[
-                            set.prevWeight && Number(set.prevWeight) > 0 ? `${set.prevWeight}kg` : null,
-                            set.prevReps && Number(set.prevReps) > 0 ? `${set.prevReps} reps` : null,
-                        ].filter(Boolean).join(' × ')}
-                    </span>
+            <div className={`grid ${showRIR ? 'grid-cols-[28px_38px_1fr_1fr_38px_36px]' : 'grid-cols-[28px_44px_1fr_1fr_36px]'} items-center gap-2 px-2.5 py-1.5`}>
+                <div className="flex justify-center">
+                    <BadgeEl {...badgeProps as any} className={badgeClass}>
+                        {effectiveBadgeLabel}
+                    </BadgeEl>
+                </div>
+                <div className="text-center text-[12px] text-muted tabular-nums truncate font-medium">
+                    {prevText}
+                </div>
+                <div>
+                    <input
+                        ref={weightRef}
+                        type="number" inputMode="decimal"
+                        className={currentInputClass}
+                        placeholder={weightPlaceholder}
+                        value={localWeight}
+                        onChange={e => setLocalWeight(e.target.value)}
+                        onBlur={() => handleWeightBlur(localWeight)}
+                        onFocus={() => activeFieldRef.current = 'weight'}
+                        enterKeyHint="next"
+                    />
+                </div>
+                <div>
+                    <input
+                        ref={repsRef}
+                        type="number" inputMode="numeric"
+                        className={currentInputClass}
+                        placeholder={repsPlaceholder}
+                        value={localReps}
+                        onChange={e => setLocalReps(e.target.value)}
+                        onBlur={() => handleBlur('reps', localReps)}
+                        onFocus={() => activeFieldRef.current = 'reps'}
+                        enterKeyHint="done"
+                    />
+                </div>
+                {showRIR && (
+                    <div>
+                        <input
+                            type="number" inputMode="decimal"
+                            className={currentInputClass}
+                            placeholder="RIR"
+                            value={localRpe}
+                            onChange={e => setLocalRpe(e.target.value)}
+                            onBlur={() => handleBlur('rpe', localRpe)}
+                            enterKeyHint="done"
+                        />
+                    </div>
+                )}
+                <div className="flex justify-center">
+                    <button
+                        onClick={() => {
+                            triggerHaptic(isDone ? 'light' : 'medium');
+                            onToggleComplete(exInstanceId, set.id);
+                        }}
+                        className={checkBtnClass}
+                        aria-pressed={Boolean(isDone)}
+                        aria-label={lang === 'es' ? (isDone ? 'Serie completada' : 'Completar serie') : (isDone ? 'Set completed' : 'Complete set')}
+                    >
+                        <Icon name="Check" size={17} strokeWidth={isDone ? 3 : 2.5} />
+                    </button>
                 </div>
             </div>
-        )}
-        {DifficultyPicker}
+            {prescriptionHint && !isDone && (
+                <div className="flex justify-center pb-1 -mt-0.5">
+                    <span className="text-[10px] font-bold tracking-wide text-primary-400">{prescriptionHint}</span>
+                </div>
+            )}
         </div>
     );
 });
