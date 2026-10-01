@@ -6,7 +6,13 @@ type SyncCapableRegistration = ServiceWorkerRegistration & {
     periodicSync?: { register: (tag: string, options: { minInterval: number }) => Promise<void> };
 };
 
-export const requestBackgroundSync = async () => {
+/**
+ * Request background sync on a best-effort basis (Audit Decision S4-a).
+ * If window clients are open when the OS fires the sync event, the SW signals
+ * them to flush their pending sync queue. When the app is closed, authoritative
+ * sync flushing is performed on next app launch/foregrounding via AppContext.
+ */
+export const requestBackgroundSync = async (): Promise<boolean> => {
     if (!('serviceWorker' in navigator)) return false;
 
     try {
@@ -21,7 +27,12 @@ export const requestBackgroundSync = async () => {
     }
 };
 
-export const requestPeriodicSync = async () => {
+/**
+ * Request periodic background sync on a best-effort basis (Audit Decision S4-a).
+ * Operates as a secondary opportunity to synchronize workouts when the OS wakes
+ * the browser. If no windows are active, data remains safe in IndexedDB.
+ */
+export const requestPeriodicSync = async (): Promise<boolean> => {
     if (!('serviceWorker' in navigator)) return false;
 
     try {
