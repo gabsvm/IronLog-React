@@ -55,18 +55,41 @@ const shouldCacheResponse = (response) =>
   response.status === 200 &&
   (response.type === 'basic' || response.type === 'cors' || response.type === 'opaque');
 
-const networkFirst = async (request) => {
+const shellHandler = async (request) => {
   const cache = await caches.open(CACHE_NAME);
+  const cached =
+    (await cache.match(request, { ignoreSearch: true })) ||
+    (await cache.match('/index.html')) ||
+    (await cache.match('/'));
 
-  try {
-    const response = await fetch(request);
-    if (shouldCacheResponse(response)) {
-      cache.put(request, response.clone());
-    }
-    return response;
-  } catch (error) {
-    return cache.match(request) || cache.match('/index.html') || cache.match('/offline.html') || cache.match('/');
+  const networkPromise = fetch(request)
+    .then((res) => {
+      if (shouldCacheResponse(res)) {
+        cache.put('/index.html', res.clone());
+      }
+      return res;
+    })
+    .catch(() => null);
+
+  if (cached) {
+    void networkPromise;
+    return cached;
   }
+
+  let timeoutId;
+  const timeoutPromise = new Promise((resolve) => {
+    timeoutId = setTimeout(() => resolve(null), 3000);
+  });
+
+  const networkResponse = await Promise.race([networkPromise, timeoutPromise]);
+  if (timeoutId) clearTimeout(timeoutId);
+
+  if (networkResponse) {
+    return networkResponse;
+  }
+
+  const fallback = (await cache.match('/offline.html')) || (await cache.match('/index.html'));
+  return fallback || new Response('Offline', { status: 503, headers: { 'Content-Type': 'text/plain' } });
 };
 
 const staleWhileRevalidate = async (request) => {
@@ -82,7 +105,13 @@ const staleWhileRevalidate = async (request) => {
     })
     .catch(() => null);
 
-  return cached || networkPromise || new Response('', { status: 503 });
+  if (cached) {
+    void networkPromise;
+    return cached;
+  }
+
+  const networkResponse = await networkPromise;
+  return networkResponse || new Response('', { status: 504 });
 };
 
 self.addEventListener('fetch', (event) => {
@@ -98,7 +127,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (request.mode === 'navigate') {
-    event.respondWith(networkFirst(request));
+    event.respondWith(shellHandler(request));
     return;
   }
 
