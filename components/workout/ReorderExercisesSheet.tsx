@@ -36,9 +36,19 @@ interface SortableExerciseRowProps {
     exercise: SessionExercise;
     index: number;
     lang: 'en' | 'es';
+    isFirstInGroup?: boolean;
+    isLastInGroup?: boolean;
+    supersetLabel?: string;
 }
 
-const SortableExerciseRow: React.FC<SortableExerciseRowProps> = ({ exercise, index, lang }) => {
+const SortableExerciseRow: React.FC<SortableExerciseRowProps> = ({
+    exercise,
+    index,
+    lang,
+    isFirstInGroup,
+    isLastInGroup,
+    supersetLabel,
+}) => {
     const {
         attributes,
         listeners,
@@ -52,52 +62,66 @@ const SortableExerciseRow: React.FC<SortableExerciseRowProps> = ({ exercise, ind
     const total = (exercise.sets || []).filter(set => set.type !== 'avt_hop').length;
 
     return (
-        <div
-            ref={setNodeRef}
-            style={{
-                transform: CSS.Transform.toString(transform),
-                transition,
-                zIndex: isDragging ? 20 : 1,
-            }}
-            className={`flex min-h-[72px] items-center gap-3 rounded-2xl border px-3 py-2.5 transition-shadow ${
-                isDragging
-                    ? 'border-primary-500/40 bg-[rgb(var(--surface-elevated))] shadow-xl shadow-black/20'
-                    : 'border-[rgb(var(--border-subtle)/0.8)] bg-[rgb(var(--surface-raised)/0.72)]'
-            }`}
-        >
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[rgb(var(--surface-elevated))] text-xs font-black tabular-nums text-zinc-500">
-                {index + 1}
-            </div>
+        <div>
+            {isFirstInGroup && supersetLabel && (
+                <div className="text-[11px] font-semibold tracking-wider uppercase text-[#afa9ec] px-1 pt-3 pb-1">
+                    {supersetLabel}
+                </div>
+            )}
+            <div
+                ref={setNodeRef}
+                style={{
+                    transform: CSS.Transform.toString(transform),
+                    transition,
+                    zIndex: isDragging ? 30 : 1,
+                }}
+                className={`flex items-center gap-2.5 px-3 py-2.5 transition-all ${
+                    exercise.supersetId
+                        ? 'border-l-[3px] border-l-[#7f77dd] border-t border-r border-b border-border-subtle bg-surface-raised'
+                        : 'card-reference my-1'
+                } ${
+                    exercise.supersetId
+                        ? isFirstInGroup && isLastInGroup
+                            ? 'rounded-xl'
+                            : isFirstInGroup
+                            ? 'rounded-t-xl border-b-0'
+                            : isLastInGroup
+                            ? 'rounded-b-xl'
+                            : 'rounded-none border-b-0'
+                        : 'rounded-xl'
+                } ${
+                    isDragging ? 'shadow-2xl shadow-black/60 ring-2 ring-primary-500 z-30 opacity-95 scale-[1.02]' : ''
+                }`}
+            >
+                <span className="w-5 text-center text-xs text-muted shrink-0 tabular-nums font-medium">
+                    {index + 1}
+                </span>
 
-            <div className="min-w-0 flex-1">
-                <div className="flex min-w-0 items-center gap-2">
-                    <div className="truncate text-sm font-black tracking-tight text-zinc-950 dark:text-white">
+                <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-white truncate">
                         {getTranslated(exercise.name, lang)}
                     </div>
-                    {exercise.supersetId && (
-                        <span className="shrink-0 rounded-full border border-primary-500/20 bg-primary-500/10 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-primary-500">SS</span>
-                    )}
+                    <div className="text-xs text-muted truncate mt-0.5">
+                        {String(exercise.slotLabel || exercise.muscle || '')}
+                    </div>
                 </div>
-                <div className="mt-1 flex min-w-0 items-center gap-2 text-[10px] font-bold uppercase tracking-[0.12em] text-zinc-500">
-                    <span className="truncate">{String(exercise.slotLabel || exercise.muscle || '')}</span>
-                    <span aria-hidden="true">·</span>
-                    <span className="shrink-0 normal-case tracking-normal">
-                        {completed}/{total} {lang === 'es' ? 'series' : 'sets'}
-                    </span>
-                </div>
-            </div>
 
-            <button
-                type="button"
-                {...attributes}
-                {...listeners}
-                className="flex h-12 w-12 shrink-0 touch-none items-center justify-center rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated))] text-zinc-500 shadow-sm transition-colors active:text-primary-500 dark:text-zinc-300"
-                aria-label={lang === 'es'
-                    ? `Mover ${getTranslated(exercise.name, lang)}`
-                    : `Move ${getTranslated(exercise.name, lang)}`}
-            >
-                <Icon name="GripVertical" size={22} strokeWidth={2.5} />
-            </button>
+                <span className="text-xs text-muted shrink-0 tabular-nums px-1">
+                    {completed}/{total}
+                </span>
+
+                <button
+                    type="button"
+                    {...attributes}
+                    {...listeners}
+                    className="w-9 h-9 flex items-center justify-center text-muted hover:text-white shrink-0 touch-none active:text-primary-400 rounded-lg hover:bg-surface-elevated/40"
+                    aria-label={lang === 'es'
+                        ? `Mover ${getTranslated(exercise.name, lang)}`
+                        : `Move ${getTranslated(exercise.name, lang)}`}
+                >
+                    <Icon name="GripVertical" size={18} />
+                </button>
+            </div>
         </div>
     );
 };
@@ -127,6 +151,18 @@ export const ReorderExercisesSheet: React.FC<ReorderExercisesSheetProps> = ({
 
     const ids = useMemo(() => draft.map(exercise => exercise.instanceId), [draft]);
 
+    const supersetLetterMap = useMemo(() => {
+        const map = new Map<string, string>();
+        let currentCode = 65; // 'A'
+        for (const ex of draft) {
+            if (ex.supersetId && !map.has(ex.supersetId)) {
+                map.set(ex.supersetId, String.fromCharCode(currentCode));
+                currentCode++;
+            }
+        }
+        return map;
+    }, [draft]);
+
     const handleDragStart = (_event: DragStartEvent) => {
         triggerHaptic('light');
     };
@@ -139,6 +175,31 @@ export const ReorderExercisesSheet: React.FC<ReorderExercisesSheetProps> = ({
             const oldIndex = current.findIndex(exercise => exercise.instanceId === active.id);
             const newIndex = current.findIndex(exercise => exercise.instanceId === over.id);
             if (oldIndex < 0 || newIndex < 0) return current;
+
+            const activeItem = current[oldIndex];
+            // If the item belongs to a superset, keep that superset contiguous
+            if (activeItem.supersetId) {
+                const ssId = activeItem.supersetId;
+                const ssIndices = current
+                    .map((ex, idx) => (ex.supersetId === ssId ? idx : -1))
+                    .filter(idx => idx !== -1);
+
+                const isContiguous = ssIndices.every((val, i, arr) => i === 0 || val === arr[i - 1] + 1);
+                if (isContiguous && ssIndices.length > 1) {
+                    const ssItems = current.filter(ex => ex.supersetId === ssId);
+                    const remaining = current.filter(ex => ex.supersetId !== ssId);
+                    let insertIndex = remaining.findIndex(ex => ex.instanceId === over.id);
+                    if (insertIndex < 0) {
+                        insertIndex = newIndex > oldIndex ? remaining.length : 0;
+                    } else if (newIndex > oldIndex) {
+                        insertIndex += 1;
+                    }
+                    const next = [...remaining];
+                    next.splice(insertIndex, 0, ...ssItems);
+                    return next;
+                }
+            }
+
             return arrayMove(current, oldIndex, newIndex);
         });
         triggerHaptic('medium');
@@ -156,14 +217,14 @@ export const ReorderExercisesSheet: React.FC<ReorderExercisesSheetProps> = ({
             onOpenChange={onOpenChange}
             title={lang === 'es' ? 'Ordenar ejercicios' : 'Reorder exercises'}
             description={lang === 'es'
-                ? 'Arrastra el asa de la derecha para cambiar el orden del entrenamiento.'
-                : 'Drag the handle on the right to change workout order.'}
+                ? 'Arrastra desde el asa. Las superseries se mueven juntas.'
+                : 'Drag from the handle. Supersets move together.'}
             accent="primary"
             footer={(
                 <button
                     type="button"
                     onClick={save}
-                    className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary-500 font-black text-black transition-transform active:scale-[0.98]"
+                    className="w-full h-11 rounded-xl bg-primary-500 font-semibold text-zinc-950 flex items-center justify-center gap-2 transition-transform active:scale-[0.98]"
                 >
                     <Icon name="Check" size={18} strokeWidth={2.5} />
                     {lang === 'es' ? 'Guardar orden' : 'Save order'}
@@ -172,16 +233,11 @@ export const ReorderExercisesSheet: React.FC<ReorderExercisesSheetProps> = ({
         >
             <div className="px-4 pb-8 pt-2">
                 {methodologyWarning && (
-                    <div className="mb-3 flex gap-3 rounded-2xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-xs leading-relaxed text-amber-700 dark:text-amber-200">
-                        <Icon name="AlertTriangle" size={17} className="mt-0.5 shrink-0" />
+                    <div className="mb-3 flex gap-3 rounded-xl border border-amber-500/25 bg-amber-500/10 px-3.5 py-2.5 text-xs leading-relaxed text-amber-300">
+                        <Icon name="AlertTriangle" size={16} className="mt-0.5 shrink-0 text-amber-400" />
                         <span>{methodologyWarning}</span>
                     </div>
                 )}
-                <div className="mb-4 rounded-2xl bg-primary-500/8 px-4 py-3 text-xs font-medium leading-relaxed text-zinc-500">
-                    {lang === 'es'
-                        ? 'Mantén el asa ≡ y arrastra cada ejercicio. Pesos y series no cambian. Si ves SS, mantén juntos los ejercicios de esa superserie.'
-                        : 'Hold the ≡ handle and drag each exercise. Weights and sets stay unchanged. Keep exercises marked SS together.'}
-                </div>
 
                 <DndContext
                     sensors={sensors}
@@ -190,15 +246,29 @@ export const ReorderExercisesSheet: React.FC<ReorderExercisesSheetProps> = ({
                     onDragEnd={handleDragEnd}
                 >
                     <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-                        <div className="space-y-2">
-                            {draft.map((exercise, index) => (
-                                <SortableExerciseRow
-                                    key={exercise.instanceId}
-                                    exercise={exercise}
-                                    index={index}
-                                    lang={lang}
-                                />
-                            ))}
+                        <div className="space-y-1">
+                            {draft.map((exercise, index) => {
+                                const prevEx = draft[index - 1];
+                                const nextEx = draft[index + 1];
+                                const isFirstInGroup = !prevEx || prevEx.supersetId !== exercise.supersetId;
+                                const isLastInGroup = !nextEx || nextEx.supersetId !== exercise.supersetId;
+                                const ssLetter = exercise.supersetId ? supersetLetterMap.get(exercise.supersetId) : undefined;
+                                const supersetLabel = ssLetter
+                                    ? (lang === 'es' ? `Superserie ${ssLetter}` : `Superset ${ssLetter}`)
+                                    : undefined;
+
+                                return (
+                                    <SortableExerciseRow
+                                        key={exercise.instanceId}
+                                        exercise={exercise}
+                                        index={index}
+                                        lang={lang}
+                                        isFirstInGroup={isFirstInGroup}
+                                        isLastInGroup={isLastInGroup}
+                                        supersetLabel={supersetLabel}
+                                    />
+                                );
+                            })}
                         </div>
                     </SortableContext>
                 </DndContext>
