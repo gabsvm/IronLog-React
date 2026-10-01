@@ -14,7 +14,6 @@ import { triggerHaptic } from '../utils/audio';
 // Sub-components extracted in Phase 6.2
 import { GuidelinesModal } from './home/GuidelinesModal';
 import { TemplateSelector } from './home/TemplateSelector';
-import { WeekProgress } from './home/WeekProgress';
 import { WeeklyRecapCard } from './home/WeeklyRecapCard';
 import { NextSessionCard } from './home/NextSessionCard';
 import { ProgramBlockTransition } from '../components/programs/ProgramBlockTransition';
@@ -560,10 +559,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                 );
             })()}
 
-            {/* 5. Secondary Quick Start & Program Progress */}
+            {/* 5. Secondary Quick Start */}
             <div className="space-y-3 pt-2">
-                <WeekProgress program={safeProgram} logsForWeek={logsForWeek} />
-
                 {onStartFreeSession && (
                     <button
                         type="button"
