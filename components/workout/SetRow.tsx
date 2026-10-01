@@ -176,25 +176,29 @@ const HoldTimer: React.FC<{
             <div className="flex gap-1">
                 {!running ? (
                     <button
-                        onTouchStart={(e) => { e.stopPropagation(); start(); }}
+                        type="button"
                         onClick={(e) => { e.stopPropagation(); start(); }}
                         className="w-9 h-9 rounded-xl bg-violet-500/20 text-violet-400 flex items-center justify-center active:scale-90 transition-transform border border-violet-500/30"
+                        aria-label={lang === 'es' ? 'Iniciar timer' : 'Start timer'}
                     >
                         <Icon name="Play" size={15} fill="currentColor" />
                     </button>
                 ) : (
                     <button
-                        onTouchStart={(e) => { e.stopPropagation(); stop(); }}
+                        type="button"
                         onClick={(e) => { e.stopPropagation(); stop(); }}
                         className="w-9 h-9 rounded-xl bg-violet-500 text-white flex items-center justify-center active:scale-90 transition-transform animate-pulse-slow"
+                        aria-label={lang === 'es' ? 'Detener timer' : 'Stop timer'}
                     >
                         <Icon name="Square" size={14} fill="currentColor" />
                     </button>
                 )}
                 {elapsed > 0 && !running && (
                     <button
+                        type="button"
                         onClick={(e) => { e.stopPropagation(); reset(); }}
                         className="w-7 h-9 flex items-center justify-center text-zinc-600 hover:text-zinc-400 active:scale-90 transition-all"
+                        aria-label={lang === 'es' ? 'Reiniciar timer' : 'Reset timer'}
                     >
                         <Icon name="RotateCcw" size={13} />
                     </button>
@@ -320,13 +324,13 @@ export const SetRow = React.memo(({
     };
     // Swipe-to-complete handlers
     const onSwipeTouchStart = useCallback((e: React.TouchEvent) => {
-        if (isDone) return;
+        if (isDone || !e.touches?.[0]) return;
         swipeRef.current = { startX: e.touches[0].clientX, startY: e.touches[0].clientY, tracking: true, locked: false };
     }, [isDone]);
 
     const onSwipeTouchMove = useCallback((e: React.TouchEvent) => {
         const s = swipeRef.current;
-        if (!s.tracking || isDone || s.locked) return;
+        if (!s.tracking || isDone || s.locked || !e.touches?.[0]) return;
         const dx = e.touches[0].clientX - s.startX;
         const dy = e.touches[0].clientY - s.startY;
         // Cancel if vertical gesture dominates (user is scrolling)
