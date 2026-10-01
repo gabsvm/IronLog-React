@@ -84,10 +84,31 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
     const Divider = () => <div className="h-px bg-zinc-100 dark:bg-white/5 my-5 mx-1" />;
 
-    const ColorPill = ({ color, active, onClick, label }: any) => (
-        <button onClick={onClick} className="flex flex-col items-center gap-1.5 transition-transform active:scale-95 group">
-            <div className={`w-10 h-10 rounded-full ${color} shadow-sm border-2 transition-all ${active ? 'border-zinc-900 dark:border-white scale-110' : 'border-transparent opacity-80 group-hover:opacity-100'}`} />
-            <span className={`text-[9px] font-bold uppercase tracking-wide ${active ? 'text-zinc-900 dark:text-white' : 'text-zinc-400'}`}>{label}</span>
+    const ColorPill = ({ color, active, onClick, label, checkDark }: any) => (
+        <button
+            type="button"
+            onClick={onClick}
+            className="flex flex-col items-center gap-1.5 transition-transform active:scale-95 group"
+        >
+            <div
+                className={`w-9 h-9 rounded-full ${color} flex items-center justify-center transition-all ${
+                    active
+                        ? 'ring-2 ring-offset-2 ring-offset-zinc-900 ring-white dark:ring-white scale-105 shadow-md'
+                        : 'opacity-85 hover:opacity-100 hover:scale-105'
+                }`}
+            >
+                {active && (
+                    <Icon
+                        name="Check"
+                        size={16}
+                        strokeWidth={3}
+                        className={checkDark ? 'text-zinc-950' : 'text-white'}
+                    />
+                )}
+            </div>
+            <span className={`text-xs transition-colors ${active ? 'font-medium text-white' : 'text-muted group-hover:text-white'}`}>
+                {label}
+            </span>
         </button>
     );
 
@@ -389,45 +410,110 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     {/* APPEARANCE TAB */}
                     {tab === 'appearance' && (<>
                         <div>
-                            <label className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 block">{t.appearance}</label>
-                            <div className="grid grid-cols-3 gap-2 mb-4">
-                                <button onClick={() => setTheme('dark')} className={`py-3 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-colors ${theme === 'dark' ? 'bg-zinc-800 text-white border-zinc-600' : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-500 border-transparent'}`}>
-                                    <Icon name="Moon" size={14} /> Dark
+                            <div className="label-reference px-1 mb-1.5">{lang === 'es' ? 'Tema' : 'Theme'}</div>
+                            <div className="seg-reference grid grid-cols-3 gap-1 p-1 mb-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setTheme('dark')}
+                                    className={`h-9 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-all ${
+                                        theme === 'dark'
+                                            ? 'bg-surface-elevated text-white border border-border-strong shadow-sm'
+                                            : 'text-muted hover:text-white'
+                                    }`}
+                                >
+                                    <Icon name="Moon" size={14} /> {lang === 'es' ? 'Oscuro' : 'Dark'}
                                 </button>
-                                <button onClick={() => setTheme('light')} className={`py-3 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-colors ${theme === 'light' ? 'bg-white text-zinc-900 border-zinc-300 shadow-sm' : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-500 border-transparent'}`}>
-                                    <Icon name="Sun" size={14} /> Light
+                                <button
+                                    type="button"
+                                    onClick={() => setTheme('light')}
+                                    className={`h-9 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-all ${
+                                        theme === 'light'
+                                            ? 'bg-surface-elevated text-white border border-border-strong shadow-sm'
+                                            : 'text-muted hover:text-white'
+                                    }`}
+                                >
+                                    <Icon name="Sun" size={14} /> {lang === 'es' ? 'Claro' : 'Light'}
                                 </button>
-                                <button onClick={() => setTheme('system')} className={`py-3 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-colors ${theme === 'system' ? 'bg-zinc-900 text-white border-primary-500 dark:bg-zinc-800 dark:border-primary-500' : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-500 border-transparent'}`}>
-                                    <Icon name="Cpu" size={14} /> Auto
+                                <button
+                                    type="button"
+                                    onClick={() => setTheme('system')}
+                                    className={`h-9 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-all ${
+                                        theme === 'system'
+                                            ? 'bg-surface-elevated text-white border border-border-strong shadow-sm'
+                                            : 'text-muted hover:text-white'
+                                    }`}
+                                >
+                                    <Icon name="Smartphone" size={14} /> Auto
                                 </button>
                             </div>
 
-                            <div className="bg-zinc-50 dark:bg-white/5 p-4 rounded-2xl border border-zinc-100 dark:border-white/5 mb-5">
-                                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3 block">{lang === 'es' ? 'Color de Acento' : 'Accent Color'}</label>
-                                <div className="grid grid-cols-3 gap-4">
-                                    <ColorPill color="bg-[rgb(193,241,59)]" label={lang === 'es' ? 'Hipertrofia' : 'Hypertrophy'} active={colorTheme === 'iron'} onClick={() => setColorTheme('iron')} />
-                                    <ColorPill color="bg-blue-500" label="Ocean" active={colorTheme === 'ocean'} onClick={() => setColorTheme('ocean')} />
-                                    <ColorPill color="bg-emerald-500" label="Forest" active={colorTheme === 'forest'} onClick={() => setColorTheme('forest')} />
-                                    <ColorPill color="bg-purple-500" label="Royal" active={colorTheme === 'royal'} onClick={() => setColorTheme('royal')} />
-                                    <ColorPill color="bg-orange-500" label="Sunset" active={colorTheme === 'sunset'} onClick={() => setColorTheme('sunset')} />
-                                    <ColorPill color="bg-zinc-500" label="Mono" active={colorTheme === 'monochrome'} onClick={() => setColorTheme('monochrome')} />
+                            <div className="label-reference px-1 mb-1.5">{lang === 'es' ? 'Color de acento' : 'Accent color'}</div>
+                            <div className="card-reference p-4 mb-4">
+                                <div className="grid grid-cols-3 gap-y-4 gap-x-2 text-center text-xs">
+                                    <ColorPill color="bg-[#c4f13a]" checkDark label={lang === 'es' ? 'Hipertrofia' : 'Hypertrophy'} active={colorTheme === 'iron'} onClick={() => setColorTheme('iron')} />
+                                    <ColorPill color="bg-[#378add]" label="Ocean" active={colorTheme === 'ocean'} onClick={() => setColorTheme('ocean')} />
+                                    <ColorPill color="bg-[#1d9e75]" label="Forest" active={colorTheme === 'forest'} onClick={() => setColorTheme('forest')} />
+                                    <ColorPill color="bg-[#8f4fc9]" label="Royal" active={colorTheme === 'royal'} onClick={() => setColorTheme('royal')} />
+                                    <ColorPill color="bg-[#d4631a]" label="Sunset" active={colorTheme === 'sunset'} onClick={() => setColorTheme('sunset')} />
+                                    <ColorPill color="bg-[#5f6068]" label="Mono" active={colorTheme === 'monochrome'} onClick={() => setColorTheme('monochrome')} />
                                 </div>
                             </div>
 
-                            <div className="bg-zinc-50 dark:bg-white/5 p-4 rounded-2xl border border-zinc-100 dark:border-white/5 mb-5 space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">
-                                        {lang === 'es' ? 'Efectos y Rendimiento' : 'Effects & Performance'}
-                                    </label>
-                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">
+                            <div className="label-reference px-1 mb-1.5">{lang === 'es' ? 'Idioma' : 'Language'}</div>
+                            <div className="seg-reference grid grid-cols-2 gap-1 p-1 mb-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setLang('en')}
+                                    className={`h-9 rounded-lg text-xs font-medium flex items-center justify-center transition-all ${
+                                        lang === 'en'
+                                            ? 'bg-surface-elevated text-white border border-border-strong shadow-sm'
+                                            : 'text-muted hover:text-white'
+                                    }`}
+                                >
+                                    English
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setLang('es')}
+                                    className={`h-9 rounded-lg text-xs font-medium flex items-center justify-center transition-all ${
+                                        lang === 'es'
+                                            ? 'bg-surface-elevated text-white border border-border-strong shadow-sm'
+                                            : 'text-muted hover:text-white'
+                                    }`}
+                                >
+                                    Español
+                                </button>
+                            </div>
+
+                            <div className="label-reference px-1 mb-1.5">{lang === 'es' ? 'Avanzado' : 'Advanced'}</div>
+                            <div className="card-reference p-3.5 space-y-3">
+                                <div className="flex items-center gap-3">
+                                    <span className="w-8 h-8 rounded-lg bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
+                                        <Icon name="Zap" size={17} />
+                                    </span>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="text-sm font-medium text-white">{lang === 'es' ? 'Efectos y rendimiento' : 'Effects & performance'}</div>
+                                        <div className="text-xs text-muted truncate">
+                                            {effectsMode === 'system' && (lang === 'es' ? 'Equilibrado en móvil, completo en escritorio' : 'Balanced on mobile, full on desktop')}
+                                            {effectsMode === 'full' && (lang === 'es' ? 'Desenfoques y animaciones completas' : 'Full blurs and rich animations')}
+                                            {effectsMode === 'balanced' && (lang === 'es' ? 'Transiciones fluidas sin desenfoques pesados' : 'Smooth transitions without heavy blurs')}
+                                            {effectsMode === 'reduced' && (lang === 'es' ? 'Accesibilidad: minimiza movimiento y batería' : 'Accessibility: minimal motion & battery saving')}
+                                        </div>
+                                    </div>
+                                    <span className="chip-reference text-xs font-semibold text-muted">
                                         {resolvedEffects.toUpperCase()}
                                     </span>
                                 </div>
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+
+                                <div className="seg-reference grid grid-cols-4 gap-1 p-1">
                                     <button
                                         type="button"
                                         onClick={() => setEffectsMode('system')}
-                                        className={`py-2.5 px-2 rounded-xl text-xs font-bold border flex flex-col items-center justify-center gap-1 transition-all ${effectsMode === 'system' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 border-primary-500 shadow-sm' : 'bg-white dark:bg-zinc-800/40 text-zinc-500 border-transparent hover:text-zinc-700 dark:hover:text-zinc-300'}`}
+                                        className={`py-2 px-1 rounded-lg text-xs flex flex-col items-center justify-center gap-1 transition-all ${
+                                            effectsMode === 'system'
+                                                ? 'bg-surface-elevated text-white border border-border-strong font-medium shadow-sm'
+                                                : 'text-muted hover:text-white'
+                                        }`}
                                     >
                                         <Icon name="Cpu" size={14} />
                                         <span>{lang === 'es' ? 'Auto' : 'System'}</span>
@@ -435,7 +521,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                     <button
                                         type="button"
                                         onClick={() => setEffectsMode('full')}
-                                        className={`py-2.5 px-2 rounded-xl text-xs font-bold border flex flex-col items-center justify-center gap-1 transition-all ${effectsMode === 'full' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 border-primary-500 shadow-sm' : 'bg-white dark:bg-zinc-800/40 text-zinc-500 border-transparent hover:text-zinc-700 dark:hover:text-zinc-300'}`}
+                                        className={`py-2 px-1 rounded-lg text-xs flex flex-col items-center justify-center gap-1 transition-all ${
+                                            effectsMode === 'full'
+                                                ? 'bg-surface-elevated text-white border border-border-strong font-medium shadow-sm'
+                                                : 'text-muted hover:text-white'
+                                        }`}
                                     >
                                         <Icon name="Zap" size={14} />
                                         <span>{lang === 'es' ? 'Completo' : 'Full'}</span>
@@ -443,7 +533,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                     <button
                                         type="button"
                                         onClick={() => setEffectsMode('balanced')}
-                                        className={`py-2.5 px-2 rounded-xl text-xs font-bold border flex flex-col items-center justify-center gap-1 transition-all ${effectsMode === 'balanced' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 border-primary-500 shadow-sm' : 'bg-white dark:bg-zinc-800/40 text-zinc-500 border-transparent hover:text-zinc-700 dark:hover:text-zinc-300'}`}
+                                        className={`py-2 px-1 rounded-lg text-xs flex flex-col items-center justify-center gap-1 transition-all ${
+                                            effectsMode === 'balanced'
+                                                ? 'bg-surface-elevated text-white border border-border-strong font-medium shadow-sm'
+                                                : 'text-muted hover:text-white'
+                                        }`}
                                     >
                                         <Icon name="Layers" size={14} />
                                         <span>{lang === 'es' ? 'Equilibrado' : 'Balanced'}</span>
@@ -451,30 +545,22 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                     <button
                                         type="button"
                                         onClick={() => setEffectsMode('reduced')}
-                                        className={`py-2.5 px-2 rounded-xl text-xs font-bold border flex flex-col items-center justify-center gap-1 transition-all ${effectsMode === 'reduced' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 border-primary-500 shadow-sm' : 'bg-white dark:bg-zinc-800/40 text-zinc-500 border-transparent hover:text-zinc-700 dark:hover:text-zinc-300'}`}
+                                        className={`py-2 px-1 rounded-lg text-xs flex flex-col items-center justify-center gap-1 transition-all ${
+                                            effectsMode === 'reduced'
+                                                ? 'bg-surface-elevated text-white border border-border-strong font-medium shadow-sm'
+                                                : 'text-muted hover:text-white'
+                                        }`}
                                     >
                                         <Icon name="EyeOff" size={14} />
                                         <span>{lang === 'es' ? 'Reducido' : 'Reduced'}</span>
                                     </button>
                                 </div>
-                                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-snug">
-                                    {effectsMode === 'system' && (lang === 'es' ? 'Equilibrado en móvil, completo en escritorio. Respeta la configuración de accesibilidad del sistema.' : 'Balanced on mobile, full on desktop. Honors system accessibility settings.')}
+                                <p className="text-[11px] text-muted leading-relaxed px-1">
+                                    {effectsMode === 'system' && (lang === 'es' ? 'Equilibrado en móvil, completo en escritorio. Respeta la accesibilidad del sistema.' : 'Balanced on mobile, full on desktop. Honors system accessibility settings.')}
                                     {effectsMode === 'full' && (lang === 'es' ? 'Máxima fidelidad visual con desenfoques de vidrio completos y todas las animaciones.' : 'Full visual polish with rich backdrop blurs and complete animations.')}
-                                    {effectsMode === 'balanced' && (lang === 'es' ? 'Recomendado para entrenar: transiciones suaves y vidrio contextual sin animaciones continuas de fondo.' : 'Recommended for workouts: smooth transitions and contextual glass without continuous background animation.')}
+                                    {effectsMode === 'balanced' && (lang === 'es' ? 'Recomendado para entrenar: transiciones suaves y vidrio contextual sin animaciones continuas.' : 'Recommended for workouts: smooth transitions and contextual glass without continuous animation.')}
                                     {effectsMode === 'reduced' && (lang === 'es' ? 'Accesibilidad: elimina desenfoques pesados y minimiza el movimiento para ahorrar batería.' : 'Accessibility: disables backdrop blurs and minimizes motion for battery saving.')}
                                 </p>
-                            </div>
-
-                            <div>
-                                <label className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 block">{t.language}</label>
-                                <div className="grid grid-cols-2 gap-2.5">
-                                    <button onClick={() => setLang('en')} className={`py-3 rounded-xl text-xs font-bold border transition-colors ${lang === 'en' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 border-transparent' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-transparent'}`}>
-                                        English
-                                    </button>
-                                    <button onClick={() => setLang('es')} className={`py-3 rounded-xl text-xs font-bold border transition-colors ${lang === 'es' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 border-transparent' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-transparent'}`}>
-                                        Español
-                                    </button>
-                                </div>
                             </div>
                         </div>
                     </>)}
