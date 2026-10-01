@@ -135,10 +135,13 @@ const AppContent = () => {
 
     useEffect(() => {
         const handleUpdateAvailable = (event: Event) => {
-            const registration = (event as CustomEvent<{ registration?: ServiceWorkerRegistration }>).detail?.registration;
-            if (!registration) return;
+            const detail = (event as CustomEvent<{ registration?: ServiceWorkerRegistration; isPreloadError?: boolean }>).detail;
             setDismissedUpdate(false);
-            setUpdateRegistration(registration);
+            if (detail?.registration) {
+                setUpdateRegistration(detail.registration);
+            } else if (detail?.isPreloadError) {
+                setUpdateRegistration(prev => prev || ({} as any));
+            }
         };
 
         window.addEventListener('ironlog:update-available', handleUpdateAvailable);
@@ -630,24 +633,29 @@ const AppContent = () => {
                     <div className="pointer-events-auto flex items-center gap-3 bg-zinc-950/95 border border-primary-500/30 text-zinc-100 text-xs font-semibold px-4 py-3 rounded-2xl shadow-xl backdrop-blur-md max-w-md w-full">
                         <Icon name="Download" size={16} className="text-primary-400 shrink-0" />
                         <span className="flex-1">
-                            {lang === 'es'
-                                ? 'Hay una nueva version lista. Actualiza para cargar los cambios mas recientes.'
-                                : 'A new version is ready. Update to load the latest changes.'}
+                            {t.updateBannerReady}
                         </span>
                         <button
                             onClick={() => {
+                                if (activeSession) {
+                                    if (!window.confirm(t.updateConfirmActiveWorkout)) return;
+                                }
+                                (window as any).__USER_TRIGGERED_SW_UPDATE__ = true;
                                 const target = updateRegistration.waiting || updateRegistration.installing;
-                                if (!target) return;
-                                target.postMessage({ type: 'SKIP_WAITING' });
+                                if (target) {
+                                    target.postMessage({ type: 'SKIP_WAITING' });
+                                } else {
+                                    window.location.reload();
+                                }
                             }}
                             className="rounded-xl bg-primary-500 px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-black transition-colors hover:bg-primary-400"
                         >
-                            {lang === 'es' ? 'Actualizar' : 'Update'}
+                            {t.updateBannerAction}
                         </button>
                         <button
                             onClick={() => setDismissedUpdate(true)}
                             className="text-zinc-500 hover:text-white transition-colors"
-                            aria-label={lang === 'es' ? 'Cerrar aviso de actualizacion' : 'Dismiss update notice'}
+                            aria-label={t.updateBannerDismiss}
                         >
                             <Icon name="X" size={16} />
                         </button>

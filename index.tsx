@@ -7,6 +7,7 @@ import App from './App';
 import { requestBackgroundSync, requestPeriodicSync } from './services/backgroundSync';
 import { resetLocalData } from './services/localDataReset';
 import { isServiceWorkerAllowed } from './utils/serviceWorker';
+import { useStore } from './lib/store';
 console.log("Starting App Initialization...");
 
 const isNativeShell = Capacitor.isNativePlatform();
@@ -77,8 +78,28 @@ if (isServiceWorkerAllowed()) {
   let refreshing = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (refreshing || !hadControllerOnLoad) return;
+
+    const hasActiveSession = Boolean(useStore.getState().activeSession);
+    const userRequested = Boolean((window as any).__USER_TRIGGERED_SW_UPDATE__);
+
+    if (hasActiveSession && !userRequested) {
+      console.warn('[SW] Deferring automatic page reload because an active workout session is running.');
+      window.dispatchEvent(new CustomEvent('ironlog:update-deferred'));
+      return;
+    }
+
     refreshing = true;
     window.location.reload();
+  });
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('vite:preloadError', (event) => {
+    event.preventDefault();
+    console.warn('[PWA] Chunk preload failed (possibly outdated version); signaling update available.');
+    window.dispatchEvent(new CustomEvent('ironlog:update-available', {
+      detail: { registration: null, isPreloadError: true }
+    }));
   });
 }
 
