@@ -53,3 +53,7 @@ docs/design-reference/extracted/
 
 # Local secrets file without dot (never commit)
 /env
+
+# Local debug APK output (never commit binaries)
+apk-out/
+*.apk

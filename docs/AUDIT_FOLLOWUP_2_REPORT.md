@@ -204,3 +204,36 @@ Ninguno: las 7 tareas se verificaron con tests de comportamiento real. Deuda
 consciente heredada: ternarios `lang === 'es'` históricos (~50 archivos) y
 Fase 7 Capacitor sin hacer (el APK G9 es solo-debug sobre Capacitor 5 / SDK
 actuales).
+
+---
+
+## G9. APK de debug para pruebas
+
+Compilado sobre Capacitor 5 / SDK 33 sin tocar versiones (Fase 7 excluida).
+
+**Entorno (paso 1–2):** el archivo `env` copiado a la raíz contenía variables
+de otro proyecto (`VITE_SUPABASE_*`, solo nombres verificados) — la app usa
+`VITE_FIREBASE_*`, que ya estaban completas (6/6) en `.env.production.local`
+(pull de Vercel; ignorado, nunca commiteado). `npm run validate-android-env`:
+OK. Toolchain: JDK Temurin 17.0.19, `ANDROID_HOME`/`ANDROID_SDK_ROOT` con
+`platforms/android-33` + `build-tools/33.0.1`, Capacitor CLI 5.7.8. Nada para
+instalar.
+
+**Build (paso 3–4):** `npm run build` (precache 61 = 7 critical + 54 lazy) →
+`npx cap sync android` (0.56s) → `gradlew.bat assembleDebug` → OK al primer
+intento, sin warnings bloqueantes.
+
+**Artefacto (paso 5–6):**
+- Ruta: `C:\Dev\IronLog-React\apk-out\gainslab-debug.apk` (ignorado vía
+  `apk-out/` + `*.apk` en `.gitignore`; NO commiteado).
+- Tamaño: 17.039.810 bytes (~16,25 MB).
+- SHA-256: `F4C352BE2E3C25D9BEDBBE591B92B4AFE948996B010FC285C2B70B709ABC9655`.
+- Commit fuente: `14457fb` (rama `agent/gainslab-audit-fixes-v3`, árbol limpio).
+- Versión: `versionName "4.0.3-kong.6"`, `versionCode 414`,
+  `applicationId "com.gainslab.pro"`, minSdk 22 / targetSdk 33.
+- Instalación: `adb install -r apk-out/gainslab-debug.apk`.
+
+**Higiene (paso 7 / criterio 4):** `ironlog-kmp/local.properties` estaba
+trackeado pese a `.gitignore` → `git rm --cached` (el archivo local se
+conserva). Índice final sin `.env*`, sin APK, sin `local.properties`.
+Sin errores de Gradle que corregir.
