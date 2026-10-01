@@ -785,6 +785,11 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     }, [theme]);
 
     useEffect(() => { window.document.documentElement.setAttribute('data-theme', colorTheme); }, [colorTheme]);
+    useEffect(() => {
+        if (typeof document !== 'undefined') {
+            document.documentElement.lang = lang;
+        }
+    }, [lang]);
 
     useEffect(() => {
         const requestWakeLock = async () => {

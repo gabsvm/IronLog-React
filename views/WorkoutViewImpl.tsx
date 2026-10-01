@@ -88,8 +88,8 @@ const RestTimerControl: React.FC<{
                     restTimer.active ? 'bg-primary-500/20 text-primary-300' : 'bg-zinc-900 text-zinc-400'
                 }`}
                 title={restTimer.active
-                    ? (lang === 'es' ? 'Finalizar descanso' : 'Stop rest')
-                    : (lang === 'es' ? `Iniciar descanso de ${preset}s` : `Start ${preset}s rest`)}
+                    ? t.stopRest
+                    : `${t.startRest} (${preset}s)`}
             >
                 <Icon name="Timer" size={11} />
                 {restTimer.active ? formatSeconds(restTimer.timeLeft) : `${preset}s`}
@@ -454,7 +454,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                         type="button"
                         onClick={onBack}
                         className="relative flex h-9 w-9 after:absolute after:-inset-1 after:content-[''] shrink-0 items-center justify-center rounded-full text-zinc-400 transition-colors active:bg-surface-raised hover:text-white"
-                        aria-label={lang === 'es' ? 'Volver' : 'Back'}
+                        aria-label={t.back}
                     >
                         <Icon name="ChevronLeft" size={22} strokeWidth={2.5} />
                     </button>
@@ -462,14 +462,14 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                     <div className="flex-1 min-w-0">
                         <h1 className="truncate text-base font-semibold leading-tight text-white">
                             {isCalisthenicsSession
-                                ? (lang === 'es' ? 'Sesión de Calistenia' : 'Calisthenics Session')
+                                ? t.calisthenicsSession
                                 : activeSession.name}
                         </h1>
                         <div className="truncate text-xs text-muted">
                             {activeSession.week >= 1 ? `${t.week} ${activeSession.week} · ` : ''}
                             {remainingSets === 0
-                                ? (lang === 'es' ? 'Todo listo' : 'All done')
-                                : `${remainingSets} ${lang === 'es' ? 'series restantes' : 'sets left'}`}
+                                ? t.allDone
+                                : `${remainingSets} ${t.setsLeft}`}
                         </div>
                     </div>
 
@@ -483,8 +483,8 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                 onOpenReorder();
                             }}
                             className="relative flex h-8 w-8 after:absolute after:-inset-1.5 after:content-[''] shrink-0 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:text-white active:bg-surface-raised"
-                            title={lang === 'es' ? 'Ordenar ejercicios' : 'Reorder exercises'}
-                            aria-label={lang === 'es' ? 'Ordenar ejercicios' : 'Reorder exercises'}
+                            title={t.reorderExercises}
+                            aria-label={t.reorderExercises}
                         >
                             <Icon name="ArrowUpDown" size={16} strokeWidth={2} />
                         </button>
@@ -512,7 +512,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                         }}
                         className="relative flex h-8 after:absolute after:-inset-y-1.5 after:-inset-x-1 after:content-[''] shrink-0 items-center justify-center rounded-lg bg-primary-500 px-3.5 text-xs font-semibold text-zinc-950 transition-all hover:bg-primary-400 active:scale-95 shadow-sm"
                     >
-                        {lang === 'es' ? 'Terminar' : 'Finish'}
+                        {t.finish || (lang === 'es' ? 'Terminar' : 'Finish')}
                     </button>
                 </div>
 
@@ -628,7 +628,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                 className="w-full flex items-center justify-between border-b border-white/5 bg-zinc-950 px-5 py-3 hover:bg-zinc-900 transition-colors"
                             >
                                 <span className="text-xs font-bold text-zinc-300">
-                                    {lang === 'es' ? 'Aplicar a todas las series' : 'Apply to all sets'}
+                                    {t.applyToAllSets}
                                 </span>
                                 <div className={`relative w-9 h-5 rounded-full transition-colors shrink-0 ${applyToAll ? 'bg-primary-500 shadow-[0_2px_8px] shadow-primary-500/30' : 'bg-zinc-600'}`}>
                                     <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${applyToAll ? 'left-4' : 'left-0.5'}`} />
@@ -667,7 +667,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                 onClick={() => setShowAdvancedSetTypes(v => !v)}
                                 className="mt-1 flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2.5 text-left text-xs font-bold uppercase tracking-[0.22em] text-zinc-400 transition-all hover:border-zinc-700 hover:bg-zinc-900"
                             >
-                                <span>{lang === 'es' ? 'Protocolos avanzados' : 'Advanced protocols'}</span>
+                                <span>{t.advancedProtocols}</span>
                                 <Icon name={showAdvancedSetTypes ? 'ChevronUp' : 'ChevronDown'} size={16} />
                             </button>
 
@@ -710,20 +710,20 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                     <Sheet
                         open={showFinishModal}
                         onOpenChange={(open) => !open && setShowFinishModal(false)}
-                        title={lang === 'es' ? 'Terminar sesión' : 'Finish session'}
+                        title={t.finishSession}
                         accent="primary"
                     >
                         <div className="p-4 space-y-3.5">
                             {/* Summary Cards */}
                             <div className="grid grid-cols-2 gap-2.5">
                                 <div className="rounded-xl border border-border-subtle bg-surface-raised p-3">
-                                    <div className="text-xs text-muted">{lang === 'es' ? 'Duración' : 'Duration'}</div>
+                                    <div className="text-xs text-muted">{t.duration}</div>
                                     <div className="text-xl font-semibold text-white mt-0.5 tabular-nums">
                                         {formatSeconds(elapsedSecs)}
                                     </div>
                                 </div>
                                 <div className="rounded-xl border border-border-subtle bg-surface-raised p-3">
-                                    <div className="text-xs text-muted">{lang === 'es' ? 'Series' : 'Sets'}</div>
+                                    <div className="text-xs text-muted">{t.sets}</div>
                                     <div className="text-xl font-semibold text-white mt-0.5 tabular-nums">
                                         {completedWorkingSets} / {totalWorkingSets}
                                     </div>
@@ -749,7 +749,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                     <div className="flex-1 min-w-0">
                                         <div className="text-sm font-semibold text-white">{t.updateRoutine}</div>
                                         <div className="text-xs text-muted mt-0.5">
-                                            {lang === 'es' ? 'Guarda ejercicios, orden y series para próximos entrenos.' : 'Save exercises, order, and sets for upcoming workouts.'}
+                                            {t.saveRoutineDesc}
                                         </div>
                                     </div>
                                     <div className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${updateTemplate ? 'bg-primary-500' : 'bg-surface-elevated border border-border-strong'}`}>
@@ -761,10 +761,10 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                             {/* Session Note */}
                             <div>
                                 <label className="block text-[11px] font-semibold uppercase tracking-wider text-muted mb-1 px-0.5">
-                                    {lang === 'es' ? 'Nota de sesión' : 'Session note'}
+                                    {t.sessionNote}
                                 </label>
                                 <textarea
-                                    placeholder={lang === 'es' ? 'Cómo te has sentido hoy...' : 'How did you feel today...'}
+                                    placeholder={t.sessionNotePlaceholder}
                                     value={activeSession.note || ''}
                                     onChange={e => updateSession(prev => prev ? { ...prev, note: e.target.value } : null)}
                                     rows={3}
@@ -779,14 +779,14 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                     onClick={handleConfirmFinish}
                                     className="w-full h-11 rounded-xl bg-primary-500 text-zinc-950 font-semibold text-sm hover:bg-primary-400 active:scale-98 transition-all shadow-sm"
                                 >
-                                    {lang === 'es' ? 'Guardar y terminar' : 'Save and finish'}
+                                    {t.saveAndFinish}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setShowFinishModal(false)}
                                     className="w-full h-11 rounded-xl bg-surface-elevated text-zinc-200 font-semibold text-sm hover:bg-zinc-800 active:scale-98 transition-all"
                                 >
-                                    {lang === 'es' ? 'Seguir entrenando' : 'Continue training'}
+                                    {t.continueTraining}
                                 </button>
                             </div>
 
@@ -801,7 +801,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                     className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-400 hover:text-red-300 transition-colors uppercase tracking-wider active:scale-95"
                                 >
                                     <Icon name="Trash2" size={13} />
-                                    {t.discardSession || (lang === 'es' ? 'Descartar sesión' : 'Discard session')}
+                                    {t.discardSession}
                                 </button>
                             </div>
                         </div>
@@ -828,12 +828,12 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                 <Suspense fallback={null}>
                     <ConfirmModal
                         isOpen={true}
-                        title={lang === 'es' ? 'Sustitución en KONG' : 'KONG Substitution'}
+                        title={t.kongSubTitle}
                         description={lang === 'es'
                             ? '¿Deseas mantener este reemplazo durante todo el programa KONG o aplicarlo solo para la sesión de hoy?'
                             : 'Keep this replacement for all of KONG, or apply it only for today?'}
-                        confirmText={lang === 'es' ? 'Todo KONG' : 'All KONG'}
-                        cancelText={lang === 'es' ? 'Solo hoy' : 'Today only'}
+                        confirmText={t.allKong}
+                        cancelText={t.todayOnly}
                         onConfirm={() => {
                             setActiveMeso(prev => prev?.programSystem ? {
                                 ...prev,
@@ -854,11 +854,11 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                 <Suspense fallback={null}>
                     <ConfirmModal
                         isOpen={true}
-                        title={lang === 'es' ? 'Reordenar ejercicios KONG' : 'Reorder KONG exercises'}
+                        title={t.reorderKongTitle}
                         description={lang === 'es'
                             ? 'El orden de ejercicios forma parte de la metodología KONG. Weak Points First y Fatigued Strength dependen del orden. ¿Reordenar solo para la sesión de hoy?'
                             : 'Exercise order is part of KONG methodology. Weak Points First and Fatigued Strength depend on order. Reorder for today only?'}
-                        confirmText={lang === 'es' ? 'Reordenar hoy' : 'Reorder today'}
+                        confirmText={t.reorderToday}
                         cancelText={t.cancel}
                         onConfirm={() => {
                             reorderSessionExercises(kongReorderPrompt.oldIndex, kongReorderPrompt.newIndex);

@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { WorkoutSet, SetType } from '../../types';
 import { Icon } from '../ui/Icon';
 import { triggerHaptic } from '../../utils/audio';
+import { TRANSLATIONS } from '../../constants/translations';
 
 interface SetRowProps {
     set: WorkoutSet;
@@ -93,6 +94,7 @@ const HoldTimer: React.FC<{
     lang: 'en' | 'es';
     isDone: boolean;
 }> = ({ initialSeconds, targetSeconds, onSave, lang, isDone }) => {
+    const t = TRANSLATIONS[lang];
     const [elapsed, setElapsed] = useState(initialSeconds);
     const [running, setRunning] = useState(false);
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -206,7 +208,7 @@ const HoldTimer: React.FC<{
                         type="button"
                         onClick={(e) => { e.stopPropagation(); start(); }}
                         className="w-9 h-9 rounded-xl bg-violet-500/20 text-violet-400 flex items-center justify-center active:scale-90 transition-transform border border-violet-500/30"
-                        aria-label={lang === 'es' ? 'Iniciar timer' : 'Start timer'}
+                        aria-label={t.startTimer}
                     >
                         <Icon name="Play" size={15} fill="currentColor" />
                     </button>
@@ -215,7 +217,7 @@ const HoldTimer: React.FC<{
                         type="button"
                         onClick={(e) => { e.stopPropagation(); stop(); }}
                         className="w-9 h-9 rounded-xl bg-violet-500 text-white flex items-center justify-center active:scale-90 transition-transform animate-pulse-slow"
-                        aria-label={lang === 'es' ? 'Detener timer' : 'Stop timer'}
+                        aria-label={t.stopTimer}
                     >
                         <Icon name="Square" size={14} fill="currentColor" />
                     </button>
@@ -225,7 +227,7 @@ const HoldTimer: React.FC<{
                         type="button"
                         onClick={(e) => { e.stopPropagation(); reset(); }}
                         className="relative w-7 h-9 after:absolute after:-inset-x-2 after:-inset-y-1 after:content-[''] flex items-center justify-center text-zinc-600 hover:text-zinc-400 active:scale-90 transition-all"
-                        aria-label={lang === 'es' ? 'Reiniciar timer' : 'Reset timer'}
+                        aria-label={t.resetTimer}
                     >
                         <Icon name="RotateCcw" size={13} />
                     </button>
@@ -242,6 +244,7 @@ export const SetRow = React.memo(({
     lang, isCardio, isBodyweight, isIsometric, isometricTargetSecs,
     setIndex, badgeLabel, tutorialId, disableTypeChange, isActiveProtocolSet, isNextSet, showRIR = false
 }: SetRowProps) => {
+    const t = TRANSLATIONS[lang];
     const isDone = set.completed;
     const setType = set.type || 'regular';
     // For regular sets: show the set number (1-based index) instead of the
@@ -479,7 +482,7 @@ export const SetRow = React.memo(({
     const repsPlaceholder = set.hintReps ? String(set.hintReps) : '0';
     const prescriptionHint = set.prescribedReps !== undefined
         ? (set.prescribedReps === 'FAILURE'
-            ? (lang === 'es' ? 'OBJ: AL FALLO' : 'TARGET: FAILURE')
+            ? t.targetFailure
             : `OBJ: ${set.prescribedReps}${set.targetRpe !== undefined ? ` · RPE ${set.targetRpe}` : ''}`)
         : null;
 
@@ -512,7 +515,7 @@ export const SetRow = React.memo(({
     const badgeProps = (!disableTypeChange && !isDone)
         ? { id: tutorialId, onClick: () => onChangeType(exInstanceId, set.id, setType), 'aria-label': badgeAriaLabel }
         : { id: tutorialId, 'aria-label': badgeAriaLabel };
-    const completeSetAriaLabel = lang === 'es' ? 'Completar serie' : 'Complete set';
+    const completeSetAriaLabel = t.completeSet;
     const badgeClass = `relative flex h-7 w-7 after:absolute after:-inset-2 after:content-[''] items-center justify-center rounded-full text-[11px] font-bold transition-all ${
         isDone
             ? 'bg-primary-500 text-zinc-950'
@@ -602,7 +605,7 @@ export const SetRow = React.memo(({
                             type="number" inputMode="decimal"
                             className={currentInputClass}
                             placeholder={weightPlaceholder}
-                            aria-label={lang === 'es' ? 'Peso' : 'Weight'}
+                            aria-label={t.weight}
                             value={localWeight}
                             onChange={e => {
                                 setLocalWeight(e.target.value);
@@ -620,7 +623,7 @@ export const SetRow = React.memo(({
                             type="number" inputMode="numeric"
                             className={currentInputClass}
                             placeholder={repsPlaceholder}
-                            aria-label={lang === 'es' ? 'Repeticiones' : 'Reps'}
+                            aria-label={t.reps}
                             value={localReps}
                             onChange={e => {
                                 setLocalReps(e.target.value);
@@ -690,7 +693,7 @@ export const SetRow = React.memo(({
                         type="number" inputMode="decimal"
                         className={currentInputClass}
                         placeholder={weightPlaceholder}
-                        aria-label={lang === 'es' ? 'Peso' : 'Weight'}
+                        aria-label={t.weight}
                         value={localWeight}
                         onChange={e => {
                             setLocalWeight(e.target.value);
@@ -708,7 +711,7 @@ export const SetRow = React.memo(({
                         type="number" inputMode="numeric"
                         className={currentInputClass}
                         placeholder={repsPlaceholder}
-                        aria-label={lang === 'es' ? 'Repeticiones' : 'Reps'}
+                        aria-label={t.reps}
                         value={localReps}
                         onChange={e => {
                             setLocalReps(e.target.value);

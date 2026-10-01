@@ -839,9 +839,9 @@ const AppContent = () => {
             {/* FORCE SYNC MODAL */}
             <ConfirmModal
                 isOpen={showForceSyncModal}
-                title={t.forceSyncTitle || (lang === 'en' ? "Force Sync" : "Forzar Sincronización")}
-                description={lang === 'en' ? "Upload current local data to cloud? This will overwrite cloud data." : "¿Subir datos locales a la nube? Esto sobrescribirá los datos de la nube."}
-                confirmText={lang === 'en' ? "Upload" : "Subir"}
+                title={t.forceSyncTitle}
+                description={t.forceSyncConfirm}
+                confirmText={t.upload}
                 cancelText={t.cancel}
                 onConfirm={executeForceSync}
                 onCancel={() => setShowForceSyncModal(false)}
@@ -852,11 +852,9 @@ const AppContent = () => {
                 <Suspense fallback={null}>
                     <ConfirmModal
                         isOpen={true}
-                        title={forceSyncFeedback.type === 'success' 
-                            ? (lang === 'en' ? 'Sync Complete' : 'Sincronización Completada')
-                            : (lang === 'en' ? 'Sync Error' : 'Error de Sincronización')}
+                        title={forceSyncFeedback.type === 'success' ? t.syncComplete : t.syncError}
                         description={forceSyncFeedback.message}
-                        confirmText={lang === 'en' ? 'OK' : 'Entendido'}
+                        confirmText={t.understood}
                         cancelText=""
                         variant={forceSyncFeedback.type === 'success' ? 'primary' : 'danger'}
                         onConfirm={() => setForceSyncFeedback(null)}
@@ -872,13 +870,13 @@ const AppContent = () => {
                     aria-live="polite"
                     className="fixed bottom-24 left-1/2 -translate-x-1/2 z-toast flex items-center gap-3 px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-700 shadow-2xl text-sm text-white animate-in fade-in slide-in-from-bottom-2"
                 >
-                    <span>{skippedSessionToast.name}: {t.skipped || (lang === 'en' ? 'Skipped' : 'Saltado')}</span>
+                    <span>{skippedSessionToast.name}: {t.skipped}</span>
                     <button
                         type="button"
                         onClick={handleUndoSkip}
                         className="px-2.5 py-1 rounded-lg bg-primary-500/20 text-primary-400 font-semibold text-xs hover:bg-primary-500/30 transition-colors"
                     >
-                        {t.undo || (lang === 'en' ? 'Undo' : 'Deshacer')}
+                        {t.undo}
                     </button>
                 </div>
             )}
@@ -907,11 +905,11 @@ const AppContent = () => {
                 <Suspense fallback={null}>
                     <ConfirmModal
                         isOpen={true}
-                        title={lang === 'es' ? 'Convertir KONG en Rutina Personal' : 'Convert KONG to Personal Routine'}
+                        title={t.convertKongTitle}
                         description={lang === 'es'
                             ? 'La definición oficial de KONG no se edita directamente para preservar la metodología original. ¿Deseas convertir tu ciclo actual en una rutina editable?'
                             : 'The official KONG definition cannot be edited directly to preserve the original methodology. Do you want to convert this cycle into an editable personal routine?'}
-                        confirmText={lang === 'es' ? 'Convertir y Editar' : 'Convert & Edit'}
+                        confirmText={t.convertKongConfirm}
                         cancelText={t.cancel}
                         onConfirm={() => {
                             if (!activeMeso) return;

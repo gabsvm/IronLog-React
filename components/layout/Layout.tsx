@@ -36,6 +36,7 @@ const KongConvertConfirmModal: React.FC<KongConvertConfirmModalProps> = ({
     const { setProgram } = useApp();
     const activeMeso = useStore(state => state.activeMeso);
     const setActiveMeso = useStore(state => state.setActiveMeso);
+    const t = TRANSLATIONS[lang];
 
     const handleConfirm = () => {
         if (!activeMeso) return;
@@ -49,11 +50,11 @@ const KongConvertConfirmModal: React.FC<KongConvertConfirmModalProps> = ({
         <React.Suspense fallback={null}>
             <ConfirmModal
                 isOpen={isOpen}
-                title={lang === 'es' ? 'Convertir KONG en Rutina Personal' : 'Convert KONG to Personal Routine'}
+                title={t.convertKongTitle}
                 description={lang === 'es'
                     ? 'KONG es un programa estructurado de 12 semanas. Para editar libremente la semana actual debes convertirla en una rutina personal. KONG finalizará y la copia quedará editable. ¿Continuar?'
                     : 'KONG is a structured 12-week program. To freely edit the current week, convert it to a personal routine. KONG will end and the copy will become editable. Continue?'}
-                confirmText={lang === 'es' ? 'Convertir y Editar' : 'Convert & Edit'}
+                confirmText={t.convertKongConfirm}
                 cancelText={cancelText}
                 onConfirm={handleConfirm}
                 onCancel={onClose}
@@ -213,12 +214,12 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
                             {(!isOnline || syncStatus.pending > 0 || syncStatus.isSyncing) && (
                                 <div className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] ${!isOnline ? 'border-amber-500/25 bg-amber-500/10 text-amber-500' : syncStatus.isSyncing ? 'border-cyan-500/25 bg-cyan-500/10 text-cyan-500' : 'border-zinc-700/40 bg-zinc-900/10 text-zinc-500 dark:bg-zinc-900/85 dark:text-zinc-300'}`}>
                                     <span className={`h-1.5 w-1.5 rounded-full ${!isOnline ? 'bg-amber-400' : syncStatus.isSyncing ? 'bg-cyan-400' : 'bg-zinc-400'}`} />
-                                    <span>{!isOnline ? 'offline' : syncStatus.isSyncing ? 'sync' : `${lang === 'es' ? 'cola' : 'queue'} ${syncStatus.pending}`}</span>
+                                    <span>{!isOnline ? 'offline' : syncStatus.isSyncing ? 'sync' : `${t.queue} ${syncStatus.pending}`}</span>
                                 </div>
                             )}
                         </div>
                         <div id="tut-profile-btn">
-                            <Avatar email={user?.email} photoURL={(user as any)?.photoURL} isPro={isPro} onClick={openProfile} ariaLabel={lang === 'es' ? 'Abrir perfil' : 'Open profile'} />
+                            <Avatar email={user?.email} photoURL={(user as any)?.photoURL} isPro={isPro} onClick={openProfile} ariaLabel={t.openProfile} />
                         </div>
                     </div>
                 </div>
@@ -229,12 +230,12 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
             {view !== 'workout' && (
                 <nav aria-label="Main navigation" className="fixed bottom-0 left-0 right-0 z-30 border-t border-[rgb(var(--border-subtle)/0.7)] bg-[rgb(var(--surface-base)/0.96)] pb-safe backdrop-blur-xl">
                     <div className="mx-auto flex h-16 w-full max-w-lg items-center justify-between px-2">
-                        <NavBtn id="home" label={lang === 'es' ? 'Entreno' : 'Train'} icon="Layout" isActive={view === 'home'} onSelect={setView} />
+                        <NavBtn id="home" label={t.train} icon="Layout" isActive={view === 'home'} onSelect={setView} />
                         <NavBtn id="history" label={t.history} icon="Calendar" isActive={view === 'history'} onSelect={setView} />
-                        <button onClick={openPrimaryAction} aria-label={lang === 'es' ? 'Iniciar entreno' : 'Start workout'} className="mx-2 flex h-12 w-12 shrink-0 -translate-y-3 items-center justify-center rounded-full border border-primary-400/20 bg-primary-500 text-black shadow-lg shadow-primary-500/20 transition-transform duration-200 active:scale-95">
+                        <button onClick={openPrimaryAction} aria-label={t.startWorkout} className="mx-2 flex h-12 w-12 shrink-0 -translate-y-3 items-center justify-center rounded-full border border-primary-400/20 bg-primary-500 text-black shadow-lg shadow-primary-500/20 transition-transform duration-200 active:scale-95">
                             <Icon name="Plus" size={24} strokeWidth={2.5} />
                         </button>
-                        <NavBtn id="nutrition" label={lang === 'es' ? 'Dieta' : 'Diet'} icon="Utensils" isActive={view === 'nutrition'} onSelect={setView} />
+                        <NavBtn id="nutrition" label={t.diet} icon="Utensils" isActive={view === 'nutrition'} onSelect={setView} />
                         <NavBtn id="stats" label="Stats" icon="BarChart2" isActive={view === 'stats'} onSelect={setView} />
                     </div>
                 </nav>
@@ -267,11 +268,11 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
                 <React.Suspense fallback={null}>
                     <ConfirmModal
                         isOpen={true}
-                        title={lang === 'es' ? 'Sesión en curso' : 'Session in progress'}
+                        title={t.sessionInProgressTitle}
                         description={lang === 'es'
                             ? 'Tienes una sesión de entrenamiento activa. Finaliza o descarta la sesión antes de editar o convertir la rutina.'
                             : 'You have an active workout in progress. Finish or discard it before editing or converting routines.'}
-                        confirmText={lang === 'es' ? 'Entendido' : 'Understood'}
+                        confirmText={t.understood}
                         cancelText=""
                         variant="primary"
                         onConfirm={() => setShowActiveSessionAlert(false)}
