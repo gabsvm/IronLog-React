@@ -28,6 +28,7 @@ interface WorkoutViewProps {
 }
 
 import { useStore } from '../lib/store';
+import { scheduleWhenIdle } from '../lib/idle';
 
 const ExerciseSelector = React.lazy(() => import('../components/ui/ExerciseSelector').then(m => ({ default: m.ExerciseSelector })));
 const ExerciseDetailModal = React.lazy(() => import('../components/ui/ExerciseDetailModal').then(m => ({ default: m.ExerciseDetailModal })));
@@ -162,6 +163,17 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
         if (recommended) setManualRestPreset(recommended);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeSession?.id]);
+
+    useEffect(() => {
+        const cancel = scheduleWhenIdle(() => {
+            void import('../components/ui/ExerciseSelector');
+            void import('../components/ui/WarmupModal');
+            void import('../components/ui/ExerciseDetailModal');
+            void import('../components/ui/FeedbackModal');
+            void import('../components/ui/PRCelebrationOverlay');
+        });
+        return cancel;
+    }, []);
 
     // Set type modal: apply-to-all toggle defaults ON when all sets share the same type
     const [applyToAll, setApplyToAll] = useState(true);

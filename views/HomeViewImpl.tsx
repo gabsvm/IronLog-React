@@ -18,6 +18,7 @@ import { WeeklyRecapCard } from './home/WeeklyRecapCard';
 import { NextSessionCard } from './home/NextSessionCard';
 import { ProgramBlockTransition } from '../components/programs/ProgramBlockTransition';
 import { PlanActionsSheet } from '../components/home/PlanActionsSheet';
+import { scheduleWhenIdle } from '../lib/idle';
 const ProgramHub = React.lazy(() => import('../components/programs/ProgramHub').then((module) => ({ default: module.ProgramHub })));
 
 
@@ -76,6 +77,14 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
         const key = `${KONG_4DAY_V1.id}:block:${block}`;
         if (!(activeMeso.programSystem.seenBlockIntros || []).includes(key)) setTransitionBlock(block);
     }, [activeMeso?.week, activeMeso?.programSystem]);
+
+    useEffect(() => {
+        const cancel = scheduleWhenIdle(() => {
+            void import('../components/workout/WorkoutSortableList');
+            void import('../components/workout/SortableExerciseCardImpl');
+        });
+        return cancel;
+    }, []);
 
     const closeTransition = () => {
         if (!activeMeso || !transitionBlock) return;
