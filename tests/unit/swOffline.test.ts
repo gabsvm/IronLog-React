@@ -209,6 +209,16 @@ describe('Service Worker (real public/sw.js in vm)', () => {
         expect(entries).not.toContain(`${ORIGIN}/assets/branding/logo-mark.png`);
     });
 
+    it('fails the install when a critical asset cannot be cached', async () => {
+        sw.setFetch(async (input: any) => {
+            const url = typeof input === 'string' ? input : String(input?.url ?? input);
+            if (url.endsWith('/index.html')) throw new Error('404 Not Found');
+            return makeResponse(`network:${url}`);
+        });
+
+        await expect(sw.dispatchInstall()).rejects.toThrow();
+    });
+
     it('trimCache never deletes precached entries when the runtime cache overflows', async () => {
         const seed: Array<[string, FakeResponse]> = [
             ['/index.html', makeResponse('shell')],

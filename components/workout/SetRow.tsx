@@ -456,7 +456,7 @@ export const SetRow = React.memo(({
             : 'bg-surface-raised border border-border-subtle'
     }`;
 
-    const checkBtnClass = `relative flex h-[34px] w-[34px] after:absolute after:-inset-[5px] after:content-[''] shrink-0 items-center justify-center rounded-full transition-all duration-150 active:scale-90 ${
+    const checkBtnClass = `relative flex h-[34px] w-[34px] after:absolute after:-inset-[6px] after:content-[''] shrink-0 items-center justify-center rounded-full transition-all duration-150 active:scale-90 ${
         isDone
             ? 'bg-primary-500 text-zinc-950 font-black shadow-sm'
             : 'border border-zinc-700 bg-surface-elevated text-zinc-500 hover:border-zinc-500 hover:text-white'
@@ -500,7 +500,7 @@ export const SetRow = React.memo(({
         ? { id: tutorialId, onClick: () => onChangeType(exInstanceId, set.id, setType), 'aria-label': badgeAriaLabel }
         : { id: tutorialId, 'aria-label': badgeAriaLabel };
     const completeSetAriaLabel = t.completeSet;
-    const badgeClass = `relative flex h-7 w-7 after:absolute after:-inset-2 after:content-[''] items-center justify-center rounded-full text-[11px] font-bold transition-all ${
+    const badgeClass = `relative flex h-7 w-7 after:absolute after:-inset-2.5 after:content-[''] items-center justify-center rounded-full text-[11px] font-bold transition-all ${
         isDone
             ? 'bg-primary-500 text-zinc-950'
             : isNextSet

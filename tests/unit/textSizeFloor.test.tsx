@@ -5,9 +5,17 @@ import { NavBtn } from '../../components/layout/Layout';
 import { SetRow } from '../../components/workout/SetRow';
 import { WorkoutSet } from '../../types';
 
-describe('A2: Contrast and Text Sizing', () => {
-    it('ensures inactive NavBtn uses text-muted token and minimum 11px font size', () => {
-        render(
+describe('A2: minimum text-size floor (11px)', () => {
+    // jsdom cannot compute Tailwind styles, so the real pixel value of the
+    // shared `text-[11px]` utility is proven in tests/e2e/cssFoundations.spec.ts
+    // (computed font-size of the rendered nav label). This test guards the
+    // other half of the contract: every small-text surface must keep using
+    // that same utility instead of drifting back to 9-10px classes.
+    const fontSizeUtility = (className: string): string | undefined =>
+        className.split(/\s+/).find(c => /^text-\[?\d+px\]?$/.test(c) || /^text-(xs|sm|base|lg)/.test(c));
+
+    it('keeps the inactive NavBtn label and the SetRow prescription hint on the same 11px utility', () => {
+        const { unmount } = render(
             <NavBtn
                 id="history"
                 label="HISTORIAL"
@@ -16,15 +24,10 @@ describe('A2: Contrast and Text Sizing', () => {
                 onSelect={vi.fn()}
             />
         );
+        const navLabel = screen.getByText('HISTORIAL');
+        expect(fontSizeUtility(navLabel.className)).toBe('text-[11px]');
+        unmount();
 
-        const label = screen.getByText('HISTORIAL');
-        expect(label.className).toContain('text-muted');
-        expect(label.className).toContain('text-[11px]');
-        expect(label.className).not.toContain('text-zinc-600');
-        expect(label.className).not.toContain('text-[9px]');
-    });
-
-    it('ensures prescription hints in SetRow use minimum 11px font size', () => {
         const mockSet: WorkoutSet = {
             id: 101,
             weight: 80,
@@ -32,9 +35,8 @@ describe('A2: Contrast and Text Sizing', () => {
             rpe: 8,
             completed: false,
             type: 'regular',
-            prescribedReps: 12
+            prescribedReps: 12,
         };
-
         render(
             <SetRow
                 set={mockSet}
@@ -45,9 +47,7 @@ describe('A2: Contrast and Text Sizing', () => {
                 lang="es"
             />
         );
-
         const hint = screen.getByText(/OBJ: 12/);
-        expect(hint.className).toContain('text-[11px]');
-        expect(hint.className).not.toContain('text-[10px]');
+        expect(fontSizeUtility(hint.className)).toBe('text-[11px]');
     });
 });

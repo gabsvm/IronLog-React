@@ -47,3 +47,6 @@ playwright-report/
 
 # Design reference extracted files
 docs/design-reference/extracted/
+
+# Vercel CLI local project linkage (machine-specific)
+.vercel/

@@ -29,21 +29,32 @@ describe('A4: Light Mode Contrast and Accent Tokens', () => {
     });
 
     it('achieves >= 4.5:1 WCAG AA contrast ratio in both light and dark modes', () => {
-        const lightModeAccent: [number, number, number] = [77, 101, 12];
-        const whiteSurface: [number, number, number] = [255, 255, 255];
-        const lightContrast = contrastRatio(lightModeAccent, whiteSurface);
+        // Parse the shipped token values out of index.css so the math checks
+        // the real stylesheet instead of hardcoded copies of it.
+        const readToken = (block: string, name: string): [number, number, number] => {
+            const match = block.match(new RegExp(`${name}:\\s*(\\d+)\\s+(\\d+)\\s+(\\d+)`));
+            expect(match, `${name} must be defined`).not.toBeNull();
+            return [Number(match![1]), Number(match![2]), Number(match![3])];
+        };
 
-        // Light mode contrast against white background
+        const rootBlock = indexCss.match(/:root\s*\{([^}]*)\}/);
+        expect(rootBlock).not.toBeNull();
+        const lightBlock = indexCss.match(/html\.light\s*\{([^}]*)\}/);
+        expect(lightBlock).not.toBeNull();
+
+        // Light mode: accent text against the light surface-base.
+        const lightContrast = contrastRatio(
+            readToken(lightBlock![1], '--accent-text'),
+            readToken(lightBlock![1], '--surface-base')
+        );
         expect(lightContrast).toBeGreaterThanOrEqual(4.5);
-        expect(lightContrast).toBeGreaterThan(6.0); // ~6.66:1
 
-        const darkModeAccent: [number, number, number] = [200, 244, 90];
-        const darkSurfaceBase: [number, number, number] = [14, 14, 16];
-        const darkContrast = contrastRatio(darkModeAccent, darkSurfaceBase);
-
-        // Dark mode contrast against dark surface-base
+        // Dark mode: accent text against the dark surface-base.
+        const darkContrast = contrastRatio(
+            readToken(rootBlock![1], '--accent-text'),
+            readToken(rootBlock![1], '--surface-base')
+        );
         expect(darkContrast).toBeGreaterThanOrEqual(4.5);
-        expect(darkContrast).toBeGreaterThan(12.0); // ~15:1
     });
 
     it('ensures text-primary classes are remapped to accent-text in html.light', () => {

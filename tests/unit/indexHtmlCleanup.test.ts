@@ -38,73 +38,110 @@ describe('Task L6: index.html Error Handling and CSS Clean-up', () => {
         expect(unhandledBlock![0]).not.toContain('showError');
     });
 
-    describe('Startup error overlay behavior', () => {
+    describe('Startup error overlay behavior (real inline script from index.html)', () => {
+        // Extract the real startup <script> block (the one managing __appMounted)
+        // and execute it in this jsdom window instead of re-implementing it.
+        const startupScript = (() => {
+            const scripts = [...indexHtml.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
+            const found = scripts.find(s => s.includes('__appMounted'));
+            if (!found) throw new Error('startup script block not found in index.html');
+            return found;
+        })();
+
+        const runStartupScript = () => {
+            new Function(startupScript)();
+        };
+
+        const fireWindowError = (message: string, source?: string, lineno?: number) => {
+            const handler = window.onerror as unknown as ((m: string, s?: string, l?: number) => void) | null;
+            expect(handler).toEqual(expect.any(Function));
+            handler!(message, source, lineno);
+        };
+
         beforeEach(() => {
-            const existingBox = document.getElementById('error-box');
-            if (existingBox) existingBox.remove();
-            (window as any).__appMounted = false;
+            vi.useFakeTimers();
+            const root = document.createElement('div');
+            root.id = 'root';
+            document.body.appendChild(root);
+            runStartupScript();
         });
 
         afterEach(() => {
-            const existingBox = document.getElementById('error-box');
-            if (existingBox) existingBox.remove();
+            vi.clearAllTimers();
+            vi.useRealTimers();
+            document.getElementById('error-box')?.remove();
+            document.getElementById('root')?.remove();
+            (window as any).onerror = null;
             delete (window as any).__appMounted;
             vi.restoreAllMocks();
         });
 
-        it('does not display error overlay once the app is mounted', () => {
-            (window as any).__appMounted = true;
+        it('shows the overlay with inert text when a startup error fires before mount', () => {
+            vi.spyOn(console, 'error').mockImplementation(() => {});
+
+            fireWindowError('<img src=x onerror=alert(1)> Crash occurred', 'chunk.js', 42);
+
+            const box = document.getElementById('error-box');
+            expect(box).not.toBeNull();
+            // textContent assignment: markup is inert text, never parsed as HTML.
+            expect(box!.querySelector('img')).toBeNull();
+            expect(box!.textContent).toContain('<img src=x onerror=alert(1)> Crash occurred');
+        });
+
+        it('does not display the overlay once the app is mounted', () => {
             const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+            (window as any).__appMounted = true;
 
-            // Simulate the index.html error handler logic
-            const errorHandler = (message: any, source?: any, lineno?: any) => {
-                const msg = message + '\n' + (source || '') + (lineno ? (':' + lineno) : '');
-                console.error(msg);
-                if ((window as any).__appMounted) return;
-                const root = document.getElementById('root');
-                if (root && root.childElementCount > 0) {
-                    (window as any).__appMounted = true;
-                    return;
-                }
-                const box = document.createElement('div');
-                box.id = 'error-box';
-                document.body.appendChild(box);
-            };
-
-            errorHandler('Transient non-critical error', 'chunk.js', 42);
+            fireWindowError('Transient non-critical error', 'chunk.js', 42);
 
             expect(document.getElementById('error-box')).toBeNull();
             expect(consoleSpy).toHaveBeenCalled();
         });
 
-        it('safely renders startup errors with textContent without injecting HTML tags', () => {
-            (window as any).__appMounted = false;
+        it('treats a non-empty #root as mounted and stays silent', () => {
+            vi.spyOn(console, 'error').mockImplementation(() => {});
+            document.getElementById('root')!.appendChild(document.createElement('div'));
+
+            fireWindowError('Late chunk error', 'chunk.js', 7);
+
+            expect(document.getElementById('error-box')).toBeNull();
+            expect((window as any).__appMounted).toBe(true);
+        });
+
+        it('ignores ResizeObserver noise and cross-origin script errors', () => {
             vi.spyOn(console, 'error').mockImplementation(() => {});
 
-            const maliciousOrHtmlError = '<img src=x onerror=alert(1)> Crash occurred';
+            fireWindowError('ResizeObserver loop completed with undelivered notifications', 'app.js', 1);
+            fireWindowError('Script error.', undefined, 0);
 
-            // Simulate showError logic from index.html
-            const showError = (msg: string) => {
-                let box = document.getElementById('error-box');
-                if (!box) {
-                    box = document.createElement('div');
-                    box.id = 'error-box';
-                    const heading = document.createElement('h2');
-                    heading.textContent = 'Application Error';
-                    box.appendChild(heading);
-                    document.body.appendChild(box);
-                }
-                const line = document.createElement('div');
-                line.textContent = msg;
-                box.appendChild(line);
-            };
+            expect(document.getElementById('error-box')).toBeNull();
+        });
 
-            showError(maliciousOrHtmlError);
+        it('logs unhandledrejection to console without showing the overlay', () => {
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+            window.dispatchEvent(new Event('unhandledrejection'));
+
+            expect(consoleSpy).toHaveBeenCalledWith('Unhandled Promise Rejection:', undefined);
+            expect(document.getElementById('error-box')).toBeNull();
+        });
+
+        it('shows a startup-timeout error when the app never mounts within 15s', () => {
+            vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+            vi.advanceTimersByTime(15_000);
 
             const box = document.getElementById('error-box');
             expect(box).not.toBeNull();
-            expect(box!.querySelector('img')).toBeNull();
-            expect(box!.textContent).toContain('<img src=x onerror=alert(1)> Crash occurred');
+            expect(box!.textContent).toContain('Startup Timeout');
+        });
+
+        it('shows no startup-timeout error when the app mounts in time', () => {
+            document.getElementById('root')!.appendChild(document.createElement('div'));
+
+            vi.advanceTimersByTime(15_000);
+
+            expect(document.getElementById('error-box')).toBeNull();
         });
     });
 });
