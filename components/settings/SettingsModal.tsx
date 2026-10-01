@@ -9,8 +9,8 @@ import { AdminControlPanel } from './AdminControlPanel';
 import { PhilosophyModal } from '../ui/PhilosophyModal';
 import { Sheet } from '../ui/Sheet';
 import { useStore } from '../../lib/store';
-import { GlobalTemplate } from '../../types';
 import { BodyMetricsModal } from '../profile/BodyMetricsModal';
+import { requestTimerNotificationPermission } from '../../hooks/useTimer';
 
 const PaywallModal = React.lazy(() => import('../pro/PaywallModal').then(m => ({ default: m.PaywallModal })));
 const ConfirmModal = React.lazy(() => import('../ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
@@ -48,6 +48,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     const [showSaveTemplate, setShowSaveTemplate] = useState(false);
     const [showBodyModal, setShowBodyModal] = useState(false);
     const [templateName, setTemplateName] = useState('');
+    const [notificationPerm, setNotificationPerm] = useState<string>(typeof Notification !== 'undefined' ? Notification.permission : 'default');
     const activeMeso = useStore(state => state.activeMeso);
 
     const isAdmin = user?.email === 'gabsvm@gmail.com';
@@ -431,6 +432,36 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                         </button>
                                     </div>
                                 </div>
+                                {typeof window !== 'undefined' && 'Notification' in window && (
+                                    <div className="flex items-center justify-between p-3.5 bg-zinc-50 dark:bg-white/5 rounded-2xl border border-zinc-100 dark:border-white/5">
+                                        <div className="flex flex-col pr-2">
+                                            <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">{t.restNotifications}</span>
+                                            <span className="text-[10px] text-muted">{t.restNotificationsDesc}</span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={async () => {
+                                                await requestTimerNotificationPermission();
+                                                if (typeof Notification !== 'undefined') {
+                                                    setNotificationPerm(Notification.permission);
+                                                }
+                                            }}
+                                            className={`px-3 py-1.5 text-xs rounded-xl font-bold transition-all ${
+                                                notificationPerm === 'granted'
+                                                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                                    : notificationPerm === 'denied'
+                                                    ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                                                    : 'bg-primary-500 text-zinc-950 hover:bg-primary-400'
+                                            }`}
+                                        >
+                                            {notificationPerm === 'granted'
+                                                ? (lang === 'es' ? 'Activadas' : 'Enabled')
+                                                : notificationPerm === 'denied'
+                                                ? (lang === 'es' ? 'Bloqueadas' : 'Blocked')
+                                                : (lang === 'es' ? 'Permitir' : 'Allow')}
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </>)}

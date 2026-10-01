@@ -20,6 +20,27 @@ export interface TimerState {
     };
 }
 
+/**
+ * Request notification permission safely when the user actually initiates a rest timer
+ * or from user settings, rather than unconditionally on app mount.
+ *
+ * NOTE FOR TEAM: In mobile PWA / browsers, background workers get suspended when the device
+ * screen is locked or app is deeply frozen, making web background notifications best-effort.
+ * In Capacitor native builds, native Android AlarmManager (scheduleNativeRestTimer) handles
+ * reliable wakeups and background notifications.
+ */
+export const requestTimerNotificationPermission = async (): Promise<NotificationPermission | null> => {
+    if (Capacitor.isNativePlatform() || !('Notification' in window)) return null;
+    if (Notification.permission === 'default') {
+        try {
+            return await Notification.requestPermission();
+        } catch {
+            return null;
+        }
+    }
+    return Notification.permission;
+};
+
 export const useTimer = (lang: Lang) => {
     const [timer, setTimer] = useState<TimerState>({ active: false, timeLeft: 0, duration: 120, endAt: 0 });
     const timerRef = useRef<TimerState>(timer);
@@ -53,15 +74,21 @@ export const useTimer = (lang: Lang) => {
         const blobUrl = URL.createObjectURL(blob);
         workerRef.current = new Worker(blobUrl);
 
-        if (!isNative && 'Notification' in window && Notification.permission === 'default') {
-            void Notification.requestPermission().catch(() => {});
-        }
-
         return () => {
             workerRef.current?.terminate();
             URL.revokeObjectURL(blobUrl);
         };
     }, [isNative]);
+
+    const hasRequestedPermissionRef = useRef(false);
+
+    // Request notification permission lazily when user starts a rest timer, not on startup
+    useEffect(() => {
+        if (!isNative && timer.active && !hasRequestedPermissionRef.current) {
+            hasRequestedPermissionRef.current = true;
+            void requestTimerNotificationPermission();
+        }
+    }, [isNative, timer.active]);
 
     // Schedule/cancel the Android OS alarm only when the timer identity changes,
     // not on every displayed second.
@@ -100,7 +127,8 @@ export const useTimer = (lang: Lang) => {
                 triggerHaptic('success');
             }
 
-            if (!isNative && 'Notification' in window && Notification.permission === 'granted') {
+            const isWebInBackground = !isNative && document.visibilityState !== 'visible';
+            if (isWebInBackground && 'Notification' in window && Notification.permission === 'granted') {
                 const currentLang = langRef.current;
                 const t = TRANSLATIONS[currentLang]?.timer || TRANSLATIONS.en.timer;
                 const title = t.finished;

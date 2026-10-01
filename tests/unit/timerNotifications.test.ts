@@ -1,0 +1,150 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { renderHook, act } from '@testing-library/react';
+import { Capacitor } from '@capacitor/core';
+
+vi.mock('../../utils/audio', () => ({
+    playTimerFinishSound: vi.fn(),
+    triggerHaptic: vi.fn(),
+    scheduleNativeRestTimer: vi.fn(),
+    cancelNativeRestTimer: vi.fn(),
+}));
+
+let activeWorker: any = null;
+class MockWorker {
+    onmessage: any = null;
+    postMessage = vi.fn();
+    terminate = vi.fn();
+    constructor() {
+        activeWorker = this;
+    }
+}
+(globalThis as any).Worker = MockWorker;
+if (!globalThis.URL) {
+    (globalThis as any).URL = {} as any;
+}
+(globalThis as any).URL.createObjectURL = vi.fn(() => 'blob:mock');
+(globalThis as any).URL.revokeObjectURL = vi.fn();
+
+import { useTimer, requestTimerNotificationPermission } from '../../hooks/useTimer';
+
+describe('Task U2: Rest Timer Notification Permission and Visibility Scoping', () => {
+    let mockRequestPermission: any;
+    let originalNotification: any;
+
+    beforeEach(() => {
+        originalNotification = (globalThis as any).Notification;
+        mockRequestPermission = vi.fn().mockResolvedValue('granted');
+        (globalThis as any).Notification = {
+            permission: 'default',
+            requestPermission: mockRequestPermission,
+        };
+        vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(false);
+    });
+
+    afterEach(() => {
+        (globalThis as any).Notification = originalNotification;
+        vi.restoreAllMocks();
+    });
+
+    it('does NOT request notification permission on initial mount', () => {
+        renderHook(() => useTimer('es'));
+        expect(mockRequestPermission).not.toHaveBeenCalled();
+    });
+
+    it('requests notification permission when timer becomes active for the first time', async () => {
+        const { result } = renderHook(() => useTimer('es'));
+
+        expect(mockRequestPermission).not.toHaveBeenCalled();
+
+        // Start timer
+        act(() => {
+            result.current.setRestTimer({
+                active: true,
+                duration: 60,
+                timeLeft: 60,
+                endAt: Date.now() + 60000,
+            });
+        });
+
+        // Microtask to allow async request
+        await Promise.resolve();
+        expect(mockRequestPermission).toHaveBeenCalledTimes(1);
+    });
+
+    it('requestTimerNotificationPermission respects Capacitor native platform and skips web Notification', async () => {
+        vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(true);
+
+        const perm = await requestTimerNotificationPermission();
+        expect(perm).toBeNull();
+        expect(mockRequestPermission).not.toHaveBeenCalled();
+    });
+
+    it('does not show system notification when document is visible', async () => {
+        Object.defineProperty(document, 'visibilityState', {
+            configurable: true,
+            get: () => 'visible',
+        });
+
+        const notificationSpy = vi.fn();
+        (globalThis as any).Notification = class MockNotification {
+            constructor(public title: string, public options?: any) {
+                notificationSpy(title, options);
+            }
+            static permission = 'granted';
+            static requestPermission = vi.fn();
+        };
+
+        const { result } = renderHook(() => useTimer('es'));
+
+        // Advance to 0
+        act(() => {
+            result.current.setRestTimer({
+                active: true,
+                duration: 1,
+                timeLeft: 1,
+                endAt: Date.now() - 1000,
+            });
+        });
+
+        // Trigger tick via activeWorker onmessage
+        act(() => {
+            activeWorker?.onmessage?.();
+        });
+
+        // When visible, system Notification constructor must NOT be called
+        expect(notificationSpy).not.toHaveBeenCalled();
+    });
+
+    it('shows system notification when document is hidden (background tab)', async () => {
+        Object.defineProperty(document, 'visibilityState', {
+            configurable: true,
+            get: () => 'hidden',
+        });
+
+        const notificationSpy = vi.fn();
+        (globalThis as any).Notification = class MockNotification {
+            constructor(public title: string, public options?: any) {
+                notificationSpy(title, options);
+            }
+            static permission = 'granted';
+            static requestPermission = vi.fn();
+        };
+
+        const { result } = renderHook(() => useTimer('es'));
+
+        act(() => {
+            result.current.setRestTimer({
+                active: true,
+                duration: 1,
+                timeLeft: 1,
+                endAt: Date.now() - 1000,
+            });
+        });
+
+        act(() => {
+            activeWorker?.onmessage?.();
+        });
+
+        expect(notificationSpy).toHaveBeenCalled();
+    });
+});
