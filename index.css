@@ -36,6 +36,7 @@
   --primary-700: 132 174  22;
   --primary-800: 101 134  15;
   --primary-900:  77 101  12;
+  --accent-text: 200 244  90;
 }
 
 html.light {
@@ -52,6 +53,7 @@ html.light {
   --modal-surface: 255 255 255;
   --modal-footer: 250 250 250;
   --modal-border: 228 228 232;
+  --accent-text: 77 101  12;
 }
 
 html.dark {
@@ -71,6 +73,10 @@ html.dark {
   --primary-700: 29 78 216;
   --primary-800: 30 64 175;
   --primary-900: 30 58 138;
+  --accent-text: 96 165 250;
+}
+html.light[data-theme='ocean'], html.light [data-theme='ocean'] {
+  --accent-text: 30 58 138;
 }
 
 [data-theme='forest'] {
@@ -84,6 +90,10 @@ html.dark {
   --primary-700: 4 120 87;
   --primary-800: 6 95 70;
   --primary-900: 6 78 59;
+  --accent-text: 52 211 153;
+}
+html.light[data-theme='forest'], html.light [data-theme='forest'] {
+  --accent-text: 6 78 59;
 }
 
 [data-theme='royal'] {
@@ -97,6 +107,10 @@ html.dark {
   --primary-700: 126 34 206;
   --primary-800: 107 33 168;
   --primary-900: 88 28 135;
+  --accent-text: 192 132 252;
+}
+html.light[data-theme='royal'], html.light [data-theme='royal'] {
+  --accent-text: 88 28 135;
 }
 
 [data-theme='sunset'] {
@@ -110,6 +124,10 @@ html.dark {
   --primary-700: 194 65 12;
   --primary-800: 154 52 18;
   --primary-900: 124 45 18;
+  --accent-text: 251 146 60;
+}
+html.light[data-theme='sunset'], html.light [data-theme='sunset'] {
+  --accent-text: 124 45 18;
 }
 
 [data-theme='monochrome'] {
@@ -123,6 +141,10 @@ html.dark {
   --primary-700: 63 63 70;
   --primary-800: 39 39 42;
   --primary-900: 24 24 27;
+  --accent-text: 212 212 216;
+}
+html.light[data-theme='monochrome'], html.light [data-theme='monochrome'] {
+  --accent-text: 24 24 27;
 }
 
 html, body, #root {
@@ -491,11 +513,29 @@ html.light .bg-zinc-900\/95 { background-color: rgb(var(--surface-raised)) !impo
 html.light .bg-zinc-800,
 html.light .bg-zinc-800\/50 { background-color: rgb(var(--surface-elevated)) !important; }
 html.light .bg-zinc-700 { background-color: rgb(161 161 170) !important; }
+html.light .bg-\[\#121212\],
 html.light .bg-\[\#131316\],
+html.light .bg-\[\#17171b\],
+html.light .bg-\[\#17171B\],
 html.light .bg-\[\#17171B\]\/95,
+html.light .bg-\[\#18181c\],
+html.light .bg-\[\#1c1816\],
+html.light .bg-\[\#18141f\],
+html.light .bg-\[\#131b1f\],
+html.light .bg-\[\#1A1A1A\],
 html.light .bg-\[\#202024\] { background-color: rgb(var(--surface-raised)) !important; }
 html.light .bg-white\/5 { background-color: rgb(var(--surface-raised) / 0.85) !important; }
 html.light .bg-white\/10 { background-color: rgb(var(--surface-elevated) / 0.75) !important; }
+
+html.light .text-primary-300,
+html.light .text-primary-400,
+html.light .text-primary-500 {
+  color: rgb(var(--accent-text)) !important;
+}
+
+.text-accent-token {
+  color: rgb(var(--accent-text));
+}
 
 html.light .text-zinc-100,
 html.light .text-zinc-200,

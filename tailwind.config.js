@@ -42,6 +42,7 @@ export default {
       textColor: {
         muted: "rgb(var(--text-muted) / <alpha-value>)",
         secondary: "rgb(var(--text-secondary) / <alpha-value>)",
+        accent: "rgb(var(--accent-text) / <alpha-value>)",
       },
       fontFamily: {
         sans: ["'Inter Variable'", "Inter", "system-ui", "-apple-system", "BlinkMacSystemFont", "'Segoe UI'", "Roboto", "sans-serif"],
