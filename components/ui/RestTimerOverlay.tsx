@@ -282,6 +282,13 @@ export const RestTimerOverlay: React.FC = () => {
 
     const percentage = calculateTimerPercentage(restTimer.timeLeft, restTimer.duration);
     const floatingBottom = 80 + keyboardOffset;
+    // When the keyboard is open the pill would cover the input being edited,
+    // so dock it below the workout header instead of above the keyboard.
+    const keyboardOpen = keyboardOffset > 120;
+    const pillPositionStyle: React.CSSProperties = keyboardOpen
+        ? { top: 'calc(env(safe-area-inset-top, 0px) + 64px)', bottom: 'auto' }
+        : { bottom: `${floatingBottom}px` };
+    const showCompactExtras = showEffortFeedback && (Boolean(currentSourceSet) || Boolean(nextExerciseInfo));
 
     const adjustTimer = (deltaSeconds: number) => {
         triggerHaptic('light');
@@ -317,58 +324,110 @@ export const RestTimerOverlay: React.FC = () => {
         return (
             <aside
                 className="fixed inset-x-0 mx-auto max-w-md px-3 z-sheet pointer-events-none transition-all duration-base ease-natural"
-                style={{ bottom: `${floatingBottom}px` }}
+                style={pillPositionStyle}
                 aria-label={t.resting}
             >
-                <div className="pointer-events-auto flex items-center justify-between gap-2 rounded-full border border-border-strong bg-surface-raised/95 px-3 py-1.5 shadow-xl backdrop-blur-md">
-                    {/* Time display & tap to expand */}
-                    <button
-                        type="button"
-                        onClick={() => {
-                            triggerHaptic('light');
-                            setMode('expanded');
-                        }}
-                        className="flex items-center gap-2 pr-1 min-w-0 transition-opacity hover:opacity-85 active:scale-95 text-left"
-                        aria-label={`${t.resting}: ${formatSeconds(restTimer.timeLeft)}. ${lang === 'es' ? 'Tocar para expandir' : 'Tap to expand'}`}
-                    >
-                        <span className="relative flex h-2 w-2 shrink-0">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75" />
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-primary-500" />
-                        </span>
-                        <span className="font-mono text-sm font-black text-white tabular-nums tracking-tight">
-                            {formatSeconds(restTimer.timeLeft)}
-                        </span>
-                        <Icon name="ChevronUp" size={14} className="text-muted shrink-0" />
-                    </button>
+                <div className={`pointer-events-auto border border-border-strong bg-surface-raised/95 px-3 py-1.5 shadow-xl backdrop-blur-md ${showCompactExtras ? 'rounded-3xl' : 'rounded-full'}`}>
+                    <div className="flex items-center justify-between gap-2">
+                        {/* Time display & tap to expand */}
+                        <button
+                            type="button"
+                            onClick={() => {
+                                triggerHaptic('light');
+                                setMode('expanded');
+                            }}
+                            className="flex items-center gap-2 pr-1 min-w-0 transition-opacity hover:opacity-85 active:scale-95 text-left"
+                            aria-label={`${t.resting}: ${formatSeconds(restTimer.timeLeft)}. ${lang === 'es' ? 'Tocar para expandir' : 'Tap to expand'}`}
+                        >
+                            <span className="relative flex h-2 w-2 shrink-0">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75" />
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary-500" />
+                            </span>
+                            <span className="font-mono text-sm font-black text-white tabular-nums tracking-tight">
+                                {formatSeconds(restTimer.timeLeft)}
+                            </span>
+                            <Icon name="ChevronUp" size={14} className="text-muted shrink-0" />
+                        </button>
 
-                    {/* Quick controls: -10s, +30s, skip */}
-                    <div className="flex items-center gap-1 shrink-0">
-                        <button
-                            type="button"
-                            onClick={() => adjustTimer(-10)}
-                            className="flex h-7 px-2 items-center justify-center rounded-full bg-surface-elevated border border-border-subtle text-[11px] font-bold text-zinc-200 hover:text-white active:scale-90 transition-all"
-                            aria-label="-10s"
-                        >
-                            -10s
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => adjustTimer(30)}
-                            className="flex h-7 px-2 items-center justify-center rounded-full bg-surface-elevated border border-border-subtle text-[11px] font-bold text-zinc-200 hover:text-white active:scale-90 transition-all"
-                            aria-label="+30s"
-                        >
-                            +30s
-                        </button>
-                        <button
-                            type="button"
-                            onClick={skipTimer}
-                            className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-elevated border border-border-subtle text-muted hover:text-white active:scale-90 transition-all"
-                            aria-label={lang === 'es' ? 'Saltar descanso' : 'Skip rest'}
-                            title={lang === 'es' ? 'Saltar descanso' : 'Skip rest'}
-                        >
-                            <Icon name="FastForward" size={13} />
-                        </button>
+                        {/* Quick controls: -10s, +30s, skip (real 44px targets) */}
+                        <div className="flex items-center gap-1 shrink-0">
+                            <button
+                                type="button"
+                                onClick={() => adjustTimer(-10)}
+                                className="flex min-h-[44px] min-w-[44px] px-3 items-center justify-center rounded-full bg-surface-elevated border border-border-subtle text-[11px] font-bold text-zinc-200 hover:text-white active:scale-90 transition-all"
+                                aria-label="-10s"
+                            >
+                                -10s
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => adjustTimer(30)}
+                                className="flex min-h-[44px] min-w-[44px] px-3 items-center justify-center rounded-full bg-surface-elevated border border-border-subtle text-[11px] font-bold text-zinc-200 hover:text-white active:scale-90 transition-all"
+                                aria-label="+30s"
+                            >
+                                +30s
+                            </button>
+                            <button
+                                type="button"
+                                onClick={skipTimer}
+                                className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-surface-elevated border border-border-subtle text-muted hover:text-white active:scale-90 transition-all"
+                                aria-label={lang === 'es' ? 'Saltar descanso' : 'Skip rest'}
+                                title={lang === 'es' ? 'Saltar descanso' : 'Skip rest'}
+                            >
+                                <Icon name="FastForward" size={16} />
+                            </button>
+                        </div>
                     </div>
+                    {showCompactExtras && (
+                        <div className="mt-1 border-t border-border-subtle/60 pt-1.5">
+                            {nextExerciseInfo && (
+                                <div className="flex items-center gap-1.5 px-1 pb-1.5 text-left">
+                                    <Icon name="ArrowRight" size={13} className="text-primary-400 shrink-0" />
+                                    <p className="min-w-0 flex-1 truncate text-[11px] text-white">
+                                        <span className="font-bold uppercase tracking-wider text-muted">{nextExerciseInfo.category} · </span>
+                                        <span className="font-semibold">{nextExerciseInfo.name}{nextExerciseInfo.target ? ` · ${nextExerciseInfo.target}` : ''}</span>
+                                    </p>
+                                </div>
+                            )}
+                            {currentSourceSet && (
+                                <div className="flex gap-1.5">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleRateEffort('easy')}
+                                        className={`flex-1 h-9 rounded-lg border text-xs font-semibold transition-all active:scale-95 ${
+                                            currentSourceSet.rpe === '6'
+                                                ? 'border-emerald-500 bg-emerald-500/20 text-emerald-400 shadow-sm'
+                                                : 'border-border-subtle bg-surface-elevated text-zinc-300 hover:text-white hover:border-zinc-500'
+                                        }`}
+                                    >
+                                        {t.effortEasy}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleRateEffort('ok')}
+                                        className={`flex-1 h-9 rounded-lg border text-xs font-semibold transition-all active:scale-95 ${
+                                            currentSourceSet.rpe === '8'
+                                                ? 'border-primary-500 bg-primary-500/20 text-primary-400 shadow-sm'
+                                                : 'border-border-subtle bg-surface-elevated text-zinc-300 hover:text-white hover:border-zinc-500'
+                                        }`}
+                                    >
+                                        {t.effortOk}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleRateEffort('hard')}
+                                        className={`flex-1 h-9 rounded-lg border text-xs font-semibold transition-all active:scale-95 ${
+                                            currentSourceSet.rpe === '10'
+                                                ? 'border-rose-500 bg-rose-500/20 text-rose-400 shadow-sm'
+                                                : 'border-border-subtle bg-surface-elevated text-zinc-300 hover:text-white hover:border-zinc-500'
+                                        }`}
+                                    >
+                                        {t.effortHard}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </aside>
         );
@@ -481,14 +540,14 @@ export const RestTimerOverlay: React.FC = () => {
                     <button
                         type="button"
                         onClick={() => adjustTimer(-10)}
-                        className="h-10 rounded-xl bg-surface-elevated border border-border-subtle flex items-center justify-center gap-1.5 text-sm font-medium text-white hover:border-zinc-500 active:scale-95 transition-all"
+                        className="min-h-[44px] rounded-xl bg-surface-elevated border border-border-subtle flex items-center justify-center gap-1.5 text-sm font-medium text-white hover:border-zinc-500 active:scale-95 transition-all"
                     >
                         <Icon name="Minus" size={14} /> 10 s
                     </button>
                     <button
                         type="button"
                         onClick={() => adjustTimer(30)}
-                        className="h-10 rounded-xl bg-surface-elevated border border-border-subtle flex items-center justify-center gap-1.5 text-sm font-medium text-white hover:border-zinc-500 active:scale-95 transition-all"
+                        className="min-h-[44px] rounded-xl bg-surface-elevated border border-border-subtle flex items-center justify-center gap-1.5 text-sm font-medium text-white hover:border-zinc-500 active:scale-95 transition-all"
                     >
                         <Icon name="Plus" size={14} /> 30 s
                     </button>

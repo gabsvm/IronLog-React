@@ -134,4 +134,55 @@ describe('Task U1: RestTimerOverlay as non-modal compact floating pill by defaul
         fireEvent.click(skipBtn);
         expect(mockSetRestTimer).toHaveBeenCalledTimes(3);
     });
+
+    it('shows effort chips and next-set info in compact mode when RIR feedback is enabled', () => {
+        vi.spyOn(AppContext, 'useAppConfig').mockReturnValue({
+            config: {
+                showRIR: true,
+                rpEnabled: false,
+                restTimerDisplay: 'compact',
+            } as any,
+            setConfig: vi.fn(),
+        } as any);
+
+        render(<RestTimerOverlay />);
+
+        // Chips and next info visible WITHOUT expanding (still compact: no dialog)
+        expect(screen.queryByRole('dialog')).toBeNull();
+        expect(screen.getByText('Fácil')).toBeDefined();
+        expect(screen.getByText('OK')).toBeDefined();
+        expect(screen.getByText('Duro')).toBeDefined();
+        expect(screen.getByText(/Siguiente serie/i)).toBeDefined();
+
+        // Rating from compact mode writes RPE to the source set in the real store
+        fireEvent.click(screen.getByText('Fácil'));
+        const session = useStore.getState().activeSession;
+        const rated = session?.exercises?.[0]?.sets?.find((s: any) => s.id === 101);
+        expect(rated?.rpe).toBe('6');
+    });
+
+    it('docks the pill below the workout header when the keyboard is open', () => {
+        const originalViewport = (window as any).visualViewport;
+        const originalInnerHeight = window.innerHeight;
+        Object.defineProperty(window, 'visualViewport', {
+            value: {
+                height: 300,
+                offsetTop: 0,
+                addEventListener: vi.fn(),
+                removeEventListener: vi.fn(),
+            },
+            configurable: true,
+        });
+        Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true });
+        try {
+            render(<RestTimerOverlay />);
+            const aside = screen.getByLabelText(/Descansando: 1:30/i).closest('aside');
+            // offset = 800 - 300 - 0 = 500 > 120 => top docking below header
+            expect(aside?.style.top).toContain('env(safe-area-inset-top');
+            expect(aside?.style.bottom).toBe('auto');
+        } finally {
+            Object.defineProperty(window, 'visualViewport', { value: originalViewport, configurable: true });
+            Object.defineProperty(window, 'innerHeight', { value: originalInnerHeight, configurable: true });
+        }
+    });
 });
