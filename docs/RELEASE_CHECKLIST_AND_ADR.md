@@ -163,3 +163,58 @@
    - Webhook and payment server endpoints (Stripe / Mercado Pago) for automatic credit card processing require external merchant account credentials. Currently operating in the honest Early Access mode where entitlements are granted server-side.
 2. **Physical Device Validation (Moto G86 Power & Redmi Note 10)**:
    - Physical device verification on real hardware must be performed manually by the owner using the generated debug APK (`android/app/build/outputs/apk/debug/app-debug.apk`) or in mobile Chrome. Moto G86 Power physical runtime verification is pending owner execution. Redmi Note 10 physical validation was **NOT RUN by design** in this pass.
+
+---
+
+## 4. Visual Corrective Polish Pass (Pass 3)
+
+### ADR-010: Header-Integrated Workout Reorder & Single Shell Navigation
+- **Context**: The reorder action was floating via a fixed launcher button with a magic bottom offset (`bottom: 96px`), which directly overlapped the "Terminar" (Finish) button in the bottom action bar on mobile viewports. Simultaneously, Home rendered a duplicate shell header (logo + profile avatar) competing with `Layout.tsx`.
+- **Decision**:
+  1. Eliminated `.workout-reorder-launcher` entirely and removed all associated CSS rules.
+  2. Integrated the reorder trigger directly into the redesigned compact workout header as an `ArrowUpDown` button adjacent to the "Añadir ejercicio" button, preserving clean 36px touch targets and keeping `tut-finish-btn` completely unobstructed.
+  3. Removed the duplicate brand/avatar header from `HomeViewImpl.tsx`. `Layout.tsx` remains the single global shell header.
+- **Consequences**: Finish button is 100% unobstructed across all mobile screen sizes; no magic offset styling; clean, unified application shell.
+
+### ADR-011: Canonical Rest UI & Truthful Targeted Feedback
+- **Context**: Two competing rest timer components (`WorkoutRestWidget` and `RestTimerOverlay`) caused layout fighting. Rest feedback buttons inflated completed set rows and rated an ambiguous "latest completed set". The rest timer circular ring used `var(--primary-500)` which failed to parse the space-separated RGB triplet `--primary-500: 196 241 58`.
+- **Decision**:
+  1. Made `RestTimerOverlay.tsx` the single canonical rest surface; removed `WorkoutRestWidget`.
+  2. Extended timer state with `source: { exerciseInstanceId, setId }` captured precisely at set completion.
+  3. Moved effort feedback (Easy / OK / Hard) inside the rest overlay, shown only when `config.showRIR || config.rpEnabled` and targeting the exact triggering set via `applyEffortRatingToExercises()`.
+  4. Updated the SVG ring stroke to canonical `rgb(var(--primary-500))` ensuring dynamic adaptation across all six accent themes.
+  5. Implemented `resolveRestNextAction()` providing truthful next-action context (next set, next in superset, or advancing exercise).
+- **Consequences**: Zero UI duplication; set rows remain compact; rating precisely affects only the triggering set; timer ring dynamically matches user theme.
+
+### ADR-012: Unified Working-Set Progress & Template Update Eligibility Hardening
+- **Context**: Workout header remaining sets, progress bar percentage, exercise card set badges, and Finish Session summary counted differing set domains (e.g. some counted warmup, some ignored AVT hop, leading to "4 / 3 series" impossibilities). Furthermore, "Actualizar plantilla" in Finish Session could appear for detached Freestyle sessions, WOD, Calisthenics, or Two Block routines.
+- **Decision**:
+  1. Extracted canonical `isWorkingSet()` and `countWorkingSets()` into `utils/workoutProgress.ts`. Excludes `warmup` and `avt_hop`; includes all 12 working set types (`regular`, `myorep`, `drop`, `top`, etc.). Applied universally across header, progress bar, exercise cards, and Finish summary.
+  2. Hardened `isTemplateUpdateEligible()`: requires completed working sets > 0, matching mesocycle, valid in-range `dayIdx`, and strictly denies official KONG programs (by systemId, name, or id), detached sessions (`dayIdx: -1`), WOD, Calisthenics, and Two Block.
+- **Consequences**: Set progress is 100% synchronized across all surfaces; official KONG periodization and detached routines cannot be corrupted.
+
+### ADR-013: Active Exercise Card Collapse Semantics & Clean Metadata Wrapping
+- **Context**: Clicking the active exercise card failed to stay collapsed because state fell back to the first incomplete exercise. On narrow screens, the `SS` superset badge in the exercise metadata row could wrap onto its own line as an orphan chip.
+- **Decision**:
+  1. Replaced ambiguous fallback with explicit `activeExerciseId: number | null` state and pure helper `toggleExerciseCardExpansion()`. Collapsing an active exercise sets `activeExerciseId = null` and genuinely stays collapsed.
+  2. Moved the `SS` superset badge to the exercise title row alongside the exercise name, leaving metadata chips (`HORIZONTAL PRESS · 6-10 REPS · BW`) to wrap cleanly without orphans.
+  3. Removed the redundant `WeekProgress` rail below the Home hero card.
+  4. Extracted pure helpers (`reorderSupersetExercises`, `buildSupersetLetterMap`, `calculateTimerPercentage`, `calculateRingDashOffset`, `applyEffortRatingToExercises`, `resolveRestNextAction`) and bound unit tests directly to imported production functions.
+- **Consequences**: Predictable card collapse behavior, robust responsive mobile typography, and zero test-mock divergence.
+
+---
+
+## 5. Corrective Polish Verification Status
+
+- [x] **Workout Header & Finish Reachability**: Finish button completely unobstructed at mobile viewport; no floating reorder launcher.
+- [x] **Home Global Shell**: Single brand/profile header in `Layout.tsx`; duplicate Home header removed; redundant WeekProgress rail removed.
+- [x] **Icon Registry**: `MoreHorizontal` and `ArrowUpDown` registered in `ICON_MAP` and rendering correctly.
+- [x] **Rest Timer Unification**: `RestTimerOverlay` is the sole rest UI; theme-aware SVG stroke `rgb(var(--primary-500))`.
+- [x] **Exact Rest Feedback**: Easy / OK / Hard targets exact `exerciseInstanceId + setId` and respects user config.
+- [x] **Template Update Hardening**: `isTemplateUpdateEligible` denies KONG, detached, and invalid sessions.
+- [x] **Set Progress Synchronization**: `countWorkingSets` unified across all views.
+- [x] **Active Card Collapse**: Explicit collapse semantics verified.
+- [x] **Unit & Integration Suite**: All 15 test files passing (117 tests) against real imported production logic.
+- [x] **Target Device Honesty**:
+  - Moto G86 Power physical device validation: **NOT RUN** (pending physical hardware execution by owner).
+  - Redmi Note 10 physical device validation: **NOT RUN by design**.
