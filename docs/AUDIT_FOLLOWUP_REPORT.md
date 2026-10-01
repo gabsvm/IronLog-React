@@ -78,8 +78,10 @@ re-renderizando consumidores ante cada cambio de red/sync.
 `useSyncStatus` (`SyncStatusContext`). `handleSetComplete` documentado como
 local a la vista (no migrado al controller: no hay estado compartido que lo
 pida). Tests: `controllerIdentity.test.tsx` (identidades estables de
-`handleSetUpdate`/`toggleSetComplete`/`handleSetComplete` ante cambios de
-sesión y sync, con controller real) + `syncMetaDecoupling`.
+`handleSetUpdate`/`toggleSetComplete` ante cambios de sesión y sync, con
+controller real; CORRECCIÓN G8: `handleSetComplete` NO está cubierto ahí porque
+es un `useCallback` local de `WorkoutViewImpl.tsx:253`, no parte del
+controller) + `syncMetaDecoupling`.
 
 **Evidencia:** suites F4 en verde dentro del run global 232/232.
 
@@ -88,9 +90,11 @@ sesión y sync, con controller real) + `syncMetaDecoupling`.
 **Problema:** los `ConfirmModal` lazy de "SYNC CONFLICT" y "FORCE SYNC" se
 renderizaban sin `<Suspense>` (suspensión sin boundary = pantalla rota).
 
-**Cambios** (`App.tsx`): ambos envueltos en `<Suspense fallback={null}>` y
-render condicional cuando están abiertos. Auditoría repo-wide: 27 `React.lazy`
-revisados, todos con Suspense o render condicional. Sin otros casos.
+**Cambios** (`App.tsx`): ambos envueltos en `<Suspense fallback={null}>`
+(CORRECCIÓN G8: siempre montados con `isOpen` por props — el "render
+condicional" que decía esta línea no existe en el código; solo se agregó
+Suspense). Auditoría repo-wide: 27 `React.lazy` revisados, todos con Suspense
+o render condicional. Sin otros casos.
 
 **Evidencia:** revisión manual completa; e2e journeys (que abren sync/conflict
 paths) 5/5.
