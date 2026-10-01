@@ -2,11 +2,15 @@
 // the source placeholder makes local development deterministic too.
 const CACHE_NAME = 'gainslab-pro-__BUILD_ID__';
 
-const PRECACHE_URLS = [
+const CRITICAL_PRECACHE_URLS = [
   '/',
   '/index.html',
-  '/offline.html',
   '/manifest.json',
+  /* __BUILD_PRECACHE_URLS__ */
+];
+
+const OPTIONAL_PRECACHE_URLS = [
+  '/offline.html',
   '/icon-192.png',
   '/icon-512.png',
   '/apple-touch-icon.png',
@@ -14,16 +18,41 @@ const PRECACHE_URLS = [
   '/favicon-16.png',
   '/assets/branding/logo-mark.png',
   '/assets/branding/logo-lockup.png',
-  /* __BUILD_PRECACHE_URLS__ */
 ];
+
+const MAX_CACHE_ENTRIES = 120;
+const trimCache = async (cache, maxItems) => {
+  try {
+    const keys = await cache.keys();
+    if (keys.length > maxItems) {
+      const toDelete = keys.slice(0, keys.length - maxItems);
+      for (const req of toDelete) {
+        await cache.delete(req);
+      }
+    }
+  } catch (_) {}
+};
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) =>
-      cache.addAll(PRECACHE_URLS).catch((error) => {
-        console.warn('[SW] Precache warning:', error);
-      })
-    )
+    caches.open(CACHE_NAME).then(async (cache) => {
+      try {
+        await cache.addAll(CRITICAL_PRECACHE_URLS);
+      } catch (error) {
+        console.error('[SW] Critical precache failed:', error);
+        throw error;
+      }
+
+      await Promise.allSettled(
+        OPTIONAL_PRECACHE_URLS.map(async (url) => {
+          try {
+            await cache.add(url);
+          } catch (err) {
+            console.warn('[SW] Optional asset skipped:', url, err);
+          }
+        })
+      );
+    })
   );
 });
 
@@ -98,7 +127,7 @@ const staleWhileRevalidate = async (request) => {
   const networkPromise = fetch(request)
     .then((response) => {
       if (shouldCacheResponse(response)) {
-        cache.put(request, response.clone());
+        cache.put(request, response.clone()).then(() => trimCache(cache, MAX_CACHE_ENTRIES));
       }
       return response;
     })
@@ -130,15 +159,16 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  const isStaticAsset =
-    url.origin === self.location.origin ||
-    url.hostname.includes('fonts.gstatic.com') ||
-    url.hostname.includes('fonts.googleapis.com') ||
-    url.hostname === 'esm.sh' ||
-    url.hostname === 'cdn.tailwindcss.com' ||
-    url.hostname === 'img.youtube.com';
+  const isSameOriginStatic =
+    url.origin === self.location.origin &&
+    (url.pathname.startsWith('/assets/') ||
+     /\.(png|svg|webp|ico|json|woff2?|css|js)$/i.test(url.pathname));
 
-  if (isStaticAsset) {
+  const isExternalStatic =
+    url.hostname.includes('fonts.gstatic.com') ||
+    url.hostname.includes('fonts.googleapis.com');
+
+  if (isSameOriginStatic || isExternalStatic) {
     event.respondWith(staleWhileRevalidate(request));
   }
 });
