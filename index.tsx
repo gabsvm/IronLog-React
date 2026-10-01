@@ -9,6 +9,7 @@ import { requestBackgroundSync, requestPeriodicSync } from './services/backgroun
 import { resetLocalData } from './services/localDataReset';
 import { isServiceWorkerAllowed } from './utils/serviceWorker';
 import { useStore } from './lib/store';
+import { getPreferredLanguage, downloadEmergencyBackup } from './utils/emergencyBackup';
 console.log("Starting App Initialization...");
 
 const isNativeShell = Capacitor.isNativePlatform();
@@ -127,19 +128,28 @@ interface ErrorBoundaryState {
   error: any;
   confirmReset: boolean;
   isResetting: boolean;
+  isExporting: boolean;
+  exportedFileName: string | null;
 }
 
-class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   public state: ErrorBoundaryState;
   public props: ErrorBoundaryProps;
 
   constructor(props: ErrorBoundaryProps) {
     super(props);
-    this.state = { hasError: false, error: null, confirmReset: false, isResetting: false };
+    this.state = {
+      hasError: false,
+      error: null,
+      confirmReset: false,
+      isResetting: false,
+      isExporting: false,
+      exportedFileName: null,
+    };
     this.props = props;
   }
 
-  static getDerivedStateFromError(error: any): ErrorBoundaryState {
+  static getDerivedStateFromError(error: any): Partial<ErrorBoundaryState> {
     return { hasError: true, error, confirmReset: false, isResetting: false };
   }
 
@@ -149,22 +159,45 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 
   render() {
     if (this.state.hasError) {
+      const lang = getPreferredLanguage();
+      const isEs = lang === 'es';
+
       return (
         <div style={{
-          minHeight: '100vh',
+          minHeight: '100dvh',
           backgroundColor: '#09090b',
           color: '#fff',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '20px',
+          padding: '24px 16px',
           fontFamily: 'monospace',
           textAlign: 'center',
           zIndex: 99999
         }}>
-          <h1 style={{ color: '#ef4444', fontSize: '24px', marginBottom: '16px' }}>CRITICAL ERROR</h1>
-          <p style={{ opacity: 0.8, marginBottom: '24px' }}>The application failed to initialize.</p>
+          <h1 style={{ color: '#ef4444', fontSize: '24px', fontWeight: 'bold', marginBottom: '12px' }}>
+            {isEs ? 'ERROR CRÍTICO' : 'CRITICAL ERROR'}
+          </h1>
+          <p style={{ opacity: 0.8, fontSize: '14px', maxWidth: '420px', marginBottom: '24px', lineHeight: 1.4 }}>
+            {isEs
+              ? 'La aplicación no pudo inicializarse correctamente.'
+              : 'The application failed to initialize properly.'}
+          </p>
+
+          {this.state.exportedFileName && (
+            <div style={{
+              color: '#4ade80',
+              fontSize: '12px',
+              marginBottom: '16px',
+              padding: '6px 12px',
+              background: 'rgba(34, 197, 94, 0.1)',
+              borderRadius: '6px',
+              border: '1px solid rgba(34, 197, 94, 0.3)'
+            }}>
+              ✓ {isEs ? `Copia guardada: ${this.state.exportedFileName}` : `Backup saved: ${this.state.exportedFileName}`}
+            </div>
+          )}
 
           {this.state.confirmReset && (
             <div style={{
@@ -178,14 +211,12 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
               textAlign: 'center',
             }}>
               <h2 style={{ color: '#ef4444', fontSize: '15px', margin: '0 0 10px 0', fontWeight: 'bold' }}>
-                Reset Local Data / Reiniciar Datos
+                {isEs ? 'Reiniciar datos locales' : 'Reset Local Data'}
               </h2>
               <p style={{ color: '#d4d4d8', fontSize: '12px', margin: '0 0 16px 0', lineHeight: 1.5 }}>
-                Resetting local data will clear cached sessions and offline state. This action is permanent and cannot be undone.
-                <br />
-                <span style={{ opacity: 0.7, fontSize: '11px' }}>
-                  Esto borrará las sesiones en caché y el estado offline. Esta acción es permanente.
-                </span>
+                {isEs
+                  ? 'Esto borrará las sesiones en caché y el estado offline. Esta acción es permanente y no se puede deshacer.'
+                  : 'Resetting local data will clear cached sessions and offline state. This action is permanent and cannot be undone.'}
               </p>
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
                 <button
@@ -209,7 +240,9 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
                     opacity: this.state.isResetting ? 0.7 : 1,
                   }}
                 >
-                  {this.state.isResetting ? 'Resetting...' : 'Confirm Reset / Confirmar'}
+                  {this.state.isResetting
+                    ? (isEs ? 'Reiniciando...' : 'Resetting...')
+                    : (isEs ? 'Confirmar reinicio' : 'Confirm Reset')}
                 </button>
                 <button
                   type="button"
@@ -226,54 +259,107 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
                     cursor: 'pointer',
                   }}
                 >
-                  Cancel / Cancelar
+                  {isEs ? 'Cancelar' : 'Cancel'}
                 </button>
               </div>
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '32px' }}>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '28px' }}>
             <button
               onClick={() => {
                 window.location.reload();
               }}
               style={{
-                padding: '12px 24px',
+                padding: '10px 18px',
                 backgroundColor: '#2563eb',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
                 fontWeight: 'bold',
+                fontSize: '13px',
                 cursor: 'pointer',
               }}
             >
-              Reload App / Recargar
+              {isEs ? 'Recargar aplicación' : 'Reload App'}
             </button>
+
+            <button
+              type="button"
+              disabled={this.state.isExporting}
+              onClick={async () => {
+                this.setState({ isExporting: true });
+                try {
+                  const filename = await downloadEmergencyBackup();
+                  this.setState({ isExporting: false, exportedFileName: filename });
+                } catch (err) {
+                  console.error('Failed to export emergency backup:', err);
+                  this.setState({ isExporting: false });
+                }
+              }}
+              style={{
+                padding: '10px 18px',
+                backgroundColor: '#15803d',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontWeight: 'bold',
+                fontSize: '13px',
+                cursor: this.state.isExporting ? 'wait' : 'pointer',
+                opacity: this.state.isExporting ? 0.7 : 1,
+              }}
+            >
+              {this.state.isExporting
+                ? (isEs ? 'Exportando...' : 'Exporting...')
+                : (isEs ? 'Exportar copia de seguridad' : 'Export Backup')}
+            </button>
+
             {!this.state.confirmReset && (
               <button
                 onClick={() => {
                   this.setState({ confirmReset: true });
                 }}
                 style={{
-                  padding: '12px 24px',
+                  padding: '10px 18px',
                   backgroundColor: '#27272a',
                   color: '#f87171',
                   border: '1px solid #dc2626',
                   borderRadius: '8px',
                   fontWeight: 'bold',
+                  fontSize: '13px',
                   cursor: 'pointer',
                 }}
               >
-                Reset Local Data / Reiniciar Datos
+                {isEs ? 'Reiniciar datos locales' : 'Reset Local Data'}
               </button>
             )}
           </div>
 
-          <div style={{ width: '100%', maxWidth: '500px', textAlign: 'left', background: '#000', padding: '16px', borderRadius: '8px', overflowX: 'auto' }}>
-            <pre style={{ color: '#f87171', fontSize: '11px', margin: 0 }}>
-              {String(this.state.error)}
-            </pre>
-          </div>
+          <details style={{
+            width: '100%',
+            maxWidth: '520px',
+            textAlign: 'left',
+            background: '#18181b',
+            border: '1px solid #27272a',
+            borderRadius: '8px',
+            padding: '12px 16px',
+            overflow: 'hidden'
+          }}>
+            <summary style={{
+              color: '#a1a1aa',
+              fontSize: '12px',
+              cursor: 'pointer',
+              userSelect: 'none',
+              fontWeight: 600
+            }}>
+              {isEs ? 'Ver detalles técnicos del error' : 'View technical error details'}
+            </summary>
+            <div style={{ marginTop: '12px', overflowX: 'auto', background: '#09090b', padding: '12px', borderRadius: '6px' }}>
+              <pre style={{ color: '#f87171', fontSize: '11px', margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                {String(this.state.error?.stack || this.state.error || 'Unknown error')}
+              </pre>
+            </div>
+          </details>
         </div>
       );
     }
