@@ -242,7 +242,7 @@ export const SetRow = React.memo(({
     const weightRef = useRef<HTMLInputElement>(null);
     const repsRef = useRef<HTMLInputElement>(null);
     const extraWeightRef = useRef<HTMLInputElement>(null);
-    const commitTimersRef = useRef<Partial<Record<'weight' | 'reps', ReturnType<typeof setTimeout>>>>({});
+    const commitTimersRef = useRef<Partial<Record<'weight' | 'reps' | 'rpe', ReturnType<typeof setTimeout>>>>({});
 
     useEffect(() => { if (activeFieldRef.current !== 'weight') setLocalWeight(set.weight ?? ''); }, [set.weight]);
     useEffect(() => { if (activeFieldRef.current !== 'reps') setLocalReps(set.reps ?? ''); }, [set.reps]);
@@ -261,7 +261,7 @@ export const SetRow = React.memo(({
         }
     }, [exInstanceId, onUpdate, set]);
 
-    const flushScheduledCommit = useCallback((field: 'weight' | 'reps', value: any) => {
+    const flushScheduledCommit = useCallback((field: 'weight' | 'reps' | 'rpe', value: any) => {
         const existing = commitTimersRef.current[field];
         if (existing) {
             clearTimeout(existing);
@@ -270,7 +270,7 @@ export const SetRow = React.memo(({
         commitChange(field, value);
     }, [commitChange]);
 
-    const scheduleCommit = useCallback((field: 'weight' | 'reps', value: any, delay = 180) => {
+    const scheduleCommit = useCallback((field: 'weight' | 'reps' | 'rpe', value: any, delay = 180) => {
         const existing = commitTimersRef.current[field];
         if (existing) clearTimeout(existing);
         commitTimersRef.current[field] = setTimeout(() => {
@@ -278,6 +278,29 @@ export const SetRow = React.memo(({
             commitChange(field, value);
         }, delay);
     }, [commitChange]);
+
+    const flushPendingFields = useCallback(() => {
+        Object.values(commitTimersRef.current).forEach((timer) => {
+            if (timer) clearTimeout(timer);
+        });
+        commitTimersRef.current = {};
+
+        if (localWeight != set.weight) {
+            onUpdate(exInstanceId, set.id, 'weight', localWeight);
+        }
+        if (localReps != set.reps) {
+            onUpdate(exInstanceId, set.id, 'reps', localReps);
+        }
+        if (showRIR && localRpe != set.rpe) {
+            onUpdate(exInstanceId, set.id, 'rpe', localRpe);
+        }
+    }, [exInstanceId, localReps, localRpe, localWeight, onUpdate, set.id, set.reps, set.rpe, set.weight, showRIR]);
+
+    const handleToggleComplete = useCallback(() => {
+        flushPendingFields();
+        triggerHaptic(isDone ? 'light' : 'medium');
+        onToggleComplete(exInstanceId, set.id);
+    }, [flushPendingFields, isDone, onToggleComplete, exInstanceId, set.id]);
 
     const handleWeightBlur = (value: any) => {
         activeFieldRef.current = null;
@@ -287,7 +310,7 @@ export const SetRow = React.memo(({
 
     const handleBlur = (field: string, value: any) => {
         activeFieldRef.current = null;
-        flushScheduledCommit(field as 'weight' | 'reps', value);
+        flushScheduledCommit(field as 'weight' | 'reps' | 'rpe', value);
     };
     // Swipe-to-complete handlers
     const onSwipeTouchStart = useCallback((e: React.TouchEvent) => {
@@ -315,12 +338,13 @@ export const SetRow = React.memo(({
     const onSwipeTouchEnd = useCallback(() => {
         if (swipePct >= 85 && !isDone) {
             swipeRef.current.locked = true;
+            flushPendingFields();
             triggerHaptic('success');
             onToggleComplete(exInstanceId, set.id);
         }
         setSwipePct(0);
         swipeRef.current.tracking = false;
-    }, [swipePct, isDone, exInstanceId, set.id, onToggleComplete]);
+    }, [swipePct, isDone, flushPendingFields, exInstanceId, set.id, onToggleComplete]);
 
     const handleHoldSave = useCallback((seconds: number) => {
         onUpdate(exInstanceId, set.id, 'duration', seconds);
@@ -449,10 +473,7 @@ export const SetRow = React.memo(({
                     </div>
                     <div className="flex justify-center">
                         <button
-                            onClick={() => {
-                                triggerHaptic(isDone ? 'light' : 'medium');
-                                onToggleComplete(exInstanceId, set.id);
-                            }}
+                            onClick={handleToggleComplete}
                             className={checkBtnClass}
                             aria-pressed={Boolean(isDone)}
                             aria-label={lang === 'es' ? (isDone ? 'Serie completada' : 'Completar serie') : (isDone ? 'Set completed' : 'Complete set')}
@@ -494,7 +515,10 @@ export const SetRow = React.memo(({
                             className={currentInputClass}
                             placeholder={weightPlaceholder}
                             value={localWeight}
-                            onChange={e => setLocalWeight(e.target.value)}
+                            onChange={e => {
+                                setLocalWeight(e.target.value);
+                                scheduleCommit('weight', e.target.value, 180);
+                            }}
                             onBlur={() => handleWeightBlur(localWeight)}
                             onFocus={() => activeFieldRef.current = 'weight'}
                             enterKeyHint="next"
@@ -507,7 +531,10 @@ export const SetRow = React.memo(({
                             className={currentInputClass}
                             placeholder={repsPlaceholder}
                             value={localReps}
-                            onChange={e => setLocalReps(e.target.value)}
+                            onChange={e => {
+                                setLocalReps(e.target.value);
+                                scheduleCommit('reps', e.target.value, 180);
+                            }}
                             onBlur={() => handleBlur('reps', localReps)}
                             onFocus={() => activeFieldRef.current = 'reps'}
                             enterKeyHint="done"
@@ -520,7 +547,10 @@ export const SetRow = React.memo(({
                                 className={currentInputClass}
                                 placeholder="RIR"
                                 value={localRpe}
-                                onChange={e => setLocalRpe(e.target.value)}
+                                onChange={e => {
+                                    setLocalRpe(e.target.value);
+                                    scheduleCommit('rpe', e.target.value, 180);
+                                }}
                                 onBlur={() => handleBlur('rpe', localRpe)}
                                 enterKeyHint="done"
                             />
@@ -528,10 +558,7 @@ export const SetRow = React.memo(({
                     )}
                     <div className="flex justify-center">
                         <button
-                            onClick={() => {
-                                triggerHaptic(isDone ? 'light' : 'medium');
-                                onToggleComplete(exInstanceId, set.id);
-                            }}
+                            onClick={handleToggleComplete}
                             className={checkBtnClass}
                             aria-pressed={Boolean(isDone)}
                             aria-label={lang === 'es' ? (isDone ? 'Serie completada' : 'Completar serie') : (isDone ? 'Set completed' : 'Complete set')}
@@ -572,7 +599,10 @@ export const SetRow = React.memo(({
                         className={currentInputClass}
                         placeholder={weightPlaceholder}
                         value={localWeight}
-                        onChange={e => setLocalWeight(e.target.value)}
+                        onChange={e => {
+                            setLocalWeight(e.target.value);
+                            scheduleCommit('weight', e.target.value, 180);
+                        }}
                         onBlur={() => handleWeightBlur(localWeight)}
                         onFocus={() => activeFieldRef.current = 'weight'}
                         enterKeyHint="next"
@@ -585,7 +615,10 @@ export const SetRow = React.memo(({
                         className={currentInputClass}
                         placeholder={repsPlaceholder}
                         value={localReps}
-                        onChange={e => setLocalReps(e.target.value)}
+                        onChange={e => {
+                            setLocalReps(e.target.value);
+                            scheduleCommit('reps', e.target.value, 180);
+                        }}
                         onBlur={() => handleBlur('reps', localReps)}
                         onFocus={() => activeFieldRef.current = 'reps'}
                         enterKeyHint="done"
@@ -598,7 +631,10 @@ export const SetRow = React.memo(({
                             className={currentInputClass}
                             placeholder="RIR"
                             value={localRpe}
-                            onChange={e => setLocalRpe(e.target.value)}
+                            onChange={e => {
+                                setLocalRpe(e.target.value);
+                                scheduleCommit('rpe', e.target.value, 180);
+                            }}
                             onBlur={() => handleBlur('rpe', localRpe)}
                             enterKeyHint="done"
                         />
@@ -606,10 +642,7 @@ export const SetRow = React.memo(({
                 )}
                 <div className="flex justify-center">
                     <button
-                        onClick={() => {
-                            triggerHaptic(isDone ? 'light' : 'medium');
-                            onToggleComplete(exInstanceId, set.id);
-                        }}
+                        onClick={handleToggleComplete}
                         className={checkBtnClass}
                         aria-pressed={Boolean(isDone)}
                         aria-label={lang === 'es' ? (isDone ? 'Serie completada' : 'Completar serie') : (isDone ? 'Set completed' : 'Complete set')}
