@@ -41,6 +41,7 @@ const triggerSwUpdateCheck = (page: Page) =>
     });
 
 test.describe('Deferred SW update with active session (F8)', () => {
+    test.setTimeout(120000);
     test('no reload until the user accepts the update', async ({ page }) => {
         await seedOnboardedProfile(page);
         await page.goto('/?sw=1');

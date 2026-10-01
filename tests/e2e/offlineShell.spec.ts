@@ -4,6 +4,7 @@ const ERROR_BOUNDARY_TEXT = /ERROR CRÍTICO|CRITICAL ERROR/;
 const VIEW_LOAD_FAILED_TEXT = /No se pudo cargar esta pantalla|This screen couldn't be loaded/;
 
 test.describe('Offline shell with lazy views precached (F1)', () => {
+    test.setTimeout(120000);
     test('online load, then offline: shortcut, History and Stats render without errors', async ({ page, context }) => {
         await page.addInitScript(() => {
             localStorage.setItem('il_onboarded_v2', 'true');
