@@ -43,3 +43,6 @@ ironlog-kmp/local.properties
 # Playwright artifacts
 test-results/
 playwright-report/
+
+# Design reference extracted files
+docs/design-reference/extracted/

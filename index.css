@@ -9,30 +9,29 @@
   --safe-area-bottom: env(safe-area-inset-bottom, 20px);
 
   /* Shared surfaces/text tokens. Components can keep their existing utility
-     classes while the selected light/dark mode changes the whole shell. */
-  --surface-app: 0 0 0;
-  --surface-base: 9 9 11;
-  --surface-raised: 24 24 27;
-  --surface-elevated: 39 39 42;
-  --text-primary: 244 244 245;
-  --text-secondary: 161 161 170;
-  --text-muted: 113 113 122;
-  --border-subtle: 39 39 42;
-  --border-strong: 63 63 70;
-  --modal-surface: 15 15 15;
-  --modal-footer: 15 15 15;
-  --modal-border: 255 255 255;
+     classes while the selected light/dark mode changes the whole shell.
+     Dark mode values directly match the GainsLab reference package. */
+  --surface-app: 5 5 6;        /* #050506 */
+  --surface-base: 14 14 16;    /* #0e0e10 */
+  --surface-raised: 23 23 26;  /* #17171a */
+  --surface-elevated: 33 33 37;/* #212125 */
+  --text-primary: 242 242 242; /* #f2f2f2 */
+  --text-secondary: 168 168 176;/* #a8a8b0 */
+  --text-muted: 138 138 146;   /* #8a8a92 */
+  --border-subtle: 42 42 46;   /* #2a2a2e */
+  --border-strong: 52 52 58;   /* #34343a */
+  --modal-surface: 14 14 16;
+  --modal-footer: 14 14 16;
+  --modal-border: 42 42 46;
 
   /* --- DEFAULT THEME: HYPERTROPHY (RP LIME-GREEN) --- */
-  /* Brand color is the RP lime #C1F13B (193 241 59) anchored at 500.
-     Lower numbers MUST be lighter, higher numbers MUST be darker — the previous
-     palette had 500 lighter than 400, breaking every "primary-600" hover state. */
+  /* Brand color is the reference RP lime #C4F13A (196 241 58) anchored at 500. */
   --primary-50:  247 254 231;
   --primary-100: 236 252 203;
   --primary-200: 217 249 157;
   --primary-300: 207 246 120;
   --primary-400: 200 244  90;
-  --primary-500: 193 241  59; /* RP brand */
+  --primary-500: 196 241  58; /* Reference RP lime #c4f13a */
   --primary-600: 163 215  35;
   --primary-700: 132 174  22;
   --primary-800: 101 134  15;
@@ -41,18 +40,18 @@
 
 html.light {
   color-scheme: light;
-  --surface-app: 248 250 252;
+  --surface-app: 248 249 250;
   --surface-base: 255 255 255;
-  --surface-raised: 244 244 245;
-  --surface-elevated: 228 228 231;
-  --text-primary: 24 24 27;
-  --text-secondary: 82 82 91;
-  --text-muted: 113 113 122;
-  --border-subtle: 228 228 231;
-  --border-strong: 212 212 216;
+  --surface-raised: 244 244 246;
+  --surface-elevated: 235 235 238;
+  --text-primary: 17 20 24;
+  --text-secondary: 85 90 100;
+  --text-muted: 130 135 145;
+  --border-subtle: 228 228 232;
+  --border-strong: 212 212 218;
   --modal-surface: 255 255 255;
   --modal-footer: 250 250 250;
-  --modal-border: 212 212 216;
+  --modal-border: 228 228 232;
 }
 
 html.dark {
@@ -194,6 +193,43 @@ body {
     .scroll-container {
         -ms-overflow-style: none;  /* IE and Edge */
         scrollbar-width: none;  /* Firefox */
+    }
+
+    /* Reference primitives from GAINS_LAB_VISUAL_REFERENCE_REDESIGN_PASS */
+    .card-reference {
+        background-color: rgb(var(--surface-raised));
+        border: 0.5px solid rgb(var(--border-subtle));
+        border-radius: 14px;
+    }
+
+    .chip-reference {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 8px;
+        border-radius: 9999px;
+        background-color: rgb(var(--surface-elevated));
+        font-size: 11px;
+        color: rgb(var(--text-secondary));
+        font-weight: 500;
+    }
+
+    .seg-reference {
+        display: grid;
+        gap: 6px;
+        background-color: rgb(var(--surface-raised));
+        border: 0.5px solid rgb(var(--border-subtle));
+        border-radius: 12px;
+        padding: 4px;
+    }
+
+    .label-reference {
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: rgb(var(--text-muted));
+        margin: 16px 4px 6px;
+        font-weight: 600;
     }
 }
 

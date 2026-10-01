@@ -28,6 +28,20 @@ export default {
           800: "rgb(var(--primary-800) / <alpha-value>)",
           900: "rgb(var(--primary-900) / <alpha-value>)",
         },
+        surface: {
+          app: "rgb(var(--surface-app) / <alpha-value>)",
+          base: "rgb(var(--surface-base) / <alpha-value>)",
+          raised: "rgb(var(--surface-raised) / <alpha-value>)",
+          elevated: "rgb(var(--surface-elevated) / <alpha-value>)",
+        },
+        border: {
+          subtle: "rgb(var(--border-subtle) / <alpha-value>)",
+          strong: "rgb(var(--border-strong) / <alpha-value>)",
+        },
+      },
+      textColor: {
+        muted: "rgb(var(--text-muted) / <alpha-value>)",
+        secondary: "rgb(var(--text-secondary) / <alpha-value>)",
       },
       fontFamily: {
         sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
