@@ -42,6 +42,10 @@ export function resolveEffectsMode(options: ResolveEffectsOptions): ResolvedEffe
 
   // System (Auto) mode
   if (options.isMobileOrTouch) {
+    // Ultra low-end devices (< 3GB RAM or <= 2 cores) safely default to reduced
+    if ((options.deviceMemory && options.deviceMemory < 3) || (options.hardwareConcurrency && options.hardwareConcurrency <= 2)) {
+      return 'reduced';
+    }
     return 'balanced';
   }
 

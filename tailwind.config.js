@@ -90,5 +90,10 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    function({ addVariant }) {
+      addVariant('effects-reduced', '[data-effects="reduced"] &');
+      addVariant('effects-balanced', '[data-effects="balanced"] &');
+    },
+  ],
 }

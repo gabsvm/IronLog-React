@@ -385,7 +385,9 @@ input, textarea {
 /* Balanced profile: keeps transitions and contextual glass, disables continuous loop animations and heavy background blurs */
 [data-effects='balanced'] .blur-2xl,
 [data-effects='balanced'] .blur-3xl,
-[data-effects='balanced'] [class*='blur-['] {
+[data-effects='balanced'] .blur-\[80px\],
+[data-effects='balanced'] .blur-\[100px\],
+[data-effects='balanced'] .blur-\[120px\] {
   filter: none !important;
 }
 
@@ -410,14 +412,17 @@ input, textarea {
 [data-effects='reduced'] .backdrop-blur,
 [data-effects='reduced'] .backdrop-blur-md,
 [data-effects='reduced'] .backdrop-blur-xl,
-[data-effects='reduced'] .backdrop-blur-2xl {
+[data-effects='reduced'] .backdrop-blur-2xl,
+[data-effects='reduced'] .backdrop-blur-\[2px\] {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
 
 [data-effects='reduced'] .blur-2xl,
 [data-effects='reduced'] .blur-3xl,
-[data-effects='reduced'] [class*='blur-['] {
+[data-effects='reduced'] .blur-\[80px\],
+[data-effects='reduced'] .blur-\[100px\],
+[data-effects='reduced'] .blur-\[120px\] {
   filter: none !important;
 }
 
@@ -475,11 +480,11 @@ html.light .bg-zinc-900\/95 { background-color: rgb(var(--surface-raised)) !impo
 html.light .bg-zinc-800,
 html.light .bg-zinc-800\/50 { background-color: rgb(var(--surface-elevated)) !important; }
 html.light .bg-zinc-700 { background-color: rgb(161 161 170) !important; }
-html.light [class~="bg-[#131316]"],
-html.light [class~="bg-[#17171B]/95"],
-html.light [class~="bg-[#202024]"] { background-color: rgb(var(--surface-raised)) !important; }
-html.light [class~="bg-white/5"] { background-color: rgb(var(--surface-raised) / 0.85) !important; }
-html.light [class~="bg-white/10"] { background-color: rgb(var(--surface-elevated) / 0.75) !important; }
+html.light .bg-\[\#131316\],
+html.light .bg-\[\#17171B\]\/95,
+html.light .bg-\[\#202024\] { background-color: rgb(var(--surface-raised)) !important; }
+html.light .bg-white\/5 { background-color: rgb(var(--surface-raised) / 0.85) !important; }
+html.light .bg-white\/10 { background-color: rgb(var(--surface-elevated) / 0.75) !important; }
 
 html.light .text-zinc-100,
 html.light .text-zinc-200,
@@ -487,19 +492,25 @@ html.light .text-zinc-300,
 html.light .text-zinc-400 { color: rgb(var(--text-secondary)) !important; }
 html.light .text-zinc-500,
 html.light .text-zinc-600 { color: rgb(var(--text-muted)) !important; }
-html.light [class~="text-white"] { color: rgb(var(--text-primary)) !important; }
-html.light [class*="bg-red-"][class~="text-white"],
-html.light [class*="bg-blue-"][class~="text-white"],
-html.light [class*="bg-green-"][class~="text-white"],
-html.light [class*="bg-purple-"][class~="text-white"],
-html.light [class*="bg-orange-"][class~="text-white"],
-html.light [class*="bg-amber-"][class~="text-white"] { color: #fff !important; }
+html.light .text-white { color: rgb(var(--text-primary)) !important; }
+html.light .bg-red-500.text-white,
+html.light .bg-red-600.text-white,
+html.light .bg-blue-500.text-white,
+html.light .bg-blue-600.text-white,
+html.light .bg-green-500.text-white,
+html.light .bg-green-600.text-white,
+html.light .bg-purple-500.text-white,
+html.light .bg-purple-600.text-white,
+html.light .bg-orange-500.text-white,
+html.light .bg-orange-600.text-white,
+html.light .bg-amber-500.text-white,
+html.light .bg-amber-600.text-white { color: #fff !important; }
 
 html.light .border-zinc-700,
 html.light .border-zinc-800,
 html.light .border-zinc-900,
-html.light [class~="border-white/5"],
-html.light [class~="border-white/10"] { border-color: rgb(var(--border-subtle)) !important; }
+html.light .border-white\/5,
+html.light .border-white\/10 { border-color: rgb(var(--border-subtle)) !important; }
 html.light input,
 html.light textarea,
 html.light select { color-scheme: light; }

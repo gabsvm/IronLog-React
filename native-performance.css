@@ -34,11 +34,12 @@ html.native-shell textarea {
 
 /* CircularTimer uses an inline SVG filter. !important removes that extra filter
    pass only in the installed shell without changing the PWA. */
-html.native-shell [role='dialog'] svg[width='152'] {
+html.native-shell [role='dialog'] svg[width='170'],
+html.native-shell svg[width='170'] {
     filter: none !important;
 }
 
-html.native-shell [class*='transition-all'] {
+html.native-shell .transition-all {
     transition-property: transform, opacity, color, background-color, border-color !important;
 }
 
