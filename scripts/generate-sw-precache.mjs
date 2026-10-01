@@ -4,50 +4,47 @@ import path from 'node:path';
 
 const distDir = path.resolve('dist');
 const swPath = path.join(distDir, 'sw.js');
-const htmlPath = path.join(distDir, 'index.html');
+const assetsDir = path.join(distDir, 'assets');
 
-const toPublicUrl = (value) => value.startsWith('/') ? value : `/${value.replace(/^\.\//, '')}`;
+// Every build artifact needed to render any screen offline: the sync shell,
+// all lazy views/modals, styles and self-hosted fonts. Images stay out:
+// branding essentials are already listed as OPTIONAL_PRECACHE_URLS in sw.js
+// and the rest is served through the runtime cache.
+const PRECACHE_EXTENSIONS = new Set(['.js', '.css', '.woff', '.woff2']);
 
-const extractHtmlAssets = (html) => {
-  const matches = html.matchAll(/(?:src|href)="([^"?#]+\.(?:js|css))"/g);
-  return [...matches].map((match) => toPublicUrl(match[1])).filter((asset) => asset.startsWith('/assets/'));
-};
-
-const extractStaticImports = (source, parentUrl) => {
-  const imports = source.matchAll(/from["'](\.\/[^"']+\.js)["']/g);
-  return [...imports].map((match) => toPublicUrl(path.posix.join(path.posix.dirname(parentUrl), match[1])));
+const collectAssets = async (dir, base) => {
+  const entries = await readdir(dir, { withFileTypes: true });
+  const urls = [];
+  for (const entry of entries) {
+    const entryPath = path.join(dir, entry.name);
+    const url = `${base}/${entry.name}`;
+    if (entry.isDirectory()) {
+      urls.push(...(await collectAssets(entryPath, url)));
+    } else if (PRECACHE_EXTENSIONS.has(path.extname(entry.name).toLowerCase())) {
+      urls.push(url);
+    }
+  }
+  return urls;
 };
 
 const main = async () => {
-  const html = await readFile(htmlPath, 'utf8');
-  const pending = extractHtmlAssets(html);
-  const assets = new Set(pending);
-
-  // Precache only the application shell and its synchronous imports. Lazy
-  // screens remain runtime-cached so installation stays light on mobile data.
-  while (pending.length > 0) {
-    const asset = pending.pop();
-    if (!asset.endsWith('.js')) continue;
-
-    const absolutePath = path.join(distDir, asset.slice(1));
-    const source = await readFile(absolutePath, 'utf8');
-    for (const importedAsset of extractStaticImports(source, asset)) {
-      if (assets.has(importedAsset)) continue;
-      assets.add(importedAsset);
-      pending.push(importedAsset);
-    }
+  const assets = (await collectAssets(assetsDir, '/assets')).sort();
+  if (assets.length === 0) {
+    throw new Error(`No precacheable assets found in ${assetsDir}. Run 'vite build' first.`);
   }
 
-  const sortedAssets = [...assets].sort();
-  const buildId = createHash('sha256').update(sortedAssets.join('\n')).digest('hex').slice(0, 12);
-  const generatedEntries = sortedAssets.map((asset) => `  '${asset}',`).join('\n');
+  const buildId = createHash('sha256').update(assets.join('\n')).digest('hex').slice(0, 12);
+  const generatedEntries = assets.map((asset) => `  '${asset}',`).join('\n');
 
   let serviceWorker = await readFile(swPath, 'utf8');
+  if (!serviceWorker.includes('__BUILD_ID__') || !serviceWorker.includes('/* __BUILD_PRECACHE_URLS__ */')) {
+    throw new Error('sw.js is missing the __BUILD_ID__ / __BUILD_PRECACHE_URLS__ placeholders.');
+  }
   serviceWorker = serviceWorker.replace('__BUILD_ID__', buildId);
   serviceWorker = serviceWorker.replace('  /* __BUILD_PRECACHE_URLS__ */', generatedEntries);
   await writeFile(swPath, serviceWorker, 'utf8');
 
-  console.log(`[pwa] Precaching ${sortedAssets.length} app-shell assets (cache ${buildId}).`);
+  console.log(`[pwa] Precaching ${assets.length} build assets (shell + lazy views + styles + fonts, cache ${buildId}).`);
 };
 
 main().catch((error) => {

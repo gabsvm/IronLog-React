@@ -9,6 +9,7 @@ import { RestTimerOverlay } from './components/ui/RestTimerOverlay';
 import { Icon } from './components/ui/Icon';
 import { TRANSLATIONS } from './constants';
 import { Button } from './components/ui/Button';
+import { LazyViewBoundary } from './components/ui/LazyViewBoundary';
 import { useAuth, AuthProvider } from './context/AuthContext';
 import { getLastLogForExercise, uid } from './utils';
 import { syncService } from './services/syncService';
@@ -172,7 +173,9 @@ const AppContent = () => {
     }, []);
 
     const targetViewRef = useRef(view);
-    targetViewRef.current = view;
+    // Never mirror `view` here: this ref records the latest navigation INTENT so
+    // stale async preloads can be discarded. Overwriting it on every render
+    // cancels in-flight transitions whenever anything else re-renders.
 
     const setView = useCallback((newView: typeof view) => {
         if (newView === view) return;
@@ -255,7 +258,7 @@ const AppContent = () => {
             const state = e.state;
             if (state) {
                 withTransition('back', () => {
-                    if (state.view) setViewState(state.view);
+                    if (state.view) { targetViewRef.current = state.view; setViewState(state.view); }
                     setShowSettings(Boolean(state.settings));
                 });
             } else {
@@ -549,7 +552,7 @@ const AppContent = () => {
                             onComplete={(outcome) => {
                                 setHasSeenOnboarding(true);
                                 if (outcome.mode === 'custom') {
-                                    setViewState('program');
+                                    targetViewRef.current = 'program'; setViewState('program');
                                 } else if (outcome.mode === 'freestyle') {
                                     const freeSession = {
                                         id: Date.now(),
@@ -561,9 +564,9 @@ const AppContent = () => {
                                         exercises: [],
                                     };
                                     setActiveSession(freeSession);
-                                    setViewState('workout');
+                                    targetViewRef.current = 'workout'; setViewState('workout');
                                 } else {
-                                    setViewState('home');
+                                    targetViewRef.current = 'home'; setViewState('home');
                                 }
                             }}
                         />
@@ -575,6 +578,7 @@ const AppContent = () => {
             {hasSeenOnboarding && (
                 <>
                     {view === 'workout' && activeSession ? (
+                        <LazyViewBoundary lang={lang} resetKey="workout">
                         <Suspense fallback={<LoadingSpinner />}>
                             <WorkoutView
                                 onFinish={() => {
@@ -608,7 +612,9 @@ const AppContent = () => {
                                 onBack={() => setView('home')}
                             />
                         </Suspense>
+                        </LazyViewBoundary>
                     ) : view === 'summary' && completedWorkoutLog ? (
+                        <LazyViewBoundary lang={lang} resetKey="summary">
                         <Suspense fallback={<FullScreenLoading />}>
                             <SessionSummaryView
                                 log={completedWorkoutLog}
@@ -618,13 +624,14 @@ const AppContent = () => {
                                 }}
                             />
                         </Suspense>
+                        </LazyViewBoundary>
                     ) : view === 'exercises' ? (
                         <Suspense fallback={<LoadingSpinner />}>
-                            <ExercisesView onBack={() => { setView('home'); setShowSettings(true); }} />
+                            <LazyViewBoundary lang={lang} resetKey="exercises"><ExercisesView onBack={() => { setView('home'); setShowSettings(true); }} /></LazyViewBoundary>
                         </Suspense>
                     ) : view === 'program' ? (
                         <Suspense fallback={<LoadingSpinner />}>
-                            <ProgramEditView onBack={() => setView('home')} />
+                            <LazyViewBoundary lang={lang} resetKey="program"><ProgramEditView onBack={() => setView('home')} /></LazyViewBoundary>
                         </Suspense>
                     ) : (
                         <Layout view={view as any} setView={setView as any} onOpenSettings={() => setShowSettings(true)} onOpenCommandPalette={() => setShowCommandPalette(true)}>
@@ -672,17 +679,17 @@ const AppContent = () => {
                             />}
                             {view === 'history' && (
                                 <Suspense fallback={<LoadingSpinner />}>
-                                    <HistoryView />
+                                    <LazyViewBoundary lang={lang} resetKey={view}><HistoryView /></LazyViewBoundary>
                                 </Suspense>
                             )}
                             {view === 'stats' && (
                                 <Suspense fallback={<LoadingSpinner />}>
-                                    <StatsView />
+                                    <LazyViewBoundary lang={lang} resetKey={view}><StatsView /></LazyViewBoundary>
                                 </Suspense>
                             )}
                             {view === 'nutrition' && (
                                 <Suspense fallback={<LoadingSpinner />}>
-                                    <NutriView />
+                                    <LazyViewBoundary lang={lang} resetKey={view}><NutriView /></LazyViewBoundary>
                                 </Suspense>
                             )}
                         </Layout>

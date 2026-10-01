@@ -21,14 +21,30 @@ const OPTIONAL_PRECACHE_URLS = [
 ];
 
 const MAX_CACHE_ENTRIES = 120;
+
+// Precached shell assets must survive runtime trimming: deleting them would
+// break offline screens that were available right after install.
+const PRECACHED_URLS = new Set([...CRITICAL_PRECACHE_URLS, ...OPTIONAL_PRECACHE_URLS]);
+
+const isPrecachedRequest = (request) => {
+  try {
+    const url = new URL(request.url, self.location.origin);
+    return PRECACHED_URLS.has(url.pathname) || PRECACHED_URLS.has(request.url);
+  } catch (_) {
+    return false;
+  }
+};
+
 const trimCache = async (cache, maxItems) => {
   try {
     const keys = await cache.keys();
-    if (keys.length > maxItems) {
-      const toDelete = keys.slice(0, keys.length - maxItems);
-      for (const req of toDelete) {
-        await cache.delete(req);
-      }
+    if (keys.length <= maxItems) return;
+    let overflow = keys.length - maxItems;
+    for (const req of keys) {
+      if (overflow <= 0) break;
+      if (isPrecachedRequest(req)) continue;
+      await cache.delete(req);
+      overflow -= 1;
     }
   } catch (_) {}
 };
@@ -83,10 +99,14 @@ const shouldCacheResponse = (response) =>
   response.status === 200 &&
   (response.type === 'basic' || response.type === 'cors' || response.type === 'opaque');
 
+// ignoreVary on Request-object matches: same-origin assets are byte-identical
+// regardless of Origin; without it a `Vary: Origin` response cached at
+// install (no-cors, no Origin header) never matches runtime CORS-mode
+// module requests (which send Origin), breaking offline boot.
 const shellHandler = async (request) => {
   const cache = await caches.open(CACHE_NAME);
   const cached =
-    (await cache.match(request, { ignoreSearch: true })) ||
+    (await cache.match(request, { ignoreSearch: true, ignoreVary: true })) ||
     (await cache.match('/index.html')) ||
     (await cache.match('/'));
 
@@ -122,7 +142,7 @@ const shellHandler = async (request) => {
 
 const staleWhileRevalidate = async (request) => {
   const cache = await caches.open(CACHE_NAME);
-  const cached = await cache.match(request);
+  const cached = await cache.match(request, { ignoreVary: true });
 
   const networkPromise = fetch(request)
     .then((response) => {
