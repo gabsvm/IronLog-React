@@ -58,6 +58,21 @@ export const VIEW_LOADERS: Partial<Record<string, () => Promise<any>>> = {
     summary: () => import('./views/SessionSummaryView'),
 };
 
+export interface SkippedWeekSnapshot {
+    mesoId: number;
+    week: number;
+    isDeload: boolean;
+}
+
+/** True when the meso advanced exactly one week since the snapshot: the skip caused it. */
+export const shouldRestoreWeekAfterUndoSkip = (
+    snapshot: SkippedWeekSnapshot | null | undefined,
+    currentMeso: { id: number; week: number } | null | undefined,
+): boolean => {
+    if (!snapshot || !currentMeso) return false;
+    return currentMeso.id === snapshot.mesoId && currentMeso.week === snapshot.week + 1;
+};
+
 const LoadingSpinner = () => (
     <div className="h-full flex items-center justify-center text-zinc-400">
         <Icon name="RefreshCw" size={24} className="animate-spin" />
@@ -143,7 +158,7 @@ const AppContent = () => {
     const [importError, setImportError] = useState<string | null>(null);
     const [showForceSyncModal, setShowForceSyncModal] = useState(false);
     const [forceSyncFeedback, setForceSyncFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-    const [skippedSessionToast, setSkippedSessionToast] = useState<{ id: number; name: string } | null>(null);
+    const [skippedSessionToast, setSkippedSessionToast] = useState<{ id: number; name: string; weekSnapshot: SkippedWeekSnapshot } | null>(null);
     const [showKongConvertModal, setShowKongConvertModal] = useState(false);
 
     // Sync truncation warning — fires when cloud history is capped at 200 entries
@@ -526,12 +541,23 @@ const AppContent = () => {
         };
 
         setLogs([skippedLog, ...(Array.isArray(logs) ? logs : [])]);
-        setSkippedSessionToast({ id: logId, name: sessionName });
+        setSkippedSessionToast({
+            id: logId,
+            name: sessionName,
+            weekSnapshot: { mesoId: activeMeso.id, week: activeMeso.week, isDeload: !!activeMeso.isDeload },
+        });
     };
 
     const handleUndoSkip = () => {
         if (!skippedSessionToast) return;
         setLogs(prev => Array.isArray(prev) ? prev.filter(l => l.id !== skippedSessionToast.id) : []);
+        // If skipping the last pending day auto-advanced the week (KONG wrapper
+        // effect), undoing the skip restores the snapshotted week.
+        const snapshot = skippedSessionToast.weekSnapshot;
+        const currentMeso = useStore.getState().activeMeso;
+        if (shouldRestoreWeekAfterUndoSkip(snapshot, currentMeso)) {
+            setActiveMeso(prev => (prev && prev.id === snapshot.mesoId ? { ...prev, week: snapshot.week, isDeload: snapshot.isDeload } : prev));
+        }
         setSkippedSessionToast(null);
     };
 
