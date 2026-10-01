@@ -82,9 +82,9 @@ describe('R2: Decouple localLastUpdated from AppContext', () => {
         let triggerSyncUpdate: ((val: number) => void) | null = null;
 
         const AppConsumer: React.FC = () => {
-            const { isOnline } = useApp();
+            const { logs } = useApp();
             appConsumerRenderCount++;
-            return <div data-testid="app-consumer">{isOnline ? 'online' : 'offline'}</div>;
+            return <div data-testid="app-consumer">logs:{logs.length}</div>;
         };
 
         const SyncMetaConsumer: React.FC = () => {
@@ -104,7 +104,7 @@ describe('R2: Decouple localLastUpdated from AppContext', () => {
         const appEl = await findByTestId('app-consumer');
         const syncEl = await findByTestId('sync-consumer');
 
-        expect(appEl.textContent).toBe('online');
+        expect(appEl.textContent).toBe('logs:0');
         expect(syncEl.textContent).toBe('0');
 
         const initialAppRenders = appConsumerRenderCount;

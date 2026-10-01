@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { useApp, useAppPreferences } from '../../context/AppContext';
+import { useApp, useAppPreferences, useSyncStatus } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { usePro } from '../../hooks/usePro';
 import { useStore } from '../../lib/store';
@@ -15,7 +15,8 @@ interface ProfileSheetProps {
 }
 
 export const ProfileSheet: React.FC<ProfileSheetProps> = ({ open, onClose, onOpenSettings }) => {
-    const { userProfile, setUserProfile, logs, config, setConfig, theme, colorTheme, syncStatus, isOnline } = useApp();
+    const { userProfile, setUserProfile, logs, config, setConfig, theme, colorTheme } = useApp();
+    const { isOnline, syncStatus } = useSyncStatus();
     const { lang, setLang } = useAppPreferences();
     const { user, logout } = useAuth();
     const { isPro, tier } = usePro();

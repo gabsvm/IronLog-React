@@ -91,12 +91,6 @@ interface AppContextType extends Omit<AppState, 'activeSession' | 'activeMeso'> 
     cancelCloudSync: () => void;
     getLocalLastUpdated: () => number;
     getLocalSectionSyncMeta: () => SectionSyncMeta;
-    isOnline: boolean;
-    syncStatus: {
-        pending: number;
-        isSyncing: boolean;
-        lastSyncedAt: number | null;
-    };
 
     // PWA Install State
     deferredPrompt: BeforeInstallPromptEvent | null;
@@ -853,8 +847,6 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         tutorialProgress, markTutorialSeen, resetTutorials,
         isAppLoading,
         pendingCloudData, pendingCloudSections, confirmCloudSync, cancelCloudSync, getLocalLastUpdated, getLocalSectionSyncMeta,
-        isOnline,
-        syncStatus,
         deferredPrompt, installApp, isStandalone,
         globalTemplates, setGlobalTemplates,
         personalTemplates, setPersonalTemplates,
@@ -878,8 +870,6 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         tutorialProgress, markTutorialSeen, resetTutorials,
         isAppLoading,
         pendingCloudData, pendingCloudSections, confirmCloudSync, cancelCloudSync, getLocalLastUpdated, getLocalSectionSyncMeta,
-        isOnline,
-        syncStatus,
         deferredPrompt, installApp, isStandalone,
         globalTemplates, setGlobalTemplates,
         personalTemplates, setPersonalTemplates,
