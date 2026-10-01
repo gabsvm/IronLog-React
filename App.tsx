@@ -264,8 +264,11 @@ const AppContent = () => {
 
     // History management logic: nav tabs use replaceState to keep a clean history stack;
     // depth 2 views (workout, program, exercises) and sheets (settings, profile) use pushState.
+    // After a popstate, the browser entry already matches the render, so the sync
+    // effect compares against window.history.state instead of tracking pops with
+    // a flag (a flag gets stuck when a pop changes no App state, e.g. when
+    // closing the profile sheet, and then swallows the next pushState).
     const isFirstMountRef = useRef(true);
-    const isPopping = useRef(false);
 
     useEffect(() => {
         try {
@@ -275,7 +278,6 @@ const AppContent = () => {
         } catch (e) { }
 
         const handlePop = (e: PopStateEvent) => {
-            isPopping.current = true;
             const state = e.state;
             if (state) {
                 withTransition('back', () => {
@@ -306,17 +308,18 @@ const AppContent = () => {
             return;
         }
 
-        if (isPopping.current) {
-            isPopping.current = false;
-            return;
-        }
-
         const state = { view, settings: showSettings };
         const hash = showSettings ? 'settings' : view;
         const isNav = (view === 'home' || view === 'history' || view === 'stats' || view === 'nutrition') && !showSettings;
 
         try {
             if (typeof window !== 'undefined' && window.history) {
+                const current = window.history.state as { view?: string; settings?: boolean } | null;
+                // A popstate already moved the browser to the entry matching
+                // this render: writing again would fork or duplicate history.
+                if (current && current.view === state.view && Boolean(current.settings) === state.settings) {
+                    return;
+                }
                 if (isNav) {
                     window.history.replaceState(state, '', `#${hash}`);
                 } else {
