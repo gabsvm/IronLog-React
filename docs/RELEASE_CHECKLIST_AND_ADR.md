@@ -40,8 +40,8 @@
 - [ ] **Moto G86 Power Physical Validation**: **NOT RUN** (Host machine is a Windows PC; no physical Moto G86 Power hardware was connected or validated by the owner in this automated pass).
 - [ ] **Redmi Note 10 Physical Validation**: **NOT RUN by design** (Per corrective plan directive, RN10 was intentionally not physically validated in this pass; no physical performance claims are made).
 - [x] **Capacitor Android Web Sync (`npx cap sync android`)**: Passes cleanly (assets copied to `android/app/src/main/assets/public`).
-- [ ] **Capacitor Android APK Build (`npm run android-debug-apk`)**: **NOT RUN** (Missing local Firebase environment variables: `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_STORAGE_BUCKET`, `VITE_FIREBASE_MESSAGING_SENDER_ID`, `VITE_FIREBASE_APP_ID`. These are supplied by Vercel in production; local build requires `.env.production.local`).
-- [ ] **Capacitor Android Physical Runtime**: **NOT RUN** (Pending APK compilation on physical test device).
+- [x] **Capacitor Android APK Build (`npm run android-debug-apk`)**: **VERIFIED / PASS** — Built successfully (`BUILD SUCCESSFUL in 26s`, 85 actionable tasks executed). Generated APK at `android/app/build/outputs/apk/debug/app-debug.apk` (16.8 MB).
+- [ ] **Capacitor Android Physical Runtime**: **NOT RUN** (Debug APK ready for manual installation and testing on physical Moto G86 Power hardware).
 
 ### Workout Completion Pipeline
 - [x] **Planned Session**: Verified via unit tests (`workoutCompletionService.test.ts`) and E2E Journey A.
@@ -108,7 +108,5 @@
 
 1. **Production Payment Gateway Credentials**:
    - Webhook and payment server endpoints (Stripe / Mercado Pago) for automatic credit card processing require external merchant account credentials. Currently operating in the honest Early Access mode where entitlements are granted server-side.
-2. **Capacitor Android Production APK Build**:
-   - Web assets sync cleanly (`npx cap sync android`). Full APK compilation requires production Firebase environment variables (`VITE_FIREBASE_API_KEY`, etc.) loaded into `.env.production.local` and Android SDK tooling (`gradlew assembleDebug`).
-3. **Physical Device Validation (Moto G86 Power & Redmi Note 10)**:
-   - Physical device verification on real hardware must be performed manually by the owner. Redmi Note 10 physical validation was **NOT RUN by design** in this pass.
+2. **Physical Device Validation (Moto G86 Power & Redmi Note 10)**:
+   - Physical device verification on real hardware must be performed manually by the owner using the newly generated debug APK (`android/app/build/outputs/apk/debug/app-debug.apk`) or in mobile Chrome. Moto G86 Power physical runtime verification is pending owner execution. Redmi Note 10 physical validation was **NOT RUN by design** in this pass.
