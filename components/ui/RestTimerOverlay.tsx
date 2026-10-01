@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTimerActions, useTimerState } from '../../context/TimerContext';
-import { useApp, useAppConfig } from '../../context/AppContext';
+import { useAppConfig, useAppPreferences } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
 import { Icon } from './Icon';
 import { triggerHaptic } from '../../utils/audio';
@@ -199,7 +199,7 @@ const CircularTimer: React.FC<{
 export const RestTimerOverlay: React.FC = () => {
     const restTimer = useTimerState();
     const { setRestTimer } = useTimerActions();
-    const { lang } = useApp();
+    const { lang } = useAppPreferences();
     const { config } = useAppConfig();
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
     const activeSession = useStore(state => state.activeSession);

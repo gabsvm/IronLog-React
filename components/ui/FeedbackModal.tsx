@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { useApp } from '../../context/AppContext';
+import { useAppPreferences } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
 import { MuscleGroup } from '../../types';
 import { Button } from './Button';
@@ -24,7 +24,7 @@ type DraftFeedback = Record<string, { s: number | null; p: number | null }>;
  * importantly, keeps adaptation feedback outside the set-logging surface.
  */
 export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm, onCancel }) => {
-    const { lang } = useApp();
+    const { lang } = useAppPreferences();
     const activeMeso = useStore(state => state.activeMeso);
     const t = TRANSLATIONS[lang];
     const uniqueMuscles = useMemo(() => Array.from(new Set(muscles.filter(m => m && m !== 'CARDIO'))) as MuscleGroup[], [muscles]);

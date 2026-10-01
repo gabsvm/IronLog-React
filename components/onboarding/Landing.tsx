@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useApp } from '../../context/AppContext';
+import { useAppPreferences } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
 import { Button } from '../ui/Button';
 import { Icon } from '../ui/Icon';
@@ -12,7 +12,7 @@ interface LandingProps {
 }
 
 export const Landing: React.FC<LandingProps> = ({ onStart, onLogin }) => {
-    const { lang, setLang } = useApp();
+    const { lang, setLang } = useAppPreferences();
     const t = TRANSLATIONS[lang].landing;
 
     return (

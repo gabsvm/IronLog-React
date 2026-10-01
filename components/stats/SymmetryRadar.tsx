@@ -2,7 +2,7 @@
 import React from 'react';
 import { Radar } from 'react-chartjs-2';
 import { ChartData, ChartOptions } from 'chart.js/auto';
-import { useApp } from '../../context/AppContext';
+import { useAppPreferences } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
 import { MuscleGroup } from '../../types';
 
@@ -19,7 +19,7 @@ const RADAR_ORDER: MuscleGroup[] = [
 ];
 
 export const SymmetryRadar: React.FC<SymmetryRadarProps> = ({ volumeData }) => {
-    const { theme, lang } = useApp();
+    const { theme, lang } = useAppPreferences();
     const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
     const dataValues = RADAR_ORDER.map(m => volumeData[m] || 0);

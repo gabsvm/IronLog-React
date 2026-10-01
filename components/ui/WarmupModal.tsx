@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useApp } from '../../context/AppContext';
+import { useAppPreferences } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
 import { Button } from './Button';
 import { Icon } from './Icon';
@@ -13,7 +13,7 @@ interface WarmupModalProps {
 }
 
 export const WarmupModal: React.FC<WarmupModalProps> = ({ targetWeight, exerciseName, onClose }) => {
-    const { lang } = useApp();
+    const { lang } = useAppPreferences();
     const t = TRANSLATIONS[lang];
     const [checked, setChecked] = useState<number[]>([]);
 

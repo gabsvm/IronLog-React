@@ -112,8 +112,18 @@ export interface SyncMetaContextType {
     setLocalLastUpdated: React.Dispatch<React.SetStateAction<number>>;
 }
 
+export interface SyncStatusContextType {
+    isOnline: boolean;
+    syncStatus: {
+        pending: number;
+        isSyncing: boolean;
+        lastSyncedAt: number | null;
+    };
+}
+
 const AppContext = createContext<AppContextType | undefined>(undefined);
 const SyncMetaContext = createContext<SyncMetaContextType | undefined>(undefined);
+const SyncStatusContext = createContext<SyncStatusContextType | undefined>(undefined);
 type AppPreferencesContextType = Pick<AppContextType, 'lang' | 'setLang' | 'theme' | 'setTheme' | 'colorTheme' | 'setColorTheme' | 'deferredPrompt' | 'installApp' | 'isStandalone' | 'reducedEffects' | 'effectsMode' | 'setEffectsMode' | 'resolvedEffects'>;
 type AppConfigContextType = Pick<AppContextType, 'config' | 'setConfig'>;
 type TutorialContextType = Pick<AppContextType, 'tutorialProgress' | 'markTutorialSeen' | 'resetTutorials'>;
@@ -877,20 +887,27 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         setLocalLastUpdated,
     }), [localLastUpdated, localSectionSyncMeta, getLocalLastUpdated, getLocalSectionSyncMeta, setLocalLastUpdated]);
 
+    const syncStatusValue = useMemo(() => ({
+        isOnline,
+        syncStatus,
+    }), [isOnline, syncStatus]);
+
     if (isAppLoading) return <HomeSkeleton />;
 
     return (
         <AppContext.Provider value={contextValue}>
             <SyncMetaContext.Provider value={syncMetaValue}>
-                <AppPreferencesContext.Provider value={preferencesValue}>
-                    <AppConfigContext.Provider value={configValue}>
-                        <TutorialContext.Provider value={tutorialValue}>
-                            <TimerProvider>
-                                {children}
-                            </TimerProvider>
-                        </TutorialContext.Provider>
-                    </AppConfigContext.Provider>
-                </AppPreferencesContext.Provider>
+                <SyncStatusContext.Provider value={syncStatusValue}>
+                    <AppPreferencesContext.Provider value={preferencesValue}>
+                        <AppConfigContext.Provider value={configValue}>
+                            <TutorialContext.Provider value={tutorialValue}>
+                                <TimerProvider>
+                                    {children}
+                                </TimerProvider>
+                            </TutorialContext.Provider>
+                        </AppConfigContext.Provider>
+                    </AppPreferencesContext.Provider>
+                </SyncStatusContext.Provider>
             </SyncMetaContext.Provider>
         </AppContext.Provider>
     );
@@ -905,6 +922,12 @@ export const useApp = () => {
 export const useSyncMeta = () => {
     const context = useContext(SyncMetaContext);
     if (!context) throw new Error('useSyncMeta must be used within an AppProvider');
+    return context;
+};
+
+export const useSyncStatus = () => {
+    const context = useContext(SyncStatusContext);
+    if (!context) throw new Error('useSyncStatus must be used within an AppProvider');
     return context;
 };
 

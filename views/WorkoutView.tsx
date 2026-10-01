@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { WorkoutView as WorkoutViewImpl } from './WorkoutViewImpl';
-import { useApp, useAppConfig } from '../context/AppContext';
+import { useAppConfig, useAppPreferences } from '../context/AppContext';
 import { useStore } from '../lib/store';
 import { ReorderExercisesSheet } from '../components/workout/ReorderExercisesSheet';
 import type { SessionExercise } from '../types';
@@ -15,7 +15,7 @@ interface WorkoutViewProps {
 }
 
 export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, onBack }) => {
-    const { lang } = useApp();
+    const { lang } = useAppPreferences();
     const { config } = useAppConfig();
     const activeSession = useStore(state => state.activeSession);
     const activeMeso = useStore(state => state.activeMeso);

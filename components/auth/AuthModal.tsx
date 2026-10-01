@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useApp } from '../../context/AppContext'; // Import App Context for language
+import { useAppPreferences } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
 import { Button } from '../ui/Button';
 import { Icon } from '../ui/Icon';
@@ -12,7 +12,7 @@ interface AuthModalProps {
 
 export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
     const { login, register, error, clearError, continueAsGuest, startDemo, resetPassword } = useAuth();
-    const { lang } = useApp(); // Get current language
+    const { lang } = useAppPreferences();
     const t = TRANSLATIONS[lang].auth; // Get auth translations
 
     const [isLogin, setIsLogin] = useState(true);

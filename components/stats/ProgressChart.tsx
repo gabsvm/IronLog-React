@@ -3,7 +3,7 @@ import React from 'react';
 import { Line } from 'react-chartjs-2';
 import { ChartOptions, ScriptableContext } from 'chart.js/auto';
 import { formatDate } from '../../utils';
-import { useApp } from '../../context/AppContext';
+import { useAppPreferences } from '../../context/AppContext';
 
 export interface ChartDataPoint {
     date: number;
@@ -19,7 +19,7 @@ interface ProgressChartProps {
 }
 
 export const ProgressChart: React.FC<ProgressChartProps> = ({ dataPoints, metric, loading }) => {
-    const { lang, theme } = useApp();
+    const { lang, theme } = useAppPreferences();
     const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
     const getLabel = (m: string) => {

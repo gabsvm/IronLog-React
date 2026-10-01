@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { useApp } from '../../context/AppContext';
+import { useAppPreferences } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
 import { Icon } from './Icon';
 
@@ -19,7 +19,7 @@ interface TutorialOverlayProps {
 }
 
 export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ steps, onComplete, isActive }) => {
-    const { lang } = useApp();
+    const { lang } = useAppPreferences();
     const t = TRANSLATIONS[lang];
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
     const [rect, setRect] = useState<DOMRect | null>(null);

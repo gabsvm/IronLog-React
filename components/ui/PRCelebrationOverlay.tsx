@@ -1,6 +1,6 @@
 
 import React, { useRef, useState } from 'react';
-import { useApp } from '../../context/AppContext';
+import { useAppPreferences } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
 import { Button } from './Button';
 import { Icon } from './Icon';
@@ -10,7 +10,7 @@ interface PRCelebrationOverlayProps {
 }
 
 export const PRCelebrationOverlay: React.FC<PRCelebrationOverlayProps> = ({ onDismiss }) => {
-    const { lang } = useApp();
+    const { lang } = useAppPreferences();
     const t = TRANSLATIONS[lang];
     const cardRef = useRef<HTMLDivElement>(null);
     const [isSharing, setIsSharing] = useState(false);

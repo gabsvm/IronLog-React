@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useRef } from 'react';
-import { useApp } from '../../context/AppContext';
+import { useAppPreferences } from '../../context/AppContext';
 import { Modal } from '../ui/Modal';
 import { Icon } from '../ui/Icon';
 import { FOOD_DATABASE, FoodItem } from '../../data/foodDatabase';
@@ -14,7 +14,7 @@ interface AddFoodModalProps {
 type TabMode = 'search' | 'manual';
 
 export const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, onAdd }) => {
-    const { lang } = useApp();
+    const { lang } = useAppPreferences();
     const [tab, setTab] = useState<TabMode>('search');
     const [query, setQuery] = useState('');
     const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);

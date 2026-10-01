@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Icon } from '../ui/Icon';
-import { useApp } from '../../context/AppContext';
+import { useAppPreferences } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
 
 interface PaywallModalProps {
@@ -12,7 +12,7 @@ interface PaywallModalProps {
 
 export const PaywallModal: React.FC<PaywallModalProps> = ({ onClose, feature }) => {
     const { user } = useAuth();
-    const { lang } = useApp();
+    const { lang } = useAppPreferences();
     const [loading, setLoading] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
     const t = TRANSLATIONS[lang].pro;

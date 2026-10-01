@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useApp } from '../../context/AppContext';
+import { useAppPreferences } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
 import { Button } from './Button';
 import { Icon } from './Icon';
@@ -9,7 +9,7 @@ interface OnboardingModalProps {
 }
 
 export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onClose }) => {
-    const { lang, setLang } = useApp();
+    const { lang, setLang } = useAppPreferences();
     const t = TRANSLATIONS[lang];
     const [step, setStep] = useState(0);
 

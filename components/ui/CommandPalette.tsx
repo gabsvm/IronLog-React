@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useApp } from '../../context/AppContext';
+import { useAppPreferences } from '../../context/AppContext';
 import { useStore } from '../../lib/store';
 import { KONG_4DAY_V1 } from '../../programs/kong/kong4Day';
 import { Icon } from './Icon';
@@ -36,7 +36,7 @@ const ACCENT: Record<string, string> = {
  * Desktop: keeps the searchable command-palette behavior.
  */
 export const CommandPalette: React.FC<Props> = ({ isOpen, onClose, actions, title }) => {
-    const { lang } = useApp();
+    const { lang } = useAppPreferences();
     const activeMeso = useStore(state => state.activeMeso);
     const [query, setQuery] = useState('');
     const [activeIdx, setActiveIdx] = useState(0);

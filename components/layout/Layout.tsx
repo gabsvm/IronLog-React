@@ -1,5 +1,5 @@
 import React from 'react';
-import { useApp, useAppPreferences } from '../../context/AppContext';
+import { useApp, useAppPreferences, useSyncStatus } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { usePro } from '../../hooks/usePro';
 import { useStore } from '../../lib/store';
@@ -17,6 +17,50 @@ const FreestyleSessionModal = React.lazy(() => import('../workout/FreestyleSessi
 const TwoBlockMassModal = React.lazy(() => import('../workout/TwoBlockMassModal').then(m => ({ default: m.TwoBlockMassModal })));
 const ConfirmModal = React.lazy(() => import('../ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
 
+interface KongConvertConfirmModalProps {
+    isOpen: boolean;
+    lang: 'es' | 'en';
+    cancelText: string;
+    onClose: () => void;
+    onConverted: () => void;
+}
+
+const KongConvertConfirmModal: React.FC<KongConvertConfirmModalProps> = ({
+    isOpen,
+    lang,
+    cancelText,
+    onClose,
+    onConverted,
+}) => {
+    const { setProgram } = useApp();
+    const activeMeso = useStore(state => state.activeMeso);
+    const setActiveMeso = useStore(state => state.setActiveMeso);
+
+    const handleConfirm = () => {
+        if (!activeMeso) return;
+        const { editableProgram, convertedMeso } = convertKongToPersonalRoutine(activeMeso, lang);
+        setProgram(editableProgram);
+        setActiveMeso(convertedMeso);
+        onConverted();
+    };
+
+    return (
+        <React.Suspense fallback={null}>
+            <ConfirmModal
+                isOpen={isOpen}
+                title={lang === 'es' ? 'Convertir KONG en Rutina Personal' : 'Convert KONG to Personal Routine'}
+                description={lang === 'es'
+                    ? 'KONG es un programa estructurado de 12 semanas. Para editar libremente la semana actual debes convertirla en una rutina personal. KONG finalizará y la copia quedará editable. ¿Continuar?'
+                    : 'KONG is a structured 12-week program. To freely edit the current week, convert it to a personal routine. KONG will end and the copy will become editable. Continue?'}
+                confirmText={lang === 'es' ? 'Convertir y Editar' : 'Convert & Edit'}
+                cancelText={cancelText}
+                onConfirm={handleConfirm}
+                onCancel={onClose}
+            />
+        </React.Suspense>
+    );
+};
+
 interface LayoutProps {
     children: React.ReactNode;
     view: 'home' | 'workout' | 'history' | 'stats' | 'nutrition';
@@ -27,7 +71,7 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenSettings, onOpenCommandPalette }) => {
     const { lang } = useAppPreferences();
-    const { isOnline, syncStatus, setProgram } = useApp();
+    const { isOnline, syncStatus } = useSyncStatus();
     const { user } = useAuth();
     const { isPro } = usePro();
     const activeMeso = useStore(state => state.activeMeso);
@@ -113,17 +157,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
             return;
         }
 
-        setView('program');
-    };
-
-    const handleConfirmKongConvert = () => {
-        if (!activeMeso) return;
-
-        const { editableProgram, convertedMeso } = convertKongToPersonalRoutine(activeMeso, lang);
-        setProgram(editableProgram);
-        setActiveMeso(convertedMeso);
-
-        setShowKongConvertConfirm(false);
         setView('program');
     };
 
@@ -213,19 +246,16 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
 
             {/* KONG Convert Confirmation Modal */}
             {showKongConvertConfirm && (
-                <React.Suspense fallback={null}>
-                    <ConfirmModal
-                        isOpen={true}
-                        title={lang === 'es' ? 'Convertir KONG en Rutina Personal' : 'Convert KONG to Personal Routine'}
-                        description={lang === 'es'
-                            ? 'KONG es un programa estructurado de 12 semanas. Para editar libremente la semana actual debes convertirla en una rutina personal. KONG finalizará y la copia quedará editable. ¿Continuar?'
-                            : 'KONG is a structured 12-week program. To freely edit the current week, convert it to a personal routine. KONG will end and the copy will become editable. Continue?'}
-                        confirmText={lang === 'es' ? 'Convertir y Editar' : 'Convert & Edit'}
-                        cancelText={t.cancel}
-                        onConfirm={handleConfirmKongConvert}
-                        onCancel={() => setShowKongConvertConfirm(false)}
-                    />
-                </React.Suspense>
+                <KongConvertConfirmModal
+                    isOpen={true}
+                    lang={lang}
+                    cancelText={t.cancel}
+                    onClose={() => setShowKongConvertConfirm(false)}
+                    onConverted={() => {
+                        setShowKongConvertConfirm(false);
+                        setView('program');
+                    }}
+                />
             )}
         </div>
     );
