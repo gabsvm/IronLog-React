@@ -1,58 +1,60 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTimerActions, useTimerState } from '../../context/TimerContext';
 import { useApp } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
 import { Icon } from './Icon';
 import { triggerHaptic } from '../../utils/audio';
+import { useStore } from '../../lib/store';
+import { getTranslated } from '../../utils';
 
-const CircularTimer: React.FC<{ percentage: number; timeLeft: number; label: string }> = ({ percentage, timeLeft, label }) => {
-    const size = 152;
-    const strokeWidth = 10;
-    const radius = (size - strokeWidth) / 2;
-    const circumference = 2 * Math.PI * radius;
-    const dashOffset = circumference * (1 - percentage / 100);
+const CircularTimer: React.FC<{
+    percentage: number;
+    timeLeft: number;
+    totalDuration: number;
+    lang: 'en' | 'es';
+}> = ({ percentage, timeLeft, totalDuration, lang }) => {
+    const size = 170;
+    const strokeWidth = 7;
+    const radius = 52;
+    const circumference = 2 * Math.PI * radius; // ~326.72
+    const dashOffset = circumference * (1 - Math.min(100, Math.max(0, percentage)) / 100);
 
     const formatSeconds = (seconds: number) => {
         const safe = Math.max(0, Math.floor(Number(seconds) || 0));
         return `${Math.floor(safe / 60)}:${(safe % 60).toString().padStart(2, '0')}`;
     };
 
-    const tone = percentage > 30 ? 'primary' : percentage > 10 ? 'amber' : 'red';
-    const stroke =
-        tone === 'primary' ? 'rgb(var(--primary-500))' :
-        tone === 'amber' ? '#f59e0b' :
-        '#ef4444';
-
     return (
-        <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
-            <svg width={size} height={size} className="-rotate-90">
+        <div className="relative flex items-center justify-center mx-auto my-2" style={{ width: size, height: size }}>
+            <svg viewBox="0 0 120 120" width={size} height={size}>
                 <circle
-                    cx={size / 2}
-                    cy={size / 2}
+                    cx="60"
+                    cy="60"
                     r={radius}
                     fill="none"
-                    stroke="rgba(255,255,255,0.06)"
+                    stroke="#212125"
                     strokeWidth={strokeWidth}
                 />
                 <circle
-                    cx={size / 2}
-                    cy={size / 2}
+                    cx="60"
+                    cy="60"
                     r={radius}
                     fill="none"
-                    stroke={stroke}
+                    stroke="var(--primary-500, #c4f13a)"
                     strokeWidth={strokeWidth}
                     strokeLinecap="round"
                     strokeDasharray={circumference}
                     strokeDashoffset={dashOffset}
-                    style={{ transition: 'stroke-dashoffset 180ms linear, stroke 180ms ease' }}
+                    transform="rotate(-90 60 60)"
+                    style={{ transition: 'stroke-dashoffset 200ms linear' }}
                 />
             </svg>
-            <div className="absolute flex flex-col items-center justify-center">
-                <span className="font-mono text-[40px] font-black leading-none tracking-tight text-white tabular-nums">
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="font-mono text-4xl font-semibold text-white tabular-nums tracking-tight">
                     {formatSeconds(timeLeft)}
                 </span>
-                <span className="mt-2 text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">
-                    {label}
+                <span className="text-xs text-muted mt-0.5">
+                    {lang === 'es' ? `de ${formatSeconds(totalDuration)}` : `of ${formatSeconds(totalDuration)}`}
                 </span>
             </div>
         </div>
@@ -64,9 +66,8 @@ export const RestTimerOverlay: React.FC = () => {
     const { setRestTimer } = useTimerActions();
     const { lang } = useApp();
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-    // Progressive disclosure: an automatically-started rest timer should never
-    // cover the workout. The lightweight chip is the default; the large controls
-    // are mounted only after an explicit tap.
+    const activeSession = useStore(state => state.activeSession);
+
     const [minimized, setMinimized] = useState(true);
     const [autoMinimized, setAutoMinimized] = useState(false);
     const [keyboardOffset, setKeyboardOffset] = useState(0);
@@ -87,9 +88,6 @@ export const RestTimerOverlay: React.FC = () => {
             return;
         }
 
-        // A fresh timer starts with timeLeft ~= duration. Tracking its endAt lets
-        // us also catch a new rest that replaces a still-running one, without
-        // collapsing the panel on each normal 1 Hz countdown tick.
         const looksLikeFreshStart = restTimer.duration > 0 && restTimer.timeLeft >= restTimer.duration - 1;
         if (looksLikeFreshStart && restTimer.endAt !== lastFreshStartRef.current) {
             lastFreshStartRef.current = restTimer.endAt;
@@ -103,10 +101,6 @@ export const RestTimerOverlay: React.FC = () => {
             const target = event.target as HTMLElement | null;
             if (!target || !isEditableElement(target) || minimized) return;
 
-            // Only mark this as an automatic minimize when we actually collapse
-            // an expanded timer. That lets us restore the user's explicit state
-            // after the keyboard closes without expanding a timer that was already
-            // compact by default.
             setMinimized(true);
             setAutoMinimized(true);
         };
@@ -155,6 +149,27 @@ export const RestTimerOverlay: React.FC = () => {
         };
     }, [autoMinimized, minimized]);
 
+    const nextExerciseInfo = useMemo(() => {
+        if (!activeSession?.exercises) return null;
+        for (const ex of activeSession.exercises) {
+            const nextSet = (ex.sets || []).find(s => !s.completed);
+            if (nextSet) {
+                const isSuperset = !!ex.supersetId;
+                const target = nextSet.weight && nextSet.reps
+                    ? `${nextSet.weight} kg × ${nextSet.reps}`
+                    : nextSet.reps
+                    ? `${nextSet.reps} reps`
+                    : null;
+                return {
+                    name: getTranslated(ex.name, lang),
+                    isSuperset,
+                    target,
+                };
+            }
+        }
+        return null;
+    }, [activeSession, lang]);
+
     if (!restTimer || !restTimer.active) return null;
 
     const formatSeconds = (seconds: number) => {
@@ -163,8 +178,7 @@ export const RestTimerOverlay: React.FC = () => {
     };
 
     const percentage = Math.min(100, Math.max(0, (restTimer.timeLeft / restTimer.duration) * 100));
-    const isCritical = percentage <= 10;
-    const floatingBottom = 112 + keyboardOffset;
+    const floatingBottom = 80 + keyboardOffset;
 
     const adjustTimer = (deltaSeconds: number) => {
         triggerHaptic('light');
@@ -203,25 +217,20 @@ export const RestTimerOverlay: React.FC = () => {
                 style={{ bottom: `${floatingBottom}px` }}
             >
                 <button
+                    type="button"
                     onClick={() => {
                         triggerHaptic('light');
                         setMinimized(false);
                         setAutoMinimized(false);
                     }}
-                    className={`group flex h-10 items-center gap-2 rounded-full border px-3 shadow-lg shadow-black/30 transition-colors duration-150 active:scale-[0.98] ${
-                        isCritical
-                            ? 'border-red-500/35 bg-red-950/95'
-                            : 'border-white/10 bg-black/95 hover:border-primary-500/35'
-                    }`}
+                    className="flex h-10 items-center gap-2 rounded-full border border-border-subtle bg-surface-base/95 px-3.5 shadow-lg backdrop-blur-md transition-all hover:border-zinc-500 active:scale-95"
                     aria-label={`${t.resting}: ${formatSeconds(restTimer.timeLeft)}`}
                 >
-                    <span className={`flex h-6 w-6 items-center justify-center rounded-full ${isCritical ? 'bg-red-500/15 text-red-300' : 'bg-primary-500/10 text-primary-400'}`}>
-                        <Icon name="Clock" size={13} />
-                    </span>
-                    <span className="font-mono text-[15px] font-black leading-none text-white tabular-nums">
+                    <span className="h-2 w-2 rounded-full bg-primary-500 animate-pulse" />
+                    <span className="font-mono text-sm font-semibold text-white tabular-nums">
                         {formatSeconds(restTimer.timeLeft)}
                     </span>
-                    <Icon name="ChevronUp" size={12} className="text-zinc-500 transition-colors group-hover:text-zinc-300" />
+                    <Icon name="ChevronUp" size={14} className="text-muted" />
                 </button>
             </div>
         );
@@ -229,89 +238,108 @@ export const RestTimerOverlay: React.FC = () => {
 
     return (
         <div
-            className="fixed left-0 right-0 z-sheet animate-in fade-in duration-150"
+            className="fixed inset-x-0 bottom-0 z-sheet animate-in fade-in duration-150"
             style={{ bottom: `${keyboardOffset}px` }}
             role="dialog"
             aria-modal="false"
             aria-label={t.resting}
         >
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/55 via-black/15 to-transparent" />
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm -z-10" onClick={() => setMinimized(true)} />
+            <div className="mx-auto max-w-md rounded-t-2xl border-t border-x border-border-subtle bg-surface-base p-4 pb-safe shadow-2xl backdrop-blur-xl">
+                {/* Drag Handle */}
+                <div className="w-9 h-1 rounded-full bg-border-strong mx-auto mb-3" />
 
-            <div
-                className={`relative mx-auto max-w-md rounded-t-[28px] border-x border-t pb-safe shadow-[0_-18px_46px_rgba(0,0,0,0.55)] transition-colors duration-150 ${
-                    isCritical
-                        ? 'border-red-500/30 bg-red-950/95'
-                        : 'border-white/10 bg-black/95'
-                }`}
-            >
-                <div className="flex justify-center pb-1 pt-3">
-                    <div className="h-1 w-10 rounded-full bg-white/15" />
+                {/* Header */}
+                <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-primary-500" />
+                        <span className="text-xs font-semibold text-white">
+                            {lang === 'es' ? 'Descansando' : 'Resting'}
+                        </span>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            triggerHaptic('light');
+                            setMinimized(true);
+                            setAutoMinimized(false);
+                        }}
+                        className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-400 hover:text-white transition-colors"
+                        aria-label={lang === 'es' ? 'Minimizar' : 'Minimize'}
+                    >
+                        <Icon name="ChevronDown" size={20} />
+                    </button>
                 </div>
 
-                <div className="px-6 pb-6 pt-3">
-                    <div className="mb-5 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <span className={`h-1.5 w-1.5 rounded-full ${isCritical ? 'bg-red-400' : 'bg-primary-500'}`} />
-                            <span className="text-[10px] font-black uppercase tracking-[0.22em] text-zinc-300">
-                                {t.resting}
-                            </span>
-                        </div>
-                        <button
-                            onClick={() => {
-                                triggerHaptic('light');
-                                setMinimized(true);
-                                setAutoMinimized(false);
-                            }}
-                            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-zinc-400 transition-colors hover:bg-white/10 hover:text-white"
-                            aria-label={lang === 'es' ? 'Minimizar' : 'Minimize'}
-                        >
-                            <Icon name="ChevronDown" size={16} />
-                        </button>
-                    </div>
+                {/* Circular Timer Ring */}
+                <CircularTimer
+                    percentage={percentage}
+                    timeLeft={restTimer.timeLeft}
+                    totalDuration={restTimer.duration}
+                    lang={lang}
+                />
 
-                    <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center sm:justify-between">
-                        <CircularTimer
-                            percentage={percentage}
-                            timeLeft={restTimer.timeLeft}
-                            label={lang === 'es' ? 'DESCANSO' : 'REST'}
-                        />
-
-                        <div className="flex w-full flex-col gap-2.5 sm:flex-1">
-                            <div className="grid grid-cols-3 gap-2">
-                                {[30, 60, 90].map((seconds) => (
-                                    <button
-                                        key={seconds}
-                                        onClick={() => setQuickTimer(seconds)}
-                                        className="rounded-2xl border border-white/5 bg-white/5 py-2 text-xs font-bold text-zinc-300 transition-colors hover:bg-white/10 active:scale-95"
-                                    >
-                                        {seconds}s
-                                    </button>
-                                ))}
+                {/* Next exercise / Superset context card */}
+                {nextExerciseInfo && (
+                    <div className="card-reference p-3 flex items-center gap-2.5 mt-2 text-left">
+                        <Icon name="ArrowRight" size={18} className="text-primary-400 shrink-0" />
+                        <div className="min-w-0 flex-1">
+                            <div className="text-[10px] font-semibold uppercase tracking-wider text-muted">
+                                {nextExerciseInfo.isSuperset
+                                    ? (lang === 'es' ? 'Siguiente en la superserie' : 'Next in superset')
+                                    : (lang === 'es' ? 'Siguiente ejercicio' : 'Next exercise')}
                             </div>
-                            <button
-                                onClick={() => adjustTimer(30)}
-                                className="flex items-center justify-center gap-1.5 rounded-2xl border border-white/5 bg-white/5 py-3 text-sm font-bold text-zinc-200 transition-colors hover:bg-white/10 active:scale-95"
-                                aria-label="Add 30 seconds"
-                            >
-                                <Icon name="Plus" size={14} /> 30s
-                            </button>
-                            <button
-                                onClick={() => adjustTimer(-10)}
-                                className="flex items-center justify-center gap-1.5 rounded-2xl border border-white/5 bg-white/5 py-3 text-sm font-bold text-zinc-200 transition-colors hover:bg-white/10 active:scale-95"
-                                aria-label="Subtract 10 seconds"
-                            >
-                                <Icon name="Minus" size={14} /> 10s
-                            </button>
-                            <button
-                                onClick={skipTimer}
-                                className="flex items-center justify-center gap-1.5 rounded-2xl bg-primary-500 py-3 text-sm font-black uppercase tracking-wider text-black shadow-lg shadow-primary-500/20 transition-colors hover:bg-primary-400 active:scale-95"
-                                aria-label={lang === 'es' ? 'Saltar descanso' : 'Skip rest'}
-                            >
-                                <Icon name="SkipForward" size={14} /> {lang === 'es' ? 'Listo' : 'Done'}
-                            </button>
+                            <div className="truncate text-sm font-semibold text-white">
+                                {nextExerciseInfo.name}{nextExerciseInfo.target ? ` · ${nextExerciseInfo.target}` : ''}
+                            </div>
                         </div>
                     </div>
+                )}
+
+                {/* Quick adjustments (-10s / +30s) */}
+                <div className="grid grid-cols-2 gap-2 mt-3">
+                    <button
+                        type="button"
+                        onClick={() => adjustTimer(-10)}
+                        className="h-10 rounded-xl bg-surface-elevated border border-border-subtle flex items-center justify-center gap-1.5 text-sm font-medium text-white hover:border-zinc-500 active:scale-95 transition-all"
+                    >
+                        <Icon name="Minus" size={14} /> 10 s
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => adjustTimer(30)}
+                        className="h-10 rounded-xl bg-surface-elevated border border-border-subtle flex items-center justify-center gap-1.5 text-sm font-medium text-white hover:border-zinc-500 active:scale-95 transition-all"
+                    >
+                        <Icon name="Plus" size={14} /> 30 s
+                    </button>
                 </div>
+
+                {/* Presets (30s / 60s / 90s) */}
+                <div className="grid grid-cols-3 gap-1.5 mt-2">
+                    {[30, 60, 90].map((seconds) => (
+                        <button
+                            key={seconds}
+                            type="button"
+                            onClick={() => setQuickTimer(seconds)}
+                            className={`h-10 rounded-xl flex items-center justify-center text-sm transition-all active:scale-95 ${
+                                restTimer.duration === seconds
+                                    ? 'border-2 border-primary-500 bg-primary-500/10 text-primary-400 font-semibold'
+                                    : 'border border-border-subtle bg-surface-elevated text-muted hover:text-white'
+                            }`}
+                        >
+                            {seconds} s
+                        </button>
+                    ))}
+                </div>
+
+                {/* Skip Rest CTA */}
+                <button
+                    type="button"
+                    onClick={skipTimer}
+                    className="btn-primary-reference w-full h-12 mt-3.5 rounded-xl bg-primary-500 text-zinc-950 text-sm font-semibold hover:bg-primary-400 active:scale-98 transition-all shadow-sm"
+                >
+                    {lang === 'es' ? 'Saltar descanso' : 'Skip rest'}
+                </button>
             </div>
         </div>
     );
