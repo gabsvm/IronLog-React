@@ -176,7 +176,7 @@ const HoldTimer: React.FC<{
             <div className="flex items-center justify-center gap-1 text-green-400">
                 <Icon name="Timer" size={13} />
                 <span className="text-sm font-black tabular-nums">{formatTime(elapsed)}</span>
-                {targetSeconds && <span className="text-[9px] text-green-600">/ {formatTime(targetSeconds)}</span>}
+                {targetSeconds && <span className="text-[11px] text-green-500 font-semibold">/ {formatTime(targetSeconds)}</span>}
             </div>
         );
     }
@@ -567,7 +567,7 @@ export const SetRow = React.memo(({
                 </div>
                 {prescriptionHint && !isDone && (
                     <div className="flex justify-center pb-1 -mt-0.5">
-                        <span className="text-[10px] font-bold tracking-wide text-primary-400">{prescriptionHint}</span>
+                        <span className="text-[11px] font-bold tracking-wide text-primary-400">{prescriptionHint}</span>
                     </div>
                 )}
             </div>
@@ -653,7 +653,7 @@ export const SetRow = React.memo(({
                 </div>
                 {prescriptionHint && !isDone && (
                     <div className="flex justify-center pb-1 -mt-0.5">
-                        <span className="text-[10px] font-bold tracking-wide text-primary-400">{prescriptionHint}</span>
+                        <span className="text-[11px] font-bold tracking-wide text-primary-400">{prescriptionHint}</span>
                     </div>
                 )}
             </div>
@@ -738,7 +738,7 @@ export const SetRow = React.memo(({
             </div>
             {prescriptionHint && !isDone && (
                 <div className="flex justify-center pb-1 -mt-0.5">
-                    <span className="text-[10px] font-bold tracking-wide text-primary-400">{prescriptionHint}</span>
+                    <span className="text-[11px] font-bold tracking-wide text-primary-400">{prescriptionHint}</span>
                 </div>
             )}
         </div>
