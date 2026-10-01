@@ -213,15 +213,19 @@ describe('F9: workout re-render profile (React.Profiler, real controller + real 
         await waitFor(() => expect(capturedCtrl).not.toBeNull());
         hits.length = 0;
 
-        // Flush late post-mount effects so the window only measures the edit.
+        // Flush late post-mount effects so the window only measures the edits.
         await act(async () => {});
         hits.length = 0;
 
-        act(() => {
-            capturedCtrl!.handleSetUpdate(1, 101, 'weight', '85');
-        });
+        // Repeat the edit so scheduling noise averages out: totals compare
+        // ~5 real renders against ~5 memo bailouts instead of single samples.
+        for (let i = 0; i < 5; i++) {
+            act(() => {
+                capturedCtrl!.handleSetUpdate(1, 101, 'weight', String(85 + i));
+            });
+        }
 
-        expect(useStore.getState().activeSession?.exercises?.[0]?.sets?.[0]?.weight).toBe('85');
+        expect(useStore.getState().activeSession?.exercises?.[0]?.sets?.[0]?.weight).toBe('89');
 
         // The edited card did real render work; siblings only paid memo-bailout
         // overhead (visits with ~zero duration, no subtree render). Relative
@@ -231,7 +235,7 @@ describe('F9: workout re-render profile (React.Profiler, real controller + real 
         for (const id of ['card-2', 'card-3', 'card-4']) {
             expect(updateMs(id)).toBeLessThan(updateMs('card-1'));
         }
-        logSummary('caso A (edit weight card-1)');
+        logSummary('caso A (edit weight card-1 x5)');
     });
 
     it('Caso B: completing a set commits only the completed card', async () => {
@@ -241,13 +245,17 @@ describe('F9: workout re-render profile (React.Profiler, real controller + real 
             </AppProvider>
         );
         await waitFor(() => expect(capturedCtrl).not.toBeNull());
-        // Flush late post-mount effects so the window only measures the toggle.
+        // Flush late post-mount effects so the window only measures the toggles.
         await act(async () => {});
         hits.length = 0;
 
-        act(() => {
-            capturedCtrl!.toggleSetComplete(1, 101);
-        });
+        // Repeat the toggle so scheduling noise averages out (odd count ends
+        // on completed=true).
+        for (let i = 0; i < 5; i++) {
+            act(() => {
+                capturedCtrl!.toggleSetComplete(1, 101);
+            });
+        }
 
         expect(useStore.getState().activeSession?.exercises?.[0]?.sets?.[0]?.completed).toBe(true);
 
@@ -256,6 +264,6 @@ describe('F9: workout re-render profile (React.Profiler, real controller + real 
         for (const id of ['card-2', 'card-3', 'card-4']) {
             expect(updateMs(id)).toBeLessThan(updateMs('card-1'));
         }
-        logSummary('caso B (toggle complete card-1)');
+        logSummary('caso B (toggle complete card-1 x5)');
     });
 });
