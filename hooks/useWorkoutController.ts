@@ -94,12 +94,26 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
     // Pre-built best-1RM index from full history — O(total_history) computed once
     // when logs change, not on every call to detectPRs.
     const [historicalBest1RM, setHistoricalBest1RM] = useState<Map<string, number>>(new Map());
+    const [historicalReady, setHistoricalReady] = useState(false);
 
     useEffect(() => {
-        if (!logs || logs.length === 0) return;
+        if (!logs || logs.length === 0) {
+            setHistoricalReady(true);
+            return;
+        }
+        setHistoricalReady(false);
+        let cancelled = false;
         calculateAllBest1RMs(logs).then((resultMap) => {
-            setHistoricalBest1RM(resultMap);
+            if (!cancelled) {
+                setHistoricalBest1RM(resultMap);
+                setHistoricalReady(true);
+            }
+        }).catch(() => {
+            if (!cancelled) {
+                setHistoricalReady(true);
+            }
         });
+        return () => { cancelled = true; };
     }, [logs, calculateAllBest1RMs]);
 
     // Data Mutations
@@ -288,6 +302,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
     }, [activeMeso, sessionExercises, setActiveSession, setRestTimer]);
 
     const detectPRs = useCallback((): boolean => {
+        if (!historicalReady) return false;
         for (const ex of sessionExercises) {
             let currentBest1RM = 0;
             for (const s of (ex.sets || [])) {
@@ -302,7 +317,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
             }
         }
         return false;
-    }, [sessionExercises, historicalBest1RM, userProfile]);
+    }, [historicalReady, sessionExercises, historicalBest1RM, userProfile]);
 
     const fireConfetti = useCallback(async () => {
         try {
@@ -454,6 +469,8 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
         changingSetType, setChangingSetType,
         showPRSuccess, dismissPRSuccess,
         detailExercise, setDetailExercise,
+        historicalReady,
+        detectPRs,
         handleSetUpdate,
         handleSetTypeAll,
         handleAddSet,
