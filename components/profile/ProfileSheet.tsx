@@ -3,30 +3,21 @@ import { useApp, useAppPreferences } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { usePro } from '../../hooks/usePro';
 import { useStore } from '../../lib/store';
-import { Avatar } from '../ui/Avatar';
 import { Icon } from '../ui/Icon';
 import { Sheet } from '../ui/Sheet';
 import { BodyMetricsModal } from './BodyMetricsModal';
+import { triggerHaptic } from '../../utils/audio';
 
 interface ProfileSheetProps {
     open: boolean;
     onClose: () => void;
-    onOpenSettings: () => void;
+    onOpenSettings: (tab?: 'account' | 'training' | 'appearance' | 'data') => void;
 }
 
-const Metric = ({ label, value, suffix }: { label: string; value?: number | null; suffix: string }) => (
-    <div className="rounded-2xl border border-zinc-200/80 bg-zinc-50 p-4 dark:border-white/5 dark:bg-white/5">
-        <div className="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500">{label}</div>
-        <div className="mt-1 text-xl font-black tabular-nums text-zinc-900 dark:text-white">
-            {value ? `${value}${suffix}` : '—'}
-        </div>
-    </div>
-);
-
 export const ProfileSheet: React.FC<ProfileSheetProps> = ({ open, onClose, onOpenSettings }) => {
-    const { userProfile, setUserProfile, logs } = useApp();
-    const { lang } = useAppPreferences();
-    const { user } = useAuth();
+    const { userProfile, setUserProfile, logs, config, setConfig, theme, colorTheme, syncStatus, isOnline } = useApp();
+    const { lang, setLang } = useAppPreferences();
+    const { user, logout } = useAuth();
     const { isPro, tier } = usePro();
     const activeMeso = useStore(state => state.activeMeso);
     const [showBodyModal, setShowBodyModal] = useState(false);
@@ -42,112 +33,273 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({ open, onClose, onOpe
         };
     }, [logs]);
 
-    const openSettings = () => {
+    const openSettingsTab = (tab?: 'account' | 'training' | 'appearance' | 'data') => {
         onClose();
-        window.setTimeout(onOpenSettings, 120);
+        window.setTimeout(() => onOpenSettings(tab), 120);
+    };
+
+    const handleToggleRIR = () => {
+        triggerHaptic('light');
+        setConfig({ showRIR: !config.showRIR });
+    };
+
+    const handleToggleWakeLock = () => {
+        triggerHaptic('light');
+        setConfig({ keepScreenOn: !config.keepScreenOn });
+    };
+
+    const handleToggleLang = () => {
+        triggerHaptic('light');
+        setLang(lang === 'es' ? 'en' : 'es');
     };
 
     const accountLabel = user
         ? (isPro ? (lang === 'es' ? 'Miembro Pro' : 'Pro member') : (lang === 'es' ? 'Cuenta gratuita' : 'Free account'))
         : (lang === 'es' ? 'Modo local' : 'Local mode');
 
+    const userName = user?.displayName || user?.email?.split('@')[0] || (lang === 'es' ? 'Usuario' : 'User');
+    const userInitial = (userName[0] || 'G').toUpperCase();
+
+    const colorThemeLabel: Record<string, string> = {
+        emerald: lang === 'es' ? 'Lima' : 'Lime',
+        ocean: lang === 'es' ? 'Océano' : 'Ocean',
+        forest: lang === 'es' ? 'Bosque' : 'Forest',
+        royal: lang === 'es' ? 'Real' : 'Royal',
+        sunset: lang === 'es' ? 'Atardecer' : 'Sunset',
+        monochrome: lang === 'es' ? 'Monocromo' : 'Monochrome',
+    };
+
     return (
         <Sheet
             open={open}
             onOpenChange={(next) => { if (!next) onClose(); }}
             variant="full"
-            title={lang === 'es' ? 'Perfil' : 'Profile'}
+            title={lang === 'es' ? 'Tú' : 'You'}
             accent="primary"
         >
-            <div className="mx-auto w-full max-w-lg px-5 pb-28 pt-6">
-                <section className="rounded-[2rem] border border-zinc-200/80 bg-white p-5 shadow-sm dark:border-white/5 dark:bg-zinc-900">
-                    <div className="flex items-center gap-4">
-                        <Avatar
-                            email={user?.email}
-                            photoURL={(user as any)?.photoURL}
-                            isPro={isPro}
-                            size={72}
-                        />
-                        <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                                <h2 className="truncate text-xl font-black tracking-tight text-zinc-950 dark:text-white">
-                                    {user?.displayName || user?.email?.split('@')[0] || (lang === 'es' ? 'Usuario local' : 'Local user')}
-                                </h2>
-                                {isPro && (
-                                    <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-amber-500">
-                                        PRO
-                                    </span>
-                                )}
-                            </div>
-                            <p className="mt-1 truncate text-xs font-medium text-zinc-500">{user?.email || accountLabel}</p>
-                            <p className="mt-2 text-[10px] font-black uppercase tracking-[0.16em] text-primary-600 dark:text-primary-400">
-                                {isPro && tier ? `${accountLabel} · ${tier}` : accountLabel}
-                            </p>
-                        </div>
+            <div className="mx-auto w-full max-w-md px-4 pb-24 pt-2 space-y-4">
+                {/* 1. User Profile Info */}
+                <div className="flex items-center gap-3">
+                    <div className="w-13 h-13 rounded-full bg-surface-raised border-2 border-amber-400/90 flex items-center justify-center font-bold text-xl text-white shadow-sm shrink-0">
+                        {userInitial}
                     </div>
-
-                    <button
-                        onClick={openSettings}
-                        className="mt-5 flex w-full items-center justify-between rounded-2xl bg-zinc-100 px-4 py-3 text-left transition-transform active:scale-[0.98] dark:bg-white/5"
-                    >
-                        <div className="flex items-center gap-3">
-                            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-500/10 text-primary-600 dark:text-primary-400">
-                                <Icon name="Settings" size={18} />
-                            </span>
-                            <div>
-                                <div className="text-sm font-black text-zinc-900 dark:text-white">{lang === 'es' ? 'Ajustes' : 'Settings'}</div>
-                                <div className="text-[10px] text-zinc-500">{lang === 'es' ? 'Cuenta, apariencia, entrenamiento y datos' : 'Account, appearance, training and data'}</div>
-                            </div>
-                        </div>
-                        <Icon name="ChevronRight" size={18} className="text-zinc-400" />
-                    </button>
-                </section>
-
-                <section className="mt-6">
-                    <div className="mb-3 flex items-center justify-between px-1">
-                        <h3 className="text-[11px] font-black uppercase tracking-[0.18em] text-zinc-500">{lang === 'es' ? 'Tu cuerpo' : 'Your body'}</h3>
-                        <button onClick={() => setShowBodyModal(true)} className="text-[10px] font-black uppercase tracking-wider text-primary-600 dark:text-primary-400">
-                            {lang === 'es' ? 'Editar' : 'Edit'}
-                        </button>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2">
-                        <Metric label={lang === 'es' ? 'Peso' : 'Weight'} value={userProfile?.bodyWeight} suffix=" kg" />
-                        <Metric label={lang === 'es' ? 'Altura' : 'Height'} value={userProfile?.height} suffix=" cm" />
-                        <Metric label={lang === 'es' ? 'Grasa' : 'Body fat'} value={userProfile?.bodyFat} suffix="%" />
-                    </div>
-                </section>
-
-                <section className="mt-6 grid grid-cols-2 gap-3">
-                    <div className="rounded-3xl border border-zinc-200/80 bg-white p-5 dark:border-white/5 dark:bg-zinc-900">
-                        <Icon name="Dumbbell" size={18} className="text-primary-600 dark:text-primary-400" />
-                        <div className="mt-4 text-3xl font-black tabular-nums text-zinc-950 dark:text-white">{stats.total}</div>
-                        <div className="mt-1 text-[10px] font-black uppercase tracking-[0.14em] text-zinc-500">{lang === 'es' ? 'Sesiones' : 'Sessions'}</div>
-                    </div>
-                    <div className="rounded-3xl border border-zinc-200/80 bg-white p-5 dark:border-white/5 dark:bg-zinc-900">
-                        <Icon name="Activity" size={18} className="text-primary-600 dark:text-primary-400" />
-                        <div className="mt-4 text-3xl font-black tabular-nums text-zinc-950 dark:text-white">{stats.recent}</div>
-                        <div className="mt-1 text-[10px] font-black uppercase tracking-[0.14em] text-zinc-500">{lang === 'es' ? 'Últimos 30 días' : 'Last 30 days'}</div>
-                    </div>
-                </section>
-
-                <section className="mt-6 rounded-3xl border border-zinc-200/80 bg-white p-5 dark:border-white/5 dark:bg-zinc-900">
-                    <div className="flex items-start gap-3">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary-500/10 text-primary-600 dark:text-primary-400">
-                            <Icon name="Calendar" size={18} />
-                        </span>
-                        <div className="min-w-0 flex-1">
-                            <div className="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500">{lang === 'es' ? 'Plan actual' : 'Current plan'}</div>
-                            <div className="mt-1 truncate text-base font-black text-zinc-950 dark:text-white">
-                                {activeMeso?.name || (lang === 'es' ? 'Sin plan activo' : 'No active plan')}
-                            </div>
-                            {activeMeso && (
-                                <div className="mt-1 text-xs font-medium text-zinc-500">
-                                    {lang === 'es' ? `Semana ${activeMeso.week} de ${activeMeso.targetWeeks || activeMeso.duration || '—'}` : `Week ${activeMeso.week} of ${activeMeso.targetWeeks || activeMeso.duration || '—'}`}
-                                </div>
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                            <span className="text-base font-semibold text-white truncate">{userName}</span>
+                            {isPro && (
+                                <span className="chip-reference text-amber-400 font-semibold">
+                                    Pro
+                                </span>
                             )}
                         </div>
+                        <div className="text-xs text-muted truncate mt-0.5">
+                            {user?.email ? `${user.email} · ` : ''}{isPro && tier ? tier : accountLabel}
+                        </div>
                     </div>
-                </section>
+                </div>
+
+                {/* 2. Quick Stats (3 Columns) */}
+                <div className="grid grid-cols-3 gap-2">
+                    <div className="card-reference p-3">
+                        <div className="text-lg font-semibold text-white tabular-nums">{stats.total}</div>
+                        <div className="text-xs text-muted">{lang === 'es' ? 'Sesiones' : 'Sessions'}</div>
+                    </div>
+                    <div className="card-reference p-3">
+                        <div className="text-lg font-semibold text-white tabular-nums">{stats.recent}</div>
+                        <div className="text-xs text-muted">{lang === 'es' ? 'Últimos 30 d' : 'Last 30 d'}</div>
+                    </div>
+                    <div className="card-reference p-3">
+                        <div className="text-lg font-semibold text-white tabular-nums truncate">
+                            {userProfile?.bodyWeight ? `${userProfile.bodyWeight} kg` : '—'}
+                        </div>
+                        <div className="text-xs text-muted flex items-center gap-1">
+                            <span>{userProfile?.height ? `${userProfile.height} cm` : '—'}</span>
+                            <span>·</span>
+                            <button
+                                type="button"
+                                onClick={() => setShowBodyModal(true)}
+                                className="text-primary-400 font-semibold hover:underline"
+                            >
+                                {lang === 'es' ? 'Editar' : 'Edit'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 3. Training Group */}
+                <div>
+                    <div className="label-reference px-1 mb-1.5">{lang === 'es' ? 'Entrenamiento' : 'Training'}</div>
+                    <div className="card-reference divide-y divide-border-subtle overflow-hidden">
+                        {activeMeso && (
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="w-full flex items-center gap-3 p-3 text-left hover:bg-surface-elevated/40 transition-colors"
+                            >
+                                <span className="w-8 h-8 rounded-lg bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
+                                    <Icon name="Calendar" size={17} />
+                                </span>
+                                <div className="flex-1 min-w-0">
+                                    <div className="text-sm font-medium text-white truncate">{activeMeso.name}</div>
+                                    <div className="text-xs text-muted">
+                                        {lang === 'es' ? `Semana ${activeMeso.week} de ${activeMeso.targetWeeks || activeMeso.duration}` : `Week ${activeMeso.week} of ${activeMeso.targetWeeks || activeMeso.duration}`}
+                                    </div>
+                                </div>
+                                <Icon name="ChevronRight" size={16} className="text-muted shrink-0" />
+                            </button>
+                        )}
+                        <button
+                            type="button"
+                            onClick={() => openSettingsTab('training')}
+                            className="w-full flex items-center gap-3 p-3 text-left hover:bg-surface-elevated/40 transition-colors"
+                        >
+                            <span className="w-8 h-8 rounded-lg bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
+                                <Icon name="Layout" size={17} />
+                            </span>
+                            <div className="flex-1 text-sm font-medium text-white">{lang === 'es' ? 'Editor de programa' : 'Program editor'}</div>
+                            <Icon name="ChevronRight" size={16} className="text-muted shrink-0" />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => openSettingsTab('training')}
+                            className="w-full flex items-center gap-3 p-3 text-left hover:bg-surface-elevated/40 transition-colors"
+                        >
+                            <span className="w-8 h-8 rounded-lg bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
+                                <Icon name="Dumbbell" size={17} />
+                            </span>
+                            <div className="flex-1 text-sm font-medium text-white">{lang === 'es' ? 'Ejercicios y plantillas' : 'Exercises & templates'}</div>
+                            <Icon name="ChevronRight" size={16} className="text-muted shrink-0" />
+                        </button>
+                        <div className="flex items-center gap-3 p-3">
+                            <span className="w-8 h-8 rounded-lg bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
+                                <Icon name="Gauge" size={17} />
+                            </span>
+                            <div className="flex-1 text-sm font-medium text-white">{lang === 'es' ? 'Mostrar columna RIR' : 'Show RIR column'}</div>
+                            <button
+                                type="button"
+                                onClick={handleToggleRIR}
+                                className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${config.showRIR ? 'bg-primary-500' : 'bg-surface-elevated border border-border-strong'}`}
+                            >
+                                <span className={`absolute top-0.5 w-5 h-5 rounded-full shadow transition-all ${config.showRIR ? 'left-[22px] bg-zinc-950' : 'left-0.5 bg-zinc-400'}`} />
+                            </button>
+                        </div>
+                        <div className="flex items-center gap-3 p-3">
+                            <span className="w-8 h-8 rounded-lg bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
+                                <Icon name="Smartphone" size={17} />
+                            </span>
+                            <div className="flex-1 text-sm font-medium text-white">{lang === 'es' ? 'Mantener pantalla encendida' : 'Keep screen awake'}</div>
+                            <button
+                                type="button"
+                                onClick={handleToggleWakeLock}
+                                className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${config.keepScreenOn ? 'bg-primary-500' : 'bg-surface-elevated border border-border-strong'}`}
+                            >
+                                <span className={`absolute top-0.5 w-5 h-5 rounded-full shadow transition-all ${config.keepScreenOn ? 'left-[22px] bg-zinc-950' : 'left-0.5 bg-zinc-400'}`} />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 4. Appearance Group */}
+                <div>
+                    <div className="label-reference px-1 mb-1.5">{lang === 'es' ? 'Apariencia' : 'Appearance'}</div>
+                    <div className="card-reference divide-y divide-border-subtle overflow-hidden">
+                        <button
+                            type="button"
+                            onClick={() => openSettingsTab('appearance')}
+                            className="w-full flex items-center gap-3 p-3 text-left hover:bg-surface-elevated/40 transition-colors"
+                        >
+                            <span className="w-8 h-8 rounded-lg bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
+                                <Icon name="Palette" size={17} />
+                            </span>
+                            <div className="flex-1 text-sm font-medium text-white">{lang === 'es' ? 'Tema y color' : 'Theme & color'}</div>
+                            <span className="text-xs text-muted">
+                                {theme === 'light' ? (lang === 'es' ? 'Claro' : 'Light') : (lang === 'es' ? 'Oscuro' : 'Dark')} · {colorThemeLabel[colorTheme] || colorTheme}
+                            </span>
+                            <Icon name="ChevronRight" size={16} className="text-muted shrink-0" />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleToggleLang}
+                            className="w-full flex items-center gap-3 p-3 text-left hover:bg-surface-elevated/40 transition-colors"
+                        >
+                            <span className="w-8 h-8 rounded-lg bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
+                                <Icon name="Globe" size={17} />
+                            </span>
+                            <div className="flex-1 text-sm font-medium text-white">{lang === 'es' ? 'Idioma' : 'Language'}</div>
+                            <span className="text-xs text-muted">{lang === 'es' ? 'Español' : 'English'}</span>
+                            <Icon name="ChevronRight" size={16} className="text-muted shrink-0" />
+                        </button>
+                    </div>
+                </div>
+
+                {/* 5. Data Group */}
+                <div>
+                    <div className="label-reference px-1 mb-1.5">{lang === 'es' ? 'Datos' : 'Data'}</div>
+                    <div className="card-reference divide-y divide-border-subtle overflow-hidden">
+                        <div className="flex items-center gap-3 p-3">
+                            <span className="w-8 h-8 rounded-lg bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
+                                <Icon name="Cloud" size={17} />
+                            </span>
+                            <div className="flex-1 min-w-0">
+                                <div className="text-sm font-medium text-white">{lang === 'es' ? 'Sincronización' : 'Cloud sync'}</div>
+                                <div className="text-xs text-muted truncate">
+                                    {!user
+                                        ? (lang === 'es' ? 'Modo local' : 'Local mode')
+                                        : !isOnline
+                                        ? (lang === 'es' ? 'Sin conexión (en cola)' : 'Offline (queued)')
+                                        : syncStatus.isSyncing
+                                        ? (lang === 'es' ? 'Sincronizando...' : 'Syncing...')
+                                        : syncStatus.pending > 0
+                                        ? (lang === 'es' ? `${syncStatus.pending} pendientes` : `${syncStatus.pending} pending`)
+                                        : (lang === 'es' ? 'Actualizado en la nube' : 'Up to date in cloud')}
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => openSettingsTab('data')}
+                                className="text-xs font-semibold text-primary-400 hover:text-primary-300 transition-colors shrink-0"
+                            >
+                                {lang === 'es' ? 'Ver' : 'View'}
+                            </button>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => openSettingsTab('data')}
+                            className="w-full flex items-center gap-3 p-3 text-left hover:bg-surface-elevated/40 transition-colors"
+                        >
+                            <span className="w-8 h-8 rounded-lg bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
+                                <Icon name="Download" size={17} />
+                            </span>
+                            <div className="flex-1 text-sm font-medium text-white">{lang === 'es' ? 'Exportar y copia de seguridad' : 'Export & backup'}</div>
+                            <Icon name="ChevronRight" size={16} className="text-muted shrink-0" />
+                        </button>
+                    </div>
+                </div>
+
+                {/* 6. Logout / Login */}
+                <div className="text-center pt-2">
+                    {user ? (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                triggerHaptic('light');
+                                logout();
+                                onClose();
+                            }}
+                            className="text-xs font-semibold text-red-400 hover:text-red-300 transition-colors py-2"
+                        >
+                            {lang === 'es' ? 'Cerrar sesión' : 'Sign out'}
+                        </button>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={() => openSettingsTab('account')}
+                            className="text-xs font-semibold text-primary-400 hover:text-primary-300 transition-colors py-2"
+                        >
+                            {lang === 'es' ? 'Iniciar sesión' : 'Sign in'}
+                        </button>
+                    )}
+                </div>
             </div>
 
             <BodyMetricsModal
