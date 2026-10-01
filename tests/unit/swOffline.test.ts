@@ -92,9 +92,11 @@ interface SWHarness {
     dispatchInstall: () => Promise<void>;
     cacheEntries: () => string[];
     primeCache: (entries: Array<[string, FakeResponse]>) => Promise<void>;
+    lastWaitUntilCalls: () => any[];
 }
 
-const loadRealServiceWorker = (fetchImpl: (...args: any[]) => Promise<any>): SWHarness => {
+const loadRealServiceWorker = (fetchImpl: (...args: any[]) => Promise<any>, source: string = SW_SOURCE): SWHarness => {
+    const lastDispatch: { waitUntilCalls: any[] } = { waitUntilCalls: [] };
     const listeners = new Map<string, (event: any) => void>();
     const cachesMock = createCachesMock();
     let fetchFn = fetchImpl;
@@ -122,7 +124,7 @@ const loadRealServiceWorker = (fetchImpl: (...args: any[]) => Promise<any>): SWH
     };
     sandbox.globalThis = sandbox;
     vm.createContext(sandbox);
-    vm.runInContext(SW_SOURCE, sandbox, { filename: 'sw.js' });
+    vm.runInContext(source, sandbox, { filename: 'sw.js' });
     const swCacheName: string = vm.runInContext('CACHE_NAME', sandbox);
 
     const cacheEntries = (): string[] => {
@@ -144,10 +146,17 @@ const loadRealServiceWorker = (fetchImpl: (...args: any[]) => Promise<any>): SWH
             if (!handler) throw new Error('SW registered no fetch listener');
             const request: FakeRequest = { url, method: 'GET', mode };
             let responsePromise: Promise<any> | undefined;
-            handler({ request, respondWith: (promise: Promise<any>) => (responsePromise = promise) });
+            const waitUntilCalls: any[] = [];
+            lastDispatch.waitUntilCalls = waitUntilCalls;
+            handler({
+                request,
+                respondWith: (promise: Promise<any>) => (responsePromise = promise),
+                waitUntil: (promise: Promise<any>) => waitUntilCalls.push(promise),
+            });
             if (!responsePromise) throw new Error(`SW ignored fetch for ${url}`);
             return responsePromise;
         },
+        lastWaitUntilCalls: () => lastDispatch.waitUntilCalls,
         dispatchInstall: async () => {
             const handler = listeners.get('install');
             if (!handler) throw new Error('SW registered no install listener');
@@ -244,5 +253,55 @@ describe('Service Worker (real public/sw.js in vm)', () => {
         expect(entries).toContain(`${ORIGIN}/assets/app-new.js`);
         expect(entries.length).toBeLessThanOrEqual(120 + 3);
         expect((sw.cachesMock.__matchCalls as any[]).some((call) => call.options?.ignoreVary)).toBe(true);
+    });
+
+    it('does NOT fail the install when a LAZY asset fails (one retry, then skipped)', async () => {
+        const stamped = SW_SOURCE.replace(
+            '/* __BUILD_LAZY_URLS__ */',
+            `  '/assets/lazy-ok.js',\n  '/assets/lazy-fail.js',`
+        );
+        const lazySw = loadRealServiceWorker(offlineFetch, stamped);
+        const attempts = new Map<string, number>();
+        lazySw.setFetch(async (input: any) => {
+            const url = typeof input === 'string' ? input : String(input?.url ?? input);
+            attempts.set(url, (attempts.get(url) ?? 0) + 1);
+            if (url.includes('lazy-fail.js')) throw new Error('404 Not Found');
+            return makeResponse(`network:${url}`);
+        });
+
+        await lazySw.dispatchInstall();
+
+        const entries = lazySw.cacheEntries();
+        expect(entries).toContain(`${ORIGIN}/index.html`);
+        expect(entries).toContain(`${ORIGIN}/assets/lazy-ok.js`);
+        expect(entries).not.toContain(`${ORIGIN}/assets/lazy-fail.js`);
+        // One initial attempt plus exactly one retry.
+        expect(attempts.get(`${ORIGIN}/assets/lazy-fail.js`)).toBe(2);
+    });
+
+    it('invokes event.waitUntil with the revalidation promise on cached navigations', async () => {
+        await sw.primeCache([['/index.html', makeResponse('<html>APP SHELL</html>')]]);
+
+        const response = await sw.dispatchFetch(`${ORIGIN}/?action=start`, 'navigate');
+
+        expect(response.body).toContain('APP SHELL');
+        const calls = sw.lastWaitUntilCalls();
+        expect(calls).toHaveLength(1);
+        expect(typeof (calls[0] as Promise<unknown>).then).toBe('function');
+    });
+
+    it('invokes event.waitUntil with the revalidation promise on cached static assets', async () => {
+        await sw.primeCache([['/assets/app.js', makeResponse('old asset')]]);
+        sw.setFetch(async () => makeResponse('fresh asset'));
+
+        const response = await sw.dispatchFetch(`${ORIGIN}/assets/app.js`, 'no-cors');
+
+        // Stale served immediately while the network revalidates in waitUntil.
+        expect(response.body).toBe('old asset');
+        const calls = sw.lastWaitUntilCalls();
+        expect(calls).toHaveLength(1);
+        await calls[0];
+        const cache = await sw.cachesMock.open('gainslab-pro-__BUILD_ID__');
+        expect((await cache.match(`${ORIGIN}/assets/app.js`)).body).toBe('fresh asset');
     });
 });

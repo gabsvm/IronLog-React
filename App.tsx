@@ -151,6 +151,18 @@ const AppContent = () => {
     const [showCommandPalette, setShowCommandPalette] = useState(false);
     const [updateRegistration, setUpdateRegistration] = useState<ServiceWorkerRegistration | null>(null);
     const [dismissedUpdate, setDismissedUpdate] = useState(false);
+    const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
+
+    const applySwUpdate = useCallback(() => {
+        setShowUpdateConfirm(false);
+        (window as any).__USER_TRIGGERED_SW_UPDATE__ = true;
+        const target = updateRegistration?.waiting || updateRegistration?.installing;
+        if (target) {
+            target.postMessage({ type: 'SKIP_WAITING' });
+        } else {
+            window.location.reload();
+        }
+    }, [updateRegistration]);
 
     // Custom Modals State
     const [validatedBackup, setValidatedBackup] = useState<GainsLabBackupV1 | null>(null);
@@ -766,15 +778,10 @@ const AppContent = () => {
                         <button
                             onClick={() => {
                                 if (activeSession) {
-                                    if (!window.confirm(t.updateConfirmActiveWorkout)) return;
+                                    setShowUpdateConfirm(true);
+                                    return;
                                 }
-                                (window as any).__USER_TRIGGERED_SW_UPDATE__ = true;
-                                const target = updateRegistration.waiting || updateRegistration.installing;
-                                if (target) {
-                                    target.postMessage({ type: 'SKIP_WAITING' });
-                                } else {
-                                    window.location.reload();
-                                }
+                                applySwUpdate();
                             }}
                             className="rounded-xl bg-primary-500 px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-black transition-colors hover:bg-primary-400"
                         >
@@ -789,6 +796,21 @@ const AppContent = () => {
                         </button>
                     </div>
                 </div>
+            )}
+
+            {showUpdateConfirm && updateRegistration && (
+                <Suspense fallback={null}>
+                    <ConfirmModal
+                        isOpen={true}
+                        title={t.updateConfirmTitle}
+                        description={t.updateConfirmActiveWorkout}
+                        confirmText={t.updateBannerAction}
+                        cancelText={t.cancel}
+                        onConfirm={applySwUpdate}
+                        onCancel={() => setShowUpdateConfirm(false)}
+                        variant="primary"
+                    />
+                </Suspense>
             )}
 
             <RestTimerOverlay />

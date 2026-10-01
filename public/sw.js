@@ -6,7 +6,12 @@ const CRITICAL_PRECACHE_URLS = [
   '/',
   '/index.html',
   '/manifest.json',
-  /* __BUILD_PRECACHE_URLS__ */
+  /* __BUILD_CRITICAL_URLS__ */
+];
+
+// Best-effort at install (one retry, then left to the runtime cache).
+const LAZY_PRECACHE_URLS = [
+  /* __BUILD_LAZY_URLS__ */
 ];
 
 const OPTIONAL_PRECACHE_URLS = [
@@ -24,7 +29,7 @@ const MAX_CACHE_ENTRIES = 120;
 
 // Precached shell assets must survive runtime trimming: deleting them would
 // break offline screens that were available right after install.
-const PRECACHED_URLS = new Set([...CRITICAL_PRECACHE_URLS, ...OPTIONAL_PRECACHE_URLS]);
+const PRECACHED_URLS = new Set([...CRITICAL_PRECACHE_URLS, ...LAZY_PRECACHE_URLS, ...OPTIONAL_PRECACHE_URLS]);
 
 const isPrecachedRequest = (request) => {
   try {
@@ -58,6 +63,22 @@ self.addEventListener('install', (event) => {
         console.error('[SW] Critical precache failed:', error);
         throw error;
       }
+
+      // Lazy chunks never fail the install: one retry, then they are left
+      // for the runtime stale-while-revalidate cache on first use.
+      await Promise.allSettled(
+        LAZY_PRECACHE_URLS.map(async (url) => {
+          try {
+            await cache.add(url);
+          } catch (firstError) {
+            try {
+              await cache.add(url);
+            } catch (secondError) {
+              console.warn('[SW] Lazy asset skipped (left to runtime cache):', url, secondError);
+            }
+          }
+        })
+      );
 
       await Promise.allSettled(
         OPTIONAL_PRECACHE_URLS.map(async (url) => {
@@ -103,7 +124,7 @@ const shouldCacheResponse = (response) =>
 // regardless of Origin; without it a `Vary: Origin` response cached at
 // install (no-cors, no Origin header) never matches runtime CORS-mode
 // module requests (which send Origin), breaking offline boot.
-const shellHandler = async (request) => {
+const shellHandler = async (request, event) => {
   const cache = await caches.open(CACHE_NAME);
   const cached =
     (await cache.match(request, { ignoreSearch: true, ignoreVary: true })) ||
@@ -120,7 +141,10 @@ const shellHandler = async (request) => {
     .catch(() => null);
 
   if (cached) {
-    void networkPromise;
+    // Keep the worker alive until the background revalidation settles.
+    if (event && typeof event.waitUntil === 'function') {
+      event.waitUntil(networkPromise);
+    }
     return cached;
   }
 
@@ -140,7 +164,7 @@ const shellHandler = async (request) => {
   return fallback || new Response('Offline', { status: 503, headers: { 'Content-Type': 'text/plain' } });
 };
 
-const staleWhileRevalidate = async (request) => {
+const staleWhileRevalidate = async (request, event) => {
   const cache = await caches.open(CACHE_NAME);
   const cached = await cache.match(request, { ignoreVary: true });
 
@@ -154,7 +178,10 @@ const staleWhileRevalidate = async (request) => {
     .catch(() => null);
 
   if (cached) {
-    void networkPromise;
+    // Keep the worker alive until the background revalidation settles.
+    if (event && typeof event.waitUntil === 'function') {
+      event.waitUntil(networkPromise);
+    }
     return cached;
   }
 
@@ -175,7 +202,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (request.mode === 'navigate') {
-    event.respondWith(shellHandler(request));
+    event.respondWith(shellHandler(request, event));
     return;
   }
 
@@ -185,7 +212,7 @@ self.addEventListener('fetch', (event) => {
      /\.(png|svg|webp|ico|json|woff2?|css|js)$/i.test(url.pathname));
 
   if (isSameOriginStatic) {
-    event.respondWith(staleWhileRevalidate(request));
+    event.respondWith(staleWhileRevalidate(request, event));
   }
 });
 

@@ -67,15 +67,14 @@ test.describe('Deferred SW update with active session (F8)', () => {
             expect(await page.evaluate(() => (window as any).__f8noreload)).toBe(1);
             await expect(page.locator('#tut-finish-btn')).toBeVisible();
 
-            // 2. Tapping update asks for confirmation (native confirm); dismissing aborts.
+            // 2. Tapping update asks for confirmation (in-app modal); cancelling aborts.
             const updateBtn = banner.getByRole('button', { name: /Actualizar|Update/ });
-            let dialogMessage = '';
-            page.once('dialog', async (dialog) => {
-                dialogMessage = dialog.message();
-                await dialog.dismiss();
-            });
             await updateBtn.click();
-            await expect.poll(async () => dialogMessage, { timeout: 8000 }).toMatch(/entrenamiento en curso|workout in progress/i);
+            const confirmDialog = page.getByRole('dialog');
+            await expect(confirmDialog.getByText(/Actualizar durante el entreno|Update during workout/)).toBeVisible({ timeout: 8000 });
+            await expect(confirmDialog.getByText(/entrenamiento en curso|workout in progress/i)).toBeVisible();
+            await confirmDialog.getByRole('button', { name: /Cancelar|Cancel/ }).click();
+            await expect(confirmDialog).toHaveCount(0, { timeout: 8000 });
             await page.waitForTimeout(500);
             expect(await page.evaluate(() => (window as any).__f8noreload)).toBe(1);
             await expect(page.locator('#tut-finish-btn')).toBeVisible();
@@ -100,10 +99,10 @@ test.describe('Deferred SW update with active session (F8)', () => {
             bumpSw('BUMP2');
             await triggerSwUpdateCheck(page);
             await expect(banner).toBeVisible({ timeout: 30000 });
-            page.once('dialog', async (dialog) => {
-                await dialog.accept();
-            });
             await updateBtn.click();
+            const acceptDialog = page.getByRole('dialog');
+            await expect(acceptDialog.getByText(/Actualizar durante el entreno|Update during workout/)).toBeVisible({ timeout: 8000 });
+            await acceptDialog.getByRole('button', { name: /^Actualizar$|^Update$/ }).click();
             await page.waitForFunction(() => (window as any).__f8noreload === undefined, null, { timeout: 15000 });
 
             // App boots again after the reload.
