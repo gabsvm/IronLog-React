@@ -6,7 +6,7 @@ import './native-performance.css';
 import App from './App';
 import { requestBackgroundSync, requestPeriodicSync } from './services/backgroundSync';
 import { resetLocalData } from './services/localDataReset';
-
+import { isServiceWorkerAllowed } from './utils/serviceWorker';
 console.log("Starting App Initialization...");
 
 const isNativeShell = Capacitor.isNativePlatform();
@@ -32,7 +32,7 @@ const notifyUpdateAvailable = (registration: ServiceWorkerRegistration) => {
 };
 
 const registerServiceWorker = () => {
-  if (isNativeShell || !('serviceWorker' in navigator) || (typeof navigator !== 'undefined' && navigator.webdriver)) return;
+  if (!isServiceWorkerAllowed()) return;
 
   window.addEventListener('load', () => {
     setTimeout(() => {
@@ -73,7 +73,7 @@ if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
   hadControllerOnLoad = !!navigator.serviceWorker.controller;
 }
 
-if (!isNativeShell && 'serviceWorker' in navigator && (typeof navigator === 'undefined' || !navigator.webdriver)) {
+if (isServiceWorkerAllowed()) {
   let refreshing = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (refreshing || !hadControllerOnLoad) return;
