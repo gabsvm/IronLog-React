@@ -14,7 +14,7 @@ def releaseTaskRequested = gradle.startParameter.taskNames.any { it.toLowerCase(
 
 android {
     namespace "com.gainslab.pro"
-    compileSdkVersion rootProject.ext.compileSdkVersion
+    compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
         applicationId "com.gainslab.pro"
         minSdkVersion rootProject.ext.minSdkVersion
