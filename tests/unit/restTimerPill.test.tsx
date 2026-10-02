@@ -178,7 +178,7 @@ describe('Task U1: RestTimerOverlay as non-modal compact floating pill by defaul
             render(<RestTimerOverlay />);
             const aside = screen.getByLabelText(/Descansando: 1:30/i).closest('aside');
             // offset = 800 - 300 - 0 = 500 > 120 => top docking below header
-            expect(aside?.style.top).toContain('env(safe-area-inset-top');
+            expect(aside?.style.top).toContain('var(--safe-area-top)');
             expect(aside?.style.bottom).toBe('auto');
         } finally {
             Object.defineProperty(window, 'visualViewport', { value: originalViewport, configurable: true });

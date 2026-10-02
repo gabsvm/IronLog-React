@@ -143,7 +143,7 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
             </div>
 
             {/* Footer */}
-            <div className="p-4 bg-[rgb(var(--surface-app))] pb-[env(safe-area-inset-bottom)] border-t border-[rgb(var(--border-subtle)/0.4)]">
+            <div className="p-4 bg-[rgb(var(--surface-app))] pb-[var(--safe-area-bottom)] border-t border-[rgb(var(--border-subtle)/0.4)]">
                 <Button fullWidth onClick={onClose} className="h-12 text-base font-bold">
                     {lang === 'en' ? 'Finish & Go Home' : 'Finalizar y Volver'}
                 </Button>

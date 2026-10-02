@@ -339,7 +339,7 @@ export const RestTimerOverlay: React.FC = () => {
     };
 
     const notifPrompt = showNotifPrompt ? (
-        <div role="status" className="fixed inset-x-0 z-sheet mx-auto max-w-md px-3 pointer-events-none" style={{ bottom: 'calc(80px + var(--rest-pill-height, 0px) + 16px)' }}>
+        <div role="status" className="fixed inset-x-0 z-sheet mx-auto max-w-md px-3 pointer-events-none" style={{ bottom: 'calc(var(--safe-area-bottom) + 80px + var(--rest-pill-height, 0px) + 16px)' }}>
             <div className="pointer-events-auto rounded-2xl border border-border-strong bg-surface-raised/95 p-3 shadow-xl backdrop-blur-md">
                 <p className="text-xs font-medium text-zinc-100">{t.notifPromptTitle}</p>
                 <div className="mt-2 grid grid-cols-2 gap-2">
@@ -375,8 +375,8 @@ export const RestTimerOverlay: React.FC = () => {
     // so dock it below the workout header instead of above the keyboard.
     const keyboardOpen = keyboardOffset > 120;
     const pillPositionStyle: React.CSSProperties = keyboardOpen
-        ? { top: 'calc(env(safe-area-inset-top, 0px) + 64px)', bottom: 'auto' }
-        : { bottom: `${floatingBottom}px` };
+        ? { top: 'calc(var(--safe-area-top) + 64px)', bottom: 'auto' }
+        : { bottom: `calc(var(--safe-area-bottom) + ${floatingBottom}px)` };
     const showCompactExtras = showEffortFeedback && (Boolean(currentSourceSet) || Boolean(nextExerciseInfo));
 
     const adjustTimer = (deltaSeconds: number) => {

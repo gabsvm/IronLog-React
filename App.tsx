@@ -951,7 +951,7 @@ const AppContent = () => {
                 <div 
                     role="status"
                     aria-live="polite"
-                    className="fixed bottom-24 left-1/2 -translate-x-1/2 z-toast flex items-center gap-3 px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-700 shadow-2xl text-sm text-white animate-in fade-in slide-in-from-bottom-2"
+                    className="fixed bottom-[calc(6rem+var(--safe-area-bottom))] left-1/2 -translate-x-1/2 z-toast flex items-center gap-3 px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-700 shadow-2xl text-sm text-white animate-in fade-in slide-in-from-bottom-2"
                 >
                     <span>{skippedSessionToast.name}: {t.skipped}</span>
                     <button

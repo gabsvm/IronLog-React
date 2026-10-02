@@ -79,7 +79,7 @@ export const TemplateSelector: React.FC<Props> = ({
             </header>
 
             <div className="flex-1 overflow-y-auto scroll-container">
-                <div className="mx-auto w-full max-w-xl space-y-5 p-4 pb-[calc(env(safe-area-inset-bottom)+2rem)]">
+                <div className="mx-auto w-full max-w-xl space-y-5 p-4 pb-[calc(var(--safe-area-bottom)+2rem)]">
                     <section className="rounded-3xl border border-primary-500/30 bg-primary-500/10 p-4">
                         <div className="mb-3 flex items-center justify-between">
                             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary-500">

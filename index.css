@@ -5,8 +5,8 @@
 
 :root {
   color-scheme: dark;
-  --safe-area-top: env(safe-area-inset-top, 20px);
-  --safe-area-bottom: env(safe-area-inset-bottom, 20px);
+  --safe-area-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --safe-area-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
 
   /* Shared surfaces/text tokens. Components can keep their existing utility
      classes while the selected light/dark mode changes the whole shell.
@@ -180,6 +180,8 @@ body {
 @layer utilities {
     .pt-safe { padding-top: var(--safe-area-top); }
     .pb-safe { padding-bottom: var(--safe-area-bottom); }
+    .top-safe { top: var(--safe-area-top); }
+    .bottom-safe { bottom: var(--safe-area-bottom); }
     
     .glow-input-neon {
         @apply border-transparent shadow-none;

@@ -128,8 +128,8 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ steps, onCompl
                     bg-zinc-950 border border-white/10 rounded-3xl shadow-2xl shadow-black/80
                     transition-all duration-400
                     ${isDockedTop
-                        ? 'top-[calc(env(safe-area-inset-top)+72px)] animate-in slide-in-from-top-4'
-                        : 'bottom-[calc(env(safe-area-inset-bottom)+100px)] animate-in slide-in-from-bottom-4'}
+                        ? 'top-[calc(var(--safe-area-top)+72px)] animate-in slide-in-from-top-4'
+                        : 'bottom-[calc(var(--safe-area-bottom)+100px)] animate-in slide-in-from-bottom-4'}
                 `}
             >
                 {/* Step counter pill */}

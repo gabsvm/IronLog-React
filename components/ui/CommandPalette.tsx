@@ -117,7 +117,7 @@ export const CommandPalette: React.FC<Props> = ({ isOpen, onClose, actions, titl
                         animate={{ y: 0, opacity: 1, scale: 1 }}
                         exit={{ y: 20, opacity: 0, scale: 0.985 }}
                         transition={{ duration: 0.26, ease: [0.16, 1, 0.3, 1] }}
-                        className="modal-surface mb-[calc(env(safe-area-inset-bottom)+72px)] w-full overflow-hidden rounded-t-[1.75rem] border shadow-2xl sm:mb-0 sm:mx-4 sm:max-w-lg sm:rounded-3xl"
+                        className="modal-surface mb-[calc(var(--safe-area-bottom)+72px)] w-full overflow-hidden rounded-t-[1.75rem] border shadow-2xl sm:mb-0 sm:mx-4 sm:max-w-lg sm:rounded-3xl"
                         onClick={e => e.stopPropagation()}
                     >
                         <div className="flex justify-center pb-1 pt-3 sm:hidden">

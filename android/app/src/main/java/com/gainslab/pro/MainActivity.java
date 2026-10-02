@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.webkit.WebView;
 
+import androidx.activity.EdgeToEdge;
 import androidx.activity.OnBackPressedCallback;
 
 import com.getcapacitor.BridgeActivity;
@@ -17,6 +18,9 @@ public class MainActivity extends BridgeActivity {
         // the bridge so they are available as soon as the web bundle starts.
         registerPlugin(NativeBridgePlugin.class);
         super.onCreate(savedInstanceState);
+        // Android 15+ enforces edge-to-edge; the web layout honors the
+        // SystemBars insets (see system-bars.md insetsHandling=css).
+        EdgeToEdge.enable(this);
 
         // Predictive-back compatible back handling (no deprecated onBackPressed
         // override): App.tsx stores view changes in window.history, so route

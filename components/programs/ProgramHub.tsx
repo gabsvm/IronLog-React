@@ -505,7 +505,7 @@ export const ProgramHub: React.FC<Props> = ({ meso, logs, onClose, lang }) => {
     <div className="fixed inset-0 z-modal flex flex-col bg-[rgb(var(--surface-app))] text-[rgb(var(--text-primary))]" role="dialog" aria-modal="true" aria-label="KONG Program Hub">
       <Header />
       <main className="flex-1 overflow-y-auto scroll-container">
-        <div className="mx-auto w-full max-w-xl p-5 pb-[calc(env(safe-area-inset-bottom)+24px)]">
+        <div className="mx-auto w-full max-w-xl p-5 pb-[calc(var(--safe-area-bottom)+24px)]">
           {content}
         </div>
       </main>

@@ -18,7 +18,7 @@
   }
 
   [aria-labelledby="settings-modal-title"] > div > div:first-child {
-    padding-top: calc(env(safe-area-inset-top, 0px) + 1rem) !important;
+    padding-top: calc(var(--safe-area-top) + 1rem) !important;
   }
 }
 
