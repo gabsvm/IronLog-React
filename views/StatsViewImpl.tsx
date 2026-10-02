@@ -133,6 +133,44 @@ export interface StatsViewImplProps {
     hideHeader?: boolean;
 }
 
+export interface PersonalRecordRowProps {
+    name: string;
+    muscleLabel: string;
+    dateStr: string;
+    weight: number;
+    reps: number;
+    e1rm: number;
+}
+
+export const PersonalRecordRow: React.FC<PersonalRecordRowProps> = ({
+    name,
+    muscleLabel,
+    dateStr,
+    weight,
+    reps,
+    e1rm,
+}) => (
+    <div className="flex items-center gap-3 border-b border-zinc-800/60 py-2 last:border-0">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-yellow-500/10 text-yellow-500">
+            <Icon name="Trophy" size={16} />
+        </div>
+        <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-bold text-white">{name}</p>
+            <p className="text-[11px] font-bold uppercase tracking-wide text-zinc-500">
+                {muscleLabel} · {dateStr}
+            </p>
+        </div>
+        <div className="shrink-0 text-right">
+            <p className="text-sm font-black text-white">
+                {weight}<span className="ml-0.5 text-[11px] text-zinc-500">kg</span>
+            </p>
+            <p className="text-[11px] text-zinc-500">
+                x{reps} · <span className="font-bold text-yellow-500">{Math.round(e1rm)}kg</span>
+            </p>
+        </div>
+    </div>
+);
+
 export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader = false }) => {
     const { logs, lang, exercises, tutorialProgress, markTutorialSeen, userProfile } = useApp();
     const activeMeso = useStore(state => state.activeMeso);
@@ -672,23 +710,15 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                                 year: '2-digit'
                             });
                             return (
-                                <div key={exId} className="flex items-center gap-3 border-b border-zinc-800/60 py-2 last:border-0">
-                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-yellow-500/10 text-yellow-500 text-sm">T</div>
-                                    <div className="min-w-0 flex-1">
-                                        <p className="truncate text-sm font-bold text-white">{pr.name}</p>
-                                        <p className="text-[11px] font-bold uppercase tracking-wide text-zinc-500">
-                                            {TRANSLATIONS[lang].muscle[pr.muscle as MuscleGroup]} · {dateStr}
-                                        </p>
-                                    </div>
-                                    <div className="shrink-0 text-right">
-                                        <p className="text-sm font-black text-white">
-                                            {pr.weight}<span className="ml-0.5 text-[11px] text-zinc-500">kg</span>
-                                        </p>
-                                        <p className="text-[11px] text-zinc-500">
-                                            x{pr.reps} · <span className="font-bold text-yellow-500">{Math.round(pr.e1rm)}kg</span>
-                                        </p>
-                                    </div>
-                                </div>
+                                <PersonalRecordRow
+                                    key={exId}
+                                    name={pr.name}
+                                    muscleLabel={TRANSLATIONS[lang].muscle[pr.muscle as MuscleGroup]}
+                                    dateStr={dateStr}
+                                    weight={pr.weight}
+                                    reps={pr.reps}
+                                    e1rm={pr.e1rm}
+                                />
                             );
                         })}
                     </div>
