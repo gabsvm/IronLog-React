@@ -185,7 +185,7 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({ open, onClose, onOpe
                                 onClick={handleToggleRIR}
                                 className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${config.showRIR ? 'bg-primary-500' : 'bg-surface-elevated border border-border-strong'}`}
                             >
-                                <span className={`absolute top-0.5 w-5 h-5 rounded-full shadow transition-all ${config.showRIR ? 'left-[22px] bg-zinc-950' : 'left-0.5 bg-zinc-400'}`} />
+                                <span className={`absolute top-0.5 w-5 h-5 rounded-full shadow transition-all ${config.showRIR ? 'left-[22px] bg-white' : 'left-0.5 bg-white'}`} />
                             </button>
                         </div>
                         <div className="flex items-center gap-3 p-3">
@@ -198,7 +198,7 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({ open, onClose, onOpe
                                 onClick={handleToggleWakeLock}
                                 className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${config.keepScreenOn ? 'bg-primary-500' : 'bg-surface-elevated border border-border-strong'}`}
                             >
-                                <span className={`absolute top-0.5 w-5 h-5 rounded-full shadow transition-all ${config.keepScreenOn ? 'left-[22px] bg-zinc-950' : 'left-0.5 bg-zinc-400'}`} />
+                                <span className={`absolute top-0.5 w-5 h-5 rounded-full shadow transition-all ${config.keepScreenOn ? 'left-[22px] bg-white' : 'left-0.5 bg-white'}`} />
                             </button>
                         </div>
                     </div>

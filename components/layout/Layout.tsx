@@ -207,7 +207,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
     return (
         <div className="flex h-full w-full flex-col overflow-hidden bg-[rgb(var(--surface-app))] font-sans text-[rgb(var(--text-primary))]">
             {view !== 'workout' && (
-                <div className="pointer-events-none absolute left-0 right-0 top-0 z-20 bg-gradient-to-b from-[rgb(var(--surface-app))] via-[rgb(var(--surface-app)/0.9)] to-transparent px-6 pb-2 pt-safe">
+                <div className="app-topbar pointer-events-none absolute left-0 right-0 top-0 z-20 bg-gradient-to-b from-[rgb(var(--surface-app))] via-[rgb(var(--surface-app)/0.94)] to-[rgb(var(--surface-app)/0.92)] px-6 pb-2 pt-safe">
                     <div className="pointer-events-auto flex h-14 items-center justify-between">
                         <div className="flex items-center gap-3">
                             <Logo className="h-10 w-10" showText />
@@ -236,7 +236,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
                             <Icon name="Plus" size={24} strokeWidth={2.5} />
                         </button>
                         <NavBtn id="nutrition" label={t.diet} icon="Utensils" isActive={view === 'nutrition'} onSelect={setView} />
-                        <NavBtn id="stats" label="Stats" icon="BarChart2" isActive={view === 'stats'} onSelect={setView} />
+                        <NavBtn id="stats" label={t.statsTitle} icon="BarChart2" isActive={view === 'stats'} onSelect={setView} />
                     </div>
                 </nav>
             )}

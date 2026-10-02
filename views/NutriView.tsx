@@ -208,7 +208,7 @@ export const NutriView: React.FC = () => {
 
   // ─── RENDER ──────────────────────────────────────────────────────
   return (
-    <div className="h-full flex flex-col bg-black">
+    <div className="h-full flex flex-col bg-[rgb(var(--surface-app))]">
       {/* ── Sub-tabs ── */}
       <div className="px-4 pt-4 pb-2 shrink-0">
         <div className="flex gap-1 bg-[#131316] p-1 rounded-2xl border border-white/5">

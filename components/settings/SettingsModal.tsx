@@ -415,7 +415,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                             onClick={() => setConfig({ ...config, restTimerDisplay: 'compact' })}
                                             className={`px-2.5 py-1 text-xs rounded-lg font-semibold transition-all ${
                                                 (config.restTimerDisplay || 'compact') === 'compact'
-                                                    ? 'bg-surface-elevated text-white shadow-sm'
+                                                    ? 'bg-primary-500 text-black shadow-sm'
                                                     : 'text-muted hover:text-white'
                                             }`}
                                         >
@@ -426,7 +426,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                             onClick={() => setConfig({ ...config, restTimerDisplay: 'expanded' })}
                                             className={`px-2.5 py-1 text-xs rounded-lg font-semibold transition-all ${
                                                 config.restTimerDisplay === 'expanded'
-                                                    ? 'bg-surface-elevated text-white shadow-sm'
+                                                    ? 'bg-primary-500 text-black shadow-sm'
                                                     : 'text-muted hover:text-white'
                                             }`}
                                         >

@@ -20,7 +20,7 @@ test.describe('Flat tab history (F8)', () => {
         await historyNavBtn.click();
         await expect(page.getByRole('heading', { name: /Historial|History|Sin entrenamientos|No workouts/ }).first()).toBeVisible({ timeout: 10000 });
 
-        const statsNavBtn = page.locator('nav[aria-label="Main navigation"] button', { hasText: 'Stats' });
+        const statsNavBtn = page.locator('nav[aria-label="Main navigation"] button', { hasText: /Stats|Estadísticas/ });
         await statsNavBtn.click();
         await expect(page.getByRole('tablist').first()).toBeVisible({ timeout: 10000 });
 

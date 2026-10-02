@@ -222,7 +222,7 @@ test.describe('J1: palette and program editor (wide viewport)', () => {
         const nav = page.locator('nav[aria-label="Main navigation"]');
         await expect(nav).toBeVisible({ timeout: 15000 });
 
-        const statsNavBtn = page.locator('nav[aria-label="Main navigation"] button', { hasText: 'Stats' });
+        const statsNavBtn = page.locator('nav[aria-label="Main navigation"] button', { hasText: /Stats|Estadísticas/ });
         await statsNavBtn.click();
         await expect(page.getByRole('tablist').first()).toBeVisible({ timeout: 10000 });
 

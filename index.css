@@ -443,6 +443,10 @@ input, textarea {
   box-shadow: none !important;
 }
 
+[data-effects='reduced'] .app-topbar {
+  background: rgb(var(--surface-app)) !important;
+}
+
 [data-effects='reduced'] .backdrop-blur-sm,
 [data-effects='reduced'] .backdrop-blur,
 [data-effects='reduced'] .backdrop-blur-md,

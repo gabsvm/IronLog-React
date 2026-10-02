@@ -64,7 +64,7 @@ test.describe('Offline shell with lazy views precached (F1)', () => {
         await expect(page.getByText(VIEW_LOAD_FAILED_TEXT)).toHaveCount(0);
 
         // 6. Stats renders offline from precache.
-        const statsNavBtn = page.locator('nav[aria-label="Main navigation"] button', { hasText: 'Stats' });
+        const statsNavBtn = page.locator('nav[aria-label="Main navigation"] button', { hasText: /Stats|Estadísticas/ });
         await expect(statsNavBtn).toBeVisible({ timeout: 8000 });
         await statsNavBtn.click();
         await expect(page.getByRole('tablist').first()).toBeVisible({ timeout: 15000 });
