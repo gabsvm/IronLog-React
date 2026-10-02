@@ -86,6 +86,7 @@ export const SortableExerciseCard = React.memo(({
         transition,
         zIndex: isDragging ? 100 : 1,
         opacity: isDragging ? 0.8 : 1,
+        willChange: isDragging ? 'transform' as const : undefined,
         position: 'relative' as const,
         contentVisibility: 'auto' as const,
         containIntrinsicSize: '500px',
@@ -455,9 +456,9 @@ export const SortableExerciseCard = React.memo(({
             ref={setNodeRef}
             style={style}
             className={`
-                card-reference flex flex-col overflow-hidden transition-all
+                card-reference flex flex-col overflow-hidden transition-shadow
                 ${ssStyle ? `border-l-4 ${ssStyle.border}` : ''}
-                ${isDragging ? 'scale-[1.02] shadow-2xl ring-2 ring-red-500/20' : ''}
+                ${isDragging ? 'shadow-2xl ring-2 ring-red-500/20' : ''}
                 ${isLinkSource ? 'ring-2 ring-amber-400/40 shadow-[0_0_0_1px_rgba(251,191,36,0.15)]' : ''}
                 ${isLinkingTarget ? 'ring-2 ring-cyan-400/30 shadow-[0_0_0_1px_rgba(34,211,238,0.12)]' : ''}
                 ${allDone ? 'shadow-[0_20px_50px_-24px_rgba(34,197,94,0.32)]' : ''}

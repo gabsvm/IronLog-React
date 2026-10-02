@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
     DndContext,
     DragEndEvent,
+    DragOverlay,
     DragStartEvent,
     KeyboardSensor,
     PointerSensor,
@@ -42,7 +43,7 @@ interface SortableExerciseRowProps {
     supersetLabel?: string;
 }
 
-const SortableExerciseRow: React.FC<SortableExerciseRowProps> = ({
+export const SortableExerciseRow: React.FC<SortableExerciseRowProps> = ({
     exercise,
     index,
     lang,
@@ -76,7 +77,7 @@ const SortableExerciseRow: React.FC<SortableExerciseRowProps> = ({
                     transition,
                     zIndex: isDragging ? 30 : 1,
                 }}
-                className={`flex items-center gap-2.5 px-3 py-2.5 transition-all ${
+                className={`flex items-center gap-2.5 px-3 py-2.5 transition-shadow ${
                     exercise.supersetId
                         ? 'border-l-[3px] border-l-[#7f77dd] border-t border-r border-b border-border-subtle bg-surface-raised'
                         : 'card-reference my-1'
@@ -91,7 +92,7 @@ const SortableExerciseRow: React.FC<SortableExerciseRowProps> = ({
                             : 'rounded-none border-b-0'
                         : 'rounded-xl'
                 } ${
-                    isDragging ? 'shadow-2xl shadow-black/60 ring-2 ring-primary-500 z-30 opacity-95 scale-[1.02]' : ''
+                    isDragging ? 'opacity-30' : ''
                 }`}
             >
                 <span className="w-5 text-center text-xs text-muted shrink-0 tabular-nums font-medium">
@@ -184,6 +185,7 @@ export const ReorderExercisesSheet: React.FC<ReorderExercisesSheetProps> = ({
     methodologyWarning,
 }) => {
     const [draft, setDraft] = useState<SessionExercise[]>(exercises);
+    const [activeExercise, setActiveExercise] = useState<SessionExercise | null>(null);
 
     useEffect(() => {
         if (open) setDraft(exercises);
@@ -202,16 +204,22 @@ export const ReorderExercisesSheet: React.FC<ReorderExercisesSheetProps> = ({
 
     const supersetLetterMap = useMemo(() => buildSupersetLetterMap(draft), [draft]);
 
-    const handleDragStart = (_event: DragStartEvent) => {
+    const handleDragStart = (event: DragStartEvent) => {
+        setActiveExercise(draft.find(exercise => exercise.instanceId === event.active.id) || null);
         triggerHaptic('light');
     };
 
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
+        setActiveExercise(null);
         if (!over || active.id === over.id) return;
 
         setDraft(current => reorderSupersetExercises(current, active.id, over.id));
         triggerHaptic('medium');
+    };
+
+    const handleDragCancel = () => {
+        setActiveExercise(null);
     };
 
     const save = () => {
@@ -253,9 +261,10 @@ export const ReorderExercisesSheet: React.FC<ReorderExercisesSheetProps> = ({
                     collisionDetection={closestCenter}
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
+                    onDragCancel={handleDragCancel}
                 >
                     <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-                        <div className="space-y-1">
+                        <div className="space-y-1" data-vaul-no-drag>
                             {draft.map((exercise, index) => {
                                 const prevEx = draft[index - 1];
                                 const nextEx = draft[index + 1];
@@ -280,6 +289,23 @@ export const ReorderExercisesSheet: React.FC<ReorderExercisesSheetProps> = ({
                             })}
                         </div>
                     </SortableContext>
+                    <DragOverlay dropAnimation={null}>
+                        {activeExercise ? (
+                            <div className="card-reference flex items-center gap-2.5 rounded-xl px-3 py-2.5 shadow-2xl shadow-black/60 ring-2 ring-primary-500">
+                                <div className="flex-1 min-w-0">
+                                    <div className="text-sm font-medium text-white truncate">
+                                        {getTranslated(activeExercise.name, lang)}
+                                    </div>
+                                    <div className="text-xs text-muted truncate mt-0.5">
+                                        {(activeExercise.sets || []).filter(set => isWorkingSet(set) && set.completed && !set.skipped).length}
+                                        /
+                                        {(activeExercise.sets || []).filter(set => isWorkingSet(set)).length}
+                                    </div>
+                                </div>
+                                <Icon name="GripVertical" size={18} className="text-primary-400 shrink-0" />
+                            </div>
+                        ) : null}
+                    </DragOverlay>
                 </DndContext>
             </div>
         </Sheet>
