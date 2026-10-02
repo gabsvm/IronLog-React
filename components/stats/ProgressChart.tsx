@@ -4,6 +4,7 @@ import { Line } from 'react-chartjs-2';
 import { ChartOptions, ScriptableContext } from 'chart.js/auto';
 import { formatDate } from '../../utils';
 import { useAppPreferences } from '../../context/AppContext';
+import { primaryChartColor } from '../../utils/chartColors';
 
 export interface ChartDataPoint {
     date: number;
@@ -38,7 +39,7 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ dataPoints, metric
             {
                 label: getLabel(metric),
                 data: dataPoints.map(d => d.value),
-                borderColor: 'rgb(var(--primary-500))',
+                borderColor: primaryChartColor(),
                 backgroundColor: (context: ScriptableContext<"line">) => {
                     const ctx = context.chart.ctx;
                     const gradient = ctx.createLinearGradient(0, 0, 0, 200);
@@ -48,7 +49,7 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ dataPoints, metric
                 },
                 borderWidth: 3,
                 pointBackgroundColor: '#fff',
-                pointBorderColor: 'rgb(var(--primary-500))',
+                pointBorderColor: primaryChartColor(),
                 pointBorderWidth: 2,
                 pointRadius: 4,
                 pointHoverRadius: 6,

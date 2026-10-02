@@ -26,6 +26,7 @@ import {
 } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 import { getEffectiveSetLoad, getLogBodyWeight, getSetLoadVolume } from '../utils/trainingMetrics';
+import { buildDoughnutData, buildIntensityPalette } from '../utils/chartColors';
 
 ChartJS.register(
     RadialLinearScale,
@@ -347,17 +348,8 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
         { label: lang === 'es' ? 'Musculos' : 'Muscles', value: trackedMuscles },
     ];
 
-    const doughnutData = {
-        labels: Object.keys(setTypeDist).map(k => t.types[k] || k),
-        datasets: [{
-            data: Object.values(setTypeDist),
-            backgroundColor: [
-                'rgb(var(--primary-500))', '#ea580c', '#ca8a04', '#16a34a', '#2563eb', '#9333ea'
-            ],
-            borderWidth: 0,
-            hoverOffset: 4
-        }]
-    };
+    const doughnutData = buildDoughnutData(setTypeDist, t.types as Record<string, string>);
+    const intensityPalette = buildIntensityPalette();
 
     const prHistory = useMemo(() => {
         const bestMap: Record<string, { e1rm: number; weight: number; reps: number; date: number; name: string; muscle: string }> = {};
@@ -739,20 +731,38 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                             <div className="relative flex flex-1 flex-col items-center justify-center">
                                 <ProLock featureName="Intensity Dist.">
                                     {hasData ? (
-                                        <div className="relative h-48 w-48">
-                                            <Doughnut
-                                                data={doughnutData}
-                                                options={{
-                                                    responsive: true,
-                                                    maintainAspectRatio: false,
-                                                    cutout: '75%',
-                                                    plugins: { legend: { display: false } },
-                                                    elements: { arc: { borderWidth: 0 } }
-                                                }}
-                                            />
-                                            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                                                <span className="text-3xl font-black tracking-[-0.05em] text-white">{totalSets}</span>
-                                                <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">{t.statsSets}</span>
+                                        <div className="flex w-full flex-col items-center">
+                                            <div className="relative h-48 w-48">
+                                                <Doughnut
+                                                    data={doughnutData}
+                                                    options={{
+                                                        responsive: true,
+                                                        maintainAspectRatio: false,
+                                                        cutout: '75%',
+                                                        plugins: { legend: { display: false } },
+                                                        elements: { arc: { borderWidth: 0 } }
+                                                    }}
+                                                />
+                                                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                                                    <span className="text-3xl font-black tracking-[-0.05em] text-white">{totalSets}</span>
+                                                    <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">{t.statsSets}</span>
+                                                </div>
+                                            </div>
+                                            <div className="mt-4 grid w-full grid-cols-2 gap-x-3 gap-y-1.5">
+                                                {Object.entries(setTypeDist).map(([type, count], i) => (
+                                                    <div key={type} className="flex items-center gap-1.5">
+                                                        <span
+                                                            className="h-2.5 w-2.5 shrink-0 rounded-full"
+                                                            style={{ backgroundColor: intensityPalette[i % intensityPalette.length] }}
+                                                        />
+                                                        <span className="truncate text-[11px] font-bold text-zinc-300">
+                                                            {(t.types as Record<string, string>)[type] || type}
+                                                        </span>
+                                                        <span className="ml-auto shrink-0 text-[11px] font-black tabular-nums text-white">
+                                                            {count}
+                                                        </span>
+                                                    </div>
+                                                ))}
                                             </div>
                                         </div>
                                     ) : (
