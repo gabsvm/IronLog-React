@@ -46,7 +46,8 @@ android {
                 throw new GradleException('GainsLab release signing is not configured. Set GAINS_LAB_KEYSTORE_PATH, GAINS_LAB_KEYSTORE_PASSWORD, GAINS_LAB_KEY_ALIAS, and GAINS_LAB_KEY_PASSWORD.')
             }
             signingConfig signingConfigs.release
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
