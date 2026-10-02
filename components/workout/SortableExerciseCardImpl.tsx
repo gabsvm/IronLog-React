@@ -9,6 +9,7 @@ import { ExerciseCardMenu } from './ExerciseCardMenu';
 import { ExerciseCardSets } from './ExerciseCardSets';
 import { ExerciseProtocolBanners } from './ExerciseProtocolBanners';
 import { getTranslated, roundWeight } from '../../utils';
+import { resolveMuscleLabel } from '../../utils/muscle';
 import { triggerHaptic, playTimerFinishSound } from '../../utils/audio';
 import { isWorkingSet } from '../../utils/workoutProgress';
 
@@ -355,12 +356,12 @@ export const SortableExerciseCard = React.memo(({
                 onClick={() => onToggleExpand?.(ex.instanceId)}
                 className={`card-reference cursor-pointer p-3 transition-colors hover:border-zinc-500/60 ${
                     ssStyle ? `border-l-4 ${ssStyle.border}` : ''
-                } ${isDragging ? 'scale-[1.02] shadow-2xl' : ''}`}
+                } ${isDragging ? 'shadow-2xl' : ''}`}
             >
                 <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                            <MuscleTag label={String(ex.slotLabel || ex.muscle || 'CHEST')} />
+                            <MuscleTag label={resolveMuscleLabel(ex.slotLabel || ex.muscle || 'CHEST', lang)} />
                             {isCardio ? (
                                 <span className="chip-reference text-cyan-300">
                                     {String(t.cardioModes?.[cardioMode] || cardioMode)}
@@ -478,7 +479,7 @@ export const SortableExerciseCard = React.memo(({
                                 </div>
                             )}
 
-                            <MuscleTag label={String(ex.slotLabel || ex.muscle || 'CHEST')} />
+                            <MuscleTag label={resolveMuscleLabel(ex.slotLabel || ex.muscle || 'CHEST', lang)} />
 
                             {isCardio ? (
                                 <span className="inline-flex items-center rounded-full border border-cyan-500/20 bg-cyan-500/10 px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em] text-cyan-300">

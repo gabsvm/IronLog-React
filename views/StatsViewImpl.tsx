@@ -383,7 +383,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
         { label: lang === 'es' ? 'Sesiones' : 'Sessions', value: safeLogs.filter(log => !log.skipped).length },
         { label: lang === 'es' ? 'Ejercicios' : 'Exercises', value: availableExercises.length },
         { label: lang === 'es' ? 'Series' : 'Sets', value: totalSets },
-        { label: lang === 'es' ? 'Musculos' : 'Muscles', value: trackedMuscles },
+        { label: lang === 'es' ? 'Músculos' : 'Muscles', value: trackedMuscles },
     ];
 
     const doughnutData = buildDoughnutData(setTypeDist, t.types as Record<string, string>);
@@ -475,7 +475,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
         const volumeStatus =
             muscleWeeklySets < 6 ? { id: 'low', label: lang === 'es' ? 'Bajo' : 'Low' } :
             muscleWeeklySets < 10 ? { id: 'maintenance', label: lang === 'es' ? 'Base' : 'Base' } :
-            muscleWeeklySets <= 20 ? { id: 'optimal', label: lang === 'es' ? 'Optimo' : 'Optimal' } :
+            muscleWeeklySets <= 20 ? { id: 'optimal', label: lang === 'es' ? 'Óptimo' : 'Optimal' } :
             { id: 'high', label: lang === 'es' ? 'Alto' : 'High' };
 
         let level: PerformanceBand | null = null;
@@ -509,14 +509,14 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                 : 'Cardio uses time or distance, not load tonnage.')
             : currentEx.isIsometric
                 ? (lang === 'es'
-                    ? 'Isometricos usan segundos de hold como progreso principal.'
+                    ? 'Isométricos usan segundos de hold como progreso principal.'
                     : 'Isometrics use hold seconds as the main progress signal.')
                 : currentEx.isBodyweight
                     ? (lang === 'es'
                         ? `El volumen de carga suma tu peso corporal${userProfile?.bodyWeight ? ` (${userProfile.bodyWeight}kg)` : ''} y cualquier lastre.`
                         : `Load volume adds your bodyweight${userProfile?.bodyWeight ? ` (${userProfile.bodyWeight}kg)` : ''} plus any added load.`)
                     : (lang === 'es'
-                        ? 'Maquinas, poleas y pesos libres usan el peso que registras como carga externa.'
+                        ? 'Máquinas, poleas y pesos libres usan el peso que registras como carga externa.'
                         : 'Machines, cables, and free weights use the logged load as external resistance.');
 
         return {
@@ -542,7 +542,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                     <div className="px-1">
                         <div className="flex items-center justify-between gap-3">
                             <div>
-                                <h2 className="text-[1.7rem] font-black tracking-[-0.05em] text-white">Stats</h2>
+                                <h2 className="text-[1.7rem] font-black tracking-[-0.05em] text-white">{t.statsTitle}</h2>
                                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
                                     {activeMeso
                                         ? `${lang === 'es' ? 'Meso activo' : 'Active meso'} · ${t.week} ${activeMeso.week}`
@@ -670,7 +670,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                         <div className="flex items-center justify-between gap-3">
                             <div>
                                 <div className="text-2xl font-black capitalize tracking-[-0.04em] text-white">
-                                    {selectedExerciseInsight.level || (lang === 'es' ? 'Sin clasificar' : 'Unrated')}
+                                    {(selectedExerciseInsight.level && (t.statsLevels as Record<string, string>)[selectedExerciseInsight.level]) || (lang === 'es' ? 'Sin clasificar' : 'Unrated')}
                                 </div>
                                 <p className="mt-1 text-sm text-zinc-400">
                                     {selectedExerciseInsight.rationale || (lang === 'es' ? 'Falta historial suficiente para clasificar.' : 'Not enough history to classify yet.')}
@@ -678,7 +678,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                             </div>
                             <div className="rounded-2xl border border-white/6 bg-white/[0.03] px-4 py-3 text-right">
                                 <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-zinc-500">
-                                    {lang === 'es' ? 'Series semanales del musculo' : 'Weekly muscle sets'}
+                                    {lang === 'es' ? 'Series semanales del músculo' : 'Weekly muscle sets'}
                                 </div>
                                 <div className="mt-1 text-xl font-black text-white">
                                     {selectedExerciseInsight.muscleWeeklySets}
@@ -697,7 +697,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                     <div className="mb-5 flex items-center justify-between">
                         <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-500">
                             <Icon name="Trophy" size={14} />
-                            {lang === 'es' ? 'Records Personales' : 'Personal Records'}
+                            {lang === 'es' ? 'Récords Personales' : 'Personal Records'}
                         </h3>
                         <span className="text-[11px] font-bold uppercase text-zinc-600">{lang === 'es' ? 'e1RM estimado' : 'est. e1RM'}</span>
                     </div>

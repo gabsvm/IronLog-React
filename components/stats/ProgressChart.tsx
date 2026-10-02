@@ -4,6 +4,7 @@ import { Line } from 'react-chartjs-2';
 import { ChartOptions, ScriptableContext } from 'chart.js/auto';
 import { formatDate } from '../../utils';
 import { useAppPreferences } from '../../context/AppContext';
+import { TRANSLATIONS } from '../../constants';
 import { primaryChartColor } from '../../utils/chartColors';
 
 export interface ChartDataPoint {
@@ -136,10 +137,11 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ dataPoints, metric
     }
 
     if (dataPoints.length < 2) {
+        const { progressEmptyTitle, progressEmptyBody } = TRANSLATIONS[lang];
         return (
             <div className="h-60 flex flex-col items-center justify-center text-center p-4 border border-dashed border-zinc-200 dark:border-white/10 rounded-[1.4rem] bg-zinc-50 dark:bg-white/[0.02]">
-                <p className="text-sm font-bold text-zinc-300 mb-1">Not enough data</p>
-                <p className="text-xs text-zinc-500">Complete at least 2 workouts with this exercise to see progress.</p>
+                <p className="text-sm font-bold text-zinc-300 mb-1">{progressEmptyTitle}</p>
+                <p className="text-xs text-zinc-500">{progressEmptyBody}</p>
             </div>
         );
     }

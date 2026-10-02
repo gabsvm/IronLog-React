@@ -20,6 +20,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import type { SessionExercise } from '../../types';
 import { getTranslated } from '../../utils';
+import { resolveMuscleLabel } from '../../utils/muscle';
 import { triggerHaptic } from '../../utils/audio';
 import { isWorkingSet } from '../../utils/workoutProgress';
 import { Icon } from '../ui/Icon';
@@ -104,7 +105,7 @@ export const SortableExerciseRow: React.FC<SortableExerciseRowProps> = ({
                         {getTranslated(exercise.name, lang)}
                     </div>
                     <div className="text-xs text-muted truncate mt-0.5">
-                        {String(exercise.slotLabel || exercise.muscle || '')}
+                        {resolveMuscleLabel(exercise.slotLabel || exercise.muscle, lang)}
                     </div>
                 </div>
 

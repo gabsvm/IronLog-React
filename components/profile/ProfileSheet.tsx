@@ -3,6 +3,7 @@ import { useApp, useAppPreferences, useSyncStatus } from '../../context/AppConte
 import { useAuth } from '../../context/AuthContext';
 import { usePro } from '../../hooks/usePro';
 import { useStore } from '../../lib/store';
+import { TRANSLATIONS } from '../../constants';
 import { Icon } from '../ui/Icon';
 import { Sheet } from '../ui/Sheet';
 import { BodyMetricsModal } from './BodyMetricsModal';
@@ -22,6 +23,9 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({ open, onClose, onOpe
     const { isPro, tier } = usePro();
     const activeMeso = useStore(state => state.activeMeso);
     const [showBodyModal, setShowBodyModal] = useState(false);
+    const planLabel = isPro && tier
+        ? ((TRANSLATIONS[lang].planTypes as Record<string, string>)[tier] || tier)
+        : null;
 
     const stats = useMemo(() => {
         const safeLogs = Array.isArray(logs) ? logs : [];
@@ -94,7 +98,7 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({ open, onClose, onOpe
                             )}
                         </div>
                         <div className="text-xs text-muted truncate mt-0.5">
-                            {user?.email ? `${user.email} · ` : ''}{isPro && tier ? tier : accountLabel}
+                            {user?.email ? `${user.email} · ` : ''}{planLabel || accountLabel}
                         </div>
                     </div>
                 </div>

@@ -680,9 +680,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         <Divider />
 
                         <div>
-                            <label className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 block">Credits & Philosophy</label>
+                            <label className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 block">{t.creditsTitle}</label>
                             <button onClick={() => setShowPhilosophy(true)} className="w-full py-3 bg-zinc-100 dark:bg-zinc-800 rounded-xl text-xs font-bold flex justify-center gap-2 items-center text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
-                                <Icon name="BookOpen" size={16} /> Natural Hypertrophy (NH) 85% Rule
+                                <Icon name="BookOpen" size={16} /> {t.nhRule}
                             </button>
                         </div>
 

@@ -460,6 +460,16 @@ export const TRANSLATIONS = {
         statsIntensity: "Intensity Distribution",
         statsSets: "Sets",
         statsNoData: "No Data",
+        statsTitle: "Stats",
+        statsLevels: { beginner: "Beginner", intermediate: "Intermediate", advanced: "Advanced" },
+        planTypes: { free: "Free", monthly: "Monthly", yearly: "Yearly", lifetime: "Lifetime", demo: "Demo" },
+        progressEmptyTitle: "Not enough data",
+        progressEmptyBody: "Complete at least 2 workouts with this exercise to see progress.",
+        adminPanel: "Admin Panel",
+        adminClose: "Close Admin",
+        manageTemplates: "Manage Templates",
+        creditsTitle: "Credits & Philosophy",
+        nhRule: "Natural Hypertrophy (NH) 85% Rule",
 
         // Plate Calculator
         plateCalc: {
@@ -972,6 +982,16 @@ export const TRANSLATIONS = {
         statsIntensity: "Distribución de Intensidad",
         statsSets: "Series",
         statsNoData: "Sin Datos",
+        statsTitle: "Estadísticas",
+        statsLevels: { beginner: "Principiante", intermediate: "Intermedio", advanced: "Avanzado" },
+        planTypes: { free: "Gratuito", monthly: "Mensual", yearly: "Anual", lifetime: "Vitalicio", demo: "Demo" },
+        progressEmptyTitle: "Datos insuficientes",
+        progressEmptyBody: "Completá al menos 2 entrenamientos con este ejercicio para ver el progreso.",
+        adminPanel: "Panel Admin",
+        adminClose: "Cerrar Admin",
+        manageTemplates: "Gestionar plantillas",
+        creditsTitle: "Créditos y filosofía",
+        nhRule: "Hipertrofia Natural (NH) Regla 85%",
 
         // Plate Calculator
         plateCalc: {
