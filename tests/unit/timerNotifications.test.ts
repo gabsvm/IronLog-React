@@ -166,7 +166,9 @@ describe('Task U2: Rest Timer Notification Permission and Visibility Scoping', (
         expect(scheduleNativeRestTimer).toHaveBeenCalledWith(
             endAt,
             TRANSLATIONS.es.timer.finished,
-            TRANSLATIONS.es.timer.getBack
+            TRANSLATIONS.es.timer.getBack,
+            TRANSLATIONS.es.timer.resting,
+            TRANSLATIONS.es.timer.restingBody
         );
         expect(cancelNativeRestTimer).not.toHaveBeenCalled();
     });
@@ -194,6 +196,34 @@ describe('Task U2: Rest Timer Notification Permission and Visibility Scoping', (
         });
         expect(cancelNativeRestTimer).toHaveBeenCalledTimes(2);
         expect(scheduleNativeRestTimer).toHaveBeenCalledTimes(1);
+    });
+
+    it('J2: on native, adjusting the rest (+30s) re-schedules with the new endAt and live texts', () => {
+        vi.clearAllMocks();
+        vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(true);
+        const { result } = renderHook(() => useTimer('en'));
+        vi.clearAllMocks();
+
+        const endAt = Date.now() + 90000;
+        act(() => {
+            result.current.setRestTimer({ active: true, duration: 90, timeLeft: 90, endAt });
+        });
+        expect(scheduleNativeRestTimer).toHaveBeenCalledTimes(1);
+
+        // +30s adjustment changes endAt: the same notification id is updated.
+        const adjustedEndAt = endAt + 30000;
+        act(() => {
+            result.current.setRestTimer((prev) => ({ ...prev, endAt: adjustedEndAt, timeLeft: 120 }));
+        });
+        expect(scheduleNativeRestTimer).toHaveBeenCalledTimes(2);
+        expect(scheduleNativeRestTimer).toHaveBeenLastCalledWith(
+            adjustedEndAt,
+            TRANSLATIONS.en.timer.finished,
+            TRANSLATIONS.en.timer.getBack,
+            TRANSLATIONS.en.timer.resting,
+            TRANSLATIONS.en.timer.restingBody
+        );
+        expect(cancelNativeRestTimer).not.toHaveBeenCalled();
     });
 
     it('P7-3: on web, rests never touch the native alarm bridge', () => {

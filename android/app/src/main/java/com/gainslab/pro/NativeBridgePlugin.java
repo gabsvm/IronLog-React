@@ -36,8 +36,10 @@ import com.getcapacitor.annotation.PermissionCallback;
 public class NativeBridgePlugin extends Plugin {
     private static final String TIMER_ACTION = "com.gainslab.pro.REST_TIMER_FINISHED";
     private static final String TIMER_CHANNEL = "gainslab_rest_timer";
+    private static final String TIMER_LIVE_CHANNEL = "gainslab_rest_timer_live";
     private static final int TIMER_REQUEST_CODE = 8811;
     private static final int TIMER_NOTIFICATION_ID = 8812;
+    private static final int TIMER_LIVE_NOTIFICATION_ID = 8813;
     private static final String PREFS = "gainslab_native_bridge";
     private static final String NOTIFICATION_PROMPTED = "notification_prompted";
 
@@ -116,6 +118,12 @@ public class NativeBridgePlugin extends Plugin {
             alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent);
         }
 
+        // Publish (or update, same id) the ongoing live countdown. Adjusting
+        // the rest (+30s/-10s) re-schedules with a new endAt and refreshes it.
+        String liveTitle = call.getString("liveTitle", title);
+        String liveBody = call.getString("liveBody", body);
+        postLiveTimerNotification(context, endAt, liveTitle, liveBody);
+
         call.resolve();
     }
 
@@ -141,9 +149,14 @@ public class NativeBridgePlugin extends Plugin {
         PendingIntent pendingIntent = timerPendingIntent(context, "GainsLab", "");
         alarmManager.cancel(pendingIntent);
         pendingIntent.cancel();
+        cancelLiveTimerNotification(context);
     }
 
     public static void onRestTimerFinished(Context context, String title, String body) {
+        // Always dismiss the live countdown first, even when foregrounded, so
+        // no ongoing notification is left hanging after the rest ends.
+        cancelLiveTimerNotification(context);
+
         // If the app is foregrounded the JS timer owns sound/haptics, preventing
         // duplicate feedback. The native receiver is primarily a background path.
         if (isAppForeground()) return;
@@ -156,14 +169,7 @@ public class NativeBridgePlugin extends Plugin {
         if (!canPostNotifications(context)) return;
         createNotificationChannel(context);
 
-        Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
-        PendingIntent contentIntent = null;
-        if (launchIntent != null) {
-            launchIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            int flags = PendingIntent.FLAG_UPDATE_CURRENT;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) flags |= PendingIntent.FLAG_IMMUTABLE;
-            contentIntent = PendingIntent.getActivity(context, TIMER_REQUEST_CODE + 1, launchIntent, flags);
-        }
+        PendingIntent contentIntent = launchContentIntent(context);
 
         Notification.Builder builder;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -185,6 +191,55 @@ public class NativeBridgePlugin extends Plugin {
         if (manager != null) manager.notify(TIMER_NOTIFICATION_ID, builder.build());
     }
 
+    private static PendingIntent launchContentIntent(Context context) {
+        Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
+        if (launchIntent == null) return null;
+        launchIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) flags |= PendingIntent.FLAG_IMMUTABLE;
+        return PendingIntent.getActivity(context, TIMER_REQUEST_CODE + 1, launchIntent, flags);
+    }
+
+    private static void postLiveTimerNotification(Context context, long endAt, String liveTitle, String liveBody) {
+        if (!canPostNotifications(context)) return;
+        createNotificationChannel(context);
+
+        Notification.Builder builder;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            builder = new Notification.Builder(context, TIMER_LIVE_CHANNEL);
+        } else {
+            builder = new Notification.Builder(context)
+                    .setPriority(Notification.PRIORITY_LOW);
+        }
+
+        builder.setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle(liveTitle)
+                .setContentText(liveBody)
+                .setWhen(endAt)
+                .setShowWhen(true)
+                .setUsesChronometer(true)
+                .setChronometerCountDown(true)
+                .setOngoing(true)
+                .setOnlyAlertOnce(true)
+                .setCategory(Notification.CATEGORY_STOPWATCH)
+                .setVisibility(Notification.VISIBILITY_PUBLIC);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // Safety net: auto-dismiss shortly after the rest ends even if the
+            // app died before cancelling (API 26+ only).
+            builder.setTimeoutAfter(Math.max(1000L, endAt - System.currentTimeMillis() + 5000L));
+        }
+        PendingIntent contentIntent = launchContentIntent(context);
+        if (contentIntent != null) builder.setContentIntent(contentIntent);
+
+        NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (manager != null) manager.notify(TIMER_LIVE_NOTIFICATION_ID, builder.build());
+    }
+
+    private static void cancelLiveTimerNotification(Context context) {
+        NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (manager != null) manager.cancel(TIMER_LIVE_NOTIFICATION_ID);
+    }
+
     private static boolean isAppForeground() {
         ActivityManager.RunningAppProcessInfo info = new ActivityManager.RunningAppProcessInfo();
         ActivityManager.getMyMemoryState(info);
@@ -201,16 +256,31 @@ public class NativeBridgePlugin extends Plugin {
     private static void createNotificationChannel(Context context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        if (manager == null || manager.getNotificationChannel(TIMER_CHANNEL) != null) return;
+        if (manager == null) return;
 
-        NotificationChannel channel = new NotificationChannel(
-                TIMER_CHANNEL,
-                "Rest timer",
-                NotificationManager.IMPORTANCE_HIGH
-        );
-        channel.setDescription("GainsLab rest timer alerts");
-        channel.enableVibration(true);
-        manager.createNotificationChannel(channel);
+        if (manager.getNotificationChannel(TIMER_CHANNEL) == null) {
+            NotificationChannel channel = new NotificationChannel(
+                    TIMER_CHANNEL,
+                    "Rest timer",
+                    NotificationManager.IMPORTANCE_HIGH
+            );
+            channel.setDescription("GainsLab rest timer alerts");
+            channel.enableVibration(true);
+            manager.createNotificationChannel(channel);
+        }
+
+        if (manager.getNotificationChannel(TIMER_LIVE_CHANNEL) == null) {
+            NotificationChannel liveChannel = new NotificationChannel(
+                    TIMER_LIVE_CHANNEL,
+                    "Rest timer (live)",
+                    NotificationManager.IMPORTANCE_LOW
+            );
+            liveChannel.setDescription("Live rest countdown while a rest is running");
+            liveChannel.enableVibration(false);
+            liveChannel.setSound(null, null);
+            liveChannel.setShowBadge(false);
+            manager.createNotificationChannel(liveChannel);
+        }
     }
 
     private static void vibrate(Context context, String type) {

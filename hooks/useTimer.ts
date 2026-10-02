@@ -88,7 +88,7 @@ export const useTimer = (lang: Lang) => {
 
         if (timer.active && timer.endAt > Date.now()) {
             const t = TRANSLATIONS[lang]?.timer || TRANSLATIONS.en.timer;
-            scheduleNativeRestTimer(timer.endAt, t.finished, t.getBack);
+            scheduleNativeRestTimer(timer.endAt, t.finished, t.getBack, t.resting, t.restingBody);
         } else {
             cancelNativeRestTimer();
         }

@@ -405,7 +405,9 @@ export const TRANSLATIONS = {
         // Timer Notifications
         timer: {
             finished: "Rest Finished!",
-            getBack: "Get back to work!"
+            getBack: "Get back to work!",
+            resting: "Resting",
+            restingBody: "Next set coming up"
         },
 
         // Profile
@@ -915,7 +917,9 @@ export const TRANSLATIONS = {
         // Timer Notifications
         timer: {
             finished: "¡Descanso Terminado!",
-            getBack: "¡A trabajar!"
+            getBack: "¡A trabajar!",
+            resting: "Descansando",
+            restingBody: "Se acerca la próxima serie"
         },
 
         // Profile
