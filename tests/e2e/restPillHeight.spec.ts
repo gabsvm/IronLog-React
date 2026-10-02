@@ -86,4 +86,61 @@ test.describe('Rest pill height compensation (G2)', () => {
 
         await expect(page.getByText(ERROR_BOUNDARY_TEXT)).toHaveCount(0);
     });
+
+    test('H1: notif prompt renders above the visible pill without overlap', async ({ page }) => {
+        await seedShowRirProfile(page);
+        await page.goto('/');
+
+        const nav = page.locator('nav[aria-label="Main navigation"]');
+        await expect(nav).toBeVisible({ timeout: 15000 });
+
+        const plusBtn = page.locator('nav[aria-label="Main navigation"] button[aria-label*="Iniciar" i], nav[aria-label="Main navigation"] button[aria-label*="Start" i]').first();
+        await expect(plusBtn).toBeVisible({ timeout: 8000 });
+        await plusBtn.click();
+
+        const freestyleOption = page.locator('button:has-text("Sesión libre"), button:has-text("Freestyle")').first();
+        await expect(freestyleOption).toBeVisible({ timeout: 6000 });
+        await freestyleOption.click();
+
+        const startFreeBtn = page.locator('button:has-text("Iniciar Sesión Libre"), button:has-text("Start Free Session"), button:has-text("Iniciar sesión libre")').first();
+        await expect(startFreeBtn).toBeVisible({ timeout: 8000 });
+        await startFreeBtn.scrollIntoViewIfNeeded();
+        await startFreeBtn.click();
+
+        // Add one exercise so the session has a set to complete.
+        const addExHeaderBtn = page.locator('button[title*="Añadir ejercicio" i], button[title*="Add exercise" i], button[title*="Añadir Ejercicio" i]').first();
+        await expect(addExHeaderBtn).toBeVisible({ timeout: 6000 });
+        await addExHeaderBtn.click();
+        const option = page.locator('[role="dialog"] button, .modal button')
+            .filter({ hasText: /press|squat|curl|banca|remo|row|peso muerto|deadlift/i })
+            .first();
+        await expect(option).toBeVisible({ timeout: 6000 });
+        await option.click();
+        await expect(page.locator('[role="dialog"], .modal')).toHaveCount(0, { timeout: 6000 });
+
+        // Completing a set starts the rest pill.
+        const completeSetBtn = page.locator('button[aria-label*="Completar serie" i], button[aria-label*="Complete set" i]').first();
+        await expect(completeSetBtn).toBeVisible({ timeout: 6000 });
+        await completeSetBtn.click();
+
+        const pill = page.locator('aside');
+        await expect(pill.getByRole('button', { name: '-10s' })).toBeVisible({ timeout: 8000 });
+
+        // Fire the real event the timer hook emits on natural rest completion.
+        // (A real 90 s rest is impractical in e2e; the event contract itself is
+        // covered by timerNotifications.test.ts against the real hook.)
+        await page.evaluate(() => window.dispatchEvent(new Event('ironlog:rest-completed')));
+
+        const prompt = page.locator('[role="status"]');
+        await expect(prompt).toBeVisible({ timeout: 6000 });
+
+        // The prompt sits fully above the pill: no overlap, gap of ~16px.
+        const promptBox = await prompt.boundingBox();
+        const pillBox = await pill.boundingBox();
+        expect(promptBox).not.toBeNull();
+        expect(pillBox).not.toBeNull();
+        expect(promptBox!.y + promptBox!.height).toBeLessThanOrEqual(pillBox!.y + 1);
+
+        await expect(page.getByText(ERROR_BOUNDARY_TEXT)).toHaveCount(0);
+    });
 });

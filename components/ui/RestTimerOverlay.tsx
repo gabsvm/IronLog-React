@@ -296,6 +296,14 @@ export const RestTimerOverlay: React.FC = () => {
         return () => window.removeEventListener('ironlog:rest-completed', onRestCompleted);
     }, []);
 
+    // The prompt never blocks: it auto-dismisses after 10 s (the once-flag
+    // was already set at show time, so it never comes back).
+    useEffect(() => {
+        if (!showNotifPrompt) return;
+        const timer = window.setTimeout(() => setShowNotifPrompt(false), 10_000);
+        return () => window.clearTimeout(timer);
+    }, [showNotifPrompt]);
+
     // Derived: Current source set for effort feedback
     const currentSourceSet = useMemo(() => {
         if (!restTimer?.source || !activeSession?.exercises) return null;
@@ -331,7 +339,7 @@ export const RestTimerOverlay: React.FC = () => {
     };
 
     const notifPrompt = showNotifPrompt ? (
-        <div role="status" className="fixed inset-x-0 bottom-24 z-sheet mx-auto max-w-md px-3">
+        <div role="status" className="fixed inset-x-0 z-sheet mx-auto max-w-md px-3 pointer-events-none" style={{ bottom: 'calc(80px + var(--rest-pill-height, 0px) + 16px)' }}>
             <div className="pointer-events-auto rounded-2xl border border-border-strong bg-surface-raised/95 p-3 shadow-xl backdrop-blur-md">
                 <p className="text-xs font-medium text-zinc-100">{t.notifPromptTitle}</p>
                 <div className="mt-2 grid grid-cols-2 gap-2">

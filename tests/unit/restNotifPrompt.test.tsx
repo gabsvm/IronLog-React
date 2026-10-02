@@ -98,6 +98,32 @@ describe('G6: one-time notification opt-in after the first completed rest', () =
         expect(screen.queryByText(TRANSLATIONS.es.notifPromptTitle)).not.toBeInTheDocument();
     });
 
+    it('auto-dismisses after 10 s without clearing the once-flag', () => {
+        vi.useFakeTimers();
+        try {
+            render(<RestTimerOverlay />);
+            completeRest();
+            expect(screen.getByText(TRANSLATIONS.es.notifPromptTitle)).toBeInTheDocument();
+
+            act(() => {
+                vi.advanceTimersByTime(9999);
+            });
+            expect(screen.getByText(TRANSLATIONS.es.notifPromptTitle)).toBeInTheDocument();
+
+            act(() => {
+                vi.advanceTimersByTime(1);
+            });
+            expect(screen.queryByText(TRANSLATIONS.es.notifPromptTitle)).not.toBeInTheDocument();
+            expect(window.localStorage.getItem('il_notif_prompted')).toBe('1');
+
+            // And it never comes back.
+            completeRest();
+            expect(screen.queryByText(TRANSLATIONS.es.notifPromptTitle)).not.toBeInTheDocument();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
     it('never shows on native platforms', () => {
         vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(true);
         render(<RestTimerOverlay />);
