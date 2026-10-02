@@ -212,7 +212,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         >
             <div className="w-88 sm:w-96 max-w-full bg-white dark:bg-zinc-900 h-full shadow-2xl border-l border-zinc-200 dark:border-white/5 flex flex-col" onClick={e => e.stopPropagation()}>
 
-                <div className="p-5 pb-3 shrink-0 flex justify-between items-center bg-white dark:bg-zinc-900 z-10 border-b border-zinc-100 dark:border-white/5">
+                <div className="px-5 pb-3 pt-[calc(1.25rem+var(--safe-area-top))] shrink-0 flex justify-between items-center bg-white dark:bg-zinc-900 z-10 border-b border-zinc-100 dark:border-white/5">
                     <h2 id="settings-modal-title" className="font-bold text-xl dark:text-white tracking-tight">{t.settings}</h2>
                     <button onClick={onClose} aria-label="Close settings" className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white p-1 rounded-lg">
                         <Icon name="X" size={20} />

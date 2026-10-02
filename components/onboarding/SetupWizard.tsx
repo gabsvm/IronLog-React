@@ -358,7 +358,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
     return (
         <div className="fixed inset-0 z-modal bg-white dark:bg-zinc-950 flex flex-col">
             {/* Header */}
-            <div className="px-6 pt-safe py-4 border-b border-zinc-100 dark:border-zinc-900">
+            <div className="px-6 pb-4 pt-[calc(1rem+var(--safe-area-top))] border-b border-zinc-100 dark:border-zinc-900">
                 <div className="flex justify-between items-center mb-4">
                     <div className="flex items-center gap-2">
                         <Logo size={32} showText />
@@ -436,7 +436,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
 
             {/* Footer – only shown on steps 0–3 */}
             {step < 4 && (
-                <div className="px-6 py-5 border-t border-zinc-100 dark:border-zinc-900 bg-white dark:bg-zinc-950 flex gap-3">
+                <div className="px-6 pt-5 pb-[calc(1.25rem+var(--safe-area-bottom))] border-t border-zinc-100 dark:border-zinc-900 bg-white dark:bg-zinc-950 flex gap-3">
                     <button
                         onClick={() => setStep(Math.max(0, step - 1))}
                         disabled={step === 0}

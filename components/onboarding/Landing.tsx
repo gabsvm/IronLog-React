@@ -23,7 +23,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onLogin }) => {
                 <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-zinc-800/20 blur-[100px] md:blur-[120px] rounded-full" />
             </div>
 
-            <div className="relative min-h-full flex flex-col px-6 py-8 md:py-12 max-w-5xl mx-auto">
+            <div className="relative min-h-full flex flex-col px-6 pb-8 md:pb-12 pt-[calc(2rem+var(--safe-area-top))] md:pt-[calc(3rem+var(--safe-area-top))] max-w-5xl mx-auto">
                 {/* Header */}
                 <div className="flex justify-between items-center mb-12 md:mb-16 animate-in-up" style={{ animationDelay: '0.1s' }}>
                     <Logo size={28} />
@@ -161,7 +161,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onLogin }) => {
                 </div>
 
                 {/* Footer */}
-                <div className="text-center text-zinc-600 text-[9px] md:text-[10px] uppercase tracking-widest mt-auto pb-4 animate-in-up" style={{ animationDelay: '1s' }}>
+                <div className="text-center text-zinc-600 text-[9px] md:text-[10px] uppercase tracking-widest mt-auto pb-[calc(1rem+var(--safe-area-bottom))] animate-in-up" style={{ animationDelay: '1s' }}>
                     GainsLab v4.0 &copy; {new Date().getFullYear()} &bull; Professional Edition
                 </div>
             </div>

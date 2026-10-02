@@ -73,7 +73,7 @@ export const GuidelinesModal: React.FC<Props> = ({ isOpen, onClose, images }) =>
     return (
         <div className="fixed inset-0 z-confirm bg-black flex flex-col animate-in fade-in duration-slow" role="dialog" aria-modal="true" aria-label="Guidelines viewer">
             {/* Header with Zoom Controls */}
-            <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-50 bg-gradient-to-b from-black/90 to-transparent pt-safe">
+            <div className="absolute top-0 left-0 right-0 px-4 pb-4 pt-[calc(1rem+var(--safe-area-top))] flex justify-between items-center z-50 bg-gradient-to-b from-black/90 to-transparent">
                 <h3 className="text-white font-black text-lg uppercase flex items-center gap-2 drop-shadow-md">
                     <Icon name="Info" size={20} className="text-blue-500" /> Guidelines
                 </h3>

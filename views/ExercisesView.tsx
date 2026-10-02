@@ -252,7 +252,7 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
     return (
         <div className="h-full flex flex-col bg-gray-50 dark:bg-zinc-950">
             {/* Header */}
-            <div className="glass px-4 h-14 shrink-0 flex items-center justify-between z-10 border-b border-zinc-200 dark:border-white/5">
+            <div className="glass px-4 min-h-14 pt-safe shrink-0 flex items-center justify-between z-10 border-b border-zinc-200 dark:border-white/5">
                 <button
                     onClick={onBack}
                     className="flex items-center gap-2 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
@@ -354,12 +354,12 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
                                 data={filteredExercises}
                                 itemContent={Row}
                                 components={{
-                                    Footer: () => <div className="h-24" /> // Padding for FAB
+                                    Footer: () => <div className="h-[calc(6rem+var(--safe-area-bottom))]" /> // Padding for FAB
                                 }}
                             />
                         )}
 
-                        <div className="fixed bottom-6 right-6 z-10">
+                        <div className="fixed bottom-[calc(1.5rem+var(--safe-area-bottom))] right-6 z-10">
                             <button
                                 onClick={() => setMode('create')}
                                 className="w-14 h-14 bg-primary-500 rounded-full text-black shadow-xl shadow-primary-500/25 flex items-center justify-center hover:scale-105 active:scale-95 transition-all"
@@ -371,7 +371,7 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
                     </div>
                 </div>
             ) : (
-                <div className="p-6 space-y-6 overflow-y-auto">
+                <div className="p-6 pb-[calc(1.5rem+var(--safe-area-bottom))] space-y-6 overflow-y-auto">
                     <div>
                         <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider mb-2 block">{t.exName}</label>
                         <input

@@ -841,7 +841,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
 
             {showPicker && (
                 <div className="fixed inset-0 z-sheet flex flex-col bg-zinc-950 animate-in slide-in-from-bottom duration-200">
-                    <div className="glass flex h-16 shrink-0 items-center gap-3 border-b border-white/5 px-4">
+                    <div className="glass flex min-h-16 pt-safe shrink-0 items-center gap-3 border-b border-white/5 px-4">
                         <button onClick={() => setShowPicker(false)} className="-ml-2 p-2 text-zinc-400 hover:text-white">
                             <Icon name="X" size={24} />
                         </button>
@@ -858,7 +858,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                         </div>
                     </div>
 
-                    <div className="scroll-container flex-1 overflow-y-auto p-2">
+                    <div className="scroll-container flex-1 overflow-y-auto p-2 pb-[calc(0.5rem+var(--safe-area-bottom))]">
                         <div className="space-y-1">
                             {filteredExercises.map(ex => (
                                 <button

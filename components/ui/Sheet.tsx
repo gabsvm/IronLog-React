@@ -152,7 +152,7 @@ export const Sheet: React.FC<SheetProps> = ({
                         modal-surface outline-none
                         border-t
                         ${isFull
-                            ? 'top-0 min-h-0 rounded-none'
+                            ? 'top-0 min-h-0 rounded-none pt-safe'
                             : 'max-h-[92vh] rounded-t-[1.75rem] shadow-2xl'}
                     `}
                 >
@@ -171,7 +171,7 @@ export const Sheet: React.FC<SheetProps> = ({
 
                     {/* Header */}
                     {(title || onBack || !hideCloseButton) && (
-                        <div className={`flex items-center gap-3 px-5 ${isFull ? 'h-16 pt-safe border-b border-zinc-200 dark:border-white/5' : 'py-3'} shrink-0`}>
+                        <div className={`flex items-center gap-3 px-5 ${isFull ? 'min-h-16 border-b border-zinc-200 dark:border-white/5' : 'py-3'} shrink-0`}>
                             {onBack && (
                                 <button
                                     onClick={onBack}

@@ -185,7 +185,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
 
             {/* Content Switcher */}
             {isCreating ? (
-                <div className="flex-1 overflow-y-auto p-6 scroll-container flex flex-col">
+                <div className="flex-1 overflow-y-auto p-6 pb-[calc(1.5rem+var(--safe-area-bottom))] scroll-container flex flex-col">
                     <div className="space-y-6 flex-1">
                         <div>
                             <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider mb-2 block">{t.exName}</label>
@@ -296,7 +296,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
                                 itemContent={Row}
                                 components={{
                                     Footer: () => (
-                                        <div className="pt-4 pb-12 px-4">
+                                        <div className="pt-4 pb-[calc(3rem+var(--safe-area-bottom))] px-4">
                                             <Button variant="secondary" onClick={handleCreateStart} fullWidth className="border-dashed">
                                                 <Icon name="Plus" size={14} /> {t.createEx} {search ? `"${search}"` : ''}
                                             </Button>

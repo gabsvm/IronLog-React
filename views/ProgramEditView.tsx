@@ -160,7 +160,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
     if (isStructuredKong) {
         return (
             <div className="flex h-full flex-col bg-[rgb(var(--surface-app))] text-[rgb(var(--text-primary))]">
-                <div className="flex h-14 shrink-0 items-center border-b border-[rgb(var(--border-subtle))] px-4">
+                <div className="flex min-h-14 pt-safe shrink-0 items-center border-b border-[rgb(var(--border-subtle))] px-4">
                     <button onClick={onBack} className="flex min-h-11 items-center gap-2 text-sm font-bold text-[rgb(var(--text-secondary))]" aria-label={t.back}>
                         <Icon name="ChevronLeft" size={20} /> {t.back}
                     </button>
@@ -189,7 +189,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
     return (
         <div className="h-full flex flex-col bg-gray-50 dark:bg-zinc-950 relative">
             {/* Header: clearly distinguishes Edit vs Create */}
-            <div className="glass px-4 h-14 shrink-0 flex items-center justify-between z-10 border-b border-zinc-200 dark:border-white/5">
+            <div className="glass px-4 min-h-14 pt-safe shrink-0 flex items-center justify-between z-10 border-b border-zinc-200 dark:border-white/5">
                 <button
                     onClick={onBack}
                     className="flex items-center gap-2 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
