@@ -66,6 +66,7 @@ self.onmessage = function(e: MessageEvent) {
         // sort the much smaller output array at the end.
         for (const log of sourceLogs) {
             if (!log || log.skipped) continue;
+            if (activeMesoId && log.mesoId !== activeMesoId) continue;
             const logBodyWeight = getLogBodyWeight(log, userBodyWeight);
             const ex = (log.exercises || []).find((candidate: any) => String(candidate.id) === String(exerciseId));
             if (!ex) continue;

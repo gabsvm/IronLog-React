@@ -12,6 +12,7 @@ import { TutorialOverlay } from '../components/ui/TutorialOverlay';
 import { ProLock } from '../components/pro/ProLock';
 import { useStore } from '../lib/store';
 import { buildStatsLogsSignature, statsCache } from '../services/statsCache';
+import { countSessionsByScope, scopeMesoId as scopeMesoIdFor, StatsScope } from '../utils/statsScope';
 import {
     Chart as ChartJS,
     RadialLinearScale,
@@ -178,6 +179,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
 
     const [selectedExId, setSelectedExId] = useState<string | null>(null);
     const [chartMetric, setChartMetric] = useState<ChartMetric>('1rm');
+    const [statsScope, setStatsScope] = useState<StatsScope>('history');
     const [showPicker, setShowPicker] = useState(false);
     const [pickerSearch, setPickerSearch] = useState('');
 
@@ -194,6 +196,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
 
     const safeLogs = useMemo(() => Array.isArray(logs) ? logs : [], [logs]);
     const logsSignature = useMemo(() => buildStatsLogsSignature(safeLogs), [safeLogs]);
+    const scopeMesoId = scopeMesoIdFor(statsScope, activeMeso?.id);
     const exerciseMetaById = useMemo(() => {
         const byId = new Map<string, any>();
 
@@ -244,6 +247,24 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
     }, [selectedExId]);
 
     useEffect(() => {
+        let cancelled = false;
+
+        void statsCache.readSelectedScope().then((cachedScope) => {
+            if (!cancelled && (cachedScope === 'plan' || cachedScope === 'history')) {
+                setStatsScope(cachedScope);
+            }
+        });
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    useEffect(() => {
+        void statsCache.writeSelectedScope(statsScope);
+    }, [statsScope]);
+
+    useEffect(() => {
         if (availableExercises.length === 0) {
             if (selectedExId !== null) {
                 setSelectedExId(null);
@@ -278,7 +299,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
         if (!isWorkerReady) return;
 
         let cancelled = false;
-        const mesoId = activeMeso?.id ?? null;
+        const mesoId = scopeMesoId;
 
         const loadOverview = async () => {
             setLoadingOverview(true);
@@ -297,7 +318,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                 setLoadingOverview(false);
             }
 
-            const { volumeData, exerciseFrequency } = await calculateOverview(safeLogs, activeMeso?.id);
+            const { volumeData, exerciseFrequency } = await calculateOverview(safeLogs, scopeMesoId ?? undefined);
             if (cancelled) return;
 
             setVolumeData(volumeData);
@@ -308,10 +329,11 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
 
             const typeCounts: Record<string, number> = {};
             safeLogs.forEach(log => {
-                if (activeMeso?.id && log.mesoId !== activeMeso.id) return;
+                if (log.skipped) return;
+                if (scopeMesoId != null && log.mesoId !== scopeMesoId) return;
                 log.exercises?.forEach(ex => {
                     ex.sets?.forEach(set => {
-                        if (set.completed) {
+                        if (set.completed && !set.skipped) {
                             const type = set.type || 'regular';
                             typeCounts[type] = (typeCounts[type] || 0) + 1;
                         }
@@ -339,7 +361,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
         return () => {
             cancelled = true;
         };
-    }, [isWorkerReady, safeLogs, activeMeso?.id, exerciseMetaById, selectedExId, calculateOverview, logsSignature]);
+    }, [isWorkerReady, safeLogs, scopeMesoId, exerciseMetaById, selectedExId, calculateOverview, logsSignature]);
 
     useEffect(() => {
         if (!isWorkerReady || !selectedExId || (activeTab && activeTab !== 'progress')) return;
@@ -348,16 +370,16 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
 
         const loadChart = async () => {
             setLoadingChart(true);
-            const cached = await statsCache.readChart(logsSignature, selectedExId, chartMetric);
+            const cached = await statsCache.readChart(logsSignature, selectedExId, chartMetric, scopeMesoId);
             if (cached && !cancelled) {
                 setChartPoints(cached.dataPoints);
                 setLoadingChart(false);
             }
 
-            const points = await calculateChartData(safeLogs, selectedExId, chartMetric);
+            const points = await calculateChartData(safeLogs, selectedExId, chartMetric, scopeMesoId);
             if (cancelled) return;
             setChartPoints(points);
-            await statsCache.writeChart(logsSignature, selectedExId, chartMetric, points);
+            await statsCache.writeChart(logsSignature, selectedExId, chartMetric, scopeMesoId, points);
             setLoadingChart(false);
         };
 
@@ -365,7 +387,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
         return () => {
             cancelled = true;
         };
-    }, [isWorkerReady, selectedExId, chartMetric, safeLogs, calculateChartData, logsSignature, activeTab]);
+    }, [isWorkerReady, selectedExId, chartMetric, safeLogs, calculateChartData, logsSignature, activeTab, scopeMesoId]);
 
     const filteredExercises = useMemo(() => {
         return availableExercises.filter(ex =>
@@ -380,7 +402,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
     const hasExerciseHistory = availableExercises.length > 0;
 
     const overviewPills = [
-        { label: lang === 'es' ? 'Sesiones' : 'Sessions', value: safeLogs.filter(log => !log.skipped).length },
+        { label: lang === 'es' ? 'Sesiones' : 'Sessions', value: countSessionsByScope(safeLogs, scopeMesoId) },
         { label: lang === 'es' ? 'Ejercicios' : 'Exercises', value: availableExercises.length },
         { label: lang === 'es' ? 'Series' : 'Sets', value: totalSets },
         { label: lang === 'es' ? 'Músculos' : 'Muscles', value: trackedMuscles },
@@ -394,6 +416,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
 
         safeLogs.forEach(log => {
             if (log.skipped) return;
+            if (scopeMesoId != null && log.mesoId !== scopeMesoId) return;
             (log.exercises || []).forEach(ex => {
                 if (!ex.id || ex.isBodyweight || ex.isIsometric || ex.muscle === 'CARDIO') return;
                 const working = (ex.sets || []).filter(set => set.completed && set.type !== 'warmup' && set.type !== 'avt_hop');
@@ -420,7 +443,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
         return Object.entries(bestMap)
             .sort((a, b) => b[1].date - a[1].date)
             .slice(0, 20);
-    }, [safeLogs, lang]);
+    }, [safeLogs, lang, scopeMesoId]);
 
     const [showAllPRs, setShowAllPRs] = useState(false);
     const displayedPRs = showAllPRs ? prHistory : prHistory.slice(0, 6);
@@ -439,7 +462,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
     const selectedExerciseInsight = useMemo(() => {
         if (!currentEx) return null;
 
-        const matchingLogs = safeLogs.filter(log => !log.skipped);
+        const matchingLogs = safeLogs.filter(log => !log.skipped && (scopeMesoId == null || log.mesoId === scopeMesoId));
         let bestReps = 0;
         let bestAddedLoad = 0;
         let bestEstimated1RM = 0;
@@ -527,7 +550,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
             muscleWeeklySets,
             volumeStatus,
         };
-    }, [currentEx, lang, rawMuscleCounts, safeLogs, userProfile?.bodyWeight]);
+    }, [currentEx, lang, rawMuscleCounts, safeLogs, userProfile?.bodyWeight, scopeMesoId]);
 
     const statsTutorialSteps = [
         { targetId: 'tut-progress-chart', title: t.tutorial.stats[0].title, text: t.tutorial.stats[0].text, position: 'bottom' as const },
@@ -565,11 +588,31 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                             </div>
                         ))}
                     </div>
+                    <p className="mt-2 text-center text-[11px] font-bold uppercase tracking-[0.16em] text-zinc-600">
+                        {statsScope === 'plan' ? t.statsScopePlan : t.statsScopeHistory}
+                    </p>
                 </>
             )}
 
             {(!activeTab || activeTab === 'progress') && (
                 <>
+                    <div className="flex rounded-xl border border-white/5 bg-white/5 p-1" role="tablist" aria-label={t.statsScopeHistory}>
+                        {(['plan', 'history'] as StatsScope[]).map(scope => (
+                            <button
+                                key={scope}
+                                role="tab"
+                                aria-selected={statsScope === scope}
+                                onClick={() => setStatsScope(scope)}
+                                className={`flex-1 rounded-md px-3 py-1.5 text-[11px] font-black uppercase tracking-wider transition-all ${
+                                    statsScope === scope
+                                        ? 'bg-primary-500 text-white shadow-[0_2px_8px] shadow-primary-500/25'
+                                        : 'text-zinc-500 hover:text-zinc-300'
+                                }`}
+                            >
+                                {scope === 'plan' ? t.statsScopePlan : t.statsScopeHistory}
+                            </button>
+                        ))}
+                    </div>
                     <div id="tut-progress-chart" className="glass-card overflow-hidden rounded-[1.7rem] border border-white/6 p-5 shadow-md">
                 <div className="mb-5 flex flex-col gap-3">
                     <div className="flex items-center justify-between gap-3">

@@ -4,8 +4,9 @@ import { Log } from '../types';
 import { db } from '../utils/db';
 
 const overviewKey = (signature: string, mesoId: number | null) => `il_stats_overview_v2:${signature}:${mesoId ?? 'all'}`;
-const chartKey = (signature: string, exerciseId: string, metric: ChartMetric) => `il_stats_chart_v2:${signature}:${exerciseId}:${metric}`;
+const chartKey = (signature: string, exerciseId: string, metric: ChartMetric, mesoId: number | null) => `il_stats_chart_v3:${signature}:${exerciseId}:${metric}:${mesoId ?? 'all'}`;
 const selectedExerciseKey = 'il_stats_selected_exercise_v1';
+const selectedScopeKey = 'il_stats_scope_v1';
 
 export interface StatsOverviewCache {
     volumeData: [string, number][];
@@ -91,12 +92,12 @@ export const statsCache = {
         });
     },
 
-    readChart(signature: string, exerciseId: string, metric: ChartMetric) {
-        return db.get<StatsChartCache | null>(chartKey(signature, exerciseId, metric), null);
+    readChart(signature: string, exerciseId: string, metric: ChartMetric, mesoId: number | null) {
+        return db.get<StatsChartCache | null>(chartKey(signature, exerciseId, metric, mesoId), null);
     },
 
-    writeChart(signature: string, exerciseId: string, metric: ChartMetric, dataPoints: ChartDataPoint[]) {
-        return db.set(chartKey(signature, exerciseId, metric), {
+    writeChart(signature: string, exerciseId: string, metric: ChartMetric, mesoId: number | null, dataPoints: ChartDataPoint[]) {
+        return db.set(chartKey(signature, exerciseId, metric, mesoId), {
             dataPoints,
             savedAt: Date.now(),
         });
@@ -108,5 +109,13 @@ export const statsCache = {
 
     writeSelectedExercise(exerciseId: string | null) {
         return db.set(selectedExerciseKey, exerciseId);
+    },
+
+    readSelectedScope() {
+        return db.get<'plan' | 'history' | null>(selectedScopeKey, null);
+    },
+
+    writeSelectedScope(scope: 'plan' | 'history') {
+        return db.set(selectedScopeKey, scope);
     },
 };

@@ -80,7 +80,7 @@ export const useStatsWorker = () => {
         });
     }, [ensureLogs, nextRequestId]);
 
-    const calculateChartData = useCallback((logs: Log[], exerciseId: string, metric: ChartMetric): Promise<ChartPoint[]> => {
+    const calculateChartData = useCallback((logs: Log[], exerciseId: string, metric: ChartMetric, activeMesoId?: number | null): Promise<ChartPoint[]> => {
         const worker = ensureLogs(logs);
         if (!worker) return Promise.resolve([]);
         const reqId = nextRequestId();
@@ -90,6 +90,7 @@ export const useStatsWorker = () => {
                 type: 'CALCULATE_CHART',
                 exerciseId,
                 metric,
+                activeMesoId: activeMesoId ?? undefined,
                 userBodyWeight: userProfile?.bodyWeight,
                 reqId,
             });

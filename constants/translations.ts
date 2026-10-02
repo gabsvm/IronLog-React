@@ -470,6 +470,12 @@ export const TRANSLATIONS = {
         manageTemplates: "Manage Templates",
         creditsTitle: "Credits & Philosophy",
         nhRule: "Natural Hypertrophy (NH) 85% Rule",
+        statsScopePlan: "This plan",
+        statsScopeHistory: "Full history",
+        bodyYourGoal: "Your goal",
+        bodyRecommended: "Recommended for your weight",
+        bodyGoalProtein: "Protein",
+        bodyGoalWater: "Water",
 
         // Plate Calculator
         plateCalc: {
@@ -992,6 +998,12 @@ export const TRANSLATIONS = {
         manageTemplates: "Gestionar plantillas",
         creditsTitle: "Créditos y filosofía",
         nhRule: "Hipertrofia Natural (NH) Regla 85%",
+        statsScopePlan: "Este plan",
+        statsScopeHistory: "Todo el historial",
+        bodyYourGoal: "Tu meta",
+        bodyRecommended: "Recomendado para tu peso",
+        bodyGoalProtein: "Proteína",
+        bodyGoalWater: "Agua",
 
         // Plate Calculator
         plateCalc: {

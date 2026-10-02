@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { usePro } from '../../hooks/usePro';
 import { useStore } from '../../lib/store';
 import { TRANSLATIONS } from '../../constants';
+import { countSessionsByScope, filterLogsByScope } from '../../utils/statsScope';
 import { Icon } from '../ui/Icon';
 import { Sheet } from '../ui/Sheet';
 import { BodyMetricsModal } from './BodyMetricsModal';
@@ -28,12 +29,11 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({ open, onClose, onOpe
         : null;
 
     const stats = useMemo(() => {
-        const safeLogs = Array.isArray(logs) ? logs : [];
-        const completed = safeLogs.filter((log: any) => !log.skipped);
+        const completed = filterLogsByScope(logs, null);
         const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
         const recent = completed.filter((log: any) => (log.endTime || log.startTime || 0) >= thirtyDaysAgo);
         return {
-            total: completed.length,
+            total: countSessionsByScope(logs, null),
             recent: recent.length,
         };
     }, [logs]);
