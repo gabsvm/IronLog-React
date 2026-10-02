@@ -282,13 +282,18 @@ const AppContent = () => {
     // closing the profile sheet, and then swallows the next pushState).
     const isFirstMountRef = useRef(true);
 
+    // Seed the initial entry ONCE. (It used to live in the listener effect
+    // below, which re-ran on every view change and overwrote the real entry —
+    // e.g. Back from program landed on home instead of the previous tab.)
     useEffect(() => {
         try {
             if (typeof window !== 'undefined' && window.history) {
                 window.history.replaceState({ view: 'home', settings: false }, '', '#home');
             }
         } catch (e) { }
+    }, []);
 
+    useEffect(() => {
         const handlePop = (e: PopStateEvent) => {
             const state = e.state;
             if (state) {
@@ -312,7 +317,7 @@ const AppContent = () => {
         };
         window.addEventListener('popstate', handlePop);
         return () => window.removeEventListener('popstate', handlePop);
-    }, [setView]);
+    }, []);
 
     useEffect(() => {
         if (isFirstMountRef.current) {
