@@ -476,6 +476,9 @@ export const TRANSLATIONS = {
         bodyRecommended: "Recommended for your weight",
         bodyGoalProtein: "Protein",
         bodyGoalWater: "Water",
+        nutriHistoryEmptyTitle: "No logs yet",
+        nutriHistoryEmptyBody: "Log your meals in Today to see your trends.",
+        nutriHistoryEmptyCta: "Go to Today",
 
         // Plate Calculator
         plateCalc: {
@@ -1004,6 +1007,9 @@ export const TRANSLATIONS = {
         bodyRecommended: "Recomendado para tu peso",
         bodyGoalProtein: "Proteína",
         bodyGoalWater: "Agua",
+        nutriHistoryEmptyTitle: "Sin registros todavía",
+        nutriHistoryEmptyBody: "Registrá tus comidas en Hoy para ver tus tendencias.",
+        nutriHistoryEmptyCta: "Ir a Hoy",
 
         // Plate Calculator
         plateCalc: {

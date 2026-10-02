@@ -280,6 +280,7 @@ export const NutriView: React.FC = () => {
             last14Days={last14Days}
             historyDayList={historyDayList}
             nutritionGoal={nutritionGoal}
+            onGoToday={() => setSubTab('today')}
           />
         )}
       </div>

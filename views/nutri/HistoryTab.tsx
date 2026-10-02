@@ -1,5 +1,8 @@
 import React from 'react';
 import { NutritionGoal } from '../../types';
+import { Icon } from '../../components/ui/Icon';
+import { Button } from '../../components/ui/Button';
+import { TRANSLATIONS } from '../../constants';
 
 export interface DaySummary {
     date: string;
@@ -17,6 +20,7 @@ interface Props {
     last14Days: DaySummary[];
     historyDayList: DaySummary[];
     nutritionGoal: NutritionGoal;
+    onGoToday: () => void;
 }
 
 /**
@@ -24,12 +28,30 @@ interface Props {
  * bar chart, per-day log list. Pure presentational — all derivations come
  * from the parent memos.
  */
-export const HistoryTab: React.FC<Props> = ({ lang, last14Days, historyDayList, nutritionGoal }) => {
+export const HistoryTab: React.FC<Props> = ({ lang, last14Days, historyDayList, nutritionGoal, onGoToday }) => {
     const l = (en: string, es: string) => (lang === 'en' ? en : es);
+    const t = TRANSLATIONS[lang];
 
     const tracked = last14Days.filter((d) => d.calories > 0);
     const avgCal = tracked.length > 0 ? Math.round(tracked.reduce((a, d) => a + d.calories, 0) / tracked.length) : 0;
     const avgProt = tracked.length > 0 ? Math.round(tracked.reduce((a, d) => a + d.protein, 0) / tracked.length) : 0;
+
+    if (tracked.length === 0) {
+        return (
+            <div className="glass-card rounded-3xl p-6 pt-1">
+                <div className="flex flex-col items-center px-6 py-8 text-center">
+                    <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white/[0.04] text-zinc-500">
+                        <Icon name="BarChart3" size={20} />
+                    </div>
+                    <p className="text-sm font-bold text-white">{t.nutriHistoryEmptyTitle}</p>
+                    <p className="mt-1 text-xs text-zinc-500">{t.nutriHistoryEmptyBody}</p>
+                    <Button onClick={onGoToday} className="mt-4">
+                        {t.nutriHistoryEmptyCta}
+                    </Button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-3 pt-1">
