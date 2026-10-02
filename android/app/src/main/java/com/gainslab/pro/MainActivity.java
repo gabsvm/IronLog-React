@@ -6,6 +6,8 @@ import android.os.Bundle;
 import android.view.View;
 import android.webkit.WebView;
 
+import androidx.activity.OnBackPressedCallback;
+
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
@@ -15,6 +17,27 @@ public class MainActivity extends BridgeActivity {
         // the bridge so they are available as soon as the web bundle starts.
         registerPlugin(NativeBridgePlugin.class);
         super.onCreate(savedInstanceState);
+
+        // Predictive-back compatible back handling (no deprecated onBackPressed
+        // override): App.tsx stores view changes in window.history, so route
+        // Back through WebView.goBack() — firing the same popstate path used by
+        // browser/PWA navigation — instead of abruptly closing the activity
+        // from an inner screen.
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                WebView webView = bridge != null ? bridge.getWebView() : null;
+                if (webView != null && webView.canGoBack()) {
+                    webView.goBack();
+                    return;
+                }
+                // No web history left: fall through to the default behavior by
+                // momentarily disabling this callback and re-dispatching.
+                setEnabled(false);
+                MainActivity.this.getOnBackPressedDispatcher().onBackPressed();
+                setEnabled(true);
+            }
+        });
 
         WebView webView = bridge != null ? bridge.getWebView() : null;
         if (webView != null) {
@@ -31,18 +54,5 @@ public class MainActivity extends BridgeActivity {
                 webView.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_IMPORTANT, false);
             }
         }
-    }
-
-    @Override
-    public void onBackPressed() {
-        WebView webView = bridge != null ? bridge.getWebView() : null;
-        // App.tsx stores view changes in window.history. WebView.goBack() therefore
-        // fires the same popstate path used by browser/PWA navigation instead of
-        // abruptly closing the activity from an inner screen.
-        if (webView != null && webView.canGoBack()) {
-            webView.goBack();
-            return;
-        }
-        super.onBackPressed();
     }
 }

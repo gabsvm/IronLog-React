@@ -26,6 +26,8 @@ if (!globalThis.URL) {
 (globalThis as any).URL.revokeObjectURL = vi.fn();
 
 import { useTimer, requestTimerNotificationPermission } from '../../hooks/useTimer';
+import { scheduleNativeRestTimer, cancelNativeRestTimer } from '../../utils/audio';
+import { TRANSLATIONS } from '../../constants';
 
 describe('Task U2: Rest Timer Notification Permission and Visibility Scoping', () => {
     let mockRequestPermission: any;
@@ -146,6 +148,64 @@ describe('Task U2: Rest Timer Notification Permission and Visibility Scoping', (
         });
 
         expect(notificationSpy).toHaveBeenCalled();
+    });
+
+    it('P7-3: on native, an active rest with a future endAt schedules the OS alarm', () => {
+        vi.clearAllMocks();
+        vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(true);
+        const { result } = renderHook(() => useTimer('es'));
+        // Mount cancels any stale alarm (initial state is inactive); measure
+        // only what the rest transitions below trigger.
+        vi.clearAllMocks();
+
+        const endAt = Date.now() + 90000;
+        act(() => {
+            result.current.setRestTimer({ active: true, duration: 90, timeLeft: 90, endAt });
+        });
+
+        expect(scheduleNativeRestTimer).toHaveBeenCalledWith(
+            endAt,
+            TRANSLATIONS.es.timer.finished,
+            TRANSLATIONS.es.timer.getBack
+        );
+        expect(cancelNativeRestTimer).not.toHaveBeenCalled();
+    });
+
+    it('P7-3: on native, an inactive or expired rest cancels the OS alarm instead', () => {
+        vi.clearAllMocks();
+        vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(true);
+        const { result } = renderHook(() => useTimer('es'));
+        vi.clearAllMocks();
+
+        act(() => {
+            result.current.setRestTimer({ active: true, duration: 90, timeLeft: 90, endAt: Date.now() + 90000 });
+        });
+        expect(scheduleNativeRestTimer).toHaveBeenCalledTimes(1);
+
+        // Skipping (inactive) cancels the pending alarm.
+        act(() => {
+            result.current.setRestTimer((prev) => ({ ...prev, active: false, timeLeft: 0, endAt: 0 }));
+        });
+        expect(cancelNativeRestTimer).toHaveBeenCalledTimes(1);
+
+        // So does an already-expired endAt.
+        act(() => {
+            result.current.setRestTimer({ active: true, duration: 1, timeLeft: 1, endAt: Date.now() - 1000 });
+        });
+        expect(cancelNativeRestTimer).toHaveBeenCalledTimes(2);
+        expect(scheduleNativeRestTimer).toHaveBeenCalledTimes(1);
+    });
+
+    it('P7-3: on web, rests never touch the native alarm bridge', () => {
+        vi.clearAllMocks();
+        const { result } = renderHook(() => useTimer('es'));
+
+        act(() => {
+            result.current.setRestTimer({ active: true, duration: 90, timeLeft: 90, endAt: Date.now() + 90000 });
+        });
+
+        expect(scheduleNativeRestTimer).not.toHaveBeenCalled();
+        expect(cancelNativeRestTimer).not.toHaveBeenCalled();
     });
 
     it('announces natural completion with ironlog:rest-completed (skips do not)', async () => {
