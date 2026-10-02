@@ -509,7 +509,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                                     type="button"
                                     onClick={(e) => handleSkipClick(e, selectedDayIdx)}
                                     className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-zinc-400 hover:text-white transition-colors"
-                                    title={t.skipDay}
+                                    aria-label={t.skipSession}
+                                    title={t.skipSession}
                                 >
                                     <Icon name="SkipForward" size={16} />
                                 </button>

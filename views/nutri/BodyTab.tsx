@@ -71,6 +71,18 @@ export const BodyTab: React.FC<Props> = ({
                     </button>
                 </div>
 
+                {(() => {
+                    if (!latestWeight) return null;
+                    const daysSince = Math.floor((Date.now() - new Date(latestWeight.date).getTime()) / 86400000);
+                    if (daysSince <= 14) return null;
+                    return (
+                        <p className="mt-3 flex items-center gap-1.5 text-xs text-amber-400/90">
+                            <Icon name="AlertTriangle" size={14} className="shrink-0" />
+                            {TRANSLATIONS[lang].staleWeighIn.replace('{days}', String(daysSince))}
+                        </p>
+                    );
+                })()}
+
                 {/* Mini weight chart */}
                 {weightTrend.length > 1 && (() => {
                     const min = Math.min(...weightTrend.map((wl) => wl.weight)) - 1;

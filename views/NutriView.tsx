@@ -9,6 +9,7 @@ import { Icon } from '../components/ui/Icon';
 import { Button } from '../components/ui/Button';
 import { Sheet } from '../components/ui/Sheet';
 import { triggerHaptic } from '../utils/audio';
+import { TRANSLATIONS } from '../constants';
 
 
 // Extracted in Phase 6.3 to views/nutri/ for clarity
@@ -215,7 +216,7 @@ export const NutriView: React.FC = () => {
           {([
             { id: 'today',   label: l('Today', 'Hoy'),        icon: 'Utensils' },
             { id: 'body',    label: l('Body', 'Cuerpo'),      icon: 'Scale' },
-            { id: 'history', label: l('History', 'Historial'), icon: 'BarChart2' },
+            { id: 'history', label: TRANSLATIONS[lang].dietTrends, icon: 'BarChart2' },
           ] as { id: SubTab; label: string; icon: string }[]).map(tab => (
             <button
               key={tab.id}

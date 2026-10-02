@@ -59,7 +59,8 @@ export const NextSessionCard: React.FC<Props> = React.memo(
                         {!isSessionActive && (
                             <button
                                 onClick={(e) => handleSkipClick(e, nextWorkoutIdx)}
-                                aria-label="Skip session"
+                                aria-label={String(t.skipSession)}
+                                title={String(t.skipSession)}
                                 className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-colors duration-fast ease-natural"
                             >
                                 <Icon name="SkipForward" size={20} />

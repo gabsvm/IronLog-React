@@ -12,6 +12,7 @@ export const TRANSLATIONS = {
         delete: "Delete",
         skip: "Skip Exercise",
         skipDay: "Skip Workout",
+        skipSession: "Skip session",
         skipped: "Skipped",
         completed: "Completed",
         swap: "Swap Exercise",
@@ -479,6 +480,8 @@ export const TRANSLATIONS = {
         nutriHistoryEmptyTitle: "No logs yet",
         nutriHistoryEmptyBody: "Log your meals in Today to see your trends.",
         nutriHistoryEmptyCta: "Go to Today",
+        dietTrends: "Trends",
+        staleWeighIn: "You haven't logged your weight in {days} days",
 
         // Plate Calculator
         plateCalc: {
@@ -551,6 +554,7 @@ export const TRANSLATIONS = {
         delete: "Eliminar",
         skip: "Omitir Ejercicio",
         skipDay: "Saltar Día",
+        skipSession: "Saltar sesión",
         skipped: "Saltado",
         completed: "Completado",
         swap: "Cambiar Ejercicio",
@@ -1010,6 +1014,8 @@ export const TRANSLATIONS = {
         nutriHistoryEmptyTitle: "Sin registros todavía",
         nutriHistoryEmptyBody: "Registrá tus comidas en Hoy para ver tus tendencias.",
         nutriHistoryEmptyCta: "Ir a Hoy",
+        dietTrends: "Tendencias",
+        staleWeighIn: "Hace {days} días que no registrás tu peso",
 
         // Plate Calculator
         plateCalc: {

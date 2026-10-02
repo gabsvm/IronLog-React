@@ -48,6 +48,36 @@ const getVolumeZone = (sets: number) => {
     return { color: 'bg-red-500', label: 'MRV', textColor: 'text-red-500' };
 };
 
+interface VolumeMuscleListProps {
+    volumeData: [string, number][];
+    maxVal: number;
+    lang: 'es' | 'en';
+}
+
+// Cardio is not a muscle: it stays in the cached counts (calcs untouched)
+// but is filtered out of the displayed volume list.
+export const VolumeMuscleList: React.FC<VolumeMuscleListProps> = ({ volumeData, maxVal, lang }) => (
+    <div className="space-y-3.5">
+        {volumeData.filter(([muscle]) => muscle !== 'CARDIO').map(([muscle, count]) => {
+            const zone = getVolumeZone(count);
+            return (
+                <div key={muscle} className="group flex items-center gap-3">
+                    <div className="w-24 truncate text-right text-xs font-bold text-zinc-500">
+                        {TRANSLATIONS[lang].muscle[muscle as MuscleGroup]}
+                    </div>
+                    <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-white/5">
+                        <div
+                            className={`h-full rounded-full transition-all duration-1000 ${zone.color}`}
+                            style={{ width: `${Math.min(100, (count / maxVal) * 100)}%` }}
+                        />
+                    </div>
+                    <div className={`w-8 text-right text-xs font-mono font-bold ${zone.textColor}`}>{count}</div>
+                </div>
+            );
+        })}
+    </div>
+);
+
 const chartMetricLabel = (metric: ChartMetric) => {
     switch (metric) {
         case '1rm': return '1RM';
@@ -899,25 +929,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                             ))}
                         </div>
                     ) : (
-                        <div className="space-y-3.5">
-                            {volumeData.map(([muscle, count]) => {
-                                const zone = getVolumeZone(count);
-                                return (
-                                    <div key={muscle} className="group flex items-center gap-3">
-                                        <div className="w-24 truncate text-right text-xs font-bold text-zinc-500">
-                                            {TRANSLATIONS[lang].muscle[muscle as MuscleGroup]}
-                                        </div>
-                                        <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-white/5">
-                                            <div
-                                                className={`h-full rounded-full transition-all duration-1000 ${zone.color}`}
-                                                style={{ width: `${Math.min(100, (count / maxVal) * 100)}%` }}
-                                            />
-                                        </div>
-                                        <div className={`w-8 text-right text-xs font-mono font-bold ${zone.textColor}`}>{count}</div>
-                                    </div>
-                                );
-                            })}
-                        </div>
+                        <VolumeMuscleList volumeData={volumeData} maxVal={maxVal} lang={lang} />
                     )}
                 </div>
             )}
