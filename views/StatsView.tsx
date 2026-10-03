@@ -6,7 +6,7 @@ import { StatsScopeSelector } from '../components/stats/StatsScopeSelector';
 import { Icon } from '../components/ui/Icon';
 import { useStore } from '../lib/store';
 import { TRANSLATIONS } from '../constants';
-import { statsCache } from '../services/statsCache';
+import { buildStatsLogsSignature, statsCache } from '../services/statsCache';
 import { StatsScope, StatsSection, effectiveScopeFor, scopeMesoId as scopeMesoIdFor, summarizeLogsByScope } from '../utils/statsScope';
 import './product-polish.css';
 
@@ -40,6 +40,14 @@ export const StatsView: React.FC = () => {
             cancelled = true;
         };
     }, []);
+
+    // Drop cache generations from older log signatures whenever the data
+    // fingerprint changes (at most once per signature per session, off the
+    // critical path).
+    const logsSignature = useMemo(() => buildStatsLogsSignature(safeLogs), [safeLogs]);
+    useEffect(() => {
+        void statsCache.pruneStaleSignatureKeys(logsSignature);
+    }, [logsSignature]);
 
     const handleScopeChange = (next: StatsScope) => {
         setUserScope(next);

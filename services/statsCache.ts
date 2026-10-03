@@ -9,6 +9,8 @@ const overviewKey = (signature: string, mesoId: number | null) => `il_stats_over
 const LEGACY_SCOPE_KEYS = ['il_stats_scope_v1'];
 const LEGACY_KEY_PREFIXES = ['il_stats_overview_v2:', 'il_stats_overview_v3:', 'il_stats_chart_v2:'];
 let legacyPruned = false;
+const CURRENT_KEY_PREFIXES = ['il_stats_overview_v4:', 'il_stats_chart_v3:'];
+const prunedSignatures = new Set<string>();
 const chartKey = (signature: string, exerciseId: string, metric: ChartMetric, mesoId: number | null) => `il_stats_chart_v3:${signature}:${exerciseId}:${metric}:${mesoId ?? 'all'}`;
 const selectedExerciseKey = 'il_stats_selected_exercise_v1';
 const selectedScopeKeyV2 = 'il_stats_scope_v2';
@@ -137,6 +139,30 @@ export const statsCache = {
             const allKeys = await idbKeys();
             const stale = allKeys.filter((key) =>
                 typeof key === 'string' && LEGACY_KEY_PREFIXES.some((prefix) => key.startsWith(prefix)),
+            );
+            await Promise.all(stale.map((key) => db.del(key as string)));
+        } catch {
+            // Cache hygiene must never break the view.
+        }
+    },
+
+    /**
+     * Drops overview/chart entries written under older log signatures. Every
+     * finished session produces a new signature, so without this the cache
+     * grows one stale generation per session. Runs at most once per
+     * signature per session. Signatures contain ':' (join(':')), so keys are
+     * matched by exact prefix, never parsed with split. Scope and
+     * selected-exercise keys are never touched.
+     */
+    async pruneStaleSignatureKeys(currentSignature: string): Promise<void> {
+        if (prunedSignatures.has(currentSignature)) return;
+        prunedSignatures.add(currentSignature);
+        try {
+            const allKeys = await idbKeys();
+            const stale = allKeys.filter((key) =>
+                typeof key === 'string' && CURRENT_KEY_PREFIXES.some((prefix) =>
+                    key.startsWith(prefix) && !key.startsWith(`${prefix}${currentSignature}:`),
+                ),
             );
             await Promise.all(stale.map((key) => db.del(key as string)));
         } catch {
