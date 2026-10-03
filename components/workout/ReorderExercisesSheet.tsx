@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
     DndContext,
     DragEndEvent,
@@ -290,23 +291,28 @@ export const ReorderExercisesSheet: React.FC<ReorderExercisesSheetProps> = ({
                             })}
                         </div>
                     </SortableContext>
-                    <DragOverlay dropAnimation={null}>
-                        {activeExercise ? (
-                            <div className="card-reference flex items-center gap-2.5 rounded-xl px-3 py-2.5 shadow-2xl shadow-black/60 ring-2 ring-primary-500">
-                                <div className="flex-1 min-w-0">
-                                    <div className="text-sm font-medium text-white truncate">
-                                        {getTranslated(activeExercise.name, lang)}
+                    {/* Portaled out of the fixed vaul panel, which would otherwise
+                        capture the overlay's position:fixed (zIndex 999 > modal 90). */}
+                    {createPortal(
+                        <DragOverlay dropAnimation={null} zIndex={999}>
+                            {activeExercise ? (
+                                <div className="card-reference flex items-center gap-2.5 rounded-xl px-3 py-2.5 shadow-2xl shadow-black/60 ring-2 ring-primary-500">
+                                    <div className="flex-1 min-w-0">
+                                        <div className="text-sm font-medium text-white truncate">
+                                            {getTranslated(activeExercise.name, lang)}
+                                        </div>
+                                        <div className="text-xs text-muted truncate mt-0.5">
+                                            {(activeExercise.sets || []).filter(set => isWorkingSet(set) && set.completed && !set.skipped).length}
+                                            /
+                                            {(activeExercise.sets || []).filter(set => isWorkingSet(set)).length}
+                                        </div>
                                     </div>
-                                    <div className="text-xs text-muted truncate mt-0.5">
-                                        {(activeExercise.sets || []).filter(set => isWorkingSet(set) && set.completed && !set.skipped).length}
-                                        /
-                                        {(activeExercise.sets || []).filter(set => isWorkingSet(set)).length}
-                                    </div>
+                                    <Icon name="GripVertical" size={18} className="text-primary-400 shrink-0" />
                                 </div>
-                                <Icon name="GripVertical" size={18} className="text-primary-400 shrink-0" />
-                            </div>
-                        ) : null}
-                    </DragOverlay>
+                            ) : null}
+                        </DragOverlay>,
+                        document.body
+                    )}
                 </DndContext>
             </div>
         </Sheet>
