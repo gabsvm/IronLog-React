@@ -98,7 +98,7 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 360, height: 800 }
             await expect(page.getByText(/Historial|History|Sin entrenamientos|No workouts/).first()).toBeVisible({ timeout: 10000 });
             await expectNoOverflow(page, 'history');
 
-            await nav.locator('button', { hasText: /^Stats$|^Estadísticas$/ }).click();
+            await nav.locator('button', { hasText: /^Stats$|^Métricas$/ }).click();
             await expect(page.locator('#root')).toContainText(/Stats|Estadísticas|Progreso|Sin datos|No data/i, { timeout: 10000 });
             await expectNoOverflow(page, 'stats');
 

@@ -41,7 +41,7 @@ test.describe('K7 visual polish', () => {
     test('topbar gradient never drops below 0.92 alpha', async ({ page }) => {
         await seed(page);
         await page.goto('/');
-        await page.locator('nav[aria-label="Main navigation"] button', { hasText: /Stats|Estadísticas/ }).click();
+        await page.locator('nav[aria-label="Main navigation"] button', { hasText: /Stats|Métricas/ }).click();
         await expect(page.locator('.app-topbar')).toBeVisible({ timeout: 10000 });
         const bg = await page.evaluate(() => {
             const el = document.querySelector('.app-topbar') as HTMLElement;

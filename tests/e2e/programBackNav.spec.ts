@@ -17,7 +17,7 @@ test.describe('H2: deep-view Back returns to the previous tab', () => {
         await expect(nav).toBeVisible({ timeout: 15000 });
 
         // 1. Go to the Stats tab.
-        const statsNavBtn = page.locator('nav[aria-label="Main navigation"] button', { hasText: /Stats|Estadísticas/ });
+        const statsNavBtn = page.locator('nav[aria-label="Main navigation"] button', { hasText: /Stats|Métricas/ });
         await statsNavBtn.click();
         await expect(page.getByRole('tablist').first()).toBeVisible({ timeout: 10000 });
 
