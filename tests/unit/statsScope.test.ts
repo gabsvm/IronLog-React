@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { filterLogsByScope, countSessionsByScope, scopeMesoId, summarizeLogsByScope } from '../../utils/statsScope';
+import { filterLogsByScope, countSessionsByScope, scopeMesoId, summarizeLogsByScope, effectiveScopeFor } from '../../utils/statsScope';
 import type { Log } from '../../types';
 
 const makeLog = (id: number, mesoId?: number, skipped = false): Log =>
@@ -102,5 +102,26 @@ describe('L3: summarizeLogsByScope shares the worker definition', () => {
         expect(summarizeLogsByScope(null as unknown as Log[], null)).toEqual({
             sessions: 0, exercises: 0, sets: 0, muscles: 0,
         });
+    });
+});
+
+describe('M1: effectiveScopeFor resolves the tab default unless the user chose', () => {
+    it('explicit choice wins in every tab', () => {
+        for (const section of ['overview', 'progress', 'volume'] as const) {
+            expect(effectiveScopeFor(section, 'plan', true)).toBe('plan');
+            expect(effectiveScopeFor(section, 'history', true)).toBe('history');
+        }
+    });
+
+    it('without a choice, progress defaults to history and the rest to plan', () => {
+        expect(effectiveScopeFor('overview', null, true)).toBe('plan');
+        expect(effectiveScopeFor('volume', null, true)).toBe('plan');
+        expect(effectiveScopeFor('progress', null, true)).toBe('history');
+    });
+
+    it('without an active meso everything defaults to history', () => {
+        for (const section of ['overview', 'progress', 'volume'] as const) {
+            expect(effectiveScopeFor(section, null, false)).toBe('history');
+        }
     });
 });

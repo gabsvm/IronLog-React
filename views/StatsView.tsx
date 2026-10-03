@@ -7,10 +7,8 @@ import { Icon } from '../components/ui/Icon';
 import { useStore } from '../lib/store';
 import { TRANSLATIONS } from '../constants';
 import { statsCache } from '../services/statsCache';
-import { StatsScope, scopeMesoId as scopeMesoIdFor, summarizeLogsByScope } from '../utils/statsScope';
+import { StatsScope, StatsSection, effectiveScopeFor, scopeMesoId as scopeMesoIdFor, summarizeLogsByScope } from '../utils/statsScope';
 import './product-polish.css';
-
-type StatsSection = 'overview' | 'progress' | 'volume';
 
 /**
  * Product-facing IA over the Stats implementation.
@@ -25,16 +23,16 @@ export const StatsView: React.FC = () => {
     const safeLogs = useMemo(() => Array.isArray(logs) ? logs : [], [logs]);
     const t = TRANSLATIONS[lang];
 
-    // Single scope for all three sections. Default: this plan when a meso is
-    // active, full history otherwise. Only explicit user changes are persisted
-    // (v2 key); the default itself is never written.
-    const [scope, setScope] = useState<StatsScope>(() => (activeMeso ? 'plan' : 'history'));
+    // Explicit user choice (persisted, v2 key); null when the user never chose.
+    // The visible tab resolves it to an effective scope: without a choice,
+    // progress defaults to history while overview/volume default to the plan.
+    const [userScope, setUserScope] = useState<StatsScope | null>(null);
 
     useEffect(() => {
         let cancelled = false;
         void statsCache.readSelectedScopeV2().then((cachedScope) => {
             if (!cancelled && (cachedScope === 'plan' || cachedScope === 'history')) {
-                setScope(cachedScope);
+                setUserScope(cachedScope);
             }
         });
         return () => {
@@ -43,10 +41,11 @@ export const StatsView: React.FC = () => {
     }, []);
 
     const handleScopeChange = (next: StatsScope) => {
-        setScope(next);
+        setUserScope(next);
         void statsCache.writeSelectedScopeV2(next);
     };
 
+    const scope = effectiveScopeFor(section, userScope, activeMeso != null);
     const scopeMesoId = scopeMesoIdFor(scope, activeMeso?.id);
     const scopedSummary = useMemo(
         () => summarizeLogsByScope(safeLogs, scopeMesoId),

@@ -2,9 +2,10 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 
-const { mockState, calcOverviewSpy } = vi.hoisted(() => ({
+const { mockState, calcOverviewSpy, calcChartSpy } = vi.hoisted(() => ({
     mockState: { logs: [] as any[], activeMeso: null as any, exercises: [] as any[], tutorial: {} },
     calcOverviewSpy: vi.fn(),
+    calcChartSpy: vi.fn(),
 }));
 
 vi.mock('../../context/AuthContext', () => ({
@@ -31,7 +32,7 @@ vi.mock('../../hooks/useStatsWorker', () => ({
     useStatsWorker: () => ({
         isWorkerReady: true,
         calculateOverview: calcOverviewSpy,
-        calculateChartData: async () => [],
+        calculateChartData: calcChartSpy,
         calculateAllBest1RMs: async () => new Map(),
     }),
 }));
@@ -119,6 +120,8 @@ describe('L2: single scope control in the Stats wrapper', () => {
         calcOverviewSpy.mockImplementation(async (logs: any[], mesoId?: number) =>
             computeOverview(logs, mesoId ?? null),
         );
+        calcChartSpy.mockReset();
+        calcChartSpy.mockImplementation(async () => []);
         seedTwoMesos();
     });
 
@@ -229,5 +232,72 @@ describe('L2: single scope control in the Stats wrapper', () => {
         await waitFor(() => expect(screen.getByText('Esta semana · Este plan')).toBeTruthy());
         fireEvent.click(scopeTab('Todo el historial'));
         await waitFor(() => expect(screen.getByText('Promedio sobre 3 semanas · Todo el historial')).toBeTruthy());
+    });
+
+    it('M1: without a stored choice, overview and volume default to plan, progress to history', async () => {
+        render(<StatsView />);
+        await waitFor(() => expect(calcOverviewSpy).toHaveBeenCalled());
+        expect(scopeTab('Este plan').getAttribute('aria-selected')).toBe('true');
+        expect(cardValue('Series')).toBe(4);
+        fireEvent.click(sectionTab('Volumen'));
+        await waitFor(() => expect(scopeTab('Este plan').getAttribute('aria-selected')).toBe('true'));
+        fireEvent.click(sectionTab('Progreso'));
+        await waitFor(() => expect(scopeTab('Todo el historial').getAttribute('aria-selected')).toBe('true'));
+        // Cards follow the visible tab: history totals in progress.
+        expect(cardValue('Series')).toBe(16);
+        expect(cardValue('Sesiones')).toBe(3);
+        // The progress graph queries history scope (4th arg = null meso).
+        await waitFor(() =>
+            expect(calcChartSpy.mock.calls.some((c) => c[3] == null)).toBe(true),
+        );
+    });
+
+    it('M1: an explicit choice wins in every tab', async () => {
+        render(<StatsView />);
+        await waitFor(() => expect(calcOverviewSpy).toHaveBeenCalled());
+        fireEvent.click(sectionTab('Progreso'));
+        await waitFor(() => expect(scopeTab('Todo el historial').getAttribute('aria-selected')).toBe('true'));
+        fireEvent.click(scopeTab('Este plan'));
+        await waitFor(() => expect(calcChartSpy.mock.calls.some((c) => c[3] === 202)).toBe(true));
+        expect(cardValue('Series')).toBe(4);
+        fireEvent.click(sectionTab('Resumen'));
+        await waitFor(() => expect(scopeTab('Este plan').getAttribute('aria-selected')).toBe('true'));
+        expect(await statsCache.readSelectedScopeV2()).toBe('plan');
+    });
+
+    it('M1: a stored v2 choice applies on mount in all tabs', async () => {
+        await db.set('il_stats_scope_v2', 'plan');
+        render(<StatsView />);
+        fireEvent.click(sectionTab('Progreso'));
+        await waitFor(() => expect(scopeTab('Este plan').getAttribute('aria-selected')).toBe('true'));
+        await waitFor(() => expect(calcChartSpy.mock.calls.some((c) => c[3] === 202)).toBe(true));
+    });
+
+    it('M1: without an active meso every tab defaults to history', async () => {
+        mockState.activeMeso = null;
+        render(<StatsView />);
+        await waitFor(() => expect(calcOverviewSpy).toHaveBeenCalled());
+        expect(scopeTab('Todo el historial').getAttribute('aria-selected')).toBe('true');
+        expect(cardValue('Series')).toBe(16);
+        fireEvent.click(sectionTab('Progreso'));
+        await waitFor(() => expect(scopeTab('Todo el historial').getAttribute('aria-selected')).toBe('true'));
+        fireEvent.click(sectionTab('Volumen'));
+        await waitFor(() => expect(scopeTab('Todo el historial').getAttribute('aria-selected')).toBe('true'));
+    });
+
+    it('M1: cards, doughnut and heatmap agree per tab with its effective scope', async () => {
+        render(<StatsView />);
+        // Overview (plan default): cards match the plan doughnut.
+        await waitFor(() => expect(cardValue('Series')).toBe(donutTotal()));
+        expect(cardValue('Series')).toBe(4);
+        fireEvent.click(sectionTab('Progreso'));
+        // Progress (history default): header cards switch to history totals.
+        await waitFor(() => expect(cardValue('Series')).toBe(16));
+        expect(cardValue('Músculos')).toBe(2);
+        fireEvent.click(sectionTab('Volumen'));
+        // Volume (plan default): one muscle above zero, matching the plan cards.
+        await waitFor(() => expect(cardValue('Series')).toBe(4));
+        await waitFor(() => expect(positiveMuscleCount()).toBe(1));
+        expect(cardValue('Músculos')).toBe(positiveMuscleCount());
     });
 });

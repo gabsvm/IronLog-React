@@ -2,6 +2,24 @@ import type { Log } from '../types';
 
 export type StatsScope = 'plan' | 'history';
 
+export type StatsSection = 'overview' | 'progress' | 'volume';
+
+/**
+ * Effective scope for the visible tab. An explicit user choice wins
+ * everywhere; without one, progress defaults to full history (so charts and
+ * PRs are useful on a fresh plan) while overview and volume default to the
+ * active plan when there is one.
+ */
+export const effectiveScopeFor = (
+    section: StatsSection,
+    userScope: StatsScope | null,
+    hasActiveMeso: boolean,
+): StatsScope => {
+    if (userScope != null) return userScope;
+    if (section === 'progress') return 'history';
+    return hasActiveMeso ? 'plan' : 'history';
+};
+
 /**
  * Single definition of "which logs count" for Stats surfaces and the profile
  * sheet: skipped sessions never count; a meso id restricts to that plan,
