@@ -1,6 +1,7 @@
 import type { FirebaseApp } from 'firebase/app';
 import type { Auth } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
+import { initAppCheckOnce } from './appCheck';
 
 type FirebaseAppServices = {
     app?: FirebaseApp;
@@ -66,6 +67,12 @@ export const getFirebaseAppServices = (): Promise<FirebaseAppServices> => {
             const app = appApi.getApps().length > 0
                 ? appApi.getApps()[0]
                 : appApi.initializeApp(firebaseConfig);
+            // Optional App Check (no-op without VITE_FIREBASE_APPCHECK_SITE_KEY).
+            await initAppCheckOnce(app, {
+                env,
+                isDev: import.meta.env.DEV,
+                importAppCheck: () => import('firebase/app-check'),
+            });
             return { app, appApi };
         })().catch((error) => {
             console.error('Firebase app initialization error:', error);

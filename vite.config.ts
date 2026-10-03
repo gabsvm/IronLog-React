@@ -34,6 +34,12 @@ export default defineConfig(() => {
             ) {
               return 'vendor-react';
             }
+            // App Check stays in its own lazy chunk: the dynamic import in
+            // firebaseLoader must not bloat the eager firebase-app vendor chunk
+            // (the '/firebase/app' match below would also catch 'app-check').
+            if (moduleId.includes('/node_modules/firebase/app-check') || moduleId.includes('/node_modules/@firebase/app-check')) {
+              return 'vendor-firebase-appcheck';
+            }
             if (moduleId.includes('/node_modules/firebase/app') || moduleId.includes('/node_modules/@firebase/app')) {
               return 'vendor-firebase-app';
             }

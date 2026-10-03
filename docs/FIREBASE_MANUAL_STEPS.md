@@ -67,3 +67,28 @@ NO uses tu cuenta real:
    desaparecieron y que el usuario ya no existe en Authentication.
 5. Verificá que la app quedó con sesión cerrada y sin re-subir nada
    (sin conexión no debe quedar cola pendiente de ese usuario).
+
+## 5. App Check (opcional, SIN Enforce todavía)
+
+La app inicializa App Check solo si definís `VITE_FIREBASE_APPCHECK_SITE_KEY`
+(ver `.env.example`); sin esa variable el comportamiento es idéntico al actual
+y no se carga código extra.
+
+1. En la consola de Firebase → App Check → Apps → tu app web → registrar con
+   proveedor reCAPTCHA v3 (creá la clave en la consola de reCAPTCHA si no
+   existe) y copiá el site key a `VITE_FIREBASE_APPCHECK_SITE_KEY`.
+2. Agregá los dominios: el de producción y `localhost` (necesario para el
+   WebView de Capacitor con `androidScheme: https`, que sirve la app desde
+   `https://localhost`).
+3. Desplegá la app con la variable y mirá durante unos días las métricas de
+   solicitudes verificadas en la consola de App Check.
+4. RECIÉN DESPUÉS, y solo si las métricas muestran tráfico verificado de tus
+   usuarios reales, activá "Enforce" para Firestore (y Auth si lo usás).
+
+ADVERTENCIA: activar Enforce sin haber verificado puede dejar al propio dueño
+sin acceso (las solicitudes sin token válido se rechazan).
+
+Para desarrollo local: `VITE_FIREBASE_APPCHECK_DEBUG=1` (solo surte efecto con
+`npm run dev`, nunca en builds de producción) usa el token de depuración; el
+token impreso en consola debe registrarse en App Check → Apps → tu app →
+"Manage debug tokens" si querés probar con Enforce en local.
