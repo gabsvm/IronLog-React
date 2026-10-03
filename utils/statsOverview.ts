@@ -50,7 +50,9 @@ export const computeOverview = (logs: Log[], mesoId?: number | null): OverviewNu
                 if (set?.completed && !set?.skipped) setsDone += 1;
             }
             if (muscleCounts[ex.muscle] !== undefined) muscleCounts[ex.muscle] += setsDone;
-            if (ex?.id != null) {
+            // Only exercises with completed sets have history worth charting
+            // (same definition as the header "Ejercicios" card).
+            if (ex?.id != null && setsDone > 0) {
                 const exId = String(ex.id);
                 exFreq[exId] = (exFreq[exId] || 0) + 1;
             }

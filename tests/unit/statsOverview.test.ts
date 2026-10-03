@@ -98,6 +98,21 @@ describe('L1: computeOverview divides by real weeks in scope', () => {
         expect(avgOf(volumeData, 'BACK')).toBe(0.4);
     });
 
+    it('counts an exercise only when it has completed sets', () => {
+        const logs = [
+            log({
+                mesoId: 101, week: 1,
+                exercises: [
+                    { id: 'e-empty', muscle: 'BACK', sets: sets(2, false) },
+                    { id: 'e-skip', muscle: 'BACK', sets: [{ id: 1, completed: true, skipped: true }] },
+                    { id: 'e-done', muscle: 'BACK', sets: sets(1, true) },
+                ],
+            }),
+        ];
+        const { exerciseFrequency } = computeOverview(logs, 101);
+        expect(Object.keys(exerciseFrequency)).toEqual(['e-done']);
+    });
+
     it('floors positive averages at 0.1 so volume never rounds to zero', () => {
         const weeks = Array.from({ length: 25 }, (_, i) => i + 1);
         const logs = weeks.map((week) =>

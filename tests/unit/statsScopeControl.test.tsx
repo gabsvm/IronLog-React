@@ -314,6 +314,38 @@ describe('L2: single scope control in the Stats wrapper', () => {
         await waitFor(() => expect(positiveMuscleCount()).toBe(3));
     });
 
+    it('M3: header card, progress counter and picker draw from one exercises definition', async () => {
+        // Empty and skipped-only exercises must not count anywhere.
+        mockState.logs = [
+            {
+                ...mockState.logs[0],
+                exercises: [
+                    ...mockState.logs[0].exercises,
+                    { id: 'e-skip', muscle: 'BACK', sets: [{ id: 99, completed: true, skipped: true }] },
+                ],
+            },
+            mockState.logs[1],
+            {
+                ...mockState.logs[2],
+                exercises: [
+                    ...mockState.logs[2].exercises,
+                    { id: 'e-empty', muscle: 'CHEST', sets: [{ id: 98, completed: false, skipped: false }] },
+                ],
+            },
+        ];
+        render(<StatsView />);
+        await waitFor(() => expect(calcOverviewSpy).toHaveBeenCalled());
+        // Plan scope (overview default): only e-sh counts.
+        expect(cardValue('Ejercicios')).toBe(1);
+        fireEvent.click(sectionTab('Progreso'));
+        // History scope: e-back + e-sh; the empty and skipped-only ones are out.
+        await waitFor(() => expect(screen.getByText('2 ejercicios con historial')).toBeTruthy());
+        expect(cardValue('Ejercicios')).toBe(2);
+        fireEvent.click(scopeTab('Este plan'));
+        await waitFor(() => expect(screen.getByText('1 ejercicios con historial')).toBeTruthy());
+        expect(cardValue('Ejercicios')).toBe(1);
+    });
+
     it('M1: cards, doughnut and heatmap agree per tab with its effective scope', async () => {
         render(<StatsView />);
         // Overview (plan default): cards match the plan doughnut.
