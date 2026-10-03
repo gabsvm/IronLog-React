@@ -222,4 +222,12 @@ describe('L2: single scope control in the Stats wrapper', () => {
         fireEvent.click(sectionTab('Volumen'));
         await waitFor(() => expect(positiveMuscleCount()).toBe(2));
     });
+
+    it('L4: volume caption shows the weeks behind the average in each scope', async () => {
+        render(<StatsView />);
+        fireEvent.click(sectionTab('Volumen'));
+        await waitFor(() => expect(screen.getByText('Esta semana · Este plan')).toBeTruthy());
+        fireEvent.click(scopeTab('Todo el historial'));
+        await waitFor(() => expect(screen.getByText('Promedio sobre 3 semanas · Todo el historial')).toBeTruthy());
+    });
 });

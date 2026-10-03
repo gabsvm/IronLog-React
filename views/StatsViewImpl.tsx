@@ -54,6 +54,25 @@ interface VolumeMuscleListProps {
     lang: 'es' | 'en';
 }
 
+interface VolumeAverageCaptionProps {
+    weeks: number;
+    scope: StatsScope;
+    lang: 'es' | 'en';
+}
+
+// Small transparency line under the volume title: which weeks the weekly
+// average was computed over, and in which scope.
+export const VolumeAverageCaption: React.FC<VolumeAverageCaptionProps> = ({ weeks, scope, lang }) => {
+    const t = TRANSLATIONS[lang];
+    const scopeLabel = scope === 'plan' ? t.statsScopePlan : t.statsScopeHistory;
+    const text = weeks <= 1
+        ? `${t.volumeAvgThisWeek} · ${scopeLabel}`
+        : `${t.volumeAvgWeeks.replace('{weeks}', String(weeks))} · ${scopeLabel}`;
+    return (
+        <p className="mt-1 text-[11px] font-semibold text-zinc-500">{text}</p>
+    );
+};
+
 // Cardio is not a muscle: it stays in the cached counts (calcs untouched)
 // but is filtered out of the displayed volume list.
 export const VolumeMuscleList: React.FC<VolumeMuscleListProps> = ({ volumeData, maxVal, lang }) => (
@@ -875,10 +894,15 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
             {(!activeTab || activeTab === 'volume') && (
                 <div id="tut-vol-bar" className="glass-card rounded-[1.7rem] border border-white/6 p-5 shadow-md">
                     <div className="mb-5 flex items-center justify-between gap-3">
-                        <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-500">
-                            <Icon name="BarChart2" size={14} />
-                            {t.volPerCycle}
-                        </h3>
+                        <div>
+                            <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-500">
+                                <Icon name="BarChart2" size={14} />
+                                {t.volPerCycle}
+                            </h3>
+                            {!loadingOverview && (
+                                <VolumeAverageCaption weeks={overviewWeeks} scope={statsScope} lang={lang} />
+                            )}
+                        </div>
                         <div className="flex gap-2">
                             {['MV', 'MEV', 'MAV'].map(label => (
                                 <div key={label} className="flex items-center gap-1.5">
