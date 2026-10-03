@@ -1,0 +1,55 @@
+{
+  "profileLabels": [
+    "(row) Mantener pantalla encendida",
+    "(row) Mostrar columna RIR",
+    "Editar",
+    "Editor de programa",
+    "Ejercicios y plantillas",
+    "Exportar y copia de seguridad",
+    "Idioma Español",
+    "Iniciar sesión",
+    "Tema y color Oscuro · iron",
+    "Ver",
+    "[Close]"
+  ],
+  "settingsByTab": {
+    "Cuenta": [
+      "EDITAR",
+      "Iniciar Sesión / Registro",
+      "Instalar Ahora"
+    ],
+    "Entreno": [
+      "(row) Mantener pantalla encendida",
+      "(row) Mostrar columna RIR",
+      "Bloqueadas",
+      "Editor de programa",
+      "Gestionar Ejercicios",
+      "Guardar rutina como plantilla Inicia una rutina para poder guardarla",
+      "Panel Completo",
+      "Píldora Compacta"
+    ],
+    "Visual": [
+      "Auto",
+      "Claro",
+      "Completo",
+      "English",
+      "Equilibrado",
+      "Español",
+      "Forest",
+      "Hipertrofia",
+      "Mono",
+      "Ocean",
+      "Oscuro",
+      "Reducido",
+      "Royal",
+      "Sunset"
+    ],
+    "Datos": [
+      "Exportar Datos",
+      "Hipertrofia Natural (NH) Regla 85%",
+      "Restablecer Fábrica",
+      "[Delete]",
+      "[Download]"
+    ]
+  }
+}

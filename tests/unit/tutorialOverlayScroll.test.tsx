@@ -41,6 +41,42 @@ describe('N2: TutorialOverlay without scrollIntoView (jsdom / old WebViews)', ()
         expect(screen.getByText('N2 paso')).toBeDefined();
     });
 
+    it('survives the steps list shrinking below the current index (conditional steps)', () => {
+        const onComplete = vi.fn();
+        const twoSteps = [
+            { targetId: 'n2-shrink-1', title: 'Shrink one', text: 'texto' },
+            { targetId: 'n2-shrink-2', title: 'Shrink two', text: 'texto' },
+        ];
+        const oneStep = [{ targetId: 'n2-shrink-1', title: 'Shrink one', text: 'texto' }];
+        const { rerender } = render(
+            <>
+                <div id="n2-shrink-1">target</div>
+                <TutorialOverlay steps={twoSteps} isActive={true} onComplete={onComplete} />
+            </>
+        );
+
+        act(() => {
+            vi.advanceTimersByTime(600);
+        });
+        expect(screen.getByText('Shrink one')).toBeDefined();
+
+        // Advance to the second step (its target is missing, like a
+        // not-yet-rendered guideline), then shrink the list as HomeView does
+        // when guideline images resolve.
+        act(() => {
+            screen.getByText(/siguiente|next/i).click();
+        });
+        rerender(
+            <>
+                <div id="n2-shrink-1">target</div>
+                <TutorialOverlay steps={oneStep} isActive={true} onComplete={onComplete} />
+            </>
+        );
+
+        // Clamps to the last available step instead of crashing.
+        expect(screen.getByText('Shrink one')).toBeDefined();
+    });
+
     it('still scrolls the target into view when the API exists', () => {
         const scrollIntoView = vi.fn();
         (window.HTMLElement.prototype as any).scrollIntoView = scrollIntoView;

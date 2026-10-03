@@ -40,7 +40,6 @@ const ExercisesView = React.lazy(() => import('./views/ExercisesView').then(m =>
 const ProgramEditView = React.lazy(() => import('./views/ProgramEditView').then(m => ({ default: m.ProgramEditView })));
 const SessionSummaryView = React.lazy(() => import('./views/SessionSummaryView').then(m => ({ default: m.SessionSummaryView })));
 const WorkoutView = React.lazy(() => import('./views/WorkoutView').then(m => ({ default: m.WorkoutView })));
-const SettingsModal = React.lazy(() => import('./components/settings/SettingsModal').then(m => ({ default: m.SettingsModal })));
 const SetupWizard = React.lazy(() => import('./components/onboarding/SetupWizard').then(m => ({ default: m.SetupWizard })));
 const Landing = React.lazy(() => import('./components/onboarding/Landing').then(m => ({ default: m.Landing })));
 const AuthModal = React.lazy(() => import('./components/auth/AuthModal').then(m => ({ default: m.AuthModal })));
@@ -142,7 +141,6 @@ const AppContent = () => {
 
     const [view, setViewState] = useState<'home' | 'workout' | 'history' | 'exercises' | 'program' | 'stats' | 'summary' | 'nutrition'>('home');
     const [completedWorkoutLog, setCompletedWorkoutLog] = useState<any>(null);
-    const [showSettings, setShowSettings] = useState(false);
     const [showLanding, setShowLanding] = useState(!hasSeenOnboarding);
     const [showResetModal, setShowResetModal] = useState(false);
     const [showAuthModal, setShowAuthModal] = useState(false);
@@ -275,7 +273,8 @@ const AppContent = () => {
     }, [activeSession, activeMeso, lang, setView]);
 
     // History management logic: nav tabs use replaceState to keep a clean history stack;
-    // depth 2 views (workout, program, exercises) and sheets (settings, profile) use pushState.
+    // depth 2 views (workout, program, exercises) use pushState. The unified
+    // profile sheet pushes its own single entry from Layout (profile: true).
     // After a popstate, the browser entry already matches the render, so the sync
     // effect compares against window.history.state instead of tracking pops with
     // a flag (a flag gets stuck when a pop changes no App state, e.g. when
@@ -288,7 +287,7 @@ const AppContent = () => {
     useEffect(() => {
         try {
             if (typeof window !== 'undefined' && window.history) {
-                window.history.replaceState({ view: 'home', settings: false }, '', '#home');
+                window.history.replaceState({ view: 'home' }, '', '#home');
             }
         } catch (e) { }
     }, []);
@@ -300,16 +299,14 @@ const AppContent = () => {
                 withTransition('back', () => {
                     flushSync(() => {
                         if (state.view) { targetViewRef.current = state.view; setViewState(state.view); }
-                        setShowSettings(Boolean(state.settings));
                     });
                 });
             } else {
-                // 'home' needs no preload: flip view + settings atomically like setView does.
+                // 'home' needs no preload: flip the view atomically like setView does.
                 targetViewRef.current = 'home';
                 withTransition('back', () => {
                     flushSync(() => {
                         setViewState('home');
-                        setShowSettings(false);
                     });
                 });
             }
@@ -325,26 +322,26 @@ const AppContent = () => {
             return;
         }
 
-        const state = { view, settings: showSettings };
-        const hash = showSettings ? 'settings' : view;
-        const isNav = (view === 'home' || view === 'history' || view === 'stats' || view === 'nutrition') && !showSettings;
+        const state = { view };
+        const isNav = view === 'home' || view === 'history' || view === 'stats' || view === 'nutrition';
 
         try {
             if (typeof window !== 'undefined' && window.history) {
-                const current = window.history.state as { view?: string; settings?: boolean } | null;
+                const current = window.history.state as { view?: string } | null;
                 // A popstate already moved the browser to the entry matching
                 // this render: writing again would fork or duplicate history.
-                if (current && current.view === state.view && Boolean(current.settings) === state.settings) {
+                // Extra keys pushed by sheets (profile: true) are ignored.
+                if (current && current.view === state.view) {
                     return;
                 }
                 if (isNav) {
-                    window.history.replaceState(state, '', `#${hash}`);
+                    window.history.replaceState(state, '', `#${view}`);
                 } else {
-                    window.history.pushState(state, '', `#${hash}`);
+                    window.history.pushState(state, '', `#${view}`);
                 }
             }
         } catch (e) { }
-    }, [view, showSettings]);
+    }, [view]);
 
     // Merge CrossFit + Calisthenics exercises into the library — runs ONCE, but only
     // AFTER IndexedDB hydration finishes (isAppLoading === false). Running it earlier was
@@ -687,14 +684,26 @@ const AppContent = () => {
                         </LazyViewBoundary>
                     ) : view === 'exercises' ? (
                         <Suspense fallback={<LoadingSpinner />}>
-                            <LazyViewBoundary lang={lang} resetKey="exercises"><ExercisesView onBack={() => { setView('home'); setShowSettings(true); }} /></LazyViewBoundary>
+                            <LazyViewBoundary lang={lang} resetKey="exercises"><ExercisesView onBack={() => { setView('home'); window.dispatchEvent(new CustomEvent('gainslab:open-profile', { detail: { section: 'training' } })); }} /></LazyViewBoundary>
                         </Suspense>
                     ) : view === 'program' ? (
                         <Suspense fallback={<LoadingSpinner />}>
                             <LazyViewBoundary lang={lang} resetKey="program"><ProgramEditView onBack={() => setView('home')} /></LazyViewBoundary>
                         </Suspense>
                     ) : (
-                        <Layout view={view as any} setView={setView as any} onOpenSettings={() => setShowSettings(true)} onOpenCommandPalette={() => setShowCommandPalette(true)}>
+                        <Layout
+                            view={view as any}
+                            setView={setView as any}
+                            onOpenProgram={() => setView('program')}
+                            onOpenExercises={() => setView('exercises')}
+                            onReset={() => setShowResetModal(true)}
+                            onExport={handleExport}
+                            onForceSync={handleForceSync}
+                            onImportFile={handleImportFile}
+                            onLogin={() => setShowAuthModal(true)}
+                            isSyncing={isSyncing}
+                            onOpenCommandPalette={() => setShowCommandPalette(true)}
+                        >
                             {view === 'home' && <HomeView
                                 startSession={(idx) => {
                                     if (!activeMeso) { setView('program'); return; }
@@ -1007,25 +1016,6 @@ const AppContent = () => {
                 </Suspense>
             )}
 
-            {/* SETTINGS OVERLAY (Now with Login Callback) */}
-            {showSettings && view !== 'exercises' && (
-                <Suspense fallback={<LoadingSpinner />}>
-                    <SettingsModal
-                        onClose={() => setShowSettings(false)}
-                        onOpenProgram={() => { setView('program'); setShowSettings(false); }}
-                        onOpenExercises={() => { setView('exercises'); setShowSettings(false); }}
-                        onReset={() => setShowResetModal(true)}
-                        onExport={handleExport}
-                        onForceSync={handleForceSync}
-                        onImportFile={handleImportFile}
-                        onLogin={() => {
-                            setShowSettings(false);
-                            setShowAuthModal(true);
-                        }}
-                        isSyncing={isSyncing}
-                    />
-                </Suspense>
-            )}
         </>
     );
 };

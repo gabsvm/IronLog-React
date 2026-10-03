@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Icon } from '../ui/Icon';
-import { AdminTemplateManager } from '../admin/AdminTemplateManager';
 import { getFirebaseFirestoreServices } from '../../lib/firebaseLoader';
 import { useAppPreferences } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
@@ -12,11 +11,11 @@ interface Props {
 type Status = { msg: string; type: 'success' | 'error' | 'neutral'; codeSnippet?: string };
 
 /**
- * Admin-only sub-panel inside Settings → Account tab.
- * Lets the admin user grant/revoke PRO for any UID or email, and access
- * the global template manager. Fully self-contained: owns its own state
- * (target input, status, template-manager toggle) and Firestore calls.
- * Renders nothing for non-admin users (caller guards on email).
+ * Admin-only PRO manager inside the unified "You" sheet → Advanced section.
+ * Lets the admin user grant/revoke PRO for any UID or email. Fully
+ * self-contained: owns its own state (target input, status) and Firestore
+ * calls. Renders nothing for non-admin users (caller guards on email).
+ * (The global template manager lives in the Training section instead.)
  */
 export const AdminControlPanel: React.FC<Props> = ({ adminEmail }) => {
     const { lang } = useAppPreferences();
@@ -24,7 +23,6 @@ export const AdminControlPanel: React.FC<Props> = ({ adminEmail }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [targetInput, setTargetInput] = useState('');
     const [status, setStatus] = useState<Status | null>(null);
-    const [showTemplateManager, setShowTemplateManager] = useState(false);
 
     const resolveUid = async (input: string): Promise<string | null> => {
         const { db, firestoreApi } = await getFirebaseFirestoreServices();
@@ -83,10 +81,6 @@ export const AdminControlPanel: React.FC<Props> = ({ adminEmail }) => {
         }
     };
 
-    if (showTemplateManager) {
-        return <AdminTemplateManager onClose={() => setShowTemplateManager(false)} />;
-    }
-
     return (
         <>
             <button
@@ -141,12 +135,6 @@ export const AdminControlPanel: React.FC<Props> = ({ adminEmail }) => {
                 </div>
             )}
 
-            <button
-                onClick={() => setShowTemplateManager(true)}
-                className="w-full py-2 mt-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors duration-fast ease-natural bg-primary-500 text-black hover:bg-primary-400 shadow-md shadow-primary-500/20"
-            >
-                <Icon name="Layout" size={14} /> {t.manageTemplates}
-            </button>
         </>
     );
 };

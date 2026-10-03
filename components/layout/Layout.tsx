@@ -13,6 +13,7 @@ import { scheduleWhenIdle } from '../../lib/idle';
 import './ux-navigation.css';
 
 const ProfileSheet = React.lazy(() => import('../profile/ProfileSheet').then(m => ({ default: m.ProfileSheet })));
+import type { ProfileSection } from '../profile/ProfileSheet';
 const QuickStartSheet = React.lazy(() => import('../home/QuickStartSheet').then(m => ({ default: m.QuickStartSheet })));
 const FreestyleSessionModal = React.lazy(() => import('../workout/FreestyleSessionModal').then(m => ({ default: m.FreestyleSessionModal })));
 const TwoBlockMassModal = React.lazy(() => import('../workout/TwoBlockMassModal').then(m => ({ default: m.TwoBlockMassModal })));
@@ -92,11 +93,22 @@ interface LayoutProps {
     children: React.ReactNode;
     view: 'home' | 'workout' | 'history' | 'stats' | 'nutrition';
     setView: (v: 'home' | 'workout' | 'history' | 'stats' | 'nutrition' | 'program') => void;
-    onOpenSettings: () => void;
+    onOpenProgram: () => void;
+    onOpenExercises: () => void;
+    onReset: () => void;
+    onExport: () => void;
+    onForceSync: () => void;
+    onImportFile: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    onLogin: () => void;
+    isSyncing: boolean;
     onOpenCommandPalette?: () => void;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenSettings, onOpenCommandPalette }) => {
+export const Layout: React.FC<LayoutProps> = ({
+    children, view, setView,
+    onOpenProgram, onOpenExercises, onReset, onExport, onForceSync, onImportFile, onLogin, isSyncing,
+    onOpenCommandPalette,
+}) => {
     const { lang } = useAppPreferences();
     const { isOnline, syncStatus } = useSyncStatus();
     const { user } = useAuth();
@@ -107,6 +119,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
     const setActiveSession = useStore(state => state.setActiveSession);
     const t = TRANSLATIONS[lang];
     const [showProfile, setShowProfile] = React.useState(false);
+    const [profileSection, setProfileSection] = React.useState<ProfileSection | null>(null);
     const [showQuickStart, setShowQuickStart] = React.useState(false);
     const [showFreestyle, setShowFreestyle] = React.useState(false);
     const [showTwoBlock, setShowTwoBlock] = React.useState(false);
@@ -136,11 +149,25 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
     React.useEffect(() => {
         const handlePop = (event: Event) => {
             const detail = (event as CustomEvent).detail;
-            if (!detail?.profile) setShowProfile(false);
+            if (!detail?.profile) {
+                setProfileSection(null);
+                setShowProfile(false);
+            }
         };
         window.addEventListener('ironlog:popstate', handlePop);
         return () => window.removeEventListener('ironlog:popstate', handlePop);
     }, []);
+
+    // External entry points (e.g. back from the exercises library) open the
+    // unified sheet, optionally scrolled to a section.
+    React.useEffect(() => {
+        const handleOpenProfile = (event: Event) => {
+            const section = (event as CustomEvent<{ section?: ProfileSection }>).detail?.section;
+            openProfile(section ?? null);
+        };
+        window.addEventListener('gainslab:open-profile', handleOpenProfile);
+        return () => window.removeEventListener('gainslab:open-profile', handleOpenProfile);
+    });
 
     React.useEffect(() => {
         const handleNavigate = (event: Event) => {
@@ -153,21 +180,27 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
         return () => window.removeEventListener('gainslab:navigate', handleNavigate);
     }, [setView]);
 
-    const openProfile = () => {
-        if (showProfile) return;
-        try {
-            window.history.pushState({ ...(window.history.state || {}), view, settings: false, profile: true }, '', '#profile');
-        } catch { }
-        setShowProfile(true);
+    const openProfile = (section?: ProfileSection | null) => {
+        if (!showProfile) {
+            try {
+                // Snapshot current view and push exactly ONE entry per sheet open.
+                window.history.pushState({ ...(window.history.state || {}), view, profile: true }, '', '#profile');
+            } catch { }
+            setShowProfile(true);
+        }
+        setProfileSection(section ?? null);
     };
 
     const closeProfile = () => {
         try {
             if (window.history.state?.profile) {
+                // History owns this sheet: go back and let the popstate handler
+                // below close it, so forward/back stay consistent.
                 window.history.back();
                 return;
             }
         } catch { }
+        setProfileSection(null);
         setShowProfile(false);
     };
 
@@ -219,7 +252,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
                             )}
                         </div>
                         <div id="tut-profile-btn">
-                            <Avatar email={user?.email} photoURL={(user as any)?.photoURL} isPro={isPro} onClick={openProfile} ariaLabel={t.openProfile} />
+                            <Avatar email={user?.email} photoURL={(user as any)?.photoURL} isPro={isPro} onClick={() => openProfile()} ariaLabel={t.openProfile} />
                         </div>
                     </div>
                 </div>
@@ -243,7 +276,19 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
 
             {(showProfile || hasOpenedProfileRef.current) && (
                 <React.Suspense fallback={null}>
-                    <ProfileSheet open={showProfile} onClose={closeProfile} onOpenSettings={onOpenSettings} />
+                    <ProfileSheet
+                    open={showProfile}
+                    onClose={closeProfile}
+                    initialSection={profileSection}
+                    onOpenProgram={onOpenProgram}
+                    onOpenExercises={onOpenExercises}
+                    onReset={onReset}
+                    onExport={onExport}
+                    onForceSync={onForceSync}
+                    onImportFile={onImportFile}
+                    onLogin={onLogin}
+                    isSyncing={isSyncing}
+                />
                 </React.Suspense>
             )}
             {(showQuickStart || hasOpenedQuickStartRef.current) && (

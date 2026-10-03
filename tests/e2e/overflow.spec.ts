@@ -102,21 +102,18 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 360, height: 800 }
             await expect(page.locator('#root')).toContainText(/Stats|Estadísticas|Progreso|Sin datos|No data/i, { timeout: 10000 });
             await expectNoOverflow(page, 'stats');
 
-            // Settings opens from the profile sheet; cycle through its tabs.
+            // Unified "You" sheet: scroll through every section, including the
+            // collapsible Advanced section.
             await page.getByLabel(/Abrir perfil|Open profile/).click();
-            await page.locator('[role="dialog"] button', { hasText: /Editor de programa|Program editor/ }).click();
-            const settingsDialog = page.locator('[role="dialog"]', { has: page.locator('#settings-modal-title') });
-            await expect(settingsDialog).toBeVisible({ timeout: 10000 });
-            const settingsTabs = settingsDialog.getByRole('tab');
-            await expect(settingsTabs.first()).toBeVisible({ timeout: 10000 });
-            const tabCount = await settingsTabs.count();
-            expect(tabCount).toBeGreaterThan(0);
-            for (let i = 0; i < tabCount; i++) {
-                await settingsTabs.nth(i).click();
-                await expectNoOverflow(page, `settings-tab-${i}`);
+            const sheet = page.locator('[role="dialog"]').first();
+            await expect(sheet).toBeVisible({ timeout: 10000 });
+            await sheet.locator('summary', { hasText: /Avanzado|Advanced/ }).click();
+            for (const section of ['account', 'body', 'training', 'appearance', 'data', 'advanced', 'danger']) {
+                await sheet.locator(`#profile-section-${section}`).scrollIntoViewIfNeeded();
+                await expectNoOverflow(page, `you-${section}`);
             }
-            await settingsDialog.getByLabel('Close settings').click();
-            await expect(settingsDialog).toHaveCount(0, { timeout: 8000 });
+            await sheet.getByLabel('Close').click();
+            await expect(sheet).toHaveCount(0, { timeout: 8000 });
 
             // Workout last: the bottom nav and header hide while training.
             await nav.locator('button', { hasText: /Entreno|Train/ }).click();

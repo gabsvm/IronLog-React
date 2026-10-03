@@ -4,6 +4,8 @@ import { render, fireEvent, act, screen } from '@testing-library/react';
 
 vi.mock('../../context/AppContext', () => ({
     useApp: () => ({
+        lang: 'es',
+        setLang: vi.fn(),
         setProgram: vi.fn(),
         config: { showRIR: false, keepScreenOn: false },
         setConfig: vi.fn(),
@@ -11,20 +13,41 @@ vi.mock('../../context/AppContext', () => ({
         setUserProfile: vi.fn(),
         logs: [],
         theme: 'dark',
+        setTheme: vi.fn(),
         colorTheme: 'iron',
+        setColorTheme: vi.fn(),
+        effectsMode: 'system',
+        setEffectsMode: vi.fn(),
+        resolvedEffects: 'balanced',
+        deferredPrompt: null,
+        installApp: vi.fn(),
+        isStandalone: true,
+        pendingCloudSections: [],
+        program: [],
+        personalTemplates: [],
+        setPersonalTemplates: vi.fn(),
         syncStatus: { pending: 0, isSyncing: false, lastSyncedAt: null },
         isOnline: true,
     }),
     useAppPreferences: () => ({ lang: 'es', setLang: vi.fn() }),
+    useSyncMeta: () => ({ localLastUpdated: null, localSectionSyncMeta: {} }),
     useSyncStatus: () => ({ isOnline: true, syncStatus: { pending: 0, isSyncing: false, lastSyncedAt: null } }),
 }));
 
 vi.mock('../../context/AuthContext', () => ({
-    useAuth: () => ({ user: { email: 'test@gainslab.app' }, isPro: false }),
+    useAuth: () => ({ user: { email: 'test@gainslab.app' }, isPro: false, logout: vi.fn(), deleteAccount: vi.fn() }),
 }));
 
 vi.mock('../../hooks/usePro', () => ({
-    usePro: () => ({ isPro: false }),
+    usePro: () => ({
+        isPro: false,
+        tier: null,
+        expiryDate: null,
+        checkPro: () => true,
+        showPaywall: false,
+        setShowPaywall: vi.fn(),
+        featureAttempted: '',
+    }),
 }));
 
 vi.mock('../../lib/store', () => ({
@@ -49,7 +72,18 @@ import { Layout } from '../../components/layout/Layout';
 describe('L2: Lazy loaded ProfileSheet and QuickStartSheet', () => {
     it('does not mount ProfileSheet initially, but mounts it lazily on user interaction', async () => {
         const { getByLabelText } = render(
-            <Layout view="home" setView={vi.fn()} onOpenSettings={vi.fn()}>
+            <Layout
+                view="home"
+                setView={vi.fn()}
+                onOpenProgram={vi.fn()}
+                onOpenExercises={vi.fn()}
+                onReset={vi.fn()}
+                onExport={vi.fn()}
+                onForceSync={vi.fn()}
+                onImportFile={vi.fn()}
+                onLogin={vi.fn()}
+                isSyncing={false}
+            >
                 <div>Main Content</div>
             </Layout>
         );

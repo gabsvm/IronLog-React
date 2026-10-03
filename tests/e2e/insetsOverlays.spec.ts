@@ -166,7 +166,7 @@ test.describe('J1: fullscreen overlays respect safe-area insets', () => {
         await expect(page.getByText(/ERROR CR.TICO|CRITICAL ERROR/)).toHaveCount(0);
     });
 
-    test('settings modal with all tabs', async ({ page }) => {
+    test('unified you sheet with all sections', async ({ page }) => {
         await seedOnboarded(page);
         await page.goto('/');
         await injectInsets(page);
@@ -174,20 +174,15 @@ test.describe('J1: fullscreen overlays respect safe-area insets', () => {
         const nav = page.locator('nav[aria-label="Main navigation"]');
         await expect(nav).toBeVisible({ timeout: 15000 });
         await page.getByLabel(/Abrir perfil|Open profile/).click();
-        await page.locator('[role="dialog"] button', { hasText: /Editor de programa|Program editor/ }).click();
 
-        const settingsDialog = page.locator('[role="dialog"]', { has: page.locator('#settings-modal-title') });
-        await expect(settingsDialog).toBeVisible({ timeout: 10000 });
-        await assertControlClear(page, settingsDialog.locator('button[aria-label="Close settings"]'), 'settings-close');
+        const sheet = page.locator('[role="dialog"]').first();
+        await expect(sheet).toBeVisible({ timeout: 10000 });
+        await assertControlClear(page, sheet.locator('button[aria-label="Close"]'), 'you-close');
 
-        const tabs = settingsDialog.getByRole('tab');
-        await expect(tabs.first()).toBeVisible({ timeout: 10000 });
-        const tabCount = await tabs.count();
-        expect(tabCount).toBeGreaterThan(0);
-        for (let i = 0; i < tabCount; i++) {
-            await tabs.nth(i).click();
-            await assertScrollablePhases(page, settingsDialog, `settings-tab-${i}`);
-        }
+        // Open the collapsible Advanced section so its controls are measurable.
+        await sheet.locator('summary', { hasText: /Avanzado|Advanced/ }).click();
+
+        await assertScrollablePhases(page, sheet, 'you-sheet');
 
         await expect(page.getByText(/ERROR CR.TICO|CRITICAL ERROR/)).toHaveCount(0);
     });

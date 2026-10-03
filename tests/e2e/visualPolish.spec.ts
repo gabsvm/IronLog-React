@@ -11,13 +11,11 @@ const seed = (page: Page) =>
         }));
     });
 
-async function openSettingsTraining(page: Page) {
+async function openUnifiedSheet(page: Page) {
     await page.getByLabel(/Abrir perfil|Open profile/).click();
-    await page.locator('[role="dialog"] button', { hasText: /Editor de programa|Program editor/ }).click();
-    const settingsDialog = page.locator('[role="dialog"]', { has: page.locator('#settings-modal-title') });
-    await expect(settingsDialog).toBeVisible({ timeout: 10000 });
-    await settingsDialog.getByRole('tab', { name: /Entreno|Training/ }).click();
-    return settingsDialog;
+    const sheet = page.locator('[role="dialog"]').first();
+    await expect(sheet).toBeVisible({ timeout: 10000 });
+    return sheet;
 }
 
 function alphasOf(colorFn: string): number[] {
@@ -78,13 +76,13 @@ test.describe('K7 visual polish', () => {
     test('rest-timer segmented uses lime fill and sentence-case labels', async ({ page }) => {
         await seed(page);
         await page.goto('/');
-        const settingsDialog = await openSettingsTraining(page);
-        // Sentence case, unified with the "Tú" sheet.
-        await expect(settingsDialog.getByText('Mantener pantalla encendida')).toBeVisible();
-        await expect(settingsDialog.getByText('Mostrar columna RIR')).toBeVisible();
-        await expect(settingsDialog.getByText(/Pantalla Encendida|Mostrar Columna RIR/)).toHaveCount(0);
+        const sheet = await openUnifiedSheet(page);
+        // Sentence case, single label set in the unified sheet.
+        await expect(sheet.getByText('Mantener pantalla encendida')).toBeVisible();
+        await expect(sheet.getByText('Mostrar columna RIR')).toBeVisible();
+        await expect(sheet.getByText(/Pantalla Encendida|Mostrar Columna RIR/)).toHaveCount(0);
         // Selected segment = lime fill + black text, like the other tabs.
-        const compactBtn = settingsDialog.getByRole('button', { name: /Píldora Compacta|Compact Pill/ });
+        const compactBtn = sheet.getByRole('button', { name: /Píldora Compacta|Compact Pill/ });
         await expect(compactBtn).toBeVisible();
         const colors = await compactBtn.evaluate((el) => {
             const cs = getComputedStyle(el);

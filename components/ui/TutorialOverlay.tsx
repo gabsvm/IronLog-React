@@ -25,6 +25,12 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ steps, onCompl
     const [rect, setRect] = useState<DOMRect | null>(null);
     const [ready, setReady] = useState(false);
 
+    // Views build conditional step lists (e.g. HomeView adds a guideline step
+    // only while images exist), so the list can shrink below the live index
+    // when async state resolves. Clamp every read: without this the render
+    // crashes on steps[currentStepIndex].title with an undefined step.
+    const safeIndex = steps.length === 0 ? 0 : Math.min(currentStepIndex, steps.length - 1);
+
     useEffect(() => {
         if (!isActive) {
             setCurrentStepIndex(0);
@@ -39,7 +45,8 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ steps, onCompl
         if (!isActive || !ready) return;
 
         const updateRect = () => {
-            const step = steps[currentStepIndex];
+            const step = steps[safeIndex];
+            if (!step) return;
             const el = document.getElementById(step.targetId);
             if (el) {
                 setRect(el.getBoundingClientRect());
@@ -61,18 +68,18 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ steps, onCompl
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentStepIndex, isActive, ready, steps]);
 
-    if (!isActive || !ready) return null;
+    if (!isActive || !ready || steps.length === 0) return null;
 
     const handleNext = () => {
-        if (currentStepIndex < steps.length - 1) {
-            setCurrentStepIndex(prev => prev + 1);
+        if (safeIndex < steps.length - 1) {
+            setCurrentStepIndex(safeIndex + 1);
         } else {
             onComplete();
         }
     };
 
-    const step = steps[currentStepIndex];
-    const isLast = currentStepIndex === steps.length - 1;
+    const step = steps[safeIndex];
+    const isLast = safeIndex === steps.length - 1;
 
     // Smart positioning — dock to top if element is in the bottom 40%
     const isDockedTop = rect ? rect.top > window.innerHeight * 0.55 : false;
@@ -141,9 +148,9 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ steps, onCompl
                             <div
                                 key={idx}
                                 className={`h-1 rounded-full transition-all duration-300 ${
-                                    idx === currentStepIndex
+                                    idx === safeIndex
                                         ? 'w-5 bg-red-500'
-                                        : idx < currentStepIndex
+                                        : idx < safeIndex
                                         ? 'w-3 bg-white/30'
                                         : 'w-2 bg-white/10'
                                 }`}
@@ -151,7 +158,7 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ steps, onCompl
                         ))}
                     </div>
                     <span className="text-[9px] font-black tracking-widest text-zinc-500 uppercase">
-                        {currentStepIndex + 1} / {steps.length}
+                        {safeIndex + 1} / {steps.length}
                     </span>
                 </div>
 
