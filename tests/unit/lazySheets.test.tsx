@@ -63,8 +63,10 @@ describe('L2: Lazy loaded ProfileSheet and QuickStartSheet', () => {
             fireEvent.click(avatarBtn);
         });
 
-        // Profile sheet should now mount in Suspense into portal in document.body
-        const profileEl = await screen.findByText(/Cuenta gratuita/);
+        // Profile sheet should now mount in Suspense into portal in document.body.
+        // The lazy chunk transform shares CPU with every parallel worker, so
+        // keep the condition wait but give it a load-tolerant budget.
+        const profileEl = await screen.findByText(/Cuenta gratuita/, {}, { timeout: 15000 });
         expect(profileEl).toBeDefined();
     });
 });

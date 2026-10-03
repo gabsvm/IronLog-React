@@ -106,7 +106,9 @@ describe('L3: Preload workout modules and modals in idle (real views)', () => {
         useStore.setState({ isStoreLoading: false, activeMeso: null, activeSession: null } as any);
     });
 
-    it('HomeView schedules an idle callback that loads the real sortable list and card modules', async () => {
+    // Real-module transforms share CPU with every parallel worker: same
+    // condition waits, with a load-tolerant test budget instead of the 5 s default.
+    it('HomeView schedules an idle callback that loads the real sortable list and card modules', { timeout: 30000 }, async () => {
         render(
             <AppProvider>
                 <HomeView startSession={vi.fn()} onEditProgram={vi.fn()} />
@@ -126,7 +128,7 @@ describe('L3: Preload workout modules and modals in idle (real views)', () => {
         expect(cardModule.SortableExerciseCard).toBeDefined();
     });
 
-    it('WorkoutView schedules an idle callback that loads the real modal modules', async () => {
+    it('WorkoutView schedules an idle callback that loads the real modal modules', { timeout: 30000 }, async () => {
         const exercise: SessionExercise = {
             id: 'ex_1',
             instanceId: 1,

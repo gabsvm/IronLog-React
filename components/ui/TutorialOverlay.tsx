@@ -43,7 +43,9 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ steps, onCompl
             const el = document.getElementById(step.targetId);
             if (el) {
                 setRect(el.getBoundingClientRect());
-                el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                if (typeof el.scrollIntoView === 'function') {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                }
             } else {
                 handleNext();
             }
