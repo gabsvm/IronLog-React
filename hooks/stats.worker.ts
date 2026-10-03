@@ -1,4 +1,5 @@
 import { getEffectiveSetLoad, getLogBodyWeight, getSetLoadVolume } from '../utils/trainingMetrics';
+import { computeOverview } from '../utils/statsOverview';
 
 type MetricType = '1rm' | 'volume' | 'duration' | 'distance' | 'max_reps' | 'hold_time';
 
@@ -25,37 +26,8 @@ self.onmessage = function(e: MessageEvent) {
     const sourceLogs = cachedLogs;
 
     if (type === 'CALCULATE_OVERVIEW') {
-        const muscleCounts: Record<string, number> = {};
-        const exFreq: Record<string, number> = {};
-        const weeksFound = new Set<number>();
-        const muscles = ['CHEST', 'BACK', 'QUADS', 'HAMSTRINGS', 'GLUTES', 'CALVES', 'SHOULDERS', 'BICEPS', 'TRICEPS', 'TRAPS', 'ABS', 'FOREARMS', 'CARDIO'];
-        muscles.forEach(m => muscleCounts[m] = 0);
-
-        for (const log of sourceLogs) {
-            if (!log || log.skipped) continue;
-            if (activeMesoId && log.mesoId !== activeMesoId) continue;
-            if (log.week) weeksFound.add(log.week);
-
-            for (const ex of (log.exercises || [])) {
-                let setsDone = 0;
-                for (const set of (ex.sets || [])) {
-                    if (set?.completed && !set?.skipped) setsDone += 1;
-                }
-                if (muscleCounts[ex.muscle] !== undefined) muscleCounts[ex.muscle] += setsDone;
-                if (ex?.id != null) {
-                    const exId = String(ex.id);
-                    exFreq[exId] = (exFreq[exId] || 0) + 1;
-                }
-            }
-        }
-
-        const numWeeks = Math.max(1, weeksFound.size);
-        for (const key of Object.keys(muscleCounts)) {
-            muscleCounts[key] = Math.round(muscleCounts[key] / numWeeks);
-        }
-
-        const sortedVolume = Object.entries(muscleCounts).sort((a, b) => b[1] - a[1]);
-        self.postMessage({ type: 'OVERVIEW_READY', volumeData: sortedVolume, exerciseFrequency: exFreq, reqId });
+        const { volumeData, exerciseFrequency, weeks } = computeOverview(sourceLogs, activeMesoId ?? null);
+        self.postMessage({ type: 'OVERVIEW_READY', volumeData, exerciseFrequency, weeks, reqId });
         return;
     }
 

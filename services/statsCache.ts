@@ -3,7 +3,7 @@ import { ChartMetric } from '../hooks/useStatsWorker';
 import { Log } from '../types';
 import { db } from '../utils/db';
 
-const overviewKey = (signature: string, mesoId: number | null) => `il_stats_overview_v2:${signature}:${mesoId ?? 'all'}`;
+const overviewKey = (signature: string, mesoId: number | null) => `il_stats_overview_v3:${signature}:${mesoId ?? 'all'}`;
 const chartKey = (signature: string, exerciseId: string, metric: ChartMetric, mesoId: number | null) => `il_stats_chart_v3:${signature}:${exerciseId}:${metric}:${mesoId ?? 'all'}`;
 const selectedExerciseKey = 'il_stats_selected_exercise_v1';
 const selectedScopeKey = 'il_stats_scope_v1';
@@ -12,6 +12,7 @@ export interface StatsOverviewCache {
     volumeData: [string, number][];
     exerciseFrequency: Record<string, number>;
     setTypeDist: Record<string, number>;
+    weeks: number;
     savedAt: number;
 }
 

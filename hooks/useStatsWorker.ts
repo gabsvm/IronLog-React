@@ -5,7 +5,7 @@ import { getHistoricalBest1RMIndex } from '../utils/exerciseHistoryIndex';
 
 export type ChartMetric = '1rm' | 'volume' | 'duration' | 'distance' | 'max_reps' | 'hold_time';
 
-type OverviewResult = { volumeData: [string, number][], exerciseFrequency: Record<string, number> };
+type OverviewResult = { volumeData: [string, number][], exerciseFrequency: Record<string, number>, weeks: number };
 type ChartPoint = { date: number, value: number, weight: number, reps: number };
 
 type PendingRequest =
@@ -37,6 +37,7 @@ export const useStatsWorker = () => {
                 (pending as Extract<PendingRequest, { type: 'OVERVIEW_READY' }>).resolve({
                     volumeData: event.data.volumeData,
                     exerciseFrequency: event.data.exerciseFrequency,
+                    weeks: typeof event.data.weeks === 'number' ? event.data.weeks : 1,
                 });
             } else if (type === 'CHART_READY') {
                 (pending as Extract<PendingRequest, { type: 'CHART_READY' }>).resolve(event.data.dataPoints);
@@ -72,7 +73,7 @@ export const useStatsWorker = () => {
 
     const calculateOverview = useCallback((logs: Log[], activeMesoId?: number): Promise<OverviewResult> => {
         const worker = ensureLogs(logs);
-        if (!worker) return Promise.resolve({ volumeData: [], exerciseFrequency: {} });
+        if (!worker) return Promise.resolve({ volumeData: [], exerciseFrequency: {}, weeks: 1 });
         const reqId = nextRequestId();
         return new Promise((resolve) => {
             pendingRef.current.set(reqId, { type: 'OVERVIEW_READY', resolve });

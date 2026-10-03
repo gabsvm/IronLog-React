@@ -218,6 +218,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
     const [availableExercises, setAvailableExercises] = useState<any[]>([]);
     const [chartPoints, setChartPoints] = useState<ChartDataPoint[]>([]);
     const [setTypeDist, setSetTypeDist] = useState<Record<string, number>>({});
+    const [overviewWeeks, setOverviewWeeks] = useState(1);
 
     const [loadingOverview, setLoadingOverview] = useState(true);
     const [loadingChart, setLoadingChart] = useState(false);
@@ -338,6 +339,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                 setVolumeData(cached.volumeData);
                 setRawMuscleCounts(Object.fromEntries(cached.volumeData));
                 setSetTypeDist(cached.setTypeDist);
+                setOverviewWeeks(cached.weeks ?? 1);
 
                 const sortedExs = Object.entries(cached.exerciseFrequency)
                     .sort((a, b) => (b[1] as number) - (a[1] as number))
@@ -348,10 +350,11 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                 setLoadingOverview(false);
             }
 
-            const { volumeData, exerciseFrequency } = await calculateOverview(safeLogs, scopeMesoId ?? undefined);
+            const { volumeData, exerciseFrequency, weeks } = await calculateOverview(safeLogs, scopeMesoId ?? undefined);
             if (cancelled) return;
 
             setVolumeData(volumeData);
+            setOverviewWeeks(weeks);
 
             const counts: Record<string, number> = {};
             volumeData.forEach(([m, v]) => { counts[m] = v; });
@@ -383,6 +386,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                 volumeData,
                 exerciseFrequency,
                 setTypeDist: typeCounts,
+                weeks,
             });
             setLoadingOverview(false);
         };
