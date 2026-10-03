@@ -38,19 +38,24 @@ function alphasOf(colorFn: string): number[] {
 test.describe('K7 visual polish', () => {
     test.use({ viewport: { width: 390, height: 844 } });
 
-    test('topbar gradient never drops below 0.92 alpha', async ({ page }) => {
+    test('L6: topbar background is fully opaque in balanced mode', async ({ page }) => {
         await seed(page);
         await page.goto('/');
         await page.locator('nav[aria-label="Main navigation"] button', { hasText: /Stats|Métricas/ }).click();
         await expect(page.locator('.app-topbar')).toBeVisible({ timeout: 10000 });
         const bg = await page.evaluate(() => {
             const el = document.querySelector('.app-topbar') as HTMLElement;
-            return getComputedStyle(el).backgroundImage;
+            const cs = getComputedStyle(el);
+            const descendants = [...el.querySelectorAll('*')]
+                .map((d) => getComputedStyle(d as HTMLElement).backgroundImage);
+            return { image: cs.backgroundImage, color: cs.backgroundColor, descendants };
         });
-        const alphas = alphasOf(bg);
-        expect(alphas.length, `gradient stops in "${bg}"`).toBeGreaterThan(0);
-        for (const a of alphas) {
-            expect(a, `stop alpha in "${bg}"`).toBeGreaterThanOrEqual(0.92);
+        expect(bg.image).toBe('none');
+        expect(alphasOf(bg.color)).toEqual([1]);
+        for (const img of bg.descendants) {
+            for (const a of alphasOf(img)) {
+                expect(a, `descendant stop alpha in "${img}"`).toBeGreaterThanOrEqual(1);
+            }
         }
         await expect(page.getByText(ERROR_BOUNDARY_TEXT)).toHaveCount(0);
     });

@@ -207,7 +207,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, view, setView, onOpenS
     return (
         <div className="flex h-full w-full flex-col overflow-hidden bg-[rgb(var(--surface-app))] font-sans text-[rgb(var(--text-primary))]">
             {view !== 'workout' && (
-                <div className="app-topbar pointer-events-none absolute left-0 right-0 top-0 z-20 bg-gradient-to-b from-[rgb(var(--surface-app))] via-[rgb(var(--surface-app)/0.94)] to-[rgb(var(--surface-app)/0.92)] px-6 pb-2 pt-safe">
+                <div className="app-topbar pointer-events-none absolute left-0 right-0 top-0 z-20 bg-[rgb(var(--surface-app))] px-6 pb-2 pt-safe">
                     <div className="pointer-events-auto flex h-14 items-center justify-between">
                         <div className="flex items-center gap-3">
                             <Logo className="h-10 w-10" showText />
