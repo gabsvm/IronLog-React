@@ -7,7 +7,7 @@ import { Icon } from '../components/ui/Icon';
 import { useStore } from '../lib/store';
 import { TRANSLATIONS } from '../constants';
 import { statsCache } from '../services/statsCache';
-import { StatsScope } from '../utils/statsScope';
+import { StatsScope, scopeMesoId as scopeMesoIdFor, summarizeLogsByScope } from '../utils/statsScope';
 import './product-polish.css';
 
 type StatsSection = 'overview' | 'progress' | 'volume';
@@ -47,32 +47,11 @@ export const StatsView: React.FC = () => {
         void statsCache.writeSelectedScopeV2(next);
     };
 
-    const scopedSummary = useMemo(() => {
-        const scopedLogs = activeMeso
-            ? safeLogs.filter(log => log.mesoId === activeMeso.id)
-            : safeLogs;
-        const completedLogs = scopedLogs.filter(log => !log.skipped);
-        const exerciseIds = new Set<string>();
-        const muscles = new Set<string>();
-        let sets = 0;
-
-        completedLogs.forEach(log => {
-            (log.exercises || []).forEach((exercise, exerciseIndex) => {
-                const completedSets = (exercise.sets || []).filter(set => set.completed && !set.skipped);
-                if (!completedSets.length) return;
-                exerciseIds.add(String(exercise.id ?? exercise.instanceId ?? `${log.id}-${exerciseIndex}`));
-                if (exercise.muscle) muscles.add(String(exercise.muscle));
-                sets += completedSets.length;
-            });
-        });
-
-        return {
-            sessions: completedLogs.length,
-            exercises: exerciseIds.size,
-            sets,
-            muscles: muscles.size,
-        };
-    }, [activeMeso, safeLogs]);
+    const scopeMesoId = scopeMesoIdFor(scope, activeMeso?.id);
+    const scopedSummary = useMemo(
+        () => summarizeLogsByScope(safeLogs, scopeMesoId),
+        [safeLogs, scopeMesoId],
+    );
 
     const publicPlanLabel = useMemo(() => {
         if (!activeMeso?.mesoType) return null;
@@ -123,11 +102,11 @@ export const StatsView: React.FC = () => {
             <section className="px-4 pb-3 pt-2">
                 <div className="flex items-end justify-between gap-3 px-1">
                     <div className="min-w-0">
-                        <h2 className="text-[1.7rem] font-black tracking-[-0.05em] text-zinc-950 dark:text-white">Stats</h2>
+                        <h2 className="text-[1.7rem] font-black tracking-[-0.05em] text-zinc-950 dark:text-white">{t.statsTitle}</h2>
                         <p className="whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-500">
-                            {activeMeso
-                                ? `${lang === 'es' ? 'Plan actual' : 'Current plan'} · ${t.week} ${activeMeso.week}`
-                                : (lang === 'es' ? 'Historial global' : 'All-time history')}
+                            {scope === 'plan' && activeMeso
+                                ? `${t.currentPlan} · ${t.week} ${activeMeso.week}`
+                                : t.statsScopeHistory}
                         </p>
                     </div>
                     {publicPlanLabel && (

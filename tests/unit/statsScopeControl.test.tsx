@@ -46,6 +46,7 @@ vi.mock('react-chartjs-2', () => ({
 import { StatsView } from '../../views/StatsView';
 import { computeOverview } from '../../utils/statsOverview';
 import { statsCache } from '../../services/statsCache';
+import { TRANSLATIONS } from '../../constants';
 import { db } from '../../utils/db';
 
 const sets = (n: number) =>
@@ -83,6 +84,32 @@ const heatCellCount = (muscleLabel: string): string | null => {
     const label = screen.getByText(muscleLabel);
     return label.parentElement?.textContent ?? null;
 };
+
+// Both the heatmap grid and the volume list render these 12 muscles
+// (neither surface renders NECK; the volume list also has a CARDIO row).
+const MUSCLE_LABELS_ES_12 = Object.entries(TRANSLATIONS.es.muscle)
+    .filter(([key]) => key !== 'CARDIO' && key !== 'NECK')
+    .map(([, label]) => label);
+
+const cardValue = (label: string): number => {
+    // Header cards live in the wrapper <section>; the doughnut center reuses
+    // the "Series" label inside the tab panel.
+    const labelEl = screen.getAllByText(label).find((el) => el.closest('section'));
+    const card = labelEl?.parentElement;
+    return Number((card?.textContent ?? '').replace(label, ''));
+};
+
+const donutTotal = (): number => {
+    const data = JSON.parse(screen.getByTestId('doughnut').textContent ?? '[]') as number[];
+    return data.reduce((a, b) => a + b, 0);
+};
+
+/** Muscles whose rendered count is > 0 (heatmap cells or volume rows). */
+const positiveMuscleCount = (): number =>
+    MUSCLE_LABELS_ES_12.filter((label) => {
+        const row = screen.getByText(label).parentElement;
+        return Number((row?.textContent ?? '').replace(label, '')) > 0;
+    }).length;
 
 describe('L2: single scope control in the Stats wrapper', () => {
     beforeEach(async () => {
@@ -163,5 +190,36 @@ describe('L2: single scope control in the Stats wrapper', () => {
         await waitFor(() =>
             expect(calcOverviewSpy.mock.calls.some((c) => c[1] === undefined)).toBe(true),
         );
+    });
+
+    it('L3: plan scope cards match the doughnut, heatmap and volume list', async () => {
+        render(<StatsView />);
+        await waitFor(() => expect(donutTotal()).toBe(4));
+        expect(cardValue('Sesiones')).toBe(1);
+        expect(cardValue('Ejercicios')).toBe(1);
+        expect(cardValue('Series')).toBe(4);
+        expect(cardValue('Músculos')).toBe(1);
+        await waitFor(() => expect(cardValue('Series')).toBe(donutTotal()));
+        await waitFor(() => expect(cardValue('Músculos')).toBe(positiveMuscleCount()));
+        expect(screen.getByRole('heading', { name: 'Estadísticas' })).toBeTruthy();
+        expect(screen.getByText(/Plan actual/)).toBeTruthy();
+        fireEvent.click(sectionTab('Volumen'));
+        await waitFor(() => expect(positiveMuscleCount()).toBe(1));
+    });
+
+    it('L3: history scope cards match the doughnut, heatmap and volume list', async () => {
+        render(<StatsView />);
+        await waitFor(() => expect(calcOverviewSpy).toHaveBeenCalled());
+        fireEvent.click(scopeTab('Todo el historial'));
+        await waitFor(() => expect(cardValue('Series')).toBe(16));
+        expect(cardValue('Sesiones')).toBe(3);
+        expect(cardValue('Ejercicios')).toBe(2);
+        expect(cardValue('Músculos')).toBe(2);
+        await waitFor(() => expect(cardValue('Series')).toBe(donutTotal()));
+        await waitFor(() => expect(positiveMuscleCount()).toBe(2));
+        // Scope tab + header label under the title.
+        expect(screen.getAllByText('Todo el historial')).toHaveLength(2);
+        fireEvent.click(sectionTab('Volumen'));
+        await waitFor(() => expect(positiveMuscleCount()).toBe(2));
     });
 });

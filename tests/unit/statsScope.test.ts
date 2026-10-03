@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { filterLogsByScope, countSessionsByScope, scopeMesoId } from '../../utils/statsScope';
+import { filterLogsByScope, countSessionsByScope, scopeMesoId, summarizeLogsByScope } from '../../utils/statsScope';
 import type { Log } from '../../types';
 
 const makeLog = (id: number, mesoId?: number, skipped = false): Log =>
@@ -42,5 +42,65 @@ describe('K5: session counting and scope filtering share one definition', () => 
     it('tolerates missing logs', () => {
         expect(countSessionsByScope(null as unknown as Log[], null)).toBe(0);
         expect(countSessionsByScope(undefined as unknown as Log[], 10)).toBe(0);
+    });
+});
+
+describe('L3: summarizeLogsByScope shares the worker definition', () => {
+    const doneSets = (n: number) =>
+        Array.from({ length: n }, (_, i) => ({ id: i + 1, completed: true, skipped: false }));
+    const undoneSets = (n: number) =>
+        Array.from({ length: n }, (_, i) => ({ id: 100 + i, completed: false, skipped: false }));
+    const richLog = (partial: Record<string, unknown>): Log =>
+        ({ id: 'x', skipped: false, exercises: [], ...partial } as unknown as Log);
+
+    const logs = [
+        richLog({
+            id: 'l1', mesoId: 10,
+            exercises: [
+                { id: 'e-back', muscle: 'BACK', sets: doneSets(6) },
+                { id: 'e-cardio', muscle: 'CARDIO', sets: doneSets(2) },
+            ],
+        }),
+        richLog({
+            id: 'l2', mesoId: 10, skipped: true,
+            exercises: [{ id: 'e-back', muscle: 'BACK', sets: doneSets(60) }],
+        }),
+        richLog({
+            id: 'l3', mesoId: 20,
+            exercises: [
+                { id: 'e-chest', muscle: 'CHEST', sets: doneSets(4) },
+                { id: 'e-tri', muscle: 'TRICEPS', sets: undoneSets(3) },
+            ],
+        }),
+    ];
+
+    it('history scope summarizes every non-skipped log', () => {
+        expect(summarizeLogsByScope(logs, null)).toEqual({
+            sessions: 2,
+            exercises: 3,
+            sets: 12,
+            muscles: 2,
+        });
+    });
+
+    it('plan scope summarizes only that meso', () => {
+        expect(summarizeLogsByScope(logs, 10)).toEqual({
+            sessions: 1,
+            exercises: 2,
+            sets: 8,
+            muscles: 1,
+        });
+    });
+
+    it('excludes CARDIO from muscles but keeps its sets, and drops empty exercises', () => {
+        const summary = summarizeLogsByScope(logs, 20);
+        // TRICEPS had no completed set: not an exercise, not a muscle.
+        expect(summary).toEqual({ sessions: 1, exercises: 1, sets: 4, muscles: 1 });
+    });
+
+    it('tolerates missing logs', () => {
+        expect(summarizeLogsByScope(null as unknown as Log[], null)).toEqual({
+            sessions: 0, exercises: 0, sets: 0, muscles: 0,
+        });
     });
 });
