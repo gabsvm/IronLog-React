@@ -544,6 +544,28 @@ export const TRANSLATIONS = {
                 { title: "Routine Editor", text: "Need to change exercises or days? Jump to the editor from here." },
                 { title: "Notes", text: "Keep reminders, focus points, or goals for this specific cycle here." }
             ]
+        },
+        deleteAccount: {
+            sectionTitle: "Account",
+            rowLabel: "Delete account",
+            dialogTitle: "Delete account?",
+            dialogBody: "This permanently deletes your cloud data and your account. This cannot be undone.",
+            proWarning: "Your Pro subscription is linked to this account and will be lost.",
+            wipeLocal: "Also delete the data on this device",
+            passwordLabel: "Password",
+            confirmLabel: "Type DELETE to confirm",
+            confirmWord: "DELETE",
+            deleteButton: "Delete my account",
+            deleting: "Deleting...",
+            errors: {
+                'no-user': "No signed-in account to delete.",
+                unavailable: "Account service unavailable. Try again later.",
+                offline: "You are offline. Reconnect and try again.",
+                'wrong-password': "Incorrect password. Nothing was deleted.",
+                'requires-recent-login': "For security, sign out and sign in again, then retry.",
+                'partial-delete': "Your cloud data was deleted but the account removal failed. Please retry.",
+                unknown: "Something went wrong. Please try again.",
+            },
         }
     },
     es: {
@@ -1090,6 +1112,28 @@ export const TRANSLATIONS = {
             cardio: 'Cardio',
             tips: 'Tips',
             history: 'Historial',
+        },
+        deleteAccount: {
+            sectionTitle: "Cuenta",
+            rowLabel: "Eliminar cuenta",
+            dialogTitle: "¿Eliminar cuenta?",
+            dialogBody: "Esto borra permanentemente tus datos de la nube y tu cuenta. No se puede deshacer.",
+            proWarning: "Tu suscripción Pro está asociada a esta cuenta y se perderá.",
+            wipeLocal: "También borrar los datos de este dispositivo",
+            passwordLabel: "Contraseña",
+            confirmLabel: "Escribí ELIMINAR para confirmar",
+            confirmWord: "ELIMINAR",
+            deleteButton: "Eliminar mi cuenta",
+            deleting: "Eliminando...",
+            errors: {
+                'no-user': "No hay una cuenta con sesión para eliminar.",
+                unavailable: "Servicio de cuenta no disponible. Intentá más tarde.",
+                offline: "Estás sin conexión. Reconectá e intentá de nuevo.",
+                'wrong-password': "Contraseña incorrecta. No se borró nada.",
+                'requires-recent-login': "Por seguridad, cerrá sesión, volvé a entrar e intentá de nuevo.",
+                'partial-delete': "Tus datos de la nube se borraron pero falló la eliminación de la cuenta. Reintentá.",
+                unknown: "Algo salió mal. Intentá de nuevo.",
+            },
         }
     }
 };

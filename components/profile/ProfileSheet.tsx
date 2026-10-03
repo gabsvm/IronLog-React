@@ -8,6 +8,7 @@ import { countSessionsByScope, filterLogsByScope } from '../../utils/statsScope'
 import { Icon } from '../ui/Icon';
 import { Sheet } from '../ui/Sheet';
 import { BodyMetricsModal } from './BodyMetricsModal';
+import { DeleteAccountDialog } from './DeleteAccountDialog';
 import { triggerHaptic } from '../../utils/audio';
 
 interface ProfileSheetProps {
@@ -24,6 +25,8 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({ open, onClose, onOpe
     const { isPro, tier } = usePro();
     const activeMeso = useStore(state => state.activeMeso);
     const [showBodyModal, setShowBodyModal] = useState(false);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const tDelete = TRANSLATIONS[lang].deleteAccount;
     const planLabel = isPro && tier
         ? ((TRANSLATIONS[lang].planTypes as Record<string, string>)[tier] || tier)
         : null;
@@ -281,7 +284,30 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({ open, onClose, onOpe
                     </div>
                 </div>
 
-                {/* 6. Logout / Login */}
+                {/* 6. Account (signed-in users only) */}
+                {user && (
+                    <div>
+                        <div className="label-reference px-1 mb-1.5">{tDelete.sectionTitle}</div>
+                        <div className="card-reference divide-y divide-border-subtle overflow-hidden">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    triggerHaptic('light');
+                                    setShowDeleteDialog(true);
+                                }}
+                                className="w-full flex items-center gap-3 p-3 text-left hover:bg-red-500/10 transition-colors"
+                            >
+                                <span className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center text-red-400 shrink-0">
+                                    <Icon name="Trash2" size={17} />
+                                </span>
+                                <div className="flex-1 text-sm font-medium text-red-400">{tDelete.rowLabel}</div>
+                                <Icon name="ChevronRight" size={16} className="text-muted shrink-0" />
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* 7. Logout / Login */}
                 <div className="text-center pt-2">
                     {user ? (
                         <button
@@ -306,6 +332,16 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({ open, onClose, onOpe
                     )}
                 </div>
             </div>
+
+            <DeleteAccountDialog
+                open={showDeleteDialog}
+                onClose={() => setShowDeleteDialog(false)}
+                onDeleted={() => {
+                    setShowDeleteDialog(false);
+                    onClose();
+                }}
+                isPro={isPro}
+            />
 
             <BodyMetricsModal
                 open={showBodyModal}

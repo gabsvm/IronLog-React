@@ -4,6 +4,8 @@ import { SubscriptionTier, UserSubscription } from '../types';
 import { getFirebaseAuthServices, getFirebaseFirestoreServices, isFirebaseConfigured } from '../lib/firebaseLoader';
 import { scheduleWhenIdle } from '../lib/idle';
 import { DEFAULT_FREE_SUBSCRIPTION, createLocalDemoSubscription, resolveAuthoritativeSubscription, canGrantDemo } from '../services/entitlementService';
+import { AccountDeletionError, clearAccountDeletionLocalState, deleteCloudAccount } from '../services/accountDeletion';
+import { resetLocalData } from '../services/localDataReset';
 
 interface AuthContextType {
     user: User | null;
@@ -20,6 +22,7 @@ interface AuthContextType {
     refreshSubscription: () => Promise<UserSubscription>;
     startDemo: () => Promise<void>;
     resetPassword: (email: string) => Promise<void>;
+    deleteAccount: (password: string, opts?: { wipeLocalData?: boolean }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -217,10 +220,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await refreshSubscription();
     };
 
+    const deleteAccount = async (password: string, opts?: { wipeLocalData?: boolean }) => {
+        const currentUser = user;
+        if (!currentUser?.email) {
+            throw new AccountDeletionError('no-user');
+        }
+        const [{ auth, authApi }, { db, firestoreApi }] = await Promise.all([
+            getFirebaseAuthServices(),
+            getFirebaseFirestoreServices(),
+        ]);
+        if (!auth || !db) {
+            throw new AccountDeletionError('unavailable');
+        }
+        await deleteCloudAccount(currentUser.uid, currentUser.email, password, { auth, authApi, db, firestoreApi });
+        await clearAccountDeletionLocalState(currentUser.uid);
+        if (opts?.wipeLocalData) {
+            await resetLocalData();
+        }
+        try {
+            await authApi.signOut(auth);
+        } catch {
+            // The user no longer exists server-side; local sign-out is best-effort.
+        }
+        setUser(null);
+        setIsGuest(false);
+        setSubscription(DEFAULT_FREE_SUBSCRIPTION);
+    };
+
     const clearError = () => setError(null);
 
     return (
-        <AuthContext.Provider value={{ user, isGuest, loading, login, register, logout, continueAsGuest, error, clearError, subscription, upgradeToPro, refreshSubscription, startDemo, resetPassword }}>
+        <AuthContext.Provider value={{ user, isGuest, loading, login, register, logout, continueAsGuest, error, clearError, subscription, upgradeToPro, refreshSubscription, startDemo, resetPassword, deleteAccount }}>
             {children}
         </AuthContext.Provider>
     );
