@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { Log } from '../../types';
-import { computeOverview } from '../../utils/statsOverview';
+import { computeOverview, formatSets } from '../../utils/statsOverview';
 
 let nextId = 1;
 const sets = (n: number, completed = true) =>
@@ -89,6 +89,24 @@ describe('L1: computeOverview divides by real weeks in scope', () => {
         expect(avgOf(volumeData, 'BACK')).toBe(6);
     });
 
+    it('keeps one decimal: 2 sets over 5 weeks average 0.4', () => {
+        const logs = [1, 2, 3, 4, 5].map((week) =>
+            log({ mesoId: 101, week, exercises: week === 1 ? [muscleEx('BACK', 2)] : [] }),
+        );
+        const { weeks, volumeData } = computeOverview(logs, 101);
+        expect(weeks).toBe(5);
+        expect(avgOf(volumeData, 'BACK')).toBe(0.4);
+    });
+
+    it('floors positive averages at 0.1 so volume never rounds to zero', () => {
+        const weeks = Array.from({ length: 25 }, (_, i) => i + 1);
+        const logs = weeks.map((week) =>
+            log({ mesoId: 101, week, exercises: week === 1 ? [muscleEx('BACK', 1)] : [] }),
+        );
+        const { volumeData } = computeOverview(logs, 101);
+        expect(avgOf(volumeData, 'BACK')).toBe(0.1);
+    });
+
     it('never divides by zero and keeps the worker result shape', () => {
         const { weeks, volumeData, exerciseFrequency } = computeOverview([], null);
         expect(weeks).toBe(1);
@@ -97,5 +115,21 @@ describe('L1: computeOverview divides by real weeks in scope', () => {
         const values = volumeData.map(([, v]) => v);
         const sorted = [...values].sort((a, b) => b - a);
         expect(values).toEqual(sorted);
+    });
+});
+
+describe('M2: formatSets prints whole sets plainly, decimals localized', () => {
+    it('prints integers without decimals in both languages', () => {
+        expect(formatSets(6, 'es')).toBe('6');
+        expect(formatSets(6, 'en')).toBe('6');
+    });
+
+    it('prints one decimal with a comma in Spanish and a dot in English', () => {
+        expect(formatSets(3.5, 'es')).toBe('3,5');
+        expect(formatSets(3.5, 'en')).toBe('3.5');
+    });
+
+    it('rounds display artifacts like 0.1 + 0.2 to one decimal', () => {
+        expect(formatSets(0.1 + 0.2, 'es')).toBe('0,3');
     });
 });

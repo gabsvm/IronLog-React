@@ -109,7 +109,8 @@ const donutTotal = (): number => {
 const positiveMuscleCount = (): number =>
     MUSCLE_LABELS_ES_12.filter((label) => {
         const row = screen.getByText(label).parentElement;
-        return Number((row?.textContent ?? '').replace(label, '')) > 0;
+        const raw = (row?.textContent ?? '').replace(label, '').replace(',', '.');
+        return Number(raw) > 0;
     }).length;
 
 describe('L2: single scope control in the Stats wrapper', () => {
@@ -283,6 +284,34 @@ describe('L2: single scope control in the Stats wrapper', () => {
         await waitFor(() => expect(scopeTab('Todo el historial').getAttribute('aria-selected')).toBe('true'));
         fireEvent.click(sectionTab('Volumen'));
         await waitFor(() => expect(scopeTab('Todo el historial').getAttribute('aria-selected')).toBe('true'));
+    });
+
+    it('M2: the muscles contract holds with sparse data (no rounding to zero)', async () => {
+        // Same two mesos plus a single TRICEPS set: history averages drop to
+        // BACK 4, SHOULDERS 1.3, TRICEPS 0.3 — every muscle stays above zero.
+        mockState.logs = [
+            ...mockState.logs.slice(0, 2),
+            {
+                ...mockState.logs[2],
+                exercises: [
+                    { id: 'e-sh', muscle: 'SHOULDERS', sets: sets(4) },
+                    { id: 'e-tri', muscle: 'TRICEPS', sets: sets(1) },
+                ],
+            },
+        ];
+        render(<StatsView />);
+        await waitFor(() => expect(calcOverviewSpy).toHaveBeenCalled());
+        // Plan scope first: 2 muscles above zero.
+        expect(cardValue('Músculos')).toBe(2);
+        await waitFor(() => expect(positiveMuscleCount()).toBe(2));
+        fireEvent.click(scopeTab('Todo el historial'));
+        await waitFor(() => expect(cardValue('Músculos')).toBe(3));
+        await waitFor(() => expect(positiveMuscleCount()).toBe(3));
+        // The fractional average renders localized.
+        expect(heatCellCount('Hombros')).toContain('1,3');
+        expect(heatCellCount('Tríceps')).toContain('0,3');
+        fireEvent.click(sectionTab('Volumen'));
+        await waitFor(() => expect(positiveMuscleCount()).toBe(3));
     });
 
     it('M1: cards, doughnut and heatmap agree per tab with its effective scope', async () => {

@@ -59,9 +59,20 @@ export const computeOverview = (logs: Log[], mesoId?: number | null): OverviewNu
 
     const weeks = Math.max(1, weeksFound.size);
     for (const key of Object.keys(muscleCounts)) {
-        muscleCounts[key] = Math.round(muscleCounts[key] / weeks);
+        const raw = muscleCounts[key] / weeks;
+        muscleCounts[key] = raw > 0 ? Math.max(0.1, Math.round(raw * 10) / 10) : 0;
     }
 
     const sortedVolume = Object.entries(muscleCounts).sort((a, b) => b[1] - a[1]) as [string, number][];
     return { volumeData: sortedVolume, exerciseFrequency: exFreq, weeks };
 };
+
+/**
+ * Formats a weekly average for display: plain integer when whole, one
+ * localized decimal otherwise (comma in Spanish, dot in English).
+ */
+export const formatSets = (value: number, lang: 'es' | 'en'): string =>
+    value.toLocaleString(lang === 'es' ? 'es-ES' : 'en-US', {
+        maximumFractionDigits: 1,
+        useGrouping: false,
+    });

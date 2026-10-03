@@ -30,6 +30,7 @@ export const StatsView: React.FC = () => {
 
     useEffect(() => {
         let cancelled = false;
+        void statsCache.pruneLegacyStatsKeys();
         void statsCache.readSelectedScopeV2().then((cachedScope) => {
             if (!cancelled && (cachedScope === 'plan' || cachedScope === 'history')) {
                 setUserScope(cachedScope);

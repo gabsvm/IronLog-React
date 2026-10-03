@@ -1,5 +1,6 @@
 import React from 'react';
 import { TRANSLATIONS } from '../../constants';
+import { formatSets } from '../../utils/statsOverview';
 import { MuscleGroup } from '../../types';
 
 interface MuscleHeatmapGridProps {
@@ -43,7 +44,7 @@ export const MuscleHeatmapGrid: React.FC<MuscleHeatmapGridProps> = ({ volumeData
                         `}
                     >
                         <span className="text-[10px] font-black uppercase tracking-wider text-center leading-tight mb-1 opacity-90">{translated}</span>
-                        <span className="text-xl font-mono font-black">{count}</span>
+                        <span className="text-xl font-mono font-black">{formatSets(count, lang)}</span>
                     </div>
                 );
             })}

@@ -13,6 +13,7 @@ import { ProLock } from '../components/pro/ProLock';
 import { useStore } from '../lib/store';
 import { buildStatsLogsSignature, statsCache } from '../services/statsCache';
 import { countSessionsByScope, scopeMesoId as scopeMesoIdFor, StatsScope } from '../utils/statsScope';
+import { formatSets } from '../utils/statsOverview';
 import {
     Chart as ChartJS,
     RadialLinearScale,
@@ -41,7 +42,7 @@ ChartJS.register(
     LinearScale
 );
 
-const getVolumeZone = (sets: number) => {
+export const getVolumeZone = (sets: number) => {
     if (sets < 6) return { color: 'bg-yellow-500', label: 'MV', textColor: 'text-yellow-500' };
     if (sets < 12) return { color: 'bg-green-500', label: 'MEV', textColor: 'text-green-500' };
     if (sets <= 22) return { color: 'bg-blue-500', label: 'MAV', textColor: 'text-blue-500' };
@@ -90,7 +91,7 @@ export const VolumeMuscleList: React.FC<VolumeMuscleListProps> = ({ volumeData, 
                             style={{ width: `${Math.min(100, (count / maxVal) * 100)}%` }}
                         />
                     </div>
-                    <div className={`w-8 text-right text-xs font-mono font-bold ${zone.textColor}`}>{count}</div>
+                    <div className={`w-8 text-right text-xs font-mono font-bold ${zone.textColor}`}>{formatSets(count, lang)}</div>
                 </div>
             );
         })}
@@ -744,7 +745,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                                     {lang === 'es' ? 'Series semanales del músculo' : 'Weekly muscle sets'}
                                 </div>
                                 <div className="mt-1 text-xl font-black text-white">
-                                    {selectedExerciseInsight.muscleWeeklySets}
+                                    {formatSets(selectedExerciseInsight.muscleWeeklySets, lang)}
                                 </div>
                                 <div className="mt-1 text-[11px] font-bold uppercase tracking-[0.16em] text-primary-300">
                                     {selectedExerciseInsight.volumeStatus.label}

@@ -1,9 +1,14 @@
 import { ChartDataPoint } from '../components/stats/ProgressChart';
 import { ChartMetric } from '../hooks/useStatsWorker';
 import { Log } from '../types';
+import { keys as idbKeys } from 'idb-keyval';
 import { db } from '../utils/db';
 
-const overviewKey = (signature: string, mesoId: number | null) => `il_stats_overview_v3:${signature}:${mesoId ?? 'all'}`;
+const overviewKey = (signature: string, mesoId: number | null) => `il_stats_overview_v4:${signature}:${mesoId ?? 'all'}`;
+
+const LEGACY_SCOPE_KEYS = ['il_stats_scope_v1'];
+const LEGACY_KEY_PREFIXES = ['il_stats_overview_v2:', 'il_stats_overview_v3:', 'il_stats_chart_v2:'];
+let legacyPruned = false;
 const chartKey = (signature: string, exerciseId: string, metric: ChartMetric, mesoId: number | null) => `il_stats_chart_v3:${signature}:${exerciseId}:${metric}:${mesoId ?? 'all'}`;
 const selectedExerciseKey = 'il_stats_selected_exercise_v1';
 const selectedScopeKeyV2 = 'il_stats_scope_v2';
@@ -118,5 +123,24 @@ export const statsCache = {
 
     writeSelectedScopeV2(scope: 'plan' | 'history') {
         return db.set(selectedScopeKeyV2, scope);
+    },
+
+    /**
+     * One-time cleanup of orphaned stats keys from older cache versions.
+     * Runs once per session; safe to call on every Stats mount.
+     */
+    async pruneLegacyStatsKeys(): Promise<void> {
+        if (legacyPruned) return;
+        legacyPruned = true;
+        try {
+            await Promise.all(LEGACY_SCOPE_KEYS.map((key) => db.del(key)));
+            const allKeys = await idbKeys();
+            const stale = allKeys.filter((key) =>
+                typeof key === 'string' && LEGACY_KEY_PREFIXES.some((prefix) => key.startsWith(prefix)),
+            );
+            await Promise.all(stale.map((key) => db.del(key as string)));
+        } catch {
+            // Cache hygiene must never break the view.
+        }
     },
 };
