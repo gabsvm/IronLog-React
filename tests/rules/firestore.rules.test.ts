@@ -109,6 +109,19 @@ describe.skipIf(!EMULATOR_HOST)('N4: hardened Firestore rules (emulator)', () =>
         await assertFails(setDoc(doc(db, 'users/alice/data/history'), { logs: [], extra: 1 }));
     });
 
+    it('denies listing the whole data collection even for the owner (Q2: deletion uses direct deletes)', async () => {
+        // Expected behavior: rules grant reads by DOCUMENT path (doc == 'history'
+        // / 'subscription' branches), so a collection query over users/{uid}/data
+        // matches no allow-read and fails. deleteCloudAccount therefore deletes
+        // data/history by direct path instead of getDocs + filter.
+        await testEnv.withSecurityRulesDisabled(async (ctx) => {
+            await setDoc(doc(ctx.firestore(), 'users/alice/data/history'), { logs: [] });
+        });
+        const db = alice().firestore();
+        await assertSucceeds(getDoc(doc(db, 'users/alice/data/history')));
+        await assertFails(getDocs(collection(db, 'users/alice/data')));
+    });
+
     it('keeps subscription read-only for the client (read ok, write/delete denied)', async () => {
         await testEnv.withSecurityRulesDisabled(async (ctx) => {
             await setDoc(doc(ctx.firestore(), 'users/alice/data/subscription'), { isPro: true });

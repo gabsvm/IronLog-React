@@ -13,18 +13,10 @@ import { db } from '../../utils/db';
 const makeFirebase = (overrides: {
     reauthError?: { code: string };
     deleteUserError?: { code: string };
-    docsError?: { code: string };
+    deleteError?: { code: string };
 } = {}) => {
     const calls: string[] = [];
     const deletedRefs: string[] = [];
-    const batch = {
-        delete: vi.fn((ref: { path: string }) => {
-            deletedRefs.push(ref.path);
-        }),
-        commit: vi.fn(async () => {
-            calls.push('batch.commit');
-        }),
-    };
     const firebase: AccountDeletionFirebase = {
         auth: { currentUser: { uid: 'uid-1', email: 'a@b.c' } },
         authApi: {
@@ -45,30 +37,14 @@ const makeFirebase = (overrides: {
         },
         db: { fake: true },
         firestoreApi: {
-            collection: vi.fn((_db: unknown, ...path: string[]) => {
-                calls.push(`collection:${path.join('/')}`);
-                return { path: path.join('/') };
-            }),
-            getDocs: vi.fn(async () => {
-                calls.push('getDocs');
-                if (overrides.docsError) throw overrides.docsError;
-                return {
-                    forEach: (cb: (d: { id: string; ref: { path: string } }) => void) => {
-                        cb({ id: 'history', ref: { path: 'users/uid-1/data/history' } });
-                        cb({ id: 'subscription', ref: { path: 'users/uid-1/data/subscription' } });
-                    },
-                };
-            }),
-            writeBatch: vi.fn(() => {
-                calls.push('writeBatch');
-                return batch;
-            }),
             doc: vi.fn((_db: unknown, ...path: string[]) => {
                 calls.push(`doc:${path.join('/')}`);
                 return { path: path.join('/') };
             }),
-            deleteDoc: vi.fn(async () => {
-                calls.push('deleteDoc:users/uid-1');
+            deleteDoc: vi.fn(async (ref: { path: string }) => {
+                if (overrides.deleteError) throw overrides.deleteError;
+                deletedRefs.push(ref.path);
+                calls.push(`deleteDoc:${ref.path}`);
             }),
         },
     };
@@ -76,7 +52,7 @@ const makeFirebase = (overrides: {
 };
 
 describe('N3: deleteCloudAccount removes cloud data in the exact safe order', () => {
-    it('reauthenticates, deletes data docs except subscription, deletes the user doc, then the auth user', async () => {
+    it('reauthenticates, deletes history directly, deletes the user doc, then the auth user (no listing, no subscription)', async () => {
         const { firebase, calls, deletedRefs } = makeFirebase();
 
         await deleteCloudAccount('uid-1', 'a@b.c', 'secret', firebase);
@@ -84,19 +60,19 @@ describe('N3: deleteCloudAccount removes cloud data in the exact safe order', ()
         expect(calls).toEqual([
             'credential:a@b.c',
             'reauthenticate',
-            'collection:users/uid-1/data',
-            'getDocs',
-            'writeBatch',
-            'batch.commit',
+            'doc:users/uid-1/data/history',
+            'deleteDoc:users/uid-1/data/history',
             'doc:users/uid-1',
             'deleteDoc:users/uid-1',
             'deleteUser',
         ]);
-        expect(deletedRefs).toEqual(['users/uid-1/data/history']);
+        expect(deletedRefs).toEqual(['users/uid-1/data/history', 'users/uid-1']);
+        // Q2: subscription is untouched because it is never referenced.
+        expect(calls.join('|')).not.toContain('subscription');
     });
 
     it('never calls deleteUser when the Firestore wipe fails', async () => {
-        const { firebase } = makeFirebase({ docsError: { code: 'unavailable' } });
+        const { firebase } = makeFirebase({ deleteError: { code: 'unavailable' } });
 
         await expect(deleteCloudAccount('uid-1', 'a@b.c', 'secret', firebase)).rejects.toMatchObject({
             code: 'offline',

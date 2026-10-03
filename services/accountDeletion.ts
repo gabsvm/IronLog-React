@@ -38,9 +38,6 @@ export interface AccountDeletionFirebase {
     };
     db: any;
     firestoreApi: {
-        collection(db: any, ...path: string[]): any;
-        getDocs(ref: any): Promise<{ forEach(cb: (doc: { id: string; ref: any }) => void): void }>;
-        writeBatch(db: any): { delete(ref: any): any; commit(): Promise<void> };
         doc(db: any, ...path: string[]): any;
         deleteDoc(ref: any): Promise<void>;
     };
@@ -69,9 +66,14 @@ const mapReauthError = (err: unknown): AccountDeletionError => {
 
 /**
  * Deletes the cloud account in the exact safe order:
- * (a) re-authenticate with email+password, (b) delete every document under
- * users/{uid}/data EXCEPT `subscription` (read-only for clients, owned by an
- * external backend), then users/{uid}, (c) delete the Auth user.
+ * (a) re-authenticate with email+password, (b) delete
+ * users/{uid}/data/history directly, then users/{uid},
+ * (c) delete the Auth user.
+ *
+ * Q2: no collection listing. The hardened rules allow reading only
+ * `data/history` by path, so getDocs(users/{uid}/data) would be DENIED; and
+ * `subscription` (read-only for clients, owned by an external backend) is
+ * never touched because it is never referenced.
  *
  * deleteUser is NEVER called when the Firestore wipe fails. When Auth removal
  * fails after a successful wipe, the error is `partial-delete` and re-running
@@ -100,14 +102,10 @@ export const deleteCloudAccount = async (
     }
 
     try {
-        const dataRef = firebase.firestoreApi.collection(firebase.db, 'users', uid, 'data');
-        const snap = await firebase.firestoreApi.getDocs(dataRef);
-        const batch = firebase.firestoreApi.writeBatch(firebase.db);
-        snap.forEach((docSnap) => {
-            if (docSnap.id === 'subscription') return;
-            batch.delete(docSnap.ref);
-        });
-        await batch.commit();
+        // Direct deletes only: history is the sole client-deletable data doc.
+        await firebase.firestoreApi.deleteDoc(
+            firebase.firestoreApi.doc(firebase.db, 'users', uid, 'data', 'history'),
+        );
         await firebase.firestoreApi.deleteDoc(firebase.firestoreApi.doc(firebase.db, 'users', uid));
     } catch (err) {
         if (firebaseCodeOf(err) === 'unavailable') {

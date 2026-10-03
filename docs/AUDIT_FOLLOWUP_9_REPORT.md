@@ -9,7 +9,8 @@ Estado persistente: se actualiza y pushea al cerrar CADA tarea.
 | ID | Commit | Estado |
 |----|--------|--------|
 | Q0 | `a4de001` | hecho |
-| Q1 | (este commit) | hecho |
+| Q1 | `8d398f9` | hecho |
+| Q2 | (este commit) | hecho |
 
 ## Q0 — Preparación
 
@@ -37,3 +38,24 @@ Estado persistente: se actualiza y pushea al cerrar CADA tarea.
   fallan (`beforeAll` → `auth/api-key-not-valid` porque el SDK pega a live con la demo key).
 - Gates: build OK, `test:run` 368/368, lint limpio. `.env.example` con las 3 vars nuevas (sin valores).
 - No verificado: nada pendiente; emuladores ejecutables en esta máquina (JDK 21 en PATH).
+
+## Q2 — Borrado de cuenta sin listado de colección
+
+- `services/accountDeletion.ts`: eliminado el `getDocs(users/{uid}/data)` + batch (denegado por las
+  reglas endurecidas, que solo permiten leer `data/history` por path). Ahora borra directo
+  `data/history` y luego `users/{uid}` con `deleteDoc`; `subscription` no se toca porque nunca se
+  referencia. Interfaz `AccountDeletionFirebase` reducida a `doc`/`deleteDoc`. Orden intacto:
+  reauth → datos → users/{uid} → deleteUser → (limpieza local + logout en AuthContext, sin cambios).
+- Unit `tests/unit/accountDeletion.test.ts` actualizado: secuencia exacta con los 2 deletes directos,
+  `subscription` ausente del trace, wipe roto ⇒ no `deleteUser`, wrong-password/recent-login/offline
+  intactos.
+- Integración `tests/integration/accountDeletion.test.ts` (flujo REAL contra emuladores): borrado
+  completo deja sin users/{uid}, sin history, sin usuario Auth y con `subscription` intacta
+  (sembrada/leída por contexto admin rules-disabled); contraseña incorrecta no borra nada; reintento
+  tras wipe parcial es idempotente.
+- Reglas: nuevo caso 12 — el dueño NO puede listar `users/{uid}/data` (comportamiento esperado
+  documentado en el test); el borrado directo de history sigue permitido (caso existente).
+- Evidencia: `test:integration` 8/8, `test:rules` 12/12. Fail-proof: con el servicio viejo en stash,
+  integración da 2 failed (el `getDocs` es denegado por las reglas reales).
+- Gates: build OK, `test:run` 368/368, lint limpio.
+- No verificado: borrado con cuenta real en producción (manual del dueño, pendiente).
