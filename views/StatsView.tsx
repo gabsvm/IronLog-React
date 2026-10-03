@@ -1,10 +1,13 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { StatsView as StatsViewImpl } from './StatsViewImpl';
 import { useApp, useAppPreferences } from '../context/AppContext';
 import { ActivityHeatmap } from '../components/stats/ActivityHeatmap';
+import { StatsScopeSelector } from '../components/stats/StatsScopeSelector';
 import { Icon } from '../components/ui/Icon';
 import { useStore } from '../lib/store';
 import { TRANSLATIONS } from '../constants';
+import { statsCache } from '../services/statsCache';
+import { StatsScope } from '../utils/statsScope';
 import './product-polish.css';
 
 type StatsSection = 'overview' | 'progress' | 'volume';
@@ -21,6 +24,28 @@ export const StatsView: React.FC = () => {
     const [section, setSection] = useState<StatsSection>('overview');
     const safeLogs = useMemo(() => Array.isArray(logs) ? logs : [], [logs]);
     const t = TRANSLATIONS[lang];
+
+    // Single scope for all three sections. Default: this plan when a meso is
+    // active, full history otherwise. Only explicit user changes are persisted
+    // (v2 key); the default itself is never written.
+    const [scope, setScope] = useState<StatsScope>(() => (activeMeso ? 'plan' : 'history'));
+
+    useEffect(() => {
+        let cancelled = false;
+        void statsCache.readSelectedScopeV2().then((cachedScope) => {
+            if (!cancelled && (cachedScope === 'plan' || cachedScope === 'history')) {
+                setScope(cachedScope);
+            }
+        });
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    const handleScopeChange = (next: StatsScope) => {
+        setScope(next);
+        void statsCache.writeSelectedScopeV2(next);
+    };
 
     const scopedSummary = useMemo(() => {
         const scopedLogs = activeMeso
@@ -120,6 +145,10 @@ export const StatsView: React.FC = () => {
                         </div>
                     ))}
                 </div>
+
+                <div className="mt-3 px-1">
+                    <StatsScopeSelector scope={scope} onChange={handleScopeChange} lang={lang} />
+                </div>
             </section>
 
             <div
@@ -141,7 +170,7 @@ export const StatsView: React.FC = () => {
                     </div>
                 )}
 
-                <StatsViewImpl activeTab={section} hideHeader={true} />
+                <StatsViewImpl activeTab={section} hideHeader={true} scope={scope} onScopeChange={handleScopeChange} />
             </div>
         </div>
     );

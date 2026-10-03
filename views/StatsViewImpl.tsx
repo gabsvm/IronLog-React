@@ -162,6 +162,9 @@ const getBodyweightLevel = (profile: string, reps: number, addedLoad: number, sk
 export interface StatsViewImplProps {
     activeTab?: 'overview' | 'progress' | 'volume';
     hideHeader?: boolean;
+    /** Controlled scope, owned by the StatsView wrapper. */
+    scope: StatsScope;
+    onScopeChange: (scope: StatsScope) => void;
 }
 
 export interface PersonalRecordRowProps {
@@ -202,14 +205,13 @@ export const PersonalRecordRow: React.FC<PersonalRecordRowProps> = ({
     </div>
 );
 
-export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader = false }) => {
+export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader = false, scope: statsScope }) => {
     const { logs, lang, exercises, tutorialProgress, markTutorialSeen, userProfile } = useApp();
     const activeMeso = useStore(state => state.activeMeso);
     const t = TRANSLATIONS[lang];
 
     const [selectedExId, setSelectedExId] = useState<string | null>(null);
     const [chartMetric, setChartMetric] = useState<ChartMetric>('1rm');
-    const [statsScope, setStatsScope] = useState<StatsScope>('history');
     const [showPicker, setShowPicker] = useState(false);
     const [pickerSearch, setPickerSearch] = useState('');
 
@@ -276,24 +278,6 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
     useEffect(() => {
         void statsCache.writeSelectedExercise(selectedExId);
     }, [selectedExId]);
-
-    useEffect(() => {
-        let cancelled = false;
-
-        void statsCache.readSelectedScope().then((cachedScope) => {
-            if (!cancelled && (cachedScope === 'plan' || cachedScope === 'history')) {
-                setStatsScope(cachedScope);
-            }
-        });
-
-        return () => {
-            cancelled = true;
-        };
-    }, []);
-
-    useEffect(() => {
-        void statsCache.writeSelectedScope(statsScope);
-    }, [statsScope]);
 
     useEffect(() => {
         if (availableExercises.length === 0) {
@@ -630,23 +614,6 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
 
             {(!activeTab || activeTab === 'progress') && (
                 <>
-                    <div className="flex rounded-xl border border-white/5 bg-white/5 p-1" role="tablist" aria-label={t.statsScopeHistory}>
-                        {(['plan', 'history'] as StatsScope[]).map(scope => (
-                            <button
-                                key={scope}
-                                role="tab"
-                                aria-selected={statsScope === scope}
-                                onClick={() => setStatsScope(scope)}
-                                className={`flex-1 rounded-md px-3 py-1.5 text-[11px] font-black uppercase tracking-wider transition-all ${
-                                    statsScope === scope
-                                        ? 'bg-primary-500 text-white shadow-[0_2px_8px] shadow-primary-500/25'
-                                        : 'text-zinc-500 hover:text-zinc-300'
-                                }`}
-                            >
-                                {scope === 'plan' ? t.statsScopePlan : t.statsScopeHistory}
-                            </button>
-                        ))}
-                    </div>
                     <div id="tut-progress-chart" className="glass-card overflow-hidden rounded-[1.7rem] border border-white/6 p-5 shadow-md">
                 <div className="mb-5 flex flex-col gap-3">
                     <div className="flex items-center justify-between gap-3">

@@ -6,7 +6,7 @@ import { db } from '../utils/db';
 const overviewKey = (signature: string, mesoId: number | null) => `il_stats_overview_v3:${signature}:${mesoId ?? 'all'}`;
 const chartKey = (signature: string, exerciseId: string, metric: ChartMetric, mesoId: number | null) => `il_stats_chart_v3:${signature}:${exerciseId}:${metric}:${mesoId ?? 'all'}`;
 const selectedExerciseKey = 'il_stats_selected_exercise_v1';
-const selectedScopeKey = 'il_stats_scope_v1';
+const selectedScopeKeyV2 = 'il_stats_scope_v2';
 
 export interface StatsOverviewCache {
     volumeData: [string, number][];
@@ -112,11 +112,11 @@ export const statsCache = {
         return db.set(selectedExerciseKey, exerciseId);
     },
 
-    readSelectedScope() {
-        return db.get<'plan' | 'history' | null>(selectedScopeKey, null);
+    readSelectedScopeV2() {
+        return db.get<'plan' | 'history' | null>(selectedScopeKeyV2, null);
     },
 
-    writeSelectedScope(scope: 'plan' | 'history') {
-        return db.set(selectedScopeKey, scope);
+    writeSelectedScopeV2(scope: 'plan' | 'history') {
+        return db.set(selectedScopeKeyV2, scope);
     },
 };
