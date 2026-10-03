@@ -27,7 +27,8 @@
     "build-android": "npm run validate-android-env && npm run build && npx cap sync android",
     "build-ios": "npm run build && npx cap sync ios",
     "android-debug-apk": "npm run build-android && cd android && gradlew.bat assembleDebug",
-    "test:rules": "npx firebase-tools emulators:exec --project demo-n4-rules --only firestore \"npx vitest run --config vitest.rules.config.ts\""
+    "test:rules": "npx firebase-tools emulators:exec --project demo-n4-rules --only firestore \"npx vitest run --config vitest.rules.config.ts\"",
+    "test:integration": "npx firebase-tools emulators:exec --project demo-q1-integration --only auth,firestore \"npx vitest run --config vitest.integration.config.ts\""
   },
   "dependencies": {
     "@capacitor/android": "^8.0.0",

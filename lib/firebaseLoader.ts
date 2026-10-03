@@ -35,6 +35,32 @@ const firebaseConfig = {
 
 const hasFirebaseConfig = !!(firebaseConfig.apiKey && firebaseConfig.projectId);
 
+// Q1: emulator wiring. Active ONLY when the flag is set AND the runtime is
+// DEV or vitest ('test' mode). Production builds never take this branch:
+// import.meta.env.DEV is false and MODE is 'production' there, and the flag
+// itself is never set in production env files. No emulator host literal lives
+// in this module: hosts always come from env vars (see tests/unit/
+// emulatorProdGuard.test.ts, which also scans dist/ for leaked hosts).
+export const shouldUseFirebaseEmulator = (
+    envMap: Record<string, string | undefined>,
+    runtime: { isDev: boolean; mode: string },
+): boolean =>
+    envMap.VITE_FIREBASE_EMULATOR === '1' && (runtime.isDev || runtime.mode === 'test');
+
+const useEmulator = shouldUseFirebaseEmulator(env, {
+    isDev: import.meta.env.DEV,
+    mode: import.meta.env.MODE,
+});
+
+const splitHostPort = (value: string | undefined): { host: string; port: number } | null => {
+    if (!value) return null;
+    const idx = value.lastIndexOf(':');
+    if (idx <= 0) return null;
+    const port = Number(value.slice(idx + 1));
+    if (!Number.isInteger(port) || port <= 0) return null;
+    return { host: value.slice(0, idx), port };
+};
+
 let appPromise: Promise<FirebaseAppServices> | null = null;
 let authPromise: Promise<FirebaseAuthServices> | null = null;
 let firestorePromise: Promise<FirebaseFirestoreServices> | null = null;
@@ -95,7 +121,18 @@ export const getFirebaseAuthServices = (): Promise<FirebaseAuthServices> => {
             ]);
 
             if (!app) return emptyAuthServices();
-            return { app, auth: authApi.getAuth(app), authApi };
+            const auth = authApi.getAuth(app);
+            if (useEmulator) {
+                const endpoint = splitHostPort(env.VITE_FIREBASE_EMULATOR_AUTH);
+                if (endpoint) {
+                    authApi.connectAuthEmulator(auth, `http://${endpoint.host}:${endpoint.port}`, {
+                        disableWarnings: true,
+                    });
+                } else {
+                    console.warn('VITE_FIREBASE_EMULATOR=1 but VITE_FIREBASE_EMULATOR_AUTH is missing/invalid; using live Auth.');
+                }
+            }
+            return { app, auth, authApi };
         })().catch((error) => {
             console.error('Firebase auth initialization error:', error);
             authPromise = null;
@@ -118,11 +155,25 @@ export const getFirebaseFirestoreServices = (): Promise<FirebaseFirestoreService
 
             if (!app) return emptyFirestoreServices();
 
-            const db = firestoreApi.initializeFirestore(app, {
-                localCache: firestoreApi.persistentLocalCache({
-                    tabManager: firestoreApi.persistentMultipleTabManager(),
-                }),
-            });
+            // Emulator/test runs execute in Node without IndexedDB: memory cache.
+            const db = useEmulator
+                ? firestoreApi.initializeFirestore(app, {
+                    localCache: firestoreApi.memoryLocalCache(),
+                })
+                : firestoreApi.initializeFirestore(app, {
+                    localCache: firestoreApi.persistentLocalCache({
+                        tabManager: firestoreApi.persistentMultipleTabManager(),
+                    }),
+                });
+
+            if (useEmulator) {
+                const endpoint = splitHostPort(env.VITE_FIREBASE_EMULATOR_FIRESTORE);
+                if (endpoint) {
+                    firestoreApi.connectFirestoreEmulator(db, endpoint.host, endpoint.port);
+                } else {
+                    console.warn('VITE_FIREBASE_EMULATOR=1 but VITE_FIREBASE_EMULATOR_FIRESTORE is missing/invalid; using live Firestore.');
+                }
+            }
 
             return { app, db, firestoreApi };
         })().catch((error) => {
