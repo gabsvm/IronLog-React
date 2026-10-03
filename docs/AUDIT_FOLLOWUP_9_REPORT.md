@@ -10,7 +10,8 @@ Estado persistente: se actualiza y pushea al cerrar CADA tarea.
 |----|--------|--------|
 | Q0 | `a4de001` | hecho |
 | Q1 | `8d398f9` | hecho |
-| Q2 | (este commit) | hecho |
+| Q2 | `e87cf66` | hecho |
+| Q3 | (este commit) | hecho |
 
 ## Q0 — Preparación
 
@@ -59,3 +60,20 @@ Estado persistente: se actualiza y pushea al cerrar CADA tarea.
   integración da 2 failed (el `getDocs` es denegado por las reglas reales).
 - Gates: build OK, `test:run` 368/368, lint limpio.
 - No verificado: borrado con cuenta real en producción (manual del dueño, pendiente).
+
+## Q3 — Reglas: validar solo lo que cambia en update
+
+- `firestore.rules`: `allow create` mantiene `keys().hasOnly(userAllowedKeys())` sobre el documento
+  final; nuevo `allow update: if isOwner(uid) && userUpdateOk()` donde `userUpdateOk()` valida
+  `diff(resource.data).affectedKeys().hasOnly(...)` y los tipos/caps solo sobre claves afectadas
+  (claves borradas pasan). `userAllowedKeys()` extraída como función compartida.
+- Nuevo caso de reglas: doc existente con campos heredados (`legacyField`, `legacyCount`, creado con
+  reglas deshabilitadas) acepta updates de claves permitidas, rechaza tocar el campo heredado,
+  rechaza claves nuevas y tipos inválidos/caps excedidos, y conserva el legado intacto.
+- `docs/FIREBASE_MANUAL_STEPS.md` §3: paso previo de comparar claves reales de `users/{uid}` con la
+  lista permitida antes de desplegar. Reglas NO desplegadas.
+- Evidencia: `test:rules` 13/13 (12 previos + Q3). Fail-proof: con reglas viejas en stash, el caso Q3
+  falla y los otros 12 pasan. Rescate intermedio: el rewrite había borrado los `match /global_*`
+  (1 fail) — restaurados y verificado por diff que no falta ningún bloque.
+- Gates: build OK, `test:run` 368/368, lint limpio.
+- No verificado: despliegue en producción (manual del dueño).

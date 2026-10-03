@@ -41,6 +41,15 @@ ejecuta esto.
 
 ## 3. Desplegar las reglas
 
+Antes de desplegar, abrí en la consola de Firestore tu documento `users/{uid}`
+y compará sus claves reales con la lista permitida de `firestore.rules`
+(`userAllowedKeys`: email, lastSeen, uid, lastUpdated, program, activeMeso,
+activeSession, config, exercises, rpFeedback, nutritionLogs, cardioSessions,
+bodyLogs, customFoods, personalTemplates, nutritionGoal, macroGoals, userProfile,
+sectionSyncMeta). Desde Q3 las actualizaciones toleran campos heredados, pero
+si ves una clave vieja que la app ya no usa, conviene saber que existe antes de
+endurecer nada más.
+
 ```sh
 npx firebase-tools deploy --only firestore:rules --project <tu-project-id>
 ```

@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import {
     assertFails,
     assertSucceeds,
@@ -75,6 +75,32 @@ describe.skipIf(!EMULATOR_HOST)('N4: hardened Firestore rules (emulator)', () =>
         await assertFails(setDoc(ref, { evil: 1 }, { merge: true }));
         await assertFails(setDoc(ref, { lastUpdated: 'now' }, { merge: true }));
         await assertFails(setDoc(ref, { config: [1, 2] }, { merge: true }));
+    });
+
+    it('Q3: updates tolerate inherited unknown fields but reject new ones', async () => {
+        // Legacy doc with an unknown field, created with rules disabled.
+        await testEnv.withSecurityRulesDisabled(async (ctx) => {
+            await setDoc(doc(ctx.firestore(), 'users/alice'), {
+                email: 'alice@example.com',
+                legacyField: 'inherited',
+                legacyCount: 7,
+            });
+        });
+        const db = alice().firestore();
+        const ref = doc(db, 'users/alice');
+        // Updating allowlisted keys works despite the legacy fields.
+        await assertSucceeds(updateDoc(ref, { lastUpdated: 123 }));
+        await assertSucceeds(setDoc(ref, { config: { showRIR: true } }, { merge: true }));
+        // Touching the legacy field itself is denied (unknown key affected).
+        await assertFails(updateDoc(ref, { legacyField: 'changed' }));
+        // Brand-new unknown keys are still denied...
+        await assertFails(setDoc(ref, { brandNew: 1 }, { merge: true }));
+        // ...as are mistyped values on modified keys...
+        await assertFails(updateDoc(ref, { lastUpdated: 'now' }));
+        await assertFails(updateDoc(ref, { nutritionLogs: new Array(121).fill(1) }));
+        // ...while untouched legacy fields survive the allowed writes.
+        const snap = await getDoc(ref);
+        expect(snap.data()?.legacyField).toBe('inherited');
     });
 
     it('enforces the 2x array caps from syncService trims', async () => {

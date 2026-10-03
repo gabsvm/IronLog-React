@@ -18,7 +18,7 @@ service cloud.firestore {
       );
     }
 
-    // ── Global content (templates & exercise library) ────────────────────
+    // -- Global content (templates & exercise library) -----------------------
     match /global_templates/{id} {
       allow read: if true;
       allow create, update, delete: if isAdmin();
@@ -29,27 +29,62 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
-    // ── Per-user data ─────────────────────────────────────────────────────
+    // Every key the client writes (see services/syncService.ts):
+    // identity (email, lastSeen, uid), session (activeSession, lastUpdated)
+    // and the state sections + sectionSyncMeta.
+    function userAllowedKeys() {
+      return [
+        'email', 'lastSeen', 'uid', 'lastUpdated',
+        'program', 'activeMeso', 'activeSession', 'config', 'exercises',
+        'rpFeedback', 'nutritionLogs', 'cardioSessions', 'bodyLogs',
+        'customFoods', 'personalTemplates', 'nutritionGoal', 'macroGoals',
+        'userProfile', 'sectionSyncMeta'
+      ];
+    }
+
+    // Q3: updates validate ONLY what changed. diff() compares against the
+    // stored document, so unknown LEGACY keys sitting on old documents don't
+    // block writes; only affected keys must be allowlisted and well-typed.
+    // Deleted keys pass (absent from request.resource.data).
+    function userUpdateOk() {
+      let affected = request.resource.data.diff(resource.data).affectedKeys();
+      let data = request.resource.data;
+      return affected.hasOnly(userAllowedKeys())
+        && (!affected.hasAny(['lastUpdated']) || !('lastUpdated' in data) || data.lastUpdated is number)
+        && (!affected.hasAny(['lastSeen']) || !('lastSeen' in data) || data.lastSeen is number)
+        && (!affected.hasAny(['uid']) || !('uid' in data) || data.uid is string)
+        && (!affected.hasAny(['email']) || !('email' in data) || data.email is string || data.email == null)
+        && (!affected.hasAny(['program']) || !('program' in data) || data.program is list)
+        && (!affected.hasAny(['activeMeso']) || !('activeMeso' in data) || data.activeMeso is map || data.activeMeso == null)
+        && (!affected.hasAny(['activeSession']) || !('activeSession' in data) || data.activeSession is map || data.activeSession == null)
+        && (!affected.hasAny(['config']) || !('config' in data) || data.config is map)
+        && (!affected.hasAny(['exercises']) || !('exercises' in data) || data.exercises is list)
+        && (!affected.hasAny(['rpFeedback']) || !('rpFeedback' in data) || data.rpFeedback is map)
+        && (!affected.hasAny(['nutritionLogs']) || !('nutritionLogs' in data) || (data.nutritionLogs is list && data.nutritionLogs.size() <= 120))
+        && (!affected.hasAny(['cardioSessions']) || !('cardioSessions' in data) || (data.cardioSessions is list && data.cardioSessions.size() <= 120))
+        && (!affected.hasAny(['bodyLogs']) || !('bodyLogs' in data) || (data.bodyLogs is list && data.bodyLogs.size() <= 200))
+        && (!affected.hasAny(['customFoods']) || !('customFoods' in data) || (data.customFoods is list && data.customFoods.size() <= 200))
+        && (!affected.hasAny(['personalTemplates']) || !('personalTemplates' in data) || data.personalTemplates is list)
+        && (!affected.hasAny(['nutritionGoal']) || !('nutritionGoal' in data) || data.nutritionGoal is map || data.nutritionGoal == null)
+        && (!affected.hasAny(['macroGoals']) || !('macroGoals' in data) || data.macroGoals is map || data.macroGoals == null)
+        && (!affected.hasAny(['userProfile']) || !('userProfile' in data) || data.userProfile is map || data.userProfile == null)
+        && (!affected.hasAny(['sectionSyncMeta']) || !('sectionSyncMeta' in data) || data.sectionSyncMeta is map);
+    }
+
+    // -- Per-user data ------------------------------------------------------
     match /users/{uid} {
       // Owner-only read on the main user document.
       allow read: if isOwner(uid);
 
-      // Every key the client writes (see services/syncService.ts):
-      // identity (email, lastSeen, uid), session (activeSession, lastUpdated)
-      // and the state sections + sectionSyncMeta. Types are checked only when
-      // the key is present, because identity/session/state writes carry key
-      // subsets. Array caps are 2x the unconditional trims in syncService
-      // (nutritionLogs/cardioSessions .slice(-60) -> 120, bodyLogs/customFoods
-      // .slice(-100) -> 200); untrimmed arrays (program, exercises,
-      // personalTemplates) are type-checked but not capped.
-      allow create, update: if isOwner(uid)
-        && request.resource.data.keys().hasOnly([
-          'email', 'lastSeen', 'uid', 'lastUpdated',
-          'program', 'activeMeso', 'activeSession', 'config', 'exercises',
-          'rpFeedback', 'nutritionLogs', 'cardioSessions', 'bodyLogs',
-          'customFoods', 'personalTemplates', 'nutritionGoal', 'macroGoals',
-          'userProfile', 'sectionSyncMeta'
-        ])
+      // Create validates the WHOLE document (no legacy keys can exist yet).
+      // Types are checked only when the key is present, because
+      // identity/session/state writes carry key subsets. Array caps are 2x
+      // the unconditional trims in syncService (nutritionLogs/cardioSessions
+      // .slice(-60) -> 120, bodyLogs/customFoods .slice(-100) -> 200);
+      // untrimmed arrays (program, exercises, personalTemplates) are
+      // type-checked but not capped.
+      allow create: if isOwner(uid)
+        && request.resource.data.keys().hasOnly(userAllowedKeys())
         && (!('lastUpdated' in request.resource.data) || request.resource.data.lastUpdated is number)
         && (!('lastSeen' in request.resource.data) || request.resource.data.lastSeen is number)
         && (!('uid' in request.resource.data) || request.resource.data.uid is string)
@@ -69,6 +104,10 @@ service cloud.firestore {
         && (!('macroGoals' in request.resource.data) || request.resource.data.macroGoals is map || request.resource.data.macroGoals == null)
         && (!('userProfile' in request.resource.data) || request.resource.data.userProfile is map || request.resource.data.userProfile == null)
         && (!('sectionSyncMeta' in request.resource.data) || request.resource.data.sectionSyncMeta is map);
+
+      // Update validates only affected keys (see userUpdateOk): documents
+      // with inherited unknown fields stay writable for allowlisted keys.
+      allow update: if isOwner(uid) && userUpdateOk();
 
       // Owner account deletion (see services/accountDeletion.ts). Never reads
       // request.resource, which is null on delete.
