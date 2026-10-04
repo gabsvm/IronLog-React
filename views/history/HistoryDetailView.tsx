@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
-import { Log } from '../../types';
+import { Log, WeightUnit } from '../../types';
 import { Icon } from '../../components/ui/Icon';
 import { formatDate, formatHoursMinutes, getTranslated } from '../../utils';
+import { toDisplay, unitLabel } from '../../utils/units';
 
 interface Props {
     log: Log;
@@ -10,6 +11,7 @@ interface Props {
     onRepeat: () => void;
     onDelete: () => void;
     repeatBlocked?: boolean;
+    unit?: WeightUnit;
 }
 
 const displayDuration = (val: string | number | undefined) => {
@@ -18,7 +20,8 @@ const displayDuration = (val: string | number | undefined) => {
     return `${val}s`;
 };
 
-export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat, onDelete, repeatBlocked = false }) => {
+export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat, onDelete, repeatBlocked = false, unit = 'kg' }) => {
+    const weightSuffix = unitLabel(unit).toLowerCase();
     const summary = useMemo(() => {
         let sets = 0;
         let volume = 0;
@@ -72,7 +75,7 @@ export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat
                     <SummaryCell icon="Clock" label={lang === 'es' ? 'Duración' : 'Duration'} value={formatHoursMinutes(log.duration)} />
                     <SummaryCell icon="Dumbbell" label={lang === 'es' ? 'Ejercicios' : 'Exercises'} value={String(summary.exercises)} />
                     <SummaryCell icon="CheckCircle" label={lang === 'es' ? 'Series' : 'Sets'} value={String(summary.sets)} />
-                    <SummaryCell icon="TrendingUp" label={lang === 'es' ? 'Volumen' : 'Volume'} value={summary.volume > 0 ? `${summary.volume.toLocaleString()} kg` : '—'} />
+                    <SummaryCell icon="TrendingUp" label={lang === 'es' ? 'Volumen' : 'Volume'} value={summary.volume > 0 ? `${toDisplay(summary.volume, unit).toLocaleString()} ${weightSuffix}` : '—'} />
                 </section>
 
                 {(log as any).note && (
@@ -115,7 +118,7 @@ export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat
                                                         </>
                                                     ) : (
                                                         <>
-                                                            <span className="text-zinc-950 dark:text-white">{set.weight || 0} kg</span>
+                                                            <span className="text-zinc-950 dark:text-white">{toDisplay(Number(set.weight || 0), unit)} {weightSuffix}</span>
                                                             <span className="mx-2 text-zinc-500">×</span>
                                                             <span className="text-zinc-950 dark:text-white">{set.reps || 0}</span>
                                                             <span className="ml-1 text-[9px] text-zinc-500">REPS</span>

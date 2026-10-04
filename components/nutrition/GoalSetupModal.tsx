@@ -4,6 +4,7 @@ import { useApp } from '../../context/AppContext';
 import { Modal } from '../ui/Modal';
 import { Icon } from '../ui/Icon';
 import { calculateTDEE, calculateMacros } from '../../utils';
+import { fromDisplay, resolveWeightUnit, toDisplay, unitLabel } from '../../utils/units';
 
 interface GoalSetupModalProps {
     isOpen: boolean;
@@ -11,19 +12,21 @@ interface GoalSetupModalProps {
 }
 
 export const GoalSetupModal: React.FC<GoalSetupModalProps> = ({ isOpen, onClose }) => {
-    const { lang, userProfile, setUserProfile, setMacroGoals } = useApp();
+    const { lang, userProfile, setUserProfile, setMacroGoals, config } = useApp();
+    const unit = resolveWeightUnit(config);
     const [step, setStep] = useState(1);
-    
+
     // Form State
     const [age, setAge] = useState<string>(String(userProfile?.age || ''));
     const [gender, setGender] = useState<'male' | 'female'>(userProfile?.gender === 'female' ? 'female' : 'male');
     const [height, setHeight] = useState<string>(String(userProfile?.height || ''));
-    const [weight, setWeight] = useState<string>(String(userProfile?.bodyWeight || ''));
+    const [weight, setWeight] = useState<string>(userProfile?.bodyWeight ? String(toDisplay(userProfile.bodyWeight, unit)) : '');
     const [activity, setActivity] = useState(userProfile?.activityLevel || 'moderate');
     const [goal, setGoal] = useState<'cut' | 'maintain' | 'bulk'>(userProfile?.nutritionGoal || 'maintain');
 
     const handleFinish = () => {
-        const tdee = calculateTDEE(Number(weight), Number(height), Number(age), gender, activity);
+        const weightKg = fromDisplay(Number(weight), unit);
+        const tdee = calculateTDEE(weightKg, Number(height), Number(age), gender, activity);
         
         let targetCalories = tdee;
         if (goal === 'cut') targetCalories -= 500;
@@ -36,7 +39,7 @@ export const GoalSetupModal: React.FC<GoalSetupModalProps> = ({ isOpen, onClose 
             age: Number(age),
             gender,
             height: Number(height),
-            bodyWeight: Number(weight),
+            bodyWeight: weightKg,
             activityLevel: activity as any,
             nutritionGoal: goal
         }));
@@ -142,7 +145,7 @@ export const GoalSetupModal: React.FC<GoalSetupModalProps> = ({ isOpen, onClose 
                             </div>
                             <div className="space-y-2">
                                 <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest px-1">
-                                    {lang === 'es' ? 'Peso (kg)' : 'Weight (kg)'}
+                                    {lang === 'es' ? `Peso (${unitLabel(unit).toLowerCase()})` : `Weight (${unitLabel(unit).toLowerCase()})`}
                                 </label>
                                 <input
                                     type="number"

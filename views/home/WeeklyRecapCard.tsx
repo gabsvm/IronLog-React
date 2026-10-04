@@ -1,11 +1,14 @@
 import React, { useMemo } from 'react';
 import { Icon } from '../../components/ui/Icon';
 import { getLogBodyWeight, getSetLoadVolume } from '../../utils/trainingMetrics';
+import { toDisplay, unitLabel } from '../../utils/units';
+import type { WeightUnit } from '../../types';
 
 interface Props {
     logs: any[];
     lang: string;
     t: any;
+    unit?: WeightUnit;
 }
 
 /**
@@ -13,7 +16,7 @@ interface Props {
  * recently trained muscles / PR count from the raw log feed.
  * Skips render if no recent activity.
  */
-export const WeeklyRecapCard: React.FC<Props> = React.memo(({ logs, lang, t }) => {
+export const WeeklyRecapCard: React.FC<Props> = React.memo(({ logs, lang, t, unit = 'kg' }) => {
     const stats = useMemo(() => {
         const now = Date.now();
         const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
@@ -73,8 +76,9 @@ export const WeeklyRecapCard: React.FC<Props> = React.memo(({ logs, lang, t }) =
 
     if (!stats) return null;
 
+    const shownVolume = toDisplay(stats.totalVolume, unit);
     const volStr =
-        stats.totalVolume >= 1000 ? `${(stats.totalVolume / 1000).toFixed(1)}k` : `${stats.totalVolume}`;
+        shownVolume >= 1000 ? `${(shownVolume / 1000).toFixed(1)}k` : `${shownVolume}`;
 
     return (
         <div className="glass-card rounded-3xl p-5 space-y-4 animate-in fade-in">
@@ -95,7 +99,7 @@ export const WeeklyRecapCard: React.FC<Props> = React.memo(({ logs, lang, t }) =
                 <div className="bg-zinc-950/40 border border-white/5 rounded-2xl p-3 text-center">
                     <div className="text-2xl font-black text-white tabular-nums">{volStr}</div>
                     <div className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider mt-0.5">
-                        {lang === 'es' ? 'Vol. kg' : 'Vol. kg'}
+                        {lang === 'es' ? `Vol. ${unitLabel(unit).toLowerCase()}` : `Vol. ${unitLabel(unit).toLowerCase()}`}
                     </div>
                 </div>
                 <div

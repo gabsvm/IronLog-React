@@ -8,7 +8,8 @@ import { Icon } from './Icon';
 import { getExactAlarmState, openExactAlarmSettings, shouldShowExactAlarmNotice, triggerHaptic } from '../../utils/audio';
 import { useStore } from '../../lib/store';
 import { getTranslated } from '../../utils';
-import type { SessionExercise } from '../../types';
+import { formatWeight, resolveWeightUnit, unitLabel } from '../../utils/units';
+import type { SessionExercise, WeightUnit } from '../../types';
 
 export const TIMER_RING_RADIUS = 52;
 export const TIMER_RING_CIRCUMFERENCE = 2 * Math.PI * TIMER_RING_RADIUS; // ~326.7256...
@@ -49,9 +50,19 @@ export function applyEffortRatingToExercises(
 export function resolveRestNextAction(
     exercises: SessionExercise[] | undefined,
     source?: { exerciseInstanceId: number; setId: number },
-    lang: 'es' | 'en' = 'es'
+    lang: 'es' | 'en' = 'es',
+    unit: WeightUnit = 'kg'
 ): RestNextAction | null {
     if (!exercises || exercises.length === 0) return null;
+
+    // Stored weights are kg; the target shows the chosen display unit.
+    const formatTarget = (set?: { weight?: string | number; reps?: string | number }): string | null => {
+        if (set?.weight && set?.reps) {
+            return `${formatWeight(Number(set.weight), unit, lang)} ${unitLabel(unit).toLowerCase()} × ${set.reps}`;
+        }
+        if (set?.reps) return `${set.reps} reps`;
+        return null;
+    };
 
     // If rest was triggered by an exact source set
     if (source) {
@@ -65,11 +76,7 @@ export function resolveRestNextAction(
                 const nextPartner = supersetPartners.find(p => (p.sets || []).some(s => !s.completed));
                 if (nextPartner) {
                     const nextSet = (nextPartner.sets || []).find(s => !s.completed);
-                    const target = nextSet?.weight && nextSet?.reps
-                        ? `${nextSet.weight} kg × ${nextSet.reps}`
-                        : nextSet?.reps
-                        ? `${nextSet.reps} reps`
-                        : null;
+                    const target = formatTarget(nextSet);
                     return {
                         category: lang === 'es' ? 'Siguiente en superserie' : 'Next in superset',
                         name: getTranslated(nextPartner.name, lang),
@@ -81,11 +88,7 @@ export function resolveRestNextAction(
                 // Regular exercise: prefer the next incomplete set in the same exercise
                 const nextSetInSameEx = (sourceEx.sets || []).find(s => !s.completed);
                 if (nextSetInSameEx) {
-                    const target = nextSetInSameEx.weight && nextSetInSameEx.reps
-                        ? `${nextSetInSameEx.weight} kg × ${nextSetInSameEx.reps}`
-                        : nextSetInSameEx.reps
-                        ? `${nextSetInSameEx.reps} reps`
-                        : null;
+                    const target = formatTarget(nextSetInSameEx);
                     return {
                         category: lang === 'es' ? 'Siguiente serie' : 'Next set',
                         name: getTranslated(sourceEx.name, lang),
@@ -103,11 +106,7 @@ export function resolveRestNextAction(
                 const nextSet = (candidate.sets || []).find(s => !s.completed);
                 if (nextSet) {
                     const isSuperset = !!candidate.supersetId;
-                    const target = nextSet.weight && nextSet.reps
-                        ? `${nextSet.weight} kg × ${nextSet.reps}`
-                        : nextSet.reps
-                        ? `${nextSet.reps} reps`
-                        : null;
+                    const target = formatTarget(nextSet);
                     return {
                         category: isSuperset
                             ? (lang === 'es' ? 'Siguiente en superserie' : 'Next in superset')
@@ -126,11 +125,7 @@ export function resolveRestNextAction(
         const nextSet = (ex.sets || []).find(s => !s.completed);
         if (nextSet) {
             const isSuperset = !!ex.supersetId;
-            const target = nextSet.weight && nextSet.reps
-                ? `${nextSet.weight} kg × ${nextSet.reps}`
-                : nextSet.reps
-                ? `${nextSet.reps} reps`
-                : null;
+            const target = formatTarget(nextSet);
             return {
                 category: isSuperset
                     ? (lang === 'es' ? 'Siguiente en superserie' : 'Next in superset')
@@ -358,8 +353,8 @@ export const RestTimerOverlay: React.FC = () => {
 
     // Truthful next exercise / superset context resolution
     const nextExerciseInfo = useMemo(() => {
-        return resolveRestNextAction(activeSession?.exercises, restTimer?.source, lang);
-    }, [activeSession?.exercises, lang, restTimer?.source]);
+        return resolveRestNextAction(activeSession?.exercises, restTimer?.source, lang, resolveWeightUnit(config));
+    }, [activeSession?.exercises, lang, restTimer?.source, config]);
 
     const dismissNotifPrompt = () => setShowNotifPrompt(false);
     const dismissAlarmNotice = () => setShowAlarmNotice(false);

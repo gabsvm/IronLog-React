@@ -10,6 +10,7 @@ import { Button } from '../components/ui/Button';
 import { Sheet } from '../components/ui/Sheet';
 import { triggerHaptic } from '../utils/audio';
 import { TRANSLATIONS } from '../constants';
+import { resolveWeightUnit } from '../utils/units';
 
 
 // Extracted in Phase 6.3 to views/nutri/ for clarity
@@ -29,8 +30,9 @@ export const NutriView: React.FC = () => {
     lang, nutritionLogs, setNutritionLogs,
     cardioSessions, setCardioSessions,
     nutritionGoal, setNutritionGoal,
-    userProfile, bodyLogs, setBodyLogs
+    userProfile, bodyLogs, setBodyLogs, config
   } = useApp();
+  const unit = resolveWeightUnit(config);
 
   const nutritionLogsRef = useRef(nutritionLogs);
   nutritionLogsRef.current = nutritionLogs;
@@ -271,6 +273,7 @@ export const NutriView: React.FC = () => {
             bodyWeight={userProfile?.bodyWeight}
             bodyFat={userProfile?.bodyFat}
             onLogWeight={() => setShowLogWeight(true)}
+            unit={unit}
           />
         )}
 

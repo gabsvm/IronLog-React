@@ -4,6 +4,7 @@ import { Icon } from '../components/ui/Icon';
 import { Button } from '../components/ui/Button';
 import { useApp } from '../context/AppContext';
 import { getLogBodyWeight, getSetLoadVolume } from '../utils/trainingMetrics';
+import { resolveWeightUnit, toDisplay, unitLabel } from '../utils/units';
 
 interface SessionSummaryViewProps {
     log: Log;
@@ -11,7 +12,8 @@ interface SessionSummaryViewProps {
 }
 
 export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onClose }) => {
-    const { lang, userProfile } = useApp();
+    const { lang, userProfile, config } = useApp();
+    const unit = resolveWeightUnit(config);
 
     const isDetached = log.mesoId < 0 || log.dayIdx < 0 || log.week < 0;
     const discipline = (log as any).discipline;
@@ -118,7 +120,7 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
 
                     <div className="col-span-2 glass-card rounded-2xl p-4 flex flex-col items-center justify-center border border-zinc-200 dark:border-zinc-800 bg-[rgb(var(--surface-raised))] shadow-sm">
                         <Icon name="Dumbbell" size={18} className="text-amber-500 dark:text-amber-400 mb-1.5" />
-                        <div className="text-xl font-black">{stats.volume.toLocaleString()} kg</div>
+                        <div className="text-xl font-black">{toDisplay(stats.volume, unit).toLocaleString()} {unitLabel(unit).toLowerCase()}</div>
                         <div className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
                             {lang === 'en' ? 'Total Volume' : 'Volumen Total'}
                         </div>

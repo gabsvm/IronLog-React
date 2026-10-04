@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Sheet } from '../ui/Sheet';
 import { Button } from '../ui/Button';
-import { UserProfile } from '../../types';
+import { UserProfile, WeightUnit } from '../../types';
+import { fromDisplay, toDisplay, unitLabel } from '../../utils/units';
 
 interface BodyMetricsModalProps {
     open: boolean;
@@ -9,6 +10,7 @@ interface BodyMetricsModalProps {
     userProfile: UserProfile | null;
     onSave: (updated: Partial<UserProfile>) => void;
     lang: 'es' | 'en';
+    unit?: WeightUnit;
 }
 
 export const BodyMetricsModal: React.FC<BodyMetricsModalProps> = ({
@@ -17,6 +19,7 @@ export const BodyMetricsModal: React.FC<BodyMetricsModalProps> = ({
     userProfile,
     onSave,
     lang,
+    unit = 'kg',
 }) => {
     const [bodyWeight, setBodyWeight] = useState<string>('');
     const [height, setHeight] = useState<string>('');
@@ -24,14 +27,14 @@ export const BodyMetricsModal: React.FC<BodyMetricsModalProps> = ({
 
     useEffect(() => {
         if (open) {
-            setBodyWeight(userProfile?.bodyWeight ? String(userProfile.bodyWeight) : '');
+            setBodyWeight(userProfile?.bodyWeight ? String(toDisplay(userProfile.bodyWeight, unit)) : '');
             setHeight(userProfile?.height ? String(userProfile.height) : '');
             setBodyFat(userProfile?.bodyFat ? String(userProfile.bodyFat) : '');
         }
-    }, [open, userProfile]);
+    }, [open, userProfile, unit]);
 
     const handleSave = () => {
-        const parsedWeight = parseFloat(bodyWeight);
+        const parsedWeight = fromDisplay(parseFloat(bodyWeight), unit);
         const parsedHeight = parseFloat(height);
         const parsedFat = parseFloat(bodyFat);
 
@@ -70,7 +73,7 @@ export const BodyMetricsModal: React.FC<BodyMetricsModalProps> = ({
                 <div className="space-y-3">
                     <div>
                         <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1">
-                            {lang === 'es' ? 'Peso corporal (kg)' : 'Body weight (kg)'}
+                            {lang === 'es' ? `Peso corporal (${unitLabel(unit).toLowerCase()})` : `Body weight (${unitLabel(unit).toLowerCase()})`}
                         </label>
                         <input
                             type="number"

@@ -18,7 +18,8 @@ Estado persistente: se actualiza y pushea al cerrar CADA tarea.
 | Q7 | `6d7fc49` | hecho |
 | Q8 | `0ca31a1` | hecho |
 | Q9 | `6833d94` | hecho |
-| Q10 | (este commit) | hecho |
+| Q10 | `40fc801` | hecho |
+| Q11 | (este commit) | hecho |
 
 ## Q0 — Preparación
 
@@ -244,3 +245,38 @@ Estado persistente: se actualiza y pushea al cerrar CADA tarea.
   build; lint limpio. Fail-proof: con manifiesto viejo en stash, el test de fuente falla (el de aapt
   valida el artefacto ya compilado, como corresponde).
 - No verificado: comportamiento de restauración en dispositivo real (solo manifiesto + lint).
+
+## Q11 — Unidades kg/lb de punta a punta
+
+- Principio: lo guardado SIEMPRE es kg canónico; la unidad solo cambia presentación y entrada.
+  Cambiar de unidad no reescribe ningún dato (verificado por e2e contra IndexedDB).
+- Nuevo `utils/units.ts` (puro): `KG_PER_LB` exacto, `toDisplay` (0.1), `fromDisplay` (4
+  decimales, identidad total en kg para no alterar commits), `formatWeight` (coma en es, punto
+  en en, sin agrupar — misma convención que `formatSets` de M2), `PROGRESSION_STEP` 2.5/5,
+  `roundToPlates` (totales 2.5 kg / 5 lb), `platesFor`, `unitLabel` (KG/LBS), `resolveWeightUnit`.
+- `plateMath`: juego lb 45/35/25/10/5/2.5 + barra 45 por defecto en lb; firma kg idéntica.
+- Preferencia `weightUnit` en config: átomo `il_cfg_weight_unit` ('kg'), `setConfig`, dirty
+  tracking, subida (2 payloads) y bajada (2 ramas, solo acepta kg/lb). Reglas: sin cambios
+  (config se valida como `map`).
+- Selector en ProfileSheet → Entrenamiento (segmentado KG/LBS, `you.weightUnit` es/en).
+- Conectados: SetRow (inputs/previos/hints/placeholders + guardia de cambio de unidad con
+  flush bajo la unidad vieja y skip del blur posterior), tarjetas (header, historicalBest,
+  overload `+2,5 kg / +5 lb`), rest `resolveRestNextAction` (4.º parámetro), ProgressChart
+  (etiqueta + dataset + tooltips), PRs/e1RM, rationale y volumen de Stats, resumen de sesión,
+  History (cards + detalle), WeeklyRecapCard (prop; hoy no se renderiza en ningún lado —
+  import muerto en HomeViewImpl, queda para Q16), BodyTab, LogWeightModal, GoalSetupModal
+  (TDEE siempre en kg), BodyMetricsModal (prop `unit`), WarmupModal (prop `unit`, no contexto).
+- Notas: decimales en es ahora usan coma vía `formatWeight` (precedente M2); enteros y rutas
+  golden byte-idénticos. CSV de History queda en kg canónico con su header `Weight(kg)`:
+  Q12 es dueño de las unidades en CSV. Archivos CRLF normalizados a LF al editar (diff limpio).
+- Tests: `units` (10, incl. 135 lb ↔ kg y 100 idas y vueltas sin deriva), `plateMath` (3),
+  `setRowUnits` (4: golden kg, lb commit 63.5029, guardia de cambio, vacío), `statsUnits` (3:
+  PRs 220.5/257 lbs, chart `Est. 1RM (lbs)|257.2,264.6`, golden kg), `restNextActionUnits` (2).
+  E2E `weightUnits.spec.ts`: selector → LBS → tarjeta/input en lb → tipeo 135 → IndexedDB
+  guarda 61.235 → vuelta a KG muestra 61.235.
+- Fail-proof: con sources en stash, fallan plateMath(2)/setRow(2)/restAction(1)/stats(2) lb;
+  `units.test.ts` falló antes de existir el módulo (TDD). Goldens kg pasan en ambos árboles.
+- Evidencia: build OK (entry 324.37 kB / gzip 102.81), `test:run` 462/462 (93 ficheros),
+  `lint:a11y` limpio, Playwright 41/41 en puerto aislado 5199 (5173 lo ocupa otro proyecto).
+- WarmupModal recibe `unit` por prop desde WorkoutViewImpl (evita romper `warmupEligibility`).
+- No verificado: uso real con discos lb en gimnasio; validación visual del selector en el APK.

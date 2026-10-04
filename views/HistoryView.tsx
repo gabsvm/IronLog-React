@@ -8,8 +8,9 @@ import { Button } from '../components/ui/Button';
 import { TutorialOverlay } from '../components/ui/TutorialOverlay';
 import { usePro } from '../hooks/usePro';
 import { useStore } from '../lib/store';
-import { Log } from '../types';
+import { Log, WeightUnit } from '../types';
 import { HistoryDetailView } from './history/HistoryDetailView';
+import { resolveWeightUnit, toDisplay, unitLabel } from '../utils/units';
 
 const PaywallModal = React.lazy(() => import('../components/pro/PaywallModal').then(m => ({ default: m.PaywallModal })));
 const ConfirmModal = React.lazy(() => import('../components/ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
@@ -72,9 +73,10 @@ interface HistoryCardProps {
     lang: 'en' | 'es';
     id?: string;
     onOpen: () => void;
+    unit?: WeightUnit;
 }
 
-const HistoryCard = memo(({ log, lang, id, onOpen }: HistoryCardProps) => {
+const HistoryCard = memo(({ log, lang, id, onOpen, unit = 'kg' }: HistoryCardProps) => {
     const previews = useMemo(() => (log.exercises || []).map(ex => {
         const completed = (ex.sets || []).filter(set => set.completed && set.type !== 'avt_hop' && !set.skipped);
         if (!completed.length) return null;
@@ -83,8 +85,8 @@ const HistoryCard = memo(({ log, lang, id, onOpen }: HistoryCardProps) => {
             return { name: getTranslated(ex.name, lang), value: distance > 0 ? `${distance.toFixed(1)} km` : `${completed.length} sets` };
         }
         const best = completed.reduce((current, set) => Number(set.weight || 0) > Number(current.weight || 0) ? set : current, completed[0]);
-        return { name: getTranslated(ex.name, lang), value: `${best.weight || 0} kg × ${best.reps || 0}` };
-    }).filter(Boolean), [log.exercises, lang]);
+        return { name: getTranslated(ex.name, lang), value: `${toDisplay(Number(best.weight || 0), unit)} ${unitLabel(unit).toLowerCase()} × ${best.reps || 0}` };
+    }).filter(Boolean), [log.exercises, lang, unit]);
 
     return (
         <button
@@ -125,7 +127,8 @@ const HistoryCard = memo(({ log, lang, id, onOpen }: HistoryCardProps) => {
 });
 
 export const HistoryView: React.FC = () => {
-    const { logs, setLogs, lang, tutorialProgress, markTutorialSeen } = useApp();
+    const { logs, setLogs, lang, tutorialProgress, markTutorialSeen, config } = useApp();
+    const unit = resolveWeightUnit(config);
     const activeSession = useStore(state => state.activeSession);
     const setActiveSession = useStore(state => state.setActiveSession);
     const t = TRANSLATIONS[lang];
@@ -249,8 +252,8 @@ export const HistoryView: React.FC = () => {
 
     const context = useMemo<HistoryVirtuosoContext>(() => ({ lang, search, setSearch, hasLockedLogs, checkPro }), [lang, search, hasLockedLogs, checkPro]);
     const renderItem = useCallback((index: number, log: Log) => (
-        <HistoryCard id={index === 0 ? 'tut-first-card' : undefined} log={log} lang={lang} onOpen={() => openDetail(log)} />
-    ), [lang, openDetail]);
+        <HistoryCard id={index === 0 ? 'tut-first-card' : undefined} log={log} lang={lang} onOpen={() => openDetail(log)} unit={unit} />
+    ), [lang, openDetail, unit]);
 
     if (!safeLogs.length) {
         return (
@@ -281,6 +284,7 @@ export const HistoryView: React.FC = () => {
                 <HistoryDetailView
                     log={selectedLog}
                     lang={lang}
+                    unit={unit}
                     onBack={closeDetail}
                     onRepeat={() => repeatWorkout(selectedLog)}
                     onDelete={() => setDeletingLogId(selectedLog.id)}

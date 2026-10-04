@@ -29,6 +29,8 @@ import {
 import { Doughnut } from 'react-chartjs-2';
 import { getEffectiveSetLoad, getLogBodyWeight, getSetLoadVolume } from '../utils/trainingMetrics';
 import { buildDoughnutData, buildIntensityPalette } from '../utils/chartColors';
+import { formatWeight, resolveWeightUnit, toDisplay, unitLabel } from '../utils/units';
+import type { WeightUnit } from '../types';
 
 ChartJS.register(
     RadialLinearScale,
@@ -194,6 +196,8 @@ export interface PersonalRecordRowProps {
     weight: number;
     reps: number;
     e1rm: number;
+    /** Display unit (stored values are kg). */
+    unit?: WeightUnit;
 }
 
 export const PersonalRecordRow: React.FC<PersonalRecordRowProps> = ({
@@ -203,6 +207,7 @@ export const PersonalRecordRow: React.FC<PersonalRecordRowProps> = ({
     weight,
     reps,
     e1rm,
+    unit = 'kg',
 }) => (
     <div className="flex items-center gap-3 border-b border-zinc-800/60 py-2 last:border-0">
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-yellow-500/10 text-yellow-500">
@@ -216,19 +221,21 @@ export const PersonalRecordRow: React.FC<PersonalRecordRowProps> = ({
         </div>
         <div className="shrink-0 text-right">
             <p className="text-sm font-black text-white">
-                {weight}<span className="ml-0.5 text-[11px] text-zinc-500">kg</span>
+                {toDisplay(weight, unit)}<span className="ml-0.5 text-[11px] text-zinc-500">{unitLabel(unit).toLowerCase()}</span>
             </p>
             <p className="text-[11px] text-zinc-500">
-                x{reps} · <span className="font-bold text-yellow-500">{Math.round(e1rm)}kg</span>
+                x{reps} · <span className="font-bold text-yellow-500">{Math.round(toDisplay(e1rm, unit))}{unitLabel(unit).toLowerCase()}</span>
             </p>
         </div>
     </div>
 );
 
 export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader = false, scope: statsScope }) => {
-    const { logs, lang, exercises, tutorialProgress, markTutorialSeen, userProfile } = useApp();
+    const { logs, lang, exercises, tutorialProgress, markTutorialSeen, userProfile, config } = useApp();
     const activeMeso = useStore(state => state.activeMeso);
     const t = TRANSLATIONS[lang];
+    const unit = resolveWeightUnit(config);
+    const weightSuffix = unitLabel(unit).toLowerCase();
 
     const [selectedExId, setSelectedExId] = useState<string | null>(null);
     const [chartMetric, setChartMetric] = useState<ChartMetric>('1rm');
@@ -549,8 +556,8 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                     ? `Mejor hold: ${bestHoldSeconds}s`
                     : `Best hold: ${bestHoldSeconds}s`)
                 : (lang === 'es'
-                    ? `Mejor set: ${bestReps} reps${bestAddedLoad > 0 ? ` + ${bestAddedLoad}kg` : ''}`
-                    : `Best set: ${bestReps} reps${bestAddedLoad > 0 ? ` + ${bestAddedLoad}kg` : ''}`);
+                    ? `Mejor set: ${bestReps} reps${bestAddedLoad > 0 ? ` + ${formatWeight(bestAddedLoad, unit, lang)}${weightSuffix}` : ''}`
+                    : `Best set: ${bestReps} reps${bestAddedLoad > 0 ? ` + ${formatWeight(bestAddedLoad, unit, lang)}${weightSuffix}` : ''}`);
         } else if (!currentEx.isIsometric && currentEx.muscle !== 'CARDIO' && userProfile?.bodyWeight) {
             const relativeStrength = bestEstimated1RM / userProfile.bodyWeight;
             level = getWeightedLevel(profile, relativeStrength);
@@ -560,8 +567,8 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
         } else if (!currentEx.isIsometric && currentEx.muscle !== 'CARDIO' && bestEstimated1RM > 0) {
             level = bestEstimated1RM >= 100 ? 'advanced' : bestEstimated1RM >= 50 ? 'intermediate' : 'beginner';
             rationale = lang === 'es'
-                ? `Est. 1RM: ${Math.round(bestEstimated1RM)}kg (sin peso corporal cargado)`
-                : `Est. 1RM: ${Math.round(bestEstimated1RM)}kg (no bodyweight profile set)`;
+                ? `Est. 1RM: ${Math.round(toDisplay(bestEstimated1RM, unit))}${weightSuffix} (sin peso corporal cargado)`
+                : `Est. 1RM: ${Math.round(toDisplay(bestEstimated1RM, unit))}${weightSuffix} (no bodyweight profile set)`;
         }
 
         const volumeBasis = currentEx.muscle === 'CARDIO'
@@ -574,8 +581,8 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                     : 'Isometrics use hold seconds as the main progress signal.')
                 : currentEx.isBodyweight
                     ? (lang === 'es'
-                        ? `El volumen de carga suma tu peso corporal${userProfile?.bodyWeight ? ` (${userProfile.bodyWeight}kg)` : ''} y cualquier lastre.`
-                        : `Load volume adds your bodyweight${userProfile?.bodyWeight ? ` (${userProfile.bodyWeight}kg)` : ''} plus any added load.`)
+                        ? `El volumen de carga suma tu peso corporal${userProfile?.bodyWeight ? ` (${formatWeight(userProfile.bodyWeight, unit, lang)}${weightSuffix})` : ''} y cualquier lastre.`
+                        : `Load volume adds your bodyweight${userProfile?.bodyWeight ? ` (${formatWeight(userProfile.bodyWeight, unit, lang)}${weightSuffix})` : ''} plus any added load.`)
                     : (lang === 'es'
                         ? 'Máquinas, poleas y pesos libres usan el peso que registras como carga externa.'
                         : 'Machines, cables, and free weights use the logged load as external resistance.');
@@ -588,7 +595,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
             muscleWeeklySets,
             volumeStatus,
         };
-    }, [currentEx, lang, rawMuscleCounts, safeLogs, userProfile?.bodyWeight, scopeMesoId]);
+    }, [currentEx, lang, rawMuscleCounts, safeLogs, userProfile?.bodyWeight, scopeMesoId, unit, weightSuffix]);
 
     const statsTutorialSteps = [
         { targetId: 'tut-progress-chart', title: t.tutorial.stats[0].title, text: t.tutorial.stats[0].text, position: 'bottom' as const },
@@ -686,6 +693,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                         dataPoints={chartPoints}
                         metric={chartMetric as any}
                         loading={loadingChart}
+                        unit={unit}
                     />
                 ) : (
                     <div className="flex h-60 flex-col items-center justify-center rounded-[1.4rem] border border-dashed border-white/8 bg-white/[0.02] px-6 text-center">
@@ -720,7 +728,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                                     {lang === 'es' ? 'Carga total acumulada' : 'Accumulated load volume'}
                                 </div>
                                 <div className="mt-1 text-2xl font-black tracking-[-0.04em] text-white">
-                                    {Math.round(selectedExerciseInsight.totalVolume).toLocaleString()} kg
+                                    {Math.round(toDisplay(selectedExerciseInsight.totalVolume, unit)).toLocaleString()} {weightSuffix}
                                 </div>
                             </div>
                         )}
@@ -782,6 +790,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                                     weight={pr.weight}
                                     reps={pr.reps}
                                     e1rm={pr.e1rm}
+                                    unit={unit}
                                 />
                             );
                         })}

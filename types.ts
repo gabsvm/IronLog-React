@@ -271,6 +271,8 @@ export interface AppState {
     rpTargetRIR: number;
     keepScreenOn: boolean;
     restTimerDisplay?: 'compact' | 'expanded';
+    /** Q11: display/entry unit. Stored data is always kg. Absent = 'kg'. */
+    weightUnit?: WeightUnit;
   };
   rpFeedback: Record<string, Record<string, Record<string, FeedbackEntry>>>;
   hasSeenOnboarding: boolean;

@@ -1,9 +1,10 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { WorkoutSet, SetType } from '../../types';
+import { WorkoutSet, SetType, WeightUnit } from '../../types';
 import { Icon } from '../ui/Icon';
 import { playTimerFinishSound, triggerHaptic } from '../../utils/audio';
 import { TRANSLATIONS } from '../../constants/translations';
+import { fromDisplay, toDisplay } from '../../utils/units';
 
 interface SetRowProps {
     set: WorkoutSet;
@@ -23,6 +24,7 @@ interface SetRowProps {
     isActiveProtocolSet?: boolean;
     isNextSet?: boolean;
     showRIR?: boolean;
+    unit?: WeightUnit;
 }
 
 const getTypeColor = (type: SetType) => {
@@ -226,7 +228,8 @@ export const SetRow = React.memo(({
     set, exInstanceId,
     onUpdate, onToggleComplete, onChangeType,
     lang, isCardio, isBodyweight, isIsometric, isometricTargetSecs,
-    setIndex, badgeLabel, tutorialId, disableTypeChange, isActiveProtocolSet, isNextSet, showRIR = false
+    setIndex, badgeLabel, tutorialId, disableTypeChange, isActiveProtocolSet, isNextSet, showRIR = false,
+    unit = 'kg'
 }: SetRowProps) => {
     const t = TRANSLATIONS[lang];
     const isDone = set.completed;
@@ -246,7 +249,22 @@ export const SetRow = React.memo(({
                 ? 'bg-amber-400/12 ring-1 ring-inset ring-amber-300/20'
                 : getRowAccent(setType);
 
-    const [localWeight, setLocalWeight] = useState(set.weight ?? '');
+    // Q11: stored values are always kg; localWeight holds the DISPLAY value.
+    const shownWeight = useCallback((v: string | number | undefined, forUnit: WeightUnit = unit): string | number => {
+        if (v === '' || v == null) return '';
+        if (forUnit !== 'lb') return v;
+        const n = Number(v);
+        return Number.isFinite(n) ? toDisplay(n, 'lb') : v;
+    }, [unit]);
+    const storedWeight = useCallback((v: any, forUnit: WeightUnit = unit): any => {
+        if (v === '' || v == null) return v;
+        if (forUnit !== 'lb') return v;
+        const n = Number(v);
+        return Number.isFinite(n) ? fromDisplay(n, 'lb') : v;
+    }, [unit]);
+    const weightSuffix = unit === 'lb' ? 'lbs' : 'k';
+
+    const [localWeight, setLocalWeight] = useState<string | number>(() => shownWeight(set.weight));
     const [localReps, setLocalReps] = useState(set.reps ?? '');
     const [localRpe, setLocalRpe] = useState(set.rpe ?? '');
     const [showExtraWeight, setShowExtraWeight] = useState(
@@ -263,7 +281,7 @@ export const SetRow = React.memo(({
     const extraWeightRef = useRef<HTMLInputElement>(null);
     const commitTimersRef = useRef<Partial<Record<'weight' | 'reps' | 'rpe', ReturnType<typeof setTimeout>>>>({});
 
-    useEffect(() => { if (activeFieldRef.current !== 'weight') setLocalWeight(set.weight ?? ''); }, [set.weight]);
+    useEffect(() => { if (activeFieldRef.current !== 'weight') setLocalWeight(shownWeight(set.weight)); }, [set.weight, shownWeight]);
     useEffect(() => { if (activeFieldRef.current !== 'reps') setLocalReps(set.reps ?? ''); }, [set.reps]);
     useEffect(() => { if (activeFieldRef.current !== 'rpe') setLocalRpe(set.rpe ?? ''); }, [set.rpe]);
     // Reset swipe when set state changes
@@ -315,8 +333,9 @@ export const SetRow = React.memo(({
         });
         commitTimersRef.current = {};
 
-        if (localWeight != set.weight) {
-            onUpdate(exInstanceId, set.id, 'weight', localWeight);
+        const pendingStoredWeight = storedWeight(localWeight);
+        if (pendingStoredWeight != set.weight) {
+            onUpdate(exInstanceId, set.id, 'weight', pendingStoredWeight);
         }
         if (localReps != set.reps) {
             onUpdate(exInstanceId, set.id, 'reps', localReps);
@@ -324,13 +343,34 @@ export const SetRow = React.memo(({
         if (showRIR && localRpe != set.rpe) {
             onUpdate(exInstanceId, set.id, 'rpe', localRpe);
         }
-    }, [exInstanceId, localReps, localRpe, localWeight, onUpdate, set.id, set.reps, set.rpe, set.weight, showRIR]);
+    }, [exInstanceId, localReps, localRpe, localWeight, onUpdate, set.id, set.reps, set.rpe, set.weight, showRIR, storedWeight]);
 
     const handleToggleComplete = useCallback(() => {
         flushPendingFields();
         triggerHaptic(isDone ? 'light' : 'medium');
         onToggleComplete(exInstanceId, set.id);
     }, [flushPendingFields, isDone, onToggleComplete, exInstanceId, set.id]);
+
+    // Unit switched (possibly while editing): flush pending keystrokes under
+    // the OLD unit, then resync the display so a later blur can't commit
+    // stale text under the new unit.
+    const prevUnitRef = useRef(unit);
+    useEffect(() => {
+        if (prevUnitRef.current === unit) return;
+        const oldUnit = prevUnitRef.current;
+        prevUnitRef.current = unit;
+        const pending = commitTimersRef.current['weight'];
+        if (pending) {
+            clearTimeout(pending);
+            delete commitTimersRef.current['weight'];
+            const committed = storedWeight(localWeight, oldUnit);
+            commitChange('weight', committed);
+            setLocalWeight(shownWeight(committed, unit));
+            skipWeightBlurRef.current = true;
+        } else {
+            setLocalWeight(shownWeight(set.weight, unit));
+        }
+    }, [unit, commitChange, localWeight, set.weight, shownWeight, storedWeight]);
 
     const handleWeightKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter') {
@@ -339,9 +379,17 @@ export const SetRow = React.memo(({
         }
     };
 
+    // Set by the unit-switch guard after flushing: the next blur must not
+    // re-commit the resynced display value (display→stored is not bit-exact).
+    const skipWeightBlurRef = useRef(false);
     const handleWeightBlur = (value: any) => {
         activeFieldRef.current = null;
-        flushScheduledCommit('weight', value);
+        if (skipWeightBlurRef.current && !commitTimersRef.current['weight']) {
+            skipWeightBlurRef.current = false;
+            return;
+        }
+        skipWeightBlurRef.current = false;
+        flushScheduledCommit('weight', storedWeight(value));
     };
 
     const handleBlur = (field: string, value: any) => {
@@ -462,7 +510,7 @@ export const SetRow = React.memo(({
             : 'border border-zinc-700 bg-surface-elevated text-zinc-500 hover:border-zinc-500 hover:text-white'
     }`;
 
-    const weightPlaceholder = set.hintWeight ? String(set.hintWeight) : '0';
+    const weightPlaceholder = set.hintWeight ? String(shownWeight(set.hintWeight)) : '0';
     const repsPlaceholder = set.hintReps ? String(set.hintReps) : '0';
     const prescriptionHint = set.prescribedReps !== undefined
         ? (set.prescribedReps === 'FAILURE'
@@ -477,19 +525,19 @@ export const SetRow = React.memo(({
         }
         if (isBodyweight) {
             if (set.prevReps) {
-                return set.prevWeight && Number(set.prevWeight) > 0 ? `+${set.prevWeight}k` : `${set.prevReps}`;
+                return set.prevWeight && Number(set.prevWeight) > 0 ? `+${shownWeight(set.prevWeight)}${weightSuffix}` : `${set.prevReps}`;
             }
             return set.hintReps ? String(set.hintReps) : '—';
         }
         if (set.prevReps || set.prevWeight) {
-            if (set.prevReps && set.prevWeight) return `${set.prevWeight}k`;
-            return String(set.prevReps || set.prevWeight);
+            if (set.prevReps && set.prevWeight) return `${shownWeight(set.prevWeight)}${weightSuffix}`;
+            return set.prevWeight && !set.prevReps ? String(shownWeight(set.prevWeight)) : String(set.prevReps || set.prevWeight);
         }
         if (set.hintReps || set.hintWeight) {
-            return String(set.hintReps || set.hintWeight);
+            return set.hintWeight && !set.hintReps ? String(shownWeight(set.hintWeight)) : String(set.hintReps || set.hintWeight);
         }
         return '—';
-    }, [isBodyweight, isIsometric, set.duration, set.hintReps, set.hintWeight, set.prevReps, set.prevWeight]);
+    }, [isBodyweight, isIsometric, set.duration, set.hintReps, set.hintWeight, set.prevReps, set.prevWeight, shownWeight, weightSuffix]);
 
     const setNumber = (setIndex ?? 0) + 1;
     const badgeAriaLabel = (!disableTypeChange && !isDone)
@@ -593,7 +641,7 @@ export const SetRow = React.memo(({
                             value={localWeight}
                             onChange={e => {
                                 setLocalWeight(e.target.value);
-                                scheduleCommit('weight', e.target.value, 180);
+                                scheduleCommit('weight', storedWeight(e.target.value), 180);
                             }}
                             onKeyDown={handleWeightKeyDown}
                             onBlur={() => handleWeightBlur(localWeight)}
@@ -681,7 +729,7 @@ export const SetRow = React.memo(({
                         value={localWeight}
                         onChange={e => {
                             setLocalWeight(e.target.value);
-                            scheduleCommit('weight', e.target.value, 180);
+                            scheduleCommit('weight', storedWeight(e.target.value), 180);
                         }}
                         onKeyDown={handleWeightKeyDown}
                         onBlur={() => handleWeightBlur(localWeight)}

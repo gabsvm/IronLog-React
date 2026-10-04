@@ -20,6 +20,7 @@ import { AdminControlPanel } from '../settings/AdminControlPanel';
 import { AdminTemplateManager } from '../admin/AdminTemplateManager';
 import { triggerHaptic } from '../../utils/audio';
 import { requestTimerNotificationPermission } from '../../hooks/useTimer';
+import { formatWeight, resolveWeightUnit, unitLabel } from '../../utils/units';
 
 const PaywallModal = React.lazy(() => import('../pro/PaywallModal').then(m => ({ default: m.PaywallModal })));
 const ConfirmModal = React.lazy(() => import('../ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
@@ -334,7 +335,7 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
                             <div className="rounded-xl border border-zinc-200/60 dark:border-white/5 bg-white dark:bg-zinc-800 p-2.5 text-center">
                                 <div className="text-[9px] font-black uppercase tracking-wider text-zinc-500">{ty.weight}</div>
                                 <div className="mt-0.5 text-sm font-black text-zinc-900 dark:text-white tabular-nums">
-                                    {userProfile?.bodyWeight ? `${userProfile.bodyWeight} kg` : '—'}
+                                    {userProfile?.bodyWeight ? `${formatWeight(userProfile.bodyWeight, resolveWeightUnit(config), lang)} ${unitLabel(resolveWeightUnit(config)).toLowerCase()}` : '—'}
                                 </div>
                             </div>
                             <div className="rounded-xl border border-zinc-200/60 dark:border-white/5 bg-white dark:bg-zinc-800 p-2.5 text-center">
@@ -498,6 +499,26 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
                                 >
                                     {t.restTimerExpanded}
                                 </button>
+                            </div>
+                        </div>
+                        <div className="flex items-center justify-between gap-2 p-3">
+                            <span className="text-sm font-medium text-white">{ty.weightUnit}</span>
+                            <div className="flex gap-1 bg-zinc-200/50 dark:bg-zinc-800/80 p-0.5 rounded-xl border border-border-subtle shrink-0" role="group" aria-label={ty.weightUnit}>
+                                {(['kg', 'lb'] as const).map((option) => (
+                                    <button
+                                        key={option}
+                                        type="button"
+                                        onClick={() => setConfig({ ...config, weightUnit: option })}
+                                        aria-pressed={resolveWeightUnit(config) === option}
+                                        className={`px-2.5 py-1 text-xs rounded-lg font-semibold transition-all ${
+                                            resolveWeightUnit(config) === option
+                                                ? 'bg-primary-500 text-black shadow-sm'
+                                                : 'text-muted hover:text-white'
+                                        }`}
+                                    >
+                                        {unitLabel(option)}
+                                    </button>
+                                ))}
                             </div>
                         </div>
                         {typeof window !== 'undefined' && 'Notification' in window && (
@@ -858,6 +879,7 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
                     }
                 }}
                 lang={lang}
+                unit={resolveWeightUnit(config)}
             />
 
             <DeleteAccountDialog

@@ -5,16 +5,21 @@ import { Button } from './Button';
 import { Icon } from './Icon';
 import { Sheet } from './Sheet';
 import { roundWeight } from '../../utils';
+import { toDisplay, unitLabel } from '../../utils/units';
+import type { WeightUnit } from '../../types';
 
 interface WarmupModalProps {
     targetWeight: number;
     exerciseName: string;
     onClose: () => void;
+    /** Display unit (stored values are kg). */
+    unit?: WeightUnit;
 }
 
-export const WarmupModal: React.FC<WarmupModalProps> = ({ targetWeight, exerciseName, onClose }) => {
+export const WarmupModal: React.FC<WarmupModalProps> = ({ targetWeight, exerciseName, onClose, unit = 'kg' }) => {
     const { lang } = useAppPreferences();
     const t = TRANSLATIONS[lang];
+    const weightSuffix = unitLabel(unit);
     const [checked, setChecked] = useState<number[]>([]);
 
     const toggleCheck = (idx: number) => {
@@ -71,13 +76,13 @@ export const WarmupModal: React.FC<WarmupModalProps> = ({ targetWeight, exercise
                     </div>
                     <div className="text-right">
                         <div className="text-[10px] text-zinc-400 font-bold uppercase">{t.workingWeight}</div>
-                        <div className="text-xl font-mono font-bold text-zinc-900 dark:text-white">{targetWeight}</div>
+                        <div className="text-xl font-mono font-bold text-zinc-900 dark:text-white">{toDisplay(targetWeight, unit)}</div>
                     </div>
                 </div>
 
                 <div className="space-y-3">
                     {steps.map((step, idx) => {
-                        const weight = roundWeight(targetWeight * step.pct);
+                        const weight = toDisplay(roundWeight(targetWeight * step.pct), unit);
                         const isChecked = checked.includes(idx);
 
                         return (
@@ -85,7 +90,7 @@ export const WarmupModal: React.FC<WarmupModalProps> = ({ targetWeight, exercise
                                 key={idx}
                                 onClick={() => toggleCheck(idx)}
                                 aria-pressed={isChecked}
-                                aria-label={`${step.label} — ${weight} kg, ${step.reps} reps`}
+                                aria-label={`${step.label} — ${weight} ${weightSuffix.toLowerCase()}, ${step.reps} reps`}
                                 className={`w-full flex items-center p-3 rounded-xl border transition-colors duration-base ease-natural cursor-pointer text-left
                                     ${isChecked
                                         ? 'bg-primary-500/10 border-primary-500/30'
@@ -100,7 +105,7 @@ export const WarmupModal: React.FC<WarmupModalProps> = ({ targetWeight, exercise
                                 <div className="flex-1">
                                     <div className="flex justify-between items-center mb-0.5">
                                         <span className={`text-sm font-bold ${isChecked ? 'text-primary-700 dark:text-primary-400' : 'text-zinc-700 dark:text-zinc-200'}`}>
-                                            {weight} <span className="text-[10px] text-zinc-400">KG</span>
+                                            {weight} <span className="text-[10px] text-zinc-400">{weightSuffix}</span>
                                         </span>
                                         <span className={`font-mono font-bold text-sm ${isChecked ? 'text-primary-700 dark:text-primary-400' : 'text-zinc-900 dark:text-white'}`}>
                                             {step.reps} <span className="text-[10px] text-zinc-400">REPS</span>

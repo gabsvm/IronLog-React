@@ -19,6 +19,7 @@ import {
     toggleExerciseCardExpansion,
     advanceActiveExerciseOnCompletion
 } from '../utils/workoutProgress';
+import { resolveWeightUnit } from '../utils/units';
 
 interface WorkoutViewProps {
     onFinish: () => void;
@@ -893,7 +894,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
             )}
             {warmupExId && activeSession && (
                 <Suspense fallback={null}>
-                    <WarmupModal targetWeight={Number(sessionExercises.find(e => e.instanceId === warmupExId)?.sets?.[0]?.weight || 0)} exerciseName={getTranslated(sessionExercises.find(e => e.instanceId === warmupExId)?.name, lang)} onClose={() => setWarmupExId(null)} />
+                    <WarmupModal targetWeight={Number(sessionExercises.find(e => e.instanceId === warmupExId)?.sets?.[0]?.weight || 0)} exerciseName={getTranslated(sessionExercises.find(e => e.instanceId === warmupExId)?.name, lang)} onClose={() => setWarmupExId(null)} unit={resolveWeightUnit(config)} />
                 </Suspense>
             )}
         </div>

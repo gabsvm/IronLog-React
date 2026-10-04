@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useEffect, useRef, ReactNode, useState, PropsWithChildren, useMemo, useCallback } from 'react';
-import { AppState, Lang, Theme, ColorTheme, EffectsMode, ResolvedEffects, ExerciseDef, ActiveSession, MesoCycle, Log, ProgramDay, TutorialState, GlobalTemplate, UserProfile, BeforeInstallPromptEvent, NutritionLog, CardioSession, NutritionGoal, MacroGoals, DailyNutrition, BodyLog, CustomFood, DirtySyncSection, SectionSyncMeta } from '../types';
+import { AppState, Lang, Theme, ColorTheme, EffectsMode, ResolvedEffects, ExerciseDef, ActiveSession, MesoCycle, Log, ProgramDay, TutorialState, GlobalTemplate, UserProfile, BeforeInstallPromptEvent, NutritionLog, CardioSession, NutritionGoal, MacroGoals, DailyNutrition, BodyLog, CustomFood, DirtySyncSection, SectionSyncMeta, WeightUnit } from '../types';
 import { resolveEffectsMode } from '../utils/effectsProfile';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { usePersistedState } from '../hooks/usePersistedState';
@@ -146,6 +146,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
 
     const [rpTargetRIR, setRpTargetRIR] = useLocalStorage('il_cfg_rp_rir', 2);
     const [keepScreenOn, setKeepScreenOn] = useLocalStorage('il_cfg_screen', false);
+    const [weightUnit, setWeightUnit] = useLocalStorage<WeightUnit>('il_cfg_weight_unit', 'kg');
     const [restTimerDisplay, setRestTimerDisplay] = useLocalStorage<'compact' | 'expanded'>('il_cfg_rest_display', 'compact');
     const [tutorialProgress, setTutorialProgress] = useLocalStorage<TutorialState>('il_tutorial_v2', INITIAL_TUTORIAL_STATE);
 
@@ -502,7 +503,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     trackDirtySection('activeMeso', [activeMeso, isAppLoading, hasCheckedSync]);
     trackDirtySection('exercises', [exercises, isAppLoading, hasCheckedSync]);
     trackDirtySection('logs', [logs, isAppLoading, hasCheckedSync]);
-    trackDirtySection('config', [showRIR, rpEnabled, rpTargetRIR, keepScreenOn, isAppLoading, hasCheckedSync]);
+    trackDirtySection('config', [showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, isAppLoading, hasCheckedSync]);
     trackDirtySection('rpFeedback', [rpFeedback, isAppLoading, hasCheckedSync]);
     trackDirtySection('userProfile', [userProfile, isAppLoading, hasCheckedSync]);
     trackDirtySection('nutritionLogs', [nutritionLogs, isAppLoading, hasCheckedSync]);
@@ -574,6 +575,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                                 if (cloudData.config.rpEnabled !== undefined) setRpEnabled(cloudData.config.rpEnabled);
                                 if (cloudData.config.rpTargetRIR !== undefined) setRpTargetRIR(cloudData.config.rpTargetRIR);
                                 if (cloudData.config.keepScreenOn !== undefined) setKeepScreenOn(cloudData.config.keepScreenOn);
+                                if (cloudData.config.weightUnit === 'kg' || cloudData.config.weightUnit === 'lb') setWeightUnit(cloudData.config.weightUnit);
                             }
 
                             if (cloudData.userProfile) setUserProfile(cloudData.userProfile);
@@ -614,7 +616,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         user, isOnline, isAppLoading, pendingCloudData, hasCheckedSync, activeSession, activeMeso, logs, nutritionLogs,
         cardioSessions, bodyLogs, customFoods, personalTemplates, exercises, userProfile,
         setProgram, setExercises, setLogs, setRpFeedback, setShowRIR, setRpEnabled, setLocalLastUpdated,
-        setHasSeenOnboarding, setBodyLogs, setCustomFoods, setPersonalTemplates, setKeepScreenOn, setMacroGoals, setNutritionLogs, setLocalSectionSyncMeta,
+        setHasSeenOnboarding, setBodyLogs, setCustomFoods, setPersonalTemplates, setKeepScreenOn, setWeightUnit, setMacroGoals, setNutritionLogs, setLocalSectionSyncMeta,
         setRpTargetRIR, setUserProfile, setCardioSessions, setNutritionGoal
     ]); // Re-run when dependencies change
 
@@ -633,7 +635,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                         setLocalLastUpdated(now);
                         await syncService.uploadState(user.uid, {
                             program, activeMeso, exercises, logs,
-                            config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn },
+                            config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit },
                             rpFeedback,
                             userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, personalTemplates,
                             email: user.email || null,
@@ -651,7 +653,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         window.addEventListener('online', handleOnline);
         window.addEventListener('offline', handleOffline);
         return () => { window.removeEventListener('online', handleOnline); window.removeEventListener('offline', handleOffline); };
-    }, [user, subscription.isPro, program, activeMeso, activeSession, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, rpFeedback, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, personalTemplates, setLocalLastUpdated]);
+    }, [user, subscription.isPro, program, activeMeso, activeSession, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, rpFeedback, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, personalTemplates, setLocalLastUpdated]);
 
     // ── Debounce A: session-only write (fast, lightweight) ─────────────────────
     // activeSession changes on every set completion or weight input during a workout.
@@ -686,7 +688,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                     void syncService.flushQueue();
                     syncService.uploadState(user.uid, {
                         program, activeMeso, exercises, logs,
-                        config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn },
+                        config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit },
                         rpFeedback,
                         userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, personalTemplates,
                         email: user.email || null,
@@ -698,7 +700,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
             }
         }, 10000);
         return () => clearTimeout(timer);
-    }, [user, subscription.isPro, program, activeMeso, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, rpFeedback, isAppLoading, hasCheckedSync, pendingCloudData, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, personalTemplates, setLocalLastUpdated]);
+    }, [user, subscription.isPro, program, activeMeso, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, rpFeedback, isAppLoading, hasCheckedSync, pendingCloudData, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, personalTemplates, setLocalLastUpdated]);
 
     const confirmCloudSync = useCallback(() => {
         if (!pendingCloudData) return;
@@ -718,6 +720,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                 if (pendingCloudData.config.rpEnabled !== undefined) setRpEnabled(pendingCloudData.config.rpEnabled);
                 if (pendingCloudData.config.rpTargetRIR !== undefined) setRpTargetRIR(pendingCloudData.config.rpTargetRIR);
                 if (pendingCloudData.config.keepScreenOn !== undefined) setKeepScreenOn(pendingCloudData.config.keepScreenOn);
+                if (pendingCloudData.config.weightUnit === 'kg' || pendingCloudData.config.weightUnit === 'lb') setWeightUnit(pendingCloudData.config.weightUnit);
             }
 
             if (pendingCloudSections.includes('userProfile') && pendingCloudData.userProfile) setUserProfile(pendingCloudData.userProfile);
@@ -745,7 +748,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
             setPendingCloudSections([]);
             console.log("Cloud sections applied.");
         });
-    }, [pendingCloudData, pendingCloudSections, setProgram, setExercises, setLogs, setRpFeedback, setShowRIR, setRpEnabled, setLocalLastUpdated, setHasSeenOnboarding, setBodyLogs, setCustomFoods, setPersonalTemplates, setKeepScreenOn, setMacroGoals, setNutritionLogs, setRpTargetRIR, setUserProfile, setLocalSectionSyncMeta, setCardioSessions, setNutritionGoal]);
+    }, [pendingCloudData, pendingCloudSections, setProgram, setExercises, setLogs, setRpFeedback, setShowRIR, setRpEnabled, setLocalLastUpdated, setHasSeenOnboarding, setBodyLogs, setCustomFoods, setPersonalTemplates, setKeepScreenOn, setWeightUnit, setMacroGoals, setNutritionLogs, setRpTargetRIR, setUserProfile, setLocalSectionSyncMeta, setCardioSessions, setNutritionGoal]);
 
     const cancelCloudSync = useCallback(() => {
         // "Keep Local": user explicitly decided to retain their local state for the conflicting sections.
@@ -806,7 +809,8 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         if (newConfig.rpTargetRIR !== undefined) setRpTargetRIR(newConfig.rpTargetRIR);
         if (newConfig.keepScreenOn !== undefined) setKeepScreenOn(newConfig.keepScreenOn);
         if (newConfig.restTimerDisplay !== undefined) setRestTimerDisplay(newConfig.restTimerDisplay);
-    }, [setShowRIR, setRpEnabled, setRpTargetRIR, setKeepScreenOn, setRestTimerDisplay]);
+        if (newConfig.weightUnit === 'kg' || newConfig.weightUnit === 'lb') setWeightUnit(newConfig.weightUnit);
+    }, [setShowRIR, setRpEnabled, setRpTargetRIR, setKeepScreenOn, setRestTimerDisplay, setWeightUnit]);
 
     const markTutorialSeen = useCallback((section: keyof TutorialState) => setTutorialProgress(prev => ({ ...prev, [section]: true })), [setTutorialProgress]);
     const resetTutorials = useCallback(() => setTutorialProgress(INITIAL_TUTORIAL_STATE), [setTutorialProgress]);
@@ -818,7 +822,8 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         rpTargetRIR,
         keepScreenOn,
         restTimerDisplay,
-    }), [showRIR, rpEnabled, rpTargetRIR, keepScreenOn, restTimerDisplay]);
+        weightUnit,
+    }), [showRIR, rpEnabled, rpTargetRIR, keepScreenOn, restTimerDisplay, weightUnit]);
     const preferencesValue = useMemo(() => ({
         lang, setLang, theme, setTheme, colorTheme, setColorTheme,
         effectsMode, setEffectsMode, resolvedEffects,

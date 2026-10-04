@@ -1,8 +1,9 @@
 import React from 'react';
-import { BodyLog, NutritionGoal } from '../../types';
+import { BodyLog, NutritionGoal, WeightUnit } from '../../types';
 import { Icon } from '../../components/ui/Icon';
 import { TRANSLATIONS } from '../../constants';
 import { WATER_GOAL_ML } from './nutritionHelpers';
+import { toDisplay, unitLabel } from '../../utils/units';
 
 interface Props {
     lang: 'en' | 'es';
@@ -15,6 +16,7 @@ interface Props {
     bodyWeight?: number;
     bodyFat?: number;
     onLogWeight: () => void;
+    unit?: WeightUnit;
 }
 
 /**
@@ -33,8 +35,10 @@ export const BodyTab: React.FC<Props> = ({
     bodyWeight,
     bodyFat,
     onLogWeight,
+    unit = 'kg',
 }) => {
     const l = (en: string, es: string) => (lang === 'en' ? en : es);
+    const weightSuffix = unitLabel(unit).toLowerCase();
 
     return (
         <div className="space-y-3 pt-1">
@@ -47,9 +51,9 @@ export const BodyTab: React.FC<Props> = ({
                         </p>
                         {latestWeight ? (
                             <>
-                                <div className="text-4xl font-black text-white leading-none">{latestWeight.weight}</div>
+                                <div className="text-4xl font-black text-white leading-none">{toDisplay(latestWeight.weight, unit)}</div>
                                 <p className="text-xs text-zinc-500 mt-1">
-                                    kg · {new Date(latestWeight.date).toLocaleDateString(lang === 'es' ? 'es-AR' : 'en-US', { month: 'short', day: 'numeric' })}
+                                    {weightSuffix} · {new Date(latestWeight.date).toLocaleDateString(lang === 'es' ? 'es-AR' : 'en-US', { month: 'short', day: 'numeric' })}
                                 </p>
                                 {latestWeight.bodyFat && (
                                     <p className="text-xs text-zinc-500">
@@ -211,7 +215,7 @@ export const BodyTab: React.FC<Props> = ({
                                     {new Date(entry.date).toLocaleDateString(lang === 'es' ? 'es-AR' : 'en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                                 </span>
                                 <div className="text-right">
-                                    <span className="text-sm font-bold text-white">{entry.weight} kg</span>
+                                    <span className="text-sm font-bold text-white">{toDisplay(entry.weight, unit)} {weightSuffix}</span>
                                     {entry.bodyFat && <span className="text-xs text-muted ml-2">{entry.bodyFat}% BF</span>}
                                 </div>
                             </div>

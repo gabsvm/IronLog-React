@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Sheet } from '../ui/Sheet';
 import { Button } from '../ui/Button';
+import { fromDisplay, resolveWeightUnit, toDisplay, unitLabel } from '../../utils/units';
 
 interface LogWeightModalProps {
     isOpen: boolean;
@@ -10,14 +11,15 @@ interface LogWeightModalProps {
 }
 
 export const LogWeightModal: React.FC<LogWeightModalProps> = ({ isOpen, onClose, onLog }) => {
-    const { lang, userProfile } = useApp();
-    const [weight, setWeight] = useState<string>(String(userProfile?.bodyWeight || ''));
+    const { lang, userProfile, config } = useApp();
+    const unit = resolveWeightUnit(config);
+    const [weight, setWeight] = useState<string>(userProfile?.bodyWeight ? String(toDisplay(userProfile.bodyWeight, unit)) : '');
     const [bodyFat, setBodyFat] = useState<string>(String(userProfile?.bodyFat || ''));
     const [notes, setNotes] = useState<string>('');
 
     const handleSubmit = () => {
         onLog({
-            weight: Number(weight) || 0,
+            weight: fromDisplay(Number(weight), unit) || 0,
             bodyFat: bodyFat ? Number(bodyFat) : undefined,
             notes: notes || undefined
         });
@@ -66,7 +68,7 @@ export const LogWeightModal: React.FC<LogWeightModalProps> = ({ isOpen, onClose,
                             className="w-full bg-zinc-800 border border-zinc-700/50 rounded-2xl px-6 pr-20 py-5 text-3xl font-black text-white focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all placeholder:text-zinc-600 glow-input-neon"
                             autoFocus
                         />
-                        <div className="absolute right-5 top-1/2 -translate-y-1/2 text-zinc-300 font-black uppercase tracking-tighter text-sm bg-zinc-700/50 px-2.5 py-1 rounded-lg">kg</div>
+                        <div className="absolute right-5 top-1/2 -translate-y-1/2 text-zinc-300 font-black uppercase tracking-tighter text-sm bg-zinc-700/50 px-2.5 py-1 rounded-lg">{unitLabel(unit).toLowerCase()}</div>
                     </div>
                 </div>
 

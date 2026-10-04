@@ -6,6 +6,8 @@ import { formatDate } from '../../utils';
 import { useAppPreferences } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
 import { primaryChartColor } from '../../utils/chartColors';
+import { toDisplay, unitLabel } from '../../utils/units';
+import type { WeightUnit } from '../../types';
 
 export interface ChartDataPoint {
     date: number;
@@ -18,16 +20,20 @@ interface ProgressChartProps {
     dataPoints: ChartDataPoint[];
     metric: '1rm' | 'volume' | 'duration' | 'distance';
     loading?: boolean;
+    /** Display unit for weight-based metrics (stored values are kg). */
+    unit?: WeightUnit;
 }
 
-export const ProgressChart: React.FC<ProgressChartProps> = ({ dataPoints, metric, loading }) => {
+export const ProgressChart: React.FC<ProgressChartProps> = ({ dataPoints, metric, loading, unit = 'kg' }) => {
     const { lang, theme } = useAppPreferences();
     const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    const weightSuffix = unitLabel(unit).toLowerCase();
+    const toShownValue = (v: number) => (metric === '1rm' || metric === 'volume') ? toDisplay(v, unit) : v;
 
     const getLabel = (m: string) => {
         switch(m) {
-            case '1rm': return 'Est. 1RM (kg)';
-            case 'volume': return 'Volume (kg)';
+            case '1rm': return `Est. 1RM (${weightSuffix})`;
+            case 'volume': return `Volume (${weightSuffix})`;
             case 'duration': return 'Duration (min)';
             case 'distance': return 'Distance (km)';
             default: return 'Value';
@@ -39,7 +45,7 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ dataPoints, metric
         datasets: [
             {
                 label: getLabel(metric),
-                data: dataPoints.map(d => d.value),
+                data: dataPoints.map(d => toShownValue(d.value)),
                 borderColor: primaryChartColor(),
                 backgroundColor: (context: ScriptableContext<"line">) => {
                     const ctx = context.chart.ctx;
@@ -79,13 +85,13 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ dataPoints, metric
                     label: (item) => {
                         const point = dataPoints[item.dataIndex];
                         if (metric === '1rm') {
-                             return `Est. 1RM: ${item.formattedValue}kg (${point.weight}x${point.reps})`;
+                             return `Est. 1RM: ${item.formattedValue}${weightSuffix} (${toShownValue(point.weight)}x${point.reps})`;
                         } else if (metric === 'duration') {
                             return `Time: ${item.formattedValue} min`;
                         } else if (metric === 'distance') {
                             return `Dist: ${item.formattedValue} km`;
                         }
-                        return `Volume: ${item.formattedValue}kg`;
+                        return `Volume: ${item.formattedValue}${weightSuffix}`;
                     }
                 }
             }

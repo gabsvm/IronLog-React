@@ -9,6 +9,7 @@ import { ExerciseCardMenu } from './ExerciseCardMenu';
 import { ExerciseCardSets } from './ExerciseCardSets';
 import { ExerciseProtocolBanners } from './ExerciseProtocolBanners';
 import { getTranslated, roundWeight } from '../../utils';
+import { formatWeight, PROGRESSION_STEP, resolveWeightUnit, toDisplay, unitLabel as unitLabelFor } from '../../utils/units';
 import { resolveMuscleLabel } from '../../utils/muscle';
 import { triggerHaptic, playTimerFinishSound } from '../../utils/audio';
 import { isWorkingSet } from '../../utils/workoutProgress';
@@ -103,8 +104,8 @@ export const SortableExerciseCard = React.memo(({
             { border: 'border-l-emerald-500', badge: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-300' },
         ][supersetColorIndex]
         : null;
-    const unit = 'kg' as const;
-    const unitLabel = 'KG';
+    const unit = resolveWeightUnit(config);
+    const unitLabel = unitLabelFor(unit);
 
     const isCardio = ex.muscle === 'CARDIO';
     const cardioMode: CardioType = ex.cardioType || ex.defaultCardioType || 'steady';
@@ -153,7 +154,7 @@ export const SortableExerciseCard = React.memo(({
                 });
             });
             if (bestReps === 0) return null;
-            return bestWeight > 0 ? `${bestReps} reps (+${bestWeight}kg)` : `${bestReps} reps`;
+            return bestWeight > 0 ? `${bestReps} reps (+${formatWeight(bestWeight, unit, lang)}${unitLabel.toLowerCase()})` : `${bestReps} reps`;
         }
 
         let best1RM = 0;
@@ -167,13 +168,13 @@ export const SortableExerciseCard = React.memo(({
                     const e1rm = Number(set.weight) * (1 + Number(set.reps) / 30);
                     if (e1rm > best1RM) {
                         best1RM = e1rm;
-                        bestStr = `${set.weight}${unitLabel.toLowerCase()} x ${set.reps} (1RM: ${Math.round(e1rm)})`;
+                        bestStr = `${formatWeight(Number(set.weight), unit, lang)}${unitLabel.toLowerCase()} x ${set.reps} (1RM: ${Math.round(toDisplay(e1rm, unit))})`;
                     }
                 }
             });
         });
         return best1RM > 0 ? bestStr : null;
-    }, [logs, ex.id, isCardio, ex.isIsometric, ex.isBodyweight, unitLabel]);
+    }, [logs, ex.id, isCardio, ex.isIsometric, ex.isBodyweight, unit, unitLabel, lang]);
 
     const regularSets = useMemo(() => ex.sets.filter((set) => set.type !== 'avt_hop'), [ex.sets]);
     const completedCount = regularSets.filter((set) => set.completed).length;
@@ -194,11 +195,11 @@ export const SortableExerciseCard = React.memo(({
             const avgWeight = working.reduce((sum: number, set: any) => sum + Number(set.weight || 0), 0) / working.length;
             if (avgWeight <= 0) return null;
             const target = ex.targetReps ? parseInt(String(ex.targetReps), 10) : null;
-            if (!target) return { kg: 2.5 };
-            return working.every((set: any) => Number(set.reps) >= target) ? { kg: 2.5 } : null;
+            if (!target) return { step: PROGRESSION_STEP[unit] };
+            return working.every((set: any) => Number(set.reps) >= target) ? { step: PROGRESSION_STEP[unit] } : null;
         }
         return null;
-    }, [logs, ex.id, ex.targetReps, isCardio, ex.isBodyweight, ex.isIsometric]);
+    }, [logs, ex.id, ex.targetReps, isCardio, ex.isBodyweight, ex.isIsometric, unit]);
 
 
 
@@ -341,7 +342,7 @@ export const SortableExerciseCard = React.memo(({
     const heroMetric = overloadSuggest
         ? {
             icon: 'TrendingUp',
-            label: lang === 'es' ? `+${overloadSuggest.kg} kg sugerido` : `+${overloadSuggest.kg} kg suggested`,
+            label: lang === 'es' ? `+${overloadSuggest.step} ${unitLabel.toLowerCase()} sugerido` : `+${overloadSuggest.step} ${unitLabel.toLowerCase()} suggested`,
             tone: 'text-cyan-300',
         }
         : historicalBest

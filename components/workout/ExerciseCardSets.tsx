@@ -95,7 +95,7 @@ export const ExerciseCardSets: React.FC<Props> = React.memo(({
                     {isEMOM ? 'Min' : isMyorep ? 'Set' : '#'}
                 </div>
                 <div>{lang === 'es' ? 'Ant.' : 'Prev'}</div>
-                <div className="text-violet-400/90">+KG</div>
+                <div className="text-violet-400/90">+{unitLabel}</div>
                 <div>{String(t.reps)}</div>
                 {config?.showRIR && <div>{String(t.rir)}</div>}
                 <div></div>
@@ -135,6 +135,7 @@ export const ExerciseCardSets: React.FC<Props> = React.memo(({
                     isActiveProtocolSet={isEMOM && activeEmomMinute === idx + 1}
                     isNextSet={nextSetIdx === idx}
                     showRIR={Boolean(config?.showRIR)}
+                    unit={unit}
                 />
             ))}
         </div>
