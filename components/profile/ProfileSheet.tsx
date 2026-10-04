@@ -58,7 +58,7 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
     } = useApp();
     const { localLastUpdated, localSectionSyncMeta } = useSyncMeta();
     const { isOnline, syncStatus } = useSyncStatus();
-    const { user, logout } = useAuth();
+    const { user, logout, isAdmin } = useAuth();
     const { isPro, tier, expiryDate, checkPro, showPaywall, setShowPaywall, featureAttempted } = usePro();
     const activeMeso = useStore(state => state.activeMeso);
     const t = TRANSLATIONS[lang];
@@ -73,7 +73,6 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
     const [notificationPerm, setNotificationPerm] = useState<string>(typeof Notification !== 'undefined' ? Notification.permission : 'default');
     const [installInstructions, setInstallInstructions] = useState<string | null>(null);
 
-    const isAdmin = user?.email === 'gabsvm@gmail.com';
 
     // External entry points can request a section (e.g. back from the
     // exercises library lands on training); scroll there once per opening.

@@ -14,7 +14,8 @@ Estado persistente: se actualiza y pushea al cerrar CADA tarea.
 | Q3 | `b84b403` | hecho |
 | Q4 | `5b3fe9b` | hecho |
 | Q5 | `ae7f307` | hecho |
-| Q6 | (este commit) | hecho |
+| Q6 | `a48cf99` | hecho |
+| Q7 | (este commit) | hecho |
 
 ## Q0 — Preparación
 
@@ -154,3 +155,22 @@ Estado persistente: se actualiza y pushea al cerrar CADA tarea.
   comportamientos con aserciones exactas.
 - No verificado: Web Share real en Android (solo mocks + descarga); persistencia efectiva en
   dispositivo.
+
+## Q7 — Admin por claim
+
+- `constants/admin.ts` (nuevo): `ADMIN_EMAIL` único + `isAdminIdentity({adminClaim, email,
+  emailVerified})` pura, idéntica a la regla `isAdmin()` de firestore.rules.
+- `AuthContext` expone `isAdmin`: resuelto en `onAuthStateChanged` vía
+  `user.getIdTokenResult()` (claim `admin` + email/verificación), `false` si falla o sin usuario;
+  `login` fuerza `getIdToken(true)`; `logout`/`deleteAccount`/invitado lo limpian.
+- `ProfileSheet` usa `isAdmin` del contexto; eliminada la comparación fija (era la única en el
+  cliente; `AdminControlPanel` solo recibe el email como dato de auditoría). Verificado por grep:
+  `gabsvm` solo vive en `constants/admin.ts` (+ reglas y tests).
+- Mocks de `useAuth` en unifiedSheet/deleteAccountSheet/lazySheets agregan `isAdmin` (unifiedSheet
+  lo maneja por estado; el caso admin lo activa explícitamente).
+- Tests `tests/unit/adminClaim.test.tsx` (6): regla pura (5 combos incl. claim verdadero con email
+  no verificado) + provider real con 4 identidades (claim / email verificado / email sin verificar
+  / común) + refresh forzado en login.
+- Evidencia: `test:run` 413/413, build OK, lint limpio. Fail-proof: sin el cambio en AuthContext
+  (stash), 5/6 fallan (solo pasa la regla pura).
+- No verificado: claim real fijado por el dueño en producción (manual pendiente).

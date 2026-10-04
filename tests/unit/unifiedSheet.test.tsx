@@ -6,6 +6,7 @@ const { sheetState } = vi.hoisted(() => ({
     sheetState: {
         user: null as null | { email: string; displayName: string },
         pro: false,
+        isAdmin: false,
     },
 }));
 
@@ -39,7 +40,7 @@ vi.mock('../../context/AppContext', () => ({
 }));
 
 vi.mock('../../context/AuthContext', () => ({
-    useAuth: () => ({ user: sheetState.user, logout: vi.fn(), deleteAccount: vi.fn() }),
+    useAuth: () => ({ user: sheetState.user, logout: vi.fn(), deleteAccount: vi.fn(), isAdmin: sheetState.isAdmin }),
 }));
 
 vi.mock('../../hooks/usePro', () => ({
@@ -98,6 +99,7 @@ describe('N6: unified sheet signed-in coverage (labels the guest e2e cannot see)
     it('shows the Pro plan label and admin items for the admin user', () => {
         sheetState.user = { email: 'gabsvm@gmail.com', displayName: 'Owner' };
         sheetState.pro = true;
+        sheetState.isAdmin = true;
         renderSheet();
 
         expect(screen.getAllByText(/Vitalicio/)).toHaveLength(1);
@@ -105,6 +107,7 @@ describe('N6: unified sheet signed-in coverage (labels the guest e2e cannot see)
         expect(screen.getAllByText('Gestionar plantillas')).toHaveLength(1);
         sheetState.user = null;
         sheetState.pro = false;
+        sheetState.isAdmin = false;
     });
 
     it('each former settings entry opens its target: program/exercises rows navigate, danger calls reset', () => {

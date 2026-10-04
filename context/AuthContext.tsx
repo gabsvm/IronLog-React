@@ -6,10 +6,12 @@ import { scheduleWhenIdle } from '../lib/idle';
 import { DEFAULT_FREE_SUBSCRIPTION, createLocalDemoSubscription, resolveAuthoritativeSubscription, canGrantDemo } from '../services/entitlementService';
 import { AccountDeletionError, clearAccountDeletionLocalState, deleteCloudAccount } from '../services/accountDeletion';
 import { resetLocalData } from '../services/localDataReset';
+import { isAdminIdentity } from '../constants/admin';
 
 interface AuthContextType {
     user: User | null;
     isGuest: boolean;
+    isAdmin: boolean;
     loading: boolean;
     login: (email: string, pass: string) => Promise<void>;
     register: (email: string, pass: string, name?: string) => Promise<void>;
@@ -33,6 +35,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [subscription, setSubscription] = useState<UserSubscription>(DEFAULT_FREE_SUBSCRIPTION);
+    const [isAdmin, setIsAdmin] = useState(false);
 
     useEffect(() => {
         if (!isFirebaseConfigured()) {
@@ -58,6 +61,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 if (currentUser) {
                     setIsGuest(false);
                     try {
+                        const token = await currentUser.getIdTokenResult();
+                        const adminClaim = (token.claims as Record<string, unknown> | undefined)?.admin;
+                        if (!cancelled) {
+                            setIsAdmin(isAdminIdentity({ adminClaim, email: currentUser.email, emailVerified: currentUser.emailVerified }));
+                        }
+                    } catch {
+                        if (!cancelled) setIsAdmin(false);
+                    }
+                    try {
                         const { db, firestoreApi } = await getFirebaseFirestoreServices();
                         if (db) {
                             const subRef = firestoreApi.doc(db, 'users', currentUser.uid, 'data', 'subscription');
@@ -71,6 +83,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     }
                 } else {
                     setSubscription(DEFAULT_FREE_SUBSCRIPTION);
+                    setIsAdmin(false);
                 }
                 if (!cancelled) setLoading(false);
             });
@@ -95,6 +108,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         try {
             await authApi.signInWithEmailAndPassword(auth, email, pass);
+            try {
+                await auth.currentUser?.getIdToken(true);
+            } catch {
+                // Non-fatal: claims resolve on the next natural refresh.
+            }
         } catch (err: any) {
             setLoading(false);
             if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
@@ -182,11 +200,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         setUser(null);
         setIsGuest(false);
+        setIsAdmin(false);
         setSubscription(DEFAULT_FREE_SUBSCRIPTION);
     };
 
     const continueAsGuest = () => {
         setIsGuest(true);
+        setIsAdmin(false);
         setLoading(false);
         setSubscription(DEFAULT_FREE_SUBSCRIPTION);
     };
@@ -244,13 +264,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         setUser(null);
         setIsGuest(false);
+        setIsAdmin(false);
         setSubscription(DEFAULT_FREE_SUBSCRIPTION);
     };
 
     const clearError = () => setError(null);
 
     return (
-        <AuthContext.Provider value={{ user, isGuest, loading, login, register, logout, continueAsGuest, error, clearError, subscription, upgradeToPro, refreshSubscription, startDemo, resetPassword, deleteAccount }}>
+        <AuthContext.Provider value={{ user, isGuest, isAdmin, loading, login, register, logout, continueAsGuest, error, clearError, subscription, upgradeToPro, refreshSubscription, startDemo, resetPassword, deleteAccount }}>
             {children}
         </AuthContext.Provider>
     );

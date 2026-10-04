@@ -36,7 +36,7 @@ vi.mock('../../context/AppContext', () => ({
 }));
 
 vi.mock('../../context/AuthContext', () => ({
-    useAuth: () => ({ user: authState.user, logout: vi.fn(), deleteAccount: vi.fn() }),
+    useAuth: () => ({ user: authState.user, logout: vi.fn(), deleteAccount: vi.fn(), isAdmin: false }),
 }));
 
 vi.mock('../../hooks/usePro', () => ({

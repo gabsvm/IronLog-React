@@ -35,7 +35,7 @@ vi.mock('../../context/AppContext', () => ({
 }));
 
 vi.mock('../../context/AuthContext', () => ({
-    useAuth: () => ({ user: { email: 'test@gainslab.app' }, isPro: false, logout: vi.fn(), deleteAccount: vi.fn() }),
+    useAuth: () => ({ user: { email: 'test@gainslab.app' }, isPro: false, logout: vi.fn(), deleteAccount: vi.fn(), isAdmin: false }),
 }));
 
 vi.mock('../../hooks/usePro', () => ({
