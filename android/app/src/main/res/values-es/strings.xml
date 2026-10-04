@@ -10,4 +10,7 @@
     <string name="reminder_channel_desc">Recordatorios semanales para entrenar en tus días</string>
     <string name="reminder_title">Hora de entrenar</string>
     <string name="reminder_body">Tu entrenamiento te espera. Abrí GainsLab para empezar.</string>
+    <string name="widget_title_default">Próximo entreno</string>
+    <string name="widget_tap_to_start">Tocá para empezar</string>
+    <string name="widget_description">Botón para iniciar el entreno</string>
 </resources>

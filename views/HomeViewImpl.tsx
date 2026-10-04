@@ -9,7 +9,7 @@ import { ActivityHeatmap } from '../components/stats/ActivityHeatmap';
 import { TutorialOverlay } from '../components/ui/TutorialOverlay';
 import { usePro } from '../hooks/usePro';
 import { GlobalTemplate, ProgramDay } from '../types';
-import { triggerHaptic } from '../utils/audio';
+import { triggerHaptic, updateWidgetData } from '../utils/audio';
 
 // Sub-components extracted in Phase 6.2
 import { GuidelinesModal } from './home/GuidelinesModal';
@@ -198,6 +198,13 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
             setSelectedDayIdx(nextWorkoutIdx);
         }
     }, [nextWorkoutIdx]);
+
+    // Q17: publish the next session name to the Android widget (no-op on web).
+    useEffect(() => {
+        if (!activeMeso) return;
+        const dayDef = nextWorkoutIdx !== -1 ? safeProgram[nextWorkoutIdx] : null;
+        updateWidgetData(dayDef ? String(getTranslated(dayDef.dayName, lang)) : '');
+    }, [activeMeso, nextWorkoutIdx, safeProgram, lang]);
 
     // Memoized estimate for the currently selected day. Previously this ran as
     // an IIFE inside the JSX, so the O(N) scan over logs fired on every render —

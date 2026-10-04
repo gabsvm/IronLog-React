@@ -477,3 +477,32 @@ Estado persistente: se actualiza y pushea al cerrar CADA tarea.
 - Evidencia: build OK, `test:run` 572/572, `lint:a11y` limpio, Playwright
   43/43 en puerto aislado 5199.
 - No verificado: formato de fecha/volumen en locales distintos de es-AR.
+
+## Q17 — Widget Android "Iniciar entreno"
+
+- Nativo: `StartWorkoutWidgetProvider` (AppWidgetProvider) + layout
+  `widget_start_workout` (RemoteViews-safe) + fondo + `widget_start_workout_info`
+  (2×1, sin updates periódicos) + strings es/en (título, tap, descripción).
+  Registrado en el manifiesto (exported=true + APPWIDGET_UPDATE + meta-data,
+  como exige el sistema). Tap = PendingIntent IMMUTABLE explícito a
+  MainActivity con extra `start` (sin trampolines).
+- `MainActivity`: captura el extra en onCreate (frío) y onNewIntent
+  (singleTask en caliente); `consumeLaunchAction()` lo entrega una sola vez.
+- Plugin: `getLaunchAction` ("" si no hay nada pendiente) y
+  `updateWidgetData({title})` (guarda en prefs + refresca widgets).
+- JS: `useWidgetLaunchAction(enabled, onStart)` (montaje + visibilitychange);
+  `runStartAction` extraído del efecto del atajo PWA a `useCallback`
+  compartido (mismo flujo resume/meso/quick-start, sin cambios); Home publica
+  el nombre del próximo día vía `updateWidgetData` (no-op en web).
+- Tests: `widgetBridge` (4: web nulo, consumo único, payloads malos,
+  título) y `widgetLaunchAction` (3: frío corre una vez, caliente en resume,
+  hidden/desconocido/deshabilitado ignorados). Suite 579/579 (110 ficheros).
+- Fail-proof: sin el código (stash) los tests nuevos fallan
+  (`getNativeLaunchAction is not a function`).
+- Evidencia: `assembleDebug` + `:app:lintDebug` BUILD SUCCESSFUL con JDK 21
+  (el JDK por defecto falla con `invalid source release: 21`); solo los 2
+  warnings InlinedApi preexistentes; aapt confirma receiver exported=true,
+  intent-filter APPWIDGET_UPDATE y meta-data del provider. Web: build OK,
+  `test:run` 579/579, `lint:a11y` limpio, Playwright 43/43 (puerto 5199).
+- No verificado: tap real, instalación del widget, título actualizado y
+  arranque frío/caliente en dispositivo (`adb devices` vacío).

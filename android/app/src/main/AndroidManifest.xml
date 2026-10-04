@@ -57,6 +57,21 @@
             </intent-filter>
         </receiver>
 
+        <!-- Q17: home-screen "Start workout" widget. Receives the system
+             APPWIDGET_UPDATE broadcast, so it must stay exported. -->
+        <receiver
+            android:name=".StartWorkoutWidgetProvider"
+            android:enabled="true"
+            android:exported="true"
+            android:label="@string/widget_description">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_start_workout_info" />
+        </receiver>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

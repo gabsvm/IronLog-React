@@ -9,6 +9,8 @@ interface NativeBridgePlugin {
     canScheduleExactAlarms(): Promise<{ granted: boolean; sdkInt: number }>;
     openExactAlarmSettings(): Promise<void>;
     consumePendingTimerCommands(): Promise<{ epoch: number; commands: TimerCommandPayload[] }>;
+    getLaunchAction(): Promise<{ action: string }>;
+    updateWidgetData(options: { title: string }): Promise<void>;
     addListener(event: 'restTimerCommand', cb: (data: unknown) => void): Promise<{ remove: () => Promise<void> }>;
 }
 
@@ -188,6 +190,29 @@ export const subscribeTimerCommands = async (
     } catch {
         return () => {};
     }
+};
+
+/**
+ * Q17: consume the widget launch action (native only; null everywhere else
+ * or on failure). The native side clears the pending action, so each widget
+ * tap is delivered exactly once.
+ */
+export const getNativeLaunchAction = async (): Promise<string | null> => {
+    if (!Capacitor.isNativePlatform()) return null;
+    try {
+        const res = await NativeBridge.getLaunchAction();
+        return typeof res?.action === 'string' && res.action !== '' ? res.action : null;
+    } catch {
+        return null;
+    }
+};
+
+/** Q17: publish the next-session title to installed widgets (native only). */
+export const updateWidgetData = (title: string) => {
+    if (!Capacitor.isNativePlatform()) return;
+    void NativeBridge.updateWidgetData({ title }).catch((error) => {
+        console.warn('Update widget data failed', error);
+    });
 };
 
 export const shouldShowExactAlarmNotice = (input: {

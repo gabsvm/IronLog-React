@@ -370,6 +370,29 @@ public class NativeBridgePlugin extends Plugin {
     }
 
     /**
+     * Q17: consume the widget launch action (cold start via onCreate, warm via
+     * onNewIntent). Empty string when nothing is pending: each tap runs once.
+     */
+    @PluginMethod
+    public void getLaunchAction(PluginCall call) {
+        String action = MainActivity.consumeLaunchAction();
+        JSObject result = new JSObject();
+        result.put("action", action != null ? action : "");
+        call.resolve(result);
+    }
+
+    /** Q17: store the next-session title and refresh installed widgets. */
+    @PluginMethod
+    public void updateWidgetData(PluginCall call) {
+        String title = call.getString("title", "");
+        getContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+                .putString(StartWorkoutWidgetProvider.KEY_WIDGET_TITLE, title != null ? title : "")
+                .apply();
+        StartWorkoutWidgetProvider.refreshAll(getContext());
+        call.resolve();
+    }
+
+    /**
      * Q13: schedule the next reminder strictly in the future (mirrors the JS
      * computeNextReminder: scan today + 7 days, local time). Static so the
      * reminder and boot receivers can chain without a live bridge.

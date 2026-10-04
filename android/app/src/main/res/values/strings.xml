@@ -10,4 +10,7 @@
     <string name="reminder_channel_desc">Weekly reminders to train on your days</string>
     <string name="reminder_title">Time to train</string>
     <string name="reminder_body">Your workout is waiting. Open GainsLab to start.</string>
+    <string name="widget_title_default">Next workout</string>
+    <string name="widget_tap_to_start">Tap to start</string>
+    <string name="widget_description">Start workout button</string>
 </resources>
