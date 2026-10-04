@@ -13,6 +13,7 @@
   "English",
   "Equilibrado",
   "Español",
+  "Exportar CSV",
   "Exportar Datos",
   "Forest",
   "Guardar rutina como plantilla Inicia una rutina para poder guardarla",
@@ -34,6 +35,7 @@
   "[Close]",
   "[Delete]",
   "[Download]",
+  "[Exportar CSV]",
   "[Mantener pantalla encendida]",
   "[Mostrar columna RIR]"
 ]

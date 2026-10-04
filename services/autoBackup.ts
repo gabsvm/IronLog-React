@@ -1,4 +1,5 @@
 import { db } from '../utils/db';
+import { shareFileOrDownload } from '../utils/shareFile';
 import {
     createBackupEnvelope,
     getBackupDownloadFilename,
@@ -142,21 +143,6 @@ export const shouldShowBackupReminder = (input: {
     return true;
 };
 
-type ShareableNavigator = Navigator & {
-    canShare?: (data: { files: File[] }) => boolean;
-    share?: (data: { files: File[]; title?: string; text?: string }) => Promise<void>;
-};
-
-const downloadBlob = (json: string, filename: string): void => {
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
-};
-
 /**
  * Exports the current state: Web Share with a file when the platform can
  * share files, plain download otherwise. Stamps the export time so the Home
@@ -168,22 +154,7 @@ export const exportCurrentBackup = async (
     const envelope = createBackupEnvelope(state);
     const filename = getBackupDownloadFilename();
     const json = JSON.stringify(envelope, null, 2);
-    const nav = navigator as ShareableNavigator;
-
-    if (typeof nav.canShare === 'function' && typeof nav.share === 'function') {
-        try {
-            const file = new File([json], filename, { type: 'application/json' });
-            if (nav.canShare({ files: [file] })) {
-                await nav.share({ files: [file], title: 'GainsLab', text: filename });
-                await db.set(LAST_BACKUP_AT_KEY, Date.now());
-                return 'shared';
-            }
-        } catch {
-            // Fall through to download (user cancel included).
-        }
-    }
-
-    downloadBlob(json, filename);
+    const result = await shareFileOrDownload(json, filename, 'application/json');
     await db.set(LAST_BACKUP_AT_KEY, Date.now());
-    return 'downloaded';
+    return result;
 };

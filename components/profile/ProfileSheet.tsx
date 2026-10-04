@@ -10,6 +10,7 @@ import { Icon } from '../ui/Icon';
 import { Button } from '../ui/Button';
 import { Sheet } from '../ui/Sheet';
 import { BodyMetricsModal } from './BodyMetricsModal';
+import { CsvImportSheet } from './CsvImportSheet';
 import { DeleteAccountDialog } from './DeleteAccountDialog';
 import { ErrorLogCard } from './ErrorLogCard';
 import { StoragePersistRow } from './StoragePersistRow';
@@ -21,6 +22,18 @@ import { AdminTemplateManager } from '../admin/AdminTemplateManager';
 import { triggerHaptic } from '../../utils/audio';
 import { requestTimerNotificationPermission } from '../../hooks/useTimer';
 import { formatWeight, resolveWeightUnit, unitLabel } from '../../utils/units';
+import { shareFileOrDownload } from '../../utils/shareFile';
+import {
+    addImportKeys,
+    buildImportLogs,
+    buildTrainingCsv,
+    matchParsedExerciseNames,
+    parseTrainingCsv,
+    readImportKeys,
+    splitFreshSessions,
+} from '../../services/trainingCsv';
+import type { ExerciseMappingDecision, ParsedCsvImport } from '../../services/trainingCsv';
+import type { WeightUnit } from '../../types';
 
 const PaywallModal = React.lazy(() => import('../pro/PaywallModal').then(m => ({ default: m.PaywallModal })));
 const ConfirmModal = React.lazy(() => import('../ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
@@ -57,6 +70,7 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
         config, setConfig, deferredPrompt, installApp, isStandalone,
         userProfile, setUserProfile, pendingCloudSections,
         program, personalTemplates, setPersonalTemplates, logs,
+        setLogs, exercises, setExercises,
     } = useApp();
     const { localLastUpdated, localSectionSyncMeta } = useSyncMeta();
     const { isOnline, syncStatus } = useSyncStatus();
@@ -74,6 +88,12 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
     const [templateName, setTemplateName] = useState('');
     const [notificationPerm, setNotificationPerm] = useState<string>(typeof Notification !== 'undefined' ? Notification.permission : 'default');
     const [installInstructions, setInstallInstructions] = useState<string | null>(null);
+    const [csvRaw, setCsvRaw] = useState<string | null>(null);
+    const [csvParsed, setCsvParsed] = useState<ParsedCsvImport | null>(null);
+    const [csvStrongUnit, setCsvStrongUnit] = useState<WeightUnit>('kg');
+    const [csvError, setCsvError] = useState<string | null>(null);
+    const [csvStatus, setCsvStatus] = useState<string | null>(null);
+    const [csvKnownKeys, setCsvKnownKeys] = useState<ReadonlySet<string>>(new Set());
 
 
     // External entry points can request a section (e.g. back from the
@@ -115,6 +135,97 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
         if (!activeMeso || program.length === 0) return;
         setTemplateName(activeMeso.name || ty.saveTemplateEmpty);
         setShowSaveTemplate(true);
+    };
+
+    // Q12: training CSV export (one row per completed set, chosen unit in header).
+    // Deliberately does NOT stamp the backup reminder: this is a partial export.
+    const handleExportCsv = () => {
+        const unit = resolveWeightUnit(config);
+        const csv = buildTrainingCsv(logs, unit);
+        const filename = `gainslab_history_${new Date().toISOString().slice(0, 10)}.csv`;
+        void shareFileOrDownload(csv, filename, 'text/csv');
+    };
+
+    const openCsvImport = (text: string, strongUnit: WeightUnit) => {
+        try {
+            const parsed = parseTrainingCsv(text, strongUnit);
+            setCsvRaw(text);
+            setCsvParsed(parsed);
+            setCsvError(null);
+            setCsvStatus(null);
+            void readImportKeys().then((stored) => {
+                const fromLogs = (logs || []).map((l: any) => l?.importKey).filter(Boolean);
+                setCsvKnownKeys(new Set([...stored, ...fromLogs]));
+            });
+        } catch (err: any) {
+            setCsvRaw(null);
+            setCsvParsed(null);
+            setCsvError(
+                err?.message === 'empty' ? t.csv.errorEmpty
+                : err?.message === 'unknown-format' ? t.csv.errorUnknown
+                : t.csv.errorRead
+            );
+        }
+    };
+
+    const handleImportCsvFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        e.target.value = '';
+        if (!file) return;
+        const unit = resolveWeightUnit(config);
+        setCsvStrongUnit(unit);
+        const reader = new FileReader();
+        reader.onload = () => {
+            try {
+                openCsvImport(String(reader.result ?? ''), unit);
+            } catch {
+                setCsvError(t.csv.errorRead);
+            }
+        };
+        reader.onerror = () => setCsvError(t.csv.errorRead);
+        reader.readAsText(file);
+    };
+
+    const handleStrongUnitChange = (unit: WeightUnit) => {
+        setCsvStrongUnit(unit);
+        if (csvRaw) {
+            try {
+                setCsvParsed(parseTrainingCsv(csvRaw, unit));
+            } catch {
+                // csvRaw already parsed once; re-parse cannot fail.
+            }
+        }
+    };
+
+    const csvFresh = useMemo(
+        () => (csvParsed ? splitFreshSessions(csvParsed.sessions, csvKnownKeys) : { fresh: [], skippedCount: 0 }),
+        [csvParsed, csvKnownKeys]
+    );
+
+    const csvMatches = useMemo(() => {
+        const names: string[] = [];
+        for (const session of csvFresh.fresh) {
+            for (const ex of session.exercises) {
+                if (!names.includes(ex.name)) names.push(ex.name);
+            }
+        }
+        return matchParsedExerciseNames(names, exercises || []);
+    }, [csvFresh, exercises]);
+
+    const closeCsvImport = () => {
+        setCsvRaw(null);
+        setCsvParsed(null);
+    };
+
+    const confirmCsvImport = (mapping: Record<string, ExerciseMappingDecision>) => {
+        if (!csvParsed || csvFresh.fresh.length === 0) return;
+        const { logs: newLogs, newExercises } = buildImportLogs(csvFresh.fresh, mapping, exercises || []);
+        setLogs((prev) => [...prev, ...newLogs]);
+        if (newExercises.length > 0) setExercises((prev) => [...prev, ...newExercises]);
+        void addImportKeys(newLogs.map((l) => l.importKey).filter(Boolean) as string[]);
+        setCsvKnownKeys((prev) => new Set([...prev, ...newLogs.map((l) => l.importKey).filter(Boolean) as string[]]));
+        setCsvStatus(t.csv.importedOk.replace('{n}', String(newLogs.length)));
+        closeCsvImport();
     };
 
     const savePersonalTemplate = () => {
@@ -757,6 +868,26 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
                                     <input type="file" onChange={onImportFile} accept=".json" className="hidden" />
                                 </label>
                             </div>
+                            <div className="grid grid-cols-2 gap-2 mt-2">
+                                <button
+                                    type="button"
+                                    onClick={handleExportCsv}
+                                    className="py-3 bg-zinc-100 dark:bg-zinc-800 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                                    aria-label={t.csv.exportBtn}
+                                >
+                                    <Icon name="Download" size={14} /> {t.csv.exportBtn}
+                                </button>
+                                <label className="py-3 bg-zinc-100 dark:bg-zinc-800 rounded-xl text-xs font-bold cursor-pointer text-center flex items-center justify-center gap-2 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
+                                    <Icon name="Upload" size={14} /> {t.csv.importBtn}
+                                    <input type="file" onChange={handleImportCsvFile} accept=".csv,text/csv" className="hidden" />
+                                </label>
+                            </div>
+                            {csvError && (
+                                <p role="alert" className="mt-2 text-xs font-bold text-red-500">{csvError}</p>
+                            )}
+                            {csvStatus && !csvError && (
+                                <p role="status" className="mt-2 text-xs font-bold text-emerald-500">{csvStatus}</p>
+                            )}
                         </div>
                     </div>
                     <div className="mt-2">
@@ -868,6 +999,22 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
                     </div>
                 </div>
             </Sheet>
+
+            {csvParsed && (
+                <CsvImportSheet
+                    open={csvParsed !== null}
+                    onClose={closeCsvImport}
+                    parsed={csvParsed}
+                    fresh={csvFresh.fresh}
+                    skippedCount={csvFresh.skippedCount}
+                    matches={csvMatches}
+                    library={exercises || []}
+                    lang={lang}
+                    strongUnit={csvStrongUnit}
+                    onStrongUnitChange={handleStrongUnitChange}
+                    onConfirm={confirmCsvImport}
+                />
+            )}
 
             <BodyMetricsModal
                 open={showBodyModal}

@@ -187,6 +187,9 @@ export interface Log {
   week: number;
   exercises: SessionExercise[];
   note?: string;            // Freeform session journal note
+  /** Q12: present on CSV-imported sessions; reserved mesoId -100 keeps them out of "This plan". */
+  importKey?: string;
+  importedFrom?: 'hevy' | 'strong';
   discipline?: string;      // Optional discipline tag (e.g. crossfit, calisthenics, twoblock)
   programSystem?: {
     systemId: string;

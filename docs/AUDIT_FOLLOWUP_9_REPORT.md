@@ -19,7 +19,8 @@ Estado persistente: se actualiza y pushea al cerrar CADA tarea.
 | Q8 | `0ca31a1` | hecho |
 | Q9 | `6833d94` | hecho |
 | Q10 | `40fc801` | hecho |
-| Q11 | (este commit) | hecho |
+| Q11 | `268d020` | hecho |
+| Q12 | (este commit) | hecho |
 
 ## Q0 — Preparación
 
@@ -280,3 +281,44 @@ Estado persistente: se actualiza y pushea al cerrar CADA tarea.
   `lint:a11y` limpio, Playwright 41/41 en puerto aislado 5199 (5173 lo ocupa otro proyecto).
 - WarmupModal recibe `unit` por prop desde WorkoutViewImpl (evita romper `warmupEligibility`).
 - No verificado: uso real con discos lb en gimnasio; validación visual del selector en el APK.
+
+## Q12 — Importar / exportar CSV
+
+- Nuevo `utils/csv.ts`: parser RFC 4180 propio (comillas, comas, multilínea, CRLF, BOM) +
+  escritor con comillas mínimas.
+- Nuevo `services/trainingCsv.ts`: detección Hevy/Strong por encabezados documentados;
+  parseo a sesiones (tipos warmup/drop, RPE, notas, pesos a kg canónicos — Hevy trae
+  weight_kg/weight_lbs, Strong usa la unidad que el usuario confirma en la UI); matching por
+  nombre normalizado (insensible a mayúsculas/acentos, en+es); `buildImportLogs` con mesoId
+  reservado -100 (fuera de "Este plan", dentro de "Todo el historial"), sets completados,
+  `importKey` (`fuente:inicio:título:ExxS`) e `importedFrom` (campos nuevos en `Log`, tolerados
+  por backup/sync/reglas que no recortan campos); idempotencia por clave (IndexedDB
+  `il_csv_import_keys_v1` + claves en los logs); export `buildTrainingCsv` (una fila por serie
+  completada, header `Weight(kg|lb)` con la unidad elegida, decimales con punto, fecha en-CA).
+- Columna RIR del export: lleva el campo `rpe` tal cual (misma etiqueta que la UI del workout,
+  que rotula RIR el input de esfuerzo). Decisión documentada.
+- UI: botones Exportar/Importar CSV en Datos (ProfileSheet) + `CsvImportSheet` (resumen:
+  formato, sesiones, series, rango, nuevas, ya-importadas, filas omitidas; auto-mapeados solo
+  lectura; no reconocidos con Crear-nuevo+músculo o Mapear-a-existente; selector de unidad
+  para Strong con re-parseo). Import deshabilitado hasta mapear todo. Textos `t.csv` es/en.
+- `utils/shareFile.ts` extraído de `services/autoBackup.ts` (mismo comportamiento, tests Q6
+  verdes) y reutilizado por el export CSV. El export CSV no estampa `il_last_backup_at`
+  (es parcial; el recordatorio Q6 sigue pidiendo el backup completo). El exportador viejo de
+  History queda en kg canónico (declarado en su header).
+- Strong sin columna de unidad: la UI pregunta la unidad del archivo (defecto = unidad actual).
+- Fixtures sintéticos `tests/e2e/fixtures/hevy-sample.csv` + `strong-sample.csv` según los
+  encabezados documentados. PENDIENTE: validar con un export real del dueño (formatos reales
+  pueden traer columnas extra o fechas distintas; el parser ignora columnas desconocidas y
+  omite filas con fecha inválida contándolas).
+- Tests: `csv` (5), `trainingCsv` (14: detección, Hevy kg/lb, Strong kg/lb, filas malas,
+  normalización, matching en+es, build mesoId/key/errores, split fresh, store de claves,
+  export kg/lb con escaping y filtros), `csvImportSheet` (5: preview, validación+mapping
+  create/existing, toggle Strong, nothing-new). E2E `trainingCsv.spec.ts`: import Hevy con
+  mapeo → aparece en History → reimport idempotente → import Strong en lb con mapeo →
+  export descarga CSV con header/unidad y 61.235. Fixtures se re-fechan en runtime (cuentas
+  gratis solo ven 7 días de History).
+- Fail-proof: `csv.test.ts` falló antes del módulo (TDD); sin el cableado (stash+build) el
+  e2e falla (no existe el input CSV); con el fix, todo verde.
+- Evidencia: build OK, `test:run` 486/486 (96 ficheros), `lint:a11y` limpio, Playwright 42/42
+  en puerto aislado 5199.
+- No verificado: exports reales de Hevy/Strong del dueño; Web Share del CSV en dispositivo.

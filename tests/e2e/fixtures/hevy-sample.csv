@@ -1,0 +1,4 @@
+title,start_time,end_time,description,exercise_title,superset_id,exercise_notes,set_index,set_type,weight_kg,reps,distance_km,duration_seconds,rpe
+"Morning Push","2026-09-20 08:00:00","2026-09-20 09:00:00","Felt strong","Barbell Bench Press","","",0,normal,60,8,,,8
+"Morning Push","2026-09-20 08:00:00","2026-09-20 09:00:00","Felt strong","Barbell Bench Press","","",1,normal,60,8,,,9
+"Morning Push","2026-09-20 08:00:00","2026-09-20 09:00:00","Felt strong","Zercher Squat","","deep",0,normal,50,6,,,8
