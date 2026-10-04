@@ -5,7 +5,7 @@ import { requestTimerNotificationPermission } from '../../hooks/useTimer';
 import { useAppConfig, useAppPreferences } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
 import { Icon } from './Icon';
-import { triggerHaptic } from '../../utils/audio';
+import { getExactAlarmState, openExactAlarmSettings, shouldShowExactAlarmNotice, triggerHaptic } from '../../utils/audio';
 import { useStore } from '../../lib/store';
 import { getTranslated } from '../../utils';
 import type { SessionExercise } from '../../types';
@@ -212,6 +212,7 @@ export const RestTimerOverlay: React.FC = () => {
     const [mode, setMode] = useState<'compact' | 'expanded'>(initialMode);
     const [keyboardOffset, setKeyboardOffset] = useState(0);
     const [showNotifPrompt, setShowNotifPrompt] = useState(false);
+    const [showAlarmNotice, setShowAlarmNotice] = useState(false);
     const lastFreshStartRef = useRef(0);
     const pillRef = useRef<HTMLElement>(null);
 
@@ -296,6 +297,35 @@ export const RestTimerOverlay: React.FC = () => {
         return () => window.removeEventListener('ironlog:rest-completed', onRestCompleted);
     }, []);
 
+    // One-time exact-alarm notice (native Android 12+ only): after the first
+    // naturally completed rest, offer the system toggle once when exact
+    // alarms are not granted (denied by default since Android 14). The flag
+    // is set at show time, so it never comes back.
+    useEffect(() => {
+        const onRestCompleted = async () => {
+            try {
+                if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') return;
+                if (window.localStorage.getItem('il_exact_alarm_noticed')) return;
+                const alarmState = await getExactAlarmState();
+                if (!alarmState) return;
+                if (!shouldShowExactAlarmNotice({ platform: 'android', isNative: true, sdkInt: alarmState.sdkInt, granted: alarmState.granted, alreadyNoticed: false })) return;
+                window.localStorage.setItem('il_exact_alarm_noticed', '1');
+                setShowAlarmNotice(true);
+            } catch {
+                // Stay silent: the row in Training stays available.
+            }
+        };
+        window.addEventListener('ironlog:rest-completed', onRestCompleted);
+        return () => window.removeEventListener('ironlog:rest-completed', onRestCompleted);
+    }, []);
+
+    // Same non-blocking auto-dismiss as the notification prompt.
+    useEffect(() => {
+        if (!showAlarmNotice) return;
+        const timer = window.setTimeout(() => setShowAlarmNotice(false), 10_000);
+        return () => window.clearTimeout(timer);
+    }, [showAlarmNotice]);
+
     // The prompt never blocks: it auto-dismisses after 10 s (the once-flag
     // was already set at show time, so it never comes back).
     useEffect(() => {
@@ -332,6 +362,11 @@ export const RestTimerOverlay: React.FC = () => {
     }, [activeSession?.exercises, lang, restTimer?.source]);
 
     const dismissNotifPrompt = () => setShowNotifPrompt(false);
+    const dismissAlarmNotice = () => setShowAlarmNotice(false);
+    const enableAlarmFromNotice = () => {
+        setShowAlarmNotice(false);
+        openExactAlarmSettings();
+    };
     const enableNotifFromPrompt = () => {
         setShowNotifPrompt(false);
         // Called from the click handler: a real user gesture.
@@ -362,7 +397,32 @@ export const RestTimerOverlay: React.FC = () => {
         </div>
     ) : null;
 
-    if (!restTimer || !restTimer.active) return notifPrompt;
+    // Native-only twin of the web notification prompt (they never co-show).
+    const alarmNotice = showAlarmNotice ? (
+        <div role="status" className="fixed inset-x-0 z-sheet mx-auto max-w-md px-3 pointer-events-none" style={{ bottom: 'calc(var(--safe-area-bottom) + 80px + var(--rest-pill-height, 0px) + 16px)' }}>
+            <div className="pointer-events-auto rounded-2xl border border-border-strong bg-surface-raised/95 p-3 shadow-xl backdrop-blur-md">
+                <p className="text-xs font-medium text-zinc-100">{t.exactAlarmNoticeTitle}</p>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                    <button
+                        type="button"
+                        onClick={dismissAlarmNotice}
+                        className="min-h-[44px] rounded-xl border border-border-subtle bg-surface-elevated text-xs font-semibold text-muted hover:text-white active:scale-95 transition-all"
+                    >
+                        {t.notifPromptLater}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={enableAlarmFromNotice}
+                        className="min-h-[44px] rounded-xl bg-primary-500 text-xs font-bold text-black hover:bg-primary-400 active:scale-95 transition-all"
+                    >
+                        {t.exactAlarmNoticeEnable}
+                    </button>
+                </div>
+            </div>
+        </div>
+    ) : null;
+
+    if (!restTimer || !restTimer.active) return (<>{notifPrompt}{alarmNotice}</>);
 
     const formatSeconds = (seconds: number) => {
         const safe = Math.max(0, Math.floor(Number(seconds) || 0));

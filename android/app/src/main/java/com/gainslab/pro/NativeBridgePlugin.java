@@ -7,18 +7,22 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
+import android.net.Uri;
 import android.os.Build;
+import android.provider.Settings;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 
+import com.getcapacitor.JSObject;
 import com.getcapacitor.PermissionState;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
@@ -130,6 +134,51 @@ public class NativeBridgePlugin extends Plugin {
     @PluginMethod
     public void cancelRestTimer(PluginCall call) {
         cancelAlarm(getContext());
+        call.resolve();
+    }
+
+    /**
+     * Q8: exact-alarm state for the JS settings row. Below API 31 there is no
+     * user-facing toggle, so it reports granted. sdkInt lets JS hide the row
+     * where the permission concept does not exist.
+     */
+    @PluginMethod
+    public void canScheduleExactAlarms(PluginCall call) {
+        JSObject ret = new JSObject();
+        ret.put("sdkInt", Build.VERSION.SDK_INT);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            ret.put("granted", true);
+        } else {
+            AlarmManager alarmManager = (AlarmManager) getContext().getSystemService(Context.ALARM_SERVICE);
+            ret.put("granted", alarmManager != null && alarmManager.canScheduleExactAlarms());
+        }
+        call.resolve(ret);
+    }
+
+    /**
+     * Q8: opens the system "Alarms & reminders" screen for this app (Android
+     * 12+ special app access; there is no runtime prompt API). Falls back to
+     * the app-details settings page when the vendor ROM lacks the screen.
+     */
+    @PluginMethod
+    public void openExactAlarmSettings(PluginCall call) {
+        Context context = getContext();
+        try {
+            Intent intent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+            intent.setData(Uri.parse("package:" + context.getPackageName()));
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
+        } catch (ActivityNotFoundException e) {
+            try {
+                Intent fallback = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                fallback.setData(Uri.parse("package:" + context.getPackageName()));
+                fallback.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(fallback);
+            } catch (ActivityNotFoundException e2) {
+                call.reject("SETTINGS_UNAVAILABLE");
+                return;
+            }
+        }
         call.resolve();
     }
 

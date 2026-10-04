@@ -14,6 +14,7 @@ import { DeleteAccountDialog } from './DeleteAccountDialog';
 import { ErrorLogCard } from './ErrorLogCard';
 import { StoragePersistRow } from './StoragePersistRow';
 import { AutoBackupList } from './AutoBackupList';
+import { ExactAlarmRow } from './ExactAlarmRow';
 import { PhilosophyModal } from '../ui/PhilosophyModal';
 import { AdminControlPanel } from '../settings/AdminControlPanel';
 import { AdminTemplateManager } from '../admin/AdminTemplateManager';
@@ -529,6 +530,7 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
                                 </button>
                             </div>
                         )}
+                        <ExactAlarmRow lang={lang} />
                     </div>
                 </div>
 

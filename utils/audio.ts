@@ -6,6 +6,8 @@ interface NativeBridgePlugin {
     haptic(options: { type: HapticType }): Promise<void>;
     scheduleRestTimer(options: { endAt: number; title: string; body: string; liveTitle?: string; liveBody?: string }): Promise<void>;
     cancelRestTimer(): Promise<void>;
+    canScheduleExactAlarms(): Promise<{ granted: boolean; sdkInt: number }>;
+    openExactAlarmSettings(): Promise<void>;
 }
 
 const NativeBridge = registerPlugin<NativeBridgePlugin>('NativeBridge');
@@ -90,3 +92,50 @@ export const cancelNativeRestTimer = () => {
         console.warn('Native rest timer cancel failed', error);
     });
 };
+
+export interface ExactAlarmState {
+    granted: boolean;
+    sdkInt: number;
+}
+
+/**
+ * Q8: exact-alarm state on native Android (null everywhere else, including
+ * web/PWA and non-Android shells). Never throws: callers treat null as
+ * "hide the row / skip the notice".
+ */
+export const getExactAlarmState = async (): Promise<ExactAlarmState | null> => {
+    if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') return null;
+    try {
+        const state = await NativeBridge.canScheduleExactAlarms();
+        if (typeof state?.granted !== 'boolean' || typeof state?.sdkInt !== 'number') return null;
+        return { granted: state.granted, sdkInt: state.sdkInt };
+    } catch {
+        return null;
+    }
+};
+
+/** Q8: opens the system "Alarms & reminders" screen (native Android only). */
+export const openExactAlarmSettings = () => {
+    if (!Capacitor.isNativePlatform()) return;
+    void NativeBridge.openExactAlarmSettings().catch((error) => {
+        console.warn('Open exact-alarm settings failed', error);
+    });
+};
+
+/**
+ * Q8: pure notice rule for the one-time prompt after the first rest: native
+ * Android on API 31+ where exact alarms are not granted and the notice was
+ * never shown.
+ */
+export const shouldShowExactAlarmNotice = (input: {
+    platform: string;
+    isNative: boolean;
+    sdkInt: number;
+    granted: boolean;
+    alreadyNoticed: boolean;
+}): boolean =>
+    input.isNative
+    && input.platform === 'android'
+    && input.sdkInt >= 31
+    && !input.granted
+    && !input.alreadyNoticed;

@@ -15,7 +15,8 @@ Estado persistente: se actualiza y pushea al cerrar CADA tarea.
 | Q4 | `5b3fe9b` | hecho |
 | Q5 | `ae7f307` | hecho |
 | Q6 | `a48cf99` | hecho |
-| Q7 | (este commit) | hecho |
+| Q7 | `6d7fc49` | hecho |
+| Q8 | (este commit) | hecho |
 
 ## Q0 — Preparación
 
@@ -174,3 +175,26 @@ Estado persistente: se actualiza y pushea al cerrar CADA tarea.
 - Evidencia: `test:run` 413/413, build OK, lint limpio. Fail-proof: sin el cambio en AuthContext
   (stash), 5/6 fallan (solo pasa la regla pura).
 - No verificado: claim real fijado por el dueño en producción (manual pendiente).
+
+## Q8 — Permiso de alarmas exactas (Android 14+)
+
+- Java (`NativeBridgePlugin`): `canScheduleExactAlarms()` → `{granted, sdkInt}` (true si API < 31,
+  si no `AlarmManager.canScheduleExactAlarms()`); `openExactAlarmSettings()` →
+  `ACTION_REQUEST_SCHEDULE_EXACT_ALARM` con URI del paquete + fallback a detalles de la app.
+  Sin cambios de manifiesto (SCHEDULE_EXACT_ALARM ya declarado; sin USE_EXACT_ALARM).
+- `utils/audio.ts`: `getExactAlarmState()` (null fuera de Android nativo, never-throw, valida forma),
+  `openExactAlarmSettings()`, y regla pura `shouldShowExactAlarmNotice` (nativo + android + API ≥ 31
+  + no concedido + no mostrado).
+- UI: `ExactAlarmRow` en Entrenamiento (solo Android API ≥ 31; estado + Activar; refresca con
+  visibilitychange/focus al volver de Ajustes) y aviso único en `RestTimerOverlay` tras el primer
+  descanso natural (`ironlog:rest-completed`, flag `il_exact_alarm_noticed`, auto-cierre 10 s,
+  gemelo nativo del prompt web — nunca co-muestran). Textos `you.exactAlarm*` + `exactAlarmNotice*`
+  es/en.
+- Tests (14): wrappers con puente simulado (web/ios null, android passthrough, errores/malformados,
+  open noop en web), regla pura (6 combos), fila (oculta/estados/enable/refresh), overlay real (una
+  sola vez + flag, descartar sin rearmar, oculta con grant/API vieja).
+- Evidencia: `assembleDebug` BUILD SUCCESSFUL; `test:run` 427/427; build OK; lint limpio.
+  Fail-proof: sin el wiring del overlay (stash), 2/3 del notice fallan. Nota: 1 de 3 corridas
+  completas reportó "2 errors" transitorios con exit 0 y 427/427 (ruido paralelo; archivos Q8
+  limpios en 2/2 aisladas).
+- No verificado: pantalla real de "Alarmas y recordatorios" y toggle en dispositivo (sin dispositivo).
