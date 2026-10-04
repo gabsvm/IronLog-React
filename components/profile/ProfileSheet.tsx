@@ -12,6 +12,8 @@ import { Sheet } from '../ui/Sheet';
 import { BodyMetricsModal } from './BodyMetricsModal';
 import { DeleteAccountDialog } from './DeleteAccountDialog';
 import { ErrorLogCard } from './ErrorLogCard';
+import { StoragePersistRow } from './StoragePersistRow';
+import { AutoBackupList } from './AutoBackupList';
 import { PhilosophyModal } from '../ui/PhilosophyModal';
 import { AdminControlPanel } from '../settings/AdminControlPanel';
 import { AdminTemplateManager } from '../admin/AdminTemplateManager';
@@ -735,6 +737,9 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
                             </div>
                         </div>
                     </div>
+                    <div className="mt-2">
+                        <AutoBackupList lang={lang} />
+                    </div>
                 </div>
 
                 {/* 6. Avanzado (plegable) */}
@@ -762,6 +767,7 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
                                 <div className="text-xs text-muted">
                                     {ty.lastChange} {localLastUpdated ? new Date(localLastUpdated).toLocaleString() : 'n/a'}
                                 </div>
+                                <StoragePersistRow lang={lang} />
                                 {pendingCloudSections.length > 0 && (
                                     <div className="text-[10px] text-amber-500">
                                         {ty.cloudNewer}{' '}

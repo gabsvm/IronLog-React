@@ -19,6 +19,7 @@ import { NextSessionCard } from './home/NextSessionCard';
 import { ProgramBlockTransition } from '../components/programs/ProgramBlockTransition';
 import { PlanActionsSheet } from '../components/home/PlanActionsSheet';
 import { scheduleWhenIdle } from '../lib/idle';
+import { BackupReminderBanner } from '../components/home/BackupReminderBanner';
 const ProgramHub = React.lazy(() => import('../components/programs/ProgramHub').then((module) => ({ default: module.ProgramHub })));
 
 
@@ -376,6 +377,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
 
     return (
         <div className="px-4 space-y-4 pb-28 pt-2">
+            <BackupReminderBanner />
             {/* 1. Program Name, Badges & Plan Actions */}
             <div className={`flex items-start justify-between gap-3 pt-1 ${kongBlock ? 'kong-home-header' : ''}`}>
                 <div className="min-w-0 flex-1">

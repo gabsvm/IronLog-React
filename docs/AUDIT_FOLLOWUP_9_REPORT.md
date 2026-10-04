@@ -13,7 +13,8 @@ Estado persistente: se actualiza y pushea al cerrar CADA tarea.
 | Q2 | `e87cf66` | hecho |
 | Q3 | `b84b403` | hecho |
 | Q4 | `5b3fe9b` | hecho |
-| Q5 | (este commit) | hecho |
+| Q5 | `ae7f307` | hecho |
+| Q6 | (este commit) | hecho |
 
 ## Q0 — Preparación
 
@@ -126,3 +127,30 @@ Estado persistente: se actualiza y pushea al cerrar CADA tarea.
   corrompió ProfileSheet (BOM + mojibake) — restaurado por git y rehecho con Node UTF-8, diff final
   mínimo (+2 líneas).
 - No verificado: captura en dispositivo real con errores nativos (solo web/jsdom).
+
+## Q6 — Respaldos automáticos, recordatorio y almacenamiento persistente
+
+- `services/autoBackup.ts` (nuevo): `ensureStoragePersisted`/`getStoragePersistStatus` (on/off/
+  unsupported, never-throw); `maybeCreateAutoBackup` (máx 1/24 h, rota últimos 3 en
+  `il_auto_backup_v1` con `createBackupEnvelope`); `restoreAutoBackup` (valida + restaura con el
+  servicio existente); `exportCurrentBackup` (Web Share con archivo si `canShare`, si no descarga;
+  sella `il_last_backup_at`); `shouldShowBackupReminder` pura (export ≥ 14 d o nunca + sesiones
+  posteriores + no descartado después).
+- App.tsx: `handleExport` delega al export compartido; `onFinish` dispara `maybeCreateAutoBackup`
+  fire-and-forget con los logs frescos (sin tocar workoutCompletionService).
+- UI: `StoragePersistRow` (Avanzado/diagnóstico), `AutoBackupList` (Datos: fechas + Restaurar con
+  ConfirmModal propio + reload), `BackupReminderBanner` (top de Home, autocontenido: exporta con el
+  estado de useApp/store, descarta con sello). Textos `you.*` es/en.
+- Fix real expuesto por e2e: los botones dentro del `<details>` cerrado conservan cajas fantasma en
+  Chromium (content-visibility interno) y rompían insetsOverlays ("profile sheet", control 29).
+  Regla global en index.css `details:not([open]) > :not(summary) { display: none; }` (visual idéntica,
+  sin condicionales que romperían el test de inventario). Spec regenera `after.json` (incluye
+  etiquetas Q5+Q6).
+- Tests (23): throttle 24 h, rotación 3, restauración ida-vuelta, regla del recordatorio (6 casos),
+  share/descarga/fallback-cancel, persist on/off/unsupported, RTL de las 3 UI (lista+confirm+cancel,
+  activar, banner visible/oculto/exportar/descartar).
+- Evidencia: `test:run` 407/407, build OK, lint limpio, Playwright 40/40 (puerto 5199 aislado).
+  Fail-proof: sin el módulo (movido aside) los tests no colectan (dependencia real); módulo nuevo,
+  comportamientos con aserciones exactas.
+- No verificado: Web Share real en Android (solo mocks + descarga); persistencia efectiva en
+  dispositivo.

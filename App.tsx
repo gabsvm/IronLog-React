@@ -21,11 +21,10 @@ import { resolveProgramDay } from './programs/engine/ProgramResolver';
 import { resetLocalData } from './services/localDataReset';
 import { convertKongToPersonalRoutine } from './programs/engine/ProgramConversion';
 import { completeWorkoutPipeline } from './services/workoutCompletionService';
+import { exportCurrentBackup, maybeCreateAutoBackup } from './services/autoBackup';
 import {
-    createBackupEnvelope,
     validateAndMigrateBackup,
     restoreBackupToStorage,
-    getBackupDownloadFilename,
     type GainsLabBackupV1,
     type BackupDomainSummary
 } from './services/backupService';
@@ -450,18 +449,11 @@ const AppContent = () => {
 
     // --- DATA MANAGEMENT ---
     const handleExport = () => {
-        const envelope = createBackupEnvelope({
+        void exportCurrentBackup({
             program, exercises, logs, activeMeso, activeSession,
             userProfile, nutritionLogs, cardioSessions, bodyLogs, macroGoals, nutritionGoal,
             personalTemplates, customFoods, rpFeedback, config
         });
-        const blob = new Blob([JSON.stringify(envelope, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = getBackupDownloadFilename();
-        a.click();
-        URL.revokeObjectURL(url);
     };
 
     const handleForceSync = async () => {
@@ -650,6 +642,17 @@ const AppContent = () => {
                                     });
 
                                     setLogs(result.updatedLogs);
+
+                                    // Q6: automatic local snapshot (max 1 per 24 h, last 3 kept).
+                                    void maybeCreateAutoBackup({
+                                        program: Array.isArray(program) ? program : [],
+                                        exercises: Array.isArray(exercises) ? exercises : [],
+                                        logs: result.updatedLogs,
+                                        activeMeso: result.updatedMeso ?? activeMeso,
+                                        userProfile, nutritionLogs, cardioSessions, bodyLogs,
+                                        macroGoals, nutritionGoal, personalTemplates, customFoods,
+                                        rpFeedback, config,
+                                    });
 
                                     if (result.isMesoComplete) {
                                         setShowMesoCompleteModal(true);
