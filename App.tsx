@@ -1,52 +1,24 @@
 
-import React, { useState, useEffect, useRef, Suspense, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { flushSync } from 'react-dom';
 import { AppProvider, useApp } from './context/AppContext';
-import { useTimerActions } from './context/TimerContext';
-import { Layout } from './components/layout/Layout';
-import { HomeView } from './views/HomeView';
 import { RestTimerOverlay } from './components/ui/RestTimerOverlay';
-import { Icon } from './components/ui/Icon';
-import { TRANSLATIONS } from './constants';
-import { Button } from './components/ui/Button';
-import { LazyViewBoundary } from './components/ui/LazyViewBoundary';
 import { useAuth, AuthProvider } from './context/AuthContext';
-import { getLastLogForExercise, uid } from './utils';
-import { syncService } from './services/syncService';
 import { usePro } from './hooks/usePro';
-import { useWidgetLaunchAction } from './hooks/useWidgetLaunchAction';
+import { useAppHistory, withTransition, VIEW_DEPTH } from './hooks/useAppHistory';
+import { useShortcutLaunch } from './hooks/useShortcutLaunch';
+import { AppModals } from './components/app/AppModals';
+import { AppViews } from './components/app/AppViews';
+import { AppOnboarding } from './components/app/AppOnboarding';
+import { AppBanners } from './components/app/AppBanners';
 import type { CommandAction } from './components/ui/CommandPalette';
-import { SessionBuilder } from './services/SessionBuilder';
-import { KONG_4DAY_V1 } from './programs/kong/kong4Day';
-import { resolveProgramDay } from './programs/engine/ProgramResolver';
-import { resetLocalData } from './services/localDataReset';
-import { convertKongToPersonalRoutine } from './programs/engine/ProgramConversion';
-import { completeWorkoutPipeline } from './services/workoutCompletionService';
-import { exportCurrentBackup, maybeCreateAutoBackup } from './services/autoBackup';
-import { notifyWorkoutDone } from './utils/reminders';
+import { exportCurrentBackup } from './services/autoBackup';
 import {
     validateAndMigrateBackup,
-    restoreBackupToStorage,
     type GainsLabBackupV1,
     type BackupDomainSummary
 } from './services/backupService';
-const ProgramCompletionView = React.lazy(() => import('./components/programs/ProgramCompletionView').then((module) => ({ default: module.ProgramCompletionView })));
 import { useStore } from './lib/store';
-
-// Lazy Load views — keeps initial bundle small
-const HistoryView = React.lazy(() => import('./views/HistoryView').then(module => ({ default: module.HistoryView })));
-const StatsView = React.lazy(() => import('./views/StatsView').then(module => ({ default: module.StatsView })));
-const NutriView = React.lazy(() => import('./views/NutriView').then(m => ({ default: m.NutriView })));
-const ExercisesView = React.lazy(() => import('./views/ExercisesView').then(m => ({ default: m.ExercisesView })));
-const ProgramEditView = React.lazy(() => import('./views/ProgramEditView').then(m => ({ default: m.ProgramEditView })));
-const SessionSummaryView = React.lazy(() => import('./views/SessionSummaryView').then(m => ({ default: m.SessionSummaryView })));
-const WorkoutView = React.lazy(() => import('./views/WorkoutView').then(m => ({ default: m.WorkoutView })));
-const SetupWizard = React.lazy(() => import('./components/onboarding/SetupWizard').then(m => ({ default: m.SetupWizard })));
-const Landing = React.lazy(() => import('./components/onboarding/Landing').then(m => ({ default: m.Landing })));
-const AuthModal = React.lazy(() => import('./components/auth/AuthModal').then(m => ({ default: m.AuthModal })));
-const CommandPalette = React.lazy(() => import('./components/ui/CommandPalette').then(m => ({ default: m.CommandPalette })));
-const ConfirmModal = React.lazy(() => import('./components/ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
-const PaywallModal = React.lazy(() => import('./components/pro/PaywallModal').then(m => ({ default: m.PaywallModal })));
 
 export const VIEW_LOADERS: Partial<Record<string, () => Promise<any>>> = {
     workout: () => import('./views/WorkoutView'),
@@ -73,59 +45,16 @@ export const shouldRestoreWeekAfterUndoSkip = (
     return currentMeso.id === snapshot.mesoId && currentMeso.week === snapshot.week + 1;
 };
 
-const LoadingSpinner = () => (
-    <div className="h-full flex items-center justify-center text-zinc-400">
-        <Icon name="RefreshCw" size={24} className="animate-spin" />
-    </div>
-);
-
-const FullScreenLoading = () => (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-950 text-zinc-400">
-        <Icon name="RefreshCw" size={24} className="animate-spin" />
-    </div>
-);
-
-// Wraps a DOM mutation in a View Transition (graceful fallback when unsupported).
-export const withTransition = (direction: string, callback: () => void) => {
-    document.documentElement.dataset.transition = direction;
-    const reducedEffects = document.documentElement.dataset.effects === 'reduced';
-    if (!reducedEffects && typeof (document as any).startViewTransition === 'function') {
-        try {
-            const transition = (document as any).startViewTransition(callback);
-            if (transition?.finished && typeof transition.finished.finally === 'function') {
-                transition.finished.finally(() => { document.documentElement.dataset.transition = ''; });
-            } else {
-                document.documentElement.dataset.transition = '';
-            }
-            return transition;
-        } catch {
-            callback();
-            document.documentElement.dataset.transition = '';
-        }
-    } else {
-        callback();
-        document.documentElement.dataset.transition = '';
-    }
-};
-
-// View Hierarchy for Directional Animations
-export const VIEW_DEPTH: Record<string, number> = {
-    'home': 1,
-    'history': 1,
-    'stats': 1,
-    'workout': 2,
-    'exercises': 2,
-    'program': 2,
-    'nutrition': 1
-};
+// Q18: transition helpers live in hooks/useAppHistory; re-exported so existing
+// importers (tests) keep working without changes.
+export { withTransition, VIEW_DEPTH };
 
 const AppContent = () => {
     const {
         program, exercises, lang, logs, setLogs,
-        setExercises, setProgram,
-        config, rpFeedback, hasSeenOnboarding, setHasSeenOnboarding,
+        setExercises,
+        config, rpFeedback, hasSeenOnboarding,
         isAppLoading,
-        pendingCloudData, pendingCloudSections, confirmCloudSync, cancelCloudSync,
         userProfile, nutritionLogs, cardioSessions, bodyLogs, macroGoals, nutritionGoal,
         personalTemplates, customFoods
     } = useApp();
@@ -134,34 +63,16 @@ const AppContent = () => {
     const setActiveSession = useStore(state => state.setActiveSession);
     const setActiveMeso = useStore(state => state.setActiveMeso);
 
-    const { setRestTimer } = useTimerActions();
     const { user } = useAuth();
-    const { checkPro, showPaywall, setShowPaywall, featureAttempted } = usePro();
-
-    const t = TRANSLATIONS[lang];
+    const { checkPro } = usePro();
 
     const [view, setViewState] = useState<'home' | 'workout' | 'history' | 'exercises' | 'program' | 'stats' | 'summary' | 'nutrition'>('home');
     const [completedWorkoutLog, setCompletedWorkoutLog] = useState<any>(null);
-    const [showLanding, setShowLanding] = useState(!hasSeenOnboarding);
     const [showResetModal, setShowResetModal] = useState(false);
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
     const [showMesoCompleteModal, setShowMesoCompleteModal] = useState(false);
     const [showCommandPalette, setShowCommandPalette] = useState(false);
-    const [updateRegistration, setUpdateRegistration] = useState<ServiceWorkerRegistration | null>(null);
-    const [dismissedUpdate, setDismissedUpdate] = useState(false);
-    const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
-
-    const applySwUpdate = useCallback(() => {
-        setShowUpdateConfirm(false);
-        (window as any).__USER_TRIGGERED_SW_UPDATE__ = true;
-        const target = updateRegistration?.waiting || updateRegistration?.installing;
-        if (target) {
-            target.postMessage({ type: 'SKIP_WAITING' });
-        } else {
-            window.location.reload();
-        }
-    }, [updateRegistration]);
 
     // Custom Modals State
     const [validatedBackup, setValidatedBackup] = useState<GainsLabBackupV1 | null>(null);
@@ -172,31 +83,7 @@ const AppContent = () => {
     const [skippedSessionToast, setSkippedSessionToast] = useState<{ id: number; name: string; weekSnapshot: SkippedWeekSnapshot } | null>(null);
     const [showKongConvertModal, setShowKongConvertModal] = useState(false);
 
-    // Sync truncation warning — fires when cloud history is capped at 200 entries
-    const [syncTruncatedWarning, setSyncTruncatedWarning] = useState<{ kept: number; total: number } | null>(null);
-    useEffect(() => {
-        const handler = (e: Event) => {
-            const { kept, total } = (e as CustomEvent).detail;
-            setSyncTruncatedWarning({ kept, total });
-        };
-        window.addEventListener('ironlog:sync-truncated', handler);
-        return () => window.removeEventListener('ironlog:sync-truncated', handler);
-    }, []);
 
-    useEffect(() => {
-        const handleUpdateAvailable = (event: Event) => {
-            const detail = (event as CustomEvent<{ registration?: ServiceWorkerRegistration; isPreloadError?: boolean }>).detail;
-            setDismissedUpdate(false);
-            if (detail?.registration) {
-                setUpdateRegistration(detail.registration);
-            } else if (detail?.isPreloadError) {
-                setUpdateRegistration(prev => prev || ({} as any));
-            }
-        };
-
-        window.addEventListener('ironlog:update-available', handleUpdateAvailable);
-        return () => window.removeEventListener('ironlog:update-available', handleUpdateAvailable);
-    }, []);
 
     const targetViewRef = useRef(view);
     // Never mirror `view` here: this ref records the latest navigation INTENT so
@@ -273,76 +160,8 @@ const AppContent = () => {
         return actions;
     }, [activeSession, activeMeso, lang, setView]);
 
-    // History management logic: nav tabs use replaceState to keep a clean history stack;
-    // depth 2 views (workout, program, exercises) use pushState. The unified
-    // profile sheet pushes its own single entry from Layout (profile: true).
-    // After a popstate, the browser entry already matches the render, so the sync
-    // effect compares against window.history.state instead of tracking pops with
-    // a flag (a flag gets stuck when a pop changes no App state, e.g. when
-    // closing the profile sheet, and then swallows the next pushState).
-    const isFirstMountRef = useRef(true);
-
-    // Seed the initial entry ONCE. (It used to live in the listener effect
-    // below, which re-ran on every view change and overwrote the real entry —
-    // e.g. Back from program landed on home instead of the previous tab.)
-    useEffect(() => {
-        try {
-            if (typeof window !== 'undefined' && window.history) {
-                window.history.replaceState({ view: 'home' }, '', '#home');
-            }
-        } catch (e) { }
-    }, []);
-
-    useEffect(() => {
-        const handlePop = (e: PopStateEvent) => {
-            const state = e.state;
-            if (state) {
-                withTransition('back', () => {
-                    flushSync(() => {
-                        if (state.view) { targetViewRef.current = state.view; setViewState(state.view); }
-                    });
-                });
-            } else {
-                // 'home' needs no preload: flip the view atomically like setView does.
-                targetViewRef.current = 'home';
-                withTransition('back', () => {
-                    flushSync(() => {
-                        setViewState('home');
-                    });
-                });
-            }
-            window.dispatchEvent(new CustomEvent('ironlog:popstate', { detail: state }));
-        };
-        window.addEventListener('popstate', handlePop);
-        return () => window.removeEventListener('popstate', handlePop);
-    }, []);
-
-    useEffect(() => {
-        if (isFirstMountRef.current) {
-            isFirstMountRef.current = false;
-            return;
-        }
-
-        const state = { view };
-        const isNav = view === 'home' || view === 'history' || view === 'stats' || view === 'nutrition';
-
-        try {
-            if (typeof window !== 'undefined' && window.history) {
-                const current = window.history.state as { view?: string } | null;
-                // A popstate already moved the browser to the entry matching
-                // this render: writing again would fork or duplicate history.
-                // Extra keys pushed by sheets (profile: true) are ignored.
-                if (current && current.view === state.view) {
-                    return;
-                }
-                if (isNav) {
-                    window.history.replaceState(state, '', `#${view}`);
-                } else {
-                    window.history.pushState(state, '', `#${view}`);
-                }
-            }
-        } catch (e) { }
-    }, [view]);
+    // Q18: history management lives in hooks/useAppHistory.
+    useAppHistory(view, setViewState, targetViewRef);
 
     // Merge CrossFit + Calisthenics exercises into the library — runs ONCE, but only
     // AFTER IndexedDB hydration finishes (isAppLoading === false). Running it earlier was
@@ -376,85 +195,11 @@ const AppContent = () => {
         };
     }, [isAppLoading, setExercises]);
 
-    // Shared start flow for the PWA shortcut and the Android widget (Q17).
-    const runStartAction = useCallback(() => {
-        // 1. Resume active workout if one exists
-        if (activeSession) {
-            setView('workout');
-            return;
-        }
-
-        // 2. Start scheduled session from active meso if available
-        if (activeMeso) {
-            const logsForWeek = (Array.isArray(logs) ? logs : []).filter(
-                l => l.mesoId === activeMeso.id && l.week === activeMeso.week
-            );
-            const completedDays = new Set(logsForWeek.map(l => l.dayIdx));
-            const totalDays = activeMeso.programSystem?.systemId === KONG_4DAY_V1.id
-                ? 4
-                : (Array.isArray(program) ? program.length : 0);
-
-            let targetIdx = 0;
-            for (let i = 0; i < totalDays; i++) {
-                if (!completedDays.has(i)) {
-                    targetIdx = i;
-                    break;
-                }
-            }
-
-            const safeProgram = Array.isArray(program) ? program : [];
-            const dayDef = activeMeso.programSystem?.systemId === KONG_4DAY_V1.id
-                ? resolveProgramDay(KONG_4DAY_V1, activeMeso.week, targetIdx, activeMeso.programSystem.substitutions)
-                : safeProgram[targetIdx];
-
-            if (dayDef) {
-                const newSession = SessionBuilder.buildFromProgramDay(
-                    targetIdx,
-                    dayDef,
-                    activeMeso,
-                    Array.isArray(exercises) ? exercises : [],
-                    Array.isArray(logs) ? logs : [],
-                    lang,
-                    rpFeedback,
-                    config
-                );
-                if (newSession) {
-                    setActiveSession(newSession);
-                    setView('workout');
-                    return;
-                }
-            }
-        }
-
-        // 3. Fallback: Quick Start session
-        const quickSession = {
-            id: Date.now(),
-            name: lang === 'es' ? 'Sesión Rápida' : 'Quick Start Session',
-            dayIdx: -1,
-            mesoId: -1,
-            week: -1,
-            exercises: [],
-            startTime: Date.now(),
-            isDeload: false,
-        };
-        setActiveSession(quickSession);
-        setView('workout');
-    }, [activeSession, activeMeso, logs, program, exercises, lang, rpFeedback, config, setActiveSession, setView]);
-
-    // Handle PWA shortcut actions (e.g. /?action=start&source=shortcut)
-    useEffect(() => {
-        if (isAppLoading) return;
-        const params = new URLSearchParams(window.location.search);
-        const action = params.get('action');
-        if (action === 'start') {
-            const cleanUrl = window.location.pathname;
-            window.history.replaceState({}, document.title, cleanUrl);
-            runStartAction();
-        }
-    }, [isAppLoading, runStartAction]);
-
-    // Q17: widget taps run the same start flow (cold mount + warm resume).
-    useWidgetLaunchAction(!isAppLoading, runStartAction);
+    // Q18: shortcut/widget launch flow lives in hooks/useShortcutLaunch.
+    useShortcutLaunch({
+        isAppLoading, activeSession, activeMeso, logs, program, exercises,
+        lang, rpFeedback, config, setActiveSession, setView,
+    });
 
     // --- DATA MANAGEMENT ---
     const handleExport = () => {
@@ -475,33 +220,6 @@ const AppContent = () => {
         if (!checkPro("sync")) return;
 
         setShowForceSyncModal(true);
-    };
-
-    const executeForceSync = async () => {
-        if (!user) return;
-        setIsSyncing(true);
-        setShowForceSyncModal(false);
-        try {
-            await syncService.uploadState(user.uid, {
-                program, activeMeso, activeSession, exercises, logs,
-                config, rpFeedback,
-                userProfile, nutritionLogs, cardioSessions, bodyLogs, macroGoals, nutritionGoal,
-                email: user.email || null,
-                lastUpdated: Date.now(),
-            });
-            setForceSyncFeedback({
-                type: 'success',
-                message: t.forceSyncSuccess || (lang === 'en' ? 'Data synced to cloud successfully.' : 'Datos sincronizados con la nube correctamente.')
-            });
-        } catch (e: any) {
-            console.error(e);
-            setForceSyncFeedback({
-                type: 'error',
-                message: (t.forceSyncError || (lang === 'en' ? 'Failed to sync to cloud.' : 'Error al sincronizar con la nube.')) + (e?.message ? ` (${e.message})` : '')
-            });
-        } finally {
-            setIsSyncing(false);
-        }
     };
 
     const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -528,19 +246,6 @@ const AppContent = () => {
             }
         };
         reader.readAsText(file);
-    };
-
-    const confirmImport = async () => {
-        if (!validatedBackup) return;
-        try {
-            await restoreBackupToStorage(validatedBackup);
-            setValidatedBackup(null);
-            setBackupSummary(null);
-            window.location.reload();
-        } catch (err) {
-            console.error('Failed to restore backup:', err);
-            setImportError(lang === 'en' ? 'Failed to restore backup data' : 'Error al restaurar copia de seguridad');
-        }
     };
 
     const handleSkipSession = (dayIdx: number) => {
@@ -598,438 +303,68 @@ const AppContent = () => {
     return (
         <>
             {/* New Setup Wizard Logic */}
-            {!hasSeenOnboarding && (
-                <Suspense fallback={<LoadingSpinner />}>
-                    {showLanding ? (
-                        <Landing
-                            onStart={() => setShowLanding(false)}
-                            onLogin={() => setShowAuthModal(true)}
-                        />
-                    ) : (
-                        <SetupWizard
-                            onComplete={(outcome) => {
-                                setHasSeenOnboarding(true);
-                                if (outcome.mode === 'custom') {
-                                    targetViewRef.current = 'program'; setViewState('program');
-                                } else if (outcome.mode === 'freestyle') {
-                                    const freeSession = {
-                                        id: Date.now(),
-                                        dayIdx: -1,
-                                        name: lang === 'es' ? 'Sesión Libre' : 'Freestyle Session',
-                                        startTime: Date.now(),
-                                        mesoId: -1,
-                                        week: -1,
-                                        exercises: [],
-                                    };
-                                    setActiveSession(freeSession);
-                                    targetViewRef.current = 'workout'; setViewState('workout');
-                                } else {
-                                    targetViewRef.current = 'home'; setViewState('home');
-                                }
-                            }}
-                        />
-                    )}
-                </Suspense>
-            )}
+            <AppOnboarding
+                targetViewRef={targetViewRef}
+                setViewState={setViewState}
+                setShowAuthModal={setShowAuthModal}
+            />
+
 
             {/* Main App Content - Only visible if onboarding is done */}
             {hasSeenOnboarding && (
-                <>
-                    {view === 'workout' && activeSession ? (
-                        <LazyViewBoundary lang={lang} resetKey="workout">
-                        <Suspense fallback={<LoadingSpinner />}>
-                            <WorkoutView
-                                onFinish={() => {
-                                    if (!activeSession) return;
-
-                                    const result = completeWorkoutPipeline({
-                                        activeSession,
-                                        activeMeso,
-                                        program: Array.isArray(program) ? program : [],
-                                        logs: Array.isArray(logs) ? logs : [],
-                                        userProfile,
-                                    });
-
-                                    setLogs(result.updatedLogs);
-
-                                    // Q13: today's training reminder (if any) is satisfied.
-                                    notifyWorkoutDone();
-
-                                    // Q6: automatic local snapshot (max 1 per 24 h, last 3 kept).
-                                    void maybeCreateAutoBackup({
-                                        program: Array.isArray(program) ? program : [],
-                                        exercises: Array.isArray(exercises) ? exercises : [],
-                                        logs: result.updatedLogs,
-                                        activeMeso: result.updatedMeso ?? activeMeso,
-                                        userProfile, nutritionLogs, cardioSessions, bodyLogs,
-                                        macroGoals, nutritionGoal, personalTemplates, customFoods,
-                                        rpFeedback, config,
-                                    });
-
-                                    if (result.isMesoComplete) {
-                                        setShowMesoCompleteModal(true);
-                                    } else if (!result.isDetached && result.updatedMeso && result.updatedMeso !== activeMeso) {
-                                        setActiveMeso(result.updatedMeso);
-                                    }
-
-                                    setRestTimer({ active: false, timeLeft: 0, duration: 0, endAt: 0 });
-                                    setCompletedWorkoutLog(result.log);
-                                    // Cleared atomically with the view flip: clearing before the async
-                                    // transition exposes view==='workout' with no session (blank Layout).
-                                    setView('summary', () => setActiveSession(null));
-                                }}
-                                onDiscard={() => {
-                                    setView('home', () => setActiveSession(null));
-                                }}
-                                onBack={() => setView('home')}
-                            />
-                        </Suspense>
-                        </LazyViewBoundary>
-                    ) : view === 'summary' && completedWorkoutLog ? (
-                        <LazyViewBoundary lang={lang} resetKey="summary">
-                        <Suspense fallback={<FullScreenLoading />}>
-                            <SessionSummaryView
-                                log={completedWorkoutLog}
-                                onClose={() => {
-                                    setCompletedWorkoutLog(null);
-                                    setView('home');
-                                }}
-                            />
-                        </Suspense>
-                        </LazyViewBoundary>
-                    ) : view === 'exercises' ? (
-                        <Suspense fallback={<LoadingSpinner />}>
-                            <LazyViewBoundary lang={lang} resetKey="exercises"><ExercisesView onBack={() => { setView('home'); window.dispatchEvent(new CustomEvent('gainslab:open-profile', { detail: { section: 'training' } })); }} /></LazyViewBoundary>
-                        </Suspense>
-                    ) : view === 'program' ? (
-                        <Suspense fallback={<LoadingSpinner />}>
-                            <LazyViewBoundary lang={lang} resetKey="program"><ProgramEditView onBack={() => setView('home')} /></LazyViewBoundary>
-                        </Suspense>
-                    ) : (
-                        <Layout
-                            view={view as any}
-                            setView={setView as any}
-                            onOpenProgram={() => setView('program')}
-                            onOpenExercises={() => setView('exercises')}
-                            onReset={() => setShowResetModal(true)}
-                            onExport={handleExport}
-                            onForceSync={handleForceSync}
-                            onImportFile={handleImportFile}
-                            onLogin={() => setShowAuthModal(true)}
-                            isSyncing={isSyncing}
-                            onOpenCommandPalette={() => setShowCommandPalette(true)}
-                        >
-                            {view === 'home' && <HomeView
-                                startSession={(idx) => {
-                                    if (!activeMeso) { setView('program'); return; }
-
-                                    // CRITICAL FIX: Check if an active session already exists for this day/meso
-                                    // If so, just resume it instead of overwriting.
-                                    if (activeSession && activeSession.mesoId === activeMeso.id && activeSession.dayIdx === idx) {
-                                        setView('workout');
-                                        return;
-                                    }
-
-                                    const safeProgram = Array.isArray(program) ? program : [];
-                                    const dayDef = activeMeso.programSystem?.systemId === KONG_4DAY_V1.id
-                                        ? resolveProgramDay(KONG_4DAY_V1, activeMeso.week, idx, activeMeso.programSystem.substitutions)
-                                        : safeProgram[idx];
-                                    if (!dayDef) return;
-
-                                    const newSession = SessionBuilder.buildFromProgramDay(
-                                        idx,
-                                        dayDef,
-                                        activeMeso,
-                                        Array.isArray(exercises) ? exercises : [],
-                                        Array.isArray(logs) ? logs : [],
-                                        lang,
-                                        rpFeedback,
-                                        config
-                                    );
-
-                                    if (newSession) {
-                                        setActiveSession(newSession);
-                                        setView('workout');
-                                    }
-                                }}
-                                onEditProgram={() => {
-                                    if (activeMeso?.programSystem?.systemId === KONG_4DAY_V1.id) {
-                                        setShowKongConvertModal(true);
-                                        return;
-                                    }
-                                    setView('program');
-                                }}
-                                onSkipSession={handleSkipSession}
-                            />}
-                            {view === 'history' && (
-                                <Suspense fallback={<LoadingSpinner />}>
-                                    <LazyViewBoundary lang={lang} resetKey={view}><HistoryView /></LazyViewBoundary>
-                                </Suspense>
-                            )}
-                            {view === 'stats' && (
-                                <Suspense fallback={<LoadingSpinner />}>
-                                    <LazyViewBoundary lang={lang} resetKey={view}><StatsView /></LazyViewBoundary>
-                                </Suspense>
-                            )}
-                            {view === 'nutrition' && (
-                                <Suspense fallback={<LoadingSpinner />}>
-                                    <LazyViewBoundary lang={lang} resetKey={view}><NutriView /></LazyViewBoundary>
-                                </Suspense>
-                            )}
-                        </Layout>
-                    )}
-                </>
+                <AppViews
+                    view={view}
+                    setView={setView}
+                    activeSession={activeSession}
+                    setActiveSession={setActiveSession}
+                    completedWorkoutLog={completedWorkoutLog}
+                    setCompletedWorkoutLog={setCompletedWorkoutLog}
+                    onExport={handleExport}
+                    onForceSync={handleForceSync}
+                    onImportFile={handleImportFile}
+                    isSyncing={isSyncing}
+                    setShowAuthModal={setShowAuthModal}
+                    setShowCommandPalette={setShowCommandPalette}
+                    setShowResetModal={setShowResetModal}
+                    setShowMesoCompleteModal={setShowMesoCompleteModal}
+                    setShowKongConvertModal={setShowKongConvertModal}
+                    onSkipSession={handleSkipSession}
+                />
             )}
 
-            {syncTruncatedWarning && (
-                <div className="fixed top-safe left-0 right-0 z-[200] flex justify-center px-4 pt-3 pointer-events-none">
-                    <div role="status" aria-live="polite" className="pointer-events-auto flex items-center gap-3 bg-amber-950/90 border border-amber-500/40 text-amber-200 text-xs font-semibold px-4 py-3 rounded-2xl shadow-xl backdrop-blur-md max-w-sm w-full">
-                        <Icon name="AlertTriangle" size={16} className="text-amber-400 shrink-0" />
-                        <span className="flex-1">
-                            {lang === 'es'
-                                ? `Historial en nube limitado a ${syncTruncatedWarning.kept} sesiones (de ${syncTruncatedWarning.total}). El historial local está completo.`
-                                : `Cloud history capped at ${syncTruncatedWarning.kept} of ${syncTruncatedWarning.total} sessions. Local history is complete.`}
-                        </span>
-                        <button onClick={() => setSyncTruncatedWarning(null)} className="text-amber-400 hover:text-white transition-colors">
-                            <Icon name="X" size={16} />
-                        </button>
-                    </div>
-                </div>
-            )}
 
-            {updateRegistration && !dismissedUpdate && (
-                <div className="fixed top-safe left-0 right-0 z-[210] flex justify-center px-4 pt-3 pointer-events-none">
-                    <div role="status" aria-live="polite" className="pointer-events-auto flex items-center gap-3 bg-zinc-950/95 border border-primary-500/30 text-zinc-100 text-xs font-semibold px-4 py-3 rounded-2xl shadow-xl backdrop-blur-md max-w-md w-full">
-                        <Icon name="Download" size={16} className="text-primary-400 shrink-0" />
-                        <span className="flex-1">
-                            {t.updateBannerReady}
-                        </span>
-                        <button
-                            onClick={() => {
-                                if (activeSession) {
-                                    setShowUpdateConfirm(true);
-                                    return;
-                                }
-                                applySwUpdate();
-                            }}
-                            className="rounded-xl bg-primary-500 px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-black transition-colors hover:bg-primary-400"
-                        >
-                            {t.updateBannerAction}
-                        </button>
-                        <button
-                            onClick={() => setDismissedUpdate(true)}
-                            className="text-zinc-500 hover:text-white transition-colors"
-                            aria-label={t.updateBannerDismiss}
-                        >
-                            <Icon name="X" size={16} />
-                        </button>
-                    </div>
-                </div>
-            )}
+            <AppBanners activeSession={activeSession} />
 
-            {showUpdateConfirm && updateRegistration && (
-                <Suspense fallback={null}>
-                    <ConfirmModal
-                        isOpen={true}
-                        title={t.updateConfirmTitle}
-                        description={t.updateConfirmActiveWorkout}
-                        confirmText={t.updateBannerAction}
-                        cancelText={t.cancel}
-                        onConfirm={applySwUpdate}
-                        onCancel={() => setShowUpdateConfirm(false)}
-                        variant="primary"
-                    />
-                </Suspense>
-            )}
 
             <RestTimerOverlay />
 
-            {/* Command Palette — primary "start a workout" entry point */}
-            <Suspense fallback={null}>
-                <CommandPalette
-                    isOpen={showCommandPalette}
-                    onClose={() => setShowCommandPalette(false)}
-                    actions={commandActions}
-                />
-            </Suspense>
-
-            {/* Standard Modal Overlays */}
-            {showMesoCompleteModal && (
-                activeMeso?.programSystem?.systemId === KONG_4DAY_V1.id ? <Suspense fallback={null}><ProgramCompletionView meso={activeMeso} logs={logs} lang={lang} onFinish={() => { setActiveMeso(null); setShowMesoCompleteModal(false); }} onKeep={() => { setActiveMeso(null); setShowMesoCompleteModal(false); }} /></Suspense> :
-                <Suspense fallback={null}>
-                    <ConfirmModal
-                        isOpen={true}
-                        title={t.finishMesoTitle || "Complete Mesocycle?"}
-                        description={t.finishMesoDesc || "You've completed the final week. Great work! Conclude the mesocycle now?"}
-                        confirmText={t.complete || "Complete"}
-                        cancelText={t.notYet || "Not Yet"}
-                        onConfirm={() => {
-                            setActiveMeso(null);
-                            setShowMesoCompleteModal(false);
-                        }}
-                        onCancel={() => setShowMesoCompleteModal(false)}
-                    />
-                </Suspense>
-            )}
-            {showAuthModal && (
-                <Suspense fallback={null}>
-                    <AuthModal onClose={() => setShowAuthModal(false)} />
-                </Suspense>
-            )}
-
-            {showPaywall && (
-                <Suspense fallback={null}>
-                    <PaywallModal onClose={() => setShowPaywall(false)} feature={featureAttempted} />
-                </Suspense>
-            )}
-
-            {/* SYNC CONFLICT MODAL */}
-            <Suspense fallback={null}>
-            <ConfirmModal
-                isOpen={!!pendingCloudData}
-                title={lang === 'en' ? "Cloud Sync" : "Sincronización Nube"}
-                description={(() => {
-                    const friendlySections = pendingCloudSections.map(sec => ((t.syncSections as any)?.[sec]) || sec);
-                    const sectionsText = friendlySections.length > 0
-                        ? (lang === 'en' ? ` in: ${friendlySections.join(', ')}` : ` en: ${friendlySections.join(', ')}`)
-                        : '';
-                    return lang === 'en'
-                        ? `Newer cloud data found${sectionsText}. Download it? This will overwrite those local sections.`
-                        : `Se encontraron datos más nuevos en la nube${sectionsText}. ¿Descargar? Esto sobrescribirá esas secciones locales.`;
-                })()}
-                confirmText={lang === 'en' ? "Download" : "Descargar"}
-                cancelText={lang === 'en' ? "Keep Local" : "Mantener Local"}
-                onConfirm={confirmCloudSync}
-                onCancel={cancelCloudSync}
-                variant="primary"
+            {/* Q18: all modal dialogs live in components/app/AppModals. */}
+            <AppModals
+                showCommandPalette={showCommandPalette}
+                setShowCommandPalette={setShowCommandPalette}
+                commandActions={commandActions}
+                showMesoCompleteModal={showMesoCompleteModal}
+                setShowMesoCompleteModal={setShowMesoCompleteModal}
+                showAuthModal={showAuthModal}
+                setShowAuthModal={setShowAuthModal}
+                validatedBackup={validatedBackup}
+                setValidatedBackup={setValidatedBackup}
+                backupSummary={backupSummary}
+                setBackupSummary={setBackupSummary}
+                importError={importError}
+                setImportError={setImportError}
+                showForceSyncModal={showForceSyncModal}
+                setShowForceSyncModal={setShowForceSyncModal}
+                forceSyncFeedback={forceSyncFeedback}
+                setForceSyncFeedback={setForceSyncFeedback}
+                showResetModal={showResetModal}
+                setShowResetModal={setShowResetModal}
+                showKongConvertModal={showKongConvertModal}
+                setShowKongConvertModal={setShowKongConvertModal}
+                setIsSyncing={setIsSyncing}
+                setView={setView}
             />
 
-            </Suspense>
-
-            {/* IMPORT CONFIRM MODAL */}
-            <Suspense fallback={null}>
-                <ConfirmModal
-                    isOpen={!!validatedBackup}
-                    title={t.import}
-                    description={backupSummary ? (
-                        lang === 'en'
-                            ? `Restore ${backupSummary.programsCount} routines, ${backupSummary.exercisesCount} exercises, ${backupSummary.logsCount} logs, and ${backupSummary.nutritionDaysCount} nutrition days? This will overwrite local data.`
-                            : `¿Restaurar ${backupSummary.programsCount} rutinas, ${backupSummary.exercisesCount} ejercicios, ${backupSummary.logsCount} entrenamientos y ${backupSummary.nutritionDaysCount} días de nutrición? Esto sobrescribirá los datos locales.`
-                    ) : t.importConfirm}
-                    confirmText={t.import}
-                    cancelText={t.cancel}
-                    onConfirm={confirmImport}
-                    onCancel={() => { setValidatedBackup(null); setBackupSummary(null); }}
-                    variant="danger"
-                />
-            </Suspense>
-
-            {/* IMPORT ERROR MODAL */}
-            {importError && (
-                <Suspense fallback={null}>
-                    <ConfirmModal
-                        isOpen={true}
-                        title={lang === 'en' ? 'Import Error' : 'Error de Importación'}
-                        description={importError}
-                        confirmText={lang === 'en' ? 'OK' : 'Entendido'}
-                        cancelText=""
-                        variant="primary"
-                        onConfirm={() => setImportError(null)}
-                        onCancel={() => setImportError(null)}
-                    />
-                </Suspense>
-            )}
-
-            {/* FORCE SYNC MODAL */}
-            <Suspense fallback={null}>
-            <ConfirmModal
-                isOpen={showForceSyncModal}
-                title={t.forceSyncTitle}
-                description={t.forceSyncConfirm}
-                confirmText={t.upload}
-                cancelText={t.cancel}
-                onConfirm={executeForceSync}
-                onCancel={() => setShowForceSyncModal(false)}
-            />
-
-            </Suspense>
-
-            {/* FORCE SYNC FEEDBACK MODAL */}
-            {forceSyncFeedback && (
-                <Suspense fallback={null}>
-                    <ConfirmModal
-                        isOpen={true}
-                        title={forceSyncFeedback.type === 'success' ? t.syncComplete : t.syncError}
-                        description={forceSyncFeedback.message}
-                        confirmText={t.understood}
-                        cancelText=""
-                        variant={forceSyncFeedback.type === 'success' ? 'primary' : 'danger'}
-                        onConfirm={() => setForceSyncFeedback(null)}
-                        onCancel={() => setForceSyncFeedback(null)}
-                    />
-                </Suspense>
-            )}
-
-            {/* SKIPPED SESSION TOAST WITH UNDO */}
-            {skippedSessionToast && (
-                <div 
-                    role="status"
-                    aria-live="polite"
-                    className="fixed bottom-[calc(6rem+var(--safe-area-bottom))] left-1/2 -translate-x-1/2 z-toast flex items-center gap-3 px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-700 shadow-2xl text-sm text-white animate-in fade-in slide-in-from-bottom-2"
-                >
-                    <span>{skippedSessionToast.name}: {t.skipped}</span>
-                    <button
-                        type="button"
-                        onClick={handleUndoSkip}
-                        className="px-2.5 py-1 rounded-lg bg-primary-500/20 text-primary-400 font-semibold text-xs hover:bg-primary-500/30 transition-colors"
-                    >
-                        {t.undo}
-                    </button>
-                </div>
-            )}
-
-            {/* FACTORY RESET MODAL */}
-            {showResetModal && (
-                <Suspense fallback={null}>
-                    <ConfirmModal
-                        isOpen={true}
-                        title={t.dangerZone}
-                        description={t.deleteDataConfirm}
-                        confirmText={t.delete}
-                        cancelText={t.cancel}
-                        variant="danger"
-                        onConfirm={async () => {
-                            await resetLocalData();
-                            window.location.reload();
-                        }}
-                        onCancel={() => setShowResetModal(false)}
-                    />
-                </Suspense>
-            )}
-
-            {/* KONG CONVERSION MODAL */}
-            {showKongConvertModal && (
-                <Suspense fallback={null}>
-                    <ConfirmModal
-                        isOpen={true}
-                        title={t.convertKongTitle}
-                        description={lang === 'es'
-                            ? 'La definición oficial de KONG no se edita directamente para preservar la metodología original. ¿Deseas convertir tu ciclo actual en una rutina editable?'
-                            : 'The official KONG definition cannot be edited directly to preserve the original methodology. Do you want to convert this cycle into an editable personal routine?'}
-                        confirmText={t.convertKongConfirm}
-                        cancelText={t.cancel}
-                        onConfirm={() => {
-                            if (!activeMeso) return;
-                            const { editableProgram, convertedMeso } = convertKongToPersonalRoutine(activeMeso, lang);
-                            setProgram(editableProgram);
-                            setActiveMeso(convertedMeso);
-                            setShowKongConvertModal(false);
-                            setView('program');
-                        }}
-                        onCancel={() => setShowKongConvertModal(false)}
-                    />
-                </Suspense>
-            )}
 
         </>
     );

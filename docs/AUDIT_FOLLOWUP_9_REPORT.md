@@ -506,3 +506,34 @@ Estado persistente: se actualiza y pushea al cerrar CADA tarea.
   `test:run` 579/579, `lint:a11y` limpio, Playwright 43/43 (puerto 5199).
 - No verificado: tap real, instalación del widget, título actualizado y
   arranque frío/caliente en dispositivo (`adb devices` vacío).
+
+## Q18 — Partir monolitos (sin cambios de comportamiento)
+
+- `App.tsx` 49.381 → ~15,7 KB: historial/popstate a
+  `hooks/useAppHistory.ts` (4,5 KB; `withTransition`/`VIEW_DEPTH`
+  re-exportados desde App para no tocar importadores), atajo PWA + widget a
+  `hooks/useShortcutLaunch.ts` (4,0 KB; `runStartAction` movido verbatim),
+  vistas + ciclo de sesión a `components/app/AppViews.tsx` (10,7 KB),
+  onboarding a `AppOnboarding.tsx` (2,4 KB), banners a `AppBanners.tsx`
+  (6,1 KB), modales a `AppModals.tsx` (13,9 KB), spinners a `AppLoading.tsx`.
+  `ConfirmModal`/`SessionBuilder` re-agregados tras el split (fallo
+  detectado por tsc, no por tests). AppContext intacto.
+- `ProfileSheet.tsx` 59.809 → orquestador 3,6 KB + 7 secciones en
+  `components/profile/sections/` (Account 8,3 / Body 3,6 / Training 17,9 /
+  Appearance 9,1 / Data 10,4 / Advanced 4,8 / Danger 1,1 KB) +
+  `useSyncStatusText` + `ColorPill` extraído del cuerpo del componente.
+  Contenido movido verbatim; `aria-label="Download"/"Delete"` en inglés
+  eliminados (el nombre accesible ahora coincide con el texto visible
+  traducido).
+- Ningún archivo resultante pasa de 20 KB (máximo: TrainingSection 17,9 KB).
+  Ningún test modificado (cero cambios en tests/): la suite existente es el
+  contrato de "sin cambios de comportamiento".
+- Chunk de entrada: pre-Q18 (stash) `index-DMSjlxVl.js` 340,37 kB
+  (gzip 108,41) → post-Q18 `index-B5TXjf1T.js` 342,38 kB (gzip 109,64):
+  +0,59 % raw / +1,13 % gzip, dentro del ≤2 %.
+- Evidencia: build OK (tsc + vite + precache: 5 critical + 58 lazy),
+  `test:run` 579/579 (110 ficheros, sin editar), `lint:a11y` limpio,
+  Playwright 43/43 en puerto aislado 5199 (5173 ocupado por otro proyecto;
+  config temporal eliminada tras la corrida).
+- No verificado: nada pendiente propio de Q18; el flujo de atajo/widget se
+  ejercita en e2e (offlineShell con `?action=start`) y siguió verde.
