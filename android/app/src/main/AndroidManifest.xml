@@ -40,6 +40,23 @@
             android:enabled="true"
             android:exported="false" />
 
+        <!-- Q13: workout reminder alarm target. Explicit intents only. -->
+        <receiver
+            android:name=".WorkoutReminderReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
+        <!-- Q13: re-chains the reminder after reboot. Receives the protected
+             system BOOT_COMPLETED broadcast, so it must stay exported. -->
+        <receiver
+            android:name=".WorkoutReminderBootReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -56,4 +73,6 @@
     <!-- Exact rest-timer alarms (user-revocable; the plugin falls back to
          setAndAllowWhileIdle when not granted). NOT USE_EXACT_ALARM (Play-restricted). -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!-- Q13: re-chain workout reminders after reboot (normal permission). -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 </manifest>

@@ -29,8 +29,12 @@ import com.getcapacitor.PermissionState;
 import com.getcapacitor.Plugin;
 
 import java.lang.ref.WeakReference;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 import com.getcapacitor.PluginCall;
@@ -68,6 +72,18 @@ public class NativeBridgePlugin extends Plugin {
     private static final int ACTION_ADD_30_REQUEST_CODE = 8821;
     private static final int ACTION_SKIP_REQUEST_CODE = 8822;
     private static final String TIMER_COMMAND_EVENT = "restTimerCommand";
+
+    // Q13: weekly workout reminders. Inexact alarms (setAndAllowWhileIdle) are
+    // plenty; no exact-alarm permission involved.
+    private static final String REMINDER_ACTION = "com.gainslab.pro.WORKOUT_REMINDER";
+    private static final String REMINDER_CHANNEL = "gainslab_workout_reminder";
+    private static final int REMINDER_REQUEST_CODE = 8831;
+    private static final int REMINDER_NOTIFICATION_ID = 8832;
+    private static final String KEY_REM_ENABLED = "rem_enabled";
+    private static final String KEY_REM_DAYS = "rem_days_csv";
+    private static final String KEY_REM_HOUR = "rem_hour";
+    private static final String KEY_REM_MINUTE = "rem_minute";
+    private static final String KEY_TRAINED_DATE = "rem_trained_date";
 
     // Weak link to the live plugin so the action receiver can emit JS events
     // when the bridge is alive; commands always wait in prefs as backup.
@@ -301,6 +317,163 @@ public class NativeBridgePlugin extends Plugin {
     }
 
     /**
+     * Q13: persist the reminder config (days are JS getDay() numbers) and
+     * schedule the next occurrence with an inexact alarm.
+     */
+    @PluginMethod
+    public void scheduleWorkoutReminder(PluginCall call) {
+        JSArray daysArray = call.getArray("days", new JSArray());
+        StringBuilder csv = new StringBuilder();
+        for (int i = 0; i < daysArray.length(); i++) {
+            try {
+                int day = daysArray.getInt(i);
+                if (day < 0 || day > 6) continue;
+                if (csv.length() > 0) csv.append(',');
+                csv.append(day);
+            } catch (Exception ignored) {
+                // Skip malformed entries; an empty set cancels below.
+            }
+        }
+        Integer hourObj = call.getInt("hour");
+        Integer minuteObj = call.getInt("minute");
+        int hour = hourObj != null ? hourObj : 18;
+        int minute = minuteObj != null ? minuteObj : 0;
+
+        getContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+                .putBoolean(KEY_REM_ENABLED, true)
+                .putString(KEY_REM_DAYS, csv.toString())
+                .putInt(KEY_REM_HOUR, hour)
+                .putInt(KEY_REM_MINUTE, minute)
+                .apply();
+        scheduleNextWorkoutReminder(getContext());
+        call.resolve();
+    }
+
+    /** Q13: disable reminders and drop any pending reminder alarm. */
+    @PluginMethod
+    public void cancelWorkoutReminder(PluginCall call) {
+        getContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+                .putBoolean(KEY_REM_ENABLED, false)
+                .apply();
+        cancelReminderAlarm(getContext());
+        call.resolve();
+    }
+
+    /** Q13: JS calls this when a session finishes; today's reminder is skipped. */
+    @PluginMethod
+    public void markWorkoutDone(PluginCall call) {
+        String date = call.getString("date", "");
+        getContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+                .putString(KEY_TRAINED_DATE, date != null ? date : "")
+                .apply();
+        call.resolve();
+    }
+
+    /**
+     * Q13: schedule the next reminder strictly in the future (mirrors the JS
+     * computeNextReminder: scan today + 7 days, local time). Static so the
+     * reminder and boot receivers can chain without a live bridge.
+     */
+    static void scheduleNextWorkoutReminder(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        boolean enabled = prefs.getBoolean(KEY_REM_ENABLED, false);
+        String daysCsv = prefs.getString(KEY_REM_DAYS, "");
+        int hour = prefs.getInt(KEY_REM_HOUR, 18);
+        int minute = prefs.getInt(KEY_REM_MINUTE, 0);
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        if (!enabled || daysCsv == null || daysCsv.isEmpty() || alarmManager == null) {
+            cancelReminderAlarm(context);
+            return;
+        }
+        // JS getDay() (0=Sunday..6=Saturday) -> Calendar DAY_OF_WEEK (1..7).
+        boolean[] wanted = new boolean[8];
+        for (String part : daysCsv.split(",")) {
+            try {
+                int jsDay = Integer.parseInt(part.trim());
+                if (jsDay >= 0 && jsDay <= 6) wanted[jsDay + 1] = true;
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        long now = System.currentTimeMillis();
+        Long trigger = null;
+        Calendar base = Calendar.getInstance();
+        for (int offset = 0; offset < 8; offset++) {
+            Calendar candidate = (Calendar) base.clone();
+            candidate.add(Calendar.DAY_OF_YEAR, offset);
+            candidate.set(Calendar.HOUR_OF_DAY, hour);
+            candidate.set(Calendar.MINUTE, minute);
+            candidate.set(Calendar.SECOND, 0);
+            candidate.set(Calendar.MILLISECOND, 0);
+            if (candidate.getTimeInMillis() <= now) continue;
+            if (wanted[candidate.get(Calendar.DAY_OF_WEEK)]) {
+                trigger = candidate.getTimeInMillis();
+                break;
+            }
+        }
+        if (trigger == null) {
+            cancelReminderAlarm(context);
+            return;
+        }
+        alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger, reminderPendingIntent(context));
+    }
+
+    private static PendingIntent reminderPendingIntent(Context context) {
+        Intent intent = new Intent(context, WorkoutReminderReceiver.class);
+        intent.setAction(REMINDER_ACTION);
+        int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) flags |= PendingIntent.FLAG_IMMUTABLE;
+        return PendingIntent.getBroadcast(context, REMINDER_REQUEST_CODE, intent, flags);
+    }
+
+    private static void cancelReminderAlarm(Context context) {
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        if (alarmManager == null) return;
+        PendingIntent pendingIntent = reminderPendingIntent(context);
+        alarmManager.cancel(pendingIntent);
+        pendingIntent.cancel();
+    }
+
+    /**
+     * Q13: reminder alarm fired. Chains the next occurrence FIRST so today's
+     * notification (or a skip) can never break the weekly chain, then posts
+     * unless JS already marked today as trained.
+     */
+    public static void onWorkoutReminderFired(Context context) {
+        scheduleNextWorkoutReminder(context);
+
+        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        String trained = prefs.getString(KEY_TRAINED_DATE, "");
+        String today = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(new Date());
+        if (trained != null && trained.equals(today)) return;
+
+        postReminderNotification(context);
+    }
+
+    private static void postReminderNotification(Context context) {
+        if (!canPostNotifications(context)) return;
+        createNotificationChannel(context);
+
+        Notification.Builder builder;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            builder = new Notification.Builder(context, REMINDER_CHANNEL);
+        } else {
+            builder = new Notification.Builder(context)
+                    .setPriority(Notification.PRIORITY_DEFAULT);
+        }
+        builder.setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle(context.getString(R.string.reminder_title))
+                .setContentText(context.getString(R.string.reminder_body))
+                .setCategory(Notification.CATEGORY_REMINDER)
+                .setAutoCancel(true)
+                .setOnlyAlertOnce(true);
+        PendingIntent contentIntent = launchContentIntent(context);
+        if (contentIntent != null) builder.setContentIntent(contentIntent);
+
+        NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (manager != null) manager.notify(REMINDER_NOTIFICATION_ID, builder.build());
+    }
+
+    /**
      * Q8: exact-alarm state for the JS settings row. Below API 31 there is no
      * user-facing toggle, so it reports granted. sdkInt lets JS hide the row
      * where the permission concept does not exist.
@@ -517,6 +690,16 @@ public class NativeBridgePlugin extends Plugin {
             liveChannel.setSound(null, null);
             liveChannel.setShowBadge(false);
             manager.createNotificationChannel(liveChannel);
+        }
+
+        if (manager.getNotificationChannel(REMINDER_CHANNEL) == null) {
+            NotificationChannel reminderChannel = new NotificationChannel(
+                    REMINDER_CHANNEL,
+                    context.getString(R.string.reminder_channel_name),
+                    NotificationManager.IMPORTANCE_DEFAULT
+            );
+            reminderChannel.setDescription(context.getString(R.string.reminder_channel_desc));
+            manager.createNotificationChannel(reminderChannel);
         }
     }
 

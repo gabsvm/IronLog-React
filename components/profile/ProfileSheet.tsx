@@ -16,6 +16,7 @@ import { ErrorLogCard } from './ErrorLogCard';
 import { StoragePersistRow } from './StoragePersistRow';
 import { AutoBackupList } from './AutoBackupList';
 import { ExactAlarmRow } from './ExactAlarmRow';
+import { ReminderSettingsRow } from './ReminderSettingsRow';
 import { PhilosophyModal } from '../ui/PhilosophyModal';
 import { AdminControlPanel } from '../settings/AdminControlPanel';
 import { AdminTemplateManager } from '../admin/AdminTemplateManager';
@@ -34,6 +35,13 @@ import {
 } from '../../services/trainingCsv';
 import type { ExerciseMappingDecision, ParsedCsvImport } from '../../services/trainingCsv';
 import type { WeightUnit } from '../../types';
+import { Capacitor } from '@capacitor/core';
+import {
+    loadReminderConfig,
+    saveReminderConfig,
+    syncReminderSchedule,
+    type WorkoutReminderConfig,
+} from '../../utils/reminders';
 
 const PaywallModal = React.lazy(() => import('../pro/PaywallModal').then(m => ({ default: m.PaywallModal })));
 const ConfirmModal = React.lazy(() => import('../ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
@@ -94,6 +102,14 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
     const [csvError, setCsvError] = useState<string | null>(null);
     const [csvStatus, setCsvStatus] = useState<string | null>(null);
     const [csvKnownKeys, setCsvKnownKeys] = useState<ReadonlySet<string>>(new Set());
+    const [reminderConfig, setReminderConfig] = useState<WorkoutReminderConfig>(() => loadReminderConfig());
+    const isNativeAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
+
+    const handleReminderChange = (next: WorkoutReminderConfig) => {
+        setReminderConfig(next);
+        saveReminderConfig(next);
+        void syncReminderSchedule(next);
+    };
 
 
     // External entry points can request a section (e.g. back from the
@@ -663,6 +679,9 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
                             </div>
                         )}
                         <ExactAlarmRow lang={lang} />
+                        {isNativeAndroid && (
+                            <ReminderSettingsRow lang={lang} config={reminderConfig} onChange={handleReminderChange} />
+                        )}
                     </div>
                 </div>
 

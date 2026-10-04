@@ -22,6 +22,7 @@ import { resetLocalData } from './services/localDataReset';
 import { convertKongToPersonalRoutine } from './programs/engine/ProgramConversion';
 import { completeWorkoutPipeline } from './services/workoutCompletionService';
 import { exportCurrentBackup, maybeCreateAutoBackup } from './services/autoBackup';
+import { notifyWorkoutDone } from './utils/reminders';
 import {
     validateAndMigrateBackup,
     restoreBackupToStorage,
@@ -642,6 +643,9 @@ const AppContent = () => {
                                     });
 
                                     setLogs(result.updatedLogs);
+
+                                    // Q13: today's training reminder (if any) is satisfied.
+                                    notifyWorkoutDone();
 
                                     // Q6: automatic local snapshot (max 1 per 24 h, last 3 kept).
                                     void maybeCreateAutoBackup({

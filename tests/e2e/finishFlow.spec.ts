@@ -77,6 +77,13 @@ test.describe('Finish / discard without blank screen (F2)', () => {
 
         await expect(page.getByText(ERROR_BOUNDARY_TEXT)).toHaveCount(0);
         expect(await readEmptySamples(page)).toEqual([]);
+
+        // Q13: finishing a session stamps the trained-day marker (local half of
+        // the reminder skip; the native flag travels with it on Android).
+        const todayLocal = new Date();
+        const pad = (n: number) => String(n).padStart(2, '0');
+        const expected = `${todayLocal.getFullYear()}-${pad(todayLocal.getMonth() + 1)}-${pad(todayLocal.getDate())}`;
+        expect(await page.evaluate(() => localStorage.getItem('il_trained_day_v1'))).toBe(expected);
     });
 
     test('discard workout returns home with #root never empty', async ({ page }) => {

@@ -20,7 +20,8 @@ Estado persistente: se actualiza y pushea al cerrar CADA tarea.
 | Q9 | `6833d94` | hecho |
 | Q10 | `40fc801` | hecho |
 | Q11 | `268d020` | hecho |
-| Q12 | (este commit) | hecho |
+| Q12 | `93ee29b` | hecho |
+| Q13 | (este commit) | hecho |
 
 ## Q0 — Preparación
 
@@ -322,3 +323,35 @@ Estado persistente: se actualiza y pushea al cerrar CADA tarea.
 - Evidencia: build OK, `test:run` 486/486 (96 ficheros), `lint:a11y` limpio, Playwright 42/42
   en puerto aislado 5199.
 - No verificado: exports reales de Hevy/Strong del dueño; Web Share del CSV en dispositivo.
+
+## Q13 — Recordatorios de entrenamiento (nativo Android)
+
+- JS `utils/reminders.ts`: config local `il_cfg_reminders_v1` (nunca se sincroniza: las
+  alarmas son por dispositivo), `computeNextReminder` (estrictamente futuro, hora local,
+  barrido hoy+7), marcador `il_trained_day_v1` con fecha local (nunca UTC), `syncReminderSchedule`
+  y `notifyWorkoutDone` (solo hablan al bridge en Android nativo; best-effort con catch).
+- UI: `ReminderSettingsRow` (toggle + 7 chips Lun–Dom + `<input type="time">`, textos
+  `t.reminders` es/en) en ProfileSheet → Entrenamiento, solo Android nativo (oculto en
+  web/PWA). Icono `Bell` agregado al mapa (import estático).
+- `App.tsx` onFinish llama `notifyWorkoutDone()` (junto al snapshot Q6): estampa el día
+  local y avisa al bridge.
+- Nativo: `schedule/cancelWorkoutReminder` + `markWorkoutDone` en NativeBridgePlugin;
+  cómputo del próximo disparo en Java (espejo del JS, días getDay→Calendar); alarma con
+  `setAndAllowWhileIdle` (inexacta a propósito, sin permiso de alarma exacta);
+  `WorkoutReminderReceiver` (no exportado) re-encadena PRIMERO y luego notifica salvo día
+  entrenado; canal propio `gainslab_workout_reminder` IMPORTANCE_DEFAULT; tap abre la app
+  (contentIntent existente); `WorkoutReminderBootReceiver` (exportado, BOOT_COMPLETED) +
+  permiso RECEIVE_BOOT_COMPLETED (normal). Textos del canal/notificación en values y values-es.
+- Tests: `reminders` (8: cálculo hoy/pasado/wrap/exacto-nulo/días inválidos, fecha local,
+  persistencia+fallback, sync nativo/web, marker+bridge), `reminderSettingsRow` (4: toggle,
+  chips por getDay, hora, en). E2E: `finishFlow` ahora exige `il_trained_day_v1` == hoy local
+  tras terminar.
+- Fail-proof: `reminders.test.ts` falló antes del módulo (TDD); sin la llamada en App.tsx
+  (stash) el test de finish falla en el marcador; con ella pasa.
+- Evidencia: `assembleDebug` + `:app:lintDebug` BUILD SUCCESSFUL (solo 2 warnings InlinedApi
+  preexistentes de Q8/Q9); aapt confirma receivers (Reminder exported=0x0, Boot
+  exported=true), intent-filter BOOT_COMPLETED y permiso RECEIVE_BOOT_COMPLETED.
+  `assembleRelease` no corre sin las vars de firma (tema de Q22, no del código).
+  Web: build OK, `test:run` 498/498 (98 ficheros), `lint:a11y` limpio, Playwright 42/42.
+- No verificado: disparo real, skip por día entrenado, reboot y tap en dispositivo
+  (`adb devices` vacío).

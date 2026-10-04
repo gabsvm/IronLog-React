@@ -6,4 +6,8 @@
     <string name="custom_url_scheme">com.gainslab.pro</string>
     <string name="rest_action_add_30">+30 s</string>
     <string name="rest_action_skip">Skip</string>
+    <string name="reminder_channel_name">Workout reminders</string>
+    <string name="reminder_channel_desc">Weekly reminders to train on your days</string>
+    <string name="reminder_title">Time to train</string>
+    <string name="reminder_body">Your workout is waiting. Open GainsLab to start.</string>
 </resources>
