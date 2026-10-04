@@ -8,8 +8,9 @@ import { ExerciseCardStats } from './ExerciseCardStats';
 import { ExerciseCardMenu } from './ExerciseCardMenu';
 import { ExerciseCardSets } from './ExerciseCardSets';
 import { ExerciseProtocolBanners } from './ExerciseProtocolBanners';
-import { getTranslated, roundWeight } from '../../utils';
-import { formatWeight, PROGRESSION_STEP, resolveWeightUnit, toDisplay, unitLabel as unitLabelFor } from '../../utils/units';
+import { getTranslated, parseTargetReps, roundWeight } from '../../utils';
+import { formatWeight, resolveWeightUnit, toDisplay, unitLabel as unitLabelFor } from '../../utils/units';
+import { formatProgressionReason, recommendProgression } from '../../utils/recommendationEngine';
 import { resolveMuscleLabel } from '../../utils/muscle';
 import { triggerHaptic, playTimerFinishSound } from '../../utils/audio';
 import { isWorkingSet } from '../../utils/workoutProgress';
@@ -193,15 +194,17 @@ export const SortableExerciseCard = React.memo(({
             if (!pastEx) continue;
             const working = (pastEx.sets || []).filter((set: any) => set.type !== 'warmup' && set.type !== 'avt_hop');
             if (working.length === 0) return null;
-            if (!working.every((set: any) => set.completed)) return null;
-            const avgWeight = working.reduce((sum: number, set: any) => sum + Number(set.weight || 0), 0) / working.length;
-            if (avgWeight <= 0) return null;
-            const target = ex.targetReps ? parseInt(String(ex.targetReps), 10) : null;
-            if (!target) return { step: PROGRESSION_STEP[unit] };
-            return working.every((set: any) => Number(set.reps) >= target) ? { step: PROGRESSION_STEP[unit] } : null;
+            // Q15: full up/hold/down table with a reason line (null cases and
+            // the no-range step match the legacy rule).
+            return recommendProgression({
+                sets: working,
+                range: parseTargetReps(ex.targetReps),
+                rirTarget: typeof config?.rpTargetRIR === 'number' ? config.rpTargetRIR : 2,
+                unit,
+            });
         }
         return null;
-    }, [logs, ex.id, ex.targetReps, isCardio, ex.isBodyweight, ex.isIsometric, unit]);
+    }, [logs, ex.id, ex.targetReps, isCardio, ex.isBodyweight, ex.isIsometric, unit, config?.rpTargetRIR]);
 
 
 
@@ -343,9 +346,9 @@ export const SortableExerciseCard = React.memo(({
 
     const heroMetric = overloadSuggest
         ? {
-            icon: 'TrendingUp',
-            label: lang === 'es' ? `+${overloadSuggest.step} ${unitLabel.toLowerCase()} sugerido` : `+${overloadSuggest.step} ${unitLabel.toLowerCase()} suggested`,
-            tone: 'text-cyan-300',
+            icon: overloadSuggest.action === 'up' ? 'TrendingUp' : overloadSuggest.action === 'down' ? 'TrendingDown' : 'Minus',
+            label: formatProgressionReason(t.progression, overloadSuggest, unit, lang),
+            tone: overloadSuggest.action === 'up' ? 'text-cyan-300' : overloadSuggest.action === 'down' ? 'text-amber-300' : 'text-zinc-300',
         }
         : historicalBest
             ? { icon: 'Trophy', label: historicalBest, tone: 'text-amber-300' }

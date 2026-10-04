@@ -5,6 +5,8 @@ import { MuscleGroup } from '../types';
 import { ProgressChart, ChartDataPoint } from '../components/stats/ProgressChart';
 import { SymmetryRadar } from '../components/stats/SymmetryRadar';
 import { MuscleHeatmapGrid } from '../components/stats/MuscleHeatmapGrid';
+import { WeeklyReportCard } from '../components/stats/WeeklyReportCard';
+import { buildWeeklyReport, filterWeekPRs } from '../utils/weeklyReport';
 import { getTranslated } from '../utils';
 import { Icon } from '../components/ui/Icon';
 import { useStatsWorker, ChartMetric } from '../hooks/useStatsWorker';
@@ -232,7 +234,7 @@ export const PersonalRecordRow: React.FC<PersonalRecordRowProps> = ({
 );
 
 export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader = false, scope: statsScope }) => {
-    const { logs, lang, exercises, tutorialProgress, markTutorialSeen, userProfile, config } = useApp();
+    const { logs, lang, exercises, tutorialProgress, markTutorialSeen, userProfile, config, rpFeedback } = useApp();
     const activeMeso = useStore(state => state.activeMeso);
     const t = TRANSLATIONS[lang];
     const unit = resolveWeightUnit(config);
@@ -519,6 +521,16 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
 
     const [showAllPRs, setShowAllPRs] = useState(false);
     const displayedPRs = showAllPRs ? prHistory : prHistory.slice(0, 6);
+
+    // Q15: plan-scoped weekly report (meso coordinates, never the stats scope).
+    const weeklyReport = useMemo(
+        () => (activeMeso ? buildWeeklyReport({ logs: safeLogs, meso: activeMeso, rpFeedback }) : null),
+        [activeMeso, safeLogs, rpFeedback],
+    );
+    const weekPRs = useMemo(
+        () => (activeMeso ? filterWeekPRs(prHistory.map(([, row]) => row), safeLogs, activeMeso.id, activeMeso.week) : 0),
+        [activeMeso, prHistory, safeLogs],
+    );
 
     const metricButtons = (() => {
         const isIsometric = (currentEx as any)?.isIsometric;
@@ -843,6 +855,14 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
 
             {(!activeTab || activeTab === 'overview') && (
                 <>
+                    {weeklyReport && (
+                        <WeeklyReportCard
+                            report={weeklyReport}
+                            weekPRs={weekPRs}
+                            weekLabel={`${t.week} ${weeklyReport.week}`}
+                            lang={lang}
+                        />
+                    )}
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <div id="tut-radar-chart" className="glass-card flex min-h-[320px] h-full flex-col overflow-hidden rounded-[1.7rem] border border-white/6 p-5 shadow-md">
                             <h3 className="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-500">

@@ -405,3 +405,49 @@ Estado persistente: se actualiza y pushea al cerrar CADA tarea.
   overview re-corre al fijar selección y parpadea `t.loading` bajo carga).
 - No verificado: UX real de fusión con biblioteca grande del dueño; nombres
   de alias regionales fuera del mapa curado.
+
+## Q15 — Progresión y reporte semanal
+
+- Aclaración de premisa: `utils/recommendationEngine.ts` es un recomendador de
+  PROGRAMAS (plantilla según días/objetivo/tiempo), no de progresión por
+  ejercicio. Se mantuvo intacto (goldens nuevos) y se extendió el módulo con
+  la progresión; la regla real estaba inline en `SortableExerciseCardImpl`
+  (`overloadSuggest`: up-or-nothing con `parseInt` del rango).
+- Nuevo `recommendProgression` (puro, en recommendationEngine): tabla
+  up/hold/down sobre las series de trabajo de la última sesión. Up = todo en
+  el tope del rango con RIR ≤ objetivo (dato del campo `rpe`, que la app
+  rotula RIR; sin RIR vale solo reps, como antes); down = todo bajo el piso
+  (−5 %); hold = resto (+1 rep). Nulos legacy intactos (vacío, incompletas,
+  peso 0, reps inválidas, sin rango → step). Paso por unidad Q11 (2,5 kg/5 lb).
+- `formatProgressionReason` + `t.progression` es/en: "Llegaste a 12 reps con
+  RIR 2: +2,5 kg" (coma localizada), hold/down en ambos idiomas. El hero de la
+  tarjeta ahora muestra el motivo con icono/tono por acción (reemplaza el
+  ternario `lang==='es'` viejo). Rango vía `parseTargetReps` ("8-12"→tope 12;
+  antes `parseInt` usaba 8 como objetivo único).
+- Nuevo `utils/weeklyReport.ts` (puro): `buildWeeklyReport` (coordenadas
+  meso/semana, alcance plan; sesiones hechas/planificadas, series por músculo
+  con zonas MV/MEV/MAV/MRV — mismos umbrales que `getVolumeZone` —, cambio %
+  vs semana previa, bajo MEV / sobre MRV, descarga por semana final o
+  tendencia de feedback desfavorable: ≥2 ajustes negativos o performance
+  promedio ≤2; nunca si ya hay descarga; CARDIO y saltados fuera) y
+  `filterWeekPRs` (PRs con fecha dentro del rango logueado de la semana).
+- UI: `WeeklyReportCard` arriba de Stats → Resumen (solo con meso activo):
+  3 métricas, filas por músculo con badge de zona, líneas bajo/sobre,
+  banner de descarga, estado vacío. Nombres de músculo con sets en el mismo
+  nodo ("Espalda 4") para no romper los `getByText` exactos existentes; stat
+  boxes con flex (el e2e del heatmap cuenta `div.grid-cols-3`).
+- Tests: `progression` (19: 7 goldens recommendProgram + 8 tabla + 4 formato),
+  `weeklyReport` (10: conteos/zonas/%/MRV/ignorados/sin baseline/descarga
+  final/feedback/ya-descargando/vacío + 2 PRs), `progressionUI` (4: líneas
+  up/hold/down + nulo legacy), `weeklyReportUI` (3: tarjeta/descarga/vacío).
+  Suite 559/559 (106 ficheros), aserciones existentes intactas.
+- Fail-proof: sin el fix (stash) fallan 18 (12 progression + 3 progressionUI
+  + 3 weeklyReportUI); el nulo legacy pasa en ambos (diseñado así);
+  `weeklyReport` falló antes del módulo (TDD).
+- Incidentes: statsScopeControl rompió 2 veces por duplicación de textos
+  (spans de músculo, luego nodo directo en línea Bajo MEV) — resuelto del
+  lado del componente; heatmapGrid e2e rompió por `grid-cols-3` — flex.
+- Evidencia: build OK, `test:run` 559/559, `lint:a11y` limpio, Playwright
+  42/42 en puerto aislado 5199.
+- No verificado: RIR objetivo distinto de 2 en uso real; feedback con keys
+  numéricas vs string en datos viejos (el código acepta ambas).
