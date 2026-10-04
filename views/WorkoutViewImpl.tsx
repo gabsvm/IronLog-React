@@ -276,7 +276,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
         if (!newDef) return;
 
         const safeLogs = Array.isArray(logs) ? logs : [];
-        const lastSets = getLastLogForExercise(newExId, safeLogs);
+        const lastSets = getLastLogForExercise(newExId, safeLogs, exercises);
 
         const newInstanceId = Date.now();
         const initialSets = Array(3).fill(null).map((_, i) => {
@@ -309,7 +309,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
         if (!newDef) return;
 
         const safeLogs = Array.isArray(logs) ? logs : [];
-        const lastSets = getLastLogForExercise(newExId, safeLogs);
+        const lastSets = getLastLogForExercise(newExId, safeLogs, exercises);
 
         let replacedSlotId: string | undefined;
         updateSession(prev => !prev ? null : {
@@ -563,6 +563,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                                         stageConfig={stageConfig}
                                         dragEnabled={true}
                                         logs={logs}
+                                        library={exercises}
                                         tutorialId={idx === 0 ? 'tut-set-type' : undefined}
                                     />
                                 );

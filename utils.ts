@@ -1,5 +1,6 @@
 
-import { Lang, Log, WorkoutSet, MesoType } from "./types";
+import { Lang, Log, WorkoutSet, MesoType, ExerciseDef } from "./types";
+import { exerciseIdGroup } from "./utils/exerciseLibrary";
 
 // Monotonically increasing unique integer ID — safe against Date.now() collisions
 // when multiple IDs are generated in the same millisecond (e.g. bulk set creation).
@@ -56,16 +57,18 @@ export const getTranslated = (val: string | { en: string; es: string } | null | 
     return String(val);
 };
 
-export const getLastLogForExercise = (exerciseId: string, logs: Log[]): WorkoutSet[] | null => {
+export const getLastLogForExercise = (exerciseId: string, logs: Log[], library?: ExerciseDef[]): WorkoutSet[] | null => {
     if (!logs || !Array.isArray(logs)) return null;
     const validLogs = logs.filter(l => l && typeof l === 'object');
     const sortedLogs = [...validLogs].sort((a, b) => (b.endTime || 0) - (a.endTime || 0));
-    
+    // Merged duplicates share history: match any id in the canonical group.
+    const groupIds = library ? new Set(exerciseIdGroup(library, String(exerciseId)).map(String)) : null;
+
     for (const log of sortedLogs) {
         if (log.skipped) continue;
         const exercises = log.exercises;
         if (!Array.isArray(exercises)) continue;
-        const ex = exercises.find(e => e && e.id === exerciseId);
+        const ex = exercises.find(e => e && (groupIds ? groupIds.has(String(e.id)) : e.id === exerciseId));
         if (ex && ex.sets && Array.isArray(ex.sets) && ex.sets.some(s => s && s.completed)) {
             return ex.sets;
         }

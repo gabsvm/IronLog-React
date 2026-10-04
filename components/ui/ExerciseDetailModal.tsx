@@ -5,6 +5,7 @@ import { TRANSLATIONS } from '../../constants';
 import { ExerciseDef, SessionExercise, VolumeCountingMode } from '../../types';
 import { Icon } from './Icon';
 import { getTranslated } from '../../utils';
+import { exerciseIdGroup } from '../../utils/exerciseLibrary';
 import { MuscleTag } from '../workout/MuscleTag';
 import { Button } from './Button';
 import { ProgressChart } from '../stats/ProgressChart';
@@ -148,7 +149,7 @@ const YouTubeCard: React.FC<{ videoId: string; title: string; youtubeUrl: string
 };
 
 export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exercise, onClose }) => {
-    const { lang, logs, setExercises, setLogs } = useApp();
+    const { lang, logs, exercises, setExercises, setLogs } = useApp();
     const t = TRANSLATIONS[lang];
     const [activeTab, setActiveTab] = useState<'guide' | 'history'>('guide');
     const [volumeCountingMode, setVolumeCountingMode] = useState<VolumeCountingMode>(exercise.volumeCountingMode || 'total');
@@ -167,14 +168,15 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
             setChartLoading(true);
             const metric = exercise.muscle === 'CARDIO' ? 'duration' : '1rm';
             const safeLogs = Array.isArray(logs) ? logs : [];
-            calculateChartData(safeLogs, exercise.id, metric).then(points => {
+            // Merged duplicates share one history chart (canonical group).
+            calculateChartData(safeLogs, exerciseIdGroup(exercises, String(exercise.id)), metric).then(points => {
                 setChartData(points);
                 setChartLoading(false);
             });
         }
         // `calculateChartData` from useStatsWorker is stable across renders.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeTab, isWorkerReady, exercise.id, logs, exercise.muscle]);
+    }, [activeTab, isWorkerReady, exercise.id, logs, exercise.muscle, exercises]);
 
     const translatedName = getTranslated(exercise.name, lang);
     const translatedInstructions = getTranslated(exercise.instructions, lang);

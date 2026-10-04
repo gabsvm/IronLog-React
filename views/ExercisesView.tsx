@@ -6,9 +6,16 @@ import { Icon } from '../components/ui/Icon';
 import { Button } from '../components/ui/Button';
 import { MuscleGroup, ExerciseDef, VolumeCountingMode } from '../types';
 import { getTranslated } from '../utils';
+import {
+    matchesExerciseQuery,
+    mergeExercises,
+    suggestDuplicatePairs,
+    unmergeExercise,
+} from '../utils/exerciseLibrary';
 import { Virtuoso } from 'react-virtuoso';
 import { ExerciseDetailModal } from '../components/ui/ExerciseDetailModal';
 import { triggerHaptic } from '../utils/audio';
+import { statsCache } from '../services/statsCache';
 import {
     analyzeExerciseReferences,
     archiveExercise,
@@ -45,6 +52,12 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
     const [unreferencedDeleteId, setUnreferencedDeleteId] = useState<string | null>(null);
     const [replacingExerciseId, setReplacingExerciseId] = useState<string | null>(null);
     const [pendingReplacementCandidate, setPendingReplacementCandidate] = useState<ExerciseDef | null>(null);
+
+    // Merge State (Q14): mergingExerciseId is the duplicate that folds into
+    // mergeCandidate. Logs are never rewritten; reads resolve through the
+    // pointer and caches are invalidated so charts recompute.
+    const [mergingExerciseId, setMergingExerciseId] = useState<string | null>(null);
+    const [mergeCandidate, setMergeCandidate] = useState<ExerciseDef | null>(null);
 
     // Create State
     const [newName, setNewName] = useState('');
@@ -134,6 +147,36 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
         triggerHaptic('success');
     };
 
+    const handleStartMerge = (exId: string) => {
+        setMergingExerciseId(exId);
+        setMergeCandidate(null);
+    };
+
+    const handleCancelMerge = () => {
+        setMergingExerciseId(null);
+        setMergeCandidate(null);
+    };
+
+    const handleConfirmMerge = () => {
+        if (!mergingExerciseId || !mergeCandidate) return;
+        setExercises(prev => mergeExercises(prev, mergingExerciseId, mergeCandidate.id));
+        void statsCache.invalidateChartCache();
+        setMergingExerciseId(null);
+        setMergeCandidate(null);
+        triggerHaptic('success');
+    };
+
+    const handleUnmerge = (exId: string) => {
+        setExercises(prev => unmergeExercise(prev, exId));
+        void statsCache.invalidateChartCache();
+        triggerHaptic('success');
+    };
+
+    const duplicateSuggestions = useMemo(
+        () => suggestDuplicatePairs(exercises).slice(0, 3),
+        [exercises],
+    );
+
     const filteredExercises = useMemo(() => {
         return exercises
             .filter(ex => {
@@ -153,11 +196,9 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
                 if (selectedMuscle !== 'ALL' && ex.muscle !== selectedMuscle) {
                     return false;
                 }
-                if (searchQuery.trim()) {
-                    const name = getTranslated(ex.name, lang).toLowerCase();
-                    return name.includes(searchQuery.toLowerCase().trim());
-                }
-                return true;
+                // Accent-insensitive search across names in both languages plus
+                // library aliases (Q14).
+                return matchesExerciseQuery(ex, searchQuery);
             })
             .sort((a, b) => {
                 const na = getTranslated(a.name, lang);
@@ -169,6 +210,10 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
     const Row = (index: number, ex: ExerciseDef) => {
         const isBuiltIn = isBuiltInExercise(ex.id, exercises);
         const isArchived = !!ex.archived;
+        const isMerged = !!ex.mergedInto;
+        const mergeTargetName = isMerged
+            ? getTranslated(exercises.find(e => e.id === ex.mergedInto)?.name ?? ex.mergedInto ?? '', lang)
+            : '';
 
         return (
             <div className="px-4 py-1.5" key={ex.id}>
@@ -192,6 +237,14 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
                             {!isBuiltIn && !isArchived && (
                                 <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-primary-500/20 text-primary-400 border border-primary-500/30">
                                     {lang === 'es' ? 'Personalizado' : 'Custom'}
+                                </span>
+                            )}
+                            {isMerged && (
+                                <span
+                                    className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-violet-500/20 text-violet-400 border border-violet-500/30"
+                                    title={t.merge.mergedInto.replace('{target}', String(mergeTargetName))}
+                                >
+                                    {t.merge.badge}
                                 </span>
                             )}
                         </div>
@@ -234,6 +287,28 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
                                 <Icon name="Lock" size={16} />
                             </div>
                         )}
+
+                        {isMerged ? (
+                            <button
+                                type="button"
+                                onClick={() => handleUnmerge(ex.id)}
+                                className="p-2 text-zinc-400 hover:text-violet-400 transition-colors rounded-lg hover:bg-violet-500/10"
+                                title={t.merge.unmerge}
+                                aria-label={`${t.merge.unmerge}: ${getTranslated(ex.name, lang)}`}
+                            >
+                                <Icon name="Unlink" size={18} />
+                            </button>
+                        ) : !isArchived ? (
+                            <button
+                                type="button"
+                                onClick={() => handleStartMerge(ex.id)}
+                                className="p-2 text-zinc-400 hover:text-violet-400 transition-colors rounded-lg hover:bg-violet-500/10"
+                                title={t.merge.button}
+                                aria-label={`${t.merge.button}: ${getTranslated(ex.name, lang)}`}
+                            >
+                                <Icon name="Link" size={18} />
+                            </button>
+                        ) : null}
 
                         <button
                             type="button"
@@ -338,6 +413,48 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
                             ))}
                         </div>
                     </div>
+
+                    {/* Duplicate suggestions (Q14) */}
+                    {duplicateSuggestions.length > 0 && (
+                        <div className="shrink-0 px-4 pt-3 space-y-2">
+                            <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">
+                                {t.merge.suggestionsTitle}
+                            </p>
+                            {duplicateSuggestions.map(s => {
+                                const source = exercises.find(e => e.id === s.sourceId);
+                                const target = exercises.find(e => e.id === s.targetId);
+                                if (!source || !target) return null;
+                                return (
+                                    <div
+                                        key={`${s.sourceId}>${s.targetId}`}
+                                        className="flex items-center justify-between gap-2 rounded-xl border border-violet-500/30 bg-violet-500/10 px-3 py-2"
+                                    >
+                                        <div className="min-w-0 flex-1">
+                                            <p className="truncate text-xs font-bold text-zinc-900 dark:text-white">
+                                                {getTranslated(source.name, lang)}
+                                                <span className="mx-1 text-violet-400">→</span>
+                                                {getTranslated(target.name, lang)}
+                                            </p>
+                                            <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-500">
+                                                {s.reason === 'same-name' ? t.merge.reasonSameName : t.merge.reasonSharedAlias}
+                                            </p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setMergingExerciseId(source.id);
+                                                setMergeCandidate(target);
+                                            }}
+                                            className="shrink-0 rounded-lg bg-violet-500/20 px-3 py-1.5 text-xs font-bold text-violet-300 hover:bg-violet-500/30"
+                                            aria-label={`${t.merge.confirmAction}: ${getTranslated(source.name, lang)} → ${getTranslated(target.name, lang)}`}
+                                        >
+                                            {t.merge.confirmAction}
+                                        </button>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
 
                     {/* List */}
                     <div className="flex-1 overflow-hidden relative">
@@ -520,6 +637,40 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Exercise Selector for Merge Target (merged defs are hidden there) */}
+            {mergingExerciseId && !mergeCandidate && (
+                <Suspense fallback={null}>
+                    <ExerciseSelector
+                        excludeIds={[mergingExerciseId]}
+                        onSelect={(newExId, newExDef) => {
+                            const candidate = newExDef || exercises.find(e => e.id === newExId);
+                            if (candidate) {
+                                setMergeCandidate(candidate);
+                            }
+                        }}
+                        onClose={handleCancelMerge}
+                    />
+                </Suspense>
+            )}
+
+            {/* Confirm Merge Modal */}
+            {mergingExerciseId && mergeCandidate && (
+                <Suspense fallback={null}>
+                    <ConfirmModal
+                        isOpen={true}
+                        title={t.merge.confirmTitle}
+                        description={t.merge.confirmBody
+                            .replace('{source}', String(getTranslated(exercises.find(e => e.id === mergingExerciseId)?.name || 'Custom', lang)))
+                            .replace('{target}', String(getTranslated(mergeCandidate.name, lang)))}
+                        onConfirm={handleConfirmMerge}
+                        onCancel={handleCancelMerge}
+                        confirmText={t.merge.confirmAction}
+                        cancelText={t.cancel}
+                        variant="primary"
+                    />
+                </Suspense>
             )}
 
             {/* Exercise Selector for Reference Replacement */}

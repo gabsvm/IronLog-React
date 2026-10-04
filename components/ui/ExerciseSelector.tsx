@@ -6,6 +6,7 @@ import { Icon } from './Icon';
 import { MuscleGroup, ExerciseDef, VolumeCountingMode } from '../../types';
 import { Button } from './Button';
 import { getTranslated } from '../../utils';
+import { isSelectorVisible, matchesExerciseQuery } from '../../utils/exerciseLibrary';
 import { Virtuoso } from 'react-virtuoso';
 import { Sheet } from './Sheet';
 import { getFirebaseFirestoreServices } from '../../lib/firebaseLoader';
@@ -38,6 +39,9 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
         return exercises
             .filter(ex => !excludeIds.includes(ex.id))
             .filter(ex => !ex.archived)
+            // Merged-away duplicates stay hidden: their history reads through
+            // the surviving exercise.
+            .filter(isSelectorVisible)
             .filter(ex => {
                 if (sourceFilter) {
                     return (ex as any).source === sourceFilter;
@@ -48,8 +52,9 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
                 return !isNilsson && !isSpecialCatalog;
             })
             .filter(ex => {
-                const name = getTranslated(ex.name, lang);
-                const matchesSearch = name.toLowerCase().includes(deferredSearch.toLowerCase());
+                // Accent-insensitive search across names in both languages plus
+                // library aliases (Q14).
+                const matchesSearch = matchesExerciseQuery(ex, deferredSearch);
                 const matchesMuscle = filterMuscle === 'ALL' || ex.muscle === filterMuscle;
                 return matchesSearch && matchesMuscle;
             })

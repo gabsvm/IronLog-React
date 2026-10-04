@@ -1,6 +1,7 @@
-import { Log, WorkoutSet } from '../types';
+import { ExerciseDef, Log, WorkoutSet } from '../types';
 import { estimate1RM } from '../utils';
 import { getEffectiveSetLoad, getLogBodyWeight } from './trainingMetrics';
+import { resolveExerciseId } from './exerciseLibrary';
 
 export interface ExerciseHistorySummary {
     lastNote: string | null;
@@ -43,12 +44,24 @@ const normalizeBodyWeight = (value?: number) => {
 const cacheKeyForBodyWeight = (value?: number) => value == null ? 'bw:none' : `bw:${value}`;
 const createSummary = (): ExerciseHistorySummary => ({ ...EMPTY_SUMMARY });
 
+/** Merge pointers that affect canonicalization, for the cache key. */
+const mergeSignature = (library?: readonly ExerciseDef[]): string => {
+    if (!library) return 'mg:none';
+    const pairs: string[] = [];
+    for (const def of library) {
+        if (def?.mergedInto) pairs.push(`${def.id}>${def.mergedInto}`);
+    }
+    pairs.sort();
+    return `mg:${pairs.join(',')}`;
+};
+
 export const buildExerciseHistoryIndex = (
     logs: Log[],
     fallbackBodyWeight?: number,
+    library?: readonly ExerciseDef[],
 ): Map<string, ExerciseHistorySummary> => {
     const normalizedFallback = normalizeBodyWeight(fallbackBodyWeight);
-    const cacheKey = cacheKeyForBodyWeight(normalizedFallback);
+    const cacheKey = `${cacheKeyForBodyWeight(normalizedFallback)}|${mergeSignature(library)}`;
     const bucket = historyCache.get(logs);
     const cached = bucket?.get(cacheKey);
     if (cached) return cached;
@@ -66,7 +79,11 @@ export const buildExerciseHistoryIndex = (
 
         for (const exercise of log.exercises) {
             if (exercise?.id == null) continue;
-            const exerciseId = String(exercise.id);
+            // Merged duplicates accumulate under their canonical id; reads never
+            // rewrite the stored logs.
+            const exerciseId = library
+                ? resolveExerciseId(library, String(exercise.id))
+                : String(exercise.id);
             let summary = result.get(exerciseId);
             if (!summary) {
                 summary = createSummary();
@@ -135,16 +152,19 @@ export const getExerciseHistorySummary = (
     logs: Log[],
     exerciseId: string,
     fallbackBodyWeight?: number,
+    library?: readonly ExerciseDef[],
 ): ExerciseHistorySummary => {
     if (!Array.isArray(logs) || logs.length === 0 || !exerciseId) return EMPTY_SUMMARY;
-    return buildExerciseHistoryIndex(logs, fallbackBodyWeight).get(String(exerciseId)) || EMPTY_SUMMARY;
+    const canonicalId = library ? resolveExerciseId(library, String(exerciseId)) : String(exerciseId);
+    return buildExerciseHistoryIndex(logs, fallbackBodyWeight, library).get(canonicalId) || EMPTY_SUMMARY;
 };
 
 export const getHistoricalBest1RMIndex = (
     logs: Log[],
     fallbackBodyWeight?: number,
+    library?: readonly ExerciseDef[],
 ): Map<string, number> => {
-    const summaries = buildExerciseHistoryIndex(logs, fallbackBodyWeight);
+    const summaries = buildExerciseHistoryIndex(logs, fallbackBodyWeight, library);
     const best = new Map<string, number>();
     for (const [exerciseId, summary] of summaries) {
         if (summary.bestEffective1RM > 0) best.set(exerciseId, summary.bestEffective1RM);

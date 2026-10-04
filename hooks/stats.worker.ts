@@ -33,6 +33,11 @@ self.onmessage = function(e: MessageEvent) {
 
     if (type === 'CALCULATE_CHART') {
         const dataPoints: any[] = [];
+        // Merged duplicates share one chart: callers pass the canonical group
+        // (plain ids from older callers still work via the single-id path).
+        const wantedIds = new Set(
+            (Array.isArray(exerciseId) ? exerciseId : [exerciseId]).map((id: any) => String(id))
+        );
 
         // Do not sort/clone full log objects. Aggregate matching points first and
         // sort the much smaller output array at the end.
@@ -40,12 +45,13 @@ self.onmessage = function(e: MessageEvent) {
             if (!log || log.skipped) continue;
             if (activeMesoId && log.mesoId !== activeMesoId) continue;
             const logBodyWeight = getLogBodyWeight(log, userBodyWeight);
-            const ex = (log.exercises || []).find((candidate: any) => String(candidate.id) === String(exerciseId));
-            if (!ex) continue;
+            const matches = (log.exercises || []).filter((candidate: any) => wantedIds.has(String(candidate.id)));
+            if (matches.length === 0) continue;
 
             let bestValue = 0;
             let bestSetDetails = { w: 0, r: 0 };
 
+            for (const ex of matches) {
             if ((metric as MetricType) === '1rm') {
                 for (const s of (ex.sets || [])) {
                     if (s.completed && !s.skipped && (s.weight || s.weight === 0 || s.weight === '0') && s.reps) {
@@ -79,6 +85,7 @@ self.onmessage = function(e: MessageEvent) {
                 for (const s of (ex.sets || [])) {
                     if (s.completed && !s.skipped && s.distance) bestValue += Number(s.distance);
                 }
+            }
             }
 
             if (bestValue > 0) {

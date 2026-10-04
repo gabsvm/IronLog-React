@@ -23,7 +23,9 @@ const makeCompletedSet = (patch: Partial<WorkoutSet>): WorkoutSet => ({
  * one cached history index and feed it at most two synthetic log entries.
  */
 export const SortableExerciseCard = React.memo((props: SortableExerciseCardProps) => {
-    const { logs, exercise } = props;
+    // NOTE: the library arrives as a prop (not via useApp) so AppContext
+    // updates cannot pierce this memo and re-render every card (R1).
+    const { logs, exercise, library } = props;
 
     const programTargetSummary = useMemo(() => {
         if (!exercise?.programSlotId || !Array.isArray(exercise.sets) || exercise.sets.length === 0) return null;
@@ -41,7 +43,7 @@ export const SortableExerciseCard = React.memo((props: SortableExerciseCardProps
     const compactHistory = useMemo<Log[]>(() => {
         if (!Array.isArray(logs) || logs.length === 0 || exercise?.id == null) return [];
 
-        const summary = getExerciseHistorySummary(logs, String(exercise.id));
+        const summary = getExerciseHistorySummary(logs, String(exercise.id), undefined, library);
         const synthetic: any[] = [];
         let bestSet: WorkoutSet | null = null;
 
@@ -96,7 +98,7 @@ export const SortableExerciseCard = React.memo((props: SortableExerciseCardProps
         }
 
         return synthetic as Log[];
-    }, [logs, exercise.id, exercise.isBodyweight, exercise.isIsometric, exercise.programSlotId]);
+    }, [logs, library, exercise.id, exercise.isBodyweight, exercise.isIsometric, exercise.programSlotId]);
 
     const displayExercise = useMemo(
         () => programTargetSummary ? { ...exercise, targetReps: programTargetSummary } : exercise,

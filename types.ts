@@ -55,6 +55,10 @@ export interface ExerciseDef {
   source?: 'nilsson_bw';         // Origin tag (e.g. Nick Nilsson Best Bodyweight Exercises)
   isCustom?: boolean;            // User-created exercise
   archived?: boolean;            // Archived exercise (hidden from selectors, preserved for references)
+  /** Q14: extra search names (matched normalized, like the curated map). */
+  aliases?: string[];
+  /** Q14: id this exercise was merged into (reads resolve to it; logs untouched). */
+  mergedInto?: string;
 }
 
 export type SetType = 'regular' | 'myorep' | 'myorep_match' | 'cluster' | 'top' | 'backoff' | 'giant' | 'warmup' | 'avt_hop' | 'emom' | 'drop' | 'rest_pause' | 'time_volume' | 'triple_add';

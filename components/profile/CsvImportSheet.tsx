@@ -3,6 +3,7 @@ import { Sheet } from '../ui/Sheet';
 import { Button } from '../ui/Button';
 import { TRANSLATIONS, MUSCLE_GROUPS } from '../../constants';
 import { getTranslated } from '../../utils';
+import { isSelectorVisible } from '../../utils/exerciseLibrary';
 import { unitLabel } from '../../utils/units';
 import type { ExerciseDef, MuscleGroup, WeightUnit } from '../../types';
 import type {
@@ -66,9 +67,12 @@ export const CsvImportSheet: React.FC<CsvImportSheetProps> = ({
 
     const sortedLibrary = useMemo(
         () =>
-            [...library].sort((a, b) =>
-                getTranslated(a.name, lang).localeCompare(getTranslated(b.name, lang))
-            ),
+            // Merged-away duplicates are not offered as mapping targets.
+            [...library]
+                .filter(isSelectorVisible)
+                .sort((a, b) =>
+                    getTranslated(a.name, lang).localeCompare(getTranslated(b.name, lang))
+                ),
         [library, lang]
     );
 

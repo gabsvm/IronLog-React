@@ -38,6 +38,8 @@ interface SortableExerciseCardProps {
     stageConfig: any;
     dragEnabled?: boolean;
     logs: import('../../types').Log[];
+    /** Full exercise library for merged-history resolution (optional; wrapper use only). */
+    library?: import('../../types').ExerciseDef[];
     tutorialId?: string;
     isExpanded?: boolean;
     onToggleExpand?: (id: number) => void;

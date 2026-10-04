@@ -355,3 +355,53 @@ Estado persistente: se actualiza y pushea al cerrar CADA tarea.
   Web: build OK, `test:run` 498/498 (98 ficheros), `lint:a11y` limpio, Playwright 42/42.
 - No verificado: disparo real, skip por día entrenado, reboot y tap en dispositivo
   (`adb devices` vacío).
+
+## Q14 — Biblioteca de ejercicios (búsqueda + fusión sin reescribir)
+
+- `types.ts`: `aliases?: string[]` y `mergedInto?: string` en `ExerciseDef`.
+- Nuevo `constants/exerciseAliases.ts`: mapa curado en↔es (banca, sentadilla,
+  peso muerto, remo, militar, curl, fondos, dominadas, extensiones, hip thrust…).
+- Nuevo `utils/exerciseLibrary.ts` (puro): `normalizeExerciseName` (minúsculas,
+  sin acentos, sin puntuación), `exerciseSearchNames` (nombre en+es + alias
+  propios + curados), `matchesExerciseQuery`, `resolveExerciseId` (cadenas +
+  guardia de ciclos), `exerciseIdGroup` (canónico primero), `isSelectorVisible`,
+  `mergeExercises` (rechaza self/desconocido/ciclos, apunta al canónico),
+  `unmergeExercise`, `suggestDuplicatePairs` (mismo nombre > alias compartido,
+  built-in como destino) y `aggregateExerciseFrequency`.
+- Lecturas fusionadas (nunca se reescriben logs): `getLastLogForExercise`
+  (+SessionBuilder, Workout add/replace) acepta biblioteca y matchea el grupo;
+  `exerciseHistoryIndex` canonicaliza con firma de merges en la clave de caché
+  (+tarjeta workout vía prop `library`, +detección de PRs); worker
+  CALCULATE_CHART acepta `string | string[]` (best-of global, sumas agregadas);
+  Stats PRs/insight/picker/conteos usan el grupo (PR usa el nombre del
+  sobreviviente solo si hubo remapeo); ExerciseDetailModal pasa el grupo;
+  `matchParsedExerciseNames` usa nombres+alias compartidos (re-exporta el
+  normalize para no romper imports).
+- UI: ExerciseSelector y ExercisesView buscan en ambos idiomas + alias;
+  fusionados ocultos en selector y en map-to de CSV; ExercisesView muestra
+  badge "Fusionado", botón fusionar/desfusionar por fila, tira de sugerencias
+  (máx 3, un tap → confirmación) y confirmación con `t.merge` es/en;
+  merge/unmerge invalidan el caché de charts (`invalidateChartCache` nuevo).
+- Reglas: `exercises` se valida como `is list` (create y update) → los campos
+  nuevos pasan; sync sube/baja `exercises` wholesale → no se pierden.
+- Prop `library` (no `useApp`) en SortableExerciseCard: el primer intento con
+  contexto rompía el aislamiento de renders R1 (2 fallos); con prop, verde.
+- Barrido de lectores por id: recommendationEngine solo recomienda desde el
+  perfil; el resto son lookups de definición o de sesión, no de historial.
+- Tests: `exerciseLibrary` (12: normalización, ambos idiomas, alias, cadenas,
+  grupos, merge/unmerge, sugerencias, canónico primero, agregación,
+  visibilidad), `exerciseMergeReads` (7: last-log, índice+recaché, best-1RM,
+  matching alias, worker grupo+single+volumen, invalidación),
+  `statsMerge` (2: agregado bajo sobreviviente 700 kg/1 opción/PR única vs
+  legado 400 kg/2 opciones/2 PRs), `exercisesMergeUI` (4: flujo merge,
+  unmerge, sugerencias, búsqueda). Total suite 523/523 (102 ficheros).
+- Fail-proof: con sources en stash, 13/13 tests de comportamiento nuevos
+  fallan (7 mergeReads + 2 statsMerge + 4 mergeUI); `exerciseLibrary` falló
+  antes de existir el módulo (TDD).
+- Evidencia: build OK, `test:run` 523/523, `lint:a11y` limpio, Playwright
+  42/42 en puerto aislado 5199 (5173 lo ocupa otro proyecto y
+  `reuseExistingServer` testeaba la app ajena: 42/42 rojos ahí).
+- Nota: `statsMerge` necesitó `waitFor` en el conteo del picker (el efecto de
+  overview re-corre al fijar selección y parpadea `t.loading` bajo carga).
+- No verificado: UX real de fusión con biblioteca grande del dueño; nombres
+  de alias regionales fuera del mapa curado.

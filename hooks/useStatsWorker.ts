@@ -17,7 +17,7 @@ export const useStatsWorker = () => {
     const lastLogsRef = useRef<Log[] | null>(null);
     const requestIdRef = useRef(0);
     const pendingRef = useRef(new Map<number, PendingRequest>());
-    const { userProfile } = useApp();
+    const { userProfile, exercises } = useApp();
 
     const ensureWorker = useCallback(() => {
         if (workerRef.current) return workerRef.current;
@@ -81,7 +81,7 @@ export const useStatsWorker = () => {
         });
     }, [ensureLogs, nextRequestId]);
 
-    const calculateChartData = useCallback((logs: Log[], exerciseId: string, metric: ChartMetric, activeMesoId?: number | null): Promise<ChartPoint[]> => {
+    const calculateChartData = useCallback((logs: Log[], exerciseId: string | string[], metric: ChartMetric, activeMesoId?: number | null): Promise<ChartPoint[]> => {
         const worker = ensureLogs(logs);
         if (!worker) return Promise.resolve([]);
         const reqId = nextRequestId();
@@ -102,8 +102,8 @@ export const useStatsWorker = () => {
     // WeakMap-backed history index used by the workout cards and preserve the
     // effective-load/bodyweight semantics of EXPERIMENTAL.
     const calculateAllBest1RMs = useCallback((logs: Log[]): Promise<Map<string, number>> => {
-        return Promise.resolve(getHistoricalBest1RMIndex(logs, userProfile?.bodyWeight));
-    }, [userProfile?.bodyWeight]);
+        return Promise.resolve(getHistoricalBest1RMIndex(logs, userProfile?.bodyWeight, exercises));
+    }, [userProfile?.bodyWeight, exercises]);
 
     // No eager Worker startup: consumers can call immediately and the first
     // calculation creates the worker on demand.

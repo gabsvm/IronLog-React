@@ -65,7 +65,7 @@ export class SessionBuilder {
             }
             if (!slotDef.prescription && isDeload) setTarget = Math.max(1, Math.ceil(setTarget / 2));
 
-            const lastSets = getLastLogForExercise(exDef.id, safeLogs);
+            const lastSets = getLastLogForExercise(exDef.id, safeLogs, safeExercises);
 
             const initialSets = (slotDef.prescription || Array.from({ length: setTarget }, () => undefined)).map((prescription, i) => ({
                 id: uid(),

@@ -1,6 +1,7 @@
 import { parseCsv, toCsv } from '../utils/csv';
 import { KG_PER_LB, toDisplay } from '../utils/units';
 import { getTranslated } from '../utils';
+import { exerciseSearchNames, normalizeExerciseName } from '../utils/exerciseLibrary';
 import { db } from '../utils/db';
 import type {
     ExerciseDef,
@@ -64,14 +65,7 @@ export interface ParsedCsvImport {
 }
 
 /** Lowercase, accent-free, punctuation-collapsed Exercise name for matching. */
-export const normalizeExerciseName = (name: string): string =>
-    name
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, ' ')
-        .trim()
-        .replace(/\s+/g, ' ');
+export { normalizeExerciseName };
 
 /** Detect Hevy vs Strong by their documented header columns. */
 export const detectCsvFormat = (header: string[]): CsvSourceFormat | null => {
@@ -308,16 +302,15 @@ export interface ExerciseNameMatch {
 }
 
 /**
- * Exact normalized-name match against the library (both languages).
- * Alias/fuzzy suggestions arrive with Q14; anything unmatched goes to the
- * manual mapping step.
+ * Exact normalized-name match against the library: primary names in both
+ * languages plus per-def and curated aliases (Q14). Anything unmatched goes
+ * to the manual mapping step.
  */
 export const matchParsedExerciseNames = (names: string[], library: ExerciseDef[]): ExerciseNameMatch[] => {
     const byNorm = new Map<string, ExerciseDef>();
     for (const def of library) {
-        const candidates = typeof def.name === 'string' ? [def.name] : [def.name.en, def.name.es];
-        for (const candidate of candidates) {
-            const norm = normalizeExerciseName(candidate || '');
+        for (const candidate of exerciseSearchNames(def)) {
+            const norm = normalizeExerciseName(candidate);
             if (norm && !byNorm.has(norm)) byNorm.set(norm, def);
         }
     }

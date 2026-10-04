@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
 import { TRANSLATIONS } from '../constants';
 import { MuscleGroup } from '../types';
@@ -30,6 +30,7 @@ import { Doughnut } from 'react-chartjs-2';
 import { getEffectiveSetLoad, getLogBodyWeight, getSetLoadVolume } from '../utils/trainingMetrics';
 import { buildDoughnutData, buildIntensityPalette } from '../utils/chartColors';
 import { formatWeight, resolveWeightUnit, toDisplay, unitLabel } from '../utils/units';
+import { aggregateExerciseFrequency, exerciseIdGroup, matchesExerciseQuery, resolveExerciseId } from '../utils/exerciseLibrary';
 import type { WeightUnit } from '../types';
 
 ChartJS.register(
@@ -282,6 +283,23 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
         return byId;
     }, [exercises, safeLogs]);
 
+    // Merged duplicates fold into their canonical exercise: counts aggregate
+    // under the survivor and merged members never appear as options.
+    const exsFromFrequency = useCallback((frequency: Record<string, number>) =>
+        aggregateExerciseFrequency(frequency, exercises)
+            .sort((a, b) => b[1] - a[1])
+            .map(([id]) => exerciseMetaById.get(String(id)))
+            .filter(Boolean),
+        [exercises, exerciseMetaById],
+    );
+
+    // Canonical group (canonical id first) for the merged-aware chart query.
+    const selectedGroupIds = useMemo(
+        () => (selectedExId ? exerciseIdGroup(exercises, String(selectedExId)) : []),
+        [selectedExId, exercises],
+    );
+    const canonicalSelectedExId = selectedGroupIds.length > 0 ? selectedGroupIds[0] : null;
+
     const currentEx = selectedExId ? exerciseMetaById.get(String(selectedExId)) : null;
     const selectedExAvailable = useMemo(() => {
         if (!selectedExId) return false;
@@ -314,10 +332,20 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
             return;
         }
 
+        // A cached selection may point at an id that has since been merged
+        // away: follow the pointer to the surviving exercise.
+        if (selectedExId) {
+            const canonical = resolveExerciseId(exercises, String(selectedExId));
+            if (canonical !== String(selectedExId)) {
+                setSelectedExId(canonical);
+                return;
+            }
+        }
+
         if (!selectedExId || !selectedExAvailable || !currentEx) {
             setSelectedExId(String(availableExercises[0]!.id));
         }
-    }, [availableExercises, currentEx, selectedExAvailable, selectedExId]);
+    }, [availableExercises, currentEx, exercises, selectedExAvailable, selectedExId]);
 
     useEffect(() => {
         if (!currentEx) return;
@@ -352,12 +380,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                 setSetTypeDist(cached.setTypeDist);
                 setOverviewWeeks(cached.weeks ?? 1);
 
-                const sortedExs = Object.entries(cached.exerciseFrequency)
-                    .sort((a, b) => (b[1] as number) - (a[1] as number))
-                    .map(([id]) => exerciseMetaById.get(String(id)))
-                    .filter(Boolean);
-
-                setAvailableExercises(sortedExs);
+                setAvailableExercises(exsFromFrequency(cached.exerciseFrequency));
                 setLoadingOverview(false);
             }
 
@@ -386,12 +409,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
             });
             setSetTypeDist(typeCounts);
 
-            const sortedExs = Object.entries(exerciseFrequency)
-                .sort((a, b) => (b[1] as number) - (a[1] as number))
-                .map(([id]) => exerciseMetaById.get(String(id)))
-                .filter(Boolean);
-
-            setAvailableExercises(sortedExs);
+            setAvailableExercises(exsFromFrequency(exerciseFrequency));
 
             await statsCache.writeOverview(logsSignature, mesoId, {
                 volumeData,
@@ -406,25 +424,29 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
         return () => {
             cancelled = true;
         };
-    }, [isWorkerReady, safeLogs, scopeMesoId, exerciseMetaById, selectedExId, calculateOverview, logsSignature]);
+    }, [isWorkerReady, safeLogs, scopeMesoId, exerciseMetaById, exsFromFrequency, selectedExId, calculateOverview, logsSignature]);
 
     useEffect(() => {
         if (!isWorkerReady || !selectedExId || (activeTab && activeTab !== 'progress')) return;
 
         let cancelled = false;
+        // The chart aggregates the whole canonical group (merged history
+        // included); the cache key stays on the canonical id.
+        const groupIds = selectedGroupIds.length > 0 ? selectedGroupIds : [String(selectedExId)];
+        const cacheId = canonicalSelectedExId ?? String(selectedExId);
 
         const loadChart = async () => {
             setLoadingChart(true);
-            const cached = await statsCache.readChart(logsSignature, selectedExId, chartMetric, scopeMesoId);
+            const cached = await statsCache.readChart(logsSignature, cacheId, chartMetric, scopeMesoId);
             if (cached && !cancelled) {
                 setChartPoints(cached.dataPoints);
                 setLoadingChart(false);
             }
 
-            const points = await calculateChartData(safeLogs, selectedExId, chartMetric, scopeMesoId);
+            const points = await calculateChartData(safeLogs, groupIds, chartMetric, scopeMesoId);
             if (cancelled) return;
             setChartPoints(points);
-            await statsCache.writeChart(logsSignature, selectedExId, chartMetric, scopeMesoId, points);
+            await statsCache.writeChart(logsSignature, cacheId, chartMetric, scopeMesoId, points);
             setLoadingChart(false);
         };
 
@@ -432,13 +454,13 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
         return () => {
             cancelled = true;
         };
-    }, [isWorkerReady, selectedExId, chartMetric, safeLogs, calculateChartData, logsSignature, activeTab, scopeMesoId]);
+    }, [isWorkerReady, selectedExId, selectedGroupIds, canonicalSelectedExId, chartMetric, safeLogs, calculateChartData, logsSignature, activeTab, scopeMesoId]);
 
     const filteredExercises = useMemo(() => {
         return availableExercises.filter(ex =>
-            String(getTranslated(ex.name, lang) || '').toLowerCase().includes(pickerSearch.toLowerCase())
+            matchesExerciseQuery(ex, pickerSearch)
         );
-    }, [availableExercises, pickerSearch, lang]);
+    }, [availableExercises, pickerSearch]);
 
     const maxVal = Math.max(...volumeData.map(d => d[1]), 25);
     const totalSets = (Object.values(setTypeDist) as number[]).reduce((a, b) => a + b, 0);
@@ -464,20 +486,25 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
             if (scopeMesoId != null && log.mesoId !== scopeMesoId) return;
             (log.exercises || []).forEach(ex => {
                 if (!ex.id || ex.isBodyweight || ex.isIsometric || ex.muscle === 'CARDIO') return;
+                // Merged duplicates share one PR row under the surviving exercise.
+                const canonicalId = resolveExerciseId(exercises, String(ex.id));
                 const working = (ex.sets || []).filter(set => set.completed && set.type !== 'warmup' && set.type !== 'avt_hop');
                 working.forEach(set => {
                     const weight = Number(set.weight || 0);
                     const reps = Number(set.reps || 0);
                     if (weight <= 0 || reps <= 0) return;
                     const e1rm = weight * (1 + reps / 30);
-                    const existing = bestMap[String(ex.id)];
+                    const existing = bestMap[canonicalId];
                     if (!existing || e1rm > existing.e1rm) {
-                        bestMap[String(ex.id)] = {
+                        const canonicalDef = canonicalId !== String(ex.id)
+                            ? exercises.find(e => String(e.id) === canonicalId)
+                            : null;
+                        bestMap[canonicalId] = {
                             e1rm,
                             weight,
                             reps,
                             date: log.startTime,
-                            name: getTranslated(ex.name, lang),
+                            name: canonicalDef ? getTranslated(canonicalDef.name, lang) : getTranslated(ex.name, lang),
                             muscle: ex.muscle
                         };
                     }
@@ -488,7 +515,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
         return Object.entries(bestMap)
             .sort((a, b) => b[1].date - a[1].date)
             .slice(0, 20);
-    }, [safeLogs, lang, scopeMesoId]);
+    }, [safeLogs, lang, scopeMesoId, exercises]);
 
     const [showAllPRs, setShowAllPRs] = useState(false);
     const displayedPRs = showAllPRs ? prHistory : prHistory.slice(0, 6);
@@ -508,6 +535,8 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
         if (!currentEx) return null;
 
         const matchingLogs = safeLogs.filter(log => !log.skipped && (scopeMesoId == null || log.mesoId === scopeMesoId));
+        // The insight aggregates every id merged into the selected exercise.
+        const groupIds = new Set(exerciseIdGroup(exercises, String(currentEx.id)).map(String));
         let bestReps = 0;
         let bestAddedLoad = 0;
         let bestEstimated1RM = 0;
@@ -516,25 +545,26 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
 
         matchingLogs.forEach(log => {
             const logBodyWeight = getLogBodyWeight(log, userProfile?.bodyWeight);
-            const exercise = (log.exercises || []).find(ex => String(ex.id) === String(currentEx.id));
-            if (!exercise) return;
+            const matches = (log.exercises || []).filter(ex => ex?.id != null && groupIds.has(String(ex.id)));
 
-            (exercise.sets || []).forEach(set => {
-                if (!set.completed || set.skipped) return;
+            matches.forEach(exercise => {
+                (exercise.sets || []).forEach(set => {
+                    if (!set.completed || set.skipped) return;
 
-                const reps = Number(set.reps || 0);
-                const addedLoad = Number(set.weight || 0);
-                const effectiveLoad = getEffectiveSetLoad(set, exercise, logBodyWeight);
+                    const reps = Number(set.reps || 0);
+                    const addedLoad = Number(set.weight || 0);
+                    const effectiveLoad = getEffectiveSetLoad(set, exercise, logBodyWeight);
 
-                totalVolume += getSetLoadVolume(set, exercise, logBodyWeight);
-                if (reps > bestReps) bestReps = reps;
-                if (addedLoad > bestAddedLoad) bestAddedLoad = addedLoad;
-                if (Number(set.duration || 0) > bestHoldSeconds) bestHoldSeconds = Number(set.duration || 0);
+                    totalVolume += getSetLoadVolume(set, exercise, logBodyWeight);
+                    if (reps > bestReps) bestReps = reps;
+                    if (addedLoad > bestAddedLoad) bestAddedLoad = addedLoad;
+                    if (Number(set.duration || 0) > bestHoldSeconds) bestHoldSeconds = Number(set.duration || 0);
 
-                if (effectiveLoad > 0 && reps > 0 && !exercise.isIsometric && exercise.muscle !== 'CARDIO') {
-                    const e1rm = effectiveLoad * (1 + reps / 30);
-                    if (e1rm > bestEstimated1RM) bestEstimated1RM = e1rm;
-                }
+                    if (effectiveLoad > 0 && reps > 0 && !exercise.isIsometric && exercise.muscle !== 'CARDIO') {
+                        const e1rm = effectiveLoad * (1 + reps / 30);
+                        if (e1rm > bestEstimated1RM) bestEstimated1RM = e1rm;
+                    }
+                });
             });
         });
 
@@ -595,7 +625,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
             muscleWeeklySets,
             volumeStatus,
         };
-    }, [currentEx, lang, rawMuscleCounts, safeLogs, userProfile?.bodyWeight, scopeMesoId, unit, weightSuffix]);
+    }, [currentEx, exercises, lang, rawMuscleCounts, safeLogs, userProfile?.bodyWeight, scopeMesoId, unit, weightSuffix]);
 
     const statsTutorialSteps = [
         { targetId: 'tut-progress-chart', title: t.tutorial.stats[0].title, text: t.tutorial.stats[0].text, position: 'bottom' as const },

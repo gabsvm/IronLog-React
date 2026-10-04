@@ -10,6 +10,7 @@ const LEGACY_SCOPE_KEYS = ['il_stats_scope_v1'];
 const LEGACY_KEY_PREFIXES = ['il_stats_overview_v2:', 'il_stats_overview_v3:', 'il_stats_chart_v2:'];
 let legacyPruned = false;
 const CURRENT_KEY_PREFIXES = ['il_stats_overview_v4:', 'il_stats_chart_v3:'];
+const CHART_KEY_PREFIX = 'il_stats_chart_v3:';
 const prunedSignatures = new Set<string>();
 const chartKey = (signature: string, exerciseId: string, metric: ChartMetric, mesoId: number | null) => `il_stats_chart_v3:${signature}:${exerciseId}:${metric}:${mesoId ?? 'all'}`;
 const selectedExerciseKey = 'il_stats_selected_exercise_v1';
@@ -154,6 +155,23 @@ export const statsCache = {
      * matched by exact prefix, never parsed with split. Scope and
      * selected-exercise keys are never touched.
      */
+    /**
+     * Drops every cached per-exercise chart. Merging/unmerging exercises
+     * changes which logs each chart aggregates without changing the logs
+     * signature, so chart entries must be recomputed from scratch.
+     */
+    async invalidateChartCache(): Promise<void> {
+        try {
+            const allKeys = await idbKeys();
+            const stale = allKeys.filter((key) =>
+                typeof key === 'string' && key.startsWith(CHART_KEY_PREFIX),
+            );
+            await Promise.all(stale.map((key) => db.del(key as string)));
+        } catch {
+            // Cache hygiene must never break the view.
+        }
+    },
+
     async pruneStaleSignatureKeys(currentSignature: string): Promise<void> {
         if (prunedSignatures.has(currentSignature)) return;
         prunedSignatures.add(currentSignature);
