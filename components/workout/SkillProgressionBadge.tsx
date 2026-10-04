@@ -3,6 +3,7 @@ import React, { useMemo } from 'react';
 import { Icon } from '../ui/Icon';
 import { getSkillProgressionInfo, getSkillReadyToProgress } from '../../data/SkillProgressionMap';
 import { SessionExercise, WorkoutSet } from '../../types';
+import { TRANSLATIONS } from '../../constants';
 
 interface SkillProgressionBadgeProps {
     exercise: SessionExercise;
@@ -51,6 +52,7 @@ export const SkillProgressionBadge: React.FC<SkillProgressionBadgeProps> = ({ ex
         'bg-cyan-500': { text: 'text-cyan-400', bg: 'bg-cyan-500/10', ring: 'ring-cyan-500/30' },
     };
     const colors = colorMap[familyColor] ?? { text: 'text-zinc-400', bg: 'bg-zinc-500/10', ring: 'ring-zinc-500/30' };
+    const b = TRANSLATIONS[lang].skillBadge;
 
     const familyName = lang === 'es' ? family.name.es : family.name.en;
     const currentName = lang === 'es' ? currentLevel.name.es : currentLevel.name.en;
@@ -88,7 +90,7 @@ export const SkillProgressionBadge: React.FC<SkillProgressionBadgeProps> = ({ ex
                 <div className="mt-1.5 flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-green-500/10 ring-1 ring-green-500/25 animate-pulse-slow">
                     <Icon name="TrendingUp" size={11} className="text-green-400 shrink-0" />
                     <span className="text-[9px] font-black text-green-400 uppercase tracking-wider">
-                        {lang === 'es' ? '¡Listo para avanzar!' : 'Ready to progress!'}
+                        {b.ready}
                     </span>
                     <span className="text-xs text-muted truncate">
                         → {lang === 'es' ? nextLevel.name.es : nextLevel.name.en}
@@ -101,11 +103,11 @@ export const SkillProgressionBadge: React.FC<SkillProgressionBadgeProps> = ({ ex
                 <div className="mt-1 flex items-center gap-1.5 px-2.5">
                     <Icon name="Target" size={10} className="text-zinc-600 shrink-0" />
                     <span className="text-xs text-muted truncate">
-                        {lang === 'es' ? 'Siguiente: ' : 'Next: '}
+                        {b.next}
                         <span className="font-bold text-zinc-500">
                             {nextLevel.unlockAt.value}{nextLevel.unlockAt.unit === 'sec' ? 's' : ' reps'}
                         </span>
-                        {' '}{lang === 'es' ? 'para' : 'to reach'}{' '}
+                        {' '}{b.toReach}{' '}
                         {lang === 'es' ? nextLevel.name.es : nextLevel.name.en}
                     </span>
                 </div>

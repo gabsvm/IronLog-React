@@ -14,6 +14,7 @@ import { formatProgressionReason, recommendProgression } from '../../utils/recom
 import { resolveMuscleLabel } from '../../utils/muscle';
 import { triggerHaptic, playTimerFinishSound } from '../../utils/audio';
 import { isWorkingSet } from '../../utils/workoutProgress';
+import { TRANSLATIONS } from '../../constants';
 
 interface SortableExerciseCardProps {
     exercise: SessionExercise;
@@ -99,6 +100,7 @@ export const SortableExerciseCard = React.memo(({
     };
 
     const sets = ex.sets || [];
+    const c = TRANSLATIONS[lang].exerciseCard;
     const ssStyle = typeof supersetColorIndex === 'number'
         ? [
             { border: 'border-l-orange-500', badge: 'border-orange-500/20 bg-orange-500/10 text-orange-300' },
@@ -401,13 +403,13 @@ export const SortableExerciseCard = React.memo(({
                                     const completedCount = working.length > 0
                                         ? working.filter(s => s.completed).length
                                         : sets.filter(s => s.completed).length;
-                                    return `${completedCount}/${totalCount} ${lang === 'es' ? 'series' : 'sets'}`;
+                                    return `${completedCount}/${totalCount} ${c.setsLower}`;
                                 })()}
                             </span>
                             {allDone && (
                                 <span className="text-primary-400 font-semibold flex items-center gap-1">
                                     <Icon name="Check" size={12} strokeWidth={3} />
-                                    {lang === 'es' ? 'Listo' : 'Done'}
+                                    {c.done}
                                 </span>
                             )}
                         </div>
@@ -428,7 +430,7 @@ export const SortableExerciseCard = React.memo(({
                                 setOpenMenuId(openMenuId === ex.instanceId ? null : ex.instanceId);
                             }}
                             className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-400 hover:text-white"
-                            aria-label={lang === 'es' ? 'Más opciones' : 'More options'}
+                            aria-label={c.moreOptions}
                         >
                             <Icon name="MoreVertical" size={16} />
                         </button>
@@ -541,7 +543,7 @@ export const SortableExerciseCard = React.memo(({
                                         className="inline-flex items-center gap-1 rounded-full border border-amber-400/20 bg-amber-500/10 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-amber-200 transition-colors hover:bg-amber-500/15"
                                     >
                                         <Icon name="Link" size={10} />
-                                        <span>{lang === 'es' ? 'Elige pareja' : 'Pick pair'}</span>
+                                        <span>{c.pickPair}</span>
                                     </button>
                                 )}
 
@@ -555,7 +557,7 @@ export const SortableExerciseCard = React.memo(({
                                         className="inline-flex items-center gap-1 rounded-full border border-cyan-400/20 bg-cyan-500/10 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-cyan-200 transition-colors hover:bg-cyan-500/15"
                                     >
                                         <Icon name="Link" size={10} />
-                                        <span>{lang === 'es' ? 'Unir aqui' : 'Pair here'}</span>
+                                        <span>{c.pairHere}</span>
                                     </button>
                                 )}
                             </div>
@@ -598,14 +600,14 @@ export const SortableExerciseCard = React.memo(({
                                 handleSupersetAction();
                             }}
                             className={`flex h-8 w-8 items-center justify-center rounded-full border transition-colors ${isSuperseted ? 'border-violet-500/30 bg-violet-500/15 text-violet-200' : isLinkSource ? 'border-amber-400/30 bg-amber-500/15 text-amber-200' : 'border-zinc-700/80 bg-zinc-900/80 text-zinc-400 hover:border-zinc-500/70 hover:bg-zinc-800 hover:text-white'}`}
-                            aria-label={isSuperseted ? (lang === 'es' ? 'Quitar superserie' : 'Remove superset') : (lang === 'es' ? 'Crear superserie' : 'Create superset')}
+                            aria-label={isSuperseted ? TRANSLATIONS[lang].cardMenu.unlink : TRANSLATIONS[lang].cardMenu.link}
                         >
                             <Icon name={isSuperseted ? 'Unlink' : 'Link'} size={15} />
                         </button>
 
                         <div className="relative">
                             <button
-                                aria-label={lang === 'es' ? 'Mas opciones' : 'More options'}
+                                aria-label={c.moreOptions}
                                 aria-haspopup="menu"
                                 aria-expanded={openMenuId === ex.instanceId}
                                 onClick={(event) => {
@@ -644,7 +646,7 @@ export const SortableExerciseCard = React.memo(({
                                     onToggleExpand(ex.instanceId);
                                 }}
                                 className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-700/80 bg-zinc-900/80 text-zinc-400 hover:border-zinc-500/70 hover:bg-zinc-800 hover:text-white transition-colors"
-                                aria-label={lang === 'es' ? 'Colapsar ejercicio' : 'Collapse exercise'}
+                                aria-label={c.collapse}
                             >
                                 <Icon name="ChevronUp" size={17} />
                             </button>
@@ -710,7 +712,7 @@ export const SortableExerciseCard = React.memo(({
                 <div className="absolute inset-0 z-10 flex items-center justify-center rounded-[1.35rem] bg-green-500/5 ring-2 ring-green-500/60 pointer-events-none animate-in fade-in duration-150">
                     <div className="animate-bounce rounded-full bg-green-500 px-3 py-1.5 text-xs font-black text-white shadow-lg shadow-green-500/30">
                         <Icon name="CheckCircle" size={14} className="mr-1 inline" />
-                        {lang === 'es' ? 'Listo' : 'Done'}
+                        {c.done}
                     </div>
                 </div>
             )}

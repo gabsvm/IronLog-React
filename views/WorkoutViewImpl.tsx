@@ -76,6 +76,7 @@ const RestTimerControl: React.FC<{
 }> = React.memo(({ preset, onStart, onStop, onCyclePreset, lang }) => {
     const restTimer = useTimerState();
     const t = TRANSLATIONS[lang];
+    const w = t.workoutImpl;
 
     return (
         <>
@@ -104,7 +105,7 @@ const RestTimerControl: React.FC<{
                         onCyclePreset();
                     }}
                     className="inline-flex items-center gap-1 rounded-full bg-zinc-900 px-2 py-1 text-[11px] font-semibold text-zinc-400 transition-colors hover:text-white"
-                    title={lang === 'es' ? 'Cambiar preset de descanso' : 'Change rest preset'}
+                    title={w.changeRestPreset}
                 >
                     <Icon name="RotateCcw" size={11} />
                 </button>
@@ -124,6 +125,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
     const setActiveMeso = useStore(state => state.setActiveMeso);
     const { setRestTimer } = useTimerActions();
     const t = TRANSLATIONS[lang];
+    const w = t.workoutImpl;
 
     // Use the Custom Controller Hook - Pass both callbacks
     const ctrl = useWorkoutController(onFinish, onDiscard);
@@ -410,18 +412,14 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
         },
         {
             targetId: 'tut-set-type',
-            title: (t.tutorial as any)?.setTypesTitle || "Set Types",
-            text: (t.tutorial as any)?.setTypesText || (lang === 'en'
-                ? "Tap this icon to change the set type (Warmup, Myo-reps, Dropset, etc)."
-                : "Toca este icono para cambiar el tipo de serie (Calentamiento, Myo-reps, Dropset, etc)."),
+            title: t.tutorialExtra.setTypesTitle,
+            text: t.tutorialExtra.setTypesText,
             position: 'bottom' as const
         },
         {
             targetId: 'tut-warmup-btn',
             title: t.warmup,
-            text: (t.tutorial as any)?.smartWarmupText || (lang === 'en'
-                ? "Smart Warmup Calc. Automatically calculates progressive warmup sets based on Set 1 weight."
-                : "Calc. Calentamiento Inteligente. Calcula automáticamente las series de aproximación según el peso del Set 1."),
+            text: t.tutorialExtra.smartWarmupText,
             position: 'bottom' as const
         },
         {
@@ -514,7 +512,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                         }}
                         className="relative flex h-8 after:absolute after:-inset-y-1.5 after:-inset-x-1 after:content-[''] shrink-0 items-center justify-center rounded-lg bg-primary-500 px-3.5 text-xs font-semibold text-zinc-950 transition-all hover:bg-primary-400 active:scale-95 shadow-sm"
                     >
-                        {t.finish || (lang === 'es' ? 'Terminar' : 'Finish')}
+                        {t.finish}
                     </button>
                 </div>
 
@@ -832,9 +830,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                     <ConfirmModal
                         isOpen={true}
                         title={t.kongSubTitle}
-                        description={lang === 'es'
-                            ? '¿Deseas mantener este reemplazo durante todo el programa KONG o aplicarlo solo para la sesión de hoy?'
-                            : 'Keep this replacement for all of KONG, or apply it only for today?'}
+                        description={w.kongSubDesc}
                         confirmText={t.allKong}
                         cancelText={t.todayOnly}
                         onConfirm={() => {
@@ -858,9 +854,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ onFinish, onDiscard, o
                     <ConfirmModal
                         isOpen={true}
                         title={t.reorderKongTitle}
-                        description={lang === 'es'
-                            ? 'El orden de ejercicios forma parte de la metodología KONG. Weak Points First y Fatigued Strength dependen del orden. ¿Reordenar solo para la sesión de hoy?'
-                            : 'Exercise order is part of KONG methodology. Weak Points First and Fatigued Strength depend on order. Reorder for today only?'}
+                        description={w.kongReorderDesc}
                         confirmText={t.reorderToday}
                         cancelText={t.cancel}
                         onConfirm={() => {

@@ -5,6 +5,7 @@ import { Modal } from '../ui/Modal';
 import { Icon } from '../ui/Icon';
 import { calculateTDEE, calculateMacros } from '../../utils';
 import { fromDisplay, resolveWeightUnit, toDisplay, unitLabel } from '../../utils/units';
+import { TRANSLATIONS } from '../../constants';
 
 interface GoalSetupModalProps {
     isOpen: boolean;
@@ -13,6 +14,8 @@ interface GoalSetupModalProps {
 
 export const GoalSetupModal: React.FC<GoalSetupModalProps> = ({ isOpen, onClose }) => {
     const { lang, userProfile, setUserProfile, setMacroGoals, config } = useApp();
+    const t = TRANSLATIONS[lang];
+    const g = t.goalSetup;
     const unit = resolveWeightUnit(config);
     const [step, setStep] = useState(1);
 
@@ -56,12 +59,12 @@ export const GoalSetupModal: React.FC<GoalSetupModalProps> = ({ isOpen, onClose 
         <Modal 
             isOpen={isOpen} 
             onClose={onClose} 
-            title={lang === 'es' ? 'Configurar Objetivos' : 'Setup Goals'}
+            title={g.title}
             footer={
                 <div className="flex gap-3">
                     {step > 1 && (
                         <button type="button" onClick={() => setStep(s => s - 1)} className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-white/5 hover:bg-zinc-200 dark:hover:bg-white/10 transition-all active:scale-95">
-                            {lang === 'es' ? 'Atrás' : 'Back'}
+                            {t.back}
                         </button>
                     )}
                     <button 
@@ -69,7 +72,7 @@ export const GoalSetupModal: React.FC<GoalSetupModalProps> = ({ isOpen, onClose 
                         onClick={() => { if (step < 3) setStep(s => s + 1); else handleFinish(); }}
                         className="flex-1 py-3.5 rounded-2xl font-black text-sm text-black bg-primary-500 hover:bg-primary-400 shadow-lg shadow-primary-500/30 transition-all active:scale-95"
                     >
-                        {step === 3 ? (lang === 'es' ? '✓ Guardar Plan' : '✓ Save Plan') : (lang === 'es' ? 'Siguiente →' : 'Next →')}
+                        {step === 3 ? g.savePlan : g.next}
                     </button>
                 </div>
             }
@@ -89,17 +92,17 @@ export const GoalSetupModal: React.FC<GoalSetupModalProps> = ({ isOpen, onClose 
                     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                         <div className="space-y-2">
                             <h3 className="text-xl font-black text-zinc-900 dark:text-white">
-                                {lang === 'es' ? 'Tus Datos' : 'Your Data'}
+                                {g.dataTitle}
                             </h3>
                             <p className="text-sm text-zinc-500">
-                                {lang === 'es' ? 'Necesitamos estos datos para calcular tu BMR.' : 'We need these details to calculate your BMR.'}
+                                {g.dataDesc}
                             </p>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest px-1">
-                                    {lang === 'es' ? 'Edad' : 'Age'}
+                                    {g.age}
                                 </label>
                                 <input
                                     type="number"
@@ -111,7 +114,7 @@ export const GoalSetupModal: React.FC<GoalSetupModalProps> = ({ isOpen, onClose 
                             </div>
                             <div className="space-y-2">
                                 <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest px-1">
-                                    {lang === 'es' ? 'Género' : 'Gender'}
+                                    {g.gender}
                                 </label>
                                 <div className="flex gap-2">
                                     <button 
@@ -133,7 +136,7 @@ export const GoalSetupModal: React.FC<GoalSetupModalProps> = ({ isOpen, onClose 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest px-1">
-                                    {lang === 'es' ? 'Altura (cm)' : 'Height (cm)'}
+                                    {g.height}
                                 </label>
                                 <input
                                     type="number"
@@ -145,7 +148,7 @@ export const GoalSetupModal: React.FC<GoalSetupModalProps> = ({ isOpen, onClose 
                             </div>
                             <div className="space-y-2">
                                 <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest px-1">
-                                    {lang === 'es' ? `Peso (${unitLabel(unit).toLowerCase()})` : `Weight (${unitLabel(unit).toLowerCase()})`}
+                                    {`${g.weight} (${unitLabel(unit).toLowerCase()})`}
                                 </label>
                                 <input
                                     type="number"
@@ -163,28 +166,28 @@ export const GoalSetupModal: React.FC<GoalSetupModalProps> = ({ isOpen, onClose 
                     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                         <div className="space-y-2">
                             <h3 className="text-xl font-black text-zinc-900 dark:text-white">
-                                {lang === 'es' ? 'Nivel de Actividad' : 'Activity Level'}
+                                {g.activityTitle}
                             </h3>
                             <p className="text-sm text-zinc-500">
-                                {lang === 'es' ? '¿Cuánto te mueves en el día a día?' : 'How much do you move on a daily basis?'}
+                                {g.activityDesc}
                             </p>
                         </div>
 
                         <div className="space-y-2">
                             {[
-                                { key: 'sedentary', es: 'Sedentario', en: 'Sedentary', subEs: 'Trabajo de escritorio, sin ejercicio', subEn: 'Desk job, no exercise' },
-                                { key: 'light', es: 'Ligero', en: 'Light', subEs: '1-3 días/semana de ejercicio', subEn: '1-3 days/week exercise' },
-                                { key: 'moderate', es: 'Moderado', en: 'Moderate', subEs: '3-5 días/semana de ejercicio', subEn: '3-5 days/week exercise' },
-                                { key: 'active', es: 'Activo', en: 'Active', subEs: '6-7 días/semana de ejercicio', subEn: '6-7 days/week exercise' },
-                                { key: 'very_active', es: 'Muy Activo', en: 'Very Active', subEs: 'Atleta / doble sesión', subEn: 'Athlete / double session' }
+                                { key: 'sedentary', label: g.actSedentary, sub: g.actSedentarySub },
+                                { key: 'light', label: g.actLight, sub: g.actLightSub },
+                                { key: 'moderate', label: g.actModerate, sub: g.actModerateSub },
+                                { key: 'active', label: g.actActive, sub: g.actActiveSub },
+                                { key: 'very_active', label: g.actVeryActive, sub: g.actVeryActiveSub },
                             ].map(act => (
                                 <button
                                     key={act.key}
                                     onClick={() => setActivity(act.key as any)}
                                     className={`w-full p-4 rounded-2xl border text-left transition-all active:scale-[0.98] ${activity === act.key ? 'bg-primary-500 border-primary-500 text-black shadow-lg shadow-primary-500/20' : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-white/10 text-zinc-800 dark:text-zinc-200'}`}
                                 >
-                                    <div className="font-bold">{lang === 'es' ? act.es : act.en}</div>
-                                    <div className={`text-xs mt-0.5 ${activity === act.key ? 'text-primary-900' : 'text-zinc-400 dark:text-zinc-500'}`}>{lang === 'es' ? act.subEs : act.subEn}</div>
+                                    <div className="font-bold">{act.label}</div>
+                                    <div className={`text-xs mt-0.5 ${activity === act.key ? 'text-primary-900' : 'text-zinc-400 dark:text-zinc-500'}`}>{act.sub}</div>
                                 </button>
                             ))}
                         </div>
@@ -195,10 +198,10 @@ export const GoalSetupModal: React.FC<GoalSetupModalProps> = ({ isOpen, onClose 
                     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                         <div className="space-y-2">
                             <h3 className="text-xl font-black text-zinc-900 dark:text-white">
-                                {lang === 'es' ? 'Tu Objetivo' : 'Your Goal'}
+                                {g.goalTitle}
                             </h3>
                             <p className="text-sm text-zinc-500">
-                                {lang === 'es' ? 'Define qué quieres lograr con tu dieta.' : 'Define what you want to achieve with your diet.'}
+                                {g.goalDesc}
                             </p>
                         </div>
 
@@ -206,22 +209,22 @@ export const GoalSetupModal: React.FC<GoalSetupModalProps> = ({ isOpen, onClose 
                             <GoalOption 
                                 selected={goal === 'cut'} 
                                 onSelect={() => setGoal('cut')} 
-                                title={lang === 'es' ? 'Perder Grasa' : 'Lose Fat'} 
-                                desc={lang === 'es' ? 'Déficit calórico de -500 kcal/día.' : 'Caloric deficit of -500 kcal/day.'} 
+                                title={g.cutTitle} 
+                                desc={g.cutDesc} 
                                 icon="Minus"
                             />
                             <GoalOption 
                                 selected={goal === 'maintain'} 
                                 onSelect={() => setGoal('maintain')} 
-                                title={lang === 'es' ? 'Mantenimiento' : 'Maintenance'} 
-                                desc={lang === 'es' ? 'Mantener peso y recomposición.' : 'Maintain weight and recomposition.'} 
+                                title={g.maintainTitle} 
+                                desc={g.maintainDesc} 
                                 icon="Activity"
                             />
                             <GoalOption 
                                 selected={goal === 'bulk'} 
                                 onSelect={() => setGoal('bulk')} 
-                                title={lang === 'es' ? 'Ganar Músculo' : 'Gain Muscle'} 
-                                desc={lang === 'es' ? 'Superávit calórico controlado.' : 'Controlled caloric surplus.'} 
+                                title={g.bulkTitle} 
+                                desc={g.bulkDesc} 
                                 icon="TrendingUp"
                             />
                         </div>

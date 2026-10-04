@@ -537,3 +537,72 @@ Estado persistente: se actualiza y pushea al cerrar CADA tarea.
   config temporal eliminada tras la corrida).
 - No verificado: nada pendiente propio de Q18; el flujo de atajo/widget se
   ejercita en e2e (offlineShell con `?action=start`) y siguió verde.
+- CORRECCIÓN POSTERIOR (hallada en Q19): el Playwright 43/43 de Q18 corrió
+  contra un dist construido ANTES del splice (el último build previo era el
+  de la medición basal con el código en stash). El renombre de aria-labels
+  ("Download"→t.export, "Delete"→t.factoryReset) rompía
+  profileSettingsInventory contra el dist correcto; se arregló el spec en Q19
+  (mapeo RENAMED) y ahora corre contra dist recién construido.
+
+## Q19 — i18n con trinquete (510 → 194 ternarias, −62 %)
+
+- `scripts/count-lang-ternaries.mjs`: cuenta `lang === 'es'` (comillas
+  simples/dobles, cualquier espaciado) en .ts/.tsx/.js/.jsx/.mjs/.cjs,
+  excluyendo node_modules, dist, android, tests, scripts, coverage,
+  apk-out, ironlog-kmp y *.test/*.spec. Salida JSON {count, files}.
+- Línea base `tests/i18n-baseline.json`: 510 → **194** (−62 %, meta ≥60 %).
+  28 ficheros migrados (workout, Home, Stats, Layout, nutrición +
+  ProgramHub y ExercisesView para alcanzar la meta): ProgramHub 55→3,
+  StatsViewImpl 35→1, FreestyleSessionModal 35→8, AddFoodModal 23→5,
+  GoalSetupModal 22→0, RestTimerOverlay 16→0, QuickStartSheet 13→0,
+  HomeViewImpl 12→0, TemplateSelector 12→0, StatsView 9→0,
+  SortableExerciseCardImpl 10→0, ExerciseProtocolBanners 9→0,
+  TwoBlockMassModal 8→4, PlanActionsSheet 8→0, LogWeightModal 7→0,
+  SkillProgressionBadge 7→4, ReorderExercisesSheet 5→0,
+  ExerciseCardMenu 5→0, WorkoutViewImpl 4→0, ExerciseCardSets 4→0,
+  ActivityHeatmap 3→0, RestPresetSheet 3→0, NextSessionCard 2→0,
+  Layout 2→0, SetRow 2→0, WaterTracker 1→0, WorkoutView 1→0.
+  BodyTab/NutriView/HomeRecapStrip no se tocaron: sus 6 ocurrencias son
+  lógica de locale (`'es-AR'`/`'en-US'`) sin texto visible.
+- 27 bloques nuevos en TRANSLATIONS (es+en, planos, uno por archivo) +
+  extensión del bloque `timer` (8 claves); paridad total de claves.
+  Reutilización donde el string era idéntico: t.save/cancel/back/notes/
+  currentPlan/resting/effortEasy/effortHard/completeWeekConfirm,
+  t.statsView.pill* en StatsView, t.cardMenu.unlink/link en
+  SortableExerciseCardImpl; `item[lang]` en StatsView; ternarias con ambas
+  ramas iguales ('Manual', 'Gym', 'Kcal', 'Prot', 'Carb', 'min') → literal.
+- Ternarias que QUEDAN a propósito (25 en ficheros migrados): selección de
+  datos ya bilingües (`x.name.es/.en`, 21) y fallbacks de datos de programa
+  (blockName/blockGoal/dayName de ProgramHub, 3) y 1 locale de fecha
+  (StatsViewImpl). El resto (169) vive en ficheros no migrados
+  (SetupWizard 26, ProgramDetailView 22, FeedbackModal 15, ...).
+- Micro-correcciones documentadas (cambian render): 'Mas opciones'→
+  'Más opciones' (SortableExerciseCardImpl L608); HomeViewImpl 'de'→'of'
+  en inglés (estaba hardcodeado 'de' en ambos idiomas); tutorialExtra
+  nuevo (setTypesTitle es 'Tipos de serie', antes hardcoded "Set Types"
+  en ambos; simplificados los `||` defensivos muertos); deps exhaustive-deps
+  (`s` en StatsViewImpl, `sw.customPlan` en StatsView quitando `lang`).
+- Tests: `i18nRatchet` (falla si count > baseline), `translationsParity`
+  (claves es/en idénticas, recursivo, arrays por longitud),
+  `i18nRender` (5 componentes × es/en con strings exactos + ausencia de
+  "undefined"). Fail-proof: con components/views en stash el conteo vuelve
+  a 510 y el trinquete falla (`510 > 194`).
+- Auditoría de valores (script temporal, eliminado): 765 literales de las
+  líneas eliminadas (git diff) — 748 presentes en TRANSLATIONS o como
+  literales invariantes, 17 artefactos de composición de templates
+  verificados a mano (noMatch, replaceDesc {old}/{new}, rel1rm, showAll,
+  blockWord, searchPlaceholder escapado), 1 fix documentado ('Mas opciones').
+- profileSettingsInventory fallaba (determinista): las aria "Download" y
+  "Delete" del inventario N6 fueron renombradas por Q18 (a t.export y
+  t.factoryReset) y Q18 corrió Playwright contra un dist viejo, tapando el
+  fallo. Fix: mapeo RENAMED en el spec (vieja ausente + exactamente una
+  de las formas nuevas es/en presente). 3/3 verde.
+- Evidencia: build OK (tsc + vite + precache 5 critical + 58 lazy),
+  `test:run` 592/592 (113 ficheros: 579 + ratchet 2 + paridad 1 + render
+  10), `lint:a11y` limpio, Playwright 43/43 (puerto aislado 5199).
+  Una corrida completa mostró 1 unhandled rejection en
+  statsScopeControl (worker mock under load) con 582/582 en verde;
+  re-corridas limpias: flake de carga paralela, misma familia que los
+  timing flakes conocidos.
+- No verificado: render visual en es/en en dispositivo real; el resto de
+  ficheros con ternarias (fuera de la meta) sigue pendiente de migración.

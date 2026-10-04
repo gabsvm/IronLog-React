@@ -237,6 +237,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
     const { logs, lang, exercises, tutorialProgress, markTutorialSeen, userProfile, config, rpFeedback } = useApp();
     const activeMeso = useStore(state => state.activeMeso);
     const t = TRANSLATIONS[lang];
+    const s = t.statsView;
     const unit = resolveWeightUnit(config);
     const weightSuffix = unitLabel(unit).toLowerCase();
 
@@ -471,10 +472,10 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
     const hasExerciseHistory = availableExercises.length > 0;
 
     const overviewPills = [
-        { label: lang === 'es' ? 'Sesiones' : 'Sessions', value: countSessionsByScope(safeLogs, scopeMesoId) },
-        { label: lang === 'es' ? 'Ejercicios' : 'Exercises', value: availableExercises.length },
-        { label: lang === 'es' ? 'Series' : 'Sets', value: totalSets },
-        { label: lang === 'es' ? 'Músculos' : 'Muscles', value: trackedMuscles },
+        { label: s.pillSessions, value: countSessionsByScope(safeLogs, scopeMesoId) },
+        { label: s.pillExercises, value: availableExercises.length },
+        { label: s.pillSets, value: totalSets },
+        { label: s.pillMuscles, value: trackedMuscles },
     ];
 
     const doughnutData = buildDoughnutData(setTypeDist, t.types as Record<string, string>);
@@ -583,10 +584,10 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
         const profile = getExerciseStrengthProfile(currentEx);
         const muscleWeeklySets = rawMuscleCounts[currentEx.muscle] || 0;
         const volumeStatus =
-            muscleWeeklySets < 6 ? { id: 'low', label: lang === 'es' ? 'Bajo' : 'Low' } :
-            muscleWeeklySets < 10 ? { id: 'maintenance', label: lang === 'es' ? 'Base' : 'Base' } :
-            muscleWeeklySets <= 20 ? { id: 'optimal', label: lang === 'es' ? 'Óptimo' : 'Optimal' } :
-            { id: 'high', label: lang === 'es' ? 'Alto' : 'High' };
+            muscleWeeklySets < 6 ? { id: 'low', label: s.volLow } :
+            muscleWeeklySets < 10 ? { id: 'maintenance', label: s.volBase } :
+            muscleWeeklySets <= 20 ? { id: 'optimal', label: s.volOptimal } :
+            { id: 'high', label: s.volHigh };
 
         let level: PerformanceBand | null = null;
         let rationale = '';
@@ -594,40 +595,24 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
         if (currentEx.isBodyweight) {
             level = getBodyweightLevel(profile, bestReps, bestAddedLoad, (currentEx as any).skillLevel, bestHoldSeconds);
             rationale = currentEx.isIsometric
-                ? (lang === 'es'
-                    ? `Mejor hold: ${bestHoldSeconds}s`
-                    : `Best hold: ${bestHoldSeconds}s`)
-                : (lang === 'es'
-                    ? `Mejor set: ${bestReps} reps${bestAddedLoad > 0 ? ` + ${formatWeight(bestAddedLoad, unit, lang)}${weightSuffix}` : ''}`
-                    : `Best set: ${bestReps} reps${bestAddedLoad > 0 ? ` + ${formatWeight(bestAddedLoad, unit, lang)}${weightSuffix}` : ''}`);
+                ? `${s.bestHold} ${bestHoldSeconds}s`
+                : `${s.bestSet} ${bestReps} reps${bestAddedLoad > 0 ? ` + ${formatWeight(bestAddedLoad, unit, lang)}${weightSuffix}` : ''}`;
         } else if (!currentEx.isIsometric && currentEx.muscle !== 'CARDIO' && userProfile?.bodyWeight) {
             const relativeStrength = bestEstimated1RM / userProfile.bodyWeight;
             level = getWeightedLevel(profile, relativeStrength);
-            rationale = lang === 'es'
-                ? `Est. 1RM relativo: ${relativeStrength.toFixed(2)}x peso corporal`
-                : `Relative est. 1RM: ${relativeStrength.toFixed(2)}x bodyweight`;
+            rationale = `${s.rel1rm} ${relativeStrength.toFixed(2)}x ${s.bodyweightWord}`;
         } else if (!currentEx.isIsometric && currentEx.muscle !== 'CARDIO' && bestEstimated1RM > 0) {
             level = bestEstimated1RM >= 100 ? 'advanced' : bestEstimated1RM >= 50 ? 'intermediate' : 'beginner';
-            rationale = lang === 'es'
-                ? `Est. 1RM: ${Math.round(toDisplay(bestEstimated1RM, unit))}${weightSuffix} (sin peso corporal cargado)`
-                : `Est. 1RM: ${Math.round(toDisplay(bestEstimated1RM, unit))}${weightSuffix} (no bodyweight profile set)`;
+            rationale = `${s.est1rm} ${Math.round(toDisplay(bestEstimated1RM, unit))}${weightSuffix} ${s.noBodyweight}`;
         }
 
         const volumeBasis = currentEx.muscle === 'CARDIO'
-            ? (lang === 'es'
-                ? 'Cardio usa tiempo o distancia, no tonelaje.'
-                : 'Cardio uses time or distance, not load tonnage.')
+            ? s.cardioBasis
             : currentEx.isIsometric
-                ? (lang === 'es'
-                    ? 'Isométricos usan segundos de hold como progreso principal.'
-                    : 'Isometrics use hold seconds as the main progress signal.')
+                ? s.isoBasis
                 : currentEx.isBodyweight
-                    ? (lang === 'es'
-                        ? `El volumen de carga suma tu peso corporal${userProfile?.bodyWeight ? ` (${formatWeight(userProfile.bodyWeight, unit, lang)}${weightSuffix})` : ''} y cualquier lastre.`
-                        : `Load volume adds your bodyweight${userProfile?.bodyWeight ? ` (${formatWeight(userProfile.bodyWeight, unit, lang)}${weightSuffix})` : ''} plus any added load.`)
-                    : (lang === 'es'
-                        ? 'Máquinas, poleas y pesos libres usan el peso que registras como carga externa.'
-                        : 'Machines, cables, and free weights use the logged load as external resistance.');
+                    ? `${s.bwBasisA}${userProfile?.bodyWeight ? ` (${formatWeight(userProfile.bodyWeight, unit, lang)}${weightSuffix})` : ''} ${s.bwBasisB}`
+                    : s.extBasis;
 
         return {
             volumeBasis,
@@ -637,7 +622,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
             muscleWeeklySets,
             volumeStatus,
         };
-    }, [currentEx, exercises, lang, rawMuscleCounts, safeLogs, userProfile?.bodyWeight, scopeMesoId, unit, weightSuffix]);
+    }, [currentEx, exercises, lang, rawMuscleCounts, safeLogs, userProfile?.bodyWeight, scopeMesoId, unit, weightSuffix, s]);
 
     const statsTutorialSteps = [
         { targetId: 'tut-progress-chart', title: t.tutorial.stats[0].title, text: t.tutorial.stats[0].text, position: 'bottom' as const },
@@ -655,8 +640,8 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                                 <h2 className="text-[1.7rem] font-black tracking-[-0.05em] text-white">{t.statsTitle}</h2>
                                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
                                     {activeMeso
-                                        ? `${lang === 'es' ? 'Meso activo' : 'Active meso'} · ${t.week} ${activeMeso.week}`
-                                        : (lang === 'es' ? 'Historial global' : 'All-time history')}
+                                        ? `${s.mesoActive} · ${t.week} ${activeMeso.week}`
+                                        : s.globalHistory}
                                 </p>
                             </div>
                             {activeMeso && (
@@ -694,8 +679,8 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                                 <h3 className="font-bold text-white">{t.statsProgress}</h3>
                                 <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-zinc-500">
                                     {hasExerciseHistory
-                                        ? `${availableExercises.length} ${lang === 'es' ? 'ejercicios con historial' : 'tracked exercises'}`
-                                        : (lang === 'es' ? 'Sin historial cargado' : 'No history loaded')}
+                                        ? `${availableExercises.length} ${s.trackedEx}`
+                                        : s.noHistory}
                                 </p>
                             </div>
                         </div>
@@ -743,12 +728,10 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                             <Icon name="BarChart3" size={20} />
                         </div>
                         <p className="text-sm font-bold text-white">
-                            {lang === 'es' ? 'Aún no hay ejercicios para graficar' : 'No exercises ready to chart yet'}
+                            {s.noChartEx}
                         </p>
                         <p className="mt-1 text-xs text-zinc-500">
-                            {lang === 'es'
-                                ? 'Completa entrenamientos sincronizados para ver progresión por ejercicio.'
-                                : 'Complete synced workouts to unlock exercise progress.'}
+                            {s.noChartHint}
                         </p>
                     </div>
                 )}
@@ -759,7 +742,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                     <div className="glass-card rounded-[1.7rem] border border-white/6 p-5 shadow-md">
                         <h3 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-500">
                             <Icon name="Scale" size={14} />
-                            {lang === 'es' ? 'Base de Volumen' : 'Volume Basis'}
+                            {s.volumeBasisTitle}
                         </h3>
                         <p className="text-sm leading-relaxed text-zinc-300">
                             {selectedExerciseInsight.volumeBasis}
@@ -767,7 +750,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                         {selectedExerciseInsight.totalVolume > 0 && (
                             <div className="mt-4 rounded-2xl border border-white/6 bg-white/[0.03] px-4 py-3">
                                 <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-zinc-500">
-                                    {lang === 'es' ? 'Carga total acumulada' : 'Accumulated load volume'}
+                                    {s.totalLoad}
                                 </div>
                                 <div className="mt-1 text-2xl font-black tracking-[-0.04em] text-white">
                                     {Math.round(toDisplay(selectedExerciseInsight.totalVolume, unit)).toLocaleString()} {weightSuffix}
@@ -779,20 +762,20 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                     <div className="glass-card rounded-[1.7rem] border border-white/6 p-5 shadow-md">
                         <h3 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-500">
                             <Icon name="Award" size={14} />
-                            {lang === 'es' ? 'Nivel Actual' : 'Current Level'}
+                            {s.currentLevel}
                         </h3>
                         <div className="flex items-center justify-between gap-3">
                             <div>
                                 <div className="text-2xl font-black capitalize tracking-[-0.04em] text-white">
-                                    {(selectedExerciseInsight.level && (t.statsLevels as Record<string, string>)[selectedExerciseInsight.level]) || (lang === 'es' ? 'Sin clasificar' : 'Unrated')}
+                                    {(selectedExerciseInsight.level && (t.statsLevels as Record<string, string>)[selectedExerciseInsight.level]) || s.unrated}
                                 </div>
                                 <p className="mt-1 text-sm text-zinc-400">
-                                    {selectedExerciseInsight.rationale || (lang === 'es' ? 'Falta historial suficiente para clasificar.' : 'Not enough history to classify yet.')}
+                                    {selectedExerciseInsight.rationale || s.notEnoughHistory}
                                 </p>
                             </div>
                             <div className="rounded-2xl border border-white/6 bg-white/[0.03] px-4 py-3 text-right">
                                 <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-zinc-500">
-                                    {lang === 'es' ? 'Series semanales del músculo' : 'Weekly muscle sets'}
+                                    {s.weeklyMuscleSets}
                                 </div>
                                 <div className="mt-1 text-xl font-black text-white">
                                     {formatSets(selectedExerciseInsight.muscleWeeklySets, lang)}
@@ -811,9 +794,9 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                     <div className="mb-5 flex items-center justify-between">
                         <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-500">
                             <Icon name="Trophy" size={14} />
-                            {lang === 'es' ? 'Récords Personales' : 'Personal Records'}
+                            {s.prTitle}
                         </h3>
-                        <span className="text-[11px] font-bold uppercase text-zinc-600">{lang === 'es' ? 'e1RM estimado' : 'est. e1RM'}</span>
+                        <span className="text-[11px] font-bold uppercase text-zinc-600">{s.prEst}</span>
                     </div>
 
                     <div className="space-y-2">
@@ -844,8 +827,8 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                             className="mt-3 w-full py-1 text-center text-xs font-bold text-zinc-500 transition-colors hover:text-zinc-300"
                         >
                             {showAllPRs
-                                ? (lang === 'es' ? '↑ Ver menos' : '↑ Show less')
-                                : (lang === 'es' ? `↓ Ver todos (${prHistory.length})` : `↓ Show all (${prHistory.length})`)}
+                                ? s.showLess
+                                : `↓ ${s.showAll} (${prHistory.length})`}
                         </button>
                     )}
                 </div>
@@ -936,7 +919,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
                         <div className="relative z-10 mb-5 flex items-center justify-between">
                             <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-500">
                                 <Icon name="Grid3x3" size={14} />
-                                {lang === 'es' ? 'Mapa de Calor Muscular' : 'Muscle Heatmap'}
+                                {s.heatmapTitle}
                             </h3>
                         </div>
 
@@ -1041,9 +1024,7 @@ export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader 
 
                             {filteredExercises.length === 0 && (
                                 <div className="py-10 text-center text-xs text-zinc-400">
-                                    {lang === 'es'
-                                        ? `No hay ejercicios en tu historial que coincidan con "${pickerSearch}".`
-                                        : `No exercises found in your history matching "${pickerSearch}".`}
+                                    {`${s.noMatch} "${pickerSearch}".`}
                                 </div>
                             )}
                         </div>

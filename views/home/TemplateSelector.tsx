@@ -18,14 +18,14 @@ interface Props {
     onSelectProgram?: (programId: string) => void;
 }
 
-const getTemplateAuthor = (tpl: GlobalTemplate, lang: string): string => {
-    if (tpl.scope === 'personal') return lang === 'es' ? 'Mis plantillas' : 'My templates';
+const getTemplateAuthor = (tpl: GlobalTemplate, ts: any): string => {
+    if (tpl.scope === 'personal') return ts.myTemplates;
     const id = tpl.id;
     if (id.startsWith('nh_') || id === 'toji_fushiguro' || id === 'tokita') return 'Natural Hypertrophy';
     if (id === 'ji3') return 'Paul Carter';
     if (id === 'full_body') return 'Dr. Mike Israetel (RP)';
-    if (id.startsWith('cal_')) return lang === 'es' ? 'Calistenia / Peso Corporal' : 'Calisthenics / Bodyweight';
-    return lang === 'es' ? 'Básicos & Especiales de la App' : 'Base & App Specials';
+    if (id.startsWith('cal_')) return ts.calisthenics;
+    return ts.baseSpecials;
 };
 
 export const TemplateSelector: React.FC<Props> = ({
@@ -38,6 +38,7 @@ export const TemplateSelector: React.FC<Props> = ({
     onSelectProgram,
 }) => {
     const [showKongDetail, setShowKongDetail] = useState(false);
+    const ts = t.templateSelector;
     const [expandedAuthors, setExpandedAuthors] = useState<Record<string, boolean>>({
         'Natural Hypertrophy': true,
     });
@@ -45,12 +46,12 @@ export const TemplateSelector: React.FC<Props> = ({
     const grouped = useMemo(() => {
         const groups: Record<string, GlobalTemplate[]> = {};
         templates.forEach((tpl) => {
-            const author = getTemplateAuthor(tpl, lang);
+            const author = getTemplateAuthor(tpl, ts);
             if (!groups[author]) groups[author] = [];
             groups[author].push(tpl);
         });
         return groups;
-    }, [templates, lang]);
+    }, [templates, ts]);
 
     const selector = (
         <div
@@ -63,14 +64,14 @@ export const TemplateSelector: React.FC<Props> = ({
                 <div className="mx-auto flex h-16 w-full max-w-xl items-center justify-between gap-4">
                     <div>
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary-500">
-                            {lang === 'es' ? 'PLAN DE ENTRENAMIENTO' : 'TRAINING PLAN'}
+                            {ts.trainingPlan}
                         </p>
                         <h2 className="mt-0.5 text-2xl font-black">{t.startMeso}</h2>
                     </div>
                     <button
                         type="button"
                         onClick={onClose}
-                        aria-label={lang === 'es' ? 'Cerrar' : 'Close'}
+                        aria-label={ts.close}
                         className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] text-[rgb(var(--text-secondary))] active:scale-95"
                     >
                         <Icon name="X" size={21} />
@@ -83,10 +84,10 @@ export const TemplateSelector: React.FC<Props> = ({
                     <section className="rounded-3xl border border-primary-500/30 bg-primary-500/10 p-4">
                         <div className="mb-3 flex items-center justify-between">
                             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary-500">
-                                {lang === 'es' ? 'PROGRAMAS' : 'PROGRAMS'}
+                                {ts.programs}
                             </p>
                             <span className="rounded-full bg-primary-500/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-primary-500">
-                                {lang === 'es' ? 'SISTEMA COMPLETO' : 'FULL SYSTEM'}
+                                {ts.fullSystem}
                             </span>
                         </div>
 
@@ -103,10 +104,10 @@ export const TemplateSelector: React.FC<Props> = ({
                                 <Icon name="ChevronRight" size={20} className="mt-1 shrink-0 text-primary-500" />
                             </div>
                             <p className="mt-4 text-[10px] font-black uppercase tracking-[0.16em] text-[rgb(var(--text-muted))]">
-                                12 {lang === 'es' ? 'SEMANAS' : 'WEEKS'} · 4 {lang === 'es' ? 'DÍAS' : 'DAYS'} · 3 {lang === 'es' ? 'BLOQUES' : 'BLOCKS'}
+                                12 {ts.weeks} · 4 {ts.days} · 3 {ts.blocks}
                             </p>
                             <span className="mt-4 inline-flex min-h-11 items-center rounded-xl bg-primary-500 px-4 text-xs font-black text-black">
-                                {lang === 'es' ? 'VER PROGRAMA' : 'VIEW PROGRAM'}
+                                {ts.viewProgram}
                             </span>
                         </button>
                     </section>
@@ -114,7 +115,7 @@ export const TemplateSelector: React.FC<Props> = ({
                     <div className="flex items-center gap-4 px-1">
                         <div className="h-px flex-1 bg-[rgb(var(--border-subtle))]" />
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[rgb(var(--text-muted))]">
-                            {lang === 'es' ? 'PLANTILLAS' : 'TEMPLATES'}
+                            {ts.templates}
                         </span>
                         <div className="h-px flex-1 bg-[rgb(var(--border-subtle))]" />
                     </div>
@@ -128,16 +129,16 @@ export const TemplateSelector: React.FC<Props> = ({
                             <Icon name="Edit" size={21} />
                         </div>
                         <div className="min-w-0 flex-1">
-                            <h3 className="text-lg font-black">{lang === 'en' ? 'Design from Scratch' : 'Crear desde Cero'}</h3>
+                            <h3 className="text-lg font-black">{ts.designTitle}</h3>
                             <p className="mt-1 text-sm text-[rgb(var(--text-secondary))]">
-                                {lang === 'en' ? 'Empty canvas. You choose the exercises.' : 'Lienzo vacío. Tú eliges los ejercicios.'}
+                                {ts.designDesc}
                             </p>
                         </div>
                         <Icon name="ChevronRight" size={19} className="shrink-0 text-[rgb(var(--text-muted))]" />
                     </button>
 
                     <p className="px-1 text-[10px] font-black uppercase tracking-[0.2em] text-[rgb(var(--text-muted))]">
-                        {lang === 'en' ? 'CHOOSE BY AUTHOR' : 'ELIGE POR AUTOR'}
+                        {ts.chooseByAuthor}
                     </p>
 
                     <div className="space-y-3">
@@ -157,7 +158,7 @@ export const TemplateSelector: React.FC<Props> = ({
                                             <div className="min-w-0">
                                                 <h3 className="truncate text-sm font-black">{author}</h3>
                                                 <p className="mt-0.5 text-[9px] font-bold uppercase tracking-widest text-[rgb(var(--text-muted))]">
-                                                    {groupTemplates.length} {groupTemplates.length === 1 ? (lang === 'en' ? 'Program' : 'Programa') : (lang === 'en' ? 'Programs' : 'Programas')}
+                                                    {groupTemplates.length} {groupTemplates.length === 1 ? ts.programOne : ts.programMany}
                                                 </p>
                                             </div>
                                         </div>
@@ -184,7 +185,7 @@ export const TemplateSelector: React.FC<Props> = ({
                                                     </p>
                                                     <div className="mt-3 flex gap-2">
                                                         <span className="rounded bg-[rgb(var(--surface-base))] px-2 py-1 text-[10px] font-bold text-[rgb(var(--text-muted))]">
-                                                            {tpl.program.length} {lang === 'en' ? 'Days' : 'Días'}
+                                                            {tpl.program.length} {ts.daysLower}
                                                         </span>
                                                     </div>
                                                 </button>

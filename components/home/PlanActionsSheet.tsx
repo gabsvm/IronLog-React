@@ -1,6 +1,7 @@
 import React from 'react';
 import { Icon } from '../ui/Icon';
 import { Sheet } from '../ui/Sheet';
+import { TRANSLATIONS } from '../../constants';
 
 interface PlanActionsSheetProps {
     open: boolean;
@@ -48,26 +49,27 @@ export const PlanActionsSheet: React.FC<PlanActionsSheetProps> = ({
     totalWeeks,
     onConfigure,
     onEditProgram,
-}) => (
+}) => {
+    const t = TRANSLATIONS[lang];
+    const p = t.planActions;
+    return (
     <Sheet
         open={open}
         onOpenChange={(next) => { if (!next) onClose(); }}
-        title={lang === 'es' ? 'Opciones del plan' : 'Plan options'}
+        title={p.title}
         accent="primary"
     >
         <div className="px-5 pb-8 pt-2">
             <div className="mb-5 rounded-2xl border border-primary-500/15 bg-primary-500/[0.06] p-4">
                 <div className="text-[10px] font-black uppercase tracking-[0.16em] text-primary-600 dark:text-primary-400">
-                    {lang === 'es' ? 'Plan actual' : 'Current plan'}
+                    {t.currentPlan}
                 </div>
                 <div className="mt-1 truncate text-base font-black text-zinc-950 dark:text-white">
-                    {planName || (lang === 'es' ? 'Plan activo' : 'Active plan')}
+                    {planName || p.activeFallback}
                 </div>
                 {!!week && (
                     <div className="mt-1 text-xs font-medium text-zinc-500">
-                        {lang === 'es'
-                            ? `Semana ${week}${totalWeeks ? ` de ${totalWeeks}` : ''}`
-                            : `Week ${week}${totalWeeks ? ` of ${totalWeeks}` : ''}`}
+                        {`${p.weekOf} ${week}${totalWeeks ? ` ${p.ofWord} ${totalWeeks}` : ''}`}
                     </div>
                 )}
             </div>
@@ -75,17 +77,18 @@ export const PlanActionsSheet: React.FC<PlanActionsSheetProps> = ({
             <div className="space-y-2.5">
                 <ActionRow
                     icon="Settings"
-                    title={lang === 'es' ? 'Configurar plan' : 'Configure plan'}
-                    description={lang === 'es' ? 'Duración, deload, notas y opciones del mesociclo.' : 'Duration, deload, notes and mesocycle options.'}
+                    title={p.configureTitle}
+                    description={p.configureDesc}
                     onClick={onConfigure}
                 />
                 <ActionRow
                     icon="Edit"
-                    title={lang === 'es' ? 'Editar rutina' : 'Edit routine'}
-                    description={lang === 'es' ? 'Modifica días, ejercicios, series y estructura.' : 'Change days, exercises, sets and structure.'}
+                    title={p.editTitle}
+                    description={p.editDesc}
                     onClick={onEditProgram}
                 />
             </div>
         </div>
     </Sheet>
-);
+    );
+};

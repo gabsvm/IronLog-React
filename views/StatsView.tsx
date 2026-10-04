@@ -22,6 +22,7 @@ export const StatsView: React.FC = () => {
     const [section, setSection] = useState<StatsSection>('overview');
     const safeLogs = useMemo(() => Array.isArray(logs) ? logs : [], [logs]);
     const t = TRANSLATIONS[lang];
+    const sw = t.statsWrapper;
 
     // Explicit user choice (persisted, v2 key); null when the user never chose.
     // The visible tab resolves it to an effective scope: without a choice,
@@ -65,12 +66,12 @@ export const StatsView: React.FC = () => {
         if (!activeMeso?.mesoType) return null;
         const raw = String(activeMeso.mesoType);
         if (/^(tpl_|personal_)/i.test(raw)) {
-            return lang === 'es' ? 'PERSONALIZADO' : 'CUSTOM';
+            return sw.customPlan;
         }
         const translated = (t.phases as any)?.[raw];
         if (typeof translated === 'string' && translated.trim()) return translated;
         return raw.replace(/[_-]+/g, ' ').trim().toUpperCase();
-    }, [activeMeso?.mesoType, lang, t.phases]);
+    }, [activeMeso?.mesoType, t.phases, sw.customPlan]);
 
     const items: Array<{ id: StatsSection; es: string; en: string }> = [
         { id: 'overview', es: 'Resumen', en: 'Overview' },
@@ -79,15 +80,15 @@ export const StatsView: React.FC = () => {
     ];
 
     const summaryItems = [
-        { label: lang === 'es' ? 'Sesiones' : 'Sessions', value: scopedSummary.sessions },
-        { label: lang === 'es' ? 'Ejercicios' : 'Exercises', value: scopedSummary.exercises },
-        { label: lang === 'es' ? 'Series' : 'Sets', value: scopedSummary.sets },
-        { label: lang === 'es' ? 'Músculos' : 'Muscles', value: scopedSummary.muscles },
+        { label: t.statsView.pillSessions, value: scopedSummary.sessions },
+        { label: t.statsView.pillExercises, value: scopedSummary.exercises },
+        { label: t.statsView.pillSets, value: scopedSummary.sets },
+        { label: t.statsView.pillMuscles, value: scopedSummary.muscles },
     ];
 
     return (
         <div className="product-stats-shell">
-            <div className="product-stats-segments" role="tablist" aria-label={lang === 'es' ? 'Secciones de estadísticas' : 'Stats sections'}>
+            <div className="product-stats-segments" role="tablist" aria-label={sw.sectionsAria}>
                 <div className="product-stats-segments-inner">
                     {items.map(item => (
                         <button
@@ -101,7 +102,7 @@ export const StatsView: React.FC = () => {
                             className="product-stats-segment"
                             onClick={() => setSection(item.id)}
                         >
-                            {lang === 'es' ? item.es : item.en}
+                            {item[lang]}
                         </button>
                     ))}
                 </div>
@@ -149,8 +150,8 @@ export const StatsView: React.FC = () => {
                         <div className="mb-3 flex items-center gap-2">
                             <Icon name="Activity" size={14} className="text-primary-500" />
                             <div>
-                                <div className="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500">{lang === 'es' ? 'Consistencia' : 'Consistency'}</div>
-                                <div className="text-xs text-muted">{lang === 'es' ? 'Últimos 4 meses' : 'Last 4 months'}</div>
+                                <div className="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500">{sw.consistency}</div>
+                                <div className="text-xs text-muted">{sw.last4}</div>
                             </div>
                         </div>
                         <ActivityHeatmap logs={safeLogs} />

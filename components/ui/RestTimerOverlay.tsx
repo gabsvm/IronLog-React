@@ -53,6 +53,7 @@ export function resolveRestNextAction(
     lang: 'es' | 'en' = 'es',
     unit: WeightUnit = 'kg'
 ): RestNextAction | null {
+    const tm = TRANSLATIONS[lang].timer;
     if (!exercises || exercises.length === 0) return null;
 
     // Stored weights are kg; the target shows the chosen display unit.
@@ -78,7 +79,7 @@ export function resolveRestNextAction(
                     const nextSet = (nextPartner.sets || []).find(s => !s.completed);
                     const target = formatTarget(nextSet);
                     return {
-                        category: lang === 'es' ? 'Siguiente en superserie' : 'Next in superset',
+                        category: tm.nextInSuperset,
                         name: getTranslated(nextPartner.name, lang),
                         isSuperset: true,
                         target,
@@ -90,7 +91,7 @@ export function resolveRestNextAction(
                 if (nextSetInSameEx) {
                     const target = formatTarget(nextSetInSameEx);
                     return {
-                        category: lang === 'es' ? 'Siguiente serie' : 'Next set',
+                        category: tm.nextSet,
                         name: getTranslated(sourceEx.name, lang),
                         isSuperset: false,
                         target,
@@ -108,9 +109,7 @@ export function resolveRestNextAction(
                     const isSuperset = !!candidate.supersetId;
                     const target = formatTarget(nextSet);
                     return {
-                        category: isSuperset
-                            ? (lang === 'es' ? 'Siguiente en superserie' : 'Next in superset')
-                            : (lang === 'es' ? 'Siguiente ejercicio' : 'Next exercise'),
+                        category: isSuperset ? tm.nextInSuperset : tm.nextExercise,
                         name: getTranslated(candidate.name, lang),
                         isSuperset,
                         target,
@@ -127,9 +126,7 @@ export function resolveRestNextAction(
             const isSuperset = !!ex.supersetId;
             const target = formatTarget(nextSet);
             return {
-                category: isSuperset
-                    ? (lang === 'es' ? 'Siguiente en superserie' : 'Next in superset')
-                    : (lang === 'es' ? 'Siguiente ejercicio' : 'Next exercise'),
+                category: isSuperset ? tm.nextInSuperset : tm.nextExercise,
                 name: getTranslated(ex.name, lang),
                 isSuperset,
                 target,
@@ -146,6 +143,7 @@ export const CircularTimer: React.FC<{
     lang: 'en' | 'es';
     reducedEffects?: boolean;
 }> = ({ percentage, timeLeft, totalDuration, lang, reducedEffects }) => {
+    const tm = TRANSLATIONS[lang].timer;
     const size = 170;
     const strokeWidth = 7;
     const radius = TIMER_RING_RADIUS;
@@ -187,7 +185,7 @@ export const CircularTimer: React.FC<{
                     {formatSeconds(timeLeft)}
                 </span>
                 <span className="text-xs text-muted mt-0.5">
-                    {lang === 'es' ? `de ${formatSeconds(totalDuration)}` : `of ${formatSeconds(totalDuration)}`}
+                    {`${tm.ofWord} ${formatSeconds(totalDuration)}`}
                 </span>
             </div>
         </div>
@@ -483,7 +481,7 @@ export const RestTimerOverlay: React.FC = () => {
                                 setMode('expanded');
                             }}
                             className="flex items-center gap-2 pr-1 min-w-0 transition-opacity hover:opacity-85 active:scale-95 text-left"
-                            aria-label={`${t.resting}: ${formatSeconds(restTimer.timeLeft)}. ${lang === 'es' ? 'Tocar para expandir' : 'Tap to expand'}`}
+                            aria-label={`${t.resting}: ${formatSeconds(restTimer.timeLeft)}. ${t.timer.tapToExpand}`}
                         >
                             <span className="relative flex h-2 w-2 shrink-0">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75" />
@@ -517,8 +515,8 @@ export const RestTimerOverlay: React.FC = () => {
                                 type="button"
                                 onClick={skipTimer}
                                 className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-surface-elevated border border-border-subtle text-muted hover:text-white active:scale-90 transition-all"
-                                aria-label={lang === 'es' ? 'Saltar descanso' : 'Skip rest'}
-                                title={lang === 'es' ? 'Saltar descanso' : 'Skip rest'}
+                                aria-label={t.timer.skipRest}
+                                title={t.timer.skipRest}
                             >
                                 <Icon name="FastForward" size={16} />
                             </button>
@@ -600,7 +598,7 @@ export const RestTimerOverlay: React.FC = () => {
                     <div className="flex items-center gap-2">
                         <span className="h-2 w-2 rounded-full bg-primary-500" />
                         <span className="text-xs font-semibold text-white">
-                            {lang === 'es' ? 'Descansando' : 'Resting'}
+                            {t.resting}
                         </span>
                     </div>
                     <button
@@ -610,7 +608,7 @@ export const RestTimerOverlay: React.FC = () => {
                             setMode('compact');
                         }}
                         className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-400 hover:text-white transition-colors"
-                        aria-label={lang === 'es' ? 'Minimizar' : 'Minimize'}
+                        aria-label={t.timer.minimize}
                     >
                         <Icon name="ChevronDown" size={20} />
                     </button>
@@ -644,7 +642,7 @@ export const RestTimerOverlay: React.FC = () => {
                 {showEffortFeedback && currentSourceSet && (
                     <div className="card-reference p-3 mt-2 text-left">
                         <div className="text-[10px] font-semibold uppercase tracking-wider text-muted mb-2">
-                            {lang === 'es' ? '¿Cómo se sintió la serie?' : 'How did the set feel?'}
+                            {t.timer.effortTitle}
                         </div>
                         <div className="flex gap-2">
                             <button
@@ -656,7 +654,7 @@ export const RestTimerOverlay: React.FC = () => {
                                         : 'border-border-subtle bg-surface-elevated text-zinc-300 hover:text-white hover:border-zinc-500'
                                 }`}
                             >
-                                {lang === 'es' ? 'Fácil' : 'Easy'}
+                                {t.effortEasy}
                             </button>
                             <button
                                 type="button"
@@ -678,7 +676,7 @@ export const RestTimerOverlay: React.FC = () => {
                                         : 'border-border-subtle bg-surface-elevated text-zinc-300 hover:text-white hover:border-zinc-500'
                                 }`}
                             >
-                                {lang === 'es' ? 'Duro' : 'Hard'}
+                                {t.effortHard}
                             </button>
                         </div>
                     </div>
@@ -726,7 +724,7 @@ export const RestTimerOverlay: React.FC = () => {
                     onClick={skipTimer}
                     className="btn-primary-reference w-full h-12 mt-3.5 rounded-xl bg-primary-500 text-zinc-950 text-sm font-semibold hover:bg-primary-400 active:scale-98 transition-all shadow-sm"
                 >
-                    {lang === 'es' ? 'Saltar descanso' : 'Skip rest'}
+                    {t.timer.skipRest}
                 </button>
             </div>
         </div>

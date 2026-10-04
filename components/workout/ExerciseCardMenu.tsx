@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Icon } from '../ui/Icon';
 import { SessionExercise, CardioType } from '../../types';
+import { TRANSLATIONS } from '../../constants';
 
 interface Props {
     ex: SessionExercise;
@@ -38,6 +39,7 @@ export const ExerciseCardMenu: React.FC<Props> = ({
     lang,
 }) => {
     const [isDeleting, setIsDeleting] = useState(false);
+    const m = TRANSLATIONS[lang].cardMenu;
 
     React.useEffect(() => {
         if (!isOpen) setIsDeleting(false);
@@ -53,7 +55,7 @@ export const ExerciseCardMenu: React.FC<Props> = ({
     return (
         <div
             role="menu"
-            aria-label={lang === 'es' ? 'Acciones del ejercicio' : 'Exercise actions'}
+            aria-label={m.actions}
             className="absolute right-0 top-full mt-2 w-64 overflow-hidden rounded-[1.35rem] border border-white/10 bg-[#17171B]/95 shadow-2xl shadow-black/50 backdrop-blur-xl z-dropdown animate-in fade-in zoom-in-95 duration-fast"
         >
             {!isDeleting ? (
@@ -80,11 +82,7 @@ export const ExerciseCardMenu: React.FC<Props> = ({
                                     <Icon name={hasSuperset ? 'Unlink' : isLinking ? 'Target' : 'Link'} size={15} />
                                 </span>
                                 <span className="flex-1">
-                                    {hasSuperset
-                                        ? (lang === 'es' ? 'Quitar superserie' : 'Remove superset')
-                                        : isLinking
-                                            ? (lang === 'es' ? 'Seleccionando pareja...' : 'Selecting partner...')
-                                            : (lang === 'es' ? 'Crear superserie' : 'Create superset')}
+                                    {hasSuperset ? m.unlink : isLinking ? m.linking : m.link}
                                 </span>
                             </button>
                         </>
@@ -115,7 +113,7 @@ export const ExerciseCardMenu: React.FC<Props> = ({
                                 role="menuitem"
                                 className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-bold text-amber-300 transition-colors hover:bg-white/5"
                             >
-                                <Icon name="Zap" size={16} /> {lang === 'es' ? 'Agregar warmup' : 'Add warmup sets'}
+                                <Icon name="Zap" size={16} /> {m.addWarmup}
                             </button>
                         </>
                     )}

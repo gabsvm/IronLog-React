@@ -26,6 +26,7 @@ import { triggerHaptic } from '../../utils/audio';
 import { isWorkingSet } from '../../utils/workoutProgress';
 import { Icon } from '../ui/Icon';
 import { Sheet } from '../ui/Sheet';
+import { TRANSLATIONS } from '../../constants';
 
 interface ReorderExercisesSheetProps {
     open: boolean;
@@ -61,6 +62,7 @@ export const SortableExerciseRow: React.FC<SortableExerciseRowProps> = ({
         transition,
         isDragging,
     } = useSortable({ id: exercise.instanceId });
+    const r = TRANSLATIONS[lang].reorderSheet;
 
     const completed = (exercise.sets || []).filter(set => isWorkingSet(set) && set.completed && !set.skipped).length;
     const total = (exercise.sets || []).filter(set => isWorkingSet(set)).length;
@@ -119,9 +121,7 @@ export const SortableExerciseRow: React.FC<SortableExerciseRowProps> = ({
                     {...attributes}
                     {...listeners}
                     className="w-9 h-9 flex items-center justify-center text-muted hover:text-white shrink-0 touch-none active:text-primary-400 rounded-lg hover:bg-surface-elevated/40"
-                    aria-label={lang === 'es'
-                        ? `Mover ${getTranslated(exercise.name, lang)}`
-                        : `Move ${getTranslated(exercise.name, lang)}`}
+                    aria-label={`${r.moveEx} ${getTranslated(exercise.name, lang)}`}
                 >
                     <Icon name="GripVertical" size={18} />
                 </button>
@@ -188,6 +188,7 @@ export const ReorderExercisesSheet: React.FC<ReorderExercisesSheetProps> = ({
 }) => {
     const [draft, setDraft] = useState<SessionExercise[]>(exercises);
     const [activeExercise, setActiveExercise] = useState<SessionExercise | null>(null);
+    const r = TRANSLATIONS[lang].reorderSheet;
 
     useEffect(() => {
         if (open) setDraft(exercises);
@@ -234,10 +235,8 @@ export const ReorderExercisesSheet: React.FC<ReorderExercisesSheetProps> = ({
         <Sheet
             open={open}
             onOpenChange={onOpenChange}
-            title={lang === 'es' ? 'Ordenar ejercicios' : 'Reorder exercises'}
-            description={lang === 'es'
-                ? 'Arrastra desde el asa. Las superseries se mueven juntas.'
-                : 'Drag from the handle. Supersets move together.'}
+            title={r.title}
+            description={r.desc}
             accent="primary"
             footer={(
                 <button
@@ -246,7 +245,7 @@ export const ReorderExercisesSheet: React.FC<ReorderExercisesSheetProps> = ({
                     className="w-full h-11 rounded-xl bg-primary-500 font-semibold text-zinc-950 flex items-center justify-center gap-2 transition-transform active:scale-[0.98]"
                 >
                     <Icon name="Check" size={18} strokeWidth={2.5} />
-                    {lang === 'es' ? 'Guardar orden' : 'Save order'}
+                    {r.saveOrder}
                 </button>
             )}
         >
@@ -273,9 +272,7 @@ export const ReorderExercisesSheet: React.FC<ReorderExercisesSheetProps> = ({
                                 const isFirstInGroup = !prevEx || prevEx.supersetId !== exercise.supersetId;
                                 const isLastInGroup = !nextEx || nextEx.supersetId !== exercise.supersetId;
                                 const ssLetter = exercise.supersetId ? supersetLetterMap.get(exercise.supersetId) : undefined;
-                                const supersetLabel = ssLetter
-                                    ? (lang === 'es' ? `Superserie ${ssLetter}` : `Superset ${ssLetter}`)
-                                    : undefined;
+                                const supersetLabel = ssLetter ? `${r.superset} ${ssLetter}` : undefined;
 
                                 return (
                                     <SortableExerciseRow

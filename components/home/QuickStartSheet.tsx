@@ -2,6 +2,7 @@ import React from 'react';
 import { Sheet } from '../ui/Sheet';
 import { Icon } from '../ui/Icon';
 import { useStore } from '../../lib/store';
+import { TRANSLATIONS } from '../../constants';
 
 interface Props {
     open: boolean;
@@ -45,24 +46,23 @@ export const QuickStartSheet: React.FC<Props> = ({ open, onClose, lang, onResume
     const activeSession = useStore(state => state.activeSession);
     const activeMeso = useStore(state => state.activeMeso);
     const run = (fn: () => void) => { onClose(); window.setTimeout(fn, 300); };
+    const q = TRANSLATIONS[lang].quickStart;
 
     return (
-        <Sheet open={open} onOpenChange={(next) => { if (!next) onClose(); }} title={lang === 'es' ? 'Iniciar entrenamiento' : 'Start training'} accent="primary">
+        <Sheet open={open} onOpenChange={(next) => { if (!next) onClose(); }} title={q.title} accent="primary">
             <div className="space-y-2.5 px-4 pb-8 pt-1">
                 {activeSession ? (
                     <>
                         <Row
                             icon="Play"
                             primary
-                            badge={lang === 'es' ? 'EN CURSO' : 'LIVE'}
-                            title={lang === 'es' ? 'Reanudar sesión' : 'Resume session'}
+                            badge={q.live}
+                            title={q.resume}
                             description={activeSession.name}
                             onClick={() => run(onResume)}
                         />
                         <div className="rounded-2xl border border-amber-500/15 bg-amber-500/[0.06] px-4 py-3 text-[11px] leading-relaxed text-amber-600 dark:text-amber-300">
-                            {lang === 'es'
-                                ? 'Finaliza o descarta la sesión activa antes de iniciar otra.'
-                                : 'Finish or discard the active session before starting another one.'}
+                            {q.activeWarning}
                         </div>
                     </>
                 ) : (
@@ -71,35 +71,35 @@ export const QuickStartSheet: React.FC<Props> = ({ open, onClose, lang, onResume
                             <Row
                                 icon="Calendar"
                                 primary
-                                title={lang === 'es' ? 'Entreno programado' : 'Scheduled workout'}
-                                description={`${activeMeso.name} · ${lang === 'es' ? 'Semana' : 'Week'} ${activeMeso.week}`}
+                                title={q.scheduled}
+                                description={`${activeMeso.name} · ${q.week} ${activeMeso.week}`}
                                 onClick={() => run(onToday)}
                             />
                         )}
 
                         <div className="pt-1 text-[9px] font-black uppercase tracking-[0.17em] text-zinc-500">
-                            {lang === 'es' ? 'Entrenar sin plan fijo' : 'Train without a fixed plan'}
+                            {q.noPlan}
                         </div>
                         <Row
                             icon="Dumbbell"
-                            title={lang === 'es' ? 'Sesión libre / WOD / Skill' : 'Freestyle / WOD / Skill'}
-                            description={lang === 'es' ? 'Gym libre, CrossFit o progresiones de calistenia.' : 'Free gym, CrossFit or calisthenics progressions.'}
+                            title={q.freestyle}
+                            description={q.freestyleDesc}
                             onClick={() => run(onFreestyle)}
                         />
                         <Row
                             icon="Layers"
                             title="Two Block Mass"
-                            description={lang === 'es' ? 'Protocolos de Nick Nilsson y sesiones por bloque.' : 'Nick Nilsson protocols and block-based sessions.'}
+                            description={q.twoBlockDesc}
                             onClick={() => run(onTwoBlock)}
                         />
 
                         <div className="pt-1 text-[9px] font-black uppercase tracking-[0.17em] text-zinc-500">
-                            {lang === 'es' ? 'Gestionar' : 'Manage'}
+                            {q.manage}
                         </div>
                         <Row
                             icon="Edit"
-                            title={lang === 'es' ? 'Editar rutina' : 'Edit routine'}
-                            description={lang === 'es' ? 'Días, ejercicios, series y estructura del plan.' : 'Days, exercises, sets and plan structure.'}
+                            title={q.editRoutine}
+                            description={q.editRoutineDesc}
                             onClick={() => run(onEditProgram)}
                         />
                     </>

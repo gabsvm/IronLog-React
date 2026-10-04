@@ -1,5 +1,6 @@
 import React from 'react';
 import { WATER_GOAL_ML, WATER_PRESETS } from './nutritionHelpers';
+import { TRANSLATIONS } from '../../constants';
 
 interface Props {
     waterMl: number;
@@ -13,12 +14,13 @@ interface Props {
 export const WaterTracker: React.FC<Props> = React.memo(({ waterMl, onAdd, lang }) => {
     const pct = Math.min(100, (waterMl / WATER_GOAL_ML) * 100);
     const cups = Math.round(waterMl / 250);
+    const w = TRANSLATIONS[lang].water;
     return (
-        <div className="bg-zinc-900 rounded-3xl border border-zinc-800 p-4" aria-label={lang === 'es' ? 'Registro de agua' : 'Water tracker'}>
+        <div className="bg-zinc-900 rounded-3xl border border-zinc-800 p-4" aria-label={w.trackerLabel}>
             <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                     <span className="text-lg" aria-hidden="true">💧</span>
-                    <span className="text-sm font-bold text-white">{lang === 'en' ? 'Water' : 'Agua'}</span>
+                    <span className="text-sm font-bold text-white">{w.title}</span>
                 </div>
                 <span className="text-xs font-mono text-zinc-400">
                     {waterMl} <span className="text-zinc-600">/ {WATER_GOAL_ML} ml</span>

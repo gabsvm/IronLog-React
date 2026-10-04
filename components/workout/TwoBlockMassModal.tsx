@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
+import { TRANSLATIONS } from '../../constants';
 import { Icon } from '../ui/Icon';
 import { Button } from '../ui/Button';
 import { Sheet } from '../ui/Sheet';
@@ -111,6 +112,7 @@ export const TwoBlockMassModal: React.FC<Props> = ({ isOpen, onClose, onStart })
 
     const t = (k: { en: string; es: string }) => (lang === 'es' ? k.es : k.en);
     const phil = TWO_BLOCK_PHILOSOPHY[lang];
+    const tb = TRANSLATIONS[lang].twoBlock;
 
     return (
         <Sheet
@@ -179,7 +181,7 @@ export const TwoBlockMassModal: React.FC<Props> = ({ isOpen, onClose, onStart })
                         {/* Key rules */}
                         <div className="bg-amber-500/5 border border-amber-500/30 rounded-2xl p-4">
                             <h4 className="text-[10px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400 mb-2 flex items-center gap-2">
-                                <Icon name="AlertCircle" size={12} /> {lang === 'es' ? 'Reglas Clave' : 'Key Rules'}
+                                <Icon name="AlertCircle" size={12} /> {tb.keyRules}
                             </h4>
                             <ul className="space-y-1.5">
                                 {selected.keyRules[lang].map((rule, i) => (
@@ -200,7 +202,7 @@ export const TwoBlockMassModal: React.FC<Props> = ({ isOpen, onClose, onStart })
                                         onClick={() => setWeekIdx(i)}
                                         className={`shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-colors ${weekIdx === i ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'}`}
                                     >
-                                        {lang === 'es' ? 'Semana' : 'Week'} {i + 1}
+                                        {tb.week} {i + 1}
                                     </button>
                                 ))}
                             </div>
@@ -209,16 +211,14 @@ export const TwoBlockMassModal: React.FC<Props> = ({ isOpen, onClose, onStart })
                         {/* Day list */}
                         <div className="space-y-2">
                             <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 px-1">
-                                {lang === 'es' ? `Cronograma Semana ${weekIdx + 1}` : `Week ${weekIdx + 1} Schedule`}
+                                {tb.schedTitle.replace('{n}', String(weekIdx + 1))}
                                 {selected.schedule[weekIdx]?.restSeconds && (
                                     <span className="ml-2 text-zinc-500">· {selected.schedule[weekIdx].restSeconds}s rest</span>
                                 )}
                             </h4>
                             {selected.schedule[weekIdx]?.days.length === 0 ? (
                                 <div className="bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 text-center text-xs text-zinc-500">
-                                    {lang === 'es'
-                                        ? 'Este bloque sigue el mismo esquema que la Semana 1; la progresión la marca el descanso/reps que ves arriba.'
-                                        : 'This week follows the same scheme as Week 1; progression is driven by the rest/rep changes shown above.'}
+                                    {tb.sameScheme}
                                 </div>
                             ) : (
                                 selected.schedule[weekIdx].days.map((day, dIdx) => (

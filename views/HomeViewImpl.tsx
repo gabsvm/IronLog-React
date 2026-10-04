@@ -51,6 +51,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
     const activeMeso = useStore(state => state.activeMeso);
     const setActiveMeso = useStore(state => state.setActiveMeso);
     const t = TRANSLATIONS[lang] || TRANSLATIONS['en'];
+    const h = t.homeView;
     const kongBlock = activeMeso?.programSystem?.systemId === KONG_4DAY_V1.id ? getProgramBlockForWeek(KONG_4DAY_V1, activeMeso.week) : null;
 
     const { isPro, checkPro, showPaywall, setShowPaywall, featureAttempted } = usePro();
@@ -329,7 +330,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                                 {t.startMeso}
                             </h2>
                             <p className="text-sm text-zinc-400 font-medium">
-                                {lang === 'es' ? 'Comienza un nuevo plan' : 'Start a new plan'}
+                                {h.startPlan}
                             </p>
                         </div>
                         <div className="absolute inset-0 rounded-[2.5rem] ring-1 ring-white/10 group-hover:ring-white/30 transition-all duration-500"></div>
@@ -339,7 +340,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                 {/* Optional: Quick Action Button below if card isn't obvious enough */}
                 <div className="w-full max-w-xs animate-in fade-in slide-in-from-bottom-4 delay-200">
                     <Button onClick={handleOpenTemplateSelector} variant="secondary" fullWidth className="bg-zinc-900 border-zinc-800 hover:bg-zinc-800">
-                        {lang === 'en' ? "View Templates" : "Ver Plantillas"}
+                        {h.viewTemplates}
                     </Button>
                 </div>
 
@@ -356,7 +357,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                                 <div className="w-7 h-7 rounded-xl bg-violet-500/10 text-violet-500 flex items-center justify-center"><Icon name="User" size={14} /></div>
                             </div>
                             <span className="flex-1 text-left text-xs font-semibold text-zinc-300">
-                                {lang === 'es' ? 'Gym · CrossFit · Calistenia' : 'Gym · CrossFit · Calisthenics'}
+                                {h.freeRowShort}
                             </span>
                             <Icon name="ChevronRight" size={16} className="text-zinc-650" />
                         </button>
@@ -413,7 +414,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                         )}
                     </div>
                     <div className="text-xs text-muted mt-0.5">
-                        {t.week} {activeMeso.week} de {activeMeso.targetWeeks || activeMeso.duration} · {uniqueDaysDone.size} de {safeProgram.length} {lang === 'es' ? 'días' : 'days'}
+                        {t.week} {activeMeso.week} {h.ofWord} {activeMeso.targetWeeks || activeMeso.duration} · {uniqueDaysDone.size} {h.ofWord} {safeProgram.length} {h.daysWord}
                     </div>
                 </div>
                 <button
@@ -421,8 +422,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                     type="button"
                     onClick={() => setShowPlanActions(true)}
                     className="text-zinc-400 hover:text-white p-1.5 rounded-lg active:bg-surface-raised transition-colors shrink-0"
-                    aria-label={lang === 'es' ? 'Opciones del plan' : 'Plan options'}
-                    title={lang === 'es' ? 'Opciones del plan' : 'Plan options'}
+                    aria-label={h.planOptions}
+                    title={h.planOptions}
                 >
                     <Icon name="MoreHorizontal" size={20} />
                 </button>
@@ -460,7 +461,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                         >
                             <div className="text-[10px] font-semibold tracking-wide h-4 flex items-center justify-center">
                                 {isTodayOrNext ? (
-                                    <span className="text-primary-400 font-bold">{lang === 'es' ? 'Hoy' : 'Today'}</span>
+                                    <span className="text-primary-400 font-bold">{h.today}</span>
                                 ) : isDone ? (
                                     <span className="text-muted"><Icon name="Check" size={11} strokeWidth={3} /></span>
                                 ) : (
@@ -468,7 +469,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                                 )}
                             </div>
                             <div className="text-xs font-semibold mt-0.5 truncate">
-                                {lang === 'es' ? `Día ${idx + 1}` : `Day ${idx + 1}`}
+                                {`${h.dayWord} ${idx + 1}`}
                             </div>
                         </button>
                     );
@@ -532,9 +533,9 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                             <Icon name="Clock" size={12} />
                             <span>~{dayEstimatedMin > 0 ? dayEstimatedMin : 45} min</span>
                             <span>·</span>
-                            <span>{slots.length} {lang === 'es' ? 'ejercicios' : 'exercises'}</span>
+                            <span>{slots.length} {h.exercisesLower}</span>
                             <span>·</span>
-                            <span>{totalSets} {lang === 'es' ? 'series' : 'sets'}</span>
+                            <span>{totalSets} {h.setsLower}</span>
                         </div>
 
                         {previewSlots.length > 0 && (
@@ -553,7 +554,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                                 })}
                                 {extraSlotsCount > 0 && (
                                     <div className="text-xs text-muted pt-0.5">
-                                        {lang === 'es' ? `y ${extraSlotsCount} ejercicios más` : `and ${extraSlotsCount} more exercises`}
+                                        {`${h.andMoreA} ${extraSlotsCount} ${h.andMoreB}`}
                                     </div>
                                 )}
                             </div>
@@ -570,10 +571,10 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                             <Icon name={isSelectedActive ? 'Play' : isDone ? 'Repeat' : 'ArrowRight'} size={18} fill="currentColor" />
                             <span>
                                 {isSelectedActive
-                                    ? (lang === 'en' ? 'Resume Workout' : 'Reanudar entreno')
+                                    ? h.resume
                                     : isDone
-                                    ? (lang === 'en' ? 'Train this day again' : 'Entrenar este día de nuevo')
-                                    : `${lang === 'es' ? 'Empezar' : 'Start'} ${String(getTranslated(dayDef.dayName, lang))}`}
+                                    ? h.trainAgain
+                                    : `${h.start} ${String(getTranslated(dayDef.dayName, lang))}`}
                             </span>
                         </button>
                     </div>
@@ -604,7 +605,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                             <div className="w-7 h-7 rounded-lg bg-violet-500/10 text-violet-500 flex items-center justify-center"><Icon name="User" size={14} /></div>
                         </div>
                         <span className="flex-1 text-left text-xs font-semibold text-zinc-300">
-                            {lang === 'es' ? 'Gym · CrossFit · Calistenia (Libre)' : 'Gym · CrossFit · Calisthenics (Free)'}
+                            {h.freeRow}
                         </span>
                         <Icon name="ChevronRight" size={16} className="text-muted shrink-0" />
                     </button>
@@ -770,10 +771,10 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                         ) : ( // 'week'
                             <>
                                 <h3 className="text-white font-bold text-xl mb-2">{t.completeWeek}</h3>
-                                <p className="text-zinc-400 text-sm mb-6">{lang === 'en' ? 'Advance to the next week of your mesocycle?' : '¿Avanzar a la siguiente semana de tu mesociclo?'}</p>
+                                <p className="text-zinc-400 text-sm mb-6">{t.completeWeekConfirm}</p>
                                 <div className="flex gap-3">
                                     <Button variant="secondary" onClick={() => setShowCompleteModal(null)} fullWidth>{t.cancel}</Button>
-                                    <Button onClick={handleFinishWeek} fullWidth>{lang === 'en' ? 'Next Week' : 'Siguiente Semana'}</Button>
+                                    <Button onClick={handleFinishWeek} fullWidth>{h.nextWeek}</Button>
                                 </div>
                             </>
                         )}

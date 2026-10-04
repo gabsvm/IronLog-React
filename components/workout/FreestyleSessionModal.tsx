@@ -6,6 +6,7 @@ import { Icon } from '../ui/Icon';
 import { CROSSFIT_EXERCISES, CALISTHENICS_EXERCISES } from '../../data/disciplineExercises';
 import { SKILL_PROGRESSION_MAP } from '../../data/SkillProgressionMap';
 import { ExerciseDef, ActiveSession, SessionExercise, WorkoutSet } from '../../types';
+import { TRANSLATIONS } from '../../constants';
 
 interface FreestyleSessionModalProps {
     isOpen: boolean;
@@ -157,6 +158,7 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
     const [selectedSkillFamilyId, setSelectedSkillFamilyId] = useState<string | null>(null);
     const [calTab, setCalTab] = useState<'skills' | 'templates'>('skills');
     const [query, setQuery] = useState('');
+    const f = TRANSLATIONS[lang].freestyle;
 
     const allExercises = useMemo(() => [
         ...gymExercises,
@@ -177,9 +179,7 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
         onClose();
     };
 
-    const handleStartFreeGym = () => handleStartBlank(
-        lang === 'es' ? 'Sesión Libre (Gym)' : 'Freestyle Gym Session'
-    );
+    const handleStartFreeGym = () => handleStartBlank(f.freeGym);
 
     const handleStartWod = () => {
         const wod = CF_WODS.find(w => w.id === selectedWodId);
@@ -261,24 +261,24 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
     };
 
     const startLabel = (() => {
-        if (discipline === 'gym') return lang === 'es' ? '🏋️ Iniciar Sesión Libre' : '🏋️ Start Free Session';
+        if (discipline === 'gym') return f.startFree;
         if (discipline === 'crossfit') {
             const w = CF_WODS.find(w => w.id === selectedWodId);
-            return w ? `⚡ WOD: ${w.name}` : (lang === 'es' ? 'Selecciona un WOD' : 'Select a WOD');
+            return w ? `⚡ WOD: ${w.name}` : f.selectWod;
         }
         if (selectedSkillFamilyId) {
             const fam = SKILL_PROGRESSION_MAP[selectedSkillFamilyId];
             return fam ? `🎯 ${lang === 'es' ? fam.name.es : fam.name.en}` : '🤸 Skill Session';
         }
         const s = CAL_SKILLS.find(s => s.id === selectedSkillId);
-        return s ? `🤸 ${lang === 'es' ? s.name.es : s.name.en}` : (lang === 'es' ? 'Selecciona una sesión' : 'Select a session');
+        return s ? `🤸 ${lang === 'es' ? s.name.es : s.name.en}` : f.selectSession;
     })();
 
     return (
         <Sheet
             open={isOpen}
             onOpenChange={(o) => { if (!o) onClose(); }}
-            title={lang === 'es' ? 'Nueva Sesión' : 'New Session'}
+            title={f.title}
             accent="primary"
             footer={
                 <button
@@ -299,7 +299,7 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
                 >
                     <span className="flex items-center justify-center gap-1">
                         <Icon name="Dumbbell" size={12} />
-                        {lang === 'es' ? 'Gym' : 'Gym'}
+                        Gym
                     </span>
                 </button>
                 <button
@@ -330,22 +330,20 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
                             <Icon name="Dumbbell" size={28} className="text-primary-500" />
                         </div>
                         <h3 className="font-black text-zinc-900 dark:text-white mb-1">
-                            {lang === 'es' ? 'Sesión Libre de Gym' : 'Free Gym Session'}
+                            {f.freeGymTitle}
                         </h3>
                         <p className="text-xs text-zinc-400 leading-relaxed">
-                            {lang === 'es'
-                                ? 'Empieza con una sesión en blanco. Agrega los ejercicios que quieras durante el entreno.'
-                                : 'Start with a blank session. Add whatever exercises you want during the workout.'}
+                            {f.freeGymDesc}
                         </p>
                     </div>
                     <div className="bg-zinc-50 dark:bg-zinc-900 rounded-2xl p-4">
                         <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2">
-                            {lang === 'es' ? '💡 Durante el entreno puedes:' : '💡 During the workout you can:'}
+                            {f.duringTitle}
                         </p>
                         {[
-                            lang === 'es' ? 'Agregar cualquier ejercicio de la biblioteca' : 'Add any exercise from the library',
-                            lang === 'es' ? 'Crear ejercicios personalizados' : 'Create custom exercises',
-                            lang === 'es' ? 'Configurar pesos, reps y RPE al instante' : 'Track weights, reps and RPE instantly',
+                            f.tip1,
+                            f.tip2,
+                            f.tip3,
                         ].map((tip, i) => (
                             <div key={i} className="flex items-start gap-2 py-1.5">
                                 <div className="w-1.5 h-1.5 rounded-full bg-primary-500 mt-1.5 flex-shrink-0" />
@@ -361,7 +359,7 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
                 <div className="space-y-3">
                     {/* Blank CrossFit option */}
                     <button
-                        onClick={() => handleStartBlank(lang === 'es' ? 'Sesión CrossFit Libre' : 'Open CrossFit Session')}
+                        onClick={() => handleStartBlank(f.blankCf)}
                         className="w-full text-left p-4 rounded-2xl border-2 border-dashed border-primary-500/40 bg-primary-500/5 hover:border-primary-500/60 transition-all active:scale-[0.98]"
                     >
                         <div className="flex items-center gap-3">
@@ -370,16 +368,16 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
                             </div>
                             <div>
                                 <p className="font-black text-sm text-primary-400">
-                                    {lang === 'es' ? 'Sesión Libre' : 'Open Session'}
+                                    {f.openSession}
                                 </p>
                                 <p className="text-xs text-muted mt-0.5">
-                                    {lang === 'es' ? 'Sin plantilla — agrega ejercicios sobre la marcha' : 'No template — add exercises as you go'}
+                                    {f.noTemplate}
                                 </p>
                             </div>
                         </div>
                     </button>
                     <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
-                        {lang === 'es' ? 'WODs Benchmark & Hero' : 'Benchmark & Hero WODs'}
+                        {f.wodsTitle}
                     </p>
                     {CF_WODS.map(wod => (
                         <button
@@ -413,7 +411,7 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
                         </button>
                     ))}
                     <p className="text-[10px] text-zinc-400 text-center pt-1">
-                        {lang === 'es' ? '+ Puedes agregar ejercicios extra durante el WOD' : '+ You can add extra exercises during the WOD'}
+                        {f.extraNote}
                     </p>
                 </div>
             )}
@@ -423,7 +421,7 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
                 <div className="space-y-4">
                     {/* Blank calisthenics option */}
                     <button
-                        onClick={() => handleStartBlank(lang === 'es' ? 'Sesión Calistenia Libre' : 'Open Calisthenics Session')}
+                        onClick={() => handleStartBlank(f.blankCal)}
                         className="w-full text-left p-4 rounded-2xl border-2 border-dashed border-primary-500/40 bg-primary-500/5 hover:border-primary-500/60 transition-all active:scale-[0.98]"
                     >
                         <div className="flex items-center gap-3">
@@ -432,10 +430,10 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
                             </div>
                             <div>
                                 <p className="font-black text-sm text-primary-400">
-                                    {lang === 'es' ? 'Sesión Libre' : 'Open Session'}
+                                    {f.openSession}
                                 </p>
                                 <p className="text-xs text-muted mt-0.5">
-                                    {lang === 'es' ? 'Sin plantilla — agrega ejercicios sobre la marcha' : 'No template — add exercises as you go'}
+                                    {f.noTemplate}
                                 </p>
                             </div>
                         </div>
@@ -449,7 +447,7 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
                                 calTab === 'skills' ? 'bg-primary-600 text-black shadow' : 'text-zinc-500 hover:text-zinc-300'
                             }`}
                         >
-                            {lang === 'es' ? '🎯 Por Habilidad' : '🎯 By Skill'}
+                            {f.bySkill}
                         </button>
                         <button
                             onClick={() => { setCalTab('templates'); setSelectedSkillId(null); setSelectedSkillFamilyId(null); }}
@@ -457,7 +455,7 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
                                 calTab === 'templates' ? 'bg-primary-600 text-black shadow' : 'text-zinc-500 hover:text-zinc-300'
                             }`}
                         >
-                            {lang === 'es' ? '📋 Plantillas' : '📋 Templates'}
+                            {f.templatesTab}
                         </button>
                     </div>
 
@@ -465,7 +463,7 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
                     {calTab === 'skills' && (
                         <div className="space-y-2">
                             <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
-                                {lang === 'es' ? 'Elige una familia de habilidad para trabajar' : 'Choose a skill family to focus on'}
+                                {f.chooseFamily}
                             </p>
                             <div className="grid grid-cols-2 gap-2">
                                 {Object.values(SKILL_PROGRESSION_MAP).map(family => {
@@ -499,7 +497,7 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
                                                 </span>
                                             </div>
                                             <div className="text-xs text-muted">
-                                                {family.levels.length} {lang === 'es' ? 'niveles' : 'levels'}
+                                                {family.levels.length} {f.levels}
                                             </div>
                                             {/* Level dots */}
                                             <div className="flex gap-0.5 mt-1.5">
@@ -519,7 +517,7 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
                                 return (
                                     <div className="bg-primary-500/5 border border-primary-500/20 rounded-2xl p-3 space-y-1.5">
                                         <p className="text-[10px] font-black uppercase text-primary-400 tracking-wider">
-                                            {lang === 'es' ? 'Ejercicios en esta sesión:' : 'Exercises in this session:'}
+                                            {f.sessionExercises}
                                         </p>
                                         {fam.levels.map((lvl, i) => (
                                             <div key={i} className="flex items-center gap-2 text-[11px]">
@@ -544,7 +542,7 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
                     {calTab === 'templates' && (
                         <div className="space-y-2">
                             <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
-                                {lang === 'es' ? 'Sesiones de día completo' : 'Full-day sessions'}
+                                {f.fullDay}
                             </p>
                             {CAL_SKILLS.map(skill => {
                                 const isSelected = selectedSkillId === skill.id;
@@ -576,7 +574,7 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
                                             </div>
                                             <div className="flex flex-col items-end shrink-0 gap-1">
                                                 <span className="text-xs font-bold text-muted">
-                                                    {skill.exercises.length} {lang === 'es' ? 'ej.' : 'ex.'}
+                                                    {skill.exercises.length} {f.exAbbr}
                                                 </span>
                                                 {isSelected && <Icon name="Check" size={14} className="text-primary-500" />}
                                             </div>

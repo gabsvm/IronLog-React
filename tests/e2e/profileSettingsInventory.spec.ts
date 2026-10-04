@@ -66,6 +66,14 @@ const REMOVED = [
 // Merged duplicates asserted via contains (accessible-name form may vary).
 const CONTAINS_ONCE = ['mostrar columna rir', 'mantener pantalla encendida'];
 const NOTIF_STATES = ['permitir', 'activadas', 'bloqueadas'];
+// Q18 renamed two hardcoded English aria-labels to the translated visible
+// text (accessible name must match what sighted users see): the Export button
+// aria "Download" -> t.export, the factory-reset button aria "Delete" ->
+// t.factoryReset. The ambient test language decides which new form renders.
+const RENAMED: Record<string, string[]> = {
+    '[download]': ['[export data]', '[exportar datos]'],
+    '[delete]': ['[factory reset app]', '[restablecer fábrica]'],
+};
 
 test.describe('N6: unified sheet control mapping', () => {
     test.use({ viewport: { width: 390, height: 844 } });
@@ -121,12 +129,19 @@ test.describe('N6: unified sheet control mapping', () => {
         }
         expect(notifTotal, 'notification state button').toBe(1);
 
-        const special = new Set([...REMOVED, ...CONTAINS_ONCE.map((n) => `(row) ${n}`), ...NOTIF_STATES]);
+        const special = new Set([...REMOVED, ...CONTAINS_ONCE.map((n) => `(row) ${n}`), ...NOTIF_STATES, ...Object.keys(RENAMED)]);
         for (const label of beforeLabels) {
             if (special.has(label)) continue;
             // 'auto' is two distinct controls (theme system + effects system).
             const expected = label === 'auto' ? 2 : 1;
             expect(counts.get(label) ?? 0, `kept label "${label}"`).toBe(expected);
+        }
+
+        for (const [oldLabel, newForms] of Object.entries(RENAMED)) {
+            expect(counts.get(oldLabel) ?? 0, `renamed-away label "${oldLabel}"`).toBe(0);
+            let total = 0;
+            for (const form of newForms) total += counts.get(form) ?? 0;
+            expect(total, `renamed label "${oldLabel}" -> one of ${newForms.join(' / ')}`).toBe(1);
         }
 
         await expect(page.getByText(/ERROR CR.TICO|CRITICAL ERROR/)).toHaveCount(0);

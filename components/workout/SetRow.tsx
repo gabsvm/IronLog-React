@@ -232,6 +232,7 @@ export const SetRow = React.memo(({
     unit = 'kg'
 }: SetRowProps) => {
     const t = TRANSLATIONS[lang];
+    const sr = t.setRow;
     const isDone = set.completed;
     const setType = set.type || 'regular';
     // For regular sets: show the set number (1-based index) instead of the
@@ -540,9 +541,7 @@ export const SetRow = React.memo(({
     }, [isBodyweight, isIsometric, set.duration, set.hintReps, set.hintWeight, set.prevReps, set.prevWeight, shownWeight, weightSuffix]);
 
     const setNumber = (setIndex ?? 0) + 1;
-    const badgeAriaLabel = (!disableTypeChange && !isDone)
-        ? (lang === 'es' ? `Serie ${setNumber}, cambiar tipo` : `Set ${setNumber}, change type`)
-        : (lang === 'es' ? `Serie ${setNumber}` : `Set ${setNumber}`);
+    const badgeAriaLabel = `${sr.setWord} ${setNumber}${(!disableTypeChange && !isDone) ? sr.changeType : ''}`;
     const BadgeEl = disableTypeChange || isDone ? 'div' : 'button';
     const badgeProps = (!disableTypeChange && !isDone)
         ? { id: tutorialId, onClick: () => onChangeType(exInstanceId, set.id, setType), 'aria-label': badgeAriaLabel }

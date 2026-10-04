@@ -38,6 +38,7 @@ const KongConvertConfirmModal: React.FC<KongConvertConfirmModalProps> = ({
     const activeMeso = useStore(state => state.activeMeso);
     const setActiveMeso = useStore(state => state.setActiveMeso);
     const t = TRANSLATIONS[lang];
+    const ly = t.layoutKeys;
 
     const handleConfirm = () => {
         if (!activeMeso) return;
@@ -52,9 +53,7 @@ const KongConvertConfirmModal: React.FC<KongConvertConfirmModalProps> = ({
             <ConfirmModal
                 isOpen={isOpen}
                 title={t.convertKongTitle}
-                description={lang === 'es'
-                    ? 'KONG es un programa estructurado de 12 semanas. Para editar libremente la semana actual debes convertirla en una rutina personal. KONG finalizará y la copia quedará editable. ¿Continuar?'
-                    : 'KONG is a structured 12-week program. To freely edit the current week, convert it to a personal routine. KONG will end and the copy will become editable. Continue?'}
+                description={ly.convertDesc}
                 confirmText={t.convertKongConfirm}
                 cancelText={cancelText}
                 onConfirm={handleConfirm}
@@ -118,6 +117,7 @@ export const Layout: React.FC<LayoutProps> = ({
     const setActiveMeso = useStore(state => state.setActiveMeso);
     const setActiveSession = useStore(state => state.setActiveSession);
     const t = TRANSLATIONS[lang];
+    const ly = t.layoutKeys;
     const [showProfile, setShowProfile] = React.useState(false);
     const [profileSection, setProfileSection] = React.useState<ProfileSection | null>(null);
     const [showQuickStart, setShowQuickStart] = React.useState(false);
@@ -314,9 +314,7 @@ export const Layout: React.FC<LayoutProps> = ({
                     <ConfirmModal
                         isOpen={true}
                         title={t.sessionInProgressTitle}
-                        description={lang === 'es'
-                            ? 'Tienes una sesión de entrenamiento activa. Finaliza o descarta la sesión antes de editar o convertir la rutina.'
-                            : 'You have an active workout in progress. Finish or discard it before editing or converting routines.'}
+                        description={ly.sessionActiveDesc}
                         confirmText={t.understood}
                         cancelText=""
                         variant="primary"

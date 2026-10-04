@@ -1,6 +1,7 @@
 import React from 'react';
 import { SetRow } from './SetRow';
 import { SessionExercise, WorkoutSet, SetType, CardioType } from '../../types';
+import { TRANSLATIONS } from '../../constants';
 
 interface Props {
     ex: SessionExercise;
@@ -60,13 +61,15 @@ export const ExerciseCardSets: React.FC<Props> = React.memo(({
     t,
     lang,
     tutorialId,
-}) => (
+}) => {
+    const h = TRANSLATIONS[lang].setsHeader;
+    return (
     <>
         {/* Column header row */}
         {isCardio ? (
             <div className="grid grid-cols-[28px_44px_1fr_1fr_1fr_36px] items-center gap-1.5 border-b border-border-subtle px-2.5 py-1.5 text-center text-[10px] font-bold uppercase tracking-wider text-muted">
                 <div className={isEMOM ? 'text-cyan-400' : ''}>#</div>
-                <div>{lang === 'es' ? 'Ant.' : 'Prev'}</div>
+                <div>{h.prevCol}</div>
                 {isInterval ? (
                     <>
                         <div className="text-green-400">{String(t.cardioWork)}</div>
@@ -85,7 +88,7 @@ export const ExerciseCardSets: React.FC<Props> = React.memo(({
         ) : ex.isIsometric ? (
             <div className="grid grid-cols-[28px_44px_1fr_36px] items-center gap-2 border-b border-border-subtle px-2.5 py-1.5 text-center text-[10px] font-bold uppercase tracking-wider text-muted">
                 <div>#</div>
-                <div>{lang === 'es' ? 'Ant.' : 'Prev'}</div>
+                <div>{h.prevCol}</div>
                 <div className="text-violet-400">HOLD TIME</div>
                 <div></div>
             </div>
@@ -94,7 +97,7 @@ export const ExerciseCardSets: React.FC<Props> = React.memo(({
                 <div className={isEMOM ? 'text-cyan-400' : isMyorep ? 'text-purple-400' : isCluster ? 'text-emerald-400' : ''}>
                     {isEMOM ? 'Min' : isMyorep ? 'Set' : '#'}
                 </div>
-                <div>{lang === 'es' ? 'Ant.' : 'Prev'}</div>
+                <div>{h.prevCol}</div>
                 <div className="text-violet-400/90">+{unitLabel}</div>
                 <div>{String(t.reps)}</div>
                 {config?.showRIR && <div>{String(t.rir)}</div>}
@@ -105,7 +108,7 @@ export const ExerciseCardSets: React.FC<Props> = React.memo(({
                 <div className={isEMOM ? 'text-cyan-400' : isMyorep ? 'text-purple-400' : isCluster ? 'text-emerald-400' : ''}>
                     {isEMOM ? 'Min' : isMyorep ? 'Set' : '#'}
                 </div>
-                <div>{lang === 'es' ? 'Ant.' : 'Prev'}</div>
+                <div>{h.prevCol}</div>
                 <div>{`${String(t.weight)} (${unitLabel})`}</div>
                 <div>{String(t.reps)}</div>
                 {config?.showRIR && <div>{String(t.rir)}</div>}
@@ -140,4 +143,5 @@ export const ExerciseCardSets: React.FC<Props> = React.memo(({
             ))}
         </div>
     </>
-));
+    );
+});

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Sheet } from '../ui/Sheet';
 import { Button } from '../ui/Button';
+import { TRANSLATIONS } from '../../constants';
 import { fromDisplay, resolveWeightUnit, toDisplay, unitLabel } from '../../utils/units';
 
 interface LogWeightModalProps {
@@ -27,20 +28,14 @@ export const LogWeightModal: React.FC<LogWeightModalProps> = ({ isOpen, onClose,
         onClose();
     };
 
-    const t = {
-        title: lang === 'es' ? 'Registrar Peso' : 'Log Weight',
-        currentWeight: lang === 'es' ? 'Peso Actual' : 'Current Weight',
-        bodyFat: lang === 'es' ? 'Grasa Corporal' : 'Body Fat',
-        notes: lang === 'es' ? 'Notas' : 'Notes',
-        save: lang === 'es' ? 'Guardar' : 'Save',
-        cancel: lang === 'es' ? 'Cancelar' : 'Cancel',
-    };
+    const t = TRANSLATIONS[lang];
+    const w = t.logWeight;
 
     return (
         <Sheet
             open={isOpen}
             onOpenChange={(open) => !open && onClose()}
-            title={t.title}
+            title={w.title}
             accent="primary"
             footer={
                 <div className="flex gap-3">
@@ -56,7 +51,7 @@ export const LogWeightModal: React.FC<LogWeightModalProps> = ({ isOpen, onClose,
             <div className="p-5 space-y-5">
                 <div>
                     <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-2 px-1">
-                        {t.currentWeight}
+                        {w.currentWeight}
                     </label>
                     <div className="relative">
                         <input
@@ -74,7 +69,7 @@ export const LogWeightModal: React.FC<LogWeightModalProps> = ({ isOpen, onClose,
 
                 <div>
                     <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-2 px-1">
-                        {t.bodyFat} (%)
+                        {w.bodyFat} (%)
                     </label>
                     <div className="relative">
                         <input
@@ -96,7 +91,7 @@ export const LogWeightModal: React.FC<LogWeightModalProps> = ({ isOpen, onClose,
                     <textarea
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
-                        placeholder={lang === 'es' ? 'Añade una nota...' : 'Add a note...'}
+                        placeholder={w.notePlaceholder}
                         className="w-full bg-zinc-800 border border-zinc-700/50 rounded-2xl px-4 py-4 min-h-[90px] text-sm font-medium text-white focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all resize-none placeholder:text-zinc-600 glow-input-neon"
                     />
                 </div>

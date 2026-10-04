@@ -2,6 +2,7 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { useAppPreferences } from '../../context/AppContext';
 import { Modal } from '../ui/Modal';
+import { TRANSLATIONS } from '../../constants';
 import { Icon } from '../ui/Icon';
 import { FOOD_DATABASE, FoodItem } from '../../data/foodDatabase';
 
@@ -15,6 +16,8 @@ type TabMode = 'search' | 'manual';
 
 export const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, onAdd }) => {
     const { lang } = useAppPreferences();
+    const t = TRANSLATIONS[lang];
+    const a = t.addFood;
     const [tab, setTab] = useState<TabMode>('search');
     const [query, setQuery] = useState('');
     const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
@@ -95,7 +98,7 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, onA
         <Modal
             isOpen={isOpen}
             onClose={reset}
-            title={lang === 'es' ? 'Agregar Comida' : 'Add Food'}
+            title={a.title}
             footer={
                 <div className="flex gap-3">
                     <button
@@ -103,7 +106,7 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, onA
                         onClick={reset}
                         className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-white/5 hover:bg-zinc-200 dark:hover:bg-white/10 transition-all active:scale-95"
                     >
-                        {lang === 'es' ? 'Cancelar' : 'Cancel'}
+                        {t.cancel}
                     </button>
                     <button
                         type="button"
@@ -111,7 +114,7 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, onA
                         disabled={!canSubmit}
                         className="flex-1 py-3.5 rounded-2xl font-black text-sm text-black bg-primary-500 hover:bg-primary-400 shadow-lg shadow-primary-500/30 transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                        {lang === 'es' ? 'Guardar' : 'Save'}
+                        {t.save}
                     </button>
                 </div>
             }
@@ -121,13 +124,13 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, onA
                 <button className={tabStyle(tab === 'search')} onClick={() => setTab('search')}>
                     <span className="flex items-center justify-center gap-1.5">
                         <Icon name="Search" size={12} />
-                        {lang === 'es' ? 'Buscar' : 'Search'}
+                        {a.search}
                     </span>
                 </button>
                 <button className={tabStyle(tab === 'manual')} onClick={() => setTab('manual')}>
                     <span className="flex items-center justify-center gap-1.5">
                         <Icon name="Edit3" size={12} />
-                        {lang === 'es' ? 'Manual' : 'Manual'}
+                        Manual
                     </span>
                 </button>
             </div>
@@ -149,7 +152,7 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, onA
                                 setQuery(e.target.value);
                                 setSelectedFood(null);
                             }}
-                            placeholder={lang === 'es' ? 'Buscar "arroz", "pollo", "banana"...' : 'Search "rice", "chicken", "banana"...'}
+                            placeholder={a.searchPlaceholder}
                             className="w-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 rounded-2xl pl-10 pr-4 py-4 text-sm font-medium text-zinc-900 dark:text-white focus:border-primary-500 outline-none transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
                             autoFocus
                         />
@@ -192,13 +195,13 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, onA
                         <div className="flex flex-col items-center justify-center py-8 text-center">
                             <Icon name="Search" size={32} className="text-zinc-300 dark:text-zinc-700 mb-3" />
                             <p className="text-sm font-bold text-zinc-400 dark:text-zinc-600">
-                                {lang === 'es' ? 'No encontrado' : 'Not found'}
+                                {a.notFound}
                             </p>
                             <button
                                 onClick={() => setTab('manual')}
                                 className="mt-2 text-xs text-primary-600 dark:text-primary-400 font-bold hover:text-primary-500"
                             >
-                                {lang === 'es' ? 'Ingresar manualmente →' : 'Enter manually →'}
+                                {a.enterManual}
                             </button>
                         </div>
                     )}
@@ -207,7 +210,7 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, onA
                     {!selectedFood && query.length < 2 && (
                         <div className="flex flex-col gap-2">
                             <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 px-1">
-                                {lang === 'es' ? 'Sugerencias' : 'Suggestions'}
+                                {a.suggestions}
                             </p>
                             <div className="flex flex-wrap gap-2">
                                 {['🍗 Pollo', '🍚 Arroz', '🥩 Carne', '🥚 Huevo', '🫘 Lentejas', '🍌 Banana', '🥑 Palta', '🐟 Atún'].map(s => (
@@ -245,7 +248,7 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, onA
                             {/* Serving multiplier */}
                             <div>
                                 <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 dark:text-zinc-400 mb-2">
-                                    {lang === 'es' ? 'Porciones' : 'Servings'}
+                                    {a.servings}
                                 </label>
                                 <div className="flex items-center gap-3">
                                     <button
@@ -270,10 +273,10 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, onA
                             {/* Macro preview */}
                             {scaledMacros && (
                                 <div className="grid grid-cols-4 gap-2">
-                                    <MacroPill label={lang === 'es' ? 'Kcal' : 'Kcal'} value={scaledMacros.calories} color="text-primary-500" bgColor="bg-primary-500/10" unit="" />
-                                    <MacroPill label={lang === 'es' ? 'Prot' : 'Prot'} value={scaledMacros.protein} color="text-red-500" bgColor="bg-red-500/10" unit="g" />
-                                    <MacroPill label={lang === 'es' ? 'Carb' : 'Carb'} value={scaledMacros.carbs} color="text-blue-500" bgColor="bg-blue-500/10" unit="g" />
-                                    <MacroPill label={lang === 'es' ? 'Grasa' : 'Fat'} value={scaledMacros.fats} color="text-yellow-500" bgColor="bg-yellow-500/10" unit="g" />
+                                    <MacroPill label="Kcal" value={scaledMacros.calories} color="text-primary-500" bgColor="bg-primary-500/10" unit="" />
+                                    <MacroPill label="Prot" value={scaledMacros.protein} color="text-red-500" bgColor="bg-red-500/10" unit="g" />
+                                    <MacroPill label="Carb" value={scaledMacros.carbs} color="text-blue-500" bgColor="bg-blue-500/10" unit="g" />
+                                    <MacroPill label={a.fat} value={scaledMacros.fats} color="text-yellow-500" bgColor="bg-yellow-500/10" unit="g" />
                                 </div>
                             )}
                         </div>
@@ -284,7 +287,7 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, onA
                 <div className="space-y-5">
                     <div>
                         <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 dark:text-zinc-400 mb-2 px-1">
-                            {lang === 'es' ? 'Calorías' : 'Calories'}
+                            {a.calories}
                         </label>
                         <div className="relative">
                             <input
@@ -304,9 +307,9 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, onA
                             Macros
                         </label>
                         <div className="grid grid-cols-3 gap-3">
-                            <MacroInput label={lang === 'es' ? 'Prot' : 'Prot'} value={protein} onChange={setProtein} borderColor="border-red-400 focus:border-red-500" accentColor="text-red-500" />
-                            <MacroInput label={lang === 'es' ? 'Carb' : 'Carb'} value={carbs} onChange={setCarbs} borderColor="border-blue-400 focus:border-blue-500" accentColor="text-blue-500" />
-                            <MacroInput label={lang === 'es' ? 'Grasa' : 'Fat'} value={fats} onChange={setFats} borderColor="border-yellow-400 focus:border-yellow-500" accentColor="text-yellow-500" />
+                            <MacroInput label="Prot" value={protein} onChange={setProtein} borderColor="border-red-400 focus:border-red-500" accentColor="text-red-500" />
+                            <MacroInput label="Carb" value={carbs} onChange={setCarbs} borderColor="border-blue-400 focus:border-blue-500" accentColor="text-blue-500" />
+                            <MacroInput label={a.fat} value={fats} onChange={setFats} borderColor="border-yellow-400 focus:border-yellow-500" accentColor="text-yellow-500" />
                         </div>
                     </div>
                 </div>

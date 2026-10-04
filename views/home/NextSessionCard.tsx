@@ -1,6 +1,7 @@
 import React from 'react';
 import { Icon } from '../../components/ui/Icon';
 import { getTranslated } from '../../utils';
+import { TRANSLATIONS } from '../../constants';
 
 interface Props {
     nextDayDef: any;
@@ -21,6 +22,7 @@ interface Props {
  */
 export const NextSessionCard: React.FC<Props> = React.memo(
     ({ nextDayDef, isSessionActive, nextWorkoutIdx, startSession, handleSkipClick, lang, t, tm, estimatedMin, adherencePct }) => {
+        const n = TRANSLATIONS[lang].nextSession;
         if (!nextDayDef)
             return (
                 <div className="w-full glass-card rounded-[2rem] p-8 text-center flex flex-col items-center justify-center min-h-[220px] animate-in-up">
@@ -52,7 +54,7 @@ export const NextSessionCard: React.FC<Props> = React.memo(
                         >
                             {isSessionActive && <span className="w-2 h-2 rounded-full bg-primary-500 animate-pulse" />}
                             <span className="text-[10px] font-black uppercase tracking-widest">
-                                {isSessionActive ? (lang === 'en' ? 'IN PROGRESS' : 'EN CURSO') : String(t.upNext)}
+                                {isSessionActive ? n.inProgress : String(t.upNext)}
                             </span>
                         </div>
 
@@ -91,14 +93,14 @@ export const NextSessionCard: React.FC<Props> = React.memo(
                             {estimatedMin > 0 && (
                                 <div className="flex items-center gap-1 text-zinc-400">
                                     <Icon name="Clock" size={11} />
-                                    <span className="text-[10px] font-bold">~{estimatedMin} {lang === 'es' ? 'min' : 'min'}</span>
+                                    <span className="text-[10px] font-bold">~{estimatedMin} min</span>
                                 </div>
                             )}
                             {adherencePct !== null && (
                                 <div className="flex items-center gap-1 text-zinc-400">
                                     <Icon name="TrendingUp" size={11} />
                                     <span className="text-[10px] font-bold">
-                                        {adherencePct}% {lang === 'es' ? 'adherencia' : 'adherence'}
+                                        {adherencePct}% {n.adherence}
                                     </span>
                                 </div>
                             )}
@@ -110,7 +112,7 @@ export const NextSessionCard: React.FC<Props> = React.memo(
                             <Icon name={isSessionActive ? 'Play' : 'ArrowRight'} size={26} fill="currentColor" />
                         </div>
                         <span className="text-sm font-bold text-white">
-                            {isSessionActive ? (lang === 'en' ? 'Resume Workout' : 'Reanudar') : String(t.tapToStart)}
+                            {isSessionActive ? n.resume : String(t.tapToStart)}
                         </span>
                     </div>
                 </div>

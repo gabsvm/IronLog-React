@@ -6,6 +6,7 @@ import { KONG_4DAY_V1 } from '../../programs/kong/kong4Day';
 import { KONG_GUIDE } from '../../programs/kong/kongGuide';
 import { getProgramBlockForWeek, resolveProgramDay } from '../../programs/engine/ProgramResolver';
 import { calculateProgramMetrics } from '../../programs/engine/ProgramMetrics';
+import { TRANSLATIONS } from '../../constants';
 
 type HubPanel = 'home' | 'block' | 'principles' | 'rpe' | 'substitutions' | 'program' | 'progress';
 
@@ -98,6 +99,7 @@ export const ProgramHub: React.FC<Props> = ({ meso, logs, onClose, lang }) => {
     return { resolved: resolved.size, completed: completed.size };
   }, [logs, meso.id, meso.week]);
   const metrics = calculateProgramMetrics(logs, meso.id, scheduleProgress.resolved, meso.programSystem?.startedBodyWeight, KONG_4DAY_V1.daysPerWeek);
+  const h = TRANSLATIONS[lang].programHub;
   const title = (text: { en: string; es: string }) => text[lang];
   const blockName = (blockNumber: number) => lang === 'es'
     ? ES_BLOCK_COPY[blockNumber]?.name || title(KONG_4DAY_V1.blocks[blockNumber - 1].name)
@@ -123,53 +125,53 @@ export const ProgramHub: React.FC<Props> = ({ meso, logs, onClose, lang }) => {
   }, [meso.programSystem?.substitutions]);
 
   const metricCards: Array<{ key: keyof typeof metrics; label: string; value: string }> = [
-    { key: 'sessionsCompleted', label: lang === 'es' ? 'Sesiones' : 'Sessions', value: String(metrics.sessionsCompleted) },
-    { key: 'weeksCompleted', label: lang === 'es' ? 'Semanas' : 'Weeks', value: String(metrics.weeksCompleted) },
-    { key: 'setsCompleted', label: lang === 'es' ? 'Series' : 'Sets', value: String(metrics.setsCompleted) },
-    { key: 'totalVolume', label: lang === 'es' ? 'Volumen' : 'Volume', value: Math.round(metrics.totalVolume).toLocaleString() },
-    { key: 'totalSeconds', label: lang === 'es' ? 'Tiempo (min)' : 'Time (min)', value: String(Math.round(metrics.totalSeconds / 60)) },
-    { key: 'averageDensity', label: lang === 'es' ? 'Densidad (series/min)' : 'Density (sets/min)', value: metrics.averageDensity.toFixed(metrics.averageDensity >= 10 ? 0 : 1) },
-    { key: 'adherence', label: lang === 'es' ? 'Adherencia' : 'Adherence', value: `${Math.round(metrics.adherence * 100)}%` },
+    { key: 'sessionsCompleted', label: h.metricSessions, value: String(metrics.sessionsCompleted) },
+    { key: 'weeksCompleted', label: h.metricWeeks, value: String(metrics.weeksCompleted) },
+    { key: 'setsCompleted', label: h.metricSets, value: String(metrics.setsCompleted) },
+    { key: 'totalVolume', label: h.metricVolume, value: Math.round(metrics.totalVolume).toLocaleString() },
+    { key: 'totalSeconds', label: h.metricTimeMin, value: String(Math.round(metrics.totalSeconds / 60)) },
+    { key: 'averageDensity', label: h.metricDensity, value: metrics.averageDensity.toFixed(metrics.averageDensity >= 10 ? 0 : 1) },
+    { key: 'adherence', label: h.metricAdherence, value: `${Math.round(metrics.adherence * 100)}%` },
   ];
 
   const accessItems: Array<{ id: HubPanel; icon: string; label: string; description: string }> = [
     {
       id: 'block',
       icon: 'Layers',
-      label: lang === 'es' ? 'Cómo funciona este bloque' : 'How this block works',
-      description: lang === 'es' ? `BLOQUE ${block.number} · ${blockName(block.number)}` : `BLOCK ${block.number} · ${blockName(block.number)}`,
+      label: h.accessBlockLabel,
+      description: `${h.blockWord} ${block.number} · ${blockName(block.number)}`,
     },
     {
       id: 'principles',
       icon: 'BookOpen',
-      label: lang === 'es' ? 'Los 7 principios' : 'The 7 principles',
-      description: lang === 'es' ? 'La filosofía que organiza KONG' : 'The philosophy that structures KONG',
+      label: h.accessPrinciplesLabel,
+      description: h.accessPrinciplesDesc,
     },
     {
       id: 'rpe',
       icon: 'Target',
-      label: lang === 'es' ? 'RPE en KONG' : 'RPE in KONG',
-      description: lang === 'es' ? 'Cómo interpretar los objetivos de esfuerzo' : 'How to interpret effort targets',
+      label: h.accessRpeLabel,
+      description: h.accessRpeDesc,
     },
     {
       id: 'substitutions',
       icon: 'Repeat2',
-      label: lang === 'es' ? 'Sustituciones' : 'Substitutions',
+      label: h.accessSubsLabel,
       description: persistentSubstitutions.length > 0
-        ? (lang === 'es' ? `${persistentSubstitutions.length} cambio${persistentSubstitutions.length === 1 ? '' : 's'} permanente${persistentSubstitutions.length === 1 ? '' : 's'}` : `${persistentSubstitutions.length} persistent replacement${persistentSubstitutions.length === 1 ? '' : 's'}`)
-        : (lang === 'es' ? 'Cómo adaptar ejercicios sin romper el programa' : 'Adapt exercises without breaking the program'),
+        ? `${persistentSubstitutions.length} ${persistentSubstitutions.length === 1 ? h.subsChangeOne : h.subsChangeMany}`
+        : h.accessSubsEmpty,
     },
     {
       id: 'program',
       icon: 'Calendar',
-      label: lang === 'es' ? 'Ver programa completo' : 'View full program',
-      description: lang === 'es' ? '12 semanas · 4 días · prescripción exacta' : '12 weeks · 4 days · exact prescription',
+      label: h.accessProgramLabel,
+      description: h.accessProgramDesc,
     },
     {
       id: 'progress',
       icon: 'TrendingUp',
-      label: lang === 'es' ? 'Mi progreso' : 'My progress',
-      description: lang === 'es' ? 'Adherencia, volumen, tiempo y densidad' : 'Adherence, volume, time and density',
+      label: h.accessProgressLabel,
+      description: h.accessProgressDesc,
     },
   ];
 
@@ -196,7 +198,7 @@ export const ProgramHub: React.FC<Props> = ({ meso, logs, onClose, lang }) => {
           type="button"
           onClick={panel === 'home' ? closeHub : goHome}
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] text-[rgb(var(--text-secondary))] active:scale-95"
-          aria-label={panel === 'home' ? (lang === 'es' ? 'Cerrar' : 'Close') : (lang === 'es' ? 'Volver' : 'Back')}
+          aria-label={panel === 'home' ? h.close : h.goBack}
         >
           <Icon name="ChevronLeft" size={22} />
         </button>
@@ -204,7 +206,7 @@ export const ProgramHub: React.FC<Props> = ({ meso, logs, onClose, lang }) => {
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary-500">KONG</p>
           <p className="truncate text-sm font-black">
             {panel === 'home'
-              ? (lang === 'es' ? 'Centro del programa' : 'Program Hub')
+              ? h.hubTitle
               : accessItems.find((item) => item.id === panel)?.label}
           </p>
         </div>
@@ -214,10 +216,10 @@ export const ProgramHub: React.FC<Props> = ({ meso, logs, onClose, lang }) => {
 
   const Hero = () => (
     <section className="rounded-3xl border border-primary-500/30 bg-gradient-to-br from-primary-500/15 to-[rgb(var(--surface-raised))] p-6">
-      <p className="text-xs font-black uppercase tracking-[0.2em] text-primary-500">KONG · {lang === 'es' ? 'BLOQUE' : 'BLOCK'} {block.number}</p>
-      <h1 className="mt-2 text-3xl font-black">{lang === 'es' ? `Semana ${meso.week} / 12` : `Week ${meso.week} / 12`}</h1>
+      <p className="text-xs font-black uppercase tracking-[0.2em] text-primary-500">KONG · {h.blockWord} {block.number}</p>
+      <h1 className="mt-2 text-3xl font-black">{h.heroWeek} {meso.week} / 12</h1>
       <p className="mt-2 text-sm leading-6 text-[rgb(var(--text-secondary))]">
-        {blockName(block.number)} · {lang === 'es' ? `Semana ${blockWeek} / 4` : `Block week ${blockWeek} / 4`}
+        {blockName(block.number)} · {h.heroBlockWeek} {blockWeek} / 4
       </p>
       <div className="mt-5 h-2 overflow-hidden rounded-full bg-[rgb(var(--surface-elevated))]">
         <div className="h-full rounded-full bg-primary-500" style={{ width: `${(meso.week / 12) * 100}%` }} />
@@ -242,12 +244,12 @@ export const ProgramHub: React.FC<Props> = ({ meso, logs, onClose, lang }) => {
       <MetricGrid />
       <div className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4 text-sm text-[rgb(var(--text-secondary))]">
         {metrics.initialBodyWeight || metrics.currentBodyWeight
-          ? `${lang === 'es' ? 'Peso corporal' : 'Body weight'}: ${metrics.initialBodyWeight ?? '—'} → ${metrics.currentBodyWeight ?? '—'}`
-          : (lang === 'es' ? 'Peso corporal: sin datos' : 'Body weight: no data')}
+          ? `${h.bodyWeight}: ${metrics.initialBodyWeight ?? '—'} → ${metrics.currentBodyWeight ?? '—'}`
+          : h.bodyWeightNoData}
       </div>
 
       <section>
-        <p className="mb-3 px-1 text-xs font-black uppercase tracking-widest text-[rgb(var(--text-muted))]">{lang === 'es' ? 'Accesos' : 'Access'}</p>
+        <p className="mb-3 px-1 text-xs font-black uppercase tracking-widest text-[rgb(var(--text-muted))]">{h.accessTitle}</p>
         <div className="space-y-2">
           {accessItems.map((item) => (
             <button
@@ -276,7 +278,7 @@ export const ProgramHub: React.FC<Props> = ({ meso, logs, onClose, lang }) => {
     return (
       <div className="space-y-4">
         <section className="rounded-3xl border border-primary-500/30 bg-primary-500/10 p-5">
-          <p className="text-xs font-black uppercase tracking-[0.16em] text-primary-500">{lang === 'es' ? `BLOQUE ${block.number} · SEMANAS ${block.globalWeekStart}-${block.globalWeekEnd}` : `BLOCK ${block.number} · WEEKS ${block.globalWeekStart}-${block.globalWeekEnd}`}</p>
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-primary-500">{h.blockWord} {block.number} · {h.blockWeeksWord} {block.globalWeekStart}-{block.globalWeekEnd}</p>
           <h1 className="mt-2 text-2xl font-black">{blockName(block.number)}</h1>
           <p className="mt-2 text-sm leading-6 text-[rgb(var(--text-secondary))]">{blockGoal(block.number)}</p>
         </section>
@@ -288,8 +290,8 @@ export const ProgramHub: React.FC<Props> = ({ meso, logs, onClose, lang }) => {
         ))}
         {block.number === 1 && (
           <div className="rounded-2xl border border-primary-500/25 bg-primary-500/10 p-4 text-sm leading-6 text-[rgb(var(--text-secondary))]">
-            <strong className="text-primary-500">{lang === 'es' ? 'Descanso recomendado:' : 'Recommended rest:'}</strong>{' '}
-            {lang === 'es' ? 'aproximadamente 60 segundos entre ejercicios. Es una guía, no un bloqueo.' : 'roughly 60 seconds between exercises. It is guidance, not a hard limit.'}
+            <strong className="text-primary-500">{h.restTitle}</strong>{' '}
+            {h.restBody}
           </div>
         )}
       </div>
@@ -326,11 +328,11 @@ export const ProgramHub: React.FC<Props> = ({ meso, logs, onClose, lang }) => {
           <p className="mt-3 text-sm leading-6 text-[rgb(var(--text-secondary))]">{section ? title(section.summary) : ''}</p>
         </section>
         <article className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-5">
-          <h2 className="font-black">{lang === 'es' ? 'Cómo usarlo en la práctica' : 'How to use it in practice'}</h2>
+          <h2 className="font-black">{h.rpePractice}</h2>
           <div className="mt-3 space-y-3 text-sm leading-6 text-[rgb(var(--text-secondary))]">
-            <p>{lang === 'es' ? '• El RPE mostrado bajo cada serie es el objetivo del programa, no el RPE real que GainsLab registra por ti.' : '• The RPE shown below each set is the program target, not an actual RPE recorded for you.'}</p>
-            <p>{lang === 'es' ? '• Empieza cada bloque de forma conservadora y deja margen para progresar durante las cuatro semanas.' : '• Start each block conservatively and leave room to progress across its four weeks.'}</p>
-            <p>{lang === 'es' ? '• En rangos altos, RPE puede sentirse distinto que en triples o singles; úsalo como guía de esfuerzo.' : '• In high-rep work, RPE can feel different than in triples or singles; use it as an effort guide.'}</p>
+            <p>{h.rpeTip1}</p>
+            <p>{h.rpeTip2}</p>
+            <p>{h.rpeTip3}</p>
           </div>
         </article>
       </div>
@@ -340,29 +342,25 @@ export const ProgramHub: React.FC<Props> = ({ meso, logs, onClose, lang }) => {
   const renderSubstitutions = () => (
     <div className="space-y-4">
       <section className="rounded-3xl border border-primary-500/30 bg-primary-500/10 p-5">
-        <p className="text-xs font-black uppercase tracking-[0.16em] text-primary-500">{lang === 'es' ? 'SUSTITUCIONES KONG' : 'KONG SUBSTITUTIONS'}</p>
-        <h1 className="mt-2 text-2xl font-black">{lang === 'es' ? 'Adapta el equipo, conserva la intención' : 'Adapt equipment, preserve intent'}</h1>
+        <p className="text-xs font-black uppercase tracking-[0.16em] text-primary-500">{h.subsEyebrow}</p>
+        <h1 className="mt-2 text-2xl font-black">{h.subsTitle}</h1>
         <p className="mt-3 text-sm leading-6 text-[rgb(var(--text-secondary))]">
-          {lang === 'es'
-            ? 'Durante un entrenamiento, abre el menú ⋮ del ejercicio y elige reemplazar. GainsLab te preguntará si el cambio es solo para hoy o para todo KONG.'
-            : 'During a workout, open the exercise ⋮ menu and choose replace. GainsLab will ask whether the change is only for today or for all KONG.'}
+          {h.subsIntro}
         </p>
       </section>
 
       <div className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4 text-sm leading-6 text-[rgb(var(--text-secondary))]">
-        {lang === 'es'
-          ? 'Solo hoy modifica la sesión actual. “Todo KONG” guarda el reemplazo en el programa activo y lo reaplica cuando ese slot vuelva a aparecer.'
-          : 'Today only changes the current session. “All KONG” stores the replacement in the active program and reapplies it when that slot appears again.'}
+        {h.subsScope}
       </div>
 
       <section>
         <div className="mb-3 flex items-center justify-between px-1">
-          <h2 className="text-xs font-black uppercase tracking-widest text-[rgb(var(--text-muted))]">{lang === 'es' ? 'Cambios permanentes' : 'Persistent replacements'}</h2>
+          <h2 className="text-xs font-black uppercase tracking-widest text-[rgb(var(--text-muted))]">{h.subsPersistent}</h2>
           <span className="rounded-full bg-primary-500/10 px-2.5 py-1 text-[10px] font-black text-primary-500">{persistentSubstitutions.length}</span>
         </div>
         {persistentSubstitutions.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-[rgb(var(--border-strong))] p-6 text-center text-sm text-[rgb(var(--text-muted))]">
-            {lang === 'es' ? 'Todavía no cambiaste ningún ejercicio para todo KONG.' : 'You have not made any all-KONG replacements yet.'}
+            {h.subsNone}
           </div>
         ) : (
           <div className="space-y-2">
@@ -381,13 +379,13 @@ export const ProgramHub: React.FC<Props> = ({ meso, logs, onClose, lang }) => {
   const renderProgram = () => (
     <div className="space-y-4">
       <p className="text-sm leading-6 text-[rgb(var(--text-secondary))]">
-        {lang === 'es' ? 'Selecciona semana y día. Esta vista usa el mismo resolver que genera tus entrenamientos.' : 'Select a week and day. This view uses the same resolver that builds your workouts.'}
+        {h.programIntro}
       </p>
       {KONG_4DAY_V1.blocks.map((candidateBlock) => (
         <section key={candidateBlock.id} className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-wider text-primary-500">{lang === 'es' ? 'BLOQUE' : 'BLOCK'} {candidateBlock.number}</p>
+              <p className="text-[10px] font-black uppercase tracking-wider text-primary-500">{h.blockWord} {candidateBlock.number}</p>
               <h2 className="mt-1 text-sm font-black">{blockName(candidateBlock.number)}</h2>
             </div>
             <span className="text-[10px] font-bold text-[rgb(var(--text-muted))]">{candidateBlock.globalWeekStart}-{candidateBlock.globalWeekEnd}</span>
@@ -400,7 +398,7 @@ export const ProgramHub: React.FC<Props> = ({ meso, logs, onClose, lang }) => {
                 onClick={() => { setSelectedWeek(week); setSelectedDay(0); }}
                 className={`min-h-11 rounded-xl border text-xs font-black ${selectedWeek === week ? 'border-primary-500 bg-primary-500 text-black' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base))] text-[rgb(var(--text-secondary))]'}`}
               >
-                {lang === 'es' ? 'S' : 'W'}{week}
+                {h.weekAbbr}{week}
               </button>
             ))}
           </div>
@@ -410,7 +408,7 @@ export const ProgramHub: React.FC<Props> = ({ meso, logs, onClose, lang }) => {
       <section className="rounded-3xl border border-primary-500/25 bg-[rgb(var(--surface-raised))] p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary-500">{lang === 'es' ? `SEMANA ${selectedWeek} · BLOQUE ${selectedResolution.block.number}` : `WEEK ${selectedWeek} · BLOCK ${selectedResolution.block.number}`}</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary-500">{h.weekWord} {selectedWeek} · {h.blockWord} {selectedResolution.block.number}</p>
             <h2 className="mt-1 font-black">{blockName(selectedResolution.block.number)}</h2>
           </div>
           <span className="rounded-full bg-primary-500/10 px-2.5 py-1 text-[10px] font-black text-primary-500">{selectedResolution.blockWeek}/4</span>
@@ -424,20 +422,20 @@ export const ProgramHub: React.FC<Props> = ({ meso, logs, onClose, lang }) => {
               onClick={() => setSelectedDay(index)}
               className={`min-h-12 rounded-xl border text-xs font-black ${selectedDay === index ? 'border-primary-500 bg-primary-500/15 text-primary-500' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base))] text-[rgb(var(--text-secondary))]'}`}
             >
-              {lang === 'es' ? 'DÍA' : 'DAY'} {index + 1}
+              {h.dayWord} {index + 1}
             </button>
           ))}
         </div>
 
         <div className="mt-4 rounded-2xl bg-[rgb(var(--surface-base))] p-4">
           <h3 className="font-black">{lang === 'es' ? ES_DAY_COPY[selectedResolution.block.number]?.[selectedDay] || title(selectedResolvedDay.dayName) : title(selectedResolvedDay.dayName)}</h3>
-          <p className="mt-1 text-xs text-[rgb(var(--text-muted))]">{selectedResolvedDay.slots.length} {lang === 'es' ? 'ejercicios' : 'exercises'}</p>
+          <p className="mt-1 text-xs text-[rgb(var(--text-muted))]">{selectedResolvedDay.slots.length} {h.exercisesLower}</p>
         </div>
 
         <div className="mt-3 space-y-2">
           {selectedResolvedDay.slots.map((slot, index) => {
             const prescription = slot.prescription || [];
-            const repsText = prescription.map((set) => set.reps === 'FAILURE' ? (lang === 'es' ? 'FALLO' : 'FAIL') : String(set.reps)).join(' · ');
+            const repsText = prescription.map((set) => set.reps === 'FAILURE' ? h.failure : String(set.reps)).join(' · ');
             const rpes = prescription.map((set) => set.targetRpe).filter((value): value is number => typeof value === 'number');
             const uniqueRpes = Array.from(new Set(rpes));
             const rpeText = uniqueRpes.length === 1 ? `RPE ${uniqueRpes[0]}` : uniqueRpes.length > 1 ? `RPE ${rpes.join('/')}` : '';
@@ -471,7 +469,7 @@ export const ProgramHub: React.FC<Props> = ({ meso, logs, onClose, lang }) => {
       <section className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-5">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-xs font-black uppercase tracking-wider text-[rgb(var(--text-muted))]">{lang === 'es' ? 'Sesiones programadas resueltas' : 'Resolved scheduled sessions'}</p>
+            <p className="text-xs font-black uppercase tracking-wider text-[rgb(var(--text-muted))]">{h.resolvedLabel}</p>
             <p className="mt-1 text-2xl font-black">{scheduleProgress.completed} / {scheduleProgress.resolved}</p>
           </div>
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-500/10 text-lg font-black text-primary-500">{Math.round(metrics.adherence * 100)}%</div>
@@ -480,15 +478,13 @@ export const ProgramHub: React.FC<Props> = ({ meso, logs, onClose, lang }) => {
           <div className="h-full rounded-full bg-primary-500" style={{ width: `${Math.min(100, metrics.adherence * 100)}%` }} />
         </div>
         <p className="mt-3 text-[11px] leading-5 text-[rgb(var(--text-muted))]">
-          {lang === 'es'
-            ? 'Las sesiones repetidas suman tiempo, volumen y trabajo, pero no inflan la adherencia. Un día saltado sí reduce este porcentaje.'
-            : 'Repeated sessions add time, volume and work, but do not inflate adherence. A skipped scheduled day lowers this percentage.'}
+          {h.adherenceNote}
         </p>
       </section>
       <div className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4 text-sm text-[rgb(var(--text-secondary))]">
         {metrics.initialBodyWeight || metrics.currentBodyWeight
-          ? `${lang === 'es' ? 'Peso corporal' : 'Body weight'}: ${metrics.initialBodyWeight ?? '—'} → ${metrics.currentBodyWeight ?? '—'}`
-          : (lang === 'es' ? 'Peso corporal: sin datos posteriores todavía.' : 'Body weight: no follow-up data yet.')}
+          ? `${h.bodyWeight}: ${metrics.initialBodyWeight ?? '—'} → ${metrics.currentBodyWeight ?? '—'}`
+          : h.bodyWeightNoFollowup}
       </div>
     </div>
   );

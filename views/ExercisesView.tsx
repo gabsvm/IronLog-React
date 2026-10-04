@@ -38,6 +38,7 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
     const activeMeso = useStore(state => state.activeMeso);
     const setActiveMeso = useStore(state => state.setActiveMeso);
     const t = TRANSLATIONS[lang];
+    const ev = t.exercisesView;
 
     const [mode, setMode] = useState<'list' | 'create'>('list');
     const [searchQuery, setSearchQuery] = useState('');
@@ -231,12 +232,12 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
                             </span>
                             {isArchived && (
                                 <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-500/20 text-amber-500 border border-amber-500/30">
-                                    {lang === 'es' ? 'Archivado' : 'Archived'}
+                                    {ev.badgeArchived}
                                 </span>
                             )}
                             {!isBuiltIn && !isArchived && (
                                 <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-primary-500/20 text-primary-400 border border-primary-500/30">
-                                    {lang === 'es' ? 'Personalizado' : 'Custom'}
+                                    {ev.badgeCustom}
                                 </span>
                             )}
                             {isMerged && (
@@ -265,8 +266,8 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
                                 type="button"
                                 onClick={() => handleUnarchive(ex.id)}
                                 className="p-2 text-zinc-400 hover:text-primary-400 transition-colors rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                                title={lang === 'es' ? 'Desarchivar' : 'Unarchive'}
-                                aria-label={lang === 'es' ? 'Desarchivar' : 'Unarchive'}
+                                title={ev.unarchive}
+                                aria-label={ev.unarchive}
                             >
                                 <Icon name="ArchiveRestore" size={18} />
                             </button>
@@ -277,13 +278,13 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
                                 type="button"
                                 onClick={() => handleInitiateDelete(ex)}
                                 className="p-2 text-zinc-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30"
-                                title={lang === 'es' ? 'Eliminar / Archivar' : 'Delete / Archive'}
-                                aria-label={lang === 'es' ? 'Eliminar ejercicio' : 'Delete exercise'}
+                                title={ev.deleteArchive}
+                                aria-label={ev.deleteEx}
                             >
                                 <Icon name="Trash2" size={18} />
                             </button>
                         ) : (
-                            <div className="p-2 text-zinc-300 dark:text-zinc-600" title={lang === 'es' ? 'Catálogo oficial' : 'Official catalog'}>
+                            <div className="p-2 text-zinc-300 dark:text-zinc-600" title={ev.officialCatalog}>
                                 <Icon name="Lock" size={16} />
                             </div>
                         )}
@@ -351,7 +352,7 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
                                 type="text"
                                 value={searchQuery}
                                 onChange={e => setSearchQuery(e.target.value)}
-                                placeholder={lang === 'es' ? 'Buscar ejercicio...' : 'Search exercise...'}
+                                placeholder={ev.searchPh}
                                 className="w-full pl-9 pr-8 py-2 bg-zinc-100 dark:bg-zinc-800 rounded-xl text-sm font-medium text-zinc-900 dark:text-white border border-transparent focus:border-primary-500 outline-none transition-all"
                             />
                             {searchQuery && (
@@ -378,10 +379,10 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
                                     }`}
                                 >
                                     {cat === 'all'
-                                        ? (lang === 'es' ? 'Todos' : 'All')
+                                        ? ev.filterAll
                                         : cat === 'custom'
-                                        ? (lang === 'es' ? 'Personalizados' : 'Custom')
-                                        : (lang === 'es' ? 'Archivados' : 'Archived')}
+                                        ? ev.filterCustom
+                                        : ev.filterArchived}
                                 </button>
                             ))}
                         </div>
@@ -396,7 +397,7 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
                                         : 'bg-zinc-100 dark:bg-zinc-800/80 text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'
                                 }`}
                             >
-                                {lang === 'es' ? 'Todos los músculos' : 'All muscles'}
+                                {ev.allMuscles}
                             </button>
                             {Object.values(MUSCLE_GROUPS).map(m => (
                                 <button
@@ -462,7 +463,7 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
                             <div className="h-48 flex flex-col items-center justify-center text-center p-6 text-zinc-400">
                                 <Icon name="Dumbbell" size={32} className="mb-2 opacity-40" />
                                 <p className="text-sm font-medium">
-                                    {lang === 'es' ? 'No se encontraron ejercicios' : 'No exercises found'}
+                                    {ev.noResults}
                                 </p>
                             </div>
                         ) : (
@@ -480,7 +481,7 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
                             <button
                                 onClick={() => setMode('create')}
                                 className="w-14 h-14 bg-primary-500 rounded-full text-black shadow-xl shadow-primary-500/25 flex items-center justify-center hover:scale-105 active:scale-95 transition-all"
-                                aria-label={lang === 'es' ? 'Crear ejercicio' : 'Create exercise'}
+                                aria-label={ev.createEx}
                             >
                                 <Icon name="Plus" size={24} />
                             </button>
@@ -522,15 +523,15 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
 
                     <div>
                         <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider mb-2 block">
-                            {lang === 'es' ? 'Cálculo de tonelaje' : 'Tonnage calculation'}
+                            {ev.tonnage}
                         </label>
                         <select
                             value={newVolumeCountingMode}
                             onChange={e => setNewVolumeCountingMode(e.target.value as VolumeCountingMode)}
                             className="w-full bg-zinc-800 border border-zinc-700/50 rounded-xl p-3 font-medium text-white outline-none"
                         >
-                            <option value="total">{lang === 'es' ? 'Total registrado · ×1' : 'Recorded total · ×1'}</option>
-                            <option value="per_side">{lang === 'es' ? 'Por lado · ×2' : 'Per side · ×2'}</option>
+                            <option value="total">{ev.countTotal}</option>
+                            <option value="per_side">{ev.countPerSide}</option>
                         </select>
                     </div>
 
@@ -553,12 +554,8 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
             <Suspense fallback={null}>
                 <ConfirmModal
                     isOpen={!!unreferencedDeleteId}
-                    title={lang === 'es' ? '¿Eliminar ejercicio personalizado?' : 'Delete custom exercise?'}
-                    description={
-                        lang === 'es'
-                            ? 'Este ejercicio no está en uso en ninguna rutina activa ni plantilla. La acción es permanente.'
-                            : 'This exercise is not currently referenced in any active routine or template. This action is permanent.'
-                    }
+                    title={ev.delTitle}
+                    description={ev.delDesc}
                     onConfirm={handleConfirmPermanentDelete}
                     onCancel={() => setUnreferencedDeleteId(null)}
                     variant="danger"
@@ -580,20 +577,16 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
                             </div>
                             <div>
                                 <h3 id="ref-modal-title" className="text-base font-bold text-zinc-900 dark:text-white">
-                                    {lang === 'es' ? 'Ejercicio en uso' : 'Exercise in use'}
+                                    {ev.inUseTitle}
                                 </h3>
                                 <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                                    {lang === 'es'
-                                        ? `Referenciado en ${pendingDeleteReport.totalReferences} lugar(es)`
-                                        : `Referenced in ${pendingDeleteReport.totalReferences} location(s)`}
+                                    {`${ev.refCountA} ${pendingDeleteReport.totalReferences} ${ev.refCountB}`}
                                 </p>
                             </div>
                         </div>
 
                         <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                            {lang === 'es'
-                                ? 'No se puede eliminar de forma destructiva porque causaría sustituciones accidentales en tus rutinas. Puedes archivarlo para ocultarlo de nuevas selecciones manteniendo intactas tus rutinas actuales.'
-                                : 'Cannot be destructively deleted because it would cause unintended substitutions in your routines. You can archive it to hide it from new selections while preserving current routines.'}
+                            {ev.inUseDesc}
                         </p>
 
                         {/* List of references */}
@@ -616,7 +609,7 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
                                 variant="primary"
                             >
                                 <Icon name="Archive" size={16} className="mr-2" />
-                                {lang === 'es' ? 'Archivar Ejercicio' : 'Archive Exercise'}
+                                {ev.archiveBtn}
                             </Button>
                             <Button
                                 onClick={() => handleStartReplaceFlow(pendingDeleteReport.exerciseId)}
@@ -625,7 +618,7 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
                                 className="border border-primary-500/40 text-primary-600 dark:text-primary-400 font-bold"
                             >
                                 <Icon name="RefreshCw" size={16} className="mr-2" />
-                                {lang === 'es' ? 'Reemplazar referencias' : 'Replace references'}
+                                {ev.replaceRefs}
                             </Button>
                             <Button
                                 onClick={() => setPendingDeleteReport(null)}
@@ -694,15 +687,13 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({ onBack }) => {
                 <Suspense fallback={null}>
                     <ConfirmModal
                         isOpen={true}
-                        title={lang === 'es' ? '¿Confirmar reemplazo?' : 'Confirm replacement?'}
-                        description={
-                            lang === 'es'
-                                ? `Se actualizarán todas las referencias de "${getTranslated(exercises.find(e => e.id === replacingExerciseId)?.name || 'Personalizado', lang)}" por "${getTranslated(pendingReplacementCandidate.name, lang)}" en tus rutinas y plantillas activas. El historial anterior no se alterará y el ejercicio antiguo será eliminado.`
-                                : `All active routine and template references to "${getTranslated(exercises.find(e => e.id === replacingExerciseId)?.name || 'Custom', lang)}" will be replaced with "${getTranslated(pendingReplacementCandidate.name, lang)}". Historical logs remain intact, and the old exercise will be deleted.`
-                        }
+                        title={ev.confirmReplaceTitle}
+                        description={ev.replaceDesc
+                            .replace('{old}', String(getTranslated(exercises.find(e => e.id === replacingExerciseId)?.name || ev.unnamedFallback, lang)))
+                            .replace('{new}', String(getTranslated(pendingReplacementCandidate.name, lang)))}
                         onConfirm={() => handleExecuteReplacement(replacingExerciseId, pendingReplacementCandidate.id)}
                         onCancel={() => setPendingReplacementCandidate(null)}
-                        confirmText={lang === 'es' ? 'Reemplazar y eliminar' : 'Replace & delete'}
+                        confirmText={ev.replaceDelete}
                         cancelText={t.cancel}
                         variant="primary"
                     />

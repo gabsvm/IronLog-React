@@ -1,6 +1,7 @@
 import React from 'react';
 import { Icon } from '../ui/Icon';
 import { EMOMTimer, TabataTimer } from './ProtocolTimers';
+import { TRANSLATIONS } from '../../constants';
 
 interface Props {
     lang: 'en' | 'es';
@@ -34,7 +35,9 @@ export const ExerciseProtocolBanners: React.FC<Props> = ({
     isTabata,
     isHIIT,
     onEmomMinuteChange,
-}) => (
+}) => {
+    const b = TRANSLATIONS[lang].protocolBanners;
+    return (
     <>
         {isEMOM && (
             <EMOMTimer totalSets={totalSets} lang={lang} onMinuteChange={onEmomMinuteChange} />
@@ -44,7 +47,7 @@ export const ExerciseProtocolBanners: React.FC<Props> = ({
                 <Icon name="Repeat" size={12} className="text-purple-400" />
                 <span className="text-[10px] font-bold uppercase tracking-wider text-purple-400">Myo-rep</span>
                 <span className="ml-0.5 text-[10px] text-purple-600">
-                    {lang === 'es' ? 'Set 1 = activacion' : 'Set 1 = activation'}
+                    {b.myorep}
                 </span>
                 <span className="ml-auto text-[10px] tabular-nums text-purple-600">{totalSets - 1} mini</span>
             </div>
@@ -54,7 +57,7 @@ export const ExerciseProtocolBanners: React.FC<Props> = ({
                 <Icon name="Grid3x3" size={12} className="text-emerald-400" />
                 <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Cluster</span>
                 <span className="ml-1 text-[10px] text-emerald-600">
-                    {lang === 'es' ? '~15s entre clusters' : '~15s intra-set rest'}
+                    {b.cluster}
                 </span>
             </div>
         )}
@@ -63,7 +66,7 @@ export const ExerciseProtocolBanners: React.FC<Props> = ({
                 <Icon name="Layers" size={12} className="text-orange-400" />
                 <span className="text-[10px] font-bold uppercase tracking-wider text-orange-400">Giant Set</span>
                 <span className="ml-1 text-[10px] text-orange-600">
-                    {lang === 'es' ? 'Reps altas al fallo' : 'High reps to failure'}
+                    {b.giant}
                 </span>
             </div>
         )}
@@ -72,7 +75,7 @@ export const ExerciseProtocolBanners: React.FC<Props> = ({
                 <Icon name="Pause" size={12} className="text-rose-400" />
                 <span className="text-[10px] font-bold uppercase tracking-wider text-rose-400">Rest Pause</span>
                 <span className="ml-1 text-[10px] text-rose-600">
-                    {lang === 'es' ? 'Auto rest de 20s' : '20s auto rest'}
+                    {b.restPause}
                 </span>
             </div>
         )}
@@ -81,7 +84,7 @@ export const ExerciseProtocolBanners: React.FC<Props> = ({
                 <Icon name="TrendingDown" size={12} className="text-teal-400" />
                 <span className="text-[10px] font-bold uppercase tracking-wider text-teal-400">Drop Set</span>
                 <span className="ml-1 text-[10px] text-teal-600">
-                    {lang === 'es' ? 'Sin descanso entre drops' : 'No rest between drops'}
+                    {b.drop}
                 </span>
             </div>
         )}
@@ -90,7 +93,7 @@ export const ExerciseProtocolBanners: React.FC<Props> = ({
                 <Icon name="Timer" size={12} className="text-sky-400" />
                 <span className="text-[10px] font-bold uppercase tracking-wider text-sky-400">Time Volume</span>
                 <span className="ml-1 text-[10px] text-sky-600">
-                    {lang === 'es' ? 'Descansos cortos de 10s' : '10s short rests'}
+                    {b.timeVolume}
                 </span>
             </div>
         )}
@@ -99,7 +102,7 @@ export const ExerciseProtocolBanners: React.FC<Props> = ({
                 <Icon name="Layers" size={12} className="text-indigo-400" />
                 <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-400">Triple Add</span>
                 <span className="ml-1 text-[10px] text-indigo-600">
-                    {lang === 'es' ? 'Bloques con 10s entre cambios' : '10s between phases'}
+                    {b.tripleAdd}
                 </span>
             </div>
         )}
@@ -109,7 +112,7 @@ export const ExerciseProtocolBanners: React.FC<Props> = ({
                 <Icon name="ArrowRight" size={10} className="text-zinc-600" />
                 <span className="rounded bg-blue-500/15 px-1.5 py-0.5 text-[9px] font-black text-blue-400">B</span>
                 <span className="ml-1 text-xs font-bold text-muted">
-                    {lang === 'es' ? 'Top / Back-off' : 'Top / Back-off Protocol'}
+                    {b.topBackoff}
                 </span>
             </div>
         )}
@@ -119,10 +122,11 @@ export const ExerciseProtocolBanners: React.FC<Props> = ({
                 <Icon name="Zap" size={12} className="text-amber-400" />
                 <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400">HIIT</span>
                 <span className="ml-1 text-[10px] text-amber-600">
-                    {lang === 'es' ? 'Intervalos de alta intensidad' : 'High intensity intervals'}
+                    {b.hiit}
                 </span>
                 <span className="ml-auto text-[10px] tabular-nums text-amber-600">{totalSets}</span>
             </div>
         )}
     </>
-);
+    );
+};

@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { Log } from '../../types';
 import { useAppPreferences } from '../../context/AppContext';
+import { TRANSLATIONS } from '../../constants';
 
 import { formatLocalDateKey, addLocalDays, todayLocalDateKey } from '../../utils/localDate';
 
@@ -10,6 +11,7 @@ interface ActivityHeatmapProps {
 
 export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ logs }) => {
     const { lang } = useAppPreferences();
+    const t = TRANSLATIONS[lang].heatmap;
 
     const data = useMemo(() => {
         const todayKey = todayLocalDateKey();
@@ -45,7 +47,7 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ logs }) => {
                 {data.map(day => (
                     <div
                         key={day.date}
-                        title={`${day.date}: ${day.value} ${lang === 'es' ? 'series' : 'sets'}`}
+                        title={`${day.date}: ${day.value} ${t.setsLower}`}
                         className={`h-2.5 w-2.5 rounded-sm transition-colors duration-300 sm:h-3 sm:w-3 ${getLevelColor(day.value)}`}
                     />
                 ))}
@@ -53,11 +55,11 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ logs }) => {
             <div className="mt-2 flex items-center justify-between px-1 text-[9px] font-bold uppercase tracking-widest text-zinc-400">
                 <span>4M</span>
                 <div className="flex items-center gap-1">
-                    <span>{lang === 'es' ? 'Menos' : 'Less'}</span>
+                    <span>{t.less}</span>
                     <div className="h-2 w-2 rounded-sm bg-zinc-200 dark:bg-zinc-800" />
                     <div className="h-2 w-2 rounded-sm bg-primary-500/35" />
                     <div className="h-2 w-2 rounded-sm bg-primary-500" />
-                    <span>{lang === 'es' ? 'Más' : 'More'}</span>
+                    <span>{t.more}</span>
                 </div>
             </div>
         </div>
