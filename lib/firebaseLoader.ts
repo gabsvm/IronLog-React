@@ -1,6 +1,7 @@
 import type { FirebaseApp } from 'firebase/app';
 import type { Auth } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
+import { Capacitor } from '@capacitor/core';
 import { initAppCheckOnce } from './appCheck';
 
 type FirebaseAppServices = {
@@ -82,6 +83,16 @@ const emptyFirestoreServices = (): FirebaseFirestoreServices => ({
     firestoreApi: {} as typeof import('firebase/firestore'),
 });
 
+// Q4: cache decision, kept pure for tests. Web gets the persistent multi-tab
+// cache; the native shell uses memory (the app persists its own authoritative
+// state and offline queue already — the decision lib/firebase.ts documented);
+// emulator/test runs always use memory (Node has no IndexedDB).
+export const selectFirestoreCacheKind = (opts: {
+    useEmulator: boolean;
+    isNativePlatform: boolean;
+}): 'memory' | 'persistent' =>
+    opts.useEmulator || opts.isNativePlatform ? 'memory' : 'persistent';
+
 export const isFirebaseConfigured = () => hasFirebaseConfig;
 
 export const getFirebaseAppServices = (): Promise<FirebaseAppServices> => {
@@ -155,8 +166,8 @@ export const getFirebaseFirestoreServices = (): Promise<FirebaseFirestoreService
 
             if (!app) return emptyFirestoreServices();
 
-            // Emulator/test runs execute in Node without IndexedDB: memory cache.
-            const db = useEmulator
+            const cacheKind = selectFirestoreCacheKind({ useEmulator, isNativePlatform: Capacitor.isNativePlatform() });
+            const db = cacheKind === 'memory'
                 ? firestoreApi.initializeFirestore(app, {
                     localCache: firestoreApi.memoryLocalCache(),
                 })

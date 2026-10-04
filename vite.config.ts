@@ -34,6 +34,12 @@ export default defineConfig(() => {
             ) {
               return 'vendor-react';
             }
+            // Q4: tslib helpers get their own chunk. They used to land inside
+            // vendor-firebase-auth (its biggest consumer), which made the entry
+            // statically import the whole auth chunk just for __rest/__assign.
+            if (moduleId.includes('/node_modules/tslib/')) {
+              return 'vendor-tslib';
+            }
             // App Check stays in its own lazy chunk: the dynamic import in
             // firebaseLoader must not bloat the eager firebase-app vendor chunk
             // (the '/firebase/app' match below would also catch 'app-check').

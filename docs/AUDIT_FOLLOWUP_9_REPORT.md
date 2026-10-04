@@ -11,7 +11,8 @@ Estado persistente: se actualiza y pushea al cerrar CADA tarea.
 | Q0 | `a4de001` | hecho |
 | Q1 | `8d398f9` | hecho |
 | Q2 | `e87cf66` | hecho |
-| Q3 | (este commit) | hecho |
+| Q3 | `b84b403` | hecho |
+| Q4 | (este commit) | hecho |
 
 ## Q0 — Preparación
 
@@ -77,3 +78,27 @@ Estado persistente: se actualiza y pushea al cerrar CADA tarea.
   (1 fail) — restaurados y verificado por diff que no falta ningún bloque.
 - Gates: build OK, `test:run` 368/368, lint limpio.
 - No verificado: despliegue en producción (manual del dueño).
+
+## Q4 — Un solo inicializador de Firebase, fuera del camino crítico
+
+- `lib/firebase.ts` eliminado (`git rm`): cero importadores en el código — todo ya usaba
+  `lib/firebaseLoader.ts`. Sin re-export (sin razón para conservarlo).
+- Caché: `selectFirestoreCacheKind({useEmulator, isNativePlatform})` exportada y pura — web
+  persistente multi-tab, nativo memoria (la app persiste su estado y cola offline en su propia
+  capa; decisión heredada documentada), emulador/test memoria. Sin evidencia de rotura de cola
+  offline o borrado (integración 8/8 lo cubre).
+- Causa raíz del firebase crítico: NO era un import estático en código (verificado con probe de
+  Rollup: cero static importers) sino los helpers tslib (`__assign/__rest/__spreadArray`), que
+  Rollup metía dentro de `vendor-firebase-auth` y el entry importaba estáticamente (muerto para
+  el resto del chunk). Fix: chunk propio `vendor-tslib` (772 B) en `manualChunks`.
+- Antes/después (build real): precache 7 critical + 54 lazy → 5 critical + 57 lazy; los 5 chunks
+  `vendor-firebase-*` pasan a LAZY; entry 312.103 B → 312.294 B (+191 B, despreciable).
+- Tests `tests/unit/firebaseInit.test.ts` (4): casos del selector de caché; `lib/firebase.ts`
+  ausente + loader sin imports estáticos de firebase (solo `import type` + dinámicos); fixture del
+  `splitCriticalLazy` real (estático→critical, dinámico→lazy); scan del `dist/` real que falla si
+  algún `vendor-firebase-*` queda crítico.
+- Evidencia: `test:run` 372/372, `test:integration` 8/8, Playwright 40/40
+  (en puerto 5199 aislado: el 5173 lo ocupa otro proyecto de la máquina y `reuseExistingServer`
+  enganchaba esa app; proceso ajeno no tocado). Fail-proof: sin la regla tslib (stash + rebuild),
+  el test de dist real falla (1 failed); con ella, 4/4.
+- No verificado: nada; comportamiento nativo/memoria cubierto por tests de decisión + integración.
