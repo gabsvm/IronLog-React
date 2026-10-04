@@ -714,3 +714,47 @@ reporte. Al cerrarlo se encontraron y corrigieron 3 defectos del diseño inicial
   cuenta con flag OFF no lo toca. Una sesión borrada en un dispositivo ANTES de que su primer
   pull adopte los logs no se propaga (preferimos no perder datos a borrar de más).
 - No verificado: con datos reales de producción (reglas no desplegadas; no se usa Firebase real).
+
+## Q22 — Cierre
+
+- `docs/README.md`: índice de docs/ (pasos del dueño, reportes AUDIT_*, BUNDLE_REPORT,
+  legal-drafts, design-reference).
+- `docs/MANUAL_STEPS_9.md`: admin, desplegar reglas Q3+Q21 (con el chequeo previo de claves),
+  flags (`VITE_CLOUD_LOGS_V2` con orden seguro y vuelta atrás; App Check), APK con
+  `adb install -r`, alarmas exactas, notificaciones, acciones del descanso, recordatorios,
+  widget, validar importadores con exports reales de Hevy/Strong, respaldos y borrado con
+  cuenta de prueba.
+- `.env.example`: agregada `VITE_CLOUD_LOGS_V2=` (sin valor), que faltaba desde Q21.
+- APK release de prueba (`npm run build && npx cap sync android`, `assembleRelease` con R8,
+  JDK 21 en `C:\jdk-21`; vars `GAINS_LAB_*` apuntando a la keystore de debug de siempre,
+  `%USERPROFILE%\.android\debug.keystore`, valores no impresos):
+  - Ruta: `apk-out/gainslab-release-test.apk` (+ `apk-out/mapping.txt`, 5,5 MB); ignorados por git.
+  - Tamaño: 14 045 657 bytes (13,4 MB).
+  - SHA-256: `B690831F50D09649CD89238B403A5C373263D5C1BEDCA823E1677ED5AB00B0CF`
+  - Commit de código: `9719b37` (Q21; el commit Q22 solo agrega docs y `.env.example`).
+  - aapt: `com.gainslab.pro`, versionName `4.0.3-kong.6`, versionCode 414,
+    compileSdk 36, targetSdk 36, minSdk 24.
+  - Firma: certificado SHA-256 `A4:A8:52:18:…:7D:85:35:12` = keystore de debug (comparado
+    con `apksigner verify --print-certs` vs `keytool -list`), así que `adb install -r` actualiza
+    sin desinstalar.
+  - Manifiesto fusionado (aapt): `allowBackup=0x0`, `SCHEDULE_EXACT_ALARM`,
+    `RECEIVE_BOOT_COMPLETED`, receivers RestTimer/RestTimerAction/WorkoutReminder/
+    WorkoutReminderBoot y `StartWorkoutWidgetProvider` (APPWIDGET_UPDATE + metadatos).
+  - `adb devices`: vacío → instalación y logcat (ClassNotFoundException / FATAL de
+    com.gainslab.pro) **pendientes en dispositivo real**. Comando: `adb install -r apk-out/gainslab-release-test.apk`.
+
+## Criterios de finalización
+
+| # | Criterio | Estado |
+|---|----------|--------|
+| 1 | build, test:run ×3, lint:a11y, Playwright, test:rules; test:integration | build OK; `test:run` 652/652 en 3 corridas consecutivas; lint limpio; Playwright 43/43; `test:rules` 16/16; `test:integration` 12/12 |
+| 2 | Q1–Q21 con commits y tests de comportamiento | Todas hechas (tabla de commits); ninguna revertida |
+| 3 | Borrado y reglas | Sin getDocs de `data/` (Q2); flujo real contra emuladores; updates toleran claves heredadas (Q3) |
+| 4 | Un solo inicializador, Firebase fuera del arranque | Q4 (`lib/firebase.ts` eliminado; vendor-firebase LAZY); V2 de Q21 también lazy |
+| 5 | APK firmado con la keystore de debug | Sí, datos arriba |
+| 6 | Reporte completo + MANUAL_STEPS_9 | Este archivo + `docs/MANUAL_STEPS_9.md` |
+| 7 | Todo pusheado, tag, sin ramas nuevas ni Actions, árbol limpio | Tag `pre-q-series` en origin; sin `.github/workflows`; solo `.env.example` en el índice (sin .env, keystores, APK ni local.properties) |
+
+Pendiente solo en dispositivo real / servicios externos (por diseño): todo lo listado en
+`docs/MANUAL_STEPS_9.md` (despliegue de reglas, flag V2, permisos, widget, notificaciones,
+recordatorios, importadores con exports reales, instalación del APK y logcat).
