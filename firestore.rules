@@ -38,8 +38,33 @@ service cloud.firestore {
         'program', 'activeMeso', 'activeSession', 'config', 'exercises',
         'rpFeedback', 'nutritionLogs', 'cardioSessions', 'bodyLogs',
         'customFoods', 'personalTemplates', 'nutritionGoal', 'macroGoals',
-        'userProfile', 'sectionSyncMeta'
+        'userProfile', 'sectionSyncMeta', 'historyFormat'
       ];
+    }
+
+    // Q21: per-session history docs (users/{uid}/logs/{id}), only written by
+    // clients built with VITE_CLOUD_LOGS_V2=1. MUST match SESSION_DOC_KEYS in
+    // services/cloudLogsV2.ts (a unit test compares both lists).
+    function sessionDocAllowedKeys() {
+      return [
+        'id', 'dayIdx', 'name', 'startTime', 'endTime', 'duration',
+        'bodyWeightSnapshot', 'skipped', 'mesoId', 'week', 'exercises', 'note',
+        'importKey', 'importedFrom', 'discipline', 'programSystem',
+        'updatedAt', 'deleted'
+      ];
+    }
+
+    // Live session or tombstone {id, updatedAt, deleted: true}. Writes are
+    // whole-document set()s, so the full key set is validated every time.
+    function sessionDocOk() {
+      let data = request.resource.data;
+      return data.keys().hasOnly(sessionDocAllowedKeys())
+        && data.updatedAt is number
+        && (data.id is number || data.id is string)
+        && (!('deleted' in data) || data.deleted == true)
+        && (!('exercises' in data) || data.exercises is list)
+        && (!('startTime' in data) || data.startTime is number)
+        && (!('endTime' in data) || data.endTime is number);
     }
 
     // Q3: updates validate ONLY what changed. diff() compares against the
@@ -68,7 +93,8 @@ service cloud.firestore {
         && (!affected.hasAny(['nutritionGoal']) || !('nutritionGoal' in data) || data.nutritionGoal is map || data.nutritionGoal == null)
         && (!affected.hasAny(['macroGoals']) || !('macroGoals' in data) || data.macroGoals is map || data.macroGoals == null)
         && (!affected.hasAny(['userProfile']) || !('userProfile' in data) || data.userProfile is map || data.userProfile == null)
-        && (!affected.hasAny(['sectionSyncMeta']) || !('sectionSyncMeta' in data) || data.sectionSyncMeta is map);
+        && (!affected.hasAny(['sectionSyncMeta']) || !('sectionSyncMeta' in data) || data.sectionSyncMeta is map)
+        && (!affected.hasAny(['historyFormat']) || !('historyFormat' in data) || data.historyFormat is int);
     }
 
     // -- Per-user data ------------------------------------------------------
@@ -103,7 +129,8 @@ service cloud.firestore {
         && (!('nutritionGoal' in request.resource.data) || request.resource.data.nutritionGoal is map || request.resource.data.nutritionGoal == null)
         && (!('macroGoals' in request.resource.data) || request.resource.data.macroGoals is map || request.resource.data.macroGoals == null)
         && (!('userProfile' in request.resource.data) || request.resource.data.userProfile is map || request.resource.data.userProfile == null)
-        && (!('sectionSyncMeta' in request.resource.data) || request.resource.data.sectionSyncMeta is map);
+        && (!('sectionSyncMeta' in request.resource.data) || request.resource.data.sectionSyncMeta is map)
+        && (!('historyFormat' in request.resource.data) || request.resource.data.historyFormat is int);
 
       // Update validates only affected keys (see userUpdateOk): documents
       // with inherited unknown fields stay writable for allowlisted keys.
@@ -126,6 +153,14 @@ service cloud.firestore {
       // history carries exactly { logs: [...] } (see syncService.uploadStateNow,
       // which set()s without merge). The logs cap in code is conditional on
       // payload size, so rules only enforce the list type, never a count.
+      // Q21: one document per session. Owner-only; collection queries
+      // (delta pulls, account deletion) are allowed for the owner.
+      match /logs/{logId} {
+        allow read: if isOwner(uid);
+        allow create, update: if isOwner(uid) && sessionDocOk();
+        allow delete: if isOwner(uid);
+      }
+
       match /data/{doc} {
         allow read: if isOwner(uid) && doc == 'history';
         allow create, update: if isOwner(uid)

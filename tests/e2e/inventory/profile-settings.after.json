@@ -33,9 +33,9 @@
   "Royal",
   "Sunset",
   "[Close]",
-  "[Delete]",
-  "[Download]",
   "[Exportar CSV]",
+  "[Exportar Datos]",
   "[Mantener pantalla encendida]",
-  "[Mostrar columna RIR]"
+  "[Mostrar columna RIR]",
+  "[Restablecer fábrica]"
 ]

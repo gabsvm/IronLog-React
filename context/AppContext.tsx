@@ -567,7 +567,10 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                             if (cloudData.activeMeso) useStore.getState().setActiveMeso(cloudData.activeMeso);
                             if (cloudData.activeSession) useStore.getState().setActiveSession(cloudData.activeSession);
                             if (cloudData.exercises) setExercises(cloudData.exercises);
-                            if (cloudData.logs) setLogs(cloudData.logs);
+                            if (cloudData.logs) {
+                                setLogs(cloudData.logs);
+                                await syncService.adoptCloudLogs(user.uid, cloudData.logs);
+                            }
                             if (cloudData.rpFeedback) setRpFeedback(cloudData.rpFeedback);
 
                             if (cloudData.config) {
@@ -712,7 +715,10 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
             if (pendingCloudSections.includes('program') && pendingCloudData.program) setProgram(pendingCloudData.program);
             if (pendingCloudSections.includes('activeMeso') && pendingCloudData.activeMeso) useStore.getState().setActiveMeso(pendingCloudData.activeMeso);
             if (pendingCloudSections.includes('exercises') && pendingCloudData.exercises) setExercises(pendingCloudData.exercises);
-            if (pendingCloudSections.includes('logs') && pendingCloudData.logs) setLogs(pendingCloudData.logs);
+            if (pendingCloudSections.includes('logs') && pendingCloudData.logs) {
+                setLogs(pendingCloudData.logs);
+                if (user) await syncService.adoptCloudLogs(user.uid, pendingCloudData.logs);
+            }
             if (pendingCloudSections.includes('rpFeedback') && pendingCloudData.rpFeedback) setRpFeedback(pendingCloudData.rpFeedback);
 
             if (pendingCloudSections.includes('config') && pendingCloudData.config) {
@@ -748,7 +754,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
             setPendingCloudSections([]);
             console.log("Cloud sections applied.");
         });
-    }, [pendingCloudData, pendingCloudSections, setProgram, setExercises, setLogs, setRpFeedback, setShowRIR, setRpEnabled, setLocalLastUpdated, setHasSeenOnboarding, setBodyLogs, setCustomFoods, setPersonalTemplates, setKeepScreenOn, setWeightUnit, setMacroGoals, setNutritionLogs, setRpTargetRIR, setUserProfile, setLocalSectionSyncMeta, setCardioSessions, setNutritionGoal]);
+    }, [user, pendingCloudData, pendingCloudSections, setProgram, setExercises, setLogs, setRpFeedback, setShowRIR, setRpEnabled, setLocalLastUpdated, setHasSeenOnboarding, setBodyLogs, setCustomFoods, setPersonalTemplates, setKeepScreenOn, setWeightUnit, setMacroGoals, setNutritionLogs, setRpTargetRIR, setUserProfile, setLocalSectionSyncMeta, setCardioSessions, setNutritionGoal]);
 
     const cancelCloudSync = useCallback(() => {
         // "Keep Local": user explicitly decided to retain their local state for the conflicting sections.

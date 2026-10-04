@@ -21,7 +21,16 @@ Estado persistente: se actualiza y pushea al cerrar CADA tarea.
 | Q10 | `40fc801` | hecho |
 | Q11 | `268d020` | hecho |
 | Q12 | `93ee29b` | hecho |
-| Q13 | (este commit) | hecho |
+| Q13 | `e5cf440` | hecho |
+| Q14 | `0a8c0c2` | hecho |
+| Q15 | `9b0ab48` | hecho |
+| Q16 | `e61ea87`, `905a67c` | hecho |
+| Q17 | `01a75c2` | hecho |
+| Q18 | `f8956b5` | hecho |
+| Q19 | `fd5f4f1` | hecho |
+| Q20 | `efbe58c` | hecho |
+| Q21 | (ver `git log --grep Q21`) | hecho (flag OFF por defecto) |
+| Q22 | (ver `git log --grep Q22`) | ver sección Q22 |
 
 ## Q0 — Preparación
 
@@ -643,3 +652,65 @@ Estado persistente: se actualiza y pushea al cerrar CADA tarea.
   verde (WITHIN BUDGET), Playwright 43/43 (puerto aislado 5199).
 - No verificado: tiempos de carga en dispositivo real; resto del top-5
   sin optimizar (documentado arriba).
+
+## Q21 — Historial en la nube por sesión (flag `VITE_CLOUD_LOGS_V2`, APAGADO por defecto)
+
+Retomado tras corte de cuota del agente anterior: el módulo y 43 tests unitarios estaban
+escritos sin commit; faltaba cablear syncService, reglas, borrado de cuenta, integración y
+reporte. Al cerrarlo se encontraron y corrigieron 3 defectos del diseño inicial (abajo).
+
+- `services/cloudLogsV2.ts` (puro / IO inyectada): `planSessionUpload` (incremental por
+  índice id→{u,h}; hash FNV-1a sin `updatedAt`), `mergeSessionLogs` (unión por id, gana el
+  `updatedAt` mayor, lápidas ganan a ediciones más viejas, empate = local, lápidas >90 días
+  ignoradas), `ensureSessionLogsMigrated` (data/history legado ∪ docs V2 ∪ locales →
+  `logs/{id}` en lotes ≤400 → recién entonces `historyFormat: 2`; idempotente, reanudable,
+  NO borra data/history), `uploadSessionLogsV2`, `downloadSessionLogsV2` (pull completo sin
+  caché; delta `updatedAt > cursor − 24 h` con caché; GC best-effort de lápidas vencidas),
+  `adoptSessionLogsV2`, `deleteAllSessionLogsV2`. `services/cloudLogsIndex.ts`: índice,
+  cursor y marca en IndexedDB por uid. `types.ts`: `Log.updatedAt?`.
+- `services/cloudLogsV2Flag.ts`: chequeo del flag aislado; syncService y accountDeletion
+  cargan V2 con import dinámico → chunk lazy `cloudLogsV2` (2,7 KB gzip). Entrada
+  110,97 → 111,37 KB gzip (+0,4 %; con import estático era +2,3 %).
+- `syncService`: flag ON → `uploadStateNow` commitea el doc principal y luego sube sesiones V2
+  (ya no escribe data/history); `downloadState` hace delta sobre `cloudSyncCache`;
+  `adoptCloudLogs` (no-op con flag OFF). `AppContext`: llama `adoptCloudLogs` en los 2 sitios
+  donde aplica logs de la nube (dispositivo vacío y "aceptar datos de la nube").
+- Reglas: `historyFormat` (int) en la lista permitida (create y update);
+  `match /users/{uid}/logs/{logId}`: lectura/listado y borrado solo dueño; create/update con
+  `keys().hasOnly(sessionDocAllowedKeys())`, `updatedAt is number`, `id` number|string,
+  `deleted == true` si existe, `exercises` list, `startTime/endTime` number. El cliente
+  proyecta cada doc a `SESSION_DOC_KEYS` (misma lista; un test compara ambas) para que un
+  campo heredado desconocido en un log viejo no deje la migración denegada para siempre
+  (solo afecta a la copia en la nube; lo local no se toca).
+- Borrado de cuenta: con flag ON lista y borra `logs/` en lotes ANTES de data/history y
+  users/{uid}; si falla, `deleteUser` no se llama. Flag OFF: idéntico a Q2.
+- Defectos encontrados y corregidos al cerrar (cada uno con test que falla sin el fix):
+  1. **Pérdida de sesiones de otro dispositivo**: download/migración sembraban el índice con
+     ids remotos; si el usuario rechazaba "datos más nuevos en la nube", la siguiente subida
+     los convertía en lápidas. Fix: entradas `r` (solo remotas) nunca se lapidan hasta que el
+     id aparece en local o la app lo adopta (`adoptSessionLogsV2`). Tests: 3 unitarios +
+     integración "a declined merge loses nothing". El test previo de dos dispositivos se
+     ajustó para llamar a la adopción donde la app aplica los logs (sus aserciones no cambian).
+  2. **Sesiones invisibles a pulls delta**: altas selladas con `endTime` (sesión terminada
+     offline o importada por CSV con fecha vieja) quedaban bajo el cursor de otros
+     dispositivos. Detectado por la integración real con emuladores. Fix: altas selladas con
+     `max(now, endTime)` + solape de 24 h en el delta (tolerancia a reloj desfasado; el merge
+     es idempotente). Test de regresión falla sin el fix (pierde la sesión #2).
+  3. **Re-subida perpetua**: un log adoptado conserva su `updatedAt` viejo; tras editarlo,
+     `stamp !== índice` lo re-subía en cada sync. Fix: solo un sello explícito MÁS NUEVO es
+     cambio. Test de regresión falla sin el fix.
+- Tests: `cloudLogsV2` unit 50 (planificador, merge, migración, upload/download con Firestore
+  falso, dos dispositivos, regresiones, paridad reglas↔cliente); `accountDeletion` +3 (orden
+  con logs, fallo sin deleteUser, flag OFF no lista); reglas +3 (historyFormat, logs dueño vs
+  extraños, claves/tipos/lápidas falsas) → 16/16; integración +4 (migración real con flag ON
+  y legado intacto + download por syncService; golden flag OFF sin `logs/` ni historyFormat;
+  dos dispositivos con rechazo/aceptación/delta/incremental; borrado de cuenta con logs) → 12/12.
+- Evidencia: build OK (5 critical + 62 lazy), `test:run` 652/652 (115 ficheros),
+  `lint:a11y` limpio, `bundle:report` WITHIN BUDGET, `test:rules` 16/16,
+  `test:integration` 12/12, Playwright 43/43.
+- Limitaciones documentadas: el flag es de build (todos los dispositivos deben usar un build
+  con el mismo valor; un build viejo sin flag seguiría leyendo data/history, que deja de
+  actualizarse). Si el flag se apaga tras usarlo, `logs/` queda en la nube y el borrado de
+  cuenta con flag OFF no lo toca. Una sesión borrada en un dispositivo ANTES de que su primer
+  pull adopte los logs no se propaga (preferimos no perder datos a borrar de más).
+- No verificado: con datos reales de producción (reglas no desplegadas; no se usa Firebase real).

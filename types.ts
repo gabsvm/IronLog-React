@@ -201,6 +201,11 @@ export interface Log {
     blockNumber: number;
     blockWeek: number;
   };
+  /**
+   * Q21: last-write timestamp for per-session cloud sync (V2). Absent on
+   * older logs; readers fall back to endTime. Never required locally.
+   */
+  updatedAt?: number;
 }
 
 export interface FeedbackEntry {

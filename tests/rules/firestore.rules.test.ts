@@ -227,6 +227,53 @@ describe.skipIf(!EMULATOR_HOST)('N4: hardened Firestore rules (emulator)', () =>
         await assertSucceeds(batch.commit());
     });
 
+    it('Q21: historyFormat marker is an allowed int key on create and update', async () => {
+        const db = alice().firestore();
+        await assertSucceeds(setDoc(doc(db, 'users/alice'), { historyFormat: 2 }, { merge: true }));
+        await assertSucceeds(setDoc(doc(db, 'users/alice'), { historyFormat: 2, lastUpdated: 5 }, { merge: true }));
+        await assertFails(setDoc(doc(db, 'users/alice'), { historyFormat: 'two' }, { merge: true }));
+    });
+
+    it('Q21: owner writes, queries and deletes session docs; strangers cannot', async () => {
+        const db = alice().firestore();
+        const live = {
+            id: 1700000000000,
+            dayIdx: 0,
+            name: 'Push',
+            startTime: 1700000000000,
+            endTime: 1700000360000,
+            duration: 360,
+            mesoId: 1,
+            week: 1,
+            exercises: [{ id: 'e1', sets: [] }],
+            updatedAt: 1700000360000,
+        };
+        await assertSucceeds(setDoc(doc(db, 'users/alice/logs/1700000000000'), live));
+        await assertSucceeds(
+            setDoc(doc(db, 'users/alice/logs/1700000000000'), { id: 1700000000000, updatedAt: 1700000999999, deleted: true }),
+        );
+        await assertSucceeds(getDocs(collection(db, 'users/alice/logs')));
+        await assertSucceeds(deleteDoc(doc(db, 'users/alice/logs/1700000000000')));
+
+        const bobDb = bob().firestore();
+        await assertFails(setDoc(doc(bobDb, 'users/alice/logs/2'), { ...live, id: 2 }));
+        await assertFails(getDocs(collection(bobDb, 'users/alice/logs')));
+        await assertFails(getDocs(collection(anon().firestore(), 'users/alice/logs')));
+    });
+
+    it('Q21: session docs reject unknown keys, missing/mistyped stamps and fake tombstones', async () => {
+        const db = alice().firestore();
+        const base = { id: 5, name: 'x', exercises: [], updatedAt: 10 };
+        await assertFails(setDoc(doc(db, 'users/alice/logs/5'), { ...base, hacked: true }));
+        const { updatedAt: _u, ...noStamp } = base;
+        await assertFails(setDoc(doc(db, 'users/alice/logs/5'), noStamp));
+        await assertFails(setDoc(doc(db, 'users/alice/logs/5'), { ...base, updatedAt: '10' }));
+        await assertFails(setDoc(doc(db, 'users/alice/logs/5'), { ...base, deleted: false }));
+        await assertFails(setDoc(doc(db, 'users/alice/logs/5'), { ...base, exercises: 'nope' }));
+        await assertFails(setDoc(doc(db, 'users/alice/logs/5'), { ...base, id: true }));
+        await assertSucceeds(setDoc(doc(db, 'users/alice/logs/5'), base));
+    });
+
     it('denies unmatched paths explicitly', async () => {
         const db = alice().firestore();
         await assertFails(setDoc(doc(db, 'whatever/x'), { a: 1 }));

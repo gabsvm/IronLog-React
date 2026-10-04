@@ -3,6 +3,14 @@ import { getFirebaseFirestoreServices } from "../lib/firebaseLoader";
 import { offlineSyncQueue } from "./offlineSyncQueue";
 import { dirtySyncState } from "./dirtySyncState";
 import { cloudSyncCache } from "./cloudSyncCache";
+import { isCloudLogsV2Enabled } from "./cloudLogsV2Flag";
+import type { CloudLogsV2Firestore } from "./cloudLogsV2";
+
+// Q21: V2 is loaded on demand so the flag-OFF build keeps it off the entry chunk.
+const loadCloudLogsV2 = async () => {
+    const [v2, { cloudLogsIndex }] = await Promise.all([import("./cloudLogsV2"), import("./cloudLogsIndex")]);
+    return { ...v2, cloudLogsIndex };
+};
 
 const emitSyncStatus = (detail: Record<string, unknown>) => {
     window.dispatchEvent(new CustomEvent('ironlog:sync-status', { detail }));
@@ -75,7 +83,11 @@ const uploadStateNow = async (userId: string, state: Partial<AppState> & { email
 
     batch.set(userRef, sanitizeForFirestore(rawMainData), { merge: true });
 
-    if (shouldInclude('logs') && state.logs) {
+    // Q21: with VITE_CLOUD_LOGS_V2=1 history goes to users/{uid}/logs/* after
+    // the main doc commits; data/history is no longer written (never deleted).
+    const useLogsV2 = isCloudLogsV2Enabled();
+
+    if (!useLogsV2 && shouldInclude('logs') && state.logs) {
         const logsRef = firestoreApi.doc(db, "users", userId, "data", "history");
         let logsData = sanitizeForFirestore({ logs: state.logs });
         const payloadSize = JSON.stringify(logsData).length;
@@ -92,6 +104,16 @@ const uploadStateNow = async (userId: string, state: Partial<AppState> & { email
     }
 
     await batch.commit();
+    if (useLogsV2 && shouldInclude('logs') && state.logs) {
+        const { uploadSessionLogsV2, cloudLogsIndex } = await loadCloudLogsV2();
+        await uploadSessionLogsV2({
+            userId,
+            logs: state.logs,
+            firestore: { db, api: firestoreApi } as unknown as CloudLogsV2Firestore,
+            indexStore: cloudLogsIndex,
+            now: Date.now(),
+        });
+    }
     await dirtySyncState.clear(sections);
 };
 
@@ -99,6 +121,21 @@ export const syncService = {
     uploadUserIdentityNow,
     uploadSessionOnlyNow,
     uploadStateNow,
+
+    /**
+     * Q21: the app applied downloaded cloud logs to local state. With V2 on,
+     * those sessions become locally known (a later local delete tombstones
+     * them); with the flag OFF this is a no-op. Never throws.
+     */
+    adoptCloudLogs: async (userId: string, logs: AppState['logs'] | undefined) => {
+        if (!isCloudLogsV2Enabled() || !userId || !Array.isArray(logs)) return;
+        try {
+            const { adoptSessionLogsV2, cloudLogsIndex } = await loadCloudLogsV2();
+            await adoptSessionLogsV2(userId, logs, cloudLogsIndex);
+        } catch (error) {
+            console.warn("Cloud logs adoption bookkeeping failed:", error);
+        }
+    },
 
     flushQueue: async () => {
         const queue = await offlineSyncQueue.compact();
@@ -180,9 +217,23 @@ export const syncService = {
 
             const data = userSnap.data();
             const safeActiveMeso = deserializeMeso(data.activeMeso);
-            const logsRef = firestoreApi.doc(db, "users", userId, "data", "history");
-            const logsSnap = await firestoreApi.getDoc(logsRef);
-            const logsData = logsSnap.exists() ? logsSnap.data().logs : [];
+            let logsData;
+            if (isCloudLogsV2Enabled()) {
+                // Q21: delta pull over the last downloaded snapshot.
+                const cached = await cloudSyncCache.read(userId);
+                const { downloadSessionLogsV2, cloudLogsIndex } = await loadCloudLogsV2();
+                logsData = await downloadSessionLogsV2({
+                    userId,
+                    firestore: { db, api: firestoreApi } as unknown as CloudLogsV2Firestore,
+                    indexStore: cloudLogsIndex,
+                    cachedLogs: Array.isArray(cached?.logs) ? cached.logs : undefined,
+                    now: Date.now(),
+                });
+            } else {
+                const logsRef = firestoreApi.doc(db, "users", userId, "data", "history");
+                const logsSnap = await firestoreApi.getDoc(logsRef);
+                logsData = logsSnap.exists() ? logsSnap.data().logs : [];
+            }
 
             const snapshot: CloudSyncSnapshot = {
                 program: data.program,

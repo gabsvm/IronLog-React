@@ -168,3 +168,54 @@ describe('N3: AccountDeletionError carries a translation key code', () => {
         expect(err.cause).toBe(cause);
     });
 });
+
+describe('Q21: deleteCloudAccount wipes per-session logs when V2 is on', () => {
+    const withLogsApi = (ids: string[], opts: { commitError?: { code: string } } = {}) => {
+        const made = makeFirebase();
+        const api = made.firebase.firestoreApi;
+        api.collection = vi.fn((_db: unknown, ...path: string[]) => ({ path: path.join('/') }));
+        api.getDocs = vi.fn(async (target: { path: string }) => {
+            made.calls.push(`getDocs:${target.path}`);
+            return { docs: ids.map((id) => ({ id })) };
+        });
+        api.writeBatch = vi.fn(() => {
+            const pending: string[] = [];
+            return {
+                delete: (ref: { path: string }) => pending.push(ref.path),
+                commit: async () => {
+                    if (opts.commitError) throw opts.commitError;
+                    made.calls.push(`batchDelete:${pending.length}`);
+                },
+            };
+        });
+        return made;
+    };
+
+    it('lists and batch-deletes logs/ before history and the user doc', async () => {
+        const { firebase, calls } = withLogsApi(['1', '2', '3']);
+        await deleteCloudAccount('uid-1', 'a@b.c', 'secret', firebase, { cloudLogsV2: true });
+        const order = calls.filter((c) => /^(getDocs|batchDelete|deleteDoc|deleteUser)/.test(c));
+        expect(order).toEqual([
+            'getDocs:users/uid-1/logs',
+            'batchDelete:3',
+            'deleteDoc:users/uid-1/data/history',
+            'deleteDoc:users/uid-1',
+            'deleteUser',
+        ]);
+    });
+
+    it('a failed logs wipe never deletes the auth user', async () => {
+        const { firebase, calls } = withLogsApi(['1'], { commitError: { code: 'permission-denied' } });
+        await expect(
+            deleteCloudAccount('uid-1', 'a@b.c', 'secret', firebase, { cloudLogsV2: true }),
+        ).rejects.toMatchObject({ code: 'unknown' });
+        expect(calls).not.toContain('deleteUser');
+        expect(calls.some((c) => c.startsWith('deleteDoc:'))).toBe(false);
+    });
+
+    it('flag off (default) never lists logs/', async () => {
+        const { firebase, calls } = withLogsApi(['1']);
+        await deleteCloudAccount('uid-1', 'a@b.c', 'secret', firebase);
+        expect(calls.some((c) => c.startsWith('getDocs'))).toBe(false);
+    });
+});

@@ -1,6 +1,8 @@
 import { cloudSyncCache } from './cloudSyncCache';
 import { dirtySyncState } from './dirtySyncState';
 import { offlineSyncQueue } from './offlineSyncQueue';
+import { isCloudLogsV2Enabled } from './cloudLogsV2Flag';
+import type { CloudLogsV2Firestore } from './cloudLogsV2';
 
 /** Translation-key codes for every account-deletion failure (see TRANSLATIONS.deleteAccount.errors). */
 export type AccountDeletionErrorCode =
@@ -40,7 +42,16 @@ export interface AccountDeletionFirebase {
     firestoreApi: {
         doc(db: any, ...path: string[]): any;
         deleteDoc(ref: any): Promise<void>;
+        // Q21 (only used with VITE_CLOUD_LOGS_V2=1): owner listing + batched wipe of logs/.
+        collection?(db: any, ...path: string[]): any;
+        getDocs?(target: any): Promise<{ docs: Array<{ id: string }> }>;
+        writeBatch?(db: any): { delete(ref: any): void; commit(): Promise<void> };
     };
+}
+
+export interface AccountDeletionOptions {
+    /** Defaults to the VITE_CLOUD_LOGS_V2 build flag. */
+    cloudLogsV2?: boolean;
 }
 
 const isOffline = () => typeof navigator !== 'undefined' && navigator.onLine === false;
@@ -66,8 +77,9 @@ const mapReauthError = (err: unknown): AccountDeletionError => {
 
 /**
  * Deletes the cloud account in the exact safe order:
- * (a) re-authenticate with email+password, (b) delete
- * users/{uid}/data/history directly, then users/{uid},
+ * (a) re-authenticate with email+password, (b) with VITE_CLOUD_LOGS_V2=1
+ * wipe users/{uid}/logs/* in batches, then delete users/{uid}/data/history
+ * directly, then users/{uid},
  * (c) delete the Auth user.
  *
  * Q2: no collection listing. The hardened rules allow reading only
@@ -84,7 +96,9 @@ export const deleteCloudAccount = async (
     email: string,
     password: string,
     firebase: AccountDeletionFirebase,
+    options: AccountDeletionOptions = {},
 ): Promise<void> => {
+    const wipeSessionLogs = options.cloudLogsV2 ?? isCloudLogsV2Enabled();
     if (isOffline()) {
         throw new AccountDeletionError('offline');
     }
@@ -102,6 +116,15 @@ export const deleteCloudAccount = async (
     }
 
     try {
+        // Q21: per-session docs first (the rules allow the owner to list
+        // logs/, unlike data/). Flag OFF: never touched, Q2 behavior intact.
+        if (wipeSessionLogs) {
+            const { deleteAllSessionLogsV2 } = await import('./cloudLogsV2');
+            await deleteAllSessionLogsV2(uid, {
+                db: firebase.db,
+                api: firebase.firestoreApi as unknown as CloudLogsV2Firestore['api'],
+            });
+        }
         // Direct deletes only: history is the sole client-deletable data doc.
         await firebase.firestoreApi.deleteDoc(
             firebase.firestoreApi.doc(firebase.db, 'users', uid, 'data', 'history'),

@@ -106,4 +106,31 @@ describe.skipIf(!emulatorsRunning)('Q2: deleteCloudAccount end to end (emulators
         expect((await adminSnap(`users/${uid}`)).exists()).toBe(false);
         expect(auth.currentUser).toBeNull();
     });
+
+    it('Q21: with V2 on, wipes users/{uid}/logs/* too (owner listing allowed by rules)', async () => {
+        const { auth, authApi, db, firestoreApi, uid, email, password } =
+            await registerWithData('logs');
+        for (const id of [1, 2, 3]) {
+            await firestoreApi.setDoc(firestoreApi.doc(db, 'users', uid, 'logs', String(id)), {
+                id,
+                name: `s${id}`,
+                exercises: [],
+                updatedAt: 1000 + id,
+            });
+        }
+        await firestoreApi.setDoc(firestoreApi.doc(db, 'users', uid, 'logs', '4'), {
+            id: 4,
+            updatedAt: 2000,
+            deleted: true,
+        });
+
+        await deleteCloudAccount(uid, email, password, { auth, authApi, db, firestoreApi }, { cloudLogsV2: true });
+
+        for (const id of ['1', '2', '3', '4']) {
+            expect((await adminSnap(`users/${uid}/logs/${id}`)).exists()).toBe(false);
+        }
+        expect((await adminSnap(`users/${uid}`)).exists()).toBe(false);
+        expect((await adminSnap(`users/${uid}/data/subscription`)).exists()).toBe(true);
+        expect(auth.currentUser).toBeNull();
+    });
 });
