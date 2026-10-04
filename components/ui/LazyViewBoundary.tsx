@@ -1,5 +1,6 @@
 import React, { Component, type ReactNode } from 'react';
 import { TRANSLATIONS } from '../../constants/translations';
+import { logError } from '../../utils/errorLog';
 
 interface LazyViewBoundaryProps {
     children: ReactNode;
@@ -55,6 +56,11 @@ export class LazyViewBoundary extends Component<LazyViewBoundaryProps, LazyViewB
         } else {
             console.error('[LazyView] Non-chunk error, propagating to parent boundary:', error);
         }
+        void logError({
+            message: error instanceof Error ? error.message : String(error ?? 'unknown'),
+            stack: error instanceof Error ? error.stack : undefined,
+            source: isChunkLoadError(error) ? 'chunk' : 'boundary',
+        });
     }
 
     componentDidUpdate(prevProps: LazyViewBoundaryProps) {

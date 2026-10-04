@@ -12,7 +12,8 @@ Estado persistente: se actualiza y pushea al cerrar CADA tarea.
 | Q1 | `8d398f9` | hecho |
 | Q2 | `e87cf66` | hecho |
 | Q3 | `b84b403` | hecho |
-| Q4 | (este commit) | hecho |
+| Q4 | `5b3fe9b` | hecho |
+| Q5 | (este commit) | hecho |
 
 ## Q0 — Preparación
 
@@ -102,3 +103,26 @@ Estado persistente: se actualiza y pushea al cerrar CADA tarea.
   enganchaba esa app; proceso ajeno no tocado). Fail-proof: sin la regla tslib (stash + rebuild),
   el test de dist real falla (1 failed); con ella, 4/4.
 - No verificado: nada; comportamiento nativo/memoria cubierto por tests de decisión + integración.
+
+## Q5 — Registro local de errores
+
+- `utils/errorLog.ts` (nuevo): buffer circular de 50 en IndexedDB (`il_error_log_v1`, via `utils/db`)
+  con ts, mensaje, stack ≤ 2 KB, origen (boundary / window.onerror / unhandledrejection / chunk),
+  vista (de `history.state`), versión (`APP_VERSION`) y plataforma. Redacción: emails → `[email]`,
+  `password/token/...=` → `[redacted]`. Escrituras serializadas con promise chain (un test expuso
+  lost-update en ráfagas). Todo best-effort: jamás lanza.
+- Captura: `ErrorBoundary.componentDidCatch` (index.tsx, incluye componentStack),
+  `LazyViewBoundary` (chunk vs boundary según `isChunkLoadError`), y
+  `registerGlobalErrorListeners()` tras el montaje con `addEventListener` (convive con el
+  `window.onerror` del overlay de arranque de index.html; ignora ruido ResizeObserver/Script error).
+- UI: `components/profile/ErrorLogCard.tsx` montado en Avanzado (cuenta, Copiar diagnóstico con
+  fallback execCommand, Borrar). `buildDiagnosticsText`: versión, sync, últimos 10 errores.
+  Textos `you.errorLog*` es/en.
+- Tests (12): tope 50 + descarte del más viejo, concurrencia sin pérdidas, truncado, redacción,
+  metadata, never-throw con IDB roto, clear, blob de diagnóstico, listeners globales (captura +
+  unregister), card RTL (cuenta/copiar/borrar), boundary→log con source chunk.
+- Evidencia: `test:run` 384/384, build OK, lint limpio. Fail-proof: sin el wiring en
+  LazyViewBoundary (stash), el test de captura falla. Incidencia: una edición con PowerShell
+  corrompió ProfileSheet (BOM + mojibake) — restaurado por git y rehecho con Node UTF-8, diff final
+  mínimo (+2 líneas).
+- No verificado: captura en dispositivo real con errores nativos (solo web/jsdom).

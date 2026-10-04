@@ -11,6 +11,7 @@ import { Button } from '../ui/Button';
 import { Sheet } from '../ui/Sheet';
 import { BodyMetricsModal } from './BodyMetricsModal';
 import { DeleteAccountDialog } from './DeleteAccountDialog';
+import { ErrorLogCard } from './ErrorLogCard';
 import { PhilosophyModal } from '../ui/PhilosophyModal';
 import { AdminControlPanel } from '../settings/AdminControlPanel';
 import { AdminTemplateManager } from '../admin/AdminTemplateManager';
@@ -776,6 +777,7 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
                                 </div>
                             </div>
 
+                            <ErrorLogCard lang={lang} syncStatusText={syncStatusText} />
                             <div>
                                 <div className="label-reference px-1 mb-1.5">{t.creditsTitle}</div>
                                 <button

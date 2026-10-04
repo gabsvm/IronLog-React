@@ -645,6 +645,12 @@ export const TRANSLATIONS = {
             installIos: "In Safari, tap the Share button (square icon with upward arrow) and select \"Add to Home Screen\" (+) to install GainsLab.",
             installOther: "Tap the browser menu (⋮) and select \"Install app\" or \"Add to Home Screen\".",
             understood: "Got it",
+            errorLogTitle: "Error log",
+            errorLogEmpty: "No errors recorded",
+            errorLogCount: "{count} recorded",
+            errorLogCopy: "Copy diagnostics",
+            errorLogCopied: "Copied!",
+            errorLogClear: "Clear",
         }
     },
     es: {
@@ -1292,6 +1298,12 @@ export const TRANSLATIONS = {
             installIos: "En Safari, toca el botón Compartir (icono cuadrado con flecha hacia arriba) y selecciona \"Agregar al inicio\" (+) para instalar GainsLab.",
             installOther: "Toca el menú del navegador (⋮) y selecciona \"Instalar app\" o \"Agregar a la pantalla principal\".",
             understood: "Entendido",
+            errorLogTitle: "Registro de errores",
+            errorLogEmpty: "Sin errores registrados",
+            errorLogCount: "{count} registrados",
+            errorLogCopy: "Copiar diagnóstico",
+            errorLogCopied: "¡Copiado!",
+            errorLogClear: "Borrar",
         }
     }
 };

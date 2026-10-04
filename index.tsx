@@ -10,6 +10,7 @@ import { resetLocalData } from './services/localDataReset';
 import { isServiceWorkerAllowed } from './utils/serviceWorker';
 import { useStore } from './lib/store';
 import { getPreferredLanguage, downloadEmergencyBackup } from './utils/emergencyBackup';
+import { logError, registerGlobalErrorListeners } from './utils/errorLog';
 console.log("Starting App Initialization...");
 
 const isNativeShell = Capacitor.isNativePlatform();
@@ -155,6 +156,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   componentDidCatch(error: any, errorInfo: any) {
     console.error("Uncaught error:", error, errorInfo);
+    void logError({
+      message: String(error?.message ?? error ?? 'unknown'),
+      stack: [error?.stack, errorInfo?.componentStack].filter(Boolean).join('\n'),
+      source: 'boundary',
+    });
   }
 
   render() {
@@ -379,6 +385,7 @@ if (rootElement) {
     </StrictMode>
   );
   (window as any).__appMounted = true;
+  registerGlobalErrorListeners();
 } else {
   console.error("Root element not found");
   document.body.innerHTML = '<h1 style="color:red">FATAL: #root missing</h1>';
