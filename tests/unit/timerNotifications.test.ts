@@ -7,6 +7,10 @@ vi.mock('../../utils/audio', () => ({
     triggerHaptic: vi.fn(),
     scheduleNativeRestTimer: vi.fn(),
     cancelNativeRestTimer: vi.fn(),
+    // Q9: useTimer's command-sync effect imports these; idle defaults keep
+    // this suite's scheduling assertions unaffected.
+    consumePendingTimerCommands: vi.fn(async () => ({ epoch: -1, commands: [] })),
+    subscribeTimerCommands: vi.fn(async () => () => {}),
 }));
 
 let activeWorker: any = null;

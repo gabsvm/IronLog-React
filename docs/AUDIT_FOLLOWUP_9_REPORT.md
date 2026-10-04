@@ -16,7 +16,8 @@ Estado persistente: se actualiza y pushea al cerrar CADA tarea.
 | Q5 | `ae7f307` | hecho |
 | Q6 | `a48cf99` | hecho |
 | Q7 | `6d7fc49` | hecho |
-| Q8 | (este commit) | hecho |
+| Q8 | `0ca31a1` | hecho |
+| Q9 | (este commit) | hecho |
 
 ## Q0 — Preparación
 
@@ -198,3 +199,31 @@ Estado persistente: se actualiza y pushea al cerrar CADA tarea.
   completas reportó "2 errors" transitorios con exit 0 y 427/427 (ruido paralelo; archivos Q8
   limpios en 2/2 aisladas).
 - No verificado: pantalla real de "Alarmas y recordatorios" y toggle en dispositivo (sin dispositivo).
+
+## Q9 — Acciones +30 s / Saltar en la notificación del descanso
+
+- Nativo: `RestTimerActionReceiver` nuevo (intents explícitos, `exported=false`, sin trampolín —
+  hace el trabajo directo). La notificación viva suma 2 acciones IMMUTABLE (+30 s / Saltar, textos
+  en values + values-es nuevo). Al programar se persiste endAt + textos + se abre un stream por
+  descanso (epoch++, `next_command_id=1`, limpia `rest_cmd_*` viejos). +30 s: endAt+30 s nativo,
+  reprograma la alarma (código extraído a `programAlarm`, idéntico al path plugin) y refresca la
+  viva; tap vencido cancela sin comando. Skip: cancela todo. Cada acción agrega comando secuencial
+  `id:action:endAt` en prefs + `notifyListeners("restTimerCommand")` best-effort vía WeakReference
+  al plugin vivo. `consumePendingTimerCommands()` drena ordenado por id y borra solo lo leído.
+- JS: `TimerCommand{Stream,Payload}` + `consumePendingTimerCommands`/`subscribeTimerCommands` en
+  audio.ts (validados, noop en web). `applyTimerCommands(cmds, epoch, set)` en useTimer: cursor
+  `{epoch,lastId}` en localStorage (epoch nueva lo resetea), ordena por id, idempotente; add30 adopta
+  endAt nativo (+30 duración, ignora si inactivo), skip espeja la píldora. Efecto en useTimer: drena
+  al montar y al volver (visibility/focus) + eventos en vivo.
+- Tests (11): apply (add30/skip/inactivo/fuera de orden/epoch/malformados/idempotencia + cursor),
+  wrappers (web null, passthrough, malformados, unsubscribe), hook real (drain al montar, re-drain
+  al foreground, nada en web).
+- Evidencia: `assembleDebug` OK; receiver en manifiesto fusionado (aapt: enabled, exported=0, sin
+  filter); `test:run` 438/438; build; lint. Fail-proof: sin useTimer (stash) 8/11 fallan. Incidencia:
+  timerNotifications mockeaba audio sin los exports nuevos (3 fails en suite completa) — mock
+  extendido con defaults idle, aserciones intactas.
+- Android 16 Live Updates: NO implementado (idea documentada). Motivo: ProgressStyle/ongoing
+  promovido exige ramas solo-API-36 + verificación visual real; sin dispositivo, enviar esas llamadas
+  a ciegas arriesga notificaciones rotas en Android 16.
+- No verificado: taps reales en la notificación, reprogramación nativa y eventos en vivo en
+  dispositivo (sin dispositivo).

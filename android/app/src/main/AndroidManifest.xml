@@ -28,6 +28,13 @@
             android:enabled="true"
             android:exported="false" />
 
+        <!-- Q9: live-notification actions (+30s / skip). Explicit intents only;
+             no intent-filter, not exported, no Activity trampoline. -->
+        <receiver
+            android:name=".RestTimerActionReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

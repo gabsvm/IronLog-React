@@ -8,6 +8,14 @@ interface NativeBridgePlugin {
     cancelRestTimer(): Promise<void>;
     canScheduleExactAlarms(): Promise<{ granted: boolean; sdkInt: number }>;
     openExactAlarmSettings(): Promise<void>;
+    consumePendingTimerCommands(): Promise<{ epoch: number; commands: TimerCommandPayload[] }>;
+    addListener(event: 'restTimerCommand', cb: (data: unknown) => void): Promise<{ remove: () => Promise<void> }>;
+}
+
+export interface TimerCommandPayload {
+    id: number;
+    action: 'add30' | 'skip';
+    endAt: number;
 }
 
 const NativeBridge = registerPlugin<NativeBridgePlugin>('NativeBridge');
@@ -127,6 +135,61 @@ export const openExactAlarmSettings = () => {
  * Android on API 31+ where exact alarms are not granted and the notice was
  * never shown.
  */
+export interface TimerCommandStream {
+    epoch: number;
+    commands: TimerCommandPayload[];
+}
+
+const isTimerCommand = (value: unknown): value is TimerCommandPayload => {
+    if (typeof value !== 'object' || value === null) return false;
+    const cmd = value as Record<string, unknown>;
+    return (
+        Number.isInteger(cmd.id)
+        && (cmd.action === 'add30' || cmd.action === 'skip')
+        && typeof cmd.endAt === 'number'
+        && Number.isFinite(cmd.endAt)
+    );
+};
+
+/**
+ * Q9: drains the native command stream written by notification actions
+ * (native only; [] + epoch -1 everywhere else or on failure).
+ */
+export const consumePendingTimerCommands = async (): Promise<TimerCommandStream> => {
+    const empty: TimerCommandStream = { epoch: -1, commands: [] };
+    if (!Capacitor.isNativePlatform()) return empty;
+    try {
+        const res = await NativeBridge.consumePendingTimerCommands();
+        if (!res || !Number.isInteger(res.epoch) || !Array.isArray(res.commands)) return empty;
+        return { epoch: res.epoch, commands: res.commands.filter(isTimerCommand) };
+    } catch {
+        return empty;
+    }
+};
+
+/**
+ * Q9: live command events while the bridge is alive (the drain above is the
+ * fallback for frozen JS). No-op off native. Resolves to an unsubscribe fn.
+ */
+export const subscribeTimerCommands = async (
+    cb: (stream: TimerCommandStream) => void,
+): Promise<() => void> => {
+    if (!Capacitor.isNativePlatform()) return () => {};
+    try {
+        const handle = await NativeBridge.addListener('restTimerCommand', (raw: unknown) => {
+            if (typeof raw !== 'object' || raw === null) return;
+            const data = raw as { epoch?: unknown; command?: unknown };
+            if (!Number.isInteger(data.epoch) || !isTimerCommand(data.command)) return;
+            cb({ epoch: data.epoch as number, commands: [data.command] });
+        });
+        return () => {
+            void handle.remove().catch(() => {});
+        };
+    } catch {
+        return () => {};
+    }
+};
+
 export const shouldShowExactAlarmNotice = (input: {
     platform: string;
     isNative: boolean;

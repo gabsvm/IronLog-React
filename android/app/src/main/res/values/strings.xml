@@ -4,4 +4,6 @@
     <string name="title_activity_main">GainsLab</string>
     <string name="package_name">com.gainslab.pro</string>
     <string name="custom_url_scheme">com.gainslab.pro</string>
+    <string name="rest_action_add_30">+30 s</string>
+    <string name="rest_action_skip">Skip</string>
 </resources>

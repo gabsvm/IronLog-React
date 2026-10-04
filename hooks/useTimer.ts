@@ -1,10 +1,13 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, type Dispatch, type SetStateAction } from 'react';
 import { Capacitor } from '@capacitor/core';
 import {
     cancelNativeRestTimer,
+    consumePendingTimerCommands,
     playTimerFinishSound,
     scheduleNativeRestTimer,
+    subscribeTimerCommands,
     triggerHaptic,
+    type TimerCommandPayload,
 } from '../utils/audio';
 import { TRANSLATIONS } from '../constants';
 import { Lang } from '../types';
@@ -39,6 +42,76 @@ export const requestTimerNotificationPermission = async (): Promise<Notification
         }
     }
     return Notification.permission;
+};
+
+const TIMER_COMMAND_CURSOR_KEY = 'il_timer_cmd_cursor_v1';
+
+interface TimerCommandCursor {
+    epoch: number;
+    lastId: number;
+}
+
+const readCommandCursor = (): TimerCommandCursor => {
+    try {
+        const raw = window.localStorage.getItem(TIMER_COMMAND_CURSOR_KEY);
+        if (!raw) return { epoch: -1, lastId: 0 };
+        const parsed = JSON.parse(raw) as Partial<TimerCommandCursor>;
+        if (!Number.isInteger(parsed.epoch) || !Number.isInteger(parsed.lastId)) {
+            return { epoch: -1, lastId: 0 };
+        }
+        return { epoch: parsed.epoch as number, lastId: parsed.lastId as number };
+    } catch {
+        return { epoch: -1, lastId: 0 };
+    }
+};
+
+const writeCommandCursor = (cursor: TimerCommandCursor): void => {
+    try {
+        window.localStorage.setItem(TIMER_COMMAND_CURSOR_KEY, JSON.stringify(cursor));
+    } catch {
+        // Best-effort: worst case a command applies twice across reloads,
+        // which the idempotent updates below tolerate.
+    }
+};
+
+/**
+ * Q9: applies native notification-action commands to the JS timer exactly
+ * once. Commands arrive ordered by id; a new rest epoch resets the cursor so
+ * stale streams can never leak into a fresh rest. add30 adopts the native
+ * endAt (the alarm already moved); skip mirrors the pill's skip.
+ */
+export const applyTimerCommands = (
+    commands: TimerCommandPayload[],
+    epoch: number,
+    setRestTimer: Dispatch<SetStateAction<TimerState>>,
+): void => {
+    let cursor = readCommandCursor();
+    if (cursor.epoch !== epoch) cursor = { epoch, lastId: 0 };
+    const ordered = [...commands].sort((a, b) => a.id - b.id);
+    let applied = false;
+    for (const cmd of ordered) {
+        if (!Number.isInteger(cmd.id) || cmd.id <= cursor.lastId) continue;
+        if (cmd.action === 'skip') {
+            cursor.lastId = cmd.id;
+            applied = true;
+            setRestTimer((prev) => ({ ...prev, active: false, timeLeft: 0, endAt: 0, source: undefined }));
+        } else if (cmd.action === 'add30') {
+            if (!Number.isFinite(cmd.endAt) || cmd.endAt <= 0) continue;
+            cursor.lastId = cmd.id;
+            applied = true;
+            const endAt = cmd.endAt;
+            setRestTimer((prev) => {
+                if (!prev.active) return prev;
+                return {
+                    ...prev,
+                    endAt,
+                    timeLeft: Math.max(0, Math.round((endAt - Date.now()) / 1000)),
+                    duration: prev.duration + 30,
+                };
+            });
+        }
+    }
+    if (applied) writeCommandCursor(cursor);
 };
 
 export const useTimer = (lang: Lang) => {
@@ -195,6 +268,43 @@ export const useTimer = (lang: Lang) => {
         document.addEventListener('visibilitychange', onVisibilityChange);
         return () => document.removeEventListener('visibilitychange', onVisibilityChange);
     }, [handleTick, isNative]);
+
+    // Q9: sync notification-action commands (+30s/skip tapped with frozen JS).
+    // Drains the native stream on mount and on every return to foreground,
+    // plus live events while the bridge is alive. No-op on web.
+    useEffect(() => {
+        if (!isNative) return;
+        let cancelled = false;
+        const drain = async () => {
+            try {
+                const stream = await consumePendingTimerCommands();
+                if (!cancelled && stream.commands.length > 0) {
+                    applyTimerCommands(stream.commands, stream.epoch, setTimer);
+                }
+            } catch {
+                // Best-effort: the next resume retries.
+            }
+        };
+        void drain();
+        let unsubscribe: (() => void) | undefined;
+        void subscribeTimerCommands((stream) => {
+            if (!cancelled && stream.commands.length > 0) {
+                applyTimerCommands(stream.commands, stream.epoch, setTimer);
+            }
+        }).then((remove) => {
+            unsubscribe = remove;
+        });
+        const onResume = () => void drain();
+        document.addEventListener('visibilitychange', onResume);
+        window.addEventListener('focus', onResume);
+        return () => {
+            cancelled = true;
+            document.removeEventListener('visibilitychange', onResume);
+            window.removeEventListener('focus', onResume);
+            unsubscribe?.();
+        };
+        // setTimer is a stable useState setter; drain on mount + resume only.
+    }, [isNative]);
 
     const setRestTimer = useCallback((action: React.SetStateAction<TimerState>) => {
         setTimer(prev => {
