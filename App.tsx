@@ -2,7 +2,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { flushSync } from 'react-dom';
 import { AppProvider, useApp } from './context/AppContext';
-import { RestTimerOverlay } from './components/ui/RestTimerOverlay';
 import { useAuth, AuthProvider } from './context/AuthContext';
 import { usePro } from './hooks/usePro';
 import { useAppHistory, withTransition, VIEW_DEPTH } from './hooks/useAppHistory';
@@ -19,6 +18,10 @@ import {
     type BackupDomainSummary
 } from './services/backupService';
 import { useStore } from './lib/store';
+
+// Q20: the rest pill only renders during an active rest; the timer engine itself
+// runs in TimerProvider, so deferring the overlay keeps it out of the entry chunk.
+const RestTimerOverlay = React.lazy(() => import('./components/ui/RestTimerOverlay').then((module) => ({ default: module.RestTimerOverlay })));
 
 export const VIEW_LOADERS: Partial<Record<string, () => Promise<any>>> = {
     workout: () => import('./views/WorkoutView'),
@@ -336,7 +339,9 @@ const AppContent = () => {
             <AppBanners activeSession={activeSession} />
 
 
-            <RestTimerOverlay />
+            <React.Suspense fallback={null}>
+                <RestTimerOverlay />
+            </React.Suspense>
 
             {/* Q18: all modal dialogs live in components/app/AppModals. */}
             <AppModals

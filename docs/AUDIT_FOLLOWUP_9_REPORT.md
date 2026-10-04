@@ -606,3 +606,40 @@ Estado persistente: se actualiza y pushea al cerrar CADA tarea.
   timing flakes conocidos.
 - No verificado: render visual en es/en en dispositivo real; el resto de
   ficheros con ternarias (fuera de la meta) sigue pendiente de migración.
+
+## Q20 — Presupuesto de bundle + lazy de 3 componentes (entrada −5,4 % gzip)
+
+- `scripts/bundle-report.mjs`: gzip real por chunk (zlib de Node),
+  partición crítico/lazy reutilizada de `splitCriticalLazy` del precache,
+  escribe `docs/BUNDLE_REPORT.md`; `bundle-budget.json` = tamaño medido
+  + 5 % (entryJsGzip 126073, criticalTotalGzip 203940);
+  `npm run bundle:report` integrado en `verify` (exit 1 si excede).
+- Visualizador (`npx vite-bundle-visualizer`, sin instalar; mide pre-minify,
+  orden relativo válido). Top-5 gzip del entry: translations.ts 33,4,
+  vaul 16,4, HomeViewImpl 7,2, AppContext 6,9, @capacitor/core 5,8 KB.
+- Lazy aplicado (barato + seguro, patrón React.lazy existente):
+  RestTimerOverlay en App.tsx (el motor corre en TimerProvider; el overlay
+  es display + prompts de un solo uso con degradación elegante),
+  TutorialOverlay y TemplateSelector en HomeViewImpl (ambos render-gated).
+  Rechazados con motivo: translations (split por idioma invasivo), vaul
+  (exigiría lazy de ProfileSheet + sheets de home), kong4Day (uso síncrono
+  en el render de Layout; programs/ intocable).
+- Antes/después: entry 355,68→337,33 KB raw (−7,2 %),
+  117,25→110,97 KB gzip (−5,4 %); critical 189,68→183,39 KB;
+  lazy 696,51→704,64 KB (+3 chunks precacheados como LAZY en sw.js:
+  RestTimerOverlay 16,3, TemplateSelector 6,9, TutorialOverlay 3,7 KB raw;
+  offline intacto). Presupuesto sin cambios (más holgura).
+- Fail-proof: stash de App.tsx+HomeViewImpl → rebuild → entry vuelve a
+  117,25 KB exacto / 63 assets (determinista); mutación del script
+  (`> budget` + 1e6) → el test over-budget falla; restaurado 7/7.
+- Supuesto mojibake en BUNDLE_REPORT.md investigado: bytes E2 80 94 =
+  em-dash UTF-8 válido (verificado con Node); artefacto de display de
+  PowerShell, no un bug. Sin cambios.
+- Tests: `tests/unit/bundleReport.test.ts` (7: findEntryChunk,
+  analyzeDist sobre fixture con gzip reales, CLI en subproceso dentro/
+  fuera de presupuesto, budget ausente, --write-budget = +5 % exacto).
+- Evidencia: build OK (precache 5 critical + 61 lazy), `test:run`
+  599/599 (114 ficheros: 592 + 7 bundle), `lint:a11y` limpio, `verify`
+  verde (WITHIN BUDGET), Playwright 43/43 (puerto aislado 5199).
+- No verificado: tiempos de carga en dispositivo real; resto del top-5
+  sin optimizar (documentado arriba).

@@ -6,14 +6,12 @@ import { Icon } from '../components/ui/Icon';
 import { Button } from '../components/ui/Button';
 import { getTranslated } from '../utils';
 import { ActivityHeatmap } from '../components/stats/ActivityHeatmap';
-import { TutorialOverlay } from '../components/ui/TutorialOverlay';
 import { usePro } from '../hooks/usePro';
 import { GlobalTemplate, ProgramDay } from '../types';
 import { triggerHaptic, updateWidgetData } from '../utils/audio';
 
 // Sub-components extracted in Phase 6.2
 import { GuidelinesModal } from './home/GuidelinesModal';
-import { TemplateSelector } from './home/TemplateSelector';
 import { HomeRecapStrip } from './home/HomeRecapStrip';
 import { NextSessionCard } from './home/NextSessionCard';
 import { resolveWeightUnit } from '../utils/units';
@@ -29,6 +27,10 @@ import { KONG_4DAY_V1 } from '../programs/kong/kong4Day';
 import { resolveProgramWeek } from '../programs/engine/ProgramResolver';
 import { startProgramRun } from '../programs/engine/ProgramRunHelpers';
 import { getProgramBlockForWeek } from '../programs/engine/ProgramResolver';
+
+// Q20: tutorial + template picker only render on demand; keep them out of the entry chunk.
+const TutorialOverlay = React.lazy(() => import('../components/ui/TutorialOverlay').then(m => ({ default: m.TutorialOverlay })));
+const TemplateSelector = React.lazy(() => import('./home/TemplateSelector').then(m => ({ default: m.TemplateSelector })));
 
 const PaywallModal = React.lazy(() => import('../components/pro/PaywallModal').then(m => ({ default: m.PaywallModal })));
 const ConfirmModal = React.lazy(() => import('../components/ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
@@ -366,6 +368,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
 
                 {/* Modals */}
                 {showTemplateSelector && (
+                    <Suspense fallback={null}>
                     <TemplateSelector
                         onClose={() => setShowTemplateSelector(false)}
                         onSelectTemplate={handleSelectTemplate}
@@ -375,6 +378,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                         lang={lang}
                         onSelectProgram={handleSelectProgram}
                     />
+                    </Suspense>
                 )}
                 {showPaywall && (
                     <Suspense fallback={null}>
@@ -613,11 +617,13 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
             </div>
 
 
+            <Suspense fallback={null}>
             <TutorialOverlay
                 steps={homeTutorialSteps}
                 isActive={!tutorialProgress.home}
                 onComplete={() => markTutorialSeen('home')}
             />
+            </Suspense>
 
             {/* --- MODALS --- */}
 
@@ -747,11 +753,13 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                         </div>
 
                         {/* INTERNAL TUTORIAL */}
+                        <Suspense fallback={null}>
                         <TutorialOverlay
                             steps={mesoSettingsTutorialSteps}
                             isActive={!tutorialProgress.mesoSettings}
                             onComplete={() => markTutorialSeen('mesoSettings')}
                         />
+                        </Suspense>
                     </div>
                 </div>
             )}
