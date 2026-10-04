@@ -1,5 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
+    <string name="app_name">GainsLab</string>
+    <string name="title_activity_main">GainsLab</string>
+    <string name="package_name">com.gainslab.pro</string>
+    <string name="custom_url_scheme">com.gainslab.pro</string>
     <string name="rest_action_add_30">+30 s</string>
     <string name="rest_action_skip">Saltar</string>
 </resources>

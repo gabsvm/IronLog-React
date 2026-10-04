@@ -17,7 +17,8 @@ Estado persistente: se actualiza y pushea al cerrar CADA tarea.
 | Q6 | `a48cf99` | hecho |
 | Q7 | `6d7fc49` | hecho |
 | Q8 | `0ca31a1` | hecho |
-| Q9 | (este commit) | hecho |
+| Q9 | `6833d94` | hecho |
+| Q10 | (este commit) | hecho |
 
 ## Q0 — Preparación
 
@@ -227,3 +228,19 @@ Estado persistente: se actualiza y pushea al cerrar CADA tarea.
   a ciegas arriesga notificaciones rotas en Android 16.
 - No verificado: taps reales en la notificación, reprogramación nativa y eventos en vivo en
   dispositivo (sin dispositivo).
+
+## Q10 — android:allowBackup=false
+
+- Manifiesto: `android:allowBackup="false"` en `<application>` con comentario de decisión y
+  reversión (volver a `true`; API 31+ evaluaría `dataExtractionRules`, pre-31 `fullBackupContent`).
+  Motivo: restaurar un snapshot del WebView en otro teléfono es impredecible; la copia es explícita
+  (snapshots + export Q6) y nube (Pro).
+- Lint (`:app:lintDebug`) BUILD SUCCESSFUL sin findings AllowBackup/DataExtraction/FullBackupContent:
+  no exige reglas vacías. Incidencias resueltas: mi primer comentario rompía el XML (dentro del tag)
+  y values-es de Q9 disparaba 4 MissingTranslation (agregados app_name/title/package/scheme en es).
+- Tests `tests/unit/androidManifest.test.ts` (2): fuente con `allowBackup="false"` + manifiesto
+  fusionado vía aapt (`0x0`) cuando hay APK y SDK (skipIf si no).
+- Evidencia: aapt merged `A: android:allowBackup(0x01010280)=(type 0x12)0x0`; `test:run` 440/440;
+  build; lint limpio. Fail-proof: con manifiesto viejo en stash, el test de fuente falla (el de aapt
+  valida el artefacto ya compilado, como corresponde).
+- No verificado: comportamiento de restauración en dispositivo real (solo manifiesto + lint).
