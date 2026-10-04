@@ -451,3 +451,29 @@ Estado persistente: se actualiza y pushea al cerrar CADA tarea.
   42/42 en puerto aislado 5199.
 - No verificado: RIR objetivo distinto de 2 en uso real; feedback con keys
   numéricas vs string en datos viejos (el código acepta ambas).
+
+## Q16 — Home (resumen semanal, última sesión, racha)
+
+- Nuevo `utils/homeSummary.ts` (puro): `weekProgress` (días distintos
+  entrenados vs planificados; reentrenar un día no infla), `lastSessionSummary`
+  (fecha, duración, volumen con `getSetLoadVolume`, PRs con la regla del
+  recap: >1 % sobre el mejor e1RM previo, una vez por ejercicio, sin contar
+  estrenos) y `streakWeeks` (semanas completas consecutivas; la semana actual
+  en curso no la rompe: se cuenta desde la última completa hacia atrás).
+- Nuevo `views/home/HomeRecapStrip.tsx` bajo la hero card: "Esta semana" con
+  done/planned + barra, racha con llama, última sesión (fecha local, duración,
+  volumen localizado, chip ×PRs) y estado vacío amistoso. Textos
+  `t.homeRecap` es/en. Compacto (una tarjeta, sin scroll extra).
+- `WeeklyRecapCard` (import muerto desde Q11, "Last 7 Days" por calendario)
+  eliminado: el strip lo reemplaza con semántica del plan. `ActivityHeatmap`
+  sigue importado sin renderizar (fuera de alcance, no se tocó).
+- Etiqueta "Saltar sesión" (K8) intacta y verificada en el e2e.
+- Tests: `homeSummary` (10: conteos, última sesión/volumen/PRs/estrenos,
+  racha completa/en curso/cortada/nuevo meso), `homeRecapStrip` (3: tarjeta,
+  vacío, en), e2e `homeRecap.spec.ts` (strip bajo la hero con seeds, skip
+  con aria-label, sin ErrorBoundary). Suite 572/572 (108 ficheros).
+- Fail-proof: `homeSummary` falló antes del módulo (TDD); sin el cableado
+  (stash+build) el e2e falla en `toBeVisible`; con él pasa.
+- Evidencia: build OK, `test:run` 572/572, `lint:a11y` limpio, Playwright
+  43/43 en puerto aislado 5199.
+- No verificado: formato de fecha/volumen en locales distintos de es-AR.

@@ -1,6 +1,6 @@
 
 import React, { useState, Suspense, useMemo, useEffect } from 'react';
-import { useApp, useAppPreferences, useTutorial } from '../context/AppContext';
+import { useApp, useAppConfig, useAppPreferences, useTutorial } from '../context/AppContext';
 import { TRANSLATIONS } from '../constants';
 import { Icon } from '../components/ui/Icon';
 import { Button } from '../components/ui/Button';
@@ -14,8 +14,9 @@ import { triggerHaptic } from '../utils/audio';
 // Sub-components extracted in Phase 6.2
 import { GuidelinesModal } from './home/GuidelinesModal';
 import { TemplateSelector } from './home/TemplateSelector';
-import { WeeklyRecapCard } from './home/WeeklyRecapCard';
+import { HomeRecapStrip } from './home/HomeRecapStrip';
 import { NextSessionCard } from './home/NextSessionCard';
+import { resolveWeightUnit } from '../utils/units';
 import { ProgramBlockTransition } from '../components/programs/ProgramBlockTransition';
 import { PlanActionsSheet } from '../components/home/PlanActionsSheet';
 import { scheduleWhenIdle } from '../lib/idle';
@@ -45,6 +46,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
     const { program, logs, isAppLoading, setProgram, globalTemplates, personalTemplates, userProfile, exercises } = useApp();
     const { lang } = useAppPreferences();
     const { tutorialProgress, markTutorialSeen } = useTutorial();
+    const { config } = useAppConfig();
     const activeSession = useStore(state => state.activeSession);
     const activeMeso = useStore(state => state.activeMeso);
     const setActiveMeso = useStore(state => state.setActiveMeso);
@@ -570,6 +572,16 @@ export const HomeView: React.FC<HomeViewProps> = ({ startSession, onEditProgram,
                     </div>
                 );
             })()}
+
+            {/* 4b. Week at a glance (Q16): done/planned, streak, last session. */}
+            <HomeRecapStrip
+                logs={safeLogs}
+                meso={activeMeso}
+                plannedDays={safeProgram.length}
+                lang={lang}
+                t={t}
+                unit={resolveWeightUnit(config)}
+            />
 
             {/* 5. Secondary Quick Start */}
             <div className="space-y-3 pt-2">
