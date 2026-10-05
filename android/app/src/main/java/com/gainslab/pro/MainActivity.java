@@ -25,6 +25,7 @@ public class MainActivity extends BridgeActivity {
         // Capacitor custom plugins must be registered before BridgeActivity builds
         // the bridge so they are available as soon as the web bundle starts.
         registerPlugin(NativeBridgePlugin.class);
+        registerPlugin(HealthConnectPlugin.class);
         super.onCreate(savedInstanceState);
         captureLaunchAction(getIntent());
         // Android 15+ enforces edge-to-edge; the web layout honors the

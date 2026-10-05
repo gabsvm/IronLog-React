@@ -178,3 +178,31 @@ todo lo de Play Store. Desplegar reglas / encender `VITE_CLOUD_LOGS_V2` no se ha
   se llama al puente, modelo y formato de duración); e2e: terminar una sesión libre, tocar
   "Compartir imagen" y verificar un `gainslab-AAAA-MM-DD.png` con firma PNG y > 10 KB.
 - Evidencia: lint 0, unit 711/711, Playwright 48/48, visual 16/16, `assembleDebug` OK.
+
+## U9 — Health Connect (solo app Android, opt-in)
+
+- Nativo: `HealthConnectPlugin.kt` (primer código Kotlin del módulo: las APIs de Health
+  Connect son `suspend`; se agregó el plugin `org.jetbrains.kotlin.android` 2.2.10) con
+  `androidx.health.connect:connect-client:1.1.0`. Métodos: `getStatus`, `requestAccess`
+  (contrato de permisos oficial vía `startActivityForResult` de Capacitor), `openHealthConnect`,
+  `readWeights(sinceMs)` (paginado, tope 5000) y `writeWorkout` (sesión de
+  `STRENGTH_TRAINING` con `clientRecordId = gainslab-<id>` → exportar dos veces actualiza, no
+  duplica).
+- La librería exige minSdk 26 y la app es 24: `tools:overrideLibrary` + chequeo en tiempo de
+  ejecución (`unsupported` por debajo de API 26 o sin proveedor).
+- Manifest: permisos `health.READ_WEIGHT` y `health.WRITE_EXERCISE` (nada más), `<queries>` del
+  paquete de Health Connect, filtro `ACTION_SHOW_PERMISSIONS_RATIONALE` (Android ≤ 13) y
+  `activity-alias` `VIEW_PERMISSION_USAGE` (Android 14+), ambos abren la app.
+- Web: `utils/healthConnect.ts` (puente + lógica pura) y `HealthConnectCard` en Perfil → Tu
+  cuerpo; en la PWA no se renderiza nada. Importar peso: un registro por día local, gana la
+  última lectura del día, **nunca reemplaza un día que el usuario cargó** (re-importar no
+  duplica); la primera importación mira 1 año atrás y las siguientes desde la última (con 24 h
+  de solape). Exportar entrenamientos: interruptor apagado por defecto; al terminar una sesión
+  se escribe en segundo plano y nunca rompe el flujo.
+- Tests: 12 unit (fusión por día, manual gana, valores imposibles, payload/rango, opt-in,
+  web nunca llama al puente, tarjeta: web vacía, permiso denegado/concedido, importación con
+  conteo y fecha, actualizar, interruptor persistente).
+- No verificado en dispositivo (no instalé el APK). Para Play Store, Health Connect exige una
+  declaración de uso y una política de privacidad: fuera de alcance (no publicamos).
+- Evidencia: lint 0, unit 723/723, Playwright 48/48, visual 16/16, `assembleDebug` OK,
+  entrada 82.90 KB gzip (dentro del presupuesto).

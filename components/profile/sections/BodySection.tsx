@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { useApp } from '../../../context/AppContext';
 import { TRANSLATIONS } from '../../../constants';
 import { BodyMetricsModal } from '../BodyMetricsModal';
+import { HealthConnectCard } from '../HealthConnectCard';
 import { formatWeight, resolveWeightUnit, unitLabel } from '../../../utils/units';
 
 /** Q18: "Tu cuerpo" section, moved verbatim from ProfileSheet. */
 export const BodySection: React.FC = () => {
-    const { lang, userProfile, setUserProfile, config } = useApp();
+    const { lang, userProfile, setUserProfile, config, bodyLogs, setBodyLogs } = useApp();
     const t = TRANSLATIONS[lang];
     const ty = t.you;
 
@@ -47,6 +48,7 @@ export const BodySection: React.FC = () => {
                     </div>
                 </div>
             </div>
+            <HealthConnectCard lang={lang} bodyLogs={bodyLogs} setBodyLogs={setBodyLogs} />
 
             <BodyMetricsModal
                 open={showBodyModal}

@@ -12,6 +12,7 @@ import { resolveProgramDay } from '../../programs/engine/ProgramResolver';
 import { completeWorkoutPipeline } from '../../services/workoutCompletionService';
 import { maybeCreateAutoBackup } from '../../services/autoBackup';
 import { notifyWorkoutDone } from '../../utils/reminders';
+import { maybeExportWorkoutToHealth } from '../../utils/healthConnect';
 
 // Lazy Load views — keeps initial bundle small
 const HistoryView = React.lazy(() => import('../../views/HistoryView').then(module => ({ default: module.HistoryView })));
@@ -85,6 +86,9 @@ export const AppViews: React.FC<AppViewsProps> = ({
 
                             // Q13: today's training reminder (if any) is satisfied.
                             notifyWorkoutDone();
+
+                            // U9: Health Connect export (opt-in, Android app only, never throws).
+                            void maybeExportWorkoutToHealth(result.log);
 
                             // Q6: automatic local snapshot (max 1 per 24 h, last 3 kept).
                             void maybeCreateAutoBackup({
