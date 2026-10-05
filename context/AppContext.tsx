@@ -1,134 +1,26 @@
-
-import React, { createContext, useContext, useEffect, useRef, ReactNode, useState, PropsWithChildren, useMemo, useCallback } from 'react';
-import { AppState, Lang, Theme, ColorTheme, EffectsMode, ResolvedEffects, ExerciseDef, ActiveSession, MesoCycle, Log, ProgramDay, TutorialState, GlobalTemplate, UserProfile, BeforeInstallPromptEvent, NutritionLog, CardioSession, NutritionGoal, MacroGoals, DailyNutrition, BodyLog, CustomFood, DirtySyncSection, SectionSyncMeta, WeightUnit } from '../types';
-import { resolveEffectsMode } from '../utils/effectsProfile';
+import React, { useContext, useEffect, useRef, useState, PropsWithChildren, useMemo, useCallback } from 'react';
+import { AppState, Lang, Theme, ColorTheme, EffectsMode, ResolvedEffects, ExerciseDef, Log, ProgramDay, TutorialState, GlobalTemplate, UserProfile, BeforeInstallPromptEvent, NutritionLog, CardioSession, NutritionGoal, MacroGoals, BodyLog, CustomFood, DirtySyncSection, SectionSyncMeta, WeightUnit } from '../types';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { usePersistedState } from '../hooks/usePersistedState';
-import { Icon } from '../components/ui/Icon';
-import { Logo } from '../components/ui/Logo';
 import { TimerProvider } from './TimerContext';
 import { HomeSkeleton } from '../components/ui/SkeletonLoader';
-import { AuthProvider, useAuth } from './AuthContext';
-import { syncService } from '../services/syncService';
+import { useAuth } from './AuthContext';
 import { useStore } from '../lib/store';
-import { getFirebaseFirestoreServices, isFirebaseConfigured } from '../lib/firebaseLoader';
-import { scheduleWhenIdle } from '../lib/idle';
-import { offlineSyncQueue } from '../services/offlineSyncQueue';
 import { dirtySyncState } from '../services/dirtySyncState';
 import { isMeaningfullyEmptyLocalState } from '../services/syncHelpers';
+import { SyncMetaContextType, SyncStatusContextType, AppContext, SyncMetaContext, SyncStatusContext, AppPreferencesContext, AppConfigContext, TutorialContext, INITIAL_TUTORIAL_STATE } from './app/appContexts';
+import { useDefaultsBootstrap } from './app/useDefaultsBootstrap';
+import { useAppBootstrapEffects } from './app/useAppBootstrapEffects';
+import { useInitialCloudDownload } from './app/useInitialCloudDownload';
+import { useCloudUploads } from './app/useCloudUploads';
+import { useThemeAndWakeLock } from './app/useThemeAndWakeLock';
 
 if (typeof window !== 'undefined') {
     (window as any).__ironlog_isMeaningfullyEmptyLocalState = isMeaningfullyEmptyLocalState;
 }
 
-const FULL_SYNC_SECTIONS: DirtySyncSection[] = [
-    'program',
-    'activeMeso',
-    'exercises',
-    'logs',
-    'config',
-    'rpFeedback',
-    'userProfile',
-    'nutritionLogs',
-    'cardioSessions',
-    'nutritionGoal',
-    'bodyLogs',
-    'macroGoals',
-    'customFoods',
-    'personalTemplates',
-];
-
-interface AppContextType extends Omit<AppState, 'activeSession' | 'activeMeso'> {
-    lang: Lang;
-    theme: Theme;
-    colorTheme: ColorTheme;
-    effectsMode: EffectsMode;
-    resolvedEffects: ResolvedEffects;
-    reducedEffects: boolean;
-    setLang: (l: Lang) => void;
-    setTheme: (t: Theme) => void;
-    setColorTheme: (t: ColorTheme) => void;
-    setEffectsMode: (m: EffectsMode) => void;
-
-    setProgram: (val: ProgramDay[] | ((prev: ProgramDay[]) => ProgramDay[])) => void;
-    setExercises: (val: ExerciseDef[] | ((prev: ExerciseDef[]) => ExerciseDef[])) => void;
-    setLogs: (val: Log[] | ((prev: Log[]) => Log[])) => void;
-    setConfig: (val: Partial<AppState['config']>) => void;
-    setRpFeedback: (val: AppState['rpFeedback'] | ((prev: AppState['rpFeedback']) => AppState['rpFeedback'])) => void;
-    setHasSeenOnboarding: (val: boolean) => void;
-    setGlobalTemplates: (val: GlobalTemplate[] | ((prev: GlobalTemplate[]) => GlobalTemplate[])) => void;
-    personalTemplates: GlobalTemplate[];
-    setPersonalTemplates: (val: GlobalTemplate[] | ((prev: GlobalTemplate[]) => GlobalTemplate[])) => void;
-
-    // NEW: User Profile Setter
-    setUserProfile: (val: UserProfile | ((prev: UserProfile) => UserProfile)) => void;
-
-    // Nutrition & Cardio
-    nutritionLogs: NutritionLog[];
-    setNutritionLogs: (val: NutritionLog[] | ((prev: NutritionLog[]) => NutritionLog[])) => void;
-    cardioSessions: CardioSession[];
-    setCardioSessions: (val: CardioSession[] | ((prev: CardioSession[]) => CardioSession[])) => void;
-    nutritionGoal: NutritionGoal;
-    setNutritionGoal: (val: NutritionGoal | ((prev: NutritionGoal) => NutritionGoal)) => void;
-
-    // Body Tracking
-    setBodyLogs: (val: BodyLog[] | ((prev: BodyLog[]) => BodyLog[])) => void;
-    setMacroGoals: (val: MacroGoals | null | ((prev: MacroGoals | null) => MacroGoals | null)) => void;
-
-    // Custom Food Database
-    customFoods: CustomFood[];
-    setCustomFoods: (val: CustomFood[] | ((prev: CustomFood[]) => CustomFood[])) => void;
-
-    // Tutorial Methods
-    markTutorialSeen: (section: keyof TutorialState) => void;
-    resetTutorials: () => void;
-
-    // Sync UI State
-    isAppLoading: boolean;
-    pendingCloudData: Partial<AppState> | null;
-    pendingCloudSections: DirtySyncSection[];
-    confirmCloudSync: () => void;
-    cancelCloudSync: () => void;
-    getLocalLastUpdated: () => number;
-    getLocalSectionSyncMeta: () => SectionSyncMeta;
-
-    // PWA Install State
-    deferredPrompt: BeforeInstallPromptEvent | null;
-    installApp: () => void;
-    isStandalone: boolean;
-}
-
-export interface SyncMetaContextType {
-    localLastUpdated: number;
-    localSectionSyncMeta: SectionSyncMeta;
-    getLocalLastUpdated: () => number;
-    getLocalSectionSyncMeta: () => SectionSyncMeta;
-    setLocalLastUpdated: React.Dispatch<React.SetStateAction<number>>;
-}
-
-export interface SyncStatusContextType {
-    isOnline: boolean;
-    syncStatus: {
-        pending: number;
-        isSyncing: boolean;
-        lastSyncedAt: number | null;
-    };
-}
-
-const AppContext = createContext<AppContextType | undefined>(undefined);
-const SyncMetaContext = createContext<SyncMetaContextType | undefined>(undefined);
-const SyncStatusContext = createContext<SyncStatusContextType | undefined>(undefined);
-type AppPreferencesContextType = Pick<AppContextType, 'lang' | 'setLang' | 'theme' | 'setTheme' | 'colorTheme' | 'setColorTheme' | 'deferredPrompt' | 'installApp' | 'isStandalone' | 'reducedEffects' | 'effectsMode' | 'setEffectsMode' | 'resolvedEffects'>;
-type AppConfigContextType = Pick<AppContextType, 'config' | 'setConfig'>;
-type TutorialContextType = Pick<AppContextType, 'tutorialProgress' | 'markTutorialSeen' | 'resetTutorials'>;
-
-const AppPreferencesContext = createContext<AppPreferencesContextType | undefined>(undefined);
-const AppConfigContext = createContext<AppConfigContextType | undefined>(undefined);
-const TutorialContext = createContext<TutorialContextType | undefined>(undefined);
-
-const INITIAL_TUTORIAL_STATE: TutorialState = {
-    home: false, workout: false, history: false, stats: false, mesoSettings: false, nutrition: false
-};
+// S6: types/contexts moved to context/app/appContexts; re-exported for existing importers.
+export type { SyncMetaContextType, SyncStatusContextType } from './app/appContexts';
 
 export const AppProvider = ({ children }: PropsWithChildren) => {
     const { user, subscription } = useAuth();
@@ -269,541 +161,165 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         release();
     };
 
-    useEffect(() => {
-        let cancelled = false;
-        const cancelIdle = scheduleWhenIdle(async () => {
-            try {
-                const [{ DEFAULT_LIBRARY }, { DEFAULT_TEMPLATE, INITIAL_TEMPLATES }] = await Promise.all([
-                    import('../data/defaultLibrary'),
-                    import('../data/defaultTemplates'),
-                ]);
+    // S6: bootstrap effects, cloud sync and theme/wake-lock live in context/app/.
+    useDefaultsBootstrap({
+        program,
+        setProgram,
+        programLoading,
+        exercises,
+        setExercises,
+        exLoading,
+        setGlobalTemplates,
+        defaultLibrary,
+        setDefaultLibrary,
+        defaultTemplate,
+        setDefaultTemplate,
+        setBaseTemplates,
+        setDefaultsLoading,
+    });
 
-                if (cancelled) return;
+    const { installApp } = useAppBootstrapEffects({
+        user,
+        showRIR,
+        rpEnabled,
+        rpTargetRIR,
+        keepScreenOn,
+        weightUnit,
+        program,
+        exercises,
+        setExercises,
+        logs,
+        nutritionLogs,
+        cardioSessions,
+        nutritionGoal,
+        userProfile,
+        setGlobalTemplates,
+        personalTemplates,
+        baseTemplates,
+        defaultsLoading,
+        rpFeedback,
+        bodyLogs,
+        macroGoals,
+        customFoods,
+        hasCheckedSync,
+        isOnline,
+        syncStatus,
+        setSyncStatus,
+        deferredPrompt,
+        setDeferredPrompt,
+        setIsStandalone,
+        effectsMode,
+        setResolvedEffects,
+        setReducedEffects,
+        activeMeso,
+        isAppLoading,
+        foregroundFlushRef,
+        trackDirtySection,
+    });
 
-                setDefaultLibrary(DEFAULT_LIBRARY);
-                setDefaultTemplate(DEFAULT_TEMPLATE);
-                setBaseTemplates(INITIAL_TEMPLATES);
-                setGlobalTemplates((prev) => (prev.length > 0 ? prev : INITIAL_TEMPLATES));
-            } finally {
-                if (!cancelled) setDefaultsLoading(false);
-            }
-        }, 200);
+    useInitialCloudDownload({
+        user,
+        setShowRIR,
+        setRpEnabled,
+        setRpTargetRIR,
+        setKeepScreenOn,
+        setWeightUnit,
+        setProgram,
+        exercises,
+        setExercises,
+        logs,
+        setLogs,
+        nutritionLogs,
+        setNutritionLogs,
+        cardioSessions,
+        setCardioSessions,
+        setNutritionGoal,
+        userProfile,
+        setUserProfile,
+        personalTemplates,
+        setPersonalTemplates,
+        setRpFeedback,
+        setHasSeenOnboarding,
+        setLocalLastUpdated,
+        setLocalSectionSyncMeta,
+        localLastUpdatedRef,
+        localSectionSyncMetaRef,
+        bodyLogs,
+        setBodyLogs,
+        setMacroGoals,
+        customFoods,
+        setCustomFoods,
+        pendingCloudData,
+        setPendingCloudData,
+        setPendingCloudSections,
+        hasCheckedSync,
+        setHasCheckedSync,
+        isOnline,
+        activeSession,
+        activeMeso,
+        isAppLoading,
+        withDirtyTrackingSuppressed,
+    });
 
-        return () => {
-            cancelled = true;
-            cancelIdle();
-        };
-    }, []);
+    const { confirmCloudSync, cancelCloudSync } = useCloudUploads({
+        user,
+        subscription,
+        showRIR,
+        setShowRIR,
+        rpEnabled,
+        setRpEnabled,
+        rpTargetRIR,
+        setRpTargetRIR,
+        keepScreenOn,
+        setKeepScreenOn,
+        weightUnit,
+        setWeightUnit,
+        program,
+        setProgram,
+        exercises,
+        setExercises,
+        logs,
+        setLogs,
+        nutritionLogs,
+        setNutritionLogs,
+        cardioSessions,
+        setCardioSessions,
+        nutritionGoal,
+        setNutritionGoal,
+        userProfile,
+        setUserProfile,
+        personalTemplates,
+        setPersonalTemplates,
+        rpFeedback,
+        setRpFeedback,
+        setHasSeenOnboarding,
+        setLocalLastUpdated,
+        setLocalSectionSyncMeta,
+        bodyLogs,
+        setBodyLogs,
+        macroGoals,
+        setMacroGoals,
+        customFoods,
+        setCustomFoods,
+        pendingCloudData,
+        setPendingCloudData,
+        pendingCloudSections,
+        setPendingCloudSections,
+        hasCheckedSync,
+        setIsOnline,
+        activeSession,
+        activeMeso,
+        isAppLoading,
+        withDirtyTrackingSuppressed,
+    });
 
-    useEffect(() => {
-        if (programLoading || !defaultTemplate || program.length > 0) return;
-        setProgram(defaultTemplate);
-    }, [programLoading, defaultTemplate, program, setProgram]);
-
-    useEffect(() => {
-        if (exLoading || !defaultLibrary || exercises.length > 0) return;
-        setExercises(defaultLibrary);
-    }, [exLoading, defaultLibrary, exercises, setExercises]);
-
-    // --- FETCH GLOBAL DATA ---
-    useEffect(() => {
-        if (!isFirebaseConfigured() || !isOnline || !baseTemplates || defaultsLoading) return;
-        let cancelled = false;
-        const fetchData = async () => {
-            try {
-                const { db, firestoreApi } = await getFirebaseFirestoreServices();
-                if (!db || cancelled) return;
-
-                const qTpl = firestoreApi.query(firestoreApi.collection(db, "global_templates"), firestoreApi.orderBy("order"));
-                const tplSnapshot = await firestoreApi.getDocs(qTpl);
-                const fetchedTemplates: GlobalTemplate[] = [];
-                tplSnapshot.forEach((doc) => fetchedTemplates.push({ id: doc.id, ...doc.data() } as GlobalTemplate));
-
-                // MERGE STRATEGY: 
-                let mergedTemplates = [...baseTemplates];
-
-                fetchedTemplates.forEach(remote => {
-                    const idx = mergedTemplates.findIndex(local => local.id === remote.id);
-                    if (idx >= 0) {
-                        // Remote overrides local (allows updating content via CMS)
-                        mergedTemplates[idx] = remote;
-                    } else {
-                        // Append new remote templates
-                        mergedTemplates.push(remote);
-                    }
-                });
-
-                // Sort again to respect 'order' property
-                mergedTemplates.sort((a, b) => a.order - b.order);
-
-                if (!cancelled && mergedTemplates.length > 0) setGlobalTemplates(mergedTemplates);
-
-                const qEx = firestoreApi.collection(db, "global_exercises");
-                const exSnapshot = await firestoreApi.getDocs(qEx);
-                const fetchedExercises: ExerciseDef[] = [];
-                exSnapshot.forEach((doc) => fetchedExercises.push({ id: doc.id, ...doc.data() } as ExerciseDef));
-
-                if (!cancelled && fetchedExercises.length > 0) {
-                    setExercises(prev => {
-                        const currentIds = new Set(prev.map(e => e.id));
-                        const newExs = fetchedExercises.filter(e => !currentIds.has(e.id));
-                        return newExs.length > 0 ? [...prev, ...newExs] : prev;
-                    });
-                }
-            } catch (e: any) {
-                if (!e.code || e.code !== 'permission-denied') console.error("Global Data Fetch Error", e);
-            }
-        };
-
-        const cancelIdle = scheduleWhenIdle(fetchData, 1500);
-        return () => {
-            cancelled = true;
-            cancelIdle();
-        };
-    }, [baseTemplates, defaultsLoading, isOnline, user, setExercises]);
-
-    // --- PWA INSTALL HANDLER ---
-    useEffect(() => {
-        const isStandaloneQuery = window.matchMedia('(display-mode: standalone)');
-        setIsStandalone(isStandaloneQuery.matches);
-        isStandaloneQuery.addEventListener('change', (e) => setIsStandalone(e.matches));
-
-        // Ensure we catch it if it happens after mount
-        const handler = (e: BeforeInstallPromptEvent) => {
-            e.preventDefault();
-            window.deferredPrompt = e;
-            setDeferredPrompt(e);
-        };
-        window.addEventListener('beforeinstallprompt', handler);
-        return () => window.removeEventListener('beforeinstallprompt', handler);
-    }, []);
-
-    useEffect(() => {
-        let mounted = true;
-
-        const refreshQueueCount = async () => {
-            const pending = await offlineSyncQueue.count();
-            if (!mounted) return;
-            setSyncStatus(prev => ({ ...prev, pending }));
-        };
-
-        const handleQueueChanged = (event: Event) => {
-            const pending = Number((event as CustomEvent).detail?.pending ?? 0);
-            setSyncStatus(prev => ({ ...prev, pending }));
-        };
-
-        const handleSyncStatus = (event: Event) => {
-            const detail = (event as CustomEvent).detail || {};
-            const phase = String(detail.phase || '');
-
-            setSyncStatus(prev => ({
-                pending: typeof detail.pending === 'number' ? detail.pending : prev.pending,
-                isSyncing: phase === 'upload-start' || phase === 'flush-start',
-                lastSyncedAt: typeof detail.lastSyncedAt === 'number' ? detail.lastSyncedAt : prev.lastSyncedAt,
-            }));
-        };
-
-        void refreshQueueCount();
-        window.addEventListener('ironlog:sync-queue-changed', handleQueueChanged);
-        window.addEventListener('ironlog:sync-status', handleSyncStatus);
-
-        return () => {
-            mounted = false;
-            window.removeEventListener('ironlog:sync-queue-changed', handleQueueChanged);
-            window.removeEventListener('ironlog:sync-status', handleSyncStatus);
-        };
-    }, []);
-
-    useEffect(() => {
-        if (!user || !isOnline || syncStatus.pending <= 0 || foregroundFlushRef.current) return;
-
-        let cancelled = false;
-        let timeoutId: number | null = null;
-
-        const flushInForeground = async () => {
-            if (cancelled || foregroundFlushRef.current || document.visibilityState === 'hidden') return;
-
-            foregroundFlushRef.current = true;
-            try {
-                await syncService.flushQueue();
-            } finally {
-                foregroundFlushRef.current = false;
-            }
-        };
-
-        const scheduleForegroundFlush = () => {
-            if (cancelled || document.visibilityState === 'hidden') return;
-            if (timeoutId !== null) window.clearTimeout(timeoutId);
-            timeoutId = window.setTimeout(() => {
-                void flushInForeground();
-            }, 1200);
-        };
-
-        const handleVisibility = () => {
-            if (document.visibilityState === 'visible') {
-                scheduleForegroundFlush();
-            }
-        };
-
-        scheduleForegroundFlush();
-        window.addEventListener('focus', scheduleForegroundFlush);
-        window.addEventListener('pageshow', scheduleForegroundFlush);
-        document.addEventListener('visibilitychange', handleVisibility);
-
-        return () => {
-            cancelled = true;
-            if (timeoutId !== null) window.clearTimeout(timeoutId);
-            window.removeEventListener('focus', scheduleForegroundFlush);
-            window.removeEventListener('pageshow', scheduleForegroundFlush);
-            document.removeEventListener('visibilitychange', handleVisibility);
-        };
-    }, [user, isOnline, syncStatus.pending]);
-
-    useEffect(() => {
-        const media = window.matchMedia('(prefers-reduced-motion: reduce)');
-        const updateEffectsMode = () => {
-            const isMobile = window.matchMedia('(max-width: 768px)').matches || ('ontouchstart' in window);
-            const resolved = resolveEffectsMode({
-                effectsMode,
-                prefersReducedMotion: media.matches,
-                isMobileOrTouch: isMobile,
-                hardwareConcurrency: navigator.hardwareConcurrency,
-                deviceMemory: (navigator as any).deviceMemory,
-                saveData: !!(navigator as any).connection?.saveData,
-            });
-
-            setResolvedEffects(resolved);
-            setReducedEffects(resolved === 'reduced');
-            document.documentElement.dataset.effects = resolved;
-        };
-
-        updateEffectsMode();
-        media.addEventListener('change', updateEffectsMode);
-        window.addEventListener('pageshow', updateEffectsMode);
-        return () => {
-            media.removeEventListener('change', updateEffectsMode);
-            window.removeEventListener('pageshow', updateEffectsMode);
-        };
-    }, [effectsMode]);
-
-    trackDirtySection('program', [program, isAppLoading, hasCheckedSync]);
-    trackDirtySection('activeMeso', [activeMeso, isAppLoading, hasCheckedSync]);
-    trackDirtySection('exercises', [exercises, isAppLoading, hasCheckedSync]);
-    trackDirtySection('logs', [logs, isAppLoading, hasCheckedSync]);
-    trackDirtySection('config', [showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, isAppLoading, hasCheckedSync]);
-    trackDirtySection('rpFeedback', [rpFeedback, isAppLoading, hasCheckedSync]);
-    trackDirtySection('userProfile', [userProfile, isAppLoading, hasCheckedSync]);
-    trackDirtySection('nutritionLogs', [nutritionLogs, isAppLoading, hasCheckedSync]);
-    trackDirtySection('cardioSessions', [cardioSessions, isAppLoading, hasCheckedSync]);
-    trackDirtySection('nutritionGoal', [nutritionGoal, isAppLoading, hasCheckedSync]);
-    trackDirtySection('bodyLogs', [bodyLogs, isAppLoading, hasCheckedSync]);
-    trackDirtySection('macroGoals', [macroGoals, isAppLoading, hasCheckedSync]);
-    trackDirtySection('customFoods', [customFoods, isAppLoading, hasCheckedSync]);
-    trackDirtySection('personalTemplates', [personalTemplates, isAppLoading, hasCheckedSync]);
-
-    const installApp = useCallback(async () => {
-        const promptEvent = deferredPrompt || window.deferredPrompt;
-        if (!promptEvent) {
-            console.warn("No deferred prompt available");
-            return;
-        }
-
-        try {
-            promptEvent.prompt();
-            const { outcome } = await promptEvent.userChoice;
-            console.log(`User response to install prompt: ${outcome}`);
-            if (outcome === 'accepted') {
-                setDeferredPrompt(null);
-                window.deferredPrompt = null;
-            }
-        } catch (e) {
-            console.error("Install prompt error", e);
-        }
-    }, [deferredPrompt]);
-
-    // --- INITIAL CLOUD DOWNLOAD ---
-    useEffect(() => {
-        if (!user || isAppLoading || !isOnline || pendingCloudData || hasCheckedSync) return;
-
-        const checkCloudData = async () => {
-            try {
-                // Only trigger if we haven't checked since login or if local is empty
-                const cloudData = await syncService.downloadState(user.uid);
-                if (cloudData && cloudData.lastUpdated) {
-                    const cloudSyncMeta = cloudData.syncMeta || {};
-                    const isLocalEmpty = isMeaningfullyEmptyLocalState({
-                        activeSession,
-                        activeMeso,
-                        logs,
-                        nutritionLogs,
-                        cardioSessions,
-                        bodyLogs,
-                        customFoods,
-                        personalTemplates,
-                        exercises,
-                        userProfile,
-                    });
-                    const isCachedSnapshot = cloudData.source === 'cache';
-
-                    if (isLocalEmpty) {
-                        console.log(isCachedSnapshot
-                            ? "Applying cached cloud snapshot on empty device."
-                            : "Cloud data found on empty device. Applying automatically.");
-                        await withDirtyTrackingSuppressed(async () => {
-                            if (cloudData.program) setProgram(cloudData.program);
-                            if (cloudData.activeMeso) useStore.getState().setActiveMeso(cloudData.activeMeso);
-                            if (cloudData.activeSession) useStore.getState().setActiveSession(cloudData.activeSession);
-                            if (cloudData.exercises) setExercises(cloudData.exercises);
-                            if (cloudData.logs) {
-                                setLogs(cloudData.logs);
-                                await syncService.adoptCloudLogs(user.uid, cloudData.logs);
-                            }
-                            if (cloudData.rpFeedback) setRpFeedback(cloudData.rpFeedback);
-
-                            if (cloudData.config) {
-                                if (cloudData.config.showRIR !== undefined) setShowRIR(cloudData.config.showRIR);
-                                if (cloudData.config.rpEnabled !== undefined) setRpEnabled(cloudData.config.rpEnabled);
-                                if (cloudData.config.rpTargetRIR !== undefined) setRpTargetRIR(cloudData.config.rpTargetRIR);
-                                if (cloudData.config.keepScreenOn !== undefined) setKeepScreenOn(cloudData.config.keepScreenOn);
-                                if (cloudData.config.weightUnit === 'kg' || cloudData.config.weightUnit === 'lb') setWeightUnit(cloudData.config.weightUnit);
-                            }
-
-                            if (cloudData.userProfile) setUserProfile(cloudData.userProfile);
-                            if (cloudData.nutritionLogs) setNutritionLogs(cloudData.nutritionLogs);
-                            if (cloudData.cardioSessions) setCardioSessions(cloudData.cardioSessions);
-                            if (cloudData.nutritionGoal) setNutritionGoal(cloudData.nutritionGoal);
-                            if (cloudData.bodyLogs) setBodyLogs(cloudData.bodyLogs);
-                            if (cloudData.macroGoals) setMacroGoals(cloudData.macroGoals);
-                            if (cloudData.customFoods) setCustomFoods(cloudData.customFoods);
-                            await syncService.adoptCloudSections(user.uid, cloudData);
-                            if (cloudData.personalTemplates) setPersonalTemplates(cloudData.personalTemplates);
-
-                            setLocalLastUpdated(cloudData.lastUpdated ?? Date.now());
-                            setLocalSectionSyncMeta(cloudSyncMeta);
-                            setHasSeenOnboarding(true);
-                            await dirtySyncState.clear();
-                        });
-                    } else if (!isCachedSnapshot && cloudData.lastUpdated > (localLastUpdatedRef.current || 0)) {
-                        const newerSections = Object.entries(cloudSyncMeta)
-                            .filter(([section, ts]) => typeof ts === 'number' && ts > (localSectionSyncMetaRef.current[section as DirtySyncSection] || 0))
-                            .map(([section]) => section as DirtySyncSection);
-
-                        if (newerSections.length === 0) return;
-
-                        console.log("Cloud data is newer than local. Offering sync.");
-                        setPendingCloudData(cloudData);
-                        setPendingCloudSections(newerSections);
-                    }
-                }
-            } catch (error) {
-                console.error("Initial cloud sync check failed", error);
-            } finally {
-                setHasCheckedSync(true); // Always mark as checked so it doesn't loop
-            }
-        };
-
-        checkCloudData();
-    }, [
-        user, isOnline, isAppLoading, pendingCloudData, hasCheckedSync, activeSession, activeMeso, logs, nutritionLogs,
-        cardioSessions, bodyLogs, customFoods, personalTemplates, exercises, userProfile,
-        setProgram, setExercises, setLogs, setRpFeedback, setShowRIR, setRpEnabled, setLocalLastUpdated,
-        setHasSeenOnboarding, setBodyLogs, setCustomFoods, setPersonalTemplates, setKeepScreenOn, setWeightUnit, setMacroGoals, setNutritionLogs, setLocalSectionSyncMeta,
-        setRpTargetRIR, setUserProfile, setCardioSessions, setNutritionGoal
-    ]); // Re-run when dependencies change
-
-    // --- SYNC LOGIC ---
-    useEffect(() => {
-        const handleOnline = () => {
-            setIsOnline(true);
-            if (user) {
-                if (subscription.isPro) {
-                    void (async () => {
-                        const dirtySections = await dirtySyncState.list();
-                        await syncService.flushQueue();
-                        if (dirtySections.length === 0) return;
-
-                        const now = Date.now();
-                        setLocalLastUpdated(now);
-                        await syncService.uploadState(user.uid, {
-                            program, activeMeso, exercises, logs,
-                            config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit },
-                            rpFeedback,
-                            userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, personalTemplates,
-                            email: user.email || null,
-                            lastUpdated: now,
-                        }, dirtySections);
-                    })();
-                } else {
-                    void syncService.flushQueue();
-                    syncService.uploadUserIdentity(user.uid, user.email || "");
-                }
-            }
-        };
-
-        const handleOffline = () => setIsOnline(false);
-        window.addEventListener('online', handleOnline);
-        window.addEventListener('offline', handleOffline);
-        return () => { window.removeEventListener('online', handleOnline); window.removeEventListener('offline', handleOffline); };
-    }, [user, subscription.isPro, program, activeMeso, activeSession, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, rpFeedback, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, personalTemplates, setLocalLastUpdated]);
-
-    // ── Debounce A: session-only write (fast, lightweight) ─────────────────────
-    // activeSession changes on every set completion or weight input during a workout.
-    // Writing only this one field (~1-5 KB) instead of the full state document
-    // (~50-200 KB) reduces Firestore write cost by 95%+ during an active session.
-    useEffect(() => {
-        if (!user || isAppLoading || !hasCheckedSync || !!pendingCloudData) return;
-        if (!subscription.isPro) return; // free users: identity-only (handled in online handler)
-        const timer = setTimeout(() => {
-            const now = Date.now();
-            setLocalLastUpdated(now);
-            void syncService.flushQueue();
-            syncService.uploadSessionOnly(user.uid, activeSession, now);
-        }, 3000);
-        return () => clearTimeout(timer);
-    }, [user, subscription.isPro, isAppLoading, hasCheckedSync, pendingCloudData, activeSession, setLocalLastUpdated]);
-
-    // ── Debounce B: full-state write (slower, only when program/data changes) ──
-    // Excludes activeSession (handled above). Fires only when program, exercises,
-    // logs, nutrition or config change — much less frequent than session updates.
-    // Uses 10s debounce: these changes are deliberate edits, not keystrokes.
-    useEffect(() => {
-        if (!user || isAppLoading || !hasCheckedSync || !!pendingCloudData) return;
-        const timer = setTimeout(() => {
-            if (subscription.isPro) {
-                void (async () => {
-                    const dirtySections = await dirtySyncState.list();
-                    if (dirtySections.length === 0) return;
-
-                    const now = Date.now();
-                    setLocalLastUpdated(now);
-                    void syncService.flushQueue();
-                    syncService.uploadState(user.uid, {
-                        program, activeMeso, exercises, logs,
-                        config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit },
-                        rpFeedback,
-                        userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, personalTemplates,
-                        email: user.email || null,
-                        lastUpdated: now,
-                    }, dirtySections);
-                })();
-            } else {
-                syncService.uploadUserIdentity(user.uid, user.email || "");
-            }
-        }, 10000);
-        return () => clearTimeout(timer);
-    }, [user, subscription.isPro, program, activeMeso, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, rpFeedback, isAppLoading, hasCheckedSync, pendingCloudData, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, personalTemplates, setLocalLastUpdated]);
-
-    const confirmCloudSync = useCallback(() => {
-        if (!pendingCloudData) return;
-
-        console.log("Applying newer cloud sections...");
-        void withDirtyTrackingSuppressed(async () => {
-            const cloudSyncMeta = ((pendingCloudData as Partial<AppState> & { syncMeta?: SectionSyncMeta }).syncMeta) || {};
-
-            if (pendingCloudSections.includes('program') && pendingCloudData.program) setProgram(pendingCloudData.program);
-            if (pendingCloudSections.includes('activeMeso') && pendingCloudData.activeMeso) useStore.getState().setActiveMeso(pendingCloudData.activeMeso);
-            if (pendingCloudSections.includes('exercises') && pendingCloudData.exercises) setExercises(pendingCloudData.exercises);
-            if (pendingCloudSections.includes('logs') && pendingCloudData.logs) {
-                setLogs(pendingCloudData.logs);
-                if (user) await syncService.adoptCloudLogs(user.uid, pendingCloudData.logs);
-            }
-            if (pendingCloudSections.includes('rpFeedback') && pendingCloudData.rpFeedback) setRpFeedback(pendingCloudData.rpFeedback);
-
-            if (pendingCloudSections.includes('config') && pendingCloudData.config) {
-                if (pendingCloudData.config.showRIR !== undefined) setShowRIR(pendingCloudData.config.showRIR);
-                if (pendingCloudData.config.rpEnabled !== undefined) setRpEnabled(pendingCloudData.config.rpEnabled);
-                if (pendingCloudData.config.rpTargetRIR !== undefined) setRpTargetRIR(pendingCloudData.config.rpTargetRIR);
-                if (pendingCloudData.config.keepScreenOn !== undefined) setKeepScreenOn(pendingCloudData.config.keepScreenOn);
-                if (pendingCloudData.config.weightUnit === 'kg' || pendingCloudData.config.weightUnit === 'lb') setWeightUnit(pendingCloudData.config.weightUnit);
-            }
-
-            if (pendingCloudSections.includes('userProfile') && pendingCloudData.userProfile) setUserProfile(pendingCloudData.userProfile);
-            if (pendingCloudSections.includes('nutritionLogs') && pendingCloudData.nutritionLogs) setNutritionLogs(pendingCloudData.nutritionLogs);
-            if (pendingCloudSections.includes('cardioSessions') && pendingCloudData.cardioSessions) setCardioSessions(pendingCloudData.cardioSessions);
-            if (pendingCloudSections.includes('nutritionGoal') && pendingCloudData.nutritionGoal) setNutritionGoal(pendingCloudData.nutritionGoal);
-            if (pendingCloudSections.includes('bodyLogs') && pendingCloudData.bodyLogs) setBodyLogs(pendingCloudData.bodyLogs);
-            if (pendingCloudSections.includes('macroGoals') && pendingCloudData.macroGoals) setMacroGoals(pendingCloudData.macroGoals);
-            if (pendingCloudSections.includes('customFoods') && pendingCloudData.customFoods) setCustomFoods(pendingCloudData.customFoods);
-            if (user) {
-                await syncService.adoptCloudSections(user.uid, {
-                    nutritionLogs: pendingCloudSections.includes('nutritionLogs') ? pendingCloudData.nutritionLogs : undefined,
-                    cardioSessions: pendingCloudSections.includes('cardioSessions') ? pendingCloudData.cardioSessions : undefined,
-                    bodyLogs: pendingCloudSections.includes('bodyLogs') ? pendingCloudData.bodyLogs : undefined,
-                    customFoods: pendingCloudSections.includes('customFoods') ? pendingCloudData.customFoods : undefined,
-                });
-            }
-            if (pendingCloudSections.includes('personalTemplates') && pendingCloudData.personalTemplates) setPersonalTemplates(pendingCloudData.personalTemplates);
-
-            setLocalLastUpdated(pendingCloudData.lastUpdated ?? Date.now());
-            setLocalSectionSyncMeta(prev => {
-                const next = { ...prev };
-                pendingCloudSections.forEach(section => {
-                    const cloudTs = cloudSyncMeta[section];
-                    if (typeof cloudTs === 'number') next[section] = cloudTs;
-                });
-                return next;
-            });
-            await dirtySyncState.clear(pendingCloudSections);
-
-            setHasSeenOnboarding(true);
-            setPendingCloudData(null);
-            setPendingCloudSections([]);
-            console.log("Cloud sections applied.");
-        });
-    }, [user, pendingCloudData, pendingCloudSections, setProgram, setExercises, setLogs, setRpFeedback, setShowRIR, setRpEnabled, setLocalLastUpdated, setHasSeenOnboarding, setBodyLogs, setCustomFoods, setPersonalTemplates, setKeepScreenOn, setWeightUnit, setMacroGoals, setNutritionLogs, setRpTargetRIR, setUserProfile, setLocalSectionSyncMeta, setCardioSessions, setNutritionGoal]);
-
-    const cancelCloudSync = useCallback(() => {
-        // "Keep Local": user explicitly decided to retain their local state for the conflicting sections.
-        // We only mark the disputed sections as dirty/preferred, rather than arbitrarily marking all 14 domains dirty.
-        const sectionsToPreserve = pendingCloudSections.length > 0 ? pendingCloudSections : [];
-        setPendingCloudData(null);
-        setPendingCloudSections([]);
-        if (sectionsToPreserve.length > 0) {
-            const now = Date.now();
-            setLocalLastUpdated(now);
-            setLocalSectionSyncMeta(prev => {
-                const next = { ...prev };
-                sectionsToPreserve.forEach(section => {
-                    next[section] = now;
-                });
-                return next;
-            });
-            void dirtySyncState.mark(sectionsToPreserve);
-        }
-    }, [pendingCloudSections, setLocalLastUpdated, setLocalSectionSyncMeta]);
-
-    // --- THEME & WAKELOCK ---
-    useEffect(() => {
-        const root = window.document.documentElement;
-        root.classList.remove('light', 'dark');
-        const resolvedTheme = theme === 'system'
-            ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-            : theme;
-        root.classList.add(resolvedTheme);
-        root.style.colorScheme = resolvedTheme;
-    }, [theme]);
-
-    useEffect(() => { window.document.documentElement.setAttribute('data-theme', colorTheme); }, [colorTheme]);
-    useEffect(() => {
-        if (typeof document !== 'undefined') {
-            document.documentElement.lang = lang;
-        }
-    }, [lang]);
-
-    useEffect(() => {
-        const requestWakeLock = async () => {
-            if (keepScreenOn && 'wakeLock' in navigator) {
-                try { wakeLockRef.current = await navigator.wakeLock.request('screen'); } catch (err) { }
-            } else if (!keepScreenOn && wakeLockRef.current) {
-                wakeLockRef.current.release().catch(() => { });
-                wakeLockRef.current = null;
-            }
-        };
-        requestWakeLock();
-        const handleVis = () => { if (document.visibilityState === 'visible' && keepScreenOn) requestWakeLock(); };
-        document.addEventListener('visibilitychange', handleVis);
-        return () => { document.removeEventListener('visibilitychange', handleVis); if (wakeLockRef.current) wakeLockRef.current.release().catch(() => { }); };
-    }, [keepScreenOn]);
+    useThemeAndWakeLock({
+        lang,
+        theme,
+        colorTheme,
+        keepScreenOn,
+        wakeLockRef,
+    });
 
     const setConfig = useCallback((newConfig: any) => {
         if (newConfig.showRIR !== undefined) setShowRIR(newConfig.showRIR);

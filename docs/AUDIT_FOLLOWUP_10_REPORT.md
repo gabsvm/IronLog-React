@@ -142,3 +142,36 @@ comportamiento real que fallan sin el cambio, sin dependencias nuevas, sin despl
 - Limitación documentada: la nutrición se resuelve por DÍA (si dos dispositivos editan el
   mismo día a la vez, gana la última escritura de ese día; antes ganaba la del array entero).
 - No verificado: con datos reales (reglas no desplegadas, flag apagado).
+
+## S6 — Partir los 4 archivos grandes (sin cambios de comportamiento)
+
+| Antes | Bytes | Después (máx. por archivo) |
+|-------|------:|----------------------------|
+| `views/StatsViewImpl.tsx` | 53 503 | orquestador 2,4 KB + `views/stats/` (hook `useStatsData` 17,4 KB, 5 bloques de render, helpers, widgets, `exerciseInsight`) |
+| `context/AppContext.tsx` | 48 951 | 19,1 KB + `context/app/` (`appContexts` + 5 hooks: defaults, bootstrap, descarga inicial, subidas, tema/wake-lock; máx. 15,4 KB) |
+| `views/WorkoutViewImpl.tsx` | 47 029 | 7,3 KB + `views/workout/` (hook 17,6 KB, cabecera+lista, hojas de tipo de serie y de finalizar, constantes, RestTimerControl) |
+| `views/HomeViewImpl.tsx` | 43 051 | 8,1 KB + `views/home/` (hook 15,2 KB, estado vacío, cabecera+selector, tarjeta principal, modal de ajustes) |
+
+- Método mecánico (scripts de un solo uso, no versionados): el código se MUEVE literal;
+  cada vista queda como orquestador que llama a un hook `use…State/Data` (mismo orden de
+  hooks) y renderiza un componente por bloque, que recibe el resultado del hook y
+  desestructura solo lo que usa. Los bloques que usaban `activeSession`/`activeMeso` repiten
+  el mismo guard del padre (que solo los renderiza con ese valor presente). Imports
+  re-derivados y podados por uso; rutas de `import()` dinámicos re-basadas.
+- AppContext: los hooks extraídos reciben interfaces TIPADAS generadas con el type checker
+  de TypeScript (sin `any`); contextos, tipos y constantes en `context/app/appContexts.ts`;
+  los hooks consumidores (`useApp`, etc.) siguen en `AppContext.tsx` (los tests hacen
+  `vi.spyOn` sobre ese módulo). Las listas de dependencias se movieron tal cual: eslint
+  ahora pide setters/refs (estables) y `withDirtyTrackingSuppressed` (se recrea por render y
+  el original lo omitía a propósito); en vez de cambiar dependencias (lo que podría
+  re-ejecutar efectos) se anotó cada línea con `eslint-disable-next-line` y el motivo.
+- Exportaciones públicas intactas (StatsViewImpl reexporta `getVolumeZone`, widgets y
+  tipos; AppContext reexporta los tipos de contexto).
+- Criterio (como Q18): ningún archivo resultante de estos 4 pasa de 20 KB; TODOS los tests
+  pasan SIN cambiar ningún test (`git diff -- tests` vacío en S6); entrada +1,5 % (≤ 2 %).
+- Evidencia: `tsc` limpio, build OK, `test:run` 673/673, `lint:a11y` limpio, eslint del
+  proyecto con los mismos 4 errores preexistentes que antes de S6 (3 en `trackDirtySection`
+  de AppContext, 1 en `useStatsWorker`), `bundle:report` WITHIN BUDGET (entrada 112,23 →
+  113,94 KB gzip), Playwright 45/45.
+- Fuera de alcance (no estaban en la lista): `ExercisesView` 36 KB, `ProgramEditView` 27 KB,
+  `NutriView` 20,5 KB siguen grandes; candidatos para la misma técnica.
