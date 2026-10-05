@@ -1,6 +1,7 @@
 import { Capacitor } from '@capacitor/core';
 import { db } from './db';
 import { APP_VERSION } from '../services/backupService';
+import { reportErrorRemotely } from './errorReporting';
 
 /** Where the error was captured. */
 export type ErrorSource = 'boundary' | 'window.onerror' | 'unhandledrejection' | 'chunk';
@@ -80,6 +81,8 @@ const appendEntry = async (input: {
             entry.stack = redactSensitive(String(input.stack)).slice(0, ERROR_LOG_STACK_MAX_CHARS);
         }
         await db.set(ERROR_LOG_KEY, [...existing, entry].slice(-ERROR_LOG_MAX_ENTRIES));
+        // U7: opt-in remote copy (no-op unless the user enabled it and is signed in).
+        void reportErrorRemotely(entry);
     } catch {
         // Swallowed on purpose: the error log is best-effort diagnostics.
     }

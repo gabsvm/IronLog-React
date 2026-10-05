@@ -136,3 +136,24 @@ todo lo de Play Store. Desplegar reglas / encender `VITE_CLOUD_LOGS_V2` no se ha
   (no existía la colección por comida); por diseño, con un doc por día una de las dos
   escrituras se perdía.
 - Evidencia: lint 0, `test:run` verde, Playwright 47/47.
+
+## U7 — Reportes de errores remotos (opt-in, anónimos)
+
+- Crashlytics no tiene SDK web y en Android exigiría `google-services.json` + plugin de
+  Gradle; se usó el Firebase que ya está (Firestore), igual para PWA y APK.
+- `utils/errorReporting.ts`: preferencia local **apagada por defecto**; se envía solo con
+  sesión iniciada (las reglas exigen auth), máx. 10 por sesión, sin repetir el mismo mensaje,
+  nunca lanza. El documento: fecha, mensaje y stack (ya redactados y recortados por Q5:
+  sin emails ni secretos), origen, vista, versión y plataforma. **Sin uid ni email.**
+  Firebase se importa de forma diferida (entrada sin cambio relevante).
+- `utils/errorLog.ts` ofrece cada entrada nueva al reportero tras guardarla localmente.
+- UI: interruptor en Perfil → Avanzado (tarjeta de registro de errores) con explicación de
+  qué se envía; panel de admin con la lista de los 30 reportes más recientes (a demanda).
+- Reglas `errorReports/{id}`: crear solo autenticado, claves exactas, tamaños y valores
+  acotados (`source`, `platform` enumerados); leer/borrar solo admin; nunca actualizar.
+- Tests: unit (apagado por defecto y persistencia, nada sin opt-in, dedupe + tope por sesión,
+  sin sesión no envía y permite reintento, sink que falla no lanza, documento sin identidad y
+  acotado, claves = allowlist de reglas, interruptor de la UI); reglas 19/19 (crear con/sin
+  auth, campo uid rechazado, tamaños, lectura solo admin, sin update); integración con
+  emuladores 16/16 (envío real con sesión, nada sin sesión).
+- Pendiente del dueño: desplegar las reglas (incluye `errorReports`).

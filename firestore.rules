@@ -29,6 +29,23 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    // U7: opt-in, anonymous error reports (see utils/errorReporting.ts).
+    // Any signed-in user may CREATE a bounded report; only the admin reads or
+    // deletes them. No uid/email field is allowed in the document.
+    match /errorReports/{id} {
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['createdAt', 'message', 'stack', 'source', 'view', 'appVersion', 'platform'])
+        && request.resource.data.createdAt is number
+        && request.resource.data.message is string && request.resource.data.message.size() <= 1024
+        && (!('stack' in request.resource.data) || (request.resource.data.stack is string && request.resource.data.stack.size() <= 2048))
+        && request.resource.data.source in ['boundary', 'window.onerror', 'unhandledrejection', 'chunk']
+        && request.resource.data.view is string && request.resource.data.view.size() <= 64
+        && request.resource.data.appVersion is string && request.resource.data.appVersion.size() <= 32
+        && request.resource.data.platform in ['web', 'native'];
+      allow read, delete: if isAdmin();
+      allow update: if false;
+    }
+
     // Every key the client writes (see services/syncService.ts):
     // identity (email, lastSeen, uid), session (activeSession, lastUpdated)
     // and the state sections + sectionSyncMeta.

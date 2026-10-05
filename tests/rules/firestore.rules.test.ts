@@ -318,6 +318,21 @@ describe.skipIf(!EMULATOR_HOST)('N4: hardened Firestore rules (emulator)', () =>
         await assertFails(setDoc(doc(db, 'users/alice/customFoods/f'), { id: true, updatedAt: 1 }));
     });
 
+    it('U7: signed-in users may create bounded anonymous error reports; only the admin reads', async () => {
+        const report = { createdAt: 1, message: 'TypeError: x', source: 'window.onerror', view: 'workout', appVersion: '4.0.3', platform: 'web' };
+        await assertSucceeds(setDoc(doc(alice().firestore(), 'errorReports/r1'), report));
+        await assertSucceeds(setDoc(doc(alice().firestore(), 'errorReports/r2'), { ...report, stack: 'at foo' }));
+        await assertFails(setDoc(doc(anon().firestore(), 'errorReports/r3'), report));
+        await assertFails(setDoc(doc(alice().firestore(), 'errorReports/r4'), { ...report, uid: 'alice' }));
+        await assertFails(setDoc(doc(alice().firestore(), 'errorReports/r5'), { ...report, message: 'x'.repeat(1025) }));
+        await assertFails(setDoc(doc(alice().firestore(), 'errorReports/r6'), { ...report, source: 'other' }));
+        await assertFails(getDoc(doc(alice().firestore(), 'errorReports/r1')));
+        await assertFails(getDocs(collection(alice().firestore(), 'errorReports')));
+        await assertSucceeds(getDocs(collection(adminClaim().firestore(), 'errorReports')));
+        await assertFails(updateDoc(doc(alice().firestore(), 'errorReports/r1'), { message: 'y' }));
+        await assertSucceeds(deleteDoc(doc(adminClaim().firestore(), 'errorReports/r1')));
+    });
+
     it('denies unmatched paths explicitly', async () => {
         const db = alice().firestore();
         await assertFails(setDoc(doc(db, 'whatever/x'), { a: 1 }));

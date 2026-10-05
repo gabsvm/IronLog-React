@@ -6,6 +6,7 @@ import {
     clearErrorLog,
     readErrorLog,
 } from '../../utils/errorLog';
+import { isErrorReportingEnabled, setErrorReportingEnabled } from '../../utils/errorReporting';
 
 interface ErrorLogCardProps {
     lang: keyof typeof TRANSLATIONS;
@@ -45,6 +46,7 @@ export const ErrorLogCard: React.FC<ErrorLogCardProps> = ({ lang, syncStatusText
     const t = TRANSLATIONS[lang].you;
     const [count, setCount] = useState<number | null>(null);
     const [copied, setCopied] = useState(false);
+    const [reporting, setReporting] = useState(() => isErrorReportingEnabled());
 
     useEffect(() => {
         let cancelled = false;
@@ -80,6 +82,24 @@ export const ErrorLogCard: React.FC<ErrorLogCardProps> = ({ lang, syncStatusText
                         : t.errorLogCount.replace('{count}', String(count))}
                 </span>
             </div>
+            {/* U7: opt-in anonymous remote reports (off by default). */}
+            <label className="flex items-start justify-between gap-3 py-1 cursor-pointer">
+                <span className="flex flex-col">
+                    <span className="text-xs font-bold text-zinc-300">{t.errorReportsTitle}</span>
+                    <span className="text-[10px] text-muted">{t.errorReportsDesc}</span>
+                </span>
+                <input
+                    type="checkbox"
+                    role="switch"
+                    aria-label={t.errorReportsTitle}
+                    checked={reporting}
+                    onChange={(e) => {
+                        setErrorReportingEnabled(e.target.checked);
+                        setReporting(e.target.checked);
+                    }}
+                    className="mt-1 h-4 w-4 accent-primary-500"
+                />
+            </label>
             <div className="grid grid-cols-2 gap-2">
                 <button
                     type="button"

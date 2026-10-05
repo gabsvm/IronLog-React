@@ -3,6 +3,7 @@ import { Icon } from '../ui/Icon';
 import { getFirebaseFirestoreServices } from '../../lib/firebaseLoader';
 import { useAppPreferences } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
+import { AdminErrorReports } from './AdminErrorReports';
 
 interface Props {
     adminEmail: string | undefined;
@@ -132,6 +133,7 @@ export const AdminControlPanel: React.FC<Props> = ({ adminEmail }) => {
                             </div>
                         )}
                     </div>
+                    <AdminErrorReports />
                 </div>
             )}
 
