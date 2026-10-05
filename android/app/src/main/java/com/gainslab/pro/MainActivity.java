@@ -2,6 +2,7 @@ package com.gainslab.pro;
 
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
@@ -16,6 +17,8 @@ public class MainActivity extends BridgeActivity {
     /** Q17: widget tap target. The JS side consumes it once via getLaunchAction. */
     public static final String EXTRA_LAUNCH_ACTION = "com.gainslab.pro.LAUNCH_ACTION";
     private static String pendingLaunchAction = null;
+    /** T3: CSV shared to the app (ACTION_SEND stream / ACTION_VIEW data), read once by the plugin. */
+    private static Uri pendingSharedUri = null;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -78,6 +81,29 @@ public class MainActivity extends BridgeActivity {
         if (intent == null) return;
         String action = intent.getStringExtra(EXTRA_LAUNCH_ACTION);
         if (action != null && !action.isEmpty()) pendingLaunchAction = action;
+        // T3: "Share" / "Open with" a CSV (Hevy, Strong exports).
+        Uri shared = null;
+        if (Intent.ACTION_SEND.equals(intent.getAction())) {
+            shared = Build.VERSION.SDK_INT >= 33
+                    ? intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri.class)
+                    : legacyStream(intent);
+        } else if (Intent.ACTION_VIEW.equals(intent.getAction())) {
+            shared = intent.getData();
+        }
+        if (shared != null) pendingSharedUri = shared;
+    }
+
+    @SuppressWarnings("deprecation")
+    private static Uri legacyStream(Intent intent) {
+        Object extra = intent.getParcelableExtra(Intent.EXTRA_STREAM);
+        return extra instanceof Uri ? (Uri) extra : null;
+    }
+
+    /** T3: consumed once by NativeBridge.consumeSharedFile. */
+    static synchronized Uri consumeSharedUri() {
+        Uri uri = pendingSharedUri;
+        pendingSharedUri = null;
+        return uri;
     }
 
     /** Q17: consumed once by NativeBridge.getLaunchAction (cold or warm start). */

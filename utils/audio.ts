@@ -10,6 +10,7 @@ interface NativeBridgePlugin {
     openExactAlarmSettings(): Promise<void>;
     consumePendingTimerCommands(): Promise<{ epoch: number; commands: TimerCommandPayload[] }>;
     getLaunchAction(): Promise<{ action: string }>;
+    consumeSharedFile(): Promise<{ available: boolean; name?: string; text?: string; error?: string }>;
     updateWidgetData(options: { title: string }): Promise<void>;
     addListener(event: 'restTimerCommand', cb: (data: unknown) => void): Promise<{ remove: () => Promise<void> }>;
 }
@@ -202,6 +203,22 @@ export const getNativeLaunchAction = async (): Promise<string | null> => {
     try {
         const res = await NativeBridge.getLaunchAction();
         return typeof res?.action === 'string' && res.action !== '' ? res.action : null;
+    } catch {
+        return null;
+    }
+};
+
+/**
+ * T3: a CSV shared to / opened with the native app (consumed once).
+ * null when nothing is pending or off-native; 'error' when it could not be read.
+ */
+export const consumeNativeSharedFile = async (): Promise<{ name: string; text: string } | 'error' | null> => {
+    if (!Capacitor.isNativePlatform()) return null;
+    try {
+        const res = await NativeBridge.consumeSharedFile();
+        if (!res?.available) return null;
+        if (typeof res.text !== 'string') return 'error';
+        return { name: typeof res.name === 'string' ? res.name : 'shared.csv', text: res.text };
     } catch {
         return null;
     }

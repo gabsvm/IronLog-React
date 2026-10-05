@@ -15,7 +15,9 @@ import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
 import android.graphics.drawable.Icon;
+import android.database.Cursor;
 import android.net.Uri;
+import android.provider.OpenableColumns;
 import android.os.Build;
 import android.provider.Settings;
 import android.os.Handler;
@@ -379,6 +381,57 @@ public class NativeBridgePlugin extends Plugin {
         JSObject result = new JSObject();
         result.put("action", action != null ? action : "");
         call.resolve(result);
+    }
+
+    /**
+     * T3: hand a shared/opened CSV to the web layer exactly once. Read off the
+     * main thread with a 10 MB cap; { available:false } when nothing is pending.
+     */
+    @PluginMethod
+    public void consumeSharedFile(PluginCall call) {
+        Uri uri = MainActivity.consumeSharedUri();
+        if (uri == null) {
+            JSObject none = new JSObject();
+            none.put("available", false);
+            call.resolve(none);
+            return;
+        }
+        new Thread(() -> {
+            JSObject result = new JSObject();
+            result.put("available", true);
+            try (java.io.InputStream in = getContext().getContentResolver().openInputStream(uri)) {
+                if (in == null) throw new java.io.IOException("no stream");
+                java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+                byte[] buf = new byte[16384];
+                int total = 0;
+                int n;
+                while ((n = in.read(buf)) != -1) {
+                    total += n;
+                    if (total > SHARED_FILE_MAX_BYTES) throw new java.io.IOException("too large");
+                    out.write(buf, 0, n);
+                }
+                result.put("name", displayName(uri));
+                result.put("text", new String(out.toByteArray(), java.nio.charset.StandardCharsets.UTF_8));
+            } catch (Exception e) {
+                result.put("error", "read");
+            }
+            call.resolve(result);
+        }).start();
+    }
+
+    private static final int SHARED_FILE_MAX_BYTES = 10 * 1024 * 1024;
+
+    private String displayName(Uri uri) {
+        try (Cursor cursor = getContext().getContentResolver().query(uri, new String[] { OpenableColumns.DISPLAY_NAME }, null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                String name = cursor.getString(0);
+                if (name != null && !name.isEmpty()) return name;
+            }
+        } catch (Exception ignored) {
+            // Fall back below.
+        }
+        String last = uri.getLastPathSegment();
+        return last != null ? last : "shared.csv";
     }
 
     /** Q17: store the next-session title and refresh installed widgets. */

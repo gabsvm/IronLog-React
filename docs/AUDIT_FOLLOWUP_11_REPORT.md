@@ -46,3 +46,25 @@ suite completa. Se trata en T4.
 - Siguen > 20 KB (componentes, fuera de esta tanda): `SortableExerciseCardImpl` 37,5 KB,
   `RestTimerOverlay` 37,5 KB, `AdminTemplateManager` 36,7 KB, `SetRow` 34,3 KB,
   `FreestyleSessionModal` 29,6 KB, `SetupWizard` 25,7 KB, `ProgramHub` 25 KB, `AddMealModal` 23,7 KB.
+
+## T3 — "Compartir CSV" en la app nativa (Android)
+
+- Manifiesto: `MainActivity` acepta `ACTION_SEND` y `ACTION_VIEW` (content://) para
+  `text/csv`, `text/comma-separated-values` y `application/csv`. `text/plain` queda fuera a
+  propósito (GainsLab aparecería al compartir cualquier texto); si un export real de Hevy o
+  Strong llega con otro MIME, hay que agregarlo.
+- `MainActivity` guarda la URI recibida (arranque en frío y `onNewIntent`), igual que la
+  acción del widget de Q17. `NativeBridge.consumeSharedFile()` la entrega UNA vez: la lee en
+  un hilo aparte con tope de 10 MB, devuelve `{available, name, text}` o `{error:'read'}`.
+- JS: `consumeNativeSharedFile` (utils/audio), `useNativeSharedCsv` (al montar y al volver a
+  primer plano; cada archivo con un `seq` nuevo) y `SharedCsvImport` con prop `nativeLaunch`:
+  el mismo importador que la PWA (S3) y Perfil → Datos. App solo lo carga cuando hay archivo.
+- Tests: `nativeSharedCsv` (5: fuera de nativo no toca el puente; nada/archivo/error/fallo;
+  arranque en frío una vez; arranque en caliente con `seq` nuevo y error; deshabilitado en
+  web) y `sharedCsvImportNative` (3: el fixture de Hevy abre el importador, error → alerta,
+  espera a que haya datos locales). Sin el cambio del componente fallan 2/3.
+- Nativo: `assembleDebug` + `lintDebug` OK; las categorías del lint de Android son idénticas
+  antes y después (sin avisos nuevos).
+- Evidencia: build OK, `test:run` 689/689, `lint:a11y` limpio, bundle WITHIN BUDGET (entrada
+  81,22 KB), Playwright 47/47.
+- Pendiente en dispositivo: compartir un CSV real desde Hevy/Strong a la app instalada.

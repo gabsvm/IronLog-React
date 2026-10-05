@@ -7,6 +7,8 @@ import { useAuth, AuthProvider } from './context/AuthContext';
 import { usePro } from './hooks/usePro';
 import { useAppHistory, withTransition, VIEW_DEPTH } from './hooks/useAppHistory';
 import { useShortcutLaunch } from './hooks/useShortcutLaunch';
+import { useNativeSharedCsv } from './hooks/useNativeSharedCsv';
+import { Capacitor } from '@capacitor/core';
 import { AppModals } from './components/app/AppModals';
 import { AppViews } from './components/app/AppViews';
 import { AppOnboarding } from './components/app/AppOnboarding';
@@ -79,6 +81,8 @@ const AppContent = () => {
     const [sharedCsvLaunch] = useState(
         () => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('action') === 'import-csv'
     );
+    // T3: CSVs shared to the native app (Android Share / Open with).
+    const nativeSharedCsv = useNativeSharedCsv(Capacitor.isNativePlatform());
     const [showResetModal, setShowResetModal] = useState(false);
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
@@ -351,9 +355,14 @@ const AppContent = () => {
                 <RestTimerOverlay />
             </React.Suspense>
 
-            {sharedCsvLaunch && (
+            {(sharedCsvLaunch || nativeSharedCsv) && (
                 <React.Suspense fallback={null}>
-                    <SharedCsvImport ready={!isAppLoading} onImported={() => setView('history')} />
+                    <SharedCsvImport
+                        key={nativeSharedCsv?.seq ?? 0}
+                        ready={!isAppLoading}
+                        onImported={() => setView('history')}
+                        nativeLaunch={nativeSharedCsv?.launch}
+                    />
                 </React.Suspense>
             )}
 

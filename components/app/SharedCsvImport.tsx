@@ -3,12 +3,14 @@ import { useApp } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
 import { CsvImportSheet } from '../profile/CsvImportSheet';
 import { useCsvImportFlow } from '../profile/useCsvImportFlow';
-import { consumeSharedCsvLaunch, subscribeFileHandlerLaunches } from '../../utils/sharedCsv';
+import { consumeSharedCsvLaunch, subscribeFileHandlerLaunches, type SharedCsvLaunch } from '../../utils/sharedCsv';
 
 interface SharedCsvImportProps {
     /** True once local data is hydrated (imports must merge into real logs). */
     ready: boolean;
     onImported: () => void;
+    /** T3: a file the native app received (Android Share / Open with). */
+    nativeLaunch?: SharedCsvLaunch;
 }
 
 /**
@@ -17,7 +19,7 @@ interface SharedCsvImportProps {
  * "Open with" (manifest file_handlers / launchQueue). Same flow as
  * Perfil → Datos → Importar CSV (useCsvImportFlow).
  */
-export const SharedCsvImport: React.FC<SharedCsvImportProps> = ({ ready, onImported }) => {
+export const SharedCsvImport: React.FC<SharedCsvImportProps> = ({ ready, onImported, nativeLaunch }) => {
     const { lang } = useApp();
     const t = TRANSLATIONS[lang].csv;
     const flow = useCsvImportFlow({ onImported });
@@ -28,12 +30,17 @@ export const SharedCsvImport: React.FC<SharedCsvImportProps> = ({ ready, onImpor
     useEffect(() => {
         if (!ready || handledRef.current) return;
         handledRef.current = true;
-        void consumeSharedCsvLaunch().then((launch) => {
+        const handle = (launch: SharedCsvLaunch) => {
             if (launch.kind === 'file') flowRef.current.openCsvText(launch.payload.text);
             else if (launch.kind === 'error') flowRef.current.setCsvError(t.sharedError);
-        });
+        };
+        if (nativeLaunch) {
+            handle(nativeLaunch);
+            return;
+        }
+        void consumeSharedCsvLaunch().then(handle);
         subscribeFileHandlerLaunches((payload) => flowRef.current.openCsvText(payload.text));
-    }, [ready, t.sharedError]);
+    }, [ready, t.sharedError, nativeLaunch]);
 
     const message = flow.csvError ?? flow.csvStatus;
 
