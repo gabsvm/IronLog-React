@@ -37,6 +37,7 @@ const history = () => ({
 });
 
 const SECTIONS = ['nutritionLogs', 'bodyLogs', 'cardioSessions', 'customFoods'] as const;
+const V2_SECTION_COLLECTIONS = ['nutritionEntries', 'nutritionDays', 'bodyLogs', 'cardioSessions', 'customFoods'];
 
 const register = async (tag: string) => {
     const { auth, authApi } = await getFirebaseAuthServices();
@@ -59,12 +60,20 @@ describe.skipIf(!emulatorsRunning)('S5: section collections V2 (emulators, real 
         try {
             await syncService.uploadState(uid, stateWith(email, data), [...SECTIONS]);
 
-            for (const section of SECTIONS) {
-                const snap = await firestoreApi.getDocs(firestoreApi.collection(db, 'users', uid, section));
-                expect(snap.size, section).toBe(data[section].length);
+            // U6: nutrition is one doc per meal (80 days x 1 meal) + one per day.
+            const sizes: Record<string, number> = {
+                nutritionEntries: data.nutritionLogs.reduce((n, d) => n + d.entries.length, 0),
+                nutritionDays: data.nutritionLogs.length,
+                bodyLogs: data.bodyLogs.length,
+                cardioSessions: data.cardioSessions.length,
+                customFoods: data.customFoods.length,
+            };
+            for (const [collection, size] of Object.entries(sizes)) {
+                const snap = await firestoreApi.getDocs(firestoreApi.collection(db, 'users', uid, collection));
+                expect(snap.size, collection).toBe(size);
             }
             const user = (await firestoreApi.getDoc(firestoreApi.doc(db, 'users', uid))).data() as Record<string, any>;
-            expect(user.collectionsFormat).toEqual({ nutritionLogs: 2, bodyLogs: 2, cardioSessions: 2, customFoods: 2 });
+            expect(user.collectionsFormat).toEqual({ nutritionEntries: 2, nutritionDays: 2, bodyLogs: 2, cardioSessions: 2, customFoods: 2 });
             // Legacy copy: capped, but the NEWEST items (S5 cap fix).
             expect(user.bodyLogs).toHaveLength(100);
             expect(user.bodyLogs[0].date).toBe(data.bodyLogs[0].date);
@@ -95,9 +104,9 @@ describe.skipIf(!emulatorsRunning)('S5: section collections V2 (emulators, real 
         expect(user.cardioSessions[0].id).toBe('cardio_69');
         expect(user.customFoods[0].id).toBe('cf_109');
         expect(user).not.toHaveProperty('collectionsFormat');
-        for (const section of SECTIONS) {
-            const snap = await firestoreApi.getDocs(firestoreApi.collection(db, 'users', uid, section));
-            expect(snap.size, section).toBe(0);
+        for (const collection of V2_SECTION_COLLECTIONS) {
+            const snap = await firestoreApi.getDocs(firestoreApi.collection(db, 'users', uid, collection));
+            expect(snap.size, collection).toBe(0);
         }
     });
 
@@ -123,8 +132,8 @@ describe.skipIf(!emulatorsRunning)('S5: section collections V2 (emulators, real 
             await env.withSecurityRulesDisabled(async (ctx) => {
                 const admin = ctx.firestore();
                 const { collection: col, getDocs: list, doc: ref, getDoc: get } = await import('firebase/firestore');
-                for (const section of SECTIONS) {
-                    expect((await list(col(admin, 'users', uid, section))).size, section).toBe(0);
+                for (const collection of V2_SECTION_COLLECTIONS) {
+                    expect((await list(col(admin, 'users', uid, collection))).size, collection).toBe(0);
                 }
                 expect((await get(ref(admin, 'users', uid))).exists()).toBe(false);
             });

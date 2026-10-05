@@ -13,8 +13,12 @@ import {
     CARDIO_SPEC,
     CLOUD_SECTIONS_V2,
     FOODS_SPEC,
-    NUTRITION_SPEC,
-    SECTION_SPECS,
+    NUTRITION_DAY_SPEC,
+    NUTRITION_ENTRY_SPEC,
+    SECTION_ADAPTERS,
+    SECTION_COLLECTIONS,
+    joinNutrition,
+    splitNutrition,
 } from '../../services/cloudSectionsV2';
 import {
     docPathId,
@@ -127,16 +131,48 @@ const memoryStore = (): CloudV2IndexStore => {
 // ── S5b: specs on the shared engine ────────────────────────────────────────
 
 describe('S5: section specs', () => {
-    it('nutrition days are keyed by date; tombstones carry the date', () => {
-        const day = { date: '2026-10-01', entries: [{ id: 'm1', timestamp: NOW - 5000 }], waterMl: 500 } as any;
-        const first = planUpload(NUTRITION_SPEC, [day], {}, NOW);
-        expect(first.upserts.map((u) => u.id)).toEqual(['2026-10-01']);
-        const removed = planUpload(NUTRITION_SPEC, [], first.index, NOW + 1);
-        expect(removed.tombstones[0].doc).toEqual({ date: '2026-10-01', updatedAt: NOW + 1, deleted: true });
+    it('U6: nutrition is one doc per meal (id) plus one per day (date)', () => {
+        const day = { date: '2026-10-01', entries: [{ id: 'm1', name: 'Avena', calories: 300, timestamp: NOW - 5000 }], waterMl: 500 } as any;
+        const [entries, days] = splitNutrition([day]);
+        expect(entries).toEqual([{ id: 'm1', name: 'Avena', calories: 300, timestamp: NOW - 5000, date: '2026-10-01' }]);
+        expect(days).toEqual([{ date: '2026-10-01', waterMl: 500 }]);
+        const first = planUpload(NUTRITION_ENTRY_SPEC, entries, {}, NOW);
+        expect(first.upserts.map((u) => u.id)).toEqual(['m1']);
+        const removed = planUpload(NUTRITION_ENTRY_SPEC, [], first.index, NOW + 1);
+        expect(removed.tombstones[0].doc).toEqual({ id: 'm1', updatedAt: NOW + 1, deleted: true });
+        expect(planUpload(NUTRITION_DAY_SPEC, days, {}, NOW).upserts.map((u) => u.id)).toEqual(['2026-10-01']);
+    });
+
+    it('U6: split/join round-trips (days oldest first, meals by time, water kept)', () => {
+        const logs = [
+            { date: '2026-10-02', waterMl: 0, entries: [{ id: 'b', timestamp: 20 }, { id: 'a', timestamp: 10 }] },
+            { date: '2026-10-01', waterMl: 750, entries: [] },
+        ] as any;
+        const joined = joinNutrition(...splitNutrition(logs));
+        expect(joined.map((d) => d.date)).toEqual(['2026-10-01', '2026-10-02']);
+        expect(joined[0].waterMl).toBe(750);
+        expect(joined[1].entries.map((e) => e.id)).toEqual(['a', 'b']);
+        expect(joined[1].entries[0]).not.toHaveProperty('date');
+    });
+
+    it('U6: two devices adding meals to the SAME day both survive', async () => {
+        const fake = createFake();
+        fake.docs.set('users/u1', { collectionsFormat: { nutritionEntries: 2, nutritionDays: 2 } });
+        const a = memoryStore();
+        const b = memoryStore();
+        await a.setFormatMarker('u1', 2);
+        await b.setFormatMarker('u1', 2);
+        const dayA = [{ date: '2026-10-01', waterMl: 0, entries: [{ id: 'fromA', name: 'A', timestamp: NOW }] }] as any;
+        const dayB = [{ date: '2026-10-01', waterMl: 0, entries: [{ id: 'fromB', name: 'B', timestamp: NOW + 1 }] }] as any;
+        await uploadCollection(NUTRITION_ENTRY_SPEC, { userId: 'u1', items: splitNutrition(dayA)[0], firestore: fake.firestore, indexStore: a, now: NOW });
+        await uploadCollection(NUTRITION_ENTRY_SPEC, { userId: 'u1', items: splitNutrition(dayB)[0], firestore: fake.firestore, indexStore: b, now: NOW + 10 });
+        const pulled = await downloadCollection(NUTRITION_ENTRY_SPEC, { userId: 'u1', firestore: fake.firestore, indexStore: memoryStore(), cachedItems: undefined, now: NOW + 20 });
+        const [day] = joinNutrition(pulled, []);
+        expect(day.entries.map((e) => e.id)).toEqual(['fromA', 'fromB']);
     });
 
     it('merge keeps each section in the app order', () => {
-        const nut = mergeItems(NUTRITION_SPEC, [{ date: '2026-10-02', entries: [] } as any], [{ date: '2026-10-01', entries: [], updatedAt: 1 }], NOW);
+        const nut = mergeItems(NUTRITION_DAY_SPEC, [{ date: '2026-10-02', waterMl: 0 } as any], [{ date: '2026-10-01', waterMl: 0, updatedAt: 1 }], NOW);
         expect(nut.map((d) => d.date)).toEqual(['2026-10-01', '2026-10-02']);
         const body = mergeItems(BODY_SPEC, [{ id: 1, date: 1000, weight: 80 } as any], [{ id: 2, date: 2000, weight: 79, updatedAt: 5 }], NOW);
         expect(body.map((b) => b.id)).toEqual([2, 1]);
@@ -168,28 +204,34 @@ describe('S5: migration from the capped arrays + full local history', () => {
         // Legacy cloud only has the capped slice.
         fake.docs.set('users/u1', { nutritionLogs: capNutritionLogs(days) });
 
-        const deviceA = memoryStore();
-        const statsA = await uploadCollection(NUTRITION_SPEC, { userId: 'u1', items: days, firestore: fake.firestore, indexStore: deviceA, now: NOW });
-        expect(statsA.uploaded).toBe(200);
-        expect(fake.docs.get('users/u1')).toMatchObject({ collectionsFormat: { nutritionLogs: 2 } });
+        const adapter = SECTION_ADAPTERS.nutritionLogs;
+        const storesA = adapter.parts.map(() => memoryStore());
+        const parts = adapter.split(days);
+        const statsA = await Promise.all(adapter.parts.map((spec, i) =>
+            uploadCollection(spec, { userId: 'u1', items: parts[i], firestore: fake.firestore, indexStore: storesA[i], now: NOW })));
+        expect(statsA.map((x) => x.uploaded)).toEqual([200, 200]);
+        expect(fake.docs.get('users/u1')).toMatchObject({ collectionsFormat: { nutritionEntries: 2, nutritionDays: 2 } });
         // The legacy array is never removed.
         expect((fake.docs.get('users/u1')!.nutritionLogs as unknown[]).length).toBe(60);
 
-        const onB = await downloadCollection(NUTRITION_SPEC, { userId: 'u1', firestore: fake.firestore, indexStore: memoryStore(), cachedItems: undefined, now: NOW + 1000 });
+        const pulled = await Promise.all(adapter.parts.map((spec) =>
+            downloadCollection(spec, { userId: 'u1', firestore: fake.firestore, indexStore: memoryStore(), cachedItems: undefined, now: NOW + 1000 })));
+        const onB = adapter.join(pulled) as typeof days;
         expect(onB).toHaveLength(200);
         expect(onB[0].date).toBe(days[0].date);
 
         // Incremental: re-upload of the same days writes nothing.
-        expect(await uploadCollection(NUTRITION_SPEC, { userId: 'u1', items: days, firestore: fake.firestore, indexStore: deviceA, now: NOW + 2000 }))
-            .toEqual({ uploaded: 0, tombstoned: 0, expired: 0 });
+        const again = await Promise.all(adapter.parts.map((spec, i) =>
+            uploadCollection(spec, { userId: 'u1', items: parts[i], firestore: fake.firestore, indexStore: storesA[i], now: NOW + 2000 })));
+        expect(again).toEqual([{ uploaded: 0, tombstoned: 0, expired: 0 }, { uploaded: 0, tombstoned: 0, expired: 0 }]);
     });
 
     it('migration markers are per collection (nutrition migrated, body not yet)', async () => {
         const fake = createFake();
-        fake.docs.set('users/u1', { collectionsFormat: { nutritionLogs: 2 }, bodyLogs: [{ id: 1, date: 1, weight: 80 }] });
+        fake.docs.set('users/u1', { collectionsFormat: { nutritionEntries: 2 }, bodyLogs: [{ id: 1, date: 1, weight: 80 }] });
         const stats = await uploadCollection(BODY_SPEC, { userId: 'u1', items: [], firestore: fake.firestore, indexStore: memoryStore(), now: NOW });
         expect(stats.uploaded).toBe(1);
-        expect(fake.docs.get('users/u1')).toMatchObject({ collectionsFormat: { nutritionLogs: 2, bodyLogs: 2 } });
+        expect(fake.docs.get('users/u1')).toMatchObject({ collectionsFormat: { nutritionEntries: 2, bodyLogs: 2 } });
     });
 });
 
@@ -202,17 +244,18 @@ describe('S5: client lists match firestore.rules', () => {
     };
 
     it('each spec key list equals its rules allowlist', () => {
-        expect(ruleKeys('nutritionDocAllowedKeys')).toEqual([...NUTRITION_SPEC.keys].sort());
+        expect(ruleKeys('nutritionEntryAllowedKeys')).toEqual([...NUTRITION_ENTRY_SPEC.keys].sort());
+        expect(ruleKeys('nutritionDayAllowedKeys')).toEqual([...NUTRITION_DAY_SPEC.keys].sort());
         expect(ruleKeys('bodyDocAllowedKeys')).toEqual([...BODY_SPEC.keys].sort());
         expect(ruleKeys('cardioDocAllowedKeys')).toEqual([...CARDIO_SPEC.keys].sort());
         expect(ruleKeys('foodDocAllowedKeys')).toEqual([...FOODS_SPEC.keys].sort());
     });
 
     it('every V2 collection has a rules match and is wiped on account deletion', () => {
-        expect([...V2_COLLECTIONS]).toEqual(['logs', ...CLOUD_SECTIONS_V2]);
-        for (const section of CLOUD_SECTIONS_V2) {
-            expect(SECTION_SPECS[section].collection).toBe(section);
-            expect(rules).toContain(`match /${section}/{itemId}`);
+        expect([...V2_COLLECTIONS]).toEqual(['logs', ...SECTION_COLLECTIONS]);
+        for (const collection of SECTION_COLLECTIONS) {
+            expect(rules).toContain(`match /${collection}/{itemId}`);
         }
+        expect(Object.keys(SECTION_ADAPTERS)).toEqual([...CLOUD_SECTIONS_V2]);
     });
 });

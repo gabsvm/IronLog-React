@@ -276,12 +276,14 @@ describe.skipIf(!EMULATOR_HOST)('N4: hardened Firestore rules (emulator)', () =>
 
     it('S5: collectionsFormat is an allowed map; section docs are owner-only', async () => {
         const db = alice().firestore();
-        await assertSucceeds(setDoc(doc(db, 'users/alice'), { collectionsFormat: { nutritionLogs: 2 } }, { merge: true }));
+        await assertSucceeds(setDoc(doc(db, 'users/alice'), { collectionsFormat: { nutritionEntries: 2 } }, { merge: true }));
         await assertFails(setDoc(doc(db, 'users/alice'), { collectionsFormat: 2 }, { merge: true }));
 
-        await assertSucceeds(setDoc(doc(db, 'users/alice/nutritionLogs/2026-10-01'), {
-            date: '2026-10-01', entries: [{ id: 'm1', calories: 500 }], waterMl: 250, updatedAt: 10,
+        await assertSucceeds(setDoc(doc(db, 'users/alice/nutritionEntries/meal_1'), {
+            id: 'meal_1', date: '2026-10-01', name: 'Avena', calories: 500, protein: 20, carbs: 70, fat: 9,
+            mealType: 'breakfast', timestamp: 5, updatedAt: 10,
         }));
+        await assertSucceeds(setDoc(doc(db, 'users/alice/nutritionDays/2026-10-01'), { date: '2026-10-01', waterMl: 250, updatedAt: 10 }));
         await assertSucceeds(setDoc(doc(db, 'users/alice/bodyLogs/1700000000000'), {
             id: 1700000000000, date: 1700000000000, weight: 80.5, updatedAt: 10,
         }));
@@ -292,7 +294,8 @@ describe.skipIf(!EMULATOR_HOST)('N4: hardened Firestore rules (emulator)', () =>
             id: 'cf_1', name: 'Avena', calories: 380, protein: 13, carbs: 60, fat: 7, createdAt: 5, updatedAt: 10,
         }));
         await assertSucceeds(setDoc(doc(db, 'users/alice/customFoods/cf_1'), { id: 'cf_1', updatedAt: 11, deleted: true }));
-        await assertSucceeds(getDocs(collection(db, 'users/alice/nutritionLogs')));
+        await assertSucceeds(getDocs(collection(db, 'users/alice/nutritionEntries')));
+        await assertSucceeds(getDocs(collection(db, 'users/alice/nutritionDays')));
         await assertSucceeds(deleteDoc(doc(db, 'users/alice/bodyLogs/1700000000000')));
 
         const bobDb = bob().firestore();
@@ -302,9 +305,13 @@ describe.skipIf(!EMULATOR_HOST)('N4: hardened Firestore rules (emulator)', () =>
 
     it('S5: section docs reject unknown keys, missing stamps and bad types', async () => {
         const db = alice().firestore();
-        await assertFails(setDoc(doc(db, 'users/alice/nutritionLogs/d'), { date: 'd', entries: [], updatedAt: 1, hacked: 1 }));
-        await assertFails(setDoc(doc(db, 'users/alice/nutritionLogs/d'), { date: 'd', entries: [] }));
-        await assertFails(setDoc(doc(db, 'users/alice/nutritionLogs/d'), { date: 5, updatedAt: 1 }));
+        await assertFails(setDoc(doc(db, 'users/alice/nutritionEntries/m'), { id: 'm', date: 'd', updatedAt: 1, hacked: 1 }));
+        await assertFails(setDoc(doc(db, 'users/alice/nutritionEntries/m'), { id: 'm', date: 'd' }));
+        await assertFails(setDoc(doc(db, 'users/alice/nutritionEntries/m'), { id: 7, updatedAt: 1 }));
+        await assertFails(setDoc(doc(db, 'users/alice/nutritionEntries/m'), { id: 'm', calories: '500', updatedAt: 1 }));
+        await assertFails(setDoc(doc(db, 'users/alice/nutritionDays/d'), { date: 5, updatedAt: 1 }));
+        await assertFails(setDoc(doc(db, 'users/alice/nutritionDays/d'), { date: 'd', waterMl: 'x', updatedAt: 1 }));
+        await assertFails(setDoc(doc(db, 'users/alice/nutritionDays/d'), { date: 'd', entries: [], updatedAt: 1 }));
         await assertFails(setDoc(doc(db, 'users/alice/bodyLogs/1'), { id: 1, weight: '80', updatedAt: 1 }));
         await assertFails(setDoc(doc(db, 'users/alice/cardioSessions/c'), { id: 'c', durationMin: 'x', updatedAt: 1 }));
         await assertFails(setDoc(doc(db, 'users/alice/customFoods/f'), { id: 'f', updatedAt: 1, deleted: false }));

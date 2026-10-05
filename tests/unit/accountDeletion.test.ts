@@ -198,7 +198,9 @@ describe('Q21: deleteCloudAccount wipes per-session logs when V2 is on', () => {
         expect(order).toEqual([
             'getDocs:users/uid-1/logs',
             'batchDelete:3',
-            'getDocs:users/uid-1/nutritionLogs',
+            'getDocs:users/uid-1/nutritionEntries',
+            'batchDelete:3',
+            'getDocs:users/uid-1/nutritionDays',
             'batchDelete:3',
             'getDocs:users/uid-1/bodyLogs',
             'batchDelete:3',

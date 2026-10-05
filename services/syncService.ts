@@ -120,12 +120,17 @@ const uploadStateNow = async (userId: string, state: Partial<AppState> & { email
         if (shouldInclude('logs') && state.logs) {
             await v2.uploadSessionLogsV2({ userId, logs: state.logs, firestore, indexStore: v2.cloudLogsIndex, now });
         }
-        // S5: full (uncapped) per-item collections.
+        // S5/U6: full (uncapped) per-item collections; a section may span
+        // several collections (nutrition = meals + days).
         for (const section of v2.CLOUD_SECTIONS_V2) {
             const items = state[section];
             if (!shouldInclude(section) || !Array.isArray(items)) continue;
-            const spec = v2.SECTION_SPECS[section];
-            await v2.uploadCollection(spec, { userId, items, firestore, indexStore: v2.cloudSectionIndex(spec.collection), now });
+            const adapter = v2.SECTION_ADAPTERS[section];
+            const split = adapter.split(items);
+            for (let i = 0; i < adapter.parts.length; i++) {
+                const spec = adapter.parts[i];
+                await v2.uploadCollection(spec, { userId, items: split[i], firestore, indexStore: v2.cloudSectionIndex(spec.collection), now });
+            }
         }
     }
     await dirtySyncState.clear(sections);
@@ -165,8 +170,12 @@ export const syncService = {
             for (const section of v2.CLOUD_SECTIONS_V2) {
                 const items = applied[section];
                 if (!Array.isArray(items)) continue;
-                const spec = v2.SECTION_SPECS[section];
-                await v2.adoptItems(spec, userId, items, v2.cloudSectionIndex(spec.collection));
+                const adapter = v2.SECTION_ADAPTERS[section];
+                const split = adapter.split(items);
+                for (let i = 0; i < adapter.parts.length; i++) {
+                    const spec = adapter.parts[i];
+                    await v2.adoptItems(spec, userId, split[i], v2.cloudSectionIndex(spec.collection));
+                }
             }
         } catch (error) {
             console.warn("Cloud sections adoption bookkeeping failed:", error);
@@ -276,16 +285,18 @@ export const syncService = {
                         cachedLogs: Array.isArray(cached?.logs) ? cached.logs : undefined,
                         now,
                     }),
-                    ...v2.CLOUD_SECTIONS_V2.map((section) => {
-                        const spec = v2.SECTION_SPECS[section];
-                        const cachedItems = (cached as Record<string, unknown> | null)?.[section];
-                        return v2.downloadCollection(spec, {
+                    ...v2.CLOUD_SECTIONS_V2.map(async (section) => {
+                        const adapter = v2.SECTION_ADAPTERS[section];
+                        const cachedSection = (cached as Record<string, unknown> | null)?.[section];
+                        const cachedParts = Array.isArray(cachedSection) ? adapter.split(cachedSection) : null;
+                        const parts = await Promise.all(adapter.parts.map((spec, i) => v2.downloadCollection(spec, {
                             userId,
                             firestore,
                             indexStore: v2.cloudSectionIndex(spec.collection),
-                            cachedItems: Array.isArray(cachedItems) ? cachedItems : undefined,
+                            cachedItems: cachedParts ? cachedParts[i] : undefined,
                             now,
-                        });
+                        })));
+                        return adapter.join(parts);
                     }),
                 ]);
                 logsData = logsResult;

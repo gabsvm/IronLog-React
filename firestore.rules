@@ -42,7 +42,7 @@ service cloud.firestore {
       ];
     }
 
-    // S5: per-item section collections (nutritionLogs / bodyLogs /
+    // S5/U6: per-item section collections (nutritionEntries + nutritionDays / bodyLogs /
     // cardioSessions / customFoods), only written by VITE_CLOUD_LOGS_V2=1
     // builds. Key lists MUST match the specs in services/cloudSectionsV2.ts
     // (a unit test compares them). Live item or tombstone; whole-doc set()s.
@@ -53,8 +53,16 @@ service cloud.firestore {
         && (!('deleted' in data) || data.deleted == true);
     }
 
-    function nutritionDocAllowedKeys() {
-      return ['date', 'entries', 'waterMl', 'updatedAt', 'deleted'];
+    // U6: one doc per meal + one per day (water).
+    function nutritionEntryAllowedKeys() {
+      return [
+        'id', 'date', 'name', 'calories', 'protein', 'carbs', 'fat', 'mealType',
+        'timestamp', 'updatedAt', 'deleted'
+      ];
+    }
+
+    function nutritionDayAllowedKeys() {
+      return ['date', 'waterMl', 'updatedAt', 'deleted'];
     }
 
     function bodyDocAllowedKeys() {
@@ -75,11 +83,18 @@ service cloud.firestore {
       ];
     }
 
-    function nutritionDocOk() {
+    function nutritionEntryOk() {
       let data = request.resource.data;
-      return itemDocBase(nutritionDocAllowedKeys())
+      return itemDocBase(nutritionEntryAllowedKeys())
+        && data.id is string
+        && (!('date' in data) || data.date is string)
+        && (!('calories' in data) || data.calories is number);
+    }
+
+    function nutritionDayOk() {
+      let data = request.resource.data;
+      return itemDocBase(nutritionDayAllowedKeys())
         && data.date is string
-        && (!('entries' in data) || data.entries is list)
         && (!('waterMl' in data) || data.waterMl is number);
     }
 
@@ -227,9 +242,13 @@ service cloud.firestore {
       }
 
       // S5: per-item section collections. Owner-only, same shape as logs/.
-      match /nutritionLogs/{itemId} {
+      match /nutritionEntries/{itemId} {
         allow read, delete: if isOwner(uid);
-        allow create, update: if isOwner(uid) && nutritionDocOk();
+        allow create, update: if isOwner(uid) && nutritionEntryOk();
+      }
+      match /nutritionDays/{itemId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && nutritionDayOk();
       }
       match /bodyLogs/{itemId} {
         allow read, delete: if isOwner(uid);

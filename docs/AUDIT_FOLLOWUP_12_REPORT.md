@@ -112,3 +112,27 @@ todo lo de Play Store. Desplegar reglas / encender `VITE_CLOUD_LOGS_V2` no se ha
   palabra, posible desestructuración) se dejaron. Diccionarios: en 60,9 KB, es 65,2 KB;
   precache crítico 194,83 → 191,39 KB gzip.
 - Evidencia: lint 0, `test:run` 696/696, Playwright 47/47, visual 16/16, bundle WITHIN BUDGET.
+
+## U6b — Nutrición por comida en la nube (flag V2)
+
+- S5 guardaba la nutrición como un documento por DÍA: si dos dispositivos cargaban comidas
+  el mismo día, ganaba la última escritura del día entero. Ahora:
+  `users/{uid}/nutritionEntries/{entryId}` (una comida, con su `date`) y
+  `users/{uid}/nutritionDays/{date}` (el agua del día). La colección por día de S5 nunca se
+  desplegó (flag apagado), así que se reemplazó sin migración intermedia.
+- `services/cloudSectionsV2.ts`: `SECTION_ADAPTERS` describe cada sección como una o más
+  colecciones + cómo dividir/reagrupar el array local (`splitNutrition` / `joinNutrition`:
+  días del más viejo al más nuevo, comidas por hora, agua conservada); el resto de secciones
+  son 1:1. `syncService` (subida, bajada, adopción) recorre los adaptadores.
+- Reglas: `nutritionEntries` (claves de FoodEntry + `date`, `id` string, `calories` number) y
+  `nutritionDays` (`date` string, `waterMl` number); marcas `collectionsFormat.nutritionEntries`
+  / `.nutritionDays`; borrado de cuenta vacía ambas (`V2_COLLECTIONS`).
+- Tests: unit `cloudSectionsV2` (comida por id + día por fecha y lápidas; ida y vuelta
+  split/join; **dos dispositivos agregando comidas al MISMO día conservan ambas**; migración
+  de 200 días vía adaptador; paridad claves ↔ reglas; colecciones ↔ reglas ↔ borrado),
+  reglas (dueño / extraños / claves y tipos de ambas colecciones) 18/18, integración con
+  emuladores 15/15 (80 comidas + 80 días, marcas, borrado de cuenta), `accountDeletion`
+  con el orden nuevo. El test de "mismo día" no se puede correr contra el diseño anterior
+  (no existía la colección por comida); por diseño, con un doc por día una de las dos
+  escrituras se perdía.
+- Evidencia: lint 0, `test:run` verde, Playwright 47/47.
