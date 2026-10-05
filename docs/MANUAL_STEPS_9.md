@@ -66,7 +66,10 @@ el teléfono. Seguilos en este orden. El detalle de Firebase está en
 - **Compartir CSV a la PWA**: instalá la PWA desde Chrome en Android (menú → Instalar app).
   En Hevy/Strong exportá el CSV y usá Compartir → GainsLab: se abre el importador. La app
   Capacitor (APK) no recibe "Compartir" (haría falta un intent-filter nativo); ahí seguí
-  usando Perfil → Datos → Importar CSV.
+  usando Perfil → Datos → Importar CSV. **Actualización T3**: la app Android también recibe
+  CSV por Compartir / Abrir con (MIME `text/csv`, `text/comma-separated-values`,
+  `application/csv`). Probalo con un export real; si Hevy/Strong usan otro MIME y GainsLab
+  no aparece en la lista, avisá cuál para agregarlo.
 - **Atajos del ícono** (mantener pulsado el ícono de la PWA): Iniciar entreno, Registrar
   comida, Historial.
 - **Modo claro**: revisá un entreno en modo claro (la serie activa ya no sale negra).

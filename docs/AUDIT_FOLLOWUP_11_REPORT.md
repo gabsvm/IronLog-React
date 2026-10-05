@@ -89,3 +89,18 @@ suite completa. Se trata en T4.
   `detectPRs` (S7) no usa `waitFor` y no se pudo reproducir: sin cambios, queda anotado.
 - Evidencia: `verify` OK (lint + build estricto + 689 tests + validate-kong + bundle),
   `test:run` 3 corridas seguidas verdes, Playwright 47/47.
+
+## T5 — Cierre
+
+- Docs: entrada en `docs/README.md`; `docs/MANUAL_STEPS_9.md` §7 actualizado (Android ya
+  recibe CSV por Compartir; qué MIME acepta y qué hacer si un export real no aparece).
+- Arnés visual temporal borrado (nunca se versionó).
+- Verificación final: `verify` OK (incluye `npm run lint` en 0), `test:run` 689/689,
+  `test:rules` 18/18, `test:integration` 15/15, Playwright 47/47.
+- APK de prueba (misma keystore de debug, R8, JDK 21):
+  `apk-out/gainslab-release-test.apk` — 13 977 046 bytes, SHA-256
+  `B7B8BD26B2E7F50DA10DA287B935C4CBBA6895984C7E21E48BBA53DEE15425C2`, certificado
+  `A4:A8:52:18:…:35:12`. aapt confirma los intent-filters SEND/VIEW con `text/csv`,
+  `text/comma-separated-values` y `application/csv`. versionName/versionCode sin cambios
+  (4.0.3-kong.6 / 414).
+- `adb devices` sigue mostrando `ZT322QTT5X`; no se instaló sin confirmación del dueño.
