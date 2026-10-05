@@ -47,6 +47,13 @@ for (const theme of ['dark', 'light'] as const) {
       await page.waitForTimeout(800);
     });
 
+    test(`home desktop ${theme}`, async ({ page }) => {
+      // U4: wide screens get a centered column instead of edge-to-edge cards.
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.waitForTimeout(500);
+      await expect(page).toHaveScreenshot(`home-desktop-${theme}.png`);
+    });
+
     test(`home ${theme}`, async ({ page }) => {
       await expect(page).toHaveScreenshot(`home-${theme}.png`, { fullPage: true });
     });

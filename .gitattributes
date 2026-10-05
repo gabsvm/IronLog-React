@@ -1,0 +1,2 @@
+# U3: shell hooks must keep LF line endings on Windows checkouts.
+.githooks/* text eol=lf

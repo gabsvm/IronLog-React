@@ -240,7 +240,7 @@ export const Layout: React.FC<LayoutProps> = ({
         <div className="flex h-full w-full flex-col overflow-hidden bg-[rgb(var(--surface-app))] font-sans text-[rgb(var(--text-primary))]">
             {view !== 'workout' && (
                 <div className="app-topbar pointer-events-none absolute left-0 right-0 top-0 z-20 bg-[rgb(var(--surface-app))] px-6 pb-2 pt-safe">
-                    <div className="pointer-events-auto flex h-14 items-center justify-between">
+                    <div className="pointer-events-auto mx-auto flex h-14 w-full max-w-2xl items-center justify-between">
                         <div className="flex items-center gap-3">
                             <Logo className="h-10 w-10" showText />
                             {(!isOnline || syncStatus.pending > 0 || syncStatus.isSyncing) && (
@@ -257,7 +257,10 @@ export const Layout: React.FC<LayoutProps> = ({
                 </div>
             )}
 
-            <div className={`relative z-0 flex-1 ${isVirtualized ? 'overflow-hidden' : 'overflow-y-auto scroll-container'} ${view !== 'workout' ? 'pt-[calc(var(--safe-area-top)+60px)] pb-32' : 'pt-safe pb-0'}`}>{children}</div>
+            <div className={`relative z-0 flex-1 ${isVirtualized ? 'overflow-hidden' : 'overflow-y-auto scroll-container'} ${view !== 'workout' ? 'pt-[calc(var(--safe-area-top)+60px)] pb-32' : 'pt-safe pb-0'}`}>
+                {/* U4: centered column on wide screens (phones are narrower than max-w-2xl). */}
+                <div className={`mx-auto w-full max-w-2xl ${isVirtualized ? 'h-full' : ''}`}>{children}</div>
+            </div>
 
             {view !== 'workout' && (
                 <nav aria-label="Main navigation" className="fixed bottom-0 left-0 right-0 z-30 border-t border-[rgb(var(--border-subtle)/0.7)] bg-[rgb(var(--surface-base)/0.96)] pb-safe backdrop-blur-xl">

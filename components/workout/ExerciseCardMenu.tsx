@@ -78,7 +78,7 @@ export const ExerciseCardMenu: React.FC<Props> = ({
                                 role="menuitem"
                                 className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-bold text-zinc-100 transition-colors hover:bg-white/5"
                             >
-                                <span className={`flex h-8 w-8 items-center justify-center rounded-full border ${hasSuperset ? 'border-violet-500/30 bg-violet-500/15 text-violet-300' : isLinking ? 'border-amber-500/30 bg-amber-500/15 text-amber-300' : 'border-white/10 bg-white/5 text-zinc-300'}`}>
+                                <span className={`flex h-8 w-8 items-center justify-center rounded-full border ${hasSuperset ? 'border-violet-500/30 bg-violet-500/15 text-violet-700 dark:text-violet-300' : isLinking ? 'border-amber-500/30 bg-amber-500/15 text-amber-700 dark:text-amber-300' : 'border-white/10 bg-white/5 text-zinc-300'}`}>
                                     <Icon name={hasSuperset ? 'Unlink' : isLinking ? 'Target' : 'Link'} size={15} />
                                 </span>
                                 <span className="flex-1">
@@ -97,7 +97,7 @@ export const ExerciseCardMenu: React.FC<Props> = ({
                                     onClick={(e) => { e.stopPropagation(); onCardioModeChange(m); }}
                                     role="menuitemradio"
                                     aria-checked={cardioMode === m}
-                                    className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-bold transition-colors hover:bg-white/5 ${cardioMode === m ? 'text-blue-300' : 'text-zinc-300'}`}
+                                    className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-bold transition-colors hover:bg-white/5 ${cardioMode === m ? 'text-blue-700 dark:text-blue-300' : 'text-zinc-300'}`}
                                 >
                                     {cardioMode === m && <Icon name="Check" size={14} />} {String(t.cardioModes?.[m])}
                                 </button>
@@ -111,7 +111,7 @@ export const ExerciseCardMenu: React.FC<Props> = ({
                             <button
                                 onClick={(e) => { e.stopPropagation(); onInjectWarmup(); }}
                                 role="menuitem"
-                                className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-bold text-amber-300 transition-colors hover:bg-white/5"
+                                className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-bold text-amber-700 dark:text-amber-300 transition-colors hover:bg-white/5"
                             >
                                 <Icon name="Zap" size={16} /> {m.addWarmup}
                             </button>
@@ -121,7 +121,7 @@ export const ExerciseCardMenu: React.FC<Props> = ({
                     <button
                         onClick={(e) => { e.stopPropagation(); onReplace(ex.instanceId); }}
                         role="menuitem"
-                        className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-bold text-blue-300 transition-colors hover:bg-white/5"
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-bold text-blue-700 dark:text-blue-300 transition-colors hover:bg-white/5"
                     >
                         <Icon name="RefreshCw" size={16} /> {String(t.replaceEx)}
                     </button>
@@ -131,7 +131,7 @@ export const ExerciseCardMenu: React.FC<Props> = ({
                     <button
                         onClick={(e) => { e.stopPropagation(); setIsDeleting(true); }}
                         role="menuitem"
-                        className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-bold text-red-300 transition-colors hover:bg-red-500/10"
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-bold text-red-700 dark:text-red-300 transition-colors hover:bg-red-500/10"
                     >
                         <Icon name="Trash2" size={16} /> {String(t.removeEx)}
                     </button>

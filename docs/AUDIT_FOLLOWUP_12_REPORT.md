@@ -40,3 +40,18 @@ todo lo de Play Store. Desplegar reglas / encender `VITE_CLOUD_LOGS_V2` no se ha
   copia del repo. En otro clon hay que correrlo una vez.
 - Evita repetir lo de S8–S10, cuando `validate-kong` estuvo roto varios commits sin que
   nada lo frenara. Este mismo commit se pushea ya a través del hook.
+
+## U4 — Contraste del menú en modo claro y layout de escritorio
+
+- Menú de la tarjeta de ejercicio: textos `*-300` (pensados para fondo oscuro) ilegibles
+  sobre fondo claro → `text-amber-700 / blue-700 / red-700 / violet-700` con variante `dark:`
+  que conserva exactamente el color anterior en oscuro.
+- `Layout`: el contenido y la barra superior van en una columna centrada `max-w-2xl`
+  (672 px); en teléfonos (más angostos) no cambia nada. La vista de entreno usa su propio
+  layout fijo y no se tocó.
+- Suite visual: +2 capturas de escritorio (1280×800, claro/oscuro). Diferencias aceptadas
+  tras revisarlas: `workout-menu-light` (el contraste buscado) y `nutrition-*` (888 px de
+  anti-aliasing del texto en los botones "Agregar comida"/"Cardio" por la capa nueva del
+  contenedor; a simple vista es idéntica). Resto 11/11 sin cambios.
+- `.gitattributes`: `.githooks/*` con fin de línea LF (un hook en CRLF rompe `sh` en Windows).
+- Evidencia: suite visual 16/16, Playwright 47/47, `verify` en el hook de push.
