@@ -279,3 +279,33 @@ todo lo de Play Store. Desplegar reglas / encender `VITE_CLOUD_LOGS_V2` no se ha
 - No desplegado ni llamado contra la API real: no hay clave, y el despliegue está prohibido en
   esta serie. Pasos para el dueño en MANUAL_STEPS_9 §8.
 - `npm run lint` ahora también cubre `server/` y `api/`.
+
+## U12 — Cierre
+
+- Verificación final (todo en verde):
+  - `npm run lint` (ahora también `server/` y `api/`);
+  - unit 747/747;
+  - reglas en emulador 19/19;
+  - integración Auth + Firestore en emulador 16/16;
+  - Playwright 48/48;
+  - visual 16/16;
+  - presupuesto: entrada 82.95 KB y crítico 194.95 KB gzip, dentro.
+- APK de prueba `apk-out/gainslab-release-test.apk`:
+  - release con R8, firmado con el keystore de depuración, `apksigner verify` OK, SHA-256
+    `668a97c0447cfe8a…`;
+  - en el DEX ofuscado siguen los métodos de `HealthConnectPlugin`, `GoogleDrivePlugin` y
+    `NativeBridgePlugin`.
+
+  No se instaló en el teléfono.
+- Pendiente del dueño (MANUAL_STEPS_9 §8):
+  1. desplegar `firestore.rules`;
+  2. encender `VITE_CLOUD_LOGS_V2` cuando corresponda;
+  3. clientes OAuth de Drive (web + Android con SHA-1);
+  4. variables del servidor para la IA y límite de gasto de la clave;
+  5. `VITE_AI_ANALYSIS_URL` para el APK.
+- Probado solo con dobles y emuladores, no contra servicios reales:
+  - Health Connect en dispositivo;
+  - Drive contra Google;
+  - Claude contra la API.
+
+  Cada uno tiene tests de su lógica y de la UI.
