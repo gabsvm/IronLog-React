@@ -2,7 +2,7 @@ import type { ProgramDay, ProgramSlot, MesoCycle } from '../../types';
 import { KONG_4DAY_V1 } from '../kong/kong4Day.ts';
 import { getKongDayDisplay } from '../kong/kongDisplay.ts';
 import { getProgramBlockForWeek, resolveProgramWeek } from './ProgramResolver.ts';
-import { TRANSLATIONS } from '../../constants/translations';
+import { pickLang } from '../../utils/i18n.ts';
 
 const formatPrescriptionReps = (slot: ProgramSlot): string | undefined => {
   const prescription = slot.prescription;
@@ -72,7 +72,9 @@ export function convertKongToPersonalRoutine(
   const convertedMeso: MesoCycle = {
     ...activeMeso,
     id: now,
-    name: TRANSLATIONS[lang].copy.programConversion.kongPersonalRoutine,
+    // Persisted routine name (user data), not UI copy: resolved here so the
+    // engine stays runnable under plain Node (scripts/validate-kong.ts).
+    name: pickLang(lang, { es: 'KONG · Rutina personal', en: 'KONG · Personal routine' }),
     mesoType: 'personal',
     targetWeeks: 4,
     duration: 4,

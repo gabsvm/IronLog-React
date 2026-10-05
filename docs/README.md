@@ -8,6 +8,7 @@
 - [RELEASE_CHECKLIST_AND_ADR.md](RELEASE_CHECKLIST_AND_ADR.md): checklist de release y decisiones de arquitectura.
 
 ## Reportes de auditoría (del más nuevo al más viejo)
+- [AUDIT_FOLLOWUP_10_REPORT.md](AUDIT_FOLLOWUP_10_REPORT.md): serie S (limpieza del repo, compartir CSV, datos en la nube sin recortes, monolitos, i18n, CSS).
 - [AUDIT_FOLLOWUP_9_REPORT.md](AUDIT_FOLLOWUP_9_REPORT.md): serie Q (Q0–Q22).
 - [AUDIT_FOLLOWUP_8_REPORT.md](AUDIT_FOLLOWUP_8_REPORT.md)
 - [AUDIT_FOLLOWUP_7_REPORT.md](AUDIT_FOLLOWUP_7_REPORT.md)

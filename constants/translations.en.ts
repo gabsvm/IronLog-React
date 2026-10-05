@@ -1283,9 +1283,6 @@ export const EN = {
         useShortcutLaunch: {
             quickStartSession: 'Quick Start Session',
         },
-        programConversion: {
-            kongPersonalRoutine: 'KONG · Personal routine',
-        },
         historyDetail: {
             back: 'Back',
             deleteWorkout: 'Delete workout',

@@ -61,3 +61,18 @@ el teléfono. Seguilos en este orden. El detalle de Firebase está en
   y comprobar en la consola que no quedan `users/{uid}`, `data/history` (ni `logs/` si el
   flag V2 está encendido) y que el usuario desapareció de Auth. `data/subscription` no se
   toca por diseño (lo maneja el backend de pagos).
+
+## 7. Novedades de la serie S (ver AUDIT_FOLLOWUP_10_REPORT)
+- **Compartir CSV a la PWA**: instalá la PWA desde Chrome en Android (menú → Instalar app).
+  En Hevy/Strong exportá el CSV y usá Compartir → GainsLab: se abre el importador. La app
+  Capacitor (APK) no recibe "Compartir" (haría falta un intent-filter nativo); ahí seguí
+  usando Perfil → Datos → Importar CSV.
+- **Atajos del ícono** (mantener pulsado el ícono de la PWA): Iniciar entreno, Registrar
+  comida, Historial.
+- **Modo claro**: revisá un entreno en modo claro (la serie activa ya no sale negra).
+- **Datos en la nube**: con el flag apagado, peso/cardio/alimentos ya sincronizan lo más
+  reciente (antes, pasado el tope, se quedaban con lo más viejo). Con `VITE_CLOUD_LOGS_V2=1`
+  todo el historial de dieta/peso/cardio/alimentos va sin recortes (desplegá antes las reglas).
+- **Idioma**: la app solo descarga el idioma activo; cambiar de idioma la primera vez tarda
+  un instante (descarga el otro diccionario, que el service worker ya tiene en caché).
+

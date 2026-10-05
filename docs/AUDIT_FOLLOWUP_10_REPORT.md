@@ -10,6 +10,18 @@ comportamiento real que fallan sin el cambio, sin dependencias nuevas, sin despl
 
 | ID | Tarea | Estado |
 |----|-------|--------|
+| S1 | Quitar push/sync/periodicsync muertos del SW | hecho |
+| S2 | Limpieza del repo (KMP, imágenes, planes viejos) | hecho |
+| S3 | Manifiesto es, atajos, captura ancha, CSV desde Compartir | hecho |
+| S4 | Aviso honesto del temporizador en la web | hecho |
+| S5 | Nutrición/peso/cardio/alimentos sin recortes (fix + V2) | hecho |
+| S6 | Partir 4 archivos grandes (<20 KB) | hecho |
+| S8 | i18n: 0 ramas de idioma inline | hecho |
+| S7 | Traducciones por idioma (carga diferida) | hecho |
+| S9 | CSS consolidado + fila activa en modo claro | hecho |
+| S10 | Cierre: docs, verificación final, fix validate-kong, APK | hecho |
+
+Orden real: S8 antes que S7 (S7 divide el archivo de traducciones que S8 amplía). Commits: `git log pre-s-series..HEAD`.
 
 ## S0 — Preparación
 
@@ -263,3 +275,32 @@ comportamiento real que fallan sin el cambio, sin dependencias nuevas, sin despl
   especiales), por eso queda como siguiente paso y no como arreglo lateral.
 - Evidencia: build OK, `test:run` 681/681, `lint:a11y` limpio, `bundle:report` WITHIN BUDGET,
   arnés visual 12/12, Playwright 47/47.
+
+## S10 — Cierre
+
+- `docs/README.md`: entrada para este reporte. `docs/MANUAL_STEPS_9.md` §7: compartir CSV
+  (solo PWA instalada; la app Capacitor no recibe "Compartir"), atajos del ícono, modo
+  claro, datos en la nube sin recortes, idioma diferido.
+- Regresión encontrada al correr `npm run verify` completo: el codemod de S8 había agregado
+  a `programs/engine/ProgramConversion.ts` un import sin extensión de
+  `constants/translations`, y `validate-kong` (motor ejecutado con Node puro) fallaba con
+  `ERR_MODULE_NOT_FOUND`. Además, desde S7 ese registro no tendría diccionarios cargados en
+  Node. Arreglo: el nombre de la rutina convertida es un dato persistido, no texto de UI →
+  `pickLang` importado con `.ts` (convención de `programs/`) y clave quitada de los
+  diccionarios. **Nota honesta**: entre S5 y S9 corrí build, `test:run`, lint, bundle y
+  Playwright, pero no el `verify` completo; `validate-kong` estuvo roto desde S8 hasta acá.
+- Verificación final: `npm run verify` OK (secretos, build estricto, `test:run` 681/681,
+  validate-kong, bundle WITHIN BUDGET: entrada 81,00 KB / críticos 194,85 KB gzip);
+  `test:run` 3 corridas seguidas 681/681; `test:rules` 18/18; `test:integration` 15/15;
+  Playwright 47/47; `lint:a11y` limpio.
+- APK de prueba (`npm run build && npx cap sync android`, `assembleRelease` con R8, JDK 21,
+  misma keystore de debug; valores no impresos):
+  - `apk-out/gainslab-release-test.apk` — 13 975 038 bytes (13,3 MB), SHA-256
+    `01CD7EEB607FBF3A42D4F02D259867580681A19E9174A21D535E7039B48C31D4`.
+  - `com.gainslab.pro`, versionName `4.0.3-kong.6`, versionCode 414, compileSdk 36,
+    targetSdk 36, minSdk 24. Certificado `A4:A8:52:18:…:35:12` (= debug keystore).
+  - `adb devices` mostró un dispositivo (`ZT322QTT5X`). **No se instaló**: es el teléfono
+    real del dueño y esta serie no pedía instalar; queda a su decisión
+    (`adb install -r apk-out/gainslab-release-test.apk`, conserva los datos).
+- Estado del repo: rama `agent/gainslab-audit-fixes-v3` (sin ramas nuevas), tag
+  `pre-s-series` en origin, sin GitHub Actions, sin `.env`/keystores/APK en el índice.

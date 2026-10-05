@@ -1285,9 +1285,6 @@ export const ES: TranslationDict = {
         useShortcutLaunch: {
             quickStartSession: 'Sesión Rápida',
         },
-        programConversion: {
-            kongPersonalRoutine: 'KONG · Rutina personal',
-        },
         historyDetail: {
             back: 'Volver',
             deleteWorkout: 'Eliminar entrenamiento',
