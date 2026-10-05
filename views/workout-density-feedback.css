@@ -1,8 +1,0 @@
-/*
- * Workout density and interaction styling.
- * Structural layout and density are handled directly in React via SetRow and ExerciseCardSets.
- */
-
-.product-workout-polish.workout-density-pass #tut-exercise-list button {
-  -webkit-tap-highlight-color: transparent;
-}

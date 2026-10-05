@@ -10,7 +10,6 @@ import { Icon } from '../ui/Icon';
 import { Logo } from '../ui/Logo';
 import { Avatar } from '../ui/Avatar';
 import { scheduleWhenIdle } from '../../lib/idle';
-import './ux-navigation.css';
 
 const ProfileSheet = React.lazy(() => import('../profile/ProfileSheet').then(m => ({ default: m.ProfileSheet })));
 import type { ProfileSection } from '../profile/ProfileSheet';

@@ -5,9 +5,6 @@ import { useStore } from '../lib/store';
 import { KONG_4DAY_V1 } from '../programs/kong/kong4Day';
 import { getProgramBlockForWeek, resolveProgramWeek } from '../programs/engine/ProgramResolver';
 import { getKongDayDisplay } from '../programs/kong/kongDisplay';
-import './product-polish.css';
-import './reorder-history-polish.css';
-import './kong-final-polish.css';
 
 const ProgramCompletionView = React.lazy(() =>
     import('../components/programs/ProgramCompletionView').then((module) => ({ default: module.ProgramCompletionView })),

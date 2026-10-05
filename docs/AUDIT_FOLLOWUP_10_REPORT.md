@@ -234,3 +234,32 @@ comportamiento real que fallan sin el cambio, sin dependencias nuevas, sin despl
   (todos arrancan por la ruta nueva; `offlineShell` valida el SW).
 - Observado una vez: `detectPRs.test.ts` falló en una corrida completa y pasó en las 6
   siguientes (3 aisladas + 3 completas). No reproducible; sin cambios en ese test.
+
+## S9 — CSS: capas de pulido consolidadas + fila activa en modo claro
+
+- Cinco hojas importadas desde Layout / HomeView / StatsView / WorkoutView
+  (`ux-navigation`, `product-polish`, `reorder-history-polish`, `kong-final-polish`,
+  `workout-density-feedback`) → `styles/app-polish.css`, importada una sola vez desde
+  `index.tsx` justo después de `native-performance.css`: el mismo punto de la cascada que ya
+  tenían en el CSS construido (orden verificado en `dist`). Desaparece el CSS aparte del chunk
+  de Workout. Test `cssLayers`: solo `index.tsx` importa hojas y en el orden documentado.
+- Arnés visual de un solo uso (Playwright sobre el build de preview, reloj fijo, 6 pantallas
+  × claro/oscuro, comparación píxel a píxel con `maxDiffPixels: 0`; determinista: 12/12
+  idénticas en dos corridas sin cambios). Tras consolidar: 11/12 idénticas; la única
+  diferencia fue el arreglo buscado (abajo). No se versionó (vivía en una carpeta temporal).
+- Defecto visible encontrado con el arnés: en modo claro la serie activa de `SetRow` se veía
+  negra (`bg-[#1b1b20]` fijo, sin override). Ahora `bg-surface-base dark:bg-[#1b1b20]`:
+  oscuro idéntico (`rgb(27, 27, 32)`), claro con la superficie del tema. E2E
+  `lightTheme.spec.ts` mide el color renderizado (luminancia en claro, valor exacto en
+  oscuro); sin el arreglo falla el de claro.
+- `!important`: inventario completo. Los 35 de `index.css`/`native-performance.css` son
+  anulaciones globales legítimas (movimiento reducido, modo de efectos, filtro SVG inline,
+  capa de compatibilidad del modo claro). Los ~37 de `app-polish.css` cargan peso: compiten
+  con esa capa de compatibilidad (también `!important`) y, si se les quita, el color cambia.
+  NO se eliminaron. La vía correcta es la causa raíz: ~9 colores hex de "isla oscura" fijos en
+  3 componentes (`bg-[#1A1A1A]`, `#121212`, `#17171b`, `#18181c`, `#1c1816`, `#18141f`,
+  `#131b1f`…). Tokenizarlos (como se hizo con la fila de SetRow) permitiría borrar bloques
+  enteros de overrides; varios aparecen en estados que el arnés no cubre (tintes de protocolos
+  especiales), por eso queda como siguiente paso y no como arreglo lateral.
+- Evidencia: build OK, `test:run` 681/681, `lint:a11y` limpio, `bundle:report` WITHIN BUDGET,
+  arnés visual 12/12, Playwright 47/47.

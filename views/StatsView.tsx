@@ -8,7 +8,6 @@ import { useStore } from '../lib/store';
 import { TRANSLATIONS } from '../constants';
 import { buildStatsLogsSignature, statsCache } from '../services/statsCache';
 import { StatsScope, StatsSection, effectiveScopeFor, scopeMesoId as scopeMesoIdFor, summarizeLogsByScope } from '../utils/statsScope';
-import './product-polish.css';
 
 /**
  * Product-facing IA over the Stats implementation.

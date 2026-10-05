@@ -501,7 +501,8 @@ export const SetRow = React.memo(({
         isDone
             ? 'bg-primary-500/10 border border-primary-500/25'
             : isNextSet
-            ? 'bg-[#1b1b20] border border-primary-500/50 shadow-sm'
+            // S9: theme surface in light mode (was a hard-coded dark island); dark unchanged.
+            ? 'bg-surface-base dark:bg-[#1b1b20] border border-primary-500/50 shadow-sm'
             : 'bg-surface-raised border border-border-subtle'
     }`;
 

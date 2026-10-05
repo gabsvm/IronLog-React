@@ -6,8 +6,6 @@ import { ReorderExercisesSheet } from '../components/workout/ReorderExercisesShe
 import type { SessionExercise } from '../types';
 import { KONG_4DAY_V1 } from '../programs/kong/kong4Day';
 import { TRANSLATIONS } from '../constants';
-import './product-polish.css';
-import './workout-density-feedback.css';
 
 interface WorkoutViewProps {
     onFinish: () => void;

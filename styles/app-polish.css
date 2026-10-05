@@ -1,3 +1,43 @@
+/*
+ * S9: app-level polish layers, consolidated from five files that were imported
+ * from Layout / HomeView / StatsView / WorkoutView. Imported once from index.tsx
+ * right after native-performance.css — the same cascade position they already
+ * had in the built CSS (order below = previous order in dist).
+ */
+
+/* ======================================================================
+ * Navigation & shell  (was components/layout/ux-navigation.css)
+ * ====================================================================== */
+/* Capacitor is already an installed standalone application. `isStandalone`
+ * describes PWA display-mode and can be false inside a WebView, so the web-only
+ * install banner (unified "You" sheet, account section) must never be shown
+ * in the native shell. */
+html.native-shell [data-install-banner] {
+  display: none !important;
+}
+
+/* Home has a plan-specific settings button that historically used the same
+ * gear affordance as global Settings. Keep its existing behavior but present
+ * it as an overflow/menu action so the two concepts are no longer confused.
+ */
+.scroll-container #tut-settings-btn > svg {
+  display: none;
+}
+
+.scroll-container #tut-settings-btn::before {
+  content: '•••';
+  display: block;
+  margin-top: -3px;
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  line-height: 1;
+  color: currentColor;
+}
+
+/* ======================================================================
+ * Product polish (home / workout / stats)  (was views/product-polish.css)
+ * ====================================================================== */
 /* Product-level mobile polish layered over the proven implementations. */
 
 /* HOME ------------------------------------------------------------------- */
@@ -161,3 +201,76 @@ button[aria-label="Download CSV"] {
   color: #090909;
 }
 
+/* ======================================================================
+ * Workout reorder mode & History list  (was views/reorder-history-polish.css)
+ * ====================================================================== */
+/* Focused polish for the explicit workout reorder mode and History list. */
+
+/* Reordering is now a session-level action. The old per-card drag handle is
+   intentionally hidden so scrolling/editing a workout never starts a card drag. */
+.product-workout-polish .cursor-grab {
+  display: none !important;
+}
+/* Keep all virtualized History rows on one consistent width rail. */
+div[data-item-index] {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+button[class~="mx-4"][class~="mb-3"][class~="block"] {
+  width: calc(100% - 2rem) !important;
+  max-width: calc(100% - 2rem) !important;
+  min-width: 0 !important;
+  box-sizing: border-box;
+}
+
+/* ======================================================================
+ * KONG program polish  (was views/kong-final-polish.css)
+ * ====================================================================== */
+/* Final KONG UX polish. Scoped so normal mesocycles remain unchanged. */
+
+.product-home-polish.kong-active .kong-home-header > div:first-child {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.product-home-polish.kong-active .kong-home-header h2 {
+  max-width: min(100%, 26rem);
+  font-size: clamp(1.75rem, 8vw, 2.35rem);
+  line-height: 0.98;
+  text-wrap: balance;
+}
+
+.product-home-polish.kong-active .kong-home-header h2 + div {
+  flex-wrap: wrap;
+  gap: 0.4rem 0.65rem;
+}
+
+.product-home-polish.kong-active .kong-home-header h2 + div > * {
+  white-space: nowrap;
+}
+
+/* KONG owns its duration, block progression and deload logic. Keep the legacy
+   mesocycle sheet available for notes/finish, but do not expose controls that
+   can silently break the 12-week program definition. */
+.product-home-polish.kong-active #tut-meso-duration,
+.product-home-polish.kong-active #tut-meso-deload,
+.product-home-polish.kong-active #tut-meso-edit {
+  display: none !important;
+}
+
+.product-home-polish.kong-active #tut-meso-notes {
+  margin-top: 0.25rem;
+}
+
+/* ======================================================================
+ * Workout density & interaction  (was views/workout-density-feedback.css)
+ * ====================================================================== */
+/*
+ * Workout density and interaction styling.
+ * Structural layout and density are handled directly in React via SetRow and ExerciseCardSets.
+ */
+
+.product-workout-polish.workout-density-pass #tut-exercise-list button {
+  -webkit-tap-highlight-color: transparent;
+}
