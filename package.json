@@ -17,6 +17,8 @@
     "verify:full": "npm run verify && npm run test:e2e",
     "preview": "vite preview",
     "lint:a11y": "npx eslint \"{components,views}/**/*.{ts,tsx}\" App.tsx",
+    "test:visual": "npm run build && npx playwright test --config playwright.visual.config.ts",
+    "test:visual:update": "npm run build && npx playwright test --config playwright.visual.config.ts --update-snapshots",
     "lint": "npx eslint \"{components,views,context,hooks,services,utils,data,constants,lib,programs}/**/*.{ts,tsx}\" App.tsx index.tsx",
     "static-build": "vite build && node scripts/generate-sw-precache.mjs",
     "cap-sync": "npx cap sync",

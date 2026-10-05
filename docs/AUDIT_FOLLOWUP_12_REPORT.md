@@ -18,3 +18,16 @@ todo lo de Play Store. Desplegar reglas / encender `VITE_CLOUD_LOGS_V2` no se ha
   Suite 45–48 s → 54 s, pero tiempo de tests 46–51 s → 24 s (menos contención).
 - Evidencia: `verify` OK, `test:run` 692/692 ×3, `test:rules` 18/18, `test:integration` 15/15
   (Firebase 11 contra emuladores), Playwright 47/47.
+
+## U2 — Regresión visual permanente
+
+- `tests/visual/screens.visual.ts` + `playwright.visual.config.ts` (puerto 5196, separado de
+  los e2e): build de preview, reloj fijo, datos sembrados, 7 pantallas (inicio, historial,
+  métricas, dieta, entreno, menú de ejercicio, perfil) × oscuro/claro, comparación píxel a
+  píxel (`maxDiffPixels: 0`). 14 capturas de referencia versionadas en
+  `tests/visual/__screenshots__/` (736 KB).
+- `npm run test:visual` compara; `npm run test:visual:update` acepta cambios buscados
+  (revisar el diff antes). Las referencias se generan en la máquina Windows del dueño: las
+  fuentes cambian entre sistemas operativos, así que en otra máquina hay que regenerarlas.
+- Es el mismo arnés que detectó la fila negra en modo claro (S9) y validó T1.
+- Evidencia: generación 14/14 y comparación inmediata 14/14 idénticas (determinista).
