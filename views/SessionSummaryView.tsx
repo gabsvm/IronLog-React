@@ -1,5 +1,5 @@
 import { formatMessage } from '../utils/i18n';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Log } from '../types';
 import { Icon } from '../components/ui/Icon';
 import { Button } from '../components/ui/Button';
@@ -7,6 +7,9 @@ import { useApp } from '../context/AppContext';
 import { getLogBodyWeight, getSetLoadVolume } from '../utils/trainingMetrics';
 import { resolveWeightUnit, toDisplay, unitLabel } from '../utils/units';
 import { TRANSLATIONS } from '../constants/translations';
+import { getTranslated } from '../utils';
+import { shareFileOrDownload } from '../utils/shareFile';
+import { pickLang } from '../utils/i18n';
 
 interface SessionSummaryViewProps {
     log: Log;
@@ -40,6 +43,37 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
 
         return { volume, sets, muscles: Array.from(muscles) };
     }, [log, userProfile?.bodyWeight]);
+
+    // U8: share the summary as an image (PNG via canvas; native share sheet in the app).
+    const [shareState, setShareState] = useState<'idle' | 'busy' | 'failed'>('idle');
+    const volumeText = `${toDisplay(stats.volume, unit).toLocaleString()} ${unitLabel(unit).toLowerCase()}`;
+    const handleShareImage = async () => {
+        setShareState('busy');
+        try {
+            const { buildSessionCardModel, renderSessionCard } = await import('../utils/sessionCard');
+            const c = TRANSLATIONS[lang].copy.sessionSummary;
+            const model = buildSessionCardModel({
+                log,
+                labels: { workoutComplete: c.workoutComplete, time: c.time, sets: c.sets, totalVolume: c.totalVolume, musclesHit: c.musclesHit },
+                locale: pickLang(lang, { es: 'es-AR', en: 'en-US' }),
+                totals: stats,
+                volumeText,
+                exerciseName: (ex) => getTranslated(ex.name as any, lang) || String(ex.name ?? ''),
+                bestSetText: (ex) => {
+                    const done = (ex.sets || []).filter((s) => s.completed && !s.skipped && Number(s.weight) > 0);
+                    if (done.length === 0) return null;
+                    const best = done.reduce((a, b) => (Number(b.weight) > Number(a.weight) ? b : a));
+                    return `${toDisplay(Number(best.weight), unit)} ${unitLabel(unit).toLowerCase()} × ${best.reps}`;
+                },
+            });
+            const blob = await renderSessionCard(model);
+            const day = new Date(log.endTime || Date.now()).toISOString().slice(0, 10);
+            await shareFileOrDownload(blob, `gainslab-${day}.png`, 'image/png', model.title);
+            setShareState('idle');
+        } catch {
+            setShareState('failed');
+        }
+    };
 
     const formatDuration = (sec: number) => {
         const h = Math.floor(sec / 3600);
@@ -148,6 +182,18 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
 
             {/* Footer */}
             <div className="p-4 bg-[rgb(var(--surface-app))] pb-[var(--safe-area-bottom)] border-t border-[rgb(var(--border-subtle)/0.4)]">
+                {shareState === 'failed' && (
+                    <p role="alert" className="mb-2 text-center text-xs font-bold text-red-500">{TRANSLATIONS[lang].copy.sessionSummary.shareImageFailed}</p>
+                )}
+                <button
+                    type="button"
+                    onClick={() => void handleShareImage()}
+                    disabled={shareState === 'busy'}
+                    className="mb-2 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[rgb(var(--border-subtle))] text-sm font-bold text-[rgb(var(--text-secondary))] disabled:opacity-60"
+                >
+                    <Icon name="Share2" size={16} />
+                    {shareState === 'busy' ? TRANSLATIONS[lang].copy.sessionSummary.shareImageBusy : TRANSLATIONS[lang].copy.sessionSummary.shareImage}
+                </button>
                 <Button fullWidth onClick={onClose} className="h-12 text-base font-bold">
                     {TRANSLATIONS[lang].copy.sessionSummary.finishGoHome}
                 </Button>

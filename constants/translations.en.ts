@@ -1203,6 +1203,9 @@ export const EN = {
             totalVolume: 'Total Volume',
             musclesHit: 'Muscles Hit',
             finishGoHome: 'Finish & Go Home',
+            shareImage: 'Share image',
+            shareImageBusy: 'Preparing…',
+            shareImageFailed: 'Could not create the image.',
             week: "Week {week}",
         },
         addCardioModal: {

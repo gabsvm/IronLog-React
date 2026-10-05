@@ -157,3 +157,24 @@ todo lo de Play Store. Desplegar reglas / encender `VITE_CLOUD_LOGS_V2` no se ha
   auth, campo uid rechazado, tamaños, lectura solo admin, sin update); integración con
   emuladores 16/16 (envío real con sesión, nada sin sesión).
 - Pendiente del dueño: desplegar las reglas (incluye `errorReports`).
+
+## U8 — Compartir el resumen de sesión como imagen (+ arreglo de exportaciones nativas)
+
+- **Hallazgo:** en el APK las exportaciones (backup JSON, CSV) no hacían nada: el WebView de
+  Capacitor no tiene `DownloadListener` ni Web Share con archivos, así que el `<a download>`
+  con blob se ignoraba. Arreglado para todas las exportaciones que pasan por
+  `shareFileOrDownload`.
+- Nativo: `NativeBridgePlugin.shareFile` (filename, mime, base64, title) escribe en
+  `cache/shared` y abre el selector del sistema (`ACTION_SEND`) vía el FileProvider de la app.
+- `utils/shareFile.ts`: acepta `string | Blob`; en nativo envía base64 al puente y, si falla,
+  cae a Web Share y luego a descarga por ancla (web sin cambios de comportamiento).
+- `utils/sessionCard.ts`: modelo puro (título, fecha localizada, tiempo/series/volumen,
+  top 4 ejercicios por series completadas con su mejor serie, músculos) + render en canvas
+  1080×1350 → PNG. Sin datos personales más allá de lo que ya muestra el resumen.
+  Se carga de forma diferida (no suma a la entrada).
+- UI: botón "Compartir imagen" en el resumen de sesión, estado "Preparando…" y alerta si falla
+  (textos en TRANSLATIONS es/en).
+- Tests: unit (base64 correcto para texto y binario, nativo que falla → descarga, en web nunca
+  se llama al puente, modelo y formato de duración); e2e: terminar una sesión libre, tocar
+  "Compartir imagen" y verificar un `gainslab-AAAA-MM-DD.png` con firma PNG y > 10 KB.
+- Evidencia: lint 0, unit 711/711, Playwright 48/48, visual 16/16, `assembleDebug` OK.

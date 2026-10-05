@@ -11,6 +11,7 @@ interface NativeBridgePlugin {
     consumePendingTimerCommands(): Promise<{ epoch: number; commands: TimerCommandPayload[] }>;
     getLaunchAction(): Promise<{ action: string }>;
     consumeSharedFile(): Promise<{ available: boolean; name?: string; text?: string; error?: string }>;
+    shareFile(options: { filename: string; mime: string; base64: string; title?: string }): Promise<{ shared: boolean }>;
     updateWidgetData(options: { title: string }): Promise<void>;
     addListener(event: 'restTimerCommand', cb: (data: unknown) => void): Promise<{ remove: () => Promise<void> }>;
 }
@@ -221,6 +222,20 @@ export const consumeNativeSharedFile = async (): Promise<{ name: string; text: s
         return { name: typeof res.name === 'string' ? res.name : 'shared.csv', text: res.text };
     } catch {
         return null;
+    }
+};
+
+/**
+ * U8: hand a file to the Android share sheet (the WebView cannot download
+ * blobs nor share files). Returns false off-native or on failure.
+ */
+export const nativeShareFile = async (filename: string, mime: string, base64: string, title?: string): Promise<boolean> => {
+    if (!Capacitor.isNativePlatform()) return false;
+    try {
+        const res = await NativeBridge.shareFile({ filename, mime, base64, title });
+        return !!res?.shared;
+    } catch {
+        return false;
     }
 };
 

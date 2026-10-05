@@ -434,6 +434,54 @@ public class NativeBridgePlugin extends Plugin {
         return last != null ? last : "shared.csv";
     }
 
+    /**
+     * U8: share a file from the web layer (backups, CSV, session image). The
+     * Android WebView supports neither Web Share with files nor <a download>
+     * blobs, so the bytes come here (base64), go to cache/shared and leave
+     * through the system share sheet via the app FileProvider.
+     */
+    @PluginMethod
+    public void shareFile(PluginCall call) {
+        String filename = call.getString("filename", "gainslab-file");
+        String mime = call.getString("mime", "application/octet-stream");
+        String data = call.getString("base64", null);
+        String title = call.getString("title", "GainsLab");
+        if (data == null) {
+            call.reject("missing data");
+            return;
+        }
+        try {
+            String safeName = filename.replaceAll("[^A-Za-z0-9._-]", "_");
+            java.io.File dir = new java.io.File(getContext().getCacheDir(), "shared");
+            if (!dir.exists() && !dir.mkdirs()) throw new java.io.IOException("no dir");
+            java.io.File file = new java.io.File(dir, safeName);
+            byte[] bytes = android.util.Base64.decode(data, android.util.Base64.DEFAULT);
+            try (java.io.FileOutputStream out = new java.io.FileOutputStream(file)) {
+                out.write(bytes);
+            }
+            Uri uri = androidx.core.content.FileProvider.getUriForFile(
+                    getContext(), getContext().getPackageName() + ".fileprovider", file);
+            Intent send = new Intent(Intent.ACTION_SEND);
+            send.setType(mime);
+            send.putExtra(Intent.EXTRA_STREAM, uri);
+            send.putExtra(Intent.EXTRA_TITLE, safeName);
+            send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            Intent chooser = Intent.createChooser(send, title);
+            chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            if (getActivity() != null) {
+                getActivity().startActivity(chooser);
+            } else {
+                chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                getContext().startActivity(chooser);
+            }
+            JSObject result = new JSObject();
+            result.put("shared", true);
+            call.resolve(result);
+        } catch (Exception e) {
+            call.reject("share failed", e);
+        }
+    }
+
     /** Q17: store the next-session title and refresh installed widgets. */
     @PluginMethod
     public void updateWidgetData(PluginCall call) {

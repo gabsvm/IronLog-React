@@ -1205,6 +1205,9 @@ export const ES: TranslationDict = {
             totalVolume: 'Volumen Total',
             musclesHit: 'Músculos Trabajados',
             finishGoHome: 'Finalizar y Volver',
+            shareImage: 'Compartir imagen',
+            shareImageBusy: 'Preparando…',
+            shareImageFailed: 'No se pudo crear la imagen.',
             week: "Semana {week}",
         },
         addCardioModal: {
