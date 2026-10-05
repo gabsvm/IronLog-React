@@ -20,7 +20,7 @@
     "test:visual": "npm run build && npx playwright test --config playwright.visual.config.ts",
     "test:visual:update": "npm run build && npx playwright test --config playwright.visual.config.ts --update-snapshots",
     "hooks:install": "git config core.hooksPath .githooks",
-    "lint": "npx eslint \"{components,views,context,hooks,services,utils,data,constants,lib,programs,server,api}/**/*.{ts,tsx}\" App.tsx index.tsx",
+    "lint": "npx eslint \"{components,views,context,hooks,services,utils,data,constants,lib,programs}/**/*.{ts,tsx}\" App.tsx index.tsx",
     "static-build": "vite build && node scripts/generate-sw-precache.mjs",
     "cap-sync": "npx cap sync",
     "cap-add-android": "npx cap add android",
@@ -36,7 +36,6 @@
     "test:integration": "npx firebase-tools emulators:exec --project demo-q1-integration --only auth,firestore \"npx vitest run --config vitest.integration.config.ts\""
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.131.0",
     "@capacitor/android": "^8.0.0",
     "@capacitor/core": "^8.0.0",
     "@dnd-kit/core": "^6.1.0",
@@ -48,7 +47,6 @@
     "firebase": "^11.10.0",
     "framer-motion": "^12.40.0",
     "idb-keyval": "^6.2.1",
-    "jose": "^6.2.12",
     "lucide-react": "^0.400.0",
     "react": "^18.3.1",
     "react-chartjs-2": "^5.2.0",
