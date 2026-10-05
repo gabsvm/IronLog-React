@@ -55,3 +55,26 @@ todo lo de Play Store. Desplegar reglas / encender `VITE_CLOUD_LOGS_V2` no se ha
   contenedor; a simple vista es idéntica). Resto 11/11 sin cambios.
 - `.gitattributes`: `.githooks/*` con fin de línea LF (un hook en CRLF rompe `sh` en Windows).
 - Evidencia: suite visual 16/16, Playwright 47/47, `verify` en el hook de push.
+
+## U5a — Componentes grandes (6 de 8)
+
+| Componente | Antes | Después (máx. por archivo) |
+|------------|------:|----------------------------|
+| `AddMealModal` | 23,7 KB | 18,7 KB + `addMeal/mealData.ts` 5,2 KB |
+| `ProgramHub` | 25,0 KB | 1,4 KB + `hub/` (paneles 18 KB, estado 7,3 KB, datos 1,4 KB) |
+| `SetupWizard` | 25,7 KB | 7,8 KB + `wizard/` (pasos 13,6 KB, estado 6 KB) |
+| `FreestyleSessionModal` | 29,6 KB | 3,4 KB + `freestyle/` (calistenia 12,2 KB, datos 5,1 KB, estado 6,3 KB, WOD 4,3 KB, gym 2,1 KB) |
+| `AdminTemplateManager` | 36,7 KB | 0,6 KB + `templates/` (editor 16,5 KB, estado 13,5 KB, lista 7,2 KB, toast, constantes) |
+| `RestTimerOverlay` | 37,5 KB | 0,9 KB + `restTimer/` (activo 18,6 KB, estado 9,6 KB, lógica 5,4 KB, avisos 3,9 KB, anillo 2,5 KB) |
+
+- Código movido literal (helpers/datos de nivel superior a módulos hermanos; cuerpos en
+  hook de estado + componentes de vista). Exportaciones públicas reexportadas.
+- **Mejoras de paso**: ProgramHub (`Header`, `Hero`, `MetricGrid`) y AdminTemplateManager
+  (`Toast`) definían componentes DENTRO del render: React los recreaba y remontaba en cada
+  render (mismo antipatrón que `ColorPill` en Q18). Ahora son componentes de nivel superior.
+- RestTimerOverlay: en reposo muestra los dos avisos únicos; con el temporizador activo solo
+  el de notificaciones (comportamiento original preservado al separarlos).
+- Test nuevo `programHub` (4: inicio, cada acceso abre su panel y Atrás vuelve, todos los
+  paneles renderizan, Cerrar llama a onClose). Pasa igual con el código anterior y con el
+  nuevo: prueba de equivalencia del refactor (ProgramHub no tenía tests).
+- Evidencia: `tsc`, `npm run lint` en 0, `test:run` 696/696, Playwright 47/47, visual 16/16.
