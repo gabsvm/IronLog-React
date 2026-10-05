@@ -96,3 +96,9 @@ el teléfono. Seguilos en este orden. El detalle de Firebase está en
 - **Health Connect (U9):** en el teléfono, Perfil → Tu cuerpo → Health Connect → Conectar;
   "Importar peso" y el interruptor de exportar entrenamientos. Requiere la app/módulo Health
   Connect (Android 14+ ya lo trae).
+- **Análisis con IA (U11):** en Vercel → Settings → Environment Variables (solo servidor,
+  sin prefijo `VITE_`): `ANTHROPIC_API_KEY`, `FIREBASE_PROJECT_ID` y, si hace falta,
+  `AI_ALLOWED_ORIGINS`. Conviene poner un límite de gasto mensual a esa clave en la consola de
+  Anthropic: el límite por usuario de la función (5/h) es por instancia y no es global.
+  Para la app Android, compilar con `VITE_AI_ANALYSIS_URL=https://<tu-dominio>/api/ai-analysis`.
+  Sin la clave, la PWA muestra "no está disponible todavía".

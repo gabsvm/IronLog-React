@@ -234,3 +234,48 @@ todo lo de Play Store. Desplegar reglas / encender `VITE_CLOUD_LOGS_V2` no se ha
   MANUAL_STEPS_9 §8).
 - Evidencia: lint 0, unit 731/731, Playwright 48/48, visual 16/16, `assembleDebug` OK,
   entrada 82.94 KB gzip.
+
+## U11 — Análisis del entrenamiento con Claude (opt-in, clave solo en el servidor)
+
+- Servidor: función de Vercel `api/ai-analysis.ts` + lógica testeable en `server/aiAnalysis.ts`.
+  - **Clave:** `ANTHROPIC_API_KEY` solo en el entorno del servidor; nunca en el bundle (verificado:
+    ni el SDK ni `jose` aparecen en `dist/assets`).
+  - **Auth:** exige el ID token de Firebase del usuario, verificado con las claves públicas de
+    Google vía `jose` (issuer/audience del proyecto, RS256); no hace falta Admin SDK.
+  - **Entrada:** validación estricta con claves permitidas, fechas `AAAA-MM-DD`, rangos
+    numéricos, etiquetas de hasta 60 caracteres y cuerpo de hasta 16 KB.
+  - **Límite:** 5 análisis por hora y usuario, por instancia.
+  - **CORS:** solo para la app Android (`https://localhost`) y los orígenes configurados.
+- Claude (SDK oficial `@anthropic-ai/sdk`):
+  - modelo `claude-opus-5-5`, pensamiento adaptativo (por defecto) con `effort: medium`;
+  - salida estructurada (`output_config.format` con JSON schema: summary, strengths, issues,
+    suggestions);
+  - `fallbacks: "default"` (beta `server-side-fallback-2026-07-01`) para que una negativa del
+    clasificador se reintente en el modelo recomendado.
+  - Se revisa `stop_reason` antes de leer: una negativa da `refused` y una salida truncada o
+    inválida da `bad_output`. Errores tipados del SDK: 429 de Anthropic da `busy` y el resto
+    `upstream`.
+- Cliente:
+  - **Datos:** `services/aiAnalysis.ts` arma un resumen anónimo de 8 semanas: series de trabajo
+    por músculo (sin calentamiento ni sets no completados), sesiones, RIR medio (desde el RPE
+    cuando hay), tendencia de 1RM estimado de los 6 ejercicios más entrenados (en la unidad del
+    usuario) y peso corporal. Sin nombres, emails, notas ni ids.
+  - **Tarjeta:** `AiAnalysisCard` está en Estadísticas → Resumen. Pide iniciar sesión y, antes del
+    primer envío, muestra un consentimiento que dice qué se envía a nuestro servidor y a
+    Anthropic. Guarda el último análisis en el dispositivo, permite "Analizar de nuevo" y
+    revocar, y muestra el aviso de que no es consejo médico.
+  - **Disponibilidad:** en la web la tarjeta usa `/api/ai-analysis`; en Android necesita
+    `VITE_AI_ANALYSIS_URL` y sin él se oculta.
+- Tests (16):
+  - **Servidor:** forma de la petición a Claude; 401 sin token o con token falso, sin llamar a
+    Claude; 400, 413 y 405; límite por usuario; negativa, salida truncada, salida no JSON, 429 y
+    500 de Anthropic; CORS; verificación real de JWT con un JWKS local (proyecto correcto,
+    audience o issuer ajenos y token vencido).
+  - **Cliente:** agregación semanal, RIR, mejor e1RM por semana, conversión de unidad, ausencia
+    de datos personales, la salida del cliente pasa la validación del servidor y mapeo de
+    errores.
+  - **Tarjeta:** oculta sin endpoint; pide iniciar sesión; nada se envía sin consentimiento;
+    resultado guardado; error visible.
+- No desplegado ni llamado contra la API real: no hay clave, y el despliegue está prohibido en
+  esta serie. Pasos para el dueño en MANUAL_STEPS_9 §8.
+- `npm run lint` ahora también cubre `server/` y `api/`.

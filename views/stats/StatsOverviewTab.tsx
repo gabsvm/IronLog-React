@@ -3,6 +3,7 @@ import React from 'react';
 import { SymmetryRadar } from '../../components/stats/SymmetryRadar';
 import { MuscleHeatmapGrid } from '../../components/stats/MuscleHeatmapGrid';
 import { WeeklyReportCard } from '../../components/stats/WeeklyReportCard';
+import { AiAnalysisSection } from '../../components/stats/AiAnalysisCard';
 import { Icon } from '../../components/ui/Icon';
 import { ProLock } from '../../components/pro/ProLock';
 import { Doughnut } from 'react-chartjs-2';
@@ -21,6 +22,7 @@ export const StatsOverviewTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
                             lang={lang}
                         />
                     )}
+                    <AiAnalysisSection />
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <div id="tut-radar-chart" className="glass-card flex min-h-[320px] h-full flex-col overflow-hidden rounded-[1.7rem] border border-white/6 p-5 shadow-md">
                             <h3 className="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-500">
