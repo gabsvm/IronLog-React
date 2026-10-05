@@ -78,3 +78,18 @@ todo lo de Play Store. Desplegar reglas / encender `VITE_CLOUD_LOGS_V2` no se ha
   paneles renderizan, Cerrar llama a onClose). Pasa igual con el código anterior y con el
   nuevo: prueba de equivalencia del refactor (ProgramHub no tenía tests).
 - Evidencia: `tsc`, `npm run lint` en 0, `test:run` 696/696, Playwright 47/47, visual 16/16.
+
+## U5b — SetRow y SortableExerciseCard (los dos con React.memo)
+
+| Componente | Antes | Después (máx. por archivo) |
+|------------|------:|----------------------------|
+| `SetRow` | 34,3 KB | 0,8 KB + `setRow/` (estado 18,7 KB, HoldTimer 6,7 KB, vistas isométrica / peso corporal / estándar ≤ 5,1 KB) |
+| `SortableExerciseCardImpl` | 37,5 KB | 1,9 KB + `exerciseCard/` (expandida 17,5 KB, estado 16,8 KB, colapsada 6,3 KB) |
+
+- El límite de `React.memo` queda en el componente exterior (mismas props, misma
+  comparación): las vistas son hijos comunes que se renderizan cuando él se renderiza, igual
+  que el JSX que había adentro. `setNodeRef`/refs de dnd-kit viajan en el estado.
+- Tests de aislamiento de renders (R1 y otros) sin cambios y en verde.
+- Resultado: **ningún archivo de `components/`, `views/` ni `context/` pasa de 20 KB**.
+- Evidencia: `npm run lint` 0, `test:run` 696/696, Playwright 47/47 (incluye arrastrar y
+  reordenar), visual 16/16, bundle WITHIN BUDGET (entrada 81,28 KB, sin cambios).
