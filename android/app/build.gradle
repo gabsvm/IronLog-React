@@ -68,6 +68,8 @@ dependencies {
     implementation project(':capacitor-android')
     // U9: Health Connect (weight import, workout export). minSdk 26 inside; guarded at runtime.
     implementation "androidx.health.connect:connect-client:$healthConnectVersion"
+    // U10: Google Drive backup authorization (drive.appdata scope only).
+    implementation "com.google.android.gms:play-services-auth:$playServicesAuthVersion"
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"

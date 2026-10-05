@@ -155,6 +155,11 @@ export const exportCurrentBackup = async (
     const filename = getBackupDownloadFilename();
     const json = JSON.stringify(envelope, null, 2);
     const result = await shareFileOrDownload(json, filename, 'application/json');
-    await db.set(LAST_BACKUP_AT_KEY, Date.now());
+    await stampBackupExport();
     return result;
+};
+
+/** Records a full backup (file or Drive) so the Home reminder stays quiet. */
+export const stampBackupExport = async (now: number = Date.now()): Promise<void> => {
+    await db.set(LAST_BACKUP_AT_KEY, now);
 };

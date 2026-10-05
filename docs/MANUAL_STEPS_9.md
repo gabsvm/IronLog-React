@@ -79,3 +79,20 @@ el teléfono. Seguilos en este orden. El detalle de Firebase está en
 - **Idioma**: la app solo descarga el idioma activo; cambiar de idioma la primera vez tarda
   un instante (descarga el otro diccionario, que el service worker ya tiene en caché).
 
+
+## 8. Serie U (ver AUDIT_FOLLOWUP_12_REPORT)
+
+- **Reglas:** volver a desplegar `firestore.rules` (nuevas colecciones `nutritionEntries`,
+  `nutritionDays` y `errorReports`).
+- **Google Drive (U10):** en Google Cloud (mismo proyecto de Firebase):
+  1. Habilitar **Google Drive API**.
+  2. Pantalla de consentimiento OAuth con el alcance `.../auth/drive.appdata` (no sensible).
+  3. PWA: crear un cliente OAuth **Aplicación web** con el origen del sitio (y
+     `http://localhost:5173` para probar) y poner su ID en `VITE_GOOGLE_DRIVE_CLIENT_ID`.
+     Vacío = la opción no aparece en la web.
+  4. APK: crear un cliente OAuth **Android** con paquete `com.gainslab.pro` y el SHA-1 del
+     keystore con el que firmás (`keytool -list -v -keystore <tu keystore>`). Sin esto, "Guardar
+     en Drive" muestra "No se pudo conectar con Google Drive".
+- **Health Connect (U9):** en el teléfono, Perfil → Tu cuerpo → Health Connect → Conectar;
+  "Importar peso" y el interruptor de exportar entrenamientos. Requiere la app/módulo Health
+  Connect (Android 14+ ya lo trae).

@@ -206,3 +206,31 @@ todo lo de Play Store. Desplegar reglas / encender `VITE_CLOUD_LOGS_V2` no se ha
   declaración de uso y una política de privacidad: fuera de alcance (no publicamos).
 - Evidencia: lint 0, unit 723/723, Playwright 48/48, visual 16/16, `assembleDebug` OK,
   entrada 82.90 KB gzip (dentro del presupuesto).
+
+## U10 — Copias en Google Drive (PWA y APK)
+
+- `services/driveBackup.ts`: cliente REST de Drive v3 solo sobre `appDataFolder` (carpeta oculta;
+  la app no ve otros archivos del usuario): listar, subir (multipart), descargar, borrar; un
+  reintento con token nuevo ante 401. `backupToDrive` sube el mismo sobre de respaldo que la
+  exportación manual y deja las últimas 5; `restoreFromDrive` pasa por
+  `validateAndMigrateBackup` (un archivo inválido no toca el almacenamiento).
+- Tokens (`utils/googleDriveAuth.ts`), solo en memoria, alcance único `drive.appdata`:
+  - Web: Google Identity Services (script cargado a demanda), solo si existe
+    `VITE_GOOGLE_DRIVE_CLIENT_ID`; si no, la tarjeta no aparece.
+  - Android: `GoogleDrivePlugin.kt` con `AuthorizationClient` de Play services
+    (`play-services-auth` 21.6.0). El WebView no puede hacer el OAuth web; no hay client ID en
+    la app (lo resuelve el cliente OAuth Android registrado con el SHA-1).
+- UI: tarjeta en Perfil → Datos (bajo los respaldos automáticos): "Guardar en Drive", "Ver
+  copias en Drive" y restaurar con confirmación (recarga, como los automáticos). Guardar en Drive
+  cuenta como respaldo para el aviso de Inicio (`stampBackupExport`).
+- Sin respaldo automático a Drive: en la web pedir el token abre un popup y necesita un gesto
+  del usuario. Queda manual.
+- Tests (8): Drive falso en memoria detrás de `fetch` (sube a appDataFolder con Bearer, ida y
+  vuelta real a IndexedDB, poda a 5, reintento 401 con token nuevo, archivo inválido no pisa
+  datos); tarjeta (oculta sin disponibilidad, guardar → aviso + sello, listar → restaurar
+  confirmado, error visible sin sello); proveedor web (solo `drive.appdata`, caché, refresco,
+  oculto sin client ID).
+- No probado contra Google real (no hay credenciales ni cliente OAuth; pasos en
+  MANUAL_STEPS_9 §8).
+- Evidencia: lint 0, unit 731/731, Playwright 48/48, visual 16/16, `assembleDebug` OK,
+  entrada 82.94 KB gzip.

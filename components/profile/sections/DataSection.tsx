@@ -5,6 +5,8 @@ import { TRANSLATIONS } from '../../../constants';
 import { Icon } from '../../ui/Icon';
 import { CsvImportSheet } from '../CsvImportSheet';
 import { AutoBackupList } from '../AutoBackupList';
+import { DriveBackupCard } from '../DriveBackupCard';
+import { useStore } from '../../../lib/store';
 import { resolveWeightUnit } from '../../../utils/units';
 import { shareFileOrDownload } from '../../../utils/shareFile';
 import { buildTrainingCsv } from '../../../services/trainingCsv';
@@ -22,7 +24,10 @@ interface DataSectionProps {
 export const DataSection: React.FC<DataSectionProps> = ({
     onExport, onImportFile, onForceSync, isSyncing, syncStatusText,
 }) => {
-    const { lang, config, logs } = useApp();
+    const appState = useApp();
+    const { lang, config, logs } = appState;
+    const activeMeso = useStore((state) => state.activeMeso);
+    const activeSession = useStore((state) => state.activeSession);
     const { isOnline } = useSyncStatus();
     const { user } = useAuth();
     const t = TRANSLATIONS[lang];
@@ -109,6 +114,22 @@ export const DataSection: React.FC<DataSectionProps> = ({
             </div>
             <div className="mt-2">
                 <AutoBackupList lang={lang} />
+            </div>
+            <div className="mt-2">
+                <DriveBackupCard
+                    lang={lang}
+                    getState={() => {
+                        const {
+                            program, exercises, userProfile, nutritionLogs, cardioSessions, bodyLogs, macroGoals,
+                            nutritionGoal, personalTemplates, customFoods, rpFeedback,
+                        } = appState;
+                        return {
+                            program, exercises, logs, activeMeso, activeSession,
+                            userProfile, nutritionLogs, cardioSessions, bodyLogs, macroGoals, nutritionGoal,
+                            personalTemplates, customFoods, rpFeedback, config,
+                        };
+                    }}
+                />
             </div>
 
             {sheetProps && <CsvImportSheet {...sheetProps} />}

@@ -26,6 +26,7 @@ public class MainActivity extends BridgeActivity {
         // the bridge so they are available as soon as the web bundle starts.
         registerPlugin(NativeBridgePlugin.class);
         registerPlugin(HealthConnectPlugin.class);
+        registerPlugin(GoogleDrivePlugin.class);
         super.onCreate(savedInstanceState);
         captureLaunchAction(getIntent());
         // Android 15+ enforces edge-to-edge; the web layout honors the
