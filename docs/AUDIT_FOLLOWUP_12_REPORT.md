@@ -93,3 +93,22 @@ todo lo de Play Store. Desplegar reglas / encender `VITE_CLOUD_LOGS_V2` no se ha
 - Resultado: **ningún archivo de `components/`, `views/` ni `context/` pasa de 20 KB**.
 - Evidencia: `npm run lint` 0, `test:run` 696/696, Playwright 47/47 (incluye arrastrar y
   reordenar), visual 16/16, bundle WITHIN BUDGET (entrada 81,28 KB, sin cambios).
+
+## U6a — Código muerto (encontrado al preparar U6)
+
+- Búsqueda sistemática de módulos que nadie importa (código, tests y scripts) y verificación
+  manual por nombre. Eliminados 9 archivos (~57 KB de código fuente): `AddFoodModal` +
+  `data/foodDatabase.ts` (la app agrega comidas con `AddMealModal`), `GoalSetupModal`,
+  `ProgramCatalog`, `OnboardingModal`, `SkillProgressionBadge`, `SparkLine`,
+  `views/home/WeekProgress.tsx` y `views/workout/RestTimerControl.tsx` (este último salió de
+  WorkoutViewImpl en S6; ya estaba sin uso allí).
+- **No eliminados** (decisión del dueño): `programs/registry.ts`,
+  `programs/engine/ProgramSubstitutions.ts`, `programs/kong/kongSubstitutions.ts` y
+  `kongExerciseNotes.ts` tampoco se importan, pero son contenido de dominio KONG que puede
+  usar una futura función de sustituciones; no afectan al bundle.
+- Traducciones: 81 claves de primer nivel sin ningún uso (ni siquiera como palabra en el
+  código) + el espacio `copy.onboardingModal`, borradas de ambos idiomas (el español está
+  tipado contra el inglés: `tsc` garantiza la paridad). 11 claves dudosas (aparecen como
+  palabra, posible desestructuración) se dejaron. Diccionarios: en 60,9 KB, es 65,2 KB;
+  precache crítico 194,83 → 191,39 KB gzip.
+- Evidencia: lint 0, `test:run` 696/696, Playwright 47/47, visual 16/16, bundle WITHIN BUDGET.
