@@ -1,0 +1,11 @@
+#!/bin/sh
+# U3: local quality gate (the project deliberately has no CI). Runs the same
+# checks as `npm run verify`: secrets scan, lint, strict build, unit tests,
+# KONG validation and bundle budget. A failing gate blocks the push.
+echo "pre-push: npm run verify"
+npm run verify --silent
+status=$?
+if [ $status -ne 0 ]; then
+  echo "pre-push: verify FAILED - push blocked. Fix the failure (see output above)."
+  exit $status
+fi

@@ -31,3 +31,12 @@ todo lo de Play Store. Desplegar reglas / encender `VITE_CLOUD_LOGS_V2` no se ha
   fuentes cambian entre sistemas operativos, así que en otra máquina hay que regenerarlas.
 - Es el mismo arnés que detectó la fila negra en modo claro (S9) y validó T1.
 - Evidencia: generación 14/14 y comparación inmediata 14/14 idénticas (determinista).
+
+## U3 — Hook pre-push (control de calidad local, sin CI)
+
+- `.githooks/pre-push` corre `npm run verify` (secretos, lint, build estricto, tests
+  unitarios, validate-kong, presupuesto de bundle) y bloquea el push si falla.
+- `npm run hooks:install` (= `git config core.hooksPath .githooks`); ya activado en esta
+  copia del repo. En otro clon hay que correrlo una vez.
+- Evita repetir lo de S8–S10, cuando `validate-kong` estuvo roto varios commits sin que
+  nada lo frenara. Este mismo commit se pushea ya a través del hook.
