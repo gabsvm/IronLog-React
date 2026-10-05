@@ -523,17 +523,8 @@ html.light .bg-zinc-900\/95 { background-color: rgb(var(--surface-raised)) !impo
 html.light .bg-zinc-800,
 html.light .bg-zinc-800\/50 { background-color: rgb(var(--surface-elevated)) !important; }
 html.light .bg-zinc-700 { background-color: rgb(161 161 170) !important; }
-html.light .bg-\[\#121212\],
 html.light .bg-\[\#131316\],
-html.light .bg-\[\#17171b\],
-html.light .bg-\[\#17171B\],
-html.light .bg-\[\#17171B\]\/95,
-html.light .bg-\[\#18181c\],
-html.light .bg-\[\#1c1816\],
-html.light .bg-\[\#18141f\],
-html.light .bg-\[\#131b1f\],
-html.light .bg-\[\#1A1A1A\],
-html.light .bg-\[\#202024\] { background-color: rgb(var(--surface-raised)) !important; }
+html.light .bg-\[\#17171B\]\/95 { background-color: rgb(var(--surface-raised)) !important; }
 html.light .bg-white\/5 { background-color: rgb(var(--surface-raised) / 0.85) !important; }
 html.light .bg-white\/10 { background-color: rgb(var(--surface-elevated) / 0.75) !important; }
 

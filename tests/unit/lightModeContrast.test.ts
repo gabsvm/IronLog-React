@@ -68,9 +68,22 @@ describe('A4: Light Mode Contrast and Accent Tokens', () => {
         expect(tailwindConfig).toContain('accent: "rgb(var(--accent-text) / <alpha-value>)"');
     });
 
-    it('covers common dark hex backgrounds in html.light remapping', () => {
-        expect(indexCss).toContain('html.light .bg-\\[\\#17171b\\]');
-        expect(indexCss).toContain('html.light .bg-\\[\\#18181c\\]');
-        expect(indexCss).toContain('html.light .bg-\\[\\#1c1816\\]');
+    it('every dark hex background used in components is themed for light mode', () => {
+        // T1: a hard-coded dark `bg-[#hex]` renders as a dark island in light
+        // theme unless it is a `dark:` variant or index.css remaps it.
+        const { execSync } = require('node:child_process') as typeof import('node:child_process');
+        const sources = execSync('git grep -ohE "(dark:)?bg-\\[#[0-9a-fA-F]{6}\\](/[0-9]+)?" -- "components/*.tsx" "views/*.tsx" "App.tsx"', { encoding: 'utf8' })
+            .split(/\r?\n/)
+            .filter(Boolean);
+        const unthemed = [...new Set(sources)].filter((cls) => {
+            if (cls.startsWith('dark:')) return false;
+            const hex = cls.match(/#([0-9a-fA-F]{6})/)![1];
+            const [r, g, b] = [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16));
+            const dark = 0.2126 * r + 0.7152 * g + 0.0722 * b < 60;
+            if (!dark) return false;
+            const escaped = cls.replace(/[[\]#/]/g, (c) => `\\${c}`);
+            return !indexCss.includes(`html.light .${escaped}`);
+        });
+        expect(unthemed).toEqual([]);
     });
 });

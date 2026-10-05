@@ -70,12 +70,6 @@ html.native-shell [data-install-banner] {
 
 /* The primary session card and no-plan hero were authored as dark-only blocks.
    Use theme tokens in light mode instead of keeping a black island with dark text. */
-html.light .product-home-polish [class~="bg-[#1A1A1A]"],
-html.light .product-home-polish [class~="bg-[#121212]"] {
-  background-color: rgb(var(--surface-base)) !important;
-  border-color: rgb(var(--border-subtle)) !important;
-  box-shadow: 0 10px 30px -24px rgb(15 23 42 / 0.28) !important;
-}
 
 /* Opacity variants such as bg-zinc-950/40 are emitted as distinct utility
    classes and were not covered by the old compatibility layer. */
@@ -103,37 +97,6 @@ html.light .product-home-polish [class*="border-zinc-700"] {
 
 /* Light workout theme: replace dark-only card/row/input islands with real surface
    tokens while preserving semantic protocol tints. */
-html.light .product-workout-polish [class~="bg-[#141416]"] {
-  background-color: rgb(var(--surface-base)) !important;
-  border-color: rgb(var(--border-subtle)) !important;
-  box-shadow: 0 10px 28px -24px rgb(15 23 42 / 0.25) !important;
-}
-html.light .product-workout-polish [class~="bg-[#17171b]"],
-html.light .product-workout-polish [class~="bg-[#17171B]"] {
-  background-color: rgb(var(--surface-raised)) !important;
-}
-html.light .product-workout-polish [class~="bg-[#18181c]"] {
-  background-color: rgb(245 158 11 / 0.055) !important;
-}
-html.light .product-workout-polish [class~="bg-[#1c1816]"] {
-  background-color: rgb(249 115 22 / 0.055) !important;
-}
-html.light .product-workout-polish [class~="bg-[#18141f]"] {
-  background-color: rgb(217 70 239 / 0.05) !important;
-}
-html.light .product-workout-polish [class~="bg-[#131b1f]"] {
-  background-color: rgb(6 182 212 / 0.055) !important;
-}
-html.light .product-workout-polish [class~="bg-[#1A1A1A]"],
-html.light .product-workout-polish [class~="bg-[#121212]"] {
-  background-color: rgb(var(--surface-elevated)) !important;
-  color: rgb(var(--text-secondary)) !important;
-}
-html.light .product-workout-polish [class~="bg-[#202024]"] {
-  background-color: rgb(var(--surface-base)) !important;
-  border-color: rgb(var(--border-strong)) !important;
-  color: rgb(var(--text-primary)) !important;
-}
 html.light .product-workout-polish [class*="bg-zinc-900/"] {
   background-color: rgb(var(--surface-raised) / 0.92) !important;
 }

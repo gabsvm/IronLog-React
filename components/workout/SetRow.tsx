@@ -27,47 +27,6 @@ interface SetRowProps {
     unit?: WeightUnit;
 }
 
-const getTypeColor = (type: SetType) => {
-    switch (type) {
-        case 'warmup':       return 'bg-zinc-800 text-zinc-400 border-zinc-700';
-        case 'myorep':       
-        case 'myorep_match': 
-        case 'top':          
-        case 'backoff':      
-        case 'cluster':      
-        case 'giant':        
-        case 'avt_hop':      
-        case 'emom':         
-        case 'drop':         
-        case 'rest_pause':   
-        case 'time_volume':  
-        case 'triple_add':   return 'bg-[#1A1A1A] text-zinc-300 border-zinc-700/70';
-        default:             return 'bg-[#121212] text-zinc-400 border-zinc-800';
-    }
-};
-
-const getRowAccent = (type: SetType): string => {
-    switch (type) {
-        case 'warmup': return 'bg-[#18181c]';
-        case 'drop': return 'bg-[#1c1816]';
-        case 'myorep':
-        case 'myorep_match': return 'bg-[#18141f]';
-        case 'emom': return 'bg-[#131b1f]';
-        default: return 'bg-[#17171b]';
-    }
-};
-
-const getBorderAccent = (type: SetType): string => {
-    switch (type) {
-        case 'warmup': return 'border border-amber-500/10';
-        case 'drop': return 'border border-orange-500/10';
-        case 'myorep':
-        case 'myorep_match': return 'border border-fuchsia-500/12';
-        case 'emom': return 'border border-cyan-500/12';
-        default: return 'border border-zinc-800/90';
-    }
-};
-
 const getTypeLabel = (type: SetType) => {
     const map: Record<string, string> = {
         regular: '•',
@@ -242,13 +201,6 @@ export const SetRow = React.memo(({
         ?? (setType === 'regular' && setIndex != null
             ? String(setIndex + 1)
             : getTypeLabel(setType));
-    const rowAccent = isDone
-        ? 'bg-emerald-500/12 ring-1 ring-inset ring-emerald-400/15'
-        : isActiveProtocolSet
-            ? 'bg-cyan-500/10 ring-1 ring-inset ring-cyan-400/25'
-            : isNextSet
-                ? 'bg-amber-400/12 ring-1 ring-inset ring-amber-300/20'
-                : getRowAccent(setType);
 
     // Q11: stored values are always kg; localWeight holds the DISPLAY value.
     const shownWeight = useCallback((v: string | number | undefined, forUnit: WeightUnit = unit): string | number => {
