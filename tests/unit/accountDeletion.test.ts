@@ -191,12 +191,20 @@ describe('Q21: deleteCloudAccount wipes per-session logs when V2 is on', () => {
         return made;
     };
 
-    it('lists and batch-deletes logs/ before history and the user doc', async () => {
+    it('lists and batch-deletes logs/ and the S5 section collections before history and the user doc', async () => {
         const { firebase, calls } = withLogsApi(['1', '2', '3']);
         await deleteCloudAccount('uid-1', 'a@b.c', 'secret', firebase, { cloudLogsV2: true });
         const order = calls.filter((c) => /^(getDocs|batchDelete|deleteDoc|deleteUser)/.test(c));
         expect(order).toEqual([
             'getDocs:users/uid-1/logs',
+            'batchDelete:3',
+            'getDocs:users/uid-1/nutritionLogs',
+            'batchDelete:3',
+            'getDocs:users/uid-1/bodyLogs',
+            'batchDelete:3',
+            'getDocs:users/uid-1/cardioSessions',
+            'batchDelete:3',
+            'getDocs:users/uid-1/customFoods',
             'batchDelete:3',
             'deleteDoc:users/uid-1/data/history',
             'deleteDoc:users/uid-1',

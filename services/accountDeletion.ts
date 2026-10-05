@@ -78,7 +78,7 @@ const mapReauthError = (err: unknown): AccountDeletionError => {
 /**
  * Deletes the cloud account in the exact safe order:
  * (a) re-authenticate with email+password, (b) with VITE_CLOUD_LOGS_V2=1
- * wipe users/{uid}/logs/* in batches, then delete users/{uid}/data/history
+ * wipe users/{uid}/logs/* and the S5 section collections in batches, then delete users/{uid}/data/history
  * directly, then users/{uid},
  * (c) delete the Auth user.
  *
@@ -116,14 +116,17 @@ export const deleteCloudAccount = async (
     }
 
     try {
-        // Q21: per-session docs first (the rules allow the owner to list
-        // logs/, unlike data/). Flag OFF: never touched, Q2 behavior intact.
+        // Q21/S5: per-item V2 collections first (the rules allow the owner to
+        // list them, unlike data/). Flag OFF: never touched, Q2 behavior intact.
         if (wipeSessionLogs) {
-            const { deleteAllSessionLogsV2 } = await import('./cloudLogsV2');
-            await deleteAllSessionLogsV2(uid, {
+            const { deleteAllInCollection, V2_COLLECTIONS } = await import('./cloudV2Collections');
+            const firestore = {
                 db: firebase.db,
                 api: firebase.firestoreApi as unknown as CloudLogsV2Firestore['api'],
-            });
+            };
+            for (const collection of V2_COLLECTIONS) {
+                await deleteAllInCollection(collection, uid, firestore);
+            }
         }
         // Direct deletes only: history is the sole client-deletable data doc.
         await firebase.firestoreApi.deleteDoc(

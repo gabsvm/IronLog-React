@@ -96,3 +96,49 @@ comportamiento real que fallan sin el cambio, sin dependencias nuevas, sin despl
 - Tests: `webTimerCaveat` (2: visible en web, oculto en nativo, sobre el ProfileSheet real)
   y `restNotifPrompt` +1. Sin el cambio, los 2 tests de comportamiento nuevos fallan.
 - Evidencia: build OK, `test:run` 662/662, `lint:a11y` limpio.
+
+## S5 — Nutrición, peso, cardio y alimentos en la nube sin recortes
+
+### S5a — Bug del recorte (camino actual, SIN flag)
+- `syncService` recortaba con `.slice(-N)` (se queda con los ÚLTIMOS N). `nutritionLogs`
+  se agrega al final (bien), pero `bodyLogs`, `cardioSessions` y `customFoods` se agregan
+  al PRINCIPIO (`NutriView`, `AddMealModal`): pasado el tope (100/60/100) la nube recibía
+  los MÁS VIEJOS y dejaban de sincronizarse los pesajes, cardios y alimentos nuevos.
+- `services/syncCaps.ts`: `keepNewest` conserva los N más recientes por fecha
+  (`date`/`timestamp`/`createdAt`) manteniendo el orden original. Para nutrición el resultado
+  es idéntico a `slice(-60)` (test de oro); arrays bajo el tope, misma referencia.
+
+### S5b — Colecciones por elemento detrás de `VITE_CLOUD_LOGS_V2`
+- `services/cloudCollectionSync.ts`: el motor de Q21 extraído y parametrizado por una
+  especificación de colección (campo id, claves permitidas, sello, orden, marca de migración,
+  fuente legada). `cloudLogsV2.ts` quedó como capa fina con `LOGS_SPEC`; sus 50 tests y los
+  12 de borrado de cuenta pasan SIN cambios (refactor sin cambio de comportamiento).
+- `services/cloudSectionsV2.ts`: specs para `nutritionLogs` (un doc por DÍA, id = fecha),
+  `bodyLogs`, `cardioSessions`, `customFoods`; orden de salida = el de la app. Fuente legada
+  = arrays recortados de `users/{uid}`; el dispositivo aporta su historial completo. Marca
+  por colección: `users/{uid}.collectionsFormat.<sección> = 2` (merge anidado).
+- `cloudLogsIndex.ts`: `createCloudIndexStore(prefix)` (claves de logs idénticas a Q21) +
+  `cloudSectionIndex(colección)`. Ids con `/` se codifican solo en la ruta del documento.
+- `syncService`: con flag ON sube/baja las 4 colecciones (bajada en paralelo con logs) y
+  `adoptCloudSections` (AppContext la llama donde aplica datos de la nube). Los arrays
+  recortados del documento principal se siguen escribiendo (compatibilidad con builds sin flag).
+- Reglas: `collectionsFormat` (map) permitido; `match` para las 4 colecciones, solo dueño,
+  `keys().hasOnly(...)`, `updatedAt is number`, lápidas `deleted == true`, tipos básicos.
+- Borrado de cuenta (flag ON): vacía `logs`, `nutritionLogs`, `bodyLogs`, `cardioSessions`,
+  `customFoods` (lista única `V2_COLLECTIONS`) antes de `data/history` y `users/{uid}`.
+- Tests: `cloudSectionsV2` unit 11 (topes nuevo vs viejo, oro de nutrición, specs: fecha
+  como id y lápida con fecha, orden por sección, ids con `/`, migración de 200 días con nube
+  recortada a 60 → otro dispositivo recibe 200, incremental, marcas por colección, paridad
+  claves cliente↔reglas, `V2_COLLECTIONS` ↔ reglas). `accountDeletion`: la aserción de
+  orden se amplió a las 5 colecciones (cambio de comportamiento buscado). Reglas +2 (18/18).
+  Integración +3 (15/15): flag ON ida y vuelta completa (80/130/70/110) con el documento
+  principal recortado a los más nuevos; flag OFF de oro (sin colecciones, topes con lo más
+  nuevo); borrado de cuenta vacía las 4 colecciones.
+- Fail-proof: sin el cambio de `syncService`, los 2 tests de integración de sincronización
+  fallan; el test unitario del tope muestra que `slice(-100)` perdía el pesaje de hoy.
+- Evidencia: build OK, `test:run` 673/673, `lint:a11y` limpio, `test:rules` 18/18,
+  `test:integration` 15/15, Playwright 45/45, entrada 111,32 → 112,23 KB gzip (+0,8 %,
+  dentro del presupuesto; las specs y el motor van en chunks lazy).
+- Limitación documentada: la nutrición se resuelve por DÍA (si dos dispositivos editan el
+  mismo día a la vez, gana la última escritura de ese día; antes ganaba la del array entero).
+- No verificado: con datos reales (reglas no desplegadas, flag apagado).

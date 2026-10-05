@@ -38,8 +38,71 @@ service cloud.firestore {
         'program', 'activeMeso', 'activeSession', 'config', 'exercises',
         'rpFeedback', 'nutritionLogs', 'cardioSessions', 'bodyLogs',
         'customFoods', 'personalTemplates', 'nutritionGoal', 'macroGoals',
-        'userProfile', 'sectionSyncMeta', 'historyFormat'
+        'userProfile', 'sectionSyncMeta', 'historyFormat', 'collectionsFormat'
       ];
+    }
+
+    // S5: per-item section collections (nutritionLogs / bodyLogs /
+    // cardioSessions / customFoods), only written by VITE_CLOUD_LOGS_V2=1
+    // builds. Key lists MUST match the specs in services/cloudSectionsV2.ts
+    // (a unit test compares them). Live item or tombstone; whole-doc set()s.
+    function itemDocBase(allowed) {
+      let data = request.resource.data;
+      return data.keys().hasOnly(allowed)
+        && data.updatedAt is number
+        && (!('deleted' in data) || data.deleted == true);
+    }
+
+    function nutritionDocAllowedKeys() {
+      return ['date', 'entries', 'waterMl', 'updatedAt', 'deleted'];
+    }
+
+    function bodyDocAllowedKeys() {
+      return ['id', 'date', 'weight', 'bodyFat', 'notes', 'updatedAt', 'deleted'];
+    }
+
+    function cardioDocAllowedKeys() {
+      return [
+        'id', 'date', 'activityType', 'durationMin', 'distanceKm', 'caloriesBurned',
+        'avgHeartRate', 'notes', 'timestamp', 'updatedAt', 'deleted'
+      ];
+    }
+
+    function foodDocAllowedKeys() {
+      return [
+        'id', 'name', 'calories', 'protein', 'carbs', 'fat', 'servingSize',
+        'isFavorite', 'createdAt', 'updatedAt', 'deleted'
+      ];
+    }
+
+    function nutritionDocOk() {
+      let data = request.resource.data;
+      return itemDocBase(nutritionDocAllowedKeys())
+        && data.date is string
+        && (!('entries' in data) || data.entries is list)
+        && (!('waterMl' in data) || data.waterMl is number);
+    }
+
+    function bodyDocOk() {
+      let data = request.resource.data;
+      return itemDocBase(bodyDocAllowedKeys())
+        && (data.id is number || data.id is string)
+        && (!('weight' in data) || data.weight is number)
+        && (!('date' in data) || data.date is number);
+    }
+
+    function cardioDocOk() {
+      let data = request.resource.data;
+      return itemDocBase(cardioDocAllowedKeys())
+        && (data.id is number || data.id is string)
+        && (!('durationMin' in data) || data.durationMin is number);
+    }
+
+    function foodDocOk() {
+      let data = request.resource.data;
+      return itemDocBase(foodDocAllowedKeys())
+        && (data.id is number || data.id is string)
+        && (!('name' in data) || data.name is string);
     }
 
     // Q21: per-session history docs (users/{uid}/logs/{id}), only written by
@@ -94,7 +157,8 @@ service cloud.firestore {
         && (!affected.hasAny(['macroGoals']) || !('macroGoals' in data) || data.macroGoals is map || data.macroGoals == null)
         && (!affected.hasAny(['userProfile']) || !('userProfile' in data) || data.userProfile is map || data.userProfile == null)
         && (!affected.hasAny(['sectionSyncMeta']) || !('sectionSyncMeta' in data) || data.sectionSyncMeta is map)
-        && (!affected.hasAny(['historyFormat']) || !('historyFormat' in data) || data.historyFormat is int);
+        && (!affected.hasAny(['historyFormat']) || !('historyFormat' in data) || data.historyFormat is int)
+        && (!affected.hasAny(['collectionsFormat']) || !('collectionsFormat' in data) || data.collectionsFormat is map);
     }
 
     // -- Per-user data ------------------------------------------------------
@@ -130,7 +194,8 @@ service cloud.firestore {
         && (!('macroGoals' in request.resource.data) || request.resource.data.macroGoals is map || request.resource.data.macroGoals == null)
         && (!('userProfile' in request.resource.data) || request.resource.data.userProfile is map || request.resource.data.userProfile == null)
         && (!('sectionSyncMeta' in request.resource.data) || request.resource.data.sectionSyncMeta is map)
-        && (!('historyFormat' in request.resource.data) || request.resource.data.historyFormat is int);
+        && (!('historyFormat' in request.resource.data) || request.resource.data.historyFormat is int)
+        && (!('collectionsFormat' in request.resource.data) || request.resource.data.collectionsFormat is map);
 
       // Update validates only affected keys (see userUpdateOk): documents
       // with inherited unknown fields stay writable for allowlisted keys.
@@ -159,6 +224,24 @@ service cloud.firestore {
         allow read: if isOwner(uid);
         allow create, update: if isOwner(uid) && sessionDocOk();
         allow delete: if isOwner(uid);
+      }
+
+      // S5: per-item section collections. Owner-only, same shape as logs/.
+      match /nutritionLogs/{itemId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && nutritionDocOk();
+      }
+      match /bodyLogs/{itemId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && bodyDocOk();
+      }
+      match /cardioSessions/{itemId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && cardioDocOk();
+      }
+      match /customFoods/{itemId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && foodDocOk();
       }
 
       match /data/{doc} {

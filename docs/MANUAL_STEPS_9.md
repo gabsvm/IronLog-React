@@ -21,12 +21,15 @@ el teléfono. Seguilos en este orden. El detalle de Firebase está en
 - Q21: agrega `historyFormat` y `users/{uid}/logs/{id}`. Son inofensivas con el flag apagado.
 
 ## 3. Flags de build
-- **`VITE_CLOUD_LOGS_V2`** (historial por sesión, Q21). Apagado por defecto. Para encenderlo:
+- **`VITE_CLOUD_LOGS_V2`** (historial por sesión, Q21; desde S5 también nutrición, peso corporal, cardio y alimentos propios, un documento por elemento y sin recortes). Apagado por defecto. Para encenderlo:
   1. reglas de Q21 ya desplegadas (paso 2);
   2. `VITE_CLOUD_LOGS_V2=1` en `.env` y build nuevo para **todos** tus dispositivos (un
      build viejo seguiría leyendo `data/history`, que con el flag deja de actualizarse);
   3. primer arranque con red: migra `data/history` a `logs/` (no lo borra) y marca
-     `historyFormat: 2` en `users/{uid}`. Comprobalo en la consola.
+     `historyFormat: 2` en `users/{uid}`; las secciones de dieta/peso/cardio/alimentos se
+     copian a `nutritionLogs/`, `bodyLogs/`, `cardioSessions/` y `customFoods/` y se marca
+     `collectionsFormat` (los arrays viejos del documento principal se siguen escribiendo,
+     recortados, para builds sin el flag). Comprobalo en la consola.
   - Volver atrás: apagar el flag y rebuild. `data/history` conserva lo que había al migrar;
     las sesiones nuevas desde entonces solo están en `logs/` (y en el teléfono).
 - **App Check** (`VITE_FIREBASE_APPCHECK_SITE_KEY`, `VITE_FIREBASE_APPCHECK_DEBUG`): seguí

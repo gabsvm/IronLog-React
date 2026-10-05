@@ -575,6 +575,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                             if (cloudData.bodyLogs) setBodyLogs(cloudData.bodyLogs);
                             if (cloudData.macroGoals) setMacroGoals(cloudData.macroGoals);
                             if (cloudData.customFoods) setCustomFoods(cloudData.customFoods);
+                            await syncService.adoptCloudSections(user.uid, cloudData);
                             if (cloudData.personalTemplates) setPersonalTemplates(cloudData.personalTemplates);
 
                             setLocalLastUpdated(cloudData.lastUpdated ?? Date.now());
@@ -723,6 +724,14 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
             if (pendingCloudSections.includes('bodyLogs') && pendingCloudData.bodyLogs) setBodyLogs(pendingCloudData.bodyLogs);
             if (pendingCloudSections.includes('macroGoals') && pendingCloudData.macroGoals) setMacroGoals(pendingCloudData.macroGoals);
             if (pendingCloudSections.includes('customFoods') && pendingCloudData.customFoods) setCustomFoods(pendingCloudData.customFoods);
+            if (user) {
+                await syncService.adoptCloudSections(user.uid, {
+                    nutritionLogs: pendingCloudSections.includes('nutritionLogs') ? pendingCloudData.nutritionLogs : undefined,
+                    cardioSessions: pendingCloudSections.includes('cardioSessions') ? pendingCloudData.cardioSessions : undefined,
+                    bodyLogs: pendingCloudSections.includes('bodyLogs') ? pendingCloudData.bodyLogs : undefined,
+                    customFoods: pendingCloudSections.includes('customFoods') ? pendingCloudData.customFoods : undefined,
+                });
+            }
             if (pendingCloudSections.includes('personalTemplates') && pendingCloudData.personalTemplates) setPersonalTemplates(pendingCloudData.personalTemplates);
 
             setLocalLastUpdated(pendingCloudData.lastUpdated ?? Date.now());

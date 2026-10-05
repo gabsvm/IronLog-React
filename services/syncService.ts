@@ -5,11 +5,17 @@ import { dirtySyncState } from "./dirtySyncState";
 import { cloudSyncCache } from "./cloudSyncCache";
 import { isCloudLogsV2Enabled } from "./cloudLogsV2Flag";
 import type { CloudLogsV2Firestore } from "./cloudLogsV2";
+import { capBodyLogs, capCardioSessions, capCustomFoods, capNutritionLogs } from "./syncCaps";
 
 // Q21: V2 is loaded on demand so the flag-OFF build keeps it off the entry chunk.
 const loadCloudLogsV2 = async () => {
-    const [v2, { cloudLogsIndex }] = await Promise.all([import("./cloudLogsV2"), import("./cloudLogsIndex")]);
-    return { ...v2, cloudLogsIndex };
+    const [v2, indexes, engine, sections] = await Promise.all([
+        import("./cloudLogsV2"),
+        import("./cloudLogsIndex"),
+        import("./cloudCollectionSync"),
+        import("./cloudSectionsV2"),
+    ]);
+    return { ...v2, ...engine, ...sections, cloudLogsIndex: indexes.cloudLogsIndex, cloudSectionIndex: indexes.cloudSectionIndex };
 };
 
 const emitSyncStatus = (detail: Record<string, unknown>) => {
@@ -65,10 +71,13 @@ const uploadStateNow = async (userId: string, state: Partial<AppState> & { email
     if (shouldInclude('config')) rawMainData.config = state.config || {};
     if (shouldInclude('exercises')) rawMainData.exercises = state.exercises || [];
     if (shouldInclude('rpFeedback')) rawMainData.rpFeedback = state.rpFeedback || {};
-    if (shouldInclude('nutritionLogs')) rawMainData.nutritionLogs = (state.nutritionLogs || []).slice(-60);
-    if (shouldInclude('cardioSessions')) rawMainData.cardioSessions = (state.cardioSessions || []).slice(-60);
-    if (shouldInclude('bodyLogs')) rawMainData.bodyLogs = (state.bodyLogs || []).slice(-100);
-    if (shouldInclude('customFoods')) rawMainData.customFoods = (state.customFoods || []).slice(-100);
+    // S5: caps keep the NEWEST items by date (bodyLogs/cardio/foods are stored
+    // newest-first, so the old slice(-N) kept the oldest). Still written with
+    // V2 on, so builds without the flag keep seeing recent data.
+    if (shouldInclude('nutritionLogs')) rawMainData.nutritionLogs = capNutritionLogs(state.nutritionLogs);
+    if (shouldInclude('cardioSessions')) rawMainData.cardioSessions = capCardioSessions(state.cardioSessions);
+    if (shouldInclude('bodyLogs')) rawMainData.bodyLogs = capBodyLogs(state.bodyLogs);
+    if (shouldInclude('customFoods')) rawMainData.customFoods = capCustomFoods(state.customFoods);
     if (shouldInclude('personalTemplates')) rawMainData.personalTemplates = state.personalTemplates || [];
     if (shouldInclude('nutritionGoal')) rawMainData.nutritionGoal = state.nutritionGoal || null;
     if (shouldInclude('macroGoals')) rawMainData.macroGoals = state.macroGoals || null;
@@ -104,15 +113,20 @@ const uploadStateNow = async (userId: string, state: Partial<AppState> & { email
     }
 
     await batch.commit();
-    if (useLogsV2 && shouldInclude('logs') && state.logs) {
-        const { uploadSessionLogsV2, cloudLogsIndex } = await loadCloudLogsV2();
-        await uploadSessionLogsV2({
-            userId,
-            logs: state.logs,
-            firestore: { db, api: firestoreApi } as unknown as CloudLogsV2Firestore,
-            indexStore: cloudLogsIndex,
-            now: Date.now(),
-        });
+    if (useLogsV2) {
+        const v2 = await loadCloudLogsV2();
+        const firestore = { db, api: firestoreApi } as unknown as CloudLogsV2Firestore;
+        const now = Date.now();
+        if (shouldInclude('logs') && state.logs) {
+            await v2.uploadSessionLogsV2({ userId, logs: state.logs, firestore, indexStore: v2.cloudLogsIndex, now });
+        }
+        // S5: full (uncapped) per-item collections.
+        for (const section of v2.CLOUD_SECTIONS_V2) {
+            const items = state[section];
+            if (!shouldInclude(section) || !Array.isArray(items)) continue;
+            const spec = v2.SECTION_SPECS[section];
+            await v2.uploadCollection(spec, { userId, items, firestore, indexStore: v2.cloudSectionIndex(spec.collection), now });
+        }
     }
     await dirtySyncState.clear(sections);
 };
@@ -134,6 +148,28 @@ export const syncService = {
             await adoptSessionLogsV2(userId, logs, cloudLogsIndex);
         } catch (error) {
             console.warn("Cloud logs adoption bookkeeping failed:", error);
+        }
+    },
+
+    /**
+     * S5: same as adoptCloudLogs for the V2 section collections the app just
+     * applied from the cloud (only the sections present in `applied`).
+     */
+    adoptCloudSections: async (
+        userId: string,
+        applied: Partial<Pick<AppState, 'nutritionLogs' | 'bodyLogs' | 'cardioSessions' | 'customFoods'>>,
+    ) => {
+        if (!isCloudLogsV2Enabled() || !userId) return;
+        try {
+            const v2 = await loadCloudLogsV2();
+            for (const section of v2.CLOUD_SECTIONS_V2) {
+                const items = applied[section];
+                if (!Array.isArray(items)) continue;
+                const spec = v2.SECTION_SPECS[section];
+                await v2.adoptItems(spec, userId, items, v2.cloudSectionIndex(spec.collection));
+            }
+        } catch (error) {
+            console.warn("Cloud sections adoption bookkeeping failed:", error);
         }
     },
 
@@ -218,16 +254,43 @@ export const syncService = {
             const data = userSnap.data();
             const safeActiveMeso = deserializeMeso(data.activeMeso);
             let logsData;
+            // S5: with V2 on, the four array sections come from their own
+            // collections (complete history) instead of the capped arrays.
+            const sectionData: Record<string, unknown> = {
+                nutritionLogs: data.nutritionLogs,
+                cardioSessions: data.cardioSessions,
+                bodyLogs: data.bodyLogs,
+                customFoods: data.customFoods,
+            };
             if (isCloudLogsV2Enabled()) {
                 // Q21: delta pull over the last downloaded snapshot.
                 const cached = await cloudSyncCache.read(userId);
-                const { downloadSessionLogsV2, cloudLogsIndex } = await loadCloudLogsV2();
-                logsData = await downloadSessionLogsV2({
-                    userId,
-                    firestore: { db, api: firestoreApi } as unknown as CloudLogsV2Firestore,
-                    indexStore: cloudLogsIndex,
-                    cachedLogs: Array.isArray(cached?.logs) ? cached.logs : undefined,
-                    now: Date.now(),
+                const v2 = await loadCloudLogsV2();
+                const firestore = { db, api: firestoreApi } as unknown as CloudLogsV2Firestore;
+                const now = Date.now();
+                const [logsResult, ...sectionResults] = await Promise.all([
+                    v2.downloadSessionLogsV2({
+                        userId,
+                        firestore,
+                        indexStore: v2.cloudLogsIndex,
+                        cachedLogs: Array.isArray(cached?.logs) ? cached.logs : undefined,
+                        now,
+                    }),
+                    ...v2.CLOUD_SECTIONS_V2.map((section) => {
+                        const spec = v2.SECTION_SPECS[section];
+                        const cachedItems = (cached as Record<string, unknown> | null)?.[section];
+                        return v2.downloadCollection(spec, {
+                            userId,
+                            firestore,
+                            indexStore: v2.cloudSectionIndex(spec.collection),
+                            cachedItems: Array.isArray(cachedItems) ? cachedItems : undefined,
+                            now,
+                        });
+                    }),
+                ]);
+                logsData = logsResult;
+                v2.CLOUD_SECTIONS_V2.forEach((section, i) => {
+                    sectionData[section] = sectionResults[i];
                 });
             } else {
                 const logsRef = firestoreApi.doc(db, "users", userId, "data", "history");
@@ -243,12 +306,12 @@ export const syncService = {
                 exercises: data.exercises,
                 rpFeedback: data.rpFeedback,
                 userProfile: data.userProfile,
-                nutritionLogs: data.nutritionLogs,
-                cardioSessions: data.cardioSessions,
+                nutritionLogs: sectionData.nutritionLogs as CloudSyncSnapshot['nutritionLogs'],
+                cardioSessions: sectionData.cardioSessions as CloudSyncSnapshot['cardioSessions'],
                 nutritionGoal: data.nutritionGoal,
-                bodyLogs: data.bodyLogs,
+                bodyLogs: sectionData.bodyLogs as CloudSyncSnapshot['bodyLogs'],
                 macroGoals: data.macroGoals,
-                customFoods: data.customFoods,
+                customFoods: sectionData.customFoods as CloudSyncSnapshot['customFoods'],
                 personalTemplates: data.personalTemplates,
                 logs: logsData,
                 lastUpdated: data.lastUpdated || Date.now(),
