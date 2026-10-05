@@ -74,6 +74,12 @@ describe('G6: one-time notification opt-in after the first completed rest', () =
         expect(window.localStorage.getItem('il_notif_prompted')).toBe('1');
     });
 
+    it('S4: the prompt warns that web alerts are unreliable with the screen off', () => {
+        render(<RestTimerOverlay />);
+        completeRest();
+        expect(screen.getByText(TRANSLATIONS.es.notifWebCaveat)).toBeInTheDocument();
+    });
+
     it('"Ahora no" dismisses it and it never shows again', () => {
         render(<RestTimerOverlay />);
         completeRest();

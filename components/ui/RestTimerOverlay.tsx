@@ -370,6 +370,7 @@ export const RestTimerOverlay: React.FC = () => {
         <div role="status" className="fixed inset-x-0 z-sheet mx-auto max-w-md px-3 pointer-events-none" style={{ bottom: 'calc(var(--safe-area-bottom) + 80px + var(--rest-pill-height, 0px) + 16px)' }}>
             <div className="pointer-events-auto rounded-2xl border border-border-strong bg-surface-raised/95 p-3 shadow-xl backdrop-blur-md">
                 <p className="text-xs font-medium text-zinc-100">{t.notifPromptTitle}</p>
+                <p className="mt-1 text-[11px] text-muted">{t.notifWebCaveat}</p>
                 <div className="mt-2 grid grid-cols-2 gap-2">
                     <button
                         type="button"

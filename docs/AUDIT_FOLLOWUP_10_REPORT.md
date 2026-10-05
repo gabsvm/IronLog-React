@@ -84,3 +84,15 @@ comportamiento real que fallan sin el cambio, sin dependencias nuevas, sin despl
   INSTALADA desde Chrome (el e2e simula el POST que hace el sistema). La app Capacitor no
   usa el manifiesto: recibir CSV en la app nativa requeriría un intent-filter `SEND` en
   Android (no incluido). Observación: en escritorio el layout se estira a todo el ancho.
+
+## S4 — Aviso honesto sobre el temporizador en la web
+
+- Límite real (sin arreglo sin un servidor de push): en la PWA el aviso de fin de descanso
+  solo sale si el JS sigue vivo, y Android congela la PWA con la pantalla apagada. La app
+  Android no tiene el problema (AlarmManager, Q8/Q9).
+- `notifWebCaveat` (es/en) se muestra: (1) en Perfil → Entrenamiento, bajo la fila de
+  notificaciones del descanso, solo fuera de la app nativa; (2) en el aviso único que
+  ofrece las notificaciones tras el primer descanso.
+- Tests: `webTimerCaveat` (2: visible en web, oculto en nativo, sobre el ProfileSheet real)
+  y `restNotifPrompt` +1. Sin el cambio, los 2 tests de comportamiento nuevos fallan.
+- Evidencia: build OK, `test:run` 662/662, `lint:a11y` limpio.

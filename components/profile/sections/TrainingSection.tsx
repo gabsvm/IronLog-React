@@ -275,6 +275,10 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                         <div className="flex flex-col pr-2">
                             <span className="text-sm font-medium text-white">{t.restNotifications}</span>
                             <span className="text-[10px] text-muted">{t.restNotificationsDesc}</span>
+                            {/* S4: be honest about web timers (frozen with the screen off). */}
+                            {!Capacitor.isNativePlatform() && (
+                                <span data-testid="web-timer-caveat" className="mt-1 text-[10px] text-amber-400/90">{t.notifWebCaveat}</span>
+                            )}
                         </div>
                         <button
                             type="button"
