@@ -1,4 +1,10 @@
 import '@testing-library/jest-dom';
+import { configure } from '@testing-library/react';
+
+// T4: findBy*/waitFor default to 1 s. Under the full parallel suite a Stats
+// render occasionally needed longer (statsMerge flaked once). More time, same
+// assertions. (The single detectPRs flake does not use waitFor; see report 11.)
+configure({ asyncUtilTimeout: 3000 });
 import 'fake-indexeddb/auto';
 import { loadTranslations } from '../constants/translations';
 

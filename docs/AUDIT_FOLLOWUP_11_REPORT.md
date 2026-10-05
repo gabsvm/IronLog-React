@@ -68,3 +68,24 @@ suite completa. Se trata en T4.
 - Evidencia: build OK, `test:run` 689/689, `lint:a11y` limpio, bundle WITHIN BUDGET (entrada
   81,22 KB), Playwright 47/47.
 - Pendiente en dispositivo: compartir un CSV real desde Hevy/Strong a la app instalada.
+
+## T4 — eslint en cero y tests intermitentes
+
+- Los 4 errores que se arrastraban desde antes de la serie S:
+  - `trackDirtySection` (AppContext) era una función común que llamaba a `useEffect`
+    (rules-of-hooks + 2 de exhaustive-deps). Ahora es un hook real,
+    `context/app/useDirtySection.ts`, con su contexto explícito (`DirtyTrackingContext`); las
+    14 llamadas de `useAppBootstrapEffects` pasaron a `useDirtySection(...)` en el mismo orden.
+    El reenvío de la lista de dependencias es intencional y queda anotado en esa única línea.
+    Test nuevo `dirtySection` (3: arma y luego marca; no hace nada cargando / sin chequeo de
+    nube / suprimido; re-renders sin cambios no marcan).
+  - `useStatsWorker`: la limpieza leía `pendingRef.current`; ahora lo captura dentro del efecto
+    (el Map se crea una vez y nunca se reasigna: mismo objeto).
+- `npm run lint` nuevo (todo el código fuente: components, views, context, hooks, services,
+  utils, data, constants, lib, programs, App, index) → **0 problemas**, y forma parte de
+  `npm run verify` para que no vuelvan a acumularse.
+- Tests intermitentes: `tests/setup.ts` sube el timeout de `findBy*`/`waitFor` a 3 s (cubre el
+  fallo único de `statsMerge`, que espera un render de Stats bajo carga). El fallo único de
+  `detectPRs` (S7) no usa `waitFor` y no se pudo reproducir: sin cambios, queda anotado.
+- Evidencia: `verify` OK (lint + build estricto + 689 tests + validate-kong + bundle),
+  `test:run` 3 corridas seguidas verdes, Playwright 47/47.

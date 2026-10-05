@@ -12,6 +12,7 @@ import { SyncMetaContextType, SyncStatusContextType, AppContext, SyncMetaContext
 import { useDefaultsBootstrap } from './app/useDefaultsBootstrap';
 import { useAppBootstrapEffects } from './app/useAppBootstrapEffects';
 import { useLanguage } from './app/useLanguage';
+import type { DirtyTrackingContext } from './app/useDirtySection';
 import { useInitialCloudDownload } from './app/useInitialCloudDownload';
 import { useCloudUploads } from './app/useCloudUploads';
 import { useThemeAndWakeLock } from './app/useThemeAndWakeLock';
@@ -130,19 +131,9 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     const suppressDirtyRef = useRef(false);
     const foregroundFlushRef = useRef(false);
 
-    const trackDirtySection = (section: DirtySyncSection, deps: React.DependencyList) => {
-        useEffect(() => {
-            if (isAppLoading || !hasCheckedSync || suppressDirtyRef.current) return;
-
-            if (!dirtyInitRef.current.has(section)) {
-                dirtyInitRef.current.add(section);
-                return;
-            }
-
-            const now = Date.now();
-            setLocalSectionSyncMeta(prev => ({ ...prev, [section]: now }));
-            void dirtySyncState.mark([section]);
-        }, deps);
+    // T4: context for useDirtySection (dirty tracking per synced section).
+    const dirtyTracking: DirtyTrackingContext = {
+        isAppLoading, hasCheckedSync, suppressDirtyRef, dirtyInitRef, setLocalSectionSyncMeta,
     };
 
     const withDirtyTrackingSuppressed = async (callback: () => void | Promise<void>) => {
@@ -215,7 +206,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         activeMeso,
         isAppLoading,
         foregroundFlushRef,
-        trackDirtySection,
+        dirtyTracking,
     });
 
     useInitialCloudDownload({

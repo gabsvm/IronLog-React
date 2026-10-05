@@ -48,10 +48,12 @@ export const useStatsWorker = () => {
     }, []);
 
     useEffect(() => {
+        // The pending map is created once and never reassigned; capture it for cleanup.
+        const pending = pendingRef.current;
         return () => {
             workerRef.current?.terminate();
             workerRef.current = null;
-            pendingRef.current.clear();
+            pending.clear();
             lastLogsRef.current = null;
         };
     }, []);

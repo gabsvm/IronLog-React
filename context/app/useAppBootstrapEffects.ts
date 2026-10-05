@@ -1,4 +1,5 @@
 // S6: global data fetch, PWA install, connectivity/sync listeners, effects mode, dirty tracking and installApp, moved verbatim from context/AppContext.tsx.
+import { useDirtySection, type DirtyTrackingContext } from './useDirtySection';
 import { useEffect, useCallback } from 'react';
 import { EffectsMode, ResolvedEffects, ExerciseDef, MesoCycle, Log, ProgramDay, GlobalTemplate, UserProfile, BeforeInstallPromptEvent, NutritionLog, CardioSession, NutritionGoal, MacroGoals, BodyLog, CustomFood, DirtySyncSection, WeightUnit } from '../../types';
 import { resolveEffectsMode } from '../../utils/effectsProfile';
@@ -46,7 +47,7 @@ export interface UseAppBootstrapEffectsDeps {
     activeMeso: MesoCycle;
     isAppLoading: boolean;
     foregroundFlushRef: MutableRefObject<boolean>;
-    trackDirtySection: (section: DirtySyncSection, deps: DependencyList) => void;
+    dirtyTracking: DirtyTrackingContext;
 }
 
 /** S6: global data fetch, PWA install, connectivity/sync listeners, effects mode, dirty tracking and installApp (moved verbatim from AppProvider; same hook order). */
@@ -86,7 +87,7 @@ export const useAppBootstrapEffects = ({
     activeMeso,
     isAppLoading,
     foregroundFlushRef,
-    trackDirtySection,
+    dirtyTracking,
 }: UseAppBootstrapEffectsDeps) => {
     // --- FETCH GLOBAL DATA ---
     useEffect(() => {
@@ -274,20 +275,20 @@ export const useAppBootstrapEffects = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- S6: dependency list moved verbatim from AppProvider; the omitted names are useState setters/refs (stable) or the per-render withDirtyTrackingSuppressed, exactly as before.
     }, [effectsMode]);
 
-    trackDirtySection('program', [program, isAppLoading, hasCheckedSync]);
-    trackDirtySection('activeMeso', [activeMeso, isAppLoading, hasCheckedSync]);
-    trackDirtySection('exercises', [exercises, isAppLoading, hasCheckedSync]);
-    trackDirtySection('logs', [logs, isAppLoading, hasCheckedSync]);
-    trackDirtySection('config', [showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, isAppLoading, hasCheckedSync]);
-    trackDirtySection('rpFeedback', [rpFeedback, isAppLoading, hasCheckedSync]);
-    trackDirtySection('userProfile', [userProfile, isAppLoading, hasCheckedSync]);
-    trackDirtySection('nutritionLogs', [nutritionLogs, isAppLoading, hasCheckedSync]);
-    trackDirtySection('cardioSessions', [cardioSessions, isAppLoading, hasCheckedSync]);
-    trackDirtySection('nutritionGoal', [nutritionGoal, isAppLoading, hasCheckedSync]);
-    trackDirtySection('bodyLogs', [bodyLogs, isAppLoading, hasCheckedSync]);
-    trackDirtySection('macroGoals', [macroGoals, isAppLoading, hasCheckedSync]);
-    trackDirtySection('customFoods', [customFoods, isAppLoading, hasCheckedSync]);
-    trackDirtySection('personalTemplates', [personalTemplates, isAppLoading, hasCheckedSync]);
+    useDirtySection('program', [program, isAppLoading, hasCheckedSync], dirtyTracking);
+    useDirtySection('activeMeso', [activeMeso, isAppLoading, hasCheckedSync], dirtyTracking);
+    useDirtySection('exercises', [exercises, isAppLoading, hasCheckedSync], dirtyTracking);
+    useDirtySection('logs', [logs, isAppLoading, hasCheckedSync], dirtyTracking);
+    useDirtySection('config', [showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, isAppLoading, hasCheckedSync], dirtyTracking);
+    useDirtySection('rpFeedback', [rpFeedback, isAppLoading, hasCheckedSync], dirtyTracking);
+    useDirtySection('userProfile', [userProfile, isAppLoading, hasCheckedSync], dirtyTracking);
+    useDirtySection('nutritionLogs', [nutritionLogs, isAppLoading, hasCheckedSync], dirtyTracking);
+    useDirtySection('cardioSessions', [cardioSessions, isAppLoading, hasCheckedSync], dirtyTracking);
+    useDirtySection('nutritionGoal', [nutritionGoal, isAppLoading, hasCheckedSync], dirtyTracking);
+    useDirtySection('bodyLogs', [bodyLogs, isAppLoading, hasCheckedSync], dirtyTracking);
+    useDirtySection('macroGoals', [macroGoals, isAppLoading, hasCheckedSync], dirtyTracking);
+    useDirtySection('customFoods', [customFoods, isAppLoading, hasCheckedSync], dirtyTracking);
+    useDirtySection('personalTemplates', [personalTemplates, isAppLoading, hasCheckedSync], dirtyTracking);
 
     const installApp = useCallback(async () => {
         const promptEvent = deferredPrompt || window.deferredPrompt;
