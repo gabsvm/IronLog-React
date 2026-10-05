@@ -5,7 +5,6 @@ import '@fontsource-variable/inter';
 import './index.css';
 import './native-performance.css';
 import App from './App';
-import { requestBackgroundSync, requestPeriodicSync } from './services/backgroundSync';
 import { resetLocalData } from './services/localDataReset';
 import { isServiceWorkerAllowed } from './utils/serviceWorker';
 import { useStore } from './lib/store';
@@ -59,9 +58,6 @@ const registerServiceWorker = () => {
               }
             });
           });
-
-          void requestBackgroundSync();
-          void requestPeriodicSync();
         })
         .catch((error) => {
           console.warn('ServiceWorker registration skipped:', error.message);
@@ -103,20 +99,6 @@ if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('ironlog:update-available', {
       detail: { registration: null, isPreloadError: true }
     }));
-  });
-}
-
-if (!isNativeShell) {
-  window.addEventListener('online', () => {
-    void requestBackgroundSync();
-    void requestPeriodicSync();
-  });
-
-  window.addEventListener('ironlog:sync-queue-changed', (event) => {
-    const pending = Number((event as CustomEvent).detail?.pending ?? 0);
-    if (pending > 0) {
-      void requestBackgroundSync();
-    }
   });
 }
 

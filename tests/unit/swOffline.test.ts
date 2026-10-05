@@ -305,3 +305,10 @@ describe('Service Worker (real public/sw.js in vm)', () => {
         expect((await cache.match(`${ORIGIN}/assets/app.js`)).body).toBe('fresh asset');
     });
 });
+
+describe('S1: service worker registers only live handlers', () => {
+    it('no push / sync / periodicsync handlers (nothing subscribes or registers them)', () => {
+        const sw = loadRealServiceWorker(async () => makeResponse('ok'));
+        expect([...sw.listeners.keys()].sort()).toEqual(['activate', 'fetch', 'install', 'message', 'notificationclick']);
+    });
+});

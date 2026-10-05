@@ -1,6 +1,5 @@
 import { AppState, DirtySyncSection, SyncQueueEntry } from '../types';
 import { db } from '../utils/db';
-import { requestBackgroundSync } from './backgroundSync';
 
 const SYNC_QUEUE_KEY = 'il_sync_queue_v1';
 const SYNC_QUEUE_EVENT = 'ironlog:sync-queue-changed';
@@ -78,9 +77,6 @@ const compactQueue = (queue: SyncQueueEntry[]) =>
 
 const persistQueue = async (entries: SyncQueueEntry[]) => {
     await writeQueue(entries);
-    if (entries.length > 0) {
-        void requestBackgroundSync();
-    }
 };
 
 export const offlineSyncQueue = {

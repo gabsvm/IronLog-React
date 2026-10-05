@@ -216,31 +216,8 @@ self.addEventListener('fetch', (event) => {
   }
 });
 
-self.addEventListener('push', (event) => {
-  const data = event.data?.json() || {};
-  const title = data.title || 'GainsLab';
-  const body = data.body || 'Rest finished. Ready for the next set.';
-
-  event.waitUntil(
-    self.registration.showNotification(title, {
-      body,
-      icon: '/icon-192.png',
-      badge: '/icon-192.png',
-      vibrate: [200, 100, 200],
-      tag: 'gainslab-timer',
-      renotify: true,
-      data: { url: data.url || '/' },
-      actions: [
-        { action: 'open', title: 'Open workout' },
-        { action: 'dismiss', title: 'Dismiss' },
-      ],
-    })
-  );
-});
-
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  if (event.action === 'dismiss') return;
 
   const targetUrl = event.notification.data?.url || '/';
   event.waitUntil(
@@ -250,30 +227,6 @@ self.addEventListener('notificationclick', (event) => {
       return clients.openWindow(targetUrl);
     })
   );
-});
-
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'sync-workouts') {
-    event.waitUntil(
-      clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) =>
-        Promise.all(
-          clientList.map((client) => client.postMessage({ type: 'FLUSH_SYNC_QUEUE' }))
-        )
-      )
-    );
-  }
-});
-
-self.addEventListener('periodicsync', (event) => {
-  if (event.tag === 'update-workouts-data') {
-    event.waitUntil(
-      clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) =>
-        Promise.all(
-          clientList.map((client) => client.postMessage({ type: 'FLUSH_SYNC_QUEUE' }))
-        )
-      )
-    );
-  }
 });
 
 self.addEventListener('message', (event) => {

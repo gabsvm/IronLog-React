@@ -26,8 +26,7 @@ Object.assign((globalThis as any).window, {
     localStorage: localStorageStub,
     _lastSyncedId: undefined,
 });
-// Note: no navigator stub. Node's native navigator has no serviceWorker, so
-// backgroundSync correctly no-ops; globalThis.navigator is read-only in Node.
+// Note: no navigator stub; globalThis.navigator is read-only in Node.
 
 export const emulatorsRunning =
     !!process.env.FIRESTORE_EMULATOR_HOST && !!process.env.FIREBASE_AUTH_EMULATOR_HOST;
