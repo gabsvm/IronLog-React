@@ -61,9 +61,6 @@ export default defineConfig(() => {
             if (moduleId.includes('/node_modules/framer-motion') || moduleId.includes('/node_modules/motion')) {
               return 'vendor-motion';
             }
-            if (moduleId.includes('/node_modules/date-fns')) {
-              return 'vendor-date';
-            }
             if (moduleId.includes('/node_modules/chart.js') || moduleId.includes('/node_modules/react-chartjs-2')) {
               return 'vendor-charts';
             }
