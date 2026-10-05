@@ -21,6 +21,8 @@ import { useStore } from './lib/store';
 
 // Q20: the rest pill only renders during an active rest; the timer engine itself
 // runs in TimerProvider, so deferring the overlay keeps it out of the entry chunk.
+// S3: only loaded when the PWA was launched with a shared/opened CSV.
+const SharedCsvImport = React.lazy(() => import('./components/app/SharedCsvImport').then((module) => ({ default: module.SharedCsvImport })));
 const RestTimerOverlay = React.lazy(() => import('./components/ui/RestTimerOverlay').then((module) => ({ default: module.RestTimerOverlay })));
 
 export const VIEW_LOADERS: Partial<Record<string, () => Promise<any>>> = {
@@ -71,6 +73,10 @@ const AppContent = () => {
 
     const [view, setViewState] = useState<'home' | 'workout' | 'history' | 'exercises' | 'program' | 'stats' | 'summary' | 'nutrition'>('home');
     const [completedWorkoutLog, setCompletedWorkoutLog] = useState<any>(null);
+    // S3: launched from the share sheet / "Open with" with a CSV (read once at mount).
+    const [sharedCsvLaunch] = useState(
+        () => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('action') === 'import-csv'
+    );
     const [showResetModal, setShowResetModal] = useState(false);
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
@@ -342,6 +348,12 @@ const AppContent = () => {
             <React.Suspense fallback={null}>
                 <RestTimerOverlay />
             </React.Suspense>
+
+            {sharedCsvLaunch && (
+                <React.Suspense fallback={null}>
+                    <SharedCsvImport ready={!isAppLoading} onImported={() => setView('history')} />
+                </React.Suspense>
+            )}
 
             {/* Q18: all modal dialogs live in components/app/AppModals. */}
             <AppModals

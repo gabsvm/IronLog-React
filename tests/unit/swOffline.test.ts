@@ -312,3 +312,64 @@ describe('S1: service worker registers only live handlers', () => {
         expect([...sw.listeners.keys()].sort()).toEqual(['activate', 'fetch', 'install', 'message', 'notificationclick']);
     });
 });
+
+describe('S3: share_target handler in the real service worker', () => {
+    const manifest = JSON.parse(readFileSync(resolve(process.cwd(), 'public/manifest.json'), 'utf8'));
+
+    const postShare = async (sw: ReturnType<typeof loadRealServiceWorker>, form: Map<string, unknown>) => {
+        let responded: Promise<any> | null = null;
+        sw.listeners.get('fetch')!({
+            request: {
+                url: `${ORIGIN}${manifest.share_target.action}`,
+                method: 'POST',
+                mode: 'navigate',
+                formData: async () => ({ get: (k: string) => form.get(k) ?? null }),
+            },
+            respondWith: (p: Promise<any>) => {
+                responded = Promise.resolve(p);
+            },
+            waitUntil: () => {},
+        });
+        expect(responded).not.toBeNull();
+        return responded!;
+    };
+
+    it('stores the shared CSV and redirects to the import action', async () => {
+        const sw = loadRealServiceWorker(async () => makeResponse('ok'));
+        const file = { name: 'hevy.csv', size: 20, text: async () => 'title,start_time\nA,B\n' };
+        const res = await postShare(sw, new Map([[manifest.share_target.params.files[0].name, file]]));
+        expect(res.status).toBe(303);
+        expect(res.headers.get('location')).toBe(`${ORIGIN}/?action=import-csv`);
+        const share = await sw.cachesMock.open('gainslab-share-v1');
+        const stored = await share.match('/__shared-csv__');
+        expect(stored).toBeTruthy();
+        const body = JSON.parse(typeof stored.text === 'function' ? await stored.text() : stored.body);
+        expect(body).toMatchObject({ name: 'hevy.csv', text: 'title,start_time\nA,B\n' });
+    });
+
+    it('activate purges old shell caches but keeps a pending shared file', async () => {
+        const sw = loadRealServiceWorker(async () => makeResponse('ok'));
+        await sw.cachesMock.open('gainslab-pro-old-build');
+        await sw.cachesMock.open('gainslab-share-v1');
+        let pending: Promise<unknown> | null = null;
+        sw.listeners.get('activate')!({ waitUntil: (p: Promise<unknown>) => { pending = p; } });
+        await pending;
+        const names = await sw.cachesMock.keys();
+        expect(names).toContain('gainslab-share-v1');
+        expect(names).not.toContain('gainslab-pro-old-build');
+    });
+
+    it('redirects with an error marker when no file arrives', async () => {
+        const sw = loadRealServiceWorker(async () => makeResponse('ok'));
+        const res = await postShare(sw, new Map());
+        expect(res.headers.get('location')).toBe(`${ORIGIN}/?action=import-csv&error=share`);
+    });
+
+    it('manifest share_target / file_handlers / shortcuts point at handled actions', () => {
+        expect(manifest.share_target).toMatchObject({ method: 'POST', enctype: 'multipart/form-data', action: '/share-target' });
+        expect(manifest.file_handlers[0].action).toContain('action=import-csv');
+        const actions = manifest.shortcuts.map((s: { url: string }) => new URL(s.url, ORIGIN).searchParams.get('action'));
+        expect(actions).toEqual(['start', 'nutrition', 'history']);
+        expect(manifest.screenshots.some((s: { form_factor: string }) => s.form_factor === 'wide')).toBe(true);
+    });
+});

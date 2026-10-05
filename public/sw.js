@@ -93,13 +93,42 @@ self.addEventListener('install', (event) => {
   );
 });
 
+// S3: files shared to the installed PWA (manifest share_target, POST
+// multipart) wait here until the app consumes them (utils/sharedCsv.ts).
+// Kept across SW updates: activate never deletes this cache.
+const SHARE_CACHE = 'gainslab-share-v1';
+const SHARE_KEY = '/__shared-csv__';
+const SHARE_TARGET_PATH = '/share-target';
+const SHARE_MAX_BYTES = 10 * 1024 * 1024;
+
+const handleShareTarget = async (request) => {
+  try {
+    const form = await request.formData();
+    const file = form.get('file');
+    if (file && typeof file.text === 'function' && (file.size || 0) <= SHARE_MAX_BYTES) {
+      const text = await file.text();
+      const cache = await caches.open(SHARE_CACHE);
+      await cache.put(
+        SHARE_KEY,
+        new Response(JSON.stringify({ name: file.name || 'shared.csv', text, receivedAt: Date.now() }), {
+          headers: { 'Content-Type': 'application/json' },
+        })
+      );
+      return Response.redirect(new URL('/?action=import-csv', self.location.origin).href, 303);
+    }
+  } catch (_) {
+    // Fall through: open the app normally, nothing to import.
+  }
+  return Response.redirect(new URL('/?action=import-csv&error=share', self.location.origin).href, 303);
+};
+
 self.addEventListener('activate', (event) => {
   self.clients.claim();
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(
         keys.map((key) => {
-          if (key !== CACHE_NAME) {
+          if (key !== CACHE_NAME && key !== SHARE_CACHE) {
             return caches.delete(key);
           }
           return Promise.resolve(false);
@@ -192,6 +221,15 @@ const staleWhileRevalidate = async (request, event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
+
+  if (
+    request.method === 'POST' &&
+    url.origin === self.location.origin &&
+    url.pathname === SHARE_TARGET_PATH
+  ) {
+    event.respondWith(handleShareTarget(request));
+    return;
+  }
 
   if (
     request.method !== 'GET' ||

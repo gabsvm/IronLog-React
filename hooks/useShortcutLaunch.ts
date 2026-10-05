@@ -101,8 +101,12 @@ export const useShortcutLaunch = ({
             const cleanUrl = window.location.pathname;
             window.history.replaceState({}, document.title, cleanUrl);
             runStartAction();
+        } else if (action === 'nutrition' || action === 'history') {
+            // S3: manifest shortcuts "Registrar comida" / "Historial".
+            window.history.replaceState({}, document.title, window.location.pathname);
+            setView(action);
         }
-    }, [isAppLoading, runStartAction]);
+    }, [isAppLoading, runStartAction, setView]);
 
     // Q17: widget taps run the same start flow (cold mount + warm resume).
     useWidgetLaunchAction(!isAppLoading, runStartAction);

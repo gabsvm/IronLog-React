@@ -162,6 +162,8 @@ export const TRANSLATIONS = {
             errorUnknown: "Unrecognized format (expected a Hevy or Strong export).",
             errorEmpty: "The file is empty.",
             errorRead: "Could not read the file.",
+            sharedError: "The shared file could not be opened. Try Profile → Data → Import CSV.",
+            dismiss: "Dismiss",
         },
         reminders: {
             title: "Reminders",
@@ -1269,6 +1271,8 @@ export const TRANSLATIONS = {
             errorUnknown: "Formato no reconocido (se esperaba Hevy o Strong).",
             errorEmpty: "El archivo está vacío.",
             errorRead: "No se pudo leer el archivo.",
+            sharedError: "No se pudo abrir el archivo compartido. Probá en Perfil → Datos → Importar CSV.",
+            dismiss: "Cerrar",
         },
         reminders: {
             title: "Recordatorios",

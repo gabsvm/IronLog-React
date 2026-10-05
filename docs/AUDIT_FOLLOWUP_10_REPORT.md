@@ -47,3 +47,40 @@ comportamiento real que fallan sin el cambio, sin dependencias nuevas, sin despl
 - No se tocaron `utils.ts` / `constants.ts` de la raíz: son reexportaciones usadas por
   15 archivos.
 - Evidencia: build OK, `test:run` 649/649, `lint:a11y` limpio (sin cambios de código de la app).
+
+## S3 — Manifiesto en español, atajos, captura ancha y recibir CSV desde "Compartir"
+
+- `public/manifest.json`:
+  - Atajos en español: "Iniciar entreno" (`?action=start`), nuevos "Registrar comida"
+    (`?action=nutrition`) e "Historial" (`?action=history`); `useShortcutLaunch` abre esas
+    vistas y limpia la query.
+  - Etiquetas de capturas en español + nueva `screenshot-wide.png` (1280×800,
+    `form_factor: wide`, 55 KB) para la ventana de instalación en escritorio. Generada con
+    Playwright sobre el dev server con datos sembrados (biblioteca real, sin datos personales).
+  - `share_target` (POST multipart, `file` acepta text/csv, .csv, text/plain) y
+    `file_handlers` (`.csv` → `/?action=import-csv&source=file`).
+- `public/sw.js`: `POST /share-target` → guarda `{name, text}` en el caché
+  `gainslab-share-v1` (máx. 10 MB) → `303` a `/?action=import-csv` (con `&error=share` si
+  no llegó archivo). `activate` no borra ese caché. Redirecciones con URL absoluta.
+- `utils/sharedCsv.ts`: `consumeSharedCsvLaunch` (lee y BORRA el archivo una sola vez,
+  limpia la query para que recargar no reimporte) y `subscribeFileHandlerLaunches`
+  (`launchQueue`, Chromium de escritorio).
+- `components/profile/useCsvImportFlow.ts`: el flujo de importación de Q12 extraído tal cual
+  de `DataSection` (que ahora lo usa); `components/app/SharedCsvImport.tsx` lo reutiliza,
+  muestra el mismo `CsvImportSheet`, avisa errores/éxito y tras importar va a Historial.
+  App lo carga en `React.lazy` SOLO si la URL de arranque trae `?action=import-csv`
+  (entrada 111,37 → 111,32 KB gzip). Textos `csv.sharedError`/`csv.dismiss` es/en.
+- Tests: `sharedCsv` (6: consumo único, payload inválido, query limpia, errores,
+  launchQueue); `swOffline` +4 (POST real al `sw.js` en vm guarda y redirige 303, error
+  sin archivo, `activate` conserva el caché de compartir y purga los viejos, manifiesto ↔
+  acciones manejadas). E2E `shareTarget.spec.ts` (preview build, SW real): un formulario
+  multipart a `/share-target` abre el importador con el CSV de Hevy, query limpia, caché
+  consumido; atajos de Historial/Dieta marcan su pestaña activa.
+- Fail-proof: con el `sw.js` previo, 3/4 tests unitarios de S3 y el e2e de compartir
+  fallan; sin el cambio de `useShortcutLaunch`, el e2e de atajos falla.
+- Evidencia: build OK, `test:run` 659/659, `lint:a11y` limpio, `bundle:report` WITHIN
+  BUDGET, Playwright 45/45 (contra preview, sin servidor reutilizado).
+- No verificado / alcance: el menú "Compartir" real de Android solo ofrece la PWA
+  INSTALADA desde Chrome (el e2e simula el POST que hace el sistema). La app Capacitor no
+  usa el manifiesto: recibir CSV en la app nativa requeriría un intent-filter `SEND` en
+  Android (no incluido). Observación: en escritorio el layout se estira a todo el ancho.
