@@ -23,3 +23,26 @@ Rama: `agent/gainslab-audit-fixes-v3`. Tag de retorno: `pre-t-series` (en origin
 - Lo que queda de `!important` en app-polish (22) compite con la capa de compatibilidad
   global (`[class*="bg-zinc-900/"]`, etc.), que cubre muchas utilidades usadas en muchos
   componentes; no es código muerto.
+
+Nota T1: después del commit, una corrida completa mostró un fallo en `statsMerge.test.tsx`
+(pasó en 3 corridas aisladas y 3 completas siguientes). Mismo patrón que `detectPRs` en S7:
+`waitFor` con timeout por defecto de 1 s en tests que renderizan Stats bajo la carga de la
+suite completa. Se trata en T4.
+
+## T2 — Partir ExercisesView y ProgramEditView
+
+| Antes | Bytes | Después |
+|-------|------:|---------|
+| `views/ExercisesView.tsx` | 36 392 | orquestador 1,8 KB + `views/exercises/` (hook 15,5 KB, modo lista 10 KB, modo edición 3,7 KB, diálogos 9,3 KB) |
+| `views/ProgramEditView.tsx` | 25 794 | orquestador 4,9 KB (incluye el return temprano de KONG) + `views/programEdit/` (hook 6,9 KB, días 8 KB, diálogos 9,3 KB) |
+
+- `NutriView.tsx` ya había bajado a 20 209 bytes (< 20 KiB) con el codemod de S8: sin cambios.
+- Mismo método que S6 (movido literal, hook + bloques + orquestador), ahora con un divisor
+  genérico; los hooks son `.tsx` porque contienen helpers que devuelven JSX.
+- Corregido de paso: el botón atrás de ExercisesView tenía `aria-label="Volver"` fijo en
+  español; ahora usa `t.back` (nombre accesible = texto visible traducido).
+- Evidencia: `tsc` limpio, ningún test modificado, `test:run` 681/681, `lint:a11y` limpio,
+  eslint con los mismos 4 errores preexistentes (se tratan en T4), Playwright 47/47.
+- Siguen > 20 KB (componentes, fuera de esta tanda): `SortableExerciseCardImpl` 37,5 KB,
+  `RestTimerOverlay` 37,5 KB, `AdminTemplateManager` 36,7 KB, `SetRow` 34,3 KB,
+  `FreestyleSessionModal` 29,6 KB, `SetupWizard` 25,7 KB, `ProgramHub` 25 KB, `AddMealModal` 23,7 KB.
