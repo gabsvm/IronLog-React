@@ -10,7 +10,7 @@ const ROOT = join(fileURLToPath(import.meta.url), '..', '..');
 
 const EXCLUDED_DIRS = new Set([
     'node_modules', 'dist', 'android', 'ios', 'tests', 'scripts', 'coverage',
-    'playwright-report', 'test-results', 'apk-out', 'ironlog-kmp', '.git',
+    'playwright-report', 'test-results', 'apk-out', '.git',
     '.Muse', '.agents', '.sl', '.hg', '.eden',
 ]);
 

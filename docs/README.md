@@ -25,5 +25,8 @@
 ## Legal (borradores)
 - [legal-drafts/](legal-drafts/): política de privacidad y borrado de cuenta (es/en).
 
+## Archivo
+- [archive/](archive/): planes y análisis viejos (rediseño, pulido PWA, migración nativa y la reescritura KMP abandonada). Solo como referencia histórica.
+
 ## Diseño
 - [design-reference/](design-reference/): referencia del rediseño (zip).
