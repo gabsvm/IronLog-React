@@ -1,4 +1,5 @@
 
+import { pickLang } from '../../utils/i18n';
 import React, { useMemo } from 'react';
 import { Icon } from '../ui/Icon';
 import { getSkillProgressionInfo, getSkillReadyToProgress } from '../../data/SkillProgressionMap';
@@ -54,8 +55,8 @@ export const SkillProgressionBadge: React.FC<SkillProgressionBadgeProps> = ({ ex
     const colors = colorMap[familyColor] ?? { text: 'text-zinc-400', bg: 'bg-zinc-500/10', ring: 'ring-zinc-500/30' };
     const b = TRANSLATIONS[lang].skillBadge;
 
-    const familyName = lang === 'es' ? family.name.es : family.name.en;
-    const currentName = lang === 'es' ? currentLevel.name.es : currentLevel.name.en;
+    const familyName = pickLang(lang, family.name);
+    const currentName = pickLang(lang, currentLevel.name);
 
     return (
         <div className="px-3 pt-2 pb-1">
@@ -93,7 +94,7 @@ export const SkillProgressionBadge: React.FC<SkillProgressionBadgeProps> = ({ ex
                         {b.ready}
                     </span>
                     <span className="text-xs text-muted truncate">
-                        → {lang === 'es' ? nextLevel.name.es : nextLevel.name.en}
+                        → {pickLang(lang, nextLevel.name)}
                     </span>
                 </div>
             )}
@@ -108,7 +109,7 @@ export const SkillProgressionBadge: React.FC<SkillProgressionBadgeProps> = ({ ex
                             {nextLevel.unlockAt.value}{nextLevel.unlockAt.unit === 'sec' ? 's' : ' reps'}
                         </span>
                         {' '}{b.toReach}{' '}
-                        {lang === 'es' ? nextLevel.name.es : nextLevel.name.en}
+                        {pickLang(lang, nextLevel.name)}
                     </span>
                 </div>
             )}

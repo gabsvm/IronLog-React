@@ -1,4 +1,5 @@
 // S6: "progress" tab, moved verbatim from views/StatsViewImpl.tsx.
+import { pickLang } from '../../utils/i18n';
 import React from 'react';
 import { TRANSLATIONS } from '../../constants';
 import { MuscleGroup } from '../../types';
@@ -149,7 +150,7 @@ export const StatsProgressTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
 
                     <div className="space-y-2">
                         {displayedPRs.map(([exId, pr]) => {
-                            const dateStr = new Date(pr.date).toLocaleDateString(lang === 'es' ? 'es-ES' : 'en-US', {
+                            const dateStr = new Date(pr.date).toLocaleDateString(pickLang(lang, { es: 'es-ES', en: 'en-US' }), {
                                 month: 'short',
                                 day: 'numeric',
                                 year: '2-digit'

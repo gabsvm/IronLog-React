@@ -1,8 +1,10 @@
+import { formatMessage } from '../../utils/i18n';
 import React, { useState, useEffect } from 'react';
 import { Sheet } from '../ui/Sheet';
 import { Button } from '../ui/Button';
 import { UserProfile, WeightUnit } from '../../types';
 import { fromDisplay, toDisplay, unitLabel } from '../../utils/units';
+import { TRANSLATIONS } from '../../constants/translations';
 
 interface BodyMetricsModalProps {
     open: boolean;
@@ -50,30 +52,28 @@ export const BodyMetricsModal: React.FC<BodyMetricsModalProps> = ({
         <Sheet
             open={open}
             onOpenChange={(next) => { if (!next) onClose(); }}
-            title={lang === 'es' ? 'Métricas corporales' : 'Body metrics'}
+            title={TRANSLATIONS[lang].copy.bodyMetricsModal.bodyMetrics}
             accent="primary"
             footer={
                 <div className="flex gap-2">
                     <Button variant="ghost" fullWidth onClick={onClose}>
-                        {lang === 'es' ? 'Cancelar' : 'Cancel'}
+                        {TRANSLATIONS[lang].copy.bodyMetricsModal.cancel}
                     </Button>
                     <Button variant="primary" fullWidth onClick={handleSave}>
-                        {lang === 'es' ? 'Guardar' : 'Save'}
+                        {TRANSLATIONS[lang].copy.bodyMetricsModal.save}
                     </Button>
                 </div>
             }
         >
             <div className="p-5 space-y-4">
                 <p className="text-xs text-zinc-500">
-                    {lang === 'es'
-                        ? 'Actualiza tus medidas para un cálculo más preciso del volumen relativo, 1RM y estimación calórica.'
-                        : 'Update your metrics for more accurate relative strength, 1RM calculations and caloric estimates.'}
+                    {TRANSLATIONS[lang].copy.bodyMetricsModal.updateYourMetricsFor}
                 </p>
 
                 <div className="space-y-3">
                     <div>
                         <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1">
-                            {lang === 'es' ? `Peso corporal (${unitLabel(unit).toLowerCase()})` : `Body weight (${unitLabel(unit).toLowerCase()})`}
+                            {formatMessage(TRANSLATIONS[lang].copy.bodyMetricsModal.bodyWeight, { v: unitLabel(unit).toLowerCase() })}
                         </label>
                         <input
                             type="number"
@@ -88,7 +88,7 @@ export const BodyMetricsModal: React.FC<BodyMetricsModalProps> = ({
                     <div className="grid grid-cols-2 gap-3">
                         <div>
                             <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1">
-                                {lang === 'es' ? 'Altura (cm)' : 'Height (cm)'}
+                                {TRANSLATIONS[lang].copy.bodyMetricsModal.heightCm}
                             </label>
                             <input
                                 type="number"
@@ -102,7 +102,7 @@ export const BodyMetricsModal: React.FC<BodyMetricsModalProps> = ({
 
                         <div>
                             <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1">
-                                {lang === 'es' ? 'Grasa corporal (%)' : 'Body fat (%)'}
+                                {TRANSLATIONS[lang].copy.bodyMetricsModal.bodyFat}
                             </label>
                             <input
                                 type="number"

@@ -1,17 +1,15 @@
+import { formatMessage } from '../../utils/i18n';
 import React from 'react';
 import { getKongBlockDisplay } from '../../programs/kong/kongDisplay';
+import { TRANSLATIONS } from '../../constants/translations';
 
 export const ProgramBlockTransition: React.FC<{ blockNumber: number; onClose: () => void; lang: 'en' | 'es' }> = ({ blockNumber, onClose, lang }) => {
   const isSecond = blockNumber === 2;
   const blockName = getKongBlockDisplay(blockNumber)[lang];
-  const eyebrow = lang === 'es' ? `BLOQUE ${blockNumber}` : `BLOCK ${blockNumber}`;
+  const eyebrow = formatMessage(TRANSLATIONS[lang].copy.programBlockTransition.block, { blockNumber });
   const description = isSecond
-    ? (lang === 'es'
-        ? 'Capacidad construida. Los movimientos compuestos vuelven al frente y todas las series de la pirámide cuentan como trabajo.'
-        : 'Capacity built. Compounds return to the front and every pyramid set counts as working volume.')
-    : (lang === 'es'
-        ? 'Ahora priorizas las cargas altas estando fresco. El top set va primero y los backoffs de altas repeticiones siguen siendo parte central del trabajo.'
-        : 'Now prioritize heavier loading while fresh. The top set comes first and high-rep backoffs remain central to the work.');
+    ? (TRANSLATIONS[lang].copy.programBlockTransition.capacityBuiltCompoundsReturn)
+    : (TRANSLATIONS[lang].copy.programBlockTransition.nowPrioritizeHeavierLoading);
 
   return (
     <div className="fixed inset-0 z-modal flex items-end justify-center overflow-y-auto bg-black/70 p-4 pb-safe pt-safe backdrop-blur-sm sm:items-center">
@@ -21,11 +19,11 @@ export const ProgramBlockTransition: React.FC<{ blockNumber: number; onClose: ()
         <p className="mt-3 text-sm leading-6 text-[rgb(var(--text-secondary))]">{description}</p>
         <div className="mt-5 rounded-2xl border border-primary-500/20 bg-primary-500/10 px-4 py-3 text-xs font-bold leading-5 text-[rgb(var(--text-secondary))]">
           {isSecond
-            ? (lang === 'es' ? 'Clave: 12/10/8 también son series de trabajo; no las trates como simples calentamientos.' : 'Key point: 12/10/8 are working sets too; do not treat them as passive warmups.')
-            : (lang === 'es' ? 'Clave: usa las warmups necesarias para aprender las variantes de sobrecarga antes del top set.' : 'Key point: take the warmups you need to learn the overload variations before the top set.')}
+            ? (TRANSLATIONS[lang].copy.programBlockTransition.keyPoint1210)
+            : (TRANSLATIONS[lang].copy.programBlockTransition.keyPointTakeThe)}
         </div>
         <button onClick={onClose} className="mt-6 min-h-12 w-full rounded-2xl bg-primary-500 px-4 font-black text-black active:scale-[0.99]">
-          {lang === 'es' ? 'Continuar' : 'Continue'}
+          {TRANSLATIONS[lang].copy.programBlockTransition.continue}
         </button>
       </div>
     </div>

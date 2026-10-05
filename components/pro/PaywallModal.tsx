@@ -1,4 +1,5 @@
 
+import { formatMessage } from '../../utils/i18n';
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Icon } from '../ui/Icon';
@@ -60,7 +61,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ onClose, feature }) 
                     <div className="flex items-center justify-center gap-3 mb-6 bg-primary-500/10 p-3 rounded-xl border border-primary-500/20">
                         <Icon name="Lock" size={16} className="text-primary-500 shrink-0" />
                         <p className="text-xs text-primary-700 dark:text-primary-300 font-bold leading-tight">
-                            {feature ? (lang === 'en' ? `Locked: ${feature}` : `Bloqueado: ${feature}`) : t.subtitle}
+                            {feature ? (formatMessage(TRANSLATIONS[lang].copy.paywallModal.locked, { feature })) : t.subtitle}
                         </p>
                     </div>
 
@@ -99,9 +100,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ onClose, feature }) 
                     </div>
 
                     <p className="text-center text-[11px] text-zinc-500 dark:text-zinc-400 mt-4 leading-relaxed">
-                        {lang === 'en' 
-                            ? 'Send a WhatsApp message to request early access. We will activate your account within 24 hours.' 
-                            : 'Envíanos un mensaje por WhatsApp para solicitar acceso temprano. Activamos tu cuenta en menos de 24 hs.'}
+                        {TRANSLATIONS[lang].copy.paywallModal.sendAWhatsappMessage}
                     </p>
 
                     {/* Footer */}
@@ -110,9 +109,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ onClose, feature }) 
                             {t.guarantee}
                         </p>
                         <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                            {lang === 'en'
-                                ? 'Already have an approved account? Sign in with your email to sync Pro entitlement.'
-                                : '¿Ya tienes una cuenta aprobada? Inicia sesión con tu email para sincronizar tu acceso Pro.'}
+                            {TRANSLATIONS[lang].copy.paywallModal.alreadyHaveAnApproved}
                         </p>
                     </div>
                 </div>
@@ -123,7 +120,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ onClose, feature }) 
                     <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl flex flex-col items-center shadow-2xl animate-in zoom-in-95">
                         <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mb-4"></div>
                         <span className="font-bold dark:text-white text-sm tracking-wide uppercase">
-                            {lang === 'en' ? 'Processing...' : 'Procesando...'}
+                            {TRANSLATIONS[lang].copy.paywallModal.processing}
                         </span>
                     </div>
                 </div>
@@ -136,7 +133,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ onClose, feature }) 
                             <Icon name="Check" size={32} className="text-white" strokeWidth={4} />
                         </div>
                         <span className="font-black text-xl dark:text-white tracking-tight uppercase">
-                            {lang === 'en' ? 'Welcome Pro!' : '¡Bienvenido Pro!'}
+                            {TRANSLATIONS[lang].copy.paywallModal.welcomePro}
                         </span>
                     </div>
                 </div>

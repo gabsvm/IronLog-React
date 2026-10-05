@@ -175,3 +175,28 @@ comportamiento real que fallan sin el cambio, sin dependencias nuevas, sin despl
   113,94 KB gzip), Playwright 45/45.
 - Fuera de alcance (no estaban en la lista): `ExercisesView` 36 KB, `ProgramEditView` 27 KB,
   `NutriView` 20,5 KB siguen grandes; candidatos para la misma técnica.
+
+## S8 — i18n: cero ramas de idioma inline (194 → 0, y las que el contador no veía)
+
+- El contador de Q19 solo miraba `lang === 'es'` (194). Había además 58 `lang === 'en'`,
+  el alias `isEs` (14 en la pantalla de error de `index.tsx`) y 6 helpers locales
+  `const l = (en, es) => …` con ~110 llamadas: texto bilingüe inline que no se contaba.
+- `scripts/count-lang-ternaries.mjs`: ahora cuenta `'es'`/`'en'`, `===`/`!==` y `isEs`;
+  `tests/i18n-baseline.json` = **0**. Test nuevo del contador sobre un directorio de
+  ejemplo (5 variantes detectadas, `pickLang` y `tests/` ignorados).
+- Migración (codemods de un solo uso, verificados con `tsc` y la suite):
+  - pares de strings → `TRANSLATIONS[lang].copy.<archivo>.<clave>` (bloque nuevo `copy`,
+    34 espacios por archivo, 312 claves, mismas claves en es y en);
+  - plantillas con `${}` → claves con `{marcadores}` + `formatMessage(...)`;
+  - helpers `l(en, es)` → claves; los helpers se eliminaron;
+  - datos bilingües (`x.name.es : x.name.en`, locales `es-AR`/`es-ES`, textos KONG en
+    español con fallback al nombre del programa) → `pickLang(lang, …)` / `otherLang`.
+  - pantalla de error (`index.tsx`): `pickLang(lang, TRANSLATIONS).copy.crashScreen`.
+- `utils/i18n.ts`: `pickLang` (fallback inglés, como las ternarias), `otherLang`,
+  `formatMessage`.
+- Evidencia: `tsc` limpio, build OK, `test:run` 674/674 (paridad es/en y render en ambos
+  idiomas verdes), `lint:a11y` limpio, eslint con los mismos 4 errores preexistentes,
+  Playwright 45/45 (muchos e2e verifican textos en español).
+- Efecto en bundle: entrada 113,94 → 121,53 KB gzip (dentro del presupuesto 123,12):
+  textos que vivían en chunks lazy pasaron a TRANSLATIONS, que hoy viaja completo (es+en)
+  en la entrada. S7 lo resuelve cargando solo el idioma activo.

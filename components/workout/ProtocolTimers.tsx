@@ -1,3 +1,4 @@
+import { TRANSLATIONS } from '../../constants/translations';
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Icon } from '../ui/Icon';
 import { triggerHaptic, playTimerFinishSound } from '../../utils/audio';
@@ -81,7 +82,6 @@ export const EMOMTimer: React.FC<EMOMTimerProps> = React.memo(({ totalSets, lang
 
     useEffect(() => () => clear(), [clear]);
 
-    const l = (en: string, es: string) => (lang === 'en' ? en : es);
     const pct = ((60 - timeLeft) / 60) * 100;
     const urgent = timeLeft <= 10 && timeLeft > 0;
 
@@ -91,10 +91,10 @@ export const EMOMTimer: React.FC<EMOMTimerProps> = React.memo(({ totalSets, lang
                 <Icon name="Timer" size={14} className="shrink-0 text-cyan-400" />
                 <div className="min-w-0 flex-1">
                     <p className="text-[10px] font-black uppercase tracking-wider text-cyan-400">
-                        EMOM - {totalSets} {l('rounds', 'rondas')}
+                        EMOM - {totalSets} {TRANSLATIONS[lang].copy.protocolTimers.rounds}
                     </p>
                     <p className="text-[9px] text-cyan-700">
-                        {l('One set per minute - tap Start', 'Una serie por minuto - toca Iniciar')}
+                        {TRANSLATIONS[lang].copy.protocolTimers.oneSetPerMinute}
                     </p>
                 </div>
                 <button
@@ -103,7 +103,7 @@ export const EMOMTimer: React.FC<EMOMTimerProps> = React.memo(({ totalSets, lang
                     aria-label="Play"
                 >
                     <Icon name="Play" size={12} fill="currentColor" />
-                    {l('Start', 'Iniciar')}
+                    {TRANSLATIONS[lang].copy.protocolTimers.start}
                 </button>
             </div>
         );
@@ -114,10 +114,10 @@ export const EMOMTimer: React.FC<EMOMTimerProps> = React.memo(({ totalSets, lang
             <div className="flex items-center gap-3 rounded-xl border border-green-500/20 bg-green-500/10 px-3 py-2.5">
                 <Icon name="CheckCircle" size={14} className="shrink-0 text-green-400" />
                 <p className="flex-1 text-[10px] font-black uppercase tracking-wider text-green-400">
-                    EMOM {l('complete', 'completo')} - {totalSets} {l('rounds done', 'rondas')}
+                    EMOM {TRANSLATIONS[lang].copy.protocolTimers.complete} - {totalSets} {TRANSLATIONS[lang].copy.protocolTimers.roundsDone}
                 </p>
                 <button onClick={stop} className="px-2 py-1 text-xs font-bold text-muted transition-colors hover:text-white">
-                    {l('Reset', 'Reiniciar')}
+                    {TRANSLATIONS[lang].copy.protocolTimers.reset}
                 </button>
             </div>
         );
@@ -128,16 +128,16 @@ export const EMOMTimer: React.FC<EMOMTimerProps> = React.memo(({ totalSets, lang
             <div className="flex items-center gap-2 px-3 pb-0.5 pt-2">
                 <Icon name="Timer" size={13} className={urgent ? 'text-orange-400' : 'text-cyan-400'} />
                 <span className={`flex-1 text-[10px] font-black uppercase tracking-wider ${urgent ? 'text-orange-400' : 'text-cyan-400'}`}>
-                    EMOM - {l('Min', 'Min')} {minute} / {totalSets}
+                    EMOM - {TRANSLATIONS[lang].copy.protocolTimers.min} {minute} / {totalSets}
                 </span>
                 <span className={`text-[9px] font-bold uppercase tracking-widest ${urgent ? 'text-orange-500' : 'text-cyan-600'}`}>
-                    {urgent ? l('GO NOW', 'AHORA') : l('next set in', 'proxima serie en')}
+                    {urgent ? TRANSLATIONS[lang].copy.protocolTimers.goNow : TRANSLATIONS[lang].copy.protocolTimers.nextSetIn}
                 </span>
                 <button
                     onClick={stop}
                     className="ml-1 rounded-lg bg-zinc-800/80 px-2 py-0.5 text-xs font-bold text-muted transition-colors hover:text-white"
                 >
-                    {l('Stop', 'Detener')}
+                    {TRANSLATIONS[lang].copy.protocolTimers.stop}
                 </button>
             </div>
             <div className="px-3 pb-2">
@@ -245,7 +245,6 @@ export const TabataTimer: React.FC<TabataTimerProps> = React.memo(({ totalRounds
 
     useEffect(() => () => clear(), [clear]);
 
-    const l = (en: string, es: string) => (lang === 'en' ? en : es);
     const isWork = phase === 'work';
     const phaseDur = isWork ? WORK_SEC : REST_SEC;
     const pct = ((phaseDur - timeLeft) / phaseDur) * 100;
@@ -257,9 +256,9 @@ export const TabataTimer: React.FC<TabataTimerProps> = React.memo(({ totalRounds
                 <Icon name="Timer" size={14} className="shrink-0 text-red-400" />
                 <div className="min-w-0 flex-1">
                     <p className="text-[10px] font-black uppercase tracking-wider text-red-400">
-                        Tabata - {totalRounds} {l('rounds', 'rondas')}
+                        Tabata - {totalRounds} {TRANSLATIONS[lang].copy.protocolTimers.rounds}
                     </p>
-                    <p className="font-mono text-[9px] text-red-700">20s {l('work', 'trabajo')} / 10s {l('rest', 'descanso')}</p>
+                    <p className="font-mono text-[9px] text-red-700">20s {TRANSLATIONS[lang].copy.protocolTimers.work} / 10s {TRANSLATIONS[lang].copy.protocolTimers.rest}</p>
                 </div>
                 <button
                     onClick={start}
@@ -267,7 +266,7 @@ export const TabataTimer: React.FC<TabataTimerProps> = React.memo(({ totalRounds
                     aria-label="Play"
                 >
                     <Icon name="Play" size={12} fill="currentColor" />
-                    {l('Start', 'Iniciar')}
+                    {TRANSLATIONS[lang].copy.protocolTimers.start}
                 </button>
             </div>
         );
@@ -278,10 +277,10 @@ export const TabataTimer: React.FC<TabataTimerProps> = React.memo(({ totalRounds
             <div className="flex items-center gap-3 rounded-xl border border-green-500/20 bg-green-500/10 px-3 py-2.5">
                 <Icon name="CheckCircle" size={14} className="shrink-0 text-green-400" />
                 <p className="flex-1 text-[10px] font-black uppercase tracking-wider text-green-400">
-                    Tabata {l('complete', 'completo')} - {totalRounds} {l('rounds done', 'rondas')}
+                    Tabata {TRANSLATIONS[lang].copy.protocolTimers.complete} - {totalRounds} {TRANSLATIONS[lang].copy.protocolTimers.roundsDone}
                 </p>
                 <button onClick={stop} className="px-2 py-1 text-xs font-bold text-muted transition-colors hover:text-white">
-                    {l('Reset', 'Reiniciar')}
+                    {TRANSLATIONS[lang].copy.protocolTimers.reset}
                 </button>
             </div>
         );
@@ -291,16 +290,16 @@ export const TabataTimer: React.FC<TabataTimerProps> = React.memo(({ totalRounds
         <div className={`overflow-hidden rounded-xl border ${isWork ? 'border-red-500/25 bg-red-500/10' : 'border-blue-500/25 bg-blue-500/10'}`}>
             <div className="flex items-center gap-2 px-3 pb-0.5 pt-2">
                 <span className={`shrink-0 rounded px-2 py-0.5 text-[9px] font-black uppercase tracking-widest ${isWork ? 'bg-red-500 text-white' : 'bg-blue-500 text-white'}`}>
-                    {isWork ? l('WORK', 'TRABAJO') : l('REST', 'DESCANSO')}
+                    {isWork ? TRANSLATIONS[lang].copy.protocolTimers.work2 : TRANSLATIONS[lang].copy.protocolTimers.rest2}
                 </span>
                 <span className={`flex-1 text-[10px] font-bold uppercase tracking-wider ${isWork ? 'text-red-400' : 'text-blue-400'}`}>
-                    {l('Round', 'Ronda')} {round} / {totalRounds}
+                    {TRANSLATIONS[lang].copy.protocolTimers.round} {round} / {totalRounds}
                 </span>
                 <button
                     onClick={stop}
                     className="rounded-lg bg-zinc-800/80 px-2 py-0.5 text-xs font-bold text-muted transition-colors hover:text-white"
                 >
-                    {l('Stop', 'Detener')}
+                    {TRANSLATIONS[lang].copy.protocolTimers.stop}
                 </button>
             </div>
             <div className="px-3 pb-2">

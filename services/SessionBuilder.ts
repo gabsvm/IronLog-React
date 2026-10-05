@@ -1,3 +1,4 @@
+import { pickLang } from '../utils/i18n';
 import { ProgramDay, MesoCycle, ExerciseDef, Log, ActiveSession, SessionExercise } from '../types';
 import { getLastLogForExercise, uid } from '../utils';
 import { KONG_4DAY_V1 } from '../programs/kong/kong4Day';
@@ -28,7 +29,7 @@ export class SessionBuilder {
         const kongBlock = isKong ? getProgramBlockForWeek(KONG_4DAY_V1, activeMeso.week).block : null;
         const localizedKongDay = kongBlock ? getKongDayDisplay(kongBlock.number, dayIdx) : null;
         const dayNameSafe = localizedKongDay
-            ? localizedKongDay[(lang === 'es' ? 'es' : 'en')]
+            ? localizedKongDay[(pickLang(lang, { es: 'es', en: 'en' }))]
             : resolvedDay.dayName
                 ? (typeof resolvedDay.dayName === 'object' ? resolvedDay.dayName[lang as 'en'|'es'] : resolvedDay.dayName)
                 : `Day ${dayIdx + 1}`;

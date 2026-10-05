@@ -1,3 +1,5 @@
+import { TRANSLATIONS } from '../../constants/translations';
+import { pickLang } from '../../utils/i18n';
 import React, { useMemo, useState } from 'react';
 import { FoodEntry, CustomFood } from '../../types';
 import { Icon } from '../ui/Icon';
@@ -118,7 +120,6 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
   const [fat, setFat] = useState('');
   const [servingSize, setServingSize] = useState('');
 
-  const l = (en: string, es: string) => (lang === 'en' ? en : es);
 
   const resetForm = () => {
     setName('');
@@ -206,7 +207,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
     <Sheet
       open={isOpen}
       onOpenChange={(open) => !open && onClose()}
-      title={l('Add Food', 'Agregar Comida')}
+      title={TRANSLATIONS[lang].copy.addMealModal.addFood}
       accent="primary"
     >
       <div className="space-y-4 px-5 pb-5">
@@ -222,16 +223,16 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
               }`}
             >
               <Icon name={meal.icon as any} size={13} />
-              <span>{lang === 'en' ? meal.en : meal.es}</span>
+              <span>{pickLang(lang, meal)}</span>
             </button>
           ))}
         </div>
 
         <div className="flex gap-1 rounded-2xl bg-zinc-800 p-1">
           {([
-            { id: 'quick', icon: 'Zap', label: l('Quick Add', 'Rapido') },
-            { id: 'myfoods', icon: 'BookOpen', label: l('My Foods', 'Mis Alimentos') },
-            { id: 'manual', icon: 'Edit3', label: l('Manual', 'Manual') },
+            { id: 'quick', icon: 'Zap', label: TRANSLATIONS[lang].copy.addMealModal.quickAdd },
+            { id: 'myfoods', icon: 'BookOpen', label: TRANSLATIONS[lang].copy.addMealModal.myFoods },
+            { id: 'manual', icon: 'Edit3', label: TRANSLATIONS[lang].copy.addMealModal.manual },
           ] as { id: ModalTab; icon: string; label: string }[]).map((item) => (
             <button
               key={item.id}
@@ -250,7 +251,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
           {tab !== 'manual' && (
             <div className="flex items-center gap-2">
               <span className="shrink-0 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
-                {l('Portion', 'Porcion')}
+                {TRANSLATIONS[lang].copy.addMealModal.portion}
               </span>
               <div className="flex flex-wrap gap-1.5">
                 {PORTION_MULTIPLIERS.map((value) => (
@@ -276,7 +277,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                 <Icon name="Search" size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
                 <input
                   type="search"
-                  placeholder={l('Search foods...', 'Buscar alimentos...')}
+                  placeholder={TRANSLATIONS[lang].copy.addMealModal.searchFoods}
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   className="glow-input-neon w-full rounded-2xl border border-zinc-700/50 bg-zinc-800 py-2.5 pl-9 pr-4 text-sm text-white placeholder-zinc-600 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
@@ -285,7 +286,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
 
               <div className="scroll-container max-h-[350px] space-y-1.5 overflow-y-auto pr-0.5">
                 {filteredPresets.length === 0 && (
-                  <p className="py-4 text-center text-sm text-zinc-600">{l('No results', 'Sin resultados')}</p>
+                  <p className="py-4 text-center text-sm text-zinc-600">{TRANSLATIONS[lang].copy.addMealModal.noResults}</p>
                 )}
                 {filteredPresets.map((food) => (
                   <FoodCard
@@ -308,19 +309,16 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                     <Icon name="UtensilsCrossed" size={28} className="mx-auto text-zinc-500" />
                   </div>
                   <p className="text-sm font-medium text-zinc-500">
-                    {l('No saved foods yet.', 'Sin alimentos guardados aun.')}
+                    {TRANSLATIONS[lang].copy.addMealModal.noSavedFoodsYet}
                   </p>
                   <p className="mx-auto max-w-[220px] text-xs text-zinc-600">
-                    {l(
-                      'Add a food manually and save it to build your personal database.',
-                      'Agrega un alimento manualmente y guardalo para crear tu base personal.',
-                    )}
+                    {TRANSLATIONS[lang].copy.addMealModal.addAFoodManually}
                   </p>
                   <button
                     onClick={() => setTab('manual')}
                     className="mt-3 rounded-xl bg-zinc-800 px-4 py-2 text-xs font-bold text-zinc-300 transition-transform active:scale-95"
                   >
-                    {l('Add manually ->', 'Agregar manualmente ->')}
+                    {TRANSLATIONS[lang].copy.addMealModal.addManually}
                   </button>
                 </div>
               ) : (
@@ -329,14 +327,14 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                     <Icon name="Search" size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
                     <input
                       type="search"
-                      placeholder={l('Search my foods...', 'Buscar mis alimentos...')}
+                      placeholder={TRANSLATIONS[lang].copy.addMealModal.searchMyFoods}
                       value={search}
                       onChange={(event) => setSearch(event.target.value)}
                       className="glow-input-neon w-full rounded-2xl border border-zinc-700/50 bg-zinc-800 py-2.5 pl-9 pr-4 text-sm text-white placeholder-zinc-600 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
                     />
                   </div>
                   {sortedMyFoods.length === 0 ? (
-                    <p className="py-4 text-center text-sm text-zinc-600">{l('No results', 'Sin resultados')}</p>
+                    <p className="py-4 text-center text-sm text-zinc-600">{TRANSLATIONS[lang].copy.addMealModal.noResults}</p>
                   ) : (
                     <div className="scroll-container max-h-[350px] space-y-1.5 overflow-y-auto pr-0.5">
                       {sortedMyFoods.map((food) => (
@@ -362,7 +360,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
               <div className="space-y-3">
                 <div>
                   <label className="mb-1 block px-1 text-[10px] font-black uppercase tracking-widest text-zinc-500">
-                    {l('Food name *', 'Nombre del alimento *')}
+                    {TRANSLATIONS[lang].copy.addMealModal.foodName}
                   </label>
                   <input
                     value={name}
@@ -374,7 +372,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
 
                 <div>
                   <label className="mb-1 block px-1 text-[10px] font-black uppercase tracking-widest text-zinc-500">
-                    {l('Calories (kcal) *', 'Calorias (kcal) *')}
+                    {TRANSLATIONS[lang].copy.addMealModal.caloriesKcal}
                   </label>
                   <input
                     value={calories}
@@ -388,13 +386,13 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
 
                 <div>
                   <label className="mb-1 block px-1 text-[10px] font-black uppercase tracking-widest text-zinc-500">
-                    {l('Macros (g)', 'Macros (g)')}
+                    {TRANSLATIONS[lang].copy.addMealModal.macrosG}
                   </label>
                   <div className="grid grid-cols-3 gap-2">
                     <input
                       value={protein}
                       onChange={(event) => setProtein(event.target.value)}
-                      placeholder={l('Protein', 'Proteina')}
+                      placeholder={TRANSLATIONS[lang].copy.addMealModal.protein}
                       type="number"
                       inputMode="decimal"
                       className="rounded-2xl border border-blue-500/30 bg-zinc-800 px-3 py-3 text-center text-sm text-white placeholder-zinc-600 transition-all focus:border-blue-500 focus:outline-none"
@@ -410,7 +408,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                     <input
                       value={fat}
                       onChange={(event) => setFat(event.target.value)}
-                      placeholder={l('Fat', 'Grasa')}
+                      placeholder={TRANSLATIONS[lang].copy.addMealModal.fat}
                       type="number"
                       inputMode="decimal"
                       className="rounded-2xl border border-pink-500/30 bg-zinc-800 px-3 py-3 text-center text-sm text-white placeholder-zinc-600 transition-all focus:border-pink-500 focus:outline-none"
@@ -420,7 +418,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
 
                 <div>
                   <label className="mb-1 block px-1 text-[10px] font-black uppercase tracking-widest text-zinc-500">
-                    {l('Serving size', 'Porcion')}
+                    {TRANSLATIONS[lang].copy.addMealModal.servingSize}
                   </label>
                   <input
                     value={servingSize}
@@ -442,16 +440,16 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                     {saveToMyFoods && <Icon name="Check" size={12} className="text-white" strokeWidth={3} />}
                   </div>
                   <div className="text-left">
-                    <p className="text-sm font-bold text-white">{l('Save to My Foods', 'Guardar en Mis Alimentos')}</p>
+                    <p className="text-sm font-bold text-white">{TRANSLATIONS[lang].copy.addMealModal.saveToMyFoods}</p>
                     <p className="text-xs text-muted">
-                      {l('Add to your personal food database', 'Agregar a tu base de datos personal')}
+                      {TRANSLATIONS[lang].copy.addMealModal.addToYourPersonal}
                     </p>
                   </div>
                 </button>
               </div>
 
               <Button onClick={handleSubmitManual} fullWidth disabled={!canSubmitManual} className="mt-2">
-                {l('Add Food', 'Agregar Comida')}
+                {TRANSLATIONS[lang].copy.addMealModal.addFood}
               </Button>
             </div>
           )}

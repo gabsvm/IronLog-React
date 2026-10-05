@@ -1,3 +1,5 @@
+import { pickLang, formatMessage } from './utils/i18n';
+import { TRANSLATIONS } from './constants/translations';
 import React, { StrictMode, ReactNode, Component } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Capacitor } from '@capacitor/core';
@@ -148,7 +150,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   render() {
     if (this.state.hasError) {
       const lang = getPreferredLanguage();
-      const isEs = lang === 'es';
+      const tc = pickLang(lang, TRANSLATIONS).copy.crashScreen;
 
       return (
         <div style={{
@@ -165,12 +167,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           zIndex: 99999
         }}>
           <h1 style={{ color: '#ef4444', fontSize: '24px', fontWeight: 'bold', marginBottom: '12px' }}>
-            {isEs ? 'ERROR CRÍTICO' : 'CRITICAL ERROR'}
+            {tc.criticalError}
           </h1>
           <p style={{ opacity: 0.8, fontSize: '14px', maxWidth: '420px', marginBottom: '24px', lineHeight: 1.4 }}>
-            {isEs
-              ? 'La aplicación no pudo inicializarse correctamente.'
-              : 'The application failed to initialize properly.'}
+            {tc.theApplicationFailedTo}
           </p>
 
           {this.state.exportedFileName && (
@@ -183,7 +183,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               borderRadius: '6px',
               border: '1px solid rgba(34, 197, 94, 0.3)'
             }}>
-              ✓ {isEs ? `Copia guardada: ${this.state.exportedFileName}` : `Backup saved: ${this.state.exportedFileName}`}
+              ✓ {formatMessage(tc.backupSaved, { file: this.state.exportedFileName })}
             </div>
           )}
 
@@ -199,12 +199,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               textAlign: 'center',
             }}>
               <h2 style={{ color: '#ef4444', fontSize: '15px', margin: '0 0 10px 0', fontWeight: 'bold' }}>
-                {isEs ? 'Reiniciar datos locales' : 'Reset Local Data'}
+                {tc.resetLocalData}
               </h2>
               <p style={{ color: '#d4d4d8', fontSize: '12px', margin: '0 0 16px 0', lineHeight: 1.5 }}>
-                {isEs
-                  ? 'Esto borrará las sesiones en caché y el estado offline. Esta acción es permanente y no se puede deshacer.'
-                  : 'Resetting local data will clear cached sessions and offline state. This action is permanent and cannot be undone.'}
+                {tc.resettingLocalDataWill}
               </p>
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
                 <button
@@ -229,8 +227,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                   }}
                 >
                   {this.state.isResetting
-                    ? (isEs ? 'Reiniciando...' : 'Resetting...')
-                    : (isEs ? 'Confirmar reinicio' : 'Confirm Reset')}
+                    ? (tc.resetting)
+                    : (tc.confirmReset)}
                 </button>
                 <button
                   type="button"
@@ -247,7 +245,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                     cursor: 'pointer',
                   }}
                 >
-                  {isEs ? 'Cancelar' : 'Cancel'}
+                  {tc.cancel}
                 </button>
               </div>
             </div>
@@ -269,7 +267,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 cursor: 'pointer',
               }}
             >
-              {isEs ? 'Recargar aplicación' : 'Reload App'}
+              {tc.reloadApp}
             </button>
 
             <button
@@ -298,8 +296,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               }}
             >
               {this.state.isExporting
-                ? (isEs ? 'Exportando...' : 'Exporting...')
-                : (isEs ? 'Exportar copia de seguridad' : 'Export Backup')}
+                ? (tc.exporting)
+                : (tc.exportBackup)}
             </button>
 
             {!this.state.confirmReset && (
@@ -318,7 +316,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                   cursor: 'pointer',
                 }}
               >
-                {isEs ? 'Reiniciar datos locales' : 'Reset Local Data'}
+                {tc.resetLocalData}
               </button>
             )}
           </div>
@@ -340,7 +338,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               userSelect: 'none',
               fontWeight: 600
             }}>
-              {isEs ? 'Ver detalles técnicos del error' : 'View technical error details'}
+              {tc.viewTechnicalErrorDetails}
             </summary>
             <div style={{ marginTop: '12px', overflowX: 'auto', background: '#09090b', padding: '12px', borderRadius: '6px' }}>
               <pre style={{ color: '#f87171', fontSize: '11px', margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>

@@ -2,6 +2,7 @@ import React, { Suspense, useState, type MutableRefObject } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useStore } from '../../lib/store';
 import { LoadingSpinner } from './AppLoading';
+import { TRANSLATIONS } from '../../constants/translations';
 
 const SetupWizard = React.lazy(() => import('../onboarding/SetupWizard').then(m => ({ default: m.SetupWizard })));
 const Landing = React.lazy(() => import('../onboarding/Landing').then(m => ({ default: m.Landing })));
@@ -37,7 +38,7 @@ export const AppOnboarding: React.FC<AppOnboardingProps> = ({ targetViewRef, set
                             const freeSession = {
                                 id: Date.now(),
                                 dayIdx: -1,
-                                name: lang === 'es' ? 'Sesión Libre' : 'Freestyle Session',
+                                name: TRANSLATIONS[lang].copy.appOnboarding.freestyleSession,
                                 startTime: Date.now(),
                                 mesoId: -1,
                                 week: -1,

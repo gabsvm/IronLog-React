@@ -29,7 +29,6 @@ interface Props {
  * from the parent memos.
  */
 export const HistoryTab: React.FC<Props> = ({ lang, last14Days, historyDayList, nutritionGoal, onGoToday }) => {
-    const l = (en: string, es: string) => (lang === 'en' ? en : es);
     const t = TRANSLATIONS[lang];
 
     const tracked = last14Days.filter((d) => d.calories > 0);
@@ -59,21 +58,21 @@ export const HistoryTab: React.FC<Props> = ({ lang, last14Days, historyDayList, 
             {tracked.length > 0 && (
                 <div className="glass-card rounded-3xl p-4">
                     <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">
-                        {l('14-Day Average', 'Promedio 14 Días')} · {tracked.length} {l('days tracked', 'días registrados')}
+                        {TRANSLATIONS[lang].copy.historyTab.n14DayAverage} · {tracked.length} {TRANSLATIONS[lang].copy.historyTab.daysTracked}
                     </p>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <p className="text-2xl font-black text-white">{avgCal}</p>
                             <p className="text-[10px] text-zinc-500 uppercase">kcal/día</p>
                             <p className={`text-[10px] mt-1 ${avgCal > nutritionGoal.calories ? 'text-orange-400' : 'text-green-400'}`}>
-                                {avgCal > nutritionGoal.calories ? '+' : ''}{avgCal - nutritionGoal.calories} vs {l('goal', 'meta')}
+                                {avgCal > nutritionGoal.calories ? '+' : ''}{avgCal - nutritionGoal.calories} vs {TRANSLATIONS[lang].copy.historyTab.goal}
                             </p>
                         </div>
                         <div>
                             <p className="text-2xl font-black text-blue-400">{avgProt}g</p>
-                            <p className="text-[10px] text-zinc-500 uppercase">{l('avg protein', 'proteína prom.')}</p>
+                            <p className="text-[10px] text-zinc-500 uppercase">{TRANSLATIONS[lang].copy.historyTab.avgProtein}</p>
                             <p className={`text-[10px] mt-1 ${avgProt >= nutritionGoal.protein ? 'text-green-400' : 'text-zinc-500'}`}>
-                                {avgProt >= nutritionGoal.protein ? '✓ ' : ''}{l('goal', 'meta')} {nutritionGoal.protein}g
+                                {avgProt >= nutritionGoal.protein ? '✓ ' : ''}{TRANSLATIONS[lang].copy.historyTab.goal} {nutritionGoal.protein}g
                             </p>
                         </div>
                     </div>
@@ -83,7 +82,7 @@ export const HistoryTab: React.FC<Props> = ({ lang, last14Days, historyDayList, 
             {/* Calories chart */}
             <div className="glass-card rounded-3xl p-4">
                 <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-4">
-                    {l('Calories — Last 14 Days', 'Calorías — 14 Días')}
+                    {TRANSLATIONS[lang].copy.historyTab.caloriesLast14Days}
                 </p>
                 <div className="flex items-end gap-1 h-24">
                     {last14Days.map((day) => {
@@ -108,16 +107,16 @@ export const HistoryTab: React.FC<Props> = ({ lang, last14Days, historyDayList, 
                     })}
                 </div>
                 <div className="mt-2 flex items-center gap-3 text-[9px] text-zinc-650">
-                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-primary-500 inline-block" />{l('Today', 'Hoy')}</span>
-                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-orange-500/70 inline-block" />{l('Over goal', 'Sobre meta')}</span>
-                    <span className="ml-auto">{l('Goal', 'Meta')}: {nutritionGoal.calories} kcal</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-primary-500 inline-block" />{TRANSLATIONS[lang].copy.historyTab.today}</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-orange-500/70 inline-block" />{TRANSLATIONS[lang].copy.historyTab.overGoal}</span>
+                    <span className="ml-auto">{TRANSLATIONS[lang].copy.historyTab.goal2}: {nutritionGoal.calories} kcal</span>
                 </div>
             </div>
 
             {/* Protein chart */}
             <div className="glass-card rounded-3xl p-4">
                 <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-4">
-                    {l('Protein — Last 14 Days', 'Proteína — 14 Días')}
+                    {TRANSLATIONS[lang].copy.historyTab.proteinLast14Days}
                 </p>
                 <div className="flex items-end gap-1 h-20">
                     {last14Days.map((day) => {
@@ -135,7 +134,7 @@ export const HistoryTab: React.FC<Props> = ({ lang, last14Days, historyDayList, 
                         );
                     })}
                 </div>
-                <p className="text-xs text-muted mt-2 text-right">{l('Goal', 'Meta')}: {nutritionGoal.protein}g</p>
+                <p className="text-xs text-muted mt-2 text-right">{TRANSLATIONS[lang].copy.historyTab.goal2}: {nutritionGoal.protein}g</p>
             </div>
 
             {/* Day log list */}
@@ -144,7 +143,7 @@ export const HistoryTab: React.FC<Props> = ({ lang, last14Days, historyDayList, 
                     <div className="flex justify-between items-center mb-2">
                         <div>
                             <span className={`text-sm font-bold ${day.isToday ? 'text-primary-400' : 'text-white'}`}>
-                                {day.isToday ? l('Today', 'Hoy') : day.label}
+                                {day.isToday ? TRANSLATIONS[lang].copy.historyTab.today : day.label}
                             </span>
                             <span className="text-xs text-zinc-600 ml-2">{day.date}</span>
                         </div>

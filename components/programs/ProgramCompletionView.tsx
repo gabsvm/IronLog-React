@@ -7,6 +7,7 @@ import { toEditableProgram } from '../../programs/engine/ProgramConversion';
 import { KONG_4DAY_V1 } from '../../programs/kong/kong4Day';
 import { getKongDayDisplay } from '../../programs/kong/kongDisplay';
 import { triggerHaptic } from '../../utils/audio';
+import { TRANSLATIONS } from '../../constants/translations';
 
 interface Props {
   meso: MesoCycle;
@@ -54,20 +55,20 @@ export const ProgramCompletionView: React.FC<Props> = ({ meso, logs, onFinish, o
   };
 
   const metricCards: Array<[string, string, string]> = [
-    ['sessions', lang === 'es' ? 'Sesiones' : 'Sessions', String(metrics.sessionsCompleted)],
-    ['sets', lang === 'es' ? 'Series' : 'Sets', String(metrics.setsCompleted)],
-    ['time', lang === 'es' ? 'Tiempo' : 'Time', `${Math.round(metrics.totalSeconds / 60)} min`],
-    ['volume', lang === 'es' ? 'Volumen' : 'Volume', Math.round(metrics.totalVolume).toLocaleString()],
-    ['density', lang === 'es' ? 'Densidad' : 'Density', metrics.averageDensity.toFixed(metrics.averageDensity >= 10 ? 0 : 1)],
-    ['adherence', lang === 'es' ? 'Adherencia' : 'Adherence', `${Math.round(metrics.adherence * 100)}%`],
+    ['sessions', TRANSLATIONS[lang].copy.programCompletion.sessions, String(metrics.sessionsCompleted)],
+    ['sets', TRANSLATIONS[lang].copy.programCompletion.sets, String(metrics.setsCompleted)],
+    ['time', TRANSLATIONS[lang].copy.programCompletion.time, `${Math.round(metrics.totalSeconds / 60)} min`],
+    ['volume', TRANSLATIONS[lang].copy.programCompletion.volume, Math.round(metrics.totalVolume).toLocaleString()],
+    ['density', TRANSLATIONS[lang].copy.programCompletion.density, metrics.averageDensity.toFixed(metrics.averageDensity >= 10 ? 0 : 1)],
+    ['adherence', TRANSLATIONS[lang].copy.programCompletion.adherence, `${Math.round(metrics.adherence * 100)}%`],
   ];
 
   return (
     <div className="fixed inset-0 z-modal flex items-end justify-center overflow-y-auto bg-black/70 p-4 pb-safe pt-safe backdrop-blur-sm sm:items-center">
       <div className="w-full max-w-md rounded-3xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-6 text-[rgb(var(--text-primary))] shadow-2xl">
         <p className="text-xs font-black uppercase tracking-[0.2em] text-primary-500">KONG</p>
-        <h1 className="mt-2 text-3xl font-black">{lang === 'es' ? 'KONG completado' : 'KONG complete'}</h1>
-        <p className="mt-1 text-sm text-[rgb(var(--text-secondary))]">12 {lang === 'es' ? 'semanas' : 'weeks'} · 48 {lang === 'es' ? 'sesiones programadas' : 'scheduled sessions'}</p>
+        <h1 className="mt-2 text-3xl font-black">{TRANSLATIONS[lang].copy.programCompletion.kongComplete}</h1>
+        <p className="mt-1 text-sm text-[rgb(var(--text-secondary))]">12 {TRANSLATIONS[lang].copy.programCompletion.weeks} · 48 {TRANSLATIONS[lang].copy.programCompletion.scheduledSessions}</p>
 
         <div className="mt-5 grid grid-cols-2 gap-3">
           {metricCards.map(([key, label, value]) => (
@@ -80,16 +81,16 @@ export const ProgramCompletionView: React.FC<Props> = ({ meso, logs, onFinish, o
 
         <p className="mt-4 text-xs text-[rgb(var(--text-muted))]">
           {metrics.initialBodyWeight || metrics.currentBodyWeight
-            ? `${lang === 'es' ? 'Peso corporal' : 'Body weight'}: ${metrics.initialBodyWeight ?? '—'} → ${metrics.currentBodyWeight ?? '—'}`
-            : (lang === 'es' ? 'Peso corporal: sin datos' : 'Body weight: no data')}
+            ? `${TRANSLATIONS[lang].copy.programCompletion.bodyWeight}: ${metrics.initialBodyWeight ?? '—'} → ${metrics.currentBodyWeight ?? '—'}`
+            : (TRANSLATIONS[lang].copy.programCompletion.bodyWeightNoData)}
         </p>
 
         <div className="mt-6 space-y-2">
           <button onClick={saveAsPersonal} className="min-h-12 w-full rounded-2xl bg-primary-500 px-4 font-black text-black active:scale-[0.99]">
-            {lang === 'es' ? 'Guardar Bloque 3 como rutina personal' : 'Save Block 3 as personal routine'}
+            {TRANSLATIONS[lang].copy.programCompletion.saveBlock3As}
           </button>
           <button onClick={onFinish} className="min-h-12 w-full rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base))] px-4 font-black">
-            {lang === 'es' ? 'Terminar programa' : 'Finish program'}
+            {TRANSLATIONS[lang].copy.programCompletion.finishProgram}
           </button>
         </div>
       </div>

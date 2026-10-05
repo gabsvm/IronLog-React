@@ -2,6 +2,7 @@ import type { ProgramDay, ProgramSlot, MesoCycle } from '../../types';
 import { KONG_4DAY_V1 } from '../kong/kong4Day.ts';
 import { getKongDayDisplay } from '../kong/kongDisplay.ts';
 import { getProgramBlockForWeek, resolveProgramWeek } from './ProgramResolver.ts';
+import { TRANSLATIONS } from '../../constants/translations';
 
 const formatPrescriptionReps = (slot: ProgramSlot): string | undefined => {
   const prescription = slot.prescription;
@@ -71,7 +72,7 @@ export function convertKongToPersonalRoutine(
   const convertedMeso: MesoCycle = {
     ...activeMeso,
     id: now,
-    name: lang === 'es' ? 'KONG · Rutina personal' : 'KONG · Personal routine',
+    name: TRANSLATIONS[lang].copy.programConversion.kongPersonalRoutine,
     mesoType: 'personal',
     targetWeeks: 4,
     duration: 4,

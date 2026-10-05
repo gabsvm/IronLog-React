@@ -1,3 +1,4 @@
+import { pickLang } from '../../utils/i18n';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Log, MesoCycle } from '../../types';
@@ -101,12 +102,10 @@ export const ProgramHub: React.FC<Props> = ({ meso, logs, onClose, lang }) => {
   const metrics = calculateProgramMetrics(logs, meso.id, scheduleProgress.resolved, meso.programSystem?.startedBodyWeight, KONG_4DAY_V1.daysPerWeek);
   const h = TRANSLATIONS[lang].programHub;
   const title = (text: { en: string; es: string }) => text[lang];
-  const blockName = (blockNumber: number) => lang === 'es'
-    ? ES_BLOCK_COPY[blockNumber]?.name || title(KONG_4DAY_V1.blocks[blockNumber - 1].name)
-    : title(KONG_4DAY_V1.blocks[blockNumber - 1].name);
-  const blockGoal = (blockNumber: number) => lang === 'es'
-    ? ES_BLOCK_COPY[blockNumber]?.goal || title(KONG_4DAY_V1.blocks[blockNumber - 1].goal)
-    : title(KONG_4DAY_V1.blocks[blockNumber - 1].goal);
+  const blockName = (blockNumber: number) =>
+    pickLang(lang, { es: ES_BLOCK_COPY[blockNumber]?.name, en: undefined }) || title(KONG_4DAY_V1.blocks[blockNumber - 1].name);
+  const blockGoal = (blockNumber: number) =>
+    pickLang(lang, { es: ES_BLOCK_COPY[blockNumber]?.goal, en: undefined }) || title(KONG_4DAY_V1.blocks[blockNumber - 1].goal);
 
   const selectedResolution = getProgramBlockForWeek(KONG_4DAY_V1, selectedWeek);
   const selectedResolvedDay = resolveProgramDay(KONG_4DAY_V1, selectedWeek, selectedDay, meso.programSystem?.substitutions || {});
@@ -428,7 +427,7 @@ export const ProgramHub: React.FC<Props> = ({ meso, logs, onClose, lang }) => {
         </div>
 
         <div className="mt-4 rounded-2xl bg-[rgb(var(--surface-base))] p-4">
-          <h3 className="font-black">{lang === 'es' ? ES_DAY_COPY[selectedResolution.block.number]?.[selectedDay] || title(selectedResolvedDay.dayName) : title(selectedResolvedDay.dayName)}</h3>
+          <h3 className="font-black">{pickLang(lang, { es: ES_DAY_COPY[selectedResolution.block.number]?.[selectedDay], en: undefined }) || title(selectedResolvedDay.dayName)}</h3>
           <p className="mt-1 text-xs text-[rgb(var(--text-muted))]">{selectedResolvedDay.slots.length} {h.exercisesLower}</p>
         </div>
 

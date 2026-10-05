@@ -1,3 +1,5 @@
+import { TRANSLATIONS } from '../../constants/translations';
+import { pickLang } from '../../utils/i18n';
 import React from 'react';
 import { FoodEntry, NutritionLog, NutritionGoal, CardioSession } from '../../types';
 import { Icon } from '../../components/ui/Icon';
@@ -61,7 +63,6 @@ export const TodayTab: React.FC<Props> = ({
     onEditEntry,
     onDeleteEntry,
 }) => {
-    const l = (en: string, es: string) => (lang === 'en' ? en : es);
 
     return (
         <div className="space-y-3 pt-1">
@@ -70,9 +71,9 @@ export const TodayTab: React.FC<Props> = ({
                 <div className="flex items-start justify-between mb-4">
                     <div>
                         <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">
-                            {l('Today', 'Hoy')}
+                            {TRANSLATIONS[lang].copy.todayTab.today}
                             {streak > 1 && (
-                                <span className="ml-2 text-orange-400">🔥 {streak} {l('day streak', 'días seguidos')}</span>
+                                <span className="ml-2 text-orange-400">🔥 {streak} {TRANSLATIONS[lang].copy.todayTab.dayStreak}</span>
                             )}
                         </p>
                         <div className={`text-4xl font-black leading-none ${caloriesRemaining < 0 ? 'text-orange-400' : caloriesRemaining < 200 ? 'text-yellow-400' : 'text-white'}`}>
@@ -80,8 +81,8 @@ export const TodayTab: React.FC<Props> = ({
                         </div>
                         <p className="text-xs text-zinc-500 mt-1">
                             {caloriesRemaining >= 0
-                                ? l('kcal remaining', 'kcal restantes')
-                                : l('kcal over goal', 'kcal sobre la meta')}
+                                ? TRANSLATIONS[lang].copy.todayTab.kcalRemaining
+                                : TRANSLATIONS[lang].copy.todayTab.kcalOverGoal}
                         </p>
                     </div>
                     <MacroRing
@@ -96,9 +97,9 @@ export const TodayTab: React.FC<Props> = ({
 
                 {/* Macro bars */}
                 <div className="flex gap-3">
-                    <MacroBar value={todayMacros.protein} goal={nutritionGoal.protein} color="text-blue-400" label={l('Protein', 'Proteína')} />
+                    <MacroBar value={todayMacros.protein} goal={nutritionGoal.protein} color="text-blue-400" label={TRANSLATIONS[lang].copy.todayTab.protein} />
                     <MacroBar value={todayMacros.carbs} goal={nutritionGoal.carbs} color="text-amber-400" label="Carbs" />
-                    <MacroBar value={todayMacros.fat} goal={nutritionGoal.fat} color="text-pink-400" label={l('Fat', 'Grasa')} />
+                    <MacroBar value={todayMacros.fat} goal={nutritionGoal.fat} color="text-pink-400" label={TRANSLATIONS[lang].copy.todayTab.fat} />
                 </div>
 
                 {/* Protein callout */}
@@ -107,7 +108,7 @@ export const TodayTab: React.FC<Props> = ({
                         <div className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
                         <p className="text-[11px] text-zinc-400">
                             <span className="text-blue-400 font-bold">{Math.round(proteinRemaining)}g</span>{' '}
-                            {l('protein to hit your goal', 'de proteína para llegar a tu meta')}
+                            {TRANSLATIONS[lang].copy.todayTab.proteinToHitYour}
                         </p>
                     </div>
                 )}
@@ -118,7 +119,7 @@ export const TodayTab: React.FC<Props> = ({
                         <div className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />
                         <p className="text-[11px] text-zinc-400">
                             <span className="text-red-400 font-bold">+{caloriesBurned} kcal</span>{' '}
-                            {l('burned from cardio — added to budget', 'quemadas en cardio — sumadas al presupuesto')}
+                            {TRANSLATIONS[lang].copy.todayTab.burnedFromCardioAdded}
                         </p>
                     </div>
                 )}
@@ -127,7 +128,7 @@ export const TodayTab: React.FC<Props> = ({
                     onClick={onEditGoals}
                     className="mt-3 w-full text-center text-xs text-muted hover:text-zinc-400 transition-colors duration-fast ease-natural"
                 >
-                    {l('Edit Goals', 'Editar Metas')} →
+                    {TRANSLATIONS[lang].copy.todayTab.editGoals} →
                 </button>
             </div>
 
@@ -138,23 +139,23 @@ export const TodayTab: React.FC<Props> = ({
             <div className="grid grid-cols-2 gap-2">
                 <button
                     onClick={onAddMeal}
-                    aria-label={l('Add food entry', 'Agregar entrada de comida')}
+                    aria-label={TRANSLATIONS[lang].copy.todayTab.addFoodEntry}
                     className="flex items-center justify-center gap-2 p-4 rounded-2xl glass-card hover:border-white/10 active:scale-95 transition-all duration-fast ease-natural"
                 >
                     <div className="w-8 h-8 rounded-xl bg-green-500/15 flex items-center justify-center">
                         <Icon name="Plus" size={16} className="text-green-400" />
                     </div>
-                    <span className="text-sm font-bold text-white">{l('Add Food', 'Agregar Comida')}</span>
+                    <span className="text-sm font-bold text-white">{TRANSLATIONS[lang].copy.todayTab.addFood}</span>
                 </button>
                 <button
                     onClick={onAddCardio}
-                    aria-label={l('Log cardio session', 'Registrar sesión de cardio')}
+                    aria-label={TRANSLATIONS[lang].copy.todayTab.logCardioSession}
                     className="flex items-center justify-center gap-2 p-4 rounded-2xl glass-card hover:border-white/10 active:scale-95 transition-all duration-fast ease-natural"
                 >
                     <div className="w-8 h-8 rounded-xl bg-red-500/15 flex items-center justify-center">
                         <Icon name="Flame" size={16} className="text-red-400" />
                     </div>
-                    <span className="text-sm font-bold text-white">{l('Log Cardio', 'Cardio')}</span>
+                    <span className="text-sm font-bold text-white">{TRANSLATIONS[lang].copy.todayTab.logCardio}</span>
                 </button>
             </div>
 
@@ -162,7 +163,7 @@ export const TodayTab: React.FC<Props> = ({
             {todayCardio.length > 0 && (
                 <div className="glass-card rounded-2xl p-3">
                     <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">
-                        {l("Today's Cardio", 'Cardio de Hoy')}
+                        {TRANSLATIONS[lang].copy.todayTab.todaySCardio}
                     </p>
                     <div className="space-y-1.5">
                         {todayCardio.map((s) => (
@@ -177,7 +178,7 @@ export const TodayTab: React.FC<Props> = ({
                                     {s.caloriesBurned && <span className="text-xs font-bold text-red-400">~{s.caloriesBurned} kcal</span>}
                                     <button
                                         onClick={() => onDeleteCardio(s.id)}
-                                        aria-label={l('Delete cardio entry', 'Borrar entrada de cardio')}
+                                        aria-label={TRANSLATIONS[lang].copy.todayTab.deleteCardioEntry}
                                         className="text-zinc-700 hover:text-red-500 transition-colors duration-fast ease-natural"
                                     >
                                         <Icon name="X" size={12} />
@@ -207,8 +208,8 @@ export const TodayTab: React.FC<Props> = ({
                             <div className="flex items-center gap-3">
                                 <span className="text-xl" aria-hidden="true">{meta.emoji}</span>
                                 <div className="text-left">
-                                    <p className="font-bold text-white text-sm">{lang === 'en' ? meta.en : meta.es}</p>
-                                    <p className="text-xs text-muted">{entries.length} {l('items', 'alimentos')}</p>
+                                    <p className="font-bold text-white text-sm">{pickLang(lang, meta)}</p>
+                                    <p className="text-xs text-muted">{entries.length} {TRANSLATIONS[lang].copy.todayTab.items}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
@@ -235,14 +236,14 @@ export const TodayTab: React.FC<Props> = ({
                                             <span className="text-sm font-bold text-zinc-300 mr-1">{entry.calories}</span>
                                             <button
                                                 onClick={() => onEditEntry(entry)}
-                                                aria-label={l('Edit entry', 'Editar entrada')}
+                                                aria-label={TRANSLATIONS[lang].copy.todayTab.editEntry}
                                                 className="text-zinc-600 hover:text-zinc-300 transition-colors duration-fast ease-natural active:scale-90 p-2 rounded-lg"
                                             >
                                                 <Icon name="Pencil" size={14} />
                                             </button>
                                             <button
                                                 onClick={() => onDeleteEntry(entry.id)}
-                                                aria-label={l('Delete entry', 'Borrar entrada')}
+                                                aria-label={TRANSLATIONS[lang].copy.todayTab.deleteEntry}
                                                 className="text-zinc-700 hover:text-red-500 transition-colors duration-fast ease-natural active:scale-90 p-2 rounded-lg"
                                             >
                                                 <Icon name="Trash2" size={14} />
@@ -259,8 +260,8 @@ export const TodayTab: React.FC<Props> = ({
             {todayLog.entries.length === 0 && (
                 <div className="text-center py-8 space-y-2">
                     <div className="text-4xl" aria-hidden="true">🥗</div>
-                    <p className="text-zinc-500 text-sm">{l('No food logged yet.', 'Sin comidas registradas.')}</p>
-                    <p className="text-zinc-600 text-xs">{l('Tap "Add Food" to start.', 'Toca "Agregar Comida" para empezar.')}</p>
+                    <p className="text-zinc-500 text-sm">{TRANSLATIONS[lang].copy.todayTab.noFoodLoggedYet}</p>
+                    <p className="text-zinc-600 text-xs">{TRANSLATIONS[lang].copy.todayTab.tapAddFoodTo}</p>
                 </div>
             )}
         </div>

@@ -1,3 +1,4 @@
+import { formatMessage } from '../../utils/i18n';
 import React, { Suspense, useCallback } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
@@ -92,13 +93,13 @@ export const AppModals: React.FC<AppModalsProps> = ({
             });
             setForceSyncFeedback({
                 type: 'success',
-                message: t.forceSyncSuccess || (lang === 'en' ? 'Data synced to cloud successfully.' : 'Datos sincronizados con la nube correctamente.')
+                message: t.forceSyncSuccess || (TRANSLATIONS[lang].copy.appModals.dataSyncedToCloud)
             });
         } catch (e: any) {
             console.error(e);
             setForceSyncFeedback({
                 type: 'error',
-                message: (t.forceSyncError || (lang === 'en' ? 'Failed to sync to cloud.' : 'Error al sincronizar con la nube.')) + (e?.message ? ` (${e.message})` : '')
+                message: (t.forceSyncError || (TRANSLATIONS[lang].copy.appModals.failedToSyncTo)) + (e?.message ? ` (${e.message})` : '')
             });
         } finally {
             setIsSyncing(false);
@@ -114,7 +115,7 @@ export const AppModals: React.FC<AppModalsProps> = ({
             window.location.reload();
         } catch (err) {
             console.error('Failed to restore backup:', err);
-            setImportError(lang === 'en' ? 'Failed to restore backup data' : 'Error al restaurar copia de seguridad');
+            setImportError(TRANSLATIONS[lang].copy.appModals.failedToRestoreBackup);
         }
     }, [validatedBackup, setValidatedBackup, setBackupSummary, setImportError, lang]);
 
@@ -163,18 +164,16 @@ export const AppModals: React.FC<AppModalsProps> = ({
             <Suspense fallback={null}>
             <ConfirmModal
                 isOpen={!!pendingCloudData}
-                title={lang === 'en' ? "Cloud Sync" : "Sincronización Nube"}
+                title={TRANSLATIONS[lang].copy.appModals.cloudSync}
                 description={(() => {
                     const friendlySections = pendingCloudSections.map(sec => ((t.syncSections as any)?.[sec]) || sec);
                     const sectionsText = friendlySections.length > 0
-                        ? (lang === 'en' ? ` in: ${friendlySections.join(', ')}` : ` en: ${friendlySections.join(', ')}`)
+                        ? (formatMessage(TRANSLATIONS[lang].copy.appModals.inSections, { sections: friendlySections.join(', ') }))
                         : '';
-                    return lang === 'en'
-                        ? `Newer cloud data found${sectionsText}. Download it? This will overwrite those local sections.`
-                        : `Se encontraron datos más nuevos en la nube${sectionsText}. ¿Descargar? Esto sobrescribirá esas secciones locales.`;
+                    return formatMessage(TRANSLATIONS[lang].copy.appModals.newerCloudDataFound, { sectionsText });
                 })()}
-                confirmText={lang === 'en' ? "Download" : "Descargar"}
-                cancelText={lang === 'en' ? "Keep Local" : "Mantener Local"}
+                confirmText={TRANSLATIONS[lang].copy.appModals.download}
+                cancelText={TRANSLATIONS[lang].copy.appModals.keepLocal}
                 onConfirm={confirmCloudSync}
                 onCancel={cancelCloudSync}
                 variant="primary"
@@ -188,9 +187,7 @@ export const AppModals: React.FC<AppModalsProps> = ({
                     isOpen={!!validatedBackup}
                     title={t.import}
                     description={backupSummary ? (
-                        lang === 'en'
-                            ? `Restore ${backupSummary.programsCount} routines, ${backupSummary.exercisesCount} exercises, ${backupSummary.logsCount} logs, and ${backupSummary.nutritionDaysCount} nutrition days? This will overwrite local data.`
-                            : `¿Restaurar ${backupSummary.programsCount} rutinas, ${backupSummary.exercisesCount} ejercicios, ${backupSummary.logsCount} entrenamientos y ${backupSummary.nutritionDaysCount} días de nutrición? Esto sobrescribirá los datos locales.`
+                        formatMessage(TRANSLATIONS[lang].copy.appModals.restoreRoutinesExercisesLogs, { programsCount: backupSummary.programsCount, exercisesCount: backupSummary.exercisesCount, logsCount: backupSummary.logsCount, nutritionDaysCount: backupSummary.nutritionDaysCount })
                     ) : t.importConfirm}
                     confirmText={t.import}
                     cancelText={t.cancel}
@@ -205,9 +202,9 @@ export const AppModals: React.FC<AppModalsProps> = ({
                 <Suspense fallback={null}>
                     <ConfirmModal
                         isOpen={true}
-                        title={lang === 'en' ? 'Import Error' : 'Error de Importación'}
+                        title={TRANSLATIONS[lang].copy.appModals.importError}
                         description={importError}
-                        confirmText={lang === 'en' ? 'OK' : 'Entendido'}
+                        confirmText={TRANSLATIONS[lang].copy.appModals.ok}
                         cancelText=""
                         variant="primary"
                         onConfirm={() => setImportError(null)}
@@ -271,9 +268,7 @@ export const AppModals: React.FC<AppModalsProps> = ({
                     <ConfirmModal
                         isOpen={true}
                         title={t.convertKongTitle}
-                        description={lang === 'es'
-                            ? 'La definición oficial de KONG no se edita directamente para preservar la metodología original. ¿Deseas convertir tu ciclo actual en una rutina editable?'
-                            : 'The official KONG definition cannot be edited directly to preserve the original methodology. Do you want to convert this cycle into an editable personal routine?'}
+                        description={TRANSLATIONS[lang].copy.appModals.theOfficialKongDefinition}
                         confirmText={t.convertKongConfirm}
                         cancelText={t.cancel}
                         onConfirm={() => {

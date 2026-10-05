@@ -1,3 +1,4 @@
+import { pickLang } from '../../utils/i18n';
 import React, { useMemo } from 'react';
 import { Icon } from '../../components/ui/Icon';
 import { toDisplay, unitLabel } from '../../utils/units';
@@ -32,10 +33,10 @@ export const HomeRecapStrip: React.FC<Props> = React.memo(({ logs, meso, planned
 
     const pct = progress.planned > 0 ? Math.min(100, Math.round((progress.done / progress.planned) * 100)) : 0;
     const lastDate = last
-        ? new Date(last.date).toLocaleDateString(lang === 'es' ? 'es-AR' : 'en-US', { day: 'numeric', month: 'short' })
+        ? new Date(last.date).toLocaleDateString(pickLang(lang, { es: 'es-AR', en: 'en-US' }), { day: 'numeric', month: 'short' })
         : null;
     const lastVolume = last
-        ? Math.round(toDisplay(last.volumeKg, unit)).toLocaleString(lang === 'es' ? 'es-AR' : 'en-US')
+        ? Math.round(toDisplay(last.volumeKg, unit)).toLocaleString(pickLang(lang, { es: 'es-AR', en: 'en-US' }))
         : null;
 
     return (

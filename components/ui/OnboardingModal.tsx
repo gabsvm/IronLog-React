@@ -70,13 +70,13 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onClose }) => 
                         <div className="flex bg-zinc-100 dark:bg-zinc-800 rounded-full p-1 shadow-inner">
                             <button 
                                 onClick={() => setLang('en')}
-                                className={`px-3 py-1 rounded-full text-[10px] font-black transition-all ${lang === 'en' ? 'bg-white dark:bg-zinc-600 shadow-sm text-zinc-900 dark:text-white' : 'text-zinc-400 hover:text-zinc-600'}`}
+                                className={`px-3 py-1 rounded-full text-[10px] font-black transition-all ${TRANSLATIONS[lang].copy.onboardingModal.bgWhiteDarkBg}`}
                             >
                                 EN
                             </button>
                             <button 
                                 onClick={() => setLang('es')}
-                                className={`px-3 py-1 rounded-full text-[10px] font-black transition-all ${lang === 'es' ? 'bg-white dark:bg-zinc-600 shadow-sm text-zinc-900 dark:text-white' : 'text-zinc-400 hover:text-zinc-600'}`}
+                                className={`px-3 py-1 rounded-full text-[10px] font-black transition-all ${TRANSLATIONS[lang].copy.onboardingModal.textZinc400Hover}`}
                             >
                                 ES
                             </button>

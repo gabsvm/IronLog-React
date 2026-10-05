@@ -1,3 +1,4 @@
+import { pickLang } from '../utils/i18n';
 import React, { useState, useMemo, useCallback, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { FoodEntry, CardioSession, NutritionLog, NutritionGoal, BodyLog } from '../types';
@@ -76,8 +77,8 @@ export const NutriView: React.FC = () => {
       const macros = log ? sumMacros(log.entries) : { calories: 0, protein: 0, carbs: 0, fat: 0 };
       days.push({
         date: dateStr,
-        label: d.toLocaleDateString(lang === 'es' ? 'es-AR' : 'en-US', { weekday: 'short' }),
-        shortDate: d.toLocaleDateString(lang === 'es' ? 'es-AR' : 'en-US', { day: 'numeric' }),
+        label: d.toLocaleDateString(pickLang(lang, { es: 'es-AR', en: 'en-US' }), { weekday: 'short' }),
+        shortDate: d.toLocaleDateString(pickLang(lang, { es: 'es-AR', en: 'en-US' }), { day: 'numeric' }),
         isToday: i === 0,
         ...macros,
       });
@@ -204,7 +205,6 @@ export const NutriView: React.FC = () => {
     setShowGoalEditor(false);
   }, [editGoal, setNutritionGoal]);
 
-  const l = (en: string, es: string) => lang === 'en' ? en : es;
 
   // Latest body log
   const latestWeight = weightTrend.length > 0 ? weightTrend[weightTrend.length - 1] : null;
@@ -216,8 +216,8 @@ export const NutriView: React.FC = () => {
       <div className="px-4 pt-4 pb-2 shrink-0">
         <div className="flex gap-1 bg-[#131316] p-1 rounded-2xl border border-white/5">
           {([
-            { id: 'today',   label: l('Today', 'Hoy'),        icon: 'Utensils' },
-            { id: 'body',    label: l('Body', 'Cuerpo'),      icon: 'Scale' },
+            { id: 'today',   label: TRANSLATIONS[lang].copy.nutri.today,        icon: 'Utensils' },
+            { id: 'body',    label: TRANSLATIONS[lang].copy.nutri.body,      icon: 'Scale' },
             { id: 'history', label: TRANSLATIONS[lang].dietTrends, icon: 'BarChart2' },
           ] as { id: SubTab; label: string; icon: string }[]).map(tab => (
             <button
@@ -297,16 +297,16 @@ export const NutriView: React.FC = () => {
         accent="primary"
         footer={
           <Button onClick={handleSaveEditEntry} fullWidth>
-            {l('Save Changes', 'Guardar Cambios')}
+            {TRANSLATIONS[lang].copy.nutri.saveChanges}
           </Button>
         }
       >
         {editEntryDraft && (
           <div className="p-5 space-y-5">
-            <p className="text-[11px] text-zinc-500 -mt-3">{l('Edit nutrition values', 'Editar valores nutricionales')}</p>
+            <p className="text-[11px] text-zinc-500 -mt-3">{TRANSLATIONS[lang].copy.nutri.editNutritionValues}</p>
             {/* Quick multiplier buttons */}
             <div>
-              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">{l('Quick scale', 'Escalar')}</p>
+              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">{TRANSLATIONS[lang].copy.nutri.quickScale}</p>
               <div className="flex gap-2">
                 {[0.5, 0.75, 1, 1.5, 2].map(mult => (
                   <button
@@ -332,10 +332,10 @@ export const NutriView: React.FC = () => {
             {/* Manual edit fields */}
             <div className="grid grid-cols-2 gap-3">
               {([
-                { key: 'calories', label: l('Calories', 'Calorías'), unit: 'kcal', color: 'text-zinc-300' },
-                { key: 'protein',  label: l('Protein', 'Proteína'),  unit: 'g', color: 'text-blue-400' },
+                { key: 'calories', label: TRANSLATIONS[lang].copy.nutri.calories, unit: 'kcal', color: 'text-zinc-300' },
+                { key: 'protein',  label: TRANSLATIONS[lang].copy.nutri.protein,  unit: 'g', color: 'text-blue-400' },
                 { key: 'carbs',    label: 'Carbs',                   unit: 'g', color: 'text-amber-400' },
-                { key: 'fat',      label: l('Fat', 'Grasa'),         unit: 'g', color: 'text-pink-400' },
+                { key: 'fat',      label: TRANSLATIONS[lang].copy.nutri.fat,         unit: 'g', color: 'text-pink-400' },
               ] as const).map(({ key, label, unit, color }) => (
                 <div key={key}>
                   <label className={`text-[11px] font-bold ${color} mb-1 block`}>{label} <span className="text-zinc-600">({unit})</span></label>
@@ -357,18 +357,18 @@ export const NutriView: React.FC = () => {
       <Sheet
         open={showGoalEditor}
         onOpenChange={setShowGoalEditor}
-        title={l('Edit Goals', 'Editar Metas')}
+        title={TRANSLATIONS[lang].copy.nutri.editGoals}
         accent="primary"
         footer={
           <Button onClick={saveGoal} fullWidth>
-            {l('Save Goals', 'Guardar Metas')}
+            {TRANSLATIONS[lang].copy.nutri.saveGoals}
           </Button>
         }
       >
         <div className="p-5 space-y-4">
           {tdee && (
             <p className="text-[11px] text-zinc-500 -mt-2">
-              {l('Estimated TDEE', 'TDEE estimado')}: <span className="text-zinc-300 font-bold">{tdee} kcal</span>
+              {TRANSLATIONS[lang].copy.nutri.estimatedTdee}: <span className="text-zinc-300 font-bold">{tdee} kcal</span>
             </p>
           )}
           <div className="space-y-3">
@@ -399,10 +399,10 @@ export const NutriView: React.FC = () => {
           <div className="flex items-center justify-between bg-zinc-800 text-white px-4 py-3 rounded-2xl shadow-2xl border border-zinc-700 animate-in fade-in slide-in-from-bottom-4 pointer-events-auto">
             <div className="flex items-center gap-2">
               <Icon name="Trash2" size={14} className="text-zinc-400" />
-              <span className="text-xs font-bold">{l('Item deleted', 'Alimento eliminado')}</span>
+              <span className="text-xs font-bold">{TRANSLATIONS[lang].copy.nutri.itemDeleted}</span>
             </div>
             <button onClick={handleUndoDelete} className="text-xs font-black text-red-500 uppercase tracking-wider px-2 py-1 active:scale-95 transition-transform">
-              {l('Undo', 'Deshacer')}
+              {TRANSLATIONS[lang].copy.nutri.undo}
             </button>
           </div>
         )}
@@ -410,10 +410,10 @@ export const NutriView: React.FC = () => {
           <div className="flex items-center justify-between bg-zinc-800 text-white px-4 py-3 rounded-2xl shadow-2xl border border-zinc-700 animate-in fade-in slide-in-from-bottom-4 pointer-events-auto">
             <div className="flex items-center gap-2">
               <Icon name="Flame" size={14} className="text-zinc-400" />
-              <span className="text-xs font-bold">{l('Cardio deleted', 'Cardio eliminado')}</span>
+              <span className="text-xs font-bold">{TRANSLATIONS[lang].copy.nutri.cardioDeleted}</span>
             </div>
             <button onClick={handleUndoDeleteCardio} className="text-xs font-black text-red-500 uppercase tracking-wider px-2 py-1 active:scale-95 transition-transform">
-              {l('Undo', 'Deshacer')}
+              {TRANSLATIONS[lang].copy.nutri.undo}
             </button>
           </div>
         )}

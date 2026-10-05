@@ -1,4 +1,4 @@
-// Counts `lang === 'es'` ternaries (and quote/spacing variants) in app source.
+// Counts inline language branches (`lang === 'es'`, `lang === 'en'`, `!==`, `isEs`) in app source.
 // Used by the Q19 i18n ratchet: the count must never exceed tests/i18n-baseline.json.
 // Excludes tests, tooling, generated code and platform projects — only the
 // shipped web source counts.
@@ -16,8 +16,10 @@ const EXCLUDED_DIRS = new Set([
 
 const INCLUDE_EXT = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs']);
 
-// lang === 'es' with either quote style and any spacing (also matches lang==='es').
-const PATTERN = /lang\s*===\s*['"]es['"]/g;
+// Q19: lang === 'es' with either quote style and any spacing.
+// S8: every inline language branch counts — 'es' or 'en', === or !==, and the
+// `isEs` alias that hid ternaries from the original pattern.
+const PATTERN = /lang\s*[!=]==\s*['"](?:es|en)['"]|\bisEs\b/g;
 
 export function countLangTernaries(root = ROOT) {
     const perFile = {};

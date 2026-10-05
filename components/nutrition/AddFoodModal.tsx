@@ -1,4 +1,5 @@
 
+import { pickLang, otherLang } from '../../utils/i18n';
 import React, { useState, useMemo, useRef } from 'react';
 import { useAppPreferences } from '../../context/AppContext';
 import { Modal } from '../ui/Modal';
@@ -35,8 +36,8 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, onA
         if (!query || query.length < 2) return [];
         const q = query.toLowerCase().trim();
         return FOOD_DATABASE.filter(f => {
-            const name = lang === 'es' ? f.name.es : f.name.en;
-            const other = lang === 'es' ? f.name.en : f.name.es;
+            const name = pickLang(lang, f.name);
+            const other = pickLang(otherLang(lang), f.name);
             return name.toLowerCase().includes(q) || other.toLowerCase().includes(q);
         }).slice(0, 15);
     }, [query, lang]);
@@ -54,7 +55,7 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, onA
 
     const handleSelectFood = (food: FoodItem) => {
         setSelectedFood(food);
-        setQuery(lang === 'es' ? food.name.es : food.name.en);
+        setQuery(pickLang(lang, food.name));
         setServings('1');
     };
 
@@ -178,7 +179,7 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, onA
                                     <span className="text-2xl flex-shrink-0 w-9 text-center">{food.emoji}</span>
                                     <div className="flex-1 min-w-0">
                                         <div className="font-bold text-sm text-zinc-900 dark:text-white truncate">
-                                            {lang === 'es' ? food.name.es : food.name.en}
+                                            {pickLang(lang, food.name)}
                                         </div>
                                         <div className="text-[10px] text-zinc-400">
                                             {food.serving} · {food.calories} kcal · {food.protein}g prot
@@ -233,7 +234,7 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, onA
                                 <span className="text-3xl">{selectedFood.emoji}</span>
                                 <div>
                                     <p className="font-black text-zinc-900 dark:text-white leading-tight">
-                                        {lang === 'es' ? selectedFood.name.es : selectedFood.name.en}
+                                        {pickLang(lang, selectedFood.name)}
                                     </p>
                                     <p className="text-[10px] text-zinc-400 mt-0.5">{selectedFood.serving} = 1 porción</p>
                                 </div>

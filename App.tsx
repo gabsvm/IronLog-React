@@ -1,4 +1,5 @@
 
+import { formatMessage } from './utils/i18n';
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { flushSync } from 'react-dom';
 import { AppProvider, useApp } from './context/AppContext';
@@ -18,6 +19,7 @@ import {
     type BackupDomainSummary
 } from './services/backupService';
 import { useStore } from './lib/store';
+import { TRANSLATIONS } from './constants/translations';
 
 // Q20: the rest pill only renders during an active rest; the timer engine itself
 // runs in TimerProvider, so deferring the overlay keeps it out of the entry chunk.
@@ -141,7 +143,7 @@ const AppContent = () => {
                 description: { en: activeSession.name, es: activeSession.name },
                 icon: 'Play',
                 accent: 'emerald',
-                badge: lang === 'es' ? 'EN CURSO' : 'LIVE',
+                badge: TRANSLATIONS[lang].copy.app.live,
                 onSelect: () => setView('workout'),
                 keywords: ['continue', 'resume', 'continuar', 'activa'],
             });
@@ -241,16 +243,16 @@ const AppContent = () => {
                 const result = validateAndMigrateBackup(parsed);
                 if (result.valid === false) {
                     const details = result.errorDetails || '';
-                    const msg = lang === 'en'
-                        ? `Import rejected: ${details || 'Invalid backup format'}`
-                        : `Importación rechazada: ${details || 'Formato de copia de seguridad no válido'}`;
+                    const msg = formatMessage(TRANSLATIONS[lang].copy.app.importRejected, {
+                        details: details || TRANSLATIONS[lang].copy.app.invalidBackupFormat,
+                    });
                     setImportError(msg);
                     return;
                 }
                 setValidatedBackup(result.backup);
                 setBackupSummary(result.summary);
             } catch (_) {
-                const msg = lang === 'en' ? 'Invalid JSON file' : 'Archivo JSON inválido';
+                const msg = TRANSLATIONS[lang].copy.app.invalidJsonFile;
                 setImportError(msg);
             }
         };

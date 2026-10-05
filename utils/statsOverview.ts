@@ -1,3 +1,4 @@
+import { pickLang } from './i18n';
 import type { Log } from '../types';
 
 export interface OverviewNumbers {
@@ -74,7 +75,7 @@ export const computeOverview = (logs: Log[], mesoId?: number | null): OverviewNu
  * localized decimal otherwise (comma in Spanish, dot in English).
  */
 export const formatSets = (value: number, lang: 'es' | 'en'): string =>
-    value.toLocaleString(lang === 'es' ? 'es-ES' : 'en-US', {
+    value.toLocaleString(pickLang(lang, { es: 'es-ES', en: 'en-US' }), {
         maximumFractionDigits: 1,
         useGrouping: false,
     });

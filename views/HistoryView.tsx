@@ -29,9 +29,9 @@ const VirtuosoHeader = ({ context }: { context?: HistoryVirtuosoContext }) => {
     return (
         <div className="space-y-3 px-5 pb-4 pt-4">
             <div>
-                <h2 className="text-2xl font-black tracking-tight text-zinc-950 dark:text-white">{lang === 'en' ? 'History' : 'Historial'}</h2>
+                <h2 className="text-2xl font-black tracking-tight text-zinc-950 dark:text-white">{TRANSLATIONS[lang].copy.history.history}</h2>
                 <p className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.16em] text-zinc-500">
-                    {lang === 'es' ? 'Tus entrenamientos completados' : 'Your completed workouts'}
+                    {TRANSLATIONS[lang].copy.history.yourCompletedWorkouts}
                 </p>
             </div>
             <div id="tut-history-search" className="relative">
@@ -40,7 +40,7 @@ const VirtuosoHeader = ({ context }: { context?: HistoryVirtuosoContext }) => {
                     type="search"
                     inputMode="search"
                     enterKeyHint="search"
-                    placeholder={lang === 'en' ? 'Search workouts...' : 'Buscar entrenamientos...'}
+                    placeholder={TRANSLATIONS[lang].copy.history.searchWorkouts}
                     className="w-full rounded-2xl border border-[rgb(var(--border-subtle)/0.8)] bg-[rgb(var(--surface-raised)/0.8)] py-3 pl-10 pr-4 text-sm font-medium text-zinc-950 outline-none placeholder-zinc-500 transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:text-white"
                     value={search}
                     onChange={e => setSearch(e.target.value)}
@@ -118,7 +118,7 @@ const HistoryCard = memo(({ log, lang, id, onOpen, unit = 'kg' }: HistoryCardPro
 
             <div className="mt-3 flex items-center justify-between border-t border-[rgb(var(--border-subtle)/0.45)] pt-3">
                 <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-zinc-500">
-                    {(log.exercises || []).length} {lang === 'es' ? 'ejercicios' : 'exercises'}
+                    {(log.exercises || []).length} {TRANSLATIONS[lang].copy.history.exercises}
                 </span>
                 <Icon name="ChevronRight" size={16} className="text-zinc-400" />
             </div>
@@ -259,8 +259,8 @@ export const HistoryView: React.FC = () => {
         return (
             <div className="flex h-full flex-col items-center justify-center bg-[rgb(var(--surface-app))] p-8 text-center">
                 <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-[rgb(var(--surface-raised))] text-zinc-500"><Icon name="Dumbbell" size={34} /></div>
-                <h3 className="mb-2 text-xl font-black text-zinc-950 dark:text-white">{lang === 'en' ? 'No workouts yet' : 'Sin entrenamientos aún'}</h3>
-                <p className="max-w-[230px] text-sm leading-relaxed text-zinc-500">{lang === 'en' ? 'Complete your first session to see it here.' : 'Completa tu primera sesión para verla aquí.'}</p>
+                <h3 className="mb-2 text-xl font-black text-zinc-950 dark:text-white">{TRANSLATIONS[lang].copy.history.noWorkoutsYet}</h3>
+                <p className="max-w-[230px] text-sm leading-relaxed text-zinc-500">{TRANSLATIONS[lang].copy.history.completeYourFirstSession}</p>
             </div>
         );
     }
@@ -298,9 +298,9 @@ export const HistoryView: React.FC = () => {
                 <Suspense fallback={null}>
                     <ConfirmModal
                         isOpen={true}
-                        title={lang === 'en' ? 'Delete Workout?' : '¿Eliminar Entrenamiento?'}
-                        description={lang === 'en' ? 'This workout will be permanently deleted. This cannot be undone.' : 'Este entrenamiento se eliminará permanentemente. No se puede deshacer.'}
-                        confirmText={lang === 'en' ? 'Delete' : 'Eliminar'}
+                        title={TRANSLATIONS[lang].copy.history.deleteWorkout}
+                        description={TRANSLATIONS[lang].copy.history.thisWorkoutWillBe}
+                        confirmText={TRANSLATIONS[lang].copy.history.delete}
                         cancelText={t.cancel}
                         onConfirm={() => {
                             const idx = safeLogs.findIndex(l => l.id === deletingLogId);
@@ -322,7 +322,7 @@ export const HistoryView: React.FC = () => {
             {deletedLogBackup && (
                 <div className="fixed bottom-24 left-4 right-4 z-50 flex items-center justify-between rounded-2xl bg-zinc-900 border border-zinc-700/80 px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-4 duration-200">
                     <span className="text-xs font-semibold text-white">
-                        {lang === 'es' ? 'Entrenamiento eliminado' : 'Workout deleted'}
+                        {TRANSLATIONS[lang].copy.history.workoutDeleted}
                     </span>
                     <button
                         onClick={() => {
@@ -336,7 +336,7 @@ export const HistoryView: React.FC = () => {
                         className="flex items-center gap-1.5 text-xs font-bold text-primary-400 hover:text-primary-300 active:scale-95 transition-transform"
                     >
                         <Icon name="RotateCcw" size={14} />
-                        <span>{lang === 'es' ? 'Deshacer' : 'Undo'}</span>
+                        <span>{TRANSLATIONS[lang].copy.history.undo}</span>
                     </button>
                 </div>
             )}

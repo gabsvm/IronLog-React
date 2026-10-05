@@ -1,6 +1,7 @@
 import React from 'react';
 import { Sheet } from './Sheet';
 import { Icon } from './Icon';
+import { TRANSLATIONS } from '../../constants/translations';
 
 interface Props {
     isOpen: boolean;
@@ -13,7 +14,7 @@ export const PhilosophyModal: React.FC<Props> = ({ isOpen, onClose, lang }) => {
         <Sheet
             open={isOpen}
             onOpenChange={(open) => !open && onClose()}
-            title={lang === 'es' ? 'La Regla del 85% (NH)' : 'The 85% Rule (NH)'}
+            title={TRANSLATIONS[lang].copy.philosophyModal.the85RuleNh}
             accent="primary"
         >
             <div className="p-5 space-y-4 text-sm text-zinc-300 dark:text-zinc-400 overflow-y-auto max-h-[70vh]">

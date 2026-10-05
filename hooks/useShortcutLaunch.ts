@@ -3,6 +3,7 @@ import { SessionBuilder } from '../services/SessionBuilder';
 import { KONG_4DAY_V1 } from '../programs/kong/kong4Day';
 import { resolveProgramDay } from '../programs/engine/ProgramResolver';
 import { useWidgetLaunchAction } from './useWidgetLaunchAction';
+import { TRANSLATIONS } from '../constants/translations';
 
 interface ShortcutLaunchInput {
     isAppLoading: boolean;
@@ -80,7 +81,7 @@ export const useShortcutLaunch = ({
         // 3. Fallback: Quick Start session
         const quickSession = {
             id: Date.now(),
-            name: lang === 'es' ? 'Sesión Rápida' : 'Quick Start Session',
+            name: TRANSLATIONS[lang].copy.useShortcutLaunch.quickStartSession,
             dayIdx: -1,
             mesoId: -1,
             week: -1,

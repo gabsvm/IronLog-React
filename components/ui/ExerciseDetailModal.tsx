@@ -66,9 +66,9 @@ const ExerciseVisualHint: React.FC<{ exercise: ExerciseDef; lang: 'en' | 'es' }>
     const isCardio = muscle === 'CARDIO';
 
     const tags = [
-        isCompound ? (lang === 'en' ? 'Compound' : 'Compuesto') : (lang === 'en' ? 'Isolation' : 'Aislamiento'),
-        isBodyweight ? (lang === 'en' ? 'Bodyweight' : 'Peso Corporal') : (lang === 'en' ? 'Weighted' : 'Con Peso'),
-        isCardio ? 'Cardio' : (lang === 'en' ? 'Strength' : 'Fuerza'),
+        isCompound ? (TRANSLATIONS[lang].copy.exerciseDetailModal.compound) : (TRANSLATIONS[lang].copy.exerciseDetailModal.isolation),
+        isBodyweight ? (TRANSLATIONS[lang].copy.exerciseDetailModal.bodyweight) : (TRANSLATIONS[lang].copy.exerciseDetailModal.weighted),
+        isCardio ? 'Cardio' : (TRANSLATIONS[lang].copy.exerciseDetailModal.strength),
     ];
 
     return (
@@ -214,7 +214,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
             footer={
                 <div className="flex gap-3">
                     <Button fullWidth onClick={onClose} variant="secondary">{t.close}</Button>
-                    <Button fullWidth onClick={saveVolumeCountingMode}>{lang === 'es' ? 'Guardar' : 'Save'}</Button>
+                    <Button fullWidth onClick={saveVolumeCountingMode}>{TRANSLATIONS[lang].copy.exerciseDetailModal.save}</Button>
                 </div>
             }
         >
@@ -262,8 +262,8 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                             <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/5">
                                 <div className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest">
                                     {exercise.videoId
-                                        ? (lang === 'en' ? 'Tap to open in YouTube' : 'Toca para abrir en YouTube')
-                                        : (lang === 'en' ? 'Search tutorial online' : 'Buscar tutorial en línea')
+                                        ? (TRANSLATIONS[lang].copy.exerciseDetailModal.tapToOpenIn)
+                                        : (TRANSLATIONS[lang].copy.exerciseDetailModal.searchTutorialOnline)
                                     }
                                 </div>
                                 <a
@@ -307,16 +307,16 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                                 {exercise.muscle !== 'CARDIO' && (
                                     <div>
                                         <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                            <Icon name="Dumbbell" size={13} /> {lang === 'es' ? 'Cálculo de tonelaje' : 'Tonnage calculation'}
+                                            <Icon name="Dumbbell" size={13} /> {TRANSLATIONS[lang].copy.exerciseDetailModal.tonnageCalculation}
                                         </h4>
                                         <div className="space-y-2">
                                             <button type="button" onClick={() => setVolumeCountingMode('total')} className={`w-full text-left rounded-xl border p-3 transition-colors ${volumeCountingMode === 'total' ? 'border-primary-500 bg-primary-500/10' : 'border-white/10 bg-white/5'}`}>
-                                                <span className="block text-sm font-bold text-white">{lang === 'es' ? 'Total registrado · ×1' : 'Recorded total · ×1'}</span>
-                                                <span className="block mt-1 text-xs text-zinc-400">{lang === 'es' ? 'Usá esto para barras, máquinas bilaterales o si las reps alternadas ya son el total.' : 'For bars, bilateral machines, or alternating reps already entered as a total.'}</span>
+                                                <span className="block text-sm font-bold text-white">{TRANSLATIONS[lang].copy.exerciseDetailModal.recordedTotal1}</span>
+                                                <span className="block mt-1 text-xs text-zinc-400">{TRANSLATIONS[lang].copy.exerciseDetailModal.forBarsBilateralMachines}</span>
                                             </button>
                                             <button type="button" onClick={() => setVolumeCountingMode('per_side')} className={`w-full text-left rounded-xl border p-3 transition-colors ${volumeCountingMode === 'per_side' ? 'border-primary-500 bg-primary-500/10' : 'border-white/10 bg-white/5'}`}>
-                                                <span className="block text-sm font-bold text-white">{lang === 'es' ? 'Por lado · ×2' : 'Per side · ×2'}</span>
-                                                <span className="block mt-1 text-xs text-zinc-400">{lang === 'es' ? 'Si anotás la carga y reps de un brazo/pierna y entrenás los dos lados.' : 'When you record load and reps for one arm/leg and train both sides.'}</span>
+                                                <span className="block text-sm font-bold text-white">{TRANSLATIONS[lang].copy.exerciseDetailModal.perSide2}</span>
+                                                <span className="block mt-1 text-xs text-zinc-400">{TRANSLATIONS[lang].copy.exerciseDetailModal.whenYouRecordLoad}</span>
                                             </button>
                                         </div>
                                     </div>

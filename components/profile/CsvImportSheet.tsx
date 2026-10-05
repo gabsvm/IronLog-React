@@ -1,3 +1,4 @@
+import { pickLang } from '../../utils/i18n';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Sheet } from '../ui/Sheet';
 import { Button } from '../ui/Button';
@@ -78,7 +79,7 @@ export const CsvImportSheet: React.FC<CsvImportSheetProps> = ({
 
     const freshSetCount = fresh.reduce((n, s) => n + s.setCount, 0);
     const fmtDate = (ms: number) =>
-        new Date(ms).toLocaleDateString(lang === 'es' ? 'es-AR' : 'en-US', {
+        new Date(ms).toLocaleDateString(pickLang(lang, { es: 'es-AR', en: 'en-US' }), {
             day: 'numeric',
             month: 'short',
             year: 'numeric',

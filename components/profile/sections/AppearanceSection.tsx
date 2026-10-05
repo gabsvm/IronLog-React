@@ -71,9 +71,7 @@ export const AppearanceSection: React.FC = () => {
                     type="button"
                     onClick={() => setLang('en')}
                     className={`h-9 rounded-lg text-xs font-medium flex items-center justify-center transition-all ${
-                        lang === 'en'
-                            ? 'bg-surface-elevated text-white border border-border-strong shadow-sm'
-                            : 'text-muted hover:text-white'
+                        TRANSLATIONS[lang].copy.appearanceSection.bgSurfaceElevatedText
                     }`}
                 >
                     English
@@ -82,9 +80,7 @@ export const AppearanceSection: React.FC = () => {
                     type="button"
                     onClick={() => setLang('es')}
                     className={`h-9 rounded-lg text-xs font-medium flex items-center justify-center transition-all ${
-                        lang === 'es'
-                            ? 'bg-surface-elevated text-white border border-border-strong shadow-sm'
-                            : 'text-muted hover:text-white'
+                        TRANSLATIONS[lang].copy.appearanceSection.textMutedHoverText
                     }`}
                 >
                     Español

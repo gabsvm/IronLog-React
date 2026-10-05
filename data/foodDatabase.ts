@@ -1,3 +1,4 @@
+import { otherLang, pickLang } from '../utils/i18n';
 
 // Curated food database – bilingual (ES/EN), macros per typical serving
 export interface FoodItem {
@@ -115,8 +116,8 @@ export function searchFoods(query: string, lang: 'en' | 'es'): FoodItem[] {
     const q = query.toLowerCase().trim();
     return FOOD_DATABASE
         .filter(f => {
-            const name = lang === 'es' ? f.name.es : f.name.en;
-            const otherName = lang === 'es' ? f.name.en : f.name.es;
+            const name = pickLang(lang, f.name);
+            const otherName = pickLang(otherLang(lang), f.name);
             return name.toLowerCase().includes(q) || otherName.toLowerCase().includes(q);
         })
         .slice(0, 12);

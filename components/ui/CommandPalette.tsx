@@ -4,6 +4,7 @@ import { useAppPreferences } from '../../context/AppContext';
 import { useStore } from '../../lib/store';
 import { KONG_4DAY_V1 } from '../../programs/kong/kong4Day';
 import { Icon } from './Icon';
+import { TRANSLATIONS } from '../../constants/translations';
 
 export interface CommandAction {
     id: string;
@@ -110,7 +111,7 @@ export const CommandPalette: React.FC<Props> = ({ isOpen, onClose, actions, titl
                     onClick={onClose}
                     role="dialog"
                     aria-modal="true"
-                    aria-label={title || (lang === 'es' ? 'Acciones rápidas' : 'Quick actions')}
+                    aria-label={title || (TRANSLATIONS[lang].copy.commandPalette.quickActions)}
                 >
                     <motion.div
                         initial={{ y: 42, opacity: 0, scale: 0.985 }}
@@ -128,15 +129,15 @@ export const CommandPalette: React.FC<Props> = ({ isOpen, onClose, actions, titl
                             <div className="flex items-start justify-between gap-3">
                                 <div>
                                     <h2 className="text-xl font-black tracking-tight text-zinc-950 dark:text-white">
-                                        {lang === 'es' ? '¿Qué quieres hacer?' : 'What do you want to do?'}
+                                        {TRANSLATIONS[lang].copy.commandPalette.whatDoYouWant}
                                     </h2>
                                     <p className="mt-1 text-xs font-medium text-zinc-500">
-                                        {lang === 'es' ? 'Inicia, continúa o gestiona tu entrenamiento.' : 'Start, resume or manage your training.'}
+                                        {TRANSLATIONS[lang].copy.commandPalette.startResumeOrManage}
                                     </p>
                                 </div>
                                 <button
                                     onClick={onClose}
-                                    aria-label={lang === 'es' ? 'Cerrar' : 'Close'}
+                                    aria-label={TRANSLATIONS[lang].copy.commandPalette.close}
                                     className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-zinc-500 dark:bg-white/5"
                                 >
                                     <Icon name="X" size={17} />
@@ -150,7 +151,7 @@ export const CommandPalette: React.FC<Props> = ({ isOpen, onClose, actions, titl
                                 type="text"
                                 value={query}
                                 onChange={e => { setQuery(e.target.value); setActiveIdx(0); }}
-                                placeholder={lang === 'es' ? 'Buscar acción…' : 'Search action…'}
+                                placeholder={TRANSLATIONS[lang].copy.commandPalette.searchAction}
                                 className="flex-1 bg-transparent py-2 text-sm font-medium text-zinc-950 outline-none placeholder-zinc-500 dark:text-white"
                             />
                             <kbd className="inline-flex items-center gap-1 rounded border border-zinc-200 bg-zinc-100 px-1.5 py-0.5 text-[10px] font-bold text-zinc-500 dark:border-white/10 dark:bg-white/5">ESC</kbd>
@@ -159,7 +160,7 @@ export const CommandPalette: React.FC<Props> = ({ isOpen, onClose, actions, titl
                         <div className="max-h-[62vh] overflow-y-auto px-3 pb-4 pt-1 scroll-container sm:px-0 sm:py-2">
                             {filtered.length === 0 ? (
                                 <div className="py-12 text-center text-sm text-zinc-500">
-                                    {lang === 'es' ? 'Sin resultados' : 'No results'}
+                                    {TRANSLATIONS[lang].copy.commandPalette.noResults}
                                 </div>
                             ) : (
                                 filtered.map((a, i) => {

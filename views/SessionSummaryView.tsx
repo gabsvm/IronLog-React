@@ -1,3 +1,4 @@
+import { formatMessage } from '../utils/i18n';
 import React, { useMemo } from 'react';
 import { Log } from '../types';
 import { Icon } from '../components/ui/Icon';
@@ -5,6 +6,7 @@ import { Button } from '../components/ui/Button';
 import { useApp } from '../context/AppContext';
 import { getLogBodyWeight, getSetLoadVolume } from '../utils/trainingMetrics';
 import { resolveWeightUnit, toDisplay, unitLabel } from '../utils/units';
+import { TRANSLATIONS } from '../constants/translations';
 
 interface SessionSummaryViewProps {
     log: Log;
@@ -49,13 +51,13 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
     const getSessionTypeBadge = () => {
         if (discipline === 'crossfit') {
             return {
-                label: lang === 'es' ? 'WOD · Funcional' : 'WOD · Functional',
+                label: TRANSLATIONS[lang].copy.sessionSummary.wodFunctional,
                 color: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
             };
         }
         if (discipline === 'calisthenics') {
             return {
-                label: lang === 'es' ? 'Calistenia · Skill' : 'Calisthenics · Skill',
+                label: TRANSLATIONS[lang].copy.sessionSummary.calisthenicsSkill,
                 color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
             };
         }
@@ -67,12 +69,12 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
         }
         if (isDetached) {
             return {
-                label: lang === 'es' ? 'Sesión Libre' : 'Freestyle Session',
+                label: TRANSLATIONS[lang].copy.sessionSummary.freestyleSession,
                 color: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
             };
         }
         return {
-            label: lang === 'es' ? `Semana ${log.week}` : `Week ${log.week}`,
+            label: formatMessage(TRANSLATIONS[lang].copy.sessionSummary.week, { week: log.week }),
             color: 'bg-primary-500/20 text-primary-400 border-primary-500/30',
         };
     };
@@ -93,7 +95,7 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
                         </span>
                     </div>
                     <h1 className="text-2xl font-black uppercase tracking-tight text-zinc-950 dark:text-white leading-tight">
-                        {lang === 'en' ? 'Workout Complete!' : '¡Entrenamiento Completado!'}
+                        {TRANSLATIONS[lang].copy.sessionSummary.workoutComplete}
                     </h1>
                     <p className="text-zinc-500 dark:text-zinc-400 font-medium text-sm">
                         {log.name}
@@ -106,7 +108,7 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
                         <Icon name="Clock" size={18} className="text-blue-500 dark:text-blue-400 mb-1.5" />
                         <div className="text-xl font-black">{formatDuration(log.duration)}</div>
                         <div className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
-                            {lang === 'en' ? 'Time' : 'Tiempo'}
+                            {TRANSLATIONS[lang].copy.sessionSummary.time}
                         </div>
                     </div>
 
@@ -114,7 +116,7 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
                         <Icon name="CheckCircle" size={18} className="text-green-500 dark:text-green-400 mb-1.5" />
                         <div className="text-xl font-black">{stats.sets}</div>
                         <div className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
-                            {lang === 'en' ? 'Sets' : 'Series'}
+                            {TRANSLATIONS[lang].copy.sessionSummary.sets}
                         </div>
                     </div>
 
@@ -122,7 +124,7 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
                         <Icon name="Dumbbell" size={18} className="text-amber-500 dark:text-amber-400 mb-1.5" />
                         <div className="text-xl font-black">{toDisplay(stats.volume, unit).toLocaleString()} {unitLabel(unit).toLowerCase()}</div>
                         <div className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
-                            {lang === 'en' ? 'Total Volume' : 'Volumen Total'}
+                            {TRANSLATIONS[lang].copy.sessionSummary.totalVolume}
                         </div>
                     </div>
                 </div>
@@ -131,7 +133,7 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
                 {stats.muscles.length > 0 && (
                     <div className="w-full max-w-sm">
                         <p className="text-center text-[11px] font-bold text-zinc-500 mb-2 uppercase tracking-wider">
-                            {lang === 'en' ? 'Muscles Hit' : 'Músculos Trabajados'}
+                            {TRANSLATIONS[lang].copy.sessionSummary.musclesHit}
                         </p>
                         <div className="flex flex-wrap justify-center gap-1.5">
                             {stats.muscles.map(m => (
@@ -147,7 +149,7 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
             {/* Footer */}
             <div className="p-4 bg-[rgb(var(--surface-app))] pb-[var(--safe-area-bottom)] border-t border-[rgb(var(--border-subtle)/0.4)]">
                 <Button fullWidth onClick={onClose} className="h-12 text-base font-bold">
-                    {lang === 'en' ? 'Finish & Go Home' : 'Finalizar y Volver'}
+                    {TRANSLATIONS[lang].copy.sessionSummary.finishGoHome}
                 </Button>
             </div>
         </div>

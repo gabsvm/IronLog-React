@@ -3,6 +3,7 @@ import { Log, WeightUnit } from '../../types';
 import { Icon } from '../../components/ui/Icon';
 import { formatDate, formatHoursMinutes, getTranslated } from '../../utils';
 import { toDisplay, unitLabel } from '../../utils/units';
+import { TRANSLATIONS } from '../../constants/translations';
 
 interface Props {
     log: Log;
@@ -48,7 +49,7 @@ export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat
                     <button
                         type="button"
                         onClick={onBack}
-                        aria-label={lang === 'es' ? 'Volver' : 'Back'}
+                        aria-label={TRANSLATIONS[lang].copy.historyDetail.back}
                         className="flex h-10 w-10 items-center justify-center rounded-full text-zinc-500 transition-colors active:bg-zinc-200 dark:active:bg-white/5"
                     >
                         <Icon name="ArrowLeft" size={21} />
@@ -62,7 +63,7 @@ export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat
                     <button
                         type="button"
                         onClick={onDelete}
-                        aria-label={lang === 'es' ? 'Eliminar entrenamiento' : 'Delete workout'}
+                        aria-label={TRANSLATIONS[lang].copy.historyDetail.deleteWorkout}
                         className="flex h-10 w-10 items-center justify-center rounded-full text-zinc-500 transition-colors active:bg-red-500/10 active:text-red-500"
                     >
                         <Icon name="Trash2" size={18} />
@@ -72,15 +73,15 @@ export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat
 
             <main className="flex-1 overflow-y-auto scroll-container px-4 pb-32 pt-4">
                 <section className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                    <SummaryCell icon="Clock" label={lang === 'es' ? 'Duración' : 'Duration'} value={formatHoursMinutes(log.duration)} />
-                    <SummaryCell icon="Dumbbell" label={lang === 'es' ? 'Ejercicios' : 'Exercises'} value={String(summary.exercises)} />
-                    <SummaryCell icon="CheckCircle" label={lang === 'es' ? 'Series' : 'Sets'} value={String(summary.sets)} />
-                    <SummaryCell icon="TrendingUp" label={lang === 'es' ? 'Volumen' : 'Volume'} value={summary.volume > 0 ? `${toDisplay(summary.volume, unit).toLocaleString()} ${weightSuffix}` : '—'} />
+                    <SummaryCell icon="Clock" label={TRANSLATIONS[lang].copy.historyDetail.duration} value={formatHoursMinutes(log.duration)} />
+                    <SummaryCell icon="Dumbbell" label={TRANSLATIONS[lang].copy.historyDetail.exercises} value={String(summary.exercises)} />
+                    <SummaryCell icon="CheckCircle" label={TRANSLATIONS[lang].copy.historyDetail.sets} value={String(summary.sets)} />
+                    <SummaryCell icon="TrendingUp" label={TRANSLATIONS[lang].copy.historyDetail.volume} value={summary.volume > 0 ? `${toDisplay(summary.volume, unit).toLocaleString()} ${weightSuffix}` : '—'} />
                 </section>
 
                 {(log as any).note && (
                     <section className="mt-4 rounded-2xl border border-[rgb(var(--border-subtle)/0.7)] bg-[rgb(var(--surface-raised)/0.75)] p-4">
-                        <div className="mb-1 text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500">{lang === 'es' ? 'Nota' : 'Note'}</div>
+                        <div className="mb-1 text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500">{TRANSLATIONS[lang].copy.historyDetail.note}</div>
                         <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">{(log as any).note}</p>
                     </section>
                 )}
@@ -94,7 +95,7 @@ export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat
                                     <div className="min-w-0">
                                         <h2 className="truncate text-sm font-black text-zinc-950 dark:text-white">{getTranslated(ex.name, lang)}</h2>
                                         <div className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.13em] text-zinc-500">
-                                            {completed.length} {lang === 'es' ? 'series completadas' : 'completed sets'}
+                                            {completed.length} {TRANSLATIONS[lang].copy.historyDetail.completedSets}
                                         </div>
                                     </div>
                                     {ex.note && <span className="max-w-[42%] truncate text-xs italic text-muted">{ex.note}</span>}
@@ -102,7 +103,7 @@ export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat
 
                                 <div className="border-t border-[rgb(var(--border-subtle)/0.55)] px-3 py-2">
                                     {completed.length === 0 ? (
-                                        <div className="px-2 py-3 text-xs text-zinc-500">{lang === 'es' ? 'Sin series completadas' : 'No completed sets'}</div>
+                                        <div className="px-2 py-3 text-xs text-zinc-500">{TRANSLATIONS[lang].copy.historyDetail.noCompletedSets}</div>
                                     ) : completed.map((set, index) => {
                                         const isCardio = ex.muscle === 'CARDIO';
                                         return (
@@ -147,8 +148,8 @@ export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat
                 >
                     <Icon name={repeatBlocked ? 'Lock' : 'Repeat'} size={18} />
                     {repeatBlocked
-                        ? (lang === 'es' ? 'Finaliza la sesión activa para repetir' : 'Finish active session to repeat')
-                        : (lang === 'es' ? 'Repetir sesión histórica' : 'Repeat historical session')}
+                        ? (TRANSLATIONS[lang].copy.historyDetail.finishActiveSessionTo)
+                        : (TRANSLATIONS[lang].copy.historyDetail.repeatHistoricalSession)}
                 </button>
             </div>
         </div>

@@ -1,3 +1,4 @@
+import { pickLang } from './i18n';
 import type { WeightUnit } from '../types';
 
 /**
@@ -48,7 +49,7 @@ export const fromDisplay = (value: number, unit: WeightUnit): number => {
  * thousands grouping (same convention as formatSets in statsOverview).
  */
 export const formatWeight = (kg: number, unit: WeightUnit, lang: 'es' | 'en'): string =>
-    toDisplay(kg, unit).toLocaleString(lang === 'es' ? 'es-ES' : 'en-US', {
+    toDisplay(kg, unit).toLocaleString(pickLang(lang, { es: 'es-ES', en: 'en-US' }), {
         maximumFractionDigits: 1,
         useGrouping: false,
     });

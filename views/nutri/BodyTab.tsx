@@ -1,3 +1,4 @@
+import { pickLang } from '../../utils/i18n';
 import React from 'react';
 import { BodyLog, NutritionGoal, WeightUnit } from '../../types';
 import { Icon } from '../../components/ui/Icon';
@@ -37,7 +38,6 @@ export const BodyTab: React.FC<Props> = ({
     onLogWeight,
     unit = 'kg',
 }) => {
-    const l = (en: string, es: string) => (lang === 'en' ? en : es);
     const weightSuffix = unitLabel(unit).toLowerCase();
 
     return (
@@ -47,31 +47,31 @@ export const BodyTab: React.FC<Props> = ({
                 <div className="flex items-start justify-between mb-4">
                     <div>
                         <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">
-                            {l('Body Weight', 'Peso Corporal')}
+                            {TRANSLATIONS[lang].copy.bodyTab.bodyWeight}
                         </p>
                         {latestWeight ? (
                             <>
                                 <div className="text-4xl font-black text-white leading-none">{toDisplay(latestWeight.weight, unit)}</div>
                                 <p className="text-xs text-zinc-500 mt-1">
-                                    {weightSuffix} · {new Date(latestWeight.date).toLocaleDateString(lang === 'es' ? 'es-AR' : 'en-US', { month: 'short', day: 'numeric' })}
+                                    {weightSuffix} · {new Date(latestWeight.date).toLocaleDateString(pickLang(lang, { es: 'es-AR', en: 'en-US' }), { month: 'short', day: 'numeric' })}
                                 </p>
                                 {latestWeight.bodyFat && (
                                     <p className="text-xs text-zinc-500">
-                                        {latestWeight.bodyFat}% {l('body fat', 'grasa corporal')}
+                                        {latestWeight.bodyFat}% {TRANSLATIONS[lang].copy.bodyTab.bodyFat}
                                     </p>
                                 )}
                             </>
                         ) : (
-                            <p className="text-zinc-600 text-sm mt-1">{l('No data yet', 'Sin datos aún')}</p>
+                            <p className="text-zinc-600 text-sm mt-1">{TRANSLATIONS[lang].copy.bodyTab.noDataYet}</p>
                         )}
                     </div>
                     <button
                         onClick={onLogWeight}
-                        aria-label={l('Log body weight', 'Registrar peso corporal')}
+                        aria-label={TRANSLATIONS[lang].copy.bodyTab.logBodyWeight}
                         className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-800 text-zinc-300 text-xs font-bold active:scale-95 transition-all duration-fast ease-natural hover:bg-zinc-700"
                     >
                         <Icon name="Plus" size={14} />
-                        {l('Log', 'Registrar')}
+                        {TRANSLATIONS[lang].copy.bodyTab.log}
                     </button>
                 </div>
 
@@ -101,7 +101,7 @@ export const BodyTab: React.FC<Props> = ({
                         .join(' ');
                     return (
                         <div className="mt-3 pt-3 border-t border-zinc-800">
-                            <p className="text-xs text-muted mb-2">{l('Last 30 days', 'Últimos 30 días')}</p>
+                            <p className="text-xs text-muted mb-2">{TRANSLATIONS[lang].copy.bodyTab.last30Days}</p>
                             <svg viewBox="0 0 100 40" className="w-full h-10" preserveAspectRatio="none" aria-hidden="true">
                                 <polyline
                                     points={points}
@@ -122,23 +122,23 @@ export const BodyTab: React.FC<Props> = ({
             {/* TDEE card */}
             <div className="glass-card rounded-3xl p-4">
                 <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">
-                    {l('Energy Balance', 'Balance Energético')}
+                    {TRANSLATIONS[lang].copy.bodyTab.energyBalance}
                 </p>
                 <div className="grid grid-cols-3 gap-3">
                     <div className="text-center">
                         <p className="text-xl font-black text-white">{nutritionGoal.calories}</p>
-                        <p className="text-[11px] font-bold text-zinc-400 uppercase">{l('Goal', 'Meta')}</p>
+                        <p className="text-[11px] font-bold text-zinc-400 uppercase">{TRANSLATIONS[lang].copy.bodyTab.goal}</p>
                     </div>
                     <div className="text-center">
                         <p className={`text-xl font-black ${todayCalories > nutritionGoal.calories ? 'text-orange-400' : 'text-green-400'}`}>
                             {todayCalories}
                         </p>
-                        <p className="text-[11px] font-bold text-zinc-400 uppercase">{l('Eaten', 'Consumido')}</p>
+                        <p className="text-[11px] font-bold text-zinc-400 uppercase">{TRANSLATIONS[lang].copy.bodyTab.eaten}</p>
                     </div>
                     {tdee && (
                         <div className="text-center">
                             <p className="text-xl font-black text-zinc-300">{tdee}</p>
-                            <p className="text-[11px] font-bold text-zinc-400 uppercase">{l('TDEE (Est.)', 'TDEE (Est.)')}</p>
+                            <p className="text-[11px] font-bold text-zinc-400 uppercase">{TRANSLATIONS[lang].copy.bodyTab.tdeeEst}</p>
                         </div>
                     )}
                 </div>
@@ -146,10 +146,10 @@ export const BodyTab: React.FC<Props> = ({
                     <div className="mt-3 pt-3 border-t border-zinc-800">
                         <p className="text-[11px] text-zinc-500 text-center">
                             {nutritionGoal.calories < tdee
-                                ? `${l('Deficit', 'Déficit')} ${tdee - nutritionGoal.calories} kcal · ${l('Fat loss mode', 'Modo pérdida grasa')}`
+                                ? `${TRANSLATIONS[lang].copy.bodyTab.deficit} ${tdee - nutritionGoal.calories} kcal · ${TRANSLATIONS[lang].copy.bodyTab.fatLossMode}`
                                 : nutritionGoal.calories > tdee
-                                    ? `${l('Surplus', 'Superávit')} ${nutritionGoal.calories - tdee} kcal · ${l('Building mode', 'Modo volumen')}`
-                                    : l('Maintenance calories', 'Calorías de mantenimiento')}
+                                    ? `${TRANSLATIONS[lang].copy.bodyTab.surplus} ${nutritionGoal.calories - tdee} kcal · ${TRANSLATIONS[lang].copy.bodyTab.buildingMode}`
+                                    : TRANSLATIONS[lang].copy.bodyTab.maintenanceCalories}
                         </p>
                     </div>
                 )}
@@ -171,17 +171,17 @@ export const BodyTab: React.FC<Props> = ({
                         id: 'recommended',
                         label: t.bodyRecommended,
                         items: [
-                            { id: 'min_protein', label: l('Min protein', 'Proteína mínima'), value: `${Math.round(bodyWeight * 1.8)}g`, color: 'text-blue-400' },
-                            { id: 'opt_protein', label: l('Optimal protein', 'Proteína óptima'), value: `${Math.round(bodyWeight * 2.2)}g`, color: 'text-blue-300' },
-                            { id: 'water', label: l('Daily water', 'Agua diaria'), value: `${Math.round(bodyWeight * 37)}ml`, color: 'text-sky-400' },
-                            ...(bodyFat ? [{ id: 'body_fat', label: l('Body fat', 'Grasa corporal'), value: `${bodyFat}%`, color: 'text-zinc-300' }] : []),
+                            { id: 'min_protein', label: TRANSLATIONS[lang].copy.bodyTab.minProtein, value: `${Math.round(bodyWeight * 1.8)}g`, color: 'text-blue-400' },
+                            { id: 'opt_protein', label: TRANSLATIONS[lang].copy.bodyTab.optimalProtein, value: `${Math.round(bodyWeight * 2.2)}g`, color: 'text-blue-300' },
+                            { id: 'water', label: TRANSLATIONS[lang].copy.bodyTab.dailyWater, value: `${Math.round(bodyWeight * 37)}ml`, color: 'text-sky-400' },
+                            ...(bodyFat ? [{ id: 'body_fat', label: TRANSLATIONS[lang].copy.bodyTab.bodyFat2, value: `${bodyFat}%`, color: 'text-zinc-300' }] : []),
                         ],
                     },
                 ];
                 return (
                     <div className="glass-card rounded-3xl p-4">
                         <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">
-                            {l('Your Targets', 'Tus Objetivos')}
+                            {TRANSLATIONS[lang].copy.bodyTab.yourTargets}
                         </p>
                         {groups.map(group => (
                             <div key={group.id} className="mb-2 last:mb-0">
@@ -206,13 +206,13 @@ export const BodyTab: React.FC<Props> = ({
             {weightTrend.length > 0 && (
                 <div className="glass-card rounded-3xl p-4">
                     <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">
-                        {l('Recent Weigh-ins', 'Pesajes Recientes')}
+                        {TRANSLATIONS[lang].copy.bodyTab.recentWeighIns}
                     </p>
                     <div className="space-y-1">
                         {recentWeighIns.map((entry) => (
                             <div key={entry.id} className="flex justify-between items-center py-1.5 border-b border-zinc-800/50 last:border-0">
                                 <span className="text-xs text-zinc-500">
-                                    {new Date(entry.date).toLocaleDateString(lang === 'es' ? 'es-AR' : 'en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                                    {new Date(entry.date).toLocaleDateString(pickLang(lang, { es: 'es-AR', en: 'en-US' }), { weekday: 'short', month: 'short', day: 'numeric' })}
                                 </span>
                                 <div className="text-right">
                                     <span className="text-sm font-bold text-white">{toDisplay(entry.weight, unit)} {weightSuffix}</span>

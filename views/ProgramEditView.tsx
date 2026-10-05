@@ -1,3 +1,4 @@
+import { formatMessage } from '../utils/i18n';
 import React, { useState, useCallback, Suspense, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { TRANSLATIONS, MUSCLE_GROUPS } from '../constants';
@@ -42,7 +43,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
         type: MesoType;
         weeks: number;
     }>(() => ({
-        name: activeMeso?.name || (lang === 'en' ? 'Custom Cycle' : 'Ciclo Personalizado'),
+        name: activeMeso?.name || (TRANSLATIONS[lang].copy.programEdit.customCycle),
         type: activeMeso?.mesoType || 'hyp_1',
         weeks: activeMeso?.targetWeeks || activeMeso?.duration || 4,
     }));
@@ -120,7 +121,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
     const handleValidateAndOpenStartModal = () => {
         const unresolved: UnresolvedSlot[] = [];
         program.forEach((day, dIdx) => {
-            const dayLabel = getTranslated(day.dayName, lang) || (lang === 'es' ? `Día ${dIdx + 1}` : `Day ${dIdx + 1}`);
+            const dayLabel = getTranslated(day.dayName, lang) || (formatMessage(TRANSLATIONS[lang].copy.programEdit.day, { v: dIdx + 1 }));
             (day.slots || []).forEach((slot, sIdx) => {
                 if (!slot.exerciseId) {
                     unresolved.push({
@@ -171,14 +172,12 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
                             <Icon name="Lock" size={24} />
                         </div>
                         <p className="mt-5 text-[10px] font-black uppercase tracking-[0.2em] text-primary-500">KONG</p>
-                        <h1 className="mt-2 text-2xl font-black">{lang === 'es' ? 'Programa estructurado' : 'Structured program'}</h1>
+                        <h1 className="mt-2 text-2xl font-black">{TRANSLATIONS[lang].copy.programEdit.structuredProgram}</h1>
                         <p className="mt-3 text-sm leading-6 text-[rgb(var(--text-secondary))]">
-                            {lang === 'es'
-                                ? 'La definición oficial de KONG no se edita desde el editor genérico. Vuelve y usa Opciones del plan → Editar rutina para convertir la semana actual en una copia personal editable.'
-                                : 'The official KONG definition is not edited in the generic editor. Go back and use Plan options → Edit routine to convert the current week into an editable personal copy.'}
+                            {TRANSLATIONS[lang].copy.programEdit.theOfficialKongDefinition}
                         </p>
                         <Button onClick={onBack} fullWidth className="mt-6">
-                            {lang === 'es' ? 'Volver al plan' : 'Back to plan'}
+                            {TRANSLATIONS[lang].copy.programEdit.backToPlan}
                         </Button>
                     </div>
                 </div>
@@ -201,15 +200,15 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
 
                 <h1 className="font-bold text-sm text-zinc-900 dark:text-white truncate max-w-[180px]">
                     {isEditingActiveRoutine
-                        ? (lang === 'es' ? 'Editar Rutina Activa' : 'Edit Active Routine')
-                        : (lang === 'es' ? 'Nueva Rutina' : 'New Routine')}
+                        ? (TRANSLATIONS[lang].copy.programEdit.editActiveRoutine)
+                        : (TRANSLATIONS[lang].copy.programEdit.newRoutine)}
                 </h1>
 
                 <div className="flex items-center gap-2">
                     {isEditingActiveRoutine ? (
                         <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
                             <Icon name="Check" size={12} strokeWidth={3} />
-                            <span>{saveStatus === 'saved' ? (lang === 'es' ? 'Guardado' : 'Saved') : (lang === 'es' ? 'Guardando...' : 'Saving...')}</span>
+                            <span>{saveStatus === 'saved' ? (TRANSLATIONS[lang].copy.programEdit.saved) : (TRANSLATIONS[lang].copy.programEdit.saving)}</span>
                         </div>
                     ) : (
                         <button
@@ -217,7 +216,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
                             className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-black px-3.5 py-1.5 rounded-full text-xs font-black shadow-lg shadow-primary-500/25 active:scale-95 transition-all"
                         >
                             <Icon name="Play" size={12} fill="currentColor" />
-                            {lang === 'es' ? 'Comenzar' : 'Start'}
+                            {TRANSLATIONS[lang].copy.programEdit.start}
                         </button>
                     )}
                 </div>
@@ -231,7 +230,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
                                 className="bg-transparent font-bold text-zinc-900 dark:text-white outline-none w-full"
                                 value={day.dayName[lang] || ''}
                                 onChange={e => handleUpdateDayName(day.id, e.target.value)}
-                                placeholder={lang === 'es' ? 'Nombre del día' : 'Day Name'}
+                                placeholder={TRANSLATIONS[lang].copy.programEdit.dayName}
                             />
                             <button
                                 onClick={() => setDayToDelete(day.id)}
@@ -289,7 +288,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
                                                 <span>
                                                     {slot.exerciseId
                                                         ? getTranslated(exercises.find(e => e.id === slot.exerciseId)?.name, lang)
-                                                        : (lang === 'es' ? '⚠ Seleccionar ejercicio...' : '⚠ Select exercise...')}
+                                                        : (TRANSLATIONS[lang].copy.programEdit.selectExercise)}
                                                 </span>
                                                 <Icon name="ChevronRight" size={14} className="text-zinc-400 shrink-0 ml-2" />
                                             </button>
@@ -345,20 +344,16 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
                             </div>
                             <div>
                                 <h3 id="unresolved-title" className="text-base font-bold text-zinc-900 dark:text-white">
-                                    {lang === 'es' ? 'Faltan ejercicios por asignar' : 'Unassigned exercises'}
+                                    {TRANSLATIONS[lang].copy.programEdit.unassignedExercises}
                                 </h3>
                                 <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                                    {lang === 'es'
-                                        ? `${unresolvedSlots.length} slot(s) sin ejercicio seleccionado`
-                                        : `${unresolvedSlots.length} slot(s) without selected exercise`}
+                                    {formatMessage(TRANSLATIONS[lang].copy.programEdit.slotSWithoutSelected, { count: unresolvedSlots.length })}
                                 </p>
                             </div>
                         </div>
 
                         <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                            {lang === 'es'
-                                ? 'Cada slot debe tener un ejercicio concreto asignado antes de iniciar el ciclo para evitar sustituciones genéricas imprecisas.'
-                                : 'Each slot must have a specific exercise assigned before starting the cycle to prevent imprecise generic fallbacks.'}
+                            {TRANSLATIONS[lang].copy.programEdit.eachSlotMustHave}
                         </p>
 
                         <div className="max-h-40 overflow-y-auto space-y-1.5 p-3 rounded-xl bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200 dark:border-white/5 text-xs">
@@ -380,7 +375,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
                                 variant="primary"
                                 onClick={() => setUnresolvedSlots([])}
                             >
-                                {lang === 'es' ? 'Asignar ejercicios' : 'Assign exercises'}
+                                {TRANSLATIONS[lang].copy.programEdit.assignExercises}
                             </Button>
                         </div>
                     </div>
@@ -418,7 +413,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = ({ onBack }) => {
                             onChange={(e) => setMesoConfig({ ...mesoConfig, type: e.target.value as MesoType })}
                         >
                             {!hasKnownPhase && (
-                                <option value={mesoConfig.type}>{lang === 'es' ? 'Personalizado' : 'Custom'}</option>
+                                <option value={mesoConfig.type}>{TRANSLATIONS[lang].copy.programEdit.custom}</option>
                             )}
                             {Object.entries(t.phases).map(([key, label]) => (
                                 <option key={key} value={key}>{label}</option>

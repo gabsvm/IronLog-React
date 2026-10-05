@@ -1,8 +1,10 @@
+import { formatMessage, pickLang } from '../../utils/i18n';
 import React, { useState } from 'react';
 import { Icon } from '../ui/Icon';
 import { KONG_4DAY_V1 } from '../../programs/kong/kong4Day';
 import { KONG_GUIDE } from '../../programs/kong/kongGuide';
 import { getProgramBlockForWeek, resolveProgramDay } from '../../programs/engine/ProgramResolver';
+import { TRANSLATIONS } from '../../constants/translations';
 
 interface Props {
   lang: 'en' | 'es';
@@ -32,10 +34,10 @@ export const ProgramDetailView: React.FC<Props> = ({ lang, onBack, onStart }) =>
   const title = (text: { en: string; es: string }) => text[lang];
 
   const blockName = (block: (typeof KONG_4DAY_V1.blocks)[number]) =>
-    lang === 'es' ? ES_BLOCK_COPY[block.number]?.name || title(block.name) : title(block.name);
+    pickLang(lang, { es: ES_BLOCK_COPY[block.number]?.name, en: undefined }) || title(block.name);
 
   const blockGoal = (block: (typeof KONG_4DAY_V1.blocks)[number]) =>
-    lang === 'es' ? ES_BLOCK_COPY[block.number]?.goal || title(block.goal) : title(block.goal);
+    pickLang(lang, { es: ES_BLOCK_COPY[block.number]?.goal, en: undefined }) || title(block.goal);
 
   const selectedResolution = getProgramBlockForWeek(KONG_4DAY_V1, selectedWeek);
   const selectedResolvedDay = resolveProgramDay(KONG_4DAY_V1, selectedWeek, selectedDay, {});
@@ -53,7 +55,7 @@ export const ProgramDetailView: React.FC<Props> = ({ lang, onBack, onStart }) =>
             type="button"
             onClick={onBack}
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] text-[rgb(var(--text-secondary))] active:scale-95"
-            aria-label={lang === 'es' ? 'Volver' : 'Back'}
+            aria-label={TRANSLATIONS[lang].copy.programDetail.back}
           >
             <Icon name="ChevronLeft" size={22} />
           </button>
@@ -71,17 +73,17 @@ export const ProgramDetailView: React.FC<Props> = ({ lang, onBack, onStart }) =>
             <h1 className="mt-2 text-3xl font-black leading-tight sm:text-4xl">Savage Size · 4 Day</h1>
             <p className="mt-2 text-lg text-[rgb(var(--text-secondary))]">Alexander Bromley</p>
             <div className="mt-6 grid grid-cols-3 gap-2 text-center">
-              <div><strong className="block text-lg">12</strong><span className="text-xs font-bold text-[rgb(var(--text-secondary))]">{lang === 'es' ? 'semanas' : 'weeks'}</span></div>
-              <div><strong className="block text-lg">4</strong><span className="text-xs font-bold text-[rgb(var(--text-secondary))]">{lang === 'es' ? 'días' : 'days'}</span></div>
-              <div><strong className="block text-lg">3</strong><span className="text-xs font-bold text-[rgb(var(--text-secondary))]">{lang === 'es' ? 'bloques' : 'blocks'}</span></div>
+              <div><strong className="block text-lg">12</strong><span className="text-xs font-bold text-[rgb(var(--text-secondary))]">{TRANSLATIONS[lang].copy.programDetail.weeks}</span></div>
+              <div><strong className="block text-lg">4</strong><span className="text-xs font-bold text-[rgb(var(--text-secondary))]">{TRANSLATIONS[lang].copy.programDetail.days}</span></div>
+              <div><strong className="block text-lg">3</strong><span className="text-xs font-bold text-[rgb(var(--text-secondary))]">{TRANSLATIONS[lang].copy.programDetail.blocks}</span></div>
             </div>
           </section>
 
           <div className="mt-5 grid grid-cols-3 gap-2 rounded-2xl bg-[rgb(var(--surface-raised))] p-1.5">
             {([
-              ['overview', lang === 'es' ? 'Cómo funciona' : 'How it works'],
-              ['weeks', lang === 'es' ? '12 semanas' : '12 weeks'],
-              ['guide', lang === 'es' ? 'Guía' : 'Guide'],
+              ['overview', TRANSLATIONS[lang].copy.programDetail.howItWorks],
+              ['weeks', TRANSLATIONS[lang].copy.programDetail.n12Weeks],
+              ['guide', TRANSLATIONS[lang].copy.programDetail.guide],
             ] as [Tab, string][]).map(([id, label]) => (
               <button
                 key={id}
@@ -99,7 +101,7 @@ export const ProgramDetailView: React.FC<Props> = ({ lang, onBack, onStart }) =>
               {KONG_4DAY_V1.blocks.map((block) => (
                 <article key={block.id} className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-5">
                   <p className="text-xs font-black uppercase tracking-wider text-primary-500">
-                    {lang === 'es' ? 'BLOQUE' : 'BLOCK'} {block.number} · {block.globalWeekStart}-{block.globalWeekEnd}
+                    {TRANSLATIONS[lang].copy.programDetail.block} {block.number} · {block.globalWeekStart}-{block.globalWeekEnd}
                   </p>
                   <h2 className="mt-2 text-xl font-black">{blockName(block)}</h2>
                   <p className="mt-2 text-sm leading-6 text-[rgb(var(--text-secondary))]">{blockGoal(block)}</p>
@@ -111,9 +113,7 @@ export const ProgramDetailView: React.FC<Props> = ({ lang, onBack, onStart }) =>
           {tab === 'weeks' && (
             <div className="mt-5 space-y-4">
               <p className="px-1 text-sm leading-6 text-[rgb(var(--text-secondary))]">
-                {lang === 'es'
-                  ? 'Selecciona una semana y un día para inspeccionar la prescripción exacta antes de empezar el programa.'
-                  : 'Select a week and day to inspect the exact prescription before starting the program.'}
+                {TRANSLATIONS[lang].copy.programDetail.selectAWeekAnd}
               </p>
 
               {KONG_4DAY_V1.blocks.map((block) => (
@@ -121,7 +121,7 @@ export const ProgramDetailView: React.FC<Props> = ({ lang, onBack, onStart }) =>
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-[10px] font-black uppercase tracking-wider text-primary-500">
-                        {lang === 'es' ? 'BLOQUE' : 'BLOCK'} {block.number}
+                        {TRANSLATIONS[lang].copy.programDetail.block} {block.number}
                       </p>
                       <h2 className="mt-1 text-sm font-black">{blockName(block)}</h2>
                     </div>
@@ -137,7 +137,7 @@ export const ProgramDetailView: React.FC<Props> = ({ lang, onBack, onStart }) =>
                           onClick={() => { setSelectedWeek(week); setSelectedDay(0); }}
                           className={`min-h-11 rounded-xl border text-xs font-black ${selected ? 'border-primary-500 bg-primary-500 text-black' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base))] text-[rgb(var(--text-secondary))]'}`}
                         >
-                          {lang === 'es' ? 'S' : 'W'}{week}
+                          {TRANSLATIONS[lang].copy.programDetail.w}{week}
                         </button>
                       );
                     })}
@@ -149,12 +149,12 @@ export const ProgramDetailView: React.FC<Props> = ({ lang, onBack, onStart }) =>
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary-500">
-                      {lang === 'es' ? `SEMANA ${selectedWeek} · BLOQUE ${selectedResolution.block.number}` : `WEEK ${selectedWeek} · BLOCK ${selectedResolution.block.number}`}
+                      {formatMessage(TRANSLATIONS[lang].copy.programDetail.weekBlock, { selectedWeek, number: selectedResolution.block.number })}
                     </p>
                     <h2 className="mt-1 text-lg font-black">{blockName(selectedResolution.block)}</h2>
                   </div>
                   <span className="rounded-full bg-primary-500/10 px-3 py-1 text-[10px] font-black text-primary-500">
-                    {lang === 'es' ? `SEM. BLOQUE ${selectedResolution.blockWeek}/4` : `BLOCK WK ${selectedResolution.blockWeek}/4`}
+                    {formatMessage(TRANSLATIONS[lang].copy.programDetail.blockWk4, { blockWeek: selectedResolution.blockWeek })}
                   </span>
                 </div>
 
@@ -166,19 +166,17 @@ export const ProgramDetailView: React.FC<Props> = ({ lang, onBack, onStart }) =>
                       onClick={() => setSelectedDay(index)}
                       className={`min-h-12 rounded-xl border text-xs font-black ${selectedDay === index ? 'border-primary-500 bg-primary-500/15 text-primary-500' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base))] text-[rgb(var(--text-secondary))]'}`}
                     >
-                      {lang === 'es' ? 'DÍA' : 'DAY'} {index + 1}
+                      {TRANSLATIONS[lang].copy.programDetail.day} {index + 1}
                     </button>
                   ))}
                 </div>
 
                 <div className="mt-4 rounded-2xl bg-[rgb(var(--surface-base))] p-4">
                   <h3 className="font-black">
-                    {lang === 'es'
-                      ? ES_DAY_COPY[selectedResolution.block.number]?.[selectedDay] || title(selectedResolvedDay.dayName)
-                      : title(selectedResolvedDay.dayName)}
+                    {pickLang(lang, { es: ES_DAY_COPY[selectedResolution.block.number]?.[selectedDay], en: undefined }) || title(selectedResolvedDay.dayName)}
                   </h3>
                   <p className="mt-1 text-xs text-[rgb(var(--text-muted))]">
-                    {selectedResolvedDay.slots.length} {lang === 'es' ? 'ejercicios' : 'exercises'}
+                    {selectedResolvedDay.slots.length} {TRANSLATIONS[lang].copy.programDetail.exercises}
                   </p>
                 </div>
 
@@ -186,7 +184,7 @@ export const ProgramDetailView: React.FC<Props> = ({ lang, onBack, onStart }) =>
                   {selectedResolvedDay.slots.map((slot, index) => {
                     const prescription = slot.prescription || [];
                     const repsText = prescription
-                      .map((set) => set.reps === 'FAILURE' ? (lang === 'es' ? 'FALLO' : 'FAIL') : String(set.reps))
+                      .map((set) => set.reps === 'FAILURE' ? (TRANSLATIONS[lang].copy.programDetail.fail) : String(set.reps))
                       .join(' · ');
                     const rpes = prescription
                       .map((set) => set.targetRpe)
@@ -227,9 +225,7 @@ export const ProgramDetailView: React.FC<Props> = ({ lang, onBack, onStart }) =>
           {tab === 'guide' && (
             <div className="mt-5 space-y-3">
               <p className="px-1 text-sm leading-6 text-[rgb(var(--text-secondary))]">
-                {lang === 'es'
-                  ? 'La guía resume la lógica del programa. Toca una sección para abrirla.'
-                  : 'The guide summarizes the program logic. Tap a section to expand it.'}
+                {TRANSLATIONS[lang].copy.programDetail.theGuideSummarizesThe}
               </p>
               {KONG_GUIDE.map((section) => {
                 const open = openGuideId === section.id;
@@ -264,10 +260,10 @@ export const ProgramDetailView: React.FC<Props> = ({ lang, onBack, onStart }) =>
             className="flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-primary-500 px-5 text-base font-black text-black shadow-lg shadow-primary-500/20 active:scale-[0.99]"
           >
             <Icon name="Play" size={20} fill="currentColor" />
-            {lang === 'es' ? 'Comenzar KONG' : 'Start KONG'}
+            {TRANSLATIONS[lang].copy.programDetail.startKong}
           </button>
           <p className="pb-2 pt-2 text-center text-[10px] font-bold uppercase tracking-wider text-[rgb(var(--text-muted))]">
-            {lang === 'es' ? 'Empieza en Semana 1 · Bloque 1' : 'Starts at Week 1 · Block 1'}
+            {TRANSLATIONS[lang].copy.programDetail.startsAtWeek1}
           </p>
         </div>
       </footer>

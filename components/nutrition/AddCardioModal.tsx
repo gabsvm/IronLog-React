@@ -1,3 +1,5 @@
+import { pickLang } from '../../utils/i18n';
+import { TRANSLATIONS } from '../../constants/translations';
 import React, { useState } from 'react';
 import { CardioSession, CardioActivityType } from '../../types';
 import { useApp } from '../../context/AppContext';
@@ -63,13 +65,13 @@ export const AddCardioModal: React.FC<AddCardioModalProps> = ({ isOpen, onClose,
   };
 
   const t = {
-    title:     lang === 'en' ? 'Log Cardio'      : 'Registrar Cardio',
-    duration:  lang === 'en' ? 'Duration (min)'   : 'Duración (min)',
-    distance:  lang === 'en' ? 'Distance (km)'    : 'Distancia (km)',
-    heartRate: lang === 'en' ? 'Avg Heart Rate'   : 'FC Promedio',
-    notes:     lang === 'en' ? 'Notes (optional)' : 'Notas (opcional)',
-    estimated: lang === 'en' ? 'Est. Burned'      : 'Est. Quemadas',
-    add:       lang === 'en' ? 'Save Session'     : 'Guardar Sesión',
+    title:     TRANSLATIONS[lang].copy.addCardioModal.logCardio,
+    duration:  TRANSLATIONS[lang].copy.addCardioModal.durationMin,
+    distance:  TRANSLATIONS[lang].copy.addCardioModal.distanceKm,
+    heartRate: TRANSLATIONS[lang].copy.addCardioModal.avgHeartRate,
+    notes:     TRANSLATIONS[lang].copy.addCardioModal.notesOptional,
+    estimated: TRANSLATIONS[lang].copy.addCardioModal.estBurned,
+    add:       TRANSLATIONS[lang].copy.addCardioModal.saveSession,
   };
 
   return (
@@ -97,7 +99,7 @@ export const AddCardioModal: React.FC<AddCardioModalProps> = ({ isOpen, onClose,
                   : 'bg-zinc-800 text-zinc-400 border-zinc-700/50 hover:border-zinc-600'}`}
             >
               <span aria-hidden="true">{a.emoji}</span>
-              <span>{lang === 'en' ? a.en : a.es}</span>
+              <span>{pickLang(lang, a)}</span>
             </button>
           ))}
         </div>

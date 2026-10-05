@@ -1,3 +1,4 @@
+import { pickLang } from '../../utils/i18n';
 import React, { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
@@ -35,7 +36,7 @@ const buildSession = (protocol: TwoBlockProtocol, weekIdx: number, dayIdx: numbe
         return {
             id: Date.now(),
             dayIdx: -1,
-            name: `${lang === 'es' ? protocol.name.es : protocol.name.en} — ${day?.label?.[lang] || 'Rest'}`,
+            name: `${pickLang(lang, protocol.name)} — ${day?.label?.[lang] || 'Rest'}`,
             startTime: Date.now(),
             mesoId: -1,
             week: -1,
@@ -84,7 +85,7 @@ const buildSession = (protocol: TwoBlockProtocol, weekIdx: number, dayIdx: numbe
             instanceId: Date.now() + Math.random() + mIdx,
             slotLabel: m.group,
             sets,
-            note: day.label ? (lang === 'es' ? day.label.es : day.label.en) : undefined,
+            note: day.label ? (pickLang(lang, day.label)) : undefined,
             defaultRestSeconds: week.restSeconds,
         } as SessionExercise];
     });
@@ -92,7 +93,7 @@ const buildSession = (protocol: TwoBlockProtocol, weekIdx: number, dayIdx: numbe
     return {
         id: Date.now(),
         dayIdx: -1,
-        name: `${lang === 'es' ? protocol.name.es : protocol.name.en} — W${weekIdx + 1} D${day.day}`,
+        name: `${pickLang(lang, protocol.name)} — W${weekIdx + 1} D${day.day}`,
         startTime: Date.now(),
         mesoId: -1,
         week: -1,
@@ -110,7 +111,7 @@ export const TwoBlockMassModal: React.FC<Props> = ({ isOpen, onClose, onStart })
         [selectedId]
     );
 
-    const t = (k: { en: string; es: string }) => (lang === 'es' ? k.es : k.en);
+    const t = (k: { en: string; es: string }) => (pickLang(lang, k));
     const phil = TWO_BLOCK_PHILOSOPHY[lang];
     const tb = TRANSLATIONS[lang].twoBlock;
 

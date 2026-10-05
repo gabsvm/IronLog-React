@@ -119,9 +119,7 @@ export const WarmupModal: React.FC<WarmupModalProps> = ({ targetWeight, exercise
                 </div>
 
                 <p className="text-xs text-zinc-400 italic text-center px-4 leading-relaxed">
-                    {lang === 'en'
-                        ? 'Perform these sets to potentiate your CNS without accumulating fatigue.'
-                        : 'Realiza estas series para potenciar tu SNC sin acumular fatiga antes de tus series efectivas.'}
+                    {TRANSLATIONS[lang].copy.warmupModal.performTheseSetsTo}
                 </p>
             </div>
         </Sheet>

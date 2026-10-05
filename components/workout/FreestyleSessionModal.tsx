@@ -1,4 +1,5 @@
 
+import { pickLang } from '../../utils/i18n';
 import React, { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Sheet } from '../ui/Sheet';
@@ -212,7 +213,7 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
         onStart({
             id: Date.now(),
             dayIdx: -1,
-            name: lang === 'es' ? skill.name.es : skill.name.en,
+            name: pickLang(lang, skill.name),
             startTime: Date.now(),
             mesoId: -1,
             week: -1,
@@ -234,7 +235,7 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
         onStart({
             id: Date.now(),
             dayIdx: -1,
-            name: `🎯 ${lang === 'es' ? family.name.es : family.name.en}`,
+            name: `🎯 ${pickLang(lang, family.name)}`,
             startTime: Date.now(),
             mesoId: -1,
             week: -1,
@@ -268,10 +269,10 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
         }
         if (selectedSkillFamilyId) {
             const fam = SKILL_PROGRESSION_MAP[selectedSkillFamilyId];
-            return fam ? `🎯 ${lang === 'es' ? fam.name.es : fam.name.en}` : '🤸 Skill Session';
+            return fam ? `🎯 ${pickLang(lang, fam.name)}` : '🤸 Skill Session';
         }
         const s = CAL_SKILLS.find(s => s.id === selectedSkillId);
-        return s ? `🤸 ${lang === 'es' ? s.name.es : s.name.en}` : f.selectSession;
+        return s ? `🤸 ${pickLang(lang, s.name)}` : f.selectSession;
     })();
 
     return (
@@ -493,7 +494,7 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
                                             <div className="flex items-center gap-2 mb-1.5">
                                                 <Icon name={family.icon as any} size={14} />
                                                 <span className="text-[11px] font-black">
-                                                    {lang === 'es' ? family.name.es : family.name.en}
+                                                    {pickLang(lang, family.name)}
                                                 </span>
                                             </div>
                                             <div className="text-xs text-muted">
@@ -523,7 +524,7 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
                                             <div key={i} className="flex items-center gap-2 text-[11px]">
                                                 <div className="w-1 h-1 rounded-full bg-primary-400 shrink-0" />
                                                 <span className="text-zinc-300">
-                                                    {lang === 'es' ? lvl.name.es : lvl.name.en}
+                                                    {pickLang(lang, lvl.name)}
                                                 </span>
                                                 {lvl.unlockAt && (
                                                     <span className="text-zinc-600 ml-auto">
@@ -566,10 +567,10 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = ({ is
                                                 <div className={`font-black text-sm ${
                                                     isSelected ? 'text-primary-400' : 'text-zinc-900 dark:text-white'
                                                 }`}>
-                                                    {lang === 'es' ? skill.name.es : skill.name.en}
+                                                    {pickLang(lang, skill.name)}
                                                 </div>
                                                 <div className="text-[10px] text-zinc-400 mt-0.5">
-                                                    {lang === 'es' ? skill.description.es : skill.description.en}
+                                                    {pickLang(lang, skill.description)}
                                                 </div>
                                             </div>
                                             <div className="flex flex-col items-end shrink-0 gap-1">

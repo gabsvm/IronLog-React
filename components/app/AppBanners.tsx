@@ -1,3 +1,4 @@
+import { formatMessage } from '../../utils/i18n';
 import React, { Suspense, useCallback, useEffect, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
@@ -65,9 +66,7 @@ export const AppBanners: React.FC<AppBannersProps> = ({ activeSession }) => {
                     <div role="status" aria-live="polite" className="pointer-events-auto flex items-center gap-3 bg-amber-950/90 border border-amber-500/40 text-amber-200 text-xs font-semibold px-4 py-3 rounded-2xl shadow-xl backdrop-blur-md max-w-sm w-full">
                         <Icon name="AlertTriangle" size={16} className="text-amber-400 shrink-0" />
                         <span className="flex-1">
-                            {lang === 'es'
-                                ? `Historial en nube limitado a ${syncTruncatedWarning.kept} sesiones (de ${syncTruncatedWarning.total}). El historial local está completo.`
-                                : `Cloud history capped at ${syncTruncatedWarning.kept} of ${syncTruncatedWarning.total} sessions. Local history is complete.`}
+                            {formatMessage(TRANSLATIONS[lang].copy.appBanners.cloudHistoryCappedAt, { kept: syncTruncatedWarning.kept, total: syncTruncatedWarning.total })}
                         </span>
                         <button onClick={() => setSyncTruncatedWarning(null)} className="text-amber-400 hover:text-white transition-colors">
                             <Icon name="X" size={16} />

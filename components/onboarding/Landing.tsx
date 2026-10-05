@@ -33,13 +33,13 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onLogin }) => {
                         <div className="flex bg-zinc-900/50 p-1 rounded-full border border-white/5">
                             <button
                                 onClick={() => setLang('en')}
-                                className={`px-3 py-1 text-[10px] font-bold rounded-full transition-all ${lang === 'en' ? 'bg-primary-600 text-white shadow-lg' : 'text-zinc-500 hover:text-white'}`}
+                                className={`px-3 py-1 text-[10px] font-bold rounded-full transition-all ${TRANSLATIONS[lang].copy.landing.bgPrimary600Text}`}
                             >
                                 EN
                             </button>
                             <button
                                 onClick={() => setLang('es')}
-                                className={`px-3 py-1 text-[10px] font-bold rounded-full transition-all ${lang === 'es' ? 'bg-primary-600 text-white shadow-lg' : 'text-zinc-500 hover:text-white'}`}
+                                className={`px-3 py-1 text-[10px] font-bold rounded-full transition-all ${TRANSLATIONS[lang].copy.landing.textZinc500Hover}`}
                             >
                                 ES
                             </button>

@@ -44,8 +44,8 @@ export const PRCelebrationOverlay: React.FC<PRCelebrationOverlayProps> = ({ onDi
                 if (!blob) return;
                 const file = new File([blob], 'gainslab-pr.png', { type: 'image/png' });
                 const shareData = {
-                    title: lang === 'es' ? 'Nuevo Récord' : 'New PR!',
-                    text: lang === 'es' ? '¡Miren mi nuevo PR en GainsLab Pro! 🔥' : 'Check out my new PR on GainsLab Pro! 🔥',
+                    title: TRANSLATIONS[lang].copy.pRCelebrationOverlay.newPr,
+                    text: TRANSLATIONS[lang].copy.pRCelebrationOverlay.checkOutMyNew,
                     files: [file]
                 };
 
@@ -114,7 +114,7 @@ export const PRCelebrationOverlay: React.FC<PRCelebrationOverlayProps> = ({ onDi
                         {isSharing ? (
                             <span className="animate-spin"><Icon name="Loader" size={20} /></span>
                         ) : (
-                            <><Icon name="Share2" size={20} /> {lang === 'es' ? 'Compartir Logro' : 'Share PR'}</>
+                            <><Icon name="Share2" size={20} /> {TRANSLATIONS[lang].copy.pRCelebrationOverlay.sharePr}</>
                         )}
                     </Button>
 

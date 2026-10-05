@@ -1,3 +1,4 @@
+import { formatMessage } from '../../utils/i18n';
 import React, { useMemo, useState } from 'react';
 import { useAppPreferences } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
@@ -84,12 +85,12 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
             <Sheet
                 open={true}
                 onOpenChange={(open) => { if (!open) onCancel(); }}
-                title={lang === 'es' ? 'Check-in post-entreno' : 'Post-workout check-in'}
+                title={TRANSLATIONS[lang].copy.feedbackModal.postWorkoutCheckIn}
                 accent="primary"
-                footer={<Button fullWidth onClick={skipAndFinish}>{lang === 'es' ? 'Finalizar' : 'Finish'}</Button>}
+                footer={<Button fullWidth onClick={skipAndFinish}>{TRANSLATIONS[lang].copy.feedbackModal.finish}</Button>}
             >
                 <div className="p-5 text-sm text-[rgb(var(--text-secondary))]">
-                    {lang === 'es' ? 'No hay grupos musculares para valorar en esta sesión.' : 'There are no muscle groups to rate in this session.'}
+                    {TRANSLATIONS[lang].copy.feedbackModal.thereAreNoMuscle}
                 </div>
             </Sheet>
         );
@@ -129,21 +130,19 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
         <Sheet
             open={true}
             onOpenChange={(open) => { if (!open) onCancel(); }}
-            title={lang === 'es' ? 'Check-in post-entreno' : 'Post-workout check-in'}
-            description={lang === 'es'
-                ? 'Primero registra. Después evalúa cómo respondió el músculo.'
-                : 'Log first. Then rate how the muscle responded.'}
+            title={TRANSLATIONS[lang].copy.feedbackModal.postWorkoutCheckIn}
+            description={TRANSLATIONS[lang].copy.feedbackModal.logFirstThenRate}
             accent="primary"
             footer={
                 <div className="space-y-2">
                     <div className="grid grid-cols-2 gap-3">
                         <Button variant="secondary" onClick={skipAndFinish}>
-                            {lang === 'es' ? 'Omitir y finalizar' : 'Skip & finish'}
+                            {TRANSLATIONS[lang].copy.feedbackModal.skipFinish}
                         </Button>
                         <Button onClick={continueFlow} disabled={!currentComplete}>
                             {isLast
-                                ? (lang === 'es' ? 'Guardar y finalizar' : 'Save & finish')
-                                : (lang === 'es' ? 'Siguiente' : 'Next')}
+                                ? (TRANSLATIONS[lang].copy.feedbackModal.saveFinish)
+                                : (TRANSLATIONS[lang].copy.feedbackModal.next)}
                         </Button>
                     </div>
                     {step > 0 && (
@@ -152,7 +151,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
                             onClick={() => setStep(prev => Math.max(0, prev - 1))}
                             className="min-h-10 w-full text-xs font-bold text-[rgb(var(--text-muted))]"
                         >
-                            {lang === 'es' ? 'Volver al músculo anterior' : 'Back to previous muscle'}
+                            {TRANSLATIONS[lang].copy.feedbackModal.backToPreviousMuscle}
                         </button>
                     )}
                 </div>
@@ -177,7 +176,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
                             <div>
                                 <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[rgb(var(--text-muted))]">{t.fb.sorenessLabel}</p>
                                 <p className="mt-0.5 text-xs text-[rgb(var(--text-secondary))]">
-                                    {lang === 'es' ? '¿Cómo quedó el músculo?' : 'How did the muscle feel?'}
+                                    {TRANSLATIONS[lang].copy.feedbackModal.howDidTheMuscle}
                                 </p>
                             </div>
                         </div>
@@ -196,7 +195,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
                         <div className="mb-2">
                             <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[rgb(var(--text-muted))]">{t.fb.performanceLabel}</p>
                             <p className="mt-0.5 text-xs text-[rgb(var(--text-secondary))]">
-                                {lang === 'es' ? '¿Cómo respondió tu rendimiento?' : 'How did your performance respond?'}
+                                {TRANSLATIONS[lang].copy.feedbackModal.howDidYourPerformance}
                             </p>
                         </div>
                         <ChoiceRow
@@ -215,14 +214,12 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
                             <Icon name={isStructuredProgram ? 'Info' : adjustment && adjustment !== 0 ? 'TrendingUp' : 'CheckCircle'} size={16} className="mt-0.5 shrink-0 text-primary-500" />
                             <span>
                                 {isStructuredProgram
-                                    ? (lang === 'es'
-                                        ? 'Se guardará como feedback de la sesión. Un programa estructurado como KONG conserva su prescripción oficial.'
-                                        : 'This is stored as session feedback. A structured program such as KONG keeps its official prescription.')
+                                    ? (TRANSLATIONS[lang].copy.feedbackModal.thisIsStoredAs)
                                     : adjustment == null || adjustment === 0
-                                        ? (lang === 'es' ? 'Volumen recomendado: mantener.' : 'Recommended volume: keep current level.')
+                                        ? (TRANSLATIONS[lang].copy.feedbackModal.recommendedVolumeKeepCurrent)
                                         : adjustment > 0
-                                            ? (lang === 'es' ? `Respuesta positiva: +${adjustment} serie(s) de ajuste futuro.` : `Positive response: +${adjustment} future adjustment set(s).`)
-                                            : (lang === 'es' ? `Recuperación comprometida: ${adjustment} serie(s) de ajuste futuro.` : `Recovery limited: ${adjustment} future adjustment set(s).`)}
+                                            ? (formatMessage(TRANSLATIONS[lang].copy.feedbackModal.positiveResponseFutureAdjustment, { adjustment }))
+                                            : (formatMessage(TRANSLATIONS[lang].copy.feedbackModal.recoveryLimitedFutureAdjustment, { adjustment }))}
                             </span>
                         </div>
                     )}

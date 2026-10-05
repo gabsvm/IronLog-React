@@ -1,3 +1,4 @@
+import { formatMessage } from '../../utils/i18n';
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
@@ -177,7 +178,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                         <p className="text-3xl font-black text-zinc-900 dark:text-white">
                             {profile.daysPerWeek}
                             <span className="text-base font-medium text-zinc-400 ml-2">
-                                {lang === 'es' ? 'días / semana' : 'days / week'}
+                                {TRANSLATIONS[lang].copy.setupWizard.daysWeek}
                             </span>
                         </p>
                     </div>
@@ -187,21 +188,21 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                 <div className="space-y-3 animate-in slide-in-from-right-4 duration-300">
                     <OptionBtn
                         label={w.goalOptions.hypertrophy}
-                        description={lang === 'es' ? 'Ganar masa muscular y tamaño.' : 'Build muscle mass and size.'}
+                        description={TRANSLATIONS[lang].copy.setupWizard.buildMuscleMassAnd}
                         selected={profile.goal === 'hypertrophy'}
                         onClick={() => setProfile({ ...profile, goal: 'hypertrophy' })}
                         icon="Dumbbell"
                     />
                     <OptionBtn
                         label={w.goalOptions.strength}
-                        description={lang === 'es' ? 'Aumentar 1RM en levantamientos principales.' : 'Increase 1RM on main lifts.'}
+                        description={TRANSLATIONS[lang].copy.setupWizard.increase1rmOnMain}
                         selected={profile.goal === 'strength'}
                         onClick={() => setProfile({ ...profile, goal: 'strength' })}
                         icon="Shield"
                     />
                     <OptionBtn
                         label={w.goalOptions.endurance}
-                        description={lang === 'es' ? 'Mejorar resistencia y condición física.' : 'Improve endurance and conditioning.'}
+                        description={TRANSLATIONS[lang].copy.setupWizard.improveEnduranceAndConditioning}
                         selected={profile.goal === 'endurance'}
                         onClick={() => setProfile({ ...profile, goal: 'endurance' })}
                         icon="Activity"
@@ -212,21 +213,21 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                 <div className="space-y-3 animate-in slide-in-from-right-4 duration-300">
                     <OptionBtn
                         label={w.timeOptions.short}
-                        description={lang === 'es' ? '45 min o menos. Entrenos compactos y eficientes.' : '45 min or less. Compact and efficient sessions.'}
+                        description={TRANSLATIONS[lang].copy.setupWizard.n45MinOrLess}
                         selected={profile.sessionDuration === 'short'}
                         onClick={() => setProfile({ ...profile, sessionDuration: 'short' })}
                         icon="Clock"
                     />
                     <OptionBtn
                         label={w.timeOptions.medium}
-                        description={lang === 'es' ? '60–75 min. La duración ideal para la mayoría.' : '60–75 min. The ideal duration for most.'}
+                        description={TRANSLATIONS[lang].copy.setupWizard.n6075MinThe}
                         selected={profile.sessionDuration === 'medium'}
                         onClick={() => setProfile({ ...profile, sessionDuration: 'medium' })}
                         icon="Clock"
                     />
                     <OptionBtn
                         label={w.timeOptions.long}
-                        description={lang === 'es' ? '90+ min. Para quienes tienen tiempo y capacidad.' : '90+ min. For those with time and capacity.'}
+                        description={TRANSLATIONS[lang].copy.setupWizard.n90MinForThose}
                         selected={profile.sessionDuration === 'long'}
                         onClick={() => setProfile({ ...profile, sessionDuration: 'long' })}
                         icon="Clock"
@@ -246,7 +247,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                                 <Icon name="Check" size={32} className="text-green-500" strokeWidth={3} />
                             </div>
                             <p className="text-[10px] font-black uppercase tracking-widest text-green-500 mb-2">
-                                {lang === 'es' ? 'Tu programa recomendado' : 'Your recommended program'}
+                                {TRANSLATIONS[lang].copy.setupWizard.yourRecommendedProgram}
                             </p>
                             <h2 className="text-2xl font-black text-zinc-900 dark:text-white mb-2">{String(recTitle)}</h2>
                             <p className="text-sm text-zinc-500 dark:text-zinc-400 italic">"{recDesc}"</p>
@@ -268,7 +269,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                         {/* ── Launch Mode Picker ── */}
                         <div className="space-y-3">
                             <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 px-1">
-                                {lang === 'es' ? '¿Cómo quieres comenzar?' : 'How do you want to start?'}
+                                {TRANSLATIONS[lang].copy.setupWizard.howDoYouWant}
                             </p>
 
                             <button
@@ -280,10 +281,10 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                                 </div>
                                 <div className="flex-1 text-left">
                                     <div className="font-black text-white text-sm">
-                                        {lang === 'es' ? 'Comenzar con rutina sugerida' : 'Start with suggested routine'}
+                                        {TRANSLATIONS[lang].copy.setupWizard.startWithSuggestedRoutine}
                                     </div>
                                     <div className="text-xs text-white/70 mt-0.5">
-                                        {lang === 'es' ? `Aplicar "${String(recTitle)}" ahora mismo` : `Apply "${String(recTitle)}" right now`}
+                                        {formatMessage(TRANSLATIONS[lang].copy.setupWizard.applyRightNow, { v: String(recTitle) })}
                                     </div>
                                 </div>
                                 <Icon name="ArrowRight" size={18} className="text-white/80 group-hover:translate-x-1 transition-transform" />
@@ -298,10 +299,10 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                                 </div>
                                 <div className="flex-1 text-left">
                                     <div className="font-black text-zinc-900 dark:text-white text-sm">
-                                        {lang === 'es' ? 'Crear mi propia plantilla' : 'Create my own template'}
+                                        {TRANSLATIONS[lang].copy.setupWizard.createMyOwnTemplate}
                                     </div>
                                     <div className="text-xs text-zinc-400 mt-0.5">
-                                        {lang === 'es' ? 'Diseña tu rutina desde cero' : 'Design your routine from scratch'}
+                                        {TRANSLATIONS[lang].copy.setupWizard.designYourRoutineFrom}
                                     </div>
                                 </div>
                                 <Icon name="ChevronRight" size={18} className="text-zinc-300 group-hover:translate-x-1 transition-transform" />
@@ -316,10 +317,10 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                                 </div>
                                 <div className="flex-1 text-left">
                                     <div className="font-black text-zinc-900 dark:text-white text-sm">
-                                        {lang === 'es' ? 'Registrar sesiones libres' : 'Log freestyle sessions'}
+                                        {TRANSLATIONS[lang].copy.setupWizard.logFreestyleSessions}
                                     </div>
                                     <div className="text-xs text-zinc-400 mt-0.5">
-                                        {lang === 'es' ? 'Sin programa fijo, entrena lo que quieras' : 'No fixed program, train whatever you like'}
+                                        {TRANSLATIONS[lang].copy.setupWizard.noFixedProgramTrain}
                                     </div>
                                 </div>
                                 <Icon name="ChevronRight" size={18} className="text-zinc-300 group-hover:translate-x-1 transition-transform" />
@@ -344,7 +345,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                 </div>
                 <div className="text-center">
                     <h3 className="text-xl font-black text-zinc-900 dark:text-white">{w.generating}</h3>
-                    <p className="text-sm text-zinc-400 mt-2">{lang === 'es' ? 'Analizando tu perfil...' : 'Analyzing your profile...'}</p>
+                    <p className="text-sm text-zinc-400 mt-2">{TRANSLATIONS[lang].copy.setupWizard.analyzingYourProfile}</p>
                 </div>
             </div>
         );
@@ -415,16 +416,16 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
             {step < totalSteps && (
                 <div className="px-6 pt-8 pb-4">
                     <h2 className="text-2xl font-black text-zinc-900 dark:text-white">
-                        {step === 0 && (lang === 'es' ? '¿Cuál es tu nivel?' : "What's your level?")}
-                        {step === 1 && (lang === 'es' ? '¿Cuántos días por semana?' : 'How many days per week?')}
-                        {step === 2 && (lang === 'es' ? '¿Cuál es tu objetivo?' : "What's your goal?")}
-                        {step === 3 && (lang === 'es' ? '¿Cuánto tiempo tienes?' : 'How much time do you have?')}
+                        {step === 0 && (TRANSLATIONS[lang].copy.setupWizard.whatSYourLevel)}
+                        {step === 1 && (TRANSLATIONS[lang].copy.setupWizard.howManyDaysPer)}
+                        {step === 2 && (TRANSLATIONS[lang].copy.setupWizard.whatSYourGoal)}
+                        {step === 3 && (TRANSLATIONS[lang].copy.setupWizard.howMuchTimeDo)}
                     </h2>
                     <p className="text-sm text-zinc-400 dark:text-zinc-500 mt-1">
-                        {step === 0 && (lang === 'es' ? 'Sé honesto, esto personalizará tu rutina.' : 'Be honest, this personalizes your routine.')}
-                        {step === 1 && (lang === 'es' ? 'Considera compromisos y descanso.' : 'Consider your commitments and recovery.')}
-                        {step === 2 && (lang === 'es' ? 'Puedes cambiar esto más adelante.' : 'You can change this later.')}
-                        {step === 3 && (lang === 'es' ? 'Por sesión de entrenamiento.' : 'Per training session.')}
+                        {step === 0 && (TRANSLATIONS[lang].copy.setupWizard.beHonestThisPersonalizes)}
+                        {step === 1 && (TRANSLATIONS[lang].copy.setupWizard.considerYourCommitmentsAnd)}
+                        {step === 2 && (TRANSLATIONS[lang].copy.setupWizard.youCanChangeThis)}
+                        {step === 3 && (TRANSLATIONS[lang].copy.setupWizard.perTrainingSession)}
                     </p>
                 </div>
             )}
@@ -449,8 +450,8 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                         className="flex-1 h-12 rounded-2xl bg-primary-600 hover:bg-primary-500 text-white font-black text-sm shadow-lg shadow-primary-600/30 transition-all active:scale-95 flex items-center justify-center gap-2"
                     >
                         {step === 3
-                            ? (lang === 'es' ? 'Analizar mi perfil →' : 'Analyze my profile →')
-                            : (lang === 'es' ? 'Siguiente →' : 'Next →')}
+                            ? (TRANSLATIONS[lang].copy.setupWizard.analyzeMyProfile)
+                            : (TRANSLATIONS[lang].copy.setupWizard.next)}
                     </button>
                 </div>
             )}
