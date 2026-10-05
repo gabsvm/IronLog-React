@@ -1,5 +1,9 @@
 import '@testing-library/jest-dom';
 import 'fake-indexeddb/auto';
+import { loadTranslations } from '../constants/translations';
+
+// S7: dictionaries are lazy in the app; tests read both synchronously.
+await Promise.all([loadTranslations('en'), loadTranslations('es')]);
 
 // Node 24+ ships an experimental global `localStorage` accessor that shadows
 // jsdom's Storage with `undefined` unless --localstorage-file is provided.

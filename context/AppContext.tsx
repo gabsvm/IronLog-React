@@ -11,6 +11,7 @@ import { isMeaningfullyEmptyLocalState } from '../services/syncHelpers';
 import { SyncMetaContextType, SyncStatusContextType, AppContext, SyncMetaContext, SyncStatusContext, AppPreferencesContext, AppConfigContext, TutorialContext, INITIAL_TUTORIAL_STATE } from './app/appContexts';
 import { useDefaultsBootstrap } from './app/useDefaultsBootstrap';
 import { useAppBootstrapEffects } from './app/useAppBootstrapEffects';
+import { useLanguage } from './app/useLanguage';
 import { useInitialCloudDownload } from './app/useInitialCloudDownload';
 import { useCloudUploads } from './app/useCloudUploads';
 import { useThemeAndWakeLock } from './app/useThemeAndWakeLock';
@@ -26,8 +27,8 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     const { user, subscription } = useAuth();
 
     // --- Synchronous Config ---
-    const [langStored, setLang] = useLocalStorage<Lang>('il_lang_v1', 'es');
-    const lang: Lang = (langStored === 'en' || langStored === 'es') ? langStored : 'es';
+    // S7: language preference + lazy dictionary loading.
+    const { lang, setLang } = useLanguage();
 
     const [theme, setTheme] = useLocalStorage<Theme>('il_theme_v1', 'dark');
     const [colorTheme, setColorTheme] = useLocalStorage<ColorTheme>('il_color_theme_v1', 'iron');

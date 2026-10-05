@@ -8,7 +8,10 @@ export interface EmergencyBackupResult {
 export const getPreferredLanguage = (): 'es' | 'en' => {
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
-      const saved = window.localStorage.getItem('il_lang_v1');
+      const raw = window.localStorage.getItem('il_lang_v1');
+      // useLocalStorage stores JSON ('"es"'); accept a raw value too.
+      let saved: unknown = raw;
+      try { saved = raw ? JSON.parse(raw) : raw; } catch { /* raw string */ }
       if (saved === 'es' || saved === 'en') return saved;
       const nav = window.navigator?.language?.toLowerCase() || '';
       if (nav.startsWith('es')) return 'es';

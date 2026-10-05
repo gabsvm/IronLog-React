@@ -1,5 +1,4 @@
 import { pickLang, formatMessage } from './utils/i18n';
-import { TRANSLATIONS } from './constants/translations';
 import React, { StrictMode, ReactNode, Component } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Capacitor } from '@capacitor/core';
@@ -7,6 +6,8 @@ import '@fontsource-variable/inter';
 import './index.css';
 import './native-performance.css';
 import App from './App';
+import { CRASH_SCREEN_COPY } from './constants/crashScreenCopy';
+import { bootLanguage, loadTranslations } from './constants/translations';
 import { resetLocalData } from './services/localDataReset';
 import { isServiceWorkerAllowed } from './utils/serviceWorker';
 import { useStore } from './lib/store';
@@ -150,7 +151,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   render() {
     if (this.state.hasError) {
       const lang = getPreferredLanguage();
-      const tc = pickLang(lang, TRANSLATIONS).copy.crashScreen;
+      const tc = pickLang(lang, CRASH_SCREEN_COPY);
 
       return (
         <div style={{
@@ -355,7 +356,15 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 }
 
 const rootElement = document.getElementById('root');
+// S7: only the active language is downloaded; render once it is in memory.
+// If it cannot load (should not happen: both chunks are precached), render
+// anyway so the error boundary can offer reload / backup export.
+const translationsReady = loadTranslations(bootLanguage()).catch((error) => {
+  console.error('Translations failed to load', error);
+});
+
 if (rootElement) {
+  void translationsReady.then(() => {
   const root = createRoot(rootElement);
   root.render(
     <StrictMode>
@@ -366,6 +375,7 @@ if (rootElement) {
   );
   (window as any).__appMounted = true;
   registerGlobalErrorListeners();
+  });
 } else {
   console.error("Root element not found");
   document.body.innerHTML = '<h1 style="color:red">FATAL: #root missing</h1>';

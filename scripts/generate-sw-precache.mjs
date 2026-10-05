@@ -81,6 +81,9 @@ export const extractStaticImportRefs = (chunkCode, fromUrl) => {
  * reachable from dist/index.html, needed for boot) and LAZY (the rest:
  * dynamic chunks cached best-effort at install, runtime-cached otherwise).
  */
+/** Dynamic chunks that boot cannot do without (see splitCriticalLazy). */
+export const BOOT_CRITICAL_DYNAMIC = /\/translations\.(?:en|es)-[\w-]+\.js$/;
+
 export const splitCriticalLazy = async ({ readTextFile, indexHtml, allAssets }) => {
   const critical = new Set();
   const queue = [...extractHtmlAssetRefs(indexHtml)];
@@ -99,6 +102,11 @@ export const splitCriticalLazy = async ({ readTextFile, indexHtml, allAssets }) 
     for (const ref of extractStaticImportRefs(code, url)) {
       if (!seen.has(ref)) queue.push(ref);
     }
+  }
+  // S7: index.tsx awaits the active language chunk before rendering, so both
+  // language dictionaries are boot-critical even though they load dynamically.
+  for (const url of allAssets) {
+    if (BOOT_CRITICAL_DYNAMIC.test(url)) critical.add(url);
   }
   const assetSet = new Set(allAssets);
   const criticalList = [...critical].filter((url) => assetSet.has(url)).sort();

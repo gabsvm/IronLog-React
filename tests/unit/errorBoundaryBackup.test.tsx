@@ -25,6 +25,12 @@ describe('U6: ErrorBoundary and Emergency Backup', () => {
 
         window.localStorage.setItem('il_lang_v1', 'en');
         expect(getPreferredLanguage()).toBe('en');
+
+        // S7: the app persists it JSON-encoded through useLocalStorage.
+        window.localStorage.setItem('il_lang_v1', JSON.stringify('es'));
+        expect(getPreferredLanguage()).toBe('es');
+        window.localStorage.setItem('il_lang_v1', JSON.stringify('en'));
+        expect(getPreferredLanguage()).toBe('en');
     });
 
     it('generateEmergencyBackup dumps localStorage and IndexedDB il_* keys into backup payload', async () => {

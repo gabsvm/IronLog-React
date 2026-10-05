@@ -200,3 +200,37 @@ comportamiento real que fallan sin el cambio, sin dependencias nuevas, sin despl
 - Efecto en bundle: entrada 113,94 → 121,53 KB gzip (dentro del presupuesto 123,12):
   textos que vivían en chunks lazy pasaron a TRANSLATIONS, que hoy viaja completo (es+en)
   en la entrada. S7 lo resuelve cargando solo el idioma activo.
+
+## S7 — Traducciones por idioma (solo se descarga el activo)
+
+- `constants/translations.en.ts` / `translations.es.ts`: un diccionario por idioma; el
+  español está tipado contra el inglés (`ES: TranslationDict`), así que una clave faltante
+  o con otro tipo es error de compilación (la paridad ya no depende solo del test).
+- `constants/translations.ts`: registro `TRANSLATIONS` (misma forma síncrona
+  `TRANSLATIONS[lang].x` para los ~100 consumidores), `loadTranslations(lang)`
+  (idempotente, comparte cargas concurrentes), `bootLanguage()` (misma regla que
+  AppContext: valor guardado en JSON, si no español).
+- Arranque (`index.tsx`): carga el idioma activo y recién entonces renderiza. Si fallara
+  (no debería: ambos chunks van en el precache crítico) renderiza igual y el error boundary
+  ofrece recargar/exportar; su texto vive en `constants/crashScreenCopy.ts` (estático, fuera
+  de los diccionarios).
+- Cambio de idioma (`context/app/useLanguage.ts`): si el idioma ya está en memoria cambia
+  al instante; si no, lo descarga y después cambia.
+- Service worker: `BOOT_CRITICAL_DYNAMIC` en `generate-sw-precache.mjs` marca
+  `translations.(en|es)-*.js` como críticos (offline desde la primera instalación).
+- Bug encontrado y corregido: `getPreferredLanguage` (pantalla de error / respaldo de
+  emergencia) comparaba el valor crudo, pero `useLocalStorage` lo guarda en JSON (`"es"`):
+  nunca coincidía y caía al idioma del navegador. Test con el formato real (falla sin el fix).
+- Tests: `lazyTranslations` (5: registro vacío → carga solo lo pedido, idempotencia y
+  carga compartida, `bootLanguage`, ningún import estático de los diccionarios, precache
+  crítico sin arrastrar otros chunks dinámicos — falla sin el cambio del script);
+  `tests/setup.ts` precarga ambos idiomas para los tests que leen `TRANSLATIONS.es/en`.
+- Bundle: entrada **121,53 → 80,99 KB gzip (−33 %)**; arranque real = entrada + un idioma
+  (~20–22 KB) ≈ 103 KB (antes de S8 eran 113,9 KB solo la entrada). Críticos 193,98 →
+  194,85 KB (ambos idiomas precacheados). `bundle-budget.json` reescrito a tamaño actual
+  +5 % (entrada 87 099 B, críticos 209 505 B) para que la mejora no se pierda.
+- Evidencia: build OK, `test:run` 679/679 en 3 corridas seguidas, `lint:a11y` limpio, eslint
+  con los mismos errores preexistentes, `bundle:report` WITHIN BUDGET, Playwright 45/45
+  (todos arrancan por la ruta nueva; `offlineShell` valida el SW).
+- Observado una vez: `detectPRs.test.ts` falló en una corrida completa y pasó en las 6
+  siguientes (3 aisladas + 3 completas). No reproducible; sin cambios en ese test.
