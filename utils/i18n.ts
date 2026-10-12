@@ -21,3 +21,7 @@ export const otherLang = (lang: Lang | string): Lang => pickLang<Lang>(lang, { e
 export const formatMessage = (template: string, values: Record<string, string | number>): string =>
     template.replace(/\{(\w+)\}/g, (match, name: string) =>
         Object.prototype.hasOwnProperty.call(values, name) ? String(values[name]) : match);
+
+/** Whole number with the app language's digit grouping (es: 3.705, en: 3,705). Locale-independent of the device. */
+export const formatInteger = (value: number, lang: Lang | string): string =>
+    Math.round(value).toLocaleString(pickLang(lang, { es: 'es-AR', en: 'en-US' }));

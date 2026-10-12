@@ -86,7 +86,7 @@ export const HomeHeroCard: React.FC<{ state: HomeViewState }> = ({ state }) => {
                                 })}
                                 {extraSlotsCount > 0 && (
                                     <div className="text-xs text-muted pt-0.5">
-                                        {`${h.andMoreA} ${extraSlotsCount} ${h.andMoreB}`}
+                                        {`${h.andMoreA} ${extraSlotsCount} ${extraSlotsCount === 1 ? h.andMoreOneB : h.andMoreB}`}
                                     </div>
                                 )}
                             </div>

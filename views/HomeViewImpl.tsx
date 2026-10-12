@@ -98,7 +98,7 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
                     description={t.skipDayConfirm}
                     onConfirm={confirmSkip}
                     onCancel={() => setSkipConfirmationId(null)}
-                    confirmText={t.skip}
+                    confirmText={t.skipDay}
                     cancelText={t.cancel}
                     variant="danger"
                 />

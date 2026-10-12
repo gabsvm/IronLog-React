@@ -12,6 +12,7 @@ import type { StatsData } from './useStatsData';
 import { chartMetricLabel } from './statsHelpers';
 import { PersonalRecordRow } from './StatsWidgets';
 import { RepMaxTable } from './RepMaxTable';
+import { formatInteger } from '../../utils/i18n';
 
 export const StatsProgressTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
     const { lang, t, s, unit, weightSuffix, selectedExId, chartMetric, setChartMetric, setShowPicker, setPickerSearch, availableExercises, chartPoints, loadingOverview, loadingChart, currentEx, hasExerciseHistory, prHistory, showAllPRs, setShowAllPRs, displayedPRs, metricButtons, selectedExerciseInsight, repMaxRows } = stats;
@@ -103,7 +104,7 @@ export const StatsProgressTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
                                     {s.totalLoad}
                                 </div>
                                 <div className="mt-1 text-2xl font-black tracking-[-0.04em] text-white">
-                                    {Math.round(toDisplay(selectedExerciseInsight.totalVolume, unit)).toLocaleString()} {weightSuffix}
+                                    {formatInteger(toDisplay(selectedExerciseInsight.totalVolume, unit), lang)} {weightSuffix}
                                 </div>
                             </div>
                         )}

@@ -3,6 +3,8 @@ import React, { useState, Suspense } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Icon } from '../ui/Icon';
 import { Button } from '../ui/Button';
+import { useApp } from '../../context/AppContext';
+import { TRANSLATIONS } from '../../constants/translations';
 
 const PaywallModal = React.lazy(() => import('./PaywallModal').then(m => ({ default: m.PaywallModal })));
 
@@ -14,6 +16,7 @@ interface ProLockProps {
 
 export const ProLock: React.FC<ProLockProps> = ({ children, featureName, blur = true }) => {
     const { subscription } = useAuth();
+    const { lang } = useApp();
     const [showModal, setShowModal] = useState(false);
 
     if (subscription.isPro) {
@@ -33,7 +36,7 @@ export const ProLock: React.FC<ProLockProps> = ({ children, featureName, blur = 
                     </div>
                     <h4 className="font-bold text-sm text-zinc-900 dark:text-white mb-2">{featureName}</h4>
                     <Button size="sm" onClick={() => setShowModal(true)} className="text-xs bg-zinc-900 dark:bg-white text-white dark:text-black">
-                        Unlock PRO
+                        {TRANSLATIONS[lang].copy.paywallModal.unlockPro}
                     </Button>
                 </div>
             </div>

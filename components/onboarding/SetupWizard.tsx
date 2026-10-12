@@ -38,18 +38,18 @@ export const SetupWizard: React.FC<SetupWizardProps> = (props) => {
         <div className="fixed inset-0 z-modal bg-white dark:bg-zinc-950 flex flex-col">
             {/* Header */}
             <div className="px-6 pb-4 pt-[calc(1rem+var(--safe-area-top))] border-b border-zinc-100 dark:border-zinc-900">
-                <div className="flex justify-between items-center mb-4">
-                    <div className="flex items-center gap-2">
-                        <Logo size={32} showText />
+                <div className="flex justify-between items-center gap-3 mb-4">
+                    <div className="flex shrink-0 items-center gap-2">
+                        <Logo size={28} showText />
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex min-w-0 items-center gap-2">
                         {/* Language Toggle */}
-                        <div className="flex bg-zinc-100 dark:bg-zinc-800 rounded-xl p-1">
+                        <div className="flex shrink-0 bg-zinc-100 dark:bg-zinc-800 rounded-xl p-1">
                             {(['en', 'es'] as const).map(l => (
                                 <button
                                     key={l}
                                     onClick={() => setLang(l)}
-                                    className={`px-3 py-1 rounded-lg text-[10px] font-black transition-all uppercase ${
+                                    className={`px-2 py-1 rounded-lg text-[10px] font-black transition-all uppercase ${
                                         lang === l ? 'bg-white dark:bg-zinc-600 shadow-sm text-zinc-900 dark:text-white' : 'text-zinc-400 hover:text-zinc-600 dark:hover:text-white'
                                     }`}
                                 >
@@ -58,7 +58,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = (props) => {
                             ))}
                         </div>
                         {step < 4 && (
-                            <button onClick={() => handleApply('custom')} className="text-[10px] font-black uppercase tracking-wider text-zinc-400 hover:text-zinc-700 dark:hover:text-white">
+                            <button onClick={() => handleApply('custom')} className="min-w-0 text-right text-[10px] font-black uppercase leading-tight tracking-wider text-zinc-400 hover:text-zinc-700 dark:hover:text-white">
                                 {w.manual}
                             </button>
                         )}

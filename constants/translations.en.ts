@@ -156,6 +156,7 @@ export const EN = {
     },
     offline: "Local Mode",
     discardSession: "Discard Session",
+    discard: "Discard",
     discardConfirm: "Discard current session data? This cannot be undone.",
     types: { regular: "Regular", myorep: "Myorep", myorep_match: "Myorep Match", cluster: "Cluster", top: "Top Set", backoff: "Back-off Set", giant: "Giant Set", warmup: "Warmup", emom: "EMOM", drop: "Drop Set", rest_pause: "Rest-Pause", time_volume: "Time-Volume", triple_add: "Triple Add" },
     typeDesc: { regular: "Standard straight set", myorep: "Activation set + mini-sets (short rest)", myorep_match: "Match reps of previous set", cluster: "Intra-set rest periods", top: "Heaviest set (High Intensity)", backoff: "Volume work after Top Set", giant: "High reps to failure (Metabolite)", warmup: "Low fatigue preparation", emom: "Every Minute On the Minute — perform target reps at the start of each minute", drop: "Reduce weight ~20% each set, no rest between", rest_pause: "Nilsson 2-Block: 1 work set, 20s rest, more reps, 20s rest, more reps. Stay 1 rep shy of failure.", time_volume: "Nilsson 2-Block: 3-rep mini-sets, 10s rest, escalate rest when you can't hit 3 reps. 15-min blocks (or 7.5 for small muscles).", triple_add: "Nilsson 2-Block: light 20–30 reps → 10s → moderate 6–8 reps → 10s → heavy 1–3 reps. Hits all fiber types." },
@@ -340,7 +341,13 @@ export const EN = {
         reason: {
             freq: "Optimal frequency for your experience level.",
             time: "Exercise selection optimized for session length.",
-            goal: "Rep ranges and movement patterns aligned with your goal."
+            goal: "Rep ranges and movement patterns aligned with your goal.",
+            rec_default: "A balanced push/pull/legs rotation to build muscle across your whole body.",
+            rec_low_freq: "With 2 days a week, full-body sessions keep every muscle trained often enough.",
+            rec_wizard: "Three days a week fits a full-body split with enough recovery between sessions.",
+            rec_4_day: "Four days a week is the sweet spot for an upper/lower split.",
+            rec_ppl: "Five or six days a week supports a push/pull/legs rotation.",
+            rec_endurance: "Higher-rep, shorter-rest work to build muscular endurance."
         }
     },
 
@@ -680,6 +687,7 @@ export const EN = {
         restoreTitle: "Restore backup",
         restoreDesc: "Current data will be replaced with the backup from {date}. The app will reload.",
         reminderText: "It's been over 14 days since your last backup export",
+        reminderTextNever: "You haven't exported a backup of your data yet",
         reminderExport: "Export now",
         reminderDismiss: "Dismiss",
     },
@@ -921,6 +929,7 @@ export const EN = {
         setsLower: "sets",
         andMoreA: "and",
         andMoreB: "more exercises",
+        andMoreOneB: "more exercise",
         resume: "Resume Workout",
         trainAgain: "Train this day again",
         start: "Start",
@@ -1262,11 +1271,21 @@ export const EN = {
             saveSession: 'Save Session',
         },
         paywallModal: {
+            unlockPro: 'Unlock PRO',
             sendAWhatsappMessage: 'Send a WhatsApp message to request early access. We will activate your account within 24 hours.',
             alreadyHaveAnApproved: 'Already have an approved account? Sign in with your email to sync Pro entitlement.',
             processing: 'Processing...',
             welcomePro: 'Welcome Pro!',
             locked: "Locked: {feature}",
+            featureNames: {
+                history: "Full history",
+                csv_export: "CSV export",
+                "Exercise Library": "Exercise library",
+                "Custom Routines": "Custom routines",
+                sync: "Cloud sync",
+                "Pro Template": "Pro template",
+                Guidelines: "Guidelines",
+            } as Record<string, string>,
         },
         warmupModal: {
             performTheseSetsTo: 'Perform these sets to potentiate your CNS without accumulating fatigue.',
@@ -1317,6 +1336,7 @@ export const EN = {
             quickScale: 'Quick scale',
             calories: 'Calories',
             protein: 'Protein',
+            carbs: 'Carbs',
             fat: 'Fat',
             editGoals: 'Edit Goals',
             saveGoals: 'Save Goals',

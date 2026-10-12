@@ -69,7 +69,7 @@ export const PRCelebrationOverlay: React.FC<PRCelebrationOverlayProps> = ({ onDi
 
     return (
         <div
-            className="fixed inset-0 z-celebration bg-black/90 flex items-center justify-center p-6 animate-in fade-in duration-slow"
+            className="fixed inset-0 z-celebration bg-black/95 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in duration-slow"
             role="dialog"
             aria-modal="true"
             aria-label="Personal record celebration"
@@ -120,7 +120,7 @@ export const PRCelebrationOverlay: React.FC<PRCelebrationOverlayProps> = ({ onDi
 
                     <Button
                         onClick={onDismiss}
-                        className="flex-1 bg-white/10 text-white hover:bg-white/20 border-none py-4 text-base font-bold"
+                        className="flex-1 bg-zinc-800 text-white hover:bg-zinc-700 border-none py-4 text-base font-bold"
                     >
                         {t.continue}
                     </Button>

@@ -8,6 +8,7 @@ import { KONG_4DAY_V1 } from '../../programs/kong/kong4Day';
 import { getKongDayDisplay } from '../../programs/kong/kongDisplay';
 import { triggerHaptic } from '../../utils/audio';
 import { TRANSLATIONS } from '../../constants/translations';
+import { formatInteger } from '../../utils/i18n';
 
 interface Props {
   meso: MesoCycle;
@@ -58,7 +59,7 @@ export const ProgramCompletionView: React.FC<Props> = ({ meso, logs, onFinish, o
     ['sessions', TRANSLATIONS[lang].copy.programCompletion.sessions, String(metrics.sessionsCompleted)],
     ['sets', TRANSLATIONS[lang].copy.programCompletion.sets, String(metrics.setsCompleted)],
     ['time', TRANSLATIONS[lang].copy.programCompletion.time, `${Math.round(metrics.totalSeconds / 60)} min`],
-    ['volume', TRANSLATIONS[lang].copy.programCompletion.volume, Math.round(metrics.totalVolume).toLocaleString()],
+    ['volume', TRANSLATIONS[lang].copy.programCompletion.volume, formatInteger(metrics.totalVolume, lang)],
     ['density', TRANSLATIONS[lang].copy.programCompletion.density, metrics.averageDensity.toFixed(metrics.averageDensity >= 10 ? 0 : 1)],
     ['adherence', TRANSLATIONS[lang].copy.programCompletion.adherence, `${Math.round(metrics.adherence * 100)}%`],
   ];

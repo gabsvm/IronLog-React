@@ -81,7 +81,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
 
     return (
         <div
-            className="fixed inset-0 z-modal bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-base"
+            className="fixed inset-0 z-confirm bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-base"
             onClick={handleBackdropClick}
             role="dialog"
             aria-modal="true"

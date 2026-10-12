@@ -6,6 +6,7 @@ import { Icon } from '../../components/ui/Icon';
 import { formatDate, formatHoursMinutes, getTranslated } from '../../utils';
 import { toDisplay, unitLabel } from '../../utils/units';
 import { TRANSLATIONS } from '../../constants/translations';
+import { formatInteger } from '../../utils/i18n';
 
 interface Props {
     log: Log;
@@ -120,7 +121,7 @@ export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat
                     <SummaryCell icon="Clock" label={TRANSLATIONS[lang].copy.historyDetail.duration} value={formatHoursMinutes(log.duration)} />
                     <SummaryCell icon="Dumbbell" label={TRANSLATIONS[lang].copy.historyDetail.exercises} value={String(summary.exercises)} />
                     <SummaryCell icon="CheckCircle" label={TRANSLATIONS[lang].copy.historyDetail.sets} value={String(summary.sets)} />
-                    <SummaryCell icon="TrendingUp" label={TRANSLATIONS[lang].copy.historyDetail.volume} value={summary.volume > 0 ? `${toDisplay(summary.volume, unit).toLocaleString()} ${weightSuffix}` : '—'} />
+                    <SummaryCell icon="TrendingUp" label={TRANSLATIONS[lang].copy.historyDetail.volume} value={summary.volume > 0 ? `${formatInteger(toDisplay(summary.volume, unit), lang)} ${weightSuffix}` : '—'} />
                 </section>
 
                 {confirmDiscard && (

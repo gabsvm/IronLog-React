@@ -57,7 +57,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = (props) => {
                     isOpen={showDiscardConfirm}
                     title={t.discardSession || "Discard Session"}
                     description={t.discardConfirm || "Discard current session data? This cannot be undone."}
-                    confirmText={t.delete}
+                    confirmText={t.discard}
                     cancelText={t.cancel}
                     onConfirm={handleDiscardSession}
                     onCancel={() => setShowDiscardConfirm(false)}

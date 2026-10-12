@@ -9,7 +9,7 @@ import { resolveWeightUnit, toDisplay, unitLabel } from '../utils/units';
 import { TRANSLATIONS } from '../constants/translations';
 import { getTranslated } from '../utils';
 import { shareFileOrDownload } from '../utils/shareFile';
-import { pickLang } from '../utils/i18n';
+import { pickLang, formatInteger } from '../utils/i18n';
 
 interface SessionSummaryViewProps {
     log: Log;
@@ -30,23 +30,22 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
         const logBodyWeight = getLogBodyWeight(log, userProfile?.bodyWeight);
 
         (log.exercises || []).forEach(ex => {
-            if (ex.muscle && ex.muscle !== 'CARDIO') {
-                muscles.add(ex.muscle);
-            }
             (ex.sets || []).forEach(s => {
                 if (s.completed && !s.skipped) {
                     sets++;
+                    if (ex.muscle && ex.muscle !== 'CARDIO') muscles.add(ex.muscle);
                     volume += getSetLoadVolume(s, ex, logBodyWeight);
                 }
             });
         });
 
-        return { volume, sets, muscles: Array.from(muscles) };
-    }, [log, userProfile?.bodyWeight]);
+        const labels = TRANSLATIONS[lang].muscle as Record<string, string>;
+        return { volume, sets, muscles: Array.from(muscles).map(m => labels[m] || m) };
+    }, [log, userProfile?.bodyWeight, lang]);
 
     // U8: share the summary as an image (PNG via canvas; native share sheet in the app).
     const [shareState, setShareState] = useState<'idle' | 'busy' | 'failed'>('idle');
-    const volumeText = `${toDisplay(stats.volume, unit).toLocaleString()} ${unitLabel(unit).toLowerCase()}`;
+    const volumeText = `${formatInteger(toDisplay(stats.volume, unit), lang)} ${unitLabel(unit).toLowerCase()}`;
     const handleShareImage = async () => {
         setShareState('busy');
         try {
@@ -156,7 +155,7 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
 
                     <div className="col-span-2 glass-card rounded-2xl p-4 flex flex-col items-center justify-center border border-zinc-200 dark:border-zinc-800 bg-[rgb(var(--surface-raised))] shadow-sm">
                         <Icon name="Dumbbell" size={18} className="text-amber-500 dark:text-amber-400 mb-1.5" />
-                        <div className="text-xl font-black">{toDisplay(stats.volume, unit).toLocaleString()} {unitLabel(unit).toLowerCase()}</div>
+                        <div className="text-xl font-black">{formatInteger(toDisplay(stats.volume, unit), lang)} {unitLabel(unit).toLowerCase()}</div>
                         <div className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
                             {TRANSLATIONS[lang].copy.sessionSummary.totalVolume}
                         </div>

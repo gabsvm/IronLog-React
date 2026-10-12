@@ -1,5 +1,5 @@
 // U5: ProgramHub state, moved verbatim from components/programs/ProgramHub.tsx.
-import { pickLang } from '../../../utils/i18n';
+import { pickLang, formatInteger } from '../../../utils/i18n';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Log, MesoCycle } from '../../../types';
 import { KONG_4DAY_V1 } from '../../../programs/kong/kong4Day';
@@ -97,7 +97,7 @@ export const useProgramHubState = ({ meso, logs, onClose, lang }: ProgramHubProp
     { key: 'sessionsCompleted', label: h.metricSessions, value: String(metrics.sessionsCompleted) },
     { key: 'weeksCompleted', label: h.metricWeeks, value: String(metrics.weeksCompleted) },
     { key: 'setsCompleted', label: h.metricSets, value: String(metrics.setsCompleted) },
-    { key: 'totalVolume', label: h.metricVolume, value: Math.round(metrics.totalVolume).toLocaleString() },
+    { key: 'totalVolume', label: h.metricVolume, value: formatInteger(metrics.totalVolume, lang) },
     { key: 'totalSeconds', label: h.metricTimeMin, value: String(Math.round(metrics.totalSeconds / 60)) },
     { key: 'averageDensity', label: h.metricDensity, value: metrics.averageDensity.toFixed(metrics.averageDensity >= 10 ? 0 : 1) },
     { key: 'adherence', label: h.metricAdherence, value: `${Math.round(metrics.adherence * 100)}%` },

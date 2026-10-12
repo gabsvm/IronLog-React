@@ -334,7 +334,7 @@ export const NutriView: React.FC = () => {
               {([
                 { key: 'calories', label: TRANSLATIONS[lang].copy.nutri.calories, unit: 'kcal', color: 'text-zinc-300' },
                 { key: 'protein',  label: TRANSLATIONS[lang].copy.nutri.protein,  unit: 'g', color: 'text-blue-400' },
-                { key: 'carbs',    label: 'Carbs',                   unit: 'g', color: 'text-amber-400' },
+                { key: 'carbs',    label: TRANSLATIONS[lang].copy.nutri.carbs,       unit: 'g', color: 'text-amber-400' },
                 { key: 'fat',      label: TRANSLATIONS[lang].copy.nutri.fat,         unit: 'g', color: 'text-pink-400' },
               ] as const).map(({ key, label, unit, color }) => (
                 <div key={key}>
@@ -374,7 +374,7 @@ export const NutriView: React.FC = () => {
           <div className="space-y-3">
             {(['calories', 'protein', 'carbs', 'fat'] as const).map(key => (
               <div key={key}>
-                <label className="text-xs text-zinc-500 capitalize mb-1 block">{key} {key === 'calories' ? '(kcal)' : '(g)'}</label>
+                <label className="text-xs text-zinc-500 mb-1 block">{TRANSLATIONS[lang].copy.nutri[key]} {key === 'calories' ? '(kcal)' : '(g)'}</label>
                 <input
                   type="number"
                   inputMode="numeric"

@@ -23,6 +23,7 @@ export const BackupReminderBanner: React.FC = () => {
     const activeSession = useStore((state) => state.activeSession);
     const t = TRANSLATIONS[lang].you;
     const [visible, setVisible] = useState(false);
+    const [neverExported, setNeverExported] = useState(false);
 
     useEffect(() => {
         let cancelled = false;
@@ -32,6 +33,7 @@ export const BackupReminderBanner: React.FC = () => {
                 getReminderDismissedAt(),
             ]);
             if (cancelled) return;
+            setNeverExported(!lastExportAt);
             setVisible(
                 shouldShowBackupReminder({
                     now: Date.now(),
@@ -75,7 +77,7 @@ export const BackupReminderBanner: React.FC = () => {
             <span className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 shrink-0">
                 <Icon name="AlertTriangle" size={17} />
             </span>
-            <p className="flex-1 text-xs font-medium text-white leading-snug">{t.reminderText}</p>
+            <p className="flex-1 text-xs font-medium text-white leading-snug">{neverExported ? t.reminderTextNever : t.reminderText}</p>
             <button
                 type="button"
                 onClick={() => void handleExport()}

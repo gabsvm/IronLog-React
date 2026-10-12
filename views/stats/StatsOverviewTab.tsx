@@ -27,7 +27,7 @@ export const StatsOverviewTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
                                 <Icon name="Activity" size={14} /> {t.statsBalance}
                             </h3>
                             <div className="relative flex flex-1 items-center justify-center">
-                                <ProLock featureName="Radar Analysis">
+                                <ProLock featureName={t.statsBalance}>
                                     <div className="h-64 w-full">
                                         <SymmetryRadar volumeData={rawMuscleCounts} />
                                     </div>
@@ -40,7 +40,7 @@ export const StatsOverviewTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
                                 <Icon name="Layers" size={14} /> {t.statsIntensity}
                             </h3>
                             <div className="relative flex flex-1 flex-col items-center justify-center">
-                                <ProLock featureName="Intensity Dist.">
+                                <ProLock featureName={t.statsIntensity}>
                                     {hasData ? (
                                         <div className="flex w-full flex-col items-center">
                                             <div className="relative h-48 w-48">

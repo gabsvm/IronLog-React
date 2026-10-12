@@ -61,7 +61,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ onClose, feature }) 
                     <div className="flex items-center justify-center gap-3 mb-6 bg-primary-500/10 p-3 rounded-xl border border-primary-500/20">
                         <Icon name="Lock" size={16} className="text-primary-500 shrink-0" />
                         <p className="text-xs text-primary-700 dark:text-primary-300 font-bold leading-tight">
-                            {feature ? (formatMessage(TRANSLATIONS[lang].copy.paywallModal.locked, { feature })) : t.subtitle}
+                            {feature ? (formatMessage(TRANSLATIONS[lang].copy.paywallModal.locked, { feature: TRANSLATIONS[lang].copy.paywallModal.featureNames[feature] ?? feature })) : t.subtitle}
                         </p>
                     </div>
 

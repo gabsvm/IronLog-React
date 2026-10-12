@@ -48,7 +48,7 @@ export const SetupWizardStep: React.FC<{ state: SetupWizardState }> = ({ state }
                                 onClick={() => setProfile({ ...profile, daysPerWeek: d })}
                                 className={`aspect-square rounded-2xl font-black text-xl transition-all active:scale-90 ${
                                     profile.daysPerWeek === d
-                                        ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/30 scale-110'
+                                        ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/30 ring-2 ring-primary-400/50'
                                         : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
                                 }`}
                             >

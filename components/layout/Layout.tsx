@@ -78,7 +78,7 @@ export const NavBtn: React.FC<NavBtnProps> = React.memo(({ id, label, icon, isAc
             className="group relative flex h-full flex-1 flex-col items-center justify-center gap-0.5 transition-all duration-200 active:scale-90"
         >
             <div className={`relative flex items-center justify-center transition-all duration-200 ${isActive ? '-translate-y-1' : 'translate-y-0'}`}>
-                <Icon name={icon} size={22} strokeWidth={isActive ? 2.5 : 2} fill={isActive ? 'currentColor' : 'none'} className={`transition-colors duration-200 ${isActive ? 'text-primary-500' : 'text-muted group-hover:text-zinc-200'}`} />
+                <Icon name={icon} size={22} strokeWidth={isActive ? 2.5 : 2} fill={isActive ? 'currentColor' : 'none'} fillOpacity={isActive ? 0.25 : undefined} className={`transition-colors duration-200 ${isActive ? 'text-primary-500' : 'text-muted group-hover:text-zinc-200'}`} />
             </div>
             <span className={`min-w-0 max-w-full truncate text-[11px] font-bold uppercase tracking-wider transition-all duration-200 leading-none ${isActive ? 'text-primary-500 opacity-100' : 'text-muted group-hover:text-zinc-200'}`}>{label}</span>
             {isActive && <div className="absolute bottom-2 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-primary-500 shadow-[0_0_9px_1px] shadow-primary-500/40" />}
@@ -257,7 +257,7 @@ export const Layout: React.FC<LayoutProps> = ({
                 </div>
             )}
 
-            <div className={`relative z-0 flex-1 ${isVirtualized ? 'overflow-hidden' : 'overflow-y-auto scroll-container'} ${view !== 'workout' ? 'pt-[calc(var(--safe-area-top)+60px)] pb-32' : 'pt-safe pb-0'}`}>
+            <div className={`relative flex-1 ${isVirtualized ? 'overflow-hidden' : 'overflow-y-auto scroll-container'} ${view !== 'workout' ? 'pt-[calc(var(--safe-area-top)+60px)] pb-32' : 'pt-safe pb-0'}`}>
                 {/* U4: centered column on wide screens (phones are narrower than max-w-2xl). */}
                 <div className={`mx-auto w-full max-w-2xl ${isVirtualized ? 'h-full' : ''}`}>{children}</div>
             </div>
