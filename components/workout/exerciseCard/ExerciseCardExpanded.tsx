@@ -3,6 +3,7 @@ import React from 'react';
 import { Icon } from '../../ui/Icon';
 import { MuscleTag } from '../MuscleTag';
 import { ExerciseCardStats } from '../ExerciseCardStats';
+import { ExerciseVolumeLine } from '../ExerciseVolumeLine';
 import { ExerciseCardMenu } from '../ExerciseCardMenu';
 import { ExerciseCardSets } from '../ExerciseCardSets';
 import { ExerciseProtocolBanners } from '../ExerciseProtocolBanners';
@@ -12,7 +13,7 @@ import { TRANSLATIONS } from '../../../constants';
 import type { ExerciseCardState } from './useSortableExerciseCardState';
 
 export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ state }) => {
-    const { ex, onSetUpdate, onSetComplete, onSetTypeChange, onAddSet, onDeleteSet, onOpenDetail, onLink, onReplace, onOpenWarmup, openMenuId, setOpenMenuId, t, lang, isLinkingTarget, config, stageConfig, dragEnabled, tutorialId, onToggleExpand, attributes, listeners, setNodeRef, transition, isDragging, exDoneFlash, activeEmomMinute, setActiveEmomMinute, style, sets, c, ssStyle, unit, unitLabel, isCardio, cardioMode, isInterval, regularSets, completedCount, allDone, isSuperseted, isLinkSource, canWarmup, isEMOM, isMyorep, isCluster, isGiant, hasTopBackoff, isTabata, isHIIT, isRestPause, isDrop, isTimeVolume, isTripleAdd, isSpecialProtocol, nextSetIdx, setBadgeLabels, handleInjectWarmup, handleCardioModeChange, confirmDelete, handleSupersetAction, heroMetric } = state;
+    const { ex, onSetUpdate, onSetComplete, onSetTypeChange, onAddSet, onDeleteSet, onOpenDetail, onLink, onReplace, onOpenWarmup, openMenuId, setOpenMenuId, t, lang, isLinkingTarget, config, stageConfig, dragEnabled, tutorialId, onToggleExpand, attributes, listeners, setNodeRef, transition, isDragging, exDoneFlash, activeEmomMinute, setActiveEmomMinute, style, sets, c, ssStyle, unit, unitLabel, isCardio, cardioMode, isInterval, regularSets, completedCount, volumeComparison, allDone, isSuperseted, isLinkSource, canWarmup, isEMOM, isMyorep, isCluster, isGiant, hasTopBackoff, isTabata, isHIIT, isRestPause, isDrop, isTimeVolume, isTripleAdd, isSpecialProtocol, nextSetIdx, setBadgeLabels, handleInjectWarmup, handleCardioModeChange, confirmDelete, handleSupersetAction, heroMetric } = state;
     return (
         <div
             ref={setNodeRef}
@@ -232,6 +233,11 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                         completedCount={completedCount}
                         totalSets={regularSets.length}
                     />
+                    {volumeComparison && (
+                        <div className="mt-1">
+                            <ExerciseVolumeLine comparison={volumeComparison} unit={unit} unitLabel={unitLabel} lang={lang} labels={c.volumeLine} />
+                        </div>
+                    )}
                 </div>
 
             </div>

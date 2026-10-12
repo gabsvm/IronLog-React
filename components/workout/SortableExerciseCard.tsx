@@ -105,5 +105,12 @@ export const SortableExerciseCard = React.memo((props: SortableExerciseCardProps
         [exercise, programTargetSummary],
     );
 
-    return <SortableExerciseCardImpl {...props} exercise={displayExercise} logs={compactHistory} />;
+    const previousSets = useMemo(
+        () => (Array.isArray(logs) && exercise?.id != null
+            ? getExerciseHistorySummary(logs, String(exercise.id), undefined, library).latestWorkingSets
+            : null),
+        [logs, library, exercise.id],
+    );
+
+    return <SortableExerciseCardImpl {...props} exercise={displayExercise} logs={compactHistory} previousSets={previousSets} />;
 });

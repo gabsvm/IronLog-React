@@ -930,6 +930,7 @@ export const ES: TranslationDict = {
         pickPair: "Elige pareja",
         pairHere: "Unir aqui",
         collapse: "Colapsar ejercicio",
+        volumeLine: { volume: "Volumen", reps: "Reps totales", repsUnit: "reps", vsPrevious: "{delta} vs. anterior", previous: "Anterior: {value}" },
     },
     freestyle: {
         freeGym: "Sesión Libre (Gym)",

@@ -4,6 +4,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { SessionExercise, WorkoutSet, CardioType, SetType } from '../../../types';
 import { parseTargetReps, roundWeight } from '../../../utils';
+import { getVolumeComparison } from '../../../utils/volumeComparison';
 import { formatWeight, resolveWeightUnit, toDisplay, unitLabel as unitLabelFor } from '../../../utils/units';
 import { formatProgressionReason, recommendProgression } from '../../../utils/recommendationEngine';
 import { triggerHaptic, playTimerFinishSound } from '../../../utils/audio';
@@ -35,6 +36,8 @@ export interface SortableExerciseCardProps {
     logs: import('../../../types').Log[];
     /** Full exercise library for merged-history resolution (optional; wrapper use only). */
     library?: import('../../../types').ExerciseDef[];
+    /** Last session's working sets for this exercise (wrapper-provided), for the volume-vs-previous line. */
+    previousSets?: WorkoutSet[] | null;
     tutorialId?: string;
     isExpanded?: boolean;
     onToggleExpand?: (id: number) => void;
@@ -64,6 +67,7 @@ export const useSortableExerciseCardState = ({
     stageConfig,
     dragEnabled = true,
     logs,
+    previousSets,
     tutorialId,
     isExpanded = true,
     onToggleExpand,
@@ -176,6 +180,9 @@ export const useSortableExerciseCardState = ({
 
     const regularSets = useMemo(() => ex.sets.filter((set) => set.type !== 'avt_hop'), [ex.sets]);
     const completedCount = regularSets.filter((set) => set.completed).length;
+    const volumeComparison = useMemo(() => getVolumeComparison(ex.sets || [], previousSets, {
+        isBodyweight: ex.isBodyweight, isIsometric: ex.isIsometric, isCardio,
+    }), [ex.sets, previousSets, ex.isBodyweight, ex.isIsometric, isCardio]);
     const allDone = regularSets.length > 0 && completedCount === regularSets.length;
     const isSuperseted = !!ex.supersetId;
     const isLinkSource = linkingId === ex.instanceId;
@@ -399,6 +406,7 @@ export const useSortableExerciseCardState = ({
         historicalBest,
         regularSets,
         completedCount,
+        volumeComparison,
         allDone,
         isSuperseted,
         isLinkSource,

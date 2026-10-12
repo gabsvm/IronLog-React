@@ -928,6 +928,7 @@ export const EN = {
         pickPair: "Pick pair",
         pairHere: "Pair here",
         collapse: "Collapse exercise",
+        volumeLine: { volume: "Volume", reps: "Total reps", repsUnit: "reps", vsPrevious: "{delta} vs. last time", previous: "Last time: {value}" },
     },
     freestyle: {
         freeGym: "Freestyle Gym Session",
