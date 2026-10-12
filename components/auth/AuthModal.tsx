@@ -92,7 +92,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                     <h3 id="auth-modal-title" className="text-xl font-bold text-zinc-900 dark:text-white">
                         {isLogin ? t.signIn : t.register}
                     </h3>
-                    <button onClick={onClose} className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white" aria-label="Close"> <Icon name="X" size={24} />
+                    <button onClick={onClose} className="relative text-zinc-400 hover:text-zinc-900 dark:hover:text-white after:absolute after:-inset-2 after:content-['']" aria-label={t.close}> <Icon name="X" size={24} />
                     </button>
                 </div>
 
@@ -127,7 +127,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                                 <button 
                                     type="button" 
                                     onClick={handleResetPassword}
-                                    className="text-[10px] font-bold text-primary-600 dark:text-primary-400 hover:underline"
+                                    className="py-2 text-[10px] font-bold text-primary-600 dark:text-primary-400 hover:underline"
                                 >
                                     {t.forgotPassword || "Forgot password?"}
                                 </button>

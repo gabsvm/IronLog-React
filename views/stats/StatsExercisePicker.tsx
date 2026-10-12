@@ -17,7 +17,6 @@ export const StatsExercisePicker: React.FC<{ stats: StatsData }> = ({ stats }) =
                         <div className="relative flex-1">
                             <Icon name="Search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
                             <input
-                                autoFocus
                                 type="text"
                                 placeholder={t.searchPlaceholder}
                                 className="glow-input-neon w-full rounded-xl border border-zinc-700/50 bg-zinc-800/50 py-2 pl-9 pr-4 text-sm font-medium text-white outline-none transition-all placeholder-zinc-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"

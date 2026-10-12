@@ -135,7 +135,7 @@ export const calculateWorkoutProgression = (
 
 /**
  * Single, unified pipeline for completing ANY workout session:
- * planned, freestyle, WOD, calisthenics, Two Block, or custom.
+ * planned, freestyle, WOD, calisthenics, or custom.
  */
 export const completeWorkoutPipeline = (input: CompleteWorkoutInput): CompleteWorkoutResult => {
   const { activeSession, activeMeso, program, logs, userProfile, endTime = Date.now() } = input;

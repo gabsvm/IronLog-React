@@ -109,14 +109,14 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ steps, onCompl
                             left: rect.left - PAD,
                             width: rect.width + PAD * 2,
                             height: rect.height + PAD * 2,
-                            boxShadow: '0 0 0 2px rgba(255,255,255,0.6), 0 0 0 4px rgba(239,68,68,0.4)',
+                            boxShadow: '0 0 0 2px rgba(255,255,255,0.6), 0 0 0 4px rgb(var(--primary-500) / 0.45)',
                         }}
                     >
                         {/* Pulsing corner dots */}
                         {[...Array(4)].map((_, i) => (
                             <div
                                 key={i}
-                                className="absolute w-2 h-2 rounded-full bg-red-500 animate-ping"
+                                className="absolute w-2 h-2 rounded-full bg-primary-500 animate-ping"
                                 style={{
                                     top: i < 2 ? -4 : 'auto',
                                     bottom: i >= 2 ? -4 : 'auto',
@@ -149,7 +149,7 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ steps, onCompl
                                 key={idx}
                                 className={`h-1 rounded-full transition-all duration-300 ${
                                     idx === safeIndex
-                                        ? 'w-5 bg-red-500'
+                                        ? 'w-5 bg-primary-500'
                                         : idx < safeIndex
                                         ? 'w-3 bg-white/30'
                                         : 'w-2 bg-white/10'
@@ -181,7 +181,7 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ steps, onCompl
 
                         <button
                             onClick={handleNext}
-                            className="flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-500 text-white rounded-2xl text-sm font-black shadow-lg shadow-red-600/30 transition-all active:scale-95"
+                            className="flex items-center gap-2 px-6 py-3 bg-primary-500 hover:bg-primary-400 text-black rounded-2xl text-sm font-black shadow-lg shadow-primary-500/30 transition-all active:scale-95"
                         >
                             {isLast ? t.tutorial.finish : t.tutorial.next}
                             {!isLast && <Icon name="ArrowRight" size={15} />}

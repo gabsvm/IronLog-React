@@ -250,9 +250,9 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
                 if (set.type === 'myorep' || set.type === 'myorep_match' || set.type === 'giant') dur = 30;
                 if (set.type === 'cluster') dur = 15;
                 if (set.type === 'drop') dur = 0; // Drop sets have no rest — skip timer
-                if (set.type === 'rest_pause') dur = 20;     // Nilsson 2-Block: 20s between rest-pause mini-sets
-                if (set.type === 'time_volume') dur = 10;    // Nilsson 2-Block: starts at 10s (escalates manually per protocol)
-                if (set.type === 'triple_add') dur = 10;     // Nilsson 2-Block: 10s between fiber-type drops within Triple Add
+                if (set.type === 'rest_pause') dur = 20;     // 20s between rest-pause mini-sets
+                if (set.type === 'time_volume') dur = 10;    // starts at 10s (escalates manually per protocol)
+                if (set.type === 'triple_add') dur = 10;     // 10s between fiber-type drops within Triple Add
 
                 // Interval cardio: use the set's programmed rest, or protocol default
                 if (ex?.cardioType === 'tabata') dur = 10;
@@ -320,7 +320,9 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
                     if (e1rm > currentBest1RM) currentBest1RM = e1rm;
                 }
             }
-            if (currentBest1RM > 0 && currentBest1RM > (historicalBest1RM.get(ex.id) ?? 0)) {
+            // A record needs an earlier mark to beat: the first time an exercise is logged is not a PR.
+            const previousBest = historicalBest1RM.get(ex.id) ?? 0;
+            if (previousBest > 0 && currentBest1RM > previousBest) {
                 return true;
             }
         }

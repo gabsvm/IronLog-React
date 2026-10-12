@@ -40,6 +40,7 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
     const ty = t.you;
 
     const [showSaveTemplate, setShowSaveTemplate] = useState(false);
+    const [templateSaved, setTemplateSaved] = useState(false);
     const [showTemplateManager, setShowTemplateManager] = useState(false);
     const [templateName, setTemplateName] = useState('');
     const [notificationPerm, setNotificationPerm] = useState<string>(typeof Notification !== 'undefined' ? Notification.permission : 'default');
@@ -79,6 +80,8 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
 
         setPersonalTemplates(prev => [...prev, template]);
         setShowSaveTemplate(false);
+        setTemplateSaved(true);
+        window.setTimeout(() => setTemplateSaved(false), 3500);
     };
 
     const handleToggleRIR = () => {
@@ -122,7 +125,6 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                                 {ty.mesoWeek.replace('{week}', String(activeMeso.week)).replace('{target}', String(activeMeso.targetWeeks || activeMeso.duration))}
                             </div>
                         </div>
-                        <Icon name="ChevronRight" size={16} className="text-muted shrink-0" />
                     </button>
                 )}
                 <button
@@ -187,9 +189,10 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                 </div>
                 <Icon name="ChevronRight" size={16} className="text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-white" />
             </button>
-            <p className="text-xs text-muted leading-snug px-1 mt-2">
-                {ty.twoBlockHint}
-            </p>
+
+            {templateSaved && (
+                <p role="status" className="mt-2 px-1 text-xs font-bold text-primary-400">{ty.templateSaved}</p>
+            )}
 
             <div className="label-reference px-1 mt-4 mb-1.5">{ty.workoutSetup}</div>
             <div className="card-reference divide-y divide-border-subtle overflow-hidden">

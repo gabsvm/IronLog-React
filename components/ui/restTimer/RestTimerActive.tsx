@@ -66,7 +66,7 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
                 style={pillPositionStyle}
                 aria-label={t.resting}
             >
-                <div className={`pointer-events-auto border border-border-strong bg-surface-raised/95 px-3 py-1.5 shadow-xl backdrop-blur-md ${showCompactExtras ? 'rounded-3xl' : 'rounded-full'}`}>
+                <div className={`pointer-events-auto border border-border-strong bg-surface-raised px-3 py-1.5 shadow-xl ${showCompactExtras ? 'rounded-3xl' : 'rounded-full'}`}>
                     <div className="flex items-center justify-between gap-2">
                         {/* Time display & tap to expand */}
                         <button

@@ -133,7 +133,7 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                                             onOpenWarmup(ex.instanceId);
                                         }
                                     }}
-                                    className={`flex h-8 w-8 items-center justify-center rounded-full border transition-colors ${
+                                    className={`relative flex h-8 w-8 after:absolute after:-inset-1 after:content-[''] items-center justify-center rounded-full border transition-colors ${
                                         hasFirstSetWeight
                                             ? 'border-zinc-700/80 bg-zinc-900/80 text-amber-400 hover:border-amber-400/60 hover:bg-zinc-800'
                                             : 'border-zinc-800 bg-zinc-900/40 text-zinc-600 opacity-50 cursor-not-allowed'
@@ -153,7 +153,7 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                                 event.stopPropagation();
                                 handleSupersetAction();
                             }}
-                            className={`flex h-8 w-8 items-center justify-center rounded-full border transition-colors ${isSuperseted ? 'border-violet-500/30 bg-violet-500/15 text-violet-200' : isLinkSource ? 'border-amber-400/30 bg-amber-500/15 text-amber-200' : 'border-zinc-700/80 bg-zinc-900/80 text-zinc-400 hover:border-zinc-500/70 hover:bg-zinc-800 hover:text-white'}`}
+                            className={`relative flex h-8 w-8 after:absolute after:-inset-1 after:content-[''] items-center justify-center rounded-full border transition-colors ${isSuperseted ? 'border-violet-500/30 bg-violet-500/15 text-violet-200' : isLinkSource ? 'border-amber-400/30 bg-amber-500/15 text-amber-200' : 'border-zinc-700/80 bg-zinc-900/80 text-zinc-400 hover:border-zinc-500/70 hover:bg-zinc-800 hover:text-white'}`}
                             aria-label={isSuperseted ? TRANSLATIONS[lang].cardMenu.unlink : TRANSLATIONS[lang].cardMenu.link}
                         >
                             <Icon name={isSuperseted ? 'Unlink' : 'Link'} size={15} />
@@ -168,7 +168,7 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                                     event.stopPropagation();
                                     setOpenMenuId(openMenuId === ex.instanceId ? null : ex.instanceId);
                                 }}
-                                className={`flex h-8 w-8 items-center justify-center rounded-full border transition-colors duration-fast ease-natural ${openMenuId === ex.instanceId ? 'border-zinc-500/70 bg-zinc-800 text-white' : 'border-zinc-700/80 bg-zinc-900/80 text-zinc-400 hover:border-zinc-500/70 hover:bg-zinc-800 hover:text-white'}`}
+                                className={`relative flex h-8 w-8 after:absolute after:-inset-1 after:content-[''] items-center justify-center rounded-full border transition-colors duration-fast ease-natural ${openMenuId === ex.instanceId ? 'border-zinc-500/70 bg-zinc-800 text-white' : 'border-zinc-700/80 bg-zinc-900/80 text-zinc-400 hover:border-zinc-500/70 hover:bg-zinc-800 hover:text-white'}`}
                             >
                                 <Icon name="MoreVertical" size={18} />
                             </button>
@@ -201,7 +201,7 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                                     event.stopPropagation();
                                     onToggleExpand(ex.instanceId);
                                 }}
-                                className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-700/80 bg-zinc-900/80 text-zinc-400 hover:border-zinc-500/70 hover:bg-zinc-800 hover:text-white transition-colors"
+                                className="relative flex h-8 w-8 after:absolute after:-inset-1 after:content-[''] items-center justify-center rounded-full border border-zinc-700/80 bg-zinc-900/80 text-zinc-400 hover:border-zinc-500/70 hover:bg-zinc-800 hover:text-white transition-colors"
                                 aria-label={c.collapse}
                             >
                                 <Icon name="ChevronUp" size={17} />
@@ -290,14 +290,14 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                     type="button"
                     onClick={handleRemoveLastSet}
                     disabled={sets.length <= 1}
-                    className="flex items-center gap-1.5 py-1 text-muted transition-colors hover:text-red-400 active:scale-95 disabled:opacity-25"
+                    className="flex items-center gap-1.5 py-2.5 text-muted transition-colors hover:text-red-400 active:scale-95 disabled:opacity-25"
                 >
                     <Icon name="Minus" size={13} /> {String(t.removeSetBtn)}
                 </button>
                 <button
                     type="button"
                     onClick={() => onAddSet(ex.instanceId)}
-                    className="flex items-center gap-1.5 py-1 text-primary-400 font-semibold transition-colors hover:text-primary-300 active:scale-95"
+                    className="flex items-center gap-1.5 py-2.5 text-primary-400 font-semibold transition-colors hover:text-primary-300 active:scale-95"
                 >
                     <Icon name="Plus" size={13} /> {t.addSetBtn}
                 </button>

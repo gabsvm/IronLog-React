@@ -60,7 +60,7 @@ export const ExerciseCardMenu: React.FC<Props> = ({
         <div
             role="menu"
             aria-label={m.actions}
-            className="absolute right-0 top-full mt-2 w-64 overflow-hidden rounded-[1.35rem] border border-white/10 bg-[#17171B]/95 shadow-2xl shadow-black/50 backdrop-blur-xl z-dropdown animate-in fade-in zoom-in-95 duration-fast"
+            className="absolute right-0 top-full mt-2 w-64 overflow-hidden rounded-[1.35rem] border border-white/10 bg-[#17171B] shadow-2xl shadow-black/50 backdrop-blur-xl z-dropdown animate-in fade-in zoom-in-95 duration-fast"
         >
             {!isDeleting ? (
                 <>
@@ -82,9 +82,7 @@ export const ExerciseCardMenu: React.FC<Props> = ({
                                 role="menuitem"
                                 className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-bold text-zinc-100 transition-colors hover:bg-white/5"
                             >
-                                <span className={`flex h-8 w-8 items-center justify-center rounded-full border ${hasSuperset ? 'border-violet-500/30 bg-violet-500/15 text-violet-700 dark:text-violet-300' : isLinking ? 'border-amber-500/30 bg-amber-500/15 text-amber-700 dark:text-amber-300' : 'border-white/10 bg-white/5 text-zinc-300'}`}>
-                                    <Icon name={hasSuperset ? 'Unlink' : isLinking ? 'Target' : 'Link'} size={15} />
-                                </span>
+                                <Icon name={hasSuperset ? 'Unlink' : isLinking ? 'Target' : 'Link'} size={16} className={hasSuperset ? 'text-violet-300' : isLinking ? 'text-amber-300' : 'text-zinc-400'} />
                                 <span className="flex-1">
                                     {hasSuperset ? m.unlink : isLinking ? m.linking : m.link}
                                 </span>

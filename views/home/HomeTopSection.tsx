@@ -44,7 +44,7 @@ export const HomeTopSection: React.FC<{ state: HomeViewState }> = ({ state }) =>
                     id="tut-settings-btn"
                     type="button"
                     onClick={() => setShowPlanActions(true)}
-                    className="text-zinc-400 hover:text-white p-1.5 rounded-lg active:bg-surface-raised transition-colors shrink-0"
+                    className="relative text-zinc-400 hover:text-white p-1.5 after:absolute after:-inset-1 after:content-[''] rounded-lg active:bg-surface-raised transition-colors shrink-0"
                     aria-label={h.planOptions}
                     title={h.planOptions}
                 >

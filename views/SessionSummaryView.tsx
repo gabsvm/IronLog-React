@@ -94,12 +94,6 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
                 color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
             };
         }
-        if (discipline === 'twoblock') {
-            return {
-                label: 'Two Block Mass',
-                color: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
-            };
-        }
         if (isDetached) {
             return {
                 label: TRANSLATIONS[lang].copy.sessionSummary.freestyleSession,

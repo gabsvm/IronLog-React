@@ -95,4 +95,15 @@ describe('detectPRs historicalReady guard (D6)', () => {
         expect(result.current.historicalReady).toBe(true);
         expect(result.current.detectPRs()).toBe(true);
     });
+
+    it('does not call the first time an exercise is logged a PR (nothing earlier to beat)', async () => {
+        const { result } = renderHook(() => useWorkoutController(vi.fn(), vi.fn()));
+
+        await act(async () => {
+            resolver!(new Map<string, number>()); // no historical mark for bench_press
+        });
+
+        expect(result.current.historicalReady).toBe(true);
+        expect(result.current.detectPRs()).toBe(false);
+    });
 });

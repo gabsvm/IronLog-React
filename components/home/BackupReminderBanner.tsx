@@ -89,7 +89,7 @@ export const BackupReminderBanner: React.FC = () => {
                 type="button"
                 onClick={() => void handleDismiss()}
                 aria-label={t.reminderDismiss}
-                className="p-2 text-muted hover:text-white shrink-0"
+                className="relative p-2 after:absolute after:-inset-1 after:content-[''] text-muted hover:text-white shrink-0"
             >
                 <Icon name="X" size={14} />
             </button>

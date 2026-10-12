@@ -16,7 +16,6 @@ const ProfileSheet = React.lazy(() => import('../profile/ProfileSheet').then(m =
 import type { ProfileSection } from '../profile/ProfileSheet';
 const QuickStartSheet = React.lazy(() => import('../home/QuickStartSheet').then(m => ({ default: m.QuickStartSheet })));
 const FreestyleSessionModal = React.lazy(() => import('../workout/FreestyleSessionModal').then(m => ({ default: m.FreestyleSessionModal })));
-const TwoBlockMassModal = React.lazy(() => import('../workout/TwoBlockMassModal').then(m => ({ default: m.TwoBlockMassModal })));
 const ConfirmModal = React.lazy(() => import('../ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
 
 interface KongConvertConfirmModalProps {
@@ -122,7 +121,6 @@ export const Layout: React.FC<LayoutProps> = ({
     const [profileSection, setProfileSection] = React.useState<ProfileSection | null>(null);
     const [showQuickStart, setShowQuickStart] = React.useState(false);
     const [showFreestyle, setShowFreestyle] = React.useState(false);
-    const [showTwoBlock, setShowTwoBlock] = React.useState(false);
     const [showActiveSessionAlert, setShowActiveSessionAlert] = React.useState(false);
     const [showKongConvertConfirm, setShowKongConvertConfirm] = React.useState(false);
     const hasOpenedProfileRef = React.useRef(false);
@@ -233,7 +231,6 @@ export const Layout: React.FC<LayoutProps> = ({
     const startDetached = (session: any) => {
         setActiveSession(session);
         setShowFreestyle(false);
-        setShowTwoBlock(false);
         setView('workout');
     };
 
@@ -296,18 +293,13 @@ export const Layout: React.FC<LayoutProps> = ({
             )}
             {(showQuickStart || hasOpenedQuickStartRef.current) && (
                 <React.Suspense fallback={null}>
-                    <QuickStartSheet open={showQuickStart} onClose={() => setShowQuickStart(false)} lang={lang} onResume={() => setView('workout')} onToday={() => setView('home')} onFreestyle={() => setShowFreestyle(true)} onTwoBlock={() => setShowTwoBlock(true)} onEditProgram={editProgram} />
+                    <QuickStartSheet open={showQuickStart} onClose={() => setShowQuickStart(false)} lang={lang} onResume={() => setView('workout')} onToday={() => setView('home')} onFreestyle={() => setShowFreestyle(true)} onEditProgram={editProgram} />
                 </React.Suspense>
             )}
 
             {showFreestyle && (
                 <React.Suspense fallback={null}>
                     <FreestyleSessionModal isOpen={showFreestyle} onClose={() => setShowFreestyle(false)} onStart={startDetached} />
-                </React.Suspense>
-            )}
-            {showTwoBlock && (
-                <React.Suspense fallback={null}>
-                    <TwoBlockMassModal isOpen={showTwoBlock} onClose={() => setShowTwoBlock(false)} onStart={startDetached} />
                 </React.Suspense>
             )}
 

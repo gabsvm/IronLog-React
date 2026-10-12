@@ -126,7 +126,7 @@ export const TodayTab: React.FC<Props> = ({
 
                 <button
                     onClick={onEditGoals}
-                    className="mt-3 w-full text-center text-xs text-muted hover:text-zinc-400 transition-colors duration-fast ease-natural"
+                    className="mt-1 w-full py-2.5 text-center text-xs text-muted hover:text-zinc-400 transition-colors duration-fast ease-natural"
                 >
                     {TRANSLATIONS[lang].copy.todayTab.editGoals} →
                 </button>

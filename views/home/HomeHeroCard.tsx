@@ -52,7 +52,7 @@ export const HomeHeroCard: React.FC<{ state: HomeViewState }> = ({ state }) => {
                                 <button
                                     type="button"
                                     onClick={(e) => handleSkipClick(e, selectedDayIdx)}
-                                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-zinc-400 hover:text-white transition-colors"
+                                    className="relative flex h-8 w-8 after:absolute after:-inset-1 after:content-[''] shrink-0 items-center justify-center rounded-full text-zinc-400 hover:text-white transition-colors"
                                     aria-label={t.skipSession}
                                     title={t.skipSession}
                                 >

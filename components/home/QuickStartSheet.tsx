@@ -11,7 +11,6 @@ interface Props {
     onResume: () => void;
     onToday: () => void;
     onFreestyle: () => void;
-    onTwoBlock: () => void;
     onEditProgram: () => void;
 }
 
@@ -42,7 +41,7 @@ const Row = ({ icon, title, description, badge, primary, onClick }: {
     </button>
 );
 
-export const QuickStartSheet: React.FC<Props> = ({ open, onClose, lang, onResume, onToday, onFreestyle, onTwoBlock, onEditProgram }) => {
+export const QuickStartSheet: React.FC<Props> = ({ open, onClose, lang, onResume, onToday, onFreestyle, onEditProgram }) => {
     const activeSession = useStore(state => state.activeSession);
     const activeMeso = useStore(state => state.activeMeso);
     const run = (fn: () => void) => { onClose(); window.setTimeout(fn, 300); };
@@ -85,12 +84,6 @@ export const QuickStartSheet: React.FC<Props> = ({ open, onClose, lang, onResume
                             title={q.freestyle}
                             description={q.freestyleDesc}
                             onClick={() => run(onFreestyle)}
-                        />
-                        <Row
-                            icon="Layers"
-                            title="Two Block Mass"
-                            description={q.twoBlockDesc}
-                            onClick={() => run(onTwoBlock)}
                         />
 
                         <div className="pt-1 text-[9px] font-black uppercase tracking-[0.17em] text-zinc-500">

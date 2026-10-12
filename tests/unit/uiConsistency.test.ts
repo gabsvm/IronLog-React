@@ -52,3 +52,11 @@ describe('Onboarding recommendation reasons', () => {
         }
     });
 });
+
+describe('Two Block Mass removal', () => {
+    it('leaves no Two Block Mass strings in the translations (exercises are kept)', () => {
+        for (const lang of ['es', 'en'] as const) {
+            expect(JSON.stringify(TRANSLATIONS[lang])).not.toMatch(/two ?block|nilsson 2-block/i);
+        }
+    });
+});

@@ -194,7 +194,7 @@ export interface Log {
   /** Q12: present on CSV-imported sessions; reserved mesoId -100 keeps them out of "This plan". */
   importKey?: string;
   importedFrom?: 'hevy' | 'strong';
-  discipline?: string;      // Optional discipline tag (e.g. crossfit, calisthenics, twoblock)
+  discipline?: string;      // Optional discipline tag (e.g. crossfit, calisthenics)
   programSystem?: {
     systemId: string;
     systemVersion: number;

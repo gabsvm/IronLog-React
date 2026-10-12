@@ -30,15 +30,18 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                                 ? t.calisthenicsSession
                                 : activeSession.name}
                         </h1>
-                        <div className="truncate text-xs text-muted">
+                        <div className="flex min-w-0 items-center gap-2">
+                            <div className="min-w-0 truncate text-xs text-muted">
                             {activeSession.week >= 1 ? `${t.week} ${activeSession.week} · ` : ''}
                             {remainingSets === 0
                                 ? t.allDone
                                 : `${remainingSets} ${t.setsLeft}`}
                         </div>
+                            <WorkoutTimer startTime={activeSession.startTime} />
+                        </div>
                     </div>
 
-                    <WorkoutTimer startTime={activeSession.startTime} />
+                    
 
                     {onOpenReorder && sessionExercises.length > 1 && (
                         <button

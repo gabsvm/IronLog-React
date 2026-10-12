@@ -102,7 +102,7 @@ export const AppearanceSection: React.FC = () => {
                         </div>
                     </div>
                     <span className="chip-reference text-xs font-semibold text-muted">
-                        {resolvedEffects.toUpperCase()}
+                        {({ full: ty.effectsFull, balanced: ty.effectsBalanced, reduced: ty.effectsReduced } as Record<string, string>)[resolvedEffects] ?? resolvedEffects}
                     </span>
                 </div>
 

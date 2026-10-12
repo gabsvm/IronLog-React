@@ -126,7 +126,7 @@ export interface TemplateEligibilityMeso {
  * - dayIdx is a valid in-range program day (0 <= dayIdx < activeMeso.plan.length);
  * - target routine is user-editable;
  * - canonical KONG definitions are not directly mutated;
- * - detached sessions (Freestyle, WOD, Calisthenics, Two Block) do not show the control.
+ * - detached sessions (Freestyle, WOD, Calisthenics) do not show the control.
  */
 export function isTemplateUpdateEligible(
     activeSession: TemplateEligibilitySession | null | undefined,
@@ -148,7 +148,7 @@ export function isTemplateUpdateEligible(
         return false;
     }
 
-    // 3. Detached sessions (Freestyle, WOD, Calisthenics, Two Block, etc.)
+    // 3. Detached sessions (Freestyle, WOD, Calisthenics, etc.)
     if (
         activeSession.isDetached ||
         activeSession.sessionType === 'freestyle' ||

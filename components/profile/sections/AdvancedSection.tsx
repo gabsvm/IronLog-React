@@ -35,7 +35,7 @@ export const AdvancedSection: React.FC<AdvancedSectionProps> = ({ syncStatusText
                         <div className="label-reference px-1 mb-1">{ty.diagnostics}</div>
                         <div className="flex items-center justify-between text-xs">
                             <span className="font-bold text-zinc-500">{ty.network}</span>
-                            <span className={`font-black ${isOnline ? 'text-emerald-500' : 'text-amber-400'}`}>{isOnline ? 'ONLINE' : 'OFFLINE'}</span>
+                            <span className={`font-black ${isOnline ? 'text-emerald-500' : 'text-amber-400'}`}>{isOnline ? ty.online : ty.offline}</span>
                         </div>
                         <div className="flex items-center justify-between text-xs">
                             <span className="font-bold text-zinc-500">{ty.pendingQueue}</span>

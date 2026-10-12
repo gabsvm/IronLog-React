@@ -82,7 +82,7 @@ export const ExerciseCardCollapsed: React.FC<{ state: ExerciseCardState }> = ({ 
                                 event.stopPropagation();
                                 setOpenMenuId(openMenuId === ex.instanceId ? null : ex.instanceId);
                             }}
-                            className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-400 hover:text-white"
+                            className="relative flex h-8 w-8 after:absolute after:-inset-1 after:content-[''] items-center justify-center rounded-full text-zinc-400 hover:text-white"
                             aria-label={c.moreOptions}
                         >
                             <Icon name="MoreVertical" size={16} />
