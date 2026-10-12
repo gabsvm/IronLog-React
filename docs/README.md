@@ -32,3 +32,7 @@
 
 ## Diseño
 - [design-reference/](design-reference/): referencia del rediseño (zip).
+
+## Estándar de ingeniería
+- [../AGENTS.md](../AGENTS.md): Engineering Standard v1.1 (política compartida para Codex, Claude Code y Muse Code; `CLAUDE.md` lo importa).
+- [templates/](templates/): plantillas `PRODUCT`, `FEATURE_SPEC` y `ROADMAP`. No son specs aprobados; crear `docs/PRODUCT.md`, `docs/specs/<feature>.md` o `docs/ROADMAP.md` solo con contenido real.
