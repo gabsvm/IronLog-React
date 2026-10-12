@@ -13,7 +13,7 @@ import { TRANSLATIONS } from '../../../constants';
 import type { ExerciseCardState } from './useSortableExerciseCardState';
 
 export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ state }) => {
-    const { ex, onSetUpdate, onSetComplete, onSetTypeChange, onAddSet, onDeleteSet, onOpenDetail, onLink, onReplace, onOpenWarmup, openMenuId, setOpenMenuId, t, lang, isLinkingTarget, config, stageConfig, dragEnabled, tutorialId, onToggleExpand, attributes, listeners, setNodeRef, transition, isDragging, exDoneFlash, activeEmomMinute, setActiveEmomMinute, style, sets, c, ssStyle, unit, unitLabel, isCardio, cardioMode, isInterval, regularSets, completedCount, volumeComparison, allDone, isSuperseted, isLinkSource, canWarmup, isEMOM, isMyorep, isCluster, isGiant, hasTopBackoff, isTabata, isHIIT, isRestPause, isDrop, isTimeVolume, isTripleAdd, isSpecialProtocol, nextSetIdx, setBadgeLabels, handleInjectWarmup, handleCardioModeChange, confirmDelete, handleSupersetAction, heroMetric } = state;
+    const { ex, onSetUpdate, onSetComplete, onSetTypeChange, onAddSet, onDeleteSet, onOpenDetail, onLink, onReplace, onOpenWarmup, openMenuId, setOpenMenuId, t, lang, isLinkingTarget, config, stageConfig, dragEnabled, tutorialId, onToggleExpand, attributes, listeners, setNodeRef, transition, isDragging, exDoneFlash, activeEmomMinute, setActiveEmomMinute, style, sets, c, ssStyle, unit, unitLabel, isCardio, cardioMode, isInterval, regularSets, completedCount, volumeComparison, allDone, isSuperseted, isLinkSource, canWarmup, isEMOM, isMyorep, isCluster, isGiant, hasTopBackoff, isTabata, isHIIT, isRestPause, isDrop, isTimeVolume, isTripleAdd, isSpecialProtocol, nextSetIdx, setBadgeLabels, handleInjectWarmup, canFillPrevious, copyFromIndex, handleFillFromPrevious, handleCopyToFollowing, removedSet, handleRemoveLastSet, handleUndoRemoveSet, handleCardioModeChange, confirmDelete, handleSupersetAction, heroMetric } = state;
     return (
         <div
             ref={setNodeRef}
@@ -184,6 +184,8 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                                 onOpenDetail={onOpenDetail}
                                 onCardioModeChange={handleCardioModeChange}
                                 onInjectWarmup={handleInjectWarmup}
+                                onFillFromPrevious={canFillPrevious ? handleFillFromPrevious : undefined}
+                                onCopyToFollowing={copyFromIndex >= 0 ? handleCopyToFollowing : undefined}
                                 onSupersetAction={handleSupersetAction}
                                 onReplace={onReplace}
                                 onRequestDelete={confirmDelete}
@@ -276,10 +278,17 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                 </div>
             )}
 
+            {removedSet && (
+                <div className="flex items-center justify-between px-3 py-1.5 border-t border-border-subtle bg-surface-base/30 text-xs text-muted" role="status">
+                    <span>{c.setRemoved}</span>
+                    <button type="button" onClick={handleUndoRemoveSet} className="font-bold uppercase tracking-wider text-primary-400 active:scale-95">{c.undo}</button>
+                </div>
+            )}
+
             <div className="flex items-center justify-between px-3 py-2 border-t border-border-subtle bg-surface-base/30 text-xs text-muted">
                 <button
                     type="button"
-                    onClick={() => sets.length > 0 && onDeleteSet(ex.instanceId, sets[sets.length - 1].id)}
+                    onClick={handleRemoveLastSet}
                     disabled={sets.length <= 1}
                     className="flex items-center gap-1.5 py-1 text-muted transition-colors hover:text-red-400 active:scale-95 disabled:opacity-25"
                 >

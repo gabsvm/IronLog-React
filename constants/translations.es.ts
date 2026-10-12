@@ -849,6 +849,8 @@ export const ES: TranslationDict = {
         linking: "Seleccionando pareja...",
         link: "Crear superserie",
         addWarmup: "Agregar warmup",
+        fillPrevious: "Rellenar con lo anterior",
+        copyToFollowing: "Copiar último set al resto",
     },
     statsWrapper: {
         customPlan: "PERSONALIZADO",
@@ -930,6 +932,8 @@ export const ES: TranslationDict = {
         pickPair: "Elige pareja",
         pairHere: "Unir aqui",
         collapse: "Colapsar ejercicio",
+        setRemoved: "Set eliminado",
+        undo: "Deshacer",
         volumeLine: { volume: "Volumen", reps: "Reps totales", repsUnit: "reps", vsPrevious: "{delta} vs. anterior", previous: "Anterior: {value}" },
     },
     freestyle: {

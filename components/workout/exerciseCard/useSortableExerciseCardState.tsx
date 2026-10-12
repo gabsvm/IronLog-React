@@ -5,6 +5,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { SessionExercise, WorkoutSet, CardioType, SetType } from '../../../types';
 import { parseTargetReps, roundWeight } from '../../../utils';
 import { getVolumeComparison } from '../../../utils/volumeComparison';
+import { canFillFromPrevious, copySourceIndex, copyToFollowing, fillFromPrevious, restoreSet } from '../../../utils/setConvenience';
 import { formatWeight, resolveWeightUnit, toDisplay, unitLabel as unitLabelFor } from '../../../utils/units';
 import { formatProgressionReason, recommendProgression } from '../../../utils/recommendationEngine';
 import { triggerHaptic, playTimerFinishSound } from '../../../utils/audio';
@@ -291,6 +292,51 @@ export const useSortableExerciseCardState = ({
         setOpenMenuId(null);
     };
 
+    const patchSets = (fn: (current: WorkoutSet[]) => WorkoutSet[]) => {
+        onUpdateSession((prev: any) => !prev ? null : {
+            ...prev,
+            exercises: prev.exercises.map((item: any) =>
+                item.instanceId === ex.instanceId ? { ...item, sets: fn(item.sets || []) } : item
+            ),
+        });
+    };
+
+    const canFillPrevious = !isCardio && !ex.isIsometric && canFillFromPrevious(sets);
+    const copyFromIndex = !isCardio && !ex.isIsometric ? copySourceIndex(sets) : -1;
+
+    const handleFillFromPrevious = () => {
+        patchSets(fillFromPrevious);
+        setOpenMenuId(null);
+    };
+
+    const handleCopyToFollowing = () => {
+        const idx = copySourceIndex(sets);
+        if (idx >= 0) patchSets((current) => copyToFollowing(current, idx));
+        setOpenMenuId(null);
+    };
+
+    // Removing the last set can be undone for a few seconds.
+    const [removedSet, setRemovedSet] = useState<{ set: WorkoutSet; index: number } | null>(null);
+    const removedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    useEffect(() => () => { if (removedTimerRef.current) clearTimeout(removedTimerRef.current); }, []);
+
+    const handleRemoveLastSet = () => {
+        if (sets.length <= 1) return;
+        const index = sets.length - 1;
+        setRemovedSet({ set: sets[index], index });
+        if (removedTimerRef.current) clearTimeout(removedTimerRef.current);
+        removedTimerRef.current = setTimeout(() => setRemovedSet(null), 6000);
+        onDeleteSet(ex.instanceId, sets[index].id);
+    };
+
+    const handleUndoRemoveSet = () => {
+        if (!removedSet) return;
+        const { set, index } = removedSet;
+        patchSets((current) => restoreSet(current, set, index));
+        if (removedTimerRef.current) clearTimeout(removedTimerRef.current);
+        setRemovedSet(null);
+    };
+
     const handleCardioModeChange = (mode: CardioType) => {
         onUpdateSession((prev: any) => !prev ? null : {
             ...prev,
@@ -431,6 +477,13 @@ export const useSortableExerciseCardState = ({
         nextSetIdx,
         setBadgeLabels,
         handleInjectWarmup,
+        canFillPrevious,
+        copyFromIndex,
+        handleFillFromPrevious,
+        handleCopyToFollowing,
+        removedSet,
+        handleRemoveLastSet,
+        handleUndoRemoveSet,
         handleCardioModeChange,
         confirmDelete,
         handleSupersetAction,

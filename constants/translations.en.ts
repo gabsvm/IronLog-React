@@ -847,6 +847,8 @@ export const EN = {
         linking: "Selecting partner...",
         link: "Create superset",
         addWarmup: "Add warmup sets",
+        fillPrevious: "Fill with last time",
+        copyToFollowing: "Copy last set to the rest",
     },
     statsWrapper: {
         customPlan: "CUSTOM",
@@ -928,6 +930,8 @@ export const EN = {
         pickPair: "Pick pair",
         pairHere: "Pair here",
         collapse: "Collapse exercise",
+        setRemoved: "Set removed",
+        undo: "Undo",
         volumeLine: { volume: "Volume", reps: "Total reps", repsUnit: "reps", vsPrevious: "{delta} vs. last time", previous: "Last time: {value}" },
     },
     freestyle: {

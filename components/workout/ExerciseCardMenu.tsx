@@ -14,6 +14,8 @@ interface Props {
     onOpenDetail?: (ex: SessionExercise) => void;
     onCardioModeChange: (m: CardioType) => void;
     onInjectWarmup: () => void;
+    onFillFromPrevious?: () => void;
+    onCopyToFollowing?: () => void;
     onSupersetAction: () => void;
     onReplace: (id: number | null) => void;
     onRequestDelete: () => void;
@@ -32,6 +34,8 @@ export const ExerciseCardMenu: React.FC<Props> = ({
     onOpenDetail,
     onCardioModeChange,
     onInjectWarmup,
+    onFillFromPrevious,
+    onCopyToFollowing,
     onSupersetAction,
     onReplace,
     onRequestDelete,
@@ -115,6 +119,24 @@ export const ExerciseCardMenu: React.FC<Props> = ({
                             >
                                 <Icon name="Zap" size={16} /> {m.addWarmup}
                             </button>
+                            {onFillFromPrevious && (
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); onFillFromPrevious(); }}
+                                    role="menuitem"
+                                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-bold text-zinc-100 transition-colors hover:bg-white/5"
+                                >
+                                    <Icon name="RotateCcw" size={16} className="text-zinc-400" /> {m.fillPrevious}
+                                </button>
+                            )}
+                            {onCopyToFollowing && (
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); onCopyToFollowing(); }}
+                                    role="menuitem"
+                                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-bold text-zinc-100 transition-colors hover:bg-white/5"
+                                >
+                                    <Icon name="Copy" size={16} className="text-zinc-400" /> {m.copyToFollowing}
+                                </button>
+                            )}
                         </>
                     )}
 
