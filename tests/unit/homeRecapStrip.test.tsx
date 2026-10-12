@@ -36,7 +36,7 @@ describe('Q16: HomeRecapStrip', () => {
 
         expect(screen.getByText('Última sesión')).toBeTruthy();
         expect(screen.getByText('1.200 kg')).toBeTruthy();
-        expect(screen.getByText(/~30 min/)).toBeTruthy();
+        expect(screen.getByText('30 min')).toBeTruthy();
         // 60x10 beats the 50x10 best → one PR chip.
         expect(screen.getByText('×1')).toBeTruthy();
     });

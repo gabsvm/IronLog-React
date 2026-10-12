@@ -7,7 +7,7 @@ import { useApp } from '../context/AppContext';
 import { getLogBodyWeight, getSetLoadVolume } from '../utils/trainingMetrics';
 import { resolveWeightUnit, toDisplay, unitLabel } from '../utils/units';
 import { TRANSLATIONS } from '../constants/translations';
-import { getTranslated } from '../utils';
+import { getTranslated, formatDurationShort } from '../utils';
 import { shareFileOrDownload } from '../utils/shareFile';
 import { pickLang, formatInteger } from '../utils/i18n';
 
@@ -74,13 +74,6 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
         }
     };
 
-    const formatDuration = (sec: number) => {
-        const h = Math.floor(sec / 3600);
-        const m = Math.floor((sec % 3600) / 60);
-        if (h > 0) return `${h}h ${m}m`;
-        return `${m}m`;
-    };
-
     const getSessionTypeBadge = () => {
         if (discipline === 'crossfit') {
             return {
@@ -133,7 +126,7 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
                 <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
                     <div className="glass-card rounded-2xl p-4 flex flex-col items-center justify-center border border-zinc-200 dark:border-zinc-800 bg-[rgb(var(--surface-raised))] shadow-sm">
                         <Icon name="Clock" size={18} className="text-blue-500 dark:text-blue-400 mb-1.5" />
-                        <div className="text-xl font-black">{formatDuration(log.duration)}</div>
+                        <div className="text-xl font-black">{formatDurationShort(log.duration)}</div>
                         <div className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
                             {TRANSLATIONS[lang].copy.sessionSummary.time}
                         </div>

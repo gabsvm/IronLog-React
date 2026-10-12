@@ -2,7 +2,7 @@ import React, { memo, Suspense, useCallback, useDeferredValue, useEffect, useMem
 import { Virtuoso } from 'react-virtuoso';
 import { useApp } from '../context/AppContext';
 import { TRANSLATIONS } from '../constants';
-import { formatDate, formatHoursMinutes, getTranslated } from '../utils';
+import { formatDate, formatDurationShort, getTranslated } from '../utils';
 import { Icon } from '../components/ui/Icon';
 import { Button } from '../components/ui/Button';
 import { TutorialOverlay } from '../components/ui/TutorialOverlay';
@@ -104,7 +104,7 @@ const HistoryCard = memo(({ log, lang, id, onOpen, unit = 'kg' }: HistoryCardPro
                 </div>
                 <div className="flex shrink-0 items-center gap-1.5 rounded-full bg-zinc-100 px-2.5 py-1 text-[11px] font-bold text-zinc-500 dark:bg-white/5">
                     <Icon name="Clock" size={12} />
-                    {formatHoursMinutes(log.duration)}
+                    {formatDurationShort(log.duration)}
                 </div>
             </div>
 

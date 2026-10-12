@@ -30,13 +30,15 @@ export const formatSeconds = (s: number) => {
     return `${Math.floor(sec/60)}:${(sec%60).toString().padStart(2,'0')}`;
 };
 
-export const formatHoursMinutes = (s: number) => {
+/** Elapsed time as "42s", "12 min" or "1 h 05 min": the single format used for workout durations. */
+export const formatDurationShort = (s: number) => {
     const sec = Math.max(0, Math.floor(Number(s) || 0));
     if (sec < 60) return `${sec}s`;
     const totalMin = Math.floor(sec / 60);
     const h = Math.floor(totalMin / 60);
     const m = totalMin % 60;
-    return `${h}:${m.toString().padStart(2,'0')}`;
+    if (h === 0) return `${m} min`;
+    return m === 0 ? `${h} h` : `${h} h ${m.toString().padStart(2, '0')} min`;
 };
 
 export const roundWeight = (w: number) => { 

@@ -3,7 +3,7 @@ import { Log, WeightUnit } from '../../types';
 import { HistoryEditExercise } from './HistoryEditExercise';
 import { buildEditedLog, draftAddSet, draftRemoveSet, draftSetNote, draftUpdateSet, toDraft, type EditErrors } from '../../utils/historyEdit';
 import { Icon } from '../../components/ui/Icon';
-import { formatDate, formatHoursMinutes, getTranslated } from '../../utils';
+import { formatDate, formatDurationShort, getTranslated } from '../../utils';
 import { toDisplay, unitLabel } from '../../utils/units';
 import { TRANSLATIONS } from '../../constants/translations';
 import { formatInteger } from '../../utils/i18n';
@@ -118,7 +118,7 @@ export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat
 
             <main className="flex-1 overflow-y-auto scroll-container px-4 pb-32 pt-4">
                 <section className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                    <SummaryCell icon="Clock" label={TRANSLATIONS[lang].copy.historyDetail.duration} value={formatHoursMinutes(log.duration)} />
+                    <SummaryCell icon="Clock" label={TRANSLATIONS[lang].copy.historyDetail.duration} value={formatDurationShort(log.duration)} />
                     <SummaryCell icon="Dumbbell" label={TRANSLATIONS[lang].copy.historyDetail.exercises} value={String(summary.exercises)} />
                     <SummaryCell icon="CheckCircle" label={TRANSLATIONS[lang].copy.historyDetail.sets} value={String(summary.sets)} />
                     <SummaryCell icon="TrendingUp" label={TRANSLATIONS[lang].copy.historyDetail.volume} value={summary.volume > 0 ? `${formatInteger(toDisplay(summary.volume, unit), lang)} ${weightSuffix}` : '—'} />

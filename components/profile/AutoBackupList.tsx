@@ -47,7 +47,7 @@ export const AutoBackupList: React.FC<AutoBackupListProps> = ({ lang, onRestored
 
     return (
         <div className="card-reference p-4 space-y-2">
-            <div className="label-reference px-1 mb-1">{t.autoBackups}</div>
+            <div className="label-reference mb-1">{t.autoBackups}</div>
             {backups === null || backups.length === 0 ? (
                 <div className="text-xs text-muted">{t.autoBackupsEmpty}</div>
             ) : (

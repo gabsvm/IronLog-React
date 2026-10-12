@@ -60,3 +60,16 @@ describe('Two Block Mass removal', () => {
         }
     });
 });
+
+describe('formatDurationShort', () => {
+    it('uses one unit style for every workout duration', async () => {
+        const { formatDurationShort } = await import('../../utils');
+        expect(formatDurationShort(0)).toBe('0s');
+        expect(formatDurationShort(19)).toBe('19s');
+        expect(formatDurationShort(60)).toBe('1 min');
+        expect(formatDurationShort(42 * 60 + 59)).toBe('42 min');
+        expect(formatDurationShort(3600)).toBe('1 h');
+        expect(formatDurationShort(3600 + 5 * 60)).toBe('1 h 05 min');
+        expect(formatDurationShort(NaN)).toBe('0s');
+    });
+});

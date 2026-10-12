@@ -118,7 +118,7 @@ describe('N6: unified sheet signed-in coverage (labels the guest e2e cannot see)
         const onClose = vi.fn();
         renderSheet({ onOpenProgram, onOpenExercises, onReset, onClose });
 
-        fireEvent.click(screen.getByText('Editor de programa'));
+        fireEvent.click(screen.getByText('Editar rutina'));
         expect(onOpenProgram).toHaveBeenCalledTimes(1);
         expect(onClose).toHaveBeenCalledTimes(1);
 

@@ -23,11 +23,11 @@ export const HomeHeroCard: React.FC<{ state: HomeViewState }> = ({ state }) => {
                 const extraSlotsCount = Math.max(0, slots.length - 3);
 
                 return (
+                    // Pointer shortcut only: keyboard and screen-reader users start the session with the real
+                    // "Start" button inside the card, so the wrapper must not be a second (nested) button.
                     <div
                         id="tut-up-next"
                         onClick={() => startSession(selectedDayIdx)}
-                        role="button"
-                        tabIndex={0}
                         className="card-reference p-4 cursor-pointer transition-all active:scale-[0.99] shadow-lg"
                     >
                         <div className="flex items-start justify-between gap-2">
