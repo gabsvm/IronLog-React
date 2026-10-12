@@ -11,6 +11,7 @@ import { useStore } from '../lib/store';
 import { Log, WeightUnit } from '../types';
 import { HistoryDetailView } from './history/HistoryDetailView';
 import { resolveWeightUnit, toDisplay, unitLabel } from '../utils/units';
+import { buildUndoLog } from '../utils/historyEdit';
 
 const PaywallModal = React.lazy(() => import('../components/pro/PaywallModal').then(m => ({ default: m.PaywallModal })));
 const ConfirmModal = React.lazy(() => import('../components/ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
@@ -136,10 +137,31 @@ export const HistoryView: React.FC = () => {
     const [selectedLogId, setSelectedLogId] = useState<number | null>(null);
     const [deletingLogId, setDeletingLogId] = useState<number | null>(null);
     const [deletedLogBackup, setDeletedLogBackup] = useState<{ log: Log; index: number } | null>(null);
+    const [editBackup, setEditBackup] = useState<{ original: Log; edited: Log } | null>(null);
     const [search, setSearch] = useState('');
     const deferredSearch = useDeferredValue(search);
 
     const safeLogs = useMemo(() => Array.isArray(logs) ? logs : [], [logs]);
+    useEffect(() => {
+        if (!editBackup) return;
+        const timer = window.setTimeout(() => setEditBackup(null), 8000);
+        return () => window.clearTimeout(timer);
+    }, [editBackup]);
+
+    // A saved edit replaces the log in place (same id) and always carries a newer
+    // updatedAt than the previous version, so cloud sync (last-writer-wins) keeps it.
+    const handleSaveEdit = useCallback((original: Log, edited: Log) => {
+        setLogs(prev => prev.map(log => (log.id === original.id ? edited : log)));
+        setEditBackup({ original, edited });
+    }, [setLogs]);
+
+    const handleUndoEdit = useCallback(() => {
+        if (!editBackup) return;
+        const { original, edited } = editBackup;
+        setLogs(prev => prev.map(log => (log.id === original.id ? buildUndoLog(original, edited, Date.now()) : log)));
+        setEditBackup(null);
+    }, [editBackup, setLogs]);
+
     const selectedLog = useMemo(() => safeLogs.find(log => log.id === selectedLogId) || null, [safeLogs, selectedLogId]);
 
     useEffect(() => {
@@ -288,6 +310,7 @@ export const HistoryView: React.FC = () => {
                     onBack={closeDetail}
                     onRepeat={() => repeatWorkout(selectedLog)}
                     onDelete={() => setDeletingLogId(selectedLog.id)}
+                    onSaveEdit={handleSaveEdit}
                     repeatBlocked={!!activeSession}
                 />
             )}
@@ -317,6 +340,21 @@ export const HistoryView: React.FC = () => {
                         variant="danger"
                     />
                 </Suspense>
+            )}
+
+            {editBackup && !deletedLogBackup && (
+                <div role="status" className="fixed bottom-24 left-4 right-4 z-[80] flex items-center justify-between rounded-2xl bg-zinc-900 border border-zinc-700/80 px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-4 duration-200">
+                    <span className="text-xs font-semibold text-white">
+                        {TRANSLATIONS[lang].copy.history.workoutUpdated}
+                    </span>
+                    <button
+                        onClick={handleUndoEdit}
+                        className="flex items-center gap-1.5 text-xs font-bold text-primary-400 hover:text-primary-300 active:scale-95 transition-transform"
+                    >
+                        <Icon name="RotateCcw" size={14} />
+                        <span>{TRANSLATIONS[lang].copy.history.undo}</span>
+                    </button>
+                </div>
             )}
 
             {deletedLogBackup && (

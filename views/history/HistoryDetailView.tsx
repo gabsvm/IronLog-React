@@ -1,5 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Log, WeightUnit } from '../../types';
+import { HistoryEditExercise } from './HistoryEditExercise';
+import { buildEditedLog, draftAddSet, draftRemoveSet, draftSetNote, draftUpdateSet, toDraft, type EditErrors } from '../../utils/historyEdit';
 import { Icon } from '../../components/ui/Icon';
 import { formatDate, formatHoursMinutes, getTranslated } from '../../utils';
 import { toDisplay, unitLabel } from '../../utils/units';
@@ -11,6 +13,8 @@ interface Props {
     onBack: () => void;
     onRepeat: () => void;
     onDelete: () => void;
+    /** Persist an edited copy of this workout (see docs/specs/history-edit.md). Editing is hidden when absent. */
+    onSaveEdit?: (original: Log, edited: Log) => void;
     repeatBlocked?: boolean;
     unit?: WeightUnit;
 }
@@ -21,7 +25,25 @@ const displayDuration = (val: string | number | undefined) => {
     return `${val}s`;
 };
 
-export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat, onDelete, repeatBlocked = false, unit = 'kg' }) => {
+export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat, onDelete, onSaveEdit, repeatBlocked = false, unit = 'kg' }) => {
+    const h = TRANSLATIONS[lang].copy.historyDetail;
+    const [draft, setDraft] = useState<Log | null>(null);
+    const [errors, setErrors] = useState<EditErrors>({});
+    const [emptyError, setEmptyError] = useState(false);
+    const [confirmDiscard, setConfirmDiscard] = useState(false);
+    const editing = draft !== null;
+    const dirty = useMemo(() => editing && JSON.stringify(draft) !== JSON.stringify(toDraft(log, unit)), [editing, draft, log, unit]);
+
+    const startEdit = () => { setErrors({}); setEmptyError(false); setConfirmDiscard(false); setDraft(toDraft(log, unit)); };
+    const stopEdit = () => { setDraft(null); setErrors({}); setEmptyError(false); setConfirmDiscard(false); };
+    const handleBack = () => { if (editing && dirty) setConfirmDiscard(true); else if (editing) stopEdit(); else onBack(); };
+    const handleSave = () => {
+        if (!draft || !onSaveEdit) return;
+        const result = buildEditedLog(log, draft, unit, Date.now());
+        if ('errors' in result) { setErrors(result.errors); setEmptyError(result.empty); return; }
+        if (result.changed) onSaveEdit(log, result.log);
+        stopEdit();
+    };
     const weightSuffix = unitLabel(unit).toLowerCase();
     const summary = useMemo(() => {
         let sets = 0;
@@ -48,7 +70,7 @@ export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat
                 <div className="flex h-14 items-center gap-3 px-3">
                     <button
                         type="button"
-                        onClick={onBack}
+                        onClick={handleBack}
                         aria-label={TRANSLATIONS[lang].copy.historyDetail.back}
                         className="flex h-10 w-10 items-center justify-center rounded-full text-zinc-500 transition-colors active:bg-zinc-200 dark:active:bg-white/5"
                     >
@@ -60,14 +82,36 @@ export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat
                         </div>
                         <h1 className="truncate text-base font-black tracking-tight text-zinc-950 dark:text-white">{log.name}</h1>
                     </div>
-                    <button
-                        type="button"
-                        onClick={onDelete}
-                        aria-label={TRANSLATIONS[lang].copy.historyDetail.deleteWorkout}
-                        className="flex h-10 w-10 items-center justify-center rounded-full text-zinc-500 transition-colors active:bg-red-500/10 active:text-red-500"
-                    >
-                        <Icon name="Trash2" size={18} />
-                    </button>
+                    {editing ? (
+                        <button
+                            type="button"
+                            onClick={handleSave}
+                            className="flex h-10 items-center gap-1.5 rounded-full bg-primary-500 px-4 text-sm font-black text-black active:scale-95"
+                        >
+                            <Icon name="Check" size={16} /> {h.save}
+                        </button>
+                    ) : (
+                        <>
+                            {onSaveEdit && (
+                                <button
+                                    type="button"
+                                    onClick={startEdit}
+                                    aria-label={h.edit}
+                                    className="flex h-10 w-10 items-center justify-center rounded-full text-zinc-500 transition-colors active:bg-zinc-200 dark:active:bg-white/5"
+                                >
+                                    <Icon name="Pencil" size={18} />
+                                </button>
+                            )}
+                            <button
+                                type="button"
+                                onClick={onDelete}
+                                aria-label={TRANSLATIONS[lang].copy.historyDetail.deleteWorkout}
+                                className="flex h-10 w-10 items-center justify-center rounded-full text-zinc-500 transition-colors active:bg-red-500/10 active:text-red-500"
+                            >
+                                <Icon name="Trash2" size={18} />
+                            </button>
+                        </>
+                    )}
                 </div>
             </header>
 
@@ -79,13 +123,55 @@ export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat
                     <SummaryCell icon="TrendingUp" label={TRANSLATIONS[lang].copy.historyDetail.volume} value={summary.volume > 0 ? `${toDisplay(summary.volume, unit).toLocaleString()} ${weightSuffix}` : '—'} />
                 </section>
 
-                {(log as any).note && (
+                {confirmDiscard && (
+                    <div role="alertdialog" aria-label={h.discardTitle} className="mb-4 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4">
+                        <p className="text-sm font-bold text-amber-200">{h.discardTitle}</p>
+                        <div className="mt-3 flex gap-2">
+                            <button type="button" onClick={() => setConfirmDiscard(false)} className="flex-1 rounded-xl bg-white/5 py-2 text-xs font-bold text-zinc-200">{h.keepEditing}</button>
+                            <button type="button" onClick={stopEdit} className="flex-1 rounded-xl bg-red-500 py-2 text-xs font-bold text-white">{h.discard}</button>
+                        </div>
+                    </div>
+                )}
+
+                {emptyError && <p role="alert" className="mb-4 rounded-2xl border border-red-500/40 bg-red-500/10 p-3 text-xs font-bold text-red-400">{h.emptyWorkout}</p>}
+
+                {editing && draft && (
+                    <section className="mt-4">
+                        <label className="mb-1 block text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500" htmlFor="history-edit-note">{h.note}</label>
+                        <textarea
+                            id="history-edit-note"
+                            rows={2}
+                            value={draft.note ?? ''}
+                            onChange={e => setDraft(d => (d ? draftSetNote(d, e.target.value) : d))}
+                            className="w-full rounded-2xl border border-[rgb(var(--border-subtle)/0.7)] bg-[rgb(var(--surface-raised)/0.75)] p-3 text-sm text-zinc-700 outline-none focus:ring-2 focus:ring-primary-500 dark:text-zinc-300"
+                        />
+                    </section>
+                )}
+
+                {!editing && (log as any).note && (
                     <section className="mt-4 rounded-2xl border border-[rgb(var(--border-subtle)/0.7)] bg-[rgb(var(--surface-raised)/0.75)] p-4">
                         <div className="mb-1 text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500">{TRANSLATIONS[lang].copy.historyDetail.note}</div>
                         <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">{(log as any).note}</p>
                     </section>
                 )}
 
+                {editing && draft ? (
+                    <section className="mt-5 space-y-3">
+                        {(draft.exercises || []).map(ex => (
+                            <HistoryEditExercise
+                                key={ex.instanceId}
+                                ex={ex}
+                                unit={unit}
+                                lang={lang}
+                                errors={errors}
+                                labels={h}
+                                onChange={(instanceId, setId, field, value) => setDraft(d => (d ? draftUpdateSet(d, instanceId, setId, field, value) : d))}
+                                onRemove={(instanceId, setId) => setDraft(d => (d ? draftRemoveSet(d, instanceId, setId) : d))}
+                                onAdd={(instanceId) => setDraft(d => (d ? draftAddSet(d, instanceId) : d))}
+                            />
+                        ))}
+                    </section>
+                ) : (
                 <section className="mt-5 space-y-3">
                     {(log.exercises || []).map((ex, exIndex) => {
                         const completed = (ex.sets || []).filter(set => set.completed && !set.skipped);
@@ -137,9 +223,10 @@ export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat
                         );
                     })}
                 </section>
+                )}
             </main>
 
-            <div className="fixed bottom-0 left-0 right-0 z-[72] bg-gradient-to-t from-[rgb(var(--surface-app))] via-[rgb(var(--surface-app)/0.98)] to-transparent px-4 pb-safe pt-6">
+            {!editing && <div className="fixed bottom-0 left-0 right-0 z-[72] bg-gradient-to-t from-[rgb(var(--surface-app))] via-[rgb(var(--surface-app)/0.98)] to-transparent px-4 pb-safe pt-6">
                 <button
                     type="button"
                     onClick={onRepeat}
@@ -151,7 +238,7 @@ export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat
                         ? (TRANSLATIONS[lang].copy.historyDetail.finishActiveSessionTo)
                         : (TRANSLATIONS[lang].copy.historyDetail.repeatHistoricalSession)}
                 </button>
-            </div>
+            </div>}
         </div>
     );
 };
