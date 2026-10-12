@@ -37,10 +37,10 @@ describe('N3: DeleteAccountDialog enables deletion only with password + typed co
         fireEvent.change(screen.getByLabelText(/contraseña/i), { target: { value: 'secret' } });
         expect((deleteButton as HTMLButtonElement).disabled).toBe(true);
 
-        fireEvent.change(screen.getByLabelText(/escribí eliminar/i), { target: { value: 'ELIMINA' } });
+        fireEvent.change(screen.getByLabelText(/escribe eliminar/i), { target: { value: 'ELIMINA' } });
         expect((deleteButton as HTMLButtonElement).disabled).toBe(true);
 
-        fireEvent.change(screen.getByLabelText(/escribí eliminar/i), { target: { value: 'ELIMINAR' } });
+        fireEvent.change(screen.getByLabelText(/escribe eliminar/i), { target: { value: 'ELIMINAR' } });
         expect((deleteButton as HTMLButtonElement).disabled).toBe(false);
     });
 
@@ -49,7 +49,7 @@ describe('N3: DeleteAccountDialog enables deletion only with password + typed co
         render(<DeleteAccountDialog open={true} onClose={vi.fn()} onDeleted={onDeleted} isPro={false} />);
 
         fireEvent.change(screen.getByLabelText(/contraseña/i), { target: { value: 'secret' } });
-        fireEvent.change(screen.getByLabelText(/escribí eliminar/i), { target: { value: 'ELIMINAR' } });
+        fireEvent.change(screen.getByLabelText(/escribe eliminar/i), { target: { value: 'ELIMINAR' } });
         fireEvent.click(screen.getByLabelText(/también borrar los datos de este dispositivo/i));
         fireEvent.click(screen.getByRole('button', { name: /eliminar mi cuenta/i }));
 
@@ -61,7 +61,7 @@ describe('N3: DeleteAccountDialog enables deletion only with password + typed co
         renderDialog();
 
         fireEvent.change(screen.getByLabelText(/contraseña/i), { target: { value: 'secret' } });
-        fireEvent.change(screen.getByLabelText(/escribí eliminar/i), { target: { value: 'ELIMINAR' } });
+        fireEvent.change(screen.getByLabelText(/escribe eliminar/i), { target: { value: 'ELIMINAR' } });
         fireEvent.click(screen.getByRole('button', { name: /eliminar mi cuenta/i }));
 
         await waitFor(() => expect(deleteAccountMock).toHaveBeenCalledWith('secret', { wipeLocalData: false }));
@@ -73,7 +73,7 @@ describe('N3: DeleteAccountDialog enables deletion only with password + typed co
         render(<DeleteAccountDialog open={true} onClose={vi.fn()} onDeleted={onDeleted} isPro={false} />);
 
         fireEvent.change(screen.getByLabelText(/contraseña/i), { target: { value: 'wrong' } });
-        fireEvent.change(screen.getByLabelText(/escribí eliminar/i), { target: { value: 'ELIMINAR' } });
+        fireEvent.change(screen.getByLabelText(/escribe eliminar/i), { target: { value: 'ELIMINAR' } });
         fireEvent.click(screen.getByRole('button', { name: /eliminar mi cuenta/i }));
 
         expect(await screen.findByText(/contraseña incorrecta/i)).toBeDefined();

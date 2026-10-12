@@ -107,6 +107,13 @@ describe('Q14: exercise library search + merge', () => {
         expect(unmergeExercise(lib, 'b')).toEqual(lib);
     });
 
+    it('does not suggest merging two built-in exercises (fresh installs would see noise)', () => {
+        const builtIns = [def('cf_ring_mu', 'Muscle Up en Anillas'), def('cal_ring_mu', 'Muscle Up en Anillas')];
+        expect(suggestDuplicatePairs(builtIns)).toEqual([]);
+        const withCustom = [...builtIns, def('custom_9', 'Muscle Up en Anillas')];
+        expect(suggestDuplicatePairs(withCustom).some(p => p.sourceId === 'custom_9')).toBe(true);
+    });
+
     it('suggests duplicates by shared normalized name, preferring built-ins as target', () => {
         const pairs = suggestDuplicatePairs(LIB);
         // "Press Banca" (custom) shares its normalized name with bp_bar's alias.

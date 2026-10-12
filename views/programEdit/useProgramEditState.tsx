@@ -20,6 +20,10 @@ export interface UnresolvedSlot {
     muscle: string;
 }
 
+/** Structural equality for a meso plan (arrays of exercise ids per day). */
+export const isSamePlan = (a: ReadonlyArray<ReadonlyArray<string | null>>, b: ReadonlyArray<ReadonlyArray<string | null>> | undefined): boolean =>
+    !!b && a.length === b.length && a.every((day, i) => day.length === (b[i]?.length ?? -1) && day.every((id, j) => id === b[i][j]));
+
 export const useProgramEditState = ({ onBack }: ProgramEditViewProps) => {
     const { program, setProgram, lang, exercises } = useApp();
     const activeMeso = useStore(state => state.activeMeso);
@@ -48,9 +52,15 @@ export const useProgramEditState = ({ onBack }: ProgramEditViewProps) => {
     // Sync active meso plan if editing routine and program slots change
     useEffect(() => {
         if (!activeMeso) return;
+        const updatedPlan = program.map(day => (day.slots || []).map(s => s.exerciseId || null));
+        // Only write when the plan actually changed: saving replaces `activeMeso`, which re-ran this
+        // effect and re-saved forever (permanent "Saving..." and a state write every 300 ms).
+        if (isSamePlan(updatedPlan, activeMeso.plan)) {
+            setSaveStatus('saved');
+            return;
+        }
         setSaveStatus('saving');
         const timer = setTimeout(() => {
-            const updatedPlan = program.map(day => (day.slots || []).map(s => s.exerciseId || null));
             setActiveMeso(prev => prev ? { ...prev, plan: updatedPlan } : prev);
             setSaveStatus('saved');
         }, 300);

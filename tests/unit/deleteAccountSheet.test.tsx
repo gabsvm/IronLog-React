@@ -85,7 +85,7 @@ describe('N3: ProfileSheet account section', () => {
 
         expect(screen.getByRole('alertdialog')).toBeDefined();
         expect(screen.getByLabelText(/contraseña/i)).toBeDefined();
-        expect(screen.getByLabelText(/escribí eliminar/i)).toBeDefined();
+        expect(screen.getByLabelText(/escribe eliminar/i)).toBeDefined();
         authState.user = null;
     });
 });

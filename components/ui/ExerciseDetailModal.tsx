@@ -11,6 +11,7 @@ import { Button } from './Button';
 import { ProgressChart } from '../stats/ProgressChart';
 import { Sheet } from './Sheet';
 import { useStatsWorker } from '../../hooks/useStatsWorker';
+import { resolveMuscleLabel } from '../../utils/muscle';
 import { useStore } from '../../lib/store';
 import {
     Chart as ChartJS,
@@ -209,7 +210,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
             open={true}
             onOpenChange={(o) => { if (!o) onClose(); }}
             title={String(translatedName)}
-            description={`${exercise.muscle} exercise details`}
+            description={resolveMuscleLabel(exercise.muscle, lang)}
             accent="primary"
             footer={
                 <div className="flex gap-3">
@@ -219,7 +220,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
             }
         >
             <div className="px-5 pt-1">
-                <MuscleTag label={exercise.muscle} />
+                <MuscleTag label={resolveMuscleLabel(exercise.muscle, lang)} />
             </div>
 
             {/* Tabs */}

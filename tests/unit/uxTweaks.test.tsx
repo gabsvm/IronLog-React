@@ -71,7 +71,7 @@ describe('K8: stale weigh-in nudge in Dieta > Cuerpo', () => {
 
     it('shows the nudge when the last weigh-in is older than 14 days (es)', () => {
         render(<BodyTab {...baseProps} latestWeight={{ id: 1, date: daysAgo(20), weight: 85 }} />);
-        expect(screen.getByText('Hace 20 días que no registrás tu peso')).toBeTruthy();
+        expect(screen.getByText('Hace 20 días que no registras tu peso')).toBeTruthy();
     });
 
     it('shows the nudge in English', () => {
@@ -89,9 +89,9 @@ describe('K8: stale weigh-in nudge in Dieta > Cuerpo', () => {
         const { unmount, container } = render(
             <BodyTab {...baseProps} latestWeight={{ id: 1, date: daysAgo(3), weight: 85 }} />,
         );
-        expect(container.textContent).not.toMatch(/días que no registrás/i);
+        expect(container.textContent).not.toMatch(/días que no registras/i);
         unmount();
         const fresh = render(<BodyTab {...baseProps} latestWeight={null} />);
-        expect(fresh.container.textContent).not.toMatch(/días que no registrás/i);
+        expect(fresh.container.textContent).not.toMatch(/días que no registras/i);
     });
 });

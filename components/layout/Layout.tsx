@@ -10,6 +10,7 @@ import { Icon } from '../ui/Icon';
 import { Logo } from '../ui/Logo';
 import { Avatar } from '../ui/Avatar';
 import { scheduleWhenIdle } from '../../lib/idle';
+import { runAfterProfileClosed } from '../../utils/profileNav';
 
 const ProfileSheet = React.lazy(() => import('../profile/ProfileSheet').then(m => ({ default: m.ProfileSheet })));
 import type { ProfileSection } from '../profile/ProfileSheet';
@@ -282,8 +283,8 @@ export const Layout: React.FC<LayoutProps> = ({
                     open={showProfile}
                     onClose={closeProfile}
                     initialSection={profileSection}
-                    onOpenProgram={onOpenProgram}
-                    onOpenExercises={onOpenExercises}
+                    onOpenProgram={() => runAfterProfileClosed(onOpenProgram)}
+                    onOpenExercises={() => runAfterProfileClosed(onOpenExercises)}
                     onReset={onReset}
                     onExport={onExport}
                     onForceSync={onForceSync}

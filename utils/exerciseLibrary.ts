@@ -150,6 +150,10 @@ export const suggestDuplicatePairs = (exercises: readonly ExerciseDef[]): Duplic
             (def, i) => group.findIndex((d) => resolveExerciseId(exercises, d.id) === resolveExerciseId(exercises, def.id)) === i
         );
         if (distinct.length < 2) return;
+        // Two built-in entries (e.g. a discipline catalog overlapping the base library) are not something the
+        // user created, and every fresh install would see them as "possible duplicates". Only suggest when
+        // at least one side is user-created.
+        if (!distinct.some(isCustomish)) return;
         const sorted = [...distinct].sort((a, b) => Number(isCustomish(a)) - Number(isCustomish(b)));
         const target = sorted[0]!;
         for (const source of sorted.slice(1)) {

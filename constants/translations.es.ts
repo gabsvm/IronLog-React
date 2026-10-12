@@ -146,7 +146,7 @@ export const ES: TranslationDict = {
         errorUnknown: "Formato no reconocido (se esperaba Hevy o Strong).",
         errorEmpty: "El archivo está vacío.",
         errorRead: "No se pudo leer el archivo.",
-        sharedError: "No se pudo abrir el archivo compartido. Probá en Perfil → Datos → Importar CSV.",
+        sharedError: "No se pudo abrir el archivo compartido. Prueba en Perfil → Datos → Importar CSV.",
         dismiss: "Cerrar",
     },
     reminders: {
@@ -467,7 +467,7 @@ export const ES: TranslationDict = {
     statsLevels: { beginner: "Principiante", intermediate: "Intermedio", advanced: "Avanzado" },
     planTypes: { free: "Gratuito", monthly: "Mensual", yearly: "Anual", lifetime: "Vitalicio", demo: "Demo" },
     progressEmptyTitle: "Datos insuficientes",
-    progressEmptyBody: "Completá al menos 2 entrenamientos con este ejercicio para ver el progreso.",
+    progressEmptyBody: "Completa al menos 2 entrenamientos con este ejercicio para ver el progreso.",
     adminPanel: "Panel Admin",
     adminClose: "Cerrar Admin",
     manageTemplates: "Gestionar plantillas",
@@ -488,7 +488,7 @@ export const ES: TranslationDict = {
     nutriHistoryEmptyBody: "Registra tus comidas en Hoy para ver tus tendencias.",
     nutriHistoryEmptyCta: "Ir a Hoy",
     dietTrends: "Tendencias",
-    staleWeighIn: "Hace {days} días que no registrás tu peso",
+    staleWeighIn: "Hace {days} días que no registras tu peso",
 
     // Plate Calculator
     tutorial: {
@@ -545,7 +545,7 @@ export const ES: TranslationDict = {
         proWarning: "Tu suscripción Pro está asociada a esta cuenta y se perderá.",
         wipeLocal: "También borrar los datos de este dispositivo",
         passwordLabel: "Contraseña",
-        confirmLabel: "Escribí ELIMINAR para confirmar",
+        confirmLabel: "Escribe ELIMINAR para confirmar",
         confirmWord: "ELIMINAR",
         deleteButton: "Eliminar mi cuenta",
         deleting: "Eliminando...",
@@ -1143,9 +1143,9 @@ export const ES: TranslationDict = {
             save: 'Guardar',
             tonnageCalculation: 'Cálculo de tonelaje',
             recordedTotal1: 'Total registrado · ×1',
-            forBarsBilateralMachines: 'Usá esto para barras, máquinas bilaterales o si las reps alternadas ya son el total.',
+            forBarsBilateralMachines: 'Usa esto para barras, máquinas bilaterales o si las reps alternadas ya son el total.',
             perSide2: 'Por lado · ×2',
-            whenYouRecordLoad: 'Si anotás la carga y reps de un brazo/pierna y entrenás los dos lados.',
+            whenYouRecordLoad: 'Si anotas la carga y reps de un brazo/pierna y entrenas los dos lados.',
             compound: 'Compuesto',
             isolation: 'Aislamiento',
             bodyweight: 'Peso Corporal',
@@ -1159,8 +1159,8 @@ export const ES: TranslationDict = {
             recordedTotal1: 'Total registrado · ×1',
             barsBilateralMachinesOr: 'Barras, máquinas bilaterales o reps alternadas ya sumadas.',
             perSide2: 'Por lado · ×2',
-            whenLoadAndReps: 'Si anotás carga y reps por brazo/pierna y hacés ambos lados.',
-            searchByNameOr: 'Buscá por nombre o creá uno nuevo',
+            whenLoadAndReps: 'Si anotas carga y reps por brazo/pierna y haces ambos lados.',
+            searchByNameOr: 'Busca por nombre o crea uno nuevo',
             createExercise: 'Crear ejercicio',
         },
         feedbackModal: {
