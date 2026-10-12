@@ -14,6 +14,7 @@ import { buildDoughnutData, buildIntensityPalette } from '../../utils/chartColor
 import { resolveWeightUnit, unitLabel } from '../../utils/units';
 import { aggregateExerciseFrequency, exerciseIdGroup, matchesExerciseQuery, resolveExerciseId } from '../../utils/exerciseLibrary';
 import { buildSelectedExerciseInsight } from './exerciseInsight';
+import { computeRepMaxTable } from '../../utils/repMaxTable';
 
 export const useStatsData = ({ activeTab, hideHeader, statsScope }: { activeTab?: 'overview' | 'progress' | 'volume'; hideHeader: boolean; statsScope: StatsScope }) => {
     const { logs, lang, exercises, tutorialProgress, markTutorialSeen, userProfile, config, rpFeedback } = useApp();
@@ -331,6 +332,11 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope }: { activeTab?
         [currentEx, exercises, lang, rawMuscleCounts, safeLogs, userProfile?.bodyWeight, scopeMesoId, unit, weightSuffix, s]
     );
 
+    const repMaxRows = useMemo(() => {
+        if (!currentEx || currentEx.isBodyweight || currentEx.isIsometric || currentEx.muscle === 'CARDIO') return [];
+        return computeRepMaxTable(safeLogs, new Set(selectedGroupIds.map(String)));
+    }, [currentEx, safeLogs, selectedGroupIds]);
+
     const statsTutorialSteps = [
         { targetId: 'tut-progress-chart', title: t.tutorial.stats[0].title, text: t.tutorial.stats[0].text, position: 'bottom' as const },
         { targetId: 'tut-radar-chart', title: t.tutorial.stats[1].title, text: t.tutorial.stats[1].text, position: 'top' as const },
@@ -407,6 +413,7 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope }: { activeTab?
         weekPRs,
         metricButtons,
         selectedExerciseInsight,
+        repMaxRows,
         statsTutorialSteps,
     };
 };

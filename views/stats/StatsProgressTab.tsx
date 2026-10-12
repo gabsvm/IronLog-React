@@ -11,9 +11,10 @@ import { toDisplay } from '../../utils/units';
 import type { StatsData } from './useStatsData';
 import { chartMetricLabel } from './statsHelpers';
 import { PersonalRecordRow } from './StatsWidgets';
+import { RepMaxTable } from './RepMaxTable';
 
 export const StatsProgressTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
-    const { lang, t, s, unit, weightSuffix, selectedExId, chartMetric, setChartMetric, setShowPicker, setPickerSearch, availableExercises, chartPoints, loadingOverview, loadingChart, currentEx, hasExerciseHistory, prHistory, showAllPRs, setShowAllPRs, displayedPRs, metricButtons, selectedExerciseInsight } = stats;
+    const { lang, t, s, unit, weightSuffix, selectedExId, chartMetric, setChartMetric, setShowPicker, setPickerSearch, availableExercises, chartPoints, loadingOverview, loadingChart, currentEx, hasExerciseHistory, prHistory, showAllPRs, setShowAllPRs, displayedPRs, metricButtons, selectedExerciseInsight, repMaxRows } = stats;
     return (
         <>
                 <>
@@ -137,6 +138,8 @@ export const StatsProgressTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
                     </div>
                 </div>
             )}
+
+            {repMaxRows.length > 0 && <RepMaxTable rows={repMaxRows} unit={unit} lang={lang} labels={s} />}
 
             {prHistory.length > 0 && (
                 <div className="glass-card rounded-[1.7rem] border border-white/6 p-5 shadow-md">
