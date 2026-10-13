@@ -47,6 +47,62 @@ for (const theme of ['dark', 'light'] as const) {
       await page.waitForTimeout(800);
     });
 
+
+    test(`expressive: navegación y selector utilizables a 320 px (${theme})`, async ({ page }) => {
+      await page.setViewportSize({ width: 320, height: 720 });
+      await expect(nav(page)).toBeVisible();
+      const buttons = nav(page).locator('button');
+      await expect(buttons).toHaveCount(5);
+      const bounds = await buttons.evaluateAll(items =>
+        items.map(item => {
+          const box = item.getBoundingClientRect();
+          return { x: box.x, right: box.right, height: box.height };
+        }),
+      );
+      expect(bounds.every(box => box.x >= -1 && box.right <= 321 && box.height >= 44)).toBe(true);
+      const selectedDay = page.locator('button[aria-pressed="true"]').first();
+      await expect(selectedDay).toBeVisible();
+      const dayBox = await selectedDay.boundingBox();
+      expect(dayBox?.height ?? 0).toBeGreaterThanOrEqual(44);
+      const hero = page.locator('#tut-up-next');
+      await expect(hero).toBeVisible();
+      const heroBox = await hero.boundingBox();
+      expect((heroBox?.x ?? -999) >= -1 && (heroBox?.x ?? 999) + (heroBox?.width ?? 999) <= 321).toBe(true);
+    });
+
+    if (theme === 'light') {
+      test('expressive: textos de Stats superan contraste WCAG AA', async ({ page }) => {
+        await nav(page).getByRole('button', { name: /M[ée]tricas|Stats/i }).click();
+        const cards = page.locator('.tonal-1, .tonal-2, .tonal-3, .tonal-4');
+        await expect(cards.first()).toBeVisible();
+        const ratios = await cards.evaluateAll(items => {
+          const ctx = document.createElement('canvas').getContext('2d');
+          if (!ctx) throw new Error('Canvas 2D unavailable');
+          const luminance = (css: string) => {
+            ctx.canvas.width = ctx.canvas.height = 1;
+            ctx.clearRect(0, 0, 1, 1);
+            ctx.fillStyle = css;
+            ctx.fillRect(0, 0, 1, 1);
+            const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+            const linear = [r, g, b].map(channel => {
+              const v = channel / 255;
+              return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+            });
+            return linear[0] * 0.2126 + linear[1] * 0.7152 + linear[2] * 0.0722;
+          };
+          return items.slice(0, 4).map(card => {
+            const label = card.firstElementChild;
+            if (!label) throw new Error('Missing Stats card label');
+            const bg = luminance(getComputedStyle(card).backgroundColor);
+            const fg = luminance(getComputedStyle(label).color);
+            return (Math.max(bg, fg) + 0.05) / (Math.min(bg, fg) + 0.05);
+          });
+        });
+        expect(ratios).toHaveLength(4);
+        for (const ratio of ratios) expect(ratio).toBeGreaterThanOrEqual(4.5);
+      });
+    }
+
     test(`home desktop ${theme}`, async ({ page }) => {
       // U4: wide screens get a centered column instead of edge-to-edge cards.
       await page.setViewportSize({ width: 1280, height: 800 });
