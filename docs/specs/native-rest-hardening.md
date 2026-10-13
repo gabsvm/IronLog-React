@@ -70,3 +70,13 @@ No changes to Production were made in this native hardening pass. Preview builds
 - Physical-device acceptance remains necessary: lock the Moto g86 Power on Android 15, start a rest on set 2 of 4, verify the displayed contextual text, extend +30s from the drawer twice, complete the next set, switch exercises, then verify there are no duplicate cards/sounds or incorrect older text. Check both Spanish and English app languages with Android set to either language.
 
 **Deployment scope:** only the existing feature branch is updated. No Production promotion and no signed-release APK is published by this implementation.
+
+
+### Validation results for contextual notification (2026-10-13)
+
+- `npm run verify`: **PASS**, 143 Vitest files, **805 tests passed**, 1 skipped. Includes TypeScript, lint, accessibility, KONG and bundle budget.
+- Dedicated notification suite: **29/29 PASS**, including first native scheduling, next-set content, same-ID update and no update on every 1-second tick.
+- Chromium E2E suite: **48/48 PASS**, including real session, timer/pill, notification prompt layout and mobile insets.
+- Capacitor `npx cap sync android`, Android Gradle `:app:assembleDebug :app:testDebugUnitTest`: **BUILD SUCCESSFUL** on JDK 21 and Android SDK 36. APK manifest verified `com.gainslab.pro`, version **420** (`4.0.3-kong.12`), minSdk 24, targetSdk 36.
+- This is a source/debug-build validation: Android 15 notification drawer behavior, system locale, phone lock, exact alarm latency and OEM battery policies still require a **physical Moto g86 Power installation**.
+- Production remains on the previously approved `14163f1` release. Preview is for web behavior; it cannot deliver a modified Java/AndroidManifest to already installed Capacitor apps.
