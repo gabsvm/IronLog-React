@@ -25,7 +25,7 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
     const pillPositionStyle: React.CSSProperties = keyboardOpen
         ? { top: 'calc(var(--safe-area-top) + 64px)', bottom: 'auto' }
         : { bottom: `calc(var(--safe-area-bottom) + ${floatingBottom}px)` };
-    const showCompactExtras = showEffortFeedback && (Boolean(currentSourceSet) || Boolean(nextExerciseInfo));
+    const showCompactExtras = !keyboardOpen && showEffortFeedback && (Boolean(currentSourceSet) || Boolean(nextExerciseInfo));
 
     const adjustTimer = (deltaSeconds: number) => {
         triggerHaptic('light');
@@ -62,12 +62,12 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
             <>
             <aside
                 ref={pillRef}
-                className="fixed inset-x-0 mx-auto max-w-md px-3 z-sheet pointer-events-none transition-all duration-base ease-natural"
-                style={pillPositionStyle}
+                className={`fixed inset-x-0 mx-auto max-w-md px-3 z-sheet pointer-events-none transition-all duration-base ease-natural ${keyboardOpen ? 'max-w-[220px]' : ''}`}
+                style={{ ...pillPositionStyle, ...(keyboardOpen ? { left: 'auto', right: '8px', marginLeft: 0, marginRight: 0, width: 'min(220px, calc(100% - 16px))' } : {}) }}
                 aria-label={t.resting}
             >
                 <div className={`pointer-events-auto border border-border-strong bg-surface-raised px-3 py-1.5 shadow-xl ${showCompactExtras ? 'rounded-3xl' : 'rounded-full'}`}>
-                    <div className="flex items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                         {/* Time display & tap to expand */}
                         <button
                             type="button"
@@ -99,8 +99,8 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
                             <Icon name="ChevronUp" size={14} className="text-muted shrink-0" />
                         </button>
 
-                        {/* Quick controls: -10s, +30s, skip (real 44px targets) */}
-                        <div className="flex items-center gap-1 shrink-0">
+                        {/* Hide secondary controls during keyboard editing; remain available when dismissed. */}
+                        {!keyboardOpen && <div className="ml-auto flex items-center gap-1 shrink-0">
                             <button
                                 type="button"
                                 onClick={() => adjustTimer(-10)}
@@ -126,7 +126,7 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
                             >
                                 <Icon name="FastForward" size={16} />
                             </button>
-                        </div>
+                        </div>}
                     </div>
                     {showCompactExtras && (
                         <div className="mt-1 border-t border-border-subtle/60 pt-1.5">
