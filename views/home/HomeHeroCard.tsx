@@ -1,118 +1,95 @@
-// S6: selected-day hero card, moved verbatim from views/HomeViewImpl.tsx.
+// Editorial exercise hero: premium visual language, original workout logic preserved.
 import React from 'react';
 import { Icon } from '../../components/ui/Icon';
 import { getTranslated } from '../../utils';
 import type { HomeViewState } from './useHomeViewState';
 
 export const HomeHeroCard: React.FC<{ state: HomeViewState }> = ({ state }) => {
-    const { startSession, uniqueDaysDone, nextWorkoutIdx, exercises, lang, activeSession, activeMeso, t, h, tm, safeProgram, selectedDayIdx, selectedDayEstimatedMin, handleSkipClick } = state;
+    const { startSession, uniqueDaysDone, exercises, lang, activeSession, activeMeso, t, h, tm, safeProgram, selectedDayIdx, selectedDayEstimatedMin, handleSkipClick } = state;
     if (!activeMeso) return null;
+
+    const dayDef = safeProgram[selectedDayIdx];
+    if (!dayDef) return null;
+
+    const isDone = uniqueDaysDone.has(selectedDayIdx);
+    const isSelectedActive = Boolean(activeSession && activeSession.mesoId === activeMeso.id && activeSession.dayIdx === selectedDayIdx);
+    const slots = dayDef.slots || [];
+    const totalSets = slots.reduce((sum: number, slot: any) => sum + (slot.setTarget || 3), 0);
+    const previewSlots = slots.slice(0, 3);
+    const extraSlotsCount = Math.max(0, slots.length - previewSlots.length);
+    const dayName = String(getTranslated(dayDef.dayName, lang));
+
     return (
-        <>
-            {(() => {
-                const dayDef = safeProgram[selectedDayIdx];
-                if (!dayDef) return null;
+        <article
+            id="tut-up-next"
+            key={selectedDayIdx}
+            className="premium-hero expressive-reveal relative isolate overflow-hidden"
+        >
+            {/* CSS/SVG artwork is decorative, never covers interactive elements. */}
+            <svg className="premium-hero__art" aria-hidden="true" focusable="false" viewBox="0 0 240 220" fill="none">
+                <g stroke="currentColor" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M39 143 203 61" strokeWidth="10" />
+                    <rect x="22" y="116" width="26" height="60" rx="8" transform="rotate(-27 22 116)" />
+                    <rect x="50" y="110" width="15" height="48" rx="6" transform="rotate(-27 50 110)" />
+                    <rect x="160" y="43" width="15" height="48" rx="6" transform="rotate(-27 160 43)" />
+                    <rect x="178" y="27" width="26" height="60" rx="8" transform="rotate(-27 178 27)" />
+                </g>
+                <circle cx="126" cy="111" r="83" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 13" />
+            </svg>
 
-                const isDone = uniqueDaysDone.has(selectedDayIdx);
-                const isNext = selectedDayIdx === nextWorkoutIdx;
-                const isSelectedActive = activeSession && activeSession.mesoId === activeMeso.id && activeSession.dayIdx === selectedDayIdx;
-                const dayEstimatedMin = selectedDayEstimatedMin;
-                const slots = dayDef.slots || [];
-                const totalSets = slots.reduce((s: number, slot: any) => s + (slot.setTarget || 3), 0);
-                const previewSlots = slots.slice(0, 3);
-                const extraSlotsCount = Math.max(0, slots.length - 3);
-
-                return (
-                    // Pointer shortcut only: keyboard and screen-reader users start the session with the real
-                    // "Start" button inside the card, so the wrapper must not be a second (nested) button.
-                    <div
-                        id="tut-up-next"
-                        key={selectedDayIdx}
-                        onClick={() => startSession(selectedDayIdx)}
-                        className="card-reference expressive-press expressive-reveal p-4 sm:p-5 cursor-pointer shadow-lg"
-                    >
-                        <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0 flex-1">
-                                <h3 className="text-2xl font-bold text-white tracking-tight truncate">
-                                    {String(getTranslated(dayDef.dayName, lang))}
-                                </h3>
-                                <div className="flex flex-wrap gap-1.5 mt-2 mb-2">
-                                    {slots.slice(0, 3).map((slot: any, sIdx: number) => (
-                                        <span key={sIdx} className="chip-reference">
-                                            {String(tm(slot.muscle))}
-                                        </span>
-                                    ))}
-                                    {extraSlotsCount > 0 && (
-                                        <span className="chip-reference text-muted">
-                                            +{extraSlotsCount}
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                            {!isDone && !isSelectedActive && (
-                                <button
-                                    type="button"
-                                    onClick={(e) => handleSkipClick(e, selectedDayIdx)}
-                                    className="relative flex h-8 w-8 after:absolute after:-inset-1 after:content-[''] shrink-0 items-center justify-center rounded-full text-zinc-400 hover:text-white transition-colors"
-                                    aria-label={t.skipSession}
-                                    title={t.skipSession}
-                                >
-                                    <Icon name="SkipForward" size={16} />
-                                </button>
-                            )}
+            <div className="premium-hero__content">
+                <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                        <div className="premium-hero__eyebrow">
+                            {lang === 'es' ? `DÍA ${selectedDayIdx + 1} · TU PRÓXIMA SESIÓN` : `DAY ${selectedDayIdx + 1} · YOUR SESSION`}
                         </div>
-
-                        <div className="text-xs text-muted flex items-center gap-1.5 mt-1 mb-3">
-                            <Icon name="Clock" size={12} />
-                            <span>~{dayEstimatedMin > 0 ? dayEstimatedMin : 45} min</span>
-                            <span>·</span>
-                            <span>{slots.length} {h.exercisesLower}</span>
-                            <span>·</span>
-                            <span>{totalSets} {h.setsLower}</span>
-                        </div>
-
-                        {previewSlots.length > 0 && (
-                            <div className="border-t border-border-subtle pt-2.5 text-xs space-y-1.5 leading-relaxed">
-                                {previewSlots.map((slot: any, sIdx: number) => {
-                                    const exDef = exercises?.find((e: any) => e.id === slot.exerciseId);
-                                    const name = exDef ? getTranslated(exDef.name, lang) : slot.exerciseId || tm(slot.muscle);
-                                    const repsStr = slot.reps || '8–12';
-                                    const setsCount = slot.setTarget || 3;
-                                    return (
-                                        <div key={sIdx} className="flex justify-between items-center text-zinc-300">
-                                            <span className="truncate pr-2 font-medium">{String(name)}</span>
-                                            <span className="text-muted tabular-nums shrink-0">{setsCount} × {repsStr}</span>
-                                        </div>
-                                    );
-                                })}
-                                {extraSlotsCount > 0 && (
-                                    <div className="text-xs text-muted pt-0.5">
-                                        {`${h.andMoreA} ${extraSlotsCount} ${extraSlotsCount === 1 ? h.andMoreOneB : h.andMoreB}`}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
+                        <h3 className="premium-hero__title">{dayName}</h3>
+                    </div>
+                    {!isDone && !isSelectedActive && (
                         <button
                             type="button"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                startSession(selectedDayIdx);
-                            }}
-                            className="btn-primary-reference expressive-press w-full min-h-[48px] mt-3.5 rounded-full bg-primary-500 text-zinc-950 font-semibold text-sm flex items-center justify-center gap-2 hover:bg-primary-400 shadow-sm"
+                            onClick={(event) => handleSkipClick(event, selectedDayIdx)}
+                            className="premium-hero__skip relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors"
+                            aria-label={t.skipSession}
+                            title={t.skipSession}
                         >
-                            <Icon name={isSelectedActive ? 'Play' : isDone ? 'Repeat' : 'ArrowRight'} size={18} fill="currentColor" />
-                            <span>
-                                {isSelectedActive
-                                    ? h.resume
-                                    : isDone
-                                    ? h.trainAgain
-                                    : `${h.start} ${String(getTranslated(dayDef.dayName, lang))}`}
-                            </span>
+                            <Icon name="SkipForward" size={18} />
                         </button>
+                    )}
+                </div>
+                <div className="premium-hero__metrics" aria-label={lang === 'es' ? 'Detalles del entrenamiento' : 'Workout details'}>
+                    <span><Icon name="Clock" size={13} /> ~{selectedDayEstimatedMin > 0 ? selectedDayEstimatedMin : 45} min</span>
+                    <span><Icon name="Dumbbell" size={13} /> {slots.length} {h.exercisesLower}</span>
+                    <span><Icon name="Layers" size={13} /> {totalSets} {h.setsLower}</span>
+                </div>
+                {previewSlots.length > 0 && (
+                    <div className="premium-hero__preview">
+                        {previewSlots.map((slot: any, index: number) => {
+                            const exerciseDef = exercises?.find((exercise: any) => exercise.id === slot.exerciseId);
+                            const name = exerciseDef ? getTranslated(exerciseDef.name, lang) : slot.exerciseId || tm(slot.muscle);
+                            return (
+                                <div key={index} className="premium-hero__exercise">
+                                    <span className="min-w-0 flex-1 truncate font-semibold">{String(name)}</span>
+                                    <span className="shrink-0 tabular-nums">{slot.setTarget || 3} × {slot.reps || '8–12'}</span>
+                                </div>
+                            );
+                        })}
+                        {extraSlotsCount > 0 && (
+                            <p className="premium-hero__more">
+                                {h.andMoreA} {extraSlotsCount} {extraSlotsCount === 1 ? h.andMoreOneB : h.andMoreB}
+                            </p>
+                        )}
                     </div>
-                );
-            })()}
-        </>
+                )}
+                <button
+                    type="button"
+                    onClick={() => startSession(selectedDayIdx)}
+                    className="premium-hero__cta expressive-press mt-4 flex min-h-[50px] w-full items-center justify-center gap-2 rounded-full px-4 text-sm font-bold transition-colors"
+                >
+                    <Icon name={isSelectedActive ? 'Play' : isDone ? 'Repeat' : 'ArrowRight'} size={18} />
+                    <span>{isSelectedActive ? h.resume : isDone ? h.trainAgain : `${h.start} ${dayName}`}</span>
+                </button>
+            </div>
+        </article>
     );
 };
