@@ -140,6 +140,25 @@ for (const theme of ['dark', 'light'] as const) {
       await expect(page).toHaveScreenshot(`stats-${theme}.png`, { fullPage: true });
     });
 
+    test(`expressive: Dieta mantiene superficies y pestañas accesibles (${theme})`, async ({ page }) => {
+      await page.setViewportSize({ width: 320, height: 720 });
+      await nav(page).getByRole('button', { name: /Dieta|Diet/ }).click();
+      const tabs = page.locator('.seg-reference').filter({ has: page.locator('button[aria-pressed]') }).first();
+      const buttons = tabs.locator('button[aria-pressed]');
+      await expect(buttons).toHaveCount(3);
+      await buttons.nth(1).click();
+      await expect(buttons.nth(1)).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.locator('.premium-theme-panel').first()).toBeVisible();
+      await buttons.nth(2).click();
+      await expect(buttons.nth(2)).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.locator('.premium-theme-panel').first()).toBeVisible();
+      const scroll = await page.evaluate(() => ({
+        scrollWidth: document.documentElement.scrollWidth,
+        clientWidth: document.documentElement.clientWidth,
+      }));
+      expect(scroll.scrollWidth).toBeLessThanOrEqual(scroll.clientWidth + 1);
+    });
+
     test(`nutrition ${theme}`, async ({ page }) => {
       await nav(page).getByRole('button', { name: /Dieta|Diet/ }).click();
       await page.waitForTimeout(800);
