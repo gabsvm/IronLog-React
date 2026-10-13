@@ -44,9 +44,9 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = (props) => {
     }
 
     return (
-        <div className="h-full flex flex-col bg-gray-50 dark:bg-zinc-950 relative">
+        <div className="relative flex h-full flex-col bg-[rgb(var(--surface-app))] text-[rgb(var(--text-primary))]">
             {/* Header: clearly distinguishes Edit vs Create */}
-            <div className="glass px-4 min-h-14 pt-safe shrink-0 flex items-center justify-between z-10 border-b border-zinc-200 dark:border-white/5">
+            <div className="z-10 flex min-h-14 shrink-0 items-center justify-between border-b border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base)/0.96)] px-4 pt-safe backdrop-blur-md">
                 <button
                     onClick={onBack}
                     className="flex items-center gap-2 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
