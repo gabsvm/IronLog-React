@@ -41,29 +41,29 @@ export const HomeRecapStrip: React.FC<Props> = React.memo(({ logs, meso, planned
         : null;
 
     return (
-        <div className="card-reference p-4 space-y-3">
+        <section className="premium-theme-panel p-4 space-y-3">
             <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 min-w-0">
                     <Icon name="Calendar" size={14} className="text-primary-400 shrink-0" />
-                    <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest truncate">
+                    <h4 className="text-sm font-bold tracking-tight text-[rgb(var(--text-primary))] truncate">
                         {w.title}
                     </h4>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
                     <Icon name="Flame" size={14} className={streak > 0 ? 'text-orange-400' : 'text-zinc-600'} />
                     <span className="text-xs font-black text-white tabular-nums">{streak}</span>
-                    <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                    <span className="text-xs font-medium text-muted">
                         {streak === 1 ? w.streakWeek : w.streakWeeks}
                     </span>
                 </div>
             </div>
 
             <div className="flex items-center gap-3">
-                <span className="text-sm font-black text-white tabular-nums shrink-0">
+                <span className="text-2xl font-black tracking-tight text-[rgb(var(--text-primary))] tabular-nums shrink-0">
                     {progress.done}/{progress.planned}
                 </span>
                 <div
-                    className="h-2 flex-1 rounded-full bg-zinc-800 overflow-hidden"
+                    className="h-2.5 flex-1 rounded-full bg-surface-elevated overflow-hidden"
                     role="progressbar"
                     aria-valuenow={progress.done}
                     aria-valuemin={0}
@@ -76,7 +76,7 @@ export const HomeRecapStrip: React.FC<Props> = React.memo(({ logs, meso, planned
 
             {last && lastDate ? (
                 <div className="border-t border-border-subtle pt-2.5">
-                    <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1.5">
+                    <p className="text-xs font-semibold text-muted mb-1.5">
                         {w.lastSession}
                     </p>
                     <div className="flex items-center gap-2 text-xs text-zinc-300 flex-wrap">
@@ -93,6 +93,6 @@ export const HomeRecapStrip: React.FC<Props> = React.memo(({ logs, meso, planned
             ) : (
                 <p className="border-t border-border-subtle pt-2.5 text-xs text-zinc-500">{w.empty}</p>
             )}
-        </div>
+        </section>
     );
 });
