@@ -32,7 +32,7 @@ export const ProgramEditDialogs: React.FC<{ state: ProgramEditState }> = ({ stat
                     aria-modal="true"
                     aria-labelledby="unresolved-title"
                 >
-                    <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+                    <div className="premium-theme-panel w-full max-w-md space-y-4 p-6 shadow-2xl">
                         <div className="flex items-center gap-3 text-amber-500">
                             <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center">
                                 <Icon name="AlertTriangle" size={22} />
@@ -91,19 +91,19 @@ export const ProgramEditDialogs: React.FC<{ state: ProgramEditState }> = ({ stat
                 <div className="p-5 space-y-6">
                     <p className="text-xs text-zinc-500 -mt-2">{t.saveAsMeso}</p>
                     <div>
-                        <label className="text-[10px] font-black uppercase text-zinc-500 tracking-widest block mb-2 px-1">{t.mesoName}</label>
+                        <label className="mb-2 block px-1 text-sm font-semibold text-muted">{t.mesoName}</label>
                         <input
                             type="text"
-                            className="w-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-xl p-3 font-bold outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all glow-input-neon"
+                            className="premium-form-input w-full p-3 font-bold"
                             value={mesoConfig.name}
                             onChange={(e) => setMesoConfig({ ...mesoConfig, name: e.target.value })}
                         />
                     </div>
 
                     <div>
-                        <label className="text-[10px] font-black uppercase text-zinc-500 tracking-widest block mb-2 px-1">{t.mesoType}</label>
+                        <label className="mb-2 block px-1 text-sm font-semibold text-muted">{t.mesoType}</label>
                         <select
-                            className="w-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-xl p-3 font-bold outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all"
+                            className="premium-form-input w-full p-3 font-bold"
                             value={mesoConfig.type}
                             onChange={(e) => setMesoConfig({ ...mesoConfig, type: e.target.value as MesoType })}
                         >
@@ -117,7 +117,7 @@ export const ProgramEditDialogs: React.FC<{ state: ProgramEditState }> = ({ stat
                     </div>
 
                     <div>
-                        <label className="text-[10px] font-black uppercase text-zinc-500 tracking-widest block mb-2 px-1">{t.targetWeeks}</label>
+                        <label className="mb-2 block px-1 text-sm font-semibold text-muted">{t.targetWeeks}</label>
                         <div className="flex items-center gap-4">
                             <button
                                 onClick={() => setMesoConfig(prev => ({ ...prev, weeks: Math.max(1, prev.weeks - 1) }))}
