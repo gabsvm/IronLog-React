@@ -30,7 +30,8 @@ export const HomeHeroCard: React.FC<{ state: HomeViewState }> = ({ state }) => {
         <article
             id="tut-up-next"
             key={selectedDayIdx}
-            className="premium-hero expressive-reveal relative isolate overflow-hidden"
+            onClick={() => startSession(selectedDayIdx)}
+            className="premium-hero expressive-reveal relative isolate cursor-pointer overflow-hidden"
         >
             {/* CSS/SVG artwork is decorative, never covers interactive elements. */}
             <svg className="premium-hero__art" aria-hidden="true" focusable="false" viewBox="0 0 240 220" fill="none">
@@ -55,7 +56,7 @@ export const HomeHeroCard: React.FC<{ state: HomeViewState }> = ({ state }) => {
                     {!isDone && !isSelectedActive && (
                         <button
                             type="button"
-                            onClick={(event) => handleSkipClick(event, selectedDayIdx)}
+                            onClick={(event) => { event.stopPropagation(); handleSkipClick(event, selectedDayIdx); }}
                             className="premium-hero__skip relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors"
                             aria-label={t.skipSession}
                             title={t.skipSession}
@@ -90,7 +91,7 @@ export const HomeHeroCard: React.FC<{ state: HomeViewState }> = ({ state }) => {
                 )}
                 <button
                     type="button"
-                    onClick={() => startSession(selectedDayIdx)}
+                    onClick={(event) => { event.stopPropagation(); startSession(selectedDayIdx); }}
                     className="premium-hero__cta expressive-press mt-4 flex min-h-[50px] w-full items-center justify-center gap-2 rounded-full px-4 text-sm font-bold transition-colors"
                 >
                     <Icon name={isSelectedActive ? 'Play' : isDone ? 'Repeat' : 'ArrowRight'} size={18} />
