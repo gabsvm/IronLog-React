@@ -91,7 +91,7 @@ export const WarmupModal: React.FC<WarmupModalProps> = ({ targetWeight, exercise
                                 onClick={() => toggleCheck(idx)}
                                 aria-pressed={isChecked}
                                 aria-label={`${step.label} — ${weight} ${weightSuffix.toLowerCase()}, ${step.reps} reps`}
-                                className={`expressive-press w-full min-h-14 items-center rounded-[20px] border p-3 text-left
+                                className={`expressive-press flex w-full min-h-14 items-center rounded-[20px] border p-3 text-left
                                     ${isChecked
                                         ? 'bg-primary-500/10 border-primary-500/30'
                                         : 'bg-zinc-50 dark:bg-white/5 border-transparent hover:bg-zinc-100 dark:hover:bg-white/10'
