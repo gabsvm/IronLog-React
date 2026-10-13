@@ -97,3 +97,17 @@ Aplicada **en la misma branch** `agent/gainslab-audit-fixes-v3`. No se ha cambia
 - **Pruebas:** nuevas comprobaciones visuales funcionales de la navegación entre Hoy/Cuerpo/Tendencias a 320px. Se migraron textos bilingües de Home y PremiumTrend a `pickLang` para respetar el contador Q19 de traducciones inline y se actualizó el contrato tipográfico de navegación a 12px.
 
 **Cierre pendiente:** correr `npm run verify`, ejecutar Playwright `npm run verify:expressive`, revisar/actualizar baselines visuales en el entorno del propietario y probar Android físico (teclado, temporizador y navegación). Un build Preview READY no sustituye estas comprobaciones.
+
+
+## 11. Verificación ejecutada y correcciones de regresión (2026-10-13)
+
+Resultados obtenidos con checkout temporal de la rama en Vercel Sandbox y con un Preview Vercel independiente:
+
+- **`npm run verify`: PASS / exit 0.** Ejecutó chequeo de secretos, lint, lint de accesibilidad, compilación TypeScript + Vite, suite Vitest, validación KONG y presupuesto del bundle. Fue ejecutado antes de los últimos retoques puntuales de navegación/test E2E; un build adicional después de esos retoques pasó.
+- **Playwright funcional Expressive: 7/7 PASS**, con Chrome real, temas oscuro/claro, navegación a 320 px, contraste WCAG AA de Stats, pestañas Dieta y presencia de Home/Stats Premium. Se corrigió un selector Playwright excesivamente amplio.
+- **Playwright E2E completo: 48/48 PASS**, sobre el último estado con los cambios funcionales de Home y pruebas de control actualizadas. Incluye onboarding, entreno, descartar, sesión finalizada, compartir imagen, Perfil, KONG, Dieta, Historial y dimensiones táctiles.
+- Un test detectó que la tarjeta principal del Home dejó de responder al tocarla fuera de su CTA; se restauró el atajo con `stopPropagation` en los botones interiores, sin duplicar inicios ni afectar accesibilidad por teclado.
+- La prueba de Perfil ahora comprueba los rótulos localizados reales (Bosque, Océano, Real, Atardecer) y «Editar rutina», sin suprimir comprobaciones de controles.
+- **Pendientes deliberados:** regeneración revisada de los snapshots binarios de `tests/visual/__screenshots__` (no debe ejecutarse automáticamente `--update-snapshots`), aceptación visual del propietario y prueba en Android físico del teclado/descanso. No se ha tocado la configuración de Firebase ni el destino Production.
+
+La actualización de esta documentación no modifica el comportamiento del build validado.
