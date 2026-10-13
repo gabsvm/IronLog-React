@@ -50,7 +50,7 @@ export const DataSection: React.FC<DataSectionProps> = ({
             <div className="card-reference divide-y divide-border-subtle overflow-hidden">
                 <div className="p-3 space-y-2">
                     <div className="flex items-center justify-between text-xs">
-                        <span className="font-bold text-zinc-500">{ty.cloudStatus}</span>
+                        <span className="font-semibold text-muted">{ty.cloudStatus}</span>
                         {user && (
                             <span className={`font-black uppercase ${isOnline ? 'text-emerald-500' : 'text-amber-400'}`}>
                                 {isOnline ? ty.online : ty.offline}
@@ -70,7 +70,7 @@ export const DataSection: React.FC<DataSectionProps> = ({
                             type="button"
                             onClick={onForceSync}
                             disabled={isSyncing}
-                            className="w-full mt-2 py-2.5 bg-primary-500/10 text-primary-600 dark:text-primary-400 rounded-xl text-xs font-bold flex items-center justify-center gap-2 border border-primary-500/20 active:scale-98 transition-transform"
+                            className="w-full mt-2 py-2.5 bg-primary-500/10 text-primary-600 dark:text-primary-400 rounded-[18px] text-xs font-bold flex items-center justify-center gap-2 border border-primary-500/20 active:scale-98 transition-transform"
                         >
                             <Icon name="RefreshCw" size={14} className={isSyncing ? "animate-spin" : ""} />
                             {isSyncing ? ty.syncing : ty.syncNow}
@@ -82,12 +82,12 @@ export const DataSection: React.FC<DataSectionProps> = ({
                         <button
                             type="button"
                             onClick={onExport}
-                            className="py-3 bg-zinc-100 dark:bg-zinc-800 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                            className="min-h-11 bg-[rgb(var(--surface-elevated))] rounded-[18px] text-xs font-bold flex items-center justify-center gap-2 hover:bg-primary-500/10 transition-colors"
                             aria-label={t.export}
                         >
                             <Icon name="Download" size={14} /> {t.export}
                         </button>
-                        <label className="py-3 bg-zinc-100 dark:bg-zinc-800 rounded-xl text-xs font-bold cursor-pointer text-center flex items-center justify-center gap-2 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
+                        <label className="min-h-11 bg-[rgb(var(--surface-elevated))] rounded-[18px] text-xs font-bold cursor-pointer text-center flex items-center justify-center gap-2 hover:bg-primary-500/10 transition-colors">
                             <Icon name="Upload" size={14} /> {t.import}
                             <input type="file" onChange={onImportFile} accept=".json" className="hidden" />
                         </label>
@@ -96,12 +96,12 @@ export const DataSection: React.FC<DataSectionProps> = ({
                         <button
                             type="button"
                             onClick={handleExportCsv}
-                            className="py-3 bg-zinc-100 dark:bg-zinc-800 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                            className="min-h-11 bg-[rgb(var(--surface-elevated))] rounded-[18px] text-xs font-bold flex items-center justify-center gap-2 hover:bg-primary-500/10 transition-colors"
                             aria-label={t.csv.exportBtn}
                         >
                             <Icon name="Download" size={14} /> {t.csv.exportBtn}
                         </button>
-                        <label className="py-3 bg-zinc-100 dark:bg-zinc-800 rounded-xl text-xs font-bold cursor-pointer text-center flex items-center justify-center gap-2 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
+                        <label className="min-h-11 bg-[rgb(var(--surface-elevated))] rounded-[18px] text-xs font-bold cursor-pointer text-center flex items-center justify-center gap-2 hover:bg-primary-500/10 transition-colors">
                             <Icon name="Upload" size={14} /> {t.csv.importBtn}
                             <input type="file" onChange={handleImportCsvFile} accept=".csv,text/csv" className="hidden" />
                         </label>
