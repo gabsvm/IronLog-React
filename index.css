@@ -784,3 +784,13 @@ html.light .premium-rest-pill {
 }
 [data-effects="reduced"] .premium-rest-pill,
 [data-effects="reduced"] .premium-rest-sheet { animation: none; transition: none; }
+
+/* Landing is intentionally an immersive dark cover in both appearance modes.
+   These classes prevent hardcoded dark primitives leaking into app components. */
+.premium-landing { background: #101511; color: #fff; }
+.premium-landing-preview { background: #18201a; }
+.premium-landing-input { background: #273325; }
+@media (prefers-reduced-motion: reduce) {
+  .premium-landing .expressive-reveal { animation: none; }
+}
+[data-effects="reduced"] .premium-landing .expressive-reveal { animation: none; }
