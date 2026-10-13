@@ -13,6 +13,7 @@ import {
 import { TRANSLATIONS } from '../constants';
 import { resolveRestNotificationContent } from '../components/ui/restTimer/restTimerLogic';
 import { useStore } from '../lib/store';
+import { pickLang } from '../utils/i18n';
 import { Lang } from '../types';
 
 export interface TimerState {
@@ -177,6 +178,7 @@ export const useTimer = (lang: Lang) => {
                 context?.liveTitle ?? t.resting,
                 context?.liveBody ?? t.restingBody,
                 timer.duration, timer.source,
+                pickLang(lang, { es: 'Omitir', en: 'Skip' }),
             );
         } else {
             cancelNativeRestTimer();
