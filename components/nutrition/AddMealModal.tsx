@@ -30,21 +30,21 @@ const FoodCard: React.FC<{
   const protein = Math.round(food.protein * multiplier);
 
   return (
-    <div className="flex items-center gap-3 rounded-2xl p-3 glass-card transition-all active:scale-[0.98]">
+    <div className="flex items-center gap-3 rounded-2xl p-3 premium-theme-panel expressive-press transition-colors active:scale-[0.98]">
       <button onClick={() => onSelect(food)} className="min-w-0 flex-1 text-left">
-        <p className="truncate text-sm font-semibold text-white">{food.name}</p>
+        <p className="truncate text-sm font-semibold text-[rgb(var(--text-primary))]">{food.name}</p>
         <p className="mt-0.5 text-xs text-muted">
-          <span className="text-zinc-300">{calories}</span> kcal
+          <span className="text-[rgb(var(--text-secondary))]">{calories}</span> kcal
           {' · '}
           <span className="text-blue-400">{protein}g P</span>
-          {food.servingSize && <span className="text-zinc-600">{' · '}{food.servingSize}</span>}
+          {food.servingSize && <span className="text-muted">{' · '}{food.servingSize}</span>}
         </p>
       </button>
       <div className="flex shrink-0 items-center gap-1.5">
         {onToggleFav && (
           <button
             onClick={() => onToggleFav(food.id)}
-            className={`flex h-7 w-7 items-center justify-center rounded-lg transition-colors ${food.isFavorite ? 'text-yellow-400' : 'text-zinc-600 hover:text-zinc-400'}`}
+            className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors ${food.isFavorite ? 'text-yellow-400' : 'text-muted hover:text-muted'}`}
           >
             <Icon name="Star" size={14} fill={food.isFavorite ? 'currentColor' : 'none'} />
           </button>
@@ -52,14 +52,14 @@ const FoodCard: React.FC<{
         {onDelete && (
           <button
             onClick={() => onDelete(food.id)}
-            className="flex h-7 w-7 items-center justify-center rounded-lg text-zinc-700 transition-colors hover:text-red-400"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-[rgb(var(--text-secondary))] transition-colors hover:text-red-400"
           >
             <Icon name="Trash2" size={13} />
           </button>
         )}
         <button
           onClick={() => onSelect(food)}
-          className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-700 text-zinc-300 transition-colors hover:bg-zinc-600"
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-[rgb(var(--surface-elevated))] text-[rgb(var(--text-secondary))] transition-colors hover:bg-[rgb(var(--surface-elevated))]"
         >
           <Icon name="Plus" size={14} />
         </button>
@@ -181,8 +181,8 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
               onClick={() => setMealType(meal.id as FoodEntry['mealType'])}
               className={`duration-fast ease-natural flex flex-shrink-0 items-center gap-1.5 rounded-2xl border px-3 py-2 text-xs font-bold transition-all active:scale-95 ${
                 mealType === meal.id
-                  ? 'border-transparent bg-primary-500 text-white shadow-[0_4px_12px] shadow-primary-500/30'
-                  : 'border-zinc-700/50 bg-zinc-800 text-zinc-400'
+                  ? 'border-primary-500 bg-primary-500 text-zinc-950 shadow-sm'
+                  : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated))] text-muted'
               }`}
             >
               <Icon name={meal.icon as any} size={13} />
@@ -191,7 +191,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
           ))}
         </div>
 
-        <div className="flex gap-1 rounded-2xl bg-zinc-800 p-1">
+        <div className="seg-reference flex gap-1 p-1">
           {([
             { id: 'quick', icon: 'Zap', label: TRANSLATIONS[lang].copy.addMealModal.quickAdd },
             { id: 'myfoods', icon: 'BookOpen', label: TRANSLATIONS[lang].copy.addMealModal.myFoods },
@@ -200,8 +200,8 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
             <button
               key={item.id}
               onClick={() => setTab(item.id)}
-              className={`flex flex-1 items-center justify-center gap-1 rounded-xl py-2 text-[11px] font-bold transition-all ${
-                tab === item.id ? 'bg-white font-black text-black' : 'text-zinc-500'
+              className={`flex min-h-11 flex-1 items-center justify-center gap-1 rounded-full px-1 text-xs font-bold transition-all ${
+                tab === item.id ? 'bg-primary-500 font-black text-zinc-950' : 'text-muted'
               }`}
             >
               <Icon name={item.icon as any} size={11} />
@@ -213,7 +213,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
         <div className="space-y-4">
           {tab !== 'manual' && (
             <div className="flex items-center gap-2">
-              <span className="shrink-0 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+              <span className="shrink-0 text-xs font-semibold tracking-normal text-muted">
                 {TRANSLATIONS[lang].copy.addMealModal.portion}
               </span>
               <div className="flex flex-wrap gap-1.5">
@@ -223,8 +223,8 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                     onClick={() => setMultiplier(value)}
                     className={`duration-fast ease-natural rounded-xl border px-3 py-1.5 text-xs font-bold transition-all active:scale-95 ${
                       multiplier === value
-                        ? 'border-transparent bg-white text-black shadow-md'
-                        : 'border-zinc-700/50 bg-zinc-800 text-zinc-400'
+                        ? 'border-primary-500 bg-primary-500 text-zinc-950 shadow-sm'
+                        : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated))] text-muted'
                     }`}
                   >
                     x{value}
@@ -237,19 +237,19 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
           {tab === 'quick' && (
             <div className="space-y-4">
               <div className="relative">
-                <Icon name="Search" size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+                <Icon name="Search" size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
                 <input
                   type="search"
                   placeholder={TRANSLATIONS[lang].copy.addMealModal.searchFoods}
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  className="glow-input-neon w-full rounded-2xl border border-zinc-700/50 bg-zinc-800 py-2.5 pl-9 pr-4 text-sm text-white placeholder-zinc-600 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  className="premium-form-input w-full py-2.5 pl-9 pr-4 text-sm text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
                 />
               </div>
 
               <div className="scroll-container max-h-[350px] space-y-1.5 overflow-y-auto pr-0.5">
                 {filteredPresets.length === 0 && (
-                  <p className="py-4 text-center text-sm text-zinc-600">{TRANSLATIONS[lang].copy.addMealModal.noResults}</p>
+                  <p className="py-4 text-center text-sm text-muted">{TRANSLATIONS[lang].copy.addMealModal.noResults}</p>
                 )}
                 {filteredPresets.map((food) => (
                   <FoodCard
@@ -269,17 +269,17 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
               {customFoods.length === 0 ? (
                 <div className="space-y-2 py-10 text-center">
                   <div className="text-3xl">
-                    <Icon name="UtensilsCrossed" size={28} className="mx-auto text-zinc-500" />
+                    <Icon name="UtensilsCrossed" size={28} className="mx-auto text-muted" />
                   </div>
-                  <p className="text-sm font-medium text-zinc-500">
+                  <p className="text-sm font-medium text-muted">
                     {TRANSLATIONS[lang].copy.addMealModal.noSavedFoodsYet}
                   </p>
-                  <p className="mx-auto max-w-[220px] text-xs text-zinc-600">
+                  <p className="mx-auto max-w-[220px] text-xs text-muted">
                     {TRANSLATIONS[lang].copy.addMealModal.addAFoodManually}
                   </p>
                   <button
                     onClick={() => setTab('manual')}
-                    className="mt-3 rounded-xl bg-zinc-800 px-4 py-2 text-xs font-bold text-zinc-300 transition-transform active:scale-95"
+                    className="mt-3 rounded-xl bg-[rgb(var(--surface-elevated))] px-4 py-2 text-xs font-bold text-[rgb(var(--text-secondary))] transition-transform active:scale-95"
                   >
                     {TRANSLATIONS[lang].copy.addMealModal.addManually}
                   </button>
@@ -287,17 +287,17 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
               ) : (
                 <>
                   <div className="relative">
-                    <Icon name="Search" size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+                    <Icon name="Search" size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
                     <input
                       type="search"
                       placeholder={TRANSLATIONS[lang].copy.addMealModal.searchMyFoods}
                       value={search}
                       onChange={(event) => setSearch(event.target.value)}
-                      className="glow-input-neon w-full rounded-2xl border border-zinc-700/50 bg-zinc-800 py-2.5 pl-9 pr-4 text-sm text-white placeholder-zinc-600 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                      className="premium-form-input w-full py-2.5 pl-9 pr-4 text-sm text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
                     />
                   </div>
                   {sortedMyFoods.length === 0 ? (
-                    <p className="py-4 text-center text-sm text-zinc-600">{TRANSLATIONS[lang].copy.addMealModal.noResults}</p>
+                    <p className="py-4 text-center text-sm text-muted">{TRANSLATIONS[lang].copy.addMealModal.noResults}</p>
                   ) : (
                     <div className="scroll-container max-h-[350px] space-y-1.5 overflow-y-auto pr-0.5">
                       {sortedMyFoods.map((food) => (
@@ -322,19 +322,19 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
             <div className="space-y-4">
               <div className="space-y-3">
                 <div>
-                  <label className="mb-1 block px-1 text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                  <label className="mb-1 block px-1 text-xs font-semibold tracking-normal text-muted">
                     {TRANSLATIONS[lang].copy.addMealModal.foodName}
                   </label>
                   <input
                     value={name}
                     onChange={(event) => setName(event.target.value)}
                     placeholder="e.g. Greek Yogurt"
-                    className="glow-input-neon w-full rounded-2xl border border-zinc-700/50 bg-zinc-800 px-4 py-3 text-sm text-white placeholder-zinc-600 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    className="premium-form-input w-full px-4 py-3 text-sm text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-1 block px-1 text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                  <label className="mb-1 block px-1 text-xs font-semibold tracking-normal text-muted">
                     {TRANSLATIONS[lang].copy.addMealModal.caloriesKcal}
                   </label>
                   <input
@@ -343,12 +343,12 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                     placeholder="0"
                     type="number"
                     inputMode="numeric"
-                    className="glow-input-neon w-full rounded-2xl border border-zinc-700/50 bg-zinc-800 px-4 py-3 text-sm text-white placeholder-zinc-600 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    className="premium-form-input w-full px-4 py-3 text-sm text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-1 block px-1 text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                  <label className="mb-1 block px-1 text-xs font-semibold tracking-normal text-muted">
                     {TRANSLATIONS[lang].copy.addMealModal.macrosG}
                   </label>
                   <div className="grid grid-cols-3 gap-2">
@@ -358,7 +358,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                       placeholder={TRANSLATIONS[lang].copy.addMealModal.protein}
                       type="number"
                       inputMode="decimal"
-                      className="rounded-2xl border border-blue-500/30 bg-zinc-800 px-3 py-3 text-center text-sm text-white placeholder-zinc-600 transition-all focus:border-blue-500 focus:outline-none"
+                      className="premium-form-input border-blue-500/30 px-3 py-3 text-center text-sm text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-blue-500 focus:outline-none"
                     />
                     <input
                       value={carbs}
@@ -366,7 +366,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                       placeholder="Carbs"
                       type="number"
                       inputMode="decimal"
-                      className="rounded-2xl border border-amber-500/30 bg-zinc-800 px-3 py-3 text-center text-sm text-white placeholder-zinc-600 transition-all focus:border-amber-500 focus:outline-none"
+                      className="premium-form-input border-amber-500/30 px-3 py-3 text-center text-sm text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-amber-500 focus:outline-none"
                     />
                     <input
                       value={fat}
@@ -374,36 +374,36 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                       placeholder={TRANSLATIONS[lang].copy.addMealModal.fat}
                       type="number"
                       inputMode="decimal"
-                      className="rounded-2xl border border-pink-500/30 bg-zinc-800 px-3 py-3 text-center text-sm text-white placeholder-zinc-600 transition-all focus:border-pink-500 focus:outline-none"
+                      className="premium-form-input border-pink-500/30 px-3 py-3 text-center text-sm text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-pink-500 focus:outline-none"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="mb-1 block px-1 text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                  <label className="mb-1 block px-1 text-xs font-semibold tracking-normal text-muted">
                     {TRANSLATIONS[lang].copy.addMealModal.servingSize}
                   </label>
                   <input
                     value={servingSize}
                     onChange={(event) => setServingSize(event.target.value)}
                     placeholder="e.g. 100g, 1 cup"
-                    className="glow-input-neon w-full rounded-2xl border border-zinc-700/50 bg-zinc-800 px-4 py-3 text-sm text-white placeholder-zinc-600 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    className="premium-form-input w-full px-4 py-3 text-sm text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
                   />
                 </div>
 
                 <button
                   onClick={() => setSaveToMyFoods(!saveToMyFoods)}
-                  className="flex w-full items-center gap-3 rounded-2xl border border-zinc-700/50 bg-zinc-800/50 p-3.5 transition-all active:scale-[0.99]"
+                  className="flex w-full items-center gap-3 rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated)/0.6)] p-3.5 transition-all active:scale-[0.99]"
                 >
                   <div
                     className={`flex h-5 w-5 items-center justify-center rounded-md border-2 transition-colors ${
                       saveToMyFoods ? 'border-green-500 bg-green-500' : 'border-zinc-600'
                     }`}
                   >
-                    {saveToMyFoods && <Icon name="Check" size={12} className="text-white" strokeWidth={3} />}
+                    {saveToMyFoods && <Icon name="Check" size={12} className="text-[rgb(var(--text-primary))]" strokeWidth={3} />}
                   </div>
                   <div className="text-left">
-                    <p className="text-sm font-bold text-white">{TRANSLATIONS[lang].copy.addMealModal.saveToMyFoods}</p>
+                    <p className="text-sm font-bold text-[rgb(var(--text-primary))]">{TRANSLATIONS[lang].copy.addMealModal.saveToMyFoods}</p>
                     <p className="text-xs text-muted">
                       {TRANSLATIONS[lang].copy.addMealModal.addToYourPersonal}
                     </p>
