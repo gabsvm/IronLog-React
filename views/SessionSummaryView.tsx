@@ -102,11 +102,11 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
     const badge = getSessionTypeBadge();
 
     return (
-        <div className="flex flex-col h-full bg-[rgb(var(--surface-app))] text-zinc-900 dark:text-white animate-in fade-in duration-200">
-            <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-6 overflow-y-auto">
-                {/* Header with restrained trophy animation */}
-                <div className="text-center space-y-2">
-                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary-500/10 text-primary-400 mb-2 border border-primary-500/20 shadow-lg shadow-primary-500/10 animate-in zoom-in-75 duration-300">
+        <div className="flex h-full flex-col bg-[rgb(var(--surface-app))] text-[rgb(var(--text-primary))] expressive-reveal">
+            <div className="flex-1 overflow-y-auto scroll-container px-4 py-5 sm:px-6">
+                {/* Closing moment; no fabricated metrics or rewards. */}
+                <section className="premium-summary-hero mx-auto w-full max-w-sm p-5 text-center">
+                    <div className="premium-summary-medal mb-4 inline-flex h-20 w-20 items-center justify-center rounded-full border border-primary-500/25 bg-primary-500/15 text-primary-500">
                         <Icon name="Trophy" size={36} />
                     </div>
                     <div>
@@ -114,36 +114,36 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
                             {badge.label}
                         </span>
                     </div>
-                    <h1 className="text-2xl font-black uppercase tracking-tight text-zinc-950 dark:text-white leading-tight">
+                    <h1 className="text-[clamp(1.65rem,7vw,2.3rem)] font-black tracking-[-0.05em] text-[rgb(var(--text-primary))] leading-[1.08]">
                         {TRANSLATIONS[lang].copy.sessionSummary.workoutComplete}
                     </h1>
-                    <p className="text-zinc-500 dark:text-zinc-400 font-medium text-sm">
+                    <p className="mt-2 text-[rgb(var(--text-secondary))] font-medium text-sm">
                         {log.name}
                     </p>
-                </div>
+                </section>
 
                 {/* Stats Grid */}
-                <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
-                    <div className="glass-card rounded-2xl p-4 flex flex-col items-center justify-center border border-zinc-200 dark:border-zinc-800 bg-[rgb(var(--surface-raised))] shadow-sm">
+                <div className="mx-auto mt-4 grid w-full max-w-sm grid-cols-2 gap-3">
+                    <div className="premium-theme-panel tonal-1 flex min-h-[120px] flex-col items-center justify-center p-4 text-center">
                         <Icon name="Clock" size={18} className="text-blue-500 dark:text-blue-400 mb-1.5" />
-                        <div className="text-xl font-black">{formatDurationShort(log.duration)}</div>
-                        <div className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
+                        <div className="text-2xl font-black tabular-nums tracking-tight text-[rgb(var(--text-primary))]">{formatDurationShort(log.duration)}</div>
+                        <div className="mt-1 text-xs font-semibold text-muted">
                             {TRANSLATIONS[lang].copy.sessionSummary.time}
                         </div>
                     </div>
 
-                    <div className="glass-card rounded-2xl p-4 flex flex-col items-center justify-center border border-zinc-200 dark:border-zinc-800 bg-[rgb(var(--surface-raised))] shadow-sm">
+                    <div className="premium-theme-panel tonal-2 flex min-h-[120px] flex-col items-center justify-center p-4 text-center">
                         <Icon name="CheckCircle" size={18} className="text-green-500 dark:text-green-400 mb-1.5" />
-                        <div className="text-xl font-black">{stats.sets}</div>
-                        <div className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
+                        <div className="text-2xl font-black tabular-nums tracking-tight text-[rgb(var(--text-primary))]">{stats.sets}</div>
+                        <div className="mt-1 text-xs font-semibold text-muted">
                             {TRANSLATIONS[lang].copy.sessionSummary.sets}
                         </div>
                     </div>
 
-                    <div className="col-span-2 glass-card rounded-2xl p-4 flex flex-col items-center justify-center border border-zinc-200 dark:border-zinc-800 bg-[rgb(var(--surface-raised))] shadow-sm">
+                    <div className="premium-theme-panel tonal-3 col-span-2 flex min-h-[130px] flex-col items-center justify-center p-4 text-center">
                         <Icon name="Dumbbell" size={18} className="text-amber-500 dark:text-amber-400 mb-1.5" />
-                        <div className="text-xl font-black">{formatInteger(toDisplay(stats.volume, unit), lang)} {unitLabel(unit).toLowerCase()}</div>
-                        <div className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
+                        <div className="text-2xl font-black tabular-nums tracking-tight text-[rgb(var(--text-primary))]">{formatInteger(toDisplay(stats.volume, unit), lang)} {unitLabel(unit).toLowerCase()}</div>
+                        <div className="mt-1 text-xs font-semibold text-muted">
                             {TRANSLATIONS[lang].copy.sessionSummary.totalVolume}
                         </div>
                     </div>
@@ -151,13 +151,13 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
 
                 {/* Muscles Hit */}
                 {stats.muscles.length > 0 && (
-                    <div className="w-full max-w-sm">
-                        <p className="text-center text-[11px] font-bold text-zinc-500 mb-2 uppercase tracking-wider">
+                    <div className="mx-auto mt-5 w-full max-w-sm">
+                        <p className="mb-3 text-center text-sm font-semibold text-[rgb(var(--text-secondary))]">
                             {TRANSLATIONS[lang].copy.sessionSummary.musclesHit}
                         </p>
                         <div className="flex flex-wrap justify-center gap-1.5">
                             {stats.muscles.map(m => (
-                                <span key={m} className="px-2.5 py-0.5 bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/50 rounded-full text-[11px] font-bold text-zinc-700 dark:text-zinc-300">
+                                <span key={m} className="rounded-full border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] px-3 py-1.5 text-xs font-semibold text-[rgb(var(--text-primary))]">
                                     {m}
                                 </span>
                             ))}
@@ -175,7 +175,7 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
                     type="button"
                     onClick={() => void handleShareImage()}
                     disabled={shareState === 'busy'}
-                    className="mb-2 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[rgb(var(--border-subtle))] text-sm font-bold text-[rgb(var(--text-secondary))] disabled:opacity-60"
+                    className="expressive-press mb-2 flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] text-sm font-bold text-[rgb(var(--text-primary))] disabled:opacity-60"
                 >
                     <Icon name="Share2" size={16} />
                     {shareState === 'busy' ? TRANSLATIONS[lang].copy.sessionSummary.shareImageBusy : TRANSLATIONS[lang].copy.sessionSummary.shareImage}
