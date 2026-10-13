@@ -43,10 +43,10 @@ export const BodyTab: React.FC<Props> = ({
     return (
         <div className="space-y-3 pt-1">
             {/* Weight + TDEE hero */}
-            <div className="glass-card rounded-3xl p-4">
+            <div className="premium-theme-panel premium-theme-quiet p-4 sm:p-5">
                 <div className="flex items-start justify-between mb-4">
                     <div>
-                        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">
+                        <p className="text-xs font-semibold tracking-normal text-muted mb-1">
                             {TRANSLATIONS[lang].copy.bodyTab.bodyWeight}
                         </p>
                         {latestWeight ? (
@@ -68,7 +68,7 @@ export const BodyTab: React.FC<Props> = ({
                     <button
                         onClick={onLogWeight}
                         aria-label={TRANSLATIONS[lang].copy.bodyTab.logBodyWeight}
-                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-800 text-zinc-300 text-xs font-bold active:scale-95 transition-all duration-fast ease-natural hover:bg-zinc-700"
+                        className="expressive-press flex min-h-11 items-center gap-1.5 rounded-full border border-primary-500/30 bg-primary-500/10 px-3.5 text-xs font-bold text-[rgb(var(--text-primary))] hover:bg-primary-500/15"
                     >
                         <Icon name="Plus" size={14} />
                         {TRANSLATIONS[lang].copy.bodyTab.log}
@@ -100,9 +100,9 @@ export const BodyTab: React.FC<Props> = ({
                         })
                         .join(' ');
                     return (
-                        <div className="mt-3 pt-3 border-t border-zinc-800">
+                        <div className="mt-3 pt-3 border-t border-[rgb(var(--border-subtle))]">
                             <p className="text-xs text-muted mb-2">{TRANSLATIONS[lang].copy.bodyTab.last30Days}</p>
-                            <svg viewBox="0 0 100 40" className="w-full h-10" preserveAspectRatio="none" aria-hidden="true">
+                            <svg viewBox="0 0 100 40" className="w-full h-16" preserveAspectRatio="none" role="img" aria-label={`${TRANSLATIONS[lang].copy.bodyTab.last30Days}: ${weightTrend.length} ${lang === 'es' ? 'registros' : 'entries'}` }>
                                 <polyline
                                     points={points}
                                     fill="none"
@@ -120,25 +120,25 @@ export const BodyTab: React.FC<Props> = ({
             </div>
 
             {/* TDEE card */}
-            <div className="glass-card rounded-3xl p-4">
-                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">
+            <div className="premium-theme-panel p-4">
+                <p className="text-sm font-bold tracking-tight text-[rgb(var(--text-primary))] mb-3">
                     {TRANSLATIONS[lang].copy.bodyTab.energyBalance}
                 </p>
                 <div className="grid grid-cols-3 gap-3">
                     <div className="text-center">
                         <p className="text-xl font-black text-white">{nutritionGoal.calories}</p>
-                        <p className="text-[11px] font-bold text-zinc-400 uppercase">{TRANSLATIONS[lang].copy.bodyTab.goal}</p>
+                        <p className="text-xs font-semibold text-muted">{TRANSLATIONS[lang].copy.bodyTab.goal}</p>
                     </div>
                     <div className="text-center">
                         <p className={`text-xl font-black ${todayCalories > nutritionGoal.calories ? 'text-orange-400' : 'text-green-400'}`}>
                             {todayCalories}
                         </p>
-                        <p className="text-[11px] font-bold text-zinc-400 uppercase">{TRANSLATIONS[lang].copy.bodyTab.eaten}</p>
+                        <p className="text-xs font-semibold text-muted">{TRANSLATIONS[lang].copy.bodyTab.eaten}</p>
                     </div>
                     {tdee && (
                         <div className="text-center">
                             <p className="text-xl font-black text-zinc-300">{tdee}</p>
-                            <p className="text-[11px] font-bold text-zinc-400 uppercase">{TRANSLATIONS[lang].copy.bodyTab.tdeeEst}</p>
+                            <p className="text-xs font-semibold text-muted">{TRANSLATIONS[lang].copy.bodyTab.tdeeEst}</p>
                         </div>
                     )}
                 </div>
@@ -179,18 +179,18 @@ export const BodyTab: React.FC<Props> = ({
                     },
                 ];
                 return (
-                    <div className="glass-card rounded-3xl p-4">
-                        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">
+                    <div className="premium-theme-panel p-4">
+                        <p className="text-sm font-bold tracking-tight text-[rgb(var(--text-primary))] mb-3">
                             {TRANSLATIONS[lang].copy.bodyTab.yourTargets}
                         </p>
                         {groups.map(group => (
                             <div key={group.id} className="mb-2 last:mb-0">
-                                <p className="text-[11px] font-bold text-zinc-400 mt-2 first:mt-0 mb-1">
+                                <p className="text-xs font-semibold text-muted mt-3 first:mt-0 mb-2">
                                     {group.label}
                                 </p>
                                 <div className="space-y-2">
                                     {group.items.map((item) => (
-                                        <div key={item.id} className="flex justify-between items-center py-1.5 border-b border-zinc-800/50 last:border-0">
+                                        <div key={item.id} className="flex justify-between items-center py-1.5 border-b border-[rgb(var(--border-subtle)/0.5)] last:border-0">
                                             <span className="text-xs text-zinc-500">{item.label}</span>
                                             <span className={`text-sm font-bold ${item.color}`}>{item.value}</span>
                                         </div>
@@ -204,13 +204,13 @@ export const BodyTab: React.FC<Props> = ({
 
             {/* Recent weigh-ins */}
             {weightTrend.length > 0 && (
-                <div className="glass-card rounded-3xl p-4">
-                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">
+                <div className="premium-theme-panel p-4">
+                    <p className="text-sm font-bold tracking-tight text-[rgb(var(--text-primary))] mb-3">
                         {TRANSLATIONS[lang].copy.bodyTab.recentWeighIns}
                     </p>
                     <div className="space-y-1">
                         {recentWeighIns.map((entry) => (
-                            <div key={entry.id} className="flex justify-between items-center py-1.5 border-b border-zinc-800/50 last:border-0">
+                            <div key={entry.id} className="flex justify-between items-center py-1.5 border-b border-[rgb(var(--border-subtle)/0.5)] last:border-0">
                                 <span className="text-xs text-zinc-500">
                                     {new Date(entry.date).toLocaleDateString(pickLang(lang, { es: 'es-AR', en: 'en-US' }), { weekday: 'short', month: 'short', day: 'numeric' })}
                                 </span>
