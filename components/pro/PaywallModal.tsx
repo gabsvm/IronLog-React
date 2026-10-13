@@ -39,12 +39,12 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ onClose, feature }) 
             aria-modal="true"
             aria-label="GainsLab Pro upgrade"
         >
-            <div className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-3xl overflow-hidden shadow-2xl relative border border-zinc-200 dark:border-white/10 max-h-[90vh] overflow-y-auto scroll-container">
+            <div className="premium-theme-panel w-full max-w-md overflow-hidden shadow-2xl relative max-h-[90vh] overflow-y-auto scroll-container">
                 
                 {/* Header Image / Gradient */}
                 <div className="h-40 bg-gradient-to-br from-primary-700 to-primary-400 relative flex flex-col items-center justify-center shrink-0">
-                    <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
-                    <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-xl animate-bounce mb-2">
+                    <div className="absolute inset-0 bg-[linear-gradient(135deg,transparent_0%,rgb(0_0_0/0.1)_100%)] opacity-20"></div>
+                    <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-xl expressive-reveal mb-2">
                         <Icon name="Crown" size={28} className="text-primary-600 fill-primary-600" />
                     </div>
                     <button onClick={onClose} className="absolute top-4 right-4 bg-black/20 hover:bg-black/40 text-white rounded-full p-2 transition-colors z-20" aria-label="Close"> <Icon name="X" size={20} />
@@ -83,11 +83,11 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ onClose, feature }) 
                             <button
                                 key={tier}
                                 onClick={() => handleContactWhatsApp(tier)}
-                                className="w-full flex items-center justify-between p-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 hover:border-primary-500/50 rounded-2xl transition-all active:scale-95 group"
+                                className="w-full flex min-h-[64px] items-center justify-between p-4 bg-[rgb(var(--surface-elevated))] hover:bg-primary-500/10 border border-[rgb(var(--border-subtle))] hover:border-primary-500/50 rounded-2xl transition-all active:scale-95 group"
                             >
                                 <div className="text-left">
-                                    <div className="font-bold text-white text-sm">{t.tiers[tier].label}</div>
-                                    <div className="text-xs text-zinc-400">{t.tiers[tier].price}</div>
+                                    <div className="font-bold text-[rgb(var(--text-primary))] text-sm">{t.tiers[tier].label}</div>
+                                    <div className="text-xs text-muted">{t.tiers[tier].price}</div>
                                 </div>
                                 {/* Ícono de WhatsApp */}
                                 <div className="w-10 h-10 bg-primary-500/20 group-hover:bg-primary-500 rounded-xl flex items-center justify-center transition-colors">
@@ -99,16 +99,16 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ onClose, feature }) 
                         ))}
                     </div>
 
-                    <p className="text-center text-[11px] text-zinc-500 dark:text-zinc-400 mt-4 leading-relaxed">
+                    <p className="text-center text-xs text-zinc-500 dark:text-muted mt-4 leading-relaxed">
                         {TRANSLATIONS[lang].copy.paywallModal.sendAWhatsappMessage}
                     </p>
 
                     {/* Footer */}
                     <div className="text-center space-y-2 mt-4">
-                        <p className="text-[11px] text-zinc-400 font-medium">
+                        <p className="text-xs text-muted font-medium">
                             {t.guarantee}
                         </p>
-                        <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                        <p className="text-xs text-zinc-500 dark:text-muted">
                             {TRANSLATIONS[lang].copy.paywallModal.alreadyHaveAnApproved}
                         </p>
                     </div>
@@ -117,9 +117,9 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ onClose, feature }) 
             
             {loading && (
                 <div className="absolute inset-0 z-celebration bg-black/60 flex items-center justify-center backdrop-blur-sm">
-                    <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl flex flex-col items-center shadow-2xl animate-in zoom-in-95">
+                    <div className="bg-[rgb(var(--surface-raised))] p-6 rounded-2xl flex flex-col items-center shadow-2xl animate-in zoom-in-95">
                         <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                        <span className="font-bold dark:text-white text-sm tracking-wide uppercase">
+                        <span className="font-bold text-[rgb(var(--text-primary))] text-sm tracking-wide uppercase">
                             {TRANSLATIONS[lang].copy.paywallModal.processing}
                         </span>
                     </div>
@@ -128,11 +128,11 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ onClose, feature }) 
 
             {success && (
                 <div className="absolute inset-0 z-celebration bg-black/60 flex items-center justify-center backdrop-blur-sm">
-                    <div className="bg-white dark:bg-zinc-900 p-8 rounded-2xl flex flex-col items-center shadow-2xl animate-in zoom-in-95">
-                        <div className="w-16 h-16 bg-primary-500 rounded-full flex items-center justify-center mb-4 animate-bounce">
+                    <div className="bg-[rgb(var(--surface-raised))] p-8 rounded-2xl flex flex-col items-center shadow-2xl animate-in zoom-in-95">
+                        <div className="w-16 h-16 bg-primary-500 rounded-full flex items-center justify-center mb-4 expressive-reveal">
                             <Icon name="Check" size={32} className="text-white" strokeWidth={4} />
                         </div>
-                        <span className="font-black text-xl dark:text-white tracking-tight uppercase">
+                        <span className="font-black text-xl text-[rgb(var(--text-primary))] tracking-tight uppercase">
                             {TRANSLATIONS[lang].copy.paywallModal.welcomePro}
                         </span>
                     </div>
