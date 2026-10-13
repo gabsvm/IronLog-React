@@ -13,6 +13,7 @@ public class WorkoutReminderBootReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         if (intent != null && Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
             NativeBridgePlugin.scheduleNextWorkoutReminder(context);
+            NativeBridgePlugin.restoreRestAfterBoot(context);
         }
     }
 }
