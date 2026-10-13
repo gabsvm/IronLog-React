@@ -116,11 +116,11 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                         onClick={onClose}
                         className="flex min-h-[56px] w-full items-center gap-3 p-3 text-left transition-colors hover:bg-surface-elevated/40"
                     >
-                        <span className="w-8 h-8 rounded-lg bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
+                        <span className="w-8 h-8 rounded-xl bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
                             <Icon name="Calendar" size={17} />
                         </span>
                         <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium text-white truncate">{activeMeso.name}</div>
+                            <div className="text-sm font-medium text-[rgb(var(--text-primary))] truncate">{activeMeso.name}</div>
                             <div className="text-xs text-muted">
                                 {ty.mesoWeek.replace('{week}', String(activeMeso.week)).replace('{target}', String(activeMeso.targetWeeks || activeMeso.duration))}
                             </div>
@@ -132,10 +132,10 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                     onClick={openProgramGated}
                     className="flex min-h-[56px] w-full items-center gap-3 p-3 text-left transition-colors hover:bg-surface-elevated/40"
                 >
-                    <span className="w-8 h-8 rounded-lg bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
+                    <span className="w-8 h-8 rounded-xl bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
                         <Icon name="Layout" size={17} />
                     </span>
-                    <div className="flex-1 text-sm font-medium text-white">{t.programEditor}</div>
+                    <div className="flex-1 text-sm font-medium text-[rgb(var(--text-primary))]">{t.programEditor}</div>
                     {!isPro
                         ? <Icon name="Lock" size={16} className="text-yellow-500 shrink-0" />
                         : <Icon name="ChevronRight" size={16} className="text-muted shrink-0" />}
@@ -145,10 +145,10 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                     onClick={openExercisesGated}
                     className="flex min-h-[56px] w-full items-center gap-3 p-3 text-left transition-colors hover:bg-surface-elevated/40"
                 >
-                    <span className="w-8 h-8 rounded-lg bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
+                    <span className="w-8 h-8 rounded-xl bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
                         <Icon name="Dumbbell" size={17} />
                     </span>
-                    <div className="flex-1 text-sm font-medium text-white">{ty.exercisesRow}</div>
+                    <div className="flex-1 text-sm font-medium text-[rgb(var(--text-primary))]">{ty.exercisesRow}</div>
                     {!isPro
                         ? <Icon name="Lock" size={16} className="text-yellow-500 shrink-0" />
                         : <Icon name="ChevronRight" size={16} className="text-muted shrink-0" />}
@@ -159,10 +159,10 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                         onClick={() => setShowTemplateManager(true)}
                         className="flex min-h-[56px] w-full items-center gap-3 p-3 text-left transition-colors hover:bg-surface-elevated/40"
                     >
-                        <span className="w-8 h-8 rounded-lg bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
+                        <span className="w-8 h-8 rounded-xl bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
                             <Icon name="Copy" size={17} />
                         </span>
-                        <div className="flex-1 text-sm font-medium text-white">{t.manageTemplates}</div>
+                        <div className="flex-1 text-sm font-medium text-[rgb(var(--text-primary))]">{t.manageTemplates}</div>
                         <Icon name="ChevronRight" size={16} className="text-muted shrink-0" />
                     </button>
                 )}
@@ -175,11 +175,11 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                 className="premium-theme-panel expressive-press group mt-2 flex min-h-[60px] w-full items-center justify-between p-3.5 disabled:opacity-45"
             >
                 <div className="flex items-center gap-3 text-left">
-                    <div className="p-2 rounded-xl bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-white">
+                    <div className="p-2 rounded-xl bg-[rgb(var(--surface-elevated))] text-zinc-900 dark:text-[rgb(var(--text-primary))]">
                         <Icon name="Copy" size={18} />
                     </div>
                     <div>
-                        <span className="block font-bold text-sm text-zinc-700 dark:text-zinc-200">
+                        <span className="block font-bold text-sm text-[rgb(var(--text-secondary))]">
                             {ty.saveTemplate}
                         </span>
                         <span className="block text-xs text-muted mt-0.5">
@@ -187,7 +187,7 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                         </span>
                     </div>
                 </div>
-                <Icon name="ChevronRight" size={16} className="text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-white" />
+                <Icon name="ChevronRight" size={16} className="text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-[rgb(var(--text-primary))]" />
             </button>
 
             {templateSaved && (
@@ -197,10 +197,10 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
             <div className="label-reference px-1 mt-4 mb-1.5">{ty.workoutSetup}</div>
             <div className="card-reference divide-y divide-border-subtle overflow-hidden">
                 <div className="flex items-center gap-3 p-3">
-                    <span className="w-8 h-8 rounded-lg bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
+                    <span className="w-8 h-8 rounded-xl bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
                         <Icon name="Gauge" size={17} />
                     </span>
-                    <div className="flex-1 text-sm font-medium text-white">{t.showRIR}</div>
+                    <div className="flex-1 text-sm font-medium text-[rgb(var(--text-primary))]">{t.showRIR}</div>
                     <button
                         type="button"
                         onClick={handleToggleRIR}
@@ -212,10 +212,10 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                     </button>
                 </div>
                 <div className="flex items-center gap-3 p-3">
-                    <span className="w-8 h-8 rounded-lg bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
+                    <span className="w-8 h-8 rounded-xl bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
                         <Icon name="Smartphone" size={17} />
                     </span>
-                    <div className="flex-1 text-sm font-medium text-white">{t.keepScreen}</div>
+                    <div className="flex-1 text-sm font-medium text-[rgb(var(--text-primary))]">{t.keepScreen}</div>
                     <button
                         type="button"
                         onClick={handleToggleWakeLock}
@@ -227,15 +227,15 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                     </button>
                 </div>
                 <div className="flex items-center justify-between gap-2 p-3">
-                    <span className="text-sm font-medium text-white">{t.restTimerDisplay}</span>
-                    <div className="flex gap-1 bg-zinc-200/50 dark:bg-zinc-800/80 p-0.5 rounded-xl border border-border-subtle shrink-0">
+                    <span className="text-sm font-medium text-[rgb(var(--text-primary))]">{t.restTimerDisplay}</span>
+                    <div className="flex gap-1 bg-[rgb(var(--surface-elevated))] p-0.5 rounded-xl border border-border-subtle shrink-0">
                         <button
                             type="button"
                             onClick={() => setConfig({ ...config, restTimerDisplay: 'compact' })}
-                            className={`px-2.5 py-1 text-xs rounded-lg font-semibold transition-all ${
+                            className={`px-2.5 py-1 text-xs rounded-xl font-semibold transition-all ${
                                 (config.restTimerDisplay || 'compact') === 'compact'
                                     ? 'bg-primary-500 text-black shadow-sm'
-                                    : 'text-muted hover:text-white'
+                                    : 'text-muted hover:text-[rgb(var(--text-primary))]'
                             }`}
                         >
                             {t.restTimerCompact}
@@ -243,10 +243,10 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                         <button
                             type="button"
                             onClick={() => setConfig({ ...config, restTimerDisplay: 'expanded' })}
-                            className={`px-2.5 py-1 text-xs rounded-lg font-semibold transition-all ${
+                            className={`px-2.5 py-1 text-xs rounded-xl font-semibold transition-all ${
                                 config.restTimerDisplay === 'expanded'
                                     ? 'bg-primary-500 text-black shadow-sm'
-                                    : 'text-muted hover:text-white'
+                                    : 'text-muted hover:text-[rgb(var(--text-primary))]'
                             }`}
                         >
                             {t.restTimerExpanded}
@@ -254,18 +254,18 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                     </div>
                 </div>
                 <div className="flex items-center justify-between gap-2 p-3">
-                    <span className="text-sm font-medium text-white">{ty.weightUnit}</span>
-                    <div className="flex gap-1 bg-zinc-200/50 dark:bg-zinc-800/80 p-0.5 rounded-xl border border-border-subtle shrink-0" role="group" aria-label={ty.weightUnit}>
+                    <span className="text-sm font-medium text-[rgb(var(--text-primary))]">{ty.weightUnit}</span>
+                    <div className="flex gap-1 bg-[rgb(var(--surface-elevated))] p-0.5 rounded-xl border border-border-subtle shrink-0" role="group" aria-label={ty.weightUnit}>
                         {(['kg', 'lb'] as const).map((option) => (
                             <button
                                 key={option}
                                 type="button"
                                 onClick={() => setConfig({ ...config, weightUnit: option })}
                                 aria-pressed={resolveWeightUnit(config) === option}
-                                className={`px-2.5 py-1 text-xs rounded-lg font-semibold transition-all ${
+                                className={`px-2.5 py-1 text-xs rounded-xl font-semibold transition-all ${
                                     resolveWeightUnit(config) === option
                                         ? 'bg-primary-500 text-black shadow-sm'
-                                        : 'text-muted hover:text-white'
+                                        : 'text-muted hover:text-[rgb(var(--text-primary))]'
                                 }`}
                             >
                                 {unitLabel(option)}
@@ -276,11 +276,11 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                 {typeof window !== 'undefined' && 'Notification' in window && (
                     <div className="flex items-center justify-between gap-2 p-3">
                         <div className="flex flex-col pr-2">
-                            <span className="text-sm font-medium text-white">{t.restNotifications}</span>
-                            <span className="text-[10px] text-muted">{t.restNotificationsDesc}</span>
+                            <span className="text-sm font-medium text-[rgb(var(--text-primary))]">{t.restNotifications}</span>
+                            <span className="text-xs text-muted">{t.restNotificationsDesc}</span>
                             {/* S4: be honest about web timers (frozen with the screen off). */}
                             {!Capacitor.isNativePlatform() && (
-                                <span data-testid="web-timer-caveat" className="mt-1 text-[10px] text-amber-400/90">{t.notifWebCaveat}</span>
+                                <span data-testid="web-timer-caveat" className="mt-1 text-xs text-amber-400/90">{t.notifWebCaveat}</span>
                             )}
                         </div>
                         <button
@@ -331,13 +331,13 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                         {ty.saveTemplateDesc}
                     </p>
                     <div>
-                        <label className="text-[10px] font-black uppercase text-zinc-500 tracking-widest block mb-2">{ty.templateName}</label>
+                        <label className="text-xs font-black uppercase text-zinc-500 tracking-widest block mb-2">{ty.templateName}</label>
                         <input
                             autoFocus
                             value={templateName}
                             onChange={event => setTemplateName(event.target.value)}
                             maxLength={80}
-                            className="w-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl p-3 font-bold text-zinc-900 dark:text-white outline-none focus:border-primary-500"
+                            className="w-full bg-[rgb(var(--surface-elevated))] border border-zinc-200 dark:border-zinc-700 rounded-xl p-3 font-bold text-zinc-900 dark:text-[rgb(var(--text-primary))] outline-none focus:border-primary-500"
                             placeholder={ty.templateNamePlaceholder}
                         />
                     </div>
