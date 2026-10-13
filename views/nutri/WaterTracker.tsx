@@ -1,6 +1,7 @@
 import React from 'react';
 import { WATER_GOAL_ML, WATER_PRESETS } from './nutritionHelpers';
 import { TRANSLATIONS } from '../../constants';
+import { pickLang } from '../../utils/i18n';
 
 interface Props {
     waterMl: number;
@@ -51,7 +52,7 @@ export const WaterTracker: React.FC<Props> = React.memo(({ waterMl, onAdd, lang 
                     <button
                         key={ml}
                         onClick={() => onAdd(ml)}
-                        aria-label={`${lang === 'es' ? 'Añadir' : 'Add'} ${ml} ml`}
+                        aria-label={`${pickLang(lang, { es: 'Añadir', en: 'Add' })} ${ml} ml`}
                         className="expressive-press min-h-11 flex-1 rounded-full border border-sky-500/25 bg-sky-500/10 px-2 text-xs font-bold text-sky-600 dark:text-sky-300 hover:bg-sky-500/20"
                     >
                         +{ml}ml
