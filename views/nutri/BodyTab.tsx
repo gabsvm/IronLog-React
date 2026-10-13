@@ -102,7 +102,7 @@ export const BodyTab: React.FC<Props> = ({
                     return (
                         <div className="mt-3 pt-3 border-t border-[rgb(var(--border-subtle))]">
                             <p className="text-xs text-muted mb-2">{TRANSLATIONS[lang].copy.bodyTab.last30Days}</p>
-                            <svg viewBox="0 0 100 40" className="w-full h-16" preserveAspectRatio="none" role="img" aria-label={`${TRANSLATIONS[lang].copy.bodyTab.last30Days}: ${weightTrend.length} ${lang === 'es' ? 'registros' : 'entries'}` }>
+                            <svg viewBox="0 0 100 40" className="w-full h-16" preserveAspectRatio="none" role="img" aria-label={`${TRANSLATIONS[lang].copy.bodyTab.last30Days}: ${weightTrend.length} ${pickLang(lang, { es: 'registros', en: 'entries' })}` }>
                                 <polyline
                                     points={points}
                                     fill="none"
