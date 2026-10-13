@@ -42,7 +42,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ onClose, feature }) 
             <div className="premium-theme-panel w-full max-w-md overflow-hidden shadow-2xl relative max-h-[90vh] overflow-y-auto scroll-container">
                 
                 {/* Header Image / Gradient */}
-                <div className="h-40 bg-gradient-to-br from-primary-700 to-primary-400 relative flex flex-col items-center justify-center shrink-0">
+                <div className="premium-paywall-hero h-40 relative flex flex-col items-center justify-center shrink-0">
                     <div className="absolute inset-0 bg-[linear-gradient(135deg,transparent_0%,rgb(0_0_0/0.1)_100%)] opacity-20"></div>
                     <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-xl expressive-reveal mb-2">
                         <Icon name="Crown" size={28} className="text-primary-600 fill-primary-600" />
