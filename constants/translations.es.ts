@@ -194,7 +194,7 @@ export const ES: TranslationDict = {
     },
     progression: {
         up: "Llegaste a {reps} reps{rir}: +{step} {unit}",
-        hold: "Misma carga, apuntá a {target} reps{rir}",
+        hold: "Misma carga, apunta a {target} reps{rir}",
         down: "Bajá a {load} {unit} ({reps} reps{rir})",
         withRir: " con RIR {rir}",
     },

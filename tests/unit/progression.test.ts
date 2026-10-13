@@ -138,7 +138,7 @@ describe('Q15: progression reason lines', () => {
             range: { min: 8, max: 12 }, rirTarget: 2, unit: 'kg',
         })!;
         expect(formatProgressionReason(TRANSLATIONS.es.progression, hold, 'kg', 'es'))
-            .toBe('Misma carga, apuntá a 11 reps');
+            .toBe('Misma carga, apunta a 11 reps');
         expect(formatProgressionReason(TRANSLATIONS.en.progression, hold, 'kg', 'en'))
             .toBe('Same load, aim for 11 reps');
 

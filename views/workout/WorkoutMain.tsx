@@ -82,18 +82,10 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                         {t.finish}
                     </button>
                 </div>
-
-                {/* Progress bar line */}
-                <div className="h-[3px] w-full bg-border-subtle">
-                    <div
-                        className="h-[3px] bg-primary-500 transition-all duration-300 ease-out"
-                        style={{ width: `${Math.min(100, Math.max(0, progressPct))}%` }}
-                    />
-                </div>
             </div>
 
             <div className="flex-1 overflow-hidden flex flex-col">
-                <div id="tut-exercise-list" className="flex-1 overflow-y-auto scroll-container px-3 pt-2.5 space-y-2.5" style={{ paddingBottom: 'calc(3rem + var(--safe-area-bottom) + var(--rest-pill-height, 0px) + 16px)' }}>
+                <div id="tut-exercise-list" className="flex-1 overflow-y-auto scroll-container px-3 pt-4 space-y-2.5" style={{ paddingBottom: 'calc(3rem + var(--safe-area-bottom) + var(--rest-pill-height, 0px) + 16px)' }}>
                     <section aria-label={t.yourSession} className="flex items-center gap-4 rounded-3xl border border-border-subtle bg-surface-raised px-4 py-3.5">
                         <div className="min-w-0">
                             <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted">{t.yourSession}</p>

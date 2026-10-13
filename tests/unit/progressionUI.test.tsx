@@ -84,7 +84,7 @@ describe('Q15: progression hero line on the workout card', () => {
                 })}
             />,
         );
-        expect(screen.getByText('Misma carga, apuntá a 11 reps')).toBeTruthy();
+        expect(screen.getByText('Misma carga, apunta a 11 reps')).toBeTruthy();
     });
 
     it('shows the down reason below the floor of the range', () => {
