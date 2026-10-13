@@ -27,8 +27,9 @@ export const HomeHeroCard: React.FC<{ state: HomeViewState }> = ({ state }) => {
                     // "Start" button inside the card, so the wrapper must not be a second (nested) button.
                     <div
                         id="tut-up-next"
+                        key={selectedDayIdx}
                         onClick={() => startSession(selectedDayIdx)}
-                        className="card-reference expressive-press p-4 sm:p-5 cursor-pointer shadow-lg"
+                        className="card-reference expressive-press expressive-reveal p-4 sm:p-5 cursor-pointer shadow-lg"
                     >
                         <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0 flex-1">
