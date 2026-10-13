@@ -805,6 +805,17 @@ public class NativeBridgePlugin extends Plugin {
         PendingIntent contentIntent = launchContentIntent(context);
         if (contentIntent != null) builder.setContentIntent(contentIntent);
 
+        // Android 16 Live Updates: the OS chronometer advances the chip without
+        // per-second JavaScript/notification updates. The system/OEM decides
+        // eligibility and users may disable promoted notifications. Request
+        // only for meaningful user-started rests, not tiny short intervals.
+        // Extras key is API 36.1; a literal avoids calling newer platform APIs
+        // from builds targeting the initial API 36 SDK.
+        if (Build.VERSION.SDK_INT >= 36
+                && endAt - System.currentTimeMillis() >= 90000L) {
+            builder.getExtras().putBoolean("android.requestPromotedOngoing", true);
+        }
+
         // Q9: +30s / skip actions, handled by the receiver below (no Activity
         // trampoline: the receiver does the work directly). Explicit intents
         // to a non-exported receiver + immutable PendingIntents.
