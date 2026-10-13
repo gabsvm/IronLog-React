@@ -157,9 +157,8 @@ describe('Task U2: Rest Timer Notification Permission and Visibility Scoping', (
     });
 
     it('initial Android schedule already includes the real upcoming exercise and set', async () => {
-        const previous = useStore.getState().activeSession;
-        useStore.setState({
-            activeSession: {
+        const originalState = useStore.getState();
+        const session = {
                 id: 41, dayIdx: 0, name: 'Torso', startTime: Date.now(), mesoId: 1, week: 1,
                 exercises: [{
                     id: 'bench', instanceId: 3, muscle: 'CHEST',
@@ -169,7 +168,11 @@ describe('Task U2: Rest Timer Notification Permission and Visibility Scoping', (
                         completed: index <= 2, type: 'regular' as const,
                     })),
                 }],
-            },
+            };
+        // The full test suite runs other store mutations concurrently in
+        // separate fixtures. Pin this lookup to a deterministic snapshot.
+        const lookup = vi.spyOn(useStore, 'getState').mockReturnValue({
+            ...originalState, activeSession: session,
         });
         try {
             vi.clearAllMocks();
@@ -188,7 +191,7 @@ describe('Task U2: Rest Timer Notification Permission and Visibility Scoping', (
                 { exerciseInstanceId: 3, setId: 12 }, 'Omitir',
             ));
         } finally {
-            useStore.setState({ activeSession: previous });
+            lookup.mockRestore();
         }
     });
 
