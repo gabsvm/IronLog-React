@@ -1,14 +1,17 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import { RestTimerOverlay } from '../../components/ui/RestTimerOverlay';
 import * as TimerContext from '../../context/TimerContext';
 import * as AppContext from '../../context/AppContext';
+import { Capacitor } from '@capacitor/core';
+import { updateNativeRestTimerContent } from '../../utils/audio';
 import { useStore } from '../../lib/store';
 
 vi.mock('../../utils/audio', () => ({
     triggerHaptic: vi.fn(),
     playRestBeep: vi.fn(),
+    updateNativeRestTimerContent: vi.fn(),
 }));
 
 describe('Task U1: RestTimerOverlay as non-modal compact floating pill by default', () => {
@@ -185,4 +188,43 @@ describe('Task U1: RestTimerOverlay as non-modal compact floating pill by defaul
             Object.defineProperty(window, 'innerHeight', { value: originalInnerHeight, configurable: true });
         }
     });
+    it('updates the Android 15 notification with the next real set but not on every countdown tick', async () => {
+        const native = vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(true);
+        const platform = vi.spyOn(Capacitor, 'getPlatform').mockReturnValue('android');
+        try {
+            const { rerender } = render(<RestTimerOverlay />);
+            await waitFor(() => expect(updateNativeRestTimerContent).toHaveBeenCalledWith(
+                mockRestTimer.endAt,
+                { liveTitle: 'Descansando · Bench Press', liveBody: 'Próxima serie: 2 de 2', skipLabel: 'Omitir' },
+            ));
+            const firstCallCount = vi.mocked(updateNativeRestTimerContent).mock.calls.length;
+            vi.spyOn(TimerContext, 'useTimerState').mockReturnValue({
+                ...mockRestTimer, timeLeft: 89,
+            } as any);
+            rerender(<RestTimerOverlay />);
+            expect(updateNativeRestTimerContent).toHaveBeenCalledTimes(firstCallCount);
+
+            act(() => {
+                const session = useStore.getState().activeSession!;
+                useStore.setState({
+                    activeSession: {
+                        ...session,
+                        exercises: session.exercises.map(ex => ({
+                            ...ex,
+                            sets: ex.sets.map((set, index) => index === 1 ? { ...set, completed: true } : set)
+                                .concat([{ id: 103, setNumber: 3, weight: 100, reps: 8, completed: false } as any]),
+                        })),
+                    },
+                });
+            });
+            await waitFor(() => expect(updateNativeRestTimerContent).toHaveBeenLastCalledWith(
+                mockRestTimer.endAt,
+                { liveTitle: 'Descansando · Bench Press', liveBody: 'Próxima serie: 3 de 3', skipLabel: 'Omitir' },
+            ));
+        } finally {
+            native.mockRestore();
+            platform.mockRestore();
+        }
+    });
+
 });
