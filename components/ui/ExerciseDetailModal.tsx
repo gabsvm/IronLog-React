@@ -224,12 +224,12 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
             </div>
 
             {/* Tabs */}
-            <div role="tablist" className="flex p-1 bg-zinc-100 dark:bg-zinc-800 mx-4 mt-4 rounded-xl">
+            <div role="tablist" className="seg-reference mx-4 mt-4 flex p-1">
                 <button
                     role="tab"
                     aria-selected={activeTab === 'guide'}
                     onClick={() => setActiveTab('guide')}
-                    className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all duration-fast ease-natural ${activeTab === 'guide' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow' : 'text-zinc-500'}`}
+                    className={`expressive-press min-h-11 flex-1 rounded-full px-3 text-xs font-bold ${activeTab === 'guide' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow' : 'text-zinc-500'}`}
                 >
                     {t.guide || 'Guide'}
                 </button>
@@ -237,7 +237,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                     role="tab"
                     aria-selected={activeTab === 'history'}
                     onClick={() => setActiveTab('history')}
-                    className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all duration-fast ease-natural ${activeTab === 'history' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow' : 'text-zinc-500'}`}
+                    className={`expressive-press min-h-11 flex-1 rounded-full px-3 text-xs font-bold ${activeTab === 'history' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow' : 'text-zinc-500'}`}
                 >
                     {t.history || 'History'}
                 </button>
@@ -261,7 +261,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
 
                             {/* Search on YouTube link (always shown) */}
                             <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/5">
-                                <div className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest">
+                                <div className="text-xs font-semibold text-muted">
                                     {exercise.videoId
                                         ? (TRANSLATIONS[lang].copy.exerciseDetailModal.tapToOpenIn)
                                         : (TRANSLATIONS[lang].copy.exerciseDetailModal.searchTutorialOnline)
@@ -281,7 +281,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                             {/* Instructions & Tip */}
                             <div className="p-5 space-y-5">
                                 <div>
-                                    <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                    <h4 className="text-sm font-bold tracking-tight text-[rgb(var(--text-primary))] mb-3 flex items-center gap-2">
                                         <Icon name="FileText" size={13} /> {t.instructions}
                                     </h4>
                                     <div className="text-sm text-zinc-300 leading-relaxed">
@@ -307,15 +307,15 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
 
                                 {exercise.muscle !== 'CARDIO' && (
                                     <div>
-                                        <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                        <h4 className="text-sm font-bold tracking-tight text-[rgb(var(--text-primary))] mb-3 flex items-center gap-2">
                                             <Icon name="Dumbbell" size={13} /> {TRANSLATIONS[lang].copy.exerciseDetailModal.tonnageCalculation}
                                         </h4>
                                         <div className="space-y-2">
-                                            <button type="button" onClick={() => setVolumeCountingMode('total')} className={`w-full text-left rounded-xl border p-3 transition-colors ${volumeCountingMode === 'total' ? 'border-primary-500 bg-primary-500/10' : 'border-white/10 bg-white/5'}`}>
+                                            <button type="button" onClick={() => setVolumeCountingMode('total')} className={`w-full text-left rounded-xl border p-3 transition-colors ${volumeCountingMode === 'total' ? 'border-primary-500 bg-primary-500/10' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated)/0.6)]'}`}>
                                                 <span className="block text-sm font-bold text-white">{TRANSLATIONS[lang].copy.exerciseDetailModal.recordedTotal1}</span>
                                                 <span className="block mt-1 text-xs text-zinc-400">{TRANSLATIONS[lang].copy.exerciseDetailModal.forBarsBilateralMachines}</span>
                                             </button>
-                                            <button type="button" onClick={() => setVolumeCountingMode('per_side')} className={`w-full text-left rounded-xl border p-3 transition-colors ${volumeCountingMode === 'per_side' ? 'border-primary-500 bg-primary-500/10' : 'border-white/10 bg-white/5'}`}>
+                                            <button type="button" onClick={() => setVolumeCountingMode('per_side')} className={`w-full text-left rounded-xl border p-3 transition-colors ${volumeCountingMode === 'per_side' ? 'border-primary-500 bg-primary-500/10' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated)/0.6)]'}`}>
                                                 <span className="block text-sm font-bold text-white">{TRANSLATIONS[lang].copy.exerciseDetailModal.perSide2}</span>
                                                 <span className="block mt-1 text-xs text-zinc-400">{TRANSLATIONS[lang].copy.exerciseDetailModal.whenYouRecordLoad}</span>
                                             </button>
@@ -326,7 +326,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                         </>
                     ) : (
                         <div className="p-5">
-                            <div className="bg-white/5 rounded-2xl p-4 border border-white/5">
+                            <div className="premium-theme-panel p-4">
                                 <div className="mb-4">
                                     <h4 className="text-sm font-bold text-white">{t.statsProgress}</h4>
                                     <p className="text-xs text-zinc-500">Estimated 1RM / Max Performance</p>
