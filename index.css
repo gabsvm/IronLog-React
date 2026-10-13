@@ -689,6 +689,11 @@ html.light .premium-hero__cta:hover { background: #25392b; }
 [data-effects="reduced"] .premium-history-row, [data-effects="reduced"] .premium-progress-feedback { transition: none; }
 [data-effects="reduced"] .premium-history-row:active { transform: none; }
 
+/* The neutral accent needs white ink; black fails 4.5:1 on #6b7280. */
+[data-theme='monochrome'] .premium-hero__cta { color: #fff; }
+[data-theme='monochrome'] button[aria-pressed='true'].expressive-press { color: #fff; }
+[data-theme='monochrome'] button[aria-pressed='true'].expressive-press span.text-zinc-950 { color: #fff; }
+
 /* Profile uses the same quiet tonal hierarchy as History and Diet. */
 .premium-profile .card-reference {
   background-color: color-mix(in srgb, rgb(var(--surface-raised)) 93%, rgb(var(--primary-500)));
