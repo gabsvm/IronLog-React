@@ -41,7 +41,9 @@ export const HomeHeroCard: React.FC<{ state: HomeViewState }> = ({ state }) => {
                 <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                         <div className="premium-hero__eyebrow">
-                            {lang === 'es' ? `DÍA ${selectedDayIdx + 1} · TU PRÓXIMA SESIÓN` : `DAY ${selectedDayIdx + 1} · YOUR SESSION`}
+                            {lang === 'es'
+                                ? `DÍA ${selectedDayIdx + 1} · ${isSelectedActive ? 'EN CURSO' : isDone ? 'COMPLETADO' : 'TU PRÓXIMA SESIÓN'}`
+                                : `DAY ${selectedDayIdx + 1} · ${isSelectedActive ? 'IN PROGRESS' : isDone ? 'COMPLETED' : 'YOUR NEXT SESSION'}`}
                         </div>
                         <h3 className="premium-hero__title">{dayName}</h3>
                     </div>
