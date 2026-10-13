@@ -107,7 +107,7 @@ for (const theme of ['dark', 'light'] as const) {
     test(`premium: Home and Stats remain grounded in saved data (${theme})`, async ({ page }) => {
       const hero = page.locator('#tut-up-next');
       await expect(hero).toBeVisible();
-      await expect(hero.locator('svg[aria-hidden="true"]')).toBeVisible();
+      await expect(hero.locator('svg.premium-hero__art')).toBeVisible();
       await expect(hero.getByRole('button', { name: /Empezar|Start/i })).toBeVisible();
 
       await nav(page).getByRole('button', { name: /M[ée]tricas|Stats/i }).click();
