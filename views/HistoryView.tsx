@@ -31,7 +31,7 @@ const VirtuosoHeader = ({ context }: { context?: HistoryVirtuosoContext }) => {
         <div className="space-y-3 px-5 pb-4 pt-4">
             <div>
                 <h2 className="text-2xl font-black tracking-tight text-zinc-950 dark:text-white">{TRANSLATIONS[lang].copy.history.history}</h2>
-                <p className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.16em] text-zinc-500">
+                <p className="mt-0.5 text-xs font-medium text-muted">
                     {TRANSLATIONS[lang].copy.history.yourCompletedWorkouts}
                 </p>
             </div>
@@ -94,11 +94,11 @@ const HistoryCard = memo(({ log, lang, id, onOpen, unit = 'kg' }: HistoryCardPro
             id={id}
             type="button"
             onClick={onOpen}
-            className="mx-4 mb-3 block rounded-[1.3rem] border border-[rgb(var(--border-subtle)/0.72)] bg-[rgb(var(--surface-raised)/0.72)] p-4 text-left shadow-sm transition-all active:scale-[0.99] active:bg-[rgb(var(--surface-raised))]"
+            className="premium-theme-panel premium-history-row mx-4 mb-3 block p-4 text-left"
         >
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                    <div className="mb-1 text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">{formatDate(log.endTime, lang)}</div>
+                    <div className="mb-1 text-xs font-semibold tracking-normal text-muted">{formatDate(log.endTime, lang)}</div>
                     <h3 className="truncate text-base font-black tracking-tight text-zinc-950 dark:text-white">{log.name}</h3>
                     {log.programSystem && <span className="mt-1 inline-flex rounded-full bg-primary-500/10 px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wider text-primary-600 dark:text-primary-300">KONG · B{log.programSystem.blockNumber} · W{log.week}</span>}
                 </div>
@@ -118,7 +118,7 @@ const HistoryCard = memo(({ log, lang, id, onOpen, unit = 'kg' }: HistoryCardPro
             </div>
 
             <div className="mt-3 flex items-center justify-between border-t border-[rgb(var(--border-subtle)/0.45)] pt-3">
-                <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-zinc-500">
+                <span className="text-xs font-semibold text-muted">
                     {(log.exercises || []).length} {TRANSLATIONS[lang].copy.history.exercises}
                 </span>
                 <Icon name="ChevronRight" size={16} className="text-zinc-400" />
