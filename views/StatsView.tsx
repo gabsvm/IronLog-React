@@ -4,6 +4,9 @@ import { useApp, useAppPreferences } from '../context/AppContext';
 import { ActivityHeatmap } from '../components/stats/ActivityHeatmap';
 import { StatsScopeSelector } from '../components/stats/StatsScopeSelector';
 import { Icon } from '../components/ui/Icon';
+import { PremiumTrendCard } from '../components/stats/PremiumTrendCard';
+import { buildPremiumInsights } from '../utils/premiumInsights';
+import { resolveWeightUnit } from '../utils/units';
 import { useStore } from '../lib/store';
 import { TRANSLATIONS } from '../constants';
 import { buildStatsLogsSignature, statsCache } from '../services/statsCache';
@@ -16,7 +19,7 @@ import { StatsScope, StatsSection, effectiveScopeFor, scopeMesoId as scopeMesoId
  */
 export const StatsView: React.FC = () => {
     const { lang } = useAppPreferences();
-    const { logs } = useApp();
+    const { logs, config } = useApp();
     const activeMeso = useStore(state => state.activeMeso);
     const [section, setSection] = useState<StatsSection>('overview');
     const safeLogs = useMemo(() => Array.isArray(logs) ? logs : [], [logs]);
@@ -58,6 +61,10 @@ export const StatsView: React.FC = () => {
     const scopeMesoId = scopeMesoIdFor(scope, activeMeso?.id);
     const scopedSummary = useMemo(
         () => summarizeLogsByScope(safeLogs, scopeMesoId),
+        [safeLogs, scopeMesoId],
+    );
+    const premiumInsights = useMemo(
+        () => buildPremiumInsights(safeLogs, scopeMesoId),
         [safeLogs, scopeMesoId],
     );
 
@@ -111,7 +118,7 @@ export const StatsView: React.FC = () => {
                 <div className="flex items-end justify-between gap-3 px-1">
                     <div className="min-w-0">
                         <h2 className="text-[1.7rem] font-black tracking-[-0.05em] text-zinc-950 dark:text-white">{t.statsTitle}</h2>
-                        <p className="whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-500">
+                        <p className="text-xs font-semibold tracking-normal text-muted">
                             {scope === 'plan' && activeMeso
                                 ? `${t.currentPlan} · ${t.week} ${activeMeso.week}`
                                 : t.statsScopeHistory}
@@ -124,6 +131,9 @@ export const StatsView: React.FC = () => {
                     )}
                 </div>
 
+                {section === 'overview' && (
+                    <PremiumTrendCard insights={premiumInsights} lang={lang} unit={resolveWeightUnit(config)} scope={scope} />
+                )}
                 <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
                     {summaryItems.map((item, itemIdx) => (
                         <div key={item.label} className={`tonal-${(itemIdx % 4) + 1} rounded-3xl border border-[rgb(var(--border-subtle)/0.65)] px-4 py-4`}>
