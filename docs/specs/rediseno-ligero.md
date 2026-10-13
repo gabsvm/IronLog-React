@@ -111,3 +111,31 @@ Resultados obtenidos con checkout temporal de la rama en Vercel Sandbox y con un
 - **Pendientes deliberados:** regeneración revisada de los snapshots binarios de `tests/visual/__screenshots__` (no debe ejecutarse automáticamente `--update-snapshots`), aceptación visual del propietario y prueba en Android físico del teclado/descanso. No se ha tocado la configuración de Firebase ni el destino Production.
 
 La actualización de esta documentación no modifica el comportamiento del build validado.
+
+
+## 12. Cohesión Premium Expressive de rincones secundarios (2026-10-13)
+
+Se aplicó directamente en `agent/gainslab-audit-fixes-v3` sin rama nueva ni promoción de Production; exclusivamente capa de presentación y accesibilidad, sin tocar lógica de registro, KONG, series, restauración nativa ni Firebase.
+
+**Dieta**
+- Añadir comida y cardio: etiquetas de formularios legibles, campos con `premium-form-input`, segmentos de opción tonal, estados seleccionados con contraste alto, iconos de alimentos compactos con zona táctil ampliada sin sacrificar densidad, listas y guardado de alimentos adaptados al tema claro.
+- Registrar peso / grasa / notas: inputs y sufijos tonalizados, textos de al menos 12px, unidades preservadas.
+- Agua: tarjeta tonal, barra y vasos conservados, tres incrementos con `min-h-11`, nombres accesibles «Añadir/Add N ml».
+
+**Entrenamiento y Home**
+- Menú de ejercicio, selección de tipos, descanso predefinido, panel de cierre: superficies adaptables, objetivos táctiles y contraste; controles conservan callbacks y estados.
+- Timers de protocolos (Tabata/EMOM, etc.): 9/10px elevados a 12px, botones más redondeados, fondos armonizados; se preservan cronómetros y reglas de protocolo.
+- Modal de mesociclo, Home sin programa y skeletons de carga: jerarquía tipográfica, superficies y placeholders correspondientes al nuevo Home.
+
+**Perfil y sistemas**
+- Secciones Entrenamiento, Cuerpo, Datos, Avanzado, CSV, métricas corporales, Health Connect: tarjetas uniformes y campos/etiquetas legibles, sin alterar exportaciones, Health Connect, respaldo o eliminación.
+- Asistente inicial: progress bar, decisiones y pasos alineados con superficies Expressive; controles del tema activo con tinta oscura sobre lima.
+- Landing sigue siendo una portada oscura inmersiva a propósito; sus colores están encapsulados en `premium-landing*` y respetan la preferencia de reducir movimiento.
+- Autenticación, paywall, paleta de acciones y detalles educativos: controles tonales; el hero Pro usa fondo oscuro a fin de garantizar contraste del texto blanco.
+- `Button` secundario/ghost/outline utiliza las variables de superficie y texto del tema, no el par zinc claro/oscuro fijo. PR/trofeos y visor de material siguen siendo superficies inmersivas intencionales.
+
+**Criterios de cierre**
+- Ejecutar `npm run verify`, regresión E2E y controles visuales de ambos temas en 320px; revisar específicamente la importación CSV, Health Connect, el modal de mesociclo y la edición de comidas.
+- Revisar snapshots pixel a pixel antes de actualizarlos; no ejecutar un reemplazo indiscriminado.
+- Android 17: la rama ya solicita visibilidad «promoted ongoing» para descansos relevantes sobre Android 16+. La elegibilidad final corresponde al sistema/OEM. En dispositivo físico verificar contador nativo, chip/presentación Live Update si Android lo permite, +30 s/Omitir, no duplicación, y contraste del sheet de descanso.
+- El usuario compila y distribuye por su cuenta las versiones Android; esta pasada no necesita modificar Java, permisos o versiones nativas.
