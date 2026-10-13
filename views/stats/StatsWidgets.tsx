@@ -30,7 +30,7 @@ export const VolumeAverageCaption: React.FC<VolumeAverageCaptionProps> = ({ week
         ? `${t.volumeAvgThisWeek} · ${scopeLabel}`
         : `${t.volumeAvgWeeks.replace('{weeks}', String(weeks))} · ${scopeLabel}`;
     return (
-        <p className="mt-1 text-[11px] font-semibold text-zinc-500">{text}</p>
+        <p className="mt-1 text-xs font-semibold text-muted">{text}</p>
     );
 };
 
@@ -42,10 +42,10 @@ export const VolumeMuscleList: React.FC<VolumeMuscleListProps> = ({ volumeData, 
             const zone = getVolumeZone(count);
             return (
                 <div key={muscle} className="group flex items-center gap-3">
-                    <div className="w-24 truncate text-right text-xs font-bold text-zinc-500">
+                    <div className="w-24 truncate text-right text-xs font-semibold text-muted">
                         {TRANSLATIONS[lang].muscle[muscle as MuscleGroup]}
                     </div>
-                    <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-white/5">
+                    <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-[rgb(var(--surface-elevated))]">
                         <div
                             className={`h-full rounded-full transition-all duration-1000 ${zone.color}`}
                             style={{ width: `${Math.min(100, (count / maxVal) * 100)}%` }}
@@ -78,18 +78,18 @@ export const PersonalRecordRow: React.FC<PersonalRecordRowProps> = ({
     e1rm,
     unit = 'kg',
 }) => (
-    <div className="flex items-center gap-3 border-b border-zinc-800/60 py-2 last:border-0">
+    <div className="flex items-center gap-3 border-b border-[rgb(var(--border-subtle)/0.65)] py-2 last:border-0">
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-yellow-500/10 text-yellow-500">
             <Icon name="Trophy" size={16} />
         </div>
         <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-bold text-white">{name}</p>
-            <p className="text-[11px] font-bold uppercase tracking-wide text-zinc-500">
+            <p className="truncate text-sm font-bold text-[rgb(var(--text-primary))]">{name}</p>
+            <p className="text-xs font-medium text-muted">
                 {muscleLabel} · {dateStr}
             </p>
         </div>
         <div className="shrink-0 text-right">
-            <p className="text-sm font-black text-white">
+            <p className="text-sm font-black text-[rgb(var(--text-primary))]">
                 {toDisplay(weight, unit)}<span className="ml-0.5 text-[11px] text-zinc-500">{unitLabel(unit).toLowerCase()}</span>
             </p>
             <p className="text-[11px] text-zinc-500">
