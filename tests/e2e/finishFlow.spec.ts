@@ -99,7 +99,7 @@ test.describe('Finish / discard without blank screen (F2)', () => {
 
         const dialog = page.getByRole('dialog', { name: /Descartar|Discard/ });
         await expect(dialog).toBeVisible({ timeout: 5000 });
-        await dialog.getByRole('button', { name: /Eliminar|Delete/ }).click();
+        await dialog.getByRole('button', { name: /Descartar|Discard/ }).click();
 
         const nav = page.locator('nav[aria-label="Main navigation"]');
         await expect(nav).toBeVisible({ timeout: 10000 });
