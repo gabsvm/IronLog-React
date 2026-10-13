@@ -8,6 +8,7 @@ import { TRANSLATIONS } from '../../../constants';
 import { getExactAlarmState, openExactAlarmSettings, shouldShowExactAlarmNotice, triggerHaptic, updateNativeRestTimerContent } from '../../../utils/audio';
 import { useStore } from '../../../lib/store';
 import { resolveWeightUnit } from '../../../utils/units';
+import { pickLang } from '../../../utils/i18n';
 import { applyEffortRatingToExercises, resolveRestNextAction, resolveRestNotificationContent } from './restTimerLogic';
 
 export const useRestTimerOverlayState = () => {
@@ -202,8 +203,11 @@ export const useRestTimerOverlayState = () => {
     useEffect(() => {
         if (!restTimer?.active || !restTimer.endAt) return;
         if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') return;
-        updateNativeRestTimerContent(restTimer.endAt, { liveTitle, liveBody });
-    }, [restTimer?.active, restTimer?.endAt, liveTitle, liveBody]);
+        updateNativeRestTimerContent(restTimer.endAt, {
+            liveTitle, liveBody,
+            skipLabel: pickLang(lang, { es: 'Omitir', en: 'Skip' }),
+        });
+    }, [restTimer?.active, restTimer?.endAt, liveTitle, liveBody, lang]);
 
     const dismissNotifPrompt = () => setShowNotifPrompt(false);
     const dismissAlarmNotice = () => setShowAlarmNotice(false);
