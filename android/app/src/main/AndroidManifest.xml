@@ -124,6 +124,8 @@
         <package android:name="com.google.android.apps.healthdata" />
     </queries>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Android 16: optional promoted live countdown, still user-controllable by OS. -->
+    <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <!-- Exact rest-timer alarms (user-revocable; the plugin falls back to
          setAndAllowWhileIdle when not granted). NOT USE_EXACT_ALARM (Play-restricted). -->
