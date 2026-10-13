@@ -86,6 +86,23 @@ export const useRestTimerOverlayState = () => {
         };
     }, [restTimer?.active, mode]);
 
+    // A focused set input must remain visible when the compact timer moves beneath the header.
+    // Reserve space at the top of the scrollable exercise list only while the soft keyboard is open.
+    useEffect(() => {
+        const root = document.documentElement;
+        if (restTimer?.active && mode === 'compact' && keyboardOffset > 120) {
+            root.style.setProperty('--rest-pill-top-offset', '64px');
+        } else {
+            root.style.removeProperty('--rest-pill-top-offset');
+        }
+        return () => root.style.removeProperty('--rest-pill-top-offset');
+    }, [restTimer?.active, mode, keyboardOffset]);
+
+    // Expanded rest controls consume the viewport: collapse them when editing a set.
+    useEffect(() => {
+        if (keyboardOffset > 120 && mode === 'expanded') setMode('compact');
+    }, [keyboardOffset, mode]);
+
     // One-time, non-blocking notification opt-in (web/PWA only): after the
     // first naturally completed rest, offer the finish alert once. Never
     // shown on native (AlarmManager owns it), when permission is already
