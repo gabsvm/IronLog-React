@@ -176,6 +176,10 @@ public class NativeBridgePlugin extends Plugin {
         }
 
         programAlarm(context, alarmManager, endAt, title, body);
+        // Every rest is a new alert lifecycle. Do not let the previous
+        // completed notification suppress this one's sound.
+        NotificationManager noticeManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (noticeManager != null) noticeManager.cancel(TIMER_NOTIFICATION_ID);
 
         int durationSeconds = Math.max(1, call.getInt("duration", 120));
         int sourceExercise = call.getInt("sourceExerciseInstanceId", -1);
@@ -734,12 +738,12 @@ public class NativeBridgePlugin extends Plugin {
         // duplicate feedback. The native receiver is primarily a background path.
         if (isAppForeground()) return;
 
-        vibrate(context, "success");
-        ToneGenerator tone = new ToneGenerator(AudioManager.STREAM_NOTIFICATION, 90);
-        tone.startTone(ToneGenerator.TONE_PROP_BEEP2, 450);
-        new Handler(Looper.getMainLooper()).postDelayed(tone::release, 550);
-
-        if (!canPostNotifications(context)) return;
+        // The system's high-priority notification channel handles feedback
+        // when posting is permitted. A manual beep + channel buzz doubles it.
+        if (!canPostNotifications(context)) {
+            fallbackRestFeedback(context);
+            return;
+        }
         createNotificationChannel(context);
 
         PendingIntent contentIntent = launchContentIntent(context);
@@ -761,7 +765,18 @@ public class NativeBridgePlugin extends Plugin {
         if (contentIntent != null) builder.setContentIntent(contentIntent);
 
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        if (manager != null) manager.notify(TIMER_NOTIFICATION_ID, builder.build());
+        if (manager != null) {
+            manager.notify(TIMER_NOTIFICATION_ID, builder.build());
+        } else {
+            fallbackRestFeedback(context);
+        }
+    }
+
+    private static void fallbackRestFeedback(Context context) {
+        vibrate(context, "success");
+        ToneGenerator tone = new ToneGenerator(AudioManager.STREAM_NOTIFICATION, 90);
+        tone.startTone(ToneGenerator.TONE_PROP_BEEP2, 450);
+        new Handler(Looper.getMainLooper()).postDelayed(tone::release, 550);
     }
 
     private static PendingIntent launchContentIntent(Context context) {
