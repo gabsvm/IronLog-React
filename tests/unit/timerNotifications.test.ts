@@ -33,6 +33,7 @@ if (!globalThis.URL) {
 import { useTimer, requestTimerNotificationPermission } from '../../hooks/useTimer';
 import { scheduleNativeRestTimer, cancelNativeRestTimer } from '../../utils/audio';
 import { TRANSLATIONS } from '../../constants';
+import { useStore } from '../../lib/store';
 
 describe('Task U2: Rest Timer Notification Permission and Visibility Scoping', () => {
     let mockRequestPermission: any;
@@ -153,6 +154,42 @@ describe('Task U2: Rest Timer Notification Permission and Visibility Scoping', (
         });
 
         expect(notificationSpy).toHaveBeenCalled();
+    });
+
+    it('initial Android schedule already includes the real upcoming exercise and set', async () => {
+        const previous = useStore.getState().activeSession;
+        useStore.setState({
+            activeSession: {
+                id: 41, dayIdx: 0, name: 'Torso', startTime: Date.now(), mesoId: 1, week: 1,
+                exercises: [{
+                    id: 'bench', instanceId: 3, muscle: 'CHEST',
+                    name: { es: 'Press banca', en: 'Bench press' },
+                    sets: [1, 2, 3, 4].map((index) => ({
+                        id: index + 10, weight: 80, reps: 8, rpe: '',
+                        completed: index <= 2, type: 'regular' as const,
+                    })),
+                }],
+            },
+        });
+        try {
+            vi.clearAllMocks();
+            vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(true);
+            const { result } = renderHook(() => useTimer('es'));
+            const endAt = Date.now() + 120000;
+            act(() => {
+                result.current.setRestTimer({
+                    active: true, duration: 120, timeLeft: 120, endAt,
+                    source: { exerciseInstanceId: 3, setId: 12 },
+                });
+            });
+            await waitFor(() => expect(scheduleNativeRestTimer).toHaveBeenCalledWith(
+                endAt, TRANSLATIONS.es.timer.finished, TRANSLATIONS.es.timer.getBack,
+                'Descansando · Press banca', 'Próxima serie: 3 de 4', 120,
+                { exerciseInstanceId: 3, setId: 12 }, 'Omitir',
+            ));
+        } finally {
+            useStore.setState({ activeSession: previous });
+        }
     });
 
     it('P7-3: on native, an active user-started rest schedules the OS alarm after restoring', async () => {
