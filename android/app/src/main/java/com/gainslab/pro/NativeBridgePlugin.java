@@ -71,6 +71,7 @@ public class NativeBridgePlugin extends Plugin {
     private static final String KEY_FINAL_BODY = "rest_final_body";
     private static final String KEY_LIVE_TITLE = "rest_live_title";
     private static final String KEY_LIVE_BODY = "rest_live_body";
+    private static final String KEY_REST_SKIP_LABEL = "rest_skip_label";
     private static final String KEY_REST_EPOCH = "rest_epoch";
     private static final String KEY_NEXT_COMMAND_ID = "rest_next_command_id";
     private static final String KEY_CMD_PREFIX = "rest_cmd_";
@@ -186,6 +187,7 @@ public class NativeBridgePlugin extends Plugin {
         int sourceSet = call.getInt("sourceSetId", -1);
         String liveTitle = call.getString("liveTitle", title);
         String liveBody = call.getString("liveBody", body);
+        String skipLabel = call.getString("skipLabel", context.getString(R.string.rest_action_skip));
 
         // Q9: persist everything the action receiver needs to reschedule with
         // frozen JS, and start a fresh command stream for this rest.
@@ -200,6 +202,7 @@ public class NativeBridgePlugin extends Plugin {
                 .putString(KEY_FINAL_BODY, body)
                 .putString(KEY_LIVE_TITLE, liveTitle)
                 .putString(KEY_LIVE_BODY, liveBody)
+                .putString(KEY_REST_SKIP_LABEL, skipLabel)
                 .putInt(KEY_REST_EPOCH, epoch)
                 .putInt(KEY_NEXT_COMMAND_ID, 1);
         for (String key : prefs.getAll().keySet()) {
@@ -376,13 +379,24 @@ public class NativeBridgePlugin extends Plugin {
         }
         title = title.length() > 110 ? title.substring(0, 110) : title;
         body = body.length() > 120 ? body.substring(0, 120) : body;
+        String label = call.getString("skipLabel", prefs.getString(KEY_REST_SKIP_LABEL,
+                context.getString(R.string.rest_action_skip)));
+        if (label == null || label.trim().isEmpty()) {
+            label = context.getString(R.string.rest_action_skip);
+        }
+        label = label.length() > 30 ? label.substring(0, 30) : label;
 
         if (title.equals(prefs.getString(KEY_LIVE_TITLE, ""))
-                && body.equals(prefs.getString(KEY_LIVE_BODY, ""))) {
+                && body.equals(prefs.getString(KEY_LIVE_BODY, ""))
+                && label.equals(prefs.getString(KEY_REST_SKIP_LABEL, ""))) {
             call.resolve();
             return;
         }
-        prefs.edit().putString(KEY_LIVE_TITLE, title).putString(KEY_LIVE_BODY, body).apply();
+        prefs.edit()
+                .putString(KEY_LIVE_TITLE, title)
+                .putString(KEY_LIVE_BODY, body)
+                .putString(KEY_REST_SKIP_LABEL, label)
+                .apply();
         // Same TIMER_LIVE_NOTIFICATION_ID and setOnlyAlertOnce: no new card,
         // alert, sound or vibration, and +30s still reads these persisted texts.
         postLiveTimerNotification(context, currentEndAt, title, body);
@@ -895,7 +909,8 @@ public class NativeBridgePlugin extends Plugin {
                     PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
             builder.addAction(new Notification.Action.Builder(
                     Icon.createWithResource(context, android.R.drawable.ic_media_next),
-                    context.getString(R.string.rest_action_skip),
+                    context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(
+                            KEY_REST_SKIP_LABEL, context.getString(R.string.rest_action_skip)),
                     skipPending).build());
         }
 
