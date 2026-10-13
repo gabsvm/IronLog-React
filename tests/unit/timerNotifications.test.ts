@@ -166,7 +166,7 @@ describe('Task U2: Rest Timer Notification Permission and Visibility Scoping', (
                     name: { es: 'Press banca', en: 'Bench press' },
                     sets: [1, 2, 3, 4].map((index) => ({
                         id: index + 10, weight: 80, reps: 8, rpe: '',
-                        completed: index <= 2, type: 'regular' as const,
+                        completed: index <= 1, type: 'regular' as const,
                     })),
                 }],
             },
