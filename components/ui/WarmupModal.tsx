@@ -71,11 +71,11 @@ export const WarmupModal: React.FC<WarmupModalProps> = ({ targetWeight, exercise
         >
             <div className="p-5 space-y-4">
                 <div className="flex justify-between items-start">
-                    <div className="text-[10px] font-bold text-primary-500 uppercase tracking-widest flex items-center gap-1">
+                    <div className="text-xs font-semibold text-primary-500 flex items-center gap-1">
                         <Icon name="Zap" size={10} /> {t.warmupTitle}
                     </div>
                     <div className="text-right">
-                        <div className="text-[10px] text-zinc-400 font-bold uppercase">{t.workingWeight}</div>
+                        <div className="text-xs font-semibold text-muted">{t.workingWeight}</div>
                         <div className="text-xl font-mono font-bold text-zinc-900 dark:text-white">{toDisplay(targetWeight, unit)}</div>
                     </div>
                 </div>
@@ -91,7 +91,7 @@ export const WarmupModal: React.FC<WarmupModalProps> = ({ targetWeight, exercise
                                 onClick={() => toggleCheck(idx)}
                                 aria-pressed={isChecked}
                                 aria-label={`${step.label} — ${weight} ${weightSuffix.toLowerCase()}, ${step.reps} reps`}
-                                className={`w-full flex items-center p-3 rounded-xl border transition-colors duration-base ease-natural cursor-pointer text-left
+                                className={`expressive-press w-full min-h-14 items-center rounded-[20px] border p-3 text-left
                                     ${isChecked
                                         ? 'bg-primary-500/10 border-primary-500/30'
                                         : 'bg-zinc-50 dark:bg-white/5 border-transparent hover:bg-zinc-100 dark:hover:bg-white/10'
@@ -111,7 +111,7 @@ export const WarmupModal: React.FC<WarmupModalProps> = ({ targetWeight, exercise
                                             {step.reps} <span className="text-[10px] text-zinc-400">REPS</span>
                                         </span>
                                     </div>
-                                    <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{step.label}</div>
+                                    <div className="text-xs font-semibold text-muted">{step.label}</div>
                                 </div>
                             </button>
                         );
