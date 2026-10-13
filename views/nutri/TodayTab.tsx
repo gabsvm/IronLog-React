@@ -65,9 +65,9 @@ export const TodayTab: React.FC<Props> = ({
 }) => {
 
     return (
-        <div className="space-y-3 pt-1">
+        <div className="space-y-4 pt-1">
             {/* Hero card — calories + key metrics */}
-            <div className="glass-card rounded-3xl p-4">
+            <div className="premium-theme-panel premium-theme-quiet p-4 sm:p-5">
                 <div className="flex items-start justify-between mb-4">
                     <div>
                         <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">
@@ -140,7 +140,7 @@ export const TodayTab: React.FC<Props> = ({
                 <button
                     onClick={onAddMeal}
                     aria-label={TRANSLATIONS[lang].copy.todayTab.addFoodEntry}
-                    className="flex items-center justify-center gap-2 p-4 rounded-2xl glass-card hover:border-white/10 active:scale-95 transition-all duration-fast ease-natural"
+                    className="premium-theme-panel expressive-press flex min-h-[64px] items-center justify-center gap-2 p-4 hover:border-primary-500/25"
                 >
                     <div className="w-8 h-8 rounded-xl bg-green-500/15 flex items-center justify-center">
                         <Icon name="Plus" size={16} className="text-green-400" />
@@ -150,7 +150,7 @@ export const TodayTab: React.FC<Props> = ({
                 <button
                     onClick={onAddCardio}
                     aria-label={TRANSLATIONS[lang].copy.todayTab.logCardioSession}
-                    className="flex items-center justify-center gap-2 p-4 rounded-2xl glass-card hover:border-white/10 active:scale-95 transition-all duration-fast ease-natural"
+                    className="premium-theme-panel expressive-press flex min-h-[64px] items-center justify-center gap-2 p-4 hover:border-primary-500/25"
                 >
                     <div className="w-8 h-8 rounded-xl bg-red-500/15 flex items-center justify-center">
                         <Icon name="Flame" size={16} className="text-red-400" />
@@ -161,7 +161,7 @@ export const TodayTab: React.FC<Props> = ({
 
             {/* Today cardio summary */}
             {todayCardio.length > 0 && (
-                <div className="glass-card rounded-2xl p-3">
+                <div className="premium-theme-panel p-3">
                     <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">
                         {TRANSLATIONS[lang].copy.todayTab.todaySCardio}
                     </p>
@@ -199,11 +199,11 @@ export const TodayTab: React.FC<Props> = ({
                 const mealProt = entries.reduce((a, e) => a + e.protein, 0);
                 const isExpanded = expandedMeal === mealType;
                 return (
-                    <div key={mealType} className="glass-card rounded-3xl overflow-hidden">
+                    <div key={mealType} className="premium-theme-panel overflow-hidden">
                         <button
                             onClick={() => setExpandedMeal(isExpanded ? null : mealType)}
                             aria-expanded={isExpanded}
-                            className="w-full flex items-center justify-between p-4"
+                            className="expressive-press w-full flex items-center justify-between p-4"
                         >
                             <div className="flex items-center gap-3">
                                 <span className="text-xl" aria-hidden="true">{meta.emoji}</span>
