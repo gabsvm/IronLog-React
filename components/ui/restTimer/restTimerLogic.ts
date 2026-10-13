@@ -1,6 +1,7 @@
 // U5: pure rest-timer math, effort rating and next-action resolution, moved verbatim from components/ui/RestTimerOverlay.tsx.
 import { TRANSLATIONS } from '../../../constants';
 import { getTranslated } from '../../../utils';
+import { pickLang } from '../../../utils/i18n';
 import { formatWeight, unitLabel } from '../../../utils/units';
 import type { SessionExercise, WeightUnit } from '../../../types';
 
@@ -22,6 +23,39 @@ export interface RestNextAction {
     name: string;
     isSuperset: boolean;
     target: string | null;
+    /** One-based ordinal within the visible exercise set list. */
+    setNumber: number;
+    totalSets: number;
+}
+
+export interface RestNotificationContent {
+    liveTitle: string;
+    liveBody: string;
+}
+
+const NOTIFICATION_COPY = {
+    es: { resting: 'Descansando', nextSet: 'Próxima serie', nextExercise: 'Próximo ejercicio', superset: 'Superserie', of: 'de' },
+    en: { resting: 'Resting', nextSet: 'Next set', nextExercise: 'Next exercise', superset: 'Superset', of: 'of' },
+};
+
+/** Identical exercise selection to the in-app rest overlay; no invented next set. */
+export function resolveRestNotificationContent(
+    exercises: SessionExercise[] | undefined,
+    source: { exerciseInstanceId: number; setId: number } | undefined,
+    lang: 'es' | 'en',
+): RestNotificationContent | null {
+    const info = resolveRestNextAction(exercises, source, lang);
+    if (!info) return null;
+    const copy = pickLang(lang, NOTIFICATION_COPY);
+    const nextSet = info.category === TRANSLATIONS[lang].timer.nextSet;
+    const prefix = info.isSuperset ? copy.superset : nextSet ? copy.nextSet : copy.nextExercise;
+    const detail = info.setNumber > 0 && info.totalSets > 0
+        ? `${prefix}: ${info.setNumber} ${copy.of} ${info.totalSets}`
+        : prefix;
+    return {
+        liveTitle: `${copy.resting} · ${info.name}`.slice(0, 110),
+        liveBody: detail,
+    };
 }
 
 export function applyEffortRatingToExercises(
@@ -58,6 +92,11 @@ export function resolveRestNextAction(
         return null;
     };
 
+    const setPosition = (ex: SessionExercise, set: SessionExercise['sets'][number]) => ({
+        setNumber: ex.sets.indexOf(set) + 1,
+        totalSets: ex.sets.length,
+    });
+
     // If rest was triggered by an exact source set
     if (source) {
         const sourceExIndex = exercises.findIndex(e => e.instanceId === source.exerciseInstanceId);
@@ -76,6 +115,7 @@ export function resolveRestNextAction(
                         name: getTranslated(nextPartner.name, lang),
                         isSuperset: true,
                         target,
+                        ...setPosition(nextPartner, nextSet!)
                     };
                 }
             } else {
@@ -88,6 +128,7 @@ export function resolveRestNextAction(
                         name: getTranslated(sourceEx.name, lang),
                         isSuperset: false,
                         target,
+                        ...setPosition(sourceEx, nextSetInSameEx)
                     };
                 }
             }
@@ -106,6 +147,7 @@ export function resolveRestNextAction(
                         name: getTranslated(candidate.name, lang),
                         isSuperset,
                         target,
+                        ...setPosition(candidate, nextSet)
                     };
                 }
             }
@@ -123,6 +165,7 @@ export function resolveRestNextAction(
                 name: getTranslated(ex.name, lang),
                 isSuperset,
                 target,
+                ...setPosition(ex, nextSet)
             };
         }
     }
