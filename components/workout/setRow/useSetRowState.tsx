@@ -294,7 +294,7 @@ export const useSetRowState = ({
     const inputDoneClass = "h-[38px] w-full rounded-[9px] bg-transparent text-center text-[15px] font-semibold text-primary-400 outline-none tabular-nums";
     const currentInputClass = isDone ? inputDoneClass : isNextSet ? inputActiveClass : inputBaseClass;
 
-    const rowClass = `relative rounded-[12px] transition-all duration-150 ${
+    const rowClass = `premium-progress-feedback relative rounded-[14px] ${
         isDone
             ? 'bg-primary-500/10 border border-primary-500/25'
             : isNextSet
@@ -303,7 +303,7 @@ export const useSetRowState = ({
             : 'bg-surface-raised border border-border-subtle'
     }`;
 
-    const checkBtnClass = `relative flex h-[34px] w-[34px] after:absolute after:-inset-[6px] after:content-[''] shrink-0 items-center justify-center rounded-full transition-all duration-150 active:scale-90 ${
+    const checkBtnClass = `premium-progress-feedback relative flex h-[34px] w-[34px] after:absolute after:-inset-[6px] after:content-[''] shrink-0 items-center justify-center rounded-full transition-all duration-150 active:scale-90 ${
         isDone
             ? 'bg-primary-500 text-zinc-950 font-black shadow-sm'
             : 'border border-zinc-700 bg-surface-elevated text-zinc-500 hover:border-zinc-500 hover:text-white'
