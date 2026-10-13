@@ -8,7 +8,7 @@ import type { HomeViewState } from './useHomeViewState';
 const HERO_COPY = {
     es: { day: 'DÍA', inProgress: 'EN CURSO', completed: 'COMPLETADO', next: 'TU PRÓXIMA SESIÓN', details: 'Detalles del entrenamiento' },
     en: { day: 'DAY', inProgress: 'IN PROGRESS', completed: 'COMPLETED', next: 'YOUR NEXT SESSION', details: 'Workout details' },
-} as const;
+};
 
 export const HomeHeroCard: React.FC<{ state: HomeViewState }> = ({ state }) => {
     const { startSession, uniqueDaysDone, exercises, lang, activeSession, activeMeso, t, h, tm, safeProgram, selectedDayIdx, selectedDayEstimatedMin, handleSkipClick } = state;
