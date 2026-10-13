@@ -106,6 +106,35 @@ describe('Android native rest state is authoritative', () => {
         expect(native.cancel).not.toHaveBeenCalled();
     });
 
+    it('an inactive native snapshot never cancels alarms on app mount', async () => {
+        const { result } = renderHook(() => useTimer('es'));
+        await waitFor(() => expect(native.read).toHaveBeenCalled());
+        expect(result.current.restTimer.active).toBe(false);
+        expect(native.cancel).not.toHaveBeenCalled();
+        expect(native.schedule).not.toHaveBeenCalled();
+    });
+
+    it('a late startup snapshot cannot overwrite a rest that the user just started', async () => {
+        let release!: (value: {
+            active: boolean; endAt: number; duration: number; epoch: number;
+            sourceExerciseInstanceId: number; sourceSetId: number;
+        }) => void;
+        native.read.mockImplementationOnce(() => new Promise(resolve => { release = resolve; }));
+        const { result } = renderHook(() => useTimer('en'));
+        const endAt = Date.now() + 110000;
+        act(() => result.current.setRestTimer({ active: true, endAt, duration: 110, timeLeft: 110 }));
+        await waitFor(() => expect(native.read).toHaveBeenCalled());
+        await act(async () => {
+            release({
+                active: true, endAt: Date.now() + 5000, duration: 5, epoch: 1,
+                sourceExerciseInstanceId: -1, sourceSetId: -1,
+            });
+        });
+        await waitFor(() => expect(native.schedule).toHaveBeenCalledTimes(1));
+        expect(result.current.restTimer.endAt).toBe(endAt);
+        expect(native.schedule).toHaveBeenCalledWith(expect.objectContaining({ endAt }));
+    });
+
     it('user-started rests schedule the Android alarm after the initial reconciliation', async () => {
         const { result } = renderHook(() => useTimer('es'));
         await waitFor(() => expect(native.read).toHaveBeenCalled());
