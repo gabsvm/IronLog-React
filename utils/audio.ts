@@ -4,9 +4,9 @@ export type HapticType = 'light' | 'medium' | 'heavy' | 'success' | 'warning';
 
 interface NativeBridgePlugin {
     haptic(options: { type: HapticType }): Promise<void>;
-    scheduleRestTimer(options: { endAt: number; title: string; body: string; liveTitle?: string; liveBody?: string; duration: number; sourceExerciseInstanceId: number; sourceSetId: number }): Promise<void>;
+    scheduleRestTimer(options: { endAt: number; title: string; body: string; liveTitle?: string; liveBody?: string; skipLabel?: string; duration: number; sourceExerciseInstanceId: number; sourceSetId: number }): Promise<void>;
     getRestTimerState(): Promise<NativeRestTimerSnapshot>;
-    updateRestTimerContent(options: { endAt: number; liveTitle: string; liveBody: string }): Promise<void>;
+    updateRestTimerContent(options: { endAt: number; liveTitle: string; liveBody: string; skipLabel?: string }): Promise<void>;
     cancelRestTimer(): Promise<void>;
     canScheduleExactAlarms(): Promise<{ granted: boolean; sdkInt: number }>;
     openExactAlarmSettings(): Promise<void>;
@@ -107,10 +107,11 @@ export const scheduleNativeRestTimer = (
     liveBody?: string,
     duration = 120,
     source?: { exerciseInstanceId: number; setId: number },
+    skipLabel?: string,
 ) => {
     if (!Capacitor.isNativePlatform()) return;
     const options = {
-        endAt, title, body, liveTitle, liveBody,
+        endAt, title, body, liveTitle, liveBody, skipLabel,
         duration: Math.max(1, Math.round(duration)),
         sourceExerciseInstanceId: source?.exerciseInstanceId ?? -1,
         sourceSetId: source?.setId ?? -1,
@@ -142,12 +143,12 @@ export const getNativeRestTimerState = async (): Promise<NativeRestTimerSnapshot
  */
 export const updateNativeRestTimerContent = (
     endAt: number,
-    content: { liveTitle: string; liveBody: string },
+    content: { liveTitle: string; liveBody: string; skipLabel?: string },
 ): void => {
     if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') return;
     if (!Number.isFinite(endAt) || endAt <= Date.now()) return;
     void NativeBridge.updateRestTimerContent({
-        endAt, liveTitle: content.liveTitle, liveBody: content.liveBody,
+        endAt, liveTitle: content.liveTitle, liveBody: content.liveBody, skipLabel: content.skipLabel,
     }).catch(() => {
         // Old APK without the newer bridge remains fully functional with generic text.
     });
