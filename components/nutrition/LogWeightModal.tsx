@@ -50,7 +50,7 @@ export const LogWeightModal: React.FC<LogWeightModalProps> = ({ isOpen, onClose,
         >
             <div className="p-5 space-y-5">
                 <div>
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-2 px-1">
+                    <label className="block text-sm font-semibold tracking-normal text-muted mb-2 px-1">
                         {w.currentWeight}
                     </label>
                     <div className="relative">
@@ -60,15 +60,15 @@ export const LogWeightModal: React.FC<LogWeightModalProps> = ({ isOpen, onClose,
                             value={weight}
                             onChange={(e) => setWeight(e.target.value)}
                             placeholder="0.0"
-                            className="w-full bg-zinc-800 border border-zinc-700/50 rounded-2xl px-6 pr-20 py-5 text-3xl font-black text-white focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all placeholder:text-zinc-600 glow-input-neon"
+                            className="w-full premium-form-input px-6 pr-20 py-5 text-3xl font-black text-[rgb(var(--text-primary))] focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all placeholder:text-muted "
                             autoFocus
                         />
-                        <div className="absolute right-5 top-1/2 -translate-y-1/2 text-zinc-300 font-black uppercase tracking-tighter text-sm bg-zinc-700/50 px-2.5 py-1 rounded-lg">{unitLabel(unit).toLowerCase()}</div>
+                        <div className="absolute right-5 top-1/2 -translate-y-1/2 text-[rgb(var(--text-secondary))] font-black uppercase tracking-tighter text-sm bg-[rgb(var(--surface-elevated))] px-2.5 py-1 rounded-full">{unitLabel(unit).toLowerCase()}</div>
                     </div>
                 </div>
 
                 <div>
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-2 px-1">
+                    <label className="block text-sm font-semibold tracking-normal text-muted mb-2 px-1">
                         {w.bodyFat} (%)
                     </label>
                     <div className="relative">
@@ -78,21 +78,21 @@ export const LogWeightModal: React.FC<LogWeightModalProps> = ({ isOpen, onClose,
                             value={bodyFat}
                             onChange={(e) => setBodyFat(e.target.value)}
                             placeholder="0.0"
-                            className="w-full bg-zinc-800 border border-zinc-700/50 rounded-2xl px-6 pr-16 py-4 text-xl font-bold text-white focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all placeholder:text-zinc-600 glow-input-neon"
+                            className="w-full premium-form-input px-6 pr-16 py-4 text-xl font-bold text-[rgb(var(--text-primary))] focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all placeholder:text-muted "
                         />
-                        <div className="absolute right-5 top-1/2 -translate-y-1/2 text-zinc-300 font-black text-sm bg-zinc-700/50 px-2.5 py-1 rounded-lg">%</div>
+                        <div className="absolute right-5 top-1/2 -translate-y-1/2 text-[rgb(var(--text-secondary))] font-black text-sm bg-[rgb(var(--surface-elevated))] px-2.5 py-1 rounded-full">%</div>
                     </div>
                 </div>
 
                 <div>
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-2 px-1">
+                    <label className="block text-sm font-semibold tracking-normal text-muted mb-2 px-1">
                         {t.notes}
                     </label>
                     <textarea
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
                         placeholder={w.notePlaceholder}
-                        className="w-full bg-zinc-800 border border-zinc-700/50 rounded-2xl px-4 py-4 min-h-[90px] text-sm font-medium text-white focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all resize-none placeholder:text-zinc-600 glow-input-neon"
+                        className="w-full premium-form-input px-4 py-4 min-h-[90px] text-sm font-medium text-[rgb(var(--text-primary))] focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all resize-none placeholder:text-muted "
                     />
                 </div>
             </div>
