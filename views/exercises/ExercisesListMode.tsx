@@ -12,7 +12,7 @@ export const ExercisesListMode: React.FC<{ state: ExercisesViewState }> = ({ sta
         <>
                 <div className="flex-1 flex flex-col overflow-hidden relative">
                     {/* Controls: Search and Filter Chips */}
-                    <div className="p-4 space-y-3 shrink-0 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm border-b border-zinc-200 dark:border-white/5">
+                    <div className="shrink-0 space-y-3 border-b border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base)/0.95)] p-4 backdrop-blur-md">
                         {/* Search input */}
                         <div className="relative">
                             <Icon name="Search" size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
@@ -21,7 +21,7 @@ export const ExercisesListMode: React.FC<{ state: ExercisesViewState }> = ({ sta
                                 value={searchQuery}
                                 onChange={e => setSearchQuery(e.target.value)}
                                 placeholder={ev.searchPh}
-                                className="w-full pl-9 pr-8 py-2 bg-zinc-100 dark:bg-zinc-800 rounded-xl text-sm font-medium text-zinc-900 dark:text-white border border-transparent focus:border-primary-500 outline-none transition-all"
+                                className="premium-form-input w-full py-3 pl-10 pr-9 font-medium"
                             />
                             {searchQuery && (
                                 <button
@@ -40,10 +40,10 @@ export const ExercisesListMode: React.FC<{ state: ExercisesViewState }> = ({ sta
                                 <button
                                     key={cat}
                                     onClick={() => setFilterCategory(cat)}
-                                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                                    className={`premium-filter-pill ${
                                         filterCategory === cat
                                             ? 'bg-primary-500 text-black shadow-sm'
-                                            : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-white'
+                                            : 'bg-[rgb(var(--surface-elevated))] text-[rgb(var(--text-secondary))]'
                                     }`}
                                 >
                                     {cat === 'all'
@@ -59,10 +59,10 @@ export const ExercisesListMode: React.FC<{ state: ExercisesViewState }> = ({ sta
                         <div className="flex gap-1.5 overflow-x-auto no-scrollbar py-0.5">
                             <button
                                 onClick={() => setSelectedMuscle('ALL')}
-                                className={`px-2.5 py-1 rounded-md text-[11px] font-bold whitespace-nowrap transition-colors ${
+                                className={`premium-filter-pill shrink-0 whitespace-nowrap ${
                                     selectedMuscle === 'ALL'
-                                        ? 'bg-zinc-800 dark:bg-white text-white dark:text-black'
-                                        : 'bg-zinc-100 dark:bg-zinc-800/80 text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'
+                                        ? 'bg-primary-500 text-zinc-950'
+                                        : 'bg-[rgb(var(--surface-elevated))] text-[rgb(var(--text-secondary))]'
                                 }`}
                             >
                                 {ev.allMuscles}
@@ -71,10 +71,10 @@ export const ExercisesListMode: React.FC<{ state: ExercisesViewState }> = ({ sta
                                 <button
                                     key={m}
                                     onClick={() => setSelectedMuscle(m)}
-                                    className={`px-2.5 py-1 rounded-md text-[11px] font-bold whitespace-nowrap transition-colors ${
+                                    className={`premium-filter-pill shrink-0 whitespace-nowrap ${
                                         selectedMuscle === m
                                             ? 'bg-primary-500/20 text-primary-400 border border-primary-500/40'
-                                            : 'bg-zinc-100 dark:bg-zinc-800/80 text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'
+                                            : 'bg-[rgb(var(--surface-elevated))] text-[rgb(var(--text-secondary))]'
                                     }`}
                                 >
                                     {TRANSLATIONS[lang].muscle[m]}
@@ -86,7 +86,7 @@ export const ExercisesListMode: React.FC<{ state: ExercisesViewState }> = ({ sta
                     {/* Duplicate suggestions (Q14) */}
                     {duplicateSuggestions.length > 0 && (
                         <div className="shrink-0 px-4 pt-3 space-y-2">
-                            <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">
+                            <p className="text-xs font-semibold text-muted">
                                 {t.merge.suggestionsTitle}
                             </p>
                             {duplicateSuggestions.map(s => {
