@@ -202,12 +202,15 @@ export const useRestTimerOverlayState = () => {
     const liveBody = notificationInfo?.liveBody ?? t.timer.restingBody;
     useEffect(() => {
         if (!restTimer?.active || !restTimer.endAt) return;
+        // A restored alarm already owns the last valid context; do not erase
+        // it with generic text while the session store is still bootstrapping.
+        if (!activeSession) return;
         if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') return;
         updateNativeRestTimerContent(restTimer.endAt, {
             liveTitle, liveBody,
             skipLabel: pickLang(lang, { es: 'Omitir', en: 'Skip' }),
         });
-    }, [restTimer?.active, restTimer?.endAt, liveTitle, liveBody, lang]);
+    }, [restTimer?.active, restTimer?.endAt, activeSession, liveTitle, liveBody, lang]);
 
     const dismissNotifPrompt = () => setShowNotifPrompt(false);
     const dismissAlarmNotice = () => setShowAlarmNotice(false);
