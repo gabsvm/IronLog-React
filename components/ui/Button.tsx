@@ -17,11 +17,11 @@ export const Button: React.FC<ButtonProps> = ({
         // MUST match the brand. Previously was bg-white/text-black, which made every
         // CTA across SessionSummary, NutriView, ProgramEdit, ConfirmModal etc.
         // appear as a generic white pill instead of the brand color.
-        primary: "bg-primary-500 text-black hover:bg-primary-400 shadow-[0_0_20px_rgb(var(--primary-500)/0.25)] border border-transparent focus:ring-primary-500",
-        secondary: "bg-zinc-100 text-zinc-800 border border-zinc-200 hover:bg-zinc-200 focus:ring-zinc-500 dark:bg-zinc-800 dark:text-white dark:border-zinc-700 dark:hover:bg-zinc-700 dark:focus:ring-zinc-600",
+        primary: "bg-primary-500 text-black hover:bg-primary-400 shadow-sm border border-transparent focus:ring-primary-500",
+        secondary: "bg-[rgb(var(--surface-elevated))] text-[rgb(var(--text-primary))] border border-[rgb(var(--border-subtle))] hover:bg-primary-500/10 focus:ring-primary-500",
         danger: "bg-red-900/20 text-red-500 border border-red-500/50 hover:bg-red-500 hover:text-white focus:ring-red-500",
-        ghost: "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-white/5",
-        outline: "border border-zinc-300 text-zinc-600 hover:text-zinc-900 hover:border-zinc-500 dark:border-zinc-700 dark:text-zinc-400 dark:hover:text-white dark:hover:border-zinc-500 border-dashed"
+        ghost: "text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--text-primary))] hover:bg-[rgb(var(--surface-elevated))]",
+        outline: "border border-[rgb(var(--border-subtle))] text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--text-primary))] hover:border-primary-500/40 border-dashed"
     };
     
     const sizes = {
