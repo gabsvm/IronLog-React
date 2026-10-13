@@ -16,7 +16,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onLogin }) => {
     const t = TRANSLATIONS[lang].landing;
 
     return (
-        <div className="fixed inset-0 z-50 bg-black overflow-y-auto scroll-container">
+        <div className="fixed inset-0 z-50 overflow-y-auto scroll-container bg-[#101511] text-white">
             {/* Background Effects */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-primary-600/10 blur-[100px] md:blur-[120px] rounded-full" />
@@ -33,13 +33,13 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onLogin }) => {
                         <div className="flex bg-zinc-900/50 p-1 rounded-full border border-white/5">
                             <button
                                 onClick={() => setLang('en')}
-                                className={`px-3 py-1 text-[10px] font-bold rounded-full transition-all ${TRANSLATIONS[lang].copy.landing.bgPrimary600Text}`}
+                                className={`px-3 py-1 text-xs font-bold rounded-full transition-all ${TRANSLATIONS[lang].copy.landing.bgPrimary600Text}`}
                             >
                                 EN
                             </button>
                             <button
                                 onClick={() => setLang('es')}
-                                className={`px-3 py-1 text-[10px] font-bold rounded-full transition-all ${TRANSLATIONS[lang].copy.landing.textZinc500Hover}`}
+                                className={`px-3 py-1 text-xs font-bold rounded-full transition-all ${TRANSLATIONS[lang].copy.landing.textZinc500Hover}`}
                             >
                                 ES
                             </button>
@@ -60,15 +60,15 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onLogin }) => {
                     <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff04_1px,transparent_1px),linear-gradient(to_bottom,#ffffff04_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none opacity-60" />
 
                     {/* Floating mock workout card */}
-                    <div className="relative w-full max-w-xs mb-8 animate-bounce-cta" style={{ animationDuration: '3s' }}>
-                        <div className="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden shadow-2xl shadow-black/60">
+                    <div className="relative w-full max-w-xs mb-8 expressive-reveal" style={{ animationDuration: '3s' }}>
+                        <div className="bg-[#18201a] border border-primary-500/20 rounded-[32px] overflow-hidden shadow-2xl shadow-black/60">
                             {/* Card header */}
-                            <div className="px-4 pt-4 pb-3 border-b border-zinc-800 flex items-center justify-between">
+                            <div className="px-4 pt-4 pb-3 border-b border-primary-500/10 flex items-center justify-between">
                                 <div>
-                                    <div className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest mb-0.5">CHEST · WEEK 2</div>
+                                    <div className="text-xs font-bold text-zinc-600 uppercase tracking-widest mb-0.5">CHEST · WEEK 2</div>
                                     <div className="text-base font-black text-white">Bench Press</div>
                                 </div>
-                                <div className="text-[9px] font-bold bg-zinc-800 text-zinc-500 px-2 py-1 rounded-lg border border-zinc-700">
+                                <div className="text-xs font-bold bg-zinc-800 text-zinc-500 px-2 py-1 rounded-lg border border-zinc-700">
                                     8-12 Reps
                                 </div>
                             </div>
@@ -81,17 +81,17 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onLogin }) => {
                                 ].map((s, i) => (
                                     <div key={i} className={`grid grid-cols-12 gap-2 items-center py-2.5 px-3 ${s.done ? 'opacity-60' : ''}`}>
                                         <div className="col-span-2 flex justify-center">
-                                            <div className={`w-8 h-8 rounded-lg border flex items-center justify-center text-[10px] font-black ${s.done ? 'bg-green-500/15 border-green-500/30 text-green-400' : s.color}`}>
+                                            <div className={`w-8 h-8 rounded-lg border flex items-center justify-center text-xs font-black ${s.done ? 'bg-green-500/15 border-green-500/30 text-green-400' : s.color}`}>
                                                 {s.done ? '✓' : s.label}
                                             </div>
                                         </div>
                                         <div className="col-span-4">
-                                            <div className={`text-center text-lg font-black rounded-lg py-1.5 ${s.done ? 'text-green-400' : 'bg-zinc-800 text-white'}`}>
+                                            <div className={`text-center text-lg font-black rounded-lg py-1.5 ${s.done ? 'text-green-400' : 'bg-[#273325] text-white'}`}>
                                                 {s.weight || '—'}
                                             </div>
                                         </div>
                                         <div className="col-span-4">
-                                            <div className={`text-center text-lg font-black rounded-lg py-1.5 ${s.done ? 'text-green-400' : s.reps ? 'bg-zinc-800 text-white' : 'bg-zinc-800 text-zinc-600'}`}>
+                                            <div className={`text-center text-lg font-black rounded-lg py-1.5 ${s.done ? 'text-green-400' : s.reps ? 'bg-[#273325] text-white' : 'bg-zinc-800 text-zinc-600'}`}>
                                                 {s.reps || '—'}
                                             </div>
                                         </div>
@@ -110,7 +110,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onLogin }) => {
 
                     <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tighter mb-4 md:mb-6 animate-in-up" style={{ animationDelay: '0.2s' }}>
                         {t.title}{' '}
-                        <span className="text-primary-600">{t.titleAccent}</span>
+                        <span className="text-primary-500">{t.titleAccent}</span>
                         {t.titleSuffix && ` ${t.titleSuffix}`}
                     </h1>
                     <p className="text-zinc-400 text-base md:text-xl max-w-sm md:max-w-md mb-8 md:mb-10 animate-in-up text-balance" style={{ animationDelay: '0.3s' }}>
@@ -121,7 +121,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onLogin }) => {
                         <Button
                             variant="primary"
                             size="lg"
-                            className="w-full h-14 md:h-16 text-lg font-bold shadow-[0_0_30px_rgba(220,38,38,0.35)] active:scale-95 transition-transform flex items-center justify-center gap-3"
+                            className="w-full h-14 md:h-16 text-lg font-bold shadow-[0_16px_45px_-25px_rgb(var(--primary-500)/0.6)] active:scale-95 transition-transform flex items-center justify-center gap-3"
                             onClick={onStart}
                         >
                             {t.getStarted}
@@ -131,14 +131,14 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onLogin }) => {
 
                     {/* Scroll Indicator */}
                     <div className="absolute bottom-4 left-1/2 -translate-x-1/2 animate-bounce opacity-20 hover:opacity-100 transition-opacity hidden md:flex flex-col items-center gap-2">
-                        <span className="text-[10px] uppercase tracking-[0.3em] font-bold text-zinc-500">Scroll</span>
+                        <span className="text-xs uppercase tracking-[0.3em] font-bold text-zinc-500">Scroll</span>
                         <Icon name="ChevronDown" size={16} className="text-zinc-500" />
                     </div>
                 </div>
 
                 {/* Features Grid */}
                 <div id="features" className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 mb-12">
-                    <h2 className="col-span-full text-zinc-500 text-[10px] font-bold uppercase tracking-[0.2em] mb-2 animate-in-up" style={{ animationDelay: '0.5s' }}>
+                    <h2 className="col-span-full text-zinc-500 text-xs font-bold uppercase tracking-[0.2em] mb-2 animate-in-up" style={{ animationDelay: '0.5s' }}>
                         {t.featuresTitle}
                     </h2>
                     {t.features.map((feature: any, i: number) => (
@@ -161,7 +161,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onLogin }) => {
                 </div>
 
                 {/* Footer */}
-                <div className="text-center text-zinc-600 text-[9px] md:text-[10px] uppercase tracking-widest mt-auto pb-[calc(1rem+var(--safe-area-bottom))] animate-in-up" style={{ animationDelay: '1s' }}>
+                <div className="text-center text-zinc-600 text-xs md:text-xs uppercase tracking-widest mt-auto pb-[calc(1rem+var(--safe-area-bottom))] animate-in-up" style={{ animationDelay: '1s' }}>
                     GainsLab v4.0 &copy; {new Date().getFullYear()} &bull; Professional Edition
                 </div>
             </div>
