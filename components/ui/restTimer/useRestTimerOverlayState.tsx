@@ -5,10 +5,10 @@ import { useTimerActions, useTimerState } from '../../../context/TimerContext';
 import { requestTimerNotificationPermission } from '../../../hooks/useTimer';
 import { useAppConfig, useAppPreferences } from '../../../context/AppContext';
 import { TRANSLATIONS } from '../../../constants';
-import { getExactAlarmState, openExactAlarmSettings, shouldShowExactAlarmNotice, triggerHaptic } from '../../../utils/audio';
+import { getExactAlarmState, openExactAlarmSettings, shouldShowExactAlarmNotice, triggerHaptic, updateNativeRestTimerContent } from '../../../utils/audio';
 import { useStore } from '../../../lib/store';
 import { resolveWeightUnit } from '../../../utils/units';
-import { applyEffortRatingToExercises, resolveRestNextAction } from './restTimerLogic';
+import { applyEffortRatingToExercises, resolveRestNextAction, resolveRestNotificationContent } from './restTimerLogic';
 
 export const useRestTimerOverlayState = () => {
     const restTimer = useTimerState();
@@ -188,6 +188,22 @@ export const useRestTimerOverlayState = () => {
     const nextExerciseInfo = useMemo(() => {
         return resolveRestNextAction(activeSession?.exercises, restTimer?.source, lang, resolveWeightUnit(config));
     }, [activeSession?.exercises, lang, restTimer?.source, config]);
+
+    // Android 15 supports updating an existing notification by ID. Update only
+    // when the exercise/set context changes, not with each countdown tick.
+    // The native bridge validates endAt so a delayed render cannot resurrect
+    // a skipped rest or overwrite a +30s action.
+    const notificationInfo = useMemo(
+        () => resolveRestNotificationContent(activeSession?.exercises, restTimer?.source, lang),
+        [activeSession?.exercises, restTimer?.source, lang],
+    );
+    const liveTitle = notificationInfo?.liveTitle ?? t.timer.resting;
+    const liveBody = notificationInfo?.liveBody ?? t.timer.restingBody;
+    useEffect(() => {
+        if (!restTimer?.active || !restTimer.endAt) return;
+        if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') return;
+        updateNativeRestTimerContent(restTimer.endAt, { liveTitle, liveBody });
+    }, [restTimer?.active, restTimer?.endAt, liveTitle, liveBody]);
 
     const dismissNotifPrompt = () => setShowNotifPrompt(false);
     const dismissAlarmNotice = () => setShowAlarmNotice(false);
