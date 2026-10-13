@@ -214,7 +214,7 @@ export const NutriView: React.FC = () => {
     <div className="h-full flex flex-col bg-[rgb(var(--surface-app))]">
       {/* ── Sub-tabs ── */}
       <div className="px-4 pt-4 pb-2 shrink-0">
-        <div className="flex gap-1 bg-[#131316] p-1 rounded-2xl border border-white/5">
+        <div className="seg-reference flex gap-1 p-1">
           {([
             { id: 'today',   label: TRANSLATIONS[lang].copy.nutri.today,        icon: 'Utensils' },
             { id: 'body',    label: TRANSLATIONS[lang].copy.nutri.body,      icon: 'Scale' },
@@ -223,8 +223,9 @@ export const NutriView: React.FC = () => {
             <button
               key={tab.id}
               onClick={() => setSubTab(tab.id)}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all ${
-                subTab === tab.id ? 'bg-primary-500 text-black shadow-[0_0_15px] shadow-primary-500/15' : 'text-zinc-500 hover:text-white'
+              aria-pressed={subTab === tab.id}
+              className={`expressive-press flex min-h-11 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full px-1 text-xs font-bold tracking-normal ${
+                subTab === tab.id ? 'bg-primary-500 text-zinc-950 shadow-sm' : 'text-muted hover:text-[rgb(var(--text-primary))]'
               }`}
             >
               <Icon name={tab.icon as any} size={12} />
