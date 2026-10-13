@@ -67,3 +67,17 @@ Aplicada **directamente** en `agent/gainslab-audit-fixes-v3`, sin tocar `main`, 
 - Pruebas Playwright adicionales: teléfono estrecho 320 px y contraste WCAG AA; `npm run verify:expressive` para ejecutarlas sin depender de snapshots anteriores.
 
 **Evidencia/limitaciones:** los resultados de 783 pruebas, 16 capturas y `tsc` citados arriba corresponden a la implementación anterior. Esta pasada se aplicó mediante la conexión GitHub, sin checkout local ni ejecución de npm/Playwright: aún deben ejecutarse `npm run verify`, `npm run verify:expressive`, `npm run test:visual:update` (solo tras revisar los nuevos PNG), `npm run test:visual` y una prueba en Android con teclado y descanso activos. No confundir commit/push correcto con suite validada.
+
+
+## 9. Premium Expressive — pasada final (2026-10-13)
+
+Implementado directamente en `agent/gainslab-audit-fixes-v3` a partir del prototipo interactivo Premium Expressive Lab. Sin nuevos paquetes, sin pantallas o datos ficticios, sin tocar `main` ni promover Production.
+
+- **Home:** `HomeHeroCard` usa una composición editorial más distintiva, un motivo de pesa hecho con SVG inline, un CTA primario claro y los ejercicios/series reales del día. Admite todos los acentos y ambos temas; conserva empezar/reanudar/repetir/omitir sin cambiar la lógica de KONG. `HomeRecapStrip` mantiene la misma información y ofrece mejor jerarquía.
+- **Stats:** `utils/premiumInsights.ts` deriva del historial filtrado por el scope actual (plan/histórico) las series de trabajo completadas de cuatro ventanas móviles de 7 días y la mejor serie con carga por e1RM de Epley; se excluyen saltadas, warmups, AVT hops, cardio, isométricos y peso corporal al identificar la marca. Se muestra la carga real anotada, no el e1RM como una cifra levantada, y se etiqueta como **mejor serie registrada**, no «nuevo PR». Sin semanas comparables, no se inventa crecimiento. `PremiumTrendCard` muestra un SVG con los datos y fallback vacío.
+- **Entreno:** `SetRow` conserva tamaños, foco, orden y lógica de confirmación; las series siguientes/completadas reciben una transición de color/borde muy ligera; nunca se animan las filas en su posición.
+- **Dieta, Historial, Perfil:** reutilizan una familia de superficies tonales contenidas; no se añaden tarjetas extra a listas ni se afecta la virtualización de Historial.
+- **Accesibilidad y rendimiento:** el SVG de Home es decorativo, el gráfico de Stats ofrece una descripción legible y todos los movimientos añadidos respetan `prefers-reduced-motion` y el ajuste reducido de la aplicación.
+- **Pruebas añadidas:** `tests/unit/premiumInsights.test.ts` cubre conteo, scope, marcas, fechas futuras y estados vacíos; la suite visual contiene un test funcional de los elementos Premium para ambos temas.
+
+**Validación:** el Preview intermedio compiló con TypeScript + Vite. El Preview final debe comprobar el SHA final. Quedan por ejecutar en un entorno con checkout y navegador los comandos `npm run verify`, `npm run verify:expressive` y la regresión visual completa con regeneración revisada de baselines. No asumir que capturas antiguas son compatibles: el rediseño cambia la interfaz intencionalmente. Falta la inspección física Android y prueba del teclado/temporizador.
