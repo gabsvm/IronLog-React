@@ -66,7 +66,7 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
                 style={{ ...pillPositionStyle, ...(keyboardOpen ? { left: 'auto', right: '8px', marginLeft: 0, marginRight: 0, width: 'min(220px, calc(100% - 16px))' } : {}) }}
                 aria-label={t.resting}
             >
-                <div className={`pointer-events-auto border border-border-strong bg-surface-raised px-3 py-1.5 shadow-xl ${showCompactExtras ? 'rounded-3xl' : 'rounded-full'}`}>
+                <div className={`premium-rest-pill pointer-events-auto border border-[rgb(var(--border-subtle))] px-3 py-2 shadow-xl ${showCompactExtras ? 'rounded-3xl' : 'rounded-full'}`}>
                     <div className="flex flex-wrap items-center justify-between gap-2">
                         {/* Time display & tap to expand */}
                         <button
@@ -93,7 +93,7 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
                                     style={{ transition: reducedEffects ? 'none' : 'stroke-dashoffset 1s linear' }}
                                 />
                             </svg>
-                            <span className="font-mono text-lg font-black text-white tabular-nums tracking-tight">
+                            <span className="font-mono text-lg font-black text-[rgb(var(--text-primary))] tabular-nums tracking-tight">
                                 {formatSeconds(restTimer.timeLeft)}
                             </span>
                             <Icon name="ChevronUp" size={14} className="text-muted shrink-0" />
@@ -104,7 +104,7 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
                             <button
                                 type="button"
                                 onClick={() => adjustTimer(-10)}
-                                className="flex min-h-[44px] min-w-[44px] px-3 items-center justify-center rounded-full bg-surface-elevated border border-border-subtle text-[11px] font-bold text-zinc-200 hover:text-white active:scale-90 transition-all"
+                                className="flex min-h-[44px] min-w-[44px] px-3 items-center justify-center rounded-full bg-surface-elevated border border-border-subtle text-[11px] font-bold text-[rgb(var(--text-primary))] hover:border-primary-500/30 active:scale-90 transition-all"
                                 aria-label="-10s"
                             >
                                 -10s
@@ -112,7 +112,7 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
                             <button
                                 type="button"
                                 onClick={() => adjustTimer(30)}
-                                className="flex min-h-[44px] min-w-[44px] px-3 items-center justify-center rounded-full bg-surface-elevated border border-border-subtle text-[11px] font-bold text-zinc-200 hover:text-white active:scale-90 transition-all"
+                                className="flex min-h-[44px] min-w-[44px] px-3 items-center justify-center rounded-full bg-surface-elevated border border-border-subtle text-[11px] font-bold text-[rgb(var(--text-primary))] hover:border-primary-500/30 active:scale-90 transition-all"
                                 aria-label="+30s"
                             >
                                 +30s
@@ -188,22 +188,22 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
     return (
         <>
         <div
-            className="fixed inset-x-0 bottom-0 z-sheet animate-in fade-in duration-150"
+            className="fixed inset-x-0 bottom-0 z-sheet expressive-reveal"
             style={{ bottom: `${keyboardOffset}px` }}
             role="dialog"
             aria-modal="false"
             aria-label={t.resting}
         >
             <div className="fixed inset-0 top-16 bg-black/60 backdrop-blur-sm -z-10" onClick={() => setMode('compact')} />
-            <div className="mx-auto max-w-md rounded-t-2xl border-t border-x border-border-subtle bg-surface-base p-4 pb-safe shadow-2xl backdrop-blur-xl">
+            <div className="premium-rest-sheet mx-auto max-w-md rounded-t-[32px] border-t border-x border-[rgb(var(--border-subtle))] p-4 pb-safe shadow-2xl">
                 {/* Drag Handle */}
-                <div className="w-9 h-1 rounded-full bg-border-strong mx-auto mb-3" />
+                <div className="mx-auto mb-4 h-1 w-12 rounded-full bg-[rgb(var(--border-strong))]" />
 
                 {/* Header */}
                 <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                         <span className="h-2 w-2 rounded-full bg-primary-500" />
-                        <span className="text-xs font-semibold text-white">
+                        <span className="text-xs font-bold text-[rgb(var(--text-primary))]">
                             {t.resting}
                         </span>
                     </div>
@@ -231,13 +231,13 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
 
                 {/* Next exercise / Superset context card */}
                 {nextExerciseInfo && (
-                    <div className="card-reference p-3 flex items-center gap-2.5 mt-2 text-left">
+                    <div className="premium-theme-panel premium-theme-quiet p-3 flex items-center gap-2.5 mt-2 text-left">
                         <Icon name="ArrowRight" size={18} className="text-primary-400 shrink-0" />
                         <div className="min-w-0 flex-1">
-                            <div className="text-[10px] font-semibold uppercase tracking-wider text-muted">
+                            <div className="text-xs font-semibold text-muted">
                                 {nextExerciseInfo.category}
                             </div>
-                            <div className="truncate text-sm font-semibold text-white">
+                            <div className="truncate text-sm font-semibold text-[rgb(var(--text-primary))]">
                                 {nextExerciseInfo.name}{nextExerciseInfo.target ? ` · ${nextExerciseInfo.target}` : ''}
                             </div>
                         </div>
@@ -246,8 +246,8 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
 
                 {/* Effort Rating Buttons (Easy / OK / Hard) - only when enabled and source set exists */}
                 {showEffortFeedback && currentSourceSet && (
-                    <div className="card-reference p-3 mt-2 text-left">
-                        <div className="text-[10px] font-semibold uppercase tracking-wider text-muted mb-2">
+                    <div className="premium-theme-panel premium-theme-quiet p-3 mt-2 text-left">
+                        <div className="mb-2 text-xs font-semibold text-muted">
                             {t.timer.effortTitle}
                         </div>
                         <div className="flex gap-2">
@@ -293,14 +293,14 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
                     <button
                         type="button"
                         onClick={() => adjustTimer(-10)}
-                        className="min-h-[44px] rounded-xl bg-surface-elevated border border-border-subtle flex items-center justify-center gap-1.5 text-sm font-medium text-white hover:border-zinc-500 active:scale-95 transition-all"
+                        className="min-h-[44px] rounded-full bg-[rgb(var(--surface-elevated))] border border-[rgb(var(--border-subtle))] flex items-center justify-center gap-1.5 text-sm font-medium text-white hover:border-zinc-500 active:scale-95 transition-all"
                     >
                         <Icon name="Minus" size={14} /> 10 s
                     </button>
                     <button
                         type="button"
                         onClick={() => adjustTimer(30)}
-                        className="min-h-[44px] rounded-xl bg-surface-elevated border border-border-subtle flex items-center justify-center gap-1.5 text-sm font-medium text-white hover:border-zinc-500 active:scale-95 transition-all"
+                        className="min-h-[44px] rounded-full bg-[rgb(var(--surface-elevated))] border border-[rgb(var(--border-subtle))] flex items-center justify-center gap-1.5 text-sm font-medium text-white hover:border-zinc-500 active:scale-95 transition-all"
                     >
                         <Icon name="Plus" size={14} /> 30 s
                     </button>
@@ -313,7 +313,7 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
                             key={seconds}
                             type="button"
                             onClick={() => setQuickTimer(seconds)}
-                            className={`h-10 rounded-xl flex items-center justify-center text-sm transition-all active:scale-95 ${
+                            className={`h-10 rounded-full flex items-center justify-center text-sm transition-all active:scale-95 ${
                                 restTimer.duration === seconds
                                     ? 'border-2 border-primary-500 bg-primary-500/10 text-primary-400 font-semibold'
                                     : 'border border-border-subtle bg-surface-elevated text-muted hover:text-white'
@@ -328,7 +328,7 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
                 <button
                     type="button"
                     onClick={skipTimer}
-                    className="btn-primary-reference w-full h-12 mt-3.5 rounded-xl bg-primary-500 text-zinc-950 text-sm font-semibold hover:bg-primary-400 active:scale-98 transition-all shadow-sm"
+                    className="btn-primary-reference expressive-press w-full h-12 mt-3.5 rounded-full bg-primary-500 text-zinc-950 text-sm font-semibold hover:bg-primary-400 active:scale-98 transition-all shadow-sm"
                 >
                     {t.timer.skipRest}
                 </button>
