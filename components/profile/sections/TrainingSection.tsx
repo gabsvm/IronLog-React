@@ -114,7 +114,7 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                     <button
                         type="button"
                         onClick={onClose}
-                        className="w-full flex items-center gap-3 p-3 text-left hover:bg-surface-elevated/40 transition-colors"
+                        className="flex min-h-[56px] w-full items-center gap-3 p-3 text-left transition-colors hover:bg-surface-elevated/40"
                     >
                         <span className="w-8 h-8 rounded-lg bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
                             <Icon name="Calendar" size={17} />
@@ -130,7 +130,7 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                 <button
                     type="button"
                     onClick={openProgramGated}
-                    className="w-full flex items-center gap-3 p-3 text-left hover:bg-surface-elevated/40 transition-colors"
+                    className="flex min-h-[56px] w-full items-center gap-3 p-3 text-left transition-colors hover:bg-surface-elevated/40"
                 >
                     <span className="w-8 h-8 rounded-lg bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
                         <Icon name="Layout" size={17} />
@@ -143,7 +143,7 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                 <button
                     type="button"
                     onClick={openExercisesGated}
-                    className="w-full flex items-center gap-3 p-3 text-left hover:bg-surface-elevated/40 transition-colors"
+                    className="flex min-h-[56px] w-full items-center gap-3 p-3 text-left transition-colors hover:bg-surface-elevated/40"
                 >
                     <span className="w-8 h-8 rounded-lg bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
                         <Icon name="Dumbbell" size={17} />
@@ -157,7 +157,7 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                     <button
                         type="button"
                         onClick={() => setShowTemplateManager(true)}
-                        className="w-full flex items-center gap-3 p-3 text-left hover:bg-surface-elevated/40 transition-colors"
+                        className="flex min-h-[56px] w-full items-center gap-3 p-3 text-left transition-colors hover:bg-surface-elevated/40"
                     >
                         <span className="w-8 h-8 rounded-lg bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
                             <Icon name="Copy" size={17} />
@@ -172,7 +172,7 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                 type="button"
                 onClick={openSaveTemplate}
                 disabled={!activeMeso || program.length === 0}
-                className="mt-2 w-full p-3.5 bg-zinc-50 dark:bg-white/5 rounded-2xl flex items-center justify-between group active:scale-[0.98] transition-all border border-zinc-100 dark:border-white/5 hover:border-zinc-300 dark:hover:border-zinc-600 disabled:opacity-45 disabled:active:scale-100"
+                className="premium-theme-panel expressive-press group mt-2 flex min-h-[60px] w-full items-center justify-between p-3.5 disabled:opacity-45"
             >
                 <div className="flex items-center gap-3 text-left">
                     <div className="p-2 rounded-xl bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-white">
