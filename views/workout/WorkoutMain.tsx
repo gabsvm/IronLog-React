@@ -85,18 +85,18 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
             </div>
 
             <div className="flex-1 overflow-hidden flex flex-col">
-                <div id="tut-exercise-list" className="flex-1 overflow-y-auto scroll-container px-3 pt-4 space-y-2.5" style={{ paddingBottom: 'calc(3rem + var(--safe-area-bottom) + var(--rest-pill-height, 0px) + 16px)' }}>
-                    <section aria-label={t.yourSession} className="tonal-3 flex items-center gap-4 rounded-3xl border border-border-subtle bg-surface-raised px-4 py-3.5">
+                <div id="tut-exercise-list" className="flex-1 overflow-y-auto scroll-container px-3 space-y-2.5" style={{ paddingTop: 'calc(1rem + var(--rest-pill-top-offset, 0px))', paddingBottom: 'calc(3rem + var(--safe-area-bottom) + var(--rest-pill-height, 0px) + 16px)' }}>
+                    <section aria-label={t.yourSession} className="tonal-3 flex items-center gap-4 rounded-3xl border border-border-subtle px-4 py-3.5">
                         <div className="min-w-0">
-                            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted">{t.yourSession}</p>
+                            <p className="text-xs font-semibold tracking-normal text-[rgb(var(--text-muted))]">{t.yourSession}</p>
                             <WorkoutTimer startTime={activeSession.startTime} className="text-3xl font-black leading-tight text-white" />
                         </div>
                         <div className="min-w-0 flex-1">
                             <p className="text-right text-xs font-semibold tabular-nums text-secondary">
                                 <span className="text-sm text-white">{completedWorkingSets}</span> {t.setsDoneOf} {totalWorkingSets} {t.sets.toLowerCase()}
                             </p>
-                            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-surface-elevated">
-                                <div className="h-full rounded-full bg-primary-500 transition-all duration-300 ease-out" style={{ width: `${Math.min(100, Math.max(0, progressPct))}%` }} />
+                            <div role="progressbar" aria-label={t.yourSession} aria-valuemin={0} aria-valuemax={totalWorkingSets || 1} aria-valuenow={completedWorkingSets} className="mt-2 h-2 w-full overflow-hidden rounded-full bg-surface-elevated">
+                                <div className="h-full rounded-full bg-primary-500 transition-[width] duration-300 ease-natural effects-reduced:transition-none" style={{ width: `${Math.min(100, Math.max(0, progressPct))}%` }} />
                             </div>
                         </div>
                     </section>
