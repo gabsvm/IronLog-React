@@ -22,8 +22,8 @@ export const StatsOverviewTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
                         />
                     )}
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <div id="tut-radar-chart" className="glass-card flex min-h-[320px] h-full flex-col overflow-hidden rounded-[1.7rem] border border-white/6 p-5 shadow-md">
-                            <h3 className="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-500">
+                        <div id="tut-radar-chart" className="premium-theme-panel flex min-h-[320px] h-full flex-col overflow-hidden p-5 shadow-md">
+                            <h3 className="mb-4 flex items-center gap-2 text-sm font-bold tracking-tight text-[rgb(var(--text-primary))]">
                                 <Icon name="Activity" size={14} /> {t.statsBalance}
                             </h3>
                             <div className="relative flex flex-1 items-center justify-center">
@@ -35,8 +35,8 @@ export const StatsOverviewTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
                             </div>
                         </div>
 
-                        <div className="glass-card flex min-h-[320px] h-full flex-col rounded-[1.7rem] border border-white/6 p-5 shadow-md">
-                            <h3 className="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-500">
+                        <div className="premium-theme-panel flex min-h-[320px] h-full flex-col p-5 shadow-md">
+                            <h3 className="mb-4 flex items-center gap-2 text-sm font-bold tracking-tight text-[rgb(var(--text-primary))]">
                                 <Icon name="Layers" size={14} /> {t.statsIntensity}
                             </h3>
                             <div className="relative flex flex-1 flex-col items-center justify-center">
@@ -56,7 +56,7 @@ export const StatsOverviewTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
                                                 />
                                                 <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
                                                     <span className="text-3xl font-black tracking-[-0.05em] text-white">{totalSets}</span>
-                                                    <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">{t.statsSets}</span>
+                                                    <span className="text-xs font-medium text-muted">{t.statsSets}</span>
                                                 </div>
                                             </div>
                                             <div className="mt-4 grid w-full grid-cols-2 gap-x-3 gap-y-1.5">
@@ -66,10 +66,10 @@ export const StatsOverviewTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
                                                             className="h-2.5 w-2.5 shrink-0 rounded-full"
                                                             style={{ backgroundColor: intensityPalette[i % intensityPalette.length] }}
                                                         />
-                                                        <span className="truncate text-[11px] font-bold text-zinc-300">
+                                                        <span className="truncate text-xs font-semibold text-[rgb(var(--text-secondary))]">
                                                             {(t.types as Record<string, string>)[type] || type}
                                                         </span>
-                                                        <span className="ml-auto shrink-0 text-[11px] font-black tabular-nums text-white">
+                                                        <span className="ml-auto shrink-0 text-xs font-bold tabular-nums text-[rgb(var(--text-primary))]">
                                                             {count}
                                                         </span>
                                                     </div>
@@ -81,7 +81,7 @@ export const StatsOverviewTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
                                             <div className="flex h-32 w-32 items-center justify-center rounded-full border-[12px] border-zinc-800">
                                                 <Icon name="CloudOff" size={24} className="text-zinc-600" />
                                             </div>
-                                            <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">{t.statsNoData}</span>
+                                            <span className="text-xs font-medium text-muted">{t.statsNoData}</span>
                                         </div>
                                     )}
                                 </ProLock>
@@ -89,10 +89,10 @@ export const StatsOverviewTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
                         </div>
                     </div>
 
-                    <div className="glass-card relative overflow-hidden rounded-[1.7rem] border border-white/6 p-5 shadow-md">
+                    <div className="premium-theme-panel relative overflow-hidden p-5 shadow-md">
                         <div className="pointer-events-none absolute right-0 top-0 h-64 w-64 rounded-full bg-primary-500/5 blur-[80px]"></div>
                         <div className="relative z-10 mb-5 flex items-center justify-between">
-                            <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-500">
+                            <h3 className="flex items-center gap-2 text-sm font-bold tracking-tight text-[rgb(var(--text-primary))]">
                                 <Icon name="Grid3x3" size={14} />
                                 {s.heatmapTitle}
                             </h3>
