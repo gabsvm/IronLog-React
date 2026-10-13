@@ -74,6 +74,10 @@ const RENAMED: Record<string, string[]> = {
     '[download]': ['[export data]', '[exportar datos]'],
     '[delete]': ['[factory reset app]', '[restablecer fábrica]'],
     'editor de programa': ['editar rutina'],
+    'forest': ['bosque'],
+    'ocean': ['océano'],
+    'royal': ['real'],
+    'sunset': ['atardecer'],
 };
 
 test.describe('N6: unified sheet control mapping', () => {
