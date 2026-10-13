@@ -95,7 +95,7 @@ export const useRestTimerOverlayState = () => {
         } else {
             root.style.removeProperty('--rest-pill-top-offset');
         }
-        return () => root.style.removeProperty('--rest-pill-top-offset');
+        return () => { root.style.removeProperty('--rest-pill-top-offset'); };
     }, [restTimer?.active, mode, keyboardOffset]);
 
     // Expanded rest controls consume the viewport: collapse them when editing a set.
