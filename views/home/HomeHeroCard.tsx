@@ -28,7 +28,7 @@ export const HomeHeroCard: React.FC<{ state: HomeViewState }> = ({ state }) => {
                     <div
                         id="tut-up-next"
                         onClick={() => startSession(selectedDayIdx)}
-                        className="card-reference p-4 cursor-pointer transition-all active:scale-[0.99] shadow-lg"
+                        className="card-reference expressive-press p-4 sm:p-5 cursor-pointer shadow-lg"
                     >
                         <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0 flex-1">
@@ -98,7 +98,7 @@ export const HomeHeroCard: React.FC<{ state: HomeViewState }> = ({ state }) => {
                                 e.stopPropagation();
                                 startSession(selectedDayIdx);
                             }}
-                            className="btn-primary-reference w-full h-11.5 mt-3.5 rounded-xl bg-primary-500 text-zinc-950 font-semibold text-sm flex items-center justify-center gap-2 hover:bg-primary-400 active:scale-98 transition-all shadow-sm"
+                            className="btn-primary-reference expressive-press w-full min-h-[48px] mt-3.5 rounded-full bg-primary-500 text-zinc-950 font-semibold text-sm flex items-center justify-center gap-2 hover:bg-primary-400 shadow-sm"
                         >
                             <Icon name={isSelectedActive ? 'Play' : isDone ? 'Repeat' : 'ArrowRight'} size={18} fill="currentColor" />
                             <span>
