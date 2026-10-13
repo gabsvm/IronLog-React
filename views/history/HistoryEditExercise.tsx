@@ -35,10 +35,10 @@ export const HistoryEditExercise: React.FC<Props> = ({ ex, unit, lang, errors, l
     const suffix = unitLabel(unit).toLowerCase();
 
     return (
-        <article className="overflow-hidden rounded-[1.35rem] border border-primary-500/30 bg-[rgb(var(--surface-raised)/0.72)]" data-testid={`history-edit-ex-${ex.instanceId}`}>
+        <article className="premium-editor-card border-primary-500/30" data-testid={`history-edit-ex-${ex.instanceId}`}>
             <div className="px-4 pb-2 pt-4">
                 <h2 className="truncate text-sm font-black text-zinc-950 dark:text-white">{getTranslated(ex.name, lang)}</h2>
-                {!canEdit && <div className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.13em] text-zinc-500">{labels.readOnly}</div>}
+                {!canEdit && <div className="mt-0.5 text-xs font-medium text-muted">{labels.readOnly}</div>}
             </div>
 
             <div className="space-y-1.5 border-t border-[rgb(var(--border-subtle)/0.55)] px-3 py-2">
@@ -78,7 +78,7 @@ export const HistoryEditExercise: React.FC<Props> = ({ ex, unit, lang, errors, l
                                 type="button"
                                 aria-label={`${labels.removeSet} #${index + 1}`}
                                 onClick={() => onRemove(ex.instanceId, set.id)}
-                                className="flex h-9 w-9 items-center justify-center rounded-full text-zinc-500 transition-colors active:bg-red-500/10 active:text-red-500"
+                                className="flex h-11 w-11 items-center justify-center rounded-full text-muted transition-colors active:bg-red-500/10 active:text-red-500"
                             >
                                 <Icon name="Trash2" size={15} />
                             </button>
