@@ -759,3 +759,28 @@ html.light .premium-summary-hero {
 }
 [data-effects="reduced"] .premium-form-input,
 [data-effects="reduced"] .premium-filter-pill { transition: none; }
+
+
+/* Native rest experience: one tonal vocabulary on web and in Capacitor WebView. */
+.premium-rest-pill {
+  background: color-mix(in srgb, rgb(var(--surface-raised)) 90%, rgb(var(--primary-500)));
+  box-shadow: 0 12px 30px -22px rgb(0 0 0 / .65), inset 0 1px 0 rgb(var(--primary-500) / .12);
+}
+.premium-rest-sheet {
+  background: rgb(var(--surface-base));
+  box-shadow: 0 -16px 45px -22px rgb(0 0 0 / .52);
+}
+.premium-rest-ring {
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(var(--primary-500) / .075), transparent 68%);
+}
+html.light .premium-rest-sheet { background: rgb(var(--surface-base)); }
+html.light .premium-rest-pill {
+  background: color-mix(in srgb, rgb(var(--surface-raised)) 91%, rgb(var(--primary-500)));
+  box-shadow: 0 12px 25px -18px rgb(36 53 30 / .3);
+}
+@media (prefers-reduced-motion: reduce) {
+  .premium-rest-pill, .premium-rest-sheet { animation: none; transition: none; }
+}
+[data-effects="reduced"] .premium-rest-pill,
+[data-effects="reduced"] .premium-rest-sheet { animation: none; transition: none; }
