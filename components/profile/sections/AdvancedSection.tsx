@@ -34,15 +34,15 @@ export const AdvancedSection: React.FC<AdvancedSectionProps> = ({ syncStatusText
                     <div className="card-reference p-4 space-y-2">
                         <div className="label-reference px-1 mb-1">{ty.diagnostics}</div>
                         <div className="flex items-center justify-between text-xs">
-                            <span className="font-bold text-zinc-500">{ty.network}</span>
+                            <span className="font-bold text-muted">{ty.network}</span>
                             <span className={`font-black ${isOnline ? 'text-emerald-500' : 'text-amber-400'}`}>{isOnline ? ty.online : ty.offline}</span>
                         </div>
                         <div className="flex items-center justify-between text-xs">
-                            <span className="font-bold text-zinc-500">{ty.pendingQueue}</span>
+                            <span className="font-bold text-muted">{ty.pendingQueue}</span>
                             <span className="font-black text-zinc-900 dark:text-white">{syncStatus.pending}</span>
                         </div>
                         <div className="flex items-center justify-between text-xs">
-                            <span className="font-bold text-zinc-500">{ty.status}</span>
+                            <span className="font-bold text-muted">{ty.status}</span>
                             <span className="font-black text-zinc-900 dark:text-white">{syncStatus.isSyncing ? ty.syncingState : ty.idleState}</span>
                         </div>
                         <div className="text-xs text-muted">
@@ -50,14 +50,14 @@ export const AdvancedSection: React.FC<AdvancedSectionProps> = ({ syncStatusText
                         </div>
                         <StoragePersistRow lang={lang} />
                         {pendingCloudSections.length > 0 && (
-                            <div className="text-[10px] text-amber-500">
+                            <div className="text-xs text-amber-500">
                                 {ty.cloudNewer}{' '}
                                 {pendingCloudSections.map(s => ((t.syncSections as any)?.[s]) || s).join(', ')}
                             </div>
                         )}
                         <div className="flex flex-wrap gap-1 pt-1">
                             {Object.entries(localSectionSyncMeta).slice(0, 8).map(([section]) => (
-                                <span key={section} className="rounded-full bg-zinc-200 px-2 py-0.5 text-[9px] font-bold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                                <span key={section} className="rounded-full bg-[rgb(var(--surface-elevated))] px-2 py-0.5 text-xs font-bold text-zinc-700  dark:text-zinc-300">
                                     {((t.syncSections as any)?.[section]) || section}
                                 </span>
                             ))}
@@ -70,7 +70,7 @@ export const AdvancedSection: React.FC<AdvancedSectionProps> = ({ syncStatusText
                         <button
                             type="button"
                             onClick={() => setShowPhilosophy(true)}
-                            className="w-full py-3 bg-zinc-100 dark:bg-zinc-800 rounded-xl text-xs font-bold flex justify-center gap-2 items-center text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                            className="w-full py-3 bg-zinc-100  rounded-[18px] text-xs font-bold flex justify-center gap-2 items-center text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--surface-elevated))] dark:hover:bg-zinc-700 transition-colors"
                         >
                             <Icon name="BookOpen" size={16} /> {t.nhRule}
                         </button>
