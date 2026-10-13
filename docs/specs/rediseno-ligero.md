@@ -50,3 +50,20 @@ IronLog ya comparte con el concepto el acento lima `#c4f13a`, la barra inferior 
 
 - `tsc` limpio; 139 archivos / 783 pruebas en verde; capturas visuales regeneradas (oscuro y claro) y revisadas para Home, Entreno, Estadísticas, Historial, Dieta y Perfil. Nota: Playwright tolera diferencias pequeñas de color (umbral por píxel), por lo que al cambiar tonos hay que borrar los PNG antes de `test:visual:update`.
 - Sin validación en dispositivo del anillo de descanso (no sale en las capturas).
+
+## 8. Pasada de consistencia Expressive (2026-10-13)
+
+Aplicada **directamente** en `agent/gainslab-audit-fixes-v3`, sin tocar `main`, sin crear otra rama y sin promocionar Vercel manualmente.
+
+- Tema claro: `--text-muted: #535e4e` en lugar de `#7d8478`; contraste calculado >= 5:1 en los fondos lila, menta, azul y durazno originales. Nueva prueba automatizada de contraste real para las cuatro tarjetas de Stats.
+- Tokens globales de forma/movimiento y tarjetas de 24 px; segmentos de 18 px. CTA principal tipo píldora de 48 px como mínimo.
+- Tonalidad del tema claro mezclada ligeramente con el acento elegido; la tarjeta hero principal responde al color de acento. En oscuro, las tarjetas tonales reciben una capa tenue del acento.
+- Barra inferior: selección tonal en forma de píldora, tipografía de 12 px sin mayúsculas forzadas y estados de iconografía coherentes.
+- Selector de días: mínimo 56 px, etiqueta de 11 px, nombre de 13 px y `aria-pressed`.
+- Stats: etiquetas legibles de 12 px y contraste del texto sobre cada superficie tonal.
+- Entreno: barra de progreso con rol semántico y lectura accesible; tarjeta de resumen tonal.
+- Descanso: píldora que se adapta a 320 px; al aparecer teclado oculta acciones secundarias y se acopla junto al encabezado; la lista reserva espacio superior. El modo expandido vuelve a compacto al abrirse el teclado.
+- Movimiento reducido del sistema y `data-effects="reduced"` respetados en la nueva clase `expressive-press`.
+- Pruebas Playwright adicionales: teléfono estrecho 320 px y contraste WCAG AA; `npm run verify:expressive` para ejecutarlas sin depender de snapshots anteriores.
+
+**Evidencia/limitaciones:** los resultados de 783 pruebas, 16 capturas y `tsc` citados arriba corresponden a la implementación anterior. Esta pasada se aplicó mediante la conexión GitHub, sin checkout local ni ejecución de npm/Playwright: aún deben ejecutarse `npm run verify`, `npm run verify:expressive`, `npm run test:visual:update` (solo tras revisar los nuevos PNG), `npm run test:visual` y una prueba en Android con teclado y descanso activos. No confundir commit/push correcto con suite validada.
