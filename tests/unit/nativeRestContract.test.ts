@@ -32,6 +32,24 @@ describe('native rest implementation contracts (source-level)', () => {
         expect(java).toContain('alarmManager.setAndAllowWhileIdle(');
         expect(java).toContain('alarmManager.setExactAndAllowWhileIdle(');
     });
+    it('updates the same ongoing Android notification without resetting alarm or epoch', () => {
+        const start = java.indexOf('public void updateRestTimerContent(PluginCall call)');
+        const end = java.indexOf('public void cancelRestTimer(PluginCall call)', start);
+        const update = java.slice(start, end);
+        expect(start).toBeGreaterThan(0);
+        expect(end).toBeGreaterThan(start);
+        expect(update).toContain('currentEndAt != expectedEndAt');
+        expect(update).toContain('KEY_LIVE_TITLE');
+        expect(update).toContain('KEY_LIVE_BODY');
+        expect(update).toContain('KEY_REST_SKIP_LABEL');
+        expect(update).toContain('postLiveTimerNotification(context, currentEndAt, title, body)');
+        expect(update).not.toContain('programAlarm(');
+        expect(update).not.toContain('KEY_REST_EPOCH');
+        expect(java).toContain('manager.notify(TIMER_LIVE_NOTIFICATION_ID, builder.build())');
+        expect(java).toContain('.setOnlyAlertOnce(true)');
+        expect(java).toContain('KEY_REST_SKIP_LABEL, context.getString(R.string.rest_action_skip)');
+    });
+
     it('uses a monochrome status icon and only requests Live Updates on Android 16+', () => {
         expect(vector).toContain('android:fillColor="#FFFFFFFF"');
         expect(java).toContain('.setSmallIcon(R.drawable.ic_stat_rest_timer)');
