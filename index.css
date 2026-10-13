@@ -794,3 +794,10 @@ html.light .premium-rest-pill {
   .premium-landing .expressive-reveal { animation: none; }
 }
 [data-effects="reduced"] .premium-landing .expressive-reveal { animation: none; }
+
+/* The Pro header is intentionally cinematic in both color schemes, with
+   legible white ink rather than low-contrast white on bright lime. */
+.premium-paywall-hero {
+  background: radial-gradient(ellipse at 75% 5%, rgb(var(--primary-500) / .25), transparent 60%),
+              linear-gradient(145deg, #15291d, #243d2d 70%, #142017);
+}
