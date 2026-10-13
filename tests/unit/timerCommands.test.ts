@@ -218,15 +218,17 @@ describe('Q9: useTimer drains commands on mount and resume', () => {
         sim.consumeResult = { epoch: 1, commands: [] };
     });
 
-    it('applies a drained add30 to the live rest', async () => {
+    it('does not replay an old native +30 command into a new user-started rest', async () => {
         const endAt = Date.now() + 120000;
         sim.consumeResult = { epoch: 3, commands: [{ id: 1, action: 'add30', endAt }] };
         const { result } = renderHook(() => useTimer('es'));
         act(() => {
             result.current.setRestTimer({ ...ACTIVE_REST });
         });
-        await waitFor(() => expect(result.current.restTimer.endAt).toBe(endAt));
-        expect(result.current.restTimer.duration).toBe(ACTIVE_REST.duration + 30);
+        // The user's new rest supersedes any asynchronous startup drain.
+        await waitFor(() => expect(sim.consume).toHaveBeenCalled());
+        expect(result.current.restTimer.endAt).toBe(ACTIVE_REST.endAt);
+        expect(result.current.restTimer.duration).toBe(ACTIVE_REST.duration);
     });
 
     it('drains again on foregrounding', async () => {
