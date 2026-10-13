@@ -75,13 +75,13 @@ export const NavBtn: React.FC<NavBtnProps> = React.memo(({ id, label, icon, isAc
         <button
             onClick={() => onSelect(id)}
             aria-current={isActive ? 'page' : undefined}
-            className="group relative flex h-full flex-1 flex-col items-center justify-center gap-0.5 transition-all duration-200 active:scale-90"
+            type="button"
+            className="group expressive-press relative flex h-full min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-2xl py-1"
         >
-            <div className={`relative flex items-center justify-center transition-all duration-200 ${isActive ? '-translate-y-1' : 'translate-y-0'}`}>
-                <Icon name={icon} size={22} strokeWidth={isActive ? 2.5 : 2} fill={isActive ? 'currentColor' : 'none'} fillOpacity={isActive ? 0.25 : undefined} className={`transition-colors duration-200 ${isActive ? 'text-primary-500' : 'text-muted group-hover:text-zinc-200'}`} />
+            <div className={`flex h-8 w-[min(100%,64px)] items-center justify-center rounded-full transition-[background-color,transform] duration-300 ease-natural ${isActive ? 'bg-primary-500/18 scale-[1.03]' : 'bg-transparent'}`}>
+                <Icon name={icon} size={21} strokeWidth={isActive ? 2.5 : 2} fill={isActive ? 'currentColor' : 'none'} fillOpacity={isActive ? 0.22 : undefined} className={isActive ? 'text-[rgb(var(--accent-text))]' : 'text-muted group-hover:text-[rgb(var(--text-primary))]'} />
             </div>
-            <span className={`min-w-0 max-w-full truncate text-[11px] font-bold uppercase tracking-wider transition-all duration-200 leading-none ${isActive ? 'text-primary-500 opacity-100' : 'text-muted group-hover:text-zinc-200'}`}>{label}</span>
-            {isActive && <div className="absolute bottom-2 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-primary-500 shadow-[0_0_9px_1px] shadow-primary-500/40" />}
+            <span className={`min-w-0 max-w-full truncate text-[12px] font-semibold tracking-normal leading-tight transition-colors duration-300 ${isActive ? 'text-[rgb(var(--accent-text))]' : 'text-muted group-hover:text-[rgb(var(--text-primary))]'}`}>{label}</span>
         </button>
     );
 });
@@ -265,7 +265,7 @@ export const Layout: React.FC<LayoutProps> = ({
                     <div className="mx-auto flex h-16 w-full max-w-lg items-center justify-between px-2">
                         <NavBtn id="home" label={t.train} icon="Layout" isActive={view === 'home'} onSelect={setView} />
                         <NavBtn id="history" label={t.history} icon="Calendar" isActive={view === 'history'} onSelect={setView} />
-                        <button onClick={openPrimaryAction} aria-label={t.startWorkout} className="mx-2 flex h-12 w-12 shrink-0 -translate-y-3 items-center justify-center rounded-full border border-primary-400/20 bg-primary-500 text-black shadow-lg shadow-primary-500/20 transition-transform duration-200 active:scale-95">
+                        <button onClick={openPrimaryAction} aria-label={t.startWorkout} className="mx-2 flex h-12 w-12 shrink-0 -translate-y-3 items-center justify-center rounded-full border border-primary-400/20 bg-primary-500 text-black shadow-lg shadow-primary-500/20 transition-transform duration-300 ease-natural active:scale-95">
                             <Icon name="Plus" size={24} strokeWidth={2.5} />
                         </button>
                         <NavBtn id="nutrition" label={t.diet} icon="Utensils" isActive={view === 'nutrition'} onSelect={setView} />
