@@ -44,7 +44,7 @@ const FoodCard: React.FC<{
         {onToggleFav && (
           <button
             onClick={() => onToggleFav(food.id)}
-            className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors ${food.isFavorite ? 'text-yellow-400' : 'text-muted hover:text-muted'}`}
+            className={`relative flex h-9 w-9 items-center justify-center rounded-full after:absolute after:-inset-1 after:content-[''] transition-colors ${food.isFavorite ? 'text-yellow-400' : 'text-muted hover:text-muted'}`}
           >
             <Icon name="Star" size={14} fill={food.isFavorite ? 'currentColor' : 'none'} />
           </button>
@@ -52,14 +52,14 @@ const FoodCard: React.FC<{
         {onDelete && (
           <button
             onClick={() => onDelete(food.id)}
-            className="flex h-11 w-11 items-center justify-center rounded-full text-[rgb(var(--text-secondary))] transition-colors hover:text-red-400"
+            className="relative flex h-9 w-9 items-center justify-center rounded-full after:absolute after:-inset-1 after:content-[''] text-[rgb(var(--text-secondary))] transition-colors hover:text-red-400"
           >
             <Icon name="Trash2" size={13} />
           </button>
         )}
         <button
           onClick={() => onSelect(food)}
-          className="flex h-11 w-11 items-center justify-center rounded-full bg-[rgb(var(--surface-elevated))] text-[rgb(var(--text-secondary))] transition-colors hover:bg-[rgb(var(--surface-elevated))]"
+          className="relative flex h-9 w-9 items-center justify-center rounded-full after:absolute after:-inset-1 after:content-[''] bg-[rgb(var(--surface-elevated))] text-[rgb(var(--text-secondary))] transition-colors hover:bg-[rgb(var(--surface-elevated))]"
         >
           <Icon name="Plus" size={14} />
         </button>
