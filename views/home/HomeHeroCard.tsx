@@ -1,8 +1,14 @@
 // Editorial exercise hero: premium visual language, original workout logic preserved.
 import React from 'react';
+import { pickLang } from '../../utils/i18n';
 import { Icon } from '../../components/ui/Icon';
 import { getTranslated } from '../../utils';
 import type { HomeViewState } from './useHomeViewState';
+
+const HERO_COPY = {
+    es: { day: 'DÍA', inProgress: 'EN CURSO', completed: 'COMPLETADO', next: 'TU PRÓXIMA SESIÓN', details: 'Detalles del entrenamiento' },
+    en: { day: 'DAY', inProgress: 'IN PROGRESS', completed: 'COMPLETED', next: 'YOUR NEXT SESSION', details: 'Workout details' },
+} as const;
 
 export const HomeHeroCard: React.FC<{ state: HomeViewState }> = ({ state }) => {
     const { startSession, uniqueDaysDone, exercises, lang, activeSession, activeMeso, t, h, tm, safeProgram, selectedDayIdx, selectedDayEstimatedMin, handleSkipClick } = state;
@@ -18,6 +24,7 @@ export const HomeHeroCard: React.FC<{ state: HomeViewState }> = ({ state }) => {
     const previewSlots = slots.slice(0, 3);
     const extraSlotsCount = Math.max(0, slots.length - previewSlots.length);
     const dayName = String(getTranslated(dayDef.dayName, lang));
+    const ui = pickLang(lang, HERO_COPY);
 
     return (
         <article
@@ -41,9 +48,7 @@ export const HomeHeroCard: React.FC<{ state: HomeViewState }> = ({ state }) => {
                 <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                         <div className="premium-hero__eyebrow">
-                            {lang === 'es'
-                                ? `DÍA ${selectedDayIdx + 1} · ${isSelectedActive ? 'EN CURSO' : isDone ? 'COMPLETADO' : 'TU PRÓXIMA SESIÓN'}`
-                                : `DAY ${selectedDayIdx + 1} · ${isSelectedActive ? 'IN PROGRESS' : isDone ? 'COMPLETED' : 'YOUR NEXT SESSION'}`}
+                            {`${ui.day} ${selectedDayIdx + 1} · ${isSelectedActive ? ui.inProgress : isDone ? ui.completed : ui.next}`}
                         </div>
                         <h3 className="premium-hero__title">{dayName}</h3>
                     </div>
@@ -59,7 +64,7 @@ export const HomeHeroCard: React.FC<{ state: HomeViewState }> = ({ state }) => {
                         </button>
                     )}
                 </div>
-                <div className="premium-hero__metrics" aria-label={lang === 'es' ? 'Detalles del entrenamiento' : 'Workout details'}>
+                <div className="premium-hero__metrics" aria-label={ui.details}>
                     <span><Icon name="Clock" size={13} /> ~{selectedDayEstimatedMin > 0 ? selectedDayEstimatedMin : 45} min</span>
                     <span><Icon name="Dumbbell" size={13} /> {slots.length} {h.exercisesLower}</span>
                     <span><Icon name="Layers" size={13} /> {totalSets} {h.setsLower}</span>
