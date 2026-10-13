@@ -81,3 +81,19 @@ Implementado directamente en `agent/gainslab-audit-fixes-v3` a partir del protot
 - **Pruebas añadidas:** `tests/unit/premiumInsights.test.ts` cubre conteo, scope, marcas, fechas futuras y estados vacíos; la suite visual contiene un test funcional de los elementos Premium para ambos temas.
 
 **Validación:** el Preview intermedio compiló con TypeScript + Vite. El Preview final debe comprobar el SHA final. Quedan por ejecutar en un entorno con checkout y navegador los comandos `npm run verify`, `npm run verify:expressive` y la regresión visual completa con regeneración revisada de baselines. No asumir que capturas antiguas son compatibles: el rediseño cambia la interfaz intencionalmente. Falta la inspección física Android y prueba del teclado/temporizador.
+
+
+## 10. Unificación final de pantallas secundarias (2026-10-13)
+
+Aplicada **en la misma branch** `agent/gainslab-audit-fixes-v3`. No se ha cambiado la lógica de negocio ni las reglas de KONG, ejercicio, carga, edición de series, sincronización o nutrición.
+
+- **Dieta / Cuerpo e Historial:** tarjetas `premium-theme-panel`, mejor tipografía, controles de peso táctiles y gráficos de 14 días con marcas legibles cada tres días, valores exactos en `title` y respeto de ambas unidades. Las tres subtabs comparten la segmentación Expressive con `aria-pressed`.
+- **Stats / Resumen, Progreso y Volumen:** tarjetas y contenedores de gráfico con la misma familia de superficies, pestañas y encabezados legibles; sin tocar las fórmulas o el filtrado de datos.
+- **Cierre del entrenamiento:** portada de conclusión `premium-summary-hero` con datos de la sesión real (tiempo, series y volumen), espacios y escalas de texto uniformes, sin recompensas ficticias. Se preservaron compartir PNG y volver al Home.
+- **Biblioteca de ejercicios y editor de programas:** encabezados, filtros, inputs, tarjetas y estados seleccionados modernizados. Sin eliminar ni modificar operaciones de edición, creación, filtro, merge y guardado.
+- **Historial, Perfil y modales secundarios:** tarjetas de detalles y edición, confirmación, calentamiento y detalles/selector de ejercicios armonizados. Se mantienen el sheet común, los diálogos y los mensajes.
+- **KONG:** retoque mínimo del hero y formas de las tarjetas; la planificación y estados de programa no cambian.
+- **Tokens:** clases reutilizables `premium-summary-hero`, `premium-form-input`, `premium-editor-card`, `premium-filter-pill`, `premium-section-heading` y `premium-quiet-row`. Se evita sustituir globalmente estilos viejos: algunos remapeos del modo claro continúan para compatibilidad con vistas no migradas.
+- **Pruebas:** nuevas comprobaciones visuales funcionales de la navegación entre Hoy/Cuerpo/Tendencias a 320px. Se migraron textos bilingües de Home y PremiumTrend a `pickLang` para respetar el contador Q19 de traducciones inline y se actualizó el contrato tipográfico de navegación a 12px.
+
+**Cierre pendiente:** correr `npm run verify`, ejecutar Playwright `npm run verify:expressive`, revisar/actualizar baselines visuales en el entorno del propietario y probar Android físico (teclado, temporizador y navegación). Un build Preview READY no sustituye estas comprobaciones.
