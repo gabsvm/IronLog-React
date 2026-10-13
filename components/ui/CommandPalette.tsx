@@ -118,7 +118,7 @@ export const CommandPalette: React.FC<Props> = ({ isOpen, onClose, actions, titl
                         animate={{ y: 0, opacity: 1, scale: 1 }}
                         exit={{ y: 20, opacity: 0, scale: 0.985 }}
                         transition={{ duration: 0.26, ease: [0.16, 1, 0.3, 1] }}
-                        className="modal-surface mb-[calc(var(--safe-area-bottom)+72px)] w-full overflow-hidden rounded-t-[1.75rem] border shadow-2xl sm:mb-0 sm:mx-4 sm:max-w-lg sm:rounded-3xl"
+                        className="modal-surface mb-[calc(var(--safe-area-bottom)+72px)] w-full overflow-hidden rounded-t-[32px] border shadow-2xl sm:mb-0 sm:mx-4 sm:max-w-lg sm:rounded-3xl"
                         onClick={e => e.stopPropagation()}
                     >
                         <div className="flex justify-center pb-1 pt-3 sm:hidden">
@@ -128,25 +128,25 @@ export const CommandPalette: React.FC<Props> = ({ isOpen, onClose, actions, titl
                         <div className="px-5 pb-3 pt-2 sm:hidden">
                             <div className="flex items-start justify-between gap-3">
                                 <div>
-                                    <h2 className="text-xl font-black tracking-tight text-zinc-950 dark:text-white">
+                                    <h2 className="text-xl font-black tracking-tight text-[rgb(var(--text-primary))]">
                                         {TRANSLATIONS[lang].copy.commandPalette.whatDoYouWant}
                                     </h2>
-                                    <p className="mt-1 text-xs font-medium text-zinc-500">
+                                    <p className="mt-1 text-xs font-medium text-muted">
                                         {TRANSLATIONS[lang].copy.commandPalette.startResumeOrManage}
                                     </p>
                                 </div>
                                 <button
                                     onClick={onClose}
                                     aria-label={TRANSLATIONS[lang].copy.commandPalette.close}
-                                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-zinc-500 dark:bg-white/5"
+                                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[rgb(var(--surface-elevated))] text-muted"
                                 >
                                     <Icon name="X" size={17} />
                                 </button>
                             </div>
                         </div>
 
-                        <div className="hidden items-center gap-3 border-b border-zinc-200 px-4 pb-2 pt-3 dark:border-white/5 sm:flex">
-                            <Icon name="Search" size={18} className="shrink-0 text-zinc-500" />
+                        <div className="hidden items-center gap-3 border-b border-[rgb(var(--border-subtle))] px-4 pb-2 pt-3 dark:border-white/5 sm:flex">
+                            <Icon name="Search" size={18} className="shrink-0 text-muted" />
                             <input
                                 type="text"
                                 value={query}
@@ -154,12 +154,12 @@ export const CommandPalette: React.FC<Props> = ({ isOpen, onClose, actions, titl
                                 placeholder={TRANSLATIONS[lang].copy.commandPalette.searchAction}
                                 className="flex-1 bg-transparent py-2 text-sm font-medium text-zinc-950 outline-none placeholder-zinc-500 dark:text-white"
                             />
-                            <kbd className="inline-flex items-center gap-1 rounded border border-zinc-200 bg-zinc-100 px-1.5 py-0.5 text-[10px] font-bold text-zinc-500 dark:border-white/10 dark:bg-white/5">ESC</kbd>
+                            <kbd className="inline-flex items-center gap-1 rounded border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated))] px-1.5 py-0.5 text-xs font-bold text-muted  ">ESC</kbd>
                         </div>
 
                         <div className="max-h-[62vh] overflow-y-auto px-3 pb-4 pt-1 scroll-container sm:px-0 sm:py-2">
                             {filtered.length === 0 ? (
-                                <div className="py-12 text-center text-sm text-zinc-500">
+                                <div className="py-12 text-center text-sm text-muted">
                                     {TRANSLATIONS[lang].copy.commandPalette.noResults}
                                 </div>
                             ) : (
@@ -173,23 +173,23 @@ export const CommandPalette: React.FC<Props> = ({ isOpen, onClose, actions, titl
                                             className={`mb-2 flex w-full items-center gap-3 rounded-2xl border px-3.5 py-3.5 text-left transition-all active:scale-[0.985] sm:mb-0 sm:rounded-none sm:border-0 sm:px-4 sm:py-3 ${
                                                 emphasized
                                                     ? 'border-primary-500/20 bg-primary-500/[0.06]'
-                                                    : 'border-zinc-200/70 bg-zinc-50 dark:border-white/5 dark:bg-white/[0.025]'
-                                            } ${i === activeIdx ? 'sm:bg-white/5' : ''}`}
+                                                    : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))]'
+                                            } ${i === activeIdx ? 'sm:bg-[rgb(var(--surface-elevated))]' : ''}`}
                                         >
                                             <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br shadow-md ${ACCENT[a.accent || 'zinc']}`}>
                                                 <Icon name={a.icon} size={19} />
                                             </span>
                                             <div className="min-w-0 flex-1">
-                                                <div className="flex items-center gap-2 truncate text-sm font-black text-zinc-950 dark:text-white">
+                                                <div className="flex items-center gap-2 truncate text-sm font-black text-[rgb(var(--text-primary))]">
                                                     <span className="truncate">{a.label[lang]}</span>
                                                     {a.badge && (
-                                                        <span className="shrink-0 rounded-full border border-primary-500/25 bg-primary-500/10 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-primary-600 dark:text-primary-400">
+                                                        <span className="shrink-0 rounded-full border border-primary-500/25 bg-primary-500/10 px-1.5 py-0.5 text-xs font-black uppercase tracking-wider text-primary-600 dark:text-primary-400">
                                                             {a.badge}
                                                         </span>
                                                     )}
                                                 </div>
                                                 {a.description && (
-                                                    <div className="mt-0.5 truncate text-[11px] leading-snug text-zinc-500">{a.description[lang]}</div>
+                                                    <div className="mt-0.5 truncate text-xs leading-snug text-muted">{a.description[lang]}</div>
                                                 )}
                                             </div>
                                             <Icon name="ChevronRight" size={17} className="shrink-0 text-zinc-400" />
