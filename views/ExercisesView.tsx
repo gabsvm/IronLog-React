@@ -15,18 +15,18 @@ export const ExercisesView: React.FC<ExercisesViewProps> = (props) => {
     const { onBack, t, mode } = state;
 
     return (
-        <div className="h-full flex flex-col bg-gray-50 dark:bg-zinc-950">
+        <div className="flex h-full flex-col bg-[rgb(var(--surface-app))] text-[rgb(var(--text-primary))]">
             {/* Header */}
-            <div className="glass px-4 min-h-14 pt-safe shrink-0 flex items-center justify-between z-10 border-b border-zinc-200 dark:border-white/5">
+            <div className="z-10 flex min-h-14 shrink-0 items-center justify-between border-b border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base)/0.96)] px-4 pt-safe backdrop-blur-md">
                 <button
                     onClick={onBack}
-                    className="flex items-center gap-2 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
+                    className="flex min-h-11 items-center gap-2 rounded-full text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--text-primary))]"
                     aria-label={t.back}
                 >
                     <Icon name="ChevronLeft" size={20} />
                     <span className="font-bold text-sm">{t.back}</span>
                 </button>
-                <h1 className="font-bold text-zinc-900 dark:text-white">{t.manageEx}</h1>
+                <h1 className="text-lg font-black tracking-tight text-[rgb(var(--text-primary))]">{t.manageEx}</h1>
                 <div className="w-8"></div>
             </div>
 
