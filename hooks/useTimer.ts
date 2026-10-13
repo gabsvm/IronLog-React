@@ -11,6 +11,8 @@ import {
     type TimerCommandPayload,
 } from '../utils/audio';
 import { TRANSLATIONS } from '../constants';
+import { resolveRestNotificationContent } from '../components/ui/restTimer/restTimerLogic';
+import { useStore } from '../lib/store';
 import { Lang } from '../types';
 
 export interface TimerState {
@@ -167,8 +169,13 @@ export const useTimer = (lang: Lang) => {
         if (!isNative || !nativeReady || nativeUserRevision === 0) return;
         if (timer.active && timer.endAt > Date.now()) {
             const t = TRANSLATIONS[lang]?.timer || TRANSLATIONS.en.timer;
+            const context = resolveRestNotificationContent(
+                useStore.getState().activeSession?.exercises, timer.source, lang,
+            );
             scheduleNativeRestTimer(
-                timer.endAt, t.finished, t.getBack, t.resting, t.restingBody,
+                timer.endAt, t.finished, t.getBack,
+                context?.liveTitle ?? t.resting,
+                context?.liveBody ?? t.restingBody,
                 timer.duration, timer.source,
             );
         } else {
