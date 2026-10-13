@@ -103,6 +103,20 @@ for (const theme of ['dark', 'light'] as const) {
       });
     }
 
+
+    test(`premium: Home and Stats remain grounded in saved data (${theme})`, async ({ page }) => {
+      const hero = page.locator('#tut-up-next');
+      await expect(hero).toBeVisible();
+      await expect(hero.locator('svg[aria-hidden="true"]')).toBeVisible();
+      await expect(hero.getByRole('button', { name: /Empezar|Start/i })).toBeVisible();
+
+      await nav(page).getByRole('button', { name: /M[ée]tricas|Stats/i }).click();
+      const trend = page.getByRole('region', { name: /Tendencia reciente|Recent training trend/i });
+      await expect(trend).toBeVisible();
+      await expect(trend.locator('svg[role="img"]')).toBeVisible();
+      await expect(trend.getByText(/Mejor serie de fuerza|Best recorded strength set|Best strength set/i)).toBeVisible();
+    });
+
     test(`home desktop ${theme}`, async ({ page }) => {
       // U4: wide screens get a centered column instead of edge-to-edge cards.
       await page.setViewportSize({ width: 1280, height: 800 });
