@@ -73,6 +73,7 @@ const NOTIF_STATES = ['permitir', 'activadas', 'bloqueadas'];
 const RENAMED: Record<string, string[]> = {
     '[download]': ['[export data]', '[exportar datos]'],
     '[delete]': ['[factory reset app]', '[restablecer fábrica]'],
+    'editor de programa': ['editar rutina'],
 };
 
 test.describe('N6: unified sheet control mapping', () => {
