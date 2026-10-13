@@ -34,6 +34,7 @@ import { useTimer, requestTimerNotificationPermission } from '../../hooks/useTim
 import { scheduleNativeRestTimer, cancelNativeRestTimer } from '../../utils/audio';
 import { TRANSLATIONS } from '../../constants';
 import { useStore } from '../../lib/store';
+import type { ActiveSession } from '../../types';
 
 describe('Task U2: Rest Timer Notification Permission and Visibility Scoping', () => {
     let mockRequestPermission: any;
@@ -158,7 +159,7 @@ describe('Task U2: Rest Timer Notification Permission and Visibility Scoping', (
 
     it('initial Android schedule already includes the real upcoming exercise and set', async () => {
         const originalState = useStore.getState();
-        const session = {
+        const session: ActiveSession = {
                 id: 41, dayIdx: 0, name: 'Torso', startTime: Date.now(), mesoId: 1, week: 1,
                 exercises: [{
                     id: 'bench', instanceId: 3, muscle: 'CHEST',
