@@ -17,9 +17,9 @@ export default {
     extend: {
       // Redesign (docs/specs/rediseno-ligero.md): rounder shapes, applied app-wide via tokens.
       borderRadius: {
-        xl: "1rem",
-        "2xl": "1.25rem",
-        "3xl": "1.75rem",
+        xl: "1.125rem",
+        "2xl": "1.5rem",
+        "3xl": "1.875rem",
       },
       colors: {
         primary: {
