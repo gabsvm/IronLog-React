@@ -125,10 +125,10 @@ export const StatsView: React.FC = () => {
                 </div>
 
                 <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                    {summaryItems.map(item => (
-                        <div key={item.label} className="rounded-2xl border border-[rgb(var(--border-subtle)/0.85)] bg-[rgb(var(--surface-raised)/0.62)] px-4 py-4">
+                    {summaryItems.map((item, itemIdx) => (
+                        <div key={item.label} className={`tonal-${(itemIdx % 4) + 1} rounded-3xl border border-[rgb(var(--border-subtle)/0.85)] bg-[rgb(var(--surface-raised)/0.62)] px-4 py-4`}>
                             <div className="text-[9px] font-black uppercase tracking-[0.16em] text-zinc-500">{item.label}</div>
-                            <div className="mt-1 text-2xl font-black tabular-nums tracking-[-0.04em] text-zinc-950 dark:text-white">{item.value}</div>
+                            <div className="mt-1 text-3xl font-black tabular-nums tracking-[-0.04em] text-zinc-950 dark:text-white">{item.value}</div>
                         </div>
                     ))}
                 </div>

@@ -86,7 +86,7 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
 
             <div className="flex-1 overflow-hidden flex flex-col">
                 <div id="tut-exercise-list" className="flex-1 overflow-y-auto scroll-container px-3 pt-4 space-y-2.5" style={{ paddingBottom: 'calc(3rem + var(--safe-area-bottom) + var(--rest-pill-height, 0px) + 16px)' }}>
-                    <section aria-label={t.yourSession} className="flex items-center gap-4 rounded-3xl border border-border-subtle bg-surface-raised px-4 py-3.5">
+                    <section aria-label={t.yourSession} className="tonal-3 flex items-center gap-4 rounded-3xl border border-border-subtle bg-surface-raised px-4 py-3.5">
                         <div className="min-w-0">
                             <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted">{t.yourSession}</p>
                             <WorkoutTimer startTime={activeSession.startTime} className="text-3xl font-black leading-tight text-white" />

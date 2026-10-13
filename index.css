@@ -41,18 +41,19 @@
 
 html.light {
   color-scheme: light;
-  --surface-app: 248 249 250;
-  --surface-base: 255 255 255;
-  --surface-raised: 244 244 246;
-  --surface-elevated: 235 235 238;
-  --text-primary: 17 20 24;
-  --text-secondary: 85 90 100;
-  --text-muted: 130 135 145;
-  --border-subtle: 228 228 232;
-  --border-strong: 212 212 218;
-  --modal-surface: 255 255 255;
-  --modal-footer: 250 250 250;
-  --modal-border: 228 228 232;
+  /* Warm tonal light palette (concept 02, docs/specs/rediseno-ligero.md). */
+  --surface-app: 244 244 238;
+  --surface-base: 255 254 250;
+  --surface-raised: 241 243 236;
+  --surface-elevated: 230 233 223;
+  --text-primary: 32 37 28;
+  --text-secondary: 100 107 98;
+  --text-muted: 125 132 120;
+  --border-subtle: 227 230 220;
+  --border-strong: 211 216 200;
+  --modal-surface: 255 254 250;
+  --modal-footer: 250 250 244;
+  --modal-border: 227 230 220;
   --accent-text: 77 101  12;
 }
 
@@ -573,3 +574,10 @@ html.light .glass-panel,
 html.light .glass-island {
   color: rgb(var(--text-primary));
 }
+
+/* Tonal cards (light mode only): lilac / mint / blue / peach, as in concept 02. */
+html.light .tonal-1 { background-color: #e8e2fa; }
+html.light .tonal-2 { background-color: #dff1e8; }
+html.light .tonal-3 { background-color: #dbe9fb; }
+html.light .tonal-4 { background-color: #fde8d2; }
+html.light #tut-up-next.card-reference { background-color: #e2efca; }

@@ -1,6 +1,6 @@
 # Feature Spec — Rediseño ligero (concepto Expressive)
 
-> **Estado:** Aprobado en alcance por el propietario (2026-10-12); en implementación por incrementos.
+> **Estado:** Implementado (2026-10-12), pendiente de validación del propietario en dispositivo.
 > **Producto:** IronLog / GainsLab Pro (PWA + Capacitor) es la app principal. GainsLab nativa (KMP) queda pausada.
 > **Referencias:** `C:\Dev\GainsLab\docs\design\references\concepto-01-oscuro-expressive.png` (oscuro) y `concepto-02-claro-tonal.html` (claro). Son propuestas, no capturas de producción.
 > **Modo del estándar:** Estándar, en incrementos pequeños.
@@ -44,8 +44,9 @@ IronLog ya comparte con el concepto el acento lima `#c4f13a`, la barra inferior 
 
 ## 6. Decisiones pendientes
 
-- ¿Tema claro tonal (lila/menta/azul del concepto 02) o solo ajustar el claro actual? — decidir al ver el oscuro.
+- Resuelta: el tema claro adopta la paleta cálida y tarjetas tonales del concepto 02 (variables en `index.css`, clases `.tonal-1..4` y hero de Home en menta). Solo afecta al modo claro.
 
 ## 7. Evidencia de cierre
 
-- Por incremento: comandos y resultado, más captura. Aún sin evidencia.
+- `tsc` limpio; 139 archivos / 783 pruebas en verde; capturas visuales regeneradas (oscuro y claro) y revisadas para Home, Entreno, Estadísticas, Historial, Dieta y Perfil. Nota: Playwright tolera diferencias pequeñas de color (umbral por píxel), por lo que al cambiar tonos hay que borrar los PNG antes de `test:visual:update`.
+- Sin validación en dispositivo del anillo de descanso (no sale en las capturas).
