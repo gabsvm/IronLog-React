@@ -78,7 +78,7 @@ export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat
                         <Icon name="ArrowLeft" size={21} />
                     </button>
                     <div className="min-w-0 flex-1">
-                        <div className="truncate text-[10px] font-black uppercase tracking-[0.15em] text-zinc-500">
+                        <div className="truncate text-xs font-semibold text-muted">
                             {formatDate(log.endTime, lang)}
                         </div>
                         <h1 className="truncate text-base font-black tracking-tight text-zinc-950 dark:text-white">{log.name}</h1>
@@ -138,20 +138,20 @@ export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat
 
                 {editing && draft && (
                     <section className="mt-4">
-                        <label className="mb-1 block text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500" htmlFor="history-edit-note">{h.note}</label>
+                        <label className="mb-1 block text-xs font-semibold text-muted" htmlFor="history-edit-note">{h.note}</label>
                         <textarea
                             id="history-edit-note"
                             rows={2}
                             value={draft.note ?? ''}
                             onChange={e => setDraft(d => (d ? draftSetNote(d, e.target.value) : d))}
-                            className="w-full rounded-2xl border border-[rgb(var(--border-subtle)/0.7)] bg-[rgb(var(--surface-raised)/0.75)] p-3 text-sm text-zinc-700 outline-none focus:ring-2 focus:ring-primary-500 dark:text-zinc-300"
+                            className="w-full premium-theme-panel p-3 text-sm text-zinc-700 outline-none focus:ring-2 focus:ring-primary-500 dark:text-zinc-300"
                         />
                     </section>
                 )}
 
                 {!editing && (log as any).note && (
-                    <section className="mt-4 rounded-2xl border border-[rgb(var(--border-subtle)/0.7)] bg-[rgb(var(--surface-raised)/0.75)] p-4">
-                        <div className="mb-1 text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500">{TRANSLATIONS[lang].copy.historyDetail.note}</div>
+                    <section className="mt-4 premium-theme-panel p-4">
+                        <div className="mb-1 text-xs font-semibold text-muted">{TRANSLATIONS[lang].copy.historyDetail.note}</div>
                         <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">{(log as any).note}</p>
                     </section>
                 )}
@@ -177,11 +177,11 @@ export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat
                     {(log.exercises || []).map((ex, exIndex) => {
                         const completed = (ex.sets || []).filter(set => set.completed && !set.skipped);
                         return (
-                            <article key={ex.instanceId ?? ex.id ?? exIndex} className="overflow-hidden rounded-[1.35rem] border border-[rgb(var(--border-subtle)/0.7)] bg-[rgb(var(--surface-raised)/0.72)]">
+                            <article key={ex.instanceId ?? ex.id ?? exIndex} className="overflow-hidden premium-theme-panel">
                                 <div className="flex items-start justify-between gap-3 px-4 pb-3 pt-4">
                                     <div className="min-w-0">
                                         <h2 className="truncate text-sm font-black text-zinc-950 dark:text-white">{getTranslated(ex.name, lang)}</h2>
-                                        <div className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.13em] text-zinc-500">
+                                        <div className="mt-0.5 text-xs font-medium text-muted">
                                             {completed.length} {TRANSLATIONS[lang].copy.historyDetail.completedSets}
                                         </div>
                                     </div>
@@ -232,7 +232,7 @@ export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat
                     type="button"
                     onClick={onRepeat}
                     disabled={repeatBlocked}
-                    className="mx-auto flex min-h-[52px] w-full max-w-md items-center justify-center gap-2 rounded-2xl bg-primary-500 px-5 py-4 text-sm font-black text-black shadow-lg shadow-primary-500/20 transition-transform active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:text-zinc-500 disabled:shadow-none dark:disabled:bg-zinc-800 dark:disabled:text-zinc-400"
+                    className="expressive-press mx-auto flex min-h-[52px] w-full max-w-md items-center justify-center gap-2 rounded-full bg-primary-500 px-5 py-4 text-sm font-black text-black shadow-lg shadow-primary-500/20 transition-transform active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:text-zinc-500 disabled:shadow-none dark:disabled:bg-zinc-800 dark:disabled:text-zinc-400"
                 >
                     <Icon name={repeatBlocked ? 'Lock' : 'Repeat'} size={18} />
                     {repeatBlocked
@@ -245,7 +245,7 @@ export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat
 };
 
 const SummaryCell = ({ icon, label, value }: { icon: string; label: string; value: string }) => (
-    <div className="rounded-2xl border border-[rgb(var(--border-subtle)/0.7)] bg-[rgb(var(--surface-raised)/0.72)] p-3">
+    <div className="premium-theme-panel p-3">
         <div className="flex items-center gap-1.5 text-zinc-500">
             <Icon name={icon} size={12} />
             <span className="text-[9px] font-black uppercase tracking-[0.14em]">{label}</span>
