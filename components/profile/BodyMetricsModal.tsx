@@ -66,13 +66,13 @@ export const BodyMetricsModal: React.FC<BodyMetricsModalProps> = ({
             }
         >
             <div className="p-5 space-y-4">
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-muted">
                     {TRANSLATIONS[lang].copy.bodyMetricsModal.updateYourMetricsFor}
                 </p>
 
                 <div className="space-y-3">
                     <div>
-                        <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1">
+                        <label className="text-sm font-semibold text-muted block mb-1">
                             {formatMessage(TRANSLATIONS[lang].copy.bodyMetricsModal.bodyWeight, { v: unitLabel(unit).toLowerCase() })}
                         </label>
                         <input
@@ -81,13 +81,13 @@ export const BodyMetricsModal: React.FC<BodyMetricsModalProps> = ({
                             value={bodyWeight}
                             onChange={(e) => setBodyWeight(e.target.value)}
                             placeholder="e.g. 75"
-                            className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-base font-bold text-zinc-900 outline-none focus:border-primary-500 dark:border-white/10 dark:bg-zinc-800 dark:text-white"
+                            className="premium-form-input w-full p-3 !text-base !font-bold"
                         />
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1">
+                            <label className="text-sm font-semibold text-muted block mb-1">
                                 {TRANSLATIONS[lang].copy.bodyMetricsModal.heightCm}
                             </label>
                             <input
@@ -96,12 +96,12 @@ export const BodyMetricsModal: React.FC<BodyMetricsModalProps> = ({
                                 value={height}
                                 onChange={(e) => setHeight(e.target.value)}
                                 placeholder="e.g. 175"
-                                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-base font-bold text-zinc-900 outline-none focus:border-primary-500 dark:border-white/10 dark:bg-zinc-800 dark:text-white"
+                                className="premium-form-input w-full p-3 !text-base !font-bold"
                             />
                         </div>
 
                         <div>
-                            <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1">
+                            <label className="text-sm font-semibold text-muted block mb-1">
                                 {TRANSLATIONS[lang].copy.bodyMetricsModal.bodyFat}
                             </label>
                             <input
@@ -110,7 +110,7 @@ export const BodyMetricsModal: React.FC<BodyMetricsModalProps> = ({
                                 value={bodyFat}
                                 onChange={(e) => setBodyFat(e.target.value)}
                                 placeholder="e.g. 15"
-                                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-base font-bold text-zinc-900 outline-none focus:border-primary-500 dark:border-white/10 dark:bg-zinc-800 dark:text-white"
+                                className="premium-form-input w-full p-3 !text-base !font-bold"
                             />
                         </div>
                     </div>
