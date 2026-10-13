@@ -50,3 +50,23 @@ Implementation on `agent/gainslab-audit-fixes-v3` (2026-10-13). No production pr
 - Known exclusions: exact-alarm physical timing/Doze, Android 16 OEM Live Update eligibility, hardware-specific vibration, battery saver, process reclaim, restart, real notification permissions, signed-release installation.
 
 No changes to Production were made in this native hardening pass. Preview builds contain the React/CSS changes; an Android release must be built and distributed separately to deliver the Java/manifest code.
+
+
+## Android 15 contextual ongoing notification (2026-10-13)
+
+- The existing ongoing notification continues to use **one** `TIMER_LIVE_NOTIFICATION_ID`, `setUsesChronometer(true)`, `setChronometerCountDown(true)`, `setOngoing(true)`, `setOnlyAlertOnce(true)` and the existing LOW-importance channel. This works on Android 15 without Android 16 Live Updates.
+- `resolveRestNotificationContent` in `restTimerLogic.ts` reuses `resolveRestNextAction`, which already handles next working set, the next exercise and supersets. It adds **actual next set ordinal and the current exercise's set count** (e.g. `Descansando · Press banca` / `Próxima serie: 3 de 4`). No guessing from set IDs or previous exercise names. Long user-custom names are capped.
+- The **first** native `scheduleRestTimer` receives the resolved texts (or original generic fallback) so context is correct even when initial Android notification registration precedes React effects.
+- For later exercise / set changes, `updateRestTimerContent` updates the exact same OS notification and persists texts in `SharedPreferences`, guarded by the expected deadline. It never modifies `AlarmManager`, command epoch, completion alert, vibration or timer duration. The in-app rest overlay effect depends on exercise context, not `timeLeft`, avoiding per-second bridge calls.
+- An active native rest keeps its last context through a WebView reboot while the active workout store is rehydrating. A `+30 s` native action retains the persisted text without an active WebView and refreshes the native chronometer.
+- The notification action label uses **GainsLab's selected language** rather than Android's system locale (`Omitir` in Spanish; `Skip` in English); Android's Spanish resource fallback is also `Omitir`.
+- **Android version:** `versionCode 420`, `versionName 4.0.3-kong.12`. The web Preview changes alone cannot install these native modifications; a new Capacitor Android build is required.
+
+### Additional automated checks
+
+- `tests/unit/restNotificationContent.test.ts`: next 3/4, next exercise, supersets, duplicated exercise names, manual rest, English/Spanish, empty histories, long custom names.
+- `tests/unit/restTimerPill.test.tsx`: in-place update on real set completion; no bridge call per second; app-language skip label.
+- `tests/unit/nativeRestContract.test.ts`: native update method only mutates notification text and preserves scheduled alarm, command epoch, same notification ID and alert-once semantics.
+- Physical-device acceptance remains necessary: lock the Moto g86 Power on Android 15, start a rest on set 2 of 4, verify the displayed contextual text, extend +30s from the drawer twice, complete the next set, switch exercises, then verify there are no duplicate cards/sounds or incorrect older text. Check both Spanish and English app languages with Android set to either language.
+
+**Deployment scope:** only the existing feature branch is updated. No Production promotion and no signed-release APK is published by this implementation.
