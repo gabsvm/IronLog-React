@@ -346,6 +346,49 @@ public class NativeBridgePlugin extends Plugin {
         call.resolve(state);
     }
 
+    /**
+     * Refreshes the text of an already-running Android 15+ countdown card
+     * without scheduling another alarm or resetting its command epoch.
+     * A stale WebView callback cannot undo a +30s/Skip action.
+     */
+    @PluginMethod
+    public void updateRestTimerContent(PluginCall call) {
+        Context context = getContext();
+        Long expectedEndAt = call.getLong("endAt");
+        if (expectedEndAt == null) {
+            call.reject("MISSING_END_AT");
+            return;
+        }
+        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        long currentEndAt = prefs.getLong(KEY_END_AT, 0L);
+        if (currentEndAt <= System.currentTimeMillis() || currentEndAt != expectedEndAt) {
+            // Not an error: the app may have skipped or extended rest while
+            // a previous UI render was still completing.
+            call.resolve();
+            return;
+        }
+
+        String title = call.getString("liveTitle", "");
+        String body = call.getString("liveBody", "");
+        if (title == null || title.trim().isEmpty() || body == null || body.trim().isEmpty()) {
+            call.resolve();
+            return;
+        }
+        title = title.length() > 110 ? title.substring(0, 110) : title;
+        body = body.length() > 120 ? body.substring(0, 120) : body;
+
+        if (title.equals(prefs.getString(KEY_LIVE_TITLE, ""))
+                && body.equals(prefs.getString(KEY_LIVE_BODY, ""))) {
+            call.resolve();
+            return;
+        }
+        prefs.edit().putString(KEY_LIVE_TITLE, title).putString(KEY_LIVE_BODY, body).apply();
+        // Same TIMER_LIVE_NOTIFICATION_ID and setOnlyAlertOnce: no new card,
+        // alert, sound or vibration, and +30s still reads these persisted texts.
+        postLiveTimerNotification(context, currentEndAt, title, body);
+        call.resolve();
+    }
+
     @PluginMethod
     public void cancelRestTimer(PluginCall call) {
         cancelAlarm(getContext());
