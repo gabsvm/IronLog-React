@@ -93,10 +93,10 @@ export const AddCardioModal: React.FC<AddCardioModalProps> = ({ isOpen, onClose,
             <button
               key={a.id}
               onClick={() => setActivity(a.id)}
-              className={`flex items-center gap-2 px-3 py-2.5 rounded-2xl text-xs font-bold border transition-all active:scale-95 duration-fast ease-natural
+              className={`flex items-center gap-2 px-3 py-2.5 rounded-[18px] min-h-11 text-xs font-bold border transition-colors active:scale-95 duration-fast ease-natural
                 ${activity === a.id 
-                  ? 'bg-primary-500 text-white border-transparent shadow-[0_4px_12px] shadow-primary-500/30' 
-                  : 'bg-zinc-800 text-zinc-400 border-zinc-700/50 hover:border-zinc-600'}`}
+                  ? 'bg-primary-500 text-zinc-950 border-primary-500 shadow-[0_4px_12px] shadow-primary-500/30' 
+                  : 'bg-[rgb(var(--surface-elevated))] text-muted border-[rgb(var(--border-subtle))] hover:border-zinc-600'}`}
             >
               <span aria-hidden="true">{a.emoji}</span>
               <span>{pickLang(lang, a)}</span>
@@ -106,56 +106,56 @@ export const AddCardioModal: React.FC<AddCardioModalProps> = ({ isOpen, onClose,
 
         <div className="space-y-3">
           <div>
-            <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1 px-1">{t.duration}</label>
+            <label className="block text-sm font-semibold text-muted mb-1 px-1">{t.duration}</label>
             <input
               value={duration}
               onChange={e => setDuration(e.target.value)}
               placeholder="0"
               type="number"
               inputMode="numeric"
-              className="w-full bg-zinc-800 border border-zinc-700/50 rounded-2xl px-4 py-3 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all glow-input-neon"
+              className="premium-form-input w-full px-4 py-3 text-[rgb(var(--text-primary))] placeholder-zinc-500 text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all "
             />
           </div>
           
           {duration && (
             <div className="bg-primary-500/10 border border-primary-500/20 rounded-2xl px-4 py-3 flex justify-between items-center animate-in fade-in duration-slow">
-              <span className="text-xs text-zinc-400">{t.estimated}</span>
+              <span className="text-xs text-muted">{t.estimated}</span>
               <span className="text-sm font-bold text-primary-400">~{calEstimate} kcal</span>
             </div>
           )}
 
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1 px-1">{t.distance}</label>
+              <label className="block text-sm font-semibold text-muted mb-1 px-1">{t.distance}</label>
               <input
                 value={distance}
                 onChange={e => setDistance(e.target.value)}
                 placeholder="0.0"
                 type="number"
                 inputMode="decimal"
-                className="w-full bg-zinc-800 border border-zinc-700/50 rounded-2xl px-4 py-3 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all glow-input-neon"
+                className="premium-form-input w-full px-4 py-3 text-[rgb(var(--text-primary))] placeholder-zinc-500 text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all "
               />
             </div>
             <div>
-              <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1 px-1">{t.heartRate}</label>
+              <label className="block text-sm font-semibold text-muted mb-1 px-1">{t.heartRate}</label>
               <input
                 value={heartRate}
                 onChange={e => setHeartRate(e.target.value)}
                 placeholder="0"
                 type="number"
                 inputMode="numeric"
-                className="w-full bg-zinc-800 border border-zinc-700/50 rounded-2xl px-4 py-3 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all glow-input-neon"
+                className="premium-form-input w-full px-4 py-3 text-[rgb(var(--text-primary))] placeholder-zinc-500 text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all "
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1 px-1">{t.notes}</label>
+            <label className="block text-sm font-semibold text-muted mb-1 px-1">{t.notes}</label>
             <input
               value={notes}
               onChange={e => setNotes(e.target.value)}
               placeholder="..."
-              className="w-full bg-zinc-800 border border-zinc-700/50 rounded-2xl px-4 py-3 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all glow-input-neon"
+              className="premium-form-input w-full px-4 py-3 text-[rgb(var(--text-primary))] placeholder-zinc-500 text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all "
             />
           </div>
         </div>
