@@ -107,11 +107,11 @@ export const AccountSection: React.FC<AccountSectionProps> = ({ onClose, onLogin
             </div>
 
             <div className="grid grid-cols-2 gap-2">
-                <div className="card-reference p-3">
+                <div className="card-reference premium-theme-quiet p-3">
                     <div className="text-lg font-semibold text-white tabular-nums">{stats.total}</div>
                     <div className="text-xs text-muted">{ty.sessions}</div>
                 </div>
-                <div className="card-reference p-3">
+                <div className="card-reference premium-theme-quiet p-3">
                     <div className="text-lg font-semibold text-white tabular-nums">{stats.recent}</div>
                     <div className="text-xs text-muted">{ty.last30}</div>
                 </div>
