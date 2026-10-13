@@ -37,6 +37,11 @@
   --primary-800: 101 134  15;
   --primary-900:  77 101  12;
   --accent-text: 200 244  90;
+  /* Shared expressive shape + motion tokens; never override users' accent choice. */
+  --shape-card-radius: 24px;
+  --shape-segment-radius: 18px;
+  --shape-hero-radius: 30px;
+  --motion-expressive: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 html.light {
@@ -48,7 +53,7 @@ html.light {
   --surface-elevated: 230 233 223;
   --text-primary: 32 37 28;
   --text-secondary: 100 107 98;
-  --text-muted: 125 132 120;
+  --text-muted: 83 94 78; /* #535e4e — >=5:1 on all four light tonal cards */
   --border-subtle: 227 230 220;
   --border-strong: 211 216 200;
   --modal-surface: 255 254 250;
@@ -235,17 +240,18 @@ body {
     .card-reference {
         background-color: rgb(var(--surface-raised));
         border: 0.5px solid rgb(var(--border-subtle));
-        border-radius: 14px;
+        border-radius: var(--shape-card-radius);
+        transition: background-color 220ms var(--motion-expressive), border-color 220ms var(--motion-expressive), box-shadow 220ms var(--motion-expressive);
     }
 
     .chip-reference {
         display: inline-flex;
         align-items: center;
         gap: 4px;
-        padding: 2px 8px;
+        padding: 4px 10px;
         border-radius: 9999px;
         background-color: rgb(var(--surface-elevated));
-        font-size: 11px;
+        font-size: 12px;
         color: rgb(var(--text-secondary));
         font-weight: 500;
     }
@@ -255,14 +261,14 @@ body {
         gap: 6px;
         background-color: rgb(var(--surface-raised));
         border: 0.5px solid rgb(var(--border-subtle));
-        border-radius: 12px;
+        border-radius: var(--shape-segment-radius);
         padding: 4px;
     }
 
     .label-reference {
-        font-size: 11px;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: 0.025em;
+        text-transform: none;
         color: rgb(var(--text-muted));
         margin: 16px 4px 6px;
         font-weight: 600;
@@ -575,9 +581,19 @@ html.light .glass-island {
   color: rgb(var(--text-primary));
 }
 
-/* Tonal cards (light mode only): lilac / mint / blue / peach, as in concept 02. */
-html.light .tonal-1 { background-color: #e8e2fa; }
-html.light .tonal-2 { background-color: #dff1e8; }
-html.light .tonal-3 { background-color: #dbe9fb; }
-html.light .tonal-4 { background-color: #fde8d2; }
-html.light #tut-up-next.card-reference { background-color: #e2efca; }
+/* Tonal surfaces retain their semantic palette, but follow the selected accent. */
+html.light .tonal-1 { background-color: color-mix(in srgb, #e8e2fa 90%, rgb(var(--primary-500))); }
+html.light .tonal-2 { background-color: color-mix(in srgb, #dff1e8 90%, rgb(var(--primary-500))); }
+html.light .tonal-3 { background-color: color-mix(in srgb, #dbe9fb 90%, rgb(var(--primary-500))); }
+html.light .tonal-4 { background-color: color-mix(in srgb, #fde8d2 90%, rgb(var(--primary-500))); }
+html.light #tut-up-next.card-reference { background-color: color-mix(in srgb, #fffefa 78%, rgb(var(--primary-500))); }
+html.dark .tonal-1, html.dark .tonal-2, html.dark .tonal-3, html.dark .tonal-4 {
+  background-color: color-mix(in srgb, rgb(var(--surface-raised)) 92%, rgb(var(--primary-500)));
+}
+/* Larger readable tap targets and softly emphasized actions. */
+.btn-primary-reference { min-height: 48px; border-radius: 9999px; }
+.expressive-press { transition: transform 260ms var(--motion-expressive), background-color 260ms var(--motion-expressive), color 260ms var(--motion-expressive); }
+.expressive-press:active { transform: scale(0.96); }
+@media (prefers-reduced-motion: reduce) { .expressive-press { transition: none; } .expressive-press:active { transform: none; } }
+[data-effects="reduced"] .expressive-press { transition: none; }
+[data-effects="reduced"] .expressive-press:active { transform: none; }
