@@ -176,6 +176,7 @@ describe('Task U2: Rest Timer Notification Permission and Visibility Scoping', (
             TRANSLATIONS.es.timer.restingBody,
             90,
             undefined,
+            'Omitir',
         ));
         expect(cancelNativeRestTimer).not.toHaveBeenCalled();
     });
@@ -231,6 +232,7 @@ describe('Task U2: Rest Timer Notification Permission and Visibility Scoping', (
             TRANSLATIONS.en.timer.restingBody,
             90,
             undefined,
+            'Skip',
         );
         expect(cancelNativeRestTimer).not.toHaveBeenCalled();
     });
