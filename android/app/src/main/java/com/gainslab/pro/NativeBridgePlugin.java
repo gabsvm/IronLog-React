@@ -161,6 +161,7 @@ public class NativeBridgePlugin extends Plugin {
         Long endAt = call.getLong("endAt");
         if (endAt == null || endAt <= System.currentTimeMillis()) {
             cancelAlarm(getContext());
+            markRestInactive(getContext());
             call.resolve();
             return;
         }
@@ -697,6 +698,25 @@ public class NativeBridgePlugin extends Plugin {
                 .remove(KEY_SOURCE_EXERCISE)
                 .remove(KEY_SOURCE_SET)
                 .apply();
+    }
+
+    /** Restores an active short countdown after a device reboot. */
+    static void restoreRestAfterBoot(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        long endAt = prefs.getLong(KEY_END_AT, 0L);
+        if (endAt <= System.currentTimeMillis()) {
+            markRestInactive(context);
+            cancelLiveTimerNotification(context);
+            return;
+        }
+        AlarmManager manager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        if (manager == null) return;
+        programAlarm(context, manager, endAt,
+                prefs.getString(KEY_FINAL_TITLE, "GainsLab"),
+                prefs.getString(KEY_FINAL_BODY, "Rest finished. Ready for the next set."));
+        postLiveTimerNotification(context, endAt,
+                prefs.getString(KEY_LIVE_TITLE, "GainsLab"),
+                prefs.getString(KEY_LIVE_BODY, ""));
     }
 
     public static void onRestTimerFinished(Context context, String title, String body) {
