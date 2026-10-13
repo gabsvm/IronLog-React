@@ -91,7 +91,7 @@ const ExerciseVisualHint: React.FC<{ exercise: ExerciseDef; lang: 'en' | 'es' }>
                 </div>
                 <div className="flex gap-2 flex-wrap justify-center px-4">
                     {tags.map((tag, i) => (
-                        <span key={i} className="text-[9px] font-bold uppercase tracking-widest bg-white/10 border border-white/15 text-white/70 px-2 py-0.5 rounded-full">
+                        <span key={i} className="text-xs font-bold uppercase tracking-widest bg-white/10 border border-white/15 text-white/70 px-2 py-0.5 rounded-full">
                             {tag}
                         </span>
                     ))}
@@ -136,14 +136,14 @@ const YouTubeCard: React.FC<{ videoId: string; title: string; youtubeUrl: string
             </div>
 
             {/* "Open in YouTube" badge */}
-            <div className="absolute bottom-3 right-3 flex items-center gap-1.5 bg-black/70 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1.5 rounded-full border border-white/10">
+            <div className="absolute bottom-3 right-3 flex items-center gap-1.5 bg-black/70 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1.5 rounded-full border border-white/10">
                 <Icon name="ExternalLink" size={11} />
                 YouTube
             </div>
 
             {/* YouTube logo top-left */}
             <div className="absolute top-3 left-3">
-                <div className="bg-red-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded">YouTube</div>
+                <div className="bg-red-600 text-white text-xs font-black px-1.5 py-0.5 rounded">YouTube</div>
             </div>
         </a>
     );
@@ -229,7 +229,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                     role="tab"
                     aria-selected={activeTab === 'guide'}
                     onClick={() => setActiveTab('guide')}
-                    className={`expressive-press min-h-11 flex-1 rounded-full px-3 text-xs font-bold ${activeTab === 'guide' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow' : 'text-zinc-500'}`}
+                    className={`expressive-press min-h-11 flex-1 rounded-full px-3 text-xs font-bold ${activeTab === 'guide' ? 'bg-primary-500 text-zinc-950 shadow-sm' : 'text-muted'}`}
                 >
                     {t.guide || 'Guide'}
                 </button>
@@ -237,7 +237,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                     role="tab"
                     aria-selected={activeTab === 'history'}
                     onClick={() => setActiveTab('history')}
-                    className={`expressive-press min-h-11 flex-1 rounded-full px-3 text-xs font-bold ${activeTab === 'history' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow' : 'text-zinc-500'}`}
+                    className={`expressive-press min-h-11 flex-1 rounded-full px-3 text-xs font-bold ${activeTab === 'history' ? 'bg-primary-500 text-zinc-950 shadow-sm' : 'text-muted'}`}
                 >
                     {t.history || 'History'}
                 </button>
@@ -260,7 +260,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                             </div>
 
                             {/* Search on YouTube link (always shown) */}
-                            <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/5">
+                            <div className="flex items-center justify-between px-4 py-2.5 border-b border-[rgb(var(--border-subtle))]">
                                 <div className="text-xs font-semibold text-muted">
                                     {exercise.videoId
                                         ? (TRANSLATIONS[lang].copy.exerciseDetailModal.tapToOpenIn)
@@ -271,7 +271,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                                     href={youtubeUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-center gap-1.5 text-[10px] font-bold text-red-500 hover:text-red-400 transition-colors"
+                                    className="flex items-center gap-1.5 text-xs font-bold text-red-500 hover:text-red-400 transition-colors"
                                 >
                                     <Icon name="ExternalLink" size={12} />
                                     {t.watchVideo || 'Watch Video'}
@@ -284,7 +284,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                                     <h4 className="text-sm font-bold tracking-tight text-[rgb(var(--text-primary))] mb-3 flex items-center gap-2">
                                         <Icon name="FileText" size={13} /> {t.instructions}
                                     </h4>
-                                    <div className="text-sm text-zinc-300 leading-relaxed">
+                                    <div className="text-sm text-[rgb(var(--text-secondary))] leading-relaxed">
                                         {translatedInstructions && translatedInstructions !== 'Unknown' ? (
                                             <p>{String(translatedInstructions)}</p>
                                         ) : (
@@ -329,7 +329,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                             <div className="premium-theme-panel p-4">
                                 <div className="mb-4">
                                     <h4 className="text-sm font-bold text-white">{t.statsProgress}</h4>
-                                    <p className="text-xs text-zinc-500">Estimated 1RM / Max Performance</p>
+                                    <p className="text-xs text-muted">Estimated 1RM / Max Performance</p>
                                 </div>
                                 <ProgressChart
                                     dataPoints={chartData}
@@ -338,7 +338,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                                 />
                             </div>
                             {chartData.length === 0 && !chartLoading && (
-                                <div className="text-center py-8 text-zinc-500 text-xs italic">
+                                <div className="text-center py-8 text-muted text-xs italic">
                                     {t.statsNoData}
                                 </div>
                             )}
