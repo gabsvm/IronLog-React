@@ -37,7 +37,7 @@ export const HubHeader: React.FC<{ s: HubState }> = ({ s }) => {
 export const HubHero: React.FC<{ s: HubState }> = ({ s }) => {
     const { meso, block, blockWeek, h, blockName } = s;
   return (
-    <section className="rounded-3xl border border-primary-500/30 bg-gradient-to-br from-primary-500/15 to-[rgb(var(--surface-raised))] p-6">
+    <section className="premium-summary-hero p-6">
       <p className="text-xs font-black uppercase tracking-[0.2em] text-primary-500">KONG · {h.blockWord} {block.number}</p>
       <h1 className="mt-2 text-3xl font-black">{h.heroWeek} {meso.week} / 12</h1>
       <p className="mt-2 text-sm leading-6 text-[rgb(var(--text-secondary))]">
@@ -55,7 +55,7 @@ export const HubMetricGrid: React.FC<{ s: HubState }> = ({ s }) => {
   return (
     <div className="grid grid-cols-2 gap-3">
       {metricCards.map((card) => (
-        <div key={card.key} className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4">
+        <div key={card.key} className="rounded-3xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4">
           <p className="text-xs text-[rgb(var(--text-muted))]">{card.label}</p>
           <p className="mt-2 text-2xl font-black">{card.value}</p>
         </div>
@@ -70,7 +70,7 @@ export const HubHome: React.FC<{ s: HubState }> = ({ s }) => {
     <div className="space-y-5">
       <HubHero s={s} />
       <HubMetricGrid s={s} />
-      <div className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4 text-sm text-[rgb(var(--text-secondary))]">
+      <div className="rounded-3xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4 text-sm text-[rgb(var(--text-secondary))]">
         {metrics.initialBodyWeight || metrics.currentBodyWeight
           ? `${h.bodyWeight}: ${metrics.initialBodyWeight ?? '—'} → ${metrics.currentBodyWeight ?? '—'}`
           : h.bodyWeightNoData}
@@ -84,7 +84,7 @@ export const HubHome: React.FC<{ s: HubState }> = ({ s }) => {
               key={item.id}
               type="button"
               onClick={() => setPanel(item.id)}
-              className="flex min-h-[68px] w-full items-center gap-3 rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] px-4 py-3 text-left transition-colors active:bg-[rgb(var(--surface-elevated))]"
+              className="flex min-h-[68px] w-full items-center gap-3 rounded-3xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] px-4 py-3 text-left transition-colors active:bg-[rgb(var(--surface-elevated))]"
             >
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-500/10 text-primary-500">
                 <Icon name={item.icon} size={19} />
@@ -113,7 +113,7 @@ export const HubBlock: React.FC<{ s: HubState }> = ({ s }) => {
           <p className="mt-2 text-sm leading-6 text-[rgb(var(--text-secondary))]">{blockGoal(block.number)}</p>
         </section>
         {sections.map((section) => (
-          <article key={section.id} className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-5">
+          <article key={section.id} className="rounded-3xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-5">
             <h2 className="font-black">{title(section.title)}</h2>
             <p className="mt-2 text-sm leading-6 text-[rgb(var(--text-secondary))]">{title(section.summary)}</p>
           </article>
@@ -137,7 +137,7 @@ export const HubPrinciples: React.FC<{ s: HubState }> = ({ s }) => {
         if (!section) return null;
         const open = openPrinciple === id;
         return (
-          <article key={id} className="overflow-hidden rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))]">
+          <article key={id} className="overflow-hidden rounded-3xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))]">
             <button type="button" onClick={() => setOpenPrinciple(open ? '' : id)} className="flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-500/10 text-sm font-black text-primary-500">{index + 1}</span>
               <span className="flex-1 font-black">{title(section.title).replace(/^Principio \d+ — |^Tenet \d+ — /, '')}</span>
@@ -161,7 +161,7 @@ export const HubRpe: React.FC<{ s: HubState }> = ({ s }) => {
           <h1 className="mt-2 text-2xl font-black">{section ? title(section.title) : 'RPE en KONG'}</h1>
           <p className="mt-3 text-sm leading-6 text-[rgb(var(--text-secondary))]">{section ? title(section.summary) : ''}</p>
         </section>
-        <article className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-5">
+        <article className="rounded-3xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-5">
           <h2 className="font-black">{h.rpePractice}</h2>
           <div className="mt-3 space-y-3 text-sm leading-6 text-[rgb(var(--text-secondary))]">
             <p>{h.rpeTip1}</p>
@@ -185,7 +185,7 @@ export const HubSubstitutions: React.FC<{ s: HubState }> = ({ s }) => {
         </p>
       </section>
 
-      <div className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4 text-sm leading-6 text-[rgb(var(--text-secondary))]">
+      <div className="rounded-3xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4 text-sm leading-6 text-[rgb(var(--text-secondary))]">
         {h.subsScope}
       </div>
 
@@ -201,7 +201,7 @@ export const HubSubstitutions: React.FC<{ s: HubState }> = ({ s }) => {
         ) : (
           <div className="space-y-2">
             {persistentSubstitutions.map((item) => (
-              <div key={item.slotId} className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4">
+              <div key={item.slotId} className="rounded-3xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4">
                 <p className="text-xs text-[rgb(var(--text-muted))]">{item.source}</p>
                 <div className="mt-2 flex items-center gap-2 text-sm font-black"><Icon name="ArrowRight" size={15} className="text-primary-500" /><span className="capitalize">{item.replacement}</span></div>
               </div>
@@ -221,7 +221,7 @@ export const HubProgram: React.FC<{ s: HubState }> = ({ s }) => {
         {h.programIntro}
       </p>
       {KONG_4DAY_V1.blocks.map((candidateBlock) => (
-        <section key={candidateBlock.id} className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4">
+        <section key={candidateBlock.id} className="rounded-3xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-[10px] font-black uppercase tracking-wider text-primary-500">{h.blockWord} {candidateBlock.number}</p>
@@ -308,7 +308,7 @@ export const HubProgress: React.FC<{ s: HubState }> = ({ s }) => {
     <div className="space-y-5">
       <HubHero s={s} />
       <HubMetricGrid s={s} />
-      <section className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-5">
+      <section className="rounded-3xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-5">
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-xs font-black uppercase tracking-wider text-[rgb(var(--text-muted))]">{h.resolvedLabel}</p>
@@ -323,7 +323,7 @@ export const HubProgress: React.FC<{ s: HubState }> = ({ s }) => {
           {h.adherenceNote}
         </p>
       </section>
-      <div className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4 text-sm text-[rgb(var(--text-secondary))]">
+      <div className="rounded-3xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4 text-sm text-[rgb(var(--text-secondary))]">
         {metrics.initialBodyWeight || metrics.currentBodyWeight
           ? `${h.bodyWeight}: ${metrics.initialBodyWeight ?? '—'} → ${metrics.currentBodyWeight ?? '—'}`
           : h.bodyWeightNoFollowup}
