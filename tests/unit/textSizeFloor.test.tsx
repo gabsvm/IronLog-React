@@ -7,14 +7,14 @@ import { WorkoutSet } from '../../types';
 
 describe('A2: minimum text-size floor (11px)', () => {
     // jsdom cannot compute Tailwind styles, so the real pixel value of the
-    // shared `text-[11px]` utility is proven in tests/e2e/cssFoundations.spec.ts
+    // minimum utility is proven in tests/e2e/cssFoundations.spec.ts
     // (computed font-size of the rendered nav label). This test guards the
-    // other half of the contract: every small-text surface must keep using
-    // that same utility instead of drifting back to 9-10px classes.
+    // other half of the contract: navigation uses 12px and prescription
+    // hints remain at least 11px rather than drifting to tiny classes.
     const fontSizeUtility = (className: string): string | undefined =>
         className.split(/\s+/).find(c => /^text-\[?\d+px\]?$/.test(c) || /^text-(xs|sm|base|lg)/.test(c));
 
-    it('keeps the inactive NavBtn label and the SetRow prescription hint on the same 11px utility', () => {
+    it('keeps the NavBtn label at 12px and SetRow prescription hints at 11px', () => {
         const { unmount } = render(
             <NavBtn
                 id="history"
@@ -25,7 +25,7 @@ describe('A2: minimum text-size floor (11px)', () => {
             />
         );
         const navLabel = screen.getByText('HISTORIAL');
-        expect(fontSizeUtility(navLabel.className)).toBe('text-[11px]');
+        expect(fontSizeUtility(navLabel.className)).toBe('text-[12px]');
         unmount();
 
         const mockSet: WorkoutSet = {
