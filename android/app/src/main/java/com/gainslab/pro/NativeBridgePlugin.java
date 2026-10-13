@@ -785,7 +785,7 @@ public class NativeBridgePlugin extends Plugin {
                     .setPriority(Notification.PRIORITY_LOW);
         }
 
-        builder.setSmallIcon(R.mipmap.ic_launcher)
+        builder.setSmallIcon(R.drawable.ic_stat_rest_timer)
                 .setContentTitle(liveTitle)
                 .setContentText(liveBody)
                 .setWhen(endAt)
