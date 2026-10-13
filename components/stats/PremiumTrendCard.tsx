@@ -35,7 +35,7 @@ const PREMIUM_COPY = {
         bestPlan: 'Best strength set in this plan',
         bestHistory: 'Best recorded strength set',
     },
-} as const;
+};
 
 interface Props {
     insights: PremiumInsights;
