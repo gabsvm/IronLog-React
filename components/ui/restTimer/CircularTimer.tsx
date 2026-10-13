@@ -23,14 +23,14 @@ export const CircularTimer: React.FC<{
     };
 
     return (
-        <div className="relative flex items-center justify-center mx-auto my-2" style={{ width: size, height: size }}>
+        <div className="premium-rest-ring relative mx-auto my-3 flex items-center justify-center" style={{ width: size, height: size }}>
             <svg viewBox="0 0 120 120" width={size} height={size}>
                 <circle
                     cx="60"
                     cy="60"
                     r={radius}
                     fill="none"
-                    stroke="#212125"
+                    stroke="rgb(var(--border-strong))"
                     strokeWidth={strokeWidth}
                 />
                 <circle
@@ -48,7 +48,7 @@ export const CircularTimer: React.FC<{
                 />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="font-mono text-4xl font-semibold text-white tabular-nums tracking-tight">
+                <span className="font-mono text-[40px] font-black text-[rgb(var(--text-primary))] tabular-nums tracking-[-0.06em]">
                     {formatSeconds(timeLeft)}
                 </span>
                 <span className="text-xs text-muted mt-0.5">
