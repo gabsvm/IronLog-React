@@ -660,7 +660,7 @@ html.light .premium-hero__metrics > span, html.light .premium-hero__exercise {
 }
 html.light .premium-hero__exercise > span:last-child { color: #344232; }
 html.light .premium-hero__skip { color: #263522; background: rgb(255 255 255 / .46); }
-html.light .premium-hero__cta { background: #111d15; color: #d5ff78; }
+html.light .premium-hero__cta { background: #111d15; color: #fffefa; }
 html.light .premium-hero__cta:hover { background: #25392b; }
 .premium-theme-panel {
   border: 1px solid rgb(var(--border-subtle) / .8);
@@ -688,3 +688,10 @@ html.light .premium-hero__cta:hover { background: #25392b; }
 [data-effects="reduced"] .premium-trend-line { animation: none; stroke-dashoffset: 0; }
 [data-effects="reduced"] .premium-history-row, [data-effects="reduced"] .premium-progress-feedback { transition: none; }
 [data-effects="reduced"] .premium-history-row:active { transform: none; }
+
+/* Profile uses the same quiet tonal hierarchy as History and Diet. */
+.premium-profile .card-reference {
+  background-color: color-mix(in srgb, rgb(var(--surface-raised)) 93%, rgb(var(--primary-500)));
+  border-color: rgb(var(--border-subtle));
+}
+.premium-profile .label-reference { font-size: 12px; letter-spacing: .025em; }
