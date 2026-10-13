@@ -25,15 +25,15 @@ export const WorkoutFinishSheet: React.FC<{ state: WorkoutViewState }> = ({ stat
                         <div className="p-4 space-y-3.5">
                             {/* Summary Cards */}
                             <div className="grid grid-cols-2 gap-2.5">
-                                <div className="rounded-xl border border-border-subtle bg-surface-raised p-3">
+                                <div className="rounded-[20px] border border-border-subtle bg-surface-raised p-3">
                                     <div className="text-xs text-muted">{t.duration}</div>
-                                    <div className="text-xl font-semibold text-white mt-0.5 tabular-nums">
+                                    <div className="text-xl font-semibold text-[rgb(var(--text-primary))] mt-0.5 tabular-nums">
                                         {formatSeconds(elapsedSecs)}
                                     </div>
                                 </div>
-                                <div className="rounded-xl border border-border-subtle bg-surface-raised p-3">
+                                <div className="rounded-[20px] border border-border-subtle bg-surface-raised p-3">
                                     <div className="text-xs text-muted">{t.sets}</div>
-                                    <div className="text-xl font-semibold text-white mt-0.5 tabular-nums">
+                                    <div className="text-xl font-semibold text-[rgb(var(--text-primary))] mt-0.5 tabular-nums">
                                         {completedWorkingSets} / {totalWorkingSets}
                                     </div>
                                 </div>
@@ -56,7 +56,7 @@ export const WorkoutFinishSheet: React.FC<{ state: WorkoutViewState }> = ({ stat
                                     }}
                                 >
                                     <div className="flex-1 min-w-0">
-                                        <div className="text-sm font-semibold text-white">{t.updateRoutine}</div>
+                                        <div className="text-sm font-semibold text-[rgb(var(--text-primary))]">{t.updateRoutine}</div>
                                         <div className="text-xs text-muted mt-0.5">
                                             {t.saveRoutineDesc}
                                         </div>
@@ -69,7 +69,7 @@ export const WorkoutFinishSheet: React.FC<{ state: WorkoutViewState }> = ({ stat
 
                             {/* Session Note */}
                             <div>
-                                <label className="block text-[11px] font-semibold uppercase tracking-wider text-muted mb-1 px-0.5">
+                                <label className="block text-xs font-semibold text-muted mb-1 px-0.5">
                                     {t.sessionNote}
                                 </label>
                                 <textarea
@@ -77,7 +77,7 @@ export const WorkoutFinishSheet: React.FC<{ state: WorkoutViewState }> = ({ stat
                                     value={activeSession.note || ''}
                                     onChange={e => updateSession(prev => prev ? { ...prev, note: e.target.value } : null)}
                                     rows={3}
-                                    className="w-full rounded-xl border border-border-subtle bg-surface-raised px-3.5 py-2.5 text-sm text-white placeholder-zinc-500 outline-none resize-none transition-all focus:border-zinc-600"
+                                    className="w-full rounded-[20px] border border-border-subtle bg-surface-raised px-3.5 py-3 text-sm text-[rgb(var(--text-primary))] placeholder-zinc-500 outline-none resize-none transition-all focus:border-zinc-600"
                                 />
                             </div>
 
@@ -86,14 +86,14 @@ export const WorkoutFinishSheet: React.FC<{ state: WorkoutViewState }> = ({ stat
                                 <button
                                     type="button"
                                     onClick={handleConfirmFinish}
-                                    className="w-full h-11 rounded-xl bg-primary-500 text-zinc-950 font-semibold text-sm hover:bg-primary-400 active:scale-98 transition-all shadow-sm"
+                                    className="expressive-press w-full min-h-12 rounded-full bg-primary-500 text-zinc-950 font-semibold text-sm hover:bg-primary-400 active:scale-98 transition-all shadow-sm"
                                 >
                                     {t.saveAndFinish}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setShowFinishModal(false)}
-                                    className="w-full h-11 rounded-xl bg-surface-elevated text-zinc-200 font-semibold text-sm hover:bg-zinc-800 active:scale-98 transition-all"
+                                    className="expressive-press w-full min-h-12 rounded-full bg-surface-elevated text-[rgb(var(--text-primary))] font-semibold text-sm hover:bg-[rgb(var(--surface-elevated))] active:scale-98 transition-all"
                                 >
                                     {t.continueTraining}
                                 </button>
