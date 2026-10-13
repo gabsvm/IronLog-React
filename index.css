@@ -700,3 +700,62 @@ html.light .premium-hero__cta:hover { background: #25392b; }
   border-color: rgb(var(--border-subtle));
 }
 .premium-profile .label-reference { font-size: 12px; letter-spacing: .025em; }
+
+/* Expressive final pass — editorial closure and reusable form controls. */
+.premium-summary-hero {
+  border: 1px solid color-mix(in srgb, rgb(var(--primary-500)) 25%, rgb(var(--border-subtle)));
+  border-radius: var(--shape-hero-radius);
+  background: linear-gradient(145deg, color-mix(in srgb, rgb(var(--primary-500)) 18%, rgb(var(--surface-raised))), rgb(var(--surface-raised)));
+  box-shadow: 0 14px 38px -30px rgb(0 0 0 / .6);
+}
+.premium-summary-medal { box-shadow: 0 0 0 8px rgb(var(--primary-500) / .04); }
+.premium-form-input {
+  background: rgb(var(--surface-elevated) / .66);
+  color: rgb(var(--text-primary));
+  border: 1px solid rgb(var(--border-subtle));
+  border-radius: 16px;
+  min-height: 44px;
+  font-size: 14px;
+  transition: border-color 160ms var(--motion-expressive), background-color 160ms var(--motion-expressive);
+}
+.premium-form-input:focus-visible {
+  outline: 2px solid rgb(var(--primary-500));
+  outline-offset: 1px;
+}
+.premium-filter-pill {
+  min-height: 40px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 8px 12px;
+  transition: background-color 160ms var(--motion-expressive), color 160ms var(--motion-expressive);
+}
+.premium-filter-pill[data-selected="true"] {
+  background: rgb(var(--primary-500));
+  color: #151910;
+}
+.premium-filter-pill[data-selected="false"] {
+  background: rgb(var(--surface-elevated) / .8);
+  color: rgb(var(--text-secondary));
+}
+.premium-editor-card {
+  background: rgb(var(--surface-raised));
+  border: 1px solid rgb(var(--border-subtle));
+  border-radius: var(--shape-card-radius);
+  overflow: hidden;
+}
+.premium-section-heading {
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: -.01em;
+  color: rgb(var(--text-primary));
+}
+.premium-quiet-row { background: rgb(var(--surface-elevated) / .48); }
+html.light .premium-summary-hero {
+  background: linear-gradient(145deg, color-mix(in srgb, rgb(var(--primary-500)) 26%, #fffefa), #fffefa);
+}
+@media (prefers-reduced-motion: reduce) {
+  .premium-form-input, .premium-filter-pill { transition: none; }
+}
+[data-effects="reduced"] .premium-form-input,
+[data-effects="reduced"] .premium-filter-pill { transition: none; }
