@@ -15,7 +15,7 @@ export const HomeTopSection: React.FC<{ state: HomeViewState }> = ({ state }) =>
             <div className={`flex items-start justify-between gap-3 pt-1 ${kongBlock ? 'kong-home-header' : ''}`}>
                 <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                        <h2 className="text-lg font-semibold text-white tracking-tight truncate">{activeMeso.name}</h2>
+                        <h2 className="text-2xl font-black text-white tracking-[-0.03em] truncate">{activeMeso.name}</h2>
                         {kongBlock && (
                             <button
                                 type="button"

@@ -27,9 +27,9 @@ export const StatsHeader: React.FC<{ stats: StatsData }> = ({ stats }) => {
 
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                         {overviewPills.map(pill => (
-                            <div key={pill.label} className="rounded-2xl border border-white/6 bg-white/[0.03] px-3 py-3">
+                            <div key={pill.label} className="rounded-3xl border border-border-subtle bg-surface-raised px-4 py-3.5">
                                 <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-zinc-500">{pill.label}</div>
-                                <div className="mt-1 text-xl font-black tracking-[-0.04em] text-white">{pill.value}</div>
+                                <div className="mt-1 text-3xl font-black tracking-[-0.04em] text-white">{pill.value}</div>
                             </div>
                         ))}
                     </div>

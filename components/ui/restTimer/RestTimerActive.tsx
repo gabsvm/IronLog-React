@@ -78,11 +78,22 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
                             className="flex items-center gap-2 pr-1 min-w-0 transition-opacity hover:opacity-85 active:scale-95 text-left"
                             aria-label={`${t.resting}: ${formatSeconds(restTimer.timeLeft)}. ${t.timer.tapToExpand}`}
                         >
-                            <span className="relative flex h-2 w-2 shrink-0">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75" />
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary-500" />
-                            </span>
-                            <span className="font-mono text-sm font-black text-white tabular-nums tracking-tight">
+                            <svg viewBox="0 0 36 36" className="h-9 w-9 shrink-0 -rotate-90" aria-hidden="true">
+                                <circle cx="18" cy="18" r="15" fill="none" strokeWidth="3.5" className="stroke-surface-elevated" />
+                                <circle
+                                    cx="18"
+                                    cy="18"
+                                    r="15"
+                                    fill="none"
+                                    strokeWidth="3.5"
+                                    strokeLinecap="round"
+                                    className="stroke-primary-500"
+                                    strokeDasharray={2 * Math.PI * 15}
+                                    strokeDashoffset={2 * Math.PI * 15 * (1 - Math.min(100, Math.max(0, percentage)) / 100)}
+                                    style={{ transition: reducedEffects ? 'none' : 'stroke-dashoffset 1s linear' }}
+                                />
+                            </svg>
+                            <span className="font-mono text-lg font-black text-white tabular-nums tracking-tight">
                                 {formatSeconds(restTimer.timeLeft)}
                             </span>
                             <Icon name="ChevronUp" size={14} className="text-muted shrink-0" />
