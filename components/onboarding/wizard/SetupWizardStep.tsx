@@ -159,7 +159,7 @@ export const SetupWizardStep: React.FC<{ state: SetupWizardState }> = ({ state }
                                 className="w-full p-4 bg-primary-500 hover:bg-primary-400 rounded-2xl flex items-center gap-4 transition-all active:scale-[0.98] group shadow-sm"
                             >
                                 <div className="w-10 h-10 bg-zinc-950/10 rounded-[18px] flex items-center justify-center shrink-0">
-                                    <Icon name="Zap" size={20} className="text-white" />
+                                    <Icon name="Zap" size={20} className="text-zinc-950" />
                                 </div>
                                 <div className="flex-1 text-left">
                                     <div className="font-black text-zinc-950 text-sm">
