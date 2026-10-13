@@ -123,7 +123,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
         <div className="px-2 py-1">
             <button
                 onClick={() => onSelect(ex.id, ex)}
-                className="w-full text-left p-3 rounded-xl hover:bg-zinc-100 dark:hover:bg-white/5 active:scale-[0.99] transition-all flex items-center justify-between group bg-transparent"
+                className="expressive-press group flex min-h-14 w-full items-center justify-between rounded-[18px] p-3 text-left hover:bg-[rgb(var(--surface-elevated)/0.6)]"
             >
                 <div>
                     <div className="font-bold text-zinc-900 dark:text-zinc-100 text-sm">
@@ -172,7 +172,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
                                 type="text"
                                 placeholder={t.searchPlaceholder}
                                 aria-label="Search exercises"
-                                className="w-full bg-zinc-100 dark:bg-zinc-800/50 rounded-xl py-2 pl-9 pr-4 text-sm font-medium focus:ring-2 focus:ring-primary-500 border-none outline-none text-zinc-900 dark:text-white placeholder-zinc-400"
+                                className="premium-form-input w-full py-2 pl-9 pr-4 font-medium"
                                 value={search}
                                 onChange={e => setSearch(e.target.value)}
                             />
@@ -193,10 +193,10 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
                 <div className="flex-1 overflow-y-auto p-6 pb-[calc(1.5rem+var(--safe-area-bottom))] scroll-container flex flex-col">
                     <div className="space-y-6 flex-1">
                         <div>
-                            <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider mb-2 block">{t.exName}</label>
+                            <label className="text-sm font-semibold text-muted mb-2 block">{t.exName}</label>
                             <input 
                                 type="text" 
-                                className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 font-medium text-zinc-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none"
+                                className="premium-form-input w-full p-3 font-medium"
                                 value={newName}
                                 onChange={e => setNewName(e.target.value)}
                                 autoFocus
@@ -204,13 +204,13 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
                         </div>
 
                         <div>
-                            <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider mb-2 block">{t.selectMuscle}</label>
+                            <label className="text-sm font-semibold text-muted mb-2 block">{t.selectMuscle}</label>
                             <div className="grid grid-cols-2 gap-2">
                                 {Object.values(MUSCLE_GROUPS).map(m => (
                                     <button
                                         key={m}
                                         onClick={() => setNewMuscle(m)}
-                                        className={`p-3 rounded-xl text-xs font-bold border transition-all ${newMuscle === m ? 'bg-primary-500/10 border-primary-500/30 text-primary-700 dark:text-primary-400' : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-500'}`}
+                                        className={`p-3 rounded-xl text-xs font-bold border transition-all ${newMuscle === m ? 'bg-primary-500/10 border-primary-500/30 text-primary-700 dark:text-primary-400' : 'bg-white dark:bg-zinc-900 border-[rgb(var(--border-subtle))] text-zinc-500'}`}
                                     >
                                         {TRANSLATIONS[lang].muscle[m]}
                                     </button>
@@ -232,15 +232,15 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
                         </div>
 
                         <div>
-                            <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider mb-2 block">
+                            <label className="text-sm font-semibold text-muted mb-2 block">
                                 {TRANSLATIONS[lang].copy.exerciseSelector.tonnageCalculation}
                             </label>
                             <div className="grid gap-2">
-                                <button type="button" onClick={() => setVolumeCountingMode('total')} className={`text-left rounded-xl border p-3 ${volumeCountingMode === 'total' ? 'border-primary-500 bg-primary-500/10' : 'border-zinc-200 dark:border-zinc-800'}`}>
+                                <button type="button" onClick={() => setVolumeCountingMode('total')} className={`text-left rounded-xl border p-3 ${volumeCountingMode === 'total' ? 'border-primary-500 bg-primary-500/10' : 'border-[rgb(var(--border-subtle))]'}`}>
                                     <span className="block text-sm font-bold text-zinc-800 dark:text-zinc-100">{TRANSLATIONS[lang].copy.exerciseSelector.recordedTotal1}</span>
                                     <span className="block mt-1 text-xs text-zinc-500">{TRANSLATIONS[lang].copy.exerciseSelector.barsBilateralMachinesOr}</span>
                                 </button>
-                                <button type="button" onClick={() => setVolumeCountingMode('per_side')} className={`text-left rounded-xl border p-3 ${volumeCountingMode === 'per_side' ? 'border-primary-500 bg-primary-500/10' : 'border-zinc-200 dark:border-zinc-800'}`}>
+                                <button type="button" onClick={() => setVolumeCountingMode('per_side')} className={`text-left rounded-xl border p-3 ${volumeCountingMode === 'per_side' ? 'border-primary-500 bg-primary-500/10' : 'border-[rgb(var(--border-subtle))]'}`}>
                                     <span className="block text-sm font-bold text-zinc-800 dark:text-zinc-100">{TRANSLATIONS[lang].copy.exerciseSelector.perSide2}</span>
                                     <span className="block mt-1 text-xs text-zinc-500">{TRANSLATIONS[lang].copy.exerciseSelector.whenLoadAndReps}</span>
                                 </button>
@@ -256,10 +256,10 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
             ) : (
                 <>
                     {/* Filters */}
-                    <div className="p-2 border-b border-zinc-200 dark:border-white/5 overflow-x-auto scroll-container flex gap-2 bg-white dark:bg-zinc-900/50 shrink-0">
+                    <div className="flex shrink-0 gap-2 overflow-x-auto border-b border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base))] p-2 scroll-container">
                         <button 
                             onClick={() => setFilterMuscle('ALL')}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-colors ${filterMuscle === 'ALL' ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'}`}
+                            className={`premium-filter-pill whitespace-nowrap ${filterMuscle === 'ALL' ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'}`}
                         >
                             {t.any}
                         </button>
@@ -267,7 +267,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
                             <button 
                                 key={m}
                                 onClick={() => setFilterMuscle(m)}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-colors ${filterMuscle === m ? 'bg-primary-500 text-black' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'}`}
+                                className={`premium-filter-pill whitespace-nowrap ${filterMuscle === m ? 'bg-primary-500 text-black' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'}`}
                             >
                                 {TRANSLATIONS[lang].muscle[m]}
                             </button>
