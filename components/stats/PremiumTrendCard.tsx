@@ -42,7 +42,7 @@ export const PremiumTrendCard: React.FC<Props> = ({ insights, lang, unit, scope 
                 </div>
                 <div className="shrink-0 rounded-full border border-primary-500/20 bg-primary-500/10 px-3 py-1.5 text-xs font-semibold text-[rgb(var(--text-primary))]">
                     <Icon name="TrendingUp" size={13} className="mr-1 inline text-primary-500" />
-                    {currentWeekSets} {isEs ? 'esta semana' : 'this week'}
+                    {currentWeekSets} {isEs ? 'últimos 7 días' : 'last 7 days'}
                 </div>
             </div>
             {hasRecentWork ? (
