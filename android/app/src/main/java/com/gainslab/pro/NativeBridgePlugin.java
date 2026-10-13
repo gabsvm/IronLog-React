@@ -64,6 +64,9 @@ public class NativeBridgePlugin extends Plugin {
     // action receiver reschedule natively with frozen JS; epoch + commands
     // sync the JS timer exactly once (see consumePendingTimerCommands).
     private static final String KEY_END_AT = "rest_end_at";
+    private static final String KEY_REST_DURATION = "rest_duration_seconds";
+    private static final String KEY_SOURCE_EXERCISE = "rest_source_exercise";
+    private static final String KEY_SOURCE_SET = "rest_source_set";
     private static final String KEY_FINAL_TITLE = "rest_final_title";
     private static final String KEY_FINAL_BODY = "rest_final_body";
     private static final String KEY_LIVE_TITLE = "rest_live_title";
@@ -173,6 +176,9 @@ public class NativeBridgePlugin extends Plugin {
 
         programAlarm(context, alarmManager, endAt, title, body);
 
+        int durationSeconds = Math.max(1, call.getInt("duration", 120));
+        int sourceExercise = call.getInt("sourceExerciseInstanceId", -1);
+        int sourceSet = call.getInt("sourceSetId", -1);
         String liveTitle = call.getString("liveTitle", title);
         String liveBody = call.getString("liveBody", body);
 
@@ -182,6 +188,9 @@ public class NativeBridgePlugin extends Plugin {
         int epoch = prefs.getInt(KEY_REST_EPOCH, 0) + 1;
         SharedPreferences.Editor editor = prefs.edit()
                 .putLong(KEY_END_AT, endAt)
+                .putInt(KEY_REST_DURATION, durationSeconds)
+                .putInt(KEY_SOURCE_EXERCISE, sourceExercise)
+                .putInt(KEY_SOURCE_SET, sourceSet)
                 .putString(KEY_FINAL_TITLE, title)
                 .putString(KEY_FINAL_BODY, body)
                 .putString(KEY_LIVE_TITLE, liveTitle)
@@ -224,7 +233,10 @@ public class NativeBridgePlugin extends Plugin {
             return;
         }
         long newEndAt = endAt + 30000L;
-        prefs.edit().putLong(KEY_END_AT, newEndAt).apply();
+        prefs.edit()
+                .putLong(KEY_END_AT, newEndAt)
+                .putInt(KEY_REST_DURATION, Math.max(1, prefs.getInt(KEY_REST_DURATION, 120) + 30))
+                .apply();
 
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (alarmManager != null) {
@@ -246,6 +258,7 @@ public class NativeBridgePlugin extends Plugin {
     /** Q9: skip from the notification, fully native (works with frozen JS). */
     static void skipFromAction(Context context) {
         cancelAlarm(context);
+        markRestInactive(context);
         appendTimerCommand(context, "skip", 0L);
     }
 
@@ -312,9 +325,26 @@ public class NativeBridgePlugin extends Plugin {
         call.resolve(ret);
     }
 
+    /** Read the OS-owned rest state before React runs any native schedule/cancel.
+     * This survives WebView/process recreation; the expiry receiver clears it. */
+    @PluginMethod
+    public void getRestTimerState(PluginCall call) {
+        SharedPreferences prefs = getContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        long endAt = prefs.getLong(KEY_END_AT, 0L);
+        JSObject state = new JSObject();
+        state.put("active", endAt > System.currentTimeMillis());
+        state.put("endAt", endAt > System.currentTimeMillis() ? endAt : 0L);
+        state.put("duration", prefs.getInt(KEY_REST_DURATION, 120));
+        state.put("epoch", prefs.getInt(KEY_REST_EPOCH, 0));
+        state.put("sourceExerciseInstanceId", prefs.getInt(KEY_SOURCE_EXERCISE, -1));
+        state.put("sourceSetId", prefs.getInt(KEY_SOURCE_SET, -1));
+        call.resolve(state);
+    }
+
     @PluginMethod
     public void cancelRestTimer(PluginCall call) {
         cancelAlarm(getContext());
+        markRestInactive(getContext());
         call.resolve();
     }
 
@@ -584,7 +614,7 @@ public class NativeBridgePlugin extends Plugin {
             builder = new Notification.Builder(context)
                     .setPriority(Notification.PRIORITY_DEFAULT);
         }
-        builder.setSmallIcon(R.mipmap.ic_launcher)
+        builder.setSmallIcon(R.drawable.ic_stat_rest_timer)
                 .setContentTitle(context.getString(R.string.reminder_title))
                 .setContentText(context.getString(R.string.reminder_body))
                 .setCategory(Notification.CATEGORY_REMINDER)
@@ -661,7 +691,21 @@ public class NativeBridgePlugin extends Plugin {
         cancelLiveTimerNotification(context);
     }
 
+    private static void markRestInactive(Context context) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+                .putLong(KEY_END_AT, 0L)
+                .remove(KEY_SOURCE_EXERCISE)
+                .remove(KEY_SOURCE_SET)
+                .apply();
+    }
+
     public static void onRestTimerFinished(Context context, String title, String body) {
+        // A previous alarm can race with a native +30s action or Skip.
+        // Native persisted endAt is authoritative; never publish a stale finish.
+        long expectedEndAt = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .getLong(KEY_END_AT, 0L);
+        if (expectedEndAt <= 0 || expectedEndAt > System.currentTimeMillis() + 1500L) return;
+        markRestInactive(context);
         // Always dismiss the live countdown first, even when foregrounded, so
         // no ongoing notification is left hanging after the rest ends.
         cancelLiveTimerNotification(context);
@@ -688,7 +732,7 @@ public class NativeBridgePlugin extends Plugin {
                     .setPriority(Notification.PRIORITY_HIGH);
         }
 
-        builder.setSmallIcon(R.mipmap.ic_launcher)
+        builder.setSmallIcon(R.drawable.ic_stat_rest_timer)
                 .setContentTitle(title)
                 .setContentText(body)
                 .setCategory(Notification.CATEGORY_ALARM)
@@ -731,7 +775,8 @@ public class NativeBridgePlugin extends Plugin {
                 .setOngoing(true)
                 .setOnlyAlertOnce(true)
                 .setCategory(Notification.CATEGORY_STOPWATCH)
-                .setVisibility(Notification.VISIBILITY_PUBLIC);
+                .setVisibility(Notification.VISIBILITY_PUBLIC)
+                .setColor(0xFFC4F13A);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // Safety net: auto-dismiss shortly after the rest ends even if the
             // app died before cancelling (API 26+ only).
