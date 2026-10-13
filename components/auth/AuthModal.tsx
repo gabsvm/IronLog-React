@@ -87,22 +87,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
             aria-modal="true"
             aria-labelledby="auth-modal-title"
         >
-            <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-2xl p-6 shadow-2xl border border-zinc-200 dark:border-white/10" onClick={e => e.stopPropagation()}>
+            <div className="premium-theme-panel w-full max-w-sm p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-center mb-6">
-                    <h3 id="auth-modal-title" className="text-xl font-bold text-zinc-900 dark:text-white">
+                    <h3 id="auth-modal-title" className="text-xl font-bold text-[rgb(var(--text-primary))]">
                         {isLogin ? t.signIn : t.register}
                     </h3>
-                    <button onClick={onClose} className="relative text-zinc-400 hover:text-zinc-900 dark:hover:text-white after:absolute after:-inset-2 after:content-['']" aria-label={t.close}> <Icon name="X" size={24} />
+                    <button onClick={onClose} className="relative text-muted hover:text-zinc-900 dark:hover:text-white after:absolute after:-inset-2 after:content-['']" aria-label={t.close}> <Icon name="X" size={24} />
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {!isLogin && (
                         <div>
-                            <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider block mb-2">{t.name || "Name"}</label>
+                            <label className="text-sm font-semibold text-muted block mb-2">{t.name || "Name"}</label>
                             <input 
                                 type="text" 
-                                className="w-full bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white rounded-xl p-3 outline-none focus:ring-2 focus:ring-primary-500"
+                                className="w-full premium-form-input w-full p-3 focus:ring-2 focus:ring-primary-500"
                                 value={name}
                                 onChange={e => setName(e.target.value)}
                                 placeholder="John Doe"
@@ -110,11 +110,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                         </div>
                     )}
                     <div>
-                        <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider block mb-2">{t.email}</label>
+                        <label className="text-sm font-semibold text-muted block mb-2">{t.email}</label>
                         <input 
                             type="email" 
                             required
-                            className="w-full bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white rounded-xl p-3 outline-none focus:ring-2 focus:ring-primary-500"
+                            className="w-full premium-form-input w-full p-3 focus:ring-2 focus:ring-primary-500"
                             value={email}
                             onChange={e => { setEmail(e.target.value); clearError(); }}
                             placeholder="you@example.com"
@@ -122,12 +122,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                     </div>
                     <div>
                         <div className="flex justify-between items-center mb-2">
-                            <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider block">{t.password}</label>
+                            <label className="text-sm font-semibold text-muted block">{t.password}</label>
                             {isLogin && (
                                 <button 
                                     type="button" 
                                     onClick={handleResetPassword}
-                                    className="py-2 text-[10px] font-bold text-primary-600 dark:text-primary-400 hover:underline"
+                                    className="py-2 text-xs font-bold text-primary-600 dark:text-primary-400 hover:underline"
                                 >
                                     {t.forgotPassword || "Forgot password?"}
                                 </button>
@@ -138,7 +138,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                                 type={showPass ? "text" : "password"} 
                                 required
                                 minLength={6}
-                                className="w-full bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white rounded-xl p-3 outline-none focus:ring-2 focus:ring-primary-500 pr-10"
+                                className="w-full premium-form-input w-full p-3 focus:ring-2 focus:ring-primary-500 pr-10"
                                 value={pass}
                                 onChange={e => { setPass(e.target.value); clearError(); }}
                                 placeholder="••••••"
@@ -146,7 +146,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                             <button 
                                 type="button" 
                                 onClick={() => setShowPass(!showPass)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-zinc-600 dark:hover:text-zinc-300"
                             >
                                 <Icon name={showPass ? "EyeOff" : "Eye"} size={16} />
                             </button>
@@ -155,12 +155,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
 
                     {!isLogin && (
                         <div>
-                            <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider block mb-2">{t.confirmPassword || "Confirm Password"}</label>
+                            <label className="text-sm font-semibold text-muted block mb-2">{t.confirmPassword || "Confirm Password"}</label>
                             <input 
                                 type="password" 
                                 required
                                 minLength={6}
-                                className={`w-full bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white rounded-xl p-3 outline-none focus:ring-2 ${pass && confirmPass && pass !== confirmPass ? 'ring-2 ring-red-500' : 'focus:ring-primary-500'}`}
+                                className={`w-full bg-zinc-100 dark:bg-zinc-800 text-[rgb(var(--text-primary))] rounded-[18px] p-3 outline-none focus:ring-2 ${pass && confirmPass && pass !== confirmPass ? 'ring-2 ring-red-500' : 'focus:ring-primary-500'}`}
                                 value={confirmPass}
                                 onChange={e => setConfirmPass(e.target.value)}
                                 placeholder="••••••"
@@ -169,13 +169,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                     )}
 
                     {error && (
-                        <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-3 rounded-xl text-sm font-medium flex items-center gap-2">
+                        <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-3 rounded-[18px] text-sm font-medium flex items-center gap-2">
                             <Icon name="AlertTriangle" size={16} />
                             {error === "Passwords do not match" ? (t.passwordMismatch || error) : error}
                         </div>
                     )}
                     {resetSent && (
-                        <div className="bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 p-3 rounded-xl text-xs font-medium flex items-center gap-2">
+                        <div className="bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 p-3 rounded-[18px] text-xs font-medium flex items-center gap-2">
                             <Icon name="CheckCircle" size={16} />
                             {t.resetSent || "Reset link sent to your email!"}
                         </div>
@@ -188,7 +188,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
 
                 <div className="my-6 flex items-center">
                     <div className="flex-grow border-t border-zinc-200 dark:border-zinc-800"></div>
-                    <span className="flex-shrink-0 mx-4 text-xs font-bold text-zinc-400 uppercase tracking-widest">{t.or}</span>
+                    <span className="flex-shrink-0 mx-4 text-xs font-bold text-muted uppercase tracking-widest">{t.or}</span>
                     <div className="flex-grow border-t border-zinc-200 dark:border-zinc-800"></div>
                 </div>
 
@@ -216,7 +216,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                 </div>
                 
                 <div className="mt-4 pt-4 border-t border-zinc-100 dark:border-white/5 text-center">
-                    <p className="text-[10px] text-zinc-400 leading-relaxed">
+                    <p className="text-xs text-muted leading-relaxed">
                         {t.syncNote}
                     </p>
                 </div>
