@@ -37,3 +37,16 @@ Implementation on `agent/gainslab-audit-fixes-v3` (2026-10-13). No production pr
 7. Test dark/light themes, keyboard focus, small widths, reduced motion, and battery saver. Verify the native and web/PWA outcomes separately.
 
 **No guarantee** of sub-second alarms without exact-alarm permission or after a user Force Stops the app; this is controlled by Android. On some Motorola devices, battery restrictions can further delay background work. Never claim Chrome E2E substitutes for physical-device alarm tests.
+
+
+## Final automated validation evidence
+
+- `npm run verify`: exit 0, **142 test files / 796 tests passed / 1 skipped**; lint/a11y, TypeScript, Vite, KONG and bundle checks clean.
+- Chromium Playwright functional Expressive checks: **7 / 7 passed**, both themes and 320px checks.
+- Chromium full E2E: **48 / 48 passed**, including rest pill, touch targets, insets and session lifecycle.
+- Native Capacitor `npx cap sync android` + Gradle `:app:assembleDebug`: **BUILD SUCCESSFUL** with Java 21, SDK 36 and native version 419. Result was an unsigned-for-release *debug* APK; no release-signing credentials used and no APK published.
+- Gradle `:app:testDebugUnitTest`: exit 0. This does **not** exercise physical Android `AlarmManager`/Doze behavior.
+- Follow-up native alert fix: Android notification channel handles the completion tone/vibration when permission is granted; `fallbackRestFeedback` plays a tone/vibration only if the system notification cannot be posted. A fresh rest cancels any leftover completion alert to avoid `setOnlyAlertOnce` suppressing subsequent sessions.
+- Known exclusions: exact-alarm physical timing/Doze, Android 16 OEM Live Update eligibility, hardware-specific vibration, battery saver, process reclaim, restart, real notification permissions, signed-release installation.
+
+No changes to Production were made in this native hardening pass. Preview builds contain the React/CSS changes; an Android release must be built and distributed separately to deliver the Java/manifest code.
