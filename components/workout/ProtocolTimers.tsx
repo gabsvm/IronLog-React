@@ -87,19 +87,19 @@ export const EMOMTimer: React.FC<EMOMTimerProps> = React.memo(({ totalSets, lang
 
     if (state === 'idle') {
         return (
-            <div className="flex items-center gap-3 rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 py-2.5">
+            <div className="flex items-center gap-3 rounded-[20px] border border-cyan-500/20 bg-cyan-500/10 px-3 py-2.5">
                 <Icon name="Timer" size={14} className="shrink-0 text-cyan-400" />
                 <div className="min-w-0 flex-1">
-                    <p className="text-[10px] font-black uppercase tracking-wider text-cyan-400">
+                    <p className="text-xs font-black uppercase tracking-wider text-cyan-400">
                         EMOM - {totalSets} {TRANSLATIONS[lang].copy.protocolTimers.rounds}
                     </p>
-                    <p className="text-[9px] text-cyan-700">
+                    <p className="text-xs text-cyan-600 dark:text-cyan-300">
                         {TRANSLATIONS[lang].copy.protocolTimers.oneSetPerMinute}
                     </p>
                 </div>
                 <button
                     onClick={start}
-                    className="flex shrink-0 items-center gap-1.5 rounded-lg bg-cyan-500 px-3 py-1.5 text-xs font-black text-white transition-all active:scale-95"
+                    className="flex shrink-0 items-center gap-1.5 rounded-full bg-cyan-500 px-3 py-1.5 text-xs font-black text-zinc-950 transition-all active:scale-95"
                     aria-label="Play"
                 >
                     <Icon name="Play" size={12} fill="currentColor" />
@@ -111,12 +111,12 @@ export const EMOMTimer: React.FC<EMOMTimerProps> = React.memo(({ totalSets, lang
 
     if (state === 'done') {
         return (
-            <div className="flex items-center gap-3 rounded-xl border border-green-500/20 bg-green-500/10 px-3 py-2.5">
+            <div className="flex items-center gap-3 rounded-[20px] border border-green-500/20 bg-green-500/10 px-3 py-2.5">
                 <Icon name="CheckCircle" size={14} className="shrink-0 text-green-400" />
-                <p className="flex-1 text-[10px] font-black uppercase tracking-wider text-green-400">
+                <p className="flex-1 text-xs font-black uppercase tracking-wider text-green-400">
                     EMOM {TRANSLATIONS[lang].copy.protocolTimers.complete} - {totalSets} {TRANSLATIONS[lang].copy.protocolTimers.roundsDone}
                 </p>
-                <button onClick={stop} className="px-2 py-1 text-xs font-bold text-muted transition-colors hover:text-white">
+                <button onClick={stop} className="px-2 py-1 text-xs font-bold text-muted transition-colors hover:text-[rgb(var(--text-primary))]">
                     {TRANSLATIONS[lang].copy.protocolTimers.reset}
                 </button>
             </div>
@@ -124,18 +124,18 @@ export const EMOMTimer: React.FC<EMOMTimerProps> = React.memo(({ totalSets, lang
     }
 
     return (
-        <div className={`overflow-hidden rounded-xl border ${urgent ? 'border-orange-500/30 bg-orange-500/10' : 'border-cyan-500/25 bg-cyan-500/10'}`}>
+        <div className={`overflow-hidden rounded-[20px] border ${urgent ? 'border-orange-500/30 bg-orange-500/10' : 'border-cyan-500/25 bg-cyan-500/10'}`}>
             <div className="flex items-center gap-2 px-3 pb-0.5 pt-2">
                 <Icon name="Timer" size={13} className={urgent ? 'text-orange-400' : 'text-cyan-400'} />
-                <span className={`flex-1 text-[10px] font-black uppercase tracking-wider ${urgent ? 'text-orange-400' : 'text-cyan-400'}`}>
+                <span className={`flex-1 text-xs font-black uppercase tracking-wider ${urgent ? 'text-orange-400' : 'text-cyan-400'}`}>
                     EMOM - {TRANSLATIONS[lang].copy.protocolTimers.min} {minute} / {totalSets}
                 </span>
-                <span className={`text-[9px] font-bold uppercase tracking-widest ${urgent ? 'text-orange-500' : 'text-cyan-600'}`}>
+                <span className={`text-xs font-bold uppercase tracking-widest ${urgent ? 'text-orange-500' : 'text-cyan-600'}`}>
                     {urgent ? TRANSLATIONS[lang].copy.protocolTimers.goNow : TRANSLATIONS[lang].copy.protocolTimers.nextSetIn}
                 </span>
                 <button
                     onClick={stop}
-                    className="ml-1 rounded-lg bg-zinc-800/80 px-2 py-0.5 text-xs font-bold text-muted transition-colors hover:text-white"
+                    className="ml-1 rounded-full bg-[rgb(var(--surface-elevated))] px-2 py-0.5 text-xs font-bold text-muted transition-colors hover:text-[rgb(var(--text-primary))]"
                 >
                     {TRANSLATIONS[lang].copy.protocolTimers.stop}
                 </button>
@@ -252,17 +252,17 @@ export const TabataTimer: React.FC<TabataTimerProps> = React.memo(({ totalRounds
 
     if (state === 'idle') {
         return (
-            <div className="flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2.5">
+            <div className="flex items-center gap-3 rounded-[20px] border border-red-500/20 bg-red-500/10 px-3 py-2.5">
                 <Icon name="Timer" size={14} className="shrink-0 text-red-400" />
                 <div className="min-w-0 flex-1">
-                    <p className="text-[10px] font-black uppercase tracking-wider text-red-400">
+                    <p className="text-xs font-black uppercase tracking-wider text-red-400">
                         Tabata - {totalRounds} {TRANSLATIONS[lang].copy.protocolTimers.rounds}
                     </p>
-                    <p className="font-mono text-[9px] text-red-700">20s {TRANSLATIONS[lang].copy.protocolTimers.work} / 10s {TRANSLATIONS[lang].copy.protocolTimers.rest}</p>
+                    <p className="font-mono text-xs text-red-600 dark:text-red-300">20s {TRANSLATIONS[lang].copy.protocolTimers.work} / 10s {TRANSLATIONS[lang].copy.protocolTimers.rest}</p>
                 </div>
                 <button
                     onClick={start}
-                    className="flex shrink-0 items-center gap-1.5 rounded-lg bg-red-500 px-3 py-1.5 text-xs font-black text-white transition-all active:scale-95"
+                    className="flex shrink-0 items-center gap-1.5 rounded-full bg-red-500 px-3 py-1.5 text-xs font-black text-zinc-950 transition-all active:scale-95"
                     aria-label="Play"
                 >
                     <Icon name="Play" size={12} fill="currentColor" />
@@ -274,12 +274,12 @@ export const TabataTimer: React.FC<TabataTimerProps> = React.memo(({ totalRounds
 
     if (state === 'done') {
         return (
-            <div className="flex items-center gap-3 rounded-xl border border-green-500/20 bg-green-500/10 px-3 py-2.5">
+            <div className="flex items-center gap-3 rounded-[20px] border border-green-500/20 bg-green-500/10 px-3 py-2.5">
                 <Icon name="CheckCircle" size={14} className="shrink-0 text-green-400" />
-                <p className="flex-1 text-[10px] font-black uppercase tracking-wider text-green-400">
+                <p className="flex-1 text-xs font-black uppercase tracking-wider text-green-400">
                     Tabata {TRANSLATIONS[lang].copy.protocolTimers.complete} - {totalRounds} {TRANSLATIONS[lang].copy.protocolTimers.roundsDone}
                 </p>
-                <button onClick={stop} className="px-2 py-1 text-xs font-bold text-muted transition-colors hover:text-white">
+                <button onClick={stop} className="px-2 py-1 text-xs font-bold text-muted transition-colors hover:text-[rgb(var(--text-primary))]">
                     {TRANSLATIONS[lang].copy.protocolTimers.reset}
                 </button>
             </div>
@@ -287,17 +287,17 @@ export const TabataTimer: React.FC<TabataTimerProps> = React.memo(({ totalRounds
     }
 
     return (
-        <div className={`overflow-hidden rounded-xl border ${isWork ? 'border-red-500/25 bg-red-500/10' : 'border-blue-500/25 bg-blue-500/10'}`}>
+        <div className={`overflow-hidden rounded-[20px] border ${isWork ? 'border-red-500/25 bg-red-500/10' : 'border-blue-500/25 bg-blue-500/10'}`}>
             <div className="flex items-center gap-2 px-3 pb-0.5 pt-2">
-                <span className={`shrink-0 rounded px-2 py-0.5 text-[9px] font-black uppercase tracking-widest ${isWork ? 'bg-red-500 text-white' : 'bg-blue-500 text-white'}`}>
+                <span className={`shrink-0 rounded px-2 py-0.5 text-xs font-black uppercase tracking-widest ${isWork ? 'bg-red-500 text-zinc-950' : 'bg-blue-500 text-zinc-950'}`}>
                     {isWork ? TRANSLATIONS[lang].copy.protocolTimers.work2 : TRANSLATIONS[lang].copy.protocolTimers.rest2}
                 </span>
-                <span className={`flex-1 text-[10px] font-bold uppercase tracking-wider ${isWork ? 'text-red-400' : 'text-blue-400'}`}>
+                <span className={`flex-1 text-xs font-bold uppercase tracking-wider ${isWork ? 'text-red-400' : 'text-blue-400'}`}>
                     {TRANSLATIONS[lang].copy.protocolTimers.round} {round} / {totalRounds}
                 </span>
                 <button
                     onClick={stop}
-                    className="rounded-lg bg-zinc-800/80 px-2 py-0.5 text-xs font-bold text-muted transition-colors hover:text-white"
+                    className="rounded-full bg-[rgb(var(--surface-elevated))] px-2 py-0.5 text-xs font-bold text-muted transition-colors hover:text-[rgb(var(--text-primary))]"
                 >
                     {TRANSLATIONS[lang].copy.protocolTimers.stop}
                 </button>
