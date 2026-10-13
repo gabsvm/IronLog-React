@@ -6,6 +6,7 @@ interface NativeBridgePlugin {
     haptic(options: { type: HapticType }): Promise<void>;
     scheduleRestTimer(options: { endAt: number; title: string; body: string; liveTitle?: string; liveBody?: string; duration: number; sourceExerciseInstanceId: number; sourceSetId: number }): Promise<void>;
     getRestTimerState(): Promise<NativeRestTimerSnapshot>;
+    updateRestTimerContent(options: { endAt: number; liveTitle: string; liveBody: string }): Promise<void>;
     cancelRestTimer(): Promise<void>;
     canScheduleExactAlarms(): Promise<{ granted: boolean; sdkInt: number }>;
     openExactAlarmSettings(): Promise<void>;
@@ -134,6 +135,22 @@ export const getNativeRestTimerState = async (): Promise<NativeRestTimerSnapshot
     } catch {
         return null;
     }
+};
+
+/** Update the same Android countdown notification without touching its alarm,
+ * countdown epoch or action queue. Native rejects stale deadlines.
+ */
+export const updateNativeRestTimerContent = (
+    endAt: number,
+    content: { liveTitle: string; liveBody: string },
+): void => {
+    if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') return;
+    if (!Number.isFinite(endAt) || endAt <= Date.now()) return;
+    void NativeBridge.updateRestTimerContent({
+        endAt, liveTitle: content.liveTitle, liveBody: content.liveBody,
+    }).catch(() => {
+        // Old APK without the newer bridge remains fully functional with generic text.
+    });
 };
 
 export const cancelNativeRestTimer = () => {
