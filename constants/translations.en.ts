@@ -64,6 +64,8 @@ export const EN = {
     effortHard: "Hard",
     allDone: "All done",
     setsLeft: "sets left",
+    yourSession: "Your session",
+    setsDoneOf: "of",
     applyToAllSets: "Apply to all sets",
     advancedProtocols: "Advanced protocols",
     finishSession: "Finish session",

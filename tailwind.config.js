@@ -15,6 +15,12 @@ export default {
   darkMode: "class",
   theme: {
     extend: {
+      // Redesign (docs/specs/rediseno-ligero.md): rounder shapes, applied app-wide via tokens.
+      borderRadius: {
+        xl: "1rem",
+        "2xl": "1.25rem",
+        "3xl": "1.75rem",
+      },
       colors: {
         primary: {
           50:  "rgb(var(--primary-50)  / <alpha-value>)",

@@ -14,7 +14,7 @@ const formatWorkoutElapsed = (seconds: number) => {
     return `${minutes}:${secs.toString().padStart(2, '0')}`;
 };
 
-export const WorkoutTimer: React.FC<{ startTime: number | null }> = ({ startTime }) => {
+export const WorkoutTimer: React.FC<{ startTime: number | null; className?: string }> = ({ startTime, className }) => {
     const [now, setNow] = useState(() => Date.now());
     const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -65,6 +65,10 @@ export const WorkoutTimer: React.FC<{ startTime: number | null }> = ({ startTime
     }, [startTime]);
 
     const elapsed = startTime ? Math.floor((now - startTime) / 1000) : 0;
+
+    if (className) {
+        return <p className={`font-mono tabular-nums ${className}`}>{formatWorkoutElapsed(elapsed)}</p>;
+    }
 
     return (
         <div className="chip-reference text-zinc-100 font-mono text-xs shrink-0">

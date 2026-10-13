@@ -8,7 +8,7 @@ import type { WorkoutViewState } from './useWorkoutViewState';
 const WorkoutSortableList = React.lazy(() => import('../../components/workout/WorkoutSortableList'));
 
 export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) => {
-    const { onBack, onOpenReorder, sessionExercises, openMenuId, setOpenMenuId, setShowFinishModal, setReplacingExId, setAddingExercise, linkingId, setLinkingId, setEditingMuscleId, setWarmupExId, setDetailExercise, handleSetUpdate, handleAddSet, handleDeleteSet, updateSession, exercises, logs, lang, config, activeSession, t, w, stageConfig, isCalisthenicsSession, supersetColorIndexes, handleSetTypeChange, sortableItems, activeExerciseId, handleToggleExpand, handleSetComplete, handleReorder, remainingSets, progressPct } = state;
+    const { onBack, onOpenReorder, sessionExercises, openMenuId, setOpenMenuId, setShowFinishModal, setReplacingExId, setAddingExercise, linkingId, setLinkingId, setEditingMuscleId, setWarmupExId, setDetailExercise, handleSetUpdate, handleAddSet, handleDeleteSet, updateSession, exercises, logs, lang, config, activeSession, t, w, stageConfig, isCalisthenicsSession, supersetColorIndexes, handleSetTypeChange, sortableItems, activeExerciseId, handleToggleExpand, handleSetComplete, handleReorder, remainingSets, progressPct, completedWorkingSets, totalWorkingSets } = state;
     if (!activeSession) return null;
     return (
         <>
@@ -37,7 +37,6 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                                 ? t.allDone
                                 : `${remainingSets} ${t.setsLeft}`}
                         </div>
-                            <WorkoutTimer startTime={activeSession.startTime} />
                         </div>
                     </div>
 
@@ -95,6 +94,20 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
 
             <div className="flex-1 overflow-hidden flex flex-col">
                 <div id="tut-exercise-list" className="flex-1 overflow-y-auto scroll-container px-3 pt-2.5 space-y-2.5" style={{ paddingBottom: 'calc(3rem + var(--safe-area-bottom) + var(--rest-pill-height, 0px) + 16px)' }}>
+                    <section aria-label={t.yourSession} className="flex items-center gap-4 rounded-3xl border border-border-subtle bg-surface-raised px-4 py-3.5">
+                        <div className="min-w-0">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted">{t.yourSession}</p>
+                            <WorkoutTimer startTime={activeSession.startTime} className="text-3xl font-black leading-tight text-white" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                            <p className="text-right text-xs font-semibold tabular-nums text-secondary">
+                                <span className="text-sm text-white">{completedWorkingSets}</span> {t.setsDoneOf} {totalWorkingSets} {t.sets.toLowerCase()}
+                            </p>
+                            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-surface-elevated">
+                                <div className="h-full rounded-full bg-primary-500 transition-all duration-300 ease-out" style={{ width: `${Math.min(100, Math.max(0, progressPct))}%` }} />
+                            </div>
+                        </div>
+                    </section>
                     <Suspense fallback={null}>
                         <WorkoutSortableList itemIds={sortableItems} onReorder={handleReorder}>
                             {sessionExercises.map((ex, idx) => {

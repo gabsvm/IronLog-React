@@ -67,6 +67,8 @@ export const ES: TranslationDict = {
     effortHard: "Duro",
     allDone: "Todo listo",
     setsLeft: "series restantes",
+    yourSession: "Tu sesión",
+    setsDoneOf: "de",
     applyToAllSets: "Aplicar a todas las series",
     advancedProtocols: "Protocolos avanzados",
     finishSession: "Terminar sesión",
