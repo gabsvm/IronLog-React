@@ -12,8 +12,8 @@ export const ProgramEditDays: React.FC<{ state: ProgramEditState }> = ({ state }
         <>
             <div className="flex-1 overflow-y-auto p-4 scroll-container space-y-6 pb-24">
                 {program.map((day) => (
-                    <div key={day.id} className="glass-card rounded-2xl overflow-hidden shadow-lg transition-all hover:border-white/10">
-                        <div className="bg-zinc-100/80 dark:bg-white/5 p-4 border-b border-zinc-200 dark:border-white/5 flex justify-between items-center">
+                    <div key={day.id} className="premium-editor-card shadow-sm">
+                        <div className="premium-quiet-row flex items-center justify-between border-b border-[rgb(var(--border-subtle))] p-4">
                             <input
                                 className="bg-transparent font-bold text-zinc-900 dark:text-white outline-none w-full"
                                 value={day.dayName[lang] || ''}
@@ -29,14 +29,14 @@ export const ProgramEditDays: React.FC<{ state: ProgramEditState }> = ({ state }
                             </button>
                         </div>
 
-                        <div className="divide-y divide-zinc-100 dark:divide-white/5">
+                        <div className="divide-y divide-[rgb(var(--border-subtle)/0.65)]">
                             {(day.slots || []).map((slot, idx) => (
                                 <div key={idx} className="p-3 flex flex-col gap-2">
                                     <div className="flex items-center gap-3">
                                         <div className="flex-1 space-y-2">
                                             <div className="flex gap-2 items-center flex-wrap">
                                                 <select
-                                                    className="bg-zinc-100 dark:bg-white/5 hover:bg-zinc-200 dark:hover:bg-white/10 text-xs font-bold rounded-lg px-2 py-1.5 border-none outline-none text-zinc-900 dark:text-zinc-200 max-w-[110px] transition-colors"
+                                                    className="bg-[rgb(var(--surface-elevated)/0.7)] hover:bg-zinc-200 dark:hover:bg-white/10 text-xs font-bold rounded-xl px-2 py-2.5 border-none outline-none text-zinc-900 dark:text-zinc-200 max-w-[110px] transition-colors"
                                                     value={slot.muscle}
                                                     onChange={(e) => handleUpdateSlot(day.id, idx, 'muscle', e.target.value)}
                                                 >
@@ -45,8 +45,8 @@ export const ProgramEditDays: React.FC<{ state: ProgramEditState }> = ({ state }
                                                     ))}
                                                 </select>
 
-                                                <div className="flex items-center gap-1 bg-zinc-100 dark:bg-white/5 rounded-lg px-2 py-1 border border-zinc-200 dark:border-white/5">
-                                                    <span className="text-[9px] font-bold text-zinc-400">SETS</span>
+                                                <div className="flex items-center gap-1 bg-[rgb(var(--surface-elevated)/0.7)] rounded-xl px-2 py-2 border border-[rgb(var(--border-subtle))]">
+                                                    <span className="text-[11px] font-semibold text-muted">SETS</span>
                                                     <input
                                                         type="number"
                                                         className="w-6 bg-transparent text-xs font-bold text-center outline-none text-zinc-900 dark:text-white"
@@ -55,8 +55,8 @@ export const ProgramEditDays: React.FC<{ state: ProgramEditState }> = ({ state }
                                                     />
                                                 </div>
 
-                                                <div className="flex items-center gap-1 bg-zinc-100 dark:bg-white/5 rounded-lg px-2 py-1 flex-1 min-w-[80px] border border-zinc-200 dark:border-white/5">
-                                                    <span className="text-[9px] font-bold text-zinc-400 whitespace-nowrap">REPS</span>
+                                                <div className="flex items-center gap-1 bg-[rgb(var(--surface-elevated)/0.7)] rounded-xl px-2 py-2 flex-1 min-w-[80px] border border-[rgb(var(--border-subtle))]">
+                                                    <span className="text-[11px] font-semibold text-muted whitespace-nowrap">REPS</span>
                                                     <input
                                                         type="text"
                                                         className="w-full bg-transparent text-xs font-bold text-center outline-none text-zinc-900 dark:text-white"
@@ -69,7 +69,7 @@ export const ProgramEditDays: React.FC<{ state: ProgramEditState }> = ({ state }
 
                                             <button
                                                 onClick={() => setPickingForSlot({ dayId: day.id, slotIdx: idx })}
-                                                className={`text-sm font-medium w-full text-left truncate flex items-center justify-between p-2 rounded-xl bg-zinc-100/50 dark:bg-white/5 hover:bg-zinc-200/50 dark:hover:bg-white/10 transition-colors ${
+                                                className={`text-sm font-medium w-full text-left truncate flex items-center justify-between p-2 rounded-xl bg-[rgb(var(--surface-elevated)/0.7)] hover:bg-zinc-200/50 dark:hover:bg-white/10 transition-colors ${
                                                     slot.exerciseId ? 'text-zinc-900 dark:text-white font-semibold' : 'text-amber-500 dark:text-amber-400 font-bold'
                                                 }`}
                                             >
@@ -92,10 +92,10 @@ export const ProgramEditDays: React.FC<{ state: ProgramEditState }> = ({ state }
                                 </div>
                             ))}
                         </div>
-                        <div className="p-2 border-t border-zinc-100 dark:border-white/5">
+                        <div className="p-2 border-t border-[rgb(var(--border-subtle))]">
                             <button
                                 onClick={() => handleAddSlot(day.id)}
-                                className="w-full py-2 flex items-center justify-center gap-2 text-xs font-bold text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+                                className="expressive-press flex min-h-11 w-full items-center justify-center gap-2 rounded-xl text-xs font-bold text-primary-500"
                             >
                                 <Icon name="Plus" size={14} /> {t.addSlot}
                             </button>
