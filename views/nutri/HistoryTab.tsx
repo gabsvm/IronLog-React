@@ -119,7 +119,7 @@ export const HistoryTab: React.FC<Props> = ({ lang, last14Days, historyDayList, 
                     {TRANSLATIONS[lang].copy.historyTab.proteinLast14Days}
                 </p>
                 <div className="flex items-end gap-1 h-20">
-                    {last14Days.map((day) => {
+                    {last14Days.map((day, index) => {
                         const pct = Math.min(day.protein / Math.max(nutritionGoal.protein, 1), 1.2);
                         return (
                             <div key={day.date} className="flex min-w-0 flex-1 flex-col items-center gap-1" title={`${day.label}: ${day.calories} kcal · ${Math.round(day.protein)}g P`}>
