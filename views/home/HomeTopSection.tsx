@@ -74,15 +74,16 @@ export const HomeTopSection: React.FC<{ state: HomeViewState }> = ({ state }) =>
                                 triggerHaptic('light');
                                 setSelectedDayIdx(idx);
                             }}
-                            className={`py-2 px-1 text-center rounded-xl transition-all active:scale-95 ${
+                            aria-pressed={isSelected}
+                            className={`expressive-press min-h-[56px] py-2.5 px-1.5 text-center rounded-[20px] transition-all ${
                                 isSelected
-                                    ? 'border-1.5 border-primary-500 bg-primary-500/10 text-white font-medium shadow-sm'
+                                    ? 'border border-primary-500/60 bg-primary-500/15 text-[rgb(var(--text-primary))] font-semibold shadow-sm'
                                     : isDone
                                     ? 'card-reference bg-surface-raised/40 text-muted'
                                     : 'card-reference bg-surface-raised text-zinc-300'
                             }`}
                         >
-                            <div className="text-[10px] font-semibold tracking-wide h-4 flex items-center justify-center">
+                            <div className="text-[11px] font-semibold tracking-normal h-4 flex items-center justify-center">
                                 {isTodayOrNext ? (
                                     <span className="text-primary-400 font-bold">{h.today}</span>
                                 ) : isDone ? (
@@ -91,7 +92,7 @@ export const HomeTopSection: React.FC<{ state: HomeViewState }> = ({ state }) =>
                                     <span>&nbsp;</span>
                                 )}
                             </div>
-                            <div className="text-xs font-semibold mt-0.5 truncate">
+                            <div className="text-[13px] font-semibold mt-0.5 truncate">
                                 {`${h.dayWord} ${idx + 1}`}
                             </div>
                         </button>
