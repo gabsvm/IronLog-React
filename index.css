@@ -594,6 +594,11 @@ html.dark .tonal-1, html.dark .tonal-2, html.dark .tonal-3, html.dark .tonal-4 {
 .btn-primary-reference { min-height: 48px; border-radius: 9999px; }
 .expressive-press { transition: transform 260ms var(--motion-expressive), background-color 260ms var(--motion-expressive), color 260ms var(--motion-expressive); }
 .expressive-press:active { transform: scale(0.96); }
-@media (prefers-reduced-motion: reduce) { .expressive-press { transition: none; } .expressive-press:active { transform: none; } }
-[data-effects="reduced"] .expressive-press { transition: none; }
+@keyframes expressive-reveal { from { opacity: 0.4; } to { opacity: 1; } }
+.expressive-reveal { animation: expressive-reveal 240ms var(--motion-expressive) both; }
+@media (prefers-reduced-motion: reduce) {
+  .expressive-press, .expressive-reveal { animation: none; transition: none; }
+  .expressive-press:active { transform: none; }
+}
+[data-effects="reduced"] .expressive-press, [data-effects="reduced"] .expressive-reveal { animation: none; transition: none; }
 [data-effects="reduced"] .expressive-press:active { transform: none; }
