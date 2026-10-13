@@ -4,7 +4,8 @@ export type HapticType = 'light' | 'medium' | 'heavy' | 'success' | 'warning';
 
 interface NativeBridgePlugin {
     haptic(options: { type: HapticType }): Promise<void>;
-    scheduleRestTimer(options: { endAt: number; title: string; body: string; liveTitle?: string; liveBody?: string }): Promise<void>;
+    scheduleRestTimer(options: { endAt: number; title: string; body: string; liveTitle?: string; liveBody?: string; duration: number; sourceExerciseInstanceId: number; sourceSetId: number }): Promise<void>;
+    getRestTimerState(): Promise<NativeRestTimerSnapshot>;
     cancelRestTimer(): Promise<void>;
     canScheduleExactAlarms(): Promise<{ granted: boolean; sdkInt: number }>;
     openExactAlarmSettings(): Promise<void>;
@@ -14,6 +15,15 @@ interface NativeBridgePlugin {
     shareFile(options: { filename: string; mime: string; base64: string; title?: string }): Promise<{ shared: boolean }>;
     updateWidgetData(options: { title: string }): Promise<void>;
     addListener(event: 'restTimerCommand', cb: (data: unknown) => void): Promise<{ remove: () => Promise<void> }>;
+}
+
+export interface NativeRestTimerSnapshot {
+    active: boolean;
+    endAt: number;
+    duration: number;
+    epoch: number;
+    sourceExerciseInstanceId: number;
+    sourceSetId: number;
 }
 
 export interface TimerCommandPayload {
@@ -88,14 +98,42 @@ export const triggerHaptic = (type: HapticType = 'light') => {
  * Schedule the rest timer at the Android OS layer. AlarmManager remains useful
  * when the WebView is throttled, the app is backgrounded, or the screen locks.
  */
-export const scheduleNativeRestTimer = (endAt: number, title: string, body: string, liveTitle?: string, liveBody?: string) => {
+export const scheduleNativeRestTimer = (
+    endAt: number,
+    title: string,
+    body: string,
+    liveTitle?: string,
+    liveBody?: string,
+    duration = 120,
+    source?: { exerciseInstanceId: number; setId: number },
+) => {
     if (!Capacitor.isNativePlatform()) return;
-    const options: { endAt: number; title: string; body: string; liveTitle?: string; liveBody?: string } = { endAt, title, body };
-    if (liveTitle !== undefined) options.liveTitle = liveTitle;
-    if (liveBody !== undefined) options.liveBody = liveBody;
+    const options = {
+        endAt, title, body, liveTitle, liveBody,
+        duration: Math.max(1, Math.round(duration)),
+        sourceExerciseInstanceId: source?.exerciseInstanceId ?? -1,
+        sourceSetId: source?.setId ?? -1,
+    };
     void NativeBridge.scheduleRestTimer(options).catch((error) => {
         console.warn('Native rest timer schedule failed', error);
     });
+};
+
+/** Native alarm state is the source of truth after an Android WebView restart.
+ * A missing/older native bridge returns null (never overwrite a live JS timer).
+ */
+export const getNativeRestTimerState = async (): Promise<NativeRestTimerSnapshot | null> => {
+    if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') return null;
+    try {
+        const state = await NativeBridge.getRestTimerState();
+        if (!state || typeof state.active !== 'boolean'
+            || !Number.isFinite(state.endAt) || !Number.isFinite(state.duration)
+            || !Number.isInteger(state.epoch) || !Number.isInteger(state.sourceExerciseInstanceId)
+            || !Number.isInteger(state.sourceSetId)) return null;
+        return state;
+    } catch {
+        return null;
+    }
 };
 
 export const cancelNativeRestTimer = () => {
