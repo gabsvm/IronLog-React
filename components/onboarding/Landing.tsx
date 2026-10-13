@@ -16,7 +16,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onLogin }) => {
     const t = TRANSLATIONS[lang].landing;
 
     return (
-        <div className="fixed inset-0 z-50 overflow-y-auto scroll-container bg-[#101511] text-white">
+        <div className="fixed inset-0 z-50 overflow-y-auto scroll-container premium-landing text-white">
             {/* Background Effects */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-primary-600/10 blur-[100px] md:blur-[120px] rounded-full" />
@@ -61,7 +61,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onLogin }) => {
 
                     {/* Floating mock workout card */}
                     <div className="relative w-full max-w-xs mb-8 expressive-reveal" style={{ animationDuration: '3s' }}>
-                        <div className="bg-[#18201a] border border-primary-500/20 rounded-[32px] overflow-hidden shadow-2xl shadow-black/60">
+                        <div className="premium-landing-preview border border-primary-500/20 rounded-[32px] overflow-hidden shadow-2xl shadow-black/60">
                             {/* Card header */}
                             <div className="px-4 pt-4 pb-3 border-b border-primary-500/10 flex items-center justify-between">
                                 <div>
@@ -86,7 +86,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onLogin }) => {
                                             </div>
                                         </div>
                                         <div className="col-span-4">
-                                            <div className={`text-center text-lg font-black rounded-lg py-1.5 ${s.done ? 'text-green-400' : 'bg-[#273325] text-white'}`}>
+                                            <div className={`text-center text-lg font-black rounded-lg py-1.5 ${s.done ? 'text-green-400' : 'premium-landing-input text-white'}`}>
                                                 {s.weight || '—'}
                                             </div>
                                         </div>
