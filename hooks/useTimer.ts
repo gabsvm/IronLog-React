@@ -3,6 +3,7 @@ import { Capacitor } from '@capacitor/core';
 import {
     cancelNativeRestTimer,
     consumePendingTimerCommands,
+    getNativeRestTimerState,
     playTimerFinishSound,
     scheduleNativeRestTimer,
     subscribeTimerCommands,
@@ -121,6 +122,11 @@ export const useTimer = (lang: Lang) => {
     const workerRef = useRef<Worker | null>(null);
     const langRef = useRef(lang);
     const isNative = Capacitor.isNativePlatform();
+    const [nativeReady, setNativeReady] = useState(!isNative);
+    const [nativeUserRevision, setNativeUserRevision] = useState(0);
+    const nativeUserRevisionRef = useRef(0);
+    const nativeRefreshGeneration = useRef(0);
+    const nativeReconcilingRef = useRef(false);
 
     useEffect(() => {
         langRef.current = lang;
@@ -154,22 +160,30 @@ export const useTimer = (lang: Lang) => {
     }, [isNative]);
 
 
-    // Schedule/cancel the Android OS alarm only when the timer identity changes,
-    // not on every displayed second.
+    // Only explicit JS controls schedule/cancel native alarms. Native actions,
+    // process restoration and countdown ticks MUST NOT rewrite the native
+    // deadline/epoch: doing so can erase a +30s action while JS is suspended.
     useEffect(() => {
-        if (!isNative) return;
-
+        if (!isNative || !nativeReady || nativeUserRevision === 0) return;
         if (timer.active && timer.endAt > Date.now()) {
             const t = TRANSLATIONS[lang]?.timer || TRANSLATIONS.en.timer;
-            scheduleNativeRestTimer(timer.endAt, t.finished, t.getBack, t.resting, t.restingBody);
+            scheduleNativeRestTimer(
+                timer.endAt, t.finished, t.getBack, t.resting, t.restingBody,
+                timer.duration, timer.source,
+            );
         } else {
             cancelNativeRestTimer();
         }
-    }, [isNative, timer.active, timer.endAt, lang]);
+        // Triggered by user actions only, never timer ticks or native restores.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isNative, nativeReady, nativeUserRevision]);
 
     const handleTick = useCallback((suppressFeedback = false) => {
         const current = timerRef.current;
         if (!current || !current.active) return;
+        // Android is the sole owner while backgrounded or during a native
+        // reconciliation; a delayed JS tick must never end an extended rest.
+        if (isNative && (nativeReconcilingRef.current || document.visibilityState !== 'visible')) return;
 
         const remainingMs = Math.max(0, (current.endAt || 0) - Date.now());
         const secondsLeft = Math.ceil(remainingMs / 1000);
@@ -259,60 +273,95 @@ export const useTimer = (lang: Lang) => {
         }
     }, [timer.active, handleTick, isNative]);
 
-    // Recalculate immediately after returning from background. Native resync is
-    // state-only because AlarmManager already owns background completion feedback.
+    // Web/PWA resyncs on resume. Native instead reads the OS snapshot FIRST.
     useEffect(() => {
+        if (isNative) return;
         const onVisibilityChange = () => {
-            if (document.visibilityState === 'visible') handleTick(isNative);
+            if (document.visibilityState === 'visible') handleTick(false);
         };
         document.addEventListener('visibilitychange', onVisibilityChange);
         return () => document.removeEventListener('visibilitychange', onVisibilityChange);
     }, [handleTick, isNative]);
 
-    // Q9: sync notification-action commands (+30s/skip tapped with frozen JS).
-    // Drains the native stream on mount and on every return to foreground,
-    // plus live events while the bridge is alive. No-op on web.
+    // Native state is authoritative after WebView recreation or background
+    // notification actions. Command stream is drained before reading the
+    // snapshot so +30s/Skip can never be undone by stale JS scheduling.
     useEffect(() => {
         if (!isNative) return;
         let cancelled = false;
-        const drain = async () => {
+        let removeListener: (() => void) | undefined;
+        const reconcile = async (fallbackCommands: TimerCommandPayload[] = [], fallbackEpoch = -1) => {
+            const generation = ++nativeRefreshGeneration.current;
+            const userRevision = nativeUserRevisionRef.current;
+            nativeReconcilingRef.current = true;
             try {
                 const stream = await consumePendingTimerCommands();
-                if (!cancelled && stream.commands.length > 0) {
-                    applyTimerCommands(stream.commands, stream.epoch, setTimer);
+                const native = await getNativeRestTimerState();
+                if (cancelled || generation !== nativeRefreshGeneration.current
+                    || userRevision !== nativeUserRevisionRef.current) return;
+                if (native) {
+                    const validActive = native.active && native.endAt > Date.now();
+                    setTimer(prev => validActive ? {
+                        ...prev,
+                        active: true,
+                        endAt: native.endAt,
+                        timeLeft: Math.ceil((native.endAt - Date.now()) / 1000),
+                        duration: Math.max(1, native.duration),
+                        source: native.sourceExerciseInstanceId >= 0 && native.sourceSetId >= 0
+                            ? { exerciseInstanceId: native.sourceExerciseInstanceId, setId: native.sourceSetId }
+                            : undefined,
+                    } : {
+                        ...prev, active: false, timeLeft: 0, endAt: 0, source: undefined,
+                    });
+                } else {
+                    // Older native shell / test double without snapshot API.
+                    const commands = stream.commands.length ? stream.commands : fallbackCommands;
+                    const epoch = stream.commands.length ? stream.epoch : fallbackEpoch;
+                    if (commands.length) applyTimerCommands(commands, epoch, setTimer);
                 }
             } catch {
-                // Best-effort: the next resume retries.
+                // On bridge failures, leave existing JS state intact.
+            } finally {
+                if (!cancelled && generation === nativeRefreshGeneration.current) {
+                    nativeReconcilingRef.current = false;
+                    setNativeReady(true);
+                }
             }
         };
-        void drain();
-        let unsubscribe: (() => void) | undefined;
-        void subscribeTimerCommands((stream) => {
-            if (!cancelled && stream.commands.length > 0) {
-                applyTimerCommands(stream.commands, stream.epoch, setTimer);
-            }
-        }).then((remove) => {
-            unsubscribe = remove;
+        void reconcile();
+        void subscribeTimerCommands(stream => {
+            if (!cancelled) void reconcile(stream.commands, stream.epoch);
+        }).then(remove => {
+            if (cancelled) remove(); else removeListener = remove;
         });
-        const onResume = () => void drain();
+        const onResume = () => {
+            if (document.visibilityState === 'visible') void reconcile();
+        };
         document.addEventListener('visibilitychange', onResume);
         window.addEventListener('focus', onResume);
         return () => {
             cancelled = true;
+            nativeRefreshGeneration.current += 1;
+            nativeReconcilingRef.current = false;
             document.removeEventListener('visibilitychange', onResume);
             window.removeEventListener('focus', onResume);
-            unsubscribe?.();
+            removeListener?.();
         };
-        // setTimer is a stable useState setter; drain on mount + resume only.
     }, [isNative]);
 
     const setRestTimer = useCallback((action: React.SetStateAction<TimerState>) => {
+        // Only this user-intent entry point may mutate the OS alarm. Native
+        // commands and background hydration call setTimer directly instead.
+        if (isNative) {
+            nativeUserRevisionRef.current += 1;
+            setNativeUserRevision(nativeUserRevisionRef.current);
+        }
         setTimer(prev => {
             const next = typeof action === 'function' ? (action as (p: TimerState) => TimerState)(prev) : action;
             timerRef.current = next;
             return next;
         });
-    }, []);
+    }, [isNative]);
 
     return { restTimer: timer, setRestTimer };
 };
