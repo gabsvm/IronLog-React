@@ -19,7 +19,7 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
             ref={setNodeRef}
             style={style}
             className={`
-                card-reference flex flex-col overflow-hidden transition-shadow
+                card-reference expressive-reveal flex flex-col overflow-hidden transition-shadow
                 ${ssStyle ? `border-l-4 ${ssStyle.border}` : ''}
                 ${isDragging ? 'shadow-2xl ring-2 ring-red-500/20' : ''}
                 ${isLinkSource ? 'ring-2 ring-amber-400/40 shadow-[0_0_0_1px_rgba(251,191,36,0.15)]' : ''}
