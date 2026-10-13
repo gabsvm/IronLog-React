@@ -134,43 +134,43 @@ export const CsvImportSheet: React.FC<CsvImportSheetProps> = ({
         >
             <div className="p-5 space-y-4">
                 {/* Summary */}
-                <div className="rounded-2xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/5 p-4">
+                <div className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated)/0.6)] p-4">
                     <div className="flex items-center gap-2 mb-3">
-                        <span className="px-2 py-0.5 rounded-full bg-primary-500/15 text-primary-600 dark:text-primary-400 text-[11px] font-black uppercase tracking-wider">
+                        <span className="px-2 py-0.5 rounded-full bg-primary-500/15 text-primary-600 dark:text-primary-400 text-xs font-black uppercase tracking-wider">
                             {parsed.source === 'hevy' ? 'Hevy' : 'Strong'}
                         </span>
-                        <span className="text-[11px] text-zinc-500">
+                        <span className="text-xs text-muted">
                             {c.format}: {parsed.source === 'hevy' ? 'Hevy' : 'Strong'}
                         </span>
                     </div>
                     <dl className="grid grid-cols-2 gap-2 text-sm">
                         <div>
-                            <dt className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">{c.sessions}</dt>
-                            <dd className="font-black text-zinc-900 dark:text-white">{fresh.length}</dd>
+                            <dt className="text-xs font-semibold tracking-normal text-muted">{c.sessions}</dt>
+                            <dd className="font-black text-[rgb(var(--text-primary))]">{fresh.length}</dd>
                         </div>
                         <div>
-                            <dt className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">{c.sets}</dt>
-                            <dd className="font-black text-zinc-900 dark:text-white">{freshSetCount}</dd>
+                            <dt className="text-xs font-semibold tracking-normal text-muted">{c.sets}</dt>
+                            <dd className="font-black text-[rgb(var(--text-primary))]">{freshSetCount}</dd>
                         </div>
                         {parsed.dateRange && (
                             <div className="col-span-2">
-                                <dt className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">{c.range}</dt>
-                                <dd className="font-bold text-zinc-900 dark:text-white">
+                                <dt className="text-xs font-semibold tracking-normal text-muted">{c.range}</dt>
+                                <dd className="font-bold text-[rgb(var(--text-primary))]">
                                     {fmtDate(parsed.dateRange.min)} → {fmtDate(parsed.dateRange.max)}
                                 </dd>
                             </div>
                         )}
                         <div>
-                            <dt className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">{c.newExercises}</dt>
-                            <dd className="font-black text-zinc-900 dark:text-white">{unmatched.length}</dd>
+                            <dt className="text-xs font-semibold tracking-normal text-muted">{c.newExercises}</dt>
+                            <dd className="font-black text-[rgb(var(--text-primary))]">{unmatched.length}</dd>
                         </div>
                         <div>
-                            <dt className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">{c.alreadyImported}</dt>
-                            <dd className="font-black text-zinc-900 dark:text-white">{skippedCount}</dd>
+                            <dt className="text-xs font-semibold tracking-normal text-muted">{c.alreadyImported}</dt>
+                            <dd className="font-black text-[rgb(var(--text-primary))]">{skippedCount}</dd>
                         </div>
                         {parsed.skippedRows > 0 && (
                             <div className="col-span-2">
-                                <dt className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">{c.skippedRows}</dt>
+                                <dt className="text-xs font-semibold tracking-normal text-muted">{c.skippedRows}</dt>
                                 <dd className="font-bold text-amber-500">{parsed.skippedRows}</dd>
                             </div>
                         )}
@@ -178,15 +178,15 @@ export const CsvImportSheet: React.FC<CsvImportSheetProps> = ({
                 </div>
 
                 {fresh.length === 0 && (
-                    <p className="text-sm text-zinc-500 text-center py-2">{c.nothingNew}</p>
+                    <p className="text-sm text-muted text-center py-2">{c.nothingNew}</p>
                 )}
 
                 {fresh.length > 0 && (
                     <>
                         {parsed.source === 'strong' && (
-                            <div className="flex items-center justify-between gap-2 rounded-2xl border border-zinc-200 dark:border-white/10 p-3">
-                                <span className="text-sm font-medium text-zinc-900 dark:text-white">{c.strongUnit}</span>
-                                <div className="flex gap-1 bg-zinc-200/50 dark:bg-zinc-800/80 p-0.5 rounded-xl border border-border-subtle shrink-0">
+                            <div className="flex items-center justify-between gap-2 rounded-2xl border border-[rgb(var(--border-subtle))] p-3">
+                                <span className="text-sm font-medium text-[rgb(var(--text-primary))]">{c.strongUnit}</span>
+                                <div className="flex gap-1 bg-[rgb(var(--surface-elevated))] p-0.5 rounded-[18px] border border-border-subtle shrink-0">
                                     {(['kg', 'lb'] as const).map((option) => (
                                         <button
                                             key={option}
@@ -196,7 +196,7 @@ export const CsvImportSheet: React.FC<CsvImportSheetProps> = ({
                                             className={`px-2.5 py-1 text-xs rounded-lg font-semibold transition-all ${
                                                 strongUnit === option
                                                     ? 'bg-primary-500 text-black shadow-sm'
-                                                    : 'text-muted hover:text-white'
+                                                    : 'text-muted hover:text-[rgb(var(--text-primary))]'
                                             }`}
                                         >
                                             {unitLabel(option)}
@@ -208,14 +208,14 @@ export const CsvImportSheet: React.FC<CsvImportSheetProps> = ({
 
                         {matched.length > 0 && (
                             <div>
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
+                                <p className="text-xs font-semibold tracking-normal text-muted mb-2">
                                     {c.autoMatched} ({matched.length})
                                 </p>
                                 <ul className="space-y-1">
                                     {matched.map((m) => (
                                         <li
                                             key={m.parsedName}
-                                            className="flex items-center justify-between gap-2 text-sm px-3 py-2 rounded-xl bg-zinc-50 dark:bg-white/5"
+                                            className="flex items-center justify-between gap-2 text-sm px-3 py-2 rounded-[18px] bg-[rgb(var(--surface-elevated)/0.6)]"
                                         >
                                             <span className="truncate text-zinc-700 dark:text-zinc-300">{m.parsedName}</span>
                                             <span className="shrink-0 text-emerald-500 font-bold text-xs">
@@ -229,7 +229,7 @@ export const CsvImportSheet: React.FC<CsvImportSheetProps> = ({
 
                         {unmatched.length > 0 && (
                             <div className="space-y-3">
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                                <p className="text-xs font-semibold tracking-normal text-muted">
                                     {c.needsMapping} ({unmatched.length})
                                 </p>
                                 {unmatched.map((m) => {
@@ -237,16 +237,16 @@ export const CsvImportSheet: React.FC<CsvImportSheetProps> = ({
                                     return (
                                         <div
                                             key={m.parsedName}
-                                            className="rounded-2xl border border-zinc-200 dark:border-white/10 p-3 space-y-2"
+                                            className="rounded-2xl border border-[rgb(var(--border-subtle))] p-3 space-y-2"
                                         >
-                                            <p className="text-sm font-bold text-zinc-900 dark:text-white">{m.parsedName}</p>
-                                            <div className="flex gap-1 bg-zinc-200/50 dark:bg-zinc-800/80 p-0.5 rounded-xl w-fit">
+                                            <p className="text-sm font-bold text-[rgb(var(--text-primary))]">{m.parsedName}</p>
+                                            <div className="flex gap-1 bg-[rgb(var(--surface-elevated))] p-0.5 rounded-[18px] w-fit">
                                                 <button
                                                     type="button"
                                                     onClick={() => setRow(m.parsedName, { mode: 'create' })}
                                                     aria-pressed={d.mode === 'create'}
                                                     className={`px-2.5 py-1 text-xs rounded-lg font-semibold transition-all ${
-                                                        d.mode === 'create' ? 'bg-primary-500 text-black' : 'text-muted hover:text-white'
+                                                        d.mode === 'create' ? 'bg-primary-500 text-black' : 'text-muted hover:text-[rgb(var(--text-primary))]'
                                                     }`}
                                                 >
                                                     {c.createNew}
@@ -256,19 +256,19 @@ export const CsvImportSheet: React.FC<CsvImportSheetProps> = ({
                                                     onClick={() => setRow(m.parsedName, { mode: 'existing' })}
                                                     aria-pressed={d.mode === 'existing'}
                                                     className={`px-2.5 py-1 text-xs rounded-lg font-semibold transition-all ${
-                                                        d.mode === 'existing' ? 'bg-primary-500 text-black' : 'text-muted hover:text-white'
+                                                        d.mode === 'existing' ? 'bg-primary-500 text-black' : 'text-muted hover:text-[rgb(var(--text-primary))]'
                                                     }`}
                                                 >
                                                     {c.mapTo}
                                                 </button>
                                             </div>
                                             {d.mode === 'create' ? (
-                                                <label className="block text-xs text-zinc-500">
+                                                <label className="block text-xs text-muted">
                                                     {c.muscle}
                                                     <select
                                                         value={d.muscle}
                                                         onChange={(e) => setRow(m.parsedName, { muscle: e.target.value as MuscleGroup | '' })}
-                                                        className="mt-1 w-full rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 text-sm font-bold text-zinc-900 outline-none focus:border-primary-500 dark:border-white/10 dark:bg-zinc-800 dark:text-white"
+                                                        className="mt-1 w-full rounded-[18px] border border-zinc-200 bg-zinc-50 p-2.5 text-sm font-bold text-zinc-900 outline-none focus:border-primary-500 dark:border-white/10 dark:bg-[rgb(var(--surface-elevated))] dark:text-[rgb(var(--text-primary))]"
                                                     >
                                                         <option value="">—</option>
                                                         {MUSCLES.map((muscle) => (
@@ -279,12 +279,12 @@ export const CsvImportSheet: React.FC<CsvImportSheetProps> = ({
                                                     </select>
                                                 </label>
                                             ) : (
-                                                <label className="block text-xs text-zinc-500">
+                                                <label className="block text-xs text-muted">
                                                     {c.mapTo}
                                                     <select
                                                         value={d.exerciseId}
                                                         onChange={(e) => setRow(m.parsedName, { exerciseId: e.target.value })}
-                                                        className="mt-1 w-full rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 text-sm font-bold text-zinc-900 outline-none focus:border-primary-500 dark:border-white/10 dark:bg-zinc-800 dark:text-white"
+                                                        className="mt-1 w-full rounded-[18px] border border-zinc-200 bg-zinc-50 p-2.5 text-sm font-bold text-zinc-900 outline-none focus:border-primary-500 dark:border-white/10 dark:bg-[rgb(var(--surface-elevated))] dark:text-[rgb(var(--text-primary))]"
                                                     >
                                                         <option value="">—</option>
                                                         {sortedLibrary.map((def) => (
