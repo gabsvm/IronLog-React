@@ -91,7 +91,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onLogin }) => {
                                             </div>
                                         </div>
                                         <div className="col-span-4">
-                                            <div className={`text-center text-lg font-black rounded-lg py-1.5 ${s.done ? 'text-green-400' : s.reps ? 'bg-[#273325] text-white' : 'bg-zinc-800 text-zinc-600'}`}>
+                                            <div className={`text-center text-lg font-black rounded-lg py-1.5 ${s.done ? 'text-green-400' : s.reps ? 'premium-landing-input text-white' : 'bg-zinc-800 text-zinc-600'}`}>
                                                 {s.reps || '—'}
                                             </div>
                                         </div>
