@@ -1,11 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { Capacitor } from '@capacitor/core';
 
 vi.mock('../../utils/audio', () => ({
     playTimerFinishSound: vi.fn(),
     triggerHaptic: vi.fn(),
     scheduleNativeRestTimer: vi.fn(),
+    getNativeRestTimerState: vi.fn(async () => null),
     cancelNativeRestTimer: vi.fn(),
     // Q9: useTimer's command-sync effect imports these; idle defaults keep
     // this suite's scheduling assertions unaffected.
@@ -154,7 +155,7 @@ describe('Task U2: Rest Timer Notification Permission and Visibility Scoping', (
         expect(notificationSpy).toHaveBeenCalled();
     });
 
-    it('P7-3: on native, an active rest with a future endAt schedules the OS alarm', () => {
+    it('P7-3: on native, an active user-started rest schedules the OS alarm after restoring', async () => {
         vi.clearAllMocks();
         vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(true);
         const { result } = renderHook(() => useTimer('es'));
@@ -167,17 +168,19 @@ describe('Task U2: Rest Timer Notification Permission and Visibility Scoping', (
             result.current.setRestTimer({ active: true, duration: 90, timeLeft: 90, endAt });
         });
 
-        expect(scheduleNativeRestTimer).toHaveBeenCalledWith(
+        await waitFor(() => expect(scheduleNativeRestTimer).toHaveBeenCalledWith(
             endAt,
             TRANSLATIONS.es.timer.finished,
             TRANSLATIONS.es.timer.getBack,
             TRANSLATIONS.es.timer.resting,
-            TRANSLATIONS.es.timer.restingBody
-        );
+            TRANSLATIONS.es.timer.restingBody,
+            90,
+            undefined,
+        ));
         expect(cancelNativeRestTimer).not.toHaveBeenCalled();
     });
 
-    it('P7-3: on native, an inactive or expired rest cancels the OS alarm instead', () => {
+    it('P7-3: user skip or expiration cancels the OS alarm instead', async () => {
         vi.clearAllMocks();
         vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(true);
         const { result } = renderHook(() => useTimer('es'));
@@ -186,13 +189,13 @@ describe('Task U2: Rest Timer Notification Permission and Visibility Scoping', (
         act(() => {
             result.current.setRestTimer({ active: true, duration: 90, timeLeft: 90, endAt: Date.now() + 90000 });
         });
-        expect(scheduleNativeRestTimer).toHaveBeenCalledTimes(1);
+        await waitFor(() => expect(scheduleNativeRestTimer).toHaveBeenCalledTimes(1));
 
         // Skipping (inactive) cancels the pending alarm.
         act(() => {
             result.current.setRestTimer((prev) => ({ ...prev, active: false, timeLeft: 0, endAt: 0 }));
         });
-        expect(cancelNativeRestTimer).toHaveBeenCalledTimes(1);
+        await waitFor(() => expect(cancelNativeRestTimer).toHaveBeenCalledTimes(1));
 
         // So does an already-expired endAt.
         act(() => {
@@ -202,7 +205,7 @@ describe('Task U2: Rest Timer Notification Permission and Visibility Scoping', (
         expect(scheduleNativeRestTimer).toHaveBeenCalledTimes(1);
     });
 
-    it('J2: on native, adjusting the rest (+30s) re-schedules with the new endAt and live texts', () => {
+    it('J2: user +30s re-schedules with the new endAt and live texts', async () => {
         vi.clearAllMocks();
         vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(true);
         const { result } = renderHook(() => useTimer('en'));
@@ -212,7 +215,7 @@ describe('Task U2: Rest Timer Notification Permission and Visibility Scoping', (
         act(() => {
             result.current.setRestTimer({ active: true, duration: 90, timeLeft: 90, endAt });
         });
-        expect(scheduleNativeRestTimer).toHaveBeenCalledTimes(1);
+        await waitFor(() => expect(scheduleNativeRestTimer).toHaveBeenCalledTimes(1));
 
         // +30s adjustment changes endAt: the same notification id is updated.
         const adjustedEndAt = endAt + 30000;
@@ -225,7 +228,9 @@ describe('Task U2: Rest Timer Notification Permission and Visibility Scoping', (
             TRANSLATIONS.en.timer.finished,
             TRANSLATIONS.en.timer.getBack,
             TRANSLATIONS.en.timer.resting,
-            TRANSLATIONS.en.timer.restingBody
+            TRANSLATIONS.en.timer.restingBody,
+            90,
+            undefined,
         );
         expect(cancelNativeRestTimer).not.toHaveBeenCalled();
     });
