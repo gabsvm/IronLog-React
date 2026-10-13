@@ -21,7 +21,7 @@ export const AppearanceSection: React.FC = () => {
                 <button
                     type="button"
                     onClick={() => setTheme('dark')}
-                    className={`h-9 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-all ${
+                    className={`min-h-11 rounded-2xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
                         theme === 'dark'
                             ? 'bg-surface-elevated text-white border border-border-strong shadow-sm'
                             : 'text-muted hover:text-white'
@@ -32,7 +32,7 @@ export const AppearanceSection: React.FC = () => {
                 <button
                     type="button"
                     onClick={() => setTheme('light')}
-                    className={`h-9 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-all ${
+                    className={`min-h-11 rounded-2xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
                         theme === 'light'
                             ? 'bg-surface-elevated text-white border border-border-strong shadow-sm'
                             : 'text-muted hover:text-white'
@@ -43,7 +43,7 @@ export const AppearanceSection: React.FC = () => {
                 <button
                     type="button"
                     onClick={() => setTheme('system')}
-                    className={`h-9 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-all ${
+                    className={`min-h-11 rounded-2xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
                         theme === 'system'
                             ? 'bg-surface-elevated text-white border border-border-strong shadow-sm'
                             : 'text-muted hover:text-white'
@@ -70,7 +70,7 @@ export const AppearanceSection: React.FC = () => {
                 <button
                     type="button"
                     onClick={() => setLang('en')}
-                    className={`h-9 rounded-lg text-xs font-medium flex items-center justify-center transition-all ${
+                    className={`min-h-11 rounded-2xl text-xs font-semibold flex items-center justify-center transition-all ${
                         TRANSLATIONS[lang].copy.appearanceSection.bgSurfaceElevatedText
                     }`}
                 >
@@ -79,7 +79,7 @@ export const AppearanceSection: React.FC = () => {
                 <button
                     type="button"
                     onClick={() => setLang('es')}
-                    className={`h-9 rounded-lg text-xs font-medium flex items-center justify-center transition-all ${
+                    className={`min-h-11 rounded-2xl text-xs font-semibold flex items-center justify-center transition-all ${
                         TRANSLATIONS[lang].copy.appearanceSection.textMutedHoverText
                     }`}
                 >
@@ -110,7 +110,7 @@ export const AppearanceSection: React.FC = () => {
                     <button
                         type="button"
                         onClick={() => setEffectsMode('system')}
-                        className={`py-2 px-1 rounded-lg text-xs flex flex-col items-center justify-center gap-1 transition-all ${
+                        className={`min-h-11 py-2 px-1 rounded-2xl text-xs flex flex-col items-center justify-center gap-1 transition-all ${
                             effectsMode === 'system'
                                 ? 'bg-surface-elevated text-white border border-border-strong font-medium shadow-sm'
                                 : 'text-muted hover:text-white'
@@ -122,7 +122,7 @@ export const AppearanceSection: React.FC = () => {
                     <button
                         type="button"
                         onClick={() => setEffectsMode('full')}
-                        className={`py-2 px-1 rounded-lg text-xs flex flex-col items-center justify-center gap-1 transition-all ${
+                        className={`min-h-11 py-2 px-1 rounded-2xl text-xs flex flex-col items-center justify-center gap-1 transition-all ${
                             effectsMode === 'full'
                                 ? 'bg-surface-elevated text-white border border-border-strong font-medium shadow-sm'
                                 : 'text-muted hover:text-white'
@@ -134,7 +134,7 @@ export const AppearanceSection: React.FC = () => {
                     <button
                         type="button"
                         onClick={() => setEffectsMode('balanced')}
-                        className={`py-2 px-1 rounded-lg text-xs flex flex-col items-center justify-center gap-1 transition-all ${
+                        className={`min-h-11 py-2 px-1 rounded-2xl text-xs flex flex-col items-center justify-center gap-1 transition-all ${
                             effectsMode === 'balanced'
                                 ? 'bg-surface-elevated text-white border border-border-strong font-medium shadow-sm'
                                 : 'text-muted hover:text-white'
@@ -146,7 +146,7 @@ export const AppearanceSection: React.FC = () => {
                     <button
                         type="button"
                         onClick={() => setEffectsMode('reduced')}
-                        className={`py-2 px-1 rounded-lg text-xs flex flex-col items-center justify-center gap-1 transition-all ${
+                        className={`min-h-11 py-2 px-1 rounded-2xl text-xs flex flex-col items-center justify-center gap-1 transition-all ${
                             effectsMode === 'reduced'
                                 ? 'bg-surface-elevated text-white border border-border-strong font-medium shadow-sm'
                                 : 'text-muted hover:text-white'
