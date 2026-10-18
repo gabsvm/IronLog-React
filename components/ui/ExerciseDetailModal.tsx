@@ -213,6 +213,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
             description={resolveMuscleLabel(exercise.muscle, lang)}
             accent="primary"
             contentId="exercise-detail-scroll"
+            dragHandleOnly
             footer={
                 <div className="flex gap-3">
                     <Button fullWidth onClick={onClose} variant="secondary">{t.close}</Button>
