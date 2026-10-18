@@ -4,6 +4,8 @@ import { Capacitor } from '@capacitor/core';
 import { Log } from '../types';
 import { Icon } from '../components/ui/Icon';
 import { Button } from '../components/ui/Button';
+import { Sheet } from '../components/ui/Sheet';
+import type { SessionCardVariant } from '../utils/sessionCard';
 import { useApp } from '../context/AppContext';
 import { getLogBodyWeight, getSetLoadVolume } from '../utils/trainingMetrics';
 import { resolveWeightUnit, toDisplay, unitLabel } from '../utils/units';
@@ -44,25 +46,33 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
         return { volume, sets, muscles: Array.from(muscles).map(m => labels[m] || m) };
     }, [log, userProfile?.bodyWeight, lang]);
 
-    // Prepare the image once, shortly after opening the completion screen.
-    // The share button reuses the same promise; immediate taps never trigger a
-    // second render, and Android exports a smaller JPEG across the JS bridge.
+    type PreparedImage = { blob: Blob; filename: string; title: string; mime: string };
+    const [showShareSheet, setShowShareSheet] = useState(false);
+    const [shareVariant, setShareVariant] = useState<SessionCardVariant>('dark-photo');
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [previewFailed, setPreviewFailed] = useState(false);
     const [shareState, setShareState] = useState<'idle' | 'busy' | 'failed'>('idle');
     const volumeText = `${formatInteger(toDisplay(stats.volume, unit), lang)} ${unitLabel(unit).toLowerCase()}`;
-    type PreparedImage = { blob: Blob; filename: string; title: string; mime: string };
-    const preparedRef = useRef<{ key: string; promise: Promise<PreparedImage> } | null>(null);
     const key = `${log.id}|${log.endTime}|${log.name}|${lang}|${unit}|${stats.sets}|${stats.volume}`;
-    const prepareShare = useCallback((): Promise<PreparedImage> => {
-        if (preparedRef.current?.key === key) return preparedRef.current.promise;
+    const cardCacheRef = useRef<Map<string, Promise<PreparedImage>>>(new Map());
+    const previewUrlsRef = useRef<Map<string, string>>(new Map());
+
+    const prepareShare = useCallback((variant: SessionCardVariant): Promise<PreparedImage> => {
+        const cacheKey = key + '|' + variant;
+        const hit = cardCacheRef.current.get(cacheKey);
+        if (hit) return hit;
         const promise: Promise<PreparedImage> = (async () => {
             const { buildSessionCardModel, renderSessionCard } = await import('../utils/sessionCard');
             const c = TRANSLATIONS[lang].copy.sessionSummary;
             const model = buildSessionCardModel({
                 log,
-                labels: { workoutComplete: c.workoutComplete, time: c.time, sets: c.sets, totalVolume: c.totalVolume, musclesHit: c.musclesHit },
+                labels: {
+                    workoutComplete: c.workoutComplete, time: c.time, sets: c.sets,
+                    totalVolume: c.totalVolume, musclesHit: c.musclesHit,
+                    highlights: pickLang(lang, { es: 'Ejercicios destacados', en: 'Highlights' }),
+                },
                 locale: pickLang(lang, { es: 'es-AR', en: 'en-US' }),
-                totals: stats,
-                volumeText,
+                totals: stats, volumeText,
                 exerciseName: (ex) => getTranslated(ex.name as any, lang) || String(ex.name ?? ''),
                 bestSetText: (ex) => {
                     const done = (ex.sets || []).filter((s) => s.completed && !s.skipped && Number(s.weight) > 0);
@@ -72,31 +82,56 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
                 },
             });
             const native = Capacitor.isNativePlatform();
-            const blob = await renderSessionCard(model, { format: native ? 'jpeg' : 'png' });
+            const blob = await renderSessionCard(model, { format: native ? 'jpeg' : 'png', variant });
             const day = new Date(log.endTime || Date.now()).toISOString().slice(0, 10);
             return {
-                blob, title: model.title,
-                mime: native ? 'image/jpeg' : 'image/png',
+                blob, title: model.title, mime: native ? 'image/jpeg' : 'image/png',
                 filename: `gainslab-${day}.${native ? 'jpg' : 'png'}`,
             };
         })();
-        preparedRef.current = { key, promise };
-        // Do not permanently cache an encoding error: next tap can retry.
-        void promise.catch(() => { if (preparedRef.current?.promise === promise) preparedRef.current = null; });
+        cardCacheRef.current.set(cacheKey, promise);
+        // A transient encoding error must not poison subsequent export attempts.
+        void promise.catch(() => {
+            if (cardCacheRef.current.get(cacheKey) === promise) cardCacheRef.current.delete(cacheKey);
+        });
         return promise;
     }, [key, log, lang, unit, stats, volumeText]);
 
     useEffect(() => {
-        // Keep first paint responsive; pre-render off the tap path.
-        const timer = window.setTimeout(() => { void prepareShare().catch(() => {}); }, 120);
-        return () => window.clearTimeout(timer);
+        // Prepare the main template after first paint, not on the share button.
+        const id = window.setTimeout(() => { void prepareShare('dark-photo').catch(() => {}); }, 120);
+        return () => window.clearTimeout(id);
     }, [prepareShare]);
+
+    useEffect(() => {
+        if (!showShareSheet) return;
+        let active = true;
+        setPreviewUrl(null);
+        setPreviewFailed(false);
+        const previewKey = key + '|' + shareVariant;
+        void prepareShare(shareVariant).then(({ blob }) => {
+            if (!active) return;
+            let url = previewUrlsRef.current.get(previewKey);
+            if (!url) {
+                url = URL.createObjectURL(blob);
+                previewUrlsRef.current.set(previewKey, url);
+            }
+            setPreviewUrl(url);
+        }).catch(() => { if (active) setPreviewFailed(true); });
+        return () => { active = false; };
+    }, [key, showShareSheet, shareVariant, prepareShare]);
+
+    useEffect(() => () => {
+        previewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+        previewUrlsRef.current.clear();
+        cardCacheRef.current.clear();
+    }, []);
 
     const handleShareImage = async () => {
         if (shareState === 'busy') return;
         setShareState('busy');
         try {
-            const image = await prepareShare();
+            const image = await prepareShare(shareVariant);
             await shareFileOrDownload(image.blob, image.filename, image.mime, image.title);
             setShareState('idle');
         } catch {
@@ -198,22 +233,88 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
 
             {/* Footer */}
             <div className="p-4 bg-[rgb(var(--surface-app))] pb-[var(--safe-area-bottom)] border-t border-[rgb(var(--border-subtle)/0.4)]">
-                {shareState === 'failed' && (
-                    <p role="alert" className="mb-2 text-center text-xs font-bold text-red-500">{TRANSLATIONS[lang].copy.sessionSummary.shareImageFailed}</p>
-                )}
                 <button
                     type="button"
-                    onClick={() => void handleShareImage()}
-                    disabled={shareState === 'busy'}
+                    onClick={() => setShowShareSheet(true)}
                     className="expressive-press mb-2 flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] text-sm font-bold text-[rgb(var(--text-primary))] disabled:opacity-60"
                 >
                     <Icon name="Share2" size={16} />
-                    {shareState === 'busy' ? TRANSLATIONS[lang].copy.sessionSummary.shareImageBusy : TRANSLATIONS[lang].copy.sessionSummary.shareImage}
+                    {TRANSLATIONS[lang].copy.sessionSummary.shareImage}
                 </button>
                 <Button fullWidth onClick={onClose} className="h-12 text-base font-bold">
                     {TRANSLATIONS[lang].copy.sessionSummary.finishGoHome}
                 </Button>
             </div>
+            <Sheet
+                open={showShareSheet}
+                onOpenChange={setShowShareSheet}
+                title={pickLang(lang, { es: 'Compartir entrenamiento', en: 'Share workout' })}
+                description={pickLang(lang, { es: 'Vista previa y estilo de la imagen de tu sesión', en: 'Preview and style of your session image' })}
+                accent="primary"
+                footer={
+                    <button
+                        type="button"
+                        disabled={shareState === 'busy' || !previewUrl}
+                        onClick={() => void handleShareImage()}
+                        className="expressive-press flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-primary-500 px-5 font-bold text-zinc-950 disabled:opacity-50"
+                    >
+                        <Icon name="Share2" size={18} />
+                        {shareState === 'busy'
+                            ? TRANSLATIONS[lang].copy.sessionSummary.shareImageBusy
+                            : pickLang(lang, { es: 'Compartir imagen', en: 'Share image' })}
+                    </button>
+                }
+            >
+                <div className="space-y-4 px-5 pb-6 pt-1">
+                    <div className="mx-auto flex aspect-[4/5] w-full max-w-[232px] items-center justify-center overflow-hidden rounded-[24px] border border-primary-500/15 bg-[rgb(var(--surface-elevated))] shadow-xl">
+                        {previewUrl ? (
+                            <img
+                                src={previewUrl}
+                                alt={pickLang(lang, { es: 'Vista previa de la tarjeta de entrenamiento completado', en: 'Completed workout card preview' })}
+                                className="h-full w-full object-contain"
+                            />
+                        ) : (
+                            <div role="status" className="flex flex-col items-center gap-3 px-4 text-center text-xs text-muted">
+                                <Icon name={previewFailed ? 'AlertCircle' : 'Image'} size={28} />
+                                {previewFailed
+                                    ? TRANSLATIONS[lang].copy.sessionSummary.shareImageFailed
+                                    : pickLang(lang, { es: 'Preparando vista previa…', en: 'Preparing preview…' })}
+                            </div>
+                        )}
+                    </div>
+                    <div>
+                        <div className="mb-2 text-xs font-semibold text-muted">
+                            {pickLang(lang, { es: 'ESTILO DE LA TARJETA', en: 'CARD STYLE' })}
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                            {([
+                                { id: 'dark-photo', name: { es: 'Editorial', en: 'Editorial' } },
+                                { id: 'minimal-dark', name: { es: 'Minimal', en: 'Minimal' } },
+                                { id: 'lime-accent', name: { es: 'Lima', en: 'Lime' } },
+                            ] as const).map((variant) => (
+                                <button
+                                    key={variant.id}
+                                    type="button"
+                                    aria-pressed={shareVariant === variant.id}
+                                    onClick={() => { setShareState('idle'); setShareVariant(variant.id); }}
+                                    className={'expressive-press min-h-11 rounded-[16px] border px-2 py-2 text-xs font-bold transition-colors ' + (
+                                        shareVariant === variant.id
+                                            ? 'border-primary-500 bg-primary-500/15 text-[rgb(var(--text-primary))]'
+                                            : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] text-muted'
+                                    )}
+                                >
+                                    {pickLang(lang, variant.name)}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    {shareState === 'failed' && (
+                        <p role="alert" className="text-center text-xs font-semibold text-red-500">
+                            {TRANSLATIONS[lang].copy.sessionSummary.shareImageFailed}
+                        </p>
+                    )}
+                </div>
+            </Sheet>
         </div>
     );
 };
