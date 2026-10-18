@@ -44,15 +44,27 @@ test.describe('Exercise details can scroll above sticky footer', () => {
 
         // Simulates a finger swipe up on an Android touch display. The Vaul
         // drawer must not intercept the gesture; only the Sheet body scrolls.
+        // Wait for Vaul's opening transform to finish before starting a
+        // real finger drag. Synthetic scroll-wheel gestures don't exercise
+        // the pointer capture path that broke scrolling on Android.
+        await page.waitForTimeout(600);
         const rect = await scroll.boundingBox();
         if (!rect) throw new Error('Missing Sheet scroll bounds');
         const client = await page.context().newCDPSession(page);
-        await client.send('Input.synthesizeScrollGesture', {
-            x: rect.x + rect.width / 2,
-            y: rect.y + Math.min(250, rect.height / 2),
-            xDistance: 0, yDistance: -450,
-            gestureSourceType: 'touch', speed: 650,
+        const startX = Math.round(rect.x + rect.width / 2);
+        const startY = Math.round(Math.min(rect.y + rect.height - 85, page.viewportSize()!.height - 110));
+        const endY = Math.round(Math.max(rect.y + 70, startY - 310));
+        await client.send('Input.dispatchTouchEvent', {
+            type: 'touchStart', touchPoints: [{ x: startX, y: startY, id: 1 }],
         });
+        for (let step = 1; step <= 18; step++) {
+            const y = startY + (endY - startY) * (step / 18);
+            await client.send('Input.dispatchTouchEvent', {
+                type: 'touchMove', touchPoints: [{ x: startX, y, id: 1 }],
+            });
+            await page.waitForTimeout(20);
+        }
+        await client.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
         await expect.poll(async () => scroll.evaluate(el => el.scrollTop), { timeout: 10000 })
             .toBeGreaterThan(80);
         await options.nth(1).scrollIntoViewIfNeeded();
