@@ -24,8 +24,20 @@ test.describe('U8: share session summary image', () => {
         await page.locator('button:has-text("Terminar"), button:has-text("Finish")').last().click();
         await expect(page.locator('button:has-text("Finalizar y Volver")')).toBeVisible({ timeout: 10000 });
 
-        const downloadPromise = page.waitForEvent('download');
         await page.getByRole('button', { name: 'Compartir imagen' }).click();
+        const sheet = page.getByRole('dialog', { name: 'Compartir entrenamiento' });
+        await expect(sheet).toBeVisible();
+        const preview = sheet.getByRole('img', { name: /vista previa/i });
+        await expect(preview).toBeVisible({ timeout: 15000 });
+        const firstUrl = await preview.getAttribute('src');
+        expect(firstUrl).toMatch(/^blob:/);
+
+        await sheet.getByRole('button', { name: 'Lima' }).click();
+        await expect(sheet.getByRole('button', { name: 'Lima' })).toHaveAttribute('aria-pressed', 'true');
+        await expect(preview).toHaveAttribute('src', /blob:/, { timeout: 15000 });
+        await expect.poll(async () => preview.getAttribute('src')).not.toBe(firstUrl);
+        const downloadPromise = page.waitForEvent('download');
+        await sheet.getByRole('button', { name: 'Compartir imagen' }).click();
         const download = await downloadPromise;
         expect(download.suggestedFilename()).toMatch(/^gainslab-\d{4}-\d{2}-\d{2}\.png$/);
         const path = await download.path();
@@ -34,6 +46,8 @@ test.describe('U8: share session summary image', () => {
         // PNG signature + a real image (not an empty canvas export).
         expect([...bytes.subarray(0, 8)]).toEqual([137, 80, 78, 71, 13, 10, 26, 10]);
         expect(bytes.length).toBeGreaterThan(10_000);
+        expect(bytes.readUInt32BE(16)).toBe(1080);
+        expect(bytes.readUInt32BE(20)).toBe(1350);
         await expect(page.getByRole('alert')).toHaveCount(0);
     });
 });
