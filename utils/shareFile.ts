@@ -15,6 +15,28 @@ type ShareableNavigator = Navigator & {
 
 const toBase64 = async (content: string | Blob): Promise<string> => {
     const blob = typeof content === 'string' ? new Blob([content]) : content;
+    // FileReader encodes large exports inside the WebView implementation
+    // instead of allocating a second JS byte array and concatenated string.
+    // Especially useful before the Capacitor bridge copies the payload.
+    if (blob.size >= 65536 && typeof FileReader !== 'undefined') {
+        try {
+            return await new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onerror = () => reject(reader.error ?? new Error('read failed'));
+                reader.onload = () => {
+                    const data = reader.result;
+                    if (typeof data !== 'string' || !data.includes(',')) {
+                        reject(new Error('invalid data URI'));
+                        return;
+                    }
+                    resolve(data.slice(data.indexOf(',') + 1));
+                };
+                reader.readAsDataURL(blob);
+            });
+        } catch {
+            // Retain the proven arrayBuffer conversion as a compatibility path.
+        }
+    }
     const bytes = new Uint8Array(await blob.arrayBuffer());
     let binary = '';
     const chunk = 0x8000;
