@@ -14,11 +14,23 @@ test.describe('Exercise details can scroll above sticky footer', () => {
         await page.goto('/');
         await expect(page.locator('nav[aria-label="Main navigation"]')).toBeVisible({ timeout: 20000 });
 
-        await page.getByLabel(/Abrir perfil|Open profile/).click();
-        await page.getByText(/Ejercicios y plantillas|Exercises and templates/i).click();
-        const detailsButton = page.getByRole('button', { name: /Detalles de .*Press Banca Barra/i }).first();
-        await expect(detailsButton).toBeVisible({ timeout: 12000 });
-        await detailsButton.click();
+        // Exercise library navigation is Pro-gated in a guest account.
+        // Enter the same details component through a real free workout.
+        const plus = page.locator('nav[aria-label="Main navigation"] button[aria-label*="Iniciar" i], nav[aria-label="Main navigation"] button[aria-label*="Start" i]').first();
+        await plus.click();
+        await page.locator('button:has-text("Sesión libre"), button:has-text("Freestyle")').first().click();
+        await page.locator('button:has-text("Iniciar Sesión Libre"), button:has-text("Start Free Session"), button:has-text("Iniciar sesión libre")').first().click();
+        await expect(page.locator('#tut-finish-btn')).toBeVisible({ timeout: 10000 });
+        await page.locator('button[title*="Añadir ejercicio" i], button[title*="Add exercise" i]').first().click();
+        const picker = page.locator('[role="dialog"]');
+        await expect(picker).toBeVisible();
+        await picker.locator('input[type="text"]').first().fill('press banca barra');
+        const exerciseOption = picker.getByRole('button', { name: /press banca barra/i }).first();
+        await expect(exerciseOption).toBeVisible({ timeout: 10000 });
+        await exerciseOption.click();
+        const exerciseHeader = page.locator('#tut-exercise-list h3').first();
+        await expect(exerciseHeader).toBeVisible({ timeout: 10000 });
+        await exerciseHeader.click();
 
         const dialog = page.getByRole('dialog').last();
         const scroll = dialog.locator('#exercise-detail-scroll');
@@ -49,7 +61,7 @@ test.describe('Exercise details can scroll above sticky footer', () => {
         await expect(dialog.getByRole('button', { name: /Guardar|Save/ }).last()).toBeVisible();
         await dialog.getByRole('button', { name: /^Guardar$|^Save$/ }).last().click();
 
-        await detailsButton.click();
+        await exerciseHeader.click();
         const reopened = page.getByRole('dialog').last();
         await reopened.locator('#exercise-detail-scroll button[aria-pressed="true"]').last()
             .scrollIntoViewIfNeeded();
