@@ -36,9 +36,12 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ steps, onCompl
             setCurrentStepIndex(0);
             setRect(null);
             setReady(false);
-        } else {
-            setTimeout(() => setReady(true), 500);
+            return;
         }
+        const timer = window.setTimeout(() => setReady(true), 500);
+        // A closing drawer can unmount its tutorial before the delay expires.
+        // Cancel the callback rather than updating an unmounted test/WebView.
+        return () => window.clearTimeout(timer);
     }, [isActive]);
 
     useEffect(() => {
