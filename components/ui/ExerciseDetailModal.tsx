@@ -212,6 +212,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
             title={String(translatedName)}
             description={resolveMuscleLabel(exercise.muscle, lang)}
             accent="primary"
+            contentId="exercise-detail-scroll"
             footer={
                 <div className="flex gap-3">
                     <Button fullWidth onClick={onClose} variant="secondary">{t.close}</Button>
@@ -243,7 +244,10 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                 </button>
             </div>
 
-            <div className="overflow-y-auto scroll-container">
+            {/* The Sheet owns the single scroll container. Nested overflow-y-auto
+                intercepted vertical touch gestures on Android, leaving the
+                tonnage options trapped beneath the sticky Save footer. */}
+            <div data-vaul-no-drag className="min-w-0 pb-8">
                     {activeTab === 'guide' ? (
                         <>
                             {/* Video / Visual Section */}
@@ -311,11 +315,11 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                                             <Icon name="Dumbbell" size={13} /> {TRANSLATIONS[lang].copy.exerciseDetailModal.tonnageCalculation}
                                         </h4>
                                         <div className="space-y-2">
-                                            <button type="button" onClick={() => setVolumeCountingMode('total')} className={`w-full text-left rounded-xl border p-3 transition-colors ${volumeCountingMode === 'total' ? 'border-primary-500 bg-primary-500/10' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated)/0.6)]'}`}>
+                                            <button type="button" aria-pressed={volumeCountingMode === 'total'} onClick={() => setVolumeCountingMode('total')} className={`w-full text-left rounded-xl border p-3 transition-colors ${volumeCountingMode === 'total' ? 'border-primary-500 bg-primary-500/10' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated)/0.6)]'}`}>
                                                 <span className="block text-sm font-bold text-white">{TRANSLATIONS[lang].copy.exerciseDetailModal.recordedTotal1}</span>
                                                 <span className="block mt-1 text-xs text-zinc-400">{TRANSLATIONS[lang].copy.exerciseDetailModal.forBarsBilateralMachines}</span>
                                             </button>
-                                            <button type="button" onClick={() => setVolumeCountingMode('per_side')} className={`w-full text-left rounded-xl border p-3 transition-colors ${volumeCountingMode === 'per_side' ? 'border-primary-500 bg-primary-500/10' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated)/0.6)]'}`}>
+                                            <button type="button" aria-pressed={volumeCountingMode === 'per_side'} onClick={() => setVolumeCountingMode('per_side')} className={`w-full text-left rounded-xl border p-3 transition-colors ${volumeCountingMode === 'per_side' ? 'border-primary-500 bg-primary-500/10' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated)/0.6)]'}`}>
                                                 <span className="block text-sm font-bold text-white">{TRANSLATIONS[lang].copy.exerciseDetailModal.perSide2}</span>
                                                 <span className="block mt-1 text-xs text-zinc-400">{TRANSLATIONS[lang].copy.exerciseDetailModal.whenYouRecordLoad}</span>
                                             </button>
