@@ -14,6 +14,7 @@ export interface SessionCardModel {
     footer: string;
     musclesLabel?: string;
     highlightsLabel?: string;
+    sessionCaption?: string;
 }
 
 export interface SessionCardLabels {
@@ -23,6 +24,7 @@ export interface SessionCardLabels {
     totalVolume: string;
     musclesHit: string;
     highlights?: string;
+    sessionCaption?: string;
 }
 
 export const formatSessionDuration = (sec: number): string => {
@@ -62,6 +64,7 @@ export const buildSessionCardModel = (input: {
         footer: 'GAINSLAB',
         musclesLabel: labels.musclesHit,
         highlightsLabel: labels.highlights || 'HIGHLIGHTS',
+        sessionCaption: labels.sessionCaption || 'SESSION RECAP',
     };
 };
 
@@ -182,7 +185,7 @@ export const renderSessionCard = async (
     ctx.fillText(model.footer, P + 64, 102);
     ctx.font = font(650, 22);
     ctx.fillStyle = dim;
-    const stamp = model.musclesLabel === 'Músculos trabajados' ? 'RESUMEN DE SESIÓN' : 'SESSION RECAP';
+    const stamp = model.sessionCaption || 'SESSION RECAP';
     ctx.fillText(stamp, W - P - ctx.measureText(stamp).width, 98);
 
     // Badge, readable two-line title, and quiet date; nothing clips at phone width.
