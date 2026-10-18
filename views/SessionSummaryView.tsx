@@ -1,5 +1,6 @@
 import { formatMessage } from '../utils/i18n';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { Log } from '../types';
 import { Icon } from '../components/ui/Icon';
 import { Button } from '../components/ui/Button';
@@ -43,12 +44,17 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
         return { volume, sets, muscles: Array.from(muscles).map(m => labels[m] || m) };
     }, [log, userProfile?.bodyWeight, lang]);
 
-    // U8: share the summary as an image (PNG via canvas; native share sheet in the app).
+    // Prepare the image once, shortly after opening the completion screen.
+    // The share button reuses the same promise; immediate taps never trigger a
+    // second render, and Android exports a smaller JPEG across the JS bridge.
     const [shareState, setShareState] = useState<'idle' | 'busy' | 'failed'>('idle');
     const volumeText = `${formatInteger(toDisplay(stats.volume, unit), lang)} ${unitLabel(unit).toLowerCase()}`;
-    const handleShareImage = async () => {
-        setShareState('busy');
-        try {
+    type PreparedImage = { blob: Blob; filename: string; title: string; mime: string };
+    const preparedRef = useRef<{ key: string; promise: Promise<PreparedImage> } | null>(null);
+    const key = `${log.id}|${log.endTime}|${log.name}|${lang}|${unit}|${stats.sets}|${stats.volume}`;
+    const prepareShare = useCallback((): Promise<PreparedImage> => {
+        if (preparedRef.current?.key === key) return preparedRef.current.promise;
+        const promise: Promise<PreparedImage> = (async () => {
             const { buildSessionCardModel, renderSessionCard } = await import('../utils/sessionCard');
             const c = TRANSLATIONS[lang].copy.sessionSummary;
             const model = buildSessionCardModel({
@@ -60,14 +66,38 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
                 exerciseName: (ex) => getTranslated(ex.name as any, lang) || String(ex.name ?? ''),
                 bestSetText: (ex) => {
                     const done = (ex.sets || []).filter((s) => s.completed && !s.skipped && Number(s.weight) > 0);
-                    if (done.length === 0) return null;
+                    if (!done.length) return null;
                     const best = done.reduce((a, b) => (Number(b.weight) > Number(a.weight) ? b : a));
                     return `${toDisplay(Number(best.weight), unit)} ${unitLabel(unit).toLowerCase()} × ${best.reps}`;
                 },
             });
-            const blob = await renderSessionCard(model);
+            const native = Capacitor.isNativePlatform();
+            const blob = await renderSessionCard(model, { format: native ? 'jpeg' : 'png' });
             const day = new Date(log.endTime || Date.now()).toISOString().slice(0, 10);
-            await shareFileOrDownload(blob, `gainslab-${day}.png`, 'image/png', model.title);
+            return {
+                blob, title: model.title,
+                mime: native ? 'image/jpeg' : 'image/png',
+                filename: `gainslab-${day}.${native ? 'jpg' : 'png'}`,
+            };
+        })();
+        preparedRef.current = { key, promise };
+        // Do not permanently cache an encoding error: next tap can retry.
+        void promise.catch(() => { if (preparedRef.current?.promise === promise) preparedRef.current = null; });
+        return promise;
+    }, [key, log, lang, unit, stats, volumeText]);
+
+    useEffect(() => {
+        // Keep first paint responsive; pre-render off the tap path.
+        const timer = window.setTimeout(() => { void prepareShare().catch(() => {}); }, 120);
+        return () => window.clearTimeout(timer);
+    }, [prepareShare]);
+
+    const handleShareImage = async () => {
+        if (shareState === 'busy') return;
+        setShareState('busy');
+        try {
+            const image = await prepareShare();
+            await shareFileOrDownload(image.blob, image.filename, image.mime, image.title);
             setShareState('idle');
         } catch {
             setShareState('failed');
