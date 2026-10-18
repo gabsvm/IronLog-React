@@ -22,6 +22,8 @@ interface SheetProps {
     onBack?: () => void;
     /** Optional ID for the content container (focus targets, scroll anchors). */
     contentId?: string;
+    /** Only the drag handle may move the sheet; leave content gestures for scrolling. */
+    dragHandleOnly?: boolean;
 }
 
 const ACCENT_HANDLE: Record<string, string> = {
@@ -59,6 +61,7 @@ export const Sheet: React.FC<SheetProps> = ({
     hideCloseButton = false,
     onBack,
     contentId,
+    dragHandleOnly = false,
 }) => {
     const isFull = variant === 'full';
     const [fullViewport, setFullViewport] = useState<{ height: number; top: number } | null>(null);
@@ -141,6 +144,7 @@ export const Sheet: React.FC<SheetProps> = ({
             onOpenChange={onOpenChange}
             shouldScaleBackground={false}
             repositionInputs={!isFull}
+            handleOnly={dragHandleOnly}
         >
             <Drawer.Portal>
                 <Drawer.Overlay className="modal-backdrop fixed inset-0 z-modal backdrop-blur-sm" />
@@ -159,7 +163,11 @@ export const Sheet: React.FC<SheetProps> = ({
                     {/* Drag handle (always present — it's the dismiss affordance) */}
                     {!isFull && (
                         <div className="flex justify-center pt-3 pb-1 shrink-0">
-                            <div className={`w-10 h-1.5 rounded-full ${ACCENT_HANDLE[accent]}`} />
+                            {dragHandleOnly ? (
+                                <Drawer.Handle className={`w-10 h-1.5 rounded-full ${ACCENT_HANDLE[accent]}`} />
+                            ) : (
+                                <div className={`w-10 h-1.5 rounded-full ${ACCENT_HANDLE[accent]}`} />
+                            )}
                         </div>
                     )}
 
