@@ -13,6 +13,7 @@ export interface SessionCardModel {
     muscles: string[];
     footer: string;
     musclesLabel?: string;
+    highlightsLabel?: string;
 }
 
 export interface SessionCardLabels {
@@ -21,6 +22,7 @@ export interface SessionCardLabels {
     sets: string;
     totalVolume: string;
     musclesHit: string;
+    highlights?: string;
 }
 
 export const formatSessionDuration = (sec: number): string => {
@@ -59,11 +61,13 @@ export const buildSessionCardModel = (input: {
         muscles: totals.muscles.slice(0, 6),
         footer: 'GAINSLAB',
         musclesLabel: labels.musclesHit,
+        highlightsLabel: labels.highlights || 'HIGHLIGHTS',
     };
 };
 
 export const SESSION_CARD_SIZE = { width: 1080, height: 1350 } as const;
 export type SessionCardFormat = 'png' | 'jpeg';
+export type SessionCardVariant = 'dark-photo' | 'minimal-dark' | 'lime-accent';
 
 const readAccent = (): string => {
     try {
@@ -123,7 +127,7 @@ const drawValue = (ctx: CanvasRenderingContext2D, value: string, x: number, y: n
  */
 export const renderSessionCard = async (
     model: SessionCardModel,
-    options: { format?: SessionCardFormat } = {},
+    options: { format?: SessionCardFormat; variant?: SessionCardVariant } = {},
 ): Promise<Blob> => {
     const { width: W, height: H } = SESSION_CARD_SIZE;
     const canvas = document.createElement('canvas');
@@ -132,6 +136,7 @@ export const renderSessionCard = async (
     const ctx = canvas.getContext('2d', { alpha: false });
     if (!ctx) throw new Error('no 2d context');
     const accent = readAccent();
+    const variant = options.variant || 'dark-photo';
     const P = 72;
     const ink = '#f5f8f4';
     const dim = '#a4afa7';
@@ -139,8 +144,8 @@ export const renderSessionCard = async (
     // Dark, tactile background: gradients and geometrical arcs instead of
     // expensive remote photos, blurs, canvas filters or screenshot capture.
     const base = ctx.createLinearGradient(0, 0, W, H);
-    base.addColorStop(0, '#14221a');
-    base.addColorStop(0.48, '#0e1512');
+    base.addColorStop(0, variant === 'lime-accent' ? '#294a2e' : variant === 'minimal-dark' ? '#131817' : '#14221a');
+    base.addColorStop(0.48, variant === 'lime-accent' ? '#142c21' : '#0e1512');
     base.addColorStop(1, '#090e0d');
     ctx.fillStyle = base;
     ctx.fillRect(0, 0, W, H);
@@ -149,8 +154,9 @@ export const renderSessionCard = async (
     glow.addColorStop(0, 'rgba(150,198,98,.18)');
     glow.addColorStop(1, 'rgba(150,198,98,0)');
     ctx.fillStyle = glow;
-    ctx.fillRect(0, 0, W, 780);
+    if (variant !== 'minimal-dark') ctx.fillRect(0, 0, W, 780);
 
+    if (variant !== 'minimal-dark') {
     ctx.save();
     ctx.translate(900, 365);
     ctx.rotate(-Math.PI / 8);
@@ -162,8 +168,9 @@ export const renderSessionCard = async (
         ctx.stroke();
     }
     ctx.restore();
+    }
     ctx.fillStyle = accent;
-    ctx.fillRect(0, 0, W, 9);
+    ctx.fillRect(0, 0, W, variant === 'lime-accent' ? 15 : 9);
 
     // Quiet upper brand rail.
     roundFill(ctx, P, 68, 48, 48, 15, accent);
@@ -175,11 +182,11 @@ export const renderSessionCard = async (
     ctx.fillText(model.footer, P + 64, 102);
     ctx.font = font(650, 22);
     ctx.fillStyle = dim;
-    const stamp = 'WORKOUT / 01';
+    const stamp = model.musclesLabel === 'Músculos trabajados' ? 'RESUMEN DE SESIÓN' : 'SESSION RECAP';
     ctx.fillText(stamp, W - P - ctx.measureText(stamp).width, 98);
 
     // Badge, readable two-line title, and quiet date; nothing clips at phone width.
-    roundFill(ctx, P, 172, 420, 56, 28, 'rgba(196,241,58,.12)');
+    roundFill(ctx, P, 172, 420, 56, 28, variant === 'lime-accent' ? 'rgba(196,241,58,.23)' : 'rgba(196,241,58,.12)');
     ctx.font = font(800, 25);
     ctx.fillStyle = accent;
     ctx.fillText(textFit(ctx, model.badge.toUpperCase(), 376), P + 24, 209);
@@ -197,7 +204,7 @@ export const renderSessionCard = async (
     let sx = P;
     model.stats.slice(0, 3).forEach((stat, index) => {
         const w = widths[index];
-        roundFill(ctx, sx, top, w, cardH, 28, index === 2 ? '#213b2b' : '#1d2922');
+        roundFill(ctx, sx, top, w, cardH, 28, index === 2 ? (variant === 'lime-accent' ? '#355a31' : '#213b2b') : (variant === 'minimal-dark' ? '#1a211e' : '#1d2922'));
         ctx.fillStyle = 'rgba(255,255,255,.10)';
         ctx.fillRect(sx + 28, top + 28, 32, 3);
         drawValue(ctx, stat.value, sx + 27, top + 109, w - 54, index === 2 ? 53 : 64);
@@ -210,7 +217,7 @@ export const renderSessionCard = async (
     // Editorial exercise list: rank on the left, best-set performance on right.
     ctx.fillStyle = ink;
     ctx.font = font(850, 33);
-    ctx.fillText('HIGHLIGHTS', P, 776);
+    ctx.fillText(textFit(ctx, (model.highlightsLabel || 'HIGHLIGHTS').toUpperCase(), W - 190), P, 776);
     ctx.fillStyle = dim;
     ctx.font = font(600, 21);
     const count = String(model.topExercises.length).padStart(2, '0');
