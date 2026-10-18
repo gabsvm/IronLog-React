@@ -70,6 +70,7 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
                     workoutComplete: c.workoutComplete, time: c.time, sets: c.sets,
                     totalVolume: c.totalVolume, musclesHit: c.musclesHit,
                     highlights: pickLang(lang, { es: 'Ejercicios destacados', en: 'Highlights' }),
+                    sessionCaption: pickLang(lang, { es: 'RESUMEN DE SESIÓN', en: 'SESSION RECAP' }),
                 },
                 locale: pickLang(lang, { es: 'es-AR', en: 'en-US' }),
                 totals: stats, volumeText,
