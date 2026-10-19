@@ -1,20 +1,20 @@
 import React, { Suspense } from 'react';
 import { Icon } from '../components/ui/Icon';
 import { Button } from '../components/ui/Button';
-import { GuidelinesModal } from './home/GuidelinesModal';
 import { HomeRecapStrip } from './home/HomeRecapStrip';
 import { resolveWeightUnit } from '../utils/units';
-import { ProgramBlockTransition } from '../components/programs/ProgramBlockTransition';
-import { PlanActionsSheet } from '../components/home/PlanActionsSheet';
 import { useHomeViewState, type HomeViewProps } from './home/useHomeViewState';
 import { HomeEmptyState } from './home/HomeEmptyState';
 import { HomeTopSection } from './home/HomeTopSection';
 import { HomeHeroCard } from './home/HomeHeroCard';
-import { HomeMesoSettingsModal } from './home/HomeMesoSettingsModal';
 
 // S6: state lives in views/home/useHomeViewState; render blocks in views/home/.
 export type { HomeViewProps } from './home/useHomeViewState';
 
+const GuidelinesModal = React.lazy(() => import('./home/GuidelinesModal').then(m => ({ default: m.GuidelinesModal })));
+const ProgramBlockTransition = React.lazy(() => import('../components/programs/ProgramBlockTransition').then(m => ({ default: m.ProgramBlockTransition })));
+const PlanActionsSheet = React.lazy(() => import('../components/home/PlanActionsSheet').then(m => ({ default: m.PlanActionsSheet })));
+const HomeMesoSettingsModal = React.lazy(() => import('./home/HomeMesoSettingsModal').then(m => ({ default: m.HomeMesoSettingsModal })));
 const ProgramHub = React.lazy(() => import('../components/programs/ProgramHub').then((module) => ({ default: module.ProgramHub })));
 const TutorialOverlay = React.lazy(() => import('../components/ui/TutorialOverlay').then(m => ({ default: m.TutorialOverlay })));
 const PaywallModal = React.lazy(() => import('../components/pro/PaywallModal').then(m => ({ default: m.PaywallModal })));
@@ -22,7 +22,7 @@ const ConfirmModal = React.lazy(() => import('../components/ui/ConfirmModal').th
 
 export const HomeView: React.FC<HomeViewProps> = (props) => {
     const state = useHomeViewState(props);
-    const { onEditProgram, onStartFreeSession, logs, lang, tutorialProgress, markTutorialSeen, config, activeMeso, t, h, showPaywall, setShowPaywall, featureAttempted, showCompleteModal, setShowCompleteModal, setShowMesoSettings, showPlanActions, setShowPlanActions, skipConfirmationId, setSkipConfirmationId, showGuidelines, setShowGuidelines, transitionBlock, showKongHub, setShowKongHub, closeTransition, currentGuidelineImages, safeProgram, safeLogs, confirmSkip, handleFinishMeso, handleFinishWeek, homeTutorialSteps } = state;
+    const { onEditProgram, onStartFreeSession, logs, lang, tutorialProgress, markTutorialSeen, config, activeMeso, t, h, showPaywall, setShowPaywall, featureAttempted, showCompleteModal, setShowCompleteModal, showMesoSettings, setShowMesoSettings, showPlanActions, setShowPlanActions, skipConfirmationId, setSkipConfirmationId, showGuidelines, setShowGuidelines, transitionBlock, showKongHub, setShowKongHub, closeTransition, currentGuidelineImages, safeProgram, safeLogs, confirmSkip, handleFinishMeso, handleFinishWeek, homeTutorialSteps } = state;
 
     if (!activeMeso) {
         return <HomeEmptyState state={state} />;
@@ -84,11 +84,15 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
             )}
 
             {/* Guidelines Modal */}
-            <GuidelinesModal
-                isOpen={showGuidelines}
-                onClose={() => setShowGuidelines(false)}
-                images={currentGuidelineImages}
-            />
+            {showGuidelines && (
+                <Suspense fallback={null}>
+                    <GuidelinesModal
+                        isOpen={showGuidelines}
+                        onClose={() => setShowGuidelines(false)}
+                        images={currentGuidelineImages}
+                    />
+                </Suspense>
+            )}
 
             {/* Skip Confirmation */}
             <Suspense fallback={null}>
@@ -105,25 +109,33 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
             </Suspense>
 
             {/* Plan Actions Sheet */}
-            <PlanActionsSheet
-                open={showPlanActions}
-                onClose={() => setShowPlanActions(false)}
-                lang={lang}
-                planName={activeMeso?.name}
-                week={activeMeso?.week}
-                totalWeeks={activeMeso?.targetWeeks || activeMeso?.duration}
-                onConfigure={() => {
-                    setShowPlanActions(false);
-                    setShowMesoSettings(true);
-                }}
-                onEditProgram={() => {
-                    setShowPlanActions(false);
-                    onEditProgram();
-                }}
-            />
+            {showPlanActions && (
+                <Suspense fallback={null}>
+                    <PlanActionsSheet
+                        open={showPlanActions}
+                        onClose={() => setShowPlanActions(false)}
+                        lang={lang}
+                        planName={activeMeso?.name}
+                        week={activeMeso?.week}
+                        totalWeeks={activeMeso?.targetWeeks || activeMeso?.duration}
+                        onConfigure={() => {
+                            setShowPlanActions(false);
+                            setShowMesoSettings(true);
+                        }}
+                        onEditProgram={() => {
+                            setShowPlanActions(false);
+                            onEditProgram();
+                        }}
+                    />
+                </Suspense>
+            )}
 
             {/* MESO SETTINGS MODAL */}
-            <HomeMesoSettingsModal state={state} />
+            {showMesoSettings && (
+                <Suspense fallback={null}>
+                    <HomeMesoSettingsModal state={state} />
+                </Suspense>
+            )}
 
             {showCompleteModal && (
                 <div className="fixed inset-0 z-modal bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in">
@@ -150,7 +162,11 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
                     </div>
                 </div>
             )}
-            {transitionBlock && <ProgramBlockTransition blockNumber={transitionBlock} onClose={closeTransition} lang={lang} />}
+            {transitionBlock && (
+                <Suspense fallback={null}>
+                    <ProgramBlockTransition blockNumber={transitionBlock} onClose={closeTransition} lang={lang} />
+                </Suspense>
+            )}
             {showKongHub && activeMeso && <Suspense fallback={null}><ProgramHub meso={activeMeso} logs={logs} lang={lang} onClose={() => setShowKongHub(false)} /></Suspense>}
         </div>
     );

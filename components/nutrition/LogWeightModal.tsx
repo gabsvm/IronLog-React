@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Sheet } from '../ui/Sheet';
 import { Button } from '../ui/Button';
@@ -18,9 +18,20 @@ export const LogWeightModal: React.FC<LogWeightModalProps> = ({ isOpen, onClose,
     const [bodyFat, setBodyFat] = useState<string>(String(userProfile?.bodyFat || ''));
     const [notes, setNotes] = useState<string>('');
 
+    useEffect(() => {
+        if (isOpen) {
+            setWeight(userProfile?.bodyWeight ? String(toDisplay(userProfile.bodyWeight, unit)) : '');
+            setBodyFat(userProfile?.bodyFat !== undefined && userProfile?.bodyFat !== null ? String(userProfile.bodyFat) : '');
+        }
+    }, [isOpen, unit, userProfile?.bodyWeight, userProfile?.bodyFat]);
+
+    const numericWeight = Number(weight);
+    const isValid = Number.isFinite(numericWeight) && numericWeight > 0;
+
     const handleSubmit = () => {
+        if (!isValid) return;
         onLog({
-            weight: fromDisplay(Number(weight), unit) || 0,
+            weight: fromDisplay(numericWeight, unit) || 0,
             bodyFat: bodyFat ? Number(bodyFat) : undefined,
             notes: notes || undefined
         });
@@ -42,7 +53,7 @@ export const LogWeightModal: React.FC<LogWeightModalProps> = ({ isOpen, onClose,
                     <Button variant="secondary" onClick={onClose} fullWidth>
                         {t.cancel}
                     </Button>
-                    <Button onClick={handleSubmit} fullWidth>
+                    <Button onClick={handleSubmit} disabled={!isValid} fullWidth>
                         {t.save}
                     </Button>
                 </div>

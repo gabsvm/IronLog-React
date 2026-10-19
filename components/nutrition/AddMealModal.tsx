@@ -25,7 +25,7 @@ const FoodCard: React.FC<{
   onDelete?: (id: string) => void;
   multiplier?: number;
   lang: 'en' | 'es';
-}> = ({ food, onSelect, onToggleFav, onDelete, multiplier = 1 }) => {
+}> = ({ food, onSelect, onToggleFav, onDelete, multiplier = 1, lang }) => {
   const calories = Math.round(food.calories * multiplier);
   const protein = Math.round(food.protein * multiplier);
 
@@ -40,10 +40,11 @@ const FoodCard: React.FC<{
           {food.servingSize && <span className="text-muted">{' · '}{food.servingSize}</span>}
         </p>
       </button>
-      <div className="flex shrink-0 items-center gap-1.5">
+      <div className="flex shrink-0 items-center gap-2">
         {onToggleFav && (
           <button
             onClick={() => onToggleFav(food.id)}
+            aria-label={pickLang(lang, food.isFavorite ? { en: 'Remove from favorites', es: 'Quitar de favoritos' } : { en: 'Add to favorites', es: 'Agregar a favoritos' })}
             className={`relative flex h-9 w-9 items-center justify-center rounded-full after:absolute after:-inset-1 after:content-[''] transition-colors ${food.isFavorite ? 'text-yellow-400' : 'text-muted hover:text-muted'}`}
           >
             <Icon name="Star" size={14} fill={food.isFavorite ? 'currentColor' : 'none'} />
@@ -52,6 +53,7 @@ const FoodCard: React.FC<{
         {onDelete && (
           <button
             onClick={() => onDelete(food.id)}
+            aria-label={pickLang(lang, { en: `Delete ${food.name}`, es: `Eliminar ${food.name}` })}
             className="relative flex h-9 w-9 items-center justify-center rounded-full after:absolute after:-inset-1 after:content-[''] text-[rgb(var(--text-secondary))] transition-colors hover:text-red-400"
           >
             <Icon name="Trash2" size={13} />
@@ -59,6 +61,7 @@ const FoodCard: React.FC<{
         )}
         <button
           onClick={() => onSelect(food)}
+          aria-label={pickLang(lang, { en: `Add ${food.name}`, es: `Agregar ${food.name}` })}
           className="relative flex h-9 w-9 items-center justify-center rounded-full after:absolute after:-inset-1 after:content-[''] bg-[rgb(var(--surface-elevated))] text-[rgb(var(--text-secondary))] transition-colors hover:bg-[rgb(var(--surface-elevated))]"
         >
           <Icon name="Plus" size={14} />
@@ -247,7 +250,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                 />
               </div>
 
-              <div className="scroll-container max-h-[350px] space-y-1.5 overflow-y-auto pr-0.5">
+              <div data-vaul-no-drag className="scroll-container max-h-[350px] space-y-1.5 overflow-y-auto pr-0.5">
                 {filteredPresets.length === 0 && (
                   <p className="py-4 text-center text-sm text-muted">{TRANSLATIONS[lang].copy.addMealModal.noResults}</p>
                 )}
@@ -299,7 +302,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                   {sortedMyFoods.length === 0 ? (
                     <p className="py-4 text-center text-sm text-muted">{TRANSLATIONS[lang].copy.addMealModal.noResults}</p>
                   ) : (
-                    <div className="scroll-container max-h-[350px] space-y-1.5 overflow-y-auto pr-0.5">
+                    <div data-vaul-no-drag className="scroll-container max-h-[350px] space-y-1.5 overflow-y-auto pr-0.5">
                       {sortedMyFoods.map((food) => (
                         <FoodCard
                           key={food.id}
@@ -392,6 +395,9 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                 </div>
 
                 <button
+                  type="button"
+                  role="checkbox"
+                  aria-checked={saveToMyFoods}
                   onClick={() => setSaveToMyFoods(!saveToMyFoods)}
                   className="flex w-full items-center gap-3 rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated)/0.6)] p-3.5 transition-all active:scale-[0.99]"
                 >

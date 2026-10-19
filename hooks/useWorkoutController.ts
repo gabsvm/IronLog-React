@@ -41,7 +41,6 @@ const reorderList = <T,>(items: T[], from: number, to: number): T[] => {
 export const useWorkoutController = (onFinishCallback: () => void, onDiscardCallback: () => void) => {
     const { setProgram, exercises, rpFeedback, setRpFeedback, config, logs, userProfile } = useApp();
     const activeSession = useStore(state => state.activeSession);
-    const activeMeso = useStore(state => state.activeMeso);
     const setActiveSession = useStore(state => state.setActiveSession);
     const setActiveMeso = useStore(state => state.setActiveMeso);
     const { setRestTimer } = useTimerActions();

@@ -59,3 +59,9 @@ html.native-shell input[inputmode='numeric'] {
     font-variant-numeric: tabular-nums;
     -webkit-font-smoothing: antialiased;
 }
+
+html.native-shell[data-effects='balanced'] main .glass-card,
+.native-shell[data-effects='balanced'] main .glass-card {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}

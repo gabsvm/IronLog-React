@@ -1269,6 +1269,7 @@ export const ES: TranslationDict = {
             saveSession: 'Guardar Sesión',
         },
         paywallModal: {
+            close: 'Cerrar',
             unlockPro: 'Desbloquear PRO',
             sendAWhatsappMessage: 'Envíanos un mensaje por WhatsApp para solicitar acceso temprano. Activamos tu cuenta en menos de 24 hs.',
             alreadyHaveAnApproved: '¿Ya tienes una cuenta aprobada? Inicia sesión con tu email para sincronizar tu acceso Pro.',
@@ -1383,6 +1384,7 @@ export const ES: TranslationDict = {
             kcalRemaining: 'kcal restantes',
             kcalOverGoal: 'kcal sobre la meta',
             protein: 'Proteína',
+            carbs: 'Carbos',
             fat: 'Grasa',
             proteinToHitYour: 'de proteína para llegar a tu meta',
             burnedFromCardioAdded: 'quemadas en cardio — sumadas al presupuesto',

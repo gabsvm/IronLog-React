@@ -195,7 +195,7 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
             aria-label={t.resting}
         >
             <div className="fixed inset-0 top-16 bg-black/60 backdrop-blur-sm -z-10" onClick={() => setMode('compact')} />
-            <div className="premium-rest-sheet mx-auto max-w-md rounded-t-[32px] border-t border-x border-[rgb(var(--border-subtle))] p-4 pb-safe shadow-2xl">
+            <div className="premium-rest-sheet mx-auto max-w-md rounded-t-[32px] border-t border-x border-[rgb(var(--border-subtle))] p-4 pb-safe shadow-2xl max-h-[calc(100dvh-1rem)] overflow-y-auto">
                 {/* Drag Handle */}
                 <div className="mx-auto mb-4 h-1 w-12 rounded-full bg-[rgb(var(--border-strong))]" />
 

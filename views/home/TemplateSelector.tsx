@@ -71,7 +71,7 @@ export const TemplateSelector: React.FC<Props> = ({
                     <button
                         type="button"
                         onClick={onClose}
-                        aria-label={ts.close}
+                        aria-label={ts.close || t.close || 'Close'}
                         className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] text-[rgb(var(--text-secondary))] active:scale-95"
                     >
                         <Icon name="X" size={21} />

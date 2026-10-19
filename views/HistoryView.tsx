@@ -5,14 +5,19 @@ import { TRANSLATIONS } from '../constants';
 import { formatDate, formatDurationShort, getTranslated } from '../utils';
 import { Icon } from '../components/ui/Icon';
 import { Button } from '../components/ui/Button';
-import { TutorialOverlay } from '../components/ui/TutorialOverlay';
 import { usePro } from '../hooks/usePro';
 import { useStore } from '../lib/store';
 import { Log, WeightUnit } from '../types';
-import { HistoryDetailView } from './history/HistoryDetailView';
 import { resolveWeightUnit, toDisplay, unitLabel } from '../utils/units';
 import { buildUndoLog } from '../utils/historyEdit';
+import { uid } from '../utils';
+import { buildTrainingCsv } from '../services/trainingCsv';
+import { shareFileOrDownload } from '../utils/shareFile';
+import { todayLocalDateKey } from '../utils/localDate';
+import { pickLang } from '../utils/i18n';
 
+const HistoryDetailView = React.lazy(() => import('./history/HistoryDetailView').then(m => ({ default: m.HistoryDetailView })));
+const TutorialOverlay = React.lazy(() => import('../components/ui/TutorialOverlay').then(m => ({ default: m.TutorialOverlay })));
 const PaywallModal = React.lazy(() => import('../components/pro/PaywallModal').then(m => ({ default: m.PaywallModal })));
 const ConfirmModal = React.lazy(() => import('../components/ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
 
@@ -59,9 +64,15 @@ const VirtuosoFooter = ({ context }: { context?: HistoryVirtuosoContext }) => {
                 <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-zinc-200 text-zinc-400 dark:bg-zinc-800">
                     <Icon name="Lock" size={24} />
                 </div>
-                <h4 className="mb-2 font-bold text-zinc-900 dark:text-white">History Locked</h4>
-                <p className="mx-auto mb-6 max-w-[220px] text-xs text-zinc-500">Older workouts are archived. Unlock Premium to access your full training history.</p>
-                <Button size="sm" onClick={() => context.checkPro('history')} className="mx-auto bg-zinc-900 text-white dark:bg-white dark:text-black">Unlock PRO</Button>
+                <h4 className="mb-2 font-bold text-zinc-900 dark:text-white">
+                    {pickLang(context.lang, { es: 'Historial bloqueado', en: 'History Locked' })}
+                </h4>
+                <p className="mx-auto mb-6 max-w-[220px] text-xs text-zinc-500">
+                    {pickLang(context.lang, { es: 'Los entrenamientos anteriores están archivados. Desbloquea Premium para acceder a todo tu historial de entrenamiento.', en: 'Older workouts are archived. Unlock Premium to access your full training history.' })}
+                </p>
+                <Button size="sm" onClick={() => context.checkPro('history')} className="mx-auto bg-zinc-900 text-white dark:bg-white dark:text-black">
+                    {pickLang(context.lang, { es: 'Desbloquear PRO', en: 'Unlock PRO' })}
+                </Button>
             </div>
         </div>
     );
@@ -83,7 +94,7 @@ const HistoryCard = memo(({ log, lang, id, onOpen, unit = 'kg' }: HistoryCardPro
         if (!completed.length) return null;
         if (ex.muscle === 'CARDIO') {
             const distance = completed.reduce((sum, set) => sum + Number(set.distance || 0), 0);
-            return { name: getTranslated(ex.name, lang), value: distance > 0 ? `${distance.toFixed(1)} km` : `${completed.length} sets` };
+            return { name: getTranslated(ex.name, lang), value: distance > 0 ? `${distance.toFixed(1)} km` : `${completed.length} ${pickLang(lang, { es: 'series', en: 'sets' })}` };
         }
         const best = completed.reduce((current, set) => Number(set.weight || 0) > Number(current.weight || 0) ? set : current, completed[0]);
         return { name: getTranslated(ex.name, lang), value: `${toDisplay(Number(best.weight || 0), unit)} ${unitLabel(unit).toLowerCase()} × ${best.reps || 0}` };
@@ -170,13 +181,16 @@ export const HistoryView: React.FC = () => {
         return () => window.clearTimeout(timer);
     }, [deletedLogBackup]);
 
+    const [isDetailDirty, setIsDetailDirty] = useState(false);
+
     useEffect(() => {
         const onPop = (event: PopStateEvent) => {
+            if (isDetailDirty) return;
             if (!event.state?.historyDetail) setSelectedLogId(null);
         };
         window.addEventListener('popstate', onPop);
         return () => window.removeEventListener('popstate', onPop);
-    }, []);
+    }, [isDetailDirty]);
 
     const { visibleLogs, hasLockedLogs } = useMemo(() => {
         let result = safeLogs;
@@ -226,10 +240,10 @@ export const HistoryView: React.FC = () => {
             name: log.name,
             exercises: (log.exercises || []).map((exercise: any) => ({
                 ...exercise,
-                instanceId: now + Math.random(),
-                sets: (exercise.sets || []).map((set: any, index: number) => ({
+                instanceId: uid(),
+                sets: (exercise.sets || []).map((set: any) => ({
                     ...set,
-                    id: now + index + Math.floor(Math.random() * 10000),
+                    id: uid(),
                     completed: false,
                     skipped: false,
                     rpe: '',
@@ -244,28 +258,12 @@ export const HistoryView: React.FC = () => {
         window.dispatchEvent(new CustomEvent('gainslab:navigate', { detail: { view: 'workout' } }));
     }, [activeSession, setActiveSession]);
 
-    const handleExportCSV = useCallback(() => {
+    const handleExportCSV = useCallback(async () => {
         if (!checkPro('csv_export')) return;
-        const rows = [['Date', 'Session', 'Exercise', 'Muscle', 'Set', 'Type', 'Weight(kg)', 'Reps', 'RPE', 'Completed'].join(',')];
-        safeLogs.forEach(log => {
-            if (log.skipped) return;
-            const date = new Date(log.startTime).toLocaleDateString('en-CA');
-            (log.exercises || []).forEach(ex => {
-                const exName = getTranslated(ex.name, lang).replace(/,/g, ';');
-                (ex.sets || []).forEach((set, index) => rows.push([
-                    date, String(log.name || '').replace(/,/g, ';'), exName, ex.muscle, index + 1,
-                    set.type, set.weight || '', set.reps || '', set.rpe || '', set.completed ? '1' : '0'
-                ].join(',')));
-            });
-        });
-        const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const anchor = document.createElement('a');
-        anchor.href = url;
-        anchor.download = `gainslab_history_${new Date().toISOString().slice(0, 10)}.csv`;
-        anchor.click();
-        URL.revokeObjectURL(url);
-    }, [checkPro, lang, safeLogs]);
+        const csv = buildTrainingCsv(safeLogs, resolveWeightUnit(config));
+        const filename = `gainslab_history_${todayLocalDateKey()}.csv`;
+        await shareFileOrDownload(csv, filename, 'text/csv');
+    }, [checkPro, config, safeLogs]);
 
     const historyTutorialSteps = [
         { targetId: 'tut-history-search', title: t.tutorial.history[1].title, text: t.tutorial.history[1].text, position: 'bottom' as const },
@@ -295,24 +293,29 @@ export const HistoryView: React.FC = () => {
                 type="button"
                 onClick={handleExportCSV}
                 className="absolute bottom-24 right-4 flex items-center gap-2 rounded-full border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised)/0.95)] px-4 py-2.5 text-xs font-bold text-zinc-600 shadow-xl transition-transform active:scale-95 dark:text-zinc-300"
-                aria-label="Download CSV"
+                aria-label={pickLang(lang, { es: 'Descargar CSV', en: 'Download CSV' })}
             >
                 <Icon name="Download" size={14} /> CSV {!isPro && <Icon name="Lock" size={11} className="text-yellow-500" />}
             </button>
 
-            <TutorialOverlay steps={historyTutorialSteps} isActive={!tutorialProgress.history} onComplete={() => markTutorialSeen('history')} />
+            <Suspense fallback={null}>
+                <TutorialOverlay steps={historyTutorialSteps} isActive={!tutorialProgress.history} onComplete={() => markTutorialSeen('history')} />
+            </Suspense>
 
             {selectedLog && (
-                <HistoryDetailView
-                    log={selectedLog}
-                    lang={lang}
-                    unit={unit}
-                    onBack={closeDetail}
-                    onRepeat={() => repeatWorkout(selectedLog)}
-                    onDelete={() => setDeletingLogId(selectedLog.id)}
-                    onSaveEdit={handleSaveEdit}
-                    repeatBlocked={!!activeSession}
-                />
+                <Suspense fallback={null}>
+                    <HistoryDetailView
+                        log={selectedLog}
+                        lang={lang}
+                        unit={unit}
+                        onBack={closeDetail}
+                        onRepeat={() => repeatWorkout(selectedLog)}
+                        onDelete={() => setDeletingLogId(selectedLog.id)}
+                        onSaveEdit={handleSaveEdit}
+                        repeatBlocked={!!activeSession}
+                        onDirtyChange={setIsDetailDirty}
+                    />
+                </Suspense>
             )}
 
             {showPaywall && <Suspense fallback={null}><PaywallModal onClose={() => setShowPaywall(false)} feature="history" /></Suspense>}

@@ -41,10 +41,16 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
                 </div>
                 <h3 id="confirm-modal-title" className="text-xl font-bold text-zinc-900 dark:text-white mb-2">{title}</h3>
                 <p id="confirm-modal-desc" className="mb-6 text-sm leading-relaxed text-[rgb(var(--text-secondary))]">{description}</p>
-                <div className="grid grid-cols-2 gap-3">
-                    <Button variant="secondary" onClick={onCancel}>{cancelText}</Button>
-                    <Button variant={variant} onClick={onConfirm}>{confirmText}</Button>
-                </div>
+                {cancelText ? (
+                    <div className="grid grid-cols-2 gap-3">
+                        <Button variant="secondary" onClick={onCancel}>{cancelText}</Button>
+                        <Button variant={variant} onClick={onConfirm}>{confirmText}</Button>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 gap-3">
+                        <Button variant={variant} onClick={onConfirm}>{confirmText}</Button>
+                    </div>
+                )}
             </div>
         </div>
     );

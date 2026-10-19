@@ -29,6 +29,42 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const getAuthErrorMessage = (
+    key: 'unavailable' | 'invalid-credential' | 'too-many-requests' | 'demo-unavailable' | 'demo-failed' | 'email-in-use' | 'weak-password' | 'login-failed' | 'register-failed',
+    fallback?: string
+): string => {
+    let isEn = false;
+    try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+            const raw = window.localStorage.getItem('il_lang') || window.localStorage.getItem('il_lang_v1');
+            if (raw && raw.includes('en')) isEn = true;
+        }
+    } catch {
+        // default to Spanish
+    }
+
+    switch (key) {
+        case 'unavailable':
+            return isEn ? 'Authentication service unavailable.' : 'Servicio de autenticación no disponible.';
+        case 'invalid-credential':
+            return isEn ? 'Invalid email or password.' : 'Correo o contraseña incorrectos.';
+        case 'too-many-requests':
+            return isEn ? 'Too many failed attempts. Please try again later.' : 'Demasiados intentos fallidos. Inténtalo de nuevo más tarde.';
+        case 'demo-unavailable':
+            return isEn ? 'Demo mode is only available in development.' : 'El modo demo solo está disponible en desarrollo.';
+        case 'demo-failed':
+            return fallback || (isEn ? 'Could not create demo account.' : 'No se pudo crear la cuenta demo.');
+        case 'email-in-use':
+            return isEn ? 'Email already in use.' : 'El correo electrónico ya está en uso.';
+        case 'weak-password':
+            return isEn ? 'Password should be at least 6 characters.' : 'La contraseña debe tener al menos 6 caracteres.';
+        case 'login-failed':
+            return fallback || (isEn ? 'An unknown login error occurred.' : 'Ocurrió un error al iniciar sesión.');
+        case 'register-failed':
+            return fallback || (isEn ? 'Registration failed.' : 'Error al registrarse.');
+    }
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
     const [isGuest, setIsGuest] = useState(false);
@@ -101,7 +137,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setLoading(true);
         const { auth, authApi } = await getFirebaseAuthServices();
         if (!auth) {
-            setError('Authentication service unavailable.');
+            setError(getAuthErrorMessage('unavailable'));
             setLoading(false);
             return;
         }
@@ -116,11 +152,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } catch (err: any) {
             setLoading(false);
             if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-                setError('Email or password incorrect.');
+                setError(getAuthErrorMessage('invalid-credential'));
             } else if (err.code === 'auth/too-many-requests') {
-                setError('Too many attempts. Please try again later.');
+                setError(getAuthErrorMessage('too-many-requests'));
             } else {
-                setError(err.message || 'An unknown login error occurred.');
+                setError(getAuthErrorMessage('login-failed', err.message));
             }
             throw err;
         }
@@ -130,7 +166,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setError(null);
         if (!canGrantDemo(import.meta.env.DEV)) {
             console.warn('startDemo is disabled in production environments.');
-            setError('Demo mode is only available in development.');
+            setError(getAuthErrorMessage('demo-unavailable'));
             return;
         }
         setLoading(true);
@@ -139,7 +175,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             getFirebaseFirestoreServices(),
         ]);
         if (!auth || !db) {
-            setError('Authentication service unavailable.');
+            setError(getAuthErrorMessage('unavailable'));
             setLoading(false);
             return;
         }
@@ -153,7 +189,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setSubscription(demoSubscription);
             setLoading(false);
         } catch (err: any) {
-            setError(err.message || 'Could not create demo account.');
+            setError(getAuthErrorMessage('demo-failed', err.message));
             setLoading(false);
             throw err;
         }
@@ -166,7 +202,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             getFirebaseFirestoreServices(),
         ]);
         if (!auth) {
-            setError('Authentication service unavailable.');
+            setError(getAuthErrorMessage('unavailable'));
             return;
         }
         try {
@@ -177,11 +213,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } catch (err: any) {
             console.error('Register Error:', err);
             if (err.code === 'auth/email-already-in-use') {
-                setError('Email already in use.');
+                setError(getAuthErrorMessage('email-in-use'));
             } else if (err.code === 'auth/weak-password') {
-                setError('Password should be at least 6 characters.');
+                setError(getAuthErrorMessage('weak-password'));
             } else {
-                setError(err.message || 'Registration failed');
+                setError(getAuthErrorMessage('register-failed', err.message));
             }
             throw err;
         }
@@ -194,6 +230,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const logout = async () => {
+        if (typeof window !== 'undefined') {
+            delete (window as any)._lastSyncedId;
+        }
         const { auth, authApi } = await getFirebaseAuthServices();
         if (auth) {
             await authApi.signOut(auth);

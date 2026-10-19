@@ -47,10 +47,11 @@ export interface UseInitialCloudDownloadDeps {
     hasCheckedSync: boolean;
     setHasCheckedSync: Dispatch<SetStateAction<boolean>>;
     isOnline: boolean;
-    activeSession: ActiveSession;
+    activeSession?: ActiveSession;
     activeMeso: MesoCycle;
     isAppLoading: boolean;
     withDirtyTrackingSuppressed: (callback: () => void | Promise<void>) => Promise<void>;
+    setRestTimerDisplay?: (value: 'compact' | 'expanded' | ((val: 'compact' | 'expanded') => 'compact' | 'expanded')) => void;
 }
 
 /** S6: initial cloud download on login (apply on empty device / offer newer sections) (moved verbatim from AppProvider; same hook order). */
@@ -96,6 +97,7 @@ export const useInitialCloudDownload = ({
     activeMeso,
     isAppLoading,
     withDirtyTrackingSuppressed,
+    setRestTimerDisplay,
 }: UseInitialCloudDownloadDeps) => {
     // --- INITIAL CLOUD DOWNLOAD ---
     useEffect(() => {
@@ -107,8 +109,9 @@ export const useInitialCloudDownload = ({
                 const cloudData = await syncService.downloadState(user.uid);
                 if (cloudData && cloudData.lastUpdated) {
                     const cloudSyncMeta = cloudData.syncMeta || {};
+                    const currentActiveSession = activeSession ?? useStore.getState().activeSession;
                     const isLocalEmpty = isMeaningfullyEmptyLocalState({
-                        activeSession,
+                        activeSession: currentActiveSession,
                         activeMeso,
                         logs,
                         nutritionLogs,
@@ -142,6 +145,7 @@ export const useInitialCloudDownload = ({
                                 if (cloudData.config.rpTargetRIR !== undefined) setRpTargetRIR(cloudData.config.rpTargetRIR);
                                 if (cloudData.config.keepScreenOn !== undefined) setKeepScreenOn(cloudData.config.keepScreenOn);
                                 if (cloudData.config.weightUnit === 'kg' || cloudData.config.weightUnit === 'lb') setWeightUnit(cloudData.config.weightUnit);
+                                if (setRestTimerDisplay && cloudData.config.restTimerDisplay !== undefined) setRestTimerDisplay(cloudData.config.restTimerDisplay as any);
                             }
 
                             if (cloudData.userProfile) setUserProfile(cloudData.userProfile);
@@ -181,10 +185,10 @@ export const useInitialCloudDownload = ({
         checkCloudData();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- S6: dependency list moved verbatim from AppProvider; the omitted names are useState setters/refs (stable) or the per-render withDirtyTrackingSuppressed, exactly as before.
     }, [
-        user, isOnline, isAppLoading, pendingCloudData, hasCheckedSync, activeSession, activeMeso, logs, nutritionLogs,
+        user, isOnline, isAppLoading, pendingCloudData, hasCheckedSync, activeMeso, logs, nutritionLogs,
         cardioSessions, bodyLogs, customFoods, personalTemplates, exercises, userProfile,
         setProgram, setExercises, setLogs, setRpFeedback, setShowRIR, setRpEnabled, setLocalLastUpdated,
-        setHasSeenOnboarding, setBodyLogs, setCustomFoods, setPersonalTemplates, setKeepScreenOn, setWeightUnit, setMacroGoals, setNutritionLogs, setLocalSectionSyncMeta,
+        setHasSeenOnboarding, setBodyLogs, setCustomFoods, setPersonalTemplates, setKeepScreenOn, setWeightUnit, setRestTimerDisplay, setMacroGoals, setNutritionLogs, setLocalSectionSyncMeta,
         setRpTargetRIR, setUserProfile, setCardioSessions, setNutritionGoal
     ]); // Re-run when dependencies change
 };

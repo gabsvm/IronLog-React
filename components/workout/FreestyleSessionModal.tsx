@@ -1,6 +1,7 @@
 import React from 'react';
 import { Sheet } from '../ui/Sheet';
 import { Icon } from '../ui/Icon';
+import { pickLang } from '../../utils/i18n';
 import type { Discipline } from './freestyle/freestyleData';
 import { useFreestyleSessionState, type FreestyleSessionModalProps } from './freestyle/useFreestyleSessionState';
 import { FreestyleGymPanel } from './freestyle/FreestyleGymPanel';
@@ -14,7 +15,7 @@ export type { FreestyleSessionModalProps } from './freestyle/useFreestyleSession
 
 export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = (props) => {
     const state = useFreestyleSessionState(props);
-    const { isOpen, onClose, discipline, setDiscipline, f, tabStyle, canStart, handleStart, startLabel } = state;
+    const { isOpen, onClose, discipline, setDiscipline, f, tabStyle, canStart, handleStart, startLabel, lang } = state;
 
     return (
         <Sheet
@@ -59,7 +60,7 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = (prop
                 >
                     <span className="flex items-center justify-center gap-1">
                         <Icon name="User" size={12} />
-                        Calistenia
+                        {pickLang(lang, { es: 'Calistenia', en: 'Calisthenics' })}
                     </span>
                 </button>
             </div>

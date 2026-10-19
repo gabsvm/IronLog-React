@@ -4,6 +4,7 @@ import { TRANSLATIONS } from '../../../constants';
 import { BodyMetricsModal } from '../BodyMetricsModal';
 import { HealthConnectCard } from '../HealthConnectCard';
 import { formatWeight, resolveWeightUnit, unitLabel } from '../../../utils/units';
+import { todayLocalDateKey, formatLocalDateKey } from '../../../utils/localDate';
 
 /** Q18: "Tu cuerpo" section, moved verbatim from ProfileSheet. */
 export const BodySection: React.FC = () => {
@@ -57,6 +58,20 @@ export const BodySection: React.FC = () => {
                 onSave={(updated) => {
                     if (setUserProfile) {
                         setUserProfile((prev: any) => ({ ...prev, ...updated }));
+                    }
+                    if (updated?.bodyWeight && updated.bodyWeight > 0 && setBodyLogs) {
+                        const now = Date.now();
+                        const today = todayLocalDateKey();
+                        const entry = {
+                            id: now,
+                            date: now,
+                            weight: updated.bodyWeight,
+                            ...(updated.bodyFat !== undefined ? { bodyFat: updated.bodyFat } : {}),
+                        };
+                        setBodyLogs((prev: any[]) => [
+                            entry,
+                            ...(prev || []).filter((l: any) => formatLocalDateKey(new Date(l.date)) !== today),
+                        ]);
                     }
                 }}
                 lang={lang}

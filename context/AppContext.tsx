@@ -6,7 +6,6 @@ import { TimerProvider } from './TimerContext';
 import { HomeSkeleton } from '../components/ui/SkeletonLoader';
 import { useAuth } from './AuthContext';
 import { useStore } from '../lib/store';
-import { dirtySyncState } from '../services/dirtySyncState';
 import { isMeaningfullyEmptyLocalState } from '../services/syncHelpers';
 import { SyncMetaContextType, SyncStatusContextType, AppContext, SyncMetaContext, SyncStatusContext, AppPreferencesContext, AppConfigContext, TutorialContext, INITIAL_TUTORIAL_STATE } from './app/appContexts';
 import { useDefaultsBootstrap } from './app/useDefaultsBootstrap';
@@ -50,9 +49,9 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     const [logs, setLogs, logsLoading] = usePersistedState<Log[]>('il_logs_v16', [], 1000);
 
     const DEFAULT_NUTRITION_GOAL: NutritionGoal = { calories: 2500, protein: 180, carbs: 280, fat: 70 };
-    const [nutritionLogs, setNutritionLogs, nutLoading] = usePersistedState<NutritionLog[]>('il_nutrition_v1', [], 1000);
-    const [cardioSessions, setCardioSessions, cardioLoading] = usePersistedState<CardioSession[]>('il_cardio_v1', [], 1000);
-    const [nutritionGoal, setNutritionGoal, goalLoading] = usePersistedState<NutritionGoal>('il_nut_goal_v1', DEFAULT_NUTRITION_GOAL, 500);
+    const [nutritionLogs, setNutritionLogs] = usePersistedState<NutritionLog[]>('il_nutrition_v1', [], 1000);
+    const [cardioSessions, setCardioSessions] = usePersistedState<CardioSession[]>('il_cardio_v1', [], 1000);
+    const [nutritionGoal, setNutritionGoal] = usePersistedState<NutritionGoal>('il_nut_goal_v1', DEFAULT_NUTRITION_GOAL, 500);
 
     // NEW: User Profile Persistence
     const [userProfile, setUserProfile, profileLoading] = usePersistedState<UserProfile>('il_profile_v1', {
@@ -82,8 +81,8 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     const getLocalSectionSyncMeta = useCallback(() => localSectionSyncMetaRef.current, []);
 
     // NEW: Nutrition & Body Tracking Persistence
-    const [bodyLogs, setBodyLogs, bodyLoading] = usePersistedState<BodyLog[]>('il_body_v1', [], 1000);
-    const [macroGoals, setMacroGoals, macroLoading] = usePersistedState<MacroGoals | null>('il_macros_v1', null, 500);
+    const [bodyLogs, setBodyLogs] = usePersistedState<BodyLog[]>('il_body_v1', [], 1000);
+    const [macroGoals, setMacroGoals] = usePersistedState<MacroGoals | null>('il_macros_v1', null, 500);
     const [customFoods, setCustomFoods] = usePersistedState<CustomFood[]>('il_custom_foods_v1', [], 1000);
 
     const [pendingCloudData, setPendingCloudData] = useState<Partial<AppState> | null>(null);
@@ -104,7 +103,6 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     const [reducedEffects, setReducedEffects] = useState(false);
 
     const isStoreLoading = useStore(state => state.isStoreLoading);
-    const activeSession = useStore(state => state.activeSession);
     const activeMeso = useStore(state => state.activeMeso);
 
     const needsDefaultBootstrap =
@@ -247,10 +245,10 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         hasCheckedSync,
         setHasCheckedSync,
         isOnline,
-        activeSession,
         activeMeso,
         isAppLoading,
         withDirtyTrackingSuppressed,
+        setRestTimerDisplay,
     });
 
     const { confirmCloudSync, cancelCloudSync } = useCloudUploads({
@@ -299,10 +297,11 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         setPendingCloudSections,
         hasCheckedSync,
         setIsOnline,
-        activeSession,
         activeMeso,
         isAppLoading,
         withDirtyTrackingSuppressed,
+        restTimerDisplay,
+        setRestTimerDisplay,
     });
 
     useThemeAndWakeLock({

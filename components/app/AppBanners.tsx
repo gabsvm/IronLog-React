@@ -1,4 +1,4 @@
-import { formatMessage } from '../../utils/i18n';
+import { formatMessage, pickLang } from '../../utils/i18n';
 import React, { Suspense, useCallback, useEffect, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
@@ -8,13 +8,19 @@ const ConfirmModal = React.lazy(() => import('../ui/ConfirmModal').then(m => ({ 
 
 interface AppBannersProps {
     activeSession: any;
+    skippedSessionToast?: { id: number; name: string; weekSnapshot?: any } | null;
+    onUndoSkip?: () => void;
 }
 
 /**
  * Q18: sync-truncation + SW-update banners, moved verbatim from App
  * (subscriptions, deferred-update state and the update confirm dialog).
  */
-export const AppBanners: React.FC<AppBannersProps> = ({ activeSession }) => {
+export const AppBanners: React.FC<AppBannersProps> = ({
+    activeSession,
+    skippedSessionToast,
+    onUndoSkip,
+}) => {
     const { lang } = useApp();
     const t = TRANSLATIONS[lang];
 
@@ -118,6 +124,16 @@ export const AppBanners: React.FC<AppBannersProps> = ({ activeSession }) => {
                         variant="primary"
                     />
                 </Suspense>
+            )}
+            {skippedSessionToast && (
+                <div role="status" aria-live="polite" className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[210] flex items-center gap-3 px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-700 shadow-2xl text-sm text-white">
+                    <span>{skippedSessionToast.name}: {t.skipped || pickLang(lang, { en: 'Skipped', es: 'Saltado' })}</span>
+                    {onUndoSkip && (
+                        <button type="button" onClick={onUndoSkip} className="px-2.5 py-1 rounded-lg bg-primary-500/20 text-primary-400 font-semibold text-xs hover:bg-primary-500/30 transition-colors">
+                            {t.undo || pickLang(lang, { en: 'Undo', es: 'Deshacer' })}
+                        </button>
+                    )}
+                </div>
             )}
         </>
     );

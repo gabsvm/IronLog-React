@@ -3,23 +3,6 @@
 import React, { createContext } from 'react';
 import { AppState, Lang, Theme, ColorTheme, EffectsMode, ResolvedEffects, ExerciseDef, Log, ProgramDay, TutorialState, GlobalTemplate, UserProfile, BeforeInstallPromptEvent, NutritionLog, CardioSession, NutritionGoal, MacroGoals, BodyLog, CustomFood, DirtySyncSection, SectionSyncMeta } from '../../types';
 
-export const FULL_SYNC_SECTIONS: DirtySyncSection[] = [
-    'program',
-    'activeMeso',
-    'exercises',
-    'logs',
-    'config',
-    'rpFeedback',
-    'userProfile',
-    'nutritionLogs',
-    'cardioSessions',
-    'nutritionGoal',
-    'bodyLogs',
-    'macroGoals',
-    'customFoods',
-    'personalTemplates',
-];
-
 export interface AppContextType extends Omit<AppState, 'activeSession' | 'activeMeso'> {
     lang: Lang;
     theme: Theme;

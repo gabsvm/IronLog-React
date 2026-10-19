@@ -21,7 +21,7 @@ export const Button: React.FC<ButtonProps> = ({
         secondary: "bg-[rgb(var(--surface-elevated))] text-[rgb(var(--text-primary))] border border-[rgb(var(--border-subtle))] hover:bg-primary-500/10 focus:ring-primary-500",
         danger: "bg-red-900/20 text-red-500 border border-red-500/50 hover:bg-red-500 hover:text-white focus:ring-red-500",
         ghost: "text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--text-primary))] hover:bg-[rgb(var(--surface-elevated))]",
-        outline: "border border-[rgb(var(--border-subtle))] text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--text-primary))] hover:border-primary-500/40 border-dashed"
+        outline: "bg-transparent hover:bg-zinc-800/60 text-zinc-300 border border-zinc-700/80"
     };
     
     const sizes = {

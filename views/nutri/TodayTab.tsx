@@ -8,6 +8,18 @@ import { MacroBar } from './MacroBar';
 import { WaterTracker } from './WaterTracker';
 import { MEAL_ORDER, MEAL_META, ACTIVITY_EMOJI } from './nutritionHelpers';
 
+const CARDIO_ACTIVITY_LABELS: Record<string, { en: string; es: string }> = {
+    running: { en: 'Running', es: 'Correr' },
+    cycling: { en: 'Cycling', es: 'Ciclismo' },
+    walking: { en: 'Walking', es: 'Caminar' },
+    swimming: { en: 'Swimming', es: 'Natación' },
+    rowing: { en: 'Rowing', es: 'Remo' },
+    elliptical: { en: 'Elliptical', es: 'Elíptica' },
+    jump_rope: { en: 'Jump rope', es: 'Soga' },
+    hiit: { en: 'HIIT', es: 'HIIT' },
+    other: { en: 'Other', es: 'Otro' },
+};
+
 interface MacroTotals {
     calories: number;
     protein: number;
@@ -98,7 +110,7 @@ export const TodayTab: React.FC<Props> = ({
                 {/* Macro bars */}
                 <div className="flex gap-3">
                     <MacroBar value={todayMacros.protein} goal={nutritionGoal.protein} color="text-blue-400" label={TRANSLATIONS[lang].copy.todayTab.protein} />
-                    <MacroBar value={todayMacros.carbs} goal={nutritionGoal.carbs} color="text-amber-400" label="Carbs" />
+                    <MacroBar value={todayMacros.carbs} goal={nutritionGoal.carbs} color="text-amber-400" label={TRANSLATIONS[lang].copy.todayTab.carbs || pickLang(lang, { en: 'Carbs', es: 'Carbos' })} />
                     <MacroBar value={todayMacros.fat} goal={nutritionGoal.fat} color="text-pink-400" label={TRANSLATIONS[lang].copy.todayTab.fat} />
                 </div>
 
@@ -171,7 +183,7 @@ export const TodayTab: React.FC<Props> = ({
                                 <div className="flex items-center gap-2 text-sm">
                                     <span aria-hidden="true">{ACTIVITY_EMOJI[s.activityType] || '🏋️'}</span>
                                     <span className="text-zinc-300 capitalize text-xs">
-                                        {s.activityType.replace('_', ' ')} · {s.durationMin}min
+                                        {CARDIO_ACTIVITY_LABELS[s.activityType]?.[lang] || s.activityType.replace('_', ' ')} · {s.durationMin}min
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -179,7 +191,7 @@ export const TodayTab: React.FC<Props> = ({
                                     <button
                                         onClick={() => onDeleteCardio(s.id)}
                                         aria-label={TRANSLATIONS[lang].copy.todayTab.deleteCardioEntry}
-                                        className="text-zinc-700 hover:text-red-500 transition-colors duration-fast ease-natural"
+                                        className="p-2 -m-1 text-zinc-700 hover:text-red-500 transition-colors duration-fast ease-natural"
                                     >
                                         <Icon name="X" size={12} />
                                     </button>

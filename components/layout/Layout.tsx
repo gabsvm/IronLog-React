@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { usePro } from '../../hooks/usePro';
 import { useStore } from '../../lib/store';
 import { TRANSLATIONS } from '../../constants';
-import { KONG_4DAY_V1 } from '../../programs/kong/kong4Day';
+import { KONG_4DAY_ID } from '../../programs/kong/constants';
 import { convertKongToPersonalRoutine } from '../../programs/engine/ProgramConversion';
 import { Icon } from '../ui/Icon';
 import { Logo } from '../ui/Logo';
@@ -112,8 +112,8 @@ export const Layout: React.FC<LayoutProps> = ({
     const { user } = useAuth();
     const { isPro } = usePro();
     const activeMeso = useStore(state => state.activeMeso);
-    const activeSession = useStore(state => state.activeSession);
-    const setActiveMeso = useStore(state => state.setActiveMeso);
+    const hasActiveSession = useStore(state => Boolean(state.activeSession));
+    const activeSessionDayIdx = useStore(state => state.activeSession?.dayIdx);
     const setActiveSession = useStore(state => state.setActiveSession);
     const t = TRANSLATIONS[lang];
     const ly = t.layoutKeys;
@@ -137,7 +137,7 @@ export const Layout: React.FC<LayoutProps> = ({
         return cancel;
     }, []);
 
-    const isKong = activeMeso?.programSystem?.systemId === KONG_4DAY_V1.id;
+    const isKong = activeMeso?.programSystem?.systemId === KONG_4DAY_ID || activeMeso?.programSystem?.systemId === 'kong_4day';
 
     React.useEffect(() => {
         document.documentElement.classList.toggle('kong-program-active', !!isKong);
@@ -156,6 +156,17 @@ export const Layout: React.FC<LayoutProps> = ({
         return () => window.removeEventListener('ironlog:popstate', handlePop);
     }, []);
 
+    const openProfile = React.useCallback((section?: ProfileSection | null) => {
+        if (!showProfile) {
+            try {
+                // Snapshot current view and push exactly ONE entry per sheet open.
+                window.history.pushState({ ...(window.history.state || {}), view, profile: true }, '', '#profile');
+            } catch { }
+            setShowProfile(true);
+        }
+        setProfileSection(section ?? null);
+    }, [showProfile, view]);
+
     // External entry points (e.g. back from the exercises library) open the
     // unified sheet, optionally scrolled to a section.
     React.useEffect(() => {
@@ -165,7 +176,7 @@ export const Layout: React.FC<LayoutProps> = ({
         };
         window.addEventListener('gainslab:open-profile', handleOpenProfile);
         return () => window.removeEventListener('gainslab:open-profile', handleOpenProfile);
-    });
+    }, [openProfile]);
 
     React.useEffect(() => {
         const handleNavigate = (event: Event) => {
@@ -177,17 +188,6 @@ export const Layout: React.FC<LayoutProps> = ({
         window.addEventListener('gainslab:navigate', handleNavigate);
         return () => window.removeEventListener('gainslab:navigate', handleNavigate);
     }, [setView]);
-
-    const openProfile = (section?: ProfileSection | null) => {
-        if (!showProfile) {
-            try {
-                // Snapshot current view and push exactly ONE entry per sheet open.
-                window.history.pushState({ ...(window.history.state || {}), view, profile: true }, '', '#profile');
-            } catch { }
-            setShowProfile(true);
-        }
-        setProfileSection(section ?? null);
-    };
 
     const closeProfile = () => {
         try {
@@ -207,7 +207,7 @@ export const Layout: React.FC<LayoutProps> = ({
     const editProgram = () => {
         setShowQuickStart(false);
 
-        if (activeSession) {
+        if (useStore.getState().activeSession) {
             setShowActiveSessionAlert(true);
             return;
         }
@@ -293,7 +293,31 @@ export const Layout: React.FC<LayoutProps> = ({
             )}
             {(showQuickStart || hasOpenedQuickStartRef.current) && (
                 <React.Suspense fallback={null}>
-                    <QuickStartSheet open={showQuickStart} onClose={() => setShowQuickStart(false)} lang={lang} onResume={() => setView('workout')} onToday={() => setView('home')} onFreestyle={() => setShowFreestyle(true)} onEditProgram={editProgram} />
+                    <QuickStartSheet
+                        open={showQuickStart}
+                        onClose={() => setShowQuickStart(false)}
+                        lang={lang}
+                        onResume={() => setView('workout')}
+                        onToday={() => {
+                            setShowQuickStart(false);
+                            if (useStore.getState().activeSession) {
+                                setView('workout');
+                            } else if (view === 'home') {
+                                window.dispatchEvent(new CustomEvent('gainslab:start-scheduled'));
+                                const heroCta = document.querySelector<HTMLElement>('[data-testid="hero-start-workout"], #hero-start-workout, .hero-cta-btn');
+                                if (heroCta) {
+                                    heroCta.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    heroCta.click();
+                                } else {
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                }
+                            } else {
+                                setView('home');
+                            }
+                        }}
+                        onFreestyle={() => setShowFreestyle(true)}
+                        onEditProgram={editProgram}
+                    />
                 </React.Suspense>
             )}
 

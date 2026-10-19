@@ -7,7 +7,7 @@ import { isTemplateUpdateEligible } from '../../utils/workoutProgress';
 import type { WorkoutViewState } from './useWorkoutViewState';
 
 export const WorkoutFinishSheet: React.FC<{ state: WorkoutViewState }> = ({ state }) => {
-    const { showFinishModal, setShowFinishModal, handleConfirmFinish, setShowDiscardConfirm, updateSession, updateTemplate, setUpdateTemplate, activeSession, activeMeso, t, w, completedWorkingSets, totalWorkingSets } = state;
+    const { showFinishModal, setShowFinishModal, handleConfirmFinish, setShowDiscardConfirm, updateSession, updateTemplate, setUpdateTemplate, activeSession, activeMeso, t, completedWorkingSets, totalWorkingSets } = state;
     if (!activeSession) return null;
     return (
         <>

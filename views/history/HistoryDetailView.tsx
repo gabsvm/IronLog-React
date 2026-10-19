@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { Log, WeightUnit } from '../../types';
 import { HistoryEditExercise } from './HistoryEditExercise';
 import { buildEditedLog, draftAddSet, draftRemoveSet, draftSetNote, draftUpdateSet, toDraft, type EditErrors } from '../../utils/historyEdit';
@@ -7,6 +7,8 @@ import { formatDate, formatDurationShort, getTranslated } from '../../utils';
 import { toDisplay, unitLabel } from '../../utils/units';
 import { TRANSLATIONS } from '../../constants/translations';
 import { formatInteger } from '../../utils/i18n';
+import { AppContext } from '../../context/app/appContexts';
+import { getLogBodyWeight, getSetLoadVolume } from '../../utils/trainingMetrics';
 
 interface Props {
     log: Log;
@@ -18,6 +20,7 @@ interface Props {
     onSaveEdit?: (original: Log, edited: Log) => void;
     repeatBlocked?: boolean;
     unit?: WeightUnit;
+    onDirtyChange?: (dirty: boolean) => void;
 }
 
 const displayDuration = (val: string | number | undefined) => {
@@ -26,7 +29,9 @@ const displayDuration = (val: string | number | undefined) => {
     return `${val}s`;
 };
 
-export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat, onDelete, onSaveEdit, repeatBlocked = false, unit = 'kg' }) => {
+export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat, onDelete, onSaveEdit, repeatBlocked = false, unit = 'kg', onDirtyChange }) => {
+    const app = useContext(AppContext);
+    const userProfile = app?.userProfile;
     const h = TRANSLATIONS[lang].copy.historyDetail;
     const [draft, setDraft] = useState<Log | null>(null);
     const [errors, setErrors] = useState<EditErrors>({});
@@ -34,6 +39,22 @@ export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat
     const [confirmDiscard, setConfirmDiscard] = useState(false);
     const editing = draft !== null;
     const dirty = useMemo(() => editing && JSON.stringify(draft) !== JSON.stringify(toDraft(log, unit)), [editing, draft, log, unit]);
+
+    useEffect(() => {
+        onDirtyChange?.(editing && dirty);
+    }, [editing, dirty, onDirtyChange]);
+
+    useEffect(() => {
+        if (!editing || !dirty) return;
+        const onPop = () => {
+            try {
+                window.history.pushState({ ...(window.history.state || {}), historyDetail: log.id }, '', '#history-detail');
+            } catch { }
+            setConfirmDiscard(true);
+        };
+        window.addEventListener('popstate', onPop);
+        return () => window.removeEventListener('popstate', onPop);
+    }, [editing, dirty, log.id]);
 
     const startEdit = () => { setErrors({}); setEmptyError(false); setConfirmDiscard(false); setDraft(toDraft(log, unit)); };
     const stopEdit = () => { setDraft(null); setErrors({}); setEmptyError(false); setConfirmDiscard(false); };
@@ -49,13 +70,12 @@ export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat
     const summary = useMemo(() => {
         let sets = 0;
         let volume = 0;
+        const logBodyWeight = getLogBodyWeight(log, userProfile?.bodyWeight);
         (log.exercises || []).forEach(ex => {
-            (ex.sets || []).forEach(set => {
-                if (!set.completed || set.skipped) return;
+            (ex.sets || []).forEach(s => {
+                if (!s.completed || s.skipped) return;
                 sets += 1;
-                const weight = Number(set.weight || 0);
-                const reps = Number(set.reps || 0);
-                if (weight > 0 && reps > 0) volume += weight * reps;
+                volume += getSetLoadVolume(s, ex, logBodyWeight);
             });
         });
         return {
@@ -63,7 +83,7 @@ export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat
             exercises: (log.exercises || []).length,
             volume: Math.round(volume),
         };
-    }, [log]);
+    }, [log, userProfile?.bodyWeight]);
 
     return (
         <div className="fixed inset-0 z-[70] flex flex-col bg-[rgb(var(--surface-app))] text-[rgb(var(--text-primary))]">
@@ -126,9 +146,9 @@ export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat
 
                 {confirmDiscard && (
                     <div role="alertdialog" aria-label={h.discardTitle} className="mb-4 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4">
-                        <p className="text-sm font-bold text-amber-200">{h.discardTitle}</p>
+                        <p className="text-sm font-bold text-amber-800 dark:text-amber-200">{h.discardTitle}</p>
                         <div className="mt-3 flex gap-2">
-                            <button type="button" onClick={() => setConfirmDiscard(false)} className="flex-1 rounded-xl bg-white/5 py-2 text-xs font-bold text-zinc-200">{h.keepEditing}</button>
+                            <button type="button" onClick={() => setConfirmDiscard(false)} className="flex-1 rounded-xl bg-white/5 py-2 text-xs font-bold text-zinc-800 dark:text-zinc-200">{h.keepEditing}</button>
                             <button type="button" onClick={stopEdit} className="flex-1 rounded-xl bg-red-500 py-2 text-xs font-bold text-white">{h.discard}</button>
                         </div>
                     </div>

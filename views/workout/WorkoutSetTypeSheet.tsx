@@ -6,7 +6,7 @@ import type { WorkoutViewState } from './useWorkoutViewState';
 import { SET_TYPE_COLORS, SET_TYPE_ICONS, CORE_SET_TYPES, ADVANCED_SET_TYPES } from './workoutConstants';
 
 export const WorkoutSetTypeSheet: React.FC<{ state: WorkoutViewState }> = ({ state }) => {
-    const { sessionExercises, changingSetType, setChangingSetType, handleSetUpdate, handleSetTypeAll, t, w, showAdvancedSetTypes, setShowAdvancedSetTypes, applyToAll, setApplyToAll } = state;
+    const { sessionExercises, changingSetType, setChangingSetType, handleSetUpdate, handleSetTypeAll, t, showAdvancedSetTypes, setShowAdvancedSetTypes, applyToAll, setApplyToAll } = state;
     return (
         <>
             {changingSetType && (() => {
@@ -44,7 +44,7 @@ export const WorkoutSetTypeSheet: React.FC<{ state: WorkoutViewState }> = ({ sta
                                 </div>
                             </button>
                         )}
-                        <div className="p-4 grid grid-cols-1 gap-1.5 max-h-[60vh] overflow-y-auto">
+                        <div data-vaul-no-drag className="p-4 grid grid-cols-1 gap-1.5 max-h-[60vh] overflow-y-auto">
                             {CORE_SET_TYPES.map(type => {
                                 const isSelected = changingSetType?.currentType === type;
                                 return (

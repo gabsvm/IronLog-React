@@ -6,7 +6,7 @@ import { usePro } from '../../hooks/usePro';
 import { useStore } from '../../lib/store';
 import { TRANSLATIONS } from '../../constants';
 import type { CommandAction } from '../../components/ui/CommandPalette';
-import { KONG_4DAY_V1 } from '../../programs/kong/kong4Day';
+import { KONG_4DAY_ID } from '../../programs/kong/constants';
 import { convertKongToPersonalRoutine } from '../../programs/engine/ProgramConversion';
 import { resetLocalData } from '../../services/localDataReset';
 import { syncService } from '../../services/syncService';
@@ -72,7 +72,6 @@ export const AppModals: React.FC<AppModalsProps> = ({
         setProgram,
     } = useApp();
     const activeMeso = useStore(state => state.activeMeso);
-    const activeSession = useStore(state => state.activeSession);
     const setActiveMeso = useStore(state => state.setActiveMeso);
     const { user } = useAuth();
     const { showPaywall, setShowPaywall, featureAttempted } = usePro();
@@ -83,9 +82,10 @@ export const AppModals: React.FC<AppModalsProps> = ({
         if (!user) return;
         setIsSyncing(true);
         setShowForceSyncModal(false);
+        const currentActiveSession = useStore.getState().activeSession;
         try {
             await syncService.uploadState(user.uid, {
-                program, activeMeso, activeSession, exercises, logs,
+                program, activeMeso, activeSession: currentActiveSession, exercises, logs,
                 config, rpFeedback,
                 userProfile, nutritionLogs, cardioSessions, bodyLogs, macroGoals, nutritionGoal,
                 email: user.email || null,
@@ -104,7 +104,7 @@ export const AppModals: React.FC<AppModalsProps> = ({
         } finally {
             setIsSyncing(false);
         }
-    }, [user, program, activeMeso, activeSession, exercises, logs, config, rpFeedback, userProfile, nutritionLogs, cardioSessions, bodyLogs, macroGoals, nutritionGoal, t, lang, setIsSyncing, setShowForceSyncModal, setForceSyncFeedback]);
+    }, [user, program, activeMeso, exercises, logs, config, rpFeedback, userProfile, nutritionLogs, cardioSessions, bodyLogs, macroGoals, nutritionGoal, t, lang, setIsSyncing, setShowForceSyncModal, setForceSyncFeedback]);
 
     const confirmImport = useCallback(async () => {
         if (!validatedBackup) return;
@@ -132,7 +132,7 @@ export const AppModals: React.FC<AppModalsProps> = ({
 
             {/* Standard Modal Overlays */}
             {showMesoCompleteModal && (
-                activeMeso?.programSystem?.systemId === KONG_4DAY_V1.id ? <Suspense fallback={null}><ProgramCompletionView meso={activeMeso} logs={logs} lang={lang} onFinish={() => { setActiveMeso(null); setShowMesoCompleteModal(false); }} onKeep={() => { setActiveMeso(null); setShowMesoCompleteModal(false); }} /></Suspense> :
+                (activeMeso?.programSystem?.systemId === KONG_4DAY_ID || activeMeso?.programSystem?.systemId === 'kong_4day') ? <Suspense fallback={null}><ProgramCompletionView meso={activeMeso} logs={logs} lang={lang} onFinish={() => { setActiveMeso(null); setShowMesoCompleteModal(false); }} onKeep={() => { setActiveMeso(null); setShowMesoCompleteModal(false); }} /></Suspense> :
                 <Suspense fallback={null}>
                     <ConfirmModal
                         isOpen={true}

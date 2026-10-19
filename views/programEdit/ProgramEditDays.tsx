@@ -22,7 +22,7 @@ export const ProgramEditDays: React.FC<{ state: ProgramEditState }> = ({ state }
                             />
                             <button
                                 onClick={() => setDayToDelete(day.id)}
-                                className="text-zinc-400 hover:text-red-500 ml-2"
+                                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-zinc-400 hover:text-red-500 hover:bg-red-500/10 ml-2 transition-colors"
                                 aria-label={t.delete}
                             >
                                 <Icon name="Trash2" size={18} />
@@ -83,7 +83,7 @@ export const ProgramEditDays: React.FC<{ state: ProgramEditState }> = ({ state }
                                         </div>
                                         <button
                                             onClick={() => handleRemoveSlot(day.id, idx)}
-                                            className="text-zinc-300 hover:text-red-500 p-2"
+                                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-zinc-300 hover:text-red-500 hover:bg-red-500/10 transition-colors"
                                             aria-label={t.delete}
                                         >
                                             <Icon name="X" size={16} />

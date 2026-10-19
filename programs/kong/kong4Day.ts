@@ -9,44 +9,24 @@ import type {
 } from '../types';
 
 const localized = (en: string, es = en) => ({ en, es });
-const series = (reps: number | 'FAILURE', rpe?: number, roles?: SetPrescription['role'][]): SetPrescription[] =>
-  Array.isArray(roles)
-    ? roles.map((role, index) => ({ reps, targetRpe: rpe, role }))
-    : [{ reps, targetRpe: rpe }];
-const exact = (reps: (number | 'FAILURE')[], rpes?: number[], roles?: SetPrescription['role'][]): ExerciseWeekPrescription => ({
+const exact = (reps: (number | 'FAILURE')[], rpes?: any[], roles?: SetPrescription['role'][]): ExerciseWeekPrescription => ({
   sets: reps.map((rep, index) => ({ reps: rep, targetRpe: rpes?.[index], role: roles?.[index] })),
 });
-const uniform = (count: number, reps: number | 'FAILURE', rpes: number[], roles?: SetPrescription['role'][]): ExerciseWeekPrescription => ({
-  sets: Array.from({ length: count }, (_, index) => ({ reps, targetRpe: rpes[index], role: roles?.[index] })),
-});
-const b1 = (slotId: string, sourceExerciseName: string, exerciseId: string, muscle: MuscleGroup, reps: [number, number, number, number], rpes: [number[], number[], number[], number[]], extra: Partial<ProgramExercisePrescription> = {}): ProgramExercisePrescription => ({
-  slotId, sourceExerciseName, exerciseId, muscle,
-  prescriptions: {
-    1: uniform(reps[0], reps[0] === 0 ? 1 : (extra as any).weekReps?.[0] ?? (extra as any).constantReps ?? 15, rpes[0]),
-    2: uniform(reps[1], (extra as any).weekReps?.[1] ?? (extra as any).constantReps ?? 12, rpes[1]),
-    3: uniform(reps[2], (extra as any).weekReps?.[2] ?? (extra as any).constantReps ?? 12, rpes[2]),
-    4: uniform(reps[3], (extra as any).weekReps?.[3] ?? (extra as any).constantReps ?? 10, rpes[3]),
-  },
-  recommendedRestSeconds: 60,
-  ...extra,
-});
-const rpeB1 = (count: number, week: 1 | 2 | 3 | 4) => week === 1 ? Array(count).fill(7) : week === 2 ? [5, 7, ...Array(Math.max(0, count - 2)).fill(10)] : [5, 7, ...Array(Math.max(0, count - 2)).fill(10)];
-const b1slot = (slotId: string, name: string, exerciseId: string, muscle: MuscleGroup, counts: [number, number, number, number], repsByWeek: [number, number, number, number], extra: Partial<ProgramExercisePrescription> = {}) => ({
-  slotId, sourceExerciseName: name, exerciseId, muscle,
-  prescriptions: {
-    1: uniform(counts[0], repsByWeek[0], rpeB1(counts[0], 1)),
-    2: uniform(counts[1], repsByWeek[1], rpeB1(counts[1], 2)),
-    3: uniform(counts[2], repsByWeek[2], rpeB1(counts[2], 3)),
-    4: uniform(counts[3], repsByWeek[3], rpeB1(counts[3], 4)),
-  }, recommendedRestSeconds: 60, ...extra,
-} satisfies ProgramExercisePrescription);
+const rpeB1 = (countOrWeek: number, maybeWeek?: number): any => {
+  if (maybeWeek !== undefined) {
+    const count = countOrWeek;
+    const week = maybeWeek;
+    return week === 1 ? Array(count).fill(7) : [5, 7, ...Array(Math.max(0, count - 2)).fill(10)].slice(0, count);
+  }
+  return countOrWeek === 1 ? '6-7 (10-12 on last set)' : '7-8 (10-12 on last set)';
+};
 const b1custom = (slotId: string, name: string, exerciseId: string, muscle: MuscleGroup, reps: [number[], number[], number[], number[]], extra: Partial<ProgramExercisePrescription> = {}) => ({
   slotId, sourceExerciseName: name, exerciseId, muscle,
   prescriptions: {
-    1: exact(reps[0], rpeB1(reps[0].length, 1)),
-    2: exact(reps[1], rpeB1(reps[1].length, 2)),
-    3: exact(reps[2], rpeB1(reps[2].length, 3)),
-    4: exact(reps[3], rpeB1(reps[3].length, 4)),
+    1: exact(reps[0], rpeB1(reps[0].length, 1) as any),
+    2: exact(reps[1], rpeB1(reps[1].length, 2) as any),
+    3: exact(reps[2], rpeB1(reps[2].length, 3) as any),
+    4: exact(reps[3], rpeB1(reps[3].length, 4) as any),
   }, recommendedRestSeconds: 60, ...extra,
 } satisfies ProgramExercisePrescription);
 

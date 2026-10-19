@@ -3,8 +3,12 @@ import React from 'react';
 import { TRANSLATIONS, MUSCLE_GROUPS } from '../../constants';
 import { Icon } from '../../components/ui/Icon';
 import { getTranslated } from '../../utils';
+import { pickLang } from '../../utils/i18n';
 import { Virtuoso } from 'react-virtuoso';
 import type { ExercisesViewState } from './useExercisesViewState';
+
+const VirtuosoFooter = () => <div style={{ height: 'calc(5rem + var(--safe-area-bottom))' }} />;
+const VIRTUOSO_COMPONENTS = { Footer: VirtuosoFooter };
 
 export const ExercisesListMode: React.FC<{ state: ExercisesViewState }> = ({ state }) => {
     const { exercises, lang, t, ev, setMode, searchQuery, setSearchQuery, selectedMuscle, setSelectedMuscle, filterCategory, setFilterCategory, setMergingExerciseId, setMergeCandidate, duplicateSuggestions, filteredExercises, Row } = state;
@@ -27,7 +31,7 @@ export const ExercisesListMode: React.FC<{ state: ExercisesViewState }> = ({ sta
                                 <button
                                     onClick={() => setSearchQuery('')}
                                     className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
-                                    aria-label="Limpiar búsqueda"
+                                    aria-label={pickLang(lang, { es: 'Limpiar búsqueda', en: 'Clear search' })}
                                 >
                                     <Icon name="X" size={14} />
                                 </button>
@@ -139,9 +143,7 @@ export const ExercisesListMode: React.FC<{ state: ExercisesViewState }> = ({ sta
                                 style={{ height: '100%' }}
                                 data={filteredExercises}
                                 itemContent={Row}
-                                components={{
-                                    Footer: () => <div className="h-[calc(6rem+var(--safe-area-bottom))]" /> // Padding for FAB
-                                }}
+                                components={VIRTUOSO_COMPONENTS}
                             />
                         )}
 

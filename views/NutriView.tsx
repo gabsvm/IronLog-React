@@ -1,8 +1,7 @@
 import { pickLang } from '../utils/i18n';
-import React, { useState, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { FoodEntry, CardioSession, NutritionLog, NutritionGoal, BodyLog } from '../types';
-import { MacroRing } from '../components/nutrition/MacroRing';
+import { FoodEntry, CardioSession, BodyLog } from '../types';
 import { AddMealModal } from '../components/nutrition/AddMealModal';
 import { AddCardioModal } from '../components/nutrition/AddCardioModal';
 import { LogWeightModal } from '../components/nutrition/LogWeightModal';
@@ -15,10 +14,8 @@ import { resolveWeightUnit } from '../utils/units';
 
 
 // Extracted in Phase 6.3 to views/nutri/ for clarity
-import { todayStr, getTodayLog, sumMacros, MEAL_ORDER, MEAL_META, ACTIVITY_EMOJI, WATER_GOAL_ML, calcStreak, calcTDEE } from './nutri/nutritionHelpers';
+import { todayStr, getTodayLog, sumMacros, calcStreak, calcTDEE } from './nutri/nutritionHelpers';
 import { formatLocalDateKey, addLocalDays } from '../utils/localDate';
-import { MacroBar } from './nutri/MacroBar';
-import { WaterTracker } from './nutri/WaterTracker';
 import { TodayTab } from './nutri/TodayTab';
 import { BodyTab } from './nutri/BodyTab';
 import { HistoryTab } from './nutri/HistoryTab';
@@ -31,7 +28,7 @@ export const NutriView: React.FC = () => {
     lang, nutritionLogs, setNutritionLogs,
     cardioSessions, setCardioSessions,
     nutritionGoal, setNutritionGoal,
-    userProfile, bodyLogs, setBodyLogs, config
+    userProfile, setUserProfile, bodyLogs, setBodyLogs, config
   } = useApp();
   const unit = resolveWeightUnit(config);
 
@@ -42,6 +39,13 @@ export const NutriView: React.FC = () => {
   const cardioSessionsRef = useRef(cardioSessions);
   cardioSessionsRef.current = cardioSessions;
   const undoCardioTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+      if (undoCardioTimerRef.current) clearTimeout(undoCardioTimerRef.current);
+    };
+  }, []);
 
   const [subTab, setSubTab]             = useState<SubTab>('today');
   const [showAddMeal, setShowAddMeal]   = useState(false);
@@ -198,7 +202,12 @@ export const NutriView: React.FC = () => {
     const today = todayStr();
     const entry: BodyLog = { id: now, date: now, weight: data.weight, bodyFat: data.bodyFat, notes: data.notes };
     setBodyLogs(prev => [entry, ...prev.filter(l => formatLocalDateKey(new Date(l.date)) !== today)]);
-  }, [setBodyLogs]);
+    setUserProfile((prev: any) => ({
+      ...(prev || {}),
+      bodyWeight: entry.weight,
+      ...(entry.bodyFat !== undefined ? { bodyFat: entry.bodyFat } : {})
+    }));
+  }, [setBodyLogs, setUserProfile]);
 
   const saveGoal = useCallback(() => {
     setNutritionGoal(editGoal);
@@ -313,13 +322,13 @@ export const NutriView: React.FC = () => {
                   <button
                     key={mult}
                     onClick={() => {
-                      if (!editEntryDraft) return;
+                      if (!editEntryDraft || !editingEntry) return;
                       setEditEntryDraft({
                         ...editEntryDraft,
-                        calories: Math.round(editEntryDraft.calories * mult),
-                        protein:  Math.round(editEntryDraft.protein  * mult),
-                        carbs:    Math.round(editEntryDraft.carbs    * mult),
-                        fat:      Math.round(editEntryDraft.fat      * mult),
+                        calories: Math.round(editingEntry.calories * mult),
+                        protein:  Math.round(editingEntry.protein  * mult),
+                        carbs:    Math.round(editingEntry.carbs    * mult),
+                        fat:      Math.round(editingEntry.fat      * mult),
                       });
                     }}
                     className="flex-1 py-2 rounded-xl bg-zinc-800 text-zinc-300 text-xs font-bold active:scale-95 transition-all hover:bg-zinc-700"

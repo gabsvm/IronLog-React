@@ -1,12 +1,13 @@
 // S6: banner, plan header and day selector, moved verbatim from views/HomeViewImpl.tsx.
 import React from 'react';
+import { pickLang } from '../../utils/i18n';
 import { Icon } from '../../components/ui/Icon';
 import { triggerHaptic } from '../../utils/audio';
 import { BackupReminderBanner } from '../../components/home/BackupReminderBanner';
 import type { HomeViewState } from './useHomeViewState';
 
 export const HomeTopSection: React.FC<{ state: HomeViewState }> = ({ state }) => {
-    const { uniqueDaysDone, nextWorkoutIdx, activeMeso, t, h, kongBlock, isPro, checkPro, setShowPlanActions, setShowGuidelines, setShowKongHub, currentGuidelineImages, safeProgram, selectedDayIdx, setSelectedDayIdx } = state;
+    const { uniqueDaysDone, nextWorkoutIdx, activeMeso, t, h, lang, kongBlock, isPro, checkPro, setShowPlanActions, setShowGuidelines, setShowKongHub, currentGuidelineImages, safeProgram, selectedDayIdx, setSelectedDayIdx } = state;
     if (!activeMeso) return null;
     return (
         <>
@@ -32,7 +33,7 @@ export const HomeTopSection: React.FC<{ state: HomeViewState }> = ({ state }) =>
                                 onClick={() => checkPro("Guidelines") && setShowGuidelines(true)}
                                 className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-surface-raised text-blue-400 border border-border-subtle hover:text-white transition-colors flex items-center gap-1 active:scale-95"
                             >
-                                <Icon name="Info" size={12} /> GUIDELINES {!isPro && <Icon name="Lock" size={10} className="text-yellow-500 ml-0.5" />}
+                                <Icon name="Info" size={12} /> {pickLang(lang, { en: 'GUIDELINES', es: 'GUÍA' })} {!isPro && <Icon name="Lock" size={10} className="text-yellow-500 ml-0.5" />}
                             </button>
                         )}
                     </div>

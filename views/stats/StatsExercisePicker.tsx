@@ -2,16 +2,32 @@
 import React from 'react';
 import { TRANSLATIONS } from '../../constants';
 import { getTranslated } from '../../utils';
+import { pickLang } from '../../utils/i18n';
 import { Icon } from '../../components/ui/Icon';
 import type { StatsData } from './useStatsData';
 
 export const StatsExercisePicker: React.FC<{ stats: StatsData }> = ({ stats }) => {
     const { lang, t, s, selectedExId, setSelectedExId, setShowPicker, pickerSearch, setPickerSearch, filteredExercises } = stats;
+
+    React.useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                setShowPicker(false);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [setShowPicker]);
+
     return (
         <>
                 <div className="fixed inset-0 z-sheet flex flex-col bg-zinc-950 animate-in slide-in-from-bottom duration-200">
                     <div className="glass flex min-h-16 pt-safe shrink-0 items-center gap-3 border-b border-white/5 px-4">
-                        <button onClick={() => setShowPicker(false)} className="-ml-2 p-2 text-zinc-400 hover:text-white">
+                        <button
+                            onClick={() => setShowPicker(false)}
+                            className="-ml-2 p-2 text-zinc-400 hover:text-white"
+                            aria-label={pickLang(lang, { es: 'Cerrar', en: 'Close' })}
+                        >
                             <Icon name="X" size={24} />
                         </button>
                         <div className="relative flex-1">

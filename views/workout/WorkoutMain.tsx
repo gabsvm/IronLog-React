@@ -8,7 +8,7 @@ import type { WorkoutViewState } from './useWorkoutViewState';
 const WorkoutSortableList = React.lazy(() => import('../../components/workout/WorkoutSortableList'));
 
 export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) => {
-    const { onBack, onOpenReorder, sessionExercises, openMenuId, setOpenMenuId, setShowFinishModal, setReplacingExId, setAddingExercise, linkingId, setLinkingId, setEditingMuscleId, setWarmupExId, setDetailExercise, handleSetUpdate, handleAddSet, handleDeleteSet, updateSession, exercises, logs, lang, config, activeSession, t, w, stageConfig, isCalisthenicsSession, supersetColorIndexes, handleSetTypeChange, sortableItems, activeExerciseId, handleToggleExpand, handleSetComplete, handleReorder, remainingSets, progressPct, completedWorkingSets, totalWorkingSets } = state;
+    const { onBack, onOpenReorder, sessionExercises, openMenuId, setOpenMenuId, setShowFinishModal, setReplacingExId, setAddingExercise, linkingId, setLinkingId, setEditingMuscleId, setWarmupExId, setDetailExercise, handleSetUpdate, handleAddSet, handleDeleteSet, updateSession, exercises, logs, lang, config, activeSession, t, stageConfig, isCalisthenicsSession, supersetColorIndexes, handleSetTypeChange, sortableItems, activeExerciseId, handleToggleExpand, handleSetComplete, handleReorder, remainingSets, progressPct, completedWorkingSets, totalWorkingSets } = state;
     if (!activeSession) return null;
     return (
         <>

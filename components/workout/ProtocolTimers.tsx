@@ -141,7 +141,7 @@ export const EMOMTimer: React.FC<EMOMTimerProps> = React.memo(({ totalSets, lang
                 </button>
             </div>
             <div className="px-3 pb-2">
-                <div className={`py-0.5 text-center text-4xl font-black tracking-tight tabular-nums ${urgent ? 'animate-pulse text-orange-300' : 'text-cyan-200'}`}>
+                <div className={`py-0.5 text-center text-4xl font-black tracking-tight tabular-nums ${urgent ? 'animate-pulse text-orange-700 dark:text-orange-300' : 'text-cyan-700 dark:text-cyan-200'}`}>
                     {fmt(timeLeft)}
                 </div>
                 <div className={`mt-1 h-2 overflow-hidden rounded-full ${urgent ? 'bg-orange-900/30' : 'bg-cyan-900/30'}`}>
@@ -303,7 +303,7 @@ export const TabataTimer: React.FC<TabataTimerProps> = React.memo(({ totalRounds
                 </button>
             </div>
             <div className="px-3 pb-2">
-                <div className={`py-0.5 text-center text-4xl font-black tracking-tight tabular-nums ${urgent ? 'animate-pulse' : ''} ${isWork ? 'text-red-200' : 'text-blue-200'}`}>
+                <div className={`py-0.5 text-center text-4xl font-black tracking-tight tabular-nums ${urgent ? 'animate-pulse' : ''} ${isWork ? 'text-red-700 dark:text-red-200' : 'text-blue-700 dark:text-blue-200'}`}>
                     {timeLeft}s
                 </div>
                 <div className={`mt-1 h-2 overflow-hidden rounded-full ${isWork ? 'bg-red-900/30' : 'bg-blue-900/30'}`}>

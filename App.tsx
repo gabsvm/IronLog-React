@@ -22,6 +22,7 @@ import {
 } from './services/backupService';
 import { useStore } from './lib/store';
 import { TRANSLATIONS } from './constants/translations';
+import { scheduleWhenIdle } from './lib/idle';
 
 // Q20: the rest pill only renders during an active rest; the timer engine itself
 // runs in TimerProvider, so deferring the overlay keeps it out of the entry chunk.
@@ -190,23 +191,26 @@ const AppContent = () => {
         mergedExtrasRef.current = true;
         let cancelled = false;
 
-        void import('./data/disciplineExercises').then(({ CROSSFIT_EXERCISES, CALISTHENICS_EXERCISES, NILSSON_BW_EXERCISES }) => {
-            if (cancelled) return;
-            setExercises((prev: any[]) => {
-                const base = Array.isArray(prev) ? prev : [];
-                const byId = new Map<string, any>();
-                for (const e of base) if (e && !byId.has(e.id)) byId.set(e.id, e);
-                const extras = [...CROSSFIT_EXERCISES, ...CALISTHENICS_EXERCISES, ...NILSSON_BW_EXERCISES];
-                let changed = base.length !== byId.size; // pre-existing duplicates present
-                for (const e of extras) {
-                    if (!byId.has(e.id)) { byId.set(e.id, e); changed = true; }
-                }
-                return changed ? Array.from(byId.values()) : base;
+        const cancelIdle = scheduleWhenIdle(() => {
+            void import('./data/disciplineExercises').then(({ CROSSFIT_EXERCISES, CALISTHENICS_EXERCISES, NILSSON_BW_EXERCISES }) => {
+                if (cancelled) return;
+                setExercises((prev: any[]) => {
+                    const base = Array.isArray(prev) ? prev : [];
+                    const byId = new Map<string, any>();
+                    for (const e of base) if (e && !byId.has(e.id)) byId.set(e.id, e);
+                    const extras = [...CROSSFIT_EXERCISES, ...CALISTHENICS_EXERCISES, ...NILSSON_BW_EXERCISES];
+                    let changed = base.length !== byId.size; // pre-existing duplicates present
+                    for (const e of extras) {
+                        if (!byId.has(e.id)) { byId.set(e.id, e); changed = true; }
+                    }
+                    return changed ? Array.from(byId.values()) : base;
+                });
             });
-        });
+        }, 1500);
 
         return () => {
             cancelled = true;
+            cancelIdle();
         };
     }, [isAppLoading, setExercises]);
 
@@ -348,7 +352,11 @@ const AppContent = () => {
             )}
 
 
-            <AppBanners activeSession={activeSession} />
+            <AppBanners
+                activeSession={activeSession}
+                skippedSessionToast={skippedSessionToast}
+                onUndoSkip={handleUndoSkip}
+            />
 
 
             <React.Suspense fallback={null}>

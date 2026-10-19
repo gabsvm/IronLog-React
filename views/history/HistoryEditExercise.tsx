@@ -42,6 +42,14 @@ export const HistoryEditExercise: React.FC<Props> = ({ ex, unit, lang, errors, l
             </div>
 
             <div className="space-y-1.5 border-t border-[rgb(var(--border-subtle)/0.55)] px-3 py-2">
+                {canEdit && sets.length > 0 && (
+                    <div className="grid grid-cols-[1.5rem_1fr_1fr_2.25rem] items-center gap-2 pb-1 text-center font-mono text-[10px] font-bold uppercase tracking-wider text-muted">
+                        <span>#</span>
+                        <span>{unitLabel(unit).toUpperCase()}</span>
+                        <span>REPS</span>
+                        <span />
+                    </div>
+                )}
                 {sets.map((set, index) => {
                     const key = setKey(ex.instanceId, set.id);
                     const bad = errors[key];

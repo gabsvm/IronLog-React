@@ -35,7 +35,7 @@ export const useSetupWizardState = ({ onComplete }: SetupWizardProps) => {
     }));
 
     const [recommendation, setRecommendation] = useState<RecommendationResult | null>(null);
-    const [isGenerating, setIsGenerating] = useState(false);
+    const [isGenerating] = useState(false);
 
     // ── Navigation ────────────────────────────────────────────────────
     const handleNext = () => {
@@ -141,7 +141,6 @@ export const useSetupWizardState = ({ onComplete }: SetupWizardProps) => {
         recommendation,
         setRecommendation,
         isGenerating,
-        setIsGenerating,
         handleNext,
         handleApply,
         OptionBtn,

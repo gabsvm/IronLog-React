@@ -2,10 +2,20 @@ import { AppState, ExerciseDef, GlobalTemplate, Log, MesoCycle, NutritionGoal, N
 import { db } from '../utils/db';
 import { useStore } from '../lib/store';
 import { todayLocalDateKey } from '../utils/localDate';
+import { cancelAllPersistedStateFlushes } from '../hooks/usePersistedState';
 
 export const BACKUP_SCHEMA = 'gainslab-backup';
 export const CURRENT_BACKUP_VERSION = 1;
 export const APP_VERSION = '4.0.3';
+
+export interface GainsLabBackupConfig {
+    showRIR?: boolean;
+    rpEnabled?: boolean;
+    rpTargetRIR?: number;
+    keepScreenOn?: boolean;
+    weightUnit?: 'kg' | 'lb';
+    restTimerDisplay?: 'Overlay' | 'Banner' | 'compact' | 'expanded';
+}
 
 export interface GainsLabBackupState {
     program?: ProgramDay[];
@@ -22,12 +32,7 @@ export interface GainsLabBackupState {
     personalTemplates?: GlobalTemplate[];
     customFoods?: CustomFood[];
     rpFeedback?: Record<string, any>;
-    config?: {
-        showRIR?: boolean;
-        rpEnabled?: boolean;
-        rpTargetRIR?: number;
-        keepScreenOn?: boolean;
-    };
+    config?: GainsLabBackupConfig;
 }
 
 export interface GainsLabBackupV1 {
@@ -36,6 +41,7 @@ export interface GainsLabBackupV1 {
     exportedAt: number;
     appVersion: string;
     state: GainsLabBackupState;
+    data?: GainsLabBackupState;
 }
 
 export type BackupValidationResult =
@@ -60,30 +66,35 @@ export interface BackupDomainSummary {
  * Creates a versioned backup payload from current application state.
  */
 export const createBackupEnvelope = (state: GainsLabBackupState): GainsLabBackupV1 => {
+    const backupState: GainsLabBackupState = {
+        program: state.program ?? [],
+        exercises: state.exercises ?? [],
+        logs: state.logs ?? [],
+        activeMeso: state.activeMeso ?? null,
+        activeSession: state.activeSession ?? null,
+        userProfile: state.userProfile,
+        nutritionLogs: state.nutritionLogs ?? [],
+        cardioSessions: state.cardioSessions ?? [],
+        bodyLogs: state.bodyLogs ?? [],
+        macroGoals: state.macroGoals ?? null,
+        nutritionGoal: state.nutritionGoal,
+        personalTemplates: state.personalTemplates ?? [],
+        customFoods: state.customFoods ?? [],
+        rpFeedback: state.rpFeedback ?? {},
+        config: state.config,
+    };
+
     return {
         schema: BACKUP_SCHEMA,
         version: CURRENT_BACKUP_VERSION,
         exportedAt: Date.now(),
         appVersion: APP_VERSION,
-        state: {
-            program: state.program ?? [],
-            exercises: state.exercises ?? [],
-            logs: state.logs ?? [],
-            activeMeso: state.activeMeso ?? null,
-            activeSession: state.activeSession ?? null,
-            userProfile: state.userProfile,
-            nutritionLogs: state.nutritionLogs ?? [],
-            cardioSessions: state.cardioSessions ?? [],
-            bodyLogs: state.bodyLogs ?? [],
-            macroGoals: state.macroGoals ?? null,
-            nutritionGoal: state.nutritionGoal,
-            personalTemplates: state.personalTemplates ?? [],
-            customFoods: state.customFoods ?? [],
-            rpFeedback: state.rpFeedback ?? {},
-            config: state.config,
-        },
+        state: backupState,
+        data: backupState,
     };
 };
+
+export const createBackupPayload = createBackupEnvelope;
 
 /**
  * Calculates a summary of data domains contained in a backup.
@@ -128,9 +139,18 @@ export const validateAndMigrateBackup = (raw: unknown): BackupValidationResult =
             };
         }
 
-        const state = obj.state;
+        const state = (obj.state || obj.data) as GainsLabBackupState | undefined;
         if (!state || typeof state !== 'object') {
             return { valid: false, errorKey: 'backup_missing_state', errorDetails: 'State payload is missing' };
+        }
+
+        if (state.config && typeof state.config === 'object') {
+            if (state.config.weightUnit !== undefined && state.config.weightUnit !== 'kg' && state.config.weightUnit !== 'lb') {
+                delete state.config.weightUnit;
+            }
+            if (state.config.restTimerDisplay !== undefined && typeof state.config.restTimerDisplay !== 'string') {
+                delete state.config.restTimerDisplay;
+            }
         }
 
         const summary = summarizeBackup(state);
@@ -141,9 +161,18 @@ export const validateAndMigrateBackup = (raw: unknown): BackupValidationResult =
             return { valid: false, errorKey: 'backup_empty', errorDetails: 'Backup contains no usable domain data' };
         }
 
+        const validBackup: GainsLabBackupV1 = {
+            schema: BACKUP_SCHEMA,
+            version: version,
+            exportedAt: Number(obj.exportedAt) || Date.now(),
+            appVersion: String(obj.appVersion || APP_VERSION),
+            state,
+            data: state,
+        };
+
         return {
             valid: true,
-            backup: obj as GainsLabBackupV1,
+            backup: validBackup,
             summary,
         };
     }
@@ -178,6 +207,7 @@ export const validateAndMigrateBackup = (raw: unknown): BackupValidationResult =
             exportedAt: Date.now(),
             appVersion: String(obj.version || '4.0.3-legacy'),
             state: legacyState,
+            data: legacyState,
         };
 
         return {
@@ -199,7 +229,9 @@ export const validateAndMigrateBackup = (raw: unknown): BackupValidationResult =
  * ensuring immediate persistence before app reload.
  */
 export const restoreBackupToStorage = async (backup: GainsLabBackupV1): Promise<void> => {
-    const s = backup.state;
+    cancelAllPersistedStateFlushes();
+
+    const s = backup.state || (backup as any).data;
 
     const writeTasks: Promise<void>[] = [];
 
@@ -234,6 +266,12 @@ export const restoreBackupToStorage = async (backup: GainsLabBackupV1): Promise<
         }
         if (s.config.keepScreenOn !== undefined) {
             window.localStorage.setItem('il_cfg_screen', JSON.stringify(s.config.keepScreenOn));
+        }
+        if (s.config.weightUnit !== undefined) {
+            window.localStorage.setItem('il_cfg_weight_unit', JSON.stringify(s.config.weightUnit));
+        }
+        if (s.config.restTimerDisplay !== undefined) {
+            window.localStorage.setItem('il_cfg_rest_display', JSON.stringify(s.config.restTimerDisplay));
         }
     }
 

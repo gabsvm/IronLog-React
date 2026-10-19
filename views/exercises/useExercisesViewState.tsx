@@ -7,6 +7,7 @@ import { TRANSLATIONS } from '../../constants';
 import { Icon } from '../../components/ui/Icon';
 import { MuscleGroup, ExerciseDef, VolumeCountingMode } from '../../types';
 import { getTranslated } from '../../utils';
+import { pickLang } from '../../utils/i18n';
 import { matchesExerciseQuery, mergeExercises, suggestDuplicatePairs, unmergeExercise } from '../../utils/exerciseLibrary';
 import { triggerHaptic } from '../../utils/audio';
 import { statsCache } from '../../services/statsCache';
@@ -191,7 +192,7 @@ export const useExercisesViewState = ({ onBack }: ExercisesViewProps) => {
             });
     }, [exercises, filterCategory, selectedMuscle, searchQuery, lang]);
 
-    const Row = (index: number, ex: ExerciseDef) => {
+    const Row = (_index: number, ex: ExerciseDef) => {
         const isBuiltIn = isBuiltInExercise(ex.id, exercises);
         const isArchived = !!ex.archived;
         const isMerged = !!ex.mergedInto;
@@ -201,13 +202,13 @@ export const useExercisesViewState = ({ onBack }: ExercisesViewProps) => {
 
         return (
             <div className="px-4 py-1.5" key={ex.id}>
-                <div className="w-full glass-card p-3 rounded-2xl flex items-center justify-between shadow-sm border border-zinc-200 dark:border-white/5 bg-white/70 dark:bg-zinc-900/70 hover:border-primary-500/30 transition-all">
+                <div className="w-full card-reference p-3 rounded-2xl flex items-center justify-between shadow-sm border border-zinc-200 dark:border-white/5 bg-white/70 dark:bg-zinc-900/70 hover:border-primary-500/30 transition-all">
                     {/* Main card button (no nested buttons inside!) */}
                     <button
                         type="button"
                         onClick={() => setDetailEx(ex)}
                         className="flex-1 min-w-0 text-left py-1 pr-2 flex flex-col justify-center focus:outline-none"
-                        aria-label={`Detalles de ${getTranslated(ex.name, lang)}`}
+                        aria-label={pickLang(lang, { es: `Detalles de ${getTranslated(ex.name, lang)}`, en: `Details of ${getTranslated(ex.name, lang)}` })}
                     >
                         <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-bold text-zinc-900 dark:text-white text-sm truncate">
@@ -298,7 +299,7 @@ export const useExercisesViewState = ({ onBack }: ExercisesViewProps) => {
                             type="button"
                             onClick={() => setDetailEx(ex)}
                             className="p-2 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
-                            aria-label="Ver detalles"
+                            aria-label={pickLang(lang, { es: 'Ver detalles', en: 'View details' })}
                         >
                             <Icon name="ChevronRight" size={18} />
                         </button>

@@ -172,7 +172,36 @@ describe('syncHelpers & conflict resolution', () => {
             expect(isMeaningfullyEmptyLocalState({
                 activeMeso: null,
                 logs: [],
-                userProfile: { experience: 'intermediate', goal: 'hypertrophy' } as any,
+                userProfile: { experience: 'advanced', goal: 'strength' } as any,
+            })).toBe(false);
+        });
+
+        it('treats default seed userProfile as empty, but customized profile as non-empty', () => {
+            // Default seed values initialized by AppContext
+            expect(isMeaningfullyEmptyLocalState({
+                userProfile: {
+                    experience: 'intermediate',
+                    daysPerWeek: 4,
+                    goal: 'hypertrophy',
+                    sessionDuration: 'medium',
+                } as any,
+            })).toBe(true);
+
+            // Customized goal
+            expect(isMeaningfullyEmptyLocalState({
+                userProfile: {
+                    experience: 'intermediate',
+                    daysPerWeek: 4,
+                    goal: 'strength',
+                    sessionDuration: 'medium',
+                } as any,
+            })).toBe(false);
+
+            // Customized bodyWeight
+            expect(isMeaningfullyEmptyLocalState({
+                userProfile: {
+                    bodyWeight: 80,
+                } as any,
             })).toBe(false);
         });
     });

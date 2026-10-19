@@ -37,7 +37,7 @@ export const DeleteAccountDialog: React.FC<DeleteAccountDialogProps> = ({ open, 
 
     if (!open) return null;
 
-    const canDelete = password.length > 0 && confirmWord === t.confirmWord && !deleting;
+    const canDelete = password.length > 0 && confirmWord.trim().toUpperCase() === t.confirmWord.toUpperCase() && !deleting;
 
     const handleDelete = async () => {
         if (!canDelete) return;
@@ -61,7 +61,7 @@ export const DeleteAccountDialog: React.FC<DeleteAccountDialogProps> = ({ open, 
             aria-labelledby="delete-account-title"
             aria-describedby="delete-account-desc"
         >
-            <div className="modal-surface w-full max-w-sm rounded-2xl border p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="modal-surface w-full max-w-sm rounded-2xl border p-6 shadow-2xl max-h-[calc(100dvh-2rem)] overflow-y-auto" onClick={e => e.stopPropagation()}>
                 <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 bg-red-500/10 text-red-500">
                     <Icon name="AlertTriangle" size={32} />
                 </div>

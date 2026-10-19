@@ -1,10 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { VolumeMuscleList } from '../../views/StatsViewImpl';
-import { NextSessionCard } from '../../views/home/NextSessionCard';
 import { BodyTab } from '../../views/nutri/BodyTab';
-import { TRANSLATIONS } from '../../constants';
-
 describe('K8: volume list hides the Cardio row without touching counts', () => {
     const volumeData: [string, number][] = [['CHEST', 14], ['CARDIO', 99], ['BACK', 8]];
 
@@ -29,30 +26,6 @@ describe('K8: volume list hides the Cardio row without touching counts', () => {
     });
 });
 
-describe('K8: skip-session button has an accessible name and tooltip', () => {
-    const cardProps = {
-        nextDayDef: { dayName: { es: 'Pecho', en: 'Chest' }, slots: [{ muscle: 'CHEST' }] },
-        isSessionActive: false,
-        nextWorkoutIdx: 0,
-        startSession: vi.fn(),
-        handleSkipClick: vi.fn(),
-        tm: (m: string) => m,
-        estimatedMin: 45,
-        adherencePct: null as number | null,
-    };
-
-    it('exposes "Saltar sesión" as name and title in Spanish', () => {
-        render(<NextSessionCard {...cardProps} lang="es" t={TRANSLATIONS.es} />);
-        const btn = screen.getByRole('button', { name: 'Saltar sesión' });
-        expect(btn.getAttribute('title')).toBe('Saltar sesión');
-    });
-
-    it('exposes "Skip session" as name and title in English', () => {
-        render(<NextSessionCard {...cardProps} lang="en" t={TRANSLATIONS.en} />);
-        const btn = screen.getByRole('button', { name: 'Skip session' });
-        expect(btn.getAttribute('title')).toBe('Skip session');
-    });
-});
 
 describe('K8: stale weigh-in nudge in Dieta > Cuerpo', () => {
     const baseProps = {

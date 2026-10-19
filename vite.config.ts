@@ -14,8 +14,7 @@ export default defineConfig(() => {
       modulePreload: {
         resolveDependencies: (_filename, deps) => deps.filter(dep =>
           !dep.includes('vendor-firebase') &&
-          !dep.includes('vendor-charts') &&
-          !dep.includes('vendor-motion')
+          !dep.includes('vendor-charts')
         ),
       },
       rollupOptions: {
@@ -57,9 +56,6 @@ export default defineConfig(() => {
             }
             if (moduleId.includes('/node_modules/firebase') || moduleId.includes('/node_modules/@firebase')) {
               return 'vendor-firebase-core';
-            }
-            if (moduleId.includes('/node_modules/framer-motion') || moduleId.includes('/node_modules/motion')) {
-              return 'vendor-motion';
             }
             if (moduleId.includes('/node_modules/chart.js') || moduleId.includes('/node_modules/react-chartjs-2')) {
               return 'vendor-charts';

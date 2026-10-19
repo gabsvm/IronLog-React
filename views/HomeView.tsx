@@ -45,7 +45,7 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
             dayName: getKongDayDisplay(block.number, dayIndex),
         }));
 
-        setProgram(prev => JSON.stringify(prev) === JSON.stringify(resolved) ? prev : resolved);
+        setProgram(prev => (prev === resolved || JSON.stringify(prev) === JSON.stringify(resolved)) ? prev : resolved);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeMeso?.week, isKong, setProgram, substitutionSignature]);
 

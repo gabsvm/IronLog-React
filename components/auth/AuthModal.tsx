@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { pickLang } from '../../utils/i18n';
 import { useAuth } from '../../context/AuthContext';
 import { useAppPreferences } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
@@ -23,17 +24,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
     const [showPass, setShowPass] = useState(false);
     const [loading, setLoading] = useState(false);
     const [resetSent, setResetSent] = useState(false);
+    const [localError, setLocalError] = useState<string | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setLocalError(null);
+        clearError();
+        if (!isLogin && pass !== confirmPass) {
+            setLocalError("Passwords do not match");
+            setLoading(false);
+            return;
+        }
         setLoading(true);
         try {
             if (isLogin) {
                 await login(email, pass);
             } else {
-                if (pass !== confirmPass) {
-                    throw new Error("Passwords do not match");
-                }
                 await register(email, pass, name);
             }
             onClose();
@@ -45,10 +51,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
     };
 
     const handleResetPassword = async () => {
-        if (!email) {
-            // Handle error or alert
+        if (!email.trim()) {
+            setLocalError(pickLang(lang, { en: 'Please enter your email first.', es: 'Ingresa tu correo electrónico primero.' }));
             return;
         }
+        setLocalError(null);
+        clearError();
         try {
             await resetPassword(email);
             setResetSent(true);
@@ -168,12 +176,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                         </div>
                     )}
 
-                    {error && (
-                        <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-3 rounded-[18px] text-sm font-medium flex items-center gap-2">
-                            <Icon name="AlertTriangle" size={16} />
-                            {error === "Passwords do not match" ? (t.passwordMismatch || error) : error}
-                        </div>
-                    )}
+                    {(() => {
+                        const activeError = localError || error;
+                        return activeError ? (
+                            <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-3 rounded-[18px] text-sm font-medium flex items-center gap-2">
+                                <Icon name="AlertTriangle" size={16} />
+                                {activeError === "Passwords do not match" ? (t.passwordMismatch || activeError) : activeError}
+                            </div>
+                        ) : null;
+                    })()}
                     {resetSent && (
                         <div className="bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 p-3 rounded-[18px] text-xs font-medium flex items-center gap-2">
                             <Icon name="CheckCircle" size={16} />
@@ -207,7 +218,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                     <p className="text-sm text-zinc-500">
                         {isLogin ? `${t.noAccount} ` : `${t.hasAccount} `}
                         <button 
-                            onClick={() => { setIsLogin(!isLogin); clearError(); }}
+                            onClick={() => { setIsLogin(!isLogin); clearError(); setLocalError(null); }}
                             className="text-primary-600 dark:text-primary-400 font-bold hover:underline"
                         >
                             {isLogin ? t.signUpBtn : t.signInBtn}

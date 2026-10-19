@@ -54,10 +54,12 @@ export interface UseCloudUploadsDeps {
     setPendingCloudSections: Dispatch<SetStateAction<DirtySyncSection[]>>;
     hasCheckedSync: boolean;
     setIsOnline: Dispatch<SetStateAction<boolean>>;
-    activeSession: ActiveSession;
+    activeSession?: ActiveSession;
     activeMeso: MesoCycle;
     isAppLoading: boolean;
     withDirtyTrackingSuppressed: (callback: () => void | Promise<void>) => Promise<void>;
+    restTimerDisplay?: 'compact' | 'expanded';
+    setRestTimerDisplay?: (value: 'compact' | 'expanded' | ((val: 'compact' | 'expanded') => 'compact' | 'expanded')) => void;
 }
 
 /** S6: online flush, session/state upload debounces and cloud-merge confirm/cancel (moved verbatim from AppProvider; same hook order). */
@@ -107,10 +109,12 @@ export const useCloudUploads = ({
     setPendingCloudSections,
     hasCheckedSync,
     setIsOnline,
-    activeSession,
+    activeSession: _activeSession,
     activeMeso,
     isAppLoading,
     withDirtyTrackingSuppressed,
+    restTimerDisplay,
+    setRestTimerDisplay,
 }: UseCloudUploadsDeps) => {
     // --- SYNC LOGIC ---
     useEffect(() => {
@@ -127,7 +131,7 @@ export const useCloudUploads = ({
                         setLocalLastUpdated(now);
                         await syncService.uploadState(user.uid, {
                             program, activeMeso, exercises, logs,
-                            config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit },
+                            config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, restTimerDisplay },
                             rpFeedback,
                             userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, personalTemplates,
                             email: user.email || null,
@@ -146,23 +150,38 @@ export const useCloudUploads = ({
         window.addEventListener('offline', handleOffline);
         return () => { window.removeEventListener('online', handleOnline); window.removeEventListener('offline', handleOffline); };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- S6: dependency list moved verbatim from AppProvider; the omitted names are useState setters/refs (stable) or the per-render withDirtyTrackingSuppressed, exactly as before.
-    }, [user, subscription.isPro, program, activeMeso, activeSession, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, rpFeedback, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, personalTemplates, setLocalLastUpdated]);
+    }, [user, subscription.isPro, program, activeMeso, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, restTimerDisplay, rpFeedback, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, personalTemplates, setLocalLastUpdated]);
 
     // ── Debounce A: session-only write (fast, lightweight) ─────────────────────
-    // activeSession changes on every set completion or weight input during a workout.
-    // Writing only this one field (~1-5 KB) instead of the full state document
-    // (~50-200 KB) reduces Firestore write cost by 95%+ during an active session.
+    // Watches state.activeSession via useStore.subscribe with a 5000ms debounce
+    // so active workout edits don't trigger AppProvider re-renders.
     useEffect(() => {
         if (!user || isAppLoading || !hasCheckedSync || !!pendingCloudData) return;
         if (!subscription.isPro) return; // free users: identity-only (handled in online handler)
-        const timer = setTimeout(() => {
-            const now = Date.now();
-            setLocalLastUpdated(now);
-            void syncService.flushQueue();
-            syncService.uploadSessionOnly(user.uid, activeSession, now);
-        }, 3000);
-        return () => clearTimeout(timer);
-    }, [user, subscription.isPro, isAppLoading, hasCheckedSync, pendingCloudData, activeSession, setLocalLastUpdated]);
+
+        let timer: ReturnType<typeof setTimeout> | null = null;
+        let lastSession = useStore.getState().activeSession;
+
+        const unsubscribe = useStore.subscribe((state) => {
+            const nextSession = state.activeSession;
+            if (nextSession === lastSession) return;
+            lastSession = nextSession;
+
+            if (timer) clearTimeout(timer);
+            timer = setTimeout(() => {
+                timer = null;
+                const now = Date.now();
+                setLocalLastUpdated(now);
+                void syncService.flushQueue();
+                syncService.uploadSessionOnly(user.uid, nextSession, now);
+            }, 5000);
+        });
+
+        return () => {
+            unsubscribe();
+            if (timer) clearTimeout(timer);
+        };
+    }, [user, subscription.isPro, isAppLoading, hasCheckedSync, pendingCloudData, setLocalLastUpdated]);
 
     // ── Debounce B: full-state write (slower, only when program/data changes) ──
     // Excludes activeSession (handled above). Fires only when program, exercises,
@@ -181,7 +200,7 @@ export const useCloudUploads = ({
                     void syncService.flushQueue();
                     syncService.uploadState(user.uid, {
                         program, activeMeso, exercises, logs,
-                        config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit },
+                        config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, restTimerDisplay },
                         rpFeedback,
                         userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, personalTemplates,
                         email: user.email || null,
@@ -193,7 +212,7 @@ export const useCloudUploads = ({
             }
         }, 10000);
         return () => clearTimeout(timer);
-    }, [user, subscription.isPro, program, activeMeso, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, rpFeedback, isAppLoading, hasCheckedSync, pendingCloudData, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, personalTemplates, setLocalLastUpdated]);
+    }, [user, subscription.isPro, program, activeMeso, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, restTimerDisplay, rpFeedback, isAppLoading, hasCheckedSync, pendingCloudData, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, personalTemplates, setLocalLastUpdated]);
 
     const confirmCloudSync = useCallback(() => {
         if (!pendingCloudData) return;
@@ -217,6 +236,9 @@ export const useCloudUploads = ({
                 if (pendingCloudData.config.rpTargetRIR !== undefined) setRpTargetRIR(pendingCloudData.config.rpTargetRIR);
                 if (pendingCloudData.config.keepScreenOn !== undefined) setKeepScreenOn(pendingCloudData.config.keepScreenOn);
                 if (pendingCloudData.config.weightUnit === 'kg' || pendingCloudData.config.weightUnit === 'lb') setWeightUnit(pendingCloudData.config.weightUnit);
+                if (setRestTimerDisplay && (pendingCloudData.config.restTimerDisplay === 'compact' || pendingCloudData.config.restTimerDisplay === 'expanded' || pendingCloudData.config.restTimerDisplay === 'Overlay' || pendingCloudData.config.restTimerDisplay === 'Banner')) {
+                    setRestTimerDisplay(pendingCloudData.config.restTimerDisplay as any);
+                }
             }
 
             if (pendingCloudSections.includes('userProfile') && pendingCloudData.userProfile) setUserProfile(pendingCloudData.userProfile);
@@ -253,7 +275,7 @@ export const useCloudUploads = ({
             console.log("Cloud sections applied.");
         });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- S6: dependency list moved verbatim from AppProvider; the omitted names are useState setters/refs (stable) or the per-render withDirtyTrackingSuppressed, exactly as before.
-    }, [user, pendingCloudData, pendingCloudSections, setProgram, setExercises, setLogs, setRpFeedback, setShowRIR, setRpEnabled, setLocalLastUpdated, setHasSeenOnboarding, setBodyLogs, setCustomFoods, setPersonalTemplates, setKeepScreenOn, setWeightUnit, setMacroGoals, setNutritionLogs, setRpTargetRIR, setUserProfile, setLocalSectionSyncMeta, setCardioSessions, setNutritionGoal]);
+    }, [user, pendingCloudData, pendingCloudSections, setProgram, setExercises, setLogs, setRpFeedback, setShowRIR, setRpEnabled, setLocalLastUpdated, setHasSeenOnboarding, setBodyLogs, setCustomFoods, setPersonalTemplates, setKeepScreenOn, setWeightUnit, setRestTimerDisplay, setMacroGoals, setNutritionLogs, setRpTargetRIR, setUserProfile, setLocalSectionSyncMeta, setCardioSessions, setNutritionGoal]);
 
     const cancelCloudSync = useCallback(() => {
         // "Keep Local": user explicitly decided to retain their local state for the conflicting sections.

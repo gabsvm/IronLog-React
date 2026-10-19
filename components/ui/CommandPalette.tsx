@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useAppPreferences } from '../../context/AppContext';
 import { useStore } from '../../lib/store';
-import { KONG_4DAY_V1 } from '../../programs/kong/kong4Day';
+import { KONG_4DAY_ID } from '../../programs/kong/constants';
 import { Icon } from './Icon';
 import { TRANSLATIONS } from '../../constants/translations';
 
@@ -41,7 +40,7 @@ export const CommandPalette: React.FC<Props> = ({ isOpen, onClose, actions, titl
     const activeMeso = useStore(state => state.activeMeso);
     const [query, setQuery] = useState('');
     const [activeIdx, setActiveIdx] = useState(0);
-    const isStructuredKong = activeMeso?.programSystem?.systemId === KONG_4DAY_V1.id;
+    const isStructuredKong = activeMeso?.programSystem?.systemId === KONG_4DAY_ID || activeMeso?.programSystem?.systemId === 'kong_4day';
 
     // The generic editor mutates the projected `program` array. While KONG is
     // active that array is only a resolved view of an immutable Program System,
@@ -99,108 +98,74 @@ export const CommandPalette: React.FC<Props> = ({ isOpen, onClose, actions, titl
         return () => window.removeEventListener('keydown', onKey);
     }, [isOpen, filtered, activeIdx, onClose]);
 
+    if (!isOpen) return null;
+
     return (
-        <AnimatePresence>
-            {isOpen && (
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-                    className="fixed inset-0 z-sheet flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-start sm:pt-[18vh]"
-                    onClick={onClose}
-                    role="dialog"
-                    aria-modal="true"
-                    aria-label={title || (TRANSLATIONS[lang].copy.commandPalette.quickActions)}
-                >
-                    <motion.div
-                        initial={{ y: 42, opacity: 0, scale: 0.985 }}
-                        animate={{ y: 0, opacity: 1, scale: 1 }}
-                        exit={{ y: 20, opacity: 0, scale: 0.985 }}
-                        transition={{ duration: 0.26, ease: [0.16, 1, 0.3, 1] }}
-                        className="modal-surface mb-[calc(var(--safe-area-bottom)+72px)] w-full overflow-hidden rounded-t-[32px] border shadow-2xl sm:mb-0 sm:mx-4 sm:max-w-lg sm:rounded-3xl"
-                        onClick={e => e.stopPropagation()}
-                    >
-                        <div className="flex justify-center pb-1 pt-3 sm:hidden">
-                            <div className="h-1.5 w-10 rounded-full bg-zinc-300 dark:bg-white/20" />
-                        </div>
+        <div
+            className="fixed inset-0 z-sheet flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-start sm:pt-[18vh] animate-in fade-in duration-150"
+            onClick={onClose}
+            role="dialog"
+            aria-modal="true"
+            aria-label={title || (TRANSLATIONS[lang].copy.commandPalette.quickActions)}
+        >
+            <div
+                className="modal-surface mb-[calc(var(--safe-area-bottom)+72px)] w-full overflow-hidden rounded-t-[32px] border shadow-2xl sm:mb-0 sm:mx-4 sm:max-w-lg sm:rounded-3xl animate-in fade-in zoom-in-95 duration-150"
+                onClick={e => e.stopPropagation()}
+            >
+                <div className="hidden items-center gap-3 border-b border-[rgb(var(--border-subtle))] px-4 pb-2 pt-3 dark:border-white/5 sm:flex">
+                    <Icon name="Search" size={18} className="shrink-0 text-muted" />
+                    <input
+                        type="text"
+                        value={query}
+                        onChange={e => { setQuery(e.target.value); setActiveIdx(0); }}
+                        placeholder={TRANSLATIONS[lang].copy.commandPalette.searchAction}
+                        className="flex-1 bg-transparent py-2 text-sm font-medium text-zinc-950 outline-none placeholder-zinc-500 dark:text-white"
+                    />
+                    <kbd className="inline-flex items-center gap-1 rounded border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated))] px-1.5 py-0.5 text-xs font-bold text-muted  ">ESC</kbd>
+                </div>
 
-                        <div className="px-5 pb-3 pt-2 sm:hidden">
-                            <div className="flex items-start justify-between gap-3">
-                                <div>
-                                    <h2 className="text-xl font-black tracking-tight text-[rgb(var(--text-primary))]">
-                                        {TRANSLATIONS[lang].copy.commandPalette.whatDoYouWant}
-                                    </h2>
-                                    <p className="mt-1 text-xs font-medium text-muted">
-                                        {TRANSLATIONS[lang].copy.commandPalette.startResumeOrManage}
-                                    </p>
-                                </div>
+                <div className="max-h-[62vh] overflow-y-auto px-3 pb-4 pt-1 scroll-container sm:px-0 sm:py-2">
+                    {filtered.length === 0 ? (
+                        <div className="py-12 text-center text-sm text-muted">
+                            {TRANSLATIONS[lang].copy.commandPalette.noResults}
+                        </div>
+                    ) : (
+                        filtered.map((a, i) => {
+                            const emphasized = !!a.badge || i === 0;
+                            return (
                                 <button
-                                    onClick={onClose}
-                                    aria-label={TRANSLATIONS[lang].copy.commandPalette.close}
-                                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[rgb(var(--surface-elevated))] text-muted"
+                                    key={a.id}
+                                    onClick={() => { a.onSelect(); onClose(); }}
+                                    onMouseEnter={() => setActiveIdx(i)}
+                                    className={`mb-2 flex w-full items-center gap-3 rounded-2xl border px-3.5 py-3.5 text-left transition-all active:scale-[0.985] sm:mb-0 sm:rounded-none sm:border-0 sm:px-4 sm:py-3 ${
+                                        emphasized
+                                            ? 'border-primary-500/20 bg-primary-500/[0.06]'
+                                            : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))]'
+                                    } ${i === activeIdx ? 'sm:bg-[rgb(var(--surface-elevated))]' : ''}`}
                                 >
-                                    <Icon name="X" size={17} />
+                                    <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br shadow-md ${ACCENT[a.accent || 'zinc']}`}>
+                                        <Icon name={a.icon} size={19} />
+                                    </span>
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex items-center gap-2 truncate text-sm font-black text-[rgb(var(--text-primary))]">
+                                            <span className="truncate">{a.label[lang]}</span>
+                                            {a.badge && (
+                                                <span className="shrink-0 rounded-full border border-primary-500/25 bg-primary-500/10 px-1.5 py-0.5 text-xs font-black uppercase tracking-wider text-primary-600 dark:text-primary-400">
+                                                    {a.badge}
+                                                </span>
+                                            )}
+                                        </div>
+                                        {a.description && (
+                                            <div className="mt-0.5 truncate text-xs leading-snug text-muted">{a.description[lang]}</div>
+                                        )}
+                                    </div>
+                                    <Icon name="ChevronRight" size={17} className="shrink-0 text-zinc-400" />
                                 </button>
-                            </div>
-                        </div>
-
-                        <div className="hidden items-center gap-3 border-b border-[rgb(var(--border-subtle))] px-4 pb-2 pt-3 dark:border-white/5 sm:flex">
-                            <Icon name="Search" size={18} className="shrink-0 text-muted" />
-                            <input
-                                type="text"
-                                value={query}
-                                onChange={e => { setQuery(e.target.value); setActiveIdx(0); }}
-                                placeholder={TRANSLATIONS[lang].copy.commandPalette.searchAction}
-                                className="flex-1 bg-transparent py-2 text-sm font-medium text-zinc-950 outline-none placeholder-zinc-500 dark:text-white"
-                            />
-                            <kbd className="inline-flex items-center gap-1 rounded border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated))] px-1.5 py-0.5 text-xs font-bold text-muted  ">ESC</kbd>
-                        </div>
-
-                        <div className="max-h-[62vh] overflow-y-auto px-3 pb-4 pt-1 scroll-container sm:px-0 sm:py-2">
-                            {filtered.length === 0 ? (
-                                <div className="py-12 text-center text-sm text-muted">
-                                    {TRANSLATIONS[lang].copy.commandPalette.noResults}
-                                </div>
-                            ) : (
-                                filtered.map((a, i) => {
-                                    const emphasized = !!a.badge || i === 0;
-                                    return (
-                                        <button
-                                            key={a.id}
-                                            onClick={() => { a.onSelect(); onClose(); }}
-                                            onMouseEnter={() => setActiveIdx(i)}
-                                            className={`mb-2 flex w-full items-center gap-3 rounded-2xl border px-3.5 py-3.5 text-left transition-all active:scale-[0.985] sm:mb-0 sm:rounded-none sm:border-0 sm:px-4 sm:py-3 ${
-                                                emphasized
-                                                    ? 'border-primary-500/20 bg-primary-500/[0.06]'
-                                                    : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))]'
-                                            } ${i === activeIdx ? 'sm:bg-[rgb(var(--surface-elevated))]' : ''}`}
-                                        >
-                                            <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br shadow-md ${ACCENT[a.accent || 'zinc']}`}>
-                                                <Icon name={a.icon} size={19} />
-                                            </span>
-                                            <div className="min-w-0 flex-1">
-                                                <div className="flex items-center gap-2 truncate text-sm font-black text-[rgb(var(--text-primary))]">
-                                                    <span className="truncate">{a.label[lang]}</span>
-                                                    {a.badge && (
-                                                        <span className="shrink-0 rounded-full border border-primary-500/25 bg-primary-500/10 px-1.5 py-0.5 text-xs font-black uppercase tracking-wider text-primary-600 dark:text-primary-400">
-                                                            {a.badge}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                {a.description && (
-                                                    <div className="mt-0.5 truncate text-xs leading-snug text-muted">{a.description[lang]}</div>
-                                                )}
-                                            </div>
-                                            <Icon name="ChevronRight" size={17} className="shrink-0 text-zinc-400" />
-                                        </button>
-                                    );
-                                })
-                            )}
-                        </div>
-                    </motion.div>
-                </motion.div>
-            )}
-        </AnimatePresence>
+                            );
+                        })
+                    )}
+                </div>
+            </div>
+        </div>
     );
 };

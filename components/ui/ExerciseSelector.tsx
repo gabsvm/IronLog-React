@@ -6,6 +6,7 @@ import { Icon } from './Icon';
 import { MuscleGroup, ExerciseDef, VolumeCountingMode } from '../../types';
 import { Button } from './Button';
 import { getTranslated } from '../../utils';
+import { pickLang } from '../../utils/i18n';
 import { isSelectorVisible, matchesExerciseQuery } from '../../utils/exerciseLibrary';
 import { Virtuoso } from 'react-virtuoso';
 import { Sheet } from './Sheet';
@@ -147,7 +148,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
             onOpenChange={(o) => { if (!o) onClose(); }}
             variant="full"
             hideCloseButton
-            description={persistToGlobal ? 'Global exercise library admin' : 'Exercise picker'}
+            description={persistToGlobal ? pickLang(lang, { es: 'Administrador de biblioteca global de ejercicios', en: 'Global exercise library admin' }) : pickLang(lang, { es: 'Selector de ejercicios', en: 'Exercise picker' })}
             accent="primary"
         >
             {/* The Sheet body is a plain `overflow-y-auto` block, so we must re-establish
@@ -156,7 +157,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
             <div className="flex flex-col h-full">
             {/* Custom Header (search input replaces the default Sheet title slot) */}
             <div className={`glass px-4 h-16 shrink-0 flex items-center gap-3 border-b border-zinc-200 dark:border-white/5 ${persistToGlobal ? 'bg-primary-500/10' : ''}`}>
-                <button onClick={onClose} className="p-2 -ml-2 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white" aria-label="Close">
+                <button onClick={onClose} className="p-2 -ml-2 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white" aria-label={pickLang(lang, { es: 'Cerrar', en: 'Close' })}>
                     <Icon name="X" size={24} />
                 </button>
                 {isCreating ? (
@@ -171,7 +172,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
                                 autoFocus
                                 type="text"
                                 placeholder={t.searchPlaceholder}
-                                aria-label="Search exercises"
+                                aria-label={pickLang(lang, { es: 'Buscar ejercicios', en: 'Search exercises' })}
                                 className="premium-form-input w-full py-2 pl-9 pr-4 font-medium"
                                 value={search}
                                 onChange={e => setSearch(e.target.value)}
@@ -179,7 +180,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
                         </div>
                         <button
                             onClick={handleCreateStart}
-                            aria-label="Add new exercise"
+                            aria-label={pickLang(lang, { es: 'Añadir nuevo ejercicio', en: 'Add new exercise' })}
                             className="w-10 h-10 flex items-center justify-center rounded-xl bg-primary-500 text-black shadow-md shadow-primary-500/20 active:scale-95 transition-transform duration-fast ease-natural"
                         >
                             <Icon name="Plus" size={20} />
@@ -283,7 +284,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
                                 </div>
                                 <div>
                                     <p className="text-white font-bold text-base mb-1">
-                                        {search ? `Sin resultados para "${search}"` : (t.noExFound || 'Sin ejercicios')}
+                                        {search ? pickLang(lang, { es: `Sin resultados para "${search}"`, en: `No results for "${search}"` }) : (t.noExFound || pickLang(lang, { es: 'Sin ejercicios', en: 'No exercises' }))}
                                     </p>
                                     <p className="text-zinc-500 text-sm">
                                         {TRANSLATIONS[lang].copy.exerciseSelector.searchByNameOr}

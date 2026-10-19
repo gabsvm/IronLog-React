@@ -170,9 +170,10 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope }: { activeTab?
                 setLoadingOverview(false);
             }
 
-            const { volumeData, exerciseFrequency, weeks } = await calculateOverview(safeLogs, scopeMesoId ?? undefined);
-            if (cancelled) return;
+            const result = await calculateOverview(safeLogs, scopeMesoId ?? undefined);
+            if (cancelled || !result) return;
 
+            const { volumeData = [], exerciseFrequency = {}, weeks = 1 } = result;
             setVolumeData(volumeData);
             setOverviewWeeks(weeks);
 
@@ -231,7 +232,7 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope }: { activeTab?
 
             const points = await calculateChartData(safeLogs, groupIds, chartMetric, scopeMesoId);
             if (cancelled) return;
-            setChartPoints(points);
+            setChartPoints(Array.isArray(points) ? points : []);
             await statsCache.writeChart(logsSignature, cacheId, chartMetric, scopeMesoId, points);
             setLoadingChart(false);
         };

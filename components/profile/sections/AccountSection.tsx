@@ -88,7 +88,7 @@ export const AccountSection: React.FC<AccountSectionProps> = ({ onClose, onLogin
 
             <div className="label-reference px-1">{ty.account}</div>
             <div className="flex items-center gap-3">
-                <div className="w-13 h-13 rounded-full bg-surface-raised border-2 border-amber-400/90 flex items-center justify-center font-bold text-xl text-white shadow-sm shrink-0">
+                <div className="w-12 h-12 rounded-full bg-surface-raised border-2 border-amber-400/90 flex items-center justify-center font-bold text-xl text-white shadow-sm shrink-0">
                     {userInitial}
                 </div>
                 <div className="flex-1 min-w-0">

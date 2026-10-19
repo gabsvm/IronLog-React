@@ -107,7 +107,7 @@ const stableStringify = (value: unknown): string => {
 /** Content hash (FNV-1a 32-bit) ignoring `updatedAt`, key order and undefined holes. */
 export const hashItemContent = (item: object): string => {
     const { updatedAt: _ignored, ...rest } = item as Record<string, unknown>;
-    const canonical = stableStringify(JSON.parse(JSON.stringify(rest)));
+    const canonical = stableStringify(rest);
     let hash = 0x811c9dc5;
     for (let i = 0; i < canonical.length; i++) {
         hash ^= canonical.charCodeAt(i);

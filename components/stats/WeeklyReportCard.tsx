@@ -115,7 +115,7 @@ export const WeeklyReportCard: React.FC<WeeklyReportCardProps> = ({ report, week
                     {report.deloadSuggested && (
                         <div className="mt-4 flex items-start gap-2 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-3 py-2.5">
                             <Icon name="Info" size={16} className="mt-0.5 shrink-0 text-amber-400" />
-                            <p className="text-xs font-medium leading-relaxed text-amber-200">
+                            <p className="text-xs font-medium leading-relaxed text-amber-800 dark:text-amber-200">
                                 {report.deloadReason === 'final-week' ? w.deloadFinal : w.deloadFeedback}
                             </p>
                         </div>

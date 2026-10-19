@@ -1,4 +1,5 @@
 import React from 'react';
+import { pickLang } from '../../utils/i18n';
 import { NutritionGoal } from '../../types';
 import { Icon } from '../../components/ui/Icon';
 import { Button } from '../../components/ui/Button';
@@ -63,7 +64,7 @@ export const HistoryTab: React.FC<Props> = ({ lang, last14Days, historyDayList, 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <p className="text-2xl font-black text-[rgb(var(--text-primary))]">{avgCal}</p>
-                            <p className="text-xs text-muted">kcal/día</p>
+                            <p className="text-xs text-muted">{pickLang(lang, { en: 'kcal/day', es: 'kcal/día' })}</p>
                             <p className={`text-xs mt-1 ${avgCal > nutritionGoal.calories ? 'text-orange-400' : 'text-green-400'}`}>
                                 {avgCal > nutritionGoal.calories ? '+' : ''}{avgCal - nutritionGoal.calories} vs {TRANSLATIONS[lang].copy.historyTab.goal}
                             </p>

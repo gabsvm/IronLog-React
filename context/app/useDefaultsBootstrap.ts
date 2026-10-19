@@ -1,5 +1,4 @@
-// S6: idle load of the bundled library/templates and empty-state defaults, moved verbatim from context/AppContext.tsx.
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { ExerciseDef, ProgramDay, GlobalTemplate } from '../../types';
 import { scheduleWhenIdle } from '../../lib/idle';
 import type { Dispatch, SetStateAction } from 'react';
@@ -36,21 +35,50 @@ export const useDefaultsBootstrap = ({
     setBaseTemplates,
     setDefaultsLoading,
 }: UseDefaultsBootstrapDeps) => {
+    const programRef = useRef(program);
+    programRef.current = program;
+    const exercisesRef = useRef(exercises);
+    exercisesRef.current = exercises;
+    const programLoadingRef = useRef(programLoading);
+    programLoadingRef.current = programLoading;
+    const exLoadingRef = useRef(exLoading);
+    exLoadingRef.current = exLoading;
+
     useEffect(() => {
         let cancelled = false;
         const cancelIdle = scheduleWhenIdle(async () => {
             try {
-                const [{ DEFAULT_LIBRARY }, { DEFAULT_TEMPLATE, INITIAL_TEMPLATES }] = await Promise.all([
-                    import('../../data/defaultLibrary'),
-                    import('../../data/defaultTemplates'),
-                ]);
+                const isProgramLoaded = !programLoadingRef.current;
+                const isExLoaded = !exLoadingRef.current;
+                const currentProgram = programRef.current;
+                const currentExercises = exercisesRef.current;
 
-                if (cancelled) return;
+                if (
+                    isProgramLoaded &&
+                    isExLoaded &&
+                    Array.isArray(currentProgram) &&
+                    currentProgram.length > 0 &&
+                    Array.isArray(currentExercises) &&
+                    currentExercises.length > 0
+                ) {
+                    return;
+                }
 
-                setDefaultLibrary(DEFAULT_LIBRARY);
-                setDefaultTemplate(DEFAULT_TEMPLATE);
-                setBaseTemplates(INITIAL_TEMPLATES);
-                setGlobalTemplates((prev) => (prev.length > 0 ? prev : INITIAL_TEMPLATES));
+                const loadDefaults = async () => {
+                    const [{ DEFAULT_LIBRARY }, { DEFAULT_TEMPLATE, INITIAL_TEMPLATES }] = await Promise.all([
+                        import('../../data/defaultLibrary'),
+                        import('../../data/defaultTemplates'),
+                    ]);
+
+                    if (cancelled) return;
+
+                    setDefaultLibrary(DEFAULT_LIBRARY);
+                    setDefaultTemplate(DEFAULT_TEMPLATE);
+                    setBaseTemplates(INITIAL_TEMPLATES);
+                    setGlobalTemplates((prev) => (prev.length > 0 ? prev : INITIAL_TEMPLATES));
+                };
+
+                await loadDefaults();
             } finally {
                 if (!cancelled) setDefaultsLoading(false);
             }

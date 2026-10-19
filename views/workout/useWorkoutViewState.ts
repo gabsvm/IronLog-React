@@ -1,12 +1,11 @@
 // S6: WorkoutView state, effects and handlers, moved verbatim from
 // views/WorkoutViewImpl.tsx (the view is now an orchestrator).
-import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react';
+import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import { useApp, useAppConfig, useAppPreferences, useTutorial } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
 import { ExerciseDef, SetType } from '../../types';
 import { getMesoStageConfig, getLastLogForExercise } from '../../utils';
 import { useWorkoutController } from '../../hooks/useWorkoutController';
-import { SortableExerciseCard } from '../../components/workout/SortableExerciseCard';
 import { useTimerActions } from '../../context/TimerContext';
 import { countWorkingSets, resolveInitialActiveExerciseId, toggleExerciseCardExpansion } from '../../utils/workoutProgress';
 import { useStore } from '../../lib/store';

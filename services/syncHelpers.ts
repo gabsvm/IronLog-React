@@ -133,8 +133,22 @@ export const isMeaningfullyEmptyLocalState = (state: MeaningfulLocalStateInput |
 
     // 10. Meaningful user profile answers (non-empty onboarding responses or customized goals)
     if (state.userProfile && typeof state.userProfile === 'object') {
-        const p = state.userProfile;
-        if (p.experience || p.goal || p.daysPerWeek || p.targetWeight || p.currentWeight) {
+        const p = state.userProfile as Record<string, any>;
+        const hasCustomizedProfile = Boolean(
+            p.name ||
+            p.bodyWeight ||
+            p.height ||
+            p.age ||
+            p.sex ||
+            p.bodyFat ||
+            p.targetWeight ||
+            p.currentWeight ||
+            (p.experience && p.experience !== 'intermediate') ||
+            (p.goal && p.goal !== 'hypertrophy') ||
+            (p.daysPerWeek && p.daysPerWeek !== 4) ||
+            (p.sessionDuration && p.sessionDuration !== 'medium')
+        );
+        if (hasCustomizedProfile) {
             return false;
         }
     }

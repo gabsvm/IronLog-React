@@ -251,7 +251,7 @@ export const ReorderExercisesSheet: React.FC<ReorderExercisesSheetProps> = ({
         >
             <div className="px-4 pb-8 pt-2">
                 {methodologyWarning && (
-                    <div className="mb-3 flex gap-3 rounded-xl border border-amber-500/25 bg-amber-500/10 px-3.5 py-2.5 text-xs leading-relaxed text-amber-300">
+                    <div className="mb-3 flex gap-3 rounded-xl border border-amber-500/25 bg-amber-500/10 px-3.5 py-2.5 text-xs leading-relaxed text-amber-800 dark:text-amber-300">
                         <Icon name="AlertTriangle" size={16} className="mt-0.5 shrink-0 text-amber-400" />
                         <span>{methodologyWarning}</span>
                     </div>

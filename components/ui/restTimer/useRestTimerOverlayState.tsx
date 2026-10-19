@@ -17,7 +17,7 @@ export const useRestTimerOverlayState = () => {
     const { lang, reducedEffects } = useAppPreferences();
     const { config } = useAppConfig();
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-    const activeSession = useStore(state => state.activeSession);
+    const activeSession = useStore(state => restTimer.active ? state.activeSession : null);
     const setActiveSession = useStore(state => state.setActiveSession);
 
     const initialMode = config?.restTimerDisplay === 'expanded' ? 'expanded' : 'compact';

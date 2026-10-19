@@ -1,6 +1,7 @@
 import { db } from '../utils/db';
 import { useStore, resetStorePersistence } from '../lib/store';
 import { dirtySyncState } from './dirtySyncState';
+import { cancelAllPersistedStateFlushes } from '../hooks/usePersistedState';
 
 export interface ResetOptions {
     preservePreferences?: boolean; // If true, keeps lang/theme/effects preferences
@@ -15,6 +16,9 @@ const PREFERENCE_KEYS = ['il_theme_v1', 'il_lang_v1', 'il_color_theme_v1', 'il_e
  */
 export const resetLocalData = async (options: ResetOptions = {}): Promise<void> => {
     try {
+        // 0. Cancel all persisted state flushes and suppress in-flight writes
+        cancelAllPersistedStateFlushes();
+
         // 1. Cancel pending debounce timers and reset in-memory Zustand store
         resetStorePersistence();
 

@@ -1,6 +1,6 @@
 
-import { formatMessage } from '../../utils/i18n';
-import React, { useState } from 'react';
+import { formatMessage, pickLang } from '../../utils/i18n';
+import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Icon } from '../ui/Icon';
 import { useAppPreferences } from '../../context/AppContext';
@@ -14,8 +14,6 @@ interface PaywallModalProps {
 export const PaywallModal: React.FC<PaywallModalProps> = ({ onClose, feature }) => {
     const { user } = useAuth();
     const { lang } = useAppPreferences();
-    const [loading, setLoading] = useState<string | null>(null);
-    const [success, setSuccess] = useState(false);
     const t = TRANSLATIONS[lang].pro;
 
     const WA_NUMBER = '5491132483927';
@@ -47,7 +45,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ onClose, feature }) 
                     <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-xl expressive-reveal mb-2">
                         <Icon name="Crown" size={28} className="text-primary-600 fill-primary-600" />
                     </div>
-                    <button onClick={onClose} className="absolute top-4 right-4 bg-black/20 hover:bg-black/40 text-white rounded-full p-2 transition-colors z-20" aria-label="Close"> <Icon name="X" size={20} />
+                    <button onClick={onClose} className="absolute top-4 right-4 bg-black/20 hover:bg-black/40 text-white rounded-full p-2 transition-colors z-20" aria-label={pickLang(lang, { en: 'Close', es: 'Cerrar' })}> <Icon name="X" size={20} />
                     </button>
                     <div className="relative z-10 text-center px-6">
                         <h2 className="text-xl font-black text-white leading-tight mb-1 tracking-tight drop-shadow-md">
@@ -114,30 +112,6 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ onClose, feature }) 
                     </div>
                 </div>
             </div>
-            
-            {loading && (
-                <div className="absolute inset-0 z-celebration bg-black/60 flex items-center justify-center backdrop-blur-sm">
-                    <div className="bg-[rgb(var(--surface-raised))] p-6 rounded-2xl flex flex-col items-center shadow-2xl animate-in zoom-in-95">
-                        <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                        <span className="font-bold text-[rgb(var(--text-primary))] text-sm tracking-wide uppercase">
-                            {TRANSLATIONS[lang].copy.paywallModal.processing}
-                        </span>
-                    </div>
-                </div>
-            )}
-
-            {success && (
-                <div className="absolute inset-0 z-celebration bg-black/60 flex items-center justify-center backdrop-blur-sm">
-                    <div className="bg-[rgb(var(--surface-raised))] p-8 rounded-2xl flex flex-col items-center shadow-2xl animate-in zoom-in-95">
-                        <div className="w-16 h-16 bg-primary-500 rounded-full flex items-center justify-center mb-4 expressive-reveal">
-                            <Icon name="Check" size={32} className="text-white" strokeWidth={4} />
-                        </div>
-                        <span className="font-black text-xl text-[rgb(var(--text-primary))] tracking-tight uppercase">
-                            {TRANSLATIONS[lang].copy.paywallModal.welcomePro}
-                        </span>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

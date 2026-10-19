@@ -11,6 +11,8 @@ export default {
     "./utils/**/*.{ts,tsx}",
     "./services/**/*.{ts,tsx}",
     "./lib/**/*.{ts,tsx}",
+    "./constants/**/*.{ts,tsx}",
+    "./programs/**/*.{ts,tsx}",
   ],
   darkMode: "class",
   theme: {

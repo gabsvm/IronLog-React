@@ -285,7 +285,8 @@ service cloud.firestore {
         allow create, update: if isOwner(uid)
           && doc == 'history'
           && request.resource.data.keys().hasOnly(['logs'])
-          && request.resource.data.logs is list;
+          && request.resource.data.logs is list
+          && request.resource.data.logs.size() <= 1000;
         allow delete: if isOwner(uid) && doc == 'history';
       }
     }

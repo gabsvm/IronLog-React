@@ -1,4 +1,5 @@
 import React, { Suspense } from 'react';
+import { pickLang } from '../../utils/i18n';
 import { useApp } from '../../context/AppContext';
 import { useTimerActions } from '../../context/TimerContext';
 import { useStore } from '../../lib/store';
@@ -22,6 +23,7 @@ const ExercisesView = React.lazy(() => import('../../views/ExercisesView').then(
 const ProgramEditView = React.lazy(() => import('../../views/ProgramEditView').then(m => ({ default: m.ProgramEditView })));
 const SessionSummaryView = React.lazy(() => import('../../views/SessionSummaryView').then(m => ({ default: m.SessionSummaryView })));
 const WorkoutView = React.lazy(() => import('../../views/WorkoutView').then(m => ({ default: m.WorkoutView })));
+const ConfirmModal = React.lazy(() => import('../ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
 
 interface AppViewsProps {
     view: string;
@@ -64,6 +66,33 @@ export const AppViews: React.FC<AppViewsProps> = ({
     const activeMeso = useStore(state => state.activeMeso);
     const setActiveMeso = useStore(state => state.setActiveMeso);
     const { setRestTimer } = useTimerActions();
+    const [pendingStartDayIdx, setPendingStartDayIdx] = React.useState<number | null>(null);
+
+    const buildAndSetSession = (idx: number) => {
+        if (!activeMeso) { setView('program'); return; }
+
+        const safeProgram = Array.isArray(program) ? program : [];
+        const dayDef = activeMeso.programSystem?.systemId === KONG_4DAY_V1.id
+            ? resolveProgramDay(KONG_4DAY_V1, activeMeso.week, idx, activeMeso.programSystem.substitutions)
+            : safeProgram[idx];
+        if (!dayDef) return;
+
+        const newSession = SessionBuilder.buildFromProgramDay(
+            idx,
+            dayDef,
+            activeMeso,
+            Array.isArray(exercises) ? exercises : [],
+            Array.isArray(logs) ? logs : [],
+            lang,
+            rpFeedback,
+            config
+        );
+
+        if (newSession) {
+            setActiveSession(newSession);
+            setView('workout');
+        }
+    };
 
     return (
         <>
@@ -158,34 +187,19 @@ export const AppViews: React.FC<AppViewsProps> = ({
                         startSession={(idx) => {
                             if (!activeMeso) { setView('program'); return; }
 
-                            // CRITICAL FIX: Check if an active session already exists for this day/meso
-                            // If so, just resume it instead of overwriting.
+                            // If an active session already exists for this exact day/meso, resume it
                             if (activeSession && activeSession.mesoId === activeMeso.id && activeSession.dayIdx === idx) {
                                 setView('workout');
                                 return;
                             }
 
-                            const safeProgram = Array.isArray(program) ? program : [];
-                            const dayDef = activeMeso.programSystem?.systemId === KONG_4DAY_V1.id
-                                ? resolveProgramDay(KONG_4DAY_V1, activeMeso.week, idx, activeMeso.programSystem.substitutions)
-                                : safeProgram[idx];
-                            if (!dayDef) return;
-
-                            const newSession = SessionBuilder.buildFromProgramDay(
-                                idx,
-                                dayDef,
-                                activeMeso,
-                                Array.isArray(exercises) ? exercises : [],
-                                Array.isArray(logs) ? logs : [],
-                                lang,
-                                rpFeedback,
-                                config
-                            );
-
-                            if (newSession) {
-                                setActiveSession(newSession);
-                                setView('workout');
+                            // If an active session already exists for another day/meso, prompt confirmation
+                            if (activeSession) {
+                                setPendingStartDayIdx(idx);
+                                return;
                             }
+
+                            buildAndSetSession(idx);
                         }}
                         onEditProgram={() => {
                             if (activeMeso?.programSystem?.systemId === KONG_4DAY_V1.id) {
@@ -212,6 +226,28 @@ export const AppViews: React.FC<AppViewsProps> = ({
                         </Suspense>
                     )}
                 </Layout>
+            )}
+
+            {pendingStartDayIdx !== null && (
+                <Suspense fallback={null}>
+                    <ConfirmModal
+                        isOpen={true}
+                        title={pickLang(lang, { en: 'Replace active workout', es: 'Reemplazar sesión activa' })}
+                        description={pickLang(lang, {
+                            en: 'You already have a workout in progress. Do you want to discard it and start this new workout?',
+                            es: 'Ya tienes un entrenamiento en curso. ¿Deseas descartarlo y comenzar este nuevo entrenamiento?',
+                        })}
+                        confirmText={pickLang(lang, { en: 'Start new', es: 'Comenzar nueva' })}
+                        cancelText={pickLang(lang, { en: 'Cancel', es: 'Cancelar' })}
+                        variant="danger"
+                        onConfirm={() => {
+                            const idx = pendingStartDayIdx;
+                            setPendingStartDayIdx(null);
+                            buildAndSetSession(idx);
+                        }}
+                        onCancel={() => setPendingStartDayIdx(null)}
+                    />
+                </Suspense>
             )}
         </>
     );

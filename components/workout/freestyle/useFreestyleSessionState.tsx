@@ -111,7 +111,7 @@ export const useFreestyleSessionState = ({ isOpen, onClose, onStart }: Freestyle
 
     const tabStyle = (active: boolean, color: string) =>
         `flex-1 py-3 text-xs font-black uppercase tracking-wider rounded-2xl transition-all active:scale-95 ${
-            active ? `${color} text-white shadow-lg` : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+            active ? `${color} shadow-lg` : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
         }`;
 
     const canStart =

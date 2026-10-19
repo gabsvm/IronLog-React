@@ -1267,6 +1267,7 @@ export const EN = {
             saveSession: 'Save Session',
         },
         paywallModal: {
+            close: 'Close',
             unlockPro: 'Unlock PRO',
             sendAWhatsappMessage: 'Send a WhatsApp message to request early access. We will activate your account within 24 hours.',
             alreadyHaveAnApproved: 'Already have an approved account? Sign in with your email to sync Pro entitlement.',
@@ -1381,6 +1382,7 @@ export const EN = {
             kcalRemaining: 'kcal remaining',
             kcalOverGoal: 'kcal over goal',
             protein: 'Protein',
+            carbs: 'Carbs',
             fat: 'Fat',
             proteinToHitYour: 'protein to hit your goal',
             burnedFromCardioAdded: 'burned from cardio — added to budget',

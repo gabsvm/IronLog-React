@@ -85,16 +85,15 @@ export const useSortableExerciseCardState = ({
         isDragging,
     } = useSortable({ id: ex.instanceId, disabled: !dragEnabled });
 
+    const isMenuOpen = openMenuId === ex.instanceId;
+
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
-        zIndex: isDragging ? 100 : 1,
+        zIndex: isDragging ? 100 : isMenuOpen ? 40 : 1,
         opacity: isDragging ? 0.8 : 1,
         willChange: isDragging ? 'transform' as const : undefined,
         position: 'relative' as const,
-        contentVisibility: 'auto' as const,
-        containIntrinsicSize: '500px',
-        contain: 'layout paint style' as const,
     };
 
     const sets = ex.sets || [];
@@ -488,6 +487,7 @@ export const useSortableExerciseCardState = ({
         confirmDelete,
         handleSupersetAction,
         heroMetric,
+        isMenuOpen,
     };
 };
 

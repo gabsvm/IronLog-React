@@ -9,7 +9,7 @@ import { isWorkingSet } from '../../../utils/workoutProgress';
 import type { ExerciseCardState } from './useSortableExerciseCardState';
 
 export const ExerciseCardCollapsed: React.FC<{ state: ExerciseCardState }> = ({ state }) => {
-    const { ex, onOpenDetail, onReplace, openMenuId, setOpenMenuId, t, lang, onToggleExpand, setNodeRef, transition, isDragging, style, sets, c, ssStyle, isCardio, cardioMode, completedCount, allDone, isSuperseted, isLinkSource, handleInjectWarmup, handleCardioModeChange, confirmDelete, handleSupersetAction, heroMetric } = state;
+    const { ex, onOpenDetail, onReplace, openMenuId, setOpenMenuId, t, lang, onToggleExpand, setNodeRef, isDragging, style, c, ssStyle, isCardio, cardioMode, isSuperseted, isLinkSource, handleInjectWarmup, handleCardioModeChange, confirmDelete, handleSupersetAction, sets, allDone, heroMetric } = state;
     return (
             <div
                 ref={setNodeRef}
@@ -103,6 +103,8 @@ export const ExerciseCardCollapsed: React.FC<{ state: ExerciseCardState }> = ({ 
                     onOpenDetail={onOpenDetail}
                     onCardioModeChange={handleCardioModeChange}
                     onInjectWarmup={handleInjectWarmup}
+                    onFillFromPrevious={state.handleFillFromPrevious}
+                    onCopyToFollowing={state.handleCopyToFollowing}
                     onSupersetAction={handleSupersetAction}
                     onReplace={onReplace}
                     onRequestDelete={confirmDelete}

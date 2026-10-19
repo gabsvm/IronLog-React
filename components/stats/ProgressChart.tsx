@@ -50,8 +50,19 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ dataPoints, metric
                 backgroundColor: (context: ScriptableContext<"line">) => {
                     const ctx = context.chart.ctx;
                     const gradient = ctx.createLinearGradient(0, 0, 0, 200);
-                    gradient.addColorStop(0, 'rgba(196, 255, 38, 0.32)');
-                    gradient.addColorStop(1, 'rgba(196, 255, 38, 0.0)');
+                    const color = primaryChartColor();
+                    let rgb = '196, 255, 38';
+                    if (color.startsWith('#') && color.length === 7) {
+                        const r = parseInt(color.slice(1, 3), 16);
+                        const g = parseInt(color.slice(3, 5), 16);
+                        const b = parseInt(color.slice(5, 7), 16);
+                        rgb = `${r}, ${g}, ${b}`;
+                    } else {
+                        const m = color.match(/\d+[\s,]+\d+[\s,]+\d+/);
+                        if (m) rgb = m[0].replace(/[\s,]+/g, ', ');
+                    }
+                    gradient.addColorStop(0, `rgba(${rgb}, 0.32)`);
+                    gradient.addColorStop(1, `rgba(${rgb}, 0.0)`);
                     return gradient;
                 },
                 borderWidth: 3,

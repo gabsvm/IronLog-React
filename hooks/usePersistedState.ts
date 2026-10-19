@@ -2,6 +2,20 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { db } from '../utils/db';
 
+const activeCancels = new Set<() => void>();
+let suppressFlushes = false;
+
+export const cancelAllPersistedStateFlushes = () => {
+    suppressFlushes = true;
+    for (const cancel of activeCancels) {
+        cancel();
+    }
+};
+
+export const resetPersistedStateFlushSuppression = () => {
+    suppressFlushes = false;
+};
+
 /**
  * Hook to manage state persisted in IndexedDB with write-behind (debounce) strategy.
  * Flushes immediately on visibilitychange/pagehide to prevent data loss when the OS
@@ -14,6 +28,20 @@ export function usePersistedState<T>(key: string, initialValue: T, debounceMs = 
     const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const pendingRef = useRef<{ value: T } | null>(null);
     const hasMutatedRef = useRef(false);
+
+    useEffect(() => {
+        const cancel = () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+                timeoutRef.current = null;
+            }
+            pendingRef.current = null;
+        };
+        activeCancels.add(cancel);
+        return () => {
+            activeCancels.delete(cancel);
+        };
+    }, []);
 
     useEffect(() => {
         let isMounted = true;
@@ -38,6 +66,10 @@ export function usePersistedState<T>(key: string, initialValue: T, debounceMs = 
         if (timeoutRef.current) {
             clearTimeout(timeoutRef.current);
             timeoutRef.current = null;
+        }
+        if (suppressFlushes) {
+            pendingRef.current = null;
+            return;
         }
         if (pendingRef.current) {
             db.set(key, pendingRef.current.value);
@@ -65,11 +97,19 @@ export function usePersistedState<T>(key: string, initialValue: T, debounceMs = 
         setState((prev) => {
             const newValue = value instanceof Function ? value(prev) : value;
 
+            if (suppressFlushes) {
+                pendingRef.current = null;
+                return newValue;
+            }
+
             pendingRef.current = { value: newValue };
 
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
             timeoutRef.current = setTimeout(() => {
-                db.set(key, newValue);
+                timeoutRef.current = null;
+                if (!suppressFlushes) {
+                    db.set(key, newValue);
+                }
                 pendingRef.current = null;
             }, debounceMs);
 

@@ -117,11 +117,11 @@ describe('L2: single scope control in the Stats wrapper', () => {
     beforeEach(async () => {
         (Element.prototype as any).scrollIntoView = vi.fn();
         await db.clear();
-        calcOverviewSpy.mockReset();
+        calcOverviewSpy.mockClear();
         calcOverviewSpy.mockImplementation(async (logs: any[], mesoId?: number) =>
             computeOverview(logs, mesoId ?? null),
         );
-        calcChartSpy.mockReset();
+        calcChartSpy.mockClear();
         calcChartSpy.mockImplementation(async () => []);
         seedTwoMesos();
     });
