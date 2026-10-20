@@ -48,21 +48,6 @@ export const useDefaultsBootstrap = ({
         let cancelled = false;
         const cancelIdle = scheduleWhenIdle(async () => {
             try {
-                const isProgramLoaded = !programLoadingRef.current;
-                const isExLoaded = !exLoadingRef.current;
-                const currentProgram = programRef.current;
-                const currentExercises = exercisesRef.current;
-
-                if (
-                    isProgramLoaded &&
-                    isExLoaded &&
-                    Array.isArray(currentProgram) &&
-                    currentProgram.length > 0 &&
-                    Array.isArray(currentExercises) &&
-                    currentExercises.length > 0
-                ) {
-                    return;
-                }
 
                 const loadDefaults = async () => {
                     const [{ DEFAULT_LIBRARY }, { DEFAULT_TEMPLATE, INITIAL_TEMPLATES }] = await Promise.all([
