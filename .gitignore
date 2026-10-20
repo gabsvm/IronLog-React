@@ -53,3 +53,5 @@ docs/design-reference/extracted/
 # Local debug APK output (never commit binaries)
 apk-out/
 *.apk
+.vercel
+.env*

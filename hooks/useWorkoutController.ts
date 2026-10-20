@@ -225,7 +225,23 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
                 startTime,
                 exercises: (prev.exercises || []).map(e => e.instanceId === exInstanceId ? {
                     ...e,
-                    sets: (e.sets || []).map(s => s.id === setId ? { ...s, completed: completing } : s)
+                    sets: (e.sets || []).map(s => {
+                        if (s.id !== setId) return s;
+                        let weight = s.weight;
+                        let reps = s.reps;
+                        if (completing) {
+                            if ((weight === '' || weight === undefined || weight === null) && s.hintWeight !== undefined && s.hintWeight !== '') {
+                                weight = s.hintWeight;
+                            }
+                            if ((reps === '' || reps === undefined || reps === null)) {
+                                const hintReps = s.hintReps ?? (typeof s.prescribedReps === 'number' ? s.prescribedReps : undefined);
+                                if (hintReps !== undefined && hintReps !== '') {
+                                    reps = String(hintReps);
+                                }
+                            }
+                        }
+                        return { ...s, weight, reps, completed: completing };
+                    })
                 } : e)
             };
         });

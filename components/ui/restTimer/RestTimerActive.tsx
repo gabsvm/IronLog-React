@@ -18,7 +18,9 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
     };
 
     const percentage = calculateTimerPercentage(restTimer.timeLeft, restTimer.duration);
-    const floatingBottom = 80 + keyboardOffset;
+    const hasBottomNav = typeof document !== 'undefined' && Boolean(document.querySelector('nav[aria-label="Main navigation"]'));
+    const baseBottom = hasBottomNav ? 80 : 16;
+    const floatingBottom = baseBottom + keyboardOffset;
     // When the keyboard is open the pill would cover the input being edited,
     // so dock it below the workout header instead of above the keyboard.
     const keyboardOpen = keyboardOffset > 120;

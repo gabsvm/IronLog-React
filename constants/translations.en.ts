@@ -815,6 +815,8 @@ export const EN = {
         configureDesc: "Duration, deload, notes and mesocycle options.",
         editTitle: "Edit routine",
         editDesc: "Change days, exercises, sets and structure.",
+        changeTemplateTitle: "Change or reload routine",
+        changeTemplateDesc: "Pick an official template (Wizard v3, PPL...) or custom.",
     },
     logWeight: {
         title: "Log Weight",

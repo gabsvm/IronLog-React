@@ -131,8 +131,14 @@ export const StatsView: React.FC = () => {
                     )}
                 </div>
 
+                <div className="mt-3 px-1">
+                    <StatsScopeSelector scope={scope} onChange={handleScopeChange} lang={lang} />
+                </div>
+
                 {section === 'overview' && (
-                    <PremiumTrendCard insights={premiumInsights} lang={lang} unit={resolveWeightUnit(config)} scope={scope} />
+                    <div className="mt-3">
+                        <PremiumTrendCard insights={premiumInsights} lang={lang} unit={resolveWeightUnit(config)} scope={scope} />
+                    </div>
                 )}
                 <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
                     {summaryItems.map((item, itemIdx) => (
@@ -141,10 +147,6 @@ export const StatsView: React.FC = () => {
                             <div className="mt-1 text-3xl font-black tabular-nums tracking-[-0.04em] text-zinc-950 dark:text-white">{item.value}</div>
                         </div>
                     ))}
-                </div>
-
-                <div className="mt-3 px-1">
-                    <StatsScopeSelector scope={scope} onChange={handleScopeChange} lang={lang} />
                 </div>
             </section>
 

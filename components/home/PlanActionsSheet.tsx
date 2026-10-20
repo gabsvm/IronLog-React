@@ -12,6 +12,7 @@ interface PlanActionsSheetProps {
     totalWeeks?: number;
     onConfigure: () => void;
     onEditProgram: () => void;
+    onChangeTemplate?: () => void;
 }
 
 const ActionRow = ({
@@ -49,6 +50,7 @@ export const PlanActionsSheet: React.FC<PlanActionsSheetProps> = ({
     totalWeeks,
     onConfigure,
     onEditProgram,
+    onChangeTemplate,
 }) => {
     const t = TRANSLATIONS[lang];
     const p = t.planActions;
@@ -87,6 +89,14 @@ export const PlanActionsSheet: React.FC<PlanActionsSheetProps> = ({
                     description={p.editDesc}
                     onClick={onEditProgram}
                 />
+                {onChangeTemplate && (
+                    <ActionRow
+                        icon="Layers"
+                        title={p.changeTemplateTitle || "Cambiar o recargar rutina"}
+                        description={p.changeTemplateDesc || "Elige una plantilla predefinida o personalizada."}
+                        onClick={onChangeTemplate}
+                    />
+                )}
             </div>
         </div>
     </Sheet>

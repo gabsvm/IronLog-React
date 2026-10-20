@@ -89,7 +89,7 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
                 <AdvancedSection syncStatusText={syncStatusText} />
 
                 {/* 7. Zona peligrosa */}
-                <DangerSection onReset={onReset} />
+                <DangerSection onClose={onClose} onReset={onReset} />
             </div>
         </Sheet>
     );

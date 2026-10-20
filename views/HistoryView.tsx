@@ -27,18 +27,34 @@ interface HistoryVirtuosoContext {
     setSearch: (s: string) => void;
     hasLockedLogs: boolean;
     checkPro: (feature: string) => boolean;
+    onExportCSV?: () => void;
+    isPro?: boolean;
 }
 
 const VirtuosoHeader = ({ context }: { context?: HistoryVirtuosoContext }) => {
     if (!context) return null;
-    const { lang, search, setSearch } = context;
+    const { lang, search, setSearch, onExportCSV, isPro } = context;
     return (
         <div className="space-y-3 px-5 pb-4 pt-4">
-            <div>
-                <h2 className="text-2xl font-black tracking-tight text-zinc-950 dark:text-white">{TRANSLATIONS[lang].copy.history.history}</h2>
-                <p className="mt-0.5 text-xs font-medium text-muted">
-                    {TRANSLATIONS[lang].copy.history.yourCompletedWorkouts}
-                </p>
+            <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                    <h2 className="text-2xl font-black tracking-tight text-zinc-950 dark:text-white">{TRANSLATIONS[lang].copy.history.history}</h2>
+                    <p className="mt-0.5 text-xs font-medium text-muted">
+                        {TRANSLATIONS[lang].copy.history.yourCompletedWorkouts}
+                    </p>
+                </div>
+                {onExportCSV && (
+                    <button
+                        type="button"
+                        onClick={onExportCSV}
+                        className="flex shrink-0 items-center gap-1.5 rounded-full border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised)/0.95)] px-3.5 py-1.5 text-xs font-bold text-zinc-600 shadow-sm transition-transform active:scale-95 dark:text-zinc-300"
+                        aria-label={pickLang(lang, { es: 'Descargar CSV', en: 'Download CSV' })}
+                    >
+                        <Icon name="Download" size={13} />
+                        <span>CSV</span>
+                        {!isPro && <Icon name="Lock" size={10} className="text-yellow-500" />}
+                    </button>
+                )}
             </div>
             <div id="tut-history-search" className="relative">
                 <Icon name="Search" size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
@@ -270,7 +286,10 @@ export const HistoryView: React.FC = () => {
         { targetId: 'tut-first-card', title: t.tutorial.history[0].title, text: t.tutorial.history[0].text, position: 'bottom' as const },
     ];
 
-    const context = useMemo<HistoryVirtuosoContext>(() => ({ lang, search, setSearch, hasLockedLogs, checkPro }), [lang, search, hasLockedLogs, checkPro]);
+    const context = useMemo<HistoryVirtuosoContext>(
+        () => ({ lang, search, setSearch, hasLockedLogs, checkPro, onExportCSV: handleExportCSV, isPro }),
+        [lang, search, hasLockedLogs, checkPro, handleExportCSV, isPro]
+    );
     const renderItem = useCallback((index: number, log: Log) => (
         <HistoryCard id={index === 0 ? 'tut-first-card' : undefined} log={log} lang={lang} onOpen={() => openDetail(log)} unit={unit} />
     ), [lang, openDetail, unit]);
@@ -288,15 +307,6 @@ export const HistoryView: React.FC = () => {
     return (
         <div className="relative flex h-full w-full flex-col bg-[rgb(var(--surface-app))]">
             <Virtuoso style={{ height: '100%' }} data={visibleLogs} components={VIRTUOSO_COMPONENTS} context={context} itemContent={renderItem} />
-
-            <button
-                type="button"
-                onClick={handleExportCSV}
-                className="absolute bottom-24 right-4 flex items-center gap-2 rounded-full border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised)/0.95)] px-4 py-2.5 text-xs font-bold text-zinc-600 shadow-xl transition-transform active:scale-95 dark:text-zinc-300"
-                aria-label={pickLang(lang, { es: 'Descargar CSV', en: 'Download CSV' })}
-            >
-                <Icon name="Download" size={14} /> CSV {!isPro && <Icon name="Lock" size={11} className="text-yellow-500" />}
-            </button>
 
             <Suspense fallback={null}>
                 <TutorialOverlay steps={historyTutorialSteps} isActive={!tutorialProgress.history} onComplete={() => markTutorialSeen('history')} />

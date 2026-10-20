@@ -220,9 +220,9 @@ export const NutriView: React.FC = () => {
 
   // ─── RENDER ──────────────────────────────────────────────────────
   return (
-    <div className="h-full flex flex-col bg-[rgb(var(--surface-app))]">
+    <div className="space-y-4 px-4 pb-8">
       {/* ── Sub-tabs ── */}
-      <div className="px-4 pt-4 pb-2 shrink-0">
+      <div className="sticky top-0 z-10 -mx-4 px-4 py-2 bg-[rgb(var(--surface-app))]">
         <div className="seg-reference flex gap-1 p-1">
           {([
             { id: 'today',   label: TRANSLATIONS[lang].copy.nutri.today,        icon: 'Utensils' },
@@ -244,8 +244,7 @@ export const NutriView: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto scroll-container px-4 pb-28">
-
+      <div>
         {/* ─── TAB: TODAY ─────────────────────────────────────── */}
         {subTab === 'today' && (
           <TodayTab

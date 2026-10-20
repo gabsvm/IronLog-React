@@ -282,11 +282,11 @@ export const Layout: React.FC<LayoutProps> = ({
                     initialSection={profileSection}
                     onOpenProgram={() => runAfterProfileClosed(onOpenProgram)}
                     onOpenExercises={() => runAfterProfileClosed(onOpenExercises)}
-                    onReset={onReset}
+                    onReset={() => runAfterProfileClosed(onReset)}
                     onExport={onExport}
                     onForceSync={onForceSync}
                     onImportFile={onImportFile}
-                    onLogin={onLogin}
+                    onLogin={() => runAfterProfileClosed(onLogin)}
                     isSyncing={isSyncing}
                 />
                 </React.Suspense>

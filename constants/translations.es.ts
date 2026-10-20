@@ -817,6 +817,8 @@ export const ES: TranslationDict = {
         configureDesc: "Duración, deload, notas y opciones del mesociclo.",
         editTitle: "Editar rutina",
         editDesc: "Modifica días, ejercicios, series y estructura.",
+        changeTemplateTitle: "Cambiar o recargar rutina",
+        changeTemplateDesc: "Elige una plantilla oficial (Wizard v3, PPL...) o personalizada.",
     },
     logWeight: {
         title: "Registrar Peso",

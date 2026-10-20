@@ -25,10 +25,12 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                     </button>
 
                     <div className="flex-1 min-w-0">
-                        <h1 className="truncate text-base font-semibold leading-tight text-white">
+                        <h1 className="truncate text-sm sm:text-base font-bold leading-tight text-white">
                             {isCalisthenicsSession
                                 ? t.calisthenicsSession
-                                : activeSession.name}
+                                : (activeSession.week >= 1
+                                    ? activeSession.name.replace(new RegExp(`^${activeSession.week}\\s*[•·-]\\s*`), '')
+                                    : activeSession.name)}
                         </h1>
                         <div className="flex min-w-0 items-center gap-2">
                             <div className="min-w-0 truncate text-xs text-muted">

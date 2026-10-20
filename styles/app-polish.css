@@ -114,20 +114,11 @@ html.light .product-workout-polish .divide-white\/10 > :not([hidden]) ~ :not([hi
 }
 
 
-/* HISTORY ---------------------------------------------------------------- */
-/* CSV belongs to the History header, not floating over workout cards while scrolling. */
-button[aria-label="Download CSV"] {
-  top: 10px !important;
-  bottom: auto !important;
-  right: 18px !important;
-  min-height: 36px;
-  box-shadow: none !important;
-  z-index: 4;
-}
 
 /* STATS ------------------------------------------------------------------ */
 .product-stats-shell {
   min-height: 100%;
+  padding-bottom: 2rem;
 }
 
 .product-stats-segments {

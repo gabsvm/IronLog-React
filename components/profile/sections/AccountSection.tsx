@@ -132,7 +132,10 @@ export const AccountSection: React.FC<AccountSectionProps> = ({ onClose, onLogin
             ) : (
                 <button
                     type="button"
-                    onClick={onLogin}
+                    onClick={() => {
+                        onClose();
+                        onLogin();
+                    }}
                     className="w-full py-2.5 bg-primary-500 text-black rounded-xl text-xs font-bold hover:bg-primary-400 shadow-lg shadow-primary-500/20 transition-all active:scale-95"
                 >
                     {t.auth.signInRegister}

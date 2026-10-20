@@ -60,8 +60,17 @@ html.native-shell input[inputmode='numeric'] {
     -webkit-font-smoothing: antialiased;
 }
 
-html.native-shell[data-effects='balanced'] main .glass-card,
-.native-shell[data-effects='balanced'] main .glass-card {
+/* Disable expensive GPU backdrop blurs in the native shell to ensure locked 120 FPS
+   on mid-range Mali GPUs without visual loss (backgrounds are already 95%+ opaque). */
+html.native-shell .backdrop-blur-2xl,
+html.native-shell .backdrop-blur-xl,
+html.native-shell .backdrop-blur-lg,
+html.native-shell .backdrop-blur-md,
+html.native-shell .backdrop-blur-sm,
+html.native-shell .backdrop-blur,
+html.native-shell nav[aria-label="Main navigation"],
+html.native-shell .glass-card,
+html.native-shell .glass-panel {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
 }

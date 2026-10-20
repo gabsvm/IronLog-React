@@ -19,10 +19,11 @@ const ProgramHub = React.lazy(() => import('../components/programs/ProgramHub').
 const TutorialOverlay = React.lazy(() => import('../components/ui/TutorialOverlay').then(m => ({ default: m.TutorialOverlay })));
 const PaywallModal = React.lazy(() => import('../components/pro/PaywallModal').then(m => ({ default: m.PaywallModal })));
 const ConfirmModal = React.lazy(() => import('../components/ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
+const TemplateSelector = React.lazy(() => import('./home/TemplateSelector').then(m => ({ default: m.TemplateSelector })));
 
 export const HomeView: React.FC<HomeViewProps> = (props) => {
     const state = useHomeViewState(props);
-    const { onEditProgram, onStartFreeSession, logs, lang, tutorialProgress, markTutorialSeen, config, activeMeso, t, h, showPaywall, setShowPaywall, featureAttempted, showCompleteModal, setShowCompleteModal, showMesoSettings, setShowMesoSettings, showPlanActions, setShowPlanActions, skipConfirmationId, setSkipConfirmationId, showGuidelines, setShowGuidelines, transitionBlock, showKongHub, setShowKongHub, closeTransition, currentGuidelineImages, safeProgram, safeLogs, confirmSkip, handleFinishMeso, handleFinishWeek, homeTutorialSteps } = state;
+    const { onEditProgram, onStartFreeSession, logs, lang, tutorialProgress, markTutorialSeen, config, activeMeso, t, h, showPaywall, setShowPaywall, featureAttempted, showCompleteModal, setShowCompleteModal, showMesoSettings, setShowMesoSettings, showPlanActions, setShowPlanActions, showTemplateSelector, setShowTemplateSelector, handleOpenTemplateSelector, handleSelectTemplate, handleSelectProgram, handleCreateCustom, personalTemplates, globalTemplates, skipConfirmationId, setSkipConfirmationId, showGuidelines, setShowGuidelines, transitionBlock, showKongHub, setShowKongHub, closeTransition, currentGuidelineImages, safeProgram, safeLogs, confirmSkip, handleFinishMeso, handleFinishWeek, homeTutorialSteps } = state;
 
     if (!activeMeso) {
         return <HomeEmptyState state={state} />;
@@ -126,6 +127,24 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
                             setShowPlanActions(false);
                             onEditProgram();
                         }}
+                        onChangeTemplate={() => {
+                            setShowPlanActions(false);
+                            handleOpenTemplateSelector();
+                        }}
+                    />
+                </Suspense>
+            )}
+
+            {showTemplateSelector && (
+                <Suspense fallback={null}>
+                    <TemplateSelector
+                        onClose={() => setShowTemplateSelector(false)}
+                        onSelectTemplate={handleSelectTemplate}
+                        onSelectProgram={handleSelectProgram}
+                        onCreateCustom={handleCreateCustom}
+                        lang={lang}
+                        t={t}
+                        templates={[...personalTemplates, ...globalTemplates]}
                     />
                 </Suspense>
             )}

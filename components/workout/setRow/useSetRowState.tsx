@@ -125,26 +125,42 @@ export const useSetRowState = ({
         }, delay);
     }, [commitChange]);
 
-    const flushPendingFields = useCallback(() => {
+    const flushPendingFields = useCallback((forComplete = false) => {
         Object.values(commitTimersRef.current).forEach((timer) => {
             if (timer) clearTimeout(timer);
         });
         commitTimersRef.current = {};
 
-        const pendingStoredWeight = storedWeight(localWeight);
+        let effWeight = localWeight;
+        let effReps = localReps;
+        if (forComplete) {
+            if ((effWeight === '' || effWeight === undefined || effWeight === null) && set.hintWeight !== undefined && set.hintWeight !== '') {
+                effWeight = shownWeight(set.hintWeight);
+                setLocalWeight(effWeight);
+            }
+            if ((effReps === '' || effReps === undefined || effReps === null)) {
+                const hintReps = set.hintReps ?? (typeof set.prescribedReps === 'number' ? set.prescribedReps : undefined);
+                if (hintReps !== undefined && hintReps !== '') {
+                    effReps = String(hintReps);
+                    setLocalReps(effReps);
+                }
+            }
+        }
+
+        const pendingStoredWeight = storedWeight(effWeight);
         if (pendingStoredWeight != set.weight) {
             onUpdate(exInstanceId, set.id, 'weight', pendingStoredWeight);
         }
-        if (localReps != set.reps) {
-            onUpdate(exInstanceId, set.id, 'reps', localReps);
+        if (effReps != set.reps) {
+            onUpdate(exInstanceId, set.id, 'reps', effReps);
         }
         if (showRIR && localRpe != set.rpe) {
             onUpdate(exInstanceId, set.id, 'rpe', localRpe);
         }
-    }, [exInstanceId, localReps, localRpe, localWeight, onUpdate, set.id, set.reps, set.rpe, set.weight, showRIR, storedWeight]);
+    }, [exInstanceId, localReps, localRpe, localWeight, onUpdate, set.hintReps, set.hintWeight, set.id, set.prescribedReps, set.reps, set.rpe, set.weight, showRIR, shownWeight, storedWeight]);
 
     const handleToggleComplete = useCallback(() => {
-        flushPendingFields();
+        flushPendingFields(!isDone);
         triggerHaptic(isDone ? 'light' : 'medium');
         onToggleComplete(exInstanceId, set.id);
     }, [flushPendingFields, isDone, onToggleComplete, exInstanceId, set.id]);
@@ -241,7 +257,7 @@ export const useSetRowState = ({
         const s = swipeRef.current;
         if (s.currentPct >= 85 && !isDone && s.tracking) {
             s.locked = true;
-            flushPendingFields();
+            flushPendingFields(true);
             triggerHaptic('success');
             onToggleComplete(exInstanceId, set.id);
         }
