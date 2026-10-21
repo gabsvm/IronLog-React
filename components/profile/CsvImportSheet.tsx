@@ -186,14 +186,14 @@ export const CsvImportSheet: React.FC<CsvImportSheetProps> = ({
                         {parsed.source === 'strong' && (
                             <div className="flex items-center justify-between gap-2 rounded-2xl border border-[rgb(var(--border-subtle))] p-3">
                                 <span className="text-sm font-medium text-[rgb(var(--text-primary))]">{c.strongUnit}</span>
-                                <div className="flex gap-1 bg-[rgb(var(--surface-elevated))] p-0.5 rounded-[18px] border border-border-subtle shrink-0">
+                                <div className="flex shrink-0 gap-1 rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated))] p-1">
                                     {(['kg', 'lb'] as const).map((option) => (
                                         <button
                                             key={option}
                                             type="button"
                                             onClick={() => onStrongUnitChange(option)}
                                             aria-pressed={strongUnit === option}
-                                            className={`px-2.5 py-1 text-xs rounded-lg font-semibold transition-all ${
+                                            className={`min-h-[44px] rounded-xl px-3 text-xs font-semibold transition-all ${
                                                 strongUnit === option
                                                     ? 'bg-primary-500 text-black shadow-sm'
                                                     : 'text-muted hover:text-[rgb(var(--text-primary))]'
@@ -240,14 +240,14 @@ export const CsvImportSheet: React.FC<CsvImportSheetProps> = ({
                                             className="rounded-2xl border border-[rgb(var(--border-subtle))] p-3 space-y-2"
                                         >
                                             <p className="text-sm font-bold text-[rgb(var(--text-primary))]">{m.parsedName}</p>
-                                            <div className="flex gap-1 bg-[rgb(var(--surface-elevated))] p-0.5 rounded-[18px] w-fit">
+                                            <div className="flex w-fit gap-1 rounded-2xl bg-[rgb(var(--surface-elevated))] p-1">
                                                 <button
                                                     type="button"
                                                     onClick={() => setRow(m.parsedName, { mode: 'create' })}
                                                     aria-pressed={d.mode === 'create'}
-                                                    className={`px-2.5 py-1 text-xs rounded-lg font-semibold transition-all ${
-                                                        d.mode === 'create' ? 'bg-primary-500 text-black' : 'text-muted hover:text-[rgb(var(--text-primary))]'
-                                                    }`}
+                                                className={`min-h-[44px] rounded-xl px-3 text-xs font-semibold transition-all ${
+                                                    d.mode === 'create' ? 'bg-primary-500 text-black' : 'text-muted hover:text-[rgb(var(--text-primary))]'
+                                                }`}
                                                 >
                                                     {c.createNew}
                                                 </button>
@@ -255,9 +255,9 @@ export const CsvImportSheet: React.FC<CsvImportSheetProps> = ({
                                                     type="button"
                                                     onClick={() => setRow(m.parsedName, { mode: 'existing' })}
                                                     aria-pressed={d.mode === 'existing'}
-                                                    className={`px-2.5 py-1 text-xs rounded-lg font-semibold transition-all ${
-                                                        d.mode === 'existing' ? 'bg-primary-500 text-black' : 'text-muted hover:text-[rgb(var(--text-primary))]'
-                                                    }`}
+                                                className={`min-h-[44px] rounded-xl px-3 text-xs font-semibold transition-all ${
+                                                    d.mode === 'existing' ? 'bg-primary-500 text-black' : 'text-muted hover:text-[rgb(var(--text-primary))]'
+                                                }`}
                                                 >
                                                     {c.mapTo}
                                                 </button>
@@ -268,7 +268,7 @@ export const CsvImportSheet: React.FC<CsvImportSheetProps> = ({
                                                     <select
                                                         value={d.muscle}
                                                         onChange={(e) => setRow(m.parsedName, { muscle: e.target.value as MuscleGroup | '' })}
-                                                        className="mt-1 w-full rounded-[18px] border border-zinc-200 bg-zinc-50 p-2.5 text-sm font-bold text-zinc-900 outline-none focus:border-primary-500 dark:border-white/10 dark:bg-[rgb(var(--surface-elevated))] dark:text-[rgb(var(--text-primary))]"
+                                                        className="mt-1 min-h-[48px] w-full rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated))] px-3 text-base font-bold text-[rgb(var(--text-primary))] outline-none focus:border-primary-500"
                                                     >
                                                         <option value="">—</option>
                                                         {MUSCLES.map((muscle) => (
@@ -284,7 +284,7 @@ export const CsvImportSheet: React.FC<CsvImportSheetProps> = ({
                                                     <select
                                                         value={d.exerciseId}
                                                         onChange={(e) => setRow(m.parsedName, { exerciseId: e.target.value })}
-                                                        className="mt-1 w-full rounded-[18px] border border-zinc-200 bg-zinc-50 p-2.5 text-sm font-bold text-zinc-900 outline-none focus:border-primary-500 dark:border-white/10 dark:bg-[rgb(var(--surface-elevated))] dark:text-[rgb(var(--text-primary))]"
+                                                        className="mt-1 min-h-[48px] w-full rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated))] px-3 text-base font-bold text-[rgb(var(--text-primary))] outline-none focus:border-primary-500"
                                                     >
                                                         <option value="">—</option>
                                                         {sortedLibrary.map((def) => (

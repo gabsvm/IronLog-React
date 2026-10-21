@@ -1,3 +1,5 @@
+// Same NODE_ENV guarantee as vitest.config.ts (see comment there).
+process.env.NODE_ENV = 'test';
 import { defineConfig } from 'vitest/config';
 
 // Q1: integration tests against the LOCAL Auth + Firestore emulators

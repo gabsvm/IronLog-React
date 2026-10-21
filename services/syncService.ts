@@ -216,7 +216,6 @@ export const syncService = {
             emitSyncStatus({ phase: 'upload-start', scope: 'identity' });
             await uploadUserIdentityNow(userId, email);
             emitSyncStatus({ phase: 'upload-success', scope: 'identity', lastSyncedAt: Date.now() });
-            console.log(`Identity Synced: ${email}`);
         } catch (error) {
             await offlineSyncQueue.enqueueIdentity(userId, email);
             emitSyncStatus({ phase: 'upload-queued', scope: 'identity', error: String(error) });
@@ -241,7 +240,6 @@ export const syncService = {
             emitSyncStatus({ phase: 'upload-start', scope: 'state' });
             await uploadStateNow(userId, state, sections);
             emitSyncStatus({ phase: 'upload-success', scope: 'state', lastSyncedAt: Date.now() });
-            console.log(`Cloud Sync: Upload Complete (User: ${userId}) at ${new Date().toLocaleTimeString()}`);
         } catch (error) {
             await offlineSyncQueue.enqueueStateSnapshot(userId, state, sections);
             emitSyncStatus({ phase: 'upload-queued', scope: 'state', error: String(error) });

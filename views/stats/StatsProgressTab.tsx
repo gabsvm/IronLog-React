@@ -12,6 +12,7 @@ import type { StatsData } from './useStatsData';
 import { chartMetricLabel } from './statsHelpers';
 import { PersonalRecordRow } from './StatsWidgets';
 import { RepMaxTable } from './RepMaxTable';
+import { StatsSeriesPanel } from './StatsSeriesPanel';
 import { formatInteger } from '../../utils/i18n';
 
 export const StatsProgressTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
@@ -66,14 +67,7 @@ export const StatsProgressTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
                     </button>
                 </div>
 
-                {selectedExId && hasExerciseHistory ? (
-                    <ProgressChart
-                        dataPoints={chartPoints}
-                        metric={chartMetric as any}
-                        loading={loadingChart}
-                        unit={unit}
-                    />
-                ) : (
+                {!selectedExId || !hasExerciseHistory ? (
                     <div className="flex h-60 flex-col items-center justify-center rounded-[1.4rem] border border-dashed border-white/8 bg-white/[0.02] px-6 text-center">
                         <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white/[0.04] text-zinc-500">
                             <Icon name="BarChart3" size={20} />
@@ -85,6 +79,41 @@ export const StatsProgressTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
                             {s.noChartHint}
                         </p>
                     </div>
+                ) : loadingChart && chartPoints.length === 0 ? (
+                    <ProgressChart
+                        dataPoints={chartPoints}
+                        metric={chartMetric}
+                        loading={true}
+                        unit={unit}
+                    />
+                ) : chartPoints.length === 0 ? (
+                    <div className="flex min-h-[15rem] flex-col items-center justify-center rounded-[1.4rem] border border-dashed border-white/8 bg-white/[0.02] px-6 py-8 text-center">
+                        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white/[0.04] text-zinc-500">
+                            <Icon name="Calendar" size={20} />
+                        </div>
+                        <p className="text-sm font-bold text-[rgb(var(--text-primary))]">
+                            {s.seriesEmptyPeriodTitle}
+                        </p>
+                        <p className="mt-1 text-xs text-zinc-500">
+                            {s.seriesEmptyPeriodBody}
+                        </p>
+                    </div>
+                ) : (
+                    <>
+                        <ProgressChart
+                            dataPoints={chartPoints}
+                            metric={chartMetric}
+                            loading={loadingChart}
+                            unit={unit}
+                        />
+                        <StatsSeriesPanel
+                            points={chartPoints}
+                            metric={chartMetric}
+                            unit={unit}
+                            lang={lang}
+                            labels={s}
+                        />
+                    </>
                 )}
             </div>
 

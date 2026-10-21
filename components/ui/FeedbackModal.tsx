@@ -149,7 +149,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
                         <button
                             type="button"
                             onClick={() => setStep(prev => Math.max(0, prev - 1))}
-                            className="min-h-10 w-full text-xs font-bold text-[rgb(var(--text-muted))]"
+                            className="min-h-[44px] w-full px-2 text-xs font-bold text-[rgb(var(--text-muted))]"
                         >
                             {TRANSLATIONS[lang].copy.feedbackModal.backToPreviousMuscle}
                         </button>
@@ -162,7 +162,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
                     <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-3">
                             <span className="truncate text-lg font-black text-[rgb(var(--text-primary))]">{muscleLabel}</span>
-                            <span className="shrink-0 text-[10px] font-black tabular-nums text-[rgb(var(--text-muted))]">{step + 1}/{uniqueMuscles.length}</span>
+                            <span className="shrink-0 text-xs font-black tabular-nums text-[rgb(var(--text-muted))]">{step + 1}/{uniqueMuscles.length}</span>
                         </div>
                         <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[rgb(var(--surface-elevated))]">
                             <div className="h-full rounded-full bg-primary-500 transition-all duration-200" style={{ width: `${progressPct}%` }} />
@@ -174,7 +174,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
                     <section>
                         <div className="mb-2 flex items-end justify-between gap-3">
                             <div>
-                                <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[rgb(var(--text-muted))]">{t.fb.sorenessLabel}</p>
+                                <p className="text-xs font-black uppercase tracking-[0.15em] text-[rgb(var(--text-muted))]">{t.fb.sorenessLabel}</p>
                                 <p className="mt-0.5 text-xs text-[rgb(var(--text-secondary))]">
                                     {TRANSLATIONS[lang].copy.feedbackModal.howDidTheMuscle}
                                 </p>
@@ -193,7 +193,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
 
                     <section>
                         <div className="mb-2">
-                            <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[rgb(var(--text-muted))]">{t.fb.performanceLabel}</p>
+                            <p className="text-xs font-black uppercase tracking-[0.15em] text-[rgb(var(--text-muted))]">{t.fb.performanceLabel}</p>
                             <p className="mt-0.5 text-xs text-[rgb(var(--text-secondary))]">
                                 {TRANSLATIONS[lang].copy.feedbackModal.howDidYourPerformance}
                             </p>

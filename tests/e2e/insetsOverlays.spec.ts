@@ -107,9 +107,11 @@ const startFreestyleWorkout = async (page: Page) => {
     const nav = page.locator('nav[aria-label="Main navigation"]');
     await expect(nav).toBeVisible({ timeout: 15000 });
 
-    const plusBtn = page.locator('nav[aria-label="Main navigation"] button[aria-label*="Iniciar" i], nav[aria-label="Main navigation"] button[aria-label*="Start" i]').first();
-    await expect(plusBtn).toBeVisible({ timeout: 8000 });
-    await plusBtn.click();
+    // Fase 2 shell: freestyle entry lives in Rutina (no center + button).
+    await nav.getByRole('button', { name: /^Rutina$|^Routine$/ }).click();
+    const quickBtn = page.getByRole('button', { name: /Iniciar entreno|Start workout/ }).first();
+    await expect(quickBtn).toBeVisible({ timeout: 8000 });
+    await quickBtn.click();
 
     const freestyleOption = page.locator('button:has-text("Sesión libre"), button:has-text("Freestyle")').first();
     await expect(freestyleOption).toBeVisible({ timeout: 6000 });
@@ -206,23 +208,23 @@ test.describe('J1: fullscreen overlays respect safe-area insets', () => {
 });
 
 test.describe('J1: palette and program editor (wide viewport)', () => {
-    // The command palette only opens at >=640px by design.
-    test.use({ viewport: { width: 800, height: 600 } });
+    // The command palette opens from the desktop sidebar (lg+).
+    test.use({ viewport: { width: 1280, height: 800 } });
 
     test('command palette and program editor', async ({ page }) => {
         await seedOnboarded(page);
         await page.goto('/');
         await injectInsets(page);
 
-        const nav = page.locator('nav[aria-label="Main navigation"]');
+        const nav = page.locator('nav[aria-label="Main navigation"]:visible');
         await expect(nav).toBeVisible({ timeout: 15000 });
 
-        const statsNavBtn = page.locator('nav[aria-label="Main navigation"] button', { hasText: /Stats|Métricas/ });
+        const statsNavBtn = page.locator('nav[aria-label="Main navigation"]:visible button', { hasText: /^Progreso$|^Progress$/ });
         await statsNavBtn.click();
         await expect(page.getByRole('tablist').first()).toBeVisible({ timeout: 10000 });
 
-        const primaryBtn = page.locator('nav[aria-label="Main navigation"] button[aria-label*="Iniciar" i], nav[aria-label="Main navigation"] button[aria-label*="Start" i]').first();
-        await primaryBtn.click();
+        const paletteBtn = page.getByRole('button', { name: /Acciones rápidas|Quick actions/ });
+        await paletteBtn.click();
         const palette = page.getByRole('dialog', { name: /Acciones r.pidas|Quick actions/ });
         await expect(palette).toBeVisible({ timeout: 6000 });
         await assertControlsClear(page, palette, 'palette');

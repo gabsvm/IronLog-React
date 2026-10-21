@@ -6,6 +6,7 @@ import { AppProvider, useApp } from './context/AppContext';
 import { useAuth, AuthProvider } from './context/AuthContext';
 import { usePro } from './hooks/usePro';
 import { useAppHistory, withTransition, VIEW_DEPTH } from './hooks/useAppHistory';
+import { resolveAppView, type AppView } from './components/layout/navigation';
 import { useShortcutLaunch } from './hooks/useShortcutLaunch';
 import { useNativeSharedCsv } from './hooks/useNativeSharedCsv';
 import { Capacitor } from '@capacitor/core';
@@ -76,7 +77,7 @@ const AppContent = () => {
     const { user } = useAuth();
     const { checkPro } = usePro();
 
-    const [view, setViewState] = useState<'home' | 'workout' | 'history' | 'exercises' | 'program' | 'stats' | 'summary' | 'nutrition'>('home');
+    const [view, setViewState] = useState<AppView>('home');
     const [completedWorkoutLog, setCompletedWorkoutLog] = useState<any>(null);
     // S3: launched from the share sheet / "Open with" with a CSV (read once at mount).
     const [sharedCsvLaunch] = useState(
@@ -109,21 +110,23 @@ const AppContent = () => {
     // `after` runs atomically with the view flip (same flushSync) so callers can
     // clear the session without exposing the intermediate view-without-session state.
     const setView = useCallback((newView: typeof view, after?: () => void) => {
-        if (newView === view) {
+        // Legacy names resolve once at the boundary; renderers only see AppView.
+        const resolved = (resolveAppView(newView) ?? 'home') as typeof view;
+        if (resolved === view) {
             after?.();
             return;
         }
-        targetViewRef.current = newView;
+        targetViewRef.current = resolved;
         const currentDepth = VIEW_DEPTH[view] || 1;
-        const nextDepth = VIEW_DEPTH[newView] || 1;
+        const nextDepth = VIEW_DEPTH[resolved] || 1;
         const direction = nextDepth > currentDepth ? 'forward' : nextDepth < currentDepth ? 'back' : 'fade';
 
-        const preload = VIEW_LOADERS[newView];
+        const preload = VIEW_LOADERS[resolved];
         const executeTransition = () => {
-            if (targetViewRef.current !== newView) return;
+            if (targetViewRef.current !== resolved) return;
             withTransition(direction, () => {
                 flushSync(() => {
-                    setViewState(newView);
+                    setViewState(resolved);
                     after?.();
                 });
             });
@@ -136,16 +139,21 @@ const AppContent = () => {
         }
     }, [view]);
 
-    // Command Palette actions — memoized so the array+5 object literals aren't
-    // rebuilt on every parent re-render (was firing on every keystroke during
-    // workouts because activeSession/activeMeso changes propagate here).
+    // Narrowed to scalars: set commits create a new session object identity
+    // every 180ms, but id/name/week are stable so the memoized actions (and
+    // the memoized AppModals subtree) survive workout keystrokes.
+    const activeSessionId = activeSession?.id ?? null;
+    const activeSessionName = activeSession?.name ?? '';
+    const activeMesoId = activeMeso?.id ?? null;
+    const activeMesoWeek = activeMeso?.week ?? null;
+    const activeMesoType = activeMeso?.mesoType ?? '';
     const commandActions = useMemo<CommandAction[]>(() => {
         const actions: CommandAction[] = [];
-        if (activeSession) {
+        if (activeSessionId) {
             actions.push({
                 id: 'resume',
                 label: { en: 'Resume active session', es: 'Reanudar sesión activa' },
-                description: { en: activeSession.name, es: activeSession.name },
+                description: { en: activeSessionName, es: activeSessionName },
                 icon: 'Play',
                 accent: 'emerald',
                 badge: TRANSLATIONS[lang].copy.app.live,
@@ -153,11 +161,11 @@ const AppContent = () => {
                 keywords: ['continue', 'resume', 'continuar', 'activa'],
             });
         }
-        if (activeMeso) {
+        if (activeMesoId) {
             actions.push({
                 id: 'meso_today',
                 label: { en: 'Continue mesocycle (today)', es: 'Continuar mesociclo (hoy)' },
-                description: { en: `${activeMeso.mesoType || ''} · Week ${activeMeso.week}`, es: `${activeMeso.mesoType || ''} · Semana ${activeMeso.week}` },
+                description: { en: `${activeMesoType || ''} · Week ${activeMesoWeek}`, es: `${activeMesoType || ''} · Semana ${activeMesoWeek}` },
                 icon: 'Calendar',
                 accent: 'primary',
                 onSelect: () => setView('home'),
@@ -174,7 +182,7 @@ const AppContent = () => {
             keywords: ['routine', 'rutina', 'template', 'plantilla'],
         });
         return actions;
-    }, [activeSession, activeMeso, lang, setView]);
+    }, [activeSessionId, activeSessionName, activeMesoId, activeMesoWeek, activeMesoType, lang, setView]);
 
     // Q18: history management lives in hooks/useAppHistory.
     useAppHistory(view, setViewState, targetViewRef);
@@ -298,7 +306,7 @@ const AppContent = () => {
         });
     };
 
-    const handleUndoSkip = () => {
+    const handleUndoSkip = useCallback(() => {
         if (!skippedSessionToast) return;
         setLogs(prev => Array.isArray(prev) ? prev.filter(l => l.id !== skippedSessionToast.id) : []);
         // If skipping the last pending day auto-advanced the week (KONG wrapper
@@ -309,7 +317,7 @@ const AppContent = () => {
             setActiveMeso(prev => (prev && prev.id === snapshot.mesoId ? { ...prev, week: snapshot.week, isDeload: snapshot.isDeload } : prev));
         }
         setSkippedSessionToast(null);
-    };
+    }, [skippedSessionToast, setLogs, setActiveMeso]);
 
     useEffect(() => {
         if (!skippedSessionToast) return;
@@ -353,7 +361,7 @@ const AppContent = () => {
 
 
             <AppBanners
-                activeSession={activeSession}
+                hasActiveSession={activeSession != null}
                 skippedSessionToast={skippedSessionToast}
                 onUndoSkip={handleUndoSkip}
             />
@@ -368,7 +376,7 @@ const AppContent = () => {
                     <SharedCsvImport
                         key={nativeSharedCsv?.seq ?? 0}
                         ready={!isAppLoading}
-                        onImported={() => setView('history')}
+                        onImported={() => setView('diary')}
                         nativeLaunch={nativeSharedCsv?.launch}
                     />
                 </React.Suspense>

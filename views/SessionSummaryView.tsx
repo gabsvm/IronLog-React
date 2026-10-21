@@ -51,11 +51,11 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
     const [shareVariant, setShareVariant] = useState<SessionCardVariant>('dark-photo');
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [previewFailed, setPreviewFailed] = useState(false);
+    const [previewRetry, setPreviewRetry] = useState(0);
     const [shareState, setShareState] = useState<'idle' | 'busy' | 'failed'>('idle');
     const volumeText = `${formatInteger(toDisplay(stats.volume, unit), lang)} ${unitLabel(unit).toLowerCase()}`;
     const key = `${log.id}|${log.endTime}|${log.name}|${lang}|${unit}|${stats.sets}|${stats.volume}`;
     const cardCacheRef = useRef<Map<string, Promise<PreparedImage>>>(new Map());
-    const previewUrlsRef = useRef<Map<string, string>>(new Map());
 
     const prepareShare = useCallback((variant: SessionCardVariant): Promise<PreparedImage> => {
         const cacheKey = key + '|' + variant;
@@ -98,35 +98,29 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
         return promise;
     }, [key, log, lang, unit, stats, volumeText]);
 
-    useEffect(() => {
-        // Prepare the main template after first paint, not on the share button.
-        const id = window.setTimeout(() => { void prepareShare('dark-photo').catch(() => {}); }, 120);
-        return () => window.clearTimeout(id);
-    }, [prepareShare]);
+    // Do not encode a 1080×1350 canvas until the user opens the share flow.
 
     useEffect(() => {
         if (!showShareSheet) return;
         let active = true;
+        let objectUrl: string | null = null;
         setPreviewUrl(null);
         setPreviewFailed(false);
-        const previewKey = key + '|' + shareVariant;
         void prepareShare(shareVariant).then(({ blob }) => {
             if (!active) return;
-            let url = previewUrlsRef.current.get(previewKey);
-            if (!url) {
-                url = URL.createObjectURL(blob);
-                previewUrlsRef.current.set(previewKey, url);
-            }
-            setPreviewUrl(url);
+            objectUrl = URL.createObjectURL(blob);
+            setPreviewUrl(objectUrl);
         }).catch(() => { if (active) setPreviewFailed(true); });
-        return () => { active = false; };
-    }, [key, showShareSheet, shareVariant, prepareShare]);
+        return () => {
+            active = false;
+            if (objectUrl) URL.revokeObjectURL(objectUrl);
+        };
+    }, [showShareSheet, shareVariant, prepareShare, previewRetry]);
 
     useEffect(() => () => {
-        previewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
-        previewUrlsRef.current.clear();
         cardCacheRef.current.clear();
     }, []);
+
 
     const handleShareImage = async () => {
         if (shareState === 'busy') return;
@@ -233,7 +227,7 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
             </div>
 
             {/* Footer */}
-            <div className="p-4 bg-[rgb(var(--surface-app))] pb-[var(--safe-area-bottom)] border-t border-[rgb(var(--border-subtle)/0.4)]">
+            <div className="p-4 bg-[rgb(var(--surface-app))] pb-safe border-t border-[rgb(var(--border-subtle)/0.4)]">
                 <button
                     type="button"
                     onClick={() => setShowShareSheet(true)}
@@ -313,6 +307,15 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
                         <p role="alert" className="text-center text-xs font-semibold text-red-500">
                             {TRANSLATIONS[lang].copy.sessionSummary.shareImageFailed}
                         </p>
+                    )}
+                    {previewFailed && (
+                        <button
+                            type="button"
+                            onClick={() => setPreviewRetry((attempt) => attempt + 1)}
+                            className="mx-auto block min-h-11 rounded-full border border-[rgb(var(--border-subtle))] px-5 text-sm font-semibold text-[rgb(var(--text-primary))]"
+                        >
+                            {pickLang(lang, { es: 'Reintentar vista previa', en: 'Retry preview' })}
+                        </button>
                     )}
                 </div>
             </Sheet>

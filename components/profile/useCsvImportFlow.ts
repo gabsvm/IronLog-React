@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
 import { resolveWeightUnit } from '../../utils/units';
+import { pickLang } from '../../utils/i18n';
 import {
     addImportKeys,
     buildImportLogs,
@@ -29,9 +30,12 @@ export const useCsvImportFlow = (options: { onImported?: (count: number) => void
     const [csvError, setCsvError] = useState<string | null>(null);
     const [csvStatus, setCsvStatus] = useState<string | null>(null);
     const [csvKnownKeys, setCsvKnownKeys] = useState<ReadonlySet<string>>(new Set());
+    const csvFileTooLarge = pickLang(lang, { es: 'El archivo supera el límite de 5 MB.', en: 'File exceeds the 5 MB limit.' });
+    const csvTooManyRows = pickLang(lang, { es: 'El archivo supera el límite de 20.000 filas.', en: 'File exceeds the 20,000-row limit.' });
 
     const openCsvImport = (text: string, strongUnit: WeightUnit) => {
         try {
+            if (text.length > 5 * 1024 * 1024) throw new Error('file-too-large');
             const parsed = parseTrainingCsv(text, strongUnit);
             setCsvRaw(text);
             setCsvParsed(parsed);
@@ -47,6 +51,8 @@ export const useCsvImportFlow = (options: { onImported?: (count: number) => void
             setCsvError(
                 err?.message === 'empty' ? t.csv.errorEmpty
                 : err?.message === 'unknown-format' ? t.csv.errorUnknown
+                : err?.message === 'file-too-large' ? csvFileTooLarge
+                : err?.message === 'too-many-rows' ? csvTooManyRows
                 : t.csv.errorRead
             );
         }
@@ -63,6 +69,10 @@ export const useCsvImportFlow = (options: { onImported?: (count: number) => void
         const file = e.target.files?.[0];
         e.target.value = '';
         if (!file) return;
+        if (file.size > 5 * 1024 * 1024) {
+            setCsvError(csvFileTooLarge);
+            return;
+        }
         const unit = resolveWeightUnit(config);
         setCsvStrongUnit(unit);
         const reader = new FileReader();

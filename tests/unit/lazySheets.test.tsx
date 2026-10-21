@@ -71,7 +71,7 @@ import { Layout } from '../../components/layout/Layout';
 
 describe('L2: Lazy loaded ProfileSheet and QuickStartSheet', () => {
     it('does not mount ProfileSheet initially, but mounts it lazily on user interaction', async () => {
-        const { getByLabelText } = render(
+        const { getAllByLabelText } = render(
             <Layout
                 view="home"
                 setView={vi.fn()}
@@ -91,8 +91,9 @@ describe('L2: Lazy loaded ProfileSheet and QuickStartSheet', () => {
         // ProfileSheet should not be mounted initially in DOM
         expect(document.body.textContent).not.toContain('Cuenta gratuita');
 
-        // Open profile via avatar click
-        const avatarBtn = getByLabelText('Abrir perfil');
+        // Open profile via avatar click (mobile topbar and desktop sidebar both
+        // render one; jsdom ignores the lg:hidden breakpoint, so take the first).
+        const avatarBtn = getAllByLabelText('Abrir perfil')[0];
         act(() => {
             fireEvent.click(avatarBtn);
         });

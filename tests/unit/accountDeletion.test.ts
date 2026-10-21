@@ -46,8 +46,17 @@ const makeFirebase = (overrides: {
                 deletedRefs.push(ref.path);
                 calls.push(`deleteDoc:${ref.path}`);
             }),
+            collection: vi.fn((_db: unknown, ...path: string[]) => ({ path: path.join('/') })),
+            getDocs: vi.fn(async () => ({ docs: [] })),
+            writeBatch: vi.fn(() => ({ delete: vi.fn(), commit: vi.fn(async () => {}) })),
+            getDoc: vi.fn(async (ref: { path: string }) => {
+                calls.push(`getDoc:${ref.path}`);
+                return { exists: () => getDocResponses.get(ref.path) ?? false };
+            }),
         },
     };
+    const getDocResponses = new Map<string, boolean>();
+    (firebase as any).setDocExists = (path: string, exists: boolean) => getDocResponses.set(path, exists);
     return { firebase, calls, deletedRefs };
 };
 
@@ -55,8 +64,9 @@ describe('N3: deleteCloudAccount removes cloud data in the exact safe order', ()
     it('reauthenticates, deletes history directly, deletes the user doc, then the auth user (no listing, no subscription)', async () => {
         const { firebase, calls, deletedRefs } = makeFirebase();
 
-        await deleteCloudAccount('uid-1', 'a@b.c', 'secret', firebase);
+        const result = await deleteCloudAccount('uid-1', 'a@b.c', 'secret', firebase);
 
+        expect(result).toEqual({ subscriptionRetained: false });
         expect(calls).toEqual([
             'credential:a@b.c',
             'reauthenticate',
@@ -64,12 +74,23 @@ describe('N3: deleteCloudAccount removes cloud data in the exact safe order', ()
             'deleteDoc:users/uid-1/data/history',
             'doc:users/uid-1',
             'deleteDoc:users/uid-1',
+            'doc:users/uid-1/data/subscription',
+            'getDoc:users/uid-1/data/subscription',
             'deleteUser',
         ]);
         expect(deletedRefs).toEqual(['users/uid-1/data/history', 'users/uid-1']);
-        // Q2: subscription is untouched because it is never referenced.
-        expect(calls.join('|')).not.toContain('subscription');
+        // The subscription record is only ever read, never written or deleted.
+        expect(calls.some((c) => c.startsWith('deleteDoc:users/uid-1/data/subscription'))).toBe(false);
     });
+
+    it('reports subscriptionRetained when the server-side subscription record exists', async () => {
+        const { firebase } = makeFirebase();
+        (firebase as any).setDocExists('users/uid-1/data/subscription', true);
+
+        await expect(deleteCloudAccount('uid-1', 'a@b.c', 'secret', firebase)).resolves.toEqual({
+            subscriptionRetained: true,
+        });
+        });
 
     it('never calls deleteUser when the Firestore wipe fails', async () => {
         const { firebase } = makeFirebase({ deleteError: { code: 'unavailable' } });
@@ -169,7 +190,7 @@ describe('N3: AccountDeletionError carries a translation key code', () => {
     });
 });
 
-describe('Q21: deleteCloudAccount wipes per-session logs when V2 is on', () => {
+describe('Q21: deleteCloudAccount wipes V2 collections regardless of the rollout flag', () => {
     const withLogsApi = (ids: string[], opts: { commitError?: { code: string } } = {}) => {
         const made = makeFirebase();
         const api = made.firebase.firestoreApi;
@@ -191,9 +212,9 @@ describe('Q21: deleteCloudAccount wipes per-session logs when V2 is on', () => {
         return made;
     };
 
-    it('lists and batch-deletes logs/ and the S5 section collections before history and the user doc', async () => {
+    it('lists and batch-deletes V2 collections before history and user docs without a rollout flag', async () => {
         const { firebase, calls } = withLogsApi(['1', '2', '3']);
-        await deleteCloudAccount('uid-1', 'a@b.c', 'secret', firebase, { cloudLogsV2: true });
+        await deleteCloudAccount('uid-1', 'a@b.c', 'secret', firebase);
         const order = calls.filter((c) => /^(getDocs|batchDelete|deleteDoc|deleteUser)/.test(c));
         expect(order).toEqual([
             'getDocs:users/uid-1/logs',
@@ -217,15 +238,10 @@ describe('Q21: deleteCloudAccount wipes per-session logs when V2 is on', () => {
     it('a failed logs wipe never deletes the auth user', async () => {
         const { firebase, calls } = withLogsApi(['1'], { commitError: { code: 'permission-denied' } });
         await expect(
-            deleteCloudAccount('uid-1', 'a@b.c', 'secret', firebase, { cloudLogsV2: true }),
+            deleteCloudAccount('uid-1', 'a@b.c', 'secret', firebase),
         ).rejects.toMatchObject({ code: 'unknown' });
         expect(calls).not.toContain('deleteUser');
         expect(calls.some((c) => c.startsWith('deleteDoc:'))).toBe(false);
     });
 
-    it('flag off (default) never lists logs/', async () => {
-        const { firebase, calls } = withLogsApi(['1']);
-        await deleteCloudAccount('uid-1', 'a@b.c', 'secret', firebase);
-        expect(calls.some((c) => c.startsWith('getDocs'))).toBe(false);
-    });
 });

@@ -104,11 +104,22 @@ describe('Task L4: View Transitions and View Loaders', () => {
 
     it('defines consistent VIEW_DEPTH for directional page transitions', () => {
         expect(VIEW_DEPTH['home']).toBe(1);
-        expect(VIEW_DEPTH['history']).toBe(1);
-        expect(VIEW_DEPTH['stats']).toBe(1);
-        expect(VIEW_DEPTH['nutrition']).toBe(1);
+        expect(VIEW_DEPTH['routine']).toBe(1);
+        expect(VIEW_DEPTH['progress']).toBe(1);
+        expect(VIEW_DEPTH['diary']).toBe(1);
         expect(VIEW_DEPTH['workout']).toBe(2);
         expect(VIEW_DEPTH['exercises']).toBe(2);
         expect(VIEW_DEPTH['program']).toBe(2);
+    });
+
+    it('resolves legacy view names to the Fase 2 roots', async () => {
+        const { resolveAppView } = await import('../../components/layout/navigation');
+        expect(resolveAppView('history')).toBe('diary');
+        expect(resolveAppView('stats')).toBe('progress');
+        expect(resolveAppView('nutrition')).toBe('diary');
+        expect(resolveAppView('home')).toBe('home');
+        expect(resolveAppView('workout')).toBe('workout');
+        expect(resolveAppView('program')).toBe('program');
+        expect(resolveAppView('nope')).toBeNull();
     });
 });

@@ -129,20 +129,21 @@ for (const theme of ['dark', 'light'] as const) {
     });
 
     test(`history ${theme}`, async ({ page }) => {
-      await nav(page).getByRole('button', { name: /Historial|History/ }).click();
+      await nav(page).getByRole('button', { name: /^Diario$|^Diary$/ }).click();
       await page.waitForTimeout(800);
       await expect(page).toHaveScreenshot(`history-${theme}.png`, { fullPage: true });
     });
 
     test(`stats ${theme}`, async ({ page }) => {
-      await nav(page).getByRole('button', { name: /M[ée]tricas|Stats/i }).click();
+      await nav(page).getByRole('button', { name: /^Progreso$|^Progress$/ }).click();
       await page.waitForTimeout(1500);
       await expect(page).toHaveScreenshot(`stats-${theme}.png`, { fullPage: true });
     });
 
     test(`expressive: Dieta mantiene superficies y pestañas accesibles (${theme})`, async ({ page }) => {
       await page.setViewportSize({ width: 320, height: 720 });
-      await nav(page).getByRole('button', { name: /Dieta|Diet/ }).click();
+      await nav(page).getByRole('button', { name: /^Diario$|^Diary$/ }).click();
+      await page.getByRole('tab', { name: /Nutrición|Nutrition/ }).click();
       const tabs = page.locator('.seg-reference').filter({ has: page.locator('button[aria-pressed]') }).first();
       const buttons = tabs.locator('button[aria-pressed]');
       await expect(buttons).toHaveCount(3);
@@ -160,7 +161,8 @@ for (const theme of ['dark', 'light'] as const) {
     });
 
     test(`nutrition ${theme}`, async ({ page }) => {
-      await nav(page).getByRole('button', { name: /Dieta|Diet/ }).click();
+      await nav(page).getByRole('button', { name: /^Diario$|^Diary$/ }).click();
+      await page.getByRole('tab', { name: /Nutrición|Nutrition/ }).click();
       await page.waitForTimeout(800);
       await expect(page).toHaveScreenshot(`nutrition-${theme}.png`, { fullPage: true });
     });

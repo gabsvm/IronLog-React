@@ -1,6 +1,6 @@
 import { pickLang } from '../utils/i18n';
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
-import { useApp } from '../context/AppContext';
+import { useApp, useAppPreferences, useAppConfig } from '../context/AppContext';
 import { FoodEntry, CardioSession, BodyLog } from '../types';
 import { AddMealModal } from '../components/nutrition/AddMealModal';
 import { AddCardioModal } from '../components/nutrition/AddCardioModal';
@@ -25,11 +25,13 @@ type SubTab = 'today' | 'body' | 'history';
 
 export const NutriView: React.FC = () => {
   const {
-    lang, nutritionLogs, setNutritionLogs,
+    nutritionLogs, setNutritionLogs,
     cardioSessions, setCardioSessions,
     nutritionGoal, setNutritionGoal,
-    userProfile, setUserProfile, bodyLogs, setBodyLogs, config
+    userProfile, setUserProfile, bodyLogs, setBodyLogs,
   } = useApp();
+  const { lang } = useAppPreferences();
+  const { config } = useAppConfig();
   const unit = resolveWeightUnit(config);
 
   const nutritionLogsRef = useRef(nutritionLogs);
@@ -219,30 +221,47 @@ export const NutriView: React.FC = () => {
   const latestWeight = weightTrend.length > 0 ? weightTrend[weightTrend.length - 1] : null;
 
   // ─── RENDER ──────────────────────────────────────────────────────
-  return (
-    <div className="space-y-4 px-4 pb-8">
-      {/* ── Sub-tabs ── */}
-      <div className="sticky top-0 z-10 -mx-4 px-4 py-2 bg-[rgb(var(--surface-app))]">
-        <div className="seg-reference flex gap-1 p-1">
-          {([
-            { id: 'today',   label: TRANSLATIONS[lang].copy.nutri.today,        icon: 'Utensils' },
-            { id: 'body',    label: TRANSLATIONS[lang].copy.nutri.body,      icon: 'Scale' },
-            { id: 'history', label: TRANSLATIONS[lang].dietTrends, icon: 'BarChart2' },
-          ] as { id: SubTab; label: string; icon: string }[]).map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setSubTab(tab.id)}
-              aria-pressed={subTab === tab.id}
-              className={`expressive-press flex min-h-11 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full px-1 text-xs font-bold tracking-normal ${
-                subTab === tab.id ? 'bg-primary-500 text-zinc-950 shadow-sm' : 'text-muted hover:text-[rgb(var(--text-primary))]'
-              }`}
-            >
-              <Icon name={tab.icon as any} size={12} />
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
+    const todayLabel = new Date().toLocaleDateString(pickLang(lang, { es: 'es-AR', en: 'en-US' }), { weekday: 'long', day: 'numeric', month: 'long' });
+    return (
+        <div className="space-y-4 px-4 pb-8">
+            {/* ── Section header: title + Add-meal shortcut (same AddMealModal flow) ── */}
+            <div className="flex items-center justify-between gap-3 pt-1">
+                <div className="min-w-0">
+                    <h2 className="text-2xl font-black tracking-tight text-zinc-950 dark:text-white">{TRANSLATIONS[lang].navDiaryNutrition}</h2>
+                    <p className="mt-0.5 text-xs font-medium capitalize text-muted">{todayLabel}</p>
+                </div>
+                <button
+                    type="button"
+                    onClick={() => setShowAddMeal(true)}
+                    aria-label={TRANSLATIONS[lang].copy.todayTab.addFoodEntry}
+                    className="expressive-press flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-full bg-primary-500 px-4 text-xs font-bold text-zinc-950 shadow-sm transition-transform active:scale-95"
+                >
+                    <Icon name="Plus" size={14} />
+                    {TRANSLATIONS[lang].copy.todayTab.addFood}
+                </button>
+            </div>
+            {/* ── Sub-tabs ── */}
+            <div className="sticky top-0 z-10 -mx-4 px-4 py-2 bg-[rgb(var(--surface-app))]">
+                <div className="seg-reference flex gap-1 p-1">
+                    {([
+                        { id: 'today',   label: TRANSLATIONS[lang].copy.nutri.today,        icon: 'Utensils' },
+                        { id: 'body',    label: TRANSLATIONS[lang].copy.nutri.body,      icon: 'Scale' },
+                        { id: 'history', label: TRANSLATIONS[lang].dietTrends, icon: 'BarChart2' },
+                    ] as { id: SubTab; label: string; icon: string }[]).map(tab => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setSubTab(tab.id)}
+                            aria-pressed={subTab === tab.id}
+                            className={`expressive-press flex min-h-11 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full px-1 text-xs font-bold tracking-normal ${
+                                subTab === tab.id ? 'bg-primary-500 text-zinc-950 shadow-sm' : 'text-muted hover:text-[rgb(var(--text-primary))]'
+                            }`}
+                        >
+                            <Icon name={tab.icon} size={12} />
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
 
       <div>
         {/* ─── TAB: TODAY ─────────────────────────────────────── */}
@@ -330,7 +349,7 @@ export const NutriView: React.FC = () => {
                         fat:      Math.round(editingEntry.fat      * mult),
                       });
                     }}
-                    className="flex-1 py-2 rounded-xl bg-zinc-800 text-zinc-300 text-xs font-bold active:scale-95 transition-all hover:bg-zinc-700"
+                    className="min-h-[44px] flex-1 rounded-xl bg-zinc-800 px-1 text-zinc-300 text-xs font-bold active:scale-95 transition-all hover:bg-zinc-700"
                   >
                     ×{mult}
                   </button>
@@ -353,7 +372,7 @@ export const NutriView: React.FC = () => {
                     inputMode="numeric"
                     value={editEntryDraft[key]}
                     onChange={e => setEditEntryDraft(prev => prev ? { ...prev, [key]: Math.max(0, Number(e.target.value)) } : prev)}
-                    className="w-full bg-zinc-800 border border-zinc-700/50 rounded-2xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all glow-input-neon"
+                    className="nutri-field w-full bg-zinc-800 border border-zinc-700/50 rounded-2xl px-3 py-2.5 text-white focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all glow-input-neon"
                   />
                 </div>
               ))}
@@ -389,7 +408,7 @@ export const NutriView: React.FC = () => {
                   inputMode="numeric"
                   value={editGoal[key]}
                   onChange={e => setEditGoal(prev => ({ ...prev, [key]: Number(e.target.value) }))}
-                  className="w-full bg-zinc-800 border border-zinc-700/50 rounded-2xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all glow-input-neon"
+                  className="nutri-field w-full bg-zinc-800 border border-zinc-700/50 rounded-2xl px-4 py-3 text-white focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all glow-input-neon"
                 />
               </div>
             ))}

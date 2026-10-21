@@ -1,3 +1,6 @@
+// Tests must run against the development React build (act() support) even
+// when the ambient shell exports NODE_ENV=production for other tooling.
+process.env.NODE_ENV = 'test';
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 

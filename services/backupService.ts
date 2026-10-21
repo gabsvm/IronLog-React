@@ -233,7 +233,7 @@ export const restoreBackupToStorage = async (backup: GainsLabBackupV1): Promise<
 
     const s = backup.state || (backup as any).data;
 
-    const writeTasks: Promise<void>[] = [];
+    const writeTasks: Promise<boolean>[] = [];
 
     if (s.program !== undefined) writeTasks.push(db.set('il_prog_v16', s.program));
     if (s.exercises !== undefined) writeTasks.push(db.set('il_ex_v16', s.exercises));
@@ -279,8 +279,12 @@ export const restoreBackupToStorage = async (backup: GainsLabBackupV1): Promise<
         window.localStorage.setItem('il_has_seen_onboarding_v1', 'true');
     }
 
-    // Await all storage writes to ensure no false success on write failure
-    await Promise.all(writeTasks);
+    // Await all storage writes: any failure throws instead of reloading into a
+    // half-restored (data-losing) state. Callers already handle the rejection.
+    const results = await Promise.all(writeTasks);
+    if (results.some((ok) => !ok)) {
+        throw new Error('restore-write-failed');
+    }
 
     // Apply active workout & meso in Zustand store only after persistent writes succeed
     useStore.setState({

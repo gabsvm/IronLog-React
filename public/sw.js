@@ -16,8 +16,8 @@ const LAZY_PRECACHE_URLS = [
 
 const OPTIONAL_PRECACHE_URLS = [
   '/offline.html',
-  '/icon-192.png',
-  '/icon-512.png',
+  '/assets/icons/icon-192.png',
+  '/assets/icons/icon-512.png',
   '/apple-touch-icon.png',
   '/favicon-32.png',
   '/favicon-16.png',
@@ -222,6 +222,10 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
+  // NOTE: this POST only reaches the SW when it already controls the scope.
+  // After installing the PWA, the user must open the app once so the SW
+  // activates; otherwise the host serves /share-target directly (vercel.json
+  // rewrites GET to /index.html, but the shared file is lost).
   if (
     request.method === 'POST' &&
     url.origin === self.location.origin &&

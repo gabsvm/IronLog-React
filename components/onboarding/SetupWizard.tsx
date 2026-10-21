@@ -29,8 +29,8 @@ export const SetupWizard: React.FC<SetupWizardProps> = (props) => {
         );
     }
 
-    const stepTitles = [w.steps.exp, w.steps.freq, w.steps.goal, w.steps.time];
-    const totalSteps = 4;
+    const stepTitles = [w.steps.freq, w.steps.goal, w.steps.time];
+    const totalSteps = 3;
     const progress = step < totalSteps ? ((step + 1) / totalSteps) * 100 : 100;
 
     // ── Main render ───────────────────────────────────────────────────
@@ -57,7 +57,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = (props) => {
                                 </button>
                             ))}
                         </div>
-                        {step < 4 && (
+                        {step < 3 && (
                             <button onClick={() => handleApply('custom')} className="min-w-0 text-right text-xs font-black uppercase leading-tight tracking-wider text-muted hover:text-zinc-700 dark:hover:text-[rgb(var(--text-primary))]">
                                 {w.manual}
                             </button>
@@ -94,16 +94,14 @@ export const SetupWizard: React.FC<SetupWizardProps> = (props) => {
             {step < totalSteps && (
                 <div className="px-6 pt-8 pb-4">
                     <h2 className="text-2xl font-black text-[rgb(var(--text-primary))]">
-                        {step === 0 && (TRANSLATIONS[lang].copy.setupWizard.whatSYourLevel)}
-                        {step === 1 && (TRANSLATIONS[lang].copy.setupWizard.howManyDaysPer)}
-                        {step === 2 && (TRANSLATIONS[lang].copy.setupWizard.whatSYourGoal)}
-                        {step === 3 && (TRANSLATIONS[lang].copy.setupWizard.howMuchTimeDo)}
+                        {step === 0 && (TRANSLATIONS[lang].copy.setupWizard.howManyDaysPer)}
+                        {step === 1 && (TRANSLATIONS[lang].copy.setupWizard.whatSYourGoal)}
+                        {step === 2 && (TRANSLATIONS[lang].copy.setupWizard.howMuchTimeDo)}
                     </h2>
                     <p className="text-sm text-muted dark:text-zinc-500 mt-1">
-                        {step === 0 && (TRANSLATIONS[lang].copy.setupWizard.beHonestThisPersonalizes)}
-                        {step === 1 && (TRANSLATIONS[lang].copy.setupWizard.considerYourCommitmentsAnd)}
-                        {step === 2 && (TRANSLATIONS[lang].copy.setupWizard.youCanChangeThis)}
-                        {step === 3 && (TRANSLATIONS[lang].copy.setupWizard.perTrainingSession)}
+                        {step === 0 && (TRANSLATIONS[lang].copy.setupWizard.considerYourCommitmentsAnd)}
+                        {step === 1 && (TRANSLATIONS[lang].copy.setupWizard.youCanChangeThis)}
+                        {step === 2 && (TRANSLATIONS[lang].copy.setupWizard.perTrainingSession)}
                     </p>
                 </div>
             )}
@@ -113,24 +111,29 @@ export const SetupWizard: React.FC<SetupWizardProps> = (props) => {
                 <SetupWizardStep state={state} />
             </div>
 
-            {/* Footer – only shown on steps 0–3 */}
-            {step < 4 && (
+            {/* Step footer: step 3 can return to edit the recommendation inputs. */}
+            {step <= 3 && (
                 <div className="px-6 pt-5 pb-[calc(1.25rem+var(--safe-area-bottom))] border-t border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-app))] flex gap-3">
                     <button
+                        type="button"
                         onClick={() => setStep(Math.max(0, step - 1))}
                         disabled={step === 0}
+                        aria-label={t.back}
                         className="w-14 h-12 rounded-2xl bg-[rgb(var(--surface-elevated))] flex items-center justify-center text-zinc-500 dark:text-muted disabled:opacity-30 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all active:scale-90"
                     >
                         <Icon name="ChevronLeft" size={22} />
                     </button>
-                    <button
-                        onClick={handleNext}
-                        className="expressive-press flex-1 h-12 rounded-full bg-primary-500 hover:bg-primary-400 text-zinc-950 font-black text-sm shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2"
-                    >
-                        {step === 3
-                            ? (TRANSLATIONS[lang].copy.setupWizard.analyzeMyProfile)
-                            : (TRANSLATIONS[lang].copy.setupWizard.next)}
-                    </button>
+                    {step < 3 && (
+                        <button
+                            type="button"
+                            onClick={handleNext}
+                            className="expressive-press flex-1 h-12 rounded-full bg-primary-500 hover:bg-primary-400 text-zinc-950 font-black text-sm shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2"
+                        >
+                            {step === 2
+                                ? (TRANSLATIONS[lang].copy.setupWizard.analyzeMyProfile)
+                                : (TRANSLATIONS[lang].copy.setupWizard.next)}
+                        </button>
+                    )}
                 </div>
             )}
         </div>

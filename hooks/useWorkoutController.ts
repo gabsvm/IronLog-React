@@ -1,6 +1,6 @@
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import { useApp } from '../context/AppContext';
+import { useApp, useAppConfig } from '../context/AppContext';
 import { useTimerActions } from '../context/TimerContext';
 import { SessionExercise, ExerciseDef, SetType, Log, WorkoutSet } from '../types';
 import { triggerHaptic } from '../utils/audio';
@@ -39,7 +39,8 @@ const reorderList = <T,>(items: T[], from: number, to: number): T[] => {
 };
 
 export const useWorkoutController = (onFinishCallback: () => void, onDiscardCallback: () => void) => {
-    const { setProgram, exercises, rpFeedback, setRpFeedback, config, logs, userProfile } = useApp();
+    const { setProgram, exercises, rpFeedback, setRpFeedback, logs, userProfile } = useApp();
+    const { config } = useAppConfig();
     const activeSession = useStore(state => state.activeSession);
     const setActiveSession = useStore(state => state.setActiveSession);
     const setActiveMeso = useStore(state => state.setActiveMeso);

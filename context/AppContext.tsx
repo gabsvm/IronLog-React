@@ -55,7 +55,6 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
 
     // NEW: User Profile Persistence
     const [userProfile, setUserProfile, profileLoading] = usePersistedState<UserProfile>('il_profile_v1', {
-        experience: 'intermediate',
         daysPerWeek: 4,
         goal: 'hypertrophy',
         sessionDuration: 'medium'

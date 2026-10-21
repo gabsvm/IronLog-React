@@ -62,14 +62,15 @@ test.describe('S3: share target + shortcuts', () => {
         await expect(page.getByText(ERROR_BOUNDARY_TEXT)).toHaveCount(0);
     });
 
-    test('nutrition and history shortcuts open their views', async ({ page }) => {
+    test('nutrition and history shortcuts open their diary sections', async ({ page }) => {
         await seedOnboarded(page);
         await page.goto('/?action=history&source=shortcut');
         const nav = page.locator('nav[aria-label="Main navigation"]');
-        await expect(nav.getByRole('button', { name: /Historial|History/ })).toHaveAttribute('aria-current', 'page', { timeout: 15000 });
+        await expect(nav.getByRole('button', { name: /^Diario$|^Diary$/ })).toHaveAttribute('aria-current', 'page', { timeout: 15000 });
         expect(new URL(page.url()).search).toBe('');
 
         await page.goto('/?action=nutrition&source=shortcut');
-        await expect(nav.getByRole('button', { name: /Dieta|Diet/ })).toHaveAttribute('aria-current', 'page', { timeout: 15000 });
+        await expect(nav.getByRole('button', { name: /^Diario$|^Diary$/ })).toHaveAttribute('aria-current', 'page', { timeout: 15000 });
+        await expect(page.getByRole('tab', { name: /Nutrición|Nutrition/, selected: true })).toBeVisible({ timeout: 15000 });
     });
 });

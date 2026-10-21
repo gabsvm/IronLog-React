@@ -1,12 +1,14 @@
 package com.gainslab.pro;
 
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.webkit.WebView;
+import android.webkit.WebSettings;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.OnBackPressedCallback;
@@ -56,6 +58,12 @@ public class MainActivity extends BridgeActivity {
 
         WebView webView = bridge != null ? bridge.getWebView() : null;
         if (webView != null) {
+            // Firebase Emulator runs on HTTP. Permit its mixed-content requests
+            // only in debuggable builds; release keeps WebView's secure default.
+            boolean isDebuggable = (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+            if (isDebuggable) {
+                webView.getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+            }
             webView.setBackgroundColor(Color.BLACK);
             webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
             webView.setVerticalScrollBarEnabled(false);

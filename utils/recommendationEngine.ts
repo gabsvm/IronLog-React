@@ -17,7 +17,7 @@ export interface RecommendationResult {
 }
 
 export const recommendProgram = (profile: UserProfile): RecommendationResult => {
-    const { experience, daysPerWeek, goal, sessionDuration } = profile;
+    const { daysPerWeek, goal, sessionDuration } = profile;
 
     let selectedTemplate: ProgramDay[] = DEFAULT_TEMPLATE;
     let selectedType: MesoType = 'hyp_1';
@@ -142,7 +142,10 @@ export const recommendProgression = (input: {
 
     const atTop = parsed.every((s) => s.reps >= range.max);
     const belowFloor = parsed.every((s) => s.reps < range.min);
-    if (atTop && (loggedRir.length === 0 || loggedRir.every((v) => v <= rirTarget))) {
+    // Never suggest more load when a set reached failure proximity (RIR 0):
+    // grinding at the top of the range earns consolidation, not extra weight.
+    const hasMargin = loggedRir.length === 0 || loggedRir.every((v) => v >= 1 && v <= rirTarget);
+    if (atTop && hasMargin) {
         return { action: 'up', deltaDisplay: PROGRESSION_STEP[unit], baseDisplay, topReps, rir, targetReps: topReps + 1 };
     }
     if (belowFloor) {

@@ -30,11 +30,14 @@ dist-ssr
 *.sln
 *.sw?
 dist/
+/dist-capacitor/
 
-# Local Android release signing material and generated release artifacts
+# Local Android release signing material and generated release artifacts.
+# The root gainslab-release.keystore is local-only: it must never be committed.
+*.keystore
+*.jks
+key.properties
 android/key.properties
-android/**/*.jks
-android/**/*.keystore
 /release/
 
 # Playwright artifacts

@@ -1,3 +1,5 @@
+// Same NODE_ENV guarantee as vitest.config.ts (see comment there).
+process.env.NODE_ENV = 'test';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({

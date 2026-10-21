@@ -11,12 +11,14 @@ import { Logo } from '../ui/Logo';
 import { Avatar } from '../ui/Avatar';
 import { scheduleWhenIdle } from '../../lib/idle';
 import { runAfterProfileClosed } from '../../utils/profileNav';
+import { resolveAppView, isValidDiarySection, QUICK_START_EVENT, ROOT_NAV_ITEMS, type AppView, type DiarySection } from './navigation';
 
 const ProfileSheet = React.lazy(() => import('../profile/ProfileSheet').then(m => ({ default: m.ProfileSheet })));
 import type { ProfileSection } from '../profile/ProfileSheet';
 const QuickStartSheet = React.lazy(() => import('../home/QuickStartSheet').then(m => ({ default: m.QuickStartSheet })));
 const FreestyleSessionModal = React.lazy(() => import('../workout/FreestyleSessionModal').then(m => ({ default: m.FreestyleSessionModal })));
 const ConfirmModal = React.lazy(() => import('../ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
+const Sidebar = React.lazy(() => import('./Sidebar').then(m => ({ default: m.Sidebar })));
 
 interface KongConvertConfirmModalProps {
     isOpen: boolean;
@@ -48,7 +50,7 @@ const KongConvertConfirmModal: React.FC<KongConvertConfirmModalProps> = ({
     };
 
     return (
-        <React.Suspense fallback={null}>
+        <React.Suspense fallback={<SheetFallback />}>
             <ConfirmModal
                 isOpen={isOpen}
                 title={t.convertKongTitle}
@@ -62,8 +64,16 @@ const KongConvertConfirmModal: React.FC<KongConvertConfirmModalProps> = ({
     );
 };
 
+/** Visible while a lazy sheet chunk loads (slow 4G) so the trigger never looks dead. */
+const SheetFallback: React.FC = () => (
+    <div role="status" aria-live="polite" className="fixed inset-x-0 bottom-0 z-sheet flex justify-center pb-safe pointer-events-none">
+        <div className="mb-6 flex items-center gap-2 rounded-full bg-surface-raised px-4 py-2.5 text-xs font-semibold text-muted shadow-xl">
+            <Icon name="Loader" size={16} className="animate-spin" />
+        </div>
+    </div>
+);
 export interface NavBtnProps {
-    id: 'home' | 'workout' | 'history' | 'stats' | 'nutrition' | 'program';
+    id: string;
     label: string;
     icon: any;
     isActive: boolean;
@@ -89,8 +99,11 @@ NavBtn.displayName = 'NavBtn';
 
 interface LayoutProps {
     children: React.ReactNode;
-    view: 'home' | 'workout' | 'history' | 'stats' | 'nutrition';
-    setView: (v: 'home' | 'workout' | 'history' | 'stats' | 'nutrition' | 'program') => void;
+    view: AppView;
+    setView: (v: AppView) => void;
+    /** Which diary section is visible; drives the virtualized scroll container. */
+    diarySection?: DiarySection;
+    onDiarySection?: (section: DiarySection) => void;
     onOpenProgram: () => void;
     onOpenExercises: () => void;
     onReset: () => void;
@@ -103,7 +116,7 @@ interface LayoutProps {
 }
 
 export const Layout: React.FC<LayoutProps> = ({
-    children, view, setView,
+    children, view, setView, diarySection = 'sessions', onDiarySection,
     onOpenProgram, onOpenExercises, onReset, onExport, onForceSync, onImportFile, onLogin, isSyncing,
     onOpenCommandPalette,
 }) => {
@@ -116,13 +129,25 @@ export const Layout: React.FC<LayoutProps> = ({
     const activeSessionDayIdx = useStore(state => state.activeSession?.dayIdx);
     const setActiveSession = useStore(state => state.setActiveSession);
     const t = TRANSLATIONS[lang];
-    const ly = t.layoutKeys;
     const [showProfile, setShowProfile] = React.useState(false);
     const [profileSection, setProfileSection] = React.useState<ProfileSection | null>(null);
-    const [showQuickStart, setShowQuickStart] = React.useState(false);
-    const [showFreestyle, setShowFreestyle] = React.useState(false);
+    const ly = t.layoutKeys;
     const [showActiveSessionAlert, setShowActiveSessionAlert] = React.useState(false);
     const [showKongConvertConfirm, setShowKongConvertConfirm] = React.useState(false);
+    // Single nav in the DOM: duplicate landmarks break strict selectors and
+    // screen readers. Mobile-first; upgrades to the sidebar at lg.
+    const [isDesktop, setIsDesktop] = React.useState(
+        () => typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(min-width: 1024px)').matches,
+    );
+    React.useEffect(() => {
+        if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
+        const query = window.matchMedia('(min-width: 1024px)');
+        const onChange = (event: MediaQueryListEvent) => setIsDesktop(event.matches);
+        query.addEventListener('change', onChange);
+        return () => query.removeEventListener('change', onChange);
+    }, []);
+    const [showQuickStart, setShowQuickStart] = React.useState(false);
+    const [showFreestyle, setShowFreestyle] = React.useState(false);
     const hasOpenedProfileRef = React.useRef(false);
     const hasOpenedQuickStartRef = React.useRef(false);
 
@@ -180,14 +205,25 @@ export const Layout: React.FC<LayoutProps> = ({
 
     React.useEffect(() => {
         const handleNavigate = (event: Event) => {
-            const target = (event as CustomEvent<{ view?: string }>).detail?.view;
-            if (target === 'home' || target === 'workout' || target === 'history' || target === 'stats' || target === 'nutrition' || target === 'program') {
-                setView(target);
+            const detail = (event as CustomEvent<{ view?: string; section?: string }>).detail;
+            const resolved = resolveAppView(detail?.view);
+            if (!resolved) return;
+            if (resolved === 'diary' && isValidDiarySection(detail?.section)) {
+                onDiarySection?.(detail.section as DiarySection);
             }
+            setView(resolved);
         };
         window.addEventListener('gainslab:navigate', handleNavigate);
         return () => window.removeEventListener('gainslab:navigate', handleNavigate);
-    }, [setView]);
+    }, [setView, onDiarySection]);
+
+    // Freestyle/session entry from anywhere (Hoy/Rutina/sidebar) without a
+    // floating action button: emitters dispatch QUICK_START_EVENT.
+    React.useEffect(() => {
+        const handleQuickStart = () => setShowQuickStart(true);
+        window.addEventListener(QUICK_START_EVENT, handleQuickStart);
+        return () => window.removeEventListener(QUICK_START_EVENT, handleQuickStart);
+    }, []);
 
     const closeProfile = () => {
         try {
@@ -202,7 +238,7 @@ export const Layout: React.FC<LayoutProps> = ({
         setShowProfile(false);
     };
 
-    const isVirtualized = view === 'history';
+    const isVirtualized = view === 'diary' && diarySection === 'sessions';
 
     const editProgram = () => {
         setShowQuickStart(false);
@@ -220,29 +256,36 @@ export const Layout: React.FC<LayoutProps> = ({
         setView('program');
     };
 
-    const openPrimaryAction = () => {
-        if (typeof window !== 'undefined' && window.matchMedia('(min-width: 640px)').matches && onOpenCommandPalette) {
-            onOpenCommandPalette();
-            return;
-        }
-        setShowQuickStart(true);
-    };
-
     const startDetached = (session: any) => {
         setActiveSession(session);
         setShowFreestyle(false);
         setView('workout');
     };
 
+
+
     return (
-        <div className="flex h-full w-full flex-col overflow-hidden bg-[rgb(var(--surface-app))] font-sans text-[rgb(var(--text-primary))]">
-            {view !== 'workout' && (
+        <div className="flex h-full w-full overflow-hidden bg-[rgb(var(--surface-app))] font-sans text-[rgb(var(--text-primary))]">
+            {/* Desktop sidebar (own lazy chunk) XOR mobile chrome: a single nav landmark in the DOM. */}
+            {view !== 'workout' && isDesktop && (
+                <React.Suspense fallback={null}>
+                    <Sidebar
+                        view={view}
+                        onNavigate={setView}
+                        onOpenProfile={() => openProfile()}
+                        onOpenCommandPalette={onOpenCommandPalette}
+                    />
+                </React.Suspense>
+            )}
+
+            <div className="flex min-w-0 flex-1 flex-col">
+            {view !== 'workout' && !isDesktop && (
                 <div className="app-topbar pointer-events-none absolute left-0 right-0 top-0 z-20 bg-[rgb(var(--surface-app))] px-6 pb-2 pt-safe">
                     <div className="pointer-events-auto mx-auto flex h-14 w-full max-w-2xl items-center justify-between">
                         <div className="flex items-center gap-3">
                             <Logo className="h-10 w-10" showText />
                             {(!isOnline || syncStatus.pending > 0 || syncStatus.isSyncing) && (
-                                <div className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] ${!isOnline ? 'border-amber-500/25 bg-amber-500/10 text-amber-500' : syncStatus.isSyncing ? 'border-cyan-500/25 bg-cyan-500/10 text-cyan-500' : 'border-zinc-700/40 bg-zinc-900/10 text-zinc-500 dark:bg-zinc-900/85 dark:text-zinc-300'}`}>
+                                <div className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] ${!isOnline ? 'border-amber-500/25 bg-amber-500/10 text-amber-500' : syncStatus.isSyncing ? 'border-cyan-500/25 bg-cyan-500/10 text-cyan-500' : 'border-zinc-700/40 bg-zinc-900/10 text-muted dark:bg-zinc-900/85 dark:text-zinc-300'}`}>
                                     <span className={`h-1.5 w-1.5 rounded-full ${!isOnline ? 'bg-amber-400' : syncStatus.isSyncing ? 'bg-cyan-400' : 'bg-zinc-400'}`} />
                                     <span>{!isOnline ? 'offline' : syncStatus.isSyncing ? 'sync' : `${t.queue} ${syncStatus.pending}`}</span>
                                 </div>
@@ -255,27 +298,24 @@ export const Layout: React.FC<LayoutProps> = ({
                 </div>
             )}
 
-            <div className={`relative flex-1 ${isVirtualized ? 'overflow-hidden' : 'overflow-y-auto scroll-container'} ${view !== 'workout' ? 'pt-[calc(var(--safe-area-top)+60px)] pb-32' : 'pt-safe pb-0'}`}>
+            <div className={`relative flex-1 ${isVirtualized ? 'overflow-hidden' : 'overflow-y-auto scroll-container'} ${view !== 'workout' ? 'pt-[calc(var(--safe-area-top)+60px)] pb-32 lg:pt-[calc(var(--safe-area-top)+24px)] lg:pb-10' : 'pt-safe pb-0'}`}>
                 {/* U4: centered column on wide screens (phones are narrower than max-w-2xl). */}
-                <div className={`mx-auto w-full max-w-2xl ${isVirtualized ? 'h-full' : ''}`}>{children}</div>
+                <div className={`mx-auto w-full max-w-2xl lg:max-w-5xl ${isVirtualized ? 'h-full' : ''}`}>{children}</div>
             </div>
 
-            {view !== 'workout' && (
+            {view !== 'workout' && !isDesktop && (
                 <nav aria-label="Main navigation" className="fixed bottom-0 left-0 right-0 z-30 border-t border-[rgb(var(--border-subtle)/0.7)] bg-[rgb(var(--surface-base)/0.96)] pb-safe backdrop-blur-xl">
-                    <div className="mx-auto flex h-16 w-full max-w-lg items-center justify-between px-2">
-                        <NavBtn id="home" label={t.train} icon="Layout" isActive={view === 'home'} onSelect={setView} />
-                        <NavBtn id="history" label={t.history} icon="Calendar" isActive={view === 'history'} onSelect={setView} />
-                        <button onClick={openPrimaryAction} aria-label={t.startWorkout} className="mx-2 flex h-12 w-12 shrink-0 -translate-y-3 items-center justify-center rounded-full border border-primary-400/20 bg-primary-500 text-black shadow-lg shadow-primary-500/20 transition-transform duration-300 ease-natural active:scale-95">
-                            <Icon name="Plus" size={24} strokeWidth={2.5} />
-                        </button>
-                        <NavBtn id="nutrition" label={t.diet} icon="Utensils" isActive={view === 'nutrition'} onSelect={setView} />
-                        <NavBtn id="stats" label={t.navStats} icon="BarChart2" isActive={view === 'stats'} onSelect={setView} />
+                    <div className="mx-auto grid h-16 w-full max-w-lg grid-cols-4 items-stretch px-2">
+                        {ROOT_NAV_ITEMS.map((item) => (
+                            <NavBtn key={item.id} id={item.id} label={t[item.labelKey]} icon={item.icon} isActive={view === item.id} onSelect={setView} />
+                        ))}
                     </div>
                 </nav>
             )}
+            </div>
 
             {(showProfile || hasOpenedProfileRef.current) && (
-                <React.Suspense fallback={null}>
+                <React.Suspense fallback={<SheetFallback />}>
                     <ProfileSheet
                     open={showProfile}
                     onClose={closeProfile}
@@ -292,7 +332,7 @@ export const Layout: React.FC<LayoutProps> = ({
                 </React.Suspense>
             )}
             {(showQuickStart || hasOpenedQuickStartRef.current) && (
-                <React.Suspense fallback={null}>
+                <React.Suspense fallback={<SheetFallback />}>
                     <QuickStartSheet
                         open={showQuickStart}
                         onClose={() => setShowQuickStart(false)}
@@ -322,14 +362,14 @@ export const Layout: React.FC<LayoutProps> = ({
             )}
 
             {showFreestyle && (
-                <React.Suspense fallback={null}>
+                <React.Suspense fallback={<SheetFallback />}>
                     <FreestyleSessionModal isOpen={showFreestyle} onClose={() => setShowFreestyle(false)} onStart={startDetached} />
                 </React.Suspense>
             )}
 
             {/* Active Session Warning Modal */}
             {showActiveSessionAlert && (
-                <React.Suspense fallback={null}>
+                <React.Suspense fallback={<SheetFallback />}>
                     <ConfirmModal
                         isOpen={true}
                         title={t.sessionInProgressTitle}

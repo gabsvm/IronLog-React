@@ -103,9 +103,12 @@ export const useShortcutLaunch = ({
             window.history.replaceState({}, document.title, cleanUrl);
             runStartAction();
         } else if (action === 'nutrition' || action === 'history') {
-            // S3: manifest shortcuts "Registrar comida" / "Historial".
+            // S3: manifest shortcuts "Registrar comida" / "Historial" land on
+            // the matching diary section (Layout translates + selects it).
             window.history.replaceState({}, document.title, window.location.pathname);
-            setView(action);
+            window.dispatchEvent(new CustomEvent('gainslab:navigate', {
+                detail: { view: 'diary', section: action === 'nutrition' ? 'nutrition' : 'sessions' },
+            }));
         }
     }, [isAppLoading, runStartAction, setView]);
 

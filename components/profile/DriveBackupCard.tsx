@@ -81,14 +81,15 @@ export const DriveBackupCard: React.FC<DriveBackupCardProps> = ({
     };
 
     return (
-        <div className="card-reference p-4 space-y-2" data-testid="drive-backup-card">
+        <div className="gl-panel space-y-2 p-4" data-testid="drive-backup-card">
             <div className="flex items-start gap-3">
                 <span className="w-8 h-8 rounded-lg bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
                     <Icon name="Cloud" size={17} />
                 </span>
                 <div>
-                    <div className="text-sm font-bold text-zinc-900 dark:text-white">{t.driveTitle}</div>
-                    <p className="text-[11px] text-muted">{t.driveDesc}</p>
+                    <div className="text-sm font-bold text-[rgb(var(--text-primary))]">{t.driveTitle}</div>
+                    <p className="text-xs text-muted">{t.driveDesc}</p>
+
                 </div>
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -96,7 +97,7 @@ export const DriveBackupCard: React.FC<DriveBackupCardProps> = ({
                     type="button"
                     onClick={() => void save()}
                     disabled={busy}
-                    className="py-2.5 rounded-xl bg-primary-500/10 text-primary-600 dark:text-primary-400 text-xs font-black disabled:opacity-60"
+                    className="gl-quiet min-h-[44px] text-xs disabled:opacity-60"
                 >
                     {status === 'saving' ? t.driveSaving : t.driveBackupNow}
                 </button>
@@ -104,7 +105,7 @@ export const DriveBackupCard: React.FC<DriveBackupCardProps> = ({
                     type="button"
                     onClick={() => void loadList()}
                     disabled={busy}
-                    className="py-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-xs font-bold disabled:opacity-60"
+                    className="gl-quiet min-h-[44px] text-xs disabled:opacity-60"
                 >
                     {status === 'loading' ? t.driveLoading : t.driveShowList}
                 </button>
@@ -120,13 +121,13 @@ export const DriveBackupCard: React.FC<DriveBackupCardProps> = ({
                     <div className="divide-y divide-border-subtle">
                         {files.map((file) => (
                             <div key={file.id} className="flex items-center justify-between gap-2 py-2">
-                                <span className="text-xs font-medium text-zinc-900 dark:text-white">
+                                <span className="text-xs font-medium text-[rgb(var(--text-primary))]">
                                     {new Date(file.modifiedTime).toLocaleString(lang)}
                                 </span>
                                 <button
                                     type="button"
                                     onClick={() => setPending(file)}
-                                    className="px-3 py-1.5 text-xs rounded-xl font-bold bg-zinc-100 dark:bg-zinc-800"
+                                className="gl-quiet min-h-[44px] px-4 text-xs"
                                 >
                                     {t.restore}
                                 </button>

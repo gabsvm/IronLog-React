@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Line } from 'react-chartjs-2';
 import { ChartOptions, ScriptableContext } from 'chart.js/auto';
 import { formatDate } from '../../utils';
@@ -18,7 +18,7 @@ export interface ChartDataPoint {
 
 interface ProgressChartProps {
     dataPoints: ChartDataPoint[];
-    metric: '1rm' | 'volume' | 'duration' | 'distance';
+    metric: '1rm' | 'volume' | 'duration' | 'distance' | 'max_reps' | 'hold_time';
     loading?: boolean;
     /** Display unit for weight-based metrics (stored values are kg). */
     unit?: WeightUnit;
@@ -28,29 +28,35 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ dataPoints, metric
     const { lang, theme } = useAppPreferences();
     const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
     const weightSuffix = unitLabel(unit).toLowerCase();
-    const toShownValue = (v: number) => (metric === '1rm' || metric === 'volume') ? toDisplay(v, unit) : v;
+    // getComputedStyle per render forces style recalc; the accent only changes with theme.
+    // `theme` is intentionally a dep without being read: it invalidates the cached color.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const chartColor = useMemo(() => primaryChartColor(), [theme]);
+    const toShownValue = useCallback((v: number) => (metric === '1rm' || metric === 'volume') ? toDisplay(v, unit) : v, [metric, unit]);
 
-    const getLabel = (m: string) => {
+    const getLabel = useCallback((m: string) => {
         switch(m) {
             case '1rm': return `Est. 1RM (${weightSuffix})`;
             case 'volume': return `Volume (${weightSuffix})`;
             case 'duration': return 'Duration (min)';
             case 'distance': return 'Distance (km)';
+            case 'max_reps': return 'Reps';
+            case 'hold_time': return 'Hold (s)';
             default: return 'Value';
         }
-    };
+    }, [weightSuffix]);
 
-    const data = {
+    const data = useMemo(() => ({
         labels: dataPoints.map(d => formatDate(d.date, lang)),
         datasets: [
             {
                 label: getLabel(metric),
                 data: dataPoints.map(d => toShownValue(d.value)),
-                borderColor: primaryChartColor(),
+                borderColor: chartColor,
                 backgroundColor: (context: ScriptableContext<"line">) => {
                     const ctx = context.chart.ctx;
                     const gradient = ctx.createLinearGradient(0, 0, 0, 200);
-                    const color = primaryChartColor();
+                    const color = chartColor;
                     let rgb = '196, 255, 38';
                     if (color.startsWith('#') && color.length === 7) {
                         const r = parseInt(color.slice(1, 3), 16);
@@ -67,7 +73,7 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ dataPoints, metric
                 },
                 borderWidth: 3,
                 pointBackgroundColor: '#fff',
-                pointBorderColor: primaryChartColor(),
+                pointBorderColor: chartColor,
                 pointBorderWidth: 2,
                 pointRadius: 4,
                 pointHoverRadius: 6,
@@ -75,9 +81,9 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ dataPoints, metric
                 tension: 0.4, // Smooth curves
             }
         ]
-    };
+    }), [dataPoints, metric, lang, getLabel, toShownValue, chartColor]);
 
-    const options: ChartOptions<'line'> = {
+    const options: ChartOptions<'line'> = useMemo(() => ({
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
@@ -101,6 +107,10 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ dataPoints, metric
                             return `Time: ${item.formattedValue} min`;
                         } else if (metric === 'distance') {
                             return `Dist: ${item.formattedValue} km`;
+                        } else if (metric === 'max_reps') {
+                            return `Reps: ${item.formattedValue}`;
+                        } else if (metric === 'hold_time') {
+                            return `Hold: ${item.formattedValue} s`;
                         }
                         return `Volume: ${item.formattedValue}${weightSuffix}`;
                     }
@@ -143,7 +153,7 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ dataPoints, metric
                 beginAtZero: false // Better dynamics for 1RM
             }
         }
-    };
+    }), [isDark, metric, dataPoints, weightSuffix, toShownValue]);
 
     if (loading) {
         return (
@@ -153,7 +163,7 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ dataPoints, metric
         );
     }
 
-    if (dataPoints.length < 2) {
+    if (dataPoints.length === 0) {
         const { progressEmptyTitle, progressEmptyBody } = TRANSLATIONS[lang];
         return (
             <div className="h-60 flex flex-col items-center justify-center text-center p-4 border border-dashed border-zinc-200 dark:border-white/10 rounded-[1.4rem] bg-zinc-50 dark:bg-white/[0.02]">

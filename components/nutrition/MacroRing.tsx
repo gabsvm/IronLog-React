@@ -45,7 +45,7 @@ export const MacroRing: React.FC<MacroRingProps> = ({
     <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
         {/* Background track */}
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#27272a" strokeWidth={strokeW} />
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgb(var(--border-subtle))" strokeWidth={strokeW} />
         {/* Macro arcs */}
         {arcs.map((arc, i) => (
           <circle key={i} cx={cx} cy={cy} r={r} fill="none"
@@ -59,9 +59,9 @@ export const MacroRing: React.FC<MacroRingProps> = ({
       </svg>
       {/* Center text */}
       <div className="absolute flex flex-col items-center justify-center">
-        <span className="text-2xl font-black text-white leading-none">{calories}</span>
-        <span className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wider">kcal</span>
-        <span className="text-[10px] text-zinc-600">{calPct}%</span>
+        <span className="text-2xl font-black text-[rgb(var(--text-primary))] leading-none">{calories}</span>
+        <span className="text-[10px] text-[rgb(var(--text-secondary))] font-semibold uppercase tracking-wider">kcal</span>
+        <span className="text-[10px] text-[rgb(var(--text-muted))]">{calPct}%</span>
       </div>
     </div>
   );

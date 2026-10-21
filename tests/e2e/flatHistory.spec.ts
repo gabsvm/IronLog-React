@@ -16,19 +16,20 @@ test.describe('Flat tab history (F8)', () => {
         // Baseline includes the about:blank entry behind the fresh page.
         const baselineLength = await page.evaluate(() => window.history.length);
 
-        const historyNavBtn = page.locator('nav[aria-label="Main navigation"] button', { hasText: /Historial|History/ });
+        const historyNavBtn = page.locator('nav[aria-label="Main navigation"] button', { hasText: /^Diario$|^Diary$/ });
         await historyNavBtn.click();
         await expect(page.getByRole('heading', { name: /Historial|History|Sin entrenamientos|No workouts/ }).first()).toBeVisible({ timeout: 10000 });
 
-        const statsNavBtn = page.locator('nav[aria-label="Main navigation"] button', { hasText: /Stats|Métricas/ });
+        const statsNavBtn = page.locator('nav[aria-label="Main navigation"] button', { hasText: /^Progreso$|^Progress$/ });
         await statsNavBtn.click();
         await expect(page.getByRole('tablist').first()).toBeVisible({ timeout: 10000 });
 
-        const dietNavBtn = page.locator('nav[aria-label="Main navigation"] button', { hasText: /Dieta|Diet/ });
+        const dietNavBtn = page.locator('nav[aria-label="Main navigation"] button', { hasText: /^Diario$|^Diary$/ });
         await dietNavBtn.click();
+        await page.getByRole('tab', { name: /Nutrición|Nutrition/ }).click();
         await expect(page.getByText(/Cuerpo|Body/).first()).toBeVisible({ timeout: 10000 });
 
-        const homeNavBtn = page.locator('nav[aria-label="Main navigation"] button', { hasText: /Entreno|Train/ });
+        const homeNavBtn = page.locator('nav[aria-label="Main navigation"] button', { hasText: /^Hoy$|^Today$/ });
         await homeNavBtn.click();
         await expect(page.getByText(/Nuevo Mesociclo|New Mesocycle/)).toBeVisible({ timeout: 10000 });
 

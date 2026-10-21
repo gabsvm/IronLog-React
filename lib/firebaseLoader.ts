@@ -36,21 +36,20 @@ const firebaseConfig = {
 
 const hasFirebaseConfig = !!(firebaseConfig.apiKey && firebaseConfig.projectId);
 
-// Q1: emulator wiring. Active ONLY when the flag is set AND the runtime is
-// DEV or vitest ('test' mode). Production builds never take this branch:
-// import.meta.env.DEV is false and MODE is 'production' there, and the flag
-// itself is never set in production env files. No emulator host literal lives
-// in this module: hosts always come from env vars (see tests/unit/
-// emulatorProdGuard.test.ts, which also scans dist/ for leaked hosts).
+// Emulator routing is enabled for Vite dev, tests, or the dedicated Capacitor
+// debug mode only. The latter additionally requires a native Capacitor runtime;
+// production mode never enables this branch.
 export const shouldUseFirebaseEmulator = (
     envMap: Record<string, string | undefined>,
-    runtime: { isDev: boolean; mode: string },
+    runtime: { isDev: boolean; mode: string; isNative?: boolean },
 ): boolean =>
-    envMap.VITE_FIREBASE_EMULATOR === '1' && (runtime.isDev || runtime.mode === 'test');
+    envMap.VITE_FIREBASE_EMULATOR === '1' &&
+    (runtime.isDev || runtime.mode === 'test' || (runtime.mode === 'capacitor' && runtime.isNative === true));
 
 const useEmulator = shouldUseFirebaseEmulator(env, {
     isDev: import.meta.env.DEV,
     mode: import.meta.env.MODE,
+    isNative: Capacitor.isNativePlatform(),
 });
 
 const splitHostPort = (value: string | undefined): { host: string; port: number } | null => {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { TutorialOverlay } from '../components/ui/TutorialOverlay';
-import { StatsScope } from '../utils/statsScope';
+import { StatsScope, type StatsPeriod } from '../utils/statsScope';
 import { Chart as ChartJS, RadialLinearScale, ArcElement, Tooltip, Legend, PointElement, LineElement, Filler, CategoryScale, LinearScale } from 'chart.js';
 import { useStatsData } from './stats/useStatsData';
 import { StatsHeader } from './stats/StatsHeader';
@@ -32,10 +32,12 @@ export interface StatsViewImplProps {
     /** Controlled scope, owned by the StatsView wrapper. */
     scope: StatsScope;
     onScopeChange: (scope: StatsScope) => void;
+    /** Controlled period, owned by the StatsView wrapper (defaults to full history). */
+    period?: StatsPeriod;
 }
 
-export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader = false, scope: statsScope }) => {
-    const stats = useStatsData({ activeTab, hideHeader, statsScope });
+export const StatsView: React.FC<StatsViewImplProps> = ({ activeTab, hideHeader = false, scope: statsScope, period = 'all' }) => {
+    const stats = useStatsData({ activeTab, hideHeader, statsScope, statsPeriod: period });
     const { showPicker, statsTutorialSteps, tutorialProgress, markTutorialSeen } = stats;
 
     return (

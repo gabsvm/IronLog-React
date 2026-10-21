@@ -3,7 +3,7 @@ import React from 'react';
 import { TRANSLATIONS } from '../../constants';
 import { MuscleGroup } from '../../types';
 import { Icon } from '../../components/ui/Icon';
-import { StatsScope } from '../../utils/statsScope';
+import { StatsScope, type StatsPeriod } from '../../utils/statsScope';
 import { formatSets } from '../../utils/statsOverview';
 import { toDisplay, unitLabel } from '../../utils/units';
 import type { WeightUnit } from '../../types';
@@ -19,18 +19,24 @@ interface VolumeAverageCaptionProps {
     weeks: number;
     scope: StatsScope;
     lang: 'es' | 'en';
+    /** Bounded window label; omitted for the unbounded history. */
+    period?: StatsPeriod;
 }
 
-// Small transparency line under the volume title: which weeks the weekly
+// Small transparency line under the volume title: which weekly
 // average was computed over, and in which scope.
-export const VolumeAverageCaption: React.FC<VolumeAverageCaptionProps> = ({ weeks, scope, lang }) => {
+export const VolumeAverageCaption: React.FC<VolumeAverageCaptionProps> = ({ weeks, scope, lang, period = 'all' }) => {
     const t = TRANSLATIONS[lang];
     const scopeLabel = scope === 'plan' ? t.statsScopePlan : t.statsScopeHistory;
     const text = weeks <= 1
         ? `${t.volumeAvgThisWeek} · ${scopeLabel}`
         : `${t.volumeAvgWeeks.replace('{weeks}', String(weeks))} · ${scopeLabel}`;
+    const periodText = period === '4w' ? t.statsView.periodLast4w : period === '8w' ? t.statsView.periodLast8w : null;
     return (
-        <p className="mt-1 text-xs font-semibold text-muted">{text}</p>
+        <>
+            <p className="mt-1 text-xs font-semibold text-muted">{text}</p>
+            {periodText && <p className="mt-0.5 text-xs font-semibold text-muted">{periodText}</p>}
+        </>
     );
 };
 

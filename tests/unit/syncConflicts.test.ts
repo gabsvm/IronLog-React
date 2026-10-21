@@ -172,7 +172,7 @@ describe('syncHelpers & conflict resolution', () => {
             expect(isMeaningfullyEmptyLocalState({
                 activeMeso: null,
                 logs: [],
-                userProfile: { experience: 'advanced', goal: 'strength' } as any,
+                userProfile: { goal: 'strength' } as any,
             })).toBe(false);
         });
 
@@ -180,7 +180,6 @@ describe('syncHelpers & conflict resolution', () => {
             // Default seed values initialized by AppContext
             expect(isMeaningfullyEmptyLocalState({
                 userProfile: {
-                    experience: 'intermediate',
                     daysPerWeek: 4,
                     goal: 'hypertrophy',
                     sessionDuration: 'medium',
@@ -190,7 +189,6 @@ describe('syncHelpers & conflict resolution', () => {
             // Customized goal
             expect(isMeaningfullyEmptyLocalState({
                 userProfile: {
-                    experience: 'intermediate',
                     daysPerWeek: 4,
                     goal: 'strength',
                     sessionDuration: 'medium',

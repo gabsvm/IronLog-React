@@ -66,7 +66,7 @@ export const HomeSkeleton = () => {
             </div>
 
             {/* Bottom Nav Skeleton */}
-            <div className="fixed bottom-0 left-0 right-0 h-20 border-t border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base))] flex justify-around items-center px-6 pb-safe-bottom">
+            <div className="fixed bottom-0 left-0 right-0 h-20 border-t border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base))] flex justify-around items-center px-6 pb-safe">
                 <SkeletonPulse className="w-12 h-8 rounded-[18px]" />
                 <SkeletonPulse className="w-12 h-8 rounded-[18px]" />
                 <SkeletonPulse className="w-12 h-8 rounded-[18px]" />

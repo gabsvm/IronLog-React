@@ -4,30 +4,21 @@ import { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   appId: 'com.gainslab.pro',
   appName: 'GainsLab',
-  webDir: 'dist',
+  webDir: process.env.CAPACITOR_WEB_DIR || 'dist',
   server: {
     androidScheme: 'https'
   },
-  plugins: {
-    SystemBars: {
-      // 'css' injects --safe-area-inset-* vars (correct values even on old
-      // WebViews); the layout prefers them with env() fallback. The web app
-      // is edge-to-edge (viewport-fit=cover), so hint that to avoid jumps.
-      insetsHandling: 'css',
-      initialViewportFitValueHint: 'cover',
-    },
-    Keyboard: {
-      resize: 'body',
-      style: 'dark',
-      resizeOnFullScreen: true,
-    },
-    SplashScreen: {
-      launchShowDuration: 2000,
-      backgroundColor: "#000000",
-      showSpinner: false,
-      androidScaleType: "CENTER_CROP",
-    },
-  }
+  // NOTE: no native plugin blocks here on purpose. There are no
+  // @capacitor/keyboard, splash-screen or status-bar packages installed,
+  // so any `plugins: { SystemBars | Keyboard | SplashScreen }` section would
+  // be silently ignored by Capacitor. The real behavior is:
+  // - safe-area insets come from CSS env() (index.css) + EdgeToEdge.enable
+  //   in MainActivity (Android 15+ edge-to-edge);
+  // - keyboard resize is AndroidManifest `adjustResize` + visualViewport
+  //   compensation in JS (Sheet, RestTimerActive);
+  // - splash is the native Theme.SplashScreen drawable, not a JS plugin
+  //   (no Splash.hide() call exists). If a plugin is ever installed,
+  //   document its exact package + version here.
 };
 
 export default config;

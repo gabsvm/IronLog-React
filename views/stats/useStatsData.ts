@@ -1,7 +1,7 @@
 // S6: Stats state, worker effects and derived data, moved verbatim from
 // views/StatsViewImpl.tsx (the view is now an orchestrator + one component per tab).
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { useApp } from '../../context/AppContext';
+import { useApp, useAppPreferences, useAppConfig, useTutorial } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
 import { ChartDataPoint } from '../../components/stats/ProgressChart';
 import { buildWeeklyReport, filterWeekPRs } from '../../utils/weeklyReport';
@@ -9,15 +9,18 @@ import { getTranslated } from '../../utils';
 import { useStatsWorker, ChartMetric } from '../../hooks/useStatsWorker';
 import { useStore } from '../../lib/store';
 import { buildStatsLogsSignature, statsCache } from '../../services/statsCache';
-import { countSessionsByScope, scopeMesoId as scopeMesoIdFor, StatsScope } from '../../utils/statsScope';
+import { scopeMesoId as scopeMesoIdFor, StatsScope, StatsPeriod, filterLogsByScopeAndPeriod } from '../../utils/statsScope';
 import { buildDoughnutData, buildIntensityPalette } from '../../utils/chartColors';
 import { resolveWeightUnit, unitLabel } from '../../utils/units';
 import { aggregateExerciseFrequency, exerciseIdGroup, matchesExerciseQuery, resolveExerciseId } from '../../utils/exerciseLibrary';
 import { buildSelectedExerciseInsight } from './exerciseInsight';
 import { computeRepMaxTable } from '../../utils/repMaxTable';
 
-export const useStatsData = ({ activeTab, hideHeader, statsScope }: { activeTab?: 'overview' | 'progress' | 'volume'; hideHeader: boolean; statsScope: StatsScope }) => {
-    const { logs, lang, exercises, tutorialProgress, markTutorialSeen, userProfile, config, rpFeedback } = useApp();
+export const useStatsData = ({ activeTab, hideHeader, statsScope, statsPeriod = 'all' }: { activeTab?: 'overview' | 'progress' | 'volume'; hideHeader: boolean; statsScope: StatsScope; statsPeriod?: StatsPeriod }) => {
+    const { logs, exercises, userProfile, rpFeedback } = useApp();
+    const { lang } = useAppPreferences();
+    const { config } = useAppConfig();
+    const { tutorialProgress, markTutorialSeen } = useTutorial();
     const activeMeso = useStore(state => state.activeMeso);
     const t = TRANSLATIONS[lang];
     const s = t.statsView;
@@ -44,6 +47,14 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope }: { activeTab?
     const safeLogs = useMemo(() => Array.isArray(logs) ? logs : [], [logs]);
     const logsSignature = useMemo(() => buildStatsLogsSignature(safeLogs), [safeLogs]);
     const scopeMesoId = scopeMesoIdFor(statsScope, activeMeso?.id);
+    // Single entry for every scope+period-derived surface: scope and period
+    // apply exactly once here. Worker inputs, caches, cards, PRs and insights
+    // all derive from this array (rep maxes and the plan-week report keep
+    // their historical inputs; see below).
+    const filteredLogs = useMemo(
+        () => filterLogsByScopeAndPeriod(safeLogs, scopeMesoId, statsPeriod),
+        [safeLogs, scopeMesoId, statsPeriod],
+    );
     const exerciseMetaById = useMemo(() => {
         const byId = new Map<string, any>();
 
@@ -159,7 +170,7 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope }: { activeTab?
 
         const loadOverview = async () => {
             setLoadingOverview(true);
-            const cached = await statsCache.readOverview(logsSignature, mesoId);
+            const cached = await statsCache.readOverview(logsSignature, mesoId, statsScope, statsPeriod);
             if (cached && !cancelled) {
                 setVolumeData(cached.volumeData);
                 setRawMuscleCounts(Object.fromEntries(cached.volumeData));
@@ -170,7 +181,7 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope }: { activeTab?
                 setLoadingOverview(false);
             }
 
-            const result = await calculateOverview(safeLogs, scopeMesoId ?? undefined);
+            const result = await calculateOverview(filteredLogs, scopeMesoId ?? undefined);
             if (cancelled || !result) return;
 
             const { volumeData = [], exerciseFrequency = {}, weeks = 1 } = result;
@@ -182,9 +193,7 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope }: { activeTab?
             setRawMuscleCounts(counts);
 
             const typeCounts: Record<string, number> = {};
-            safeLogs.forEach(log => {
-                if (log.skipped) return;
-                if (scopeMesoId != null && log.mesoId !== scopeMesoId) return;
+            filteredLogs.forEach(log => {
                 log.exercises?.forEach(ex => {
                     ex.sets?.forEach(set => {
                         if (set.completed && !set.skipped) {
@@ -203,7 +212,7 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope }: { activeTab?
                 exerciseFrequency,
                 setTypeDist: typeCounts,
                 weeks,
-            });
+            }, statsScope, statsPeriod);
             setLoadingOverview(false);
         };
 
@@ -211,7 +220,7 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope }: { activeTab?
         return () => {
             cancelled = true;
         };
-    }, [isWorkerReady, safeLogs, scopeMesoId, exerciseMetaById, exsFromFrequency, selectedExId, calculateOverview, logsSignature]);
+    }, [isWorkerReady, filteredLogs, statsScope, statsPeriod, scopeMesoId, exerciseMetaById, exsFromFrequency, selectedExId, calculateOverview, logsSignature]);
 
     useEffect(() => {
         if (!isWorkerReady || !selectedExId || (activeTab && activeTab !== 'progress')) return;
@@ -224,16 +233,16 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope }: { activeTab?
 
         const loadChart = async () => {
             setLoadingChart(true);
-            const cached = await statsCache.readChart(logsSignature, cacheId, chartMetric, scopeMesoId);
+            const cached = await statsCache.readChart(logsSignature, cacheId, chartMetric, scopeMesoId, statsScope, statsPeriod);
             if (cached && !cancelled) {
                 setChartPoints(cached.dataPoints);
                 setLoadingChart(false);
             }
 
-            const points = await calculateChartData(safeLogs, groupIds, chartMetric, scopeMesoId);
+            const points = await calculateChartData(filteredLogs, groupIds, chartMetric, scopeMesoId);
             if (cancelled) return;
             setChartPoints(Array.isArray(points) ? points : []);
-            await statsCache.writeChart(logsSignature, cacheId, chartMetric, scopeMesoId, points);
+            await statsCache.writeChart(logsSignature, cacheId, chartMetric, scopeMesoId, points, statsScope, statsPeriod);
             setLoadingChart(false);
         };
 
@@ -241,7 +250,7 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope }: { activeTab?
         return () => {
             cancelled = true;
         };
-    }, [isWorkerReady, selectedExId, selectedGroupIds, canonicalSelectedExId, chartMetric, safeLogs, calculateChartData, logsSignature, activeTab, scopeMesoId]);
+    }, [isWorkerReady, selectedExId, selectedGroupIds, canonicalSelectedExId, chartMetric, filteredLogs, calculateChartData, logsSignature, activeTab, scopeMesoId, statsScope, statsPeriod]);
 
     const filteredExercises = useMemo(() => {
         return availableExercises.filter(ex =>
@@ -256,7 +265,7 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope }: { activeTab?
     const hasExerciseHistory = availableExercises.length > 0;
 
     const overviewPills = [
-        { label: s.pillSessions, value: countSessionsByScope(safeLogs, scopeMesoId) },
+        { label: s.pillSessions, value: filteredLogs.length },
         { label: s.pillExercises, value: availableExercises.length },
         { label: s.pillSets, value: totalSets },
         { label: s.pillMuscles, value: trackedMuscles },
@@ -268,9 +277,7 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope }: { activeTab?
     const prHistory = useMemo(() => {
         const bestMap: Record<string, { e1rm: number; weight: number; reps: number; date: number; name: string; muscle: string }> = {};
 
-        safeLogs.forEach(log => {
-            if (log.skipped) return;
-            if (scopeMesoId != null && log.mesoId !== scopeMesoId) return;
+        filteredLogs.forEach(log => {
             (log.exercises || []).forEach(ex => {
                 if (!ex.id || ex.isBodyweight || ex.isIsometric || ex.muscle === 'CARDIO') return;
                 // Merged duplicates share one PR row under the surviving exercise.
@@ -302,7 +309,7 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope }: { activeTab?
         return Object.entries(bestMap)
             .sort((a, b) => b[1].date - a[1].date)
             .slice(0, 20);
-    }, [safeLogs, lang, scopeMesoId, exercises]);
+    }, [filteredLogs, lang, exercises]);
 
     const [showAllPRs, setShowAllPRs] = useState(false);
     const displayedPRs = showAllPRs ? prHistory : prHistory.slice(0, 6);
@@ -329,14 +336,16 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope }: { activeTab?
     })();
 
     const selectedExerciseInsight = useMemo(
-        () => buildSelectedExerciseInsight({ currentEx, exercises, lang, rawMuscleCounts, safeLogs, bodyWeight: userProfile?.bodyWeight, scopeMesoId, unit, weightSuffix, s }),
-        [currentEx, exercises, lang, rawMuscleCounts, safeLogs, userProfile?.bodyWeight, scopeMesoId, unit, weightSuffix, s]
+        () => buildSelectedExerciseInsight({ currentEx, exercises, lang, rawMuscleCounts, safeLogs: filteredLogs, bodyWeight: userProfile?.bodyWeight, scopeMesoId, unit, weightSuffix, s }),
+        [currentEx, exercises, lang, rawMuscleCounts, filteredLogs, userProfile?.bodyWeight, scopeMesoId, unit, weightSuffix, s]
     );
 
+    // Rep maxes keep their historical definition (no scope filter, as before)
+    // and only honor the period window; the default window reproduces old numbers.
     const repMaxRows = useMemo(() => {
         if (!currentEx || currentEx.isBodyweight || currentEx.isIsometric || currentEx.muscle === 'CARDIO') return [];
-        return computeRepMaxTable(safeLogs, new Set(selectedGroupIds.map(String)));
-    }, [currentEx, safeLogs, selectedGroupIds]);
+        return computeRepMaxTable(filterLogsByScopeAndPeriod(safeLogs, null, statsPeriod), new Set(selectedGroupIds.map(String)));
+    }, [currentEx, safeLogs, statsPeriod, selectedGroupIds]);
 
     const statsTutorialSteps = [
         { targetId: 'tut-progress-chart', title: t.tutorial.stats[0].title, text: t.tutorial.stats[0].text, position: 'bottom' as const },
@@ -348,6 +357,7 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope }: { activeTab?
         activeTab,
         hideHeader,
         statsScope,
+        statsPeriod,
         logs,
         lang,
         exercises,

@@ -30,8 +30,7 @@ export const HomeHeroCard: React.FC<{ state: HomeViewState }> = ({ state }) => {
         <article
             id="tut-up-next"
             key={selectedDayIdx}
-            onClick={() => startSession(selectedDayIdx)}
-            className="premium-hero expressive-reveal relative isolate cursor-pointer overflow-hidden"
+            className="premium-hero expressive-reveal relative isolate overflow-hidden"
         >
             {/* CSS/SVG artwork is decorative, never covers interactive elements. */}
             <svg className="premium-hero__art" aria-hidden="true" focusable="false" viewBox="0 0 240 220" fill="none">
@@ -70,8 +69,18 @@ export const HomeHeroCard: React.FC<{ state: HomeViewState }> = ({ state }) => {
                     <span><Icon name="Dumbbell" size={13} /> {slots.length} {h.exercisesLower}</span>
                     <span><Icon name="Layers" size={13} /> {totalSets} {h.setsLower}</span>
                 </div>
+                <button
+                    type="button"
+                    data-testid="hero-start-workout"
+                    id="hero-start-workout"
+                    onClick={(event) => { event.stopPropagation(); startSession(selectedDayIdx); }}
+                    className="premium-hero__cta hero-cta-btn expressive-press mt-4 flex min-h-[50px] w-full items-center justify-center gap-2 rounded-full px-4 text-sm font-bold transition-colors"
+                >
+                    <Icon name={isSelectedActive ? 'Play' : isDone ? 'Repeat' : 'ArrowRight'} size={18} />
+                    <span>{isSelectedActive ? h.resume : isDone ? h.trainAgain : `${h.start} ${dayName}`}</span>
+                </button>
                 {previewSlots.length > 0 && (
-                    <div className="premium-hero__preview">
+                    <div className="premium-hero__preview mt-4">
                         {previewSlots.map((slot: any, index: number) => {
                             const exerciseDef = exercises?.find((exercise: any) => exercise.id === slot.exerciseId);
                             const name = exerciseDef ? getTranslated(exerciseDef.name, lang) : slot.exerciseId || tm(slot.muscle);
@@ -89,14 +98,6 @@ export const HomeHeroCard: React.FC<{ state: HomeViewState }> = ({ state }) => {
                         )}
                     </div>
                 )}
-                <button
-                    type="button"
-                    onClick={(event) => { event.stopPropagation(); startSession(selectedDayIdx); }}
-                    className="premium-hero__cta expressive-press mt-4 flex min-h-[50px] w-full items-center justify-center gap-2 rounded-full px-4 text-sm font-bold transition-colors"
-                >
-                    <Icon name={isSelectedActive ? 'Play' : isDone ? 'Repeat' : 'ArrowRight'} size={18} />
-                    <span>{isSelectedActive ? h.resume : isDone ? h.trainAgain : `${h.start} ${dayName}`}</span>
-                </button>
             </div>
         </article>
     );

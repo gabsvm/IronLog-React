@@ -17,33 +17,33 @@ export const BodySection: React.FC = () => {
     return (
         <div id="profile-section-body">
             <div className="label-reference px-1 mb-1.5">{ty.body}</div>
-            <div className="premium-theme-panel p-4">
-                <div className="flex items-center justify-between mb-3">
+            <div className="gl-panel p-4">
+                <div className="mb-3 flex items-center justify-between gap-2">
                     <p className="text-xs text-muted">{ty.bodySubtitle}</p>
                     <button
                         type="button"
                         onClick={() => setShowBodyModal(true)}
-                        className="px-3 py-1.5 bg-primary-500/10 text-primary-600 dark:text-primary-400 rounded-full min-h-11 text-xs font-semibold tracking-normal hover:bg-primary-500/20 active:scale-95 transition-all"
+                        className="gl-quiet min-h-[44px] px-4 text-xs"
                     >
                         {ty.edit}
                     </button>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
-                    <div className="rounded-[18px] border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated)/0.6)] p-2.5 text-center">
-                        <div className="text-xs font-semibold tracking-normal text-zinc-500">{ty.weight}</div>
-                        <div className="mt-0.5 text-sm font-black text-[rgb(var(--text-primary))] tabular-nums">
+                    <div className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated)/0.5)] p-2.5 text-center">
+                        <div className="text-xs font-semibold text-muted">{ty.weight}</div>
+                        <div className="gl-num mt-0.5 text-sm font-bold text-[rgb(var(--text-primary))]">
                             {userProfile?.bodyWeight ? `${formatWeight(userProfile.bodyWeight, resolveWeightUnit(config), lang)} ${unitLabel(resolveWeightUnit(config)).toLowerCase()}` : '—'}
                         </div>
                     </div>
-                    <div className="rounded-[18px] border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated)/0.6)] p-2.5 text-center">
-                        <div className="text-xs font-semibold tracking-normal text-zinc-500">{ty.height}</div>
-                        <div className="mt-0.5 text-sm font-black text-[rgb(var(--text-primary))] tabular-nums">
+                    <div className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated)/0.5)] p-2.5 text-center">
+                        <div className="text-xs font-semibold text-muted">{ty.height}</div>
+                        <div className="gl-num mt-0.5 text-sm font-bold text-[rgb(var(--text-primary))]">
                             {userProfile?.height ? `${userProfile.height} cm` : '—'}
                         </div>
                     </div>
-                    <div className="rounded-[18px] border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated)/0.6)] p-2.5 text-center">
-                        <div className="text-xs font-semibold tracking-normal text-zinc-500">{ty.bodyFat}</div>
-                        <div className="mt-0.5 text-sm font-black text-[rgb(var(--text-primary))] tabular-nums">
+                    <div className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated)/0.5)] p-2.5 text-center">
+                        <div className="text-xs font-semibold text-muted">{ty.bodyFat}</div>
+                        <div className="gl-num mt-0.5 text-sm font-bold text-[rgb(var(--text-primary))]">
                             {userProfile?.bodyFat ? `${userProfile.bodyFat}%` : '—'}
                         </div>
                     </div>

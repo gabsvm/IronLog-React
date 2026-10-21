@@ -51,7 +51,7 @@ export const BodyTab: React.FC<Props> = ({
                         </p>
                         {latestWeight ? (
                             <>
-                                <div className="text-4xl font-black text-white leading-none">{toDisplay(latestWeight.weight, unit)}</div>
+                                <div className="text-4xl font-black text-[rgb(var(--text-primary))] leading-none">{toDisplay(latestWeight.weight, unit)}</div>
                                 <p className="text-xs text-zinc-500 mt-1">
                                     {weightSuffix} · {new Date(latestWeight.date).toLocaleDateString(pickLang(lang, { es: 'es-AR', en: 'en-US' }), { month: 'short', day: 'numeric' })}
                                 </p>
@@ -126,7 +126,7 @@ export const BodyTab: React.FC<Props> = ({
                 </p>
                 <div className="grid grid-cols-3 gap-3">
                     <div className="text-center">
-                        <p className="text-xl font-black text-white">{nutritionGoal.calories}</p>
+                        <p className="text-xl font-black text-[rgb(var(--text-primary))]">{nutritionGoal.calories}</p>
                         <p className="text-xs font-semibold text-muted">{TRANSLATIONS[lang].copy.bodyTab.goal}</p>
                     </div>
                     <div className="text-center">
@@ -215,7 +215,7 @@ export const BodyTab: React.FC<Props> = ({
                                     {new Date(entry.date).toLocaleDateString(pickLang(lang, { es: 'es-AR', en: 'en-US' }), { weekday: 'short', month: 'short', day: 'numeric' })}
                                 </span>
                                 <div className="text-right">
-                                    <span className="text-sm font-bold text-white">{toDisplay(entry.weight, unit)} {weightSuffix}</span>
+                                    <span className="text-sm font-bold text-[rgb(var(--text-primary))]">{toDisplay(entry.weight, unit)} {weightSuffix}</span>
                                     {entry.bodyFat && <span className="text-xs text-muted ml-2">{entry.bodyFat}% BF</span>}
                                 </div>
                             </div>

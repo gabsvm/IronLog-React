@@ -240,11 +240,10 @@ service cloud.firestore {
       // Subscription is SERVER-SIDE ONLY — the owner can read but no client
       // (not even admin) can write or delete it. Writes come from the payment
       // backend. The in-app PRO manager stays blocked by design and shows its
-      // own guidance when the rules deny it.
-      match /data/subscription {
-        allow read: if isOwner(uid);
-        allow create, update, delete: if false;
-      }
+      // own guidance when the rules deny it. Erasure of this record after
+      // account deletion needs a backend flow (see
+      // docs/ACCOUNT_DELETION_SUBSCRIPTION.md); the client reports the
+      // remainder via AccountDeletionResult.subscriptionRetained.
 
       // Only real data documents (today: history). Any other name is denied.
       // history carries exactly { logs: [...] } (see syncService.uploadStateNow,

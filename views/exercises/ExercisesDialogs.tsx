@@ -36,34 +36,34 @@ export const ExercisesDialogs: React.FC<{ state: ExercisesViewState }> = ({ stat
             {/* Referenced Exercise Action Dialog (Archive vs In-Use Warning) */}
             {pendingDeleteReport && (
                 <div
-                    className="fixed inset-0 z-confirm bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-fast"
+                    className="modal-backdrop fixed inset-0 z-confirm flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm animate-in fade-in duration-fast pointer-events-auto"
                     role="dialog"
                     aria-modal="true"
                     aria-labelledby="ref-modal-title"
                 >
-                    <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+                    <div className="gl-panel w-full max-w-md space-y-4 p-6 shadow-2xl">
                         <div className="flex items-center gap-3 text-amber-500">
                             <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center">
                                 <Icon name="AlertTriangle" size={22} />
                             </div>
                             <div>
-                                <h3 id="ref-modal-title" className="text-base font-bold text-zinc-900 dark:text-white">
+                                    <h3 id="ref-modal-title" className="text-base font-bold text-[rgb(var(--text-primary))]">
                                     {ev.inUseTitle}
                                 </h3>
-                                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                                <p className="text-xs text-muted">
                                     {`${ev.refCountA} ${pendingDeleteReport.totalReferences} ${ev.refCountB}`}
                                 </p>
                             </div>
                         </div>
 
-                        <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed">
+                        <p className="text-xs leading-relaxed text-[rgb(var(--text-secondary))]">
                             {ev.inUseDesc}
                         </p>
 
                         {/* List of references */}
-                        <div className="max-h-40 overflow-y-auto space-y-1.5 p-3 rounded-xl bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200 dark:border-white/5 text-xs">
+                        <div className="max-h-40 space-y-1.5 overflow-y-auto rounded-xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated)/0.5)] p-3 text-xs">
                             {pendingDeleteReport.locations.map((loc, idx) => (
-                                <div key={idx} className="flex items-start gap-2 text-zinc-700 dark:text-zinc-300">
+                            <div key={idx} className="flex items-start gap-2 text-[rgb(var(--text-secondary))]">
                                     <Icon name="Check" size={14} className="text-amber-500 shrink-0 mt-0.5" />
                                     <span>
                                         <strong className="font-semibold">{loc.containerName}</strong>: {loc.detail}

@@ -55,7 +55,7 @@ test.describe('Offline shell with lazy views precached (F1)', () => {
         await expect(nav).toBeVisible({ timeout: 8000 });
 
         // 5. History renders offline from precache.
-        const historyNavBtn = page.locator('nav[aria-label="Main navigation"] button', { hasText: /Historial|History/ });
+        const historyNavBtn = page.locator('nav[aria-label="Main navigation"] button', { hasText: /^Diario$|^Diary$/ });
         await expect(historyNavBtn).toBeVisible({ timeout: 8000 });
         await historyNavBtn.click();
         // Populated history shows an h2; a fresh profile shows the empty-state h3.
@@ -64,7 +64,7 @@ test.describe('Offline shell with lazy views precached (F1)', () => {
         await expect(page.getByText(VIEW_LOAD_FAILED_TEXT)).toHaveCount(0);
 
         // 6. Stats renders offline from precache.
-        const statsNavBtn = page.locator('nav[aria-label="Main navigation"] button', { hasText: /Stats|Métricas/ });
+        const statsNavBtn = page.locator('nav[aria-label="Main navigation"] button', { hasText: /^Progreso$|^Progress$/ });
         await expect(statsNavBtn).toBeVisible({ timeout: 8000 });
         await statsNavBtn.click();
         await expect(page.getByRole('tablist').first()).toBeVisible({ timeout: 15000 });

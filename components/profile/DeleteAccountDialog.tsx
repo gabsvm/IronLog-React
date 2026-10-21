@@ -22,6 +22,7 @@ export const DeleteAccountDialog: React.FC<DeleteAccountDialogProps> = ({ open, 
     const [wipeLocal, setWipeLocal] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const [errorCode, setErrorCode] = useState<AccountDeletionErrorCode | null>(null);
+    const [subscriptionRetained, setSubscriptionRetained] = useState(false);
     const passwordRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -31,6 +32,7 @@ export const DeleteAccountDialog: React.FC<DeleteAccountDialogProps> = ({ open, 
             setWipeLocal(false);
             setDeleting(false);
             setErrorCode(null);
+            setSubscriptionRetained(false);
             passwordRef.current?.focus();
         }
     }, [open ]);
@@ -44,7 +46,14 @@ export const DeleteAccountDialog: React.FC<DeleteAccountDialogProps> = ({ open, 
         setDeleting(true);
         setErrorCode(null);
         try {
-            await deleteAccount(password, { wipeLocalData: wipeLocal });
+            const result = await deleteAccount(password, { wipeLocalData: wipeLocal });
+            if (result?.subscriptionRetained) {
+                // Account and training data are gone; only the store-side
+                // subscription record remains (a backend erasure removes it).
+                setSubscriptionRetained(true);
+                setDeleting(false);
+                return;
+            }
             onDeleted();
         } catch (err) {
             setErrorCode(err instanceof AccountDeletionError ? err.code : 'unknown');
@@ -54,21 +63,21 @@ export const DeleteAccountDialog: React.FC<DeleteAccountDialogProps> = ({ open, 
 
     return (
         <div
-            className="modal-backdrop fixed inset-0 z-confirm backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-base"
+            className="modal-backdrop fixed inset-0 z-confirm flex items-center justify-center p-6 backdrop-blur-sm animate-in fade-in duration-base pointer-events-auto"
             onClick={onClose}
             role="alertdialog"
             aria-modal="true"
             aria-labelledby="delete-account-title"
             aria-describedby="delete-account-desc"
         >
-            <div className="modal-surface w-full max-w-sm rounded-2xl border p-6 shadow-2xl max-h-[calc(100dvh-2rem)] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="modal-surface gl-confirm-surface w-full max-w-sm border p-6 shadow-2xl max-h-[calc(100dvh-2rem)] overflow-y-auto" onClick={e => e.stopPropagation()}>
                 <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 bg-red-500/10 text-red-500">
                     <Icon name="AlertTriangle" size={32} />
                 </div>
-                <h3 id="delete-account-title" className="text-xl font-bold text-zinc-900 dark:text-white mb-2 text-center">
+                <h3 id="delete-account-title" className="mb-2 text-center text-xl font-bold text-[rgb(var(--text-primary))]">
                     {t.dialogTitle}
                 </h3>
-                <p id="delete-account-desc" className="text-sm text-zinc-500 dark:text-zinc-400 mb-3 leading-relaxed text-center">
+                <p id="delete-account-desc" className="mb-3 text-center text-sm leading-relaxed text-muted">
                     {t.dialogBody}
                 </p>
                 {isPro && (
@@ -82,7 +91,7 @@ export const DeleteAccountDialog: React.FC<DeleteAccountDialogProps> = ({ open, 
                     </p>
                 )}
 
-                <label className="flex min-h-[44px] cursor-pointer items-center gap-3 rounded-xl border border-border-subtle bg-surface-raised/60 px-3 py-2 text-sm font-medium text-zinc-900 dark:text-white mb-3">
+                <label className="mb-3 flex min-h-[44px] cursor-pointer items-center gap-3 rounded-xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated)/0.5)] px-3 py-2 text-sm font-medium text-[rgb(var(--text-primary))]">
                     <input
                         type="checkbox"
                         checked={wipeLocal}
@@ -93,7 +102,7 @@ export const DeleteAccountDialog: React.FC<DeleteAccountDialogProps> = ({ open, 
                     {t.wipeLocal}
                 </label>
 
-                <label htmlFor="delete-account-password" className="mb-1 block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                <label htmlFor="delete-account-password" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">
                     {t.passwordLabel}
                 </label>
                 <input
@@ -104,10 +113,10 @@ export const DeleteAccountDialog: React.FC<DeleteAccountDialogProps> = ({ open, 
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={deleting}
-                    className="mb-3 h-11 w-full rounded-xl border border-border-subtle bg-surface-raised/60 px-3 text-sm text-zinc-900 dark:text-white outline-none focus:border-red-500"
+                    className="gl-input mb-3 focus:border-red-500"
                 />
 
-                <label htmlFor="delete-account-confirm" className="mb-1 block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                <label htmlFor="delete-account-confirm" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">
                     {t.confirmLabel}
                 </label>
                 <input
@@ -118,9 +127,19 @@ export const DeleteAccountDialog: React.FC<DeleteAccountDialogProps> = ({ open, 
                     value={confirmWord}
                     onChange={(e) => setConfirmWord(e.target.value)}
                     disabled={deleting}
-                    className="mb-5 h-11 w-full rounded-xl border border-border-subtle bg-surface-raised/60 px-3 text-sm text-zinc-900 dark:text-white outline-none focus:border-red-500"
+                    className="gl-input mb-5 focus:border-red-500"
                 />
 
+                {subscriptionRetained ? (
+                    <>
+                        <p role="status" className="text-sm font-semibold text-amber-500 dark:text-amber-400 mb-5 leading-relaxed text-center">
+                            {t.subscriptionRetained}
+                        </p>
+                        <Button variant="secondary" onClick={onDeleted} fullWidth>
+                            {TRANSLATIONS[lang].understood}
+                        </Button>
+                    </>
+                ) : (
                 <div className="grid grid-cols-2 gap-3">
                     <Button variant="secondary" onClick={onClose} disabled={deleting}>
                         {TRANSLATIONS[lang].cancel}
@@ -129,6 +148,7 @@ export const DeleteAccountDialog: React.FC<DeleteAccountDialogProps> = ({ open, 
                         {deleting ? t.deleting : t.deleteButton}
                     </Button>
                 </div>
+                )}
             </div>
         </div>
     );

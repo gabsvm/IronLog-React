@@ -66,20 +66,20 @@ export const AccountSection: React.FC<AccountSectionProps> = ({ onClose, onLogin
     return (
         <div id="profile-section-account" className="space-y-4">
             {!isStandalone && (
-                <div data-install-banner className="bg-gradient-to-r from-primary-500 to-primary-600 p-4 rounded-2xl shadow-lg shadow-primary-500/20 flex items-center justify-between animate-in fade-in slide-in-from-top-4">
-                    <div className="text-black">
-                        <h3 className="font-black text-sm uppercase tracking-wide flex items-center gap-2">
-                            <Icon name="Download" size={16} className="animate-bounce" />
+                <div data-install-banner className="gl-panel flex items-center justify-between gap-3 p-4">
+                    <div className="min-w-0">
+                        <h3 className="flex items-center gap-2 text-sm font-black uppercase tracking-wide text-[rgb(var(--text-primary))]">
+                            <Icon name="Download" size={16} className="text-primary-500" />
                             {t.installApp}
                         </h3>
-                        <p className="text-[11px] opacity-90 font-medium mt-1 max-w-[140px] leading-tight">
+                        <p className="mt-1 text-xs font-medium leading-snug text-muted">
                             {t.installDesc}
                         </p>
                     </div>
                     <button
                         type="button"
                         onClick={handleInstallClick}
-                        className="bg-black text-primary-400 px-4 py-2 rounded-xl text-xs font-black shadow-md active:scale-95 transition-transform"
+                        className="gl-primary shrink-0"
                     >
                         {t.installBtn}
                     </button>
@@ -87,32 +87,32 @@ export const AccountSection: React.FC<AccountSectionProps> = ({ onClose, onLogin
             )}
 
             <div className="label-reference px-1">{ty.account}</div>
-            <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-surface-raised border-2 border-amber-400/90 flex items-center justify-center font-bold text-xl text-white shadow-sm shrink-0">
+            <div className="gl-panel flex items-center gap-3 p-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-amber-400/90 bg-[rgb(var(--surface-elevated))] text-xl font-bold text-[rgb(var(--text-primary))]">
                     {userInitial}
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                        <span className="text-base font-semibold text-white truncate">{userName}</span>
+                        <span className="truncate text-sm font-bold text-[rgb(var(--text-primary))]">{userName}</span>
                         {isPro && (
-                            <span className="chip-reference text-amber-400 font-semibold">
+                            <span className="gl-pill gl-pill-accent">
                                 Pro
                             </span>
                         )}
                     </div>
-                    <div className="text-xs text-muted truncate mt-0.5">
+                    <div className="mt-0.5 truncate text-xs text-muted">
                         {user?.email ? `${user.email} · ` : ''}{planLabel || accountLabel}
                     </div>
                 </div>
             </div>
 
             <div className="grid grid-cols-2 gap-2">
-                <div className="card-reference premium-theme-quiet p-3">
-                    <div className="text-lg font-semibold text-white tabular-nums">{stats.total}</div>
+                <div className="gl-panel p-3">
+                    <div className="gl-num text-lg font-bold text-[rgb(var(--text-primary))]">{stats.total}</div>
                     <div className="text-xs text-muted">{ty.sessions}</div>
                 </div>
-                <div className="card-reference premium-theme-quiet p-3">
-                    <div className="text-lg font-semibold text-white tabular-nums">{stats.recent}</div>
+                <div className="gl-panel p-3">
+                    <div className="gl-num text-lg font-bold text-[rgb(var(--text-primary))]">{stats.recent}</div>
                     <div className="text-xs text-muted">{ty.last30}</div>
                 </div>
             </div>
@@ -125,7 +125,7 @@ export const AccountSection: React.FC<AccountSectionProps> = ({ onClose, onLogin
                         logout();
                         onClose();
                     }}
-                    className="w-full py-2.5 bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-xl text-xs font-bold hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors"
+                    className="gl-quiet w-full"
                 >
                     {t.auth.logout}
                 </button>
@@ -136,27 +136,27 @@ export const AccountSection: React.FC<AccountSectionProps> = ({ onClose, onLogin
                         onClose();
                         onLogin();
                     }}
-                    className="w-full py-2.5 bg-primary-500 text-black rounded-xl text-xs font-bold hover:bg-primary-400 shadow-lg shadow-primary-500/20 transition-all active:scale-95"
+                    className="gl-primary w-full"
                 >
                     {t.auth.signInRegister}
                 </button>
             )}
 
             {user && (
-                <div className="card-reference divide-y divide-border-subtle overflow-hidden">
+                <div className="gl-panel divide-y divide-[rgb(var(--border-subtle))] overflow-hidden">
                     <button
                         type="button"
                         onClick={() => {
                             triggerHaptic('light');
                             setShowDeleteDialog(true);
                         }}
-                        className="w-full flex items-center gap-3 p-3 text-left hover:bg-red-500/10 transition-colors"
+                        className="flex min-h-[56px] w-full items-center gap-3 p-3 text-left transition-colors hover:bg-[rgb(var(--surface-elevated)/0.5)]"
                     >
-                        <span className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center text-red-400 shrink-0">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-red-500/10 text-red-500">
                             <Icon name="Trash2" size={17} />
                         </span>
-                        <div className="flex-1 text-sm font-medium text-red-400">{t.deleteAccount.rowLabel}</div>
-                        <Icon name="ChevronRight" size={16} className="text-muted shrink-0" />
+                        <span className="flex-1 text-sm font-medium text-red-500">{t.deleteAccount.rowLabel}</span>
+                        <Icon name="ChevronRight" size={16} className="shrink-0 text-muted" />
                     </button>
                 </div>
             )}

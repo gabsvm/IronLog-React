@@ -15,7 +15,7 @@ describe('backupService', () => {
         program: [{ id: 'p1', dayName: { en: 'Push', es: 'Empuje' }, slots: [] }],
         exercises: [{ id: 'bench', name: 'Bench Press', muscle: 'CHEST' as const }],
         logs: [{ id: 101, dayIdx: 0, name: 'Push A', startTime: 1000, endTime: 2000, duration: 60, mesoId: 1, week: 1, exercises: [] }],
-        userProfile: { experience: 'intermediate' as const, daysPerWeek: 4, goal: 'hypertrophy' as const, sessionDuration: 'medium' as const },
+        userProfile: { daysPerWeek: 4, goal: 'hypertrophy' as const, sessionDuration: 'medium' as const },
         nutritionLogs: [{ date: '2026-09-30', entries: [], waterMl: 1500 }],
         cardioSessions: [{ id: 'c1', date: '2026-09-30', activityType: 'running' as const, durationMin: 30, timestamp: 1000 }],
         bodyLogs: [{ id: 1, date: 1700000000, weight: 75.5 }],
@@ -88,6 +88,7 @@ describe('backupService', () => {
         const memoryStorage = new Map<string, any>();
         vi.spyOn(db, 'set').mockImplementation(async (key, val) => {
             memoryStorage.set(key, val);
+            return true;
         });
         vi.spyOn(db, 'get').mockImplementation(async (key, defaultVal) => {
             return memoryStorage.has(key) ? memoryStorage.get(key) : defaultVal;
@@ -99,7 +100,7 @@ describe('backupService', () => {
             logs: [{ id: 101, dayIdx: 0, name: 'Push A', startTime: 1000, endTime: 2000, duration: 60, mesoId: 1, week: 1, exercises: [] }],
             activeMeso: { id: 77, name: 'Meso Hypertrophy', week: 2, duration: 6, mesoType: 'hyp_1', plan: [] },
             activeSession: { id: 88, name: 'Chest Day', startTime: 12345, mesoId: 77, week: 2, exercises: [], dayIdx: 0 },
-            userProfile: { experience: 'intermediate' as const, daysPerWeek: 4, goal: 'hypertrophy' as const, sessionDuration: 'medium' as const },
+            userProfile: { daysPerWeek: 4, goal: 'hypertrophy' as const, sessionDuration: 'medium' as const },
             nutritionLogs: [{ date: '2026-09-30', entries: [], waterMl: 1500 }],
             cardioSessions: [{ id: 'c1', date: '2026-09-30', activityType: 'running' as const, durationMin: 30, timestamp: 1000 }],
             bodyLogs: [{ id: 1, date: 1700000000, weight: 75.5 }],

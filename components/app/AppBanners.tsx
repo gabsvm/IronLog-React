@@ -7,17 +7,19 @@ import { Icon } from '../ui/Icon';
 const ConfirmModal = React.lazy(() => import('../ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
 
 interface AppBannersProps {
-    activeSession: any;
-    skippedSessionToast?: { id: number; name: string; weekSnapshot?: any } | null;
+    hasActiveSession: boolean;
+    skippedSessionToast?: { id: number; name: string; weekSnapshot?: unknown } | null;
     onUndoSkip?: () => void;
 }
 
 /**
  * Q18: sync-truncation + SW-update banners, moved verbatim from App
  * (subscriptions, deferred-update state and the update confirm dialog).
+ * Memoized: props are a boolean + a rare toast object + a stable callback,
+ * so per-set session commits in AppContent skip this subtree entirely.
  */
-export const AppBanners: React.FC<AppBannersProps> = ({
-    activeSession,
+export const AppBanners: React.FC<AppBannersProps> = React.memo(({
+    hasActiveSession,
     skippedSessionToast,
     onUndoSkip,
 }) => {
@@ -41,6 +43,25 @@ export const AppBanners: React.FC<AppBannersProps> = ({
 
     // Sync truncation warning — fires when cloud history is capped at 200 entries
     const [syncTruncatedWarning, setSyncTruncatedWarning] = useState<{ kept: number; total: number } | null>(null);
+    // Local persistence failure — fires when an IndexedDB write fails (quota,
+    // private mode). The hook keeps the value pending; the banner offers retry.
+    const [persistFailedKeys, setPersistFailedKeys] = useState<string[]>([]);
+    useEffect(() => {
+        const onError = (e: Event) => {
+            const key = (e as CustomEvent<{ key: string }>).detail?.key;
+            setPersistFailedKeys((prev) => (key && !prev.includes(key) ? [...prev, key] : prev));
+        };
+        const onOk = (e: Event) => {
+            const key = (e as CustomEvent<{ key: string }>).detail?.key;
+            setPersistFailedKeys((prev) => (key ? prev.filter((k) => k !== key) : prev));
+        };
+        window.addEventListener('ironlog:persist-error', onError);
+        window.addEventListener('ironlog:persist-ok', onOk);
+        return () => {
+            window.removeEventListener('ironlog:persist-error', onError);
+            window.removeEventListener('ironlog:persist-ok', onOk);
+        };
+    }, []);
     useEffect(() => {
         const handler = (e: Event) => {
             const { kept, total } = (e as CustomEvent).detail;
@@ -81,8 +102,26 @@ export const AppBanners: React.FC<AppBannersProps> = ({
                 </div>
             )}
 
+            {persistFailedKeys.length > 0 && (
+                <div className="fixed top-safe left-0 right-0 z-[200] flex justify-center px-4 pt-3 pointer-events-none">
+                    <div role="alert" aria-live="assertive" className="pointer-events-auto flex items-center gap-3 bg-red-950/90 border border-red-500/40 text-red-200 text-xs font-semibold px-4 py-3 rounded-2xl shadow-xl backdrop-blur-md max-w-sm w-full">
+                        <Icon name="AlertTriangle" size={16} className="text-red-400 shrink-0" />
+                        <span className="flex-1">
+                            {TRANSLATIONS[lang].copy.appBanners.persistWriteFailed}
+                        </span>
+                        <button
+                            type="button"
+                            onClick={() => window.dispatchEvent(new CustomEvent('ironlog:persist-retry'))}
+                            className="rounded-xl bg-red-500/20 px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-red-200 transition-colors hover:bg-red-500/30"
+                        >
+                            {TRANSLATIONS[lang].copy.appBanners.persistWriteRetry}
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {updateRegistration && !dismissedUpdate && (
-                <div className="fixed top-safe left-0 right-0 z-[210] flex justify-center px-4 pt-3 pointer-events-none">
+                <div className="fixed top-safe left-0 right-0 z-toast flex justify-center px-4 pt-3 pointer-events-none">
                     <div role="status" aria-live="polite" className="pointer-events-auto flex items-center gap-3 bg-zinc-950/95 border border-primary-500/30 text-zinc-100 text-xs font-semibold px-4 py-3 rounded-2xl shadow-xl backdrop-blur-md max-w-md w-full">
                         <Icon name="Download" size={16} className="text-primary-400 shrink-0" />
                         <span className="flex-1">
@@ -90,7 +129,7 @@ export const AppBanners: React.FC<AppBannersProps> = ({
                         </span>
                         <button
                             onClick={() => {
-                                if (activeSession) {
+                                if (hasActiveSession) {
                                     setShowUpdateConfirm(true);
                                     return;
                                 }
@@ -126,10 +165,10 @@ export const AppBanners: React.FC<AppBannersProps> = ({
                 </Suspense>
             )}
             {skippedSessionToast && (
-                <div role="status" aria-live="polite" className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[210] flex items-center gap-3 px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-700 shadow-2xl text-sm text-white">
+                <div role="status" aria-live="polite" className="fixed left-1/2 -translate-x-1/2 z-toast flex items-center gap-3 px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-700 shadow-2xl text-sm text-white" style={{ bottom: 'calc(var(--safe-area-bottom) + 88px)' }}>
                     <span>{skippedSessionToast.name}: {t.skipped || pickLang(lang, { en: 'Skipped', es: 'Saltado' })}</span>
                     {onUndoSkip && (
-                        <button type="button" onClick={onUndoSkip} className="px-2.5 py-1 rounded-lg bg-primary-500/20 text-primary-400 font-semibold text-xs hover:bg-primary-500/30 transition-colors">
+                        <button type="button" onClick={onUndoSkip} className="min-h-[44px] px-3 rounded-lg bg-primary-500/20 text-primary-400 font-semibold text-xs hover:bg-primary-500/30 transition-colors">
                             {t.undo || pickLang(lang, { en: 'Undo', es: 'Deshacer' })}
                         </button>
                     )}
@@ -137,4 +176,4 @@ export const AppBanners: React.FC<AppBannersProps> = ({
             )}
         </>
     );
-};
+});

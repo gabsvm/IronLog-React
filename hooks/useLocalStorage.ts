@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T | ((val: T) => T)) => void] {
     // State to store our value
@@ -15,21 +15,25 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
         }
     });
 
+    // Persist AFTER commit, never inside the updater: updaters must stay
+    // pure (StrictMode double-invokes them) and a synchronous setItem inside
+    // them blocks the render pass.
+    useEffect(() => {
+        try {
+            if (typeof window !== 'undefined') {
+                window.localStorage.setItem(key, JSON.stringify(storedValue));
+            }
+        } catch (error) {
+            console.error(`Error setting localStorage key "${key}":`, error);
+        }
+    }, [key, storedValue]);
+
     // Return a wrapped version of useState's setter function that ...
     // ... persists the new value to localStorage.
     const setValue = useCallback((value: T | ((val: T) => T)) => {
         try {
-            setStoredValue((prev) => {
-                // Allow value to be a function so we have same API as useState
-                const valueToStore = value instanceof Function ? value(prev) : value;
-
-                // Save to local storage
-                if (typeof window !== 'undefined') {
-                    window.localStorage.setItem(key, JSON.stringify(valueToStore));
-                }
-
-                return valueToStore;
-            });
+            // Allow value to be a function so we have same API as useState
+            setStoredValue((prev) => (value instanceof Function ? value(prev) : value));
         } catch (error) {
             console.error(`Error setting localStorage key "${key}":`, error);
         }

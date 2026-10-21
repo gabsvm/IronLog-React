@@ -14,20 +14,20 @@ import { completeWorkoutPipeline } from '../../services/workoutCompletionService
 import { maybeCreateAutoBackup } from '../../services/autoBackup';
 import { notifyWorkoutDone } from '../../utils/reminders';
 import { maybeExportWorkoutToHealth } from '../../utils/healthConnect';
-
-// Lazy Load views — keeps initial bundle small
-const HistoryView = React.lazy(() => import('../../views/HistoryView').then(module => ({ default: module.HistoryView })));
-const StatsView = React.lazy(() => import('../../views/StatsView').then(module => ({ default: module.StatsView })));
-const NutriView = React.lazy(() => import('../../views/NutriView').then(m => ({ default: m.NutriView })));
+import { useDiarySection } from '../../hooks/useDiarySection';
+import type { AppView } from '../layout/navigation';
 const ExercisesView = React.lazy(() => import('../../views/ExercisesView').then(m => ({ default: m.ExercisesView })));
+const StatsView = React.lazy(() => import('../../views/StatsView').then(module => ({ default: module.StatsView })));
 const ProgramEditView = React.lazy(() => import('../../views/ProgramEditView').then(m => ({ default: m.ProgramEditView })));
 const SessionSummaryView = React.lazy(() => import('../../views/SessionSummaryView').then(m => ({ default: m.SessionSummaryView })));
 const WorkoutView = React.lazy(() => import('../../views/WorkoutView').then(m => ({ default: m.WorkoutView })));
 const ConfirmModal = React.lazy(() => import('../ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
+const RoutineView = React.lazy(() => import('../../views/RoutineView').then(m => ({ default: m.RoutineView })));
+const DiaryView = React.lazy(() => import('../../views/DiaryView').then(m => ({ default: m.DiaryView })));
 
 interface AppViewsProps {
-    view: string;
-    setView: (view: any, after?: () => void) => void;
+    view: AppView;
+    setView: (view: AppView, after?: () => void) => void;
     activeSession: any;
     setActiveSession: (session: any) => void;
     completedWorkoutLog: any;
@@ -67,7 +67,16 @@ export const AppViews: React.FC<AppViewsProps> = ({
     const setActiveMeso = useStore(state => state.setActiveMeso);
     const { setRestTimer } = useTimerActions();
     const [pendingStartDayIdx, setPendingStartDayIdx] = React.useState<number | null>(null);
+    const [diarySection, setDiarySection] = useDiarySection();
 
+    // Shared routine editor entry (KONG-aware); Home and Routine reuse it.
+    const handleEditProgram = React.useCallback(() => {
+        if (activeMeso?.programSystem?.systemId === KONG_4DAY_V1.id) {
+            setShowKongConvertModal(true);
+            return;
+        }
+        setView('program');
+    }, [activeMeso, setView, setShowKongConvertModal]);
     const buildAndSetSession = (idx: number) => {
         if (!activeMeso) { setView('program'); return; }
 
@@ -167,12 +176,14 @@ export const AppViews: React.FC<AppViewsProps> = ({
                 </Suspense>
             ) : view === 'program' ? (
                 <Suspense fallback={<LoadingSpinner />}>
-                    <LazyViewBoundary lang={lang} resetKey="program"><ProgramEditView onBack={() => setView('home')} /></LazyViewBoundary>
+                    <LazyViewBoundary lang={lang} resetKey="program"><ProgramEditView onBack={() => setView('routine')} /></LazyViewBoundary>
                 </Suspense>
             ) : (
                 <Layout
-                    view={view as any}
-                    setView={setView as any}
+                    view={view}
+                    setView={setView}
+                    diarySection={diarySection}
+                    onDiarySection={setDiarySection}
                     onOpenProgram={() => setView('program')}
                     onOpenExercises={() => setView('exercises')}
                     onReset={() => setShowResetModal(true)}
@@ -201,28 +212,32 @@ export const AppViews: React.FC<AppViewsProps> = ({
 
                             buildAndSetSession(idx);
                         }}
-                        onEditProgram={() => {
-                            if (activeMeso?.programSystem?.systemId === KONG_4DAY_V1.id) {
-                                setShowKongConvertModal(true);
-                                return;
-                            }
-                            setView('program');
-                        }}
+                        onEditProgram={handleEditProgram}
                         onSkipSession={onSkipSession}
                     />}
-                    {view === 'history' && (
+                    {view === 'routine' && (
                         <Suspense fallback={<LoadingSpinner />}>
-                            <LazyViewBoundary lang={lang} resetKey={view}><HistoryView /></LazyViewBoundary>
+                            <RoutineView
+                                onStartDay={(idx) => {
+                                    if (activeSession) {
+                                        setPendingStartDayIdx(idx);
+                                        return;
+                                    }
+                                    buildAndSetSession(idx);
+                                }}
+                                onEditProgram={handleEditProgram}
+                                onOpenExercises={() => setView('exercises')}
+                            />
                         </Suspense>
                     )}
-                    {view === 'stats' && (
+                    {view === 'progress' && (
                         <Suspense fallback={<LoadingSpinner />}>
                             <LazyViewBoundary lang={lang} resetKey={view}><StatsView /></LazyViewBoundary>
                         </Suspense>
                     )}
-                    {view === 'nutrition' && (
+                    {view === 'diary' && (
                         <Suspense fallback={<LoadingSpinner />}>
-                            <LazyViewBoundary lang={lang} resetKey={view}><NutriView /></LazyViewBoundary>
+                            <LazyViewBoundary lang={lang} resetKey={`diary-${diarySection}`}><DiaryView section={diarySection} onSectionChange={setDiarySection} /></LazyViewBoundary>
                         </Suspense>
                     )}
                 </Layout>

@@ -25,11 +25,11 @@ describe('R4: NavBtn isolation, memoization, and accessibility', () => {
     it('triggers onSelect with its id on click', () => {
         const onSelect = vi.fn();
         const { getByRole } = render(
-            <NavBtn id="history" label="Historial" icon="Calendar" isActive={false} onSelect={onSelect} />
+            <NavBtn id="diary" label="Diario" icon="BookOpen" isActive={false} onSelect={onSelect} />
         );
 
         fireEvent.click(getByRole('button'));
-        expect(onSelect).toHaveBeenCalledWith('history');
+        expect(onSelect).toHaveBeenCalledWith('diary');
     });
 
     it('preserves component identity across re-renders (does not unmount DOM node)', () => {

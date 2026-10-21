@@ -99,7 +99,11 @@ export const useAppBootstrapEffects = ({
                 if (!db || cancelled) return;
 
                 const qTpl = firestoreApi.query(firestoreApi.collection(db, "global_templates"), firestoreApi.orderBy("order"));
-                const tplSnapshot = await firestoreApi.getDocs(qTpl);
+                const qEx = firestoreApi.collection(db, "global_exercises");
+                const [tplSnapshot, exSnapshot] = await Promise.all([
+                    firestoreApi.getDocs(qTpl),
+                    firestoreApi.getDocs(qEx),
+                ]);
                 const fetchedTemplates: GlobalTemplate[] = [];
                 tplSnapshot.forEach((doc) => fetchedTemplates.push({ id: doc.id, ...doc.data() } as GlobalTemplate));
 
@@ -122,8 +126,6 @@ export const useAppBootstrapEffects = ({
 
                 if (!cancelled && mergedTemplates.length > 0) setGlobalTemplates(mergedTemplates);
 
-                const qEx = firestoreApi.collection(db, "global_exercises");
-                const exSnapshot = await firestoreApi.getDocs(qEx);
                 const fetchedExercises: ExerciseDef[] = [];
                 exSnapshot.forEach((doc) => fetchedExercises.push({ id: doc.id, ...doc.data() } as ExerciseDef));
 

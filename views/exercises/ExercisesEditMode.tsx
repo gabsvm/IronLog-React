@@ -14,7 +14,7 @@ export const ExercisesEditMode: React.FC<{ state: ExercisesViewState }> = ({ sta
                         <label className="mb-2 block text-sm font-bold text-[rgb(var(--text-secondary))]">{t.exName}</label>
                         <input
                             type="text"
-                            className="premium-form-input w-full p-3 font-medium"
+                            className="gl-input font-medium"
                             value={newName}
                             onChange={e => setNewName(e.target.value)}
                             placeholder="e.g., Incline Machine Press"
@@ -30,11 +30,11 @@ export const ExercisesEditMode: React.FC<{ state: ExercisesViewState }> = ({ sta
                                     key={m}
                                     onClick={() => setNewMuscle(m)}
                                     aria-pressed={newMuscle === m}
-                                    className={`expressive-press min-h-11 rounded-[18px] border p-3 text-xs font-bold ${
-                                        newMuscle === m
-                                            ? 'bg-primary-500 border-primary-500 text-zinc-950'
-                                            : 'bg-[rgb(var(--surface-raised))] border-[rgb(var(--border-subtle))] text-[rgb(var(--text-secondary))] hover:border-primary-500/30'
-                                    }`}
+                                className={`min-h-[44px] rounded-xl border p-3 text-xs font-bold transition-all ${
+                                    newMuscle === m
+                                        ? 'border-primary-500 bg-primary-500 text-black'
+                                        : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated))] text-[rgb(var(--text-secondary))] hover:border-primary-500/30'
+                                }`}
                                 >
                                     {TRANSLATIONS[lang].muscle[m]}
                                 </button>
@@ -49,7 +49,7 @@ export const ExercisesEditMode: React.FC<{ state: ExercisesViewState }> = ({ sta
                         <select
                             value={newVolumeCountingMode}
                             onChange={e => setNewVolumeCountingMode(e.target.value as VolumeCountingMode)}
-                            className="premium-form-input w-full p-3 font-medium"
+                            className="gl-input font-medium"
                         >
                             <option value="total">{ev.countTotal}</option>
                             <option value="per_side">{ev.countPerSide}</option>

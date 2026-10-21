@@ -102,7 +102,7 @@ export const CommandPalette: React.FC<Props> = ({ isOpen, onClose, actions, titl
 
     return (
         <div
-            className="fixed inset-0 z-sheet flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-start sm:pt-[18vh] animate-in fade-in duration-150"
+            className="fixed inset-0 z-sheet flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-start sm:pt-[18vh] animate-in fade-in duration-150 pointer-events-auto"
             onClick={onClose}
             role="dialog"
             aria-modal="true"

@@ -109,7 +109,7 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
     return (
         <div id="profile-section-training">
             <div className="label-reference px-1 mb-1.5">{ty.training}</div>
-            <div className="card-reference divide-y divide-border-subtle overflow-hidden">
+            <div className="gl-panel divide-y divide-[rgb(var(--border-subtle))] overflow-hidden">
                 {activeMeso && (
                     <button
                         type="button"
@@ -172,22 +172,22 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                 type="button"
                 onClick={openSaveTemplate}
                 disabled={!activeMeso || program.length === 0}
-                className="premium-theme-panel expressive-press group mt-2 flex min-h-[60px] w-full items-center justify-between p-3.5 disabled:opacity-45"
+                className="gl-panel group flex min-h-[60px] w-full items-center justify-between gap-3 p-3.5 text-left disabled:opacity-45"
             >
                 <div className="flex items-center gap-3 text-left">
-                    <div className="p-2 rounded-xl bg-[rgb(var(--surface-elevated))] text-zinc-900 dark:text-[rgb(var(--text-primary))]">
+                    <div className="rounded-xl bg-[rgb(var(--surface-elevated))] p-2 text-[rgb(var(--text-primary))]">
                         <Icon name="Copy" size={18} />
                     </div>
                     <div>
-                        <span className="block font-bold text-sm text-[rgb(var(--text-secondary))]">
+                        <span className="block text-sm font-bold text-[rgb(var(--text-primary))]">
                             {ty.saveTemplate}
                         </span>
-                        <span className="block text-xs text-muted mt-0.5">
+                        <span className="mt-0.5 block text-xs text-muted">
                             {activeMeso && program.length > 0 ? ty.saveTemplatePrivate : ty.saveTemplateEmpty}
                         </span>
                     </div>
                 </div>
-                <Icon name="ChevronRight" size={16} className="text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-[rgb(var(--text-primary))]" />
+                <Icon name="ChevronRight" size={16} className="shrink-0 text-muted" />
             </button>
 
             {templateSaved && (
@@ -195,7 +195,7 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
             )}
 
             <div className="label-reference px-1 mt-4 mb-1.5">{ty.workoutSetup}</div>
-            <div className="card-reference divide-y divide-border-subtle overflow-hidden">
+            <div className="gl-panel divide-y divide-[rgb(var(--border-subtle))] overflow-hidden">
                 <div className="flex items-center gap-3 p-3">
                     <span className="w-8 h-8 rounded-xl bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
                         <Icon name="Gauge" size={17} />
@@ -228,11 +228,12 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                 </div>
                 <div className="flex items-center justify-between gap-2 p-3">
                     <span className="text-sm font-medium text-[rgb(var(--text-primary))]">{t.restTimerDisplay}</span>
-                    <div className="flex gap-1 bg-[rgb(var(--surface-elevated))] p-0.5 rounded-xl border border-border-subtle shrink-0">
+                    <div className="flex gap-1 rounded-xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated))] p-1 shrink-0" role="group" aria-label={t.restTimerDisplay}>
                         <button
                             type="button"
                             onClick={() => setConfig({ ...config, restTimerDisplay: 'compact' })}
-                            className={`px-2.5 py-1 text-xs rounded-xl font-semibold transition-all ${
+                            aria-pressed={(config.restTimerDisplay || 'compact') === 'compact'}
+                            className={`min-h-[44px] px-3 text-xs rounded-lg font-semibold transition-all ${
                                 (config.restTimerDisplay || 'compact') === 'compact'
                                     ? 'bg-primary-500 text-black shadow-sm'
                                     : 'text-muted hover:text-[rgb(var(--text-primary))]'
@@ -243,7 +244,8 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                         <button
                             type="button"
                             onClick={() => setConfig({ ...config, restTimerDisplay: 'expanded' })}
-                            className={`px-2.5 py-1 text-xs rounded-xl font-semibold transition-all ${
+                            aria-pressed={config.restTimerDisplay === 'expanded'}
+                            className={`min-h-[44px] px-3 text-xs rounded-lg font-semibold transition-all ${
                                 config.restTimerDisplay === 'expanded'
                                     ? 'bg-primary-500 text-black shadow-sm'
                                     : 'text-muted hover:text-[rgb(var(--text-primary))]'
@@ -255,14 +257,14 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                 </div>
                 <div className="flex items-center justify-between gap-2 p-3">
                     <span className="text-sm font-medium text-[rgb(var(--text-primary))]">{ty.weightUnit}</span>
-                    <div className="flex gap-1 bg-[rgb(var(--surface-elevated))] p-0.5 rounded-xl border border-border-subtle shrink-0" role="group" aria-label={ty.weightUnit}>
+                    <div className="flex gap-1 rounded-xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated))] p-1 shrink-0" role="group" aria-label={ty.weightUnit}>
                         {(['kg', 'lb'] as const).map((option) => (
                             <button
                                 key={option}
                                 type="button"
                                 onClick={() => setConfig({ ...config, weightUnit: option })}
                                 aria-pressed={resolveWeightUnit(config) === option}
-                                className={`px-2.5 py-1 text-xs rounded-xl font-semibold transition-all ${
+                                className={`min-h-[44px] px-3 text-xs rounded-lg font-semibold transition-all ${
                                     resolveWeightUnit(config) === option
                                         ? 'bg-primary-500 text-black shadow-sm'
                                         : 'text-muted hover:text-[rgb(var(--text-primary))]'
@@ -291,7 +293,7 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                                     setNotificationPerm(Notification.permission);
                                 }
                             }}
-                            className={`px-3 py-1.5 text-xs rounded-xl font-bold transition-all shrink-0 ${
+                            className={`min-h-[44px] px-3 text-xs rounded-xl font-bold transition-all shrink-0 ${
                                 notificationPerm === 'granted'
                                     ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                                     : notificationPerm === 'denied'
@@ -327,17 +329,17 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                 footer={<Button fullWidth onClick={savePersonalTemplate} disabled={!templateName.trim()}>{ty.saveTemplateBtn}</Button>}
             >
                 <div className="p-5 space-y-3">
-                    <p className="text-sm text-zinc-500">
+                    <p className="text-sm text-muted">
                         {ty.saveTemplateDesc}
                     </p>
                     <div>
-                        <label className="text-xs font-black uppercase text-zinc-500 tracking-widest block mb-2">{ty.templateName}</label>
+                        <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-muted">{ty.templateName}</label>
                         <input
                             autoFocus
                             value={templateName}
                             onChange={event => setTemplateName(event.target.value)}
                             maxLength={80}
-                            className="w-full bg-[rgb(var(--surface-elevated))] border border-zinc-200 dark:border-zinc-700 rounded-xl p-3 font-bold text-zinc-900 dark:text-[rgb(var(--text-primary))] outline-none focus:border-primary-500"
+                            className="gl-input font-bold"
                             placeholder={ty.templateNamePlaceholder}
                         />
                     </div>

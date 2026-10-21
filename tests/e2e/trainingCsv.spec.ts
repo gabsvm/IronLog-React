@@ -67,8 +67,8 @@ test.describe('Q12: training CSV import/export', () => {
         await page.goBack();
         await expect(sheet).toBeHidden({ timeout: 6000 });
 
-        // ── 2. Imported session lands in History ─────────────────────
-        await page.locator('nav[aria-label="Main navigation"]').getByRole('button', { name: /Historial|History/ }).click();
+        // ── 2. Imported session lands in the diary sessions section ──
+        await page.locator('nav[aria-label="Main navigation"]').getByRole('button', { name: /^Diario$|^Diary$/ }).click();
         await expect(page.getByText('Morning Push')).toBeVisible({ timeout: 8000 });
 
         // ── 3. Reimport is idempotent ─────────────────────────────────

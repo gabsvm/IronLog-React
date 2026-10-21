@@ -1,6 +1,6 @@
 import React, { memo, Suspense, useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { Virtuoso } from 'react-virtuoso';
-import { useApp } from '../context/AppContext';
+import { useApp, useAppPreferences, useAppConfig, useTutorial } from '../context/AppContext';
 import { TRANSLATIONS } from '../constants';
 import { formatDate, formatDurationShort, getTranslated } from '../utils';
 import { Icon } from '../components/ui/Icon';
@@ -155,7 +155,10 @@ const HistoryCard = memo(({ log, lang, id, onOpen, unit = 'kg' }: HistoryCardPro
 });
 
 export const HistoryView: React.FC = () => {
-    const { logs, setLogs, lang, tutorialProgress, markTutorialSeen, config } = useApp();
+    const { logs, setLogs } = useApp();
+    const { lang } = useAppPreferences();
+    const { config } = useAppConfig();
+    const { tutorialProgress, markTutorialSeen } = useTutorial();
     const unit = resolveWeightUnit(config);
     const activeSession = useStore(state => state.activeSession);
     const setActiveSession = useStore(state => state.setActiveSession);
@@ -299,7 +302,13 @@ export const HistoryView: React.FC = () => {
             <div className="flex h-full flex-col items-center justify-center bg-[rgb(var(--surface-app))] p-8 text-center">
                 <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-[rgb(var(--surface-raised))] text-zinc-500"><Icon name="Dumbbell" size={34} /></div>
                 <h3 className="mb-2 text-xl font-black text-zinc-950 dark:text-white">{TRANSLATIONS[lang].copy.history.noWorkoutsYet}</h3>
-                <p className="max-w-[230px] text-sm leading-relaxed text-zinc-500">{TRANSLATIONS[lang].copy.history.completeYourFirstSession}</p>
+                <p className="mb-5 max-w-[230px] text-sm leading-relaxed text-zinc-500">{TRANSLATIONS[lang].copy.history.completeYourFirstSession}</p>
+                <Button
+                    onClick={() => window.dispatchEvent(new CustomEvent('gainslab:navigate', { detail: { view: 'home' } }))}
+                    className="min-h-11 rounded-full px-6 font-bold"
+                >
+                    {pickLang(lang, { es: 'Ir a entrenar', en: 'Go to training' })}
+                </Button>
             </div>
         );
     }

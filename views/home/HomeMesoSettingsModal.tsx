@@ -11,7 +11,7 @@ export const HomeMesoSettingsModal: React.FC<{ state: HomeViewState }> = ({ stat
     return (
         <>
             {showMesoSettings && (
-                <div className="fixed inset-0 z-modal bg-black/65 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in" onClick={() => setShowMesoSettings(false)}>
+                <div className="fixed inset-0 z-modal bg-black/65 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in pointer-events-auto" onClick={() => setShowMesoSettings(false)}>
                     <div className="premium-theme-panel w-full max-w-sm p-6 shadow-2xl relative" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-[rgb(var(--text-primary))] font-bold text-xl">{t.mesoConfig}</h3>

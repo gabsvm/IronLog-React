@@ -124,7 +124,7 @@ describe.skipIf(!emulatorsRunning)('Q2: deleteCloudAccount end to end (emulators
             deleted: true,
         });
 
-        await deleteCloudAccount(uid, email, password, { auth, authApi, db, firestoreApi }, { cloudLogsV2: true });
+        await deleteCloudAccount(uid, email, password, { auth, authApi, db, firestoreApi });
 
         for (const id of ['1', '2', '3', '4']) {
             expect((await adminSnap(`users/${uid}/logs/${id}`)).exists()).toBe(false);

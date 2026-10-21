@@ -1,86 +1,21 @@
 import React, { useState } from 'react';
 import { Icon } from '../ui/Icon';
-import { getFirebaseFirestoreServices } from '../../lib/firebaseLoader';
 import { useAppPreferences } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
 import { AdminErrorReports } from './AdminErrorReports';
+import { pickLang } from '../../utils/i18n';
 
-interface Props {
-    adminEmail: string | undefined;
-}
-
-type Status = { msg: string; type: 'success' | 'error' | 'neutral'; codeSnippet?: string };
 
 /**
- * Admin-only PRO manager inside the unified "You" sheet → Advanced section.
- * Lets the admin user grant/revoke PRO for any UID or email. Fully
- * self-contained: owns its own state (target input, status) and Firestore
- * calls. Renders nothing for non-admin users (caller guards on email).
- * (The global template manager lives in the Training section instead.)
+ * Admin-only information panel. Subscription mutation is intentionally
+ * unavailable in the client; Firestore rules require server-side changes.
  */
-export const AdminControlPanel: React.FC<Props> = ({ adminEmail }) => {
+
+export const AdminControlPanel: React.FC = () => {
     const { lang } = useAppPreferences();
     const t = TRANSLATIONS[lang];
     const [isOpen, setIsOpen] = useState(false);
-    const [targetInput, setTargetInput] = useState('');
-    const [status, setStatus] = useState<Status | null>(null);
 
-    const resolveUid = async (input: string): Promise<string | null> => {
-        const { db, firestoreApi } = await getFirebaseFirestoreServices();
-        if (!db) return null;
-        const trimmed = input.trim();
-        if (!trimmed) return null;
-
-        if (trimmed.includes('@')) {
-            try {
-                setStatus({ msg: `Searching: ${trimmed}...`, type: 'neutral' });
-                const usersRef = firestoreApi.collection(db, 'users');
-                const q = firestoreApi.query(usersRef, firestoreApi.where('email', '==', trimmed));
-                const snap = await firestoreApi.getDocs(q);
-                if (snap.empty) return null;
-                return snap.docs[0].id;
-            } catch (e: any) {
-                if (e.code === 'permission-denied') throw new Error('PERMISSION_DENIED_LIST');
-                throw new Error(`Email lookup failed: ${e.message}`);
-            }
-        }
-        return trimmed;
-    };
-
-    const handleSubscriptionChange = async (grantPro: boolean) => {
-        const { db, firestoreApi } = await getFirebaseFirestoreServices();
-        if (!db) return;
-        setStatus({ msg: 'Processing...', type: 'neutral' });
-        try {
-            const uidToModify = await resolveUid(targetInput);
-            if (!uidToModify) {
-                setStatus({ msg: 'Error: User not found', type: 'error' });
-                return;
-            }
-            const subData = {
-                isPro: grantPro,
-                tier: grantPro ? 'lifetime' : 'free',
-                expiryDate: null,
-                grantedByAdmin: grantPro,
-                revokedByAdmin: !grantPro,
-                updatedAt: Date.now(),
-                adminUser: adminEmail,
-            };
-            await firestoreApi.setDoc(firestoreApi.doc(db, 'users', uidToModify, 'data', 'subscription'), subData, { merge: true });
-            setStatus({
-                msg: grantPro ? `✅ PRO Granted` : `🚫 PRO Revoked`,
-                type: grantPro ? 'success' : 'error',
-            });
-        } catch (e: any) {
-            let helpfulMsg = e.message;
-            let codeSnippet = '';
-            if (e.code === 'permission-denied' || e.message === 'PERMISSION_DENIED_LIST') {
-                helpfulMsg = '⛔ FIREBASE RULES BLOCKING';
-                codeSnippet = `rules_version = '2'; service cloud.firestore { match /databases/{database}/documents { function isAdmin() { return request.auth != null && request.auth.token.email == '${adminEmail}'; } match /users { allow list: if isAdmin(); } match /users/{userId}/{document=**} { allow read, write: if request.auth != null && (request.auth.uid == userId || isAdmin()); } match /global_templates/{docId} { allow read: if true; allow write: if isAdmin(); } } }`;
-            }
-            setStatus({ msg: helpfulMsg, type: 'error', codeSnippet });
-        }
-    };
 
     return (
         <>
@@ -98,40 +33,12 @@ export const AdminControlPanel: React.FC<Props> = ({ adminEmail }) => {
                         <Icon name="Crown" size={14} className="text-primary-400" />
                         <span className="text-[10px] font-black text-white uppercase tracking-widest">PRO Manager</span>
                     </div>
-
-                    <div className="space-y-3">
-                        <input
-                            type="text"
-                            value={targetInput}
-                            onChange={(e) => setTargetInput(e.target.value)}
-                            placeholder="Email or UID"
-                            aria-label="Target user email or UID"
-                            className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-xs text-white placeholder:text-zinc-600 focus:border-primary-500 focus:outline-none transition-colors duration-fast"
-                        />
-
-                        <div className="grid grid-cols-2 gap-2">
-                            <button
-                                onClick={() => handleSubscriptionChange(true)}
-                                className="py-2 bg-primary-500 text-black rounded-lg text-[10px] font-black uppercase tracking-tight hover:bg-primary-400 active:scale-95 transition-all duration-fast ease-natural shadow-lg shadow-primary-500/20"
-                            >
-                                Grant PRO
-                            </button>
-                            <button
-                                onClick={() => handleSubscriptionChange(false)}
-                                className="py-2 bg-red-500/15 text-red-400 border border-red-500/30 rounded-lg text-[10px] font-black uppercase tracking-tight hover:bg-red-500/25 active:scale-95 transition-all duration-fast ease-natural"
-                            >
-                                Revoke PRO
-                            </button>
-                        </div>
-
-                        {status && (
-                            <div
-                                role="status"
-                                className={`text-[10px] font-bold p-2 rounded-lg ${status.type === 'success' ? 'bg-primary-500/10 text-primary-300 border border-primary-500/20' : status.type === 'error' ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-white/5 text-zinc-300 border border-white/10'}`}
-                            >
-                                {status.msg}
-                            </div>
-                        )}
+                    <div className="mb-4 flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-200">
+                        <Icon name="Shield" size={14} className="mt-0.5 shrink-0" />
+                        <p>{pickLang(lang, {
+                            es: 'Los cambios de suscripción solo se realizan desde herramientas de administración del servidor. Las reglas de Firestore impiden escrituras desde esta app.',
+                            en: 'Subscription changes are restricted to server-side admin tools. Firestore rules block writes from this app.',
+                        })}</p>
                     </div>
                     <AdminErrorReports />
                 </div>

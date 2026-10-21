@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect } from 'react';
-import { useApp } from '../../context/AppContext';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useApp, useAppPreferences } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
 import { ExerciseDef, SessionExercise, VolumeCountingMode } from '../../types';
 import { Icon } from './Icon';
@@ -11,6 +11,7 @@ import { Button } from './Button';
 import { ProgressChart } from '../stats/ProgressChart';
 import { Sheet } from './Sheet';
 import { useStatsWorker } from '../../hooks/useStatsWorker';
+import { buildStatsLogsSignature } from '../../services/statsCache';
 import { resolveMuscleLabel } from '../../utils/muscle';
 import { useStore } from '../../lib/store';
 import {
@@ -150,7 +151,8 @@ const YouTubeCard: React.FC<{ videoId: string; title: string; youtubeUrl: string
 };
 
 export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exercise, onClose }) => {
-    const { lang, logs, exercises, setExercises, setLogs } = useApp();
+    const { logs, exercises, setExercises, setLogs } = useApp();
+    const { lang } = useAppPreferences();
     const t = TRANSLATIONS[lang];
     const [activeTab, setActiveTab] = useState<'guide' | 'history'>('guide');
     const [volumeCountingMode, setVolumeCountingMode] = useState<VolumeCountingMode>(exercise.volumeCountingMode || 'total');
@@ -160,6 +162,8 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
     const [chartData, setChartData] = useState<any[]>([]);
     const [chartLoading, setChartLoading] = useState(false);
 
+    const safeLogs = useMemo(() => (Array.isArray(logs) ? logs : []), [logs]);
+    const logsSignature = useMemo(() => buildStatsLogsSignature(safeLogs), [safeLogs]);
     useEffect(() => {
         setVolumeCountingMode(exercise.volumeCountingMode || 'total');
     }, [exercise.id, exercise.volumeCountingMode]);
@@ -168,16 +172,16 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
         if (activeTab === 'history' && isWorkerReady) {
             setChartLoading(true);
             const metric = exercise.muscle === 'CARDIO' ? 'duration' : '1rm';
-            const safeLogs = Array.isArray(logs) ? logs : [];
             // Merged duplicates share one history chart (canonical group).
             calculateChartData(safeLogs, exerciseIdGroup(exercises, String(exercise.id)), metric).then(points => {
                 setChartData(points);
                 setChartLoading(false);
             });
         }
-        // `calculateChartData` from useStatsWorker is stable across renders.
+        // Depend on the stable logs signature, not logs identity, so an
+        // identity-only logs change does not refetch/re-clone history.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeTab, isWorkerReady, exercise.id, logs, exercise.muscle, exercises]);
+    }, [activeTab, isWorkerReady, exercise.id, logsSignature, exercise.muscle, exercises]);
 
     const translatedName = getTranslated(exercise.name, lang);
     const translatedInstructions = getTranslated(exercise.instructions, lang);
@@ -226,12 +230,12 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
             </div>
 
             {/* Tabs */}
-            <div role="tablist" className="seg-reference mx-4 mt-4 flex p-1">
+            <div role="tablist" aria-label={String(translatedName)} className="gl-panel mx-4 mt-4 flex p-1">
                 <button
                     role="tab"
                     aria-selected={activeTab === 'guide'}
                     onClick={() => setActiveTab('guide')}
-                    className={`expressive-press min-h-11 flex-1 rounded-full px-3 text-xs font-bold ${activeTab === 'guide' ? 'bg-primary-500 text-zinc-950 shadow-sm' : 'text-muted'}`}
+                className={`min-h-[44px] flex-1 rounded-full px-3 text-xs font-bold transition-colors ${activeTab === 'guide' ? 'bg-primary-500 text-black shadow-sm' : 'text-muted'}`}
                 >
                     {t.guide || 'Guide'}
                 </button>
@@ -239,7 +243,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                     role="tab"
                     aria-selected={activeTab === 'history'}
                     onClick={() => setActiveTab('history')}
-                    className={`expressive-press min-h-11 flex-1 rounded-full px-3 text-xs font-bold ${activeTab === 'history' ? 'bg-primary-500 text-zinc-950 shadow-sm' : 'text-muted'}`}
+                className={`min-h-[44px] flex-1 rounded-full px-3 text-xs font-bold transition-colors ${activeTab === 'history' ? 'bg-primary-500 text-black shadow-sm' : 'text-muted'}`}
                 >
                     {t.history || 'History'}
                 </button>
@@ -293,17 +297,17 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                                         {translatedInstructions && translatedInstructions !== 'Unknown' ? (
                                             <p>{String(translatedInstructions)}</p>
                                         ) : (
-                                            <p className="italic text-zinc-600">{t.noData}</p>
+                                        <p className="italic text-muted">{t.noData}</p>
                                         )}
                                     </div>
                                 </div>
 
-                                <div className="bg-primary-500/10 rounded-xl p-4 border border-primary-500/15">
+                                <div className="rounded-2xl border border-primary-500/15 bg-primary-500/10 p-4">
                                     <div className="flex gap-3">
                                         <div className="bg-primary-500/20 p-1.5 rounded-lg h-fit shrink-0">
                                             <Icon name="Info" size={16} className="text-primary-400" />
                                         </div>
-                                        <div className="text-sm text-primary-900 dark:text-primary-100">
+                                        <div className="text-sm text-[rgb(var(--text-secondary))]">
                                             <p className="font-bold mb-1 text-primary-700 dark:text-primary-300">{t.executionTipTitle}</p>
                                             <p className="opacity-70 text-xs leading-relaxed">{t.executionTipText}</p>
                                         </div>
@@ -316,13 +320,15 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                                             <Icon name="Dumbbell" size={13} /> {TRANSLATIONS[lang].copy.exerciseDetailModal.tonnageCalculation}
                                         </h4>
                                         <div className="space-y-2">
-                                            <button type="button" aria-pressed={volumeCountingMode === 'total'} onClick={() => setVolumeCountingMode('total')} className={`w-full text-left rounded-xl border p-3 transition-colors ${volumeCountingMode === 'total' ? 'border-primary-500 bg-primary-500/10' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated)/0.6)]'}`}>
-                                                <span className="block text-sm font-bold text-white">{TRANSLATIONS[lang].copy.exerciseDetailModal.recordedTotal1}</span>
-                                                <span className="block mt-1 text-xs text-zinc-400">{TRANSLATIONS[lang].copy.exerciseDetailModal.forBarsBilateralMachines}</span>
+                                            <button type="button" aria-pressed={volumeCountingMode === 'total'} onClick={() => setVolumeCountingMode('total')} className={`min-h-[56px] w-full rounded-xl border p-3 text-left transition-colors ${volumeCountingMode === 'total' ? 'border-primary-500 bg-primary-500/10' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated)/0.5)]'}`}>
+                                                <span className="block text-sm font-bold text-[rgb(var(--text-primary))]">{TRANSLATIONS[lang].copy.exerciseDetailModal.recordedTotal1}</span>
+                                                <span className="mt-1 block text-xs text-muted">{TRANSLATIONS[lang].copy.exerciseDetailModal.forBarsBilateralMachines}</span>
+
                                             </button>
-                                            <button type="button" aria-pressed={volumeCountingMode === 'per_side'} onClick={() => setVolumeCountingMode('per_side')} className={`w-full text-left rounded-xl border p-3 transition-colors ${volumeCountingMode === 'per_side' ? 'border-primary-500 bg-primary-500/10' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated)/0.6)]'}`}>
-                                                <span className="block text-sm font-bold text-white">{TRANSLATIONS[lang].copy.exerciseDetailModal.perSide2}</span>
-                                                <span className="block mt-1 text-xs text-zinc-400">{TRANSLATIONS[lang].copy.exerciseDetailModal.whenYouRecordLoad}</span>
+                                            <button type="button" aria-pressed={volumeCountingMode === 'per_side'} onClick={() => setVolumeCountingMode('per_side')} className={`min-h-[56px] w-full rounded-xl border p-3 text-left transition-colors ${volumeCountingMode === 'per_side' ? 'border-primary-500 bg-primary-500/10' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated)/0.5)]'}`}>
+                                                <span className="block text-sm font-bold text-[rgb(var(--text-primary))]">{TRANSLATIONS[lang].copy.exerciseDetailModal.perSide2}</span>
+                                                <span className="mt-1 block text-xs text-muted">{TRANSLATIONS[lang].copy.exerciseDetailModal.whenYouRecordLoad}</span>
+
                                             </button>
                                         </div>
                                     </div>
@@ -331,9 +337,9 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                         </>
                     ) : (
                         <div className="p-5">
-                            <div className="premium-theme-panel p-4">
+                            <div className="gl-panel p-4">
                                 <div className="mb-4">
-                                    <h4 className="text-sm font-bold text-white">{t.statsProgress}</h4>
+                                    <h4 className="text-sm font-bold text-[rgb(var(--text-primary))]">{t.statsProgress}</h4>
                                     <p className="text-xs text-muted">Estimated 1RM / Max Performance</p>
                                 </div>
                                 <ProgressChart

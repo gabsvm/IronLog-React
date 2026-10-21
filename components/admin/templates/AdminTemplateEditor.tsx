@@ -135,7 +135,7 @@ export const AdminTemplateEditor: React.FC<{ state: AdminTemplateState }> = ({ s
                                                 value={slot.muscle}
                                                 onChange={e => updateSlot(dayIdx, slotIdx, 'muscle', e.target.value)}
                                             >
-                                                {Object.keys(MUSCLE_GROUPS).map(m => <option key={m} value={m}>{m}</option>)}
+                                                {Object.values(MUSCLE_GROUPS).map(m => <option key={m} value={m}>{m}</option>)}
                                             </select>
 
                                             <button

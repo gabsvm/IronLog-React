@@ -88,7 +88,7 @@ export const TodayTab: React.FC<Props> = ({
                                 <span className="ml-2 text-orange-400">🔥 {streak} {TRANSLATIONS[lang].copy.todayTab.dayStreak}</span>
                             )}
                         </p>
-                        <div className={`text-4xl font-black leading-none ${caloriesRemaining < 0 ? 'text-orange-400' : caloriesRemaining < 200 ? 'text-yellow-400' : 'text-white'}`}>
+                        <div className={`text-4xl font-black leading-none ${caloriesRemaining < 0 ? 'text-orange-700 dark:text-orange-400' : caloriesRemaining < 200 ? 'text-yellow-700 dark:text-yellow-400' : 'text-[rgb(var(--text-primary))]'}`}>
                             {caloriesRemaining > 0 ? caloriesRemaining : Math.abs(caloriesRemaining)}
                         </div>
                         <p className="text-xs text-zinc-500 mt-1">
@@ -157,7 +157,7 @@ export const TodayTab: React.FC<Props> = ({
                     <div className="w-8 h-8 rounded-xl bg-green-500/15 flex items-center justify-center">
                         <Icon name="Plus" size={16} className="text-green-400" />
                     </div>
-                    <span className="text-sm font-bold text-white">{TRANSLATIONS[lang].copy.todayTab.addFood}</span>
+                    <span className="text-sm font-bold text-[rgb(var(--text-primary))]">{TRANSLATIONS[lang].copy.todayTab.addFood}</span>
                 </button>
                 <button
                     onClick={onAddCardio}
@@ -167,7 +167,7 @@ export const TodayTab: React.FC<Props> = ({
                     <div className="w-8 h-8 rounded-xl bg-red-500/15 flex items-center justify-center">
                         <Icon name="Flame" size={16} className="text-red-400" />
                     </div>
-                    <span className="text-sm font-bold text-white">{TRANSLATIONS[lang].copy.todayTab.logCardio}</span>
+                    <span className="text-sm font-bold text-[rgb(var(--text-primary))]">{TRANSLATIONS[lang].copy.todayTab.logCardio}</span>
                 </button>
             </div>
 
@@ -188,13 +188,13 @@ export const TodayTab: React.FC<Props> = ({
                                 </div>
                                 <div className="flex items-center gap-2">
                                     {s.caloriesBurned && <span className="text-xs font-bold text-red-400">~{s.caloriesBurned} kcal</span>}
-                                    <button
-                                        onClick={() => onDeleteCardio(s.id)}
-                                        aria-label={TRANSLATIONS[lang].copy.todayTab.deleteCardioEntry}
-                                        className="p-2 -m-1 text-zinc-700 hover:text-red-500 transition-colors duration-fast ease-natural"
-                                    >
-                                        <Icon name="X" size={12} />
-                                    </button>
+                                        <button
+                                            onClick={() => onDeleteCardio(s.id)}
+                                            aria-label={TRANSLATIONS[lang].copy.todayTab.deleteCardioEntry}
+                                            className="flex min-h-[44px] min-w-[44px] items-center justify-center text-zinc-700 hover:text-red-500 transition-colors duration-fast ease-natural"
+                                        >
+                                            <Icon name="X" size={12} />
+                                        </button>
                                 </div>
                             </div>
                         ))}
@@ -220,24 +220,24 @@ export const TodayTab: React.FC<Props> = ({
                             <div className="flex items-center gap-3">
                                 <span className="text-xl" aria-hidden="true">{meta.emoji}</span>
                                 <div className="text-left">
-                                    <p className="font-bold text-white text-sm">{pickLang(lang, meta)}</p>
+                                    <p className="font-bold text-[rgb(var(--text-primary))] text-sm">{pickLang(lang, meta)}</p>
                                     <p className="text-xs text-muted">{entries.length} {TRANSLATIONS[lang].copy.todayTab.items}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
                                 <div className="text-right">
-                                    <p className="text-sm font-bold text-zinc-300">{mealCals} kcal</p>
+                                    <p className="text-sm font-bold text-[rgb(var(--text-secondary))]">{mealCals} kcal</p>
                                     <p className="text-[10px] text-blue-400">{Math.round(mealProt)}g P</p>
                                 </div>
                                 <Icon name={isExpanded ? 'ChevronUp' : 'ChevronDown'} size={16} className="text-zinc-600" />
                             </div>
                         </button>
                         {isExpanded && (
-                            <div className="border-t border-zinc-800 divide-y divide-zinc-800/70">
+                            <div className="border-t border-[rgb(var(--border-subtle))] divide-y divide-[rgb(var(--border-subtle))]">
                                 {entries.map((entry) => (
                                     <div key={entry.id} className="flex items-center justify-between px-4 py-3">
                                         <div className="flex-1 min-w-0 pr-2">
-                                            <p className="text-sm text-white font-medium truncate">{entry.name}</p>
+                                            <p className="text-sm text-[rgb(var(--text-primary))] font-medium truncate">{entry.name}</p>
                                             <p className="text-xs text-muted mt-0.5">
                                                 <span className="text-blue-400">{entry.protein}g P</span>{' · '}
                                                 <span className="text-amber-400">{entry.carbs}g C</span>{' · '}
@@ -245,18 +245,18 @@ export const TodayTab: React.FC<Props> = ({
                                             </p>
                                         </div>
                                         <div className="flex items-center gap-1 shrink-0">
-                                            <span className="text-sm font-bold text-zinc-300 mr-1">{entry.calories}</span>
+                                            <span className="text-sm font-bold text-[rgb(var(--text-secondary))] mr-1">{entry.calories}</span>
                                             <button
                                                 onClick={() => onEditEntry(entry)}
                                                 aria-label={TRANSLATIONS[lang].copy.todayTab.editEntry}
-                                                className="text-zinc-600 hover:text-zinc-300 transition-colors duration-fast ease-natural active:scale-90 p-2 rounded-lg"
+                                                className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-zinc-600 hover:text-zinc-300 transition-colors duration-fast ease-natural active:scale-90 rounded-lg"
                                             >
                                                 <Icon name="Pencil" size={14} />
                                             </button>
                                             <button
                                                 onClick={() => onDeleteEntry(entry.id)}
                                                 aria-label={TRANSLATIONS[lang].copy.todayTab.deleteEntry}
-                                                className="text-zinc-700 hover:text-red-500 transition-colors duration-fast ease-natural active:scale-90 p-2 rounded-lg"
+                                                className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-zinc-700 hover:text-red-500 transition-colors duration-fast ease-natural active:scale-90 rounded-lg"
                                             >
                                                 <Icon name="Trash2" size={14} />
                                             </button>

@@ -50,7 +50,7 @@ export const SharedCsvImport: React.FC<SharedCsvImportProps> = ({ ready, onImpor
             {message && !flow.sheetProps && (
                 <div
                     role={flow.csvError ? 'alert' : 'status'}
-                    className="fixed left-4 right-4 bottom-[calc(env(safe-area-inset-bottom)+5.5rem)] z-[90] mx-auto max-w-md rounded-xl border border-border-subtle bg-surface-elevated px-4 py-3 shadow-lg flex items-start gap-3"
+                    className="fixed left-4 right-4 bottom-[calc(env(safe-area-inset-bottom)+5.5rem)] z-modal mx-auto max-w-md rounded-xl border border-border-subtle bg-surface-elevated px-4 py-3 shadow-lg flex items-start gap-3"
                 >
                     <p className={`flex-1 text-xs font-bold ${flow.csvError ? 'text-red-500' : 'text-emerald-500'}`}>{message}</p>
                     <button

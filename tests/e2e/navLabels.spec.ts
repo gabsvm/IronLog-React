@@ -21,10 +21,10 @@ for (const viewport of [{ width: 360, height: 800 }, { width: 390, height: 844 }
             const nav = page.locator('nav[aria-label="Main navigation"]');
             await expect(nav).toBeVisible({ timeout: 10000 });
 
-            // Short label (fails before L5: "Estadísticas").
-            const statsBtn = nav.locator('button', { hasText: /^Métricas$|^Stats$/ });
-            await expect(statsBtn).toBeVisible({ timeout: 8000 });
-            await expect(nav.getByText('Estadísticas')).toHaveCount(0);
+            // Short label (fails on long names) + the four Fase 2 roots.
+            const progressBtn = nav.locator('button', { hasText: /^Progreso$|^Progress$/ });
+            await expect(progressBtn).toBeVisible({ timeout: 8000 });
+            await expect(nav.getByText(/^Métricas$|^Stats$/)).toHaveCount(0);
 
             // Truncation safety net on every label.
             const truncations = await page.evaluate(() => {

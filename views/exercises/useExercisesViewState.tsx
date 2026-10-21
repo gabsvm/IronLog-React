@@ -202,7 +202,7 @@ export const useExercisesViewState = ({ onBack }: ExercisesViewProps) => {
 
         return (
             <div className="px-4 py-1.5" key={ex.id}>
-                <div className="w-full card-reference p-3 rounded-2xl flex items-center justify-between shadow-sm border border-zinc-200 dark:border-white/5 bg-white/70 dark:bg-zinc-900/70 hover:border-primary-500/30 transition-all">
+                <div className="gl-panel flex w-full items-center justify-between p-3 shadow-sm">
                     {/* Main card button (no nested buttons inside!) */}
                     <button
                         type="button"
@@ -211,22 +211,22 @@ export const useExercisesViewState = ({ onBack }: ExercisesViewProps) => {
                         aria-label={pickLang(lang, { es: `Detalles de ${getTranslated(ex.name, lang)}`, en: `Details of ${getTranslated(ex.name, lang)}` })}
                     >
                         <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-bold text-zinc-900 dark:text-white text-sm truncate">
+                            <span className="truncate text-sm font-bold text-[rgb(var(--text-primary))]">
                                 {getTranslated(ex.name, lang)}
                             </span>
                             {isArchived && (
-                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-500/20 text-amber-500 border border-amber-500/30">
+                                <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-xs font-bold uppercase text-amber-500">
                                     {ev.badgeArchived}
                                 </span>
                             )}
                             {!isBuiltIn && !isArchived && (
-                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-primary-500/20 text-primary-400 border border-primary-500/30">
+                                <span className="rounded bg-primary-500/20 px-1.5 py-0.5 text-xs font-bold uppercase text-primary-500">
                                     {ev.badgeCustom}
                                 </span>
                             )}
                             {isMerged && (
                                 <span
-                                    className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-violet-500/20 text-violet-400 border border-violet-500/30"
+                                    className="rounded bg-violet-500/20 px-1.5 py-0.5 text-xs font-bold uppercase text-violet-400"
                                     title={t.merge.mergedInto.replace('{target}', String(mergeTargetName))}
                                 >
                                     {t.merge.badge}
@@ -234,11 +234,11 @@ export const useExercisesViewState = ({ onBack }: ExercisesViewProps) => {
                             )}
                         </div>
                         <div className="flex items-center gap-2 mt-1">
-                            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-zinc-100 dark:bg-white/10 text-zinc-600 dark:text-zinc-400">
+                            <span className="rounded bg-[rgb(var(--surface-elevated))] px-1.5 py-0.5 text-xs font-bold uppercase text-muted">
                                 {TRANSLATIONS[lang].muscle[ex.muscle]}
                             </span>
                             {ex.volumeCountingMode === 'per_side' && (
-                                <span className="text-[10px] text-zinc-400 font-medium">×2</span>
+                                <span className="text-xs font-medium text-muted">×2</span>
                             )}
                         </div>
                     </button>
@@ -249,7 +249,7 @@ export const useExercisesViewState = ({ onBack }: ExercisesViewProps) => {
                             <button
                                 type="button"
                                 onClick={() => handleUnarchive(ex.id)}
-                                className="p-2 text-zinc-400 hover:text-primary-400 transition-colors rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                                className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-muted transition-colors hover:bg-[rgb(var(--surface-elevated))] hover:text-primary-500"
                                 title={ev.unarchive}
                                 aria-label={ev.unarchive}
                             >
@@ -261,14 +261,14 @@ export const useExercisesViewState = ({ onBack }: ExercisesViewProps) => {
                             <button
                                 type="button"
                                 onClick={() => handleInitiateDelete(ex)}
-                                className="p-2 text-zinc-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30"
+                                className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-muted transition-colors hover:bg-red-500/10 hover:text-red-500"
                                 title={ev.deleteArchive}
                                 aria-label={ev.deleteEx}
                             >
                                 <Icon name="Trash2" size={18} />
                             </button>
                         ) : (
-                            <div className="p-2 text-zinc-300 dark:text-zinc-600" title={ev.officialCatalog}>
+                            <div className="flex min-h-[44px] min-w-[44px] items-center justify-center text-muted" title={ev.officialCatalog}>
                                 <Icon name="Lock" size={16} />
                             </div>
                         )}
@@ -277,7 +277,7 @@ export const useExercisesViewState = ({ onBack }: ExercisesViewProps) => {
                             <button
                                 type="button"
                                 onClick={() => handleUnmerge(ex.id)}
-                                className="p-2 text-zinc-400 hover:text-violet-400 transition-colors rounded-lg hover:bg-violet-500/10"
+                                className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-muted transition-colors hover:bg-violet-500/10 hover:text-violet-400"
                                 title={t.merge.unmerge}
                                 aria-label={`${t.merge.unmerge}: ${getTranslated(ex.name, lang)}`}
                             >
@@ -287,7 +287,7 @@ export const useExercisesViewState = ({ onBack }: ExercisesViewProps) => {
                             <button
                                 type="button"
                                 onClick={() => handleStartMerge(ex.id)}
-                                className="p-2 text-zinc-400 hover:text-violet-400 transition-colors rounded-lg hover:bg-violet-500/10"
+                                className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-muted transition-colors hover:bg-violet-500/10 hover:text-violet-400"
                                 title={t.merge.button}
                                 aria-label={`${t.merge.button}: ${getTranslated(ex.name, lang)}`}
                             >
@@ -298,7 +298,7 @@ export const useExercisesViewState = ({ onBack }: ExercisesViewProps) => {
                         <button
                             type="button"
                             onClick={() => setDetailEx(ex)}
-                            className="p-2 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
+                            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-muted transition-colors hover:text-[rgb(var(--text-primary))]"
                             aria-label={pickLang(lang, { es: 'Ver detalles', en: 'View details' })}
                         >
                             <Icon name="ChevronRight" size={18} />

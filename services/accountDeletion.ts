@@ -1,7 +1,7 @@
 import { cloudSyncCache } from './cloudSyncCache';
 import { dirtySyncState } from './dirtySyncState';
 import { offlineSyncQueue } from './offlineSyncQueue';
-import { isCloudLogsV2Enabled } from './cloudLogsV2Flag';
+import { deleteAllInCollection, V2_COLLECTIONS } from './cloudV2Collections';
 import type { CloudLogsV2Firestore } from './cloudLogsV2';
 
 /** Translation-key codes for every account-deletion failure (see TRANSLATIONS.deleteAccount.errors). */
@@ -42,6 +42,8 @@ export interface AccountDeletionFirebase {
     firestoreApi: {
         doc(db: any, ...path: string[]): any;
         deleteDoc(ref: any): Promise<void>;
+        /** Presence check for the server-side subscription doc (owner-readable). */
+        getDoc?(ref: any): Promise<{ exists(): boolean }>;
         // Q21 (only used with VITE_CLOUD_LOGS_V2=1): owner listing + batched wipe of logs/.
         collection?(db: any, ...path: string[]): any;
         getDocs?(target: any): Promise<{ docs: Array<{ id: string }> }>;
@@ -49,10 +51,15 @@ export interface AccountDeletionFirebase {
     };
 }
 
-export interface AccountDeletionOptions {
-    /** Defaults to the VITE_CLOUD_LOGS_V2 build flag. */
-    cloudLogsV2?: boolean;
+/** Outcome of a cloud account deletion. `subscriptionRetained` is true when the
+ * server-side subscription record (`users/{uid}/data/subscription`) existed:
+ * clients can neither write nor delete it (see firestore.rules), so a backend
+ * erasure flow must remove it — the app deletes everything else and reports
+ * the remainder instead of claiming a complete wipe. */
+export interface AccountDeletionResult {
+    subscriptionRetained: boolean;
 }
+
 
 const isOffline = () => typeof navigator !== 'undefined' && navigator.onLine === false;
 
@@ -76,29 +83,21 @@ const mapReauthError = (err: unknown): AccountDeletionError => {
 };
 
 /**
- * Deletes the cloud account in the exact safe order:
- * (a) re-authenticate with email+password, (b) with VITE_CLOUD_LOGS_V2=1
- * wipe users/{uid}/logs/* and the S5 section collections in batches, then delete users/{uid}/data/history
- * directly, then users/{uid},
- * (c) delete the Auth user.
+ * Deletes all owned cloud data before removing the Auth user. V2 collections
+ * are always wiped, independent of the current sync rollout flag: a user may
+ * have V2 documents from an earlier device or build.
  *
- * Q2: no collection listing. The hardened rules allow reading only
- * `data/history` by path, so getDocs(users/{uid}/data) would be DENIED; and
- * `subscription` (read-only for clients, owned by an external backend) is
- * never touched because it is never referenced.
- *
- * deleteUser is NEVER called when the Firestore wipe fails. When Auth removal
- * fails after a successful wipe, the error is `partial-delete` and re-running
- * the flow is idempotent (deleting already-deleted docs succeeds).
+ * The server-side subscription record cannot be deleted by clients (rules deny
+ * it); its pre-deletion presence is reported via `subscriptionRetained` so the
+ * UI never claims a complete wipe. A backend erasure flow must remove it
+ * (see docs/ACCOUNT_DELETION_SUBSCRIPTION.md).
  */
 export const deleteCloudAccount = async (
     uid: string,
     email: string,
     password: string,
     firebase: AccountDeletionFirebase,
-    options: AccountDeletionOptions = {},
-): Promise<void> => {
-    const wipeSessionLogs = options.cloudLogsV2 ?? isCloudLogsV2Enabled();
+): Promise<AccountDeletionResult> => {
     if (isOffline()) {
         throw new AccountDeletionError('offline');
     }
@@ -115,24 +114,26 @@ export const deleteCloudAccount = async (
         throw mapReauthError(err);
     }
 
+    let subscriptionRetained = false;
     try {
-        // Q21/S5: per-item V2 collections first (the rules allow the owner to
-        // list them, unlike data/). Flag OFF: never touched, Q2 behavior intact.
-        if (wipeSessionLogs) {
-            const { deleteAllInCollection, V2_COLLECTIONS } = await import('./cloudV2Collections');
-            const firestore = {
-                db: firebase.db,
-                api: firebase.firestoreApi as unknown as CloudLogsV2Firestore['api'],
-            };
-            for (const collection of V2_COLLECTIONS) {
-                await deleteAllInCollection(collection, uid, firestore);
-            }
+        const firestore = {
+            db: firebase.db,
+            api: firebase.firestoreApi as unknown as CloudLogsV2Firestore['api'],
+        };
+        for (const collection of V2_COLLECTIONS) {
+            await deleteAllInCollection(collection, uid, firestore);
         }
-        // Direct deletes only: history is the sole client-deletable data doc.
         await firebase.firestoreApi.deleteDoc(
             firebase.firestoreApi.doc(firebase.db, 'users', uid, 'data', 'history'),
         );
         await firebase.firestoreApi.deleteDoc(firebase.firestoreApi.doc(firebase.db, 'users', uid));
+        // Owner-readable: check BEFORE deleteUser removes our read access.
+        if (firebase.firestoreApi.getDoc) {
+            const subSnap = await firebase.firestoreApi.getDoc(
+                firebase.firestoreApi.doc(firebase.db, 'users', uid, 'data', 'subscription'),
+            );
+            subscriptionRetained = subSnap.exists();
+        }
     } catch (err) {
         if (firebaseCodeOf(err) === 'unavailable') {
             throw new AccountDeletionError('offline', err);
@@ -148,6 +149,7 @@ export const deleteCloudAccount = async (
         }
         throw new AccountDeletionError('partial-delete', err);
     }
+    return { subscriptionRetained };
 };
 
 /**

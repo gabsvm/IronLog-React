@@ -45,14 +45,6 @@ html.native-shell [data-install-banner] {
   min-height: 100%;
 }
 
-
-.product-home-polish .animate-bounce-cta,
-.product-home-polish .animate-pulse:not([aria-busy="true"]) {
-  animation: none !important;
-}
-
-
-
 /* Four-day programs fit on common 360dp-class phones; longer schedules still scroll. */
 .product-home-polish .calendar-timeline > button {
   width: clamp(64px, 18.2vw, 76px) !important;
@@ -140,9 +132,9 @@ html.light .product-workout-polish .divide-white\/10 > :not([hidden]) ~ :not([hi
 }
 
 .product-stats-segment {
-  min-height: 34px;
+  min-height: 44px;
   border-radius: 10px;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: .08em;
   text-transform: uppercase;

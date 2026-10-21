@@ -22,7 +22,7 @@ export const DangerSection: React.FC<DangerSectionProps> = ({ onClose, onReset }
                     onClose?.();
                     onReset();
                 }}
-                className="w-full py-3 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors"
+                className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl border border-red-500/40 bg-red-500/10 px-4 text-xs font-bold text-red-500 transition-colors hover:bg-red-500/20"
                 aria-label={t.factoryReset}
             >
                 <Icon name="Trash2" size={16} /> {t.factoryReset}

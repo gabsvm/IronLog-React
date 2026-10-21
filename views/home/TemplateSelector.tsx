@@ -42,20 +42,51 @@ export const TemplateSelector: React.FC<Props> = ({
     const [expandedAuthors, setExpandedAuthors] = useState<Record<string, boolean>>({
         'Natural Hypertrophy': true,
     });
+    const [query, setQuery] = useState('');
+    const [authorFilter, setAuthorFilter] = useState<string | null>(null);
+    const [daysFilter, setDaysFilter] = useState<number | null>(null);
+
+    // Filter options are derived from the available templates, never hardcoded.
+    const availableAuthors = useMemo(() => {
+        const authors: string[] = [];
+        templates.forEach((tpl) => {
+            const author = getTemplateAuthor(tpl, ts);
+            if (!authors.includes(author)) authors.push(author);
+        });
+        return authors.sort((a, b) => a.localeCompare(b));
+    }, [templates, ts]);
+    const availableDayCounts = useMemo(() => {
+        const counts: number[] = [];
+        templates.forEach((tpl) => {
+            if (!counts.includes(tpl.program.length)) counts.push(tpl.program.length);
+        });
+        return counts.sort((a, b) => a - b);
+    }, [templates]);
+
+    const visibleTemplates = useMemo(() => {
+        const q = query.trim().toLowerCase();
+        return templates.filter((tpl) => {
+            if (authorFilter && getTemplateAuthor(tpl, ts) !== authorFilter) return false;
+            if (daysFilter !== null && tpl.program.length !== daysFilter) return false;
+            if (!q) return true;
+            const hay = `${getTranslated(tpl.title, lang as 'en' | 'es')} ${getTranslated(tpl.description, lang as 'en' | 'es')}`.toLowerCase();
+            return hay.includes(q);
+        });
+    }, [templates, ts, authorFilter, daysFilter, query, lang]);
 
     const grouped = useMemo(() => {
         const groups: Record<string, GlobalTemplate[]> = {};
-        templates.forEach((tpl) => {
+        visibleTemplates.forEach((tpl) => {
             const author = getTemplateAuthor(tpl, ts);
             if (!groups[author]) groups[author] = [];
             groups[author].push(tpl);
         });
         return groups;
-    }, [templates, ts]);
+    }, [visibleTemplates, ts]);
 
     const selector = (
         <div
-            className="fixed inset-0 z-modal flex flex-col bg-[rgb(var(--surface-app))] text-[rgb(var(--text-primary))]"
+            className="fixed inset-0 z-modal flex flex-col bg-[rgb(var(--surface-app))] text-[rgb(var(--text-primary))] pointer-events-auto"
             role="dialog"
             aria-modal="true"
             aria-label={t.startMeso}
@@ -137,6 +168,53 @@ export const TemplateSelector: React.FC<Props> = ({
                         <Icon name="ChevronRight" size={19} className="shrink-0 text-[rgb(var(--text-muted))]" />
                     </button>
 
+                    <div className="relative">
+                        <Icon name="Search" size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[rgb(var(--text-muted))]" />
+                        <input
+                            type="search"
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            placeholder={ts.searchPh}
+                            aria-label={ts.searchPh}
+                            className="min-h-[48px] w-full rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] py-3 pl-11 pr-4 text-base text-[rgb(var(--text-primary))] placeholder:text-[rgb(var(--text-muted))]"
+                        />
+                    </div>
+
+                    {(availableAuthors.length > 1 || availableDayCounts.length > 1) && (
+                        <div className="flex gap-1.5 overflow-x-auto scroll-container px-1 py-0.5" role="group" aria-label={ts.filterBy}>
+                            <button
+                                type="button"
+                                aria-pressed={authorFilter === null && daysFilter === null}
+                                onClick={() => { setAuthorFilter(null); setDaysFilter(null); }}
+                                className={`min-h-[44px] shrink-0 rounded-full border px-3.5 text-xs font-bold ${authorFilter === null && daysFilter === null ? 'border-primary-500 bg-primary-500 text-black' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] text-[rgb(var(--text-secondary))]'}`}
+                            >
+                                {ts.filterAll}
+                            </button>
+                            {availableAuthors.length > 1 && availableAuthors.map((author) => (
+                                <button
+                                    key={author}
+                                    type="button"
+                                    aria-pressed={authorFilter === author}
+                                    onClick={() => setAuthorFilter((prev) => (prev === author ? null : author))}
+                                    className={`min-h-[44px] max-w-44 shrink-0 truncate rounded-full border px-3.5 text-xs font-bold ${authorFilter === author ? 'border-primary-500 bg-primary-500 text-black' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] text-[rgb(var(--text-secondary))]'}`}
+                                >
+                                    {author}
+                                </button>
+                            ))}
+                            {availableDayCounts.length > 1 && availableDayCounts.map((days) => (
+                                <button
+                                    key={days}
+                                    type="button"
+                                    aria-pressed={daysFilter === days}
+                                    onClick={() => setDaysFilter((prev) => (prev === days ? null : days))}
+                                    className={`min-h-[44px] shrink-0 rounded-full border px-3.5 text-xs font-bold ${daysFilter === days ? 'border-primary-500 bg-primary-500 text-black' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] text-[rgb(var(--text-secondary))]'}`}
+                                >
+                                    {days} {ts.daysLower}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
                     <p className="px-1 text-[10px] font-black uppercase tracking-[0.2em] text-[rgb(var(--text-muted))]">
                         {ts.chooseByAuthor}
                     </p>
@@ -179,9 +257,9 @@ export const TemplateSelector: React.FC<Props> = ({
                                                             PRO
                                                         </div>
                                                     )}
-                                                    <h4 className="pr-12 text-base font-black">{getTranslated(tpl.title, lang as any)}</h4>
+                                                    <h4 className="pr-12 text-base font-black">{getTranslated(tpl.title, lang as 'en' | 'es')}</h4>
                                                     <p className="mt-1 pr-2 text-xs leading-relaxed text-[rgb(var(--text-secondary))]">
-                                                        {getTranslated(tpl.description, lang as any)}
+                                                        {getTranslated(tpl.description, lang as 'en' | 'es')}
                                                     </p>
                                                     <div className="mt-3 flex gap-2">
                                                         <span className="rounded bg-[rgb(var(--surface-base))] px-2 py-1 text-[10px] font-bold text-[rgb(var(--text-muted))]">
@@ -195,6 +273,11 @@ export const TemplateSelector: React.FC<Props> = ({
                                 </section>
                             );
                         })}
+                        {visibleTemplates.length === 0 && (
+                            <p className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-6 text-center text-sm text-[rgb(var(--text-secondary))]">
+                                {ts.noResults}
+                            </p>
+                        )}
                     </div>
                 </div>
             </div>

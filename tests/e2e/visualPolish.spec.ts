@@ -39,7 +39,7 @@ test.describe('K7 visual polish', () => {
     test('L6: topbar background is fully opaque in balanced mode', async ({ page }) => {
         await seed(page);
         await page.goto('/');
-        await page.locator('nav[aria-label="Main navigation"] button', { hasText: /Stats|Métricas/ }).click();
+        await page.locator('nav[aria-label="Main navigation"] button', { hasText: /^Progreso$|^Progress$/ }).click();
         await expect(page.locator('.app-topbar')).toBeVisible({ timeout: 10000 });
         const bg = await page.evaluate(() => {
             const el = document.querySelector('.app-topbar') as HTMLElement;
@@ -116,27 +116,22 @@ test.describe('K7 visual polish', () => {
     test('diet sub-views share the body background (no lighter band)', async ({ page }) => {
         await seed(page);
         await page.goto('/');
-        await page.locator('nav[aria-label="Main navigation"] button', { hasText: /Dieta|Diet/ }).click();
+        await page.locator('nav[aria-label="Main navigation"] button', { hasText: /^Diario$|^Diary$/ }).click();
+        await page.getByRole('tab', { name: /Nutrición|Nutrition/ }).click();
         await expect(page.getByRole('button', { name: /^Hoy$|^Today$/ })).toBeVisible({ timeout: 10000 });
-        const count = await page.evaluate(() => {
-            const hoy = [...document.querySelectorAll('button')]
-                .find((b) => /^(Hoy|Today)$/.test((b.textContent || '').trim()));
-            const root = hoy?.closest('div.h-full');
-            return root ? root.querySelectorAll(':scope > div:first-child button').length : 0;
-        });
-        expect(count).toBe(3);
-        for (let i = 0; i < count; i++) {
-            const res = await page.evaluate((idx) => {
-                const hoy = [...document.querySelectorAll('button')]
-                    .find((b) => /^(Hoy|Today)$/.test((b.textContent || '').trim()));
-                const root = hoy?.closest('div.h-full') as HTMLElement | null;
-                if (!root) return null;
-                (root.querySelectorAll(':scope > div:first-child button')[idx] as HTMLElement).click();
-                return {
+        // The NutriView sub-tab bar (Hoy/Cuerpo/Tendencias): the diary adds its
+        // own Sesiones/Nutrición segmented control above it, so scope by content.
+        const subTabs = page.locator('.seg-reference', { hasText: /Tendencias|Trends/ }).locator(':scope > button');
+        await expect(subTabs).toHaveCount(3);
+        for (let i = 0; i < 3; i++) {
+            await subTabs.nth(i).click();
+            const res = await page.evaluate(() => {
+                const root = document.querySelector('div.h-full');
+                return root ? {
                     rootBg: getComputedStyle(root).backgroundColor,
                     bodyBg: getComputedStyle(document.body).backgroundColor,
-                };
-            }, i);
+                } : null;
+            });
             expect(res, `sub-tab ${i} root found`).not.toBeNull();
             expect(res!.rootBg, `sub-tab ${i} background`).toBe(res!.bodyBg);
         }

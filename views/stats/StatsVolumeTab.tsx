@@ -5,7 +5,7 @@ import type { StatsData } from './useStatsData';
 import { VolumeAverageCaption, VolumeMuscleList } from './StatsWidgets';
 
 export const StatsVolumeTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
-    const { statsScope, lang, t, volumeData, overviewWeeks, loadingOverview, maxVal } = stats;
+    const { statsScope, statsPeriod, lang, t, volumeData, overviewWeeks, loadingOverview, maxVal } = stats;
     return (
         <>
                 <div id="tut-vol-bar" className="premium-theme-panel p-5 shadow-md">
@@ -16,7 +16,7 @@ export const StatsVolumeTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
                                 {t.volPerCycle}
                             </h3>
                             {!loadingOverview && (
-                                <VolumeAverageCaption weeks={overviewWeeks} scope={statsScope} lang={lang} />
+                                <VolumeAverageCaption weeks={overviewWeeks} scope={statsScope} lang={lang} period={statsPeriod} />
                             )}
                         </div>
                         <div className="flex gap-2">

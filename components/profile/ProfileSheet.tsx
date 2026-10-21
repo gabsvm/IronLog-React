@@ -63,7 +63,7 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
             title={ty.title}
             accent="primary"
         >
-            <div className="premium-profile mx-auto w-full max-w-md px-4 pb-24 pt-2 space-y-4">
+            <div className="mx-auto w-full max-w-md space-y-4 px-4 pb-24 pt-2">
                 {/* 1. Cuenta */}
                 <AccountSection onClose={onClose} onLogin={onLogin} />
 

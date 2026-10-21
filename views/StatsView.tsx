@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { StatsView as StatsViewImpl } from './StatsViewImpl';
-import { useApp, useAppPreferences } from '../context/AppContext';
+import { useApp, useAppPreferences, useAppConfig } from '../context/AppContext';
 import { ActivityHeatmap } from '../components/stats/ActivityHeatmap';
 import { StatsScopeSelector } from '../components/stats/StatsScopeSelector';
+import { StatsPeriodSelector } from '../components/stats/StatsPeriodSelector';
 import { Icon } from '../components/ui/Icon';
 import { PremiumTrendCard } from '../components/stats/PremiumTrendCard';
 import { buildPremiumInsights } from '../utils/premiumInsights';
@@ -10,7 +11,7 @@ import { resolveWeightUnit } from '../utils/units';
 import { useStore } from '../lib/store';
 import { TRANSLATIONS } from '../constants';
 import { buildStatsLogsSignature, statsCache } from '../services/statsCache';
-import { StatsScope, StatsSection, effectiveScopeFor, scopeMesoId as scopeMesoIdFor, summarizeLogsByScope } from '../utils/statsScope';
+import { StatsScope, StatsSection, StatsPeriod, effectiveScopeFor, scopeMesoId as scopeMesoIdFor, summarizeLogsByScope, filterLogsByScopeAndPeriod } from '../utils/statsScope';
 
 /**
  * Product-facing IA over the Stats implementation.
@@ -19,7 +20,8 @@ import { StatsScope, StatsSection, effectiveScopeFor, scopeMesoId as scopeMesoId
  */
 export const StatsView: React.FC = () => {
     const { lang } = useAppPreferences();
-    const { logs, config } = useApp();
+    const { logs } = useApp();
+    const { config } = useAppConfig();
     const activeMeso = useStore(state => state.activeMeso);
     const [section, setSection] = useState<StatsSection>('overview');
     const safeLogs = useMemo(() => Array.isArray(logs) ? logs : [], [logs]);
@@ -31,12 +33,21 @@ export const StatsView: React.FC = () => {
     // progress defaults to history while overview/volume default to the plan.
     const [userScope, setUserScope] = useState<StatsScope | null>(null);
 
+    // Explicit period choice (persisted, v1 key); 'all' when never chosen.
+    // Independent from scope: scope answers "which plan", period "which weeks".
+    const [userPeriod, setUserPeriod] = useState<StatsPeriod>('all');
+
     useEffect(() => {
         let cancelled = false;
         void statsCache.pruneLegacyStatsKeys();
         void statsCache.readSelectedScopeV2().then((cachedScope) => {
             if (!cancelled && (cachedScope === 'plan' || cachedScope === 'history')) {
                 setUserScope(cachedScope);
+            }
+        });
+        void statsCache.readSelectedPeriod().then((cachedPeriod) => {
+            if (!cancelled && (cachedPeriod === '4w' || cachedPeriod === '8w' || cachedPeriod === 'all')) {
+                setUserPeriod(cachedPeriod);
             }
         });
         return () => {
@@ -57,15 +68,25 @@ export const StatsView: React.FC = () => {
         void statsCache.writeSelectedScopeV2(next);
     };
 
+    const handlePeriodChange = (next: StatsPeriod) => {
+        setUserPeriod(next);
+        void statsCache.writeSelectedPeriod(next);
+    };
+
     const scope = effectiveScopeFor(section, userScope, activeMeso != null);
     const scopeMesoId = scopeMesoIdFor(scope, activeMeso?.id);
+    // Scope + period apply exactly once here; cards and insights share the entry.
+    const filteredLogs = useMemo(
+        () => filterLogsByScopeAndPeriod(safeLogs, scopeMesoId, userPeriod),
+        [safeLogs, scopeMesoId, userPeriod],
+    );
     const scopedSummary = useMemo(
-        () => summarizeLogsByScope(safeLogs, scopeMesoId),
-        [safeLogs, scopeMesoId],
+        () => summarizeLogsByScope(filteredLogs, scopeMesoId),
+        [filteredLogs, scopeMesoId],
     );
     const premiumInsights = useMemo(
-        () => buildPremiumInsights(safeLogs, scopeMesoId),
-        [safeLogs, scopeMesoId],
+        () => buildPremiumInsights(filteredLogs, scopeMesoId),
+        [filteredLogs, scopeMesoId],
     );
 
     const publicPlanLabel = useMemo(() => {
@@ -135,6 +156,10 @@ export const StatsView: React.FC = () => {
                     <StatsScopeSelector scope={scope} onChange={handleScopeChange} lang={lang} />
                 </div>
 
+                <div className="mt-2 px-1">
+                    <StatsPeriodSelector period={userPeriod} onChange={handlePeriodChange} lang={lang} />
+                </div>
+
                 {section === 'overview' && (
                     <div className="mt-3">
                         <PremiumTrendCard insights={premiumInsights} lang={lang} unit={resolveWeightUnit(config)} scope={scope} />
@@ -169,7 +194,7 @@ export const StatsView: React.FC = () => {
                     </div>
                 )}
 
-                <StatsViewImpl activeTab={section} hideHeader={true} scope={scope} onScopeChange={handleScopeChange} />
+                <StatsViewImpl activeTab={section} hideHeader={true} scope={scope} onScopeChange={handleScopeChange} period={userPeriod} />
             </div>
         </div>
     );

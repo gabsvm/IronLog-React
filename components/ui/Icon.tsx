@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 // Import ONLY used icons to allow Tree Shaking (Drastic bundle size reduction)
 import {
     Cpu, Activity, Star, Square, Pause, Menu, Layout, FileText, BarChart2, BarChart3, Edit, Plus, Check,
-    SkipForward, ArrowRight, TrendingUp, TrendingDown, RefreshCw, Settings, DownloadCloud, Minus, Dumbbell,
+    SkipForward, ArrowRight, TrendingUp, TrendingDown, RefreshCw, Settings, Settings2, DownloadCloud, Minus, Dumbbell,
     ChevronLeft, Eye, Link, Unlink, Sun, Moon, Info, Download, Upload, CloudOff, Clock, Search,
     GripVertical, MoreVertical, MoreHorizontal, ExternalLink, VideoOff, Layers, Zap, Calendar, Home, User, LogOut,
     Trash2, X, CornerDownRight, Share2, AlertTriangle, Play, ChevronRight, Bot, Lock, Crown, Copy,
@@ -17,7 +17,7 @@ import {
 // Static Map of icons used in the app
 export const ICON_MAP: Record<string, React.ElementType> = {
     Bot, Cpu, Activity, Star, Square, Pause, Menu, Layout, FileText, BarChart2, BarChart3, Edit, Plus, Check,
-    SkipForward, ArrowRight, TrendingUp, TrendingDown, RefreshCw, Settings, DownloadCloud, Minus, Dumbbell,
+    SkipForward, ArrowRight, TrendingUp, TrendingDown, RefreshCw, Settings, Settings2, DownloadCloud, Minus, Dumbbell,
     ChevronLeft, Eye, Link, Unlink, Sun, Moon, Info, Download, Upload, CloudOff, Clock, Search,
     GripVertical, MoreVertical, MoreHorizontal, ExternalLink, VideoOff, Layers, Zap, Calendar, Home, User, LogOut,
     Trash2, X, CornerDownRight, Share2, AlertTriangle, Play, ChevronRight, Lock, Crown, Copy,

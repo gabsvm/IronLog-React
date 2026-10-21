@@ -232,7 +232,6 @@ export interface UserSubscription {
 }
 
 export interface UserProfile {
-  experience: 'beginner' | 'intermediate' | 'advanced';
   daysPerWeek: number;
   goal: 'hypertrophy' | 'strength' | 'endurance';
   sessionDuration: 'short' | 'medium' | 'long';

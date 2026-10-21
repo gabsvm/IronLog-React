@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { Log } from '../types';
 import { useApp } from '../context/AppContext';
 import { getHistoricalBest1RMIndex } from '../utils/exerciseHistoryIndex';
+import { buildStatsLogsSignature } from '../services/statsCache';
 
 export type ChartMetric = '1rm' | 'volume' | 'duration' | 'distance' | 'max_reps' | 'hold_time';
 
@@ -14,7 +15,7 @@ type PendingRequest =
 
 export const useStatsWorker = () => {
     const workerRef = useRef<Worker | null>(null);
-    const lastLogsRef = useRef<Log[] | null>(null);
+    const lastLogsSignatureRef = useRef<string | null>(null);
     const requestIdRef = useRef(0);
     const pendingRef = useRef(new Map<number, PendingRequest>());
     const { userProfile, exercises } = useApp();
@@ -54,16 +55,18 @@ export const useStatsWorker = () => {
             workerRef.current?.terminate();
             workerRef.current = null;
             pending.clear();
-            lastLogsRef.current = null;
+            lastLogsSignatureRef.current = null;
         };
     }, []);
 
     const ensureLogs = useCallback((logs: Log[]) => {
         const worker = ensureWorker();
-        if (!worker || lastLogsRef.current === logs) return worker;
-        lastLogsRef.current = logs;
-        // Structured-clone the history once per immutable logs reference. Metric
-        // requests after this send only small query payloads.
+        if (!worker) return worker;
+        // Stable content signature: a new logs array identity with unchanged
+        // chart-relevant data must not re-clone the whole history to the worker.
+        const signature = buildStatsLogsSignature(logs);
+        if (lastLogsSignatureRef.current === signature) return worker;
+        lastLogsSignatureRef.current = signature;
         worker.postMessage({ type: 'SET_LOGS', logs });
         return worker;
     }, [ensureWorker]);

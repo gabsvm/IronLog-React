@@ -9,37 +9,6 @@ export const SetupWizardStep: React.FC<{ state: SetupWizardState }> = ({ state }
     const { lang, t, w, step, profile, setProfile, recommendation, handleApply, OptionBtn } = state;
         switch (step) {
             case 0: return (
-                <div className="space-y-3 animate-in slide-in-from-right-4 duration-300">
-                    <OptionBtn
-                        label={w.expOptions.beginner}
-                        description={w.expDesc?.beginner}
-                        selected={profile.experience === 'beginner'}
-                        onClick={() => setProfile({ ...profile, experience: 'beginner' })}
-                        icon="Star"
-                    />
-                    <OptionBtn
-                        label={w.expOptions.intermediate}
-                        description={w.expDesc?.intermediate}
-                        selected={profile.experience === 'intermediate'}
-                        onClick={() => setProfile({ ...profile, experience: 'intermediate' })}
-                        icon="TrendingUp"
-                    />
-                    <OptionBtn
-                        label={w.expOptions.advanced}
-                        description={w.expDesc?.advanced}
-                        selected={profile.experience === 'advanced'}
-                        onClick={() => setProfile({ ...profile, experience: 'advanced' })}
-                        icon="Zap"
-                    />
-                    {w.expNote && (
-                        <div className="mt-4 bg-primary-500/10 p-3 rounded-[18px] flex gap-3 items-start border border-primary-500/20">
-                            <Icon name="Info" size={16} className="text-primary-500 mt-0.5 shrink-0" />
-                            <p className="text-xs text-primary-700 dark:text-primary-300 leading-relaxed font-medium">{w.expNote}</p>
-                        </div>
-                    )}
-                </div>
-            );
-            case 1: return (
                 <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
                     <div className="grid grid-cols-5 gap-2">
                         {[2, 3, 4, 5, 6].map(d => (
@@ -66,7 +35,7 @@ export const SetupWizardStep: React.FC<{ state: SetupWizardState }> = ({ state }
                     </div>
                 </div>
             );
-            case 2: return (
+            case 1: return (
                 <div className="space-y-3 animate-in slide-in-from-right-4 duration-300">
                     <OptionBtn
                         label={w.goalOptions.hypertrophy}
@@ -91,7 +60,7 @@ export const SetupWizardStep: React.FC<{ state: SetupWizardState }> = ({ state }
                     />
                 </div>
             );
-            case 3: return (
+            case 2: return (
                 <div className="space-y-3 animate-in slide-in-from-right-4 duration-300">
                     <OptionBtn
                         label={w.timeOptions.short}
@@ -116,7 +85,7 @@ export const SetupWizardStep: React.FC<{ state: SetupWizardState }> = ({ state }
                     />
                 </div>
             );
-            case 4: {
+            case 3: {
                 if (!recommendation) return null;
                 const recTitle = t.phases[recommendation.mesoType] || 'Plan';
                 const recDesc = (t.phaseDesc as any)[recommendation.mesoType] || '';

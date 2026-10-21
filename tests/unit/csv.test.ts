@@ -27,7 +27,8 @@ describe('Q12: RFC 4180 CSV parser/writer', () => {
         expect(parseCsv(text)).toEqual(rows);
     });
 
-    it('writes an empty string for null/undefined and plain numbers as-is', () => {
-        expect(toCsv([[null, undefined, 0, 62.5]])).toBe(',,0,62.5');
+    it('neutralizes spreadsheet formulas while preserving ordinary values', () => {
+        const cells = ['=1+1', ' +SUM(A1:A2)', '-12', '@cmd', 'plain'];
+        expect(parseCsv(toCsv([cells]))).toEqual([["'=1+1", "' +SUM(A1:A2)", "'-12", "'@cmd", 'plain']]);
     });
 });

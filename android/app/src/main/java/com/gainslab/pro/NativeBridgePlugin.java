@@ -416,6 +416,25 @@ public class NativeBridgePlugin extends Plugin {
      */
     @PluginMethod
     public void scheduleWorkoutReminder(PluginCall call) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                && getPermissionState("notifications") != PermissionState.GRANTED
+                && !notificationPermissionWasPrompted()) {
+            markNotificationPermissionPrompted();
+            requestPermissionForAlias("notifications", call, "scheduleWorkoutReminderAfterPermission");
+            return;
+        }
+        scheduleWorkoutReminderInternal(call);
+    }
+
+    @PermissionCallback
+    private void scheduleWorkoutReminderAfterPermission(PluginCall call) {
+        // Like scheduleRestTimerAfterPermission: the alarm does not require
+        // notification permission; if declined we still schedule and simply
+        // cannot post the notification card (canPostNotifications gates it).
+        scheduleWorkoutReminderInternal(call);
+    }
+
+    private void scheduleWorkoutReminderInternal(PluginCall call) {
         JSArray daysArray = call.getArray("days", new JSArray());
         StringBuilder csv = new StringBuilder();
         for (int i = 0; i < daysArray.length(); i++) {
@@ -542,37 +561,50 @@ public class NativeBridgePlugin extends Plugin {
             call.reject("missing data");
             return;
         }
-        try {
-            String safeName = filename.replaceAll("[^A-Za-z0-9._-]", "_");
-            java.io.File dir = new java.io.File(getContext().getCacheDir(), "shared");
-            if (!dir.exists() && !dir.mkdirs()) throw new java.io.IOException("no dir");
-            java.io.File file = new java.io.File(dir, safeName);
-            byte[] bytes = android.util.Base64.decode(data, android.util.Base64.DEFAULT);
-            try (java.io.FileOutputStream out = new java.io.FileOutputStream(file)) {
-                out.write(bytes);
-            }
-            Uri uri = androidx.core.content.FileProvider.getUriForFile(
-                    getContext(), getContext().getPackageName() + ".fileprovider", file);
-            Intent send = new Intent(Intent.ACTION_SEND);
-            send.setType(mime);
-            send.putExtra(Intent.EXTRA_STREAM, uri);
-            send.putExtra(Intent.EXTRA_TITLE, safeName);
-            send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            Intent chooser = Intent.createChooser(send, title);
-            chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            if (getActivity() != null) {
-                getActivity().startActivity(chooser);
-            } else {
-                chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                getContext().startActivity(chooser);
-            }
-            JSObject result = new JSObject();
-            result.put("shared", true);
-            call.resolve(result);
-        } catch (Exception e) {
-            call.reject("share failed", e);
+        if (data.length() > MAX_SHARE_FILE_BASE64_CHARS) {
+            call.reject("file too large");
+            return;
         }
+        new Thread(() -> {
+            try {
+                String safeName = filename.replaceAll("[^A-Za-z0-9._-]", "_");
+                java.io.File dir = new java.io.File(getContext().getCacheDir(), "shared");
+                if (!dir.exists() && !dir.mkdirs()) throw new java.io.IOException("no dir");
+                java.io.File file = new java.io.File(dir, safeName);
+                byte[] bytes = android.util.Base64.decode(data, android.util.Base64.DEFAULT);
+                if (bytes.length > MAX_SHARE_FILE_BYTES) throw new java.io.IOException("file too large");
+                try (java.io.FileOutputStream out = new java.io.FileOutputStream(file)) {
+                    out.write(bytes);
+                }
+                Uri uri = androidx.core.content.FileProvider.getUriForFile(
+                        getContext(), getContext().getPackageName() + ".fileprovider", file);
+                Intent send = new Intent(Intent.ACTION_SEND);
+                send.setType(mime);
+                send.putExtra(Intent.EXTRA_STREAM, uri);
+                send.putExtra(Intent.EXTRA_TITLE, safeName);
+                send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                Intent chooser = Intent.createChooser(send, title);
+                chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                android.app.Activity activity = getActivity();
+                if (activity == null) throw new IllegalStateException("activity unavailable");
+                activity.runOnUiThread(() -> {
+                    try {
+                        activity.startActivity(chooser);
+                        JSObject result = new JSObject();
+                        result.put("shared", true);
+                        call.resolve(result);
+                    } catch (Exception e) {
+                        call.reject("share failed", e);
+                    }
+                });
+            } catch (Exception e) {
+                call.reject("share failed", e);
+            }
+        }, "gainslab-share-file").start();
     }
+
+    private static final int MAX_SHARE_FILE_BYTES = 10 * 1024 * 1024;
+    private static final int MAX_SHARE_FILE_BASE64_CHARS = ((MAX_SHARE_FILE_BYTES + 2) / 3) * 4;
 
     /** Q17: store the next-session title and refresh installed widgets. */
     @PluginMethod

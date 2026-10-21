@@ -9,7 +9,6 @@ const { mockSetUserProfile, mockSetProgram, mockSetActiveMeso, storedProfile } =
     mockSetProgram: vi.fn(),
     mockSetActiveMeso: vi.fn(),
     storedProfile: {
-        experience: 'beginner',
         daysPerWeek: 3,
         goal: 'hypertrophy',
         sessionDuration: 'medium',
@@ -43,10 +42,10 @@ describe('onboarding outcomes (real SetupWizard)', () => {
         vi.clearAllMocks();
     });
 
-    // Drive the wizard through steps 0-3 to the recommendation screen.
+    // Drive the wizard through steps 0-2 to the recommendation screen.
     const reachRecommendation = (onComplete: (outcome: any) => void) => {
         render(<SetupWizard onComplete={onComplete} />);
-        for (let step = 0; step < 3; step++) {
+        for (let step = 0; step < 2; step++) {
             fireEvent.click(screen.getByRole('button', { name: /Siguiente/ }));
         }
         fireEvent.click(screen.getByRole('button', { name: /Analizar mi perfil/ }));
@@ -60,10 +59,9 @@ describe('onboarding outcomes (real SetupWizard)', () => {
         const updater = mockSetUserProfile.mock.calls[0][0];
         expect(typeof updater).toBe('function');
 
-        const merged = updater({ ...(storedProfile as UserProfile), experience: 'stale' });
+        const merged = updater({ ...(storedProfile as UserProfile) });
 
         // Onboarding answers applied.
-        expect(merged.experience).toBe('beginner');
         expect(merged.daysPerWeek).toBe(3);
         expect(merged.goal).toBe('hypertrophy');
         expect(merged.sessionDuration).toBe('medium');

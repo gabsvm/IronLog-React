@@ -12,7 +12,7 @@ todo lo de Play Store. Desplegar reglas / encender `VITE_CLOUD_LOGS_V2` no se ha
 - Firebase 10.8 → **11.10** (+ `@firebase/rules-unit-testing` 3 → 4). Se probó 12.19: el
   chunk de Firestore pasaba de 106,9 a **169,4 KB gzip**, así que se descartó (corrige una
   afirmación previa mía: la versión actual NO es más liviana). Con 11.10: 111,7 KB (+4,9 KB).
-- `framer-motion` se mantiene: lo usa CommandPalette, que ya va en chunk lazy.
+- `framer-motion` se mantiene: lo usa CommandPalette, que ya va en chunk lazy. *(Nota posterior: eliminado en las dietas S6–S12 — cero imports en `components/ views/ hooks/ lib/`; lock regenerado sin él.)*
 - Tests intermitentes de Stats: en la suite completa (12 procesos jsdom en paralelo) un render
   de Stats pasaba de ~0,3 s a 3,7 s. `vitest.config.ts`: `poolOptions.forks.maxForks = 6`.
   Suite 45–48 s → 54 s, pero tiempo de tests 46–51 s → 24 s (menos contención).
@@ -267,3 +267,73 @@ entorno y las dependencias `@anthropic-ai/sdk` y `jose`. Si se retoma, el commit
   - Drive contra Google.
 
   Cada uno tiene tests de su lógica y de la UI.
+
+## U13 — Auditoría Capacitor/PWA R2
+
+Alcance: segunda revisión de flujos usados por la app móvil y la PWA. Se priorizaron fallos
+de seguridad, pérdida de datos, accesibilidad, entrada de datos y trabajo costoso al abrir
+pantallas; se conservaron los cambios preexistentes del árbol de trabajo.
+
+- Compartir resumen: se quitó la dependencia CDN de `html2canvas`; compartir usa Web Share y
+  fallback de texto/archivo, sin tratar la cancelación del usuario como error. La tarjeta PNG
+  se genera al abrir el flujo de compartir, admite reintento y libera su URL temporal.
+- Formularios y confirmaciones: validación de comida y cardio; límites para duración, distancia,
+  frecuencia cardiaca, CSV y filas parseadas; confirmación al borrar comidas guardadas y
+  ejercicios; `ConfirmModal` admite Escape, foco inicial, ciclo de Tab y restauración del foco.
+- Seguridad y datos: el borrado de cuenta limpia las colecciones V2 aunque el flag de rollout
+  esté apagado; exportación CSV neutraliza fórmulas; FileProvider limita acceso a `cache/shared`;
+  escritura/base64 de `shareFile` sale del hilo UI; el panel admin ya no ofrece cambios de
+  suscripción cliente ni un ejemplo inseguro de reglas. Se quitaron logs de sincronización que
+  exponían email e ID de usuario.
+- Usabilidad/performance: navegación atrás en el último paso del wizard; acción para ir a
+  entrenar desde el historial vacío; carga paralela de plantillas y ejercicios; estados de
+  nutrición, macros, peso y recordatorios usan tokens compatibles con tema claro.
+- El análisis encontró que el worker ya evita clonar logs por cambios de identidad, el historial
+  ya difiere su filtrado, las reglas existentes ya limitan varios payloads y no se encontró el
+  token HAMS señalado en la revisión previa. No se duplicaron esos arreglos.
+- Pendiente de despliegue/UX: no se añadió CSP porque las cabeceras dependen del host/CDN
+  configurado, que no se verificó en este cambio. Revisar CSP en el entorno desplegado antes de
+  imponerla; no debilitar reglas de Firestore. La app pide permiso de notificaciones en Android,
+  pero aún no explica el estado denegado ni ofrece atajo a Ajustes. No se instaló el APK en un
+  dispositivo físico.
+- Alcance restante: no se hizo poda general de claves de traducción ni de exports potencialmente
+  muertos sin verificación de referencias/rutas dinámicas; los textos nuevos de esta revisión
+  sí usan traducciones. Revisar esas claves por separado con mapa de uso completo.
+- Verificación: lint, TypeScript, build PWA y precache; unit 800/800 (144 archivos); Playwright
+  en Mobile Chrome: `sessionShareImage.spec.ts` 1/1; `validate-android-env`; `assembleDebug`
+  con JDK 21. El primer intento Gradle con JDK 17 falló porque no admite source release 21;
+  el retry explícito con JDK 21 compiló y empaquetó correctamente.
+- El navegador de inspección visual de la herramienta no estuvo disponible; el flujo se verificó
+  con Playwright, no con una sesión manual ni en dispositivo. El build sigue mostrando dos
+  avisos de Vite sobre módulos importados de forma estática y dinámica (`firebaseLoader` y
+  `cloudCollectionSync`); quedan para medir antes de modificar el grafo de carga.
+
+## U14 — Entorno local y firma Android
+
+- `.env.development.local`: Vite web local apunta a Firebase Auth/Firestore emulados en
+  `127.0.0.1` (`9099`/`8085`); no reutiliza las variables Firebase de producción.
+- `.env.capacitor.local` + `npm run android-debug-emulator`: compila un directorio separado
+  (`dist-capacitor`), usa el proyecto ficticio `demo-ironlog-capacitor` y enruta la app nativa
+  Android Emulator a `10.0.2.2:9099`/`10.0.2.2:8085`. El validador rechaza modo sin flag, proyecto
+  no `demo-*` o hosts distintos; App Check y Cloud Logs V2 quedan apagados. Release y `dist`
+  de producción conservan su configuración. Los archivos `.env.*.local` están ignorados por git.
+- Para ejecutar el debug: iniciar `npx firebase-tools emulators:start --project
+  demo-ironlog-capacitor --only auth,firestore`, configurar `JAVA_HOME` a JDK 21+ y correr
+  `npm run android-debug-emulator`. La dirección `10.0.2.2` es para Android Emulator; un teléfono
+  físico requiere un host LAN accesible y no está configurado.
+- Corrección de entorno: `validate-android-env` ahora exige JDK 21; JDK 17 falló la compilación
+  con `invalid source release: 21`.
+- Firebase Emulator exige HTTP local: el manifiesto y `WebView` habilitan tráfico cleartext/mixed
+  content sólo para builds debug (`FLAG_DEBUGGABLE`). Release no usa esa excepción.
+- Prueba en `medium_phone`: instalación y arranque; registro e inicio de sesión contra Auth Emulator;
+  Auth respondió `200/204/200`; las solicitudes de Firestore observadas respondieron `200`.
+  Se verificó la persistencia local tras recargar. La APK release no se instaló en el emulador.
+- Firma: keystore proporcionada en la raíz del repo, alias `Gainslab`, SHA-256 del certificado
+  `4C:69:56:9B:3A:45:1D:97:24:B1:D3:17:25:76:09:0F:0B:68:73:8B:E5:8B:B6:C6:A4:A1:87:D7:D5:AE:18:3B`.
+- `npm run build-android` + `gradlew --no-daemon assembleRelease` terminó correctamente y generó
+  `android/app/build/outputs/apk/release/app-release.apk` (package `com.gainslab.pro`,
+  version `4.0.3-kong.13`, versionCode `421`). `apksigner verify` confirmó la firma v2 y el mismo
+  SHA-256 del certificado indicado arriba; el manifiesto release no contiene override
+  `usesCleartextTraffic`.
+  La búsqueda en `dist` y los assets Android tampoco encontró hosts/proyecto de emulador.
+- Los servicios Emulator/AVD y datos temporales de la prueba se cerraron/eliminaron al terminar.

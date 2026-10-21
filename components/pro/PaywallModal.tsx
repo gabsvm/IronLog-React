@@ -32,7 +32,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ onClose, feature }) 
 
     return (
         <div
-            className="fixed inset-0 z-confirm bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-slow"
+            className="fixed inset-0 z-confirm bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-slow pointer-events-auto"
             role="dialog"
             aria-modal="true"
             aria-label="GainsLab Pro upgrade"

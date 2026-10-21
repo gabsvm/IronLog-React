@@ -3,7 +3,7 @@ import { readFile, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const distDir = path.resolve('dist');
+const distDir = path.resolve(process.argv[2] || 'dist');
 const swPath = path.join(distDir, 'sw.js');
 const assetsDir = path.join(distDir, 'assets');
 

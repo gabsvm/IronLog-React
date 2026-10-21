@@ -47,7 +47,7 @@ test.describe('CSS foundations, real computed values (F8)', () => {
         expect(overscroll.root).toContain('contain');
 
         // 4. Tap delay guard: interactive controls use touch-action manipulation.
-        const dietBtn = nav.locator('button', { hasText: /Dieta|Diet/ });
+        const dietBtn = nav.locator('button', { hasText: /^Diario$|^Diary$/ });
         await expect(dietBtn).toBeVisible();
         const touchAction = await dietBtn.evaluate((el) => getComputedStyle(el).touchAction);
         expect(touchAction).toContain('manipulation');

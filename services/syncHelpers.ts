@@ -143,7 +143,6 @@ export const isMeaningfullyEmptyLocalState = (state: MeaningfulLocalStateInput |
             p.bodyFat ||
             p.targetWeight ||
             p.currentWeight ||
-            (p.experience && p.experience !== 'intermediate') ||
             (p.goal && p.goal !== 'hypertrophy') ||
             (p.daysPerWeek && p.daysPerWeek !== 4) ||
             (p.sessionDuration && p.sessionDuration !== 'medium')

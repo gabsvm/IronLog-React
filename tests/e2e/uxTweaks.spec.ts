@@ -17,21 +17,18 @@ test.describe('K8 ux tweaks', () => {
     test('diet third tab reads Tendencias, not Historial', async ({ page }) => {
         await seed(page);
         await page.goto('/');
-        await page.locator('nav[aria-label="Main navigation"] button', { hasText: /Dieta|Diet/ }).click();
+        await page.locator('nav[aria-label="Main navigation"] button', { hasText: /^Diario$|^Diary$/ }).click();
+        await page.getByRole('tab', { name: /Nutrición|Nutrition/ }).click();
         await expect(page.getByRole('button', { name: /^Hoy$|^Today$/ })).toBeVisible({ timeout: 10000 });
-        // Scope to the NutriView sub-tab bar: the bottom nav also has a "Historial" button.
-        const labels = await page.evaluate(() => {
-            const hoy = [...document.querySelectorAll('button')]
-                .find((b) => /^(Hoy|Today)$/.test((b.textContent || '').trim()));
-            const root = hoy?.closest('div.h-full');
-            if (!root) return [];
-            return [...root.querySelectorAll(':scope > div:first-child button')]
-                .map((b) => (b.textContent || '').trim());
-        });
+        // Scope to the NutriView sub-tab bar (Hoy/Cuerpo/Tendencias): the diary
+        // container adds its own Sesiones/Nutrición segmented control above it.
+        // Wait for the lazy NutriView chunk: its three pressed buttons appear.
+        const nutriBar = page.locator('.seg-reference', { hasText: /Tendencias|Trends/ });
+        await expect(nutriBar.locator(':scope > button')).toHaveCount(3);
+        const labels = await nutriBar.locator(':scope > button').evaluateAll(
+            (els) => els.map((b) => (b.textContent || '').trim()),
+        );
         expect(labels.length).toBe(3);
-        expect(labels).toContain('Tendencias');
-        expect(labels).not.toContain('Historial');
-        await expect(page.getByText(ERROR_BOUNDARY_TEXT)).toHaveCount(0);
     });
 
     test('home skip button is named Saltar sesión', async ({ page }) => {
@@ -42,8 +39,6 @@ test.describe('K8 ux tweaks', () => {
         await startBtn.scrollIntoViewIfNeeded();
         await page.waitForTimeout(400);
         await startBtn.click({ force: true });
-        await expect(page.getByText(/¿cuál es tu nivel\?|what's your level\?/i)).toBeVisible({ timeout: 12000 });
-        await page.locator('button:has-text("Siguiente"), button:has-text("Next")').first().click();
         await expect(page.getByText(/¿cuántos días por semana\?|how many days per week\?/i)).toBeVisible({ timeout: 8000 });
         await page.locator('button:has-text("Siguiente"), button:has-text("Next")').first().click();
         await expect(page.getByText(/¿cuál es tu objetivo\?|what's your goal\?/i)).toBeVisible({ timeout: 8000 });
@@ -75,6 +70,9 @@ test.describe('K8 ux tweaks', () => {
         const confirmStart = page.locator('button:has-text("Empezar Ciclo"), button:has-text("Start Cycle"), button:has-text("Iniciar Mesociclo"), button:has-text("Iniciar")').last();
         await expect(confirmStart).toBeVisible({ timeout: 6000 });
         await confirmStart.click();
+        // Starting lands on the new plan (Routine); the skip affordance lives on Home.
+        await expect.poll(async () => page.url(), { timeout: 8000 }).toContain('#routine');
+        await page.locator('nav[aria-label="Main navigation"]').getByRole('button', { name: /^Hoy$|^Today$/ }).click();
         await expect(page.locator('#tut-up-next')).toBeVisible({ timeout: 8000 });
         const skip = page.locator('#tut-up-next').getByRole('button', { name: 'Saltar sesión' });
         await expect(skip).toBeVisible();

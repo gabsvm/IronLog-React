@@ -35,13 +35,38 @@ export interface TimerCommandPayload {
 
 const NativeBridge = registerPlugin<NativeBridgePlugin>('NativeBridge');
 
+// One shared context: creating (and never closing) a context per beep leaks
+// audio resources over long sessions; resume covers the suspended state that
+// autoplay policies impose before the first user gesture.
+let sharedAudioCtx: AudioContext | null = null;
+const getAudioCtor = (): typeof AudioContext | undefined => {
+    if (typeof window === 'undefined') return undefined;
+    if (window.AudioContext) return window.AudioContext;
+    const w: unknown = window;
+    if (typeof w === 'object' && w !== null && 'webkitAudioContext' in w && typeof w.webkitAudioContext === 'function') {
+        // Legacy WebKit prefix exposes the same constructor; lib type omits it.
+        const LegacyAC = w.webkitAudioContext as unknown as typeof AudioContext;
+        return LegacyAC;
+    }
+    return undefined;
+};
+const getAudioCtx = (): AudioContext | null => {
+    try {
+        const AC = getAudioCtor();
+        if (!AC) return null;
+        if (!sharedAudioCtx) sharedAudioCtx = new AC();
+        if (sharedAudioCtx.state === 'suspended') void sharedAudioCtx.resume();
+        return sharedAudioCtx;
+    } catch {
+        return null;
+    }
+};
+
 // Simple oscillator beep to avoid loading external assets
 export const playTimerFinishSound = () => {
     try {
-        const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-        if (!AudioContext) return;
-
-        const ctx = new AudioContext();
+        const ctx = getAudioCtx();
+        if (!ctx) return;
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
 

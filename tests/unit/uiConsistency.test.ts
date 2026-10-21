@@ -42,7 +42,7 @@ describe('Onboarding recommendation reasons', () => {
         const keys = new Set<string>();
         for (const daysPerWeek of [2, 3, 4, 5, 6]) {
             for (const goal of ['hypertrophy', 'strength', 'endurance'] as const) {
-                keys.add(recommendProgram({ experience: 'intermediate', daysPerWeek, goal, sessionDuration: 'medium' }).reasonKey);
+            keys.add(recommendProgram({ daysPerWeek, goal, sessionDuration: 'medium' }).reasonKey);
             }
         }
         expect(keys.size).toBeGreaterThanOrEqual(5);

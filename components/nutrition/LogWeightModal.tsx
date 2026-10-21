@@ -103,7 +103,7 @@ export const LogWeightModal: React.FC<LogWeightModalProps> = ({ isOpen, onClose,
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
                         placeholder={w.notePlaceholder}
-                        className="w-full premium-form-input px-4 py-4 min-h-[90px] text-sm font-medium text-[rgb(var(--text-primary))] focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all resize-none placeholder:text-muted "
+                        className="nutri-field w-full premium-form-input px-4 py-4 min-h-[90px] font-medium text-[rgb(var(--text-primary))] focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all resize-none placeholder:text-muted "
                     />
                 </div>
             </div>

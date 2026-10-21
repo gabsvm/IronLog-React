@@ -7,10 +7,10 @@ if (localPropertiesFile.exists()) {
     localPropertiesFile.withInputStream { localProperties.load(it) }
 }
 
-def releaseKeystorePath = System.getenv('GAINS_LAB_KEYSTORE_PATH') ?: localProperties.getProperty('gainslab.keystore.path') ?: (project.findProperty('GAINS_LAB_KEYSTORE_PATH') ?: 'C:/Users/Gabriel Sanchez/.android/gainslab-release.keystore')
-def releaseKeystorePassword = System.getenv('GAINS_LAB_KEYSTORE_PASSWORD') ?: localProperties.getProperty('gainslab.keystore.password') ?: (project.findProperty('GAINS_LAB_KEYSTORE_PASSWORD') ?: 'Ambar07!')
-def releaseKeyAlias = System.getenv('GAINS_LAB_KEY_ALIAS') ?: localProperties.getProperty('gainslab.key.alias') ?: (project.findProperty('GAINS_LAB_KEY_ALIAS') ?: 'gainslab')
-def releaseKeyPassword = System.getenv('GAINS_LAB_KEY_PASSWORD') ?: localProperties.getProperty('gainslab.key.password') ?: (project.findProperty('GAINS_LAB_KEY_PASSWORD') ?: 'Ambar07!')
+def releaseKeystorePath = System.getenv('GAINS_LAB_KEYSTORE_PATH') ?: localProperties.getProperty('gainslab.keystore.path') ?: project.findProperty('GAINS_LAB_KEYSTORE_PATH')
+def releaseKeystorePassword = System.getenv('GAINS_LAB_KEYSTORE_PASSWORD') ?: localProperties.getProperty('gainslab.keystore.password') ?: project.findProperty('GAINS_LAB_KEYSTORE_PASSWORD')
+def releaseKeyAlias = System.getenv('GAINS_LAB_KEY_ALIAS') ?: localProperties.getProperty('gainslab.key.alias') ?: project.findProperty('GAINS_LAB_KEY_ALIAS')
+def releaseKeyPassword = System.getenv('GAINS_LAB_KEY_PASSWORD') ?: localProperties.getProperty('gainslab.key.password') ?: project.findProperty('GAINS_LAB_KEY_PASSWORD')
 def releaseSigningConfigured = [
     releaseKeystorePath,
     releaseKeystorePassword,
@@ -46,17 +46,15 @@ android {
                 keyPassword releaseKeyPassword
             }
         }
-        debug {
-            if (releaseSigningConfigured) {
-                storeFile file(releaseKeystorePath)
-                storePassword releaseKeystorePassword
-                keyAlias releaseKeyAlias
-                keyPassword releaseKeyPassword
-            }
-        }
+        // Debug intentionally uses AGP's default ~/.android/debug.keystore, NEVER the
+        // release key: a debug build must not be installable as the release identity.
     }
     buildTypes {
         debug {
+            // Distinct runtime identity so debug and release builds can coexist on one
+            // device and can never silently replace each other on update.
+            applicationIdSuffix ".debug"
+            versionNameSuffix "-debug"
             signingConfig signingConfigs.debug
         }
         release {

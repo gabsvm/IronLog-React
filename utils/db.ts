@@ -38,11 +38,16 @@ export const db = {
         }
     },
 
-    set: async <T>(key: string, value: T): Promise<void> => {
+    /** Stores a value. Resolves true on success, false when the write failed
+     * (quota, private mode, disabled storage). Callers MUST surface false to
+     * the user instead of assuming the data is safe. */
+    set: async <T>(key: string, value: T): Promise<boolean> => {
         try {
             await set(key, value);
+            return true;
         } catch (err) {
             console.error(`DB Set Error (${key}):`, err);
+            return false;
         }
     },
 

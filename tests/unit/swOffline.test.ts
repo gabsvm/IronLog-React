@@ -232,7 +232,7 @@ describe('Service Worker (real public/sw.js in vm)', () => {
         const seed: Array<[string, FakeResponse]> = [
             ['/index.html', makeResponse('shell')],
             ['/offline.html', makeResponse('offline')],
-            ['/icon-192.png', makeResponse('icon')],
+            ['/assets/icons/icon-192.png', makeResponse('icon')],
         ];
         for (let i = 0; i < 130; i += 1) {
             seed.push([`/assets/runtime-${i}.js`, makeResponse(`runtime ${i}`)]);
@@ -249,7 +249,7 @@ describe('Service Worker (real public/sw.js in vm)', () => {
         const entries = sw.cacheEntries();
         expect(entries).toContain(`${ORIGIN}/index.html`);
         expect(entries).toContain(`${ORIGIN}/offline.html`);
-        expect(entries).toContain(`${ORIGIN}/icon-192.png`);
+        expect(entries).toContain(`${ORIGIN}/assets/icons/icon-192.png`);
         expect(entries).toContain(`${ORIGIN}/assets/app-new.js`);
         expect(entries.length).toBeLessThanOrEqual(120 + 3);
         expect((sw.cachesMock.__matchCalls as any[]).some((call) => call.options?.ignoreVary)).toBe(true);

@@ -73,10 +73,10 @@ export const ErrorLogCard: React.FC<ErrorLogCardProps> = ({ lang, syncStatusText
     };
 
     return (
-        <div className="card-reference p-4 space-y-2">
+        <div className="gl-panel space-y-2 p-4">
             <div className="label-reference px-1 mb-1">{t.errorLogTitle}</div>
             <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-zinc-500">
+                    <span className="font-bold text-muted">
                     {count === null || count === 0
                         ? t.errorLogEmpty
                         : t.errorLogCount.replace('{count}', String(count))}
@@ -85,8 +85,8 @@ export const ErrorLogCard: React.FC<ErrorLogCardProps> = ({ lang, syncStatusText
             {/* U7: opt-in anonymous remote reports (off by default). */}
             <label className="flex items-start justify-between gap-3 py-1 cursor-pointer">
                 <span className="flex flex-col">
-                    <span className="text-xs font-bold text-zinc-300">{t.errorReportsTitle}</span>
-                    <span className="text-[10px] text-muted">{t.errorReportsDesc}</span>
+                    <span className="text-xs font-bold text-[rgb(var(--text-secondary))]">{t.errorReportsTitle}</span>
+                    <span className="text-xs text-muted">{t.errorReportsDesc}</span>
                 </span>
                 <input
                     type="checkbox"
@@ -104,7 +104,7 @@ export const ErrorLogCard: React.FC<ErrorLogCardProps> = ({ lang, syncStatusText
                 <button
                     type="button"
                     onClick={() => void handleCopy()}
-                    className="py-2.5 bg-zinc-100 dark:bg-zinc-800 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                    className="gl-quiet min-h-[44px] text-xs"
                 >
                     <Icon name="Copy" size={14} /> {copied ? t.errorLogCopied : t.errorLogCopy}
                 </button>
@@ -112,7 +112,7 @@ export const ErrorLogCard: React.FC<ErrorLogCardProps> = ({ lang, syncStatusText
                     type="button"
                     onClick={() => void handleClear()}
                     disabled={count === null || count === 0}
-                    className="py-2.5 bg-zinc-100 dark:bg-zinc-800 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors disabled:opacity-45"
+                    className="gl-quiet min-h-[44px] text-xs disabled:opacity-45"
                 >
                     <Icon name="Trash2" size={14} /> {t.errorLogClear}
                 </button>

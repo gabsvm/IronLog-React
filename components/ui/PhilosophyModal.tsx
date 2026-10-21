@@ -19,12 +19,12 @@ export const PhilosophyModal: React.FC<Props> = ({ isOpen, onClose, lang }) => {
         >
             <div className="p-5 space-y-4 text-sm text-[rgb(var(--text-secondary))] overflow-y-auto max-h-[70vh]">
                 
-                <div className="bg-primary-500/10 border border-primary-500/20 p-4 rounded-[20px] flex gap-3 items-center mb-6">
-                    <Icon name="Heart" size={24} className="text-primary-400 shrink-0" />
+                <div className="flex items-center gap-3 rounded-2xl border border-primary-500/20 bg-primary-500/10 p-4">
+                    <Icon name="Heart" size={24} className="shrink-0 text-primary-500" />
                     <div>
-                        <p className="font-bold text-primary-700 dark:text-primary-200">Credits to Natural Hypertrophy</p>
-                        <p className="text-xs text-primary-700/80 dark:text-primary-300/80">
-                            The following philosophy and the vast majority of the training templates included in this application 
+                        <p className="font-bold text-[rgb(var(--text-primary))]">Credits to Natural Hypertrophy</p>
+                        <p className="text-xs text-muted">
+                            The following philosophy and the vast majority of the training templates included in this application
                             are the brilliant work of <strong>Natural Hypertrophy</strong> (NH). All credit goes to him for these principles.
                         </p>
                     </div>
@@ -72,7 +72,7 @@ export const PhilosophyModal: React.FC<Props> = ({ isOpen, onClose, lang }) => {
                     The 85% rule aims to keep you in a state of flow, which is the perfect balance between overtraining (represented by anxiety) and undertraining (represented by boredom). If training is too easy you get bored and see no results, if training is too hard you get stressed and overworked, but if it’s just hard enough, what used to be 85% intensity soon feels like 70%.
                 </p>
                 
-                <p className="italic text-zinc-500 mt-6 pt-4 border-t border-[rgb(var(--border-subtle))]">
+                <p className="border-t border-[rgb(var(--border-subtle))] pt-4 text-xs italic leading-relaxed text-muted">
                     "It is best to take two steps forward rather than three steps forward then two steps back, but it is also best to take one step forward rather than three steps forward then two steps back, since it cultivates momentum and doesn't breed frustration." - NH
                 </p>
             </div>

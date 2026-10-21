@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Radar } from 'react-chartjs-2';
 import { ChartData, ChartOptions } from 'chart.js/auto';
 import { useAppPreferences } from '../../context/AppContext';
@@ -22,13 +22,13 @@ export const SymmetryRadar: React.FC<SymmetryRadarProps> = ({ volumeData }) => {
     const { theme, lang } = useAppPreferences();
     const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
-    const dataValues = RADAR_ORDER.map(m => volumeData[m] || 0);
-    const labels = RADAR_ORDER.map(m => TRANSLATIONS[lang].muscle[m]);
+    const dataValues = useMemo(() => RADAR_ORDER.map(m => volumeData[m] || 0), [volumeData]);
+    const labels = useMemo(() => RADAR_ORDER.map(m => TRANSLATIONS[lang].muscle[m]), [lang]);
 
     // Normalize data slightly to avoid ugly charts if volume is 0
     // We add a small buffer or purely show raw relative data. Raw is more honest.
 
-    const data: ChartData<'radar'> = {
+    const data: ChartData<'radar'> = useMemo(() => ({
         labels,
         datasets: [
             {
@@ -43,9 +43,9 @@ export const SymmetryRadar: React.FC<SymmetryRadarProps> = ({ volumeData }) => {
                 pointHoverBorderColor: '#dc2626'
             }
         ]
-    };
+    }), [labels, dataValues, isDark]);
 
-    const options: ChartOptions<'radar'> = {
+    const options: ChartOptions<'radar'> = useMemo(() => ({
         scales: {
             r: {
                 angleLines: {
@@ -75,7 +75,7 @@ export const SymmetryRadar: React.FC<SymmetryRadarProps> = ({ volumeData }) => {
             legend: { display: false }
         },
         maintainAspectRatio: false
-    };
+    }), [isDark, dataValues]);
 
     return (
         <div className="h-64 w-full relative">

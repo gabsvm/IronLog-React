@@ -29,8 +29,8 @@ export const StoragePersistRow: React.FC<StoragePersistRowProps> = ({ lang }) =>
         status === 'on' ? t.storageOn : status === 'off' ? t.storageOff : t.storageUnsupported;
 
     return (
-        <div className="flex items-center justify-between text-xs">
-            <span className="font-bold text-zinc-500">{t.storageTitle}</span>
+        <div className="flex items-center justify-between gap-2 text-xs">
+            <span className="font-bold text-muted">{t.storageTitle}</span>
             <span className="flex items-center gap-2">
                 <span className={`font-black ${status === 'on' ? 'text-emerald-500' : 'text-amber-400'}`}>
                     {status === null ? '…' : label}
@@ -39,7 +39,7 @@ export const StoragePersistRow: React.FC<StoragePersistRowProps> = ({ lang }) =>
                     <button
                         type="button"
                         onClick={() => void ensureStoragePersisted().then(setStatus)}
-                        className="px-2.5 py-1 text-[11px] rounded-lg font-bold bg-primary-500 text-zinc-950 hover:bg-primary-400"
+                    className="gl-quiet min-h-[44px] px-3 text-xs"
                     >
                         {t.storageEnable}
                     </button>

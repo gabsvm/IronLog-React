@@ -226,7 +226,7 @@ export const useTimer = (lang: Lang) => {
                         navigator.serviceWorker.ready.then(registration => {
                             registration.showNotification(title, {
                                 body,
-                                icon: '/icon-192.png',
+                                icon: '/assets/icons/icon-192.png',
                                 tag: 'gainslab-timer',
                                 vibrate: [200, 100, 200]
                             } as any);
@@ -234,7 +234,7 @@ export const useTimer = (lang: Lang) => {
                             try {
                                 new Notification(title, {
                                     body,
-                                    icon: '/icon-192.png',
+                                    icon: '/assets/icons/icon-192.png',
                                     tag: 'gainslab-timer'
                                 });
                             } catch (e) {}
@@ -242,7 +242,7 @@ export const useTimer = (lang: Lang) => {
                     } else {
                         new Notification(title, {
                             body,
-                            icon: '/icon-192.png',
+                            icon: '/assets/icons/icon-192.png',
                             tag: 'gainslab-timer'
                         });
                     }

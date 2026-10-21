@@ -20,6 +20,7 @@ export const parseCsv = (text: string): string[][] => {
     const pushRow = () => {
         pushCell();
         rows.push(row);
+        if (rows.length > 20_000) throw new Error('too-many-rows');
         row = [];
     };
 
@@ -66,10 +67,12 @@ export const parseCsv = (text: string): string[][] => {
 const needsQuoting = (cell: string): boolean =>
     cell.includes(',') || cell.includes('"') || cell.includes('\n') || cell.includes('\r');
 
-/** Escape one value for CSV output. */
+/** Escape one value for CSV output and neutralize spreadsheet formulas. */
 export const escapeCsvCell = (value: unknown): string => {
     if (value == null) return '';
-    const s = String(value);
+    let s = String(value);
+    // Spreadsheet applications execute formula-leading cells when opening CSV.
+    if (/^[\u0000-\u0020]*[=+\-@]/.test(s)) s = `'${s}`;
     if (!needsQuoting(s)) return s;
     return `"${s.replace(/"/g, '""')}"`;
 };

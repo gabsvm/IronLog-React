@@ -5,9 +5,11 @@ import { loadEnv } from 'vite';
 
 const failures = [];
 
-// --- 1. Firebase env (unchanged) ---
+// --- 1. Firebase environment ---
+const emulatorMode = process.argv.includes('--emulator');
+const firebaseMode = emulatorMode ? 'capacitor' : 'production';
 const env = {
-  ...loadEnv('production', process.cwd(), 'VITE_'),
+  ...loadEnv(firebaseMode, process.cwd(), 'VITE_'),
   ...process.env,
 };
 
@@ -26,15 +28,27 @@ if (missing.length > 0) {
   failures.push(
     'Firebase configuration is incomplete. Missing variables:\n' +
       missing.map((key) => `  - ${key}`).join('\n') +
-      '\nLoad the production Vercel environment (for example into .env.production.local) before building Android.'
+      (emulatorMode
+        ? '\nConfigure .env.capacitor.local for the demo Firebase Emulator project.'
+        : '\nLoad the production Vercel environment (for example into .env.production.local) before building Android.')
   );
+} else if (emulatorMode) {
+  if (
+    env.VITE_FIREBASE_EMULATOR !== '1' ||
+    !String(env.VITE_FIREBASE_PROJECT_ID).startsWith('demo-') ||
+    env.VITE_FIREBASE_EMULATOR_AUTH !== '10.0.2.2:9099' ||
+    env.VITE_FIREBASE_EMULATOR_FIRESTORE !== '10.0.2.2:8085'
+  ) {
+    failures.push('Android emulator mode must use a demo-* project and the local Android Emulator endpoints 10.0.2.2:9099 / 10.0.2.2:8085.');
+  } else {
+    console.log(`✅ Firebase Emulator environment validated for demo project: ${env.VITE_FIREBASE_PROJECT_ID}`);
+  }
 } else {
   console.log(`✅ Firebase environment validated for project: ${env.VITE_FIREBASE_PROJECT_ID}`);
 }
 
-// --- 2. JDK (Capacitor 8: 17+ required, 21 recommended) ---
-const MIN_JDK = 17;
-const RECOMMENDED_JDK = 21;
+// Capacitor 8 Android sources require Java 21 for this repository.
+const MIN_JDK = 21;
 
 const findJava = () => {
   const fromHome = process.env.JAVA_HOME
@@ -55,11 +69,8 @@ try {
     failures.push(`Could not parse JDK version from ${javaBin} output: ${text.split('\n')[0]}`);
   } else if (major < MIN_JDK) {
     failures.push(
-      `JDK ${major} is too old (found via ${javaBin}). Capacitor 8 requires JDK ${MIN_JDK}+ ` +
-        `(${RECOMMENDED_JDK} recommended). Set JAVA_HOME to a JDK ${RECOMMENDED_JDK} install.`
+      `JDK ${major} is too old (found via ${javaBin}). This Android project requires JDK ${MIN_JDK}+; set JAVA_HOME to JDK ${MIN_JDK} or newer.`
     );
-  } else if (major < RECOMMENDED_JDK) {
-    console.log(`⚠️  JDK ${major} meets the minimum (${MIN_JDK}+) but JDK ${RECOMMENDED_JDK}+ is recommended.`);
   } else {
     console.log(`✅ JDK ${major} (${javaBin})`);
   }

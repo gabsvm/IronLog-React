@@ -5,14 +5,12 @@ import { useApp, useAppConfig, useAppPreferences, useTutorial } from '../../cont
 import { TRANSLATIONS } from '../../constants';
 import { getTranslated } from '../../utils';
 import { usePro } from '../../hooks/usePro';
-import { GlobalTemplate } from '../../types';
 import { triggerHaptic, updateWidgetData } from '../../utils/audio';
 import { scheduleWhenIdle } from '../../lib/idle';
 import { useStore } from '../../lib/store';
 import { KONG_4DAY_V1 } from '../../programs/kong/kong4Day';
-import { resolveProgramWeek } from '../../programs/engine/ProgramResolver';
-import { startProgramRun } from '../../programs/engine/ProgramRunHelpers';
 import { getProgramBlockForWeek } from '../../programs/engine/ProgramResolver';
+import { createTemplateActions } from './applyTemplate';
 
 export interface HomeViewProps {
     startSession: (dayIdx: number) => void;
@@ -224,57 +222,17 @@ export const useHomeViewState = ({ startSession, onEditProgram, onSkipSession, o
         setShowCompleteModal(null);
     };
 
-    // --- TEMPLATE LOGIC ---
-    const handleOpenTemplateSelector = () => setShowTemplateSelector(true);
+    // --- TEMPLATE LOGIC (shared with Rutina via views/home/applyTemplate.ts) ---
 
-    const handleSelectTemplate = (tpl: GlobalTemplate) => {
-        if (tpl.isPro && !checkPro("Pro Template")) return;
-
-        setProgram(tpl.program);
-
-        // Auto-start Meso
-        const plan = tpl.program.map(day => (day.slots || []).map(slot => slot.exerciseId || null));
-        setActiveMeso({
-            id: Date.now(),
-            name: getTranslated(tpl.title, lang as any),
-            mesoType: tpl.id, // Using ID as type for tracking
-            week: 1,
-            targetWeeks: 5,
-            isDeload: false,
-            plan: plan,
-            duration: 5
-        });
-
-        setShowTemplateSelector(false);
-        triggerHaptic('success');
-    };
-
-    const handleSelectProgram = (programId: string) => {
-        if (programId !== KONG_4DAY_V1.id) return;
-        const firstWeek = resolveProgramWeek(KONG_4DAY_V1, 1);
-        setProgram(firstWeek);
-        const plan = firstWeek.map((day) => (day.slots || []).map((slot) => slot.exerciseId || null));
-        setActiveMeso({
-            id: Date.now(),
-            name: 'KONG · Savage Size',
-            mesoType: KONG_4DAY_V1.id,
-            week: 1,
-            targetWeeks: KONG_4DAY_V1.durationWeeks,
-            isDeload: false,
-            plan,
-            duration: KONG_4DAY_V1.durationWeeks,
-            programSystem: startProgramRun(KONG_4DAY_V1, userProfile?.bodyWeight),
-        });
-        setShowTemplateSelector(false);
-        triggerHaptic('success');
-    };
-
-    const handleCreateCustom = () => {
-        // Clear program and go to editor
-        setProgram([]); // Start empty
-        setShowTemplateSelector(false);
-        onEditProgram(); // Navigate to Editor
-    };
+    const { handleSelectTemplate, handleSelectProgram, handleCreateCustom } = createTemplateActions({
+        setProgram,
+        setActiveMeso,
+        setShowTemplateSelector,
+        onEditProgram,
+        checkPro,
+        userProfile,
+        lang,
+    });
 
     const mesoSettingsTutorialSteps = [
         { targetId: 'tut-meso-duration', title: t.tutorial.mesoSettings[0].title, text: t.tutorial.mesoSettings[0].text, position: 'bottom' as const },
@@ -361,7 +319,7 @@ export const useHomeViewState = ({ startSession, onEditProgram, onSkipSession, o
         confirmSkip,
         handleFinishMeso,
         handleFinishWeek,
-        handleOpenTemplateSelector,
+        handleOpenTemplateSelector: () => setShowTemplateSelector(true),
         handleSelectTemplate,
         handleSelectProgram,
         handleCreateCustom,

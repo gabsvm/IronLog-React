@@ -31,9 +31,11 @@ test.describe('Profile back-button then workout back stays in app (G3)', () => {
         await expect(nav).toBeVisible();
 
         // 3. Start a freestyle workout (must pushState a workout entry).
-        const plusBtn = page.locator('nav[aria-label="Main navigation"] button[aria-label*="Iniciar" i], nav[aria-label="Main navigation"] button[aria-label*="Start" i]').first();
-        await expect(plusBtn).toBeVisible({ timeout: 8000 });
-        await plusBtn.click();
+        // Fase 2 shell: freestyle entry lives in Rutina (no center + button).
+        await nav.getByRole('button', { name: /^Rutina$|^Routine$/ }).click();
+        const quickBtn = page.getByRole('button', { name: /Iniciar entreno|Start workout/ }).first();
+        await expect(quickBtn).toBeVisible({ timeout: 8000 });
+        await quickBtn.click();
 
         const freestyleOption = page.locator('button:has-text("Sesión libre"), button:has-text("Freestyle")').first();
         await expect(freestyleOption).toBeVisible({ timeout: 6000 });
@@ -45,12 +47,12 @@ test.describe('Profile back-button then workout back stays in app (G3)', () => {
         await startFreeBtn.click();
         await expect(page.locator('#tut-finish-btn')).toBeVisible({ timeout: 10000 });
 
-        // 4. Back from the workout returns Home inside the app (no exit).
+        // 4. Back from the workout returns to the origin tab inside the app (no exit).
         await page.goBack();
         expect(page.url()).toContain('localhost');
         await expect(nav).toBeVisible();
-        const homeBtn = nav.locator('button[aria-current="page"]', { hasText: /Entreno|Train/ });
-        await expect(homeBtn).toBeVisible({ timeout: 8000 });
+        const routineBtn = nav.locator('button[aria-current="page"]', { hasText: /^Rutina$|^Routine$/ });
+        await expect(routineBtn).toBeVisible({ timeout: 8000 });
         await expect(page.locator('#tut-finish-btn')).toHaveCount(0);
 
         await expect(page.getByText(ERROR_BOUNDARY_TEXT)).toHaveCount(0);

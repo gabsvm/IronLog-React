@@ -6,11 +6,26 @@ import { calculateTimerPercentage } from './restTimerLogic';
 import { CircularTimer } from './CircularTimer';
 import type { RestTimerOverlayState } from './useRestTimerOverlayState';
 import { RestTimerNotifPrompt } from './RestTimerPrompts';
-
+import { isWorkoutRestDocked, subscribeWorkoutRestDocked } from '../../workout/workoutRestDockSignal';
 export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ state }) => {
     const { restTimer, setRestTimer, lang, reducedEffects, t, mode, setMode, keyboardOffset, pillRef, currentSourceSet, showEffortFeedback, handleRateEffort, nextExerciseInfo } = state;
+    // The bottom nav mounts/unmounts with the view, not with the 1 Hz tick:
+    // read once per rest (this component mounts fresh per active rest).
+    // Must stay above the early return to keep hook order stable.
+    const [hasBottomNav] = React.useState(() => typeof document !== 'undefined' && Boolean(document.querySelector('nav[aria-label="Main navigation"]')));
+    // Workout dock signal: re-render the moment the in-flow dock mounts or
+    // unmounts so only one rest surface is ever visible.
+    const [, setDockBump] = React.useState(0);
+    React.useEffect(() => subscribeWorkoutRestDocked(() => setDockBump((generation) => generation + 1)), []);
     // Same guard as the parent (it only renders this with an active rest).
     if (!restTimer || !restTimer.active) return null;
+
+    // Phase 4: the workout shows its own in-flow rest dock (same TimerContext
+    // motor). Suppress the floating pill/sheet while it is mounted so there
+    // is a single visual rest instance; one-time prompts still render below.
+    if (isWorkoutRestDocked()) {
+        return <RestTimerNotifPrompt state={state} />;
+    }
 
     const formatSeconds = (seconds: number) => {
         const safe = Math.max(0, Math.floor(Number(seconds) || 0));
@@ -18,7 +33,6 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
     };
 
     const percentage = calculateTimerPercentage(restTimer.timeLeft, restTimer.duration);
-    const hasBottomNav = typeof document !== 'undefined' && Boolean(document.querySelector('nav[aria-label="Main navigation"]'));
     const baseBottom = hasBottomNav ? 80 : 16;
     const floatingBottom = baseBottom + keyboardOffset;
     // When the keyboard is open the pill would cover the input being edited,
@@ -215,7 +229,7 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
                             triggerHaptic('light');
                             setMode('compact');
                         }}
-                        className="flex h-8 w-8 items-center justify-center rounded-full text-muted hover:text-[rgb(var(--text-primary))] transition-colors"
+                        className="flex h-11 w-11 items-center justify-center rounded-full text-muted hover:text-[rgb(var(--text-primary))] transition-colors"
                         aria-label={t.timer.minimize}
                     >
                         <Icon name="ChevronDown" size={20} />

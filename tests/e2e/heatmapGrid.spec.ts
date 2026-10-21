@@ -30,7 +30,7 @@ test.describe('L7 muscle heatmap grid', () => {
     test('all 12 cells share one box size and never overlap', async ({ page }) => {
         await seedHighVolume(page);
         await page.goto('/');
-        await page.locator('nav[aria-label="Main navigation"] button', { hasText: /Stats|Métricas/ }).click();
+        await page.locator('nav[aria-label="Main navigation"] button', { hasText: /^Progreso$|^Progress$/ }).click();
         // Overview section with the heatmap; BACK/CHEST average 30 → top heat.
         await expect(page.getByText('Espalda').first()).toBeVisible({ timeout: 15000 });
         await page.waitForTimeout(700);

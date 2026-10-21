@@ -78,3 +78,51 @@ export const summarizeLogsByScope = (logs: Log[], mesoId?: number | null): Scope
 /** Effective meso filter for a scope selection (null = full history). */
 export const scopeMesoId = (scope: StatsScope, activeMesoId?: number | null): number | null =>
     scope === 'plan' ? (activeMesoId ?? null) : null;
+/** Rolling window for Stats, independent from the plan/history scope. */
+export type StatsPeriod = '4w' | '8w' | 'all';
+
+export const STATS_PERIODS: readonly StatsPeriod[] = ['4w', '8w', 'all'];
+
+/** Window length in days (null = unbounded history). */
+export const STATS_PERIOD_DAYS: Record<StatsPeriod, number | null> = {
+    '4w': 28,
+    '8w': 56,
+    all: null,
+};
+
+/** Inclusive lower bound of the period window (null = no bound). */
+export const periodStartFor = (period: StatsPeriod, now: number = Date.now()): number | null => {
+    const days = STATS_PERIOD_DAYS[period];
+    return days == null ? null : now - days * 86400000;
+};
+
+const logCompletionTime = (log: Log): number => Number(log?.endTime ?? log?.startTime ?? 0);
+
+/**
+ * Period filter, applied AFTER scope: keeps logs completed inside the window.
+ * 'all' drops only null/skipped logs, so composing it after a scope filter
+ * reproduces scope-only numbers exactly. A bounded window also drops
+ * future-dated entries: a "last N weeks" window ends today.
+ */
+export const filterLogsByPeriod = (logs: Log[], period: StatsPeriod = 'all', now: number = Date.now()): Log[] => {
+    const safeLogs = Array.isArray(logs) ? logs : [];
+    const start = periodStartFor(period, now);
+    if (start == null) return safeLogs.filter(log => !!log && !log.skipped);
+    return safeLogs.filter(log => {
+        if (!log || log.skipped) return false;
+        const ts = logCompletionTime(log);
+        return Number.isFinite(ts) && ts >= start && ts <= now;
+    });
+};
+
+/**
+ * Single entry point for every scope+period-derived surface (header cards,
+ * overview, progress chart, PRs, insights). Scope and period apply exactly
+ * once, before any summary or calculation runs.
+ */
+export const filterLogsByScopeAndPeriod = (
+    logs: Log[],
+    mesoId?: number | null,
+    period: StatsPeriod = 'all',
+    now: number = Date.now(),
+): Log[] => filterLogsByPeriod(filterLogsByScope(logs, mesoId), period, now);

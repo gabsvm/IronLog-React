@@ -5,6 +5,7 @@ import { FoodEntry, CustomFood } from '../../types';
 import { Icon } from '../ui/Icon';
 import { Button } from '../ui/Button';
 import { Sheet } from '../ui/Sheet';
+import { ConfirmModal } from '../ui/ConfirmModal';
 import { useApp } from '../../context/AppContext';
 import { MEAL_TYPES, PRESET_DB, PORTION_MULTIPLIERS } from './addMeal/mealData';
 
@@ -85,7 +86,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
   const [carbs, setCarbs] = useState('');
   const [fat, setFat] = useState('');
   const [servingSize, setServingSize] = useState('');
-
+  const [pendingFoodDelete, setPendingFoodDelete] = useState<CustomFood | null>(null);
 
   const resetForm = () => {
     setName('');
@@ -131,19 +132,20 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
   };
 
   const handleSubmitManual = () => {
-    if (!name || !calories) return;
+    if (!canSubmitManual) return;
 
-    const parsedCalories = Number(calories) || 0;
-    const parsedProtein = Number(protein) || 0;
-    const parsedCarbs = Number(carbs) || 0;
-    const parsedFat = Number(fat) || 0;
+    const parsedCalories = Number(calories);
+    const parsedProtein = protein.trim() ? Number(protein) : 0;
+    const parsedCarbs = carbs.trim() ? Number(carbs) : 0;
+    const parsedFat = fat.trim() ? Number(fat) : 0;
+    const foodName = name.trim();
 
-    onAdd(buildEntry(parsedCalories, parsedProtein, parsedCarbs, parsedFat, name));
+    onAdd(buildEntry(parsedCalories, parsedProtein, parsedCarbs, parsedFat, foodName));
 
     if (saveToMyFoods) {
       const newFood: CustomFood = {
         id: `cf_${Date.now()}`,
-        name,
+        name: foodName,
         calories: parsedCalories,
         protein: parsedProtein,
         carbs: parsedCarbs,
@@ -164,12 +166,25 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
   };
 
   const handleDeleteMyFood = (id: string) => {
-    setCustomFoods((prev) => prev.filter((food) => food.id !== id));
+    const food = customFoods.find((item) => item.id === id);
+    if (food) setPendingFoodDelete(food);
   };
 
-  const canSubmitManual = !!name && !!calories;
+  const confirmDeleteMyFood = () => {
+    if (!pendingFoodDelete) return;
+    setCustomFoods((prev) => prev.filter((food) => food.id !== pendingFoodDelete.id));
+    setPendingFoodDelete(null);
+  };
+
+  const isNonNegativeFinite = (value: string) => value.trim() !== '' && Number.isFinite(Number(value)) && Number(value) >= 0;
+  const isOptionalNonNegativeFinite = (value: string) => value.trim() === '' || isNonNegativeFinite(value);
+  const canSubmitManual = !!name.trim() && isNonNegativeFinite(calories)
+    && isOptionalNonNegativeFinite(protein)
+    && isOptionalNonNegativeFinite(carbs)
+    && isOptionalNonNegativeFinite(fat);
 
   return (
+    <>
     <Sheet
       open={isOpen}
       onOpenChange={(open) => !open && onClose()}
@@ -246,7 +261,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                   placeholder={TRANSLATIONS[lang].copy.addMealModal.searchFoods}
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  className="premium-form-input w-full py-2.5 pl-9 pr-4 text-sm text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  className="nutri-field premium-form-input w-full py-2.5 pl-9 pr-4 text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
                 />
               </div>
 
@@ -296,7 +311,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                       placeholder={TRANSLATIONS[lang].copy.addMealModal.searchMyFoods}
                       value={search}
                       onChange={(event) => setSearch(event.target.value)}
-                      className="premium-form-input w-full py-2.5 pl-9 pr-4 text-sm text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                      className="nutri-field premium-form-input w-full py-2.5 pl-9 pr-4 text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
                     />
                   </div>
                   {sortedMyFoods.length === 0 ? (
@@ -332,7 +347,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                     value={name}
                     onChange={(event) => setName(event.target.value)}
                     placeholder="e.g. Greek Yogurt"
-                    className="premium-form-input w-full px-4 py-3 text-sm text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    className="nutri-field premium-form-input w-full px-4 py-3 text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
                   />
                 </div>
 
@@ -361,7 +376,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                       placeholder={TRANSLATIONS[lang].copy.addMealModal.protein}
                       type="number"
                       inputMode="decimal"
-                      className="premium-form-input border-blue-500/30 px-3 py-3 text-center text-sm text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-blue-500 focus:outline-none"
+                      className="nutri-field premium-form-input border-blue-500/30 px-3 py-3 text-center text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-blue-500 focus:outline-none"
                     />
                     <input
                       value={carbs}
@@ -369,7 +384,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                       placeholder="Carbs"
                       type="number"
                       inputMode="decimal"
-                      className="premium-form-input border-amber-500/30 px-3 py-3 text-center text-sm text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-amber-500 focus:outline-none"
+                      className="nutri-field premium-form-input border-amber-500/30 px-3 py-3 text-center text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-amber-500 focus:outline-none"
                     />
                     <input
                       value={fat}
@@ -377,7 +392,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                       placeholder={TRANSLATIONS[lang].copy.addMealModal.fat}
                       type="number"
                       inputMode="decimal"
-                      className="premium-form-input border-pink-500/30 px-3 py-3 text-center text-sm text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-pink-500 focus:outline-none"
+                      className="nutri-field premium-form-input border-pink-500/30 px-3 py-3 text-center text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-pink-500 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -390,7 +405,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                     value={servingSize}
                     onChange={(event) => setServingSize(event.target.value)}
                     placeholder="e.g. 100g, 1 cup"
-                    className="premium-form-input w-full px-4 py-3 text-sm text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    className="nutri-field premium-form-input w-full px-4 py-3 text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
                   />
                 </div>
 
@@ -425,5 +440,19 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
         </div>
       </div>
     </Sheet>
+      <ConfirmModal
+        isOpen={pendingFoodDelete !== null}
+        title={pickLang(lang, { en: 'Delete saved food?', es: '¿Eliminar alimento guardado?' })}
+        description={pickLang(lang, {
+          en: `“${pendingFoodDelete?.name ?? ''}” will be removed from your saved foods.`,
+          es: `“${pendingFoodDelete?.name ?? ''}” se eliminará de tus alimentos guardados.`,
+        })}
+        confirmText={pickLang(lang, { en: 'Delete', es: 'Eliminar' })}
+        cancelText={pickLang(lang, { en: 'Cancel', es: 'Cancelar' })}
+        variant="danger"
+        onConfirm={confirmDeleteMyFood}
+        onCancel={() => setPendingFoodDelete(null)}
+      />
+    </>
   );
 };

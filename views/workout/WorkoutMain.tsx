@@ -1,15 +1,71 @@
 // S6: header + exercise list, moved verbatim from views/WorkoutViewImpl.tsx.
-import React, { Suspense } from 'react';
+// Phase 4: focused mode — exercise rail (horizontal mobile / lateral desktop)
+// governed by the existing activeExerciseId; a single main panel reusing the
+// current cards/set-rows; docked rest reusing TimerContext.
+import React, { Suspense, useMemo, useRef } from 'react';
 import { Icon } from '../../components/ui/Icon';
 import { SortableExerciseCard } from '../../components/workout/SortableExerciseCard';
+import { WorkoutExerciseRail } from '../../components/workout/WorkoutExerciseRail';
+import type { WorkoutRailItem } from '../../components/workout/WorkoutExerciseRail';
+import { WorkoutRestDock } from '../../components/workout/WorkoutRestDock';
 import { WorkoutTimer } from '../../components/workout/WorkoutTimer';
+import { getTranslated } from '../../utils';
+import { isWorkingSet } from '../../utils/workoutProgress';
 import type { WorkoutViewState } from './useWorkoutViewState';
 
 const WorkoutSortableList = React.lazy(() => import('../../components/workout/WorkoutSortableList'));
 
 export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) => {
-    const { onBack, onOpenReorder, sessionExercises, openMenuId, setOpenMenuId, setShowFinishModal, setReplacingExId, setAddingExercise, linkingId, setLinkingId, setEditingMuscleId, setWarmupExId, setDetailExercise, handleSetUpdate, handleAddSet, handleDeleteSet, updateSession, exercises, logs, lang, config, activeSession, t, stageConfig, isCalisthenicsSession, supersetColorIndexes, handleSetTypeChange, sortableItems, activeExerciseId, handleToggleExpand, handleSetComplete, handleReorder, remainingSets, progressPct, completedWorkingSets, totalWorkingSets } = state;
+    const { onBack, onOpenReorder, sessionExercises, openMenuId, setOpenMenuId, setShowFinishModal, setReplacingExId, setAddingExercise, linkingId, setLinkingId, setEditingMuscleId, setWarmupExId, setDetailExercise, handleSetUpdate, handleAddSet, handleDeleteSet, updateSession, exercises, logs, lang, config, activeSession, t, w, stageConfig, isCalisthenicsSession, supersetColorIndexes, handleSetTypeChange, sortableItems, activeExerciseId, setActiveExerciseId, handleToggleExpand, handleSetComplete, handleReorder, remainingSets, progressPct, completedWorkingSets, totalWorkingSets, quickAccessExercise } = state;
+    const panelRef = useRef<HTMLDivElement>(null);
+
+    const focusedId = useMemo(() => {
+        if (activeExerciseId !== null && sessionExercises.some((ex) => ex.instanceId === activeExerciseId)) {
+            return activeExerciseId;
+        }
+        return quickAccessExercise?.instanceId ?? sessionExercises[0]?.instanceId ?? null;
+    }, [activeExerciseId, quickAccessExercise?.instanceId, sessionExercises]);
+    const focusedIdx = useMemo(
+        () => sessionExercises.findIndex((ex) => ex.instanceId === focusedId),
+        [sessionExercises, focusedId],
+    );
+    const focusedExercise = focusedIdx >= 0 ? sessionExercises[focusedIdx] : null;
+    const railItems: WorkoutRailItem[] = useMemo(() => sessionExercises.map((ex) => {
+        const working = (ex.sets || []).filter(isWorkingSet);
+        const done = working.filter((s) => s.completed).length;
+        return {
+            instanceId: ex.instanceId,
+            label: String(getTranslated(ex.name, lang)),
+            done,
+            total: working.length,
+            superset: Boolean(ex.supersetId),
+            complete: working.length > 0 && done >= working.length,
+        };
+    }), [sessionExercises, lang]);
+    const partnerExercise = useMemo(() => {
+        if (!focusedExercise?.supersetId) return null;
+        return sessionExercises.find((ex) => ex.supersetId === focusedExercise.supersetId && ex.instanceId !== focusedExercise.instanceId) || null;
+    }, [sessionExercises, focusedExercise]);
+
     if (!activeSession) return null;
+
+    const scrollPanelIntoView = () => {
+        panelRef.current?.scrollIntoView({ block: 'start' });
+    };
+    const selectExercise = (instanceId: number) => {
+        setActiveExerciseId(instanceId);
+        // Let the newly focused card mount its expanded view first.
+        requestAnimationFrame(scrollPanelIntoView);
+    };
+    const goPrev = () => {
+        if (focusedIdx > 0) selectExercise(sessionExercises[focusedIdx - 1].instanceId);
+    };
+    const goNext = () => {
+        if (focusedIdx >= 0 && focusedIdx < sessionExercises.length - 1) {
+            selectExercise(sessionExercises[focusedIdx + 1].instanceId);
+        }
+    };
+
     return (
         <>
             {/* --- Reference-driven Compact Header --- */}
@@ -18,7 +74,7 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                     <button
                         type="button"
                         onClick={onBack}
-                        className="relative flex h-9 w-9 after:absolute after:-inset-1 after:content-[''] shrink-0 items-center justify-center rounded-full text-zinc-400 transition-colors active:bg-surface-raised hover:text-white"
+                        className="relative flex h-11 w-11 after:absolute after:-inset-1 after:content-[''] shrink-0 items-center justify-center rounded-full text-zinc-400 transition-colors active:bg-surface-raised hover:text-white"
                         aria-label={t.back}
                     >
                         <Icon name="ChevronLeft" size={22} strokeWidth={2.5} />
@@ -51,7 +107,7 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                                 e.stopPropagation();
                                 onOpenReorder();
                             }}
-                            className="relative flex h-8 w-8 after:absolute after:-inset-1.5 after:content-[''] shrink-0 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:text-white active:bg-surface-raised"
+                            className="relative flex h-11 w-11 after:absolute after:-inset-1.5 after:content-[''] shrink-0 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:text-white active:bg-surface-raised"
                             title={t.reorderExercises}
                             aria-label={t.reorderExercises}
                         >
@@ -65,7 +121,7 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                             e.stopPropagation();
                             setAddingExercise(true);
                         }}
-                        className="relative flex h-8 w-8 after:absolute after:-inset-1.5 after:content-[''] shrink-0 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:text-white active:bg-surface-raised"
+                        className="relative flex h-11 w-11 after:absolute after:-inset-1.5 after:content-[''] shrink-0 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:text-white active:bg-surface-raised"
                         title={t.addExercise}
                         aria-label={t.addExercise}
                     >
@@ -102,47 +158,107 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                             </div>
                         </div>
                     </section>
-                    <Suspense fallback={null}>
-                        <WorkoutSortableList itemIds={sortableItems} onReorder={handleReorder}>
-                            {sessionExercises.map((ex, idx) => {
-                                const supersetColorIndex = ex.supersetId ? supersetColorIndexes[ex.supersetId] : undefined;
-                                const isLinkingTarget = !!linkingId && linkingId !== ex.instanceId;
 
-                                return (
-                                    <SortableExerciseCard
-                                        key={ex.instanceId}
-                                        exercise={ex}
-                                        isExpanded={ex.instanceId === activeExerciseId}
-                                        onToggleExpand={handleToggleExpand}
-                                        onSetUpdate={handleSetUpdate}
-                                        onSetComplete={handleSetComplete}
-                                        onSetTypeChange={handleSetTypeChange}
-                                        onAddSet={handleAddSet}
-                                        onDeleteSet={handleDeleteSet}
-                                        onOpenDetail={setDetailExercise}
-                                        onLink={setLinkingId}
-                                        onReplace={setReplacingExId}
-                                        onEditMuscle={setEditingMuscleId}
-                                        onUpdateSession={updateSession}
-                                        onOpenWarmup={setWarmupExId}
-                                        openMenuId={openMenuId}
-                                        setOpenMenuId={setOpenMenuId}
-                                        linkingId={linkingId}
-                                        t={t}
-                                        lang={lang}
-                                        supersetColorIndex={supersetColorIndex}
-                                        isLinkingTarget={!!isLinkingTarget}
-                                        config={config}
-                                        stageConfig={stageConfig}
-                                        dragEnabled={true}
-                                        logs={logs}
-                                        library={exercises}
-                                        tutorialId={idx === 0 ? 'tut-set-type' : undefined}
-                                    />
-                                );
-                            })}
-                        </WorkoutSortableList>
-                    </Suspense>
+                    <div className="lg:grid lg:grid-cols-[248px_minmax(0,1fr)] lg:items-start lg:gap-4">
+                        <WorkoutExerciseRail
+                            items={railItems}
+                            activeId={focusedId}
+                            onSelect={selectExercise}
+                            navLabel={w.exerciseNav}
+                            setsOfWord={t.timer.ofWord}
+                        />
+
+                        <div ref={panelRef} className="min-w-0 scroll-mt-24 space-y-2.5">
+                            {focusedExercise && sessionExercises.length > 1 && (
+                                <div className="flex items-center justify-between gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={goPrev}
+                                        disabled={focusedIdx <= 0}
+                                        className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-border-subtle bg-surface-raised/40 px-3 text-xs font-bold text-muted transition-colors hover:text-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+                                        aria-label={w.prevExercise}
+                                        title={w.prevExercise}
+                                    >
+                                        <Icon name="ChevronLeft" size={16} strokeWidth={2.5} />
+                                    </button>
+                                    <p className="min-w-0 flex-1 truncate text-center text-xs font-semibold tabular-nums text-muted" aria-live="polite">
+                                        {focusedIdx + 1} {t.timer.ofWord} {sessionExercises.length}
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={goNext}
+                                        disabled={focusedIdx < 0 || focusedIdx >= sessionExercises.length - 1}
+                                        className="flex min-h-[44px] min-w-[44px] items-center gap-1.5 justify-center rounded-full border border-border-subtle bg-surface-raised/40 px-3 text-xs font-bold text-muted transition-colors hover:text-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+                                        aria-label={t.timer.nextExercise}
+                                        title={t.timer.nextExercise}
+                                    >
+                                        <span className="hidden sm:inline">{t.timer.nextExercise}</span>
+                                        <Icon name="ChevronRight" size={16} strokeWidth={2.5} />
+                                    </button>
+                                </div>
+                            )}
+
+                            {partnerExercise && (
+                                <button
+                                    type="button"
+                                    onClick={() => selectExercise(partnerExercise.instanceId)}
+                                    className="flex min-h-[44px] w-full items-center gap-2 rounded-2xl border border-violet-500/30 bg-violet-500/10 px-3 py-2 text-left transition-colors hover:bg-violet-500/15 active:scale-[0.99]"
+                                >
+                                    <Icon name="Link" size={14} className="shrink-0 text-violet-300" />
+                                    <span className="min-w-0 flex-1 truncate text-xs text-white">
+                                        <span className="font-bold uppercase tracking-wider text-violet-200">{t.timer.nextInSuperset} · </span>
+                                        <span className="font-semibold">{String(getTranslated(partnerExercise.name, lang))}</span>
+                                    </span>
+                                </button>
+                            )}
+
+                            <Suspense fallback={null}>
+                                <WorkoutSortableList itemIds={sortableItems} onReorder={handleReorder}>
+                                    {sessionExercises.map((ex) => {
+                                        const isActive = ex.instanceId === focusedId;
+                                        const supersetColorIndex = ex.supersetId ? supersetColorIndexes[ex.supersetId] : undefined;
+                                        const isLinkingTarget = !!linkingId && linkingId !== ex.instanceId;
+
+                                        return (
+                                            <div key={ex.instanceId} className={isActive ? undefined : 'hidden'} aria-hidden={isActive ? undefined : true}>
+                                                <SortableExerciseCard
+                                                    exercise={ex}
+                                                    isExpanded={ex.instanceId === focusedId}
+                                                    onToggleExpand={handleToggleExpand}
+                                                    onSetUpdate={handleSetUpdate}
+                                                    onSetComplete={handleSetComplete}
+                                                    onSetTypeChange={handleSetTypeChange}
+                                                    onAddSet={handleAddSet}
+                                                    onDeleteSet={handleDeleteSet}
+                                                    onOpenDetail={setDetailExercise}
+                                                    onLink={setLinkingId}
+                                                    onReplace={setReplacingExId}
+                                                    onEditMuscle={setEditingMuscleId}
+                                                    onUpdateSession={updateSession}
+                                                    onOpenWarmup={setWarmupExId}
+                                                    openMenuId={openMenuId}
+                                                    setOpenMenuId={setOpenMenuId}
+                                                    linkingId={linkingId}
+                                                    t={t}
+                                                    lang={lang}
+                                                    supersetColorIndex={supersetColorIndex}
+                                                    isLinkingTarget={!!isLinkingTarget}
+                                                    config={config}
+                                                    stageConfig={stageConfig}
+                                                    dragEnabled={false}
+                                                    logs={logs}
+                                                    library={exercises}
+                                                    tutorialId={isActive ? 'tut-set-type' : undefined}
+                                                />
+                                            </div>
+                                        );
+                                    })}
+                                </WorkoutSortableList>
+                            </Suspense>
+
+                            <WorkoutRestDock />
+                        </div>
+                    </div>
 
                     <button
                         type="button"

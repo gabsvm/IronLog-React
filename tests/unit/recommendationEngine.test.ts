@@ -4,7 +4,6 @@ import { UserProfile } from '../../types';
 
 describe('recommendProgram', () => {
     const baseProfile: UserProfile = {
-        experience: 'intermediate',
         daysPerWeek: 4,
         goal: 'hypertrophy',
         sessionDuration: 'medium',

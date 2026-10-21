@@ -24,10 +24,9 @@ export const useSetupWizardState = ({ onComplete }: SetupWizardProps) => {
     const t = TRANSLATIONS[lang];
     const w = t.wizard;
 
-    // 0–3: profile steps, 4: recommendation, 5: launch mode picker
+    // 0–2: profile steps, 3: recommendation, 4: launch mode picker
     const [step, setStep] = useState(0);
     const [profile, setProfile] = useState<UserProfile>(() => ({
-        experience: userProfile?.experience || 'intermediate',
         daysPerWeek: userProfile?.daysPerWeek || 4,
         goal: userProfile?.goal || 'hypertrophy',
         sessionDuration: userProfile?.sessionDuration || 'medium',
@@ -39,11 +38,11 @@ export const useSetupWizardState = ({ onComplete }: SetupWizardProps) => {
 
     // ── Navigation ────────────────────────────────────────────────────
     const handleNext = () => {
-        if (step === 3) {
+        if (step === 2) {
             const rec = recommendProgram(profile);
             setRecommendation(rec);
-            setStep(4); // recommendation screen
-        } else if (step < 3) {
+            setStep(3); // recommendation screen
+        } else if (step < 2) {
             setStep(prev => prev + 1);
         }
     };
@@ -52,7 +51,6 @@ export const useSetupWizardState = ({ onComplete }: SetupWizardProps) => {
         // Persist onboarding answers into userProfile without losing existing body-profile fields
         setUserProfile(prev => ({
             ...prev,
-            experience: profile.experience,
             daysPerWeek: profile.daysPerWeek,
             goal: profile.goal,
             sessionDuration: profile.sessionDuration,

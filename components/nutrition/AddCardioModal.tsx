@@ -7,6 +7,7 @@ import { Icon } from '../ui/Icon';
 import { Button } from '../ui/Button';
 import { Sheet } from '../ui/Sheet';
 import { todayLocalDateKey } from '../../utils/localDate';
+import { isValidCardioEntry } from '../../utils/cardioValidation';
 
 interface AddCardioModalProps {
   isOpen: boolean;
@@ -37,7 +38,7 @@ const getCalEstimate = (type: CardioActivityType, durationMin: number, bodyWeigh
 
 export const AddCardioModal: React.FC<AddCardioModalProps> = ({ isOpen, onClose, onAdd, lang }) => {
   const { userProfile } = useApp();
-  const bodyWeight = userProfile?.bodyWeight ?? 75;
+  const bodyWeight = Number.isFinite(userProfile?.bodyWeight) && (userProfile?.bodyWeight ?? 0) > 0 ? userProfile!.bodyWeight! : 75;
   const today = todayLocalDateKey();
   const [activity, setActivity]   = useState<CardioActivityType>('running');
   const [duration, setDuration]   = useState('');
@@ -45,18 +46,22 @@ export const AddCardioModal: React.FC<AddCardioModalProps> = ({ isOpen, onClose,
   const [heartRate, setHeartRate] = useState('');
   const [notes, setNotes]         = useState('');
 
-  const calEstimate = duration ? getCalEstimate(activity, Number(duration), bodyWeight) : 0;
+  const durationMin = Number(duration);
+  const distanceKm = distance === '' ? undefined : Number(distance);
+  const avgHeartRate = heartRate === '' ? undefined : Number(heartRate);
+  const canSubmit = isValidCardioEntry(durationMin, distanceKm, avgHeartRate);
+  const calEstimate = canSubmit ? getCalEstimate(activity, durationMin, bodyWeight) : 0;
 
   const handleSubmit = () => {
-    if (!duration) return;
+    if (!canSubmit) return;
     onAdd({
       id: `cardio_${Date.now()}`,
       date: today,
       activityType: activity,
-      durationMin: Number(duration),
-      distanceKm: distance ? Number(distance) : undefined,
+      durationMin,
+      distanceKm,
       caloriesBurned: calEstimate,
-      avgHeartRate: heartRate ? Number(heartRate) : undefined,
+      avgHeartRate,
       notes: notes || undefined,
       timestamp: Date.now(),
     });
@@ -81,7 +86,7 @@ export const AddCardioModal: React.FC<AddCardioModalProps> = ({ isOpen, onClose,
       title={t.title}
       accent="primary"
       footer={
-        <Button onClick={handleSubmit} fullWidth variant="primary" disabled={!duration}>
+        <Button onClick={handleSubmit} fullWidth variant="primary" disabled={!canSubmit}>
           {t.add}
         </Button>
       }
@@ -106,14 +111,18 @@ export const AddCardioModal: React.FC<AddCardioModalProps> = ({ isOpen, onClose,
 
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-semibold text-muted mb-1 px-1">{t.duration}</label>
+            <label htmlFor="cardio-duration" className="block text-sm font-semibold text-muted mb-1 px-1">{t.duration}</label>
             <input
+              id="cardio-duration"
               value={duration}
               onChange={e => setDuration(e.target.value)}
               placeholder="0"
               type="number"
+              min="1"
+              max="1440"
+              step="1"
               inputMode="numeric"
-              className="premium-form-input w-full px-4 py-3 text-[rgb(var(--text-primary))] placeholder-zinc-500 text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all "
+              className="nutri-field premium-form-input w-full px-4 py-3 text-[rgb(var(--text-primary))] placeholder-zinc-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all "
             />
           </div>
           
@@ -126,25 +135,33 @@ export const AddCardioModal: React.FC<AddCardioModalProps> = ({ isOpen, onClose,
 
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="block text-sm font-semibold text-muted mb-1 px-1">{t.distance}</label>
+              <label htmlFor="cardio-distance" className="block text-sm font-semibold text-muted mb-1 px-1">{t.distance}</label>
               <input
+                id="cardio-distance"
                 value={distance}
                 onChange={e => setDistance(e.target.value)}
                 placeholder="0.0"
                 type="number"
+                min="0"
+                max="1000"
+                step="any"
                 inputMode="decimal"
-                className="premium-form-input w-full px-4 py-3 text-[rgb(var(--text-primary))] placeholder-zinc-500 text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all "
+              className="nutri-field premium-form-input w-full px-4 py-3 text-[rgb(var(--text-primary))] placeholder-zinc-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all "
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-muted mb-1 px-1">{t.heartRate}</label>
+              <label htmlFor="cardio-heart-rate" className="block text-sm font-semibold text-muted mb-1 px-1">{t.heartRate}</label>
               <input
+                id="cardio-heart-rate"
                 value={heartRate}
                 onChange={e => setHeartRate(e.target.value)}
                 placeholder="0"
                 type="number"
+                min="30"
+                max="250"
+                step="1"
                 inputMode="numeric"
-                className="premium-form-input w-full px-4 py-3 text-[rgb(var(--text-primary))] placeholder-zinc-500 text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all "
+              className="nutri-field premium-form-input w-full px-4 py-3 text-[rgb(var(--text-primary))] placeholder-zinc-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all "
               />
             </div>
           </div>
@@ -155,7 +172,7 @@ export const AddCardioModal: React.FC<AddCardioModalProps> = ({ isOpen, onClose,
               value={notes}
               onChange={e => setNotes(e.target.value)}
               placeholder="..."
-              className="premium-form-input w-full px-4 py-3 text-[rgb(var(--text-primary))] placeholder-zinc-500 text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all "
+              className="nutri-field premium-form-input w-full px-4 py-3 text-[rgb(var(--text-primary))] placeholder-zinc-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all "
             />
           </div>
         </div>

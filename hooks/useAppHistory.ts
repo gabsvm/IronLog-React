@@ -24,14 +24,20 @@ export const withTransition = (direction: string, callback: () => void) => {
     }
 };
 
-// View Hierarchy for Directional Animations
+// View Hierarchy for Directional Animations (Fase 2 shell: four roots + children)
 export const VIEW_DEPTH: Record<string, number> = {
     'home': 1,
-    'history': 1,
-    'stats': 1,
+    'routine': 1,
+    'progress': 1,
+    'diary': 1,
     'workout': 2,
+    'summary': 2,
     'exercises': 2,
     'program': 2,
+    // Legacy names resolve before reaching renderers, but history entries and
+    // tests may still reference them: keep the same depths.
+    'history': 1,
+    'stats': 1,
     'nutrition': 1
 };
 
@@ -92,9 +98,8 @@ export const useAppHistory = (
             isFirstMountRef.current = false;
             return;
         }
-
         const state = { view };
-        const isNav = view === 'home' || view === 'history' || view === 'stats' || view === 'nutrition';
+    const isNav = view === 'home' || view === 'routine' || view === 'progress' || view === 'diary';
 
         try {
             if (typeof window !== 'undefined' && window.history) {

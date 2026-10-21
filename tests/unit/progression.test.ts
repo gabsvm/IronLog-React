@@ -8,7 +8,6 @@ import { TRANSLATIONS } from '../../constants';
 
 describe('Q15: recommendProgram goldens (behavior locked)', () => {
     const profile = (daysPerWeek: number, extra: Record<string, unknown> = {}) => ({
-        experience: 'intermediate',
         daysPerWeek,
         goal: 'hypertrophy',
         sessionDuration: 'normal',
@@ -100,6 +99,14 @@ describe('Q15: recommendProgression table', () => {
             range, rirTarget: 2, unit: 'kg',
         });
         expect(suggestion?.action).toBe('hold');
+    });
+
+    it('holds at the top of the range when a set reached RIR 0 (no margin for more load)', () => {
+        const suggestion = recommendProgression({
+            sets: [set(60, 12, 0), set(60, 12, 2)],
+            range, rirTarget: 2, unit: 'kg',
+        });
+        expect(suggestion).toMatchObject({ action: 'hold', deltaDisplay: 0 });
     });
 
     it('suggests down 5% below the floor of the range', () => {

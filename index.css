@@ -11,18 +11,18 @@
   /* Shared surfaces/text tokens. Components can keep their existing utility
      classes while the selected light/dark mode changes the whole shell.
      Dark mode values directly match the GainsLab reference package. */
-  --surface-app: 5 5 6;        /* #050506 */
-  --surface-base: 14 14 16;    /* #0e0e10 */
-  --surface-raised: 23 23 26;  /* #17171a */
-  --surface-elevated: 33 33 37;/* #212125 */
-  --text-primary: 242 242 242; /* #f2f2f2 */
-  --text-secondary: 168 168 176;/* #a8a8b0 */
-  --text-muted: 138 138 146;   /* #8a8a92 */
-  --border-subtle: 42 42 46;   /* #2a2a2e */
-  --border-strong: 52 52 58;   /* #34343a */
-  --modal-surface: 14 14 16;
-  --modal-footer: 14 14 16;
-  --modal-border: 42 42 46;
+  --surface-app: 16 17 18;      /* #101112 */
+  --surface-base: 25 27 28;     /* #191b1c */
+  --surface-raised: 34 37 38;   /* #222526 */
+  --surface-elevated: 44 47 48; /* #2c2f30 */
+  --text-primary: 240 241 237;  /* #f0f1ed */
+  --text-secondary: 168 170 166;/* #a8aaa6 */
+  --text-muted: 138 140 138;    /* #8a8c8a */
+  --border-subtle: 52 56 55;    /* #343837 */
+  --border-strong: 66 71 70;
+  --modal-surface: 25 27 28;
+  --modal-footer: 25 27 28;
+  --modal-border: 52 56 55;
 
   /* --- DEFAULT THEME: HYPERTROPHY (RP LIME-GREEN) --- */
   /* Brand color is the reference RP lime #C4F13A (196 241 58) anchored at 500. */
@@ -273,8 +273,101 @@ body {
         margin: 16px 4px 6px;
         font-weight: 600;
     }
-}
 
+    /* -- Design-preview family (gl-*) -------------------------------------
+     * Shared surfaces/controls matching the approved preview. Token-driven so
+     * both themes and every user accent keep working. Minimums: 44px targets,
+     * 16px form text, 12px+ labels on data and actions. */
+    .gl-panel {
+        background-color: rgb(var(--surface-base));
+        border: 1px solid rgb(var(--border-subtle));
+        border-radius: 16px;
+    }
+    .gl-eyebrow {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: rgb(var(--text-muted));
+        line-height: 1.6;
+    }
+    .gl-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 5px 10px;
+        min-height: 28px;
+        border-radius: 7px;
+        font-size: 10px;
+        line-height: 1.3;
+        background-color: rgb(var(--surface-raised));
+        color: rgb(var(--text-muted));
+        white-space: nowrap;
+    }
+    .gl-pill-accent {
+        background-color: rgb(var(--primary-500) / 0.14);
+        color: rgb(var(--accent-text));
+    }
+    .gl-primary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        min-height: 48px;
+        border-radius: 10px;
+        padding: 0 20px;
+        background-color: rgb(var(--primary-500));
+        color: #18200b;
+        font-weight: 700;
+        font-size: 13px;
+    }
+    html.light .gl-primary {
+        color: rgb(24 32 11);
+    }
+    .gl-quiet {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        min-height: 44px;
+        border: 1px solid rgb(var(--border-subtle));
+        border-radius: 9px;
+        padding: 0 15px;
+        font-size: 12px;
+        font-weight: 600;
+        background-color: rgb(var(--surface-base));
+        color: rgb(var(--text-primary));
+    }
+    .gl-textbtn {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        min-height: 44px;
+        color: rgb(var(--accent-text));
+        font-size: 12px;
+        font-weight: 600;
+    }
+    .gl-input {
+        height: 48px;
+        width: 100%;
+        border: 1px solid rgb(var(--border-subtle));
+        border-radius: 9px;
+        background-color: rgb(var(--surface-app));
+        color: rgb(var(--text-primary));
+        padding: 0 14px;
+        font-size: 16px;
+    }
+    .gl-input::placeholder {
+        color: rgb(var(--text-muted));
+    }
+    .gl-num {
+        font-variant-numeric: tabular-nums;
+    }
+    .gl-confirm-surface {
+        border-radius: 20px;
+    }
+}
 /* --- A11Y: prefers-reduced-motion --------------------------------------- */
 /* WCAG 2.3.3 — if the user has requested reduced motion at the OS level,
    collapse all animations and transitions to a near-instant cross-fade.
@@ -323,51 +416,8 @@ details:not([open]) > :not(summary) {
     to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes spring-in {
-    from { opacity: 0; transform: translateY(100%); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* Reduced aggressive glows to clean minimal pulses */
-@keyframes pulse-glow-green {
-    0%, 100% { box-shadow: 0 0 0px rgba(193, 241, 59, 0); }
-    50% { box-shadow: 0 0 12px rgba(193, 241, 59, 0.25); }
-}
-
-@keyframes bounce-cta {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.02); }
-}
-
-@keyframes slide-in-right {
-    from { opacity: 0; transform: translateX(40px); }
-    to { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes slide-in-left {
-    from { opacity: 0; transform: translateX(-40px); }
-    to { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes stagger-bar {
-    from { transform: scaleX(0); }
-    to { transform: scaleX(1); }
-}
-
 .animate-in-up {
     animation: fade-in-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.animate-spring-in {
-    animation: spring-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.animate-bounce-cta {
-    animation: bounce-cta 1.8s ease-in-out infinite;
-}
-
-.animate-pulse-glow-green {
-    animation: pulse-glow-green 1.5s ease-in-out infinite;
 }
 
 /* Inputs cleanup */
@@ -734,7 +784,7 @@ html.light .premium-hero__cta:hover { background: #25392b; }
   outline-offset: 1px;
 }
 .premium-filter-pill {
-  min-height: 40px;
+  min-height: 44px;
   border-radius: 9999px;
   font-size: 12px;
   font-weight: 700;
@@ -812,3 +862,8 @@ html.light .premium-rest-pill {
   background: radial-gradient(ellipse at 75% 5%, rgb(var(--primary-500) / .25), transparent 60%),
               linear-gradient(145deg, #15291d, #243d2d 70%, #142017);
 }
+
+/* Fase 6 — Diario/Nutrición: 16px floor for nutrition form text (iOS focus
+   zoom + legibility). Additive helper; premium-form-input keeps its own rule,
+   so this class must stay declared after it to win at equal specificity. */
+.nutri-field { font-size: 16px; }

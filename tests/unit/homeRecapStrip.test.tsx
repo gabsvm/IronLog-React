@@ -36,20 +36,24 @@ describe('Q16: HomeRecapStrip', () => {
 
         expect(screen.getByText('Última sesión')).toBeTruthy();
         expect(screen.getByText('1.200 kg')).toBeTruthy();
-        expect(screen.getByText('30 min')).toBeTruthy();
+        // Week time (30 min trained) duplicates the last-session duration text.
+        expect(screen.getAllByText('30 min').length).toBeGreaterThanOrEqual(2);
         // 60x10 beats the 50x10 best → one PR chip.
         expect(screen.getByText('×1')).toBeTruthy();
+        // Week time + previous sessions come from real log data.
+        expect(screen.getByText('Tiempo entrenado')).toBeTruthy();
+        expect(screen.getByText('Sesiones recientes')).toBeTruthy();
     });
 
     it('shows a friendly empty state without sessions', () => {
         renderStrip([]);
         expect(screen.getByText('0/3')).toBeTruthy();
-        expect(screen.getByText('Todavía no hay sesiones. ¡La primera cuenta doble!')).toBeTruthy();
+        expect(screen.getByText('Todavía no hay sesiones esta semana.')).toBeTruthy();
     });
 
     it('renders in English', () => {
         renderStrip([], 'en');
         expect(screen.getByText('This week')).toBeTruthy();
-        expect(screen.getByText('No sessions yet. The first one counts double!')).toBeTruthy();
+        expect(screen.getByText('No sessions logged this week yet.')).toBeTruthy();
     });
 });

@@ -21,7 +21,8 @@ vi.mock('../../context/AppContext', () => ({
         config: { rpEnabled: false },
         logs: mockLogs,
         userProfile: { bodyWeight: 80 }
-    })
+    }),
+    useAppConfig: () => ({ config: { rpEnabled: false }, setConfig: vi.fn() }),
 }));
 
 // Mock TimerContext

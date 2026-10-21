@@ -14,22 +14,27 @@ describe('Q1: emulator gating logic', () => {
         expect(shouldUseFirebaseEmulator({ VITE_FIREBASE_EMULATOR: '1' }, { isDev: true, mode: 'test' })).toBe(true);
     });
 
-    it('is inactive with the flag in a production build', () => {
-        expect(shouldUseFirebaseEmulator({ VITE_FIREBASE_EMULATOR: '1' }, { isDev: false, mode: 'production' })).toBe(false);
+    it('is inactive with the flag in a production build, including native runtime', () => {
+        expect(shouldUseFirebaseEmulator({ VITE_FIREBASE_EMULATOR: '1' }, { isDev: false, mode: 'production', isNative: true })).toBe(false);
     });
 
     it('is inactive without the flag even in DEV', () => {
         expect(shouldUseFirebaseEmulator({}, { isDev: true, mode: 'development' })).toBe(false);
         expect(shouldUseFirebaseEmulator({ VITE_FIREBASE_EMULATOR: '0' }, { isDev: true, mode: 'test' })).toBe(false);
     });
-});
+    it('is active for the explicit Capacitor debug mode only in a native runtime', () => {
+        const emulatorEnv = { VITE_FIREBASE_EMULATOR: '1' };
+        expect(shouldUseFirebaseEmulator(emulatorEnv, { isDev: false, mode: 'capacitor', isNative: true })).toBe(true);
+        expect(shouldUseFirebaseEmulator(emulatorEnv, { isDev: false, mode: 'capacitor', isNative: false })).toBe(false);
+    });
 
+});
 describe.skipIf(!existsSync('dist'))('Q1: dist/ contains no emulator hosts', () => {
     it('no bundled asset references the emulator endpoints', () => {
         const dir = join('dist', 'assets');
         const files = readdirSync(dir).filter((f) => f.endsWith('.js'));
         expect(files.length).toBeGreaterThan(0);
-        const banned = ['127.0.0.1:9099', '127.0.0.1:8085', 'localhost:9099', 'localhost:8085'];
+        const banned = ['127.0.0.1:9099', '127.0.0.1:8085', 'localhost:9099', 'localhost:8085', '10.0.2.2:9099', '10.0.2.2:8085'];
         for (const file of files) {
             const content = readFileSync(join(dir, file), 'utf8');
             for (const host of banned) {

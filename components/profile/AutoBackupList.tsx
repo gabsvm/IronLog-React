@@ -46,7 +46,7 @@ export const AutoBackupList: React.FC<AutoBackupListProps> = ({ lang, onRestored
     };
 
     return (
-        <div className="card-reference p-4 space-y-2">
+        <div className="gl-panel space-y-2 p-4">
             <div className="label-reference mb-1">{t.autoBackups}</div>
             {backups === null || backups.length === 0 ? (
                 <div className="text-xs text-muted">{t.autoBackupsEmpty}</div>
@@ -54,14 +54,14 @@ export const AutoBackupList: React.FC<AutoBackupListProps> = ({ lang, onRestored
                 <div className="divide-y divide-border-subtle">
                     {[...backups].reverse().map((backup) => (
                         <div key={backup.at} className="flex items-center justify-between gap-2 py-2">
-                            <span className="flex items-center gap-2 text-xs font-medium text-white">
+                            <span className="flex items-center gap-2 text-xs font-medium text-[rgb(var(--text-primary))]">
                                 <Icon name="CloudDownload" size={14} className="text-muted" />
                                 {new Date(backup.at).toLocaleString(lang)}
                             </span>
                             <button
                                 type="button"
                                 onClick={() => setPendingAt(backup.at)}
-                                className="px-3 py-1.5 text-xs rounded-xl font-bold bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                            className="gl-quiet min-h-[44px] px-4 text-xs"
                             >
                                 {t.restore}
                             </button>

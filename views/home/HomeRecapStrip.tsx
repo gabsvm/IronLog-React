@@ -1,3 +1,4 @@
+import { getLogBodyWeight, getSetLoadVolume } from '../../utils/trainingMetrics';
 import { pickLang } from '../../utils/i18n';
 import { formatDurationShort } from '../../utils';
 import React, { useMemo } from 'react';
@@ -30,6 +31,30 @@ export const HomeRecapStrip: React.FC<Props> = React.memo(({ logs, meso, planned
         [logs, meso.id, meso.week, plannedDays],
     );
     const last = useMemo(() => lastSessionSummary(logs, meso.id), [logs, meso.id]);
+    const weekMin = useMemo(() => {
+        let sec = 0;
+        for (const log of Array.isArray(logs) ? logs : []) {
+            if (!log || log.skipped || log.mesoId !== meso.id || log.week !== meso.week) continue;
+            sec += Number(log.duration) || 0;
+        }
+        return Math.round(sec / 60);
+    }, [logs, meso.id, meso.week]);
+    const recent = useMemo(() => {
+        const cands = (Array.isArray(logs) ? logs : [])
+            .filter((log) => !!log && !log.skipped && log.mesoId === meso.id)
+            .sort((a, b) => (Number(b.endTime) || 0) - (Number(a.endTime) || 0));
+        return cands.slice(1, 4);
+    }, [logs, meso.id]);
+    const recentVolumeKg = (log: Log): number => {
+        const bodyWeight = getLogBodyWeight(log);
+        let volumeKg = 0;
+        for (const ex of log.exercises || []) {
+            for (const set of ex?.sets || []) {
+                if (set?.completed && !set?.skipped) volumeKg += getSetLoadVolume(set, ex, bodyWeight);
+            }
+        }
+        return volumeKg;
+    };
     const w = t.homeRecap;
 
     const pct = progress.planned > 0 ? Math.min(100, Math.round((progress.done / progress.planned) * 100)) : 0;
@@ -74,6 +99,11 @@ export const HomeRecapStrip: React.FC<Props> = React.memo(({ logs, meso, planned
                 </div>
             </div>
 
+            <div className="flex items-center justify-between gap-3">
+                <span className="text-xs font-semibold text-muted">{w.weekTime}</span>
+                <span className="gl-num text-xs font-black text-[rgb(var(--text-primary))]">{weekMin > 0 ? formatDurationShort(weekMin * 60) : '0 min'}</span>
+            </div>
+
             {last && lastDate ? (
                 <div className="border-t border-border-subtle pt-2.5">
                     <p className="text-xs font-semibold text-muted mb-1.5">
@@ -92,6 +122,27 @@ export const HomeRecapStrip: React.FC<Props> = React.memo(({ logs, meso, planned
                 </div>
             ) : (
                 <p className="border-t border-border-subtle pt-2.5 text-xs text-zinc-500">{w.empty}</p>
+            )}
+            {recent.length > 0 && (
+                <div className="border-t border-border-subtle pt-2.5">
+                    <p className="text-xs font-semibold text-muted mb-1.5">
+                        {w.recentTitle}
+                    </p>
+                    <ul className="space-y-1.5">
+                        {recent.map((log, idx) => {
+                            const date = new Date(Number(log.endTime) || 0).toLocaleDateString(pickLang(lang, { es: 'es-AR', en: 'en-US' }), { day: 'numeric', month: 'short' });
+                            const mins = Math.round((Number(log.duration) || 0) / 60);
+                            const vol = Math.round(toDisplay(recentVolumeKg(log), unit)).toLocaleString(pickLang(lang, { es: 'es-AR', en: 'en-US' }));
+                            return (
+                                <li key={`${String(Number(log.endTime) || 0)}-${idx}`} className="flex items-center gap-2 text-xs text-zinc-300 flex-wrap">
+                                    <span className="font-bold text-white">{date}</span>
+                                    <span>{mins > 0 ? formatDurationShort(mins * 60) : '<1 min'}</span>
+                                    <span>{vol} {unitLabel(unit).toLowerCase()}</span>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                </div>
             )}
         </section>
     );

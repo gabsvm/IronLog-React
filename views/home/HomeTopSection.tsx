@@ -8,6 +8,7 @@ import type { HomeViewState } from './useHomeViewState';
 
 export const HomeTopSection: React.FC<{ state: HomeViewState }> = ({ state }) => {
     const { uniqueDaysDone, nextWorkoutIdx, activeMeso, t, h, lang, kongBlock, isPro, checkPro, setShowPlanActions, setShowGuidelines, setShowKongHub, currentGuidelineImages, safeProgram, selectedDayIdx, setSelectedDayIdx } = state;
+    const todayLabel = new Date().toLocaleDateString(pickLang(lang, { es: 'es-ES', en: 'en-US' }), { weekday: 'long', day: 'numeric', month: 'long' });
     if (!activeMeso) return null;
     return (
         <>
@@ -15,7 +16,8 @@ export const HomeTopSection: React.FC<{ state: HomeViewState }> = ({ state }) =>
             {/* 1. Program Name, Badges & Plan Actions */}
             <div className={`flex items-start justify-between gap-3 pt-1 ${kongBlock ? 'kong-home-header' : ''}`}>
                 <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted first-letter:uppercase">{todayLabel}</p>
+                    <div className="mt-1 flex items-center gap-2 flex-wrap">
                         <h2 className="text-2xl font-black text-white tracking-[-0.03em] truncate">{activeMeso.name}</h2>
                         {kongBlock && (
                             <button

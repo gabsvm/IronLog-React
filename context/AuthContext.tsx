@@ -4,7 +4,7 @@ import { SubscriptionTier, UserSubscription } from '../types';
 import { getFirebaseAuthServices, getFirebaseFirestoreServices, isFirebaseConfigured } from '../lib/firebaseLoader';
 import { scheduleWhenIdle } from '../lib/idle';
 import { DEFAULT_FREE_SUBSCRIPTION, createLocalDemoSubscription, resolveAuthoritativeSubscription, canGrantDemo } from '../services/entitlementService';
-import { AccountDeletionError, clearAccountDeletionLocalState, deleteCloudAccount } from '../services/accountDeletion';
+import { AccountDeletionError, clearAccountDeletionLocalState, deleteCloudAccount, type AccountDeletionResult } from '../services/accountDeletion';
 import { resetLocalData } from '../services/localDataReset';
 import { isAdminIdentity } from '../constants/admin';
 
@@ -24,7 +24,7 @@ interface AuthContextType {
     refreshSubscription: () => Promise<UserSubscription>;
     startDemo: () => Promise<void>;
     resetPassword: (email: string) => Promise<void>;
-    deleteAccount: (password: string, opts?: { wipeLocalData?: boolean }) => Promise<void>;
+    deleteAccount: (password: string, opts?: { wipeLocalData?: boolean }) => Promise<AccountDeletionResult>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -291,7 +291,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (!auth || !db) {
             throw new AccountDeletionError('unavailable');
         }
-        await deleteCloudAccount(currentUser.uid, currentUser.email, password, { auth, authApi, db, firestoreApi });
+        const result = await deleteCloudAccount(currentUser.uid, currentUser.email, password, { auth, authApi, db, firestoreApi });
         await clearAccountDeletionLocalState(currentUser.uid);
         if (opts?.wipeLocalData) {
             await resetLocalData();
@@ -305,6 +305,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsGuest(false);
         setIsAdmin(false);
         setSubscription(DEFAULT_FREE_SUBSCRIPTION);
+        return result;
     };
 
     const clearError = () => setError(null);

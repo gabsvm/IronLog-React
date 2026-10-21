@@ -40,7 +40,7 @@ export const ReminderSettingsRow: React.FC<ReminderSettingsRowProps> = ({ lang, 
                 <span className="w-8 h-8 rounded-lg bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
                     <Icon name="Bell" size={17} />
                 </span>
-                <div className="flex-1 text-sm font-medium text-white">{r.enable}</div>
+                <div className="flex-1 text-sm font-medium text-[rgb(var(--text-primary))]">{r.enable}</div>
                 <button
                     type="button"
                     onClick={() => onChange({ ...config, enabled: !config.enabled })}
@@ -54,7 +54,7 @@ export const ReminderSettingsRow: React.FC<ReminderSettingsRowProps> = ({ lang, 
             {config.enabled && (
                 <>
                     <div>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">{r.days}</p>
+                        <p className="mb-2 text-xs font-bold uppercase tracking-wider text-muted">{r.days}</p>
                         <div className="flex gap-1.5" role="group" aria-label={r.days}>
                             {CHIP_DAYS.map((day, i) => {
                                 const active = config.days.includes(day);
@@ -66,11 +66,11 @@ export const ReminderSettingsRow: React.FC<ReminderSettingsRowProps> = ({ lang, 
                                         aria-pressed={active}
                                         aria-label={r.weekdaysLong[i]}
                                         title={r.weekdaysLong[i]}
-                                        className={`w-9 h-9 rounded-full text-xs font-black transition-all shrink-0 ${
-                                            active
-                                                ? 'bg-primary-500 text-black shadow-sm'
-                                                : 'bg-surface-elevated text-muted border border-border-strong'
-                                        }`}
+                                    className={`flex h-11 min-w-[44px] items-center justify-center rounded-full px-2 text-xs font-black transition-all shrink-0 ${
+                                        active
+                                            ? 'bg-primary-500 text-black shadow-sm'
+                                            : 'border border-[rgb(var(--border-strong))] bg-[rgb(var(--surface-elevated))] text-muted'
+                                    }`}
                                     >
                                         {r.weekdaysShort[i]}
                                     </button>
@@ -79,13 +79,13 @@ export const ReminderSettingsRow: React.FC<ReminderSettingsRowProps> = ({ lang, 
                         </div>
                     </div>
                     <label className="flex items-center justify-between gap-2">
-                        <span className="text-sm font-medium text-white">{r.time}</span>
+                        <span className="text-sm font-medium text-[rgb(var(--text-primary))]">{r.time}</span>
                         <input
                             type="time"
                             value={`${pad2(config.hour)}:${pad2(config.minute)}`}
                             onChange={(e) => handleTime(e.target.value)}
                             aria-label={r.time}
-                            className="rounded-xl border border-border-subtle bg-zinc-100 dark:bg-zinc-800 px-3 py-2 text-sm font-bold text-zinc-900 dark:text-white outline-none focus:border-primary-500"
+                            className="min-h-[48px] rounded-xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated))] px-3 text-base font-bold text-[rgb(var(--text-primary))] outline-none focus:border-primary-500"
                         />
                     </label>
                 </>

@@ -65,7 +65,7 @@ export const ProgramCompletionView: React.FC<Props> = ({ meso, logs, onFinish, o
   ];
 
   return (
-    <div className="fixed inset-0 z-modal flex items-end justify-center overflow-y-auto bg-black/70 p-4 pb-safe pt-safe backdrop-blur-sm sm:items-center">
+    <div className="fixed inset-0 z-modal flex items-end justify-center overflow-y-auto bg-black/70 p-4 pb-safe pt-safe backdrop-blur-sm sm:items-center pointer-events-auto">
       <div className="w-full max-w-md rounded-3xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-6 text-[rgb(var(--text-primary))] shadow-2xl">
         <p className="text-xs font-black uppercase tracking-[0.2em] text-primary-500">KONG</p>
         <h1 className="mt-2 text-3xl font-black">{TRANSLATIONS[lang].copy.programCompletion.kongComplete}</h1>

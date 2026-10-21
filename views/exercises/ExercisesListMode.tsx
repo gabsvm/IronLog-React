@@ -25,12 +25,12 @@ export const ExercisesListMode: React.FC<{ state: ExercisesViewState }> = ({ sta
                                 value={searchQuery}
                                 onChange={e => setSearchQuery(e.target.value)}
                                 placeholder={ev.searchPh}
-                                className="premium-form-input w-full py-3 pl-10 pr-9 font-medium"
+                                className="gl-input py-2 pl-10 pr-9 font-medium"
                             />
                             {searchQuery && (
                                 <button
                                     onClick={() => setSearchQuery('')}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
+                                    className="absolute right-2 top-1/2 flex min-h-[44px] min-w-[44px] -translate-y-1/2 items-center justify-center rounded-lg text-muted hover:text-[rgb(var(--text-primary))]"
                                     aria-label={pickLang(lang, { es: 'Limpiar búsqueda', en: 'Clear search' })}
                                 >
                                     <Icon name="X" size={14} />
@@ -39,12 +39,13 @@ export const ExercisesListMode: React.FC<{ state: ExercisesViewState }> = ({ sta
                         </div>
 
                         {/* Category filter tabs */}
-                        <div className="flex gap-2">
+                        <div className="flex gap-2" role="group" aria-label={ev.filterAll}>
                             {(['all', 'custom', 'archived'] as const).map(cat => (
                                 <button
                                     key={cat}
                                     onClick={() => setFilterCategory(cat)}
-                                    className={`premium-filter-pill ${
+                                    aria-pressed={filterCategory === cat}
+                                    className={`min-h-[44px] rounded-full px-4 text-xs font-bold transition-colors ${
                                         filterCategory === cat
                                             ? 'bg-primary-500 text-black shadow-sm'
                                             : 'bg-[rgb(var(--surface-elevated))] text-[rgb(var(--text-secondary))]'
@@ -63,9 +64,10 @@ export const ExercisesListMode: React.FC<{ state: ExercisesViewState }> = ({ sta
                         <div className="flex gap-1.5 overflow-x-auto no-scrollbar py-0.5">
                             <button
                                 onClick={() => setSelectedMuscle('ALL')}
-                                className={`premium-filter-pill shrink-0 whitespace-nowrap ${
+                                aria-pressed={selectedMuscle === 'ALL'}
+                                className={`min-h-[44px] shrink-0 whitespace-nowrap rounded-full px-4 text-xs font-bold transition-colors ${
                                     selectedMuscle === 'ALL'
-                                        ? 'bg-primary-500 text-zinc-950'
+                                        ? 'bg-primary-500 text-black shadow-sm'
                                         : 'bg-[rgb(var(--surface-elevated))] text-[rgb(var(--text-secondary))]'
                                 }`}
                             >
@@ -75,9 +77,9 @@ export const ExercisesListMode: React.FC<{ state: ExercisesViewState }> = ({ sta
                                 <button
                                     key={m}
                                     onClick={() => setSelectedMuscle(m)}
-                                    className={`premium-filter-pill shrink-0 whitespace-nowrap ${
+                                    className={`min-h-[44px] shrink-0 whitespace-nowrap rounded-full px-4 text-xs font-bold transition-colors ${
                                         selectedMuscle === m
-                                            ? 'bg-primary-500/20 text-primary-400 border border-primary-500/40'
+                                            ? 'border border-primary-500/40 bg-primary-500/20 text-primary-500'
                                             : 'bg-[rgb(var(--surface-elevated))] text-[rgb(var(--text-secondary))]'
                                     }`}
                                 >
@@ -103,12 +105,12 @@ export const ExercisesListMode: React.FC<{ state: ExercisesViewState }> = ({ sta
                                         className="flex items-center justify-between gap-2 rounded-xl border border-violet-500/30 bg-violet-500/10 px-3 py-2"
                                     >
                                         <div className="min-w-0 flex-1">
-                                            <p className="truncate text-xs font-bold text-zinc-900 dark:text-white">
+                                            <p className="truncate text-xs font-bold text-[rgb(var(--text-primary))]">
                                                 {getTranslated(source.name, lang)}
                                                 <span className="mx-1 text-violet-400">→</span>
                                                 {getTranslated(target.name, lang)}
                                             </p>
-                                            <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-500">
+                                            <p className="text-xs font-medium uppercase tracking-wide text-muted">
                                                 {s.reason === 'same-name' ? t.merge.reasonSameName : t.merge.reasonSharedAlias}
                                             </p>
                                         </div>
@@ -118,7 +120,7 @@ export const ExercisesListMode: React.FC<{ state: ExercisesViewState }> = ({ sta
                                                 setMergingExerciseId(source.id);
                                                 setMergeCandidate(target);
                                             }}
-                                            className="shrink-0 rounded-lg bg-violet-500/20 px-3 py-1.5 text-xs font-bold text-violet-300 hover:bg-violet-500/30"
+                                            className="min-h-[44px] shrink-0 rounded-lg bg-violet-500/20 px-4 text-xs font-bold text-violet-400 hover:bg-violet-500/30"
                                             aria-label={`${t.merge.confirmAction}: ${getTranslated(source.name, lang)} → ${getTranslated(target.name, lang)}`}
                                         >
                                             {t.merge.confirmAction}
@@ -132,7 +134,7 @@ export const ExercisesListMode: React.FC<{ state: ExercisesViewState }> = ({ sta
                     {/* List */}
                     <div className="flex-1 overflow-hidden relative">
                         {filteredExercises.length === 0 ? (
-                            <div className="h-48 flex flex-col items-center justify-center text-center p-6 text-zinc-400">
+                            <div className="flex h-48 flex-col items-center justify-center p-6 text-center text-muted">
                                 <Icon name="Dumbbell" size={32} className="mb-2 opacity-40" />
                                 <p className="text-sm font-medium">
                                     {ev.noResults}
@@ -150,7 +152,7 @@ export const ExercisesListMode: React.FC<{ state: ExercisesViewState }> = ({ sta
                         <div className="fixed bottom-[calc(1.5rem+var(--safe-area-bottom))] right-6 z-10">
                             <button
                                 onClick={() => setMode('create')}
-                                className="w-14 h-14 bg-primary-500 rounded-full text-black shadow-xl shadow-primary-500/25 flex items-center justify-center hover:scale-105 active:scale-95 transition-all"
+                                className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-500 text-black shadow-xl shadow-primary-500/25 transition-all hover:scale-105 active:scale-95"
                                 aria-label={ev.createEx}
                             >
                                 <Icon name="Plus" size={24} />
