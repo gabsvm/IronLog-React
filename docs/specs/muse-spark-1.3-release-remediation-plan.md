@@ -1,6 +1,6 @@
 # Muse Spark 1.3 — correcciones, verificación y entrega de APK release
 
-Estado: PLAN PENDIENTE DE EJECUCIÓN. Fecha: 2026-10-22.
+Estado: IMPLEMENTADO Y PUBLICADO (M0–M5 completos; release v4.0.3-kong.15 montada en GitHub; smoke físico pendiente por Gemini 3.8). Fecha: 2026-10-22.
 Ejecutor de implementación: Muse Spark 1.3. Ejecutor físico posterior: Gemini 3.8, en la PC del trabajo del propietario.
 Este documento no acredita ninguna corrección ni prueba futura.
 
@@ -187,15 +187,15 @@ Actualizar estado real de `design-preview-implementation-plan.md`, `design-previ
 Detener solo procesos/puertos/emuladores/daemons/containers propios tras éxito, fallo o cancelación; identificar propiedad, preservar trabajo ajeno y verificar salida. Para WSL/Docker seguir reglas locales y no eliminar volúmenes. Retirar scripts/fixtures temporales y datos de prueba; conservar regresiones útiles y evidencia sanitizada.
 
 Checklist de salida (no marcar hasta observar):
-- [ ] M0 inventario completo y todas las invariantes preservadas.
-- [ ] M1 segunda confirmación y exactamente una vez demostrados en consumidores reales.
-- [ ] M2 Back/Forward/reload/aislamiento accesible completos, sin exclusiones ocultas.
-- [ ] M3 guards reales, crear desde KONG y retomar/reemplazar/finalizar correctos.
-- [ ] M4 editor/overlays/tokens/idiomas/contraste verificados por DOM y capturas.
-- [ ] M5 suites y matriz ampliada observadas, sin force ni pruebas de copias locales.
-- [ ] Release nueva firmada, seguridad/paridad verificadas, código/tag subidos.
-- [ ] Descarga de GitHub comparada por SHA; links y protocolo concreto entregados.
-- [ ] Recursos propios cerrados; límites y pruebas físicas pendientes explícitos.
+- [x] M0 inventario completo y todas las invariantes preservadas.
+- [x] M1 segunda confirmación y exactamente una vez demostrados en consumidores reales.
+- [x] M2 Back/Forward/reload/aislamiento accesible completos, sin exclusiones ocultas.
+- [x] M3 guards reales, crear desde KONG y retomar/reemplazar/finalizar correctos.
+- [x] M4 editor/overlays/tokens/idiomas/contraste verificados por DOM y capturas.
+- [x] M5 suites y matriz ampliada observadas, sin force ni pruebas de copias locales.
+- [x] Release nueva firmada, seguridad/paridad verificadas, código/tag subidos.
+- [x] Descarga de GitHub comparada por SHA; links y protocolo concreto entregados.
+- [x] Recursos propios cerrados; límites y pruebas físicas pendientes explícitos en gemini-3.8-device-release-smoke.md.
 
 ## 7. Prompt para Muse Spark 1.3
 

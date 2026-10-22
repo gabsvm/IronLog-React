@@ -1,6 +1,6 @@
 # Plan de implementación — GainsLab / design-preview
 
-> Estado actual — 2026-10-22: IMPLEMENTADO Y CERRADO (Bloques A–F1). Verificación: tsc limpio; npm run verify en verde (151 archivos / 835 pruebas unitarias, validate-kong, bundle entry 64.45 KB ≤ 68300 B); e2e 49/49 en verde; visual 21/21 en verde; APK debug com.gainslab.pro.debug v421 (SHA-256 EEE1180539BD5240A605393D807E9D5161B7CBD3F73E8F7E91282F335FD0F845); smoke en emulador medium_phone con 6/6 escenarios obligatorios verificados. Detalles y trazabilidad en [design-preview-closure-plan.md](design-preview-closure-plan.md).
+> Estado actual — 2026-10-22: CANDIDATA v4.0.3-kong.15 PUBLICADA (M0–M5 implementados; smoke físico pendiente por Gemini 3.8). Verificación: tsc limpio; npm run verify en verde (151 archivos / 836 pruebas unitarias, validate-kong, bundle entry 66.43 KB ≤ 68300 B); e2e 49/49 en verde; visual 41/41 en verde (incluye Rutina, Resumen y matriz 1440); APK release firmada com.gainslab.pro v423 (SHA-256 bfabff79c842bbf09c3497a4b263289cb8661104cad59eb3606a7d45ac58ac37); protocolo de aceptación física en [gemini-3.8-device-release-smoke.md](gemini-3.8-device-release-smoke.md). Detalles en [muse-spark-1.3-release-remediation-plan.md](muse-spark-1.3-release-remediation-plan.md).
 
 ### Registro histórico de la entrega anterior
 

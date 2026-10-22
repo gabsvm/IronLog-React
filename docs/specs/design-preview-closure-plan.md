@@ -1,14 +1,13 @@
 # Cierre de design-preview — plan para Gemini 3.8 Flash
 
-Estado: IMPLEMENTADO Y PUBLICADO (Bloques A–F2 completos). Fecha: 2026-10-22.
+Estado: CANDIDATA v4.0.3-kong.15 PUBLICADA (M0–M5 implementados; smoke físico pendiente por Gemini 3.8). Fecha: 2026-10-22.
 Verificación final:
 - TypeScript limpio (`tsc --noEmit` sin errores).
-- Verificación integrada (`npm run verify`): 151 archivos / 835 pruebas unitarias en verde, validate-kong passed, bundle within budget (entry 64.45 KB ≤ 68300 B).
+- Verificación integrada (`npm run verify`): 151 archivos / 836 pruebas unitarias en verde, validate-kong passed, bundle within budget (entry 66.43 KB ≤ 68300 B).
 - Playwright E2E: 49/49 pruebas en verde (`node node_modules/@playwright/test/cli.js test`).
-- Playwright Visual: 21/21 pruebas en verde (`node node_modules/@playwright/test/cli.js test --config playwright.visual.config.ts`).
-- APK debug final: `com.gainslab.pro.debug` v421 (`4.0.3-kong.13-debug`), SHA-256 `EEE1180539BD5240A605393D807E9D5161B7CBD3F73E8F7E91282F335FD0F845`.
-- Smoke Android: 6/6 escenarios obligatorios ejecutados y verificados en emulador `medium_phone` (Android 36).
-- Release de producción: `com.gainslab.pro` v422 (`4.0.3-kong.14`), SHA-256 `ef6dac6d4fb7f99778177a89becf761a0d52af71c944278151c4af32767fc86d`, publicada en GitHub y verificada por descarga.
+- Playwright Visual: 41/41 pruebas en verde (`npm run test:visual`), incluyendo Rutina, Resumen y matriz 1440 px.
+- Release candidata firmada: `com.gainslab.pro` v423 (`4.0.3-kong.15`), SHA-256 `bfabff79c842bbf09c3497a4b263289cb8661104cad59eb3606a7d45ac58ac37`, publicada en GitHub y verificada por descarga.
+- Protocolo físico de aceptación: [gemini-3.8-device-release-smoke.md](gemini-3.8-device-release-smoke.md) (78 subcasos).
 
 ## 1. Objetivo y límites
 
