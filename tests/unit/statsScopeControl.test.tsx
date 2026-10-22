@@ -131,7 +131,7 @@ describe('L2: single scope control in the Stats wrapper', () => {
     it('shows the scope selector in all three sections', async () => {
         render(<StatsView />);
         expect(scopeTablist()).toBeTruthy();
-        fireEvent.click(sectionTab('Progreso'));
+        fireEvent.click(sectionTab('Fuerza'));
         await waitFor(() => expect(scopeTablist()).toBeTruthy());
         fireEvent.click(sectionTab('Volumen'));
         await waitFor(() => expect(scopeTablist()).toBeTruthy());
@@ -208,7 +208,6 @@ describe('L2: single scope control in the Stats wrapper', () => {
         await waitFor(() => expect(cardValue('Series')).toBe(donutTotal()));
         await waitFor(() => expect(cardValue('Músculos')).toBe(positiveMuscleCount()));
         expect(screen.getByRole('heading', { name: 'Estadísticas' })).toBeTruthy();
-        expect(screen.getByText(/Plan actual/)).toBeTruthy();
         fireEvent.click(sectionTab('Volumen'));
         await waitFor(() => expect(positiveMuscleCount()).toBe(1));
     });
@@ -223,8 +222,8 @@ describe('L2: single scope control in the Stats wrapper', () => {
         expect(cardValue('Músculos')).toBe(2);
         await waitFor(() => expect(cardValue('Series')).toBe(donutTotal()));
         await waitFor(() => expect(positiveMuscleCount()).toBe(2));
-        // Scope tab + header label under the title.
-        expect(screen.getAllByText('Todo el historial')).toHaveLength(2);
+        // The scope tab is the single place that names the scope.
+        expect(scopeTab('Todo el historial').getAttribute('aria-selected')).toBe('true');
         fireEvent.click(sectionTab('Volumen'));
         await waitFor(() => expect(positiveMuscleCount()).toBe(2));
     });
@@ -244,7 +243,7 @@ describe('L2: single scope control in the Stats wrapper', () => {
         expect(cardValue('Series')).toBe(4);
         fireEvent.click(sectionTab('Volumen'));
         await waitFor(() => expect(scopeTab('Este plan').getAttribute('aria-selected')).toBe('true'));
-        fireEvent.click(sectionTab('Progreso'));
+        fireEvent.click(sectionTab('Fuerza'));
         await waitFor(() => expect(scopeTab('Todo el historial').getAttribute('aria-selected')).toBe('true'));
         // Cards follow the visible tab: history totals in progress.
         expect(cardValue('Series')).toBe(16);
@@ -258,7 +257,7 @@ describe('L2: single scope control in the Stats wrapper', () => {
     it('M1: an explicit choice wins in every tab', async () => {
         render(<StatsView />);
         await waitFor(() => expect(calcOverviewSpy).toHaveBeenCalled());
-        fireEvent.click(sectionTab('Progreso'));
+        fireEvent.click(sectionTab('Fuerza'));
         await waitFor(() => expect(scopeTab('Todo el historial').getAttribute('aria-selected')).toBe('true'));
         fireEvent.click(scopeTab('Este plan'));
         await waitFor(() => expect(calcChartSpy.mock.calls.some((c) => c[3] === 202)).toBe(true));
@@ -271,7 +270,7 @@ describe('L2: single scope control in the Stats wrapper', () => {
     it('M1: a stored v2 choice applies on mount in all tabs', async () => {
         await db.set('il_stats_scope_v2', 'plan');
         render(<StatsView />);
-        fireEvent.click(sectionTab('Progreso'));
+        fireEvent.click(sectionTab('Fuerza'));
         await waitFor(() => expect(scopeTab('Este plan').getAttribute('aria-selected')).toBe('true'));
         await waitFor(() => expect(calcChartSpy.mock.calls.some((c) => c[3] === 202)).toBe(true));
     });
@@ -282,7 +281,7 @@ describe('L2: single scope control in the Stats wrapper', () => {
         await waitFor(() => expect(calcOverviewSpy).toHaveBeenCalled());
         expect(scopeTab('Todo el historial').getAttribute('aria-selected')).toBe('true');
         expect(cardValue('Series')).toBe(16);
-        fireEvent.click(sectionTab('Progreso'));
+        fireEvent.click(sectionTab('Fuerza'));
         await waitFor(() => expect(scopeTab('Todo el historial').getAttribute('aria-selected')).toBe('true'));
         fireEvent.click(sectionTab('Volumen'));
         await waitFor(() => expect(scopeTab('Todo el historial').getAttribute('aria-selected')).toBe('true'));
@@ -339,7 +338,7 @@ describe('L2: single scope control in the Stats wrapper', () => {
         await waitFor(() => expect(calcOverviewSpy).toHaveBeenCalled());
         // Plan scope (overview default): only e-sh counts.
         expect(cardValue('Ejercicios')).toBe(1);
-        fireEvent.click(sectionTab('Progreso'));
+        fireEvent.click(sectionTab('Fuerza'));
         // History scope: e-back + e-sh; the empty and skipped-only ones are out.
         await waitFor(() => expect(screen.getByText('2 ejercicios con historial')).toBeTruthy());
         expect(cardValue('Ejercicios')).toBe(2);
@@ -353,7 +352,7 @@ describe('L2: single scope control in the Stats wrapper', () => {
         // Overview (plan default): cards match the plan doughnut.
         await waitFor(() => expect(cardValue('Series')).toBe(donutTotal()));
         expect(cardValue('Series')).toBe(4);
-        fireEvent.click(sectionTab('Progreso'));
+        fireEvent.click(sectionTab('Fuerza'));
         // Progress (history default): header cards switch to history totals.
         await waitFor(() => expect(cardValue('Series')).toBe(16));
         expect(cardValue('Músculos')).toBe(2);

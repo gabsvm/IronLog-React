@@ -28,7 +28,7 @@ interface RoutineViewProps {
  * so Hoy and Rutina apply identical behavior.
  */
 export const RoutineView: React.FC<RoutineViewProps> = ({ onStartDay, onEditProgram, onOpenExercises }) => {
-    const { program, lang, logs, setProgram, globalTemplates, personalTemplates, userProfile } = useApp();
+    const { program, lang, logs, setProgram, globalTemplates, personalTemplates, userProfile, exercises } = useApp();
     const activeMeso = useStore((state) => state.activeMeso);
     const setActiveMeso = useStore((state) => state.setActiveMeso);
     const activeSession = useStore((state) => state.activeSession);
@@ -53,74 +53,83 @@ export const RoutineView: React.FC<RoutineViewProps> = ({ onStartDay, onEditProg
     });
 
 
+    // Same rule as Hoy: a day counts as done once this week has a log for it.
+    const daysDone = new Set(
+        (Array.isArray(logs) ? logs : [])
+            .filter((log) => activeMeso && log.mesoId === activeMeso.id && log.week === activeMeso.week)
+            .map((log) => log.dayIdx),
+    );
+    const nextIdx = safeProgram.findIndex((_, idx) => !daysDone.has(idx));
+    const totalWeeks = activeMeso?.targetWeeks || activeMeso?.duration;
+    const slotName = (slot: { exerciseId?: string; muscle?: string }) => {
+        const def = slot.exerciseId ? exercises?.find((exercise) => exercise.id === slot.exerciseId) : undefined;
+        return def ? String(getTranslated(def.name, lang)) : String((t.muscle as Record<string, string>)[slot.muscle || ''] || slot.exerciseId || slot.muscle || '');
+    };
+    const actions = [
+        { key: 'quick', icon: 'Zap', label: t.startWorkout, onClick: () => requestQuickStart() },
+        { key: 'template', icon: 'Layers', label: rv.changeTemplate, onClick: () => setShowTemplates(true) },
+        { key: 'edit', icon: 'Settings2', label: t.editTemplate, onClick: onEditProgram },
+        { key: 'library', icon: 'Dumbbell', label: t.exercises, onClick: onOpenExercises },
+    ] as const;
+
     return (
         <div className="space-y-4 px-4 pb-28 pt-3">
             <div>
-                <p className="gl-eyebrow">{t.navRoutine}</p>
-                <h1 className="mt-1 text-2xl font-black tracking-tight text-[rgb(var(--text-primary))]">
+                <h1 className="text-2xl font-semibold tracking-tight text-[rgb(var(--text-primary))]">
                     {activeMeso ? activeMeso.name : t.navRoutine}
                 </h1>
                 {activeMeso && (
                     <p className="gl-num mt-1 text-xs font-medium text-muted">
-                        {t.week} {activeMeso.week}
-                        {activeMeso.targetWeeks || activeMeso.duration ? ` / ${activeMeso.targetWeeks || activeMeso.duration}` : ''}
-                        {' · '}{safeProgram.length} {t.navDiarySessions.toLowerCase()}
+                        {t.week} {activeMeso.week}{totalWeeks ? ` / ${totalWeeks}` : ''}
                     </p>
                 )}
             </div>
 
+            <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+            <div className="min-w-0 space-y-4">
             {isKong && activeMeso && (
                 <button
                     type="button"
                     onClick={() => setShowHub(true)}
-                    className="gl-panel flex w-full items-center gap-3 p-4 text-left"
+                    className="gl-panel flex min-h-[56px] w-full items-center gap-3 px-4 text-left"
                 >
-                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-500/10 text-primary-500">
-                        <Icon name="Layers" size={20} />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                        <span className="block text-sm font-bold text-[rgb(var(--text-primary))]">KONG</span>
-                        <span className="block truncate text-xs text-muted">{activeMeso.name}</span>
-                    </span>
+                    <Icon name="Layers" size={18} className="shrink-0 text-[rgb(var(--accent-text))]" />
+                    <span className="min-w-0 flex-1 text-sm font-semibold text-[rgb(var(--text-primary))]">KONG</span>
                     <Icon name="ChevronRight" size={18} className="shrink-0 text-muted" />
                 </button>
             )}
 
             {hasPlan ? (
-                <div className="space-y-2">
+                <ul className="gl-panel divide-y divide-[rgb(var(--border-subtle))]">
                     {safeProgram.map((day, idx) => {
                         const slots = day.slots || [];
-                        const totalSets = slots.reduce((sum: number, slot: { setTarget?: number }) => sum + (slot.setTarget || 3), 0);
+                        const dayName = String(getTranslated(day.dayName, lang));
                         const isDayActiveSession = Boolean(
                             activeSession && activeSession.mesoId === activeMeso?.id && activeSession.dayIdx === idx,
                         );
+                        const isDone = daysDone.has(idx);
+                        // One primary action: the session in progress, else the next day to train.
+                        const isPrimary = isDayActiveSession || (!activeSession && idx === nextIdx);
                         return (
-                            <div key={day.id ?? idx} className={`gl-panel flex items-center gap-3 p-4 transition-colors ${isDayActiveSession ? 'border-primary-500/40 bg-primary-500/5' : ''}`}>
-                                <span className={`gl-num flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-bold ${isDayActiveSession ? 'bg-primary-500 text-[rgb(var(--accent-ink))]' : 'bg-[rgb(var(--surface-raised))] text-muted'}`}>
-                                    {idx + 1}
+                            <li key={day.id ?? idx} className="flex items-center gap-3 px-4 py-3.5">
+                                <span className={`gl-num flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-semibold ${isDone ? 'bg-primary-500/15 text-[rgb(var(--accent-text))]' : 'bg-[rgb(var(--surface-raised))] text-muted'}`}>
+                                    {isDone ? <Icon name="Check" size={16} strokeWidth={3} aria-label={t.completed} /> : idx + 1}
                                 </span>
                                 <span className="min-w-0 flex-1">
-                                    <span className="block truncate text-sm font-bold text-[rgb(var(--text-primary))]">
-                                        {String(getTranslated(day.dayName, lang))}
-                                    </span>
-                                    <span className="gl-num block text-xs text-muted">
-                                        {isDayActiveSession ? (
-                                            <span className="font-semibold text-primary-500 inline-flex items-center gap-1.5">
-                                                <span className="h-1.5 w-1.5 rounded-full bg-primary-500 animate-pulse" />
-                                                {pickLang(lang, { es: 'En curso', en: 'In progress' })}
-                                            </span>
-                                        ) : (
-                                            `${slots.length} ex · ${totalSets} series`
-                                        )}
+                                    <span className="block truncate text-sm font-semibold text-[rgb(var(--text-primary))]">{dayName}</span>
+                                    <span className="mt-0.5 block truncate text-xs text-muted">
+                                        {isDayActiveSession
+                                            ? <span className="font-semibold text-[rgb(var(--accent-text))]">{pickLang(lang, { es: 'En curso', en: 'In progress' })}</span>
+                                            : slots.map(slotName).filter(Boolean).join(' · ')}
                                     </span>
                                 </span>
                                 <button
                                     type="button"
                                     onClick={() => onStartDay(idx)}
                                     aria-label={isDayActiveSession
-                                        ? `${pickLang(lang, { es: 'Retomar', en: 'Resume' })}: ${String(getTranslated(day.dayName, lang))}`
-                                        : `${t.startWorkout}: ${String(getTranslated(day.dayName, lang))}`}
-                                    className={`gl-primary min-h-[44px] px-4 inline-flex items-center gap-1.5 font-bold text-xs ${isDayActiveSession ? 'bg-primary-500 text-[rgb(var(--accent-ink))] shadow-md' : ''}`}
+                                        ? `${pickLang(lang, { es: 'Retomar', en: 'Resume' })}: ${dayName}`
+                                        : `${t.startWorkout}: ${dayName}`}
+                                    className={`${isPrimary ? 'gl-primary' : 'gl-quiet'} !min-h-[44px] shrink-0 !px-3.5`}
                                 >
                                     {isDayActiveSession ? (
                                         <>
@@ -131,13 +140,13 @@ export const RoutineView: React.FC<RoutineViewProps> = ({ onStartDay, onEditProg
                                         <Icon name="Play" size={16} fill="currentColor" />
                                     )}
                                 </button>
-                            </div>
+                            </li>
                         );
                     })}
-                </div>
+                </ul>
             ) : (
                 <div className="gl-panel p-6 text-center">
-                    <p className="text-sm font-bold text-[rgb(var(--text-primary))]">{tp.newRoutine}</p>
+                    <p className="text-sm font-semibold text-[rgb(var(--text-primary))]">{tp.newRoutine}</p>
                     <p className="mt-1 text-xs leading-relaxed text-muted">{t.navRoutineEmptyBody}</p>
                     <div className="mt-4 grid grid-cols-2 gap-2">
                         <button type="button" onClick={() => setShowTemplates(true)} className="gl-primary min-h-[48px]">
@@ -149,31 +158,20 @@ export const RoutineView: React.FC<RoutineViewProps> = ({ onStartDay, onEditProg
                     </div>
                 </div>
             )}
+            </div>
 
-            <div className="grid grid-cols-2 gap-2">
-                <button type="button" onClick={() => setShowTemplates(true)} className="gl-quiet min-h-[48px]">
-                    <Icon name="Layers" size={16} />
-                    <span>{rv.changeTemplate}</span>
-                </button>
-                <button type="button" onClick={onEditProgram} className="gl-quiet min-h-[48px]">
-                    <Icon name="Settings2" size={16} />
-                    <span>{t.editTemplate}</span>
-                </button>
+            <ul className="gl-panel divide-y divide-[rgb(var(--border-subtle))]">
+                {actions.map((action) => (
+                    <li key={action.key}>
+                        <button type="button" onClick={action.onClick} className="flex min-h-[52px] w-full items-center gap-3 px-4 text-left text-sm font-medium text-[rgb(var(--text-primary))]">
+                            <Icon name={action.icon} size={18} className="shrink-0 text-muted" />
+                            <span className="min-w-0 flex-1">{action.label}</span>
+                            <Icon name="ChevronRight" size={16} className="shrink-0 text-muted" />
+                        </button>
+                    </li>
+                ))}
+            </ul>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-                <button type="button" onClick={() => requestQuickStart()} className="gl-quiet min-h-[48px]">
-                    <Icon name="Zap" size={16} />
-                    <span>{t.startWorkout}</span>
-                </button>
-                <button type="button" onClick={onOpenExercises} className="gl-quiet min-h-[48px]">
-                    <Icon name="Dumbbell" size={16} />
-                    <span>{t.exercises}</span>
-                </button>
-            </div>
-            <button type="button" onClick={onOpenExercises} className="gl-textbtn">
-                <span>{t.exercises}</span>
-                <Icon name="ArrowRight" size={16} />
-            </button>
 
             {showHub && activeMeso && (
                 <Suspense fallback={null}>

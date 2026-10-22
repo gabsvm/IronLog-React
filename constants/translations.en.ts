@@ -894,7 +894,6 @@ export const EN = {
         copyToFollowing: "Copy last set to the rest",
     },
     statsWrapper: {
-        customPlan: "CUSTOM",
         sectionsAria: "Stats sections",
         consistency: "Consistency",
         last4: "Last 4 months",

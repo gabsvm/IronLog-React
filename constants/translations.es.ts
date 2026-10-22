@@ -896,7 +896,6 @@ export const ES: TranslationDict = {
         copyToFollowing: "Copiar último set al resto",
     },
     statsWrapper: {
-        customPlan: "PERSONALIZADO",
         sectionsAria: "Secciones de estadísticas",
         consistency: "Consistencia",
         last4: "Últimos 4 meses",

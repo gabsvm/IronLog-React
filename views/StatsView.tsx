@@ -4,7 +4,6 @@ import { useApp, useAppPreferences, useAppConfig } from '../context/AppContext';
 import { ActivityHeatmap } from '../components/stats/ActivityHeatmap';
 import { StatsScopeSelector } from '../components/stats/StatsScopeSelector';
 import { StatsPeriodSelector } from '../components/stats/StatsPeriodSelector';
-import { Icon } from '../components/ui/Icon';
 import { PremiumTrendCard } from '../components/stats/PremiumTrendCard';
 import { buildPremiumInsights } from '../utils/premiumInsights';
 import { resolveWeightUnit } from '../utils/units';
@@ -89,20 +88,9 @@ export const StatsView: React.FC = () => {
         [filteredLogs, scopeMesoId],
     );
 
-    const publicPlanLabel = useMemo(() => {
-        if (!activeMeso?.mesoType) return null;
-        const raw = String(activeMeso.mesoType);
-        if (/^(tpl_|personal_)/i.test(raw)) {
-            return sw.customPlan;
-        }
-        const translated = (t.phases as any)?.[raw];
-        if (typeof translated === 'string' && translated.trim()) return translated;
-        return raw.replace(/[_-]+/g, ' ').trim().toUpperCase();
-    }, [activeMeso?.mesoType, t.phases, sw.customPlan]);
-
     const items: Array<{ id: StatsSection; es: string; en: string }> = [
         { id: 'overview', es: 'Resumen', en: 'Overview' },
-        { id: 'progress', es: 'Progreso', en: 'Progress' },
+        { id: 'progress', es: 'Fuerza', en: 'Strength' },
         { id: 'volume', es: 'Volumen', en: 'Volume' },
     ];
 
@@ -136,23 +124,10 @@ export const StatsView: React.FC = () => {
             </div>
 
             <section className="px-4 pb-3 pt-2">
-                <div className="flex items-end justify-between gap-3 px-1">
-                    <div className="min-w-0">
-                        <h2 className="text-[1.7rem] font-black tracking-[-0.05em] text-zinc-950 dark:text-white">{t.statsTitle}</h2>
-                        <p className="text-xs font-semibold tracking-normal text-muted">
-                            {scope === 'plan' && activeMeso
-                                ? `${t.currentPlan} · ${t.week} ${activeMeso.week}`
-                                : t.statsScopeHistory}
-                        </p>
-                    </div>
-                    {publicPlanLabel && (
-                        <span className="max-w-[46%] shrink-0 truncate rounded-full border border-primary-500/15 bg-primary-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-primary-700 dark:text-primary-300">
-                            {publicPlanLabel}
-                        </span>
-                    )}
-                </div>
+                {/* The nav and the scope control already say where you are; the title stays for assistive tech. */}
+                <h2 className="sr-only">{t.statsTitle}</h2>
 
-                <div className="mt-3 px-1">
+                <div className="px-1">
                     <StatsScopeSelector scope={scope} onChange={handleScopeChange} lang={lang} />
                 </div>
 
@@ -183,12 +158,9 @@ export const StatsView: React.FC = () => {
             >
                 {section === 'overview' && safeLogs.length > 0 && (
                     <div className="gl-panel mx-4 mb-3 p-4">
-                        <div className="mb-3 flex items-center gap-2">
-                            <Icon name="Activity" size={14} className="text-primary-500" />
-                            <div>
-                                <div className="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500">{sw.consistency}</div>
-                                <div className="text-xs text-muted">{sw.last4}</div>
-                            </div>
+                        <div className="mb-3 flex items-baseline justify-between gap-2">
+                            <h3 className="text-sm font-semibold text-[rgb(var(--text-primary))]">{sw.consistency}</h3>
+                            <span className="text-xs text-muted">{sw.last4}</span>
                         </div>
                         <ActivityHeatmap logs={safeLogs} />
                     </div>

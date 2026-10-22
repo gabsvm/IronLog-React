@@ -1,6 +1,5 @@
 import React from 'react';
 import { TRANSLATIONS } from '../../constants';
-import { Icon } from '../ui/Icon';
 import { STATS_PERIODS, type StatsPeriod } from '../../utils/statsScope';
 
 interface StatsPeriodSelectorProps {
@@ -24,10 +23,6 @@ export const StatsPeriodSelector: React.FC<StatsPeriodSelectorProps> = ({ period
     };
     return (
         <div className="flex items-center gap-2">
-            <span className="flex min-h-11 shrink-0 items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-muted">
-                <Icon name="Calendar" size={14} />
-                {s.periodLabel}
-            </span>
             <div className="flex flex-1 gap-1.5" role="radiogroup" aria-label={s.periodLabel}>
                 {STATS_PERIODS.map(option => {
                     const selected = period === option;

@@ -12,7 +12,7 @@ const PREMIUM_COPY = {
         previousSeven: 'vs. 7 días anteriores',
         noWeighted: 'Aún no hay series con peso registradas.',
         region: 'Tendencia reciente de entrenamiento',
-        recent: 'Tu evolución · últimos 28 días',
+        recent: 'Últimos 28 días',
         workingSets: 'Series de trabajo',
         lastSeven: 'últimos 7 días',
         chartAria: 'Series de trabajo por semana, de la más antigua a la actual',
@@ -26,7 +26,7 @@ const PREMIUM_COPY = {
         previousSeven: 'vs. previous 7 days',
         noWeighted: 'No weighted sets recorded yet.',
         region: 'Recent training trend',
-        recent: 'Your progress · last 28 days',
+        recent: 'Last 28 days',
         workingSets: 'Working sets',
         lastSeven: 'last 7 days',
         chartAria: 'Working sets by week, oldest to newest',
@@ -88,10 +88,10 @@ export const PremiumTrendCard: React.FC<Props> = ({ insights, lang, unit, scope 
                         </defs>
                         {[39, 80, 122].map(y => <line key={y} x1="15" y1={y} x2="325" y2={y} stroke="rgb(var(--border-strong))" strokeOpacity=".56" strokeDasharray="3 6" />)}
                         <path d={area} fill="url(#premium-trend-fill)" />
-                        <path className="premium-trend-line" d={line} fill="none" stroke="rgb(var(--primary-500))" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+                        <path className="premium-trend-line" d={line} fill="none" stroke="rgb(var(--accent-text))" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
                         {points.map((point, index) => (
                             <g key={index}>
-                                <circle cx={point.x} cy={point.y} r="5" fill="rgb(var(--primary-500))" stroke="rgb(var(--surface-raised))" strokeWidth="2" />
+                                <circle cx={point.x} cy={point.y} r="5" fill="rgb(var(--accent-text))" stroke="rgb(var(--surface-raised))" strokeWidth="2" />
                                 <text x={point.x} y={Math.max(15, point.y - 12)} textAnchor="middle" fontSize="12" fontWeight="700" fill="rgb(var(--text-primary))">{counts[index]}</text>
                             </g>
                         ))}

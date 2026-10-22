@@ -30,8 +30,10 @@ export const WeeklyReportCard: React.FC<WeeklyReportCardProps> = ({ report, week
     const changeText = change == null
         ? w.noBaseline
         : `${change > 0 ? '+' : ''}${change}%`;
-    const changeTone = change == null
-        ? 'text-zinc-500'
+    // A week still in progress naturally trails the previous one: keep it neutral until it's complete.
+    const weekOpen = report.sessionsDone < report.sessionsPlanned;
+    const changeTone = change == null || weekOpen
+        ? 'text-zinc-700 dark:text-zinc-300'
         : change > 0 ? 'text-green-700 dark:text-green-400' : change < 0 ? 'text-red-700 dark:text-red-400' : 'text-zinc-700 dark:text-zinc-300';
 
     return (
@@ -53,19 +55,19 @@ export const WeeklyReportCard: React.FC<WeeklyReportCardProps> = ({ report, week
                     {/* Flex (not grid-cols-3): the heatmap e2e counts grid-cols-3 cells. */}
                     <div className="flex gap-2">
                         <div className="min-w-0 flex-1 rounded-2xl border border-white/6 bg-white/[0.03] px-3 py-3 text-center">
-                            <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-zinc-500">{w.sessions}</div>
+                            <div className="text-xs font-medium text-muted">{w.sessions}</div>
                             <div className="mt-1 text-xl font-black tracking-[-0.04em] text-white">
                                 {report.sessionsDone}/{report.sessionsPlanned}
                             </div>
                         </div>
                         <div className="min-w-0 flex-1 rounded-2xl border border-white/6 bg-white/[0.03] px-3 py-3 text-center">
-                            <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-zinc-500">{w.volume}</div>
+                            <div className="text-xs font-medium text-muted">{w.volume}</div>
                             <div className={`mt-1 text-xl font-black tracking-[-0.04em] ${changeTone}`}>
                                 {changeText}
                             </div>
                         </div>
                         <div className="min-w-0 flex-1 rounded-2xl border border-white/6 bg-white/[0.03] px-3 py-3 text-center">
-                            <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-zinc-500">{w.prs}</div>
+                            <div className="text-xs font-medium text-muted">{w.prs}</div>
                             <div className={`mt-1 text-xl font-black tracking-[-0.04em] text-white`}>
                                 {weekPRs}
                             </div>
