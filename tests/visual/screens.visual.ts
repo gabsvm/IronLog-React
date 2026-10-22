@@ -112,7 +112,13 @@ for (const theme of ['dark', 'light'] as const) {
     });
 
     test(`home ${theme}`, async ({ page }) => {
-      await expect(page).toHaveScreenshot(`home-${theme}.png`, { fullPage: true });
+        await expect(page).toHaveScreenshot(`home-${theme}.png`, { fullPage: true });
+    });
+
+    test(`routine ${theme}`, async ({ page }) => {
+        await nav(page).getByRole('button', { name: /^Rutina$|^Routine$/ }).click();
+        await page.waitForTimeout(800);
+        await expect(page).toHaveScreenshot(`routine-${theme}.png`, { fullPage: true });
     });
 
     test(`history ${theme}`, async ({ page }) => {
@@ -160,12 +166,29 @@ for (const theme of ['dark', 'light'] as const) {
     });
 
     test(`workout menu ${theme}`, async ({ page }) => {
-      await page.getByRole('button', { name: /Empezar|Start/ }).first().click();
-      await expect(page.locator('#tut-finish-btn')).toBeVisible({ timeout: 15000 });
-      await page.getByRole('button', { name: /M[aá]s opciones|More options/ }).first().click();
-      await expect(page.getByRole('menu').first()).toBeVisible();
-      await page.waitForTimeout(500);
-      await expect(page).toHaveScreenshot(`workout-menu-${theme}.png`);
+        await page.getByRole('button', { name: /Empezar|Start/ }).first().click();
+        await expect(page.locator('#tut-finish-btn')).toBeVisible({ timeout: 15000 });
+        await page.getByRole('button', { name: /M[aá]s opciones|More options/ }).first().click();
+        await expect(page.getByRole('menu').first()).toBeVisible();
+        await page.waitForTimeout(500);
+        await expect(page).toHaveScreenshot(`workout-menu-${theme}.png`);
+    });
+
+    test(`summary ${theme}`, async ({ page }) => {
+        await page.getByRole('button', { name: /Empezar|Start/ }).first().click();
+        await expect(page.locator('#tut-finish-btn')).toBeVisible({ timeout: 15000 });
+        // Complete one set so the summary renders volume/sets content.
+        const completeBtn = page.locator('button[aria-label*="Completar serie"], button[aria-label*="Complete set"]').first();
+        await completeBtn.click();
+        await expect(completeBtn).toHaveAttribute('aria-pressed', 'true');
+        await page.locator('#tut-finish-btn').click();
+        const saveBtn = page.getByRole('button', { name: /Guardar y terminar|Save and finish/ });
+        await expect(saveBtn).toBeVisible({ timeout: 8000 });
+        await saveBtn.click();
+        await page.waitForURL('**#summary', { timeout: 15000 });
+        await expect(page.locator('h1', { hasText: /Completado|Complete/i })).toBeVisible({ timeout: 15000 });
+        await page.waitForTimeout(500);
+        await expect(page).toHaveScreenshot(`summary-${theme}.png`, { fullPage: true });
     });
 
     test(`profile ${theme}`, async ({ page }) => {
@@ -173,6 +196,54 @@ for (const theme of ['dark', 'light'] as const) {
       await expect(page.locator('[role="dialog"]').first()).toBeVisible({ timeout: 10000 });
       await page.waitForTimeout(800);
       await expect(page).toHaveScreenshot(`profile-${theme}.png`);
+    });
+
+    // D2: 1440 px desktop composition for every root + workout + summary.
+    const desktopShots: Array<{ name: string; go: (page: import('@playwright/test').Page) => Promise<void> }> = [
+      { name: 'home', go: async () => { } },
+      { name: 'routine', go: async (p) => { await nav(p).getByRole('button', { name: /^Rutina$|^Routine$/ }).click(); } },
+      { name: 'history', go: async (p) => { await nav(p).getByRole('button', { name: /^Diario$|^Diary$/ }).click(); } },
+      { name: 'stats', go: async (p) => { await nav(p).getByRole('button', { name: /^Progreso$|^Progress$/ }).click(); } },
+      { name: 'nutrition', go: async (p) => { await nav(p).getByRole('button', { name: /^Diario$|^Diary$/ }).click(); await p.getByRole('tab', { name: /Nutrición|Nutrition/ }).click(); } },
+      { name: 'profile', go: async (p) => { await p.getByLabel(/Abrir perfil|Open profile/).click(); await p.locator('[role="dialog"]').first().waitFor({ timeout: 10000 }); } },
+    ];
+    for (const shot of desktopShots) {
+      test(`desktop-1440 ${shot.name} ${theme}`, async ({ page }) => {
+        await page.setViewportSize({ width: 1440, height: 900 });
+        await shot.go(page);
+        await page.waitForTimeout(800);
+        const scroll = await page.evaluate(() => ({
+          scrollWidth: document.documentElement.scrollWidth,
+          clientWidth: document.documentElement.clientWidth,
+        }));
+        expect(scroll.scrollWidth).toBeLessThanOrEqual(scroll.clientWidth + 1);
+        await expect(page).toHaveScreenshot(`desktop-1440-${shot.name}-${theme}.png`);
+      });
+    }
+
+    test(`desktop-1440 workout ${theme}`, async ({ page }) => {
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await page.getByRole('button', { name: /Empezar|Start/ }).first().click();
+      await expect(page.locator('#tut-finish-btn')).toBeVisible({ timeout: 15000 });
+      await page.waitForTimeout(800);
+      await expect(page).toHaveScreenshot(`desktop-1440-workout-${theme}.png`);
+    });
+
+    test(`desktop-1440 summary ${theme}`, async ({ page }) => {
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await page.getByRole('button', { name: /Empezar|Start/ }).first().click();
+      await expect(page.locator('#tut-finish-btn')).toBeVisible({ timeout: 15000 });
+      const completeBtn = page.locator('button[aria-label*="Completar serie"], button[aria-label*="Complete set"]').first();
+      await completeBtn.click();
+      await expect(completeBtn).toHaveAttribute('aria-pressed', 'true');
+      await page.locator('#tut-finish-btn').click();
+      const desktopSaveBtn = page.getByRole('button', { name: /Guardar y terminar|Save and finish/ });
+      await expect(desktopSaveBtn).toBeVisible({ timeout: 8000 });
+      await desktopSaveBtn.click();
+      await page.waitForURL('**#summary', { timeout: 15000 });
+      await expect(page.locator('h1', { hasText: /Completado|Complete/i })).toBeVisible({ timeout: 15000 });
+      await page.waitForTimeout(500);
+      await expect(page).toHaveScreenshot(`desktop-1440-summary-${theme}.png`);
     });
   });
 }

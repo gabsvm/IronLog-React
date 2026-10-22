@@ -21,7 +21,6 @@ export const WorkoutSetTypeSheet: React.FC<{ state: WorkoutViewState }> = ({ sta
                         onOpenChange={(open) => !open && setChangingSetType(null)}
                         title={t.setType}
                         accent="primary"
-                        manageHistory={false}
                     >
                         {hasMultipleSets && (
                             <button

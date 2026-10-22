@@ -133,7 +133,7 @@ describe('ConfirmModal keyboard interaction', () => {
         expect(screen.queryByRole('dialog', { name: 'Import error' })).not.toBeInTheDocument();
         const profile = screen.getByRole('dialog', { name: 'Profile' });
         expect(importButton).toHaveFocus();
-        fireEvent.click(within(profile).getByRole('button', { name: 'Close' }));
+        fireEvent.click(within(profile).getByRole('button', { name: /^(Close|Cerrar)$/ }));
         await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
         await waitFor(() => expect(trigger).toHaveFocus());
         expect(document.body.style.pointerEvents).toBe('');

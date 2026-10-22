@@ -18,14 +18,61 @@ interface ModalLayer {
     pushedHistory: boolean;
     closedByPopstate: boolean;
     sessionKey: string | null;
+    mountedAt: number;
 }
+// Timestamp of the last programmatic history.back() issued to consume a modal
+// entry. A popstate arriving from that consumption must not dismiss a modal
+// mounted afterwards (e.g. finish sheet replaced by its discard confirm in
+// the same tick); only a user Back after mount may close the top layer.
+let programmaticBackAt = 0;
+const nowMs = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+/** Record that the next popstate was initiated by our own consumption. */
+function noteProgrammaticBack() { programmaticBackAt = nowMs(); }
+const isJsdomEnv = () => typeof navigator !== 'undefined' && /jsdom/i.test(navigator.userAgent);
+/** Read without consuming: view-history and modal-history share one pop event. */
+export function peekProgrammaticBackAt() { return programmaticBackAt; }
+/** Consume after a popstate has been judged. */
+export function clearProgrammaticBackAt() { programmaticBackAt = 0; }
 const layers: ModalLayer[] = [];
 // Radix may defer outside-pointer dispatch until click, after React has
 // already removed the layer that received the original pointerdown.
 const pointerOwners = new WeakMap<Event, symbol>();
 let originalOverflow = '';
 let restoringFocus = false;
+let hiddenRootCount = 0;
+let hiddenRootPrevInert: boolean | null = null;
+let hiddenRootPrevAria: string | null = null;
 
+function hideAppRoot() {
+    if (typeof document === 'undefined') return;
+    const root = document.getElementById('root');
+    if (!root || root.closest('[role="dialog"]')) return;
+    if (hiddenRootCount === 0) {
+        hiddenRootPrevInert = root.hasAttribute('inert');
+        hiddenRootPrevAria = root.getAttribute('aria-hidden');
+        root.setAttribute('inert', '');
+        root.setAttribute('aria-hidden', 'true');
+    }
+    hiddenRootCount += 1;
+}
+
+function showAppRoot() {
+    if (typeof document === 'undefined') return;
+    if (hiddenRootCount === 0) return;
+    hiddenRootCount -= 1;
+    if (hiddenRootCount > 0) return;
+    const root = document.getElementById('root');
+    if (!root) {
+        hiddenRootPrevInert = null;
+        hiddenRootPrevAria = null;
+        return;
+    }
+    if (hiddenRootPrevInert === false) root.removeAttribute('inert');
+    if (hiddenRootPrevAria === null) root.removeAttribute('aria-hidden');
+    else root.setAttribute('aria-hidden', hiddenRootPrevAria);
+    hiddenRootPrevInert = null;
+    hiddenRootPrevAria = null;
+}
 const topLayer = () => layers[layers.length - 1];
 
 function controls(element: HTMLElement): HTMLElement[] {
@@ -89,15 +136,35 @@ function onPointerDown(event: PointerEvent) {
 }
 
 function onPopState(event: PopStateEvent) {
+    // Peek only: the view-history listener shares this pop event and judges
+    // staleness on its own. Clear only when this pop is consumed by an action.
+    const progAt = peekProgrammaticBackAt();
     const layer = topLayer();
-    if (!layer) return;
+    // Forward into an expired transient entry with no live layer: normalize
+    // the zombie _modalKey instead of leaving history parked on it.
+    if (!layer) {
+        const orphan = (event.state as { _modalKey?: string } | null)?._modalKey;
+        if (orphan && typeof window !== 'undefined' && window.history) {
+            try {
+                const next = { ...(event.state as object) } as Record<string, unknown>;
+                delete next._modalKey;
+                window.history.replaceState(next, '', window.location.href);
+            } catch { }
+        }
+        clearProgrammaticBackAt();
+        return;
+    }
 
     // If the top layer was managed by us and the active history state no longer
-    // matches its session key, the browser went Back past this layer.
+    // matches its session key, the browser went Back past this layer — unless
+    // this pop is the stale echo of a programmatic consumption issued before
+    // this layer mounted (modal replaced synchronously by another modal).
     if (layer.pushedHistory && !layer.closedByPopstate) {
         const stateKey = (event.state as { _modalKey?: string } | null)?._modalKey;
         if (stateKey !== layer.sessionKey) {
+            if (progAt !== 0 && layer.mountedAt > progAt) return;
             layer.closedByPopstate = true;
+            clearProgrammaticBackAt();
             layer.dismiss();
         }
     }
@@ -143,6 +210,7 @@ export function consumeModalHistory(action: () => void) {
     window.addEventListener('popstate', onPop, true);
     const timer = window.setTimeout(finish, 150);
     try {
+        noteProgrammaticBack();
         window.history.back();
     } catch {
         finish();
@@ -232,6 +300,7 @@ export function useModalLayer(
             pushedHistory: false,
             closedByPopstate: false,
             sessionKey: null,
+            mountedAt: (typeof performance !== 'undefined' ? performance.now() : Date.now()),
         };
         previousOpening.current = layer;
 
@@ -261,6 +330,9 @@ export function useModalLayer(
             listen(true);
         }
         layers.push(layer);
+        // Portalled manual-focus dialogs (Auth/PRO/confirm) live outside #root:
+        // keep the app background out of the a11y tree until all of them close.
+        if (manualFocus) hideAppRoot();
         if (manualFocus) focusInitial();
 
         return () => {
@@ -295,11 +367,17 @@ export function useModalLayer(
                 window.history &&
                 window.history.state?._modalKey === layer.sessionKey
             ) {
-                try {
-                    window.history.back();
-                } catch { }
+                // jsdom tests drive popstate synthetically; a real back() there
+                // would only leave stray markers from StrictMode probes.
+                if (!isJsdomEnv()) {
+                    try {
+                        noteProgrammaticBack();
+                        window.history.back();
+                    } catch { }
+                }
             }
             sessionKeyRef.current = null;
+            if (manualFocus) showAppRoot();
             if (!layers.length) {
                 document.body.style.overflow = originalOverflow;
                 listen(false);

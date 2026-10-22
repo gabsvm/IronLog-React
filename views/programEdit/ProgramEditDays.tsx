@@ -39,7 +39,7 @@ export const ProgramEditDays: React.FC<{ state: ProgramEditState }> = ({ state }
                                         <div className="flex-1 space-y-2">
                                             <div className="flex gap-2 items-center flex-wrap">
                                                 <select
-                                                    className="rounded-xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated)/0.5)] px-2 py-2.5 text-xs font-bold text-[rgb(var(--text-secondary))] outline-none transition-colors"
+                                                    className="rounded-xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated)/0.5)] px-2 py-2.5 text-base font-bold text-[rgb(var(--text-secondary))] outline-none transition-colors"
                                                     value={slot.muscle}
                                                     onChange={(e) => handleUpdateSlot(day.id, idx, 'muscle', e.target.value)}
                                                 >
@@ -52,7 +52,7 @@ export const ProgramEditDays: React.FC<{ state: ProgramEditState }> = ({ state }
                                                     <span className="text-xs font-semibold text-muted">SETS</span>
                                                     <input
                                                         type="number"
-                                                        className="w-6 bg-transparent text-center text-xs font-bold text-[rgb(var(--text-primary))] outline-none"
+                                                        className="w-8 bg-transparent text-center text-base font-bold text-[rgb(var(--text-primary))] outline-none"
                                                         value={slot.setTarget || ''}
                                                         onChange={e => handleUpdateSlot(day.id, idx, 'setTarget', Number(e.target.value))}
                                                     />
@@ -62,7 +62,7 @@ export const ProgramEditDays: React.FC<{ state: ProgramEditState }> = ({ state }
                                                     <span className="whitespace-nowrap text-xs font-semibold text-muted">REPS</span>
                                                     <input
                                                         type="text"
-                                                        className="w-full bg-transparent text-center text-xs font-bold text-[rgb(var(--text-primary))] outline-none"
+                                                        className="w-full bg-transparent text-center text-base font-bold text-[rgb(var(--text-primary))] outline-none"
                                                         value={slot.reps || ''}
                                                         placeholder="8-12"
                                                         onChange={e => handleUpdateSlot(day.id, idx, 'reps', e.target.value)}

@@ -21,7 +21,6 @@ export const WorkoutFinishSheet: React.FC<{ state: WorkoutViewState }> = ({ stat
                         onOpenChange={(open) => !open && setShowFinishModal(false)}
                         title={t.finishSession}
                         accent="primary"
-                        manageHistory={false}
                     >
                         <div className="p-4 space-y-3.5">
                             {/* Summary Cards */}
@@ -105,7 +104,10 @@ export const WorkoutFinishSheet: React.FC<{ state: WorkoutViewState }> = ({ stat
                                 <button
                                     type="button"
                                     onClick={() => {
-                                        setShowFinishModal(false);
+                                        // Keep the finish sheet mounted underneath: the discard
+                                        // confirm nests on top and Back/Cancel return to it.
+                                        // Closing first would race its history consumption
+                                        // against the confirm's fresh entry.
                                         setShowDiscardConfirm(true);
                                     }}
                                     className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-400 hover:text-red-300 transition-colors uppercase tracking-wider active:scale-95"
@@ -113,7 +115,7 @@ export const WorkoutFinishSheet: React.FC<{ state: WorkoutViewState }> = ({ stat
                                     <Icon name="Trash2" size={13} />
                                     {t.discardSession}
                                 </button>
-                            </div>
+                        </div>
                         </div>
                     </Sheet>
                 );

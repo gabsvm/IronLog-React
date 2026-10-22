@@ -69,10 +69,14 @@ const NOTIF_STATES = ['permitir', 'activadas', 'bloqueadas'];
 // Q18 renamed two hardcoded English aria-labels to the translated visible
 // text (accessible name must match what sighted users see): the Export button
 // aria "Download" -> t.export, the factory-reset button aria "Delete" ->
-// t.factoryReset. The ambient test language decides which new form renders.
+// t.factoryReset, and the Sheet chrome "Close" -> translated close label.
+// The ambient test language decides which new form renders.
 const RENAMED: Record<string, string[]> = {
     '[download]': ['[export data]', '[exportar datos]'],
     '[delete]': ['[factory reset app]', '[restablecer fábrica]'],
+    // Sheet chrome aria-labels are translated now (Bloque C): hardcoded
+    // English "Close" renders "Cerrar" in Spanish test language.
+    '[close]': ['[close]', '[cerrar]'],
     'editor de programa': ['editar rutina'],
     'forest': ['bosque'],
     'ocean': ['océano'],

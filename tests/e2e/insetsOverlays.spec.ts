@@ -179,7 +179,7 @@ test.describe('J1: fullscreen overlays respect safe-area insets', () => {
 
         const sheet = page.locator('[role="dialog"]').first();
         await expect(sheet).toBeVisible({ timeout: 10000 });
-        await assertControlClear(page, sheet.locator('button[aria-label="Close"]'), 'you-close');
+        await assertControlClear(page, sheet.locator('button[aria-label*="Cerrar" i], button[aria-label*="Close" i]').first(), 'you-close');
 
         // Open the collapsible Advanced section so its controls are measurable.
         await sheet.locator('summary', { hasText: /Avanzado|Advanced/ }).click();

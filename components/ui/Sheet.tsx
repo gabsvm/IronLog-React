@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Drawer } from 'vaul';
 import { Icon } from './Icon';
 import { useModalLayer } from './useModalLayer';
-
+import { AppPreferencesContext } from '../../context/app/appContexts';
+import { TRANSLATIONS } from '../../constants';
 interface SheetProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -71,6 +72,12 @@ export const Sheet: React.FC<SheetProps> = ({
     hasExternalHistory = false,
     manageHistory = true,
 }) => {
+    // Sheet also renders in unit tests without AppProvider: read the context
+    // directly and fall back to Spanish instead of throwing.
+    const prefs = useContext(AppPreferencesContext);
+    const lang = prefs?.lang ?? 'es';
+    const backLabel = TRANSLATIONS[lang].back;
+    const closeLabel = TRANSLATIONS[lang].auth.close;
     const isFull = variant === 'full';
     const [fullViewport, setFullViewport] = useState<{ height: number; top: number } | null>(null);
     const delayedViewportReadsRef = useRef<number[]>([]);
@@ -212,7 +219,7 @@ export const Sheet: React.FC<SheetProps> = ({
                             {onBack && (
                                 <button
                                     onClick={onBack}
-                                    aria-label="Back"
+                                    aria-label={backLabel}
                                     className="-ml-2 flex min-h-[44px] min-w-[44px] items-center justify-center text-zinc-500 hover:text-zinc-900 dark:hover:text-white rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 transition-colors duration-fast ease-natural"
                                 >
                                     <Icon name="ArrowLeft" size={20} />
@@ -226,7 +233,7 @@ export const Sheet: React.FC<SheetProps> = ({
                             {!hideCloseButton && (
                                 <button
                                     onClick={() => onOpenChange(false)}
-                                    aria-label="Close"
+                                    aria-label={closeLabel}
                                     className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full text-zinc-500 hover:text-zinc-900 dark:hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 transition-colors duration-fast ease-natural"
                                 >
                                     <span className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-200/60 dark:bg-white/5">

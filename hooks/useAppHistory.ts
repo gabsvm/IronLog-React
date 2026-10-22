@@ -1,5 +1,6 @@
 import { useEffect, useRef, type MutableRefObject } from 'react';
 import { flushSync } from 'react-dom';
+import { peekProgrammaticBackAt, clearProgrammaticBackAt } from '../components/ui/useModalLayer';
 
 // Wraps a DOM mutation in a View Transition (graceful fallback when unsupported).
 export const withTransition = (direction: string, callback: () => void) => {
@@ -64,6 +65,10 @@ export const useAppHistory = (
     useEffect(() => {
         try {
             if (typeof window !== 'undefined' && window.history) {
+                const existing = window.history.state as { view?: string } | null;
+                // Reload with a restored sheet (profile:true) must not be
+                // flattened to a bare home entry: the open sheet is bound to it.
+                if (existing && typeof existing.view === 'string') return;
                 window.history.replaceState({ view: 'home' }, '', '#home');
             }
         } catch (e) { }
@@ -72,7 +77,13 @@ export const useAppHistory = (
     useEffect(() => {
         const handlePop = (e: PopStateEvent) => {
             const state = e.state;
-            if (state) {
+            // A programmatic modal-entry consumption only removes that entry;
+            // the app drives the view explicitly in the same action. A pop
+            // carrying our marker must never regress or advance the view,
+            // regardless of arrival order (finish->summary, discard->home).
+            if (peekProgrammaticBackAt() !== 0) {
+                clearProgrammaticBackAt();
+            } else if (state) {
                 if (state.view && state.view !== targetViewRef.current) {
                     withTransition('back', () => {
                         flushSync(() => {

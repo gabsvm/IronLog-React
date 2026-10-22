@@ -113,7 +113,7 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 360, height: 800 }
                 await sheet.locator(`#profile-section-${section}`).scrollIntoViewIfNeeded();
                 await expectNoOverflow(page, `you-${section}`);
             }
-            await sheet.getByLabel('Close').click();
+            await sheet.getByLabel(/^(Close|Cerrar)$/).click();
             await expect(sheet).toHaveCount(0, { timeout: 8000 });
 
             // Workout last: the bottom nav and header hide while training.

@@ -1,13 +1,19 @@
 import { _android, expect } from '@playwright/test';
-import { writeFileSync } from 'fs';
+import { writeFileSync, readFileSync } from 'fs';
+import { createHash } from 'crypto';
 
-const pressBack = async (device) => {
-    await device.shell('input keyevent 4');
+// Installed-APK hash: resolved from the device itself, never a literal.
+const getInstalledApkSha256 = async (device, pkg) => {
+    const out = await device.shell(`pm path ${pkg}`);
+    const apkPath = out.trim().split('\n')[0].replace('package:', '').trim();
+    if (!apkPath) throw new Error(`pm path returned no apk for ${pkg}: ${out}`);
+    const raw = await device.shell(`sha256sum ${apkPath}`);
+    const hash = raw.trim().split(/\s+/)[0];
+    if (!/^[0-9a-f]{64}$/i.test(hash)) throw new Error(`unexpected sha256sum output: ${raw}`);
+    return { apkPath, hash: hash.toLowerCase() };
 };
 
-const pressHome = async (device) => {
-    await device.shell('input keyevent 3');
-};
+let smokeDevice = null;
 
 async function runAndroidSmoke() {
     console.log('=== GAINSLAB ANDROID SMOKE AUTOMATION ON EMULATOR ===');
@@ -17,6 +23,7 @@ async function runAndroidSmoke() {
         process.exit(1);
     }
     const device = devices[0];
+    smokeDevice = device;
     console.log('Target device:', device.serial(), '| Model:', device.model());
 
     // 0. Ensure clean app launch in isolated offline mode
@@ -40,6 +47,9 @@ async function runAndroidSmoke() {
     await page.waitForTimeout(1000);
 
     const results = {};
+    // Numbered step marks: every reached X.Y assertion is recorded; a step that
+    // throws fails loudly instead of silently flipping a scenario boolean.
+    const mark = (id, note) => { results[id] = true; console.log(`${id} ${note}`); };
 
     // -------------------------------------------------------------
     // SCENARIO 1: Login y PRO (foco y cierre); Perfil + importación JSON
@@ -103,7 +113,16 @@ async function runAndroidSmoke() {
     await expect(profileDialog).toHaveCount(0);
     await expect(page.locator('nav[aria-label="Main navigation"]')).toBeVisible();
     console.log('1.6 Back closed Profile | Landed on Home');
+    results['1.1 profile opened'] = true;
+    results['1.2 auth opened + email focused'] = true;
+    results['1.3 back closed auth -> home'] = true;
+    results['1.4 invalid-json error modal'] = true;
+    results['1.5 back closed error, profile stayed'] = true;
+    results['1.6 back closed profile -> home'] = true;
     results.scenario1 = true;
+    results['gap:1-PRO-modal'] = 'NOT-COVERED: PaywallModal never opened in this script';
+    results['gap:1-valid-json-import'] = 'NOT-COVERED: only invalid JSON is exercised';
+    results['gap:1-import-cancel'] = 'NOT-COVERED: no cancel-import path exercised';
 
     // -------------------------------------------------------------
     // SCENARIO 2: Inicio rápido, comida y hojas anidadas: Back nativo cierra una capa
@@ -143,7 +162,12 @@ async function runAndroidSmoke() {
     await expect(mealSheet).toHaveCount(0);
     await expect(page.locator('nav[aria-label="Main navigation"]')).toBeVisible();
     console.log('2.4 Back closed Add Meal sheet | Stayed in Nutrition');
+    results['2.1 quickstart opened'] = true;
+    results['2.2 back closed quickstart, app stayed'] = true;
+    results['2.3 add-meal opened'] = true;
+    results['2.4 back closed meal, stayed in nutrition'] = true;
     results.scenario2 = true;
+    results['gap:2-nested-sheets'] = 'NOT-COVERED: only single sheets, never sheet-over-sheet LIFO';
 
     // -------------------------------------------------------------
     // SCENARIO 3: Abrir teclado en última serie, completar sin blur manual, persistir
@@ -168,14 +192,17 @@ async function runAndroidSmoke() {
     const repsInput = page.locator('input[inputmode="decimal"], input[type="number"]').nth(1);
     await repsInput.fill('12');
     const completeSetBtn = page.locator('button[aria-label*="Completar serie"], button[aria-label*="Complete set"]').first();
-    await completeSetBtn.click({ force: true });
+    await completeSetBtn.click();
     await page.waitForTimeout(1000);
     // Verify set completed status and rest controls docked in workout
     await expect(completeSetBtn).toHaveAttribute('aria-pressed', 'true');
     const plus30Btn = page.getByRole('button', { name: '+30s' });
     await expect(plus30Btn).toBeVisible({ timeout: 5000 });
     console.log('3.1 Set completed directly, rest timer docked in workout');
+    results['3.1 first-set completed, no manual blur'] = true;
     results.scenario3 = true;
+    results['gap:3-last-set'] = 'NOT-COVERED: uses first() set, contract requires last set';
+    results['gap:3-ime-persistence'] = 'NOT-COVERED: .fill() is not the native IME; value persistence and exercise-switch flush unverified';
 
     // -------------------------------------------------------------
     // SCENARIO 4: Sesión en curso -> Rutina -> Retomar; segundo plano -> volver
@@ -212,7 +239,11 @@ async function runAndroidSmoke() {
     // Verify session remains active and resumed
     await expect(finishBtn).toBeVisible();
     console.log('4.3 Survived Android backgrounding and resume');
+    results['4.1 routine shows retomar'] = true;
+    results['4.2 resumed workout directly'] = true;
+    results['4.3 background->foreground kept session'] = true;
     results.scenario4 = true;
+    results['gap:4-process-death'] = 'NOT-COVERED: HOME key is not process death; force-stop/relaunch untested';
 
     // -------------------------------------------------------------
     // SCENARIO 5: Descanso (plazo continuo, retorno a Hoy sin tapar nav)
@@ -234,7 +265,9 @@ async function runAndroidSmoke() {
     const restPill = page.getByRole('complementary', { name: /Descansando|Resting/i });
     await expect(restPill).toBeVisible({ timeout: 6000 });
     console.log('5.1 Floating rest pill visible outside workout without obscuring navigation bar');
+    results['5.1 +30s applied, pill visible outside workout'] = true;
     results.scenario5 = true;
+    results['gap:5-rest-controls'] = 'NOT-COVERED: subtract/skip/continuous-deadline/lock/notifications untested';
     // -------------------------------------------------------------
     // SCENARIO 6: KONG (edición bloqueada durante sesión; cierre conserva atribución)
     // -------------------------------------------------------------
@@ -328,30 +361,40 @@ async function runAndroidSmoke() {
     });
     console.log('6.2 KONG mesocycle preserved intact without conversion:', isStillKong);
 
-    // Clear active session (disposed/completed)
-    // Clear active session from IndexedDB and localStorage
-    await page.evaluate(async () => {
-        localStorage.removeItem('il_session_v16');
-        try {
-            await new Promise((resolve) => {
-                const req = indexedDB.open('keyval-store');
-                req.onsuccess = () => {
-                    const idb = req.result;
-                    if (idb.objectStoreNames.contains('keyval')) {
-                        const tx = idb.transaction('keyval', 'readwrite');
-                        tx.objectStore('keyval').delete('il_session_v16');
-                        tx.oncomplete = resolve;
-                        tx.onerror = resolve;
-                    } else {
-                        resolve();
-                    }
+    // Close the KONG session through the real finish flow (never by deleting
+    // storage): resume from Rutina, finish, save, then verify attribution.
+    const resumeKongBtn = page.locator('.gl-panel button:has-text("Retomar"), .gl-panel button:has-text("Resume")').first();
+    await resumeKongBtn.click();
+    await page.waitForTimeout(800);
+    const kongFinishBtn = page.locator('#tut-finish-btn');
+    await expect(kongFinishBtn).toBeVisible({ timeout: 10000 });
+    await kongFinishBtn.click();
+    await page.waitForTimeout(800);
+    const saveFinishBtn = page.locator('button:has-text("Guardar y terminar"), button:has-text("Save and finish")').first();
+    await expect(saveFinishBtn).toBeVisible({ timeout: 8000 });
+    await saveFinishBtn.click();
+    await page.waitForTimeout(1500);
+
+    // Verify the saved log keeps the original mesoId and KONG programSystem.
+    const kongAttribution = await page.evaluate(async () => {
+        return await new Promise((resolve) => {
+            const req = indexedDB.open('keyval-store');
+            req.onsuccess = () => {
+                const idb = req.result;
+                const getReq = idb.transaction('keyval', 'readonly').objectStore('keyval').get('il_logs_v16');
+                getReq.onsuccess = () => {
+                    const logs = getReq.result || [];
+                    const last = logs[logs.length - 1];
+                    resolve(last ? { mesoId: last.mesoId, systemId: last.programSystem?.systemId, week: last.week } : null);
                 };
-                req.onerror = resolve;
-            });
-        } catch { }
+                getReq.onerror = () => resolve(null);
+            };
+            req.onerror = () => resolve(null);
+        });
     });
-    await page.reload();
-    await page.waitForTimeout(1000);
+    console.log('6.2b Finished via UI; saved log attribution:', JSON.stringify(kongAttribution));
+    const attributionOk = kongAttribution?.mesoId === kongMesoId
+        && (kongAttribution?.systemId === 'kong_4day_v1' || kongAttribution?.systemId === 'kong_4day');
 
     // Switch to Rutina tab without active session
     const navRoutineBtnClean = page.locator('nav[aria-label="Main navigation"]').getByRole('button', { name: /^Rutina$|^Routine$/i });
@@ -371,7 +414,11 @@ async function runAndroidSmoke() {
     await pressBack(device);
     await page.waitForTimeout(500);
 
-    results.scenario6 = isAlertShowing && isStillKong && isConvertModal;
+    results['6.1 edit blocked during session'] = !!isAlertShowing;
+    results['6.2 meso preserved without conversion'] = !!isStillKong;
+    results['6.2b UI finish kept mesoId+programSystem'] = !!attributionOk;
+    results['6.3 convert dialog without session'] = !!isConvertModal;
+    results.scenario6 = !!isAlertShowing && !!isStillKong && !!attributionOk && !!isConvertModal;
 
     // Take screenshot of final verified state
     await page.screenshot({ path: 'android_debug_smoke_final.png' });
@@ -379,15 +426,19 @@ async function runAndroidSmoke() {
     console.log('\n=== SMOKE TEST RESULTS SUMMARY ===');
     console.log(JSON.stringify(results, null, 2));
 
-    const allPassed = Object.values(results).every(Boolean);
+    const scenarioKeys = Object.keys(results).filter(k => k.startsWith('scenario'));
+    const allPassed = scenarioKeys.length === 6 && scenarioKeys.every(k => results[k] === true);
     console.log('\nALL 6 SMOKE SCENARIOS PASSED:', allPassed);
+
+    const { apkPath, hash: apkSha256 } = await getInstalledApkSha256(device, 'com.gainslab.pro.debug');
+    console.log('Installed APK:', apkPath, 'SHA-256:', apkSha256);
 
     writeFileSync('android_smoke_results.json', JSON.stringify({
         timestamp: new Date().toISOString(),
         package: 'com.gainslab.pro.debug',
         device: device.serial(),
         model: device.model(),
-        apkSha256: 'EEE1180539BD5240A605393D807E9D5161B7CBD3F73E8F7E91282F335FD0F845',
+        apkSha256,
         results,
         allPassed,
     }, null, 2));
@@ -399,7 +450,14 @@ async function runAndroidSmoke() {
     process.exit(allPassed ? 0 : 1);
 }
 
-runAndroidSmoke().catch(err => {
+runAndroidSmoke().catch(async err => {
     console.error('Smoke test execution error:', err);
+    try {
+        if (smokeDevice) {
+            await smokeDevice.shell('svc wifi enable');
+            await smokeDevice.shell('svc data enable');
+        }
+    } catch { }
     process.exit(1);
 });
+

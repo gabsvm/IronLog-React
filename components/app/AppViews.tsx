@@ -1,4 +1,5 @@
 import React, { Suspense } from 'react';
+import { resolveRoutineStartAction } from './routineGuards';
 import { pickLang } from '../../utils/i18n';
 import { useApp } from '../../context/AppContext';
 import { useTimerActions } from '../../context/TimerContext';
@@ -96,18 +97,22 @@ export const AppViews: React.FC<AppViewsProps> = ({
 
     // Shared routine editor entry (KONG-aware); Home and Routine reuse it.
     // Shared routine editor entry (KONG-aware and activeSession-protected).
+    // Reads session AND plan from the store at execution time: a stale render
+    // (e.g. setActiveMeso(null) just before onEditProgram) must not reopen KONG.
     const handleEditProgram = React.useCallback(() => {
-        if (useStore.getState().activeSession) {
+        const { activeSession: liveSession, activeMeso: liveMeso } = useStore.getState();
+        if (liveSession) {
             setShowActiveSessionAlert?.(true);
             return;
         }
-        const isKong = activeMeso?.programSystem?.systemId === KONG_4DAY_V1.id || activeMeso?.programSystem?.systemId === 'kong_4day' || activeMeso?.programSystem?.systemId === KONG_4DAY_ID;
-        if (isKong && activeMeso) {
+        const liveId = liveMeso?.programSystem?.systemId;
+        const isKong = liveId === KONG_4DAY_V1.id || liveId === 'kong_4day' || liveId === KONG_4DAY_ID;
+        if (isKong && liveMeso) {
             setShowKongConvertModal(true);
             return;
         }
         setView('program');
-    }, [activeMeso, setView, setShowKongConvertModal, setShowActiveSessionAlert]);
+    }, [setView, setShowKongConvertModal, setShowActiveSessionAlert]);
 
     React.useEffect(() => {
         if (view === 'program' && activeSession) {
@@ -260,11 +265,12 @@ export const AppViews: React.FC<AppViewsProps> = ({
                         <Suspense fallback={<LoadingSpinner />}>
                             <RoutineView
                                 onStartDay={(idx) => {
-                                    if (activeSession && activeSession.mesoId === activeMeso?.id && activeSession.dayIdx === idx) {
+                                    const action = resolveRoutineStartAction(activeSession, activeMeso, idx);
+                                    if (action === 'resume') {
                                         setView('workout');
                                         return;
                                     }
-                                    if (activeSession) {
+                                    if (action === 'replace') {
                                         setPendingStartDayIdx(idx);
                                         return;
                                     }
@@ -310,6 +316,8 @@ export const AppViews: React.FC<AppViewsProps> = ({
                         onConfirm={() => {
                             const idx = pendingStartDayIdx;
                             setPendingStartDayIdx(null);
+                            // Do not drag the old session's rest deadline into the new one.
+                            setRestTimer(prev => ({ ...prev, active: false, timeLeft: 0, endAt: 0 }));
                             buildAndSetSession(idx);
                         }}
                         onCancel={() => setPendingStartDayIdx(null)}

@@ -34,15 +34,26 @@ describe('AuthModal and PaywallModal accessibility and overlay layer contract', 
         const backgroundBtn = document.createElement('button');
         backgroundBtn.textContent = 'Opciones del plan';
         document.body.appendChild(backgroundBtn);
+        backgroundBtn.focus();
 
-        render(<AuthModal onClose={onClose} />);
+        const { unmount } = render(<AuthModal onClose={onClose} />);
 
         const emailInput = screen.getByLabelText(/Correo|Email/i);
         expect(emailInput).toHaveFocus();
 
-        // Press Escape closes when inputs are empty
+        // Tab cycles inside the dialog and never reaches the background trigger.
+        fireEvent.keyDown(document, { key: 'Tab' });
+        expect(document.activeElement).not.toBe(backgroundBtn);
+        expect(screen.getByRole('dialog', { name: /Iniciar|Sign/i }).contains(document.activeElement)).toBe(true);
+        fireEvent.keyDown(document, { key: 'Tab', shiftKey: true });
+        expect(document.activeElement).not.toBe(backgroundBtn);
+        expect(screen.getByRole('dialog', { name: /Iniciar|Sign/i }).contains(document.activeElement)).toBe(true);
+
+        // Press Escape closes when inputs are empty and restores the trigger.
         fireEvent.keyDown(document, { key: 'Escape' });
         expect(onClose).toHaveBeenCalledOnce();
+        unmount();
+        expect(backgroundBtn).toHaveFocus();
 
         backgroundBtn.remove();
     });
@@ -54,14 +65,20 @@ describe('AuthModal and PaywallModal accessibility and overlay layer contract', 
         document.body.appendChild(trigger);
         trigger.focus();
 
-        render(<PaywallModal onClose={onClose} feature="history" />);
+        const { unmount } = render(<PaywallModal onClose={onClose} feature="history" />);
 
         const dialog = screen.getByRole('dialog', { name: /GainsLab Pro/i });
         expect(dialog).toBeInTheDocument();
 
-        // Escape closes PaywallModal
+        // Tab stays inside the paywall dialog.
+        fireEvent.keyDown(document, { key: 'Tab' });
+        expect(dialog.contains(document.activeElement)).toBe(true);
+
+        // Escape closes PaywallModal and restores the trigger.
         fireEvent.keyDown(document, { key: 'Escape' });
         expect(onClose).toHaveBeenCalledOnce();
+        unmount();
+        expect(trigger).toHaveFocus();
 
         trigger.remove();
     });

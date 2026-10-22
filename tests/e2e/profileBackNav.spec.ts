@@ -67,7 +67,7 @@ test.describe('Profile import dialogs own only their overlay', () => {
         await avatar.click();
         const profile = page.locator('[data-vaul-drawer][role="dialog"]');
         await expect(profile).toBeVisible();
-        const close = profile.getByRole('button', { name: 'Close', exact: true });
+        const close = profile.getByRole('button', { name: /^(Close|Cerrar)$/ });
         await close.focus();
         const upload = profile.locator('input[type="file"][accept=".json"]');
         await upload.setInputFiles({
@@ -149,11 +149,11 @@ test.describe('Profile import dialogs own only their overlay', () => {
         // open with the restored data; the avatar is correctly behind it.
         await expect(profile).toBeVisible();
         await expect(profile.locator('#profile-section-body').getByText(/79[.,]5\s*kg/i)).toBeVisible();
-        await profile.getByRole('button', { name: 'Close', exact: true }).tap();
+        await profile.getByRole('button', { name: /^(Close|Cerrar)$/ }).tap();
         await expect(profile).toHaveCount(0);
         await avatar.tap();
         await expect(profile.locator('#profile-section-body').getByText(/79[.,]5\s*kg/i)).toBeVisible();
-        await profile.getByRole('button', { name: 'Close', exact: true }).tap();
+        await profile.getByRole('button', { name: /^(Close|Cerrar)$/ }).tap();
         await expect(profile).toHaveCount(0);
         await expect.poll(() => page.evaluate(() => ({
             pointerEvents: document.body.style.pointerEvents,

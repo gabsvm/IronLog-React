@@ -1,10 +1,17 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { useStore } from '../../lib/store';
 import { KONG_4DAY_V1 } from '../../programs/kong/kong4Day';
 import { convertKongToPersonalRoutine } from '../../programs/engine/ProgramConversion';
 import { buildWorkoutLog, isDetachedSession } from '../../services/workoutCompletionService';
+import { resolveRoutineStartAction, canConfirmKongConversion } from '../../components/app/routineGuards';
+import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import type { ActiveSession, MesoCycle } from '../../types';
 
+beforeEach(() => {
+    cleanup();
+    useStore.setState({ activeSession: null });
+});
 describe('Bloque B: Program edit/convert protection and routine resume', () => {
     it('preserves KONG attribution and mesoId when workout log is completed while activeSession is undisturbed', () => {
         const kongMeso: MesoCycle = {
@@ -78,26 +85,15 @@ describe('Bloque B: Program edit/convert protection and routine resume', () => {
         // State has activeSession
         useStore.setState({ activeMeso, activeSession });
 
-        const confirmConversion = vi.fn(() => {
-            // Guard checks store at execution time
-            if (useStore.getState().activeSession) {
-                return { blocked: true };
-            }
-            const { editableProgram, convertedMeso } = convertKongToPersonalRoutine(useStore.getState().activeMeso!, 'es');
-            useStore.setState({ activeMeso: convertedMeso });
-            return { blocked: false };
-        });
-
-        // Attempting to convert while session is active is blocked
-        const result1 = confirmConversion();
-        expect(result1.blocked).toBe(true);
+        // Production guard from routineGuards: session present blocks conversion.
+        expect(canConfirmKongConversion(useStore.getState().activeSession)).toBe(false);
         expect(useStore.getState().activeMeso?.id).toBe(555);
-        expect(useStore.getState().activeMeso?.programSystem?.systemId).toBe(KONG_4DAY_V1.id);
 
-        // After explicitly discarding the session, conversion succeeds
+        // After explicitly discarding the session, conversion succeeds on real code.
         useStore.setState({ activeSession: null });
-        const result2 = confirmConversion();
-        expect(result2.blocked).toBe(false);
+        expect(canConfirmKongConversion(useStore.getState().activeSession)).toBe(true);
+        const { convertedMeso } = convertKongToPersonalRoutine(useStore.getState().activeMeso!, 'es');
+        useStore.setState({ activeMeso: convertedMeso });
         expect(useStore.getState().activeMeso?.id).not.toBe(555);
         expect(useStore.getState().activeMeso?.programSystem).toBeUndefined();
     });
@@ -132,41 +128,57 @@ describe('Bloque B: Program edit/convert protection and routine resume', () => {
 
         useStore.setState({ activeMeso: meso, activeSession: runningSession });
 
-        let navigatedToView: string | null = null;
-        let promptedReplaceDayIdx: number | null = null;
-        let reconstructedSession = false;
-
-        const onStartDay = (idx: number) => {
-            const currentSession = useStore.getState().activeSession;
-            const currentMeso = useStore.getState().activeMeso;
-
-            // Retomar logic
-            if (currentSession && currentSession.mesoId === currentMeso?.id && currentSession.dayIdx === idx) {
-                navigatedToView = 'workout';
-                return;
-            }
-
-            if (currentSession) {
-                promptedReplaceDayIdx = idx;
-                return;
-            }
-
-            reconstructedSession = true;
-        };
-
-        // 1. Tapping day 2 (same meso & dayIdx): resumes directly
-        onStartDay(2);
-        expect(navigatedToView).toBe('workout');
-        expect(promptedReplaceDayIdx).toBeNull();
-        expect(reconstructedSession).toBe(false);
+        // Production decision function used by AppViews onStartDay.
+        expect(resolveRoutineStartAction(useStore.getState().activeSession, useStore.getState().activeMeso, 2)).toBe('resume');
+        expect(resolveRoutineStartAction(useStore.getState().activeSession, useStore.getState().activeMeso, 0)).toBe('replace');
         // Session data is completely preserved
         expect(useStore.getState().activeSession?.exercises[0].sets[0].weight).toBe(140);
+        useStore.setState({ activeSession: null });
+        expect(resolveRoutineStartAction(useStore.getState().activeSession, useStore.getState().activeMeso, 0)).toBe('start');
+    });
 
-        // 2. Tapping day 0 (different day): prompts replacement
-        navigatedToView = null;
-        onStartDay(0);
-        expect(navigatedToView).toBeNull();
-        expect(promptedReplaceDayIdx).toBe(0);
-        expect(reconstructedSession).toBe(false);
+    it('ConfirmModal confirms a second entity after reopening without remount', () => {
+        const seen: string[] = [];
+        const onCancel = vi.fn();
+        const { rerender } = render(
+            <ConfirmModal
+                isOpen={true}
+                title="Remove slot"
+                description="Remove first"
+                confirmText="Remove"
+                cancelText="Cancel"
+                variant="danger"
+                onConfirm={() => { seen.push('first'); }}
+                onCancel={onCancel}
+            />,
+        );
+        fireEvent.click(screen.getByRole('button', { name: 'Remove' }));
+        expect(seen).toEqual(['first']);
+        rerender(
+            <ConfirmModal
+                isOpen={false}
+                title="Remove slot"
+                description="Remove second"
+                confirmText="Remove"
+                cancelText="Cancel"
+                variant="danger"
+                onConfirm={() => { seen.push('second'); }}
+                onCancel={onCancel}
+            />,
+        );
+        rerender(
+            <ConfirmModal
+                isOpen={true}
+                title="Remove slot"
+                description="Remove second"
+                confirmText="Remove"
+                cancelText="Cancel"
+                variant="danger"
+                onConfirm={() => { seen.push('second'); }}
+                onCancel={onCancel}
+            />,
+        );
+        fireEvent.click(screen.getByRole('button', { name: 'Remove' }));
+        expect(seen).toEqual(['first', 'second']);
     });
 });

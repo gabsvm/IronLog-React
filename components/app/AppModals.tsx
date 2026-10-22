@@ -8,6 +8,7 @@ import { TRANSLATIONS } from '../../constants';
 import type { CommandAction } from '../../components/ui/CommandPalette';
 import { KONG_4DAY_ID } from '../../programs/kong/constants';
 import { convertKongToPersonalRoutine } from '../../programs/engine/ProgramConversion';
+import { canConfirmKongConversion } from './routineGuards';
 import { resetLocalData } from '../../services/localDataReset';
 import { syncService } from '../../services/syncService';
 import {
@@ -293,7 +294,7 @@ export const AppModals: React.FC<AppModalsProps> = ({
                         confirmText={t.convertKongConfirm}
                         cancelText={t.cancel}
                         onConfirm={() => {
-                            if (useStore.getState().activeSession) {
+                            if (!canConfirmKongConversion(useStore.getState().activeSession)) {
                                 setShowKongConvertModal(false);
                                 setShowActiveSessionAlert?.(true);
                                 return;

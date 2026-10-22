@@ -1,5 +1,5 @@
 
-import React, { useId, useRef } from 'react';
+import React, { useEffect, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from './Button';
 import { Icon } from './Icon';
@@ -32,6 +32,11 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
     const titleId = useId();
     const descriptionId = useId();
     const confirmedRef = useRef(false);
+    // Persistently mounted modal stays in fiber across openings: reset the
+    // single-shot guard on each new opening so the second confirm works.
+    useEffect(() => {
+        if (isOpen) confirmedRef.current = false;
+    }, [isOpen]);
 
     if (!isOpen) return null;
 

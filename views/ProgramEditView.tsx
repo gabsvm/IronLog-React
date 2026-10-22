@@ -49,7 +49,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = (props) => {
             <div className="z-10 flex min-h-14 shrink-0 items-center justify-between border-b border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base)/0.96)] px-4 pt-safe backdrop-blur-md">
                 <button
                     onClick={onBack}
-                    className="flex items-center gap-2 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
+                    className="flex min-h-[44px] min-w-[44px] items-center gap-2 px-1 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
                     aria-label={t.back}
                 >
                     <Icon name="ChevronLeft" size={20} />
@@ -71,7 +71,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = (props) => {
                     ) : (
                         <button
                             onClick={handleValidateAndOpenStartModal}
-                            className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-black px-3.5 py-1.5 rounded-full text-xs font-black shadow-lg shadow-primary-500/25 active:scale-95 transition-all"
+                            className="flex min-h-[44px] items-center gap-2 bg-primary-500 hover:bg-primary-600 text-black px-4 py-2 rounded-full text-xs font-black shadow-lg shadow-primary-500/25 active:scale-95 transition-all"
                         >
                             <Icon name="Play" size={12} fill="currentColor" />
                             {TRANSLATIONS[lang].copy.programEdit.start}
