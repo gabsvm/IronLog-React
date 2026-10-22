@@ -21,9 +21,16 @@ import { BodyTab } from './nutri/BodyTab';
 import { HistoryTab } from './nutri/HistoryTab';
 
 // ─── COMPONENT ──────────────────────────────────────────────────────
-type SubTab = 'today' | 'body' | 'history';
+export type NutriSubTab = 'today' | 'body' | 'history';
 
-export const NutriView: React.FC = () => {
+interface NutriViewProps {
+  subTab: NutriSubTab;
+  onSubTabChange: (tab: NutriSubTab) => void;
+  addMealRequested?: boolean;
+  onAddMealHandled?: () => void;
+}
+
+export const NutriView: React.FC<NutriViewProps> = ({ subTab, onSubTabChange, addMealRequested, onAddMealHandled }) => {
   const {
     nutritionLogs, setNutritionLogs,
     cardioSessions, setCardioSessions,
@@ -49,7 +56,6 @@ export const NutriView: React.FC = () => {
     };
   }, []);
 
-  const [subTab, setSubTab]             = useState<SubTab>('today');
   const [showAddMeal, setShowAddMeal]   = useState(false);
   const [showAddCardio, setShowAddCardio] = useState(false);
   const [showGoalEditor, setShowGoalEditor] = useState(false);
@@ -60,6 +66,12 @@ export const NutriView: React.FC = () => {
   const [editGoal, setEditGoal]           = useState(nutritionGoal);
   const [lastDeletedEntry, setLastDeletedEntry] = useState<{ entry: FoodEntry; date: string } | null>(null);
   const [lastDeletedCardio, setLastDeletedCardio] = useState<CardioSession | null>(null);
+
+  useEffect(() => {
+    if (!addMealRequested) return;
+    setShowAddMeal(true);
+    onAddMealHandled?.();
+  }, [addMealRequested, onAddMealHandled]);
 
   const todayLog    = useMemo(() => getTodayLog(nutritionLogs), [nutritionLogs]);
   const todayMacros = useMemo(() => sumMacros(todayLog.entries), [todayLog]);
@@ -227,14 +239,14 @@ export const NutriView: React.FC = () => {
             {/* ── Section header: title + Add-meal shortcut (same AddMealModal flow) ── */}
             <div className="flex items-center justify-between gap-3 pt-1">
                 <div className="min-w-0">
-                    <h2 className="text-2xl font-black tracking-tight text-zinc-950 dark:text-white">{TRANSLATIONS[lang].navDiaryNutrition}</h2>
+                    <h2 className="text-2xl font-semibold tracking-tight text-[rgb(var(--text-primary))]">{TRANSLATIONS[lang].navDiaryNutrition}</h2>
                     <p className="mt-0.5 text-xs font-medium capitalize text-muted">{todayLabel}</p>
                 </div>
                 <button
                     type="button"
                     onClick={() => setShowAddMeal(true)}
                     aria-label={TRANSLATIONS[lang].copy.todayTab.addFoodEntry}
-                    className="expressive-press flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-full bg-primary-500 px-4 text-xs font-bold text-zinc-950 shadow-sm transition-transform active:scale-95"
+                    className="gl-primary shrink-0 px-4 text-xs"
                 >
                     <Icon name="Plus" size={14} />
                     {TRANSLATIONS[lang].copy.todayTab.addFood}
@@ -242,18 +254,18 @@ export const NutriView: React.FC = () => {
             </div>
             {/* ── Sub-tabs ── */}
             <div className="sticky top-0 z-10 -mx-4 px-4 py-2 bg-[rgb(var(--surface-app))]">
-                <div className="seg-reference flex gap-1 p-1">
+                <div className="seg-reference grid-cols-3">
                     {([
                         { id: 'today',   label: TRANSLATIONS[lang].copy.nutri.today,        icon: 'Utensils' },
                         { id: 'body',    label: TRANSLATIONS[lang].copy.nutri.body,      icon: 'Scale' },
                         { id: 'history', label: TRANSLATIONS[lang].dietTrends, icon: 'BarChart2' },
-                    ] as { id: SubTab; label: string; icon: string }[]).map(tab => (
+                    ] as { id: NutriSubTab; label: string; icon: string }[]).map(tab => (
                         <button
                             key={tab.id}
-                            onClick={() => setSubTab(tab.id)}
+                            onClick={() => onSubTabChange(tab.id)}
                             aria-pressed={subTab === tab.id}
-                            className={`expressive-press flex min-h-11 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full px-1 text-xs font-bold tracking-normal ${
-                                subTab === tab.id ? 'bg-primary-500 text-zinc-950 shadow-sm' : 'text-muted hover:text-[rgb(var(--text-primary))]'
+                            className={`flex min-h-11 min-w-0 items-center justify-center gap-1.5 rounded-[10px] px-1 text-xs font-semibold tracking-normal ${
+                                subTab === tab.id ? 'bg-surface-elevated text-[rgb(var(--text-primary))]' : 'text-muted hover:text-[rgb(var(--text-primary))]'
                             }`}
                         >
                             <Icon name={tab.icon} size={12} />
@@ -312,7 +324,7 @@ export const NutriView: React.FC = () => {
             last14Days={last14Days}
             historyDayList={historyDayList}
             nutritionGoal={nutritionGoal}
-            onGoToday={() => setSubTab('today')}
+            onGoToday={() => onSubTabChange('today')}
           />
         )}
       </div>
@@ -331,10 +343,10 @@ export const NutriView: React.FC = () => {
       >
         {editEntryDraft && (
           <div className="p-5 space-y-5">
-            <p className="text-[11px] text-zinc-500 -mt-3">{TRANSLATIONS[lang].copy.nutri.editNutritionValues}</p>
+            <p className="text-xs text-muted -mt-3">{TRANSLATIONS[lang].copy.nutri.editNutritionValues}</p>
             {/* Quick multiplier buttons */}
             <div>
-              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">{TRANSLATIONS[lang].copy.nutri.quickScale}</p>
+              <p className="text-xs font-semibold text-muted mb-2">{TRANSLATIONS[lang].copy.nutri.quickScale}</p>
               <div className="flex gap-2">
                 {[0.5, 0.75, 1, 1.5, 2].map(mult => (
                   <button
@@ -349,7 +361,7 @@ export const NutriView: React.FC = () => {
                         fat:      Math.round(editingEntry.fat      * mult),
                       });
                     }}
-                    className="min-h-[44px] flex-1 rounded-xl bg-zinc-800 px-1 text-zinc-300 text-xs font-bold active:scale-95 transition-all hover:bg-zinc-700"
+                    className="min-h-[44px] flex-1 rounded-xl bg-surface-elevated px-1 text-secondary text-xs font-semibold transition-colors hover:bg-surface-raised"
                   >
                     ×{mult}
                   </button>
@@ -360,19 +372,20 @@ export const NutriView: React.FC = () => {
             {/* Manual edit fields */}
             <div className="grid grid-cols-2 gap-3">
               {([
-                { key: 'calories', label: TRANSLATIONS[lang].copy.nutri.calories, unit: 'kcal', color: 'text-zinc-300' },
-                { key: 'protein',  label: TRANSLATIONS[lang].copy.nutri.protein,  unit: 'g', color: 'text-blue-400' },
-                { key: 'carbs',    label: TRANSLATIONS[lang].copy.nutri.carbs,       unit: 'g', color: 'text-amber-400' },
-                { key: 'fat',      label: TRANSLATIONS[lang].copy.nutri.fat,         unit: 'g', color: 'text-pink-400' },
+                { key: 'calories', label: TRANSLATIONS[lang].copy.nutri.calories, unit: 'kcal', color: 'text-secondary' },
+                { key: 'protein',  label: TRANSLATIONS[lang].copy.nutri.protein,  unit: 'g', color: 'text-blue-700 dark:text-blue-400' },
+                { key: 'carbs',    label: TRANSLATIONS[lang].copy.nutri.carbs,       unit: 'g', color: 'text-amber-800 dark:text-amber-400' },
+                { key: 'fat',      label: TRANSLATIONS[lang].copy.nutri.fat,         unit: 'g', color: 'text-pink-700 dark:text-pink-400' },
               ] as const).map(({ key, label, unit, color }) => (
                 <div key={key}>
-                  <label className={`text-[11px] font-bold ${color} mb-1 block`}>{label} <span className="text-zinc-600">({unit})</span></label>
+                  <label htmlFor={`edit-meal-${key}`} className={`text-xs font-semibold ${color} mb-1 block`}>{label} <span className="text-muted">({unit})</span></label>
                   <input
+                    id={`edit-meal-${key}`}
                     type="number"
                     inputMode="numeric"
                     value={editEntryDraft[key]}
                     onChange={e => setEditEntryDraft(prev => prev ? { ...prev, [key]: Math.max(0, Number(e.target.value)) } : prev)}
-                    className="nutri-field w-full bg-zinc-800 border border-zinc-700/50 rounded-2xl px-3 py-2.5 text-white focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all glow-input-neon"
+                    className="gl-input"
                   />
                 </div>
               ))}
@@ -395,20 +408,21 @@ export const NutriView: React.FC = () => {
       >
         <div className="p-5 space-y-4">
           {tdee && (
-            <p className="text-[11px] text-zinc-500 -mt-2">
-              {TRANSLATIONS[lang].copy.nutri.estimatedTdee}: <span className="text-zinc-300 font-bold">{tdee} kcal</span>
+            <p className="text-xs text-muted -mt-2">
+              {TRANSLATIONS[lang].copy.nutri.estimatedTdee}: <span className="text-secondary font-semibold">{tdee} kcal</span>
             </p>
           )}
           <div className="space-y-3">
             {(['calories', 'protein', 'carbs', 'fat'] as const).map(key => (
               <div key={key}>
-                <label className="text-xs text-zinc-500 mb-1 block">{TRANSLATIONS[lang].copy.nutri[key]} {key === 'calories' ? '(kcal)' : '(g)'}</label>
+                <label htmlFor={`nutrition-goal-${key}`} className="text-xs text-muted mb-1 block">{TRANSLATIONS[lang].copy.nutri[key]} {key === 'calories' ? '(kcal)' : '(g)'}</label>
                 <input
+                  id={`nutrition-goal-${key}`}
                   type="number"
                   inputMode="numeric"
                   value={editGoal[key]}
                   onChange={e => setEditGoal(prev => ({ ...prev, [key]: Number(e.target.value) }))}
-                  className="nutri-field w-full bg-zinc-800 border border-zinc-700/50 rounded-2xl px-4 py-3 text-white focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all glow-input-neon"
+                  className="gl-input"
                 />
               </div>
             ))}
@@ -424,23 +438,23 @@ export const NutriView: React.FC = () => {
       {/* Undo Snackbars — stacked, food + cardio */}
       <div className="fixed bottom-24 left-4 right-4 z-modal flex flex-col gap-2 pointer-events-none">
         {lastDeletedEntry && (
-          <div className="flex items-center justify-between bg-zinc-800 text-white px-4 py-3 rounded-2xl shadow-2xl border border-zinc-700 animate-in fade-in slide-in-from-bottom-4 pointer-events-auto">
+          <div className="flex items-center justify-between bg-surface-elevated text-[rgb(var(--text-primary))] px-4 py-3 rounded-2xl shadow-sm border border-border-strong pointer-events-auto">
             <div className="flex items-center gap-2">
-              <Icon name="Trash2" size={14} className="text-zinc-400" />
+              <Icon name="Trash2" size={14} className="text-secondary" />
               <span className="text-xs font-bold">{TRANSLATIONS[lang].copy.nutri.itemDeleted}</span>
             </div>
-            <button onClick={handleUndoDelete} className="text-xs font-black text-red-500 uppercase tracking-wider px-2 py-1 active:scale-95 transition-transform">
+            <button onClick={handleUndoDelete} className="min-h-11 text-xs font-semibold text-accent px-2">
               {TRANSLATIONS[lang].copy.nutri.undo}
             </button>
           </div>
         )}
         {lastDeletedCardio && (
-          <div className="flex items-center justify-between bg-zinc-800 text-white px-4 py-3 rounded-2xl shadow-2xl border border-zinc-700 animate-in fade-in slide-in-from-bottom-4 pointer-events-auto">
+          <div className="flex items-center justify-between bg-surface-elevated text-[rgb(var(--text-primary))] px-4 py-3 rounded-2xl shadow-sm border border-border-strong pointer-events-auto">
             <div className="flex items-center gap-2">
-              <Icon name="Flame" size={14} className="text-zinc-400" />
+              <Icon name="Flame" size={14} className="text-secondary" />
               <span className="text-xs font-bold">{TRANSLATIONS[lang].copy.nutri.cardioDeleted}</span>
             </div>
-            <button onClick={handleUndoDeleteCardio} className="text-xs font-black text-red-500 uppercase tracking-wider px-2 py-1 active:scale-95 transition-transform">
+            <button onClick={handleUndoDeleteCardio} className="min-h-11 text-xs font-semibold text-accent px-2">
               {TRANSLATIONS[lang].copy.nutri.undo}
             </button>
           </div>

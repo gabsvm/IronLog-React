@@ -16,14 +16,14 @@ export const HomeTopSection: React.FC<{ state: HomeViewState }> = ({ state }) =>
             {/* 1. Program Name, Badges & Plan Actions */}
             <div className={`flex items-start justify-between gap-3 pt-1 ${kongBlock ? 'kong-home-header' : ''}`}>
                 <div className="min-w-0 flex-1">
-                    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted first-letter:uppercase">{todayLabel}</p>
+                    <p className="text-xs font-medium text-[rgb(var(--text-secondary))] first-letter:uppercase">{todayLabel}</p>
                     <div className="mt-1 flex items-center gap-2 flex-wrap">
-                        <h2 className="text-2xl font-black text-white tracking-[-0.03em] truncate">{activeMeso.name}</h2>
+                        <h1 className="text-2xl font-semibold tracking-tight text-[rgb(var(--text-primary))]">{activeMeso.name}</h1>
                         {kongBlock && (
                             <button
                                 type="button"
                                 onClick={() => setShowKongHub(true)}
-                                className="rounded-full bg-surface-raised px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary-400 border border-border-subtle"
+                                className="gl-quiet min-h-[44px] px-3 text-xs font-semibold"
                             >
                                 {`KONG · B${kongBlock.block.number}`}
                             </button>
@@ -33,7 +33,7 @@ export const HomeTopSection: React.FC<{ state: HomeViewState }> = ({ state }) =>
                                 id="tut-guidelines"
                                 type="button"
                                 onClick={() => checkPro("Guidelines") && setShowGuidelines(true)}
-                                className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-surface-raised text-blue-400 border border-border-subtle hover:text-white transition-colors flex items-center gap-1 active:scale-95"
+                                className="gl-quiet flex min-h-[44px] items-center gap-1 px-3 text-xs font-semibold"
                             >
                                 <Icon name="Info" size={12} /> {pickLang(lang, { en: 'GUIDELINES', es: 'GUÍA' })} {!isPro && <Icon name="Lock" size={10} className="text-yellow-500 ml-0.5" />}
                             </button>
@@ -47,7 +47,7 @@ export const HomeTopSection: React.FC<{ state: HomeViewState }> = ({ state }) =>
                     id="tut-settings-btn"
                     type="button"
                     onClick={() => setShowPlanActions(true)}
-                    className="relative text-zinc-400 hover:text-white p-1.5 after:absolute after:-inset-1 after:content-[''] rounded-lg active:bg-surface-raised transition-colors shrink-0"
+                    className="gl-quiet flex h-11 w-11 shrink-0 items-center justify-center"
                     aria-label={h.planOptions}
                     title={h.planOptions}
                 >
@@ -78,24 +78,22 @@ export const HomeTopSection: React.FC<{ state: HomeViewState }> = ({ state }) =>
                                 setSelectedDayIdx(idx);
                             }}
                             aria-pressed={isSelected}
-                            className={`expressive-press min-h-[56px] py-2.5 px-1.5 text-center rounded-[20px] transition-all ${
+                            className={`min-h-[56px] rounded-xl border px-1.5 py-2.5 text-center ${
                                 isSelected
-                                    ? 'border border-primary-500 bg-primary-500 text-zinc-950 font-semibold shadow-sm'
-                                    : isDone
-                                    ? 'card-reference bg-surface-raised/40 text-muted'
-                                    : 'card-reference bg-surface-raised text-zinc-300'
+                                    ? 'border-primary-500 bg-primary-500/10 text-[rgb(var(--text-primary))]'
+                                    : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base))] text-[rgb(var(--text-secondary))]'
                             }`}
                         >
-                            <div className="text-[11px] font-semibold tracking-normal h-4 flex items-center justify-center">
+                            <div className="flex h-4 items-center justify-center text-xs font-medium">
                                 {isTodayOrNext ? (
-                                    <span className={isSelected ? 'font-bold text-zinc-950' : 'font-bold text-primary-400'}>{h.today}</span>
+                                    <span className="font-semibold">{h.today}</span>
                                 ) : isDone ? (
                                     <span className="text-muted"><Icon name="Check" size={11} strokeWidth={3} /></span>
                                 ) : (
                                     <span>&nbsp;</span>
                                 )}
                             </div>
-                            <div className="text-[13px] font-semibold mt-0.5 truncate">
+                            <div className="mt-0.5 truncate text-sm font-medium">
                                 {`${h.dayWord} ${idx + 1}`}
                             </div>
                         </button>

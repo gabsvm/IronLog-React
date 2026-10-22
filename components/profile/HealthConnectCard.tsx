@@ -137,7 +137,7 @@ export const HealthConnectCard: React.FC<HealthConnectCardProps> = ({
                             {importState.added > 0 ? t.healthImported.replace('{n}', String(importState.added)) : t.healthNothingNew}
                         </p>
                     )}
-                    {importState.kind === 'failed' && <p role="alert" className="text-xs text-red-500">{t.healthImportFailed}</p>}
+                    {importState.kind === 'failed' && <p role="alert" className="text-xs text-red-700 dark:text-red-400">{t.healthImportFailed}</p>}
                     <div className="flex items-center justify-between gap-3">
                         <span className="text-xs font-bold text-[rgb(var(--text-secondary))]">{t.healthExportWorkouts}</span>
                         <button
@@ -146,7 +146,7 @@ export const HealthConnectCard: React.FC<HealthConnectCardProps> = ({
                             aria-checked={exportWorkouts}
                             aria-label={t.healthExportWorkouts}
                             onClick={toggleExport}
-                            className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${exportWorkouts ? 'bg-primary-500' : 'bg-zinc-300 dark:bg-zinc-700'}`}
+                            className={`relative h-6 w-11 shrink-0 rounded-full transition-colors before:absolute before:-inset-y-2.5 before:inset-x-0 before:content-[''] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 ${exportWorkouts ? 'bg-primary-500' : 'bg-surface-elevated border border-border-strong'}`}
                         >
                             <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${exportWorkouts ? 'translate-x-5' : 'translate-x-0.5'}`} />
                         </button>

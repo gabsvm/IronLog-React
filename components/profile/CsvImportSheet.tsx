@@ -136,7 +136,7 @@ export const CsvImportSheet: React.FC<CsvImportSheetProps> = ({
                 {/* Summary */}
                 <div className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated)/0.6)] p-4">
                     <div className="flex items-center gap-2 mb-3">
-                        <span className="px-2 py-0.5 rounded-full bg-primary-500/15 text-primary-600 dark:text-primary-400 text-xs font-black uppercase tracking-wider">
+                        <span className="px-2 py-0.5 rounded-full bg-surface-elevated text-accent text-xs font-semibold">
                             {parsed.source === 'hevy' ? 'Hevy' : 'Strong'}
                         </span>
                         <span className="text-xs text-muted">
@@ -146,11 +146,11 @@ export const CsvImportSheet: React.FC<CsvImportSheetProps> = ({
                     <dl className="grid grid-cols-2 gap-2 text-sm">
                         <div>
                             <dt className="text-xs font-semibold tracking-normal text-muted">{c.sessions}</dt>
-                            <dd className="font-black text-[rgb(var(--text-primary))]">{fresh.length}</dd>
+                            <dd className="font-semibold text-[rgb(var(--text-primary))]">{fresh.length}</dd>
                         </div>
                         <div>
                             <dt className="text-xs font-semibold tracking-normal text-muted">{c.sets}</dt>
-                            <dd className="font-black text-[rgb(var(--text-primary))]">{freshSetCount}</dd>
+                            <dd className="font-semibold text-[rgb(var(--text-primary))]">{freshSetCount}</dd>
                         </div>
                         {parsed.dateRange && (
                             <div className="col-span-2">
@@ -162,11 +162,11 @@ export const CsvImportSheet: React.FC<CsvImportSheetProps> = ({
                         )}
                         <div>
                             <dt className="text-xs font-semibold tracking-normal text-muted">{c.newExercises}</dt>
-                            <dd className="font-black text-[rgb(var(--text-primary))]">{unmatched.length}</dd>
+                            <dd className="font-semibold text-[rgb(var(--text-primary))]">{unmatched.length}</dd>
                         </div>
                         <div>
                             <dt className="text-xs font-semibold tracking-normal text-muted">{c.alreadyImported}</dt>
-                            <dd className="font-black text-[rgb(var(--text-primary))]">{skippedCount}</dd>
+                            <dd className="font-semibold text-[rgb(var(--text-primary))]">{skippedCount}</dd>
                         </div>
                         {parsed.skippedRows > 0 && (
                             <div className="col-span-2">

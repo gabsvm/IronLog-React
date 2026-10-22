@@ -6,12 +6,11 @@ import { getTranslated } from '../utils';
 import { Icon } from '../components/ui/Icon';
 import { requestQuickStart } from '../components/layout/navigation';
 import { usePro } from '../hooks/usePro';
-import { createTemplateActions } from './home/applyTemplate';
-import type { GlobalTemplate } from '../types';
+import { useTemplateActions } from './home/applyTemplate';
+import { TemplateChangeConfirmation } from './home/TemplateChangeConfirmation';
 
 const ProgramHub = React.lazy(() => import('../components/programs/ProgramHub').then((m) => ({ default: m.ProgramHub })));
 const TemplateSelector = React.lazy(() => import('./home/TemplateSelector').then((m) => ({ default: m.TemplateSelector })));
-const ConfirmModal = React.lazy(() => import('../components/ui/ConfirmModal').then((m) => ({ default: m.ConfirmModal })));
 const PaywallModal = React.lazy(() => import('../components/pro/PaywallModal').then((m) => ({ default: m.PaywallModal })));
 
 interface RoutineViewProps {
@@ -20,10 +19,6 @@ interface RoutineViewProps {
     onOpenExercises: () => void;
 }
 
-type PendingPick =
-    | { kind: 'template'; tpl: GlobalTemplate }
-    | { kind: 'program'; programId: string }
-    | { kind: 'custom' };
 
 /**
  * Fase 3 (Rutina): plan overview + day structure + library actions.
@@ -35,19 +30,17 @@ export const RoutineView: React.FC<RoutineViewProps> = ({ onStartDay, onEditProg
     const { program, lang, logs, setProgram, globalTemplates, personalTemplates, userProfile } = useApp();
     const activeMeso = useStore((state) => state.activeMeso);
     const setActiveMeso = useStore((state) => state.setActiveMeso);
-    const activeSession = useStore((state) => state.activeSession);
     const { checkPro, showPaywall, setShowPaywall, featureAttempted } = usePro();
     const t = TRANSLATIONS[lang];
     const tp = TRANSLATIONS[lang].copy.programEdit;
     const rv = t.routineView;
     const [showHub, setShowHub] = React.useState(false);
     const [showTemplates, setShowTemplates] = React.useState(false);
-    const [pendingPick, setPendingPick] = React.useState<PendingPick | null>(null);
     const safeProgram = Array.isArray(program) ? program : [];
     const isKong = Boolean(activeMeso?.programSystem);
     const hasPlan = Boolean(activeMeso) && safeProgram.length > 0;
 
-    const { handleSelectTemplate, handleSelectProgram, handleCreateCustom } = createTemplateActions({
+    const { handleSelectTemplate, handleSelectProgram, handleCreateCustom, templateChangeConfirmation } = useTemplateActions({
         setProgram,
         setActiveMeso,
         setShowTemplateSelector: setShowTemplates,
@@ -57,17 +50,6 @@ export const RoutineView: React.FC<RoutineViewProps> = ({ onStartDay, onEditProg
         lang,
     });
 
-    const applyPick = (pick: PendingPick) => {
-        if (pick.kind === 'template') handleSelectTemplate(pick.tpl);
-        else if (pick.kind === 'program') handleSelectProgram(pick.programId);
-        else handleCreateCustom();
-    };
-
-    // Swapping the plan never discards an in-progress session silently.
-    const requestPick = (pick: PendingPick) => {
-        if (activeSession) setPendingPick(pick);
-        else applyPick(pick);
-    };
 
     return (
         <div className="space-y-4 px-4 pb-28 pt-3">
@@ -140,7 +122,7 @@ export const RoutineView: React.FC<RoutineViewProps> = ({ onStartDay, onEditProg
                         <button type="button" onClick={() => setShowTemplates(true)} className="gl-primary min-h-[48px]">
                             {rv.changeTemplate}
                         </button>
-                        <button type="button" onClick={onEditProgram} className="gl-quiet min-h-[48px]">
+                        <button type="button" onClick={handleCreateCustom} className="gl-quiet min-h-[48px]">
                             {tp.newRoutine}
                         </button>
                     </div>
@@ -182,9 +164,9 @@ export const RoutineView: React.FC<RoutineViewProps> = ({ onStartDay, onEditProg
                 <Suspense fallback={null}>
                     <TemplateSelector
                         onClose={() => setShowTemplates(false)}
-                        onSelectTemplate={(tpl) => requestPick({ kind: 'template', tpl })}
-                        onSelectProgram={(programId) => requestPick({ kind: 'program', programId })}
-                        onCreateCustom={() => requestPick({ kind: 'custom' })}
+                        onSelectTemplate={handleSelectTemplate}
+                        onSelectProgram={handleSelectProgram}
+                        onCreateCustom={handleCreateCustom}
                         lang={lang}
                         t={t}
                         templates={[...personalTemplates, ...globalTemplates]}
@@ -192,21 +174,7 @@ export const RoutineView: React.FC<RoutineViewProps> = ({ onStartDay, onEditProg
                 </Suspense>
             )}
 
-            <Suspense fallback={null}>
-                <ConfirmModal
-                    isOpen={pendingPick !== null}
-                    title={rv.replaceTitle}
-                    description={rv.replaceDesc}
-                    onConfirm={() => {
-                        if (pendingPick) applyPick(pendingPick);
-                        setPendingPick(null);
-                    }}
-                    onCancel={() => setPendingPick(null)}
-                    confirmText={rv.replaceOk}
-                    cancelText={t.cancel}
-                    variant="danger"
-                />
-            </Suspense>
+            <TemplateChangeConfirmation lang={lang} confirmation={templateChangeConfirmation} />
 
             {showPaywall && (
                 <Suspense fallback={null}>

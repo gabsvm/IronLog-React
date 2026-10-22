@@ -11,14 +11,14 @@ const seedOnboarded = (page: Page) =>
         }));
     });
 
-const PLUS_BTN = 'nav[aria-label="Main navigation"] button[aria-label*="Iniciar" i], nav[aria-label="Main navigation"] button[aria-label*="Start" i]';
-
 const startFreestyleWithOneExercise = async (page: Page) => {
-    await page.locator(PLUS_BTN).first().click();
-    const freestyleOption = page.locator('button:has-text("Sesión libre"), button:has-text("Freestyle")').first();
+    await page.getByRole('button', { name: /^(Sesión libre|Freestyle session) ·/ }).click();
+    const freestyleOption = page.getByRole('dialog', { name: /Iniciar entrenamiento|Start training/ })
+        .getByRole('button', { name: /Sesión libre|Freestyle/ });
     await expect(freestyleOption).toBeVisible({ timeout: 6000 });
     await freestyleOption.click();
-    const startFreeBtn = page.locator('button:has-text("Iniciar Sesión Libre"), button:has-text("Start Free Session"), button:has-text("Iniciar sesión libre")').first();
+    const startFreeBtn = page.getByRole('dialog', { name: /Nueva Sesión|New Session/ })
+        .getByRole('button', { name: /Iniciar Sesión Libre|Start Free Session/i });
     await expect(startFreeBtn).toBeVisible({ timeout: 8000 });
     await startFreeBtn.scrollIntoViewIfNeeded();
     await startFreeBtn.click();
@@ -29,7 +29,7 @@ const startFreestyleWithOneExercise = async (page: Page) => {
     const dialog = page.locator('[role="dialog"]').last();
     await expect(dialog).toBeVisible({ timeout: 6000 });
     // Deterministic pick: a barbell strength exercise (has weight inputs).
-    await dialog.getByLabel('Search exercises').fill('press banca');
+    await dialog.getByLabel(/Buscar ejercicios|Search exercises/).fill('press banca');
     const option = dialog.locator('button[class*="text-left"]').first();
     await expect(option).toBeVisible({ timeout: 6000 });
     await option.click();
@@ -50,8 +50,9 @@ const setWeightUnitFromHome = async (page: Page, unit: 'KG' | 'LBS') => {
 };
 
 const resumeWorkoutFromHome = async (page: Page) => {
-    await page.locator(PLUS_BTN).first().click();
-    const resume = page.locator('button:has-text("Reanudar sesión"), button:has-text("Resume session")').first();
+    await page.getByRole('button', { name: /^(Sesión libre|Freestyle session) ·/ }).click();
+    const resume = page.getByRole('dialog', { name: /Iniciar entrenamiento|Start training/ })
+        .getByRole('button', { name: /Reanudar sesión|Resume session/ });
     await expect(resume).toBeVisible({ timeout: 6000 });
     await resume.click();
     await expect(page.locator('#tut-finish-btn')).toBeVisible({ timeout: 10000 });

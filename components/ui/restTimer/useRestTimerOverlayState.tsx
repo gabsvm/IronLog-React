@@ -1,5 +1,5 @@
 // U5: RestTimerOverlay state, effects and handlers, moved verbatim from components/ui/RestTimerOverlay.tsx.
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { useTimerActions, useTimerState } from '../../../context/TimerContext';
 import { requestTimerNotificationPermission } from '../../../hooks/useTimer';
@@ -26,7 +26,10 @@ export const useRestTimerOverlayState = () => {
     const [showNotifPrompt, setShowNotifPrompt] = useState(false);
     const [showAlarmNotice, setShowAlarmNotice] = useState(false);
     const lastFreshStartRef = useRef(0);
-    const pillRef = useRef<HTMLElement>(null);
+    const [pillElement, setPillElement] = useState<HTMLElement | null>(null);
+    const pillRef = useCallback((node: HTMLElement | null) => {
+        setPillElement(node);
+    }, []);
 
     // Reset to user preference when a new rest begins
     useEffect(() => {
@@ -68,24 +71,22 @@ export const useRestTimerOverlayState = () => {
     // under the pill. '0px' whenever the pill is not mounted.
     useEffect(() => {
         const root = document.documentElement;
-        if (!restTimer?.active || mode !== 'compact') {
+        if (!restTimer?.active || mode !== 'compact' || !pillElement) {
             root.style.setProperty('--rest-pill-height', '0px');
             return;
         }
-        const pill = pillRef.current;
-        if (!pill) return;
         const applyHeight = () => {
-            root.style.setProperty('--rest-pill-height', `${Math.ceil(pill.getBoundingClientRect().height)}px`);
+            root.style.setProperty('--rest-pill-height', `${Math.ceil(pillElement.getBoundingClientRect().height)}px`);
         };
         applyHeight();
         if (typeof ResizeObserver === 'undefined') return;
         const observer = new ResizeObserver(applyHeight);
-        observer.observe(pill);
+        observer.observe(pillElement);
         return () => {
             observer.disconnect();
             root.style.setProperty('--rest-pill-height', '0px');
         };
-    }, [restTimer?.active, mode]);
+    }, [restTimer?.active, mode, pillElement]);
 
     // A focused set input must remain visible when the compact timer moves beneath the header.
     // Reserve space at the top of the scrollable exercise list only while the soft keyboard is open.

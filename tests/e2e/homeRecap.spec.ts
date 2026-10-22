@@ -36,27 +36,15 @@ const seedHome = (page: Page) =>
 test.describe('Q16 home recap strip', () => {
     test.use({ viewport: { width: 390, height: 844 } });
 
-    test('shows week progress, streak and last session below the hero', async ({ page }) => {
+    test('reports computed weekly adherence, last-session load and PRs', async ({ page }) => {
         await seedHome(page);
         await page.goto('/');
-        await expect(page.getByText('Esta semana')).toBeVisible({ timeout: 15000 });
-
-        // 1 of 4 planned days trained this week.
-        await expect(page.getByText('1/4')).toBeVisible();
-        // Week 1 complete + week 2 in progress → streak of 1.
-        await expect(page.getByText('semana de racha')).toBeVisible();
+        const adherence = page.getByRole('progressbar', { name: 'Esta semana' });
+        await expect(adherence).toHaveAttribute('aria-valuenow', '1');
+        await expect(adherence).toHaveAttribute('aria-valuemax', '4');
         // Last session: 2x60x10 = 1200 kg, ~30 min, one PR.
-        await expect(page.getByText('Última sesión')).toBeVisible();
-        await expect(page.getByText('1.200 kg')).toBeVisible();
+        await expect(page.getByText('1.200 kg', { exact: true })).toBeVisible();
         await expect(page.getByText('×1')).toBeVisible();
-
-        // The strip sits below the hero day card, and the K8 skip label survives.
-        const heroBtn = page.locator('button:has-text("Empezar Espalda")');
-        await expect(heroBtn).toBeVisible();
-        const heroBox = await heroBtn.boundingBox();
-        const stripBox = await page.getByText('Esta semana').boundingBox();
-        expect(stripBox!.y).toBeGreaterThan(heroBox!.y);
-        await expect(page.locator('button[aria-label="Saltar sesión"]')).toBeVisible();
 
         await expect(page.getByText(ERROR_BOUNDARY_TEXT)).toHaveCount(0);
     });

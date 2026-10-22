@@ -154,7 +154,7 @@ const HistoryCard = memo(({ log, lang, id, onOpen, unit = 'kg' }: HistoryCardPro
     );
 });
 
-export const HistoryView: React.FC = () => {
+export const HistoryView: React.FC<{ search: string; onSearchChange: (search: string) => void }> = ({ search, onSearchChange: setSearch }) => {
     const { logs, setLogs } = useApp();
     const { lang } = useAppPreferences();
     const { config } = useAppConfig();
@@ -168,7 +168,6 @@ export const HistoryView: React.FC = () => {
     const [deletingLogId, setDeletingLogId] = useState<number | null>(null);
     const [deletedLogBackup, setDeletedLogBackup] = useState<{ log: Log; index: number } | null>(null);
     const [editBackup, setEditBackup] = useState<{ original: Log; edited: Log } | null>(null);
-    const [search, setSearch] = useState('');
     const deferredSearch = useDeferredValue(search);
 
     const safeLogs = useMemo(() => Array.isArray(logs) ? logs : [], [logs]);
@@ -291,7 +290,7 @@ export const HistoryView: React.FC = () => {
 
     const context = useMemo<HistoryVirtuosoContext>(
         () => ({ lang, search, setSearch, hasLockedLogs, checkPro, onExportCSV: handleExportCSV, isPro }),
-        [lang, search, hasLockedLogs, checkPro, handleExportCSV, isPro]
+        [lang, search, setSearch, hasLockedLogs, checkPro, handleExportCSV, isPro]
     );
     const renderItem = useCallback((index: number, log: Log) => (
         <HistoryCard id={index === 0 ? 'tut-first-card' : undefined} log={log} lang={lang} onOpen={() => openDetail(log)} unit={unit} />

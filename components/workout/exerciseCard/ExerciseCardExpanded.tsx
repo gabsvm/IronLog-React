@@ -81,9 +81,9 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                         {((heroMetric && !allDone) || isLinkSource || isLinkingTarget) && (
                             <div className="flex flex-wrap items-center gap-1 pl-0.5">
                                 {heroMetric && !allDone && (
-                                    <div className={`inline-flex max-w-full items-center gap-1 rounded-full px-1 py-0.5 text-[9px] font-semibold ${heroMetric.tone}`}>
-                                        <Icon name={heroMetric.icon} size={10} />
-                                        <span className="truncate">{heroMetric.label}</span>
+                                    <div className={`inline-flex max-w-full items-start gap-1 rounded-full px-1 py-0.5 text-xs font-semibold ${heroMetric.tone}`}>
+                                        <Icon name={heroMetric.icon} size={12} className="mt-0.5 shrink-0" />
+                                        <span>{heroMetric.label}</span>
                                     </div>
                                 )}
 

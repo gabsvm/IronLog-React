@@ -19,12 +19,13 @@ export const Avatar: React.FC<AvatarProps> = ({
     email,
     photoURL,
     isPro = false,
-    size = 40,
+    size = 44,
     onClick,
     ariaLabel,
 }) => {
     const initial = email ? email.trim().charAt(0).toUpperCase() : null;
     const dim = `${size}px`;
+    const Element = onClick ? 'button' : 'span';
 
     const inner = photoURL ? (
         <img
@@ -34,25 +35,25 @@ export const Avatar: React.FC<AvatarProps> = ({
             draggable={false}
         />
     ) : initial ? (
-        <span className="font-bold text-white tracking-tight" style={{ fontSize: size * 0.42 }}>
+        <span className="font-bold text-[rgb(var(--text-primary))] tracking-tight" style={{ fontSize: size * 0.42 }}>
             {initial}
         </span>
     ) : (
-        <Icon name="User" size={Math.round(size * 0.5)} className="text-zinc-400" />
+        <Icon name="User" size={Math.round(size * 0.5)} className="text-muted" />
     );
 
     return (
-        <button
+        <Element
             onClick={onClick}
-            aria-label={ariaLabel || (email ? `Open account (${email})` : 'Open account')}
-            className={`relative rounded-full flex items-center justify-center bg-gradient-to-br from-zinc-700 to-zinc-900 active:scale-90 transition-[transform,border-color] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black overflow-hidden
-                ${isPro ? 'border-2 border-amber-500/80 shadow-[0_0_10px_rgba(245,158,11,0.35)]' : 'border border-zinc-700 hover:border-zinc-500'}
+            aria-label={onClick ? ariaLabel || (email ? `Open account (${email})` : 'Open account') : undefined}
+            className={`relative rounded-full flex shrink-0 items-center justify-center bg-surface-elevated active:scale-90 transition-[transform,border-color] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--surface-app))] overflow-hidden
+                ${isPro ? 'border-2 border-amber-500/80' : 'border border-border-strong hover:border-[rgb(var(--text-muted))]'}
             `}
             style={{ width: dim, height: dim }}
         >
-            <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center">
+            <span className="w-full h-full rounded-full overflow-hidden flex items-center justify-center">
                 {inner}
-            </div>
+            </span>
             {isPro && (
                 <span
                     className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-[0_0_8px_rgba(251,146,60,0.6)] ring-2 ring-black"
@@ -61,6 +62,6 @@ export const Avatar: React.FC<AvatarProps> = ({
                     <Icon name="Crown" size={9} className="text-white" />
                 </span>
             )}
-        </button>
+        </Element>
     );
 };

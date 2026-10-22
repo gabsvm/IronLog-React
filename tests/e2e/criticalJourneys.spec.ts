@@ -20,11 +20,7 @@ test.describe('GainsLab Critical Journeys', () => {
         await expect(startBtn).toBeVisible({ timeout: 8000 });
         await startBtn.scrollIntoViewIfNeeded();
         await page.waitForTimeout(400);
-        await startBtn.click({ force: true });
-
-        // Step 0: Level
-        await expect(page.getByText(/¿cuál es tu nivel\?|what's your level\?/i)).toBeVisible({ timeout: 12000 });
-        await page.locator('button:has-text("Siguiente"), button:has-text("Next")').first().click();
+        await startBtn.click();
 
         // Step 1: Frequency
         await expect(page.getByText(/¿cuántos días por semana\?|how many days per week\?/i)).toBeVisible({ timeout: 8000 });
@@ -38,12 +34,12 @@ test.describe('GainsLab Critical Journeys', () => {
         await expect(page.getByText(/¿cuánto tiempo tienes\?|how much time do you have\?/i)).toBeVisible({ timeout: 8000 });
         const analyzeBtn = page.locator('button:has-text("Analizar mi perfil"), button:has-text("Analyze my profile")').first();
         await expect(analyzeBtn).toBeVisible({ timeout: 8000 });
-        await analyzeBtn.click({ force: true });
+        await analyzeBtn.click();
 
         // Step 4: Recommendation screen -> Apply suggested routine
         const applyBtn = page.locator('button:has-text("Comenzar con rutina sugerida"), button:has-text("Start with suggested routine")').first();
         await expect(applyBtn).toBeVisible({ timeout: 8000 });
-        await applyBtn.click({ force: true });
+        await applyBtn.click();
 
         // Should land on home with semantic navigation bar
         await expect(page.locator('nav[aria-label="Main navigation"]')).toBeVisible({ timeout: 10000 });
@@ -51,7 +47,7 @@ test.describe('GainsLab Critical Journeys', () => {
         // Up next card exists and can actually be opened
         const upNextCard = page.locator('#tut-up-next');
         await expect(upNextCard).toBeVisible({ timeout: 8000 });
-        await upNextCard.click();
+        await upNextCard.getByRole('button', { name: /^Empezar|^Start/i }).click();
 
         // Proves workout view is mounted with finish button
         const finishBtn = page.locator('#tut-finish-btn');
@@ -65,11 +61,7 @@ test.describe('GainsLab Critical Journeys', () => {
         await expect(startBtn).toBeVisible({ timeout: 8000 });
         await startBtn.scrollIntoViewIfNeeded();
         await page.waitForTimeout(400);
-        await startBtn.click({ force: true });
-
-        // Step 0: Level
-        await expect(page.getByText(/¿cuál es tu nivel\?|what's your level\?/i)).toBeVisible({ timeout: 12000 });
-        await page.locator('button:has-text("Siguiente"), button:has-text("Next")').first().click();
+        await startBtn.click();
 
         // Step 1: Frequency
         await expect(page.getByText(/¿cuántos días por semana\?|how many days per week\?/i)).toBeVisible({ timeout: 8000 });
@@ -83,12 +75,12 @@ test.describe('GainsLab Critical Journeys', () => {
         await expect(page.getByText(/¿cuánto tiempo tienes\?|how much time do you have\?/i)).toBeVisible({ timeout: 8000 });
         const analyzeBtn = page.locator('button:has-text("Analizar mi perfil"), button:has-text("Analyze my profile")').first();
         await expect(analyzeBtn).toBeVisible({ timeout: 8000 });
-        await analyzeBtn.click({ force: true });
+        await analyzeBtn.click();
 
         // Choose "Crear mi propia plantilla"
         const customBtn = page.locator('button:has-text("Crear mi propia plantilla"), button:has-text("Create my own template")').first();
         await expect(customBtn).toBeVisible({ timeout: 8000 });
-        await customBtn.click({ force: true });
+        await customBtn.click();
 
         // Lands in program editor
         await expect(page.getByRole('heading', { name: /nueva rutina|new routine|editar rutina/i })).toBeVisible({ timeout: 10000 });
@@ -136,14 +128,13 @@ test.describe('GainsLab Critical Journeys', () => {
         });
         await page.reload();
 
-        // Open Quick Start sheet via central primary action in bottom nav
-        const plusBtn = page.locator('nav[aria-label="Main navigation"] button[aria-label*="Iniciar" i], nav[aria-label="Main navigation"] button[aria-label*="Start" i]').first();
-        await expect(plusBtn).toBeVisible({ timeout: 8000 });
-        await plusBtn.click();
+        // Enter Quick Start through Home's named freestyle action.
+        const quickStart = page.getByRole('button', { name: /^(Sesión libre|Freestyle session) ·/i });
+        await quickStart.click();
         await page.waitForTimeout(500);
 
         // Start Freestyle Gym session
-        const freestyleOption = page.locator('button:has-text("Sesión libre"), button:has-text("Freestyle")').first();
+        const freestyleOption = page.getByRole('dialog').getByRole('button', { name: /^Sesión libre|^Freestyle/i });
         await expect(freestyleOption).toBeVisible({ timeout: 6000 });
         await freestyleOption.click();
         await page.waitForTimeout(500);
@@ -196,14 +187,9 @@ test.describe('GainsLab Critical Journeys', () => {
         const nav = page.locator('nav[aria-label="Main navigation"]');
         await expect(nav).toBeVisible({ timeout: 8000 });
 
-        // Navigate to History view and verify the completed workout exists
-        const historyNavBtn = page.locator('button[aria-label*="Historial" i], button[aria-label*="History" i], nav button:has-text("Historial"), nav button:has-text("History")').first();
-        await expect(historyNavBtn).toBeVisible({ timeout: 5000 });
-        await historyNavBtn.click();
-        await page.waitForTimeout(500);
-
-        // History entry should exist
-        await expect(page.locator('text=/Sesión Libre|Freestyle|min|reps/i').first()).toBeVisible({ timeout: 8000 });
+        // Diary must contain the session that was actually completed.
+        await nav.getByRole('button', { name: /^Diario$|^Diary$/ }).click();
+        await expect(page.getByRole('heading', { name: /^Sesión Libre \(Gym\)$|^Freestyle \(Gym\)$/i })).toBeVisible({ timeout: 8000 });
     });
 
     test('Journey D — Active workout edited values and set completion survive persistence boundary', async ({ page }) => {
@@ -216,14 +202,13 @@ test.describe('GainsLab Critical Journeys', () => {
         });
         await page.reload();
 
-        // Open Quick Start
-        const plusBtn = page.locator('nav[aria-label="Main navigation"] button[aria-label*="Iniciar" i], nav[aria-label="Main navigation"] button[aria-label*="Start" i]').first();
-        await expect(plusBtn).toBeVisible({ timeout: 8000 });
-        await plusBtn.click();
+        // Enter Quick Start through Home's named freestyle action.
+        const quickStart = page.getByRole('button', { name: /^(Sesión libre|Freestyle session) ·/i });
+        await quickStart.click();
         await page.waitForTimeout(500);
 
         // Start Freestyle Gym session
-        const freestyleOption = page.locator('button:has-text("Sesión libre"), button:has-text("Freestyle")').first();
+        const freestyleOption = page.getByRole('dialog').getByRole('button', { name: /^Sesión libre|^Freestyle/i });
         await expect(freestyleOption).toBeVisible({ timeout: 6000 });
         await freestyleOption.click();
         await page.waitForTimeout(500);
@@ -272,15 +257,8 @@ test.describe('GainsLab Critical Journeys', () => {
         await page.reload();
         await page.waitForTimeout(500);
 
-        // Reopen Quick Start to resume the active workout
-        const plusBtnAfterReload = page.locator('nav[aria-label="Main navigation"] button[aria-label*="Iniciar" i], nav[aria-label="Main navigation"] button[aria-label*="Start" i]').first();
-        await expect(plusBtnAfterReload).toBeVisible({ timeout: 8000 });
-        await plusBtnAfterReload.click();
-        await page.waitForTimeout(500);
-
-        const resumeBtn = page.locator('button:has-text("Reanudar"), button:has-text("Resume")').first();
-        await expect(resumeBtn).toBeVisible({ timeout: 6000 });
-        await resumeBtn.click({ force: true });
+        // Home resumes the persisted session independently of the selected day.
+        await page.getByRole('button', { name: /^Retomar$|^Resume session$/ }).click();
 
         // Workout view is resumed and edited values survived
         const resumedFinishBtn = page.locator('#tut-finish-btn');
@@ -290,8 +268,8 @@ test.describe('GainsLab Critical Journeys', () => {
         await expect(resumedWeightInput).toHaveValue('92.5');
 
         // Completed set status survived
-        const completedBtnAfterResume = page.locator('button[aria-pressed="true"], button[aria-label*="Serie completada" i], button[aria-label*="Set completed" i]').first();
-        await expect(completedBtnAfterResume).toBeVisible({ timeout: 5000 });
+        const completedBtnAfterResume = page.getByRole('button', { name: /Completar serie|Complete set/i }).first();
+        await expect(completedBtnAfterResume).toHaveAttribute('aria-pressed', 'true');
     });
 
     test('Journey E — Fresh-device cloud restore decision preserves local user data', async ({ page }) => {

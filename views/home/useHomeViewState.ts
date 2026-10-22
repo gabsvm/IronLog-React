@@ -10,16 +10,18 @@ import { scheduleWhenIdle } from '../../lib/idle';
 import { useStore } from '../../lib/store';
 import { KONG_4DAY_V1 } from '../../programs/kong/kong4Day';
 import { getProgramBlockForWeek } from '../../programs/engine/ProgramResolver';
-import { createTemplateActions } from './applyTemplate';
+import { useTemplateActions } from './applyTemplate';
 
 export interface HomeViewProps {
     startSession: (dayIdx: number) => void;
     onEditProgram: () => void;
     onSkipSession?: (dayIdx: number) => void;
     onStartFreeSession?: () => void;
+    onResumeSession?: () => void;
+    onAddMeal?: () => void;
 }
 
-export const useHomeViewState = ({ startSession, onEditProgram, onSkipSession, onStartFreeSession }: HomeViewProps) => {
+export const useHomeViewState = ({ startSession, onEditProgram, onSkipSession, onStartFreeSession, onResumeSession, onAddMeal }: HomeViewProps) => {
     const { program, logs, isAppLoading, setProgram, globalTemplates, personalTemplates, userProfile, exercises } = useApp();
     const { lang } = useAppPreferences();
     const { tutorialProgress, markTutorialSeen } = useTutorial();
@@ -224,7 +226,7 @@ export const useHomeViewState = ({ startSession, onEditProgram, onSkipSession, o
 
     // --- TEMPLATE LOGIC (shared with Rutina via views/home/applyTemplate.ts) ---
 
-    const { handleSelectTemplate, handleSelectProgram, handleCreateCustom } = createTemplateActions({
+    const { handleSelectTemplate, handleSelectProgram, handleCreateCustom, templateChangeConfirmation } = useTemplateActions({
         setProgram,
         setActiveMeso,
         setShowTemplateSelector,
@@ -254,6 +256,9 @@ export const useHomeViewState = ({ startSession, onEditProgram, onSkipSession, o
         onEditProgram,
         onSkipSession,
         onStartFreeSession,
+        onResumeSession,
+        onAddMeal,
+        templateChangeConfirmation,
         uniqueDaysDone,
         weekComplete,
         nextWorkoutIdx,

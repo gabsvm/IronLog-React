@@ -17,11 +17,11 @@ export default {
   darkMode: "class",
   theme: {
     extend: {
-      // Redesign (docs/specs/rediseno-ligero.md): rounder shapes, applied app-wide via tokens.
+      // Approved preview: quiet panels, compact controls, and larger dialog corners.
       borderRadius: {
-        xl: "1.125rem",
-        "2xl": "1.5rem",
-        "3xl": "1.875rem",
+        xl: "0.75rem",
+        "2xl": "1rem",
+        "3xl": "1.25rem",
       },
       colors: {
         primary: {

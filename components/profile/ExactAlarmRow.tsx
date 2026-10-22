@@ -46,12 +46,12 @@ export const ExactAlarmRow: React.FC<ExactAlarmRowProps> = ({ lang }) => {
     return (
         <div className="flex items-center justify-between gap-2 p-3">
             <div className="flex items-center gap-3 pr-2">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary-500/10 text-primary-500">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface-elevated text-accent">
                     <Icon name="Clock" size={17} />
                 </span>
                 <div className="flex flex-col">
                     <span className="text-sm font-semibold text-[rgb(var(--text-primary))]">{t.exactAlarmTitle}</span>
-                    <span className={`text-xs font-semibold ${state.granted ? 'text-emerald-400' : 'text-amber-400'}`}>
+                    <span className={`text-xs font-semibold ${state.granted ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'}`}>
                         {state.granted ? t.exactAlarmGranted : t.exactAlarmDenied}
                     </span>
                 </div>
@@ -60,7 +60,7 @@ export const ExactAlarmRow: React.FC<ExactAlarmRowProps> = ({ lang }) => {
                 <button
                     type="button"
                     onClick={() => openExactAlarmSettings()}
-                    className="expressive-press min-h-11 shrink-0 rounded-full bg-primary-500 px-4 text-xs font-bold text-zinc-950 hover:bg-primary-400"
+                    className="gl-quiet min-h-11 shrink-0 rounded-xl px-4 text-xs font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
                 >
                     {t.exactAlarmEnable}
                 </button>

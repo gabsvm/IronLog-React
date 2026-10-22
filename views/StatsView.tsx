@@ -167,7 +167,7 @@ export const StatsView: React.FC = () => {
                 )}
                 <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
                     {summaryItems.map((item, itemIdx) => (
-                        <div key={item.label} className={`tonal-${(itemIdx % 4) + 1} rounded-3xl border border-[rgb(var(--border-subtle)/0.65)] px-4 py-4`}>
+                        <div key={item.label} className={`tonal-${(itemIdx % 4) + 1} rounded-[var(--shape-card-radius)] border border-[rgb(var(--border-subtle)/0.65)] px-4 py-4`}>
                             <div className="text-xs font-semibold tracking-normal text-[rgb(var(--text-muted))]">{item.label}</div>
                             <div className="mt-1 text-3xl font-black tabular-nums tracking-[-0.04em] text-zinc-950 dark:text-white">{item.value}</div>
                         </div>
@@ -182,7 +182,7 @@ export const StatsView: React.FC = () => {
                 className="product-stats-impl"
             >
                 {section === 'overview' && safeLogs.length > 0 && (
-                    <div className="mx-4 mb-3 rounded-[1.35rem] border border-[rgb(var(--border-subtle)/0.7)] bg-[rgb(var(--surface-raised)/0.65)] p-4">
+                    <div className="gl-panel mx-4 mb-3 p-4">
                         <div className="mb-3 flex items-center gap-2">
                             <Icon name="Activity" size={14} className="text-primary-500" />
                             <div>

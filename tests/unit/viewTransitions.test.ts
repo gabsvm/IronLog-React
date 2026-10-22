@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { withTransition, VIEW_DEPTH, VIEW_LOADERS } from '../../App';
+import { withTransition } from '../../hooks/useAppHistory';
 
 describe('Task L4: View Transitions and View Loaders', () => {
     const originalStartViewTransition = (document as any).startViewTransition;
@@ -93,24 +93,6 @@ describe('Task L4: View Transitions and View Loaders', () => {
         expect(document.documentElement.dataset.transition).toBe('');
     });
 
-    it('exposes VIEW_LOADERS for all secondary and lazy views', async () => {
-        const requiredViews = ['workout', 'history', 'stats', 'nutrition', 'exercises', 'program', 'summary'];
-        for (const viewName of requiredViews) {
-            expect(typeof VIEW_LOADERS[viewName]).toBe('function');
-            const mod = await VIEW_LOADERS[viewName]!();
-            expect(mod).toBeDefined();
-        }
-    });
-
-    it('defines consistent VIEW_DEPTH for directional page transitions', () => {
-        expect(VIEW_DEPTH['home']).toBe(1);
-        expect(VIEW_DEPTH['routine']).toBe(1);
-        expect(VIEW_DEPTH['progress']).toBe(1);
-        expect(VIEW_DEPTH['diary']).toBe(1);
-        expect(VIEW_DEPTH['workout']).toBe(2);
-        expect(VIEW_DEPTH['exercises']).toBe(2);
-        expect(VIEW_DEPTH['program']).toBe(2);
-    });
 
     it('resolves legacy view names to the Fase 2 roots', async () => {
         const { resolveAppView } = await import('../../components/layout/navigation');

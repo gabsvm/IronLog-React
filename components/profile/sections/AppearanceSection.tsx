@@ -90,7 +90,7 @@ export const AppearanceSection: React.FC = () => {
 
             <div className="gl-panel p-3.5 space-y-3">
                 <div className="flex items-center gap-3">
-                    <span className="w-8 h-8 rounded-lg bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
+                    <span className="w-8 h-8 rounded-lg bg-surface-elevated flex items-center justify-center text-accent shrink-0">
                         <Icon name="Zap" size={17} />
                     </span>
                     <div className="flex-1 min-w-0">

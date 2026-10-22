@@ -16,10 +16,11 @@ test.describe('Exercise details can scroll above sticky footer', () => {
 
         // Exercise library navigation is Pro-gated in a guest account.
         // Enter the same details component through a real free workout.
-        const plus = page.locator('nav[aria-label="Main navigation"] button[aria-label*="Iniciar" i], nav[aria-label="Main navigation"] button[aria-label*="Start" i]').first();
-        await plus.click();
-        await page.locator('button:has-text("Sesión libre"), button:has-text("Freestyle")').first().click();
-        await page.locator('button:has-text("Iniciar Sesión Libre"), button:has-text("Start Free Session"), button:has-text("Iniciar sesión libre")').first().click();
+        await page.getByRole('button', { name: /^(Sesión libre|Freestyle session) ·/ }).click();
+        await page.getByRole('dialog', { name: /Iniciar entrenamiento|Start training/ })
+            .getByRole('button', { name: /Sesión libre|Freestyle/ }).click();
+        await page.getByRole('dialog', { name: /Nueva Sesión|New Session/ })
+            .getByRole('button', { name: /Iniciar Sesión Libre|Start Free Session/i }).click();
         await expect(page.locator('#tut-finish-btn')).toBeVisible({ timeout: 10000 });
         await page.locator('button[title*="Añadir ejercicio" i], button[title*="Add exercise" i]').first().click();
         const picker = page.locator('[role="dialog"]');

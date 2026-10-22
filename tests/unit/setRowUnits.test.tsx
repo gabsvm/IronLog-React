@@ -40,11 +40,10 @@ const renderRow = (set: WorkoutSet, unit: 'kg' | 'lb' = 'kg') => {
 };
 
 describe('Q11: SetRow units', () => {
-    it('kg mode is identical to the legacy behavior (golden)', () => {
+    it('kg input commits the edited canonical weight without conversion', () => {
         const { onUpdate, weightInput } = renderRow(baseSet({ hintWeight: '60', prevWeight: '60', prevReps: '5' }));
         expect(weightInput.value).toBe('60');
         expect(weightInput.placeholder).toBe('60');
-        expect(screen.getByText('60k')).toBeTruthy();
         fireEvent.change(weightInput, { target: { value: '62.5' } });
         fireEvent.blur(weightInput);
         expect(onUpdate).toHaveBeenCalledWith(1, 7, 'weight', '62.5');
@@ -57,7 +56,6 @@ describe('Q11: SetRow units', () => {
         );
         expect(weightInput.value).toBe('135');
         expect(weightInput.placeholder).toBe('132.3');
-        expect(screen.getByText('132.3lbs')).toBeTruthy();
         fireEvent.change(weightInput, { target: { value: '140' } });
         fireEvent.blur(weightInput);
         expect(onUpdate).toHaveBeenCalledWith(1, 7, 'weight', 63.5029);

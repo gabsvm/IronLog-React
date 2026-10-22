@@ -46,12 +46,13 @@ test.describe('P7-4: edge-to-edge insets', () => {
         }
 
         // --- Workout: header controls clear the simulated status bar zone. ---
-        const plusBtn = page.locator('nav[aria-label="Main navigation"] button[aria-label*="Iniciar" i], nav[aria-label="Main navigation"] button[aria-label*="Start" i]').first();
-        await plusBtn.click();
-        const freestyleOption = page.locator('button:has-text("Sesión libre"), button:has-text("Freestyle")').first();
+        await page.getByRole('button', { name: /^(Sesión libre|Freestyle session) ·/ }).click();
+        const freestyleOption = page.getByRole('dialog', { name: /Iniciar entrenamiento|Start training/ })
+            .getByRole('button', { name: /Sesión libre|Freestyle/ });
         await expect(freestyleOption).toBeVisible({ timeout: 6000 });
         await freestyleOption.click();
-        const startFreeBtn = page.locator('button:has-text("Iniciar Sesión Libre"), button:has-text("Start Free Session"), button:has-text("Iniciar sesión libre")').first();
+        const startFreeBtn = page.getByRole('dialog', { name: /Nueva Sesión|New Session/ })
+            .getByRole('button', { name: /Iniciar Sesión Libre|Start Free Session/i });
         await expect(startFreeBtn).toBeVisible({ timeout: 8000 });
         await startFreeBtn.scrollIntoViewIfNeeded();
         await startFreeBtn.click();
@@ -82,6 +83,8 @@ test.describe('P7-4: edge-to-edge insets', () => {
         const completeSetBtn = page.locator('button[aria-label*="Completar serie" i], button[aria-label*="Complete set" i]').first();
         await expect(completeSetBtn).toBeVisible({ timeout: 6000 });
         await completeSetBtn.click();
+        await page.getByLabel(/Atrás|Back/, { exact: true }).first().click();
+        await expect(page.locator('nav[aria-label="Main navigation"]')).toBeVisible();
 
         const pill = page.locator('aside');
         await expect(pill.getByRole('button', { name: '-10s' })).toBeVisible({ timeout: 8000 });

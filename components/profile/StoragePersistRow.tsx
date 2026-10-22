@@ -32,7 +32,7 @@ export const StoragePersistRow: React.FC<StoragePersistRowProps> = ({ lang }) =>
         <div className="flex items-center justify-between gap-2 text-xs">
             <span className="font-bold text-muted">{t.storageTitle}</span>
             <span className="flex items-center gap-2">
-                <span className={`font-black ${status === 'on' ? 'text-emerald-500' : 'text-amber-400'}`}>
+                <span className={`font-semibold ${status === 'on' ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'}`}>
                     {status === null ? '…' : label}
                 </span>
                 {status === 'off' && (

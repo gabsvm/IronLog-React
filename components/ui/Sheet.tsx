@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Drawer } from 'vaul';
 import { Icon } from './Icon';
+import { useModalLayer } from './useModalLayer';
 
 interface SheetProps {
     open: boolean;
@@ -36,19 +37,6 @@ const ACCENT_HANDLE: Record<string, string> = {
     zinc: 'bg-zinc-400/50 dark:bg-white/20',
 };
 
-const openFallbackSheets: symbol[] = [];
-const escapeHandlersStack: { id: symbol; handleEscape: () => void }[] = [];
-let originalBodyOverflow: string | null = null;
-
-if (typeof window !== 'undefined') {
-    window.addEventListener('keydown', (e: KeyboardEvent) => {
-        if (e.key === 'Escape' && escapeHandlersStack.length > 0) {
-            e.stopImmediatePropagation();
-            const topmost = escapeHandlersStack[escapeHandlersStack.length - 1];
-            topmost.handleEscape();
-        }
-    }, true);
-}
 
 /**
  * Unified Sheet primitive built on `vaul`.
@@ -141,41 +129,7 @@ export const Sheet: React.FC<SheetProps> = ({
         };
     }, [clearViewportRefresh, isFull, open, syncFullViewport]);
 
-    const sheetIdRef = useRef<symbol>(Symbol('sheet'));
-    const onOpenChangeRef = useRef(onOpenChange);
-    onOpenChangeRef.current = onOpenChange;
-
-    useEffect(() => {
-        if (!open || typeof window === 'undefined') return;
-        const id = sheetIdRef.current;
-
-        if (openFallbackSheets.length === 0) {
-            originalBodyOverflow = document.body.style.overflow;
-            document.body.style.overflow = 'hidden';
-        }
-        openFallbackSheets.push(id);
-
-        escapeHandlersStack.push({
-            id,
-            handleEscape: () => onOpenChangeRef.current(false),
-        });
-
-        return () => {
-            const escIdx = escapeHandlersStack.findIndex(item => item.id === id);
-            if (escIdx !== -1) {
-                escapeHandlersStack.splice(escIdx, 1);
-            }
-
-            const sheetIdx = openFallbackSheets.indexOf(id);
-            if (sheetIdx !== -1) {
-                openFallbackSheets.splice(sheetIdx, 1);
-            }
-            if (openFallbackSheets.length === 0) {
-                document.body.style.overflow = originalBodyOverflow ?? '';
-                originalBodyOverflow = null;
-            }
-        };
-    }, [open]);
+    const { contentRef, isTopLayer, ownsInteraction, focusInitial, onCloseAutoFocus } = useModalLayer(open, () => onOpenChange(false));
 
     const fullViewportStyle: React.CSSProperties | undefined = isFull
         ? fullViewport
@@ -191,7 +145,9 @@ export const Sheet: React.FC<SheetProps> = ({
     return (
         <Drawer.Root
             open={open}
-            onOpenChange={onOpenChange}
+            onOpenChange={nextOpen => {
+                if (nextOpen || isTopLayer()) onOpenChange(nextOpen);
+            }}
             shouldScaleBackground={false}
             repositionInputs={!isFull}
             handleOnly={dragHandleOnly}
@@ -199,6 +155,19 @@ export const Sheet: React.FC<SheetProps> = ({
             <Drawer.Portal>
                 <Drawer.Overlay className="modal-backdrop fixed inset-0 z-modal backdrop-blur-sm" />
                 <Drawer.Content
+                    ref={contentRef}
+                    onOpenAutoFocus={event => {
+                        event.preventDefault();
+                        focusInitial();
+                    }}
+                    onCloseAutoFocus={onCloseAutoFocus}
+                    onEscapeKeyDown={event => event.preventDefault()}
+                    onPointerDownOutside={event => {
+                        if (!ownsInteraction(event.detail.originalEvent)) event.preventDefault();
+                    }}
+                    onInteractOutside={event => {
+                        if (!ownsInteraction(event.detail.originalEvent)) event.preventDefault();
+                    }}
                     aria-describedby={description ? 'sheet-desc' : undefined}
                     style={fullViewportStyle}
                     className={`

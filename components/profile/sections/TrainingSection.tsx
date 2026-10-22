@@ -116,7 +116,7 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                         onClick={onClose}
                         className="flex min-h-[56px] w-full items-center gap-3 p-3 text-left transition-colors hover:bg-surface-elevated/40"
                     >
-                        <span className="w-8 h-8 rounded-xl bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
+                        <span className="w-8 h-8 rounded-xl bg-surface-elevated flex items-center justify-center text-accent shrink-0">
                             <Icon name="Calendar" size={17} />
                         </span>
                         <div className="flex-1 min-w-0">
@@ -132,7 +132,7 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                     onClick={openProgramGated}
                     className="flex min-h-[56px] w-full items-center gap-3 p-3 text-left transition-colors hover:bg-surface-elevated/40"
                 >
-                    <span className="w-8 h-8 rounded-xl bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
+                    <span className="w-8 h-8 rounded-xl bg-surface-elevated flex items-center justify-center text-accent shrink-0">
                         <Icon name="Layout" size={17} />
                     </span>
                     <div className="flex-1 text-sm font-medium text-[rgb(var(--text-primary))]">{t.programEditor}</div>
@@ -145,7 +145,7 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                     onClick={openExercisesGated}
                     className="flex min-h-[56px] w-full items-center gap-3 p-3 text-left transition-colors hover:bg-surface-elevated/40"
                 >
-                    <span className="w-8 h-8 rounded-xl bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
+                    <span className="w-8 h-8 rounded-xl bg-surface-elevated flex items-center justify-center text-accent shrink-0">
                         <Icon name="Dumbbell" size={17} />
                     </span>
                     <div className="flex-1 text-sm font-medium text-[rgb(var(--text-primary))]">{ty.exercisesRow}</div>

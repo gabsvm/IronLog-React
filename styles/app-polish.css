@@ -16,24 +16,6 @@ html.native-shell [data-install-banner] {
   display: none !important;
 }
 
-/* Home has a plan-specific settings button that historically used the same
- * gear affordance as global Settings. Keep its existing behavior but present
- * it as an overflow/menu action so the two concepts are no longer confused.
- */
-.scroll-container #tut-settings-btn > svg {
-  display: none;
-}
-
-.scroll-container #tut-settings-btn::before {
-  content: '•••';
-  display: block;
-  margin-top: -3px;
-  font-size: 17px;
-  font-weight: 900;
-  letter-spacing: 1.5px;
-  line-height: 1;
-  color: currentColor;
-}
 
 /* ======================================================================
  * Product polish (home / workout / stats)  (was views/product-polish.css)
@@ -45,34 +27,7 @@ html.native-shell [data-install-banner] {
   min-height: 100%;
 }
 
-/* Four-day programs fit on common 360dp-class phones; longer schedules still scroll. */
-.product-home-polish .calendar-timeline > button {
-  width: clamp(64px, 18.2vw, 76px) !important;
-  scroll-snap-align: start;
-}
-.product-home-polish .calendar-timeline {
-  scroll-snap-type: x proximity;
-}
 
-/* Week progress must follow the selected accent instead of leaking the old orange theme. */
-.product-home-polish [role="progressbar"] > div[class*="bg-gradient-to-r"] {
-  background-image: linear-gradient(to right, rgb(var(--primary-600)), rgb(var(--primary-400))) !important;
-  box-shadow: 0 0 8px rgb(var(--primary-500) / 0.22) !important;
-}
-
-/* The primary session card and no-plan hero were authored as dark-only blocks.
-   Use theme tokens in light mode instead of keeping a black island with dark text. */
-
-/* Opacity variants such as bg-zinc-950/40 are emitted as distinct utility
-   classes and were not covered by the old compatibility layer. */
-html.light .product-home-polish [class*="bg-zinc-950/"],
-html.light .product-home-polish [class*="bg-zinc-900/"] {
-  background-color: rgb(var(--surface-raised) / 0.78) !important;
-}
-html.light .product-home-polish [class*="border-zinc-800"],
-html.light .product-home-polish [class*="border-zinc-700"] {
-  border-color: rgb(var(--border-subtle)) !important;
-}
 
 /* WORKOUT ---------------------------------------------------------------- */
 .product-workout-polish {
@@ -118,7 +73,7 @@ html.light .product-workout-polish .divide-white\/10 > :not([hidden]) ~ :not([hi
   top: 0;
   z-index: 12;
   padding: 8px 16px 6px;
-  background: linear-gradient(to bottom, rgb(var(--surface-app)) 75%, rgb(var(--surface-app) / 0));
+  background: rgb(var(--surface-app));
 }
 
 .product-stats-segments-inner {
@@ -127,24 +82,24 @@ html.light .product-workout-polish .divide-white\/10 > :not([hidden]) ~ :not([hi
   gap: 4px;
   padding: 4px;
   border: 1px solid rgb(var(--border-subtle) / 0.8);
-  border-radius: 14px;
+  border-radius: var(--shape-segment-radius);
   background: rgb(var(--surface-raised) / 0.9);
 }
 
 .product-stats-segment {
   min-height: 44px;
   border-radius: 10px;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: .08em;
-  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
   color: rgb(var(--text-muted));
   transition: background-color 160ms ease, color 160ms ease, transform 120ms ease;
 }
 .product-stats-segment:active { transform: scale(.97); }
 .product-stats-segment[data-active="true"] {
-  background: rgb(var(--primary-500));
-  color: #090909;
+  background: rgb(var(--surface-elevated));
+  color: rgb(var(--text-primary));
 }
 
 /* ======================================================================
@@ -182,8 +137,8 @@ button[class~="mx-4"][class~="mb-3"][class~="block"] {
 
 .product-home-polish.kong-active .kong-home-header h2 {
   max-width: min(100%, 26rem);
-  font-size: clamp(1.75rem, 8vw, 2.35rem);
-  line-height: 0.98;
+  font-size: clamp(1.5rem, 6vw, 1.875rem);
+  line-height: 1.15;
   text-wrap: balance;
 }
 

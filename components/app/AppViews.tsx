@@ -15,7 +15,8 @@ import { maybeCreateAutoBackup } from '../../services/autoBackup';
 import { notifyWorkoutDone } from '../../utils/reminders';
 import { maybeExportWorkoutToHealth } from '../../utils/healthConnect';
 import { useDiarySection } from '../../hooks/useDiarySection';
-import type { AppView } from '../layout/navigation';
+import { requestQuickStart, type AppView } from '../layout/navigation';
+import type { NutriSubTab } from '../../views/NutriView';
 const ExercisesView = React.lazy(() => import('../../views/ExercisesView').then(m => ({ default: m.ExercisesView })));
 const StatsView = React.lazy(() => import('../../views/StatsView').then(module => ({ default: module.StatsView })));
 const ProgramEditView = React.lazy(() => import('../../views/ProgramEditView').then(m => ({ default: m.ProgramEditView })));
@@ -68,6 +69,26 @@ export const AppViews: React.FC<AppViewsProps> = ({
     const { setRestTimer } = useTimerActions();
     const [pendingStartDayIdx, setPendingStartDayIdx] = React.useState<number | null>(null);
     const [diarySection, setDiarySection] = useDiarySection();
+    // Keep lightweight view state above the lazy panels; switching sections
+    // unmounts their charts/lists without resetting the user's search or tab.
+    const [historySearch, setHistorySearch] = React.useState('');
+    const [nutritionTab, setNutritionTab] = React.useState<NutriSubTab>('today');
+    const [addMealRequested, setAddMealRequested] = React.useState(false);
+    const handleAddMealHandled = React.useCallback(() => setAddMealRequested(false), []);
+    const handleAddMeal = () => {
+        setDiarySection('nutrition');
+        setAddMealRequested(true);
+        setView('diary');
+    };
+    const returnFromChild = (fallback: AppView) => {
+        // The browser entry remembers the true origin, including a profile
+        // sheet. Back consumes the child entry instead of replacing it.
+        if (window.history.state?.parentView) {
+            window.history.back();
+        } else {
+            setView(fallback);
+        }
+    };
 
     // Shared routine editor entry (KONG-aware); Home and Routine reuse it.
     const handleEditProgram = React.useCallback(() => {
@@ -154,7 +175,7 @@ export const AppViews: React.FC<AppViewsProps> = ({
                         onDiscard={() => {
                             setView('home', () => setActiveSession(null));
                         }}
-                        onBack={() => setView('home')}
+                        onBack={() => returnFromChild('home')}
                     />
                 </Suspense>
                 </LazyViewBoundary>
@@ -172,11 +193,11 @@ export const AppViews: React.FC<AppViewsProps> = ({
                 </LazyViewBoundary>
             ) : view === 'exercises' ? (
                 <Suspense fallback={<LoadingSpinner />}>
-                    <LazyViewBoundary lang={lang} resetKey="exercises"><ExercisesView onBack={() => { setView('home'); window.dispatchEvent(new CustomEvent('gainslab:open-profile', { detail: { section: 'training' } })); }} /></LazyViewBoundary>
+                    <LazyViewBoundary lang={lang} resetKey="exercises"><ExercisesView onBack={() => returnFromChild('routine')} /></LazyViewBoundary>
                 </Suspense>
             ) : view === 'program' ? (
                 <Suspense fallback={<LoadingSpinner />}>
-                    <LazyViewBoundary lang={lang} resetKey="program"><ProgramEditView onBack={() => setView('routine')} /></LazyViewBoundary>
+                    <LazyViewBoundary lang={lang} resetKey="program"><ProgramEditView onBack={() => returnFromChild('routine')} /></LazyViewBoundary>
                 </Suspense>
             ) : (
                 <Layout
@@ -214,6 +235,9 @@ export const AppViews: React.FC<AppViewsProps> = ({
                         }}
                         onEditProgram={handleEditProgram}
                         onSkipSession={onSkipSession}
+                        onResumeSession={() => setView('workout')}
+                        onStartFreeSession={requestQuickStart}
+                        onAddMeal={handleAddMeal}
                     />}
                     {view === 'routine' && (
                         <Suspense fallback={<LoadingSpinner />}>
@@ -237,7 +261,14 @@ export const AppViews: React.FC<AppViewsProps> = ({
                     )}
                     {view === 'diary' && (
                         <Suspense fallback={<LoadingSpinner />}>
-                            <LazyViewBoundary lang={lang} resetKey={`diary-${diarySection}`}><DiaryView section={diarySection} onSectionChange={setDiarySection} /></LazyViewBoundary>
+                            <LazyViewBoundary lang={lang} resetKey={`diary-${diarySection}`}>
+                                <DiaryView
+                                    section={diarySection} onSectionChange={setDiarySection}
+                                    search={historySearch} onSearchChange={setHistorySearch}
+                                    nutritionTab={nutritionTab} onNutritionTabChange={setNutritionTab}
+                                    addMealRequested={addMealRequested} onAddMealHandled={handleAddMealHandled}
+                                />
+                            </LazyViewBoundary>
                         </Suspense>
                     )}
                 </Layout>

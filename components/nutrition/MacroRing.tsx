@@ -59,9 +59,9 @@ export const MacroRing: React.FC<MacroRingProps> = ({
       </svg>
       {/* Center text */}
       <div className="absolute flex flex-col items-center justify-center">
-        <span className="text-2xl font-black text-[rgb(var(--text-primary))] leading-none">{calories}</span>
-        <span className="text-[10px] text-[rgb(var(--text-secondary))] font-semibold uppercase tracking-wider">kcal</span>
-        <span className="text-[10px] text-[rgb(var(--text-muted))]">{calPct}%</span>
+        <span className="text-xl font-semibold tabular-nums text-[rgb(var(--text-primary))] leading-none">{calories}</span>
+        <span className="text-xs text-secondary">kcal</span>
+        <span className="text-xs text-muted">{calPct}%</span>
       </div>
     </div>
   );

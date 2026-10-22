@@ -94,10 +94,10 @@ export const TemplateSelector: React.FC<Props> = ({
             <header className="shrink-0 border-b border-[rgb(var(--border-subtle)/0.75)] bg-[rgb(var(--surface-app)/0.98)] px-4 pt-safe">
                 <div className="mx-auto flex h-16 w-full max-w-xl items-center justify-between gap-4">
                     <div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary-500">
+                        <p className="gl-eyebrow">
                             {ts.trainingPlan}
                         </p>
-                        <h2 className="mt-0.5 text-2xl font-black">{t.startMeso}</h2>
+                        <h2 className="mt-0.5 text-2xl font-semibold">{t.startMeso}</h2>
                     </div>
                     <button
                         type="button"
@@ -112,12 +112,12 @@ export const TemplateSelector: React.FC<Props> = ({
 
             <div className="flex-1 overflow-y-auto scroll-container">
                 <div className="mx-auto w-full max-w-xl space-y-5 p-4 pb-[calc(var(--safe-area-bottom)+2rem)]">
-                    <section className="rounded-3xl border border-primary-500/30 bg-primary-500/10 p-4">
+                    <section className="gl-panel p-4">
                         <div className="mb-3 flex items-center justify-between">
-                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary-500">
+                            <p className="gl-eyebrow">
                                 {ts.programs}
                             </p>
-                            <span className="rounded-full bg-primary-500/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-primary-500">
+                            <span className="rounded-lg bg-[rgb(var(--surface-raised))] px-2.5 py-1 text-xs font-medium text-[rgb(var(--text-secondary))]">
                                 {ts.fullSystem}
                             </span>
                         </div>
@@ -134,10 +134,10 @@ export const TemplateSelector: React.FC<Props> = ({
                                 </div>
                                 <Icon name="ChevronRight" size={20} className="mt-1 shrink-0 text-primary-500" />
                             </div>
-                            <p className="mt-4 text-[10px] font-black uppercase tracking-[0.16em] text-[rgb(var(--text-muted))]">
+                            <p className="mt-4 text-xs font-medium text-[rgb(var(--text-secondary))]">
                                 12 {ts.weeks} · 4 {ts.days} · 3 {ts.blocks}
                             </p>
-                            <span className="mt-4 inline-flex min-h-11 items-center rounded-xl bg-primary-500 px-4 text-xs font-black text-black">
+                            <span className="gl-quiet mt-4 inline-flex min-h-11 items-center px-4 text-sm">
                                 {ts.viewProgram}
                             </span>
                         </button>
@@ -145,7 +145,7 @@ export const TemplateSelector: React.FC<Props> = ({
 
                     <div className="flex items-center gap-4 px-1">
                         <div className="h-px flex-1 bg-[rgb(var(--border-subtle))]" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[rgb(var(--text-muted))]">
+                        <span className="gl-eyebrow">
                             {ts.templates}
                         </span>
                         <div className="h-px flex-1 bg-[rgb(var(--border-subtle))]" />
@@ -154,13 +154,13 @@ export const TemplateSelector: React.FC<Props> = ({
                     <button
                         type="button"
                         onClick={onCreateCustom}
-                        className="flex w-full items-center gap-4 rounded-2xl border-2 border-dashed border-[rgb(var(--border-strong))] bg-[rgb(var(--surface-raised))] p-5 text-left transition-transform active:scale-[0.99]"
+                        className="gl-panel flex min-h-[48px] w-full items-center gap-4 p-5 text-left"
                     >
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[rgb(var(--surface-base))] text-primary-500">
                             <Icon name="Edit" size={21} />
                         </div>
                         <div className="min-w-0 flex-1">
-                            <h3 className="text-lg font-black">{ts.designTitle}</h3>
+                            <h3 className="text-lg font-semibold">{ts.designTitle}</h3>
                             <p className="mt-1 text-sm text-[rgb(var(--text-secondary))]">
                                 {ts.designDesc}
                             </p>
@@ -176,7 +176,7 @@ export const TemplateSelector: React.FC<Props> = ({
                             onChange={(e) => setQuery(e.target.value)}
                             placeholder={ts.searchPh}
                             aria-label={ts.searchPh}
-                            className="min-h-[48px] w-full rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] py-3 pl-11 pr-4 text-base text-[rgb(var(--text-primary))] placeholder:text-[rgb(var(--text-muted))]"
+                            className="min-h-[48px] w-full rounded-xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] py-3 pl-11 pr-4 text-base text-[rgb(var(--text-primary))] placeholder:text-[rgb(var(--text-muted))]"
                         />
                     </div>
 
@@ -186,7 +186,7 @@ export const TemplateSelector: React.FC<Props> = ({
                                 type="button"
                                 aria-pressed={authorFilter === null && daysFilter === null}
                                 onClick={() => { setAuthorFilter(null); setDaysFilter(null); }}
-                                className={`min-h-[44px] shrink-0 rounded-full border px-3.5 text-xs font-bold ${authorFilter === null && daysFilter === null ? 'border-primary-500 bg-primary-500 text-black' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] text-[rgb(var(--text-secondary))]'}`}
+                                className={`min-h-[44px] shrink-0 rounded-xl border px-3.5 text-xs font-medium ${authorFilter === null && daysFilter === null ? 'border-primary-500 bg-primary-500/10 text-[rgb(var(--text-primary))]' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] text-[rgb(var(--text-secondary))]'}`}
                             >
                                 {ts.filterAll}
                             </button>
@@ -196,7 +196,7 @@ export const TemplateSelector: React.FC<Props> = ({
                                     type="button"
                                     aria-pressed={authorFilter === author}
                                     onClick={() => setAuthorFilter((prev) => (prev === author ? null : author))}
-                                    className={`min-h-[44px] max-w-44 shrink-0 truncate rounded-full border px-3.5 text-xs font-bold ${authorFilter === author ? 'border-primary-500 bg-primary-500 text-black' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] text-[rgb(var(--text-secondary))]'}`}
+                                    className={`min-h-[44px] max-w-44 shrink-0 truncate rounded-xl border px-3.5 text-xs font-medium ${authorFilter === author ? 'border-primary-500 bg-primary-500/10 text-[rgb(var(--text-primary))]' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] text-[rgb(var(--text-secondary))]'}`}
                                 >
                                     {author}
                                 </button>
@@ -207,7 +207,7 @@ export const TemplateSelector: React.FC<Props> = ({
                                     type="button"
                                     aria-pressed={daysFilter === days}
                                     onClick={() => setDaysFilter((prev) => (prev === days ? null : days))}
-                                    className={`min-h-[44px] shrink-0 rounded-full border px-3.5 text-xs font-bold ${daysFilter === days ? 'border-primary-500 bg-primary-500 text-black' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] text-[rgb(var(--text-secondary))]'}`}
+                                    className={`min-h-[44px] shrink-0 rounded-xl border px-3.5 text-xs font-medium ${daysFilter === days ? 'border-primary-500 bg-primary-500/10 text-[rgb(var(--text-primary))]' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] text-[rgb(var(--text-secondary))]'}`}
                                 >
                                     {days} {ts.daysLower}
                                 </button>
@@ -215,7 +215,7 @@ export const TemplateSelector: React.FC<Props> = ({
                         </div>
                     )}
 
-                    <p className="px-1 text-[10px] font-black uppercase tracking-[0.2em] text-[rgb(var(--text-muted))]">
+                    <p className="gl-eyebrow px-1">
                         {ts.chooseByAuthor}
                     </p>
 
@@ -227,6 +227,7 @@ export const TemplateSelector: React.FC<Props> = ({
                                     <button
                                         type="button"
                                         onClick={() => setExpandedAuthors((prev) => ({ ...prev, [author]: !prev[author] }))}
+                                        aria-expanded={isExpanded}
                                         className="flex min-h-16 w-full items-center justify-between gap-3 px-5 py-4 text-left"
                                     >
                                         <div className="flex min-w-0 items-center gap-3">
@@ -234,8 +235,8 @@ export const TemplateSelector: React.FC<Props> = ({
                                                 <Icon name="User" size={17} />
                                             </div>
                                             <div className="min-w-0">
-                                                <h3 className="truncate text-sm font-black">{author}</h3>
-                                                <p className="mt-0.5 text-[9px] font-bold uppercase tracking-widest text-[rgb(var(--text-muted))]">
+                                                <h3 className="truncate text-sm font-semibold">{author}</h3>
+                                                <p className="mt-0.5 text-xs text-[rgb(var(--text-secondary))]">
                                                     {groupTemplates.length} {groupTemplates.length === 1 ? ts.programOne : ts.programMany}
                                                 </p>
                                             </div>
@@ -253,16 +254,16 @@ export const TemplateSelector: React.FC<Props> = ({
                                                     className="relative w-full rounded-xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4 text-left transition-transform active:scale-[0.99]"
                                                 >
                                                     {tpl.isPro && (
-                                                        <div className="absolute right-3 top-3 rounded border border-yellow-500/30 bg-yellow-500/20 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-yellow-500">
+                                                        <div className="absolute right-3 top-3 rounded-lg border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base))] px-2 py-0.5 text-xs font-semibold text-[rgb(var(--text-primary))]">
                                                             PRO
                                                         </div>
                                                     )}
-                                                    <h4 className="pr-12 text-base font-black">{getTranslated(tpl.title, lang as 'en' | 'es')}</h4>
+                                                    <h4 className="pr-12 text-base font-semibold">{getTranslated(tpl.title, lang as 'en' | 'es')}</h4>
                                                     <p className="mt-1 pr-2 text-xs leading-relaxed text-[rgb(var(--text-secondary))]">
                                                         {getTranslated(tpl.description, lang as 'en' | 'es')}
                                                     </p>
                                                     <div className="mt-3 flex gap-2">
-                                                        <span className="rounded bg-[rgb(var(--surface-base))] px-2 py-1 text-[10px] font-bold text-[rgb(var(--text-muted))]">
+                                                        <span className="rounded-lg bg-[rgb(var(--surface-base))] px-2 py-1 text-xs font-medium text-[rgb(var(--text-secondary))]">
                                                             {tpl.program.length} {ts.daysLower}
                                                         </span>
                                                     </div>

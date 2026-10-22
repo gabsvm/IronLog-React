@@ -37,7 +37,7 @@ export const ReminderSettingsRow: React.FC<ReminderSettingsRowProps> = ({ lang, 
     return (
         <div className="p-3 space-y-3">
             <div className="flex items-center gap-3">
-                <span className="w-8 h-8 rounded-lg bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
+                <span className="w-8 h-8 rounded-lg bg-surface-elevated flex items-center justify-center text-accent shrink-0">
                     <Icon name="Bell" size={17} />
                 </span>
                 <div className="flex-1 text-sm font-medium text-[rgb(var(--text-primary))]">{r.enable}</div>
@@ -46,7 +46,7 @@ export const ReminderSettingsRow: React.FC<ReminderSettingsRowProps> = ({ lang, 
                     onClick={() => onChange({ ...config, enabled: !config.enabled })}
                     aria-label={r.enable}
                     aria-pressed={config.enabled}
-                    className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${config.enabled ? 'bg-primary-500' : 'bg-surface-elevated border border-border-strong'}`}
+                    className={`relative w-11 h-6 rounded-full transition-colors shrink-0 before:absolute before:-inset-y-2.5 before:inset-x-0 before:content-[''] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 ${config.enabled ? 'bg-primary-500' : 'bg-surface-elevated border border-border-strong'}`}
                 >
                     <span className={`absolute top-0.5 w-5 h-5 rounded-full shadow transition-all ${config.enabled ? 'left-[22px] bg-white' : 'left-0.5 bg-white'}`} />
                 </button>
@@ -66,9 +66,9 @@ export const ReminderSettingsRow: React.FC<ReminderSettingsRowProps> = ({ lang, 
                                         aria-pressed={active}
                                         aria-label={r.weekdaysLong[i]}
                                         title={r.weekdaysLong[i]}
-                                    className={`flex h-11 min-w-[44px] items-center justify-center rounded-full px-2 text-xs font-black transition-all shrink-0 ${
+                                    className={`flex h-11 min-w-[44px] items-center justify-center rounded-xl px-2 text-xs font-semibold transition-colors shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 ${
                                         active
-                                            ? 'bg-primary-500 text-black shadow-sm'
+                                            ? 'bg-surface-elevated border border-primary-500 text-accent'
                                             : 'border border-[rgb(var(--border-strong))] bg-[rgb(var(--surface-elevated))] text-muted'
                                     }`}
                                     >

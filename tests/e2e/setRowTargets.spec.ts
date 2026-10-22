@@ -15,15 +15,17 @@ const startFreestyleWorkout = async (page: Page) => {
     const nav = page.locator('nav[aria-label="Main navigation"]');
     await expect(nav).toBeVisible({ timeout: 15000 });
 
-    const plusBtn = page.locator('nav[aria-label="Main navigation"] button[aria-label*="Iniciar" i], nav[aria-label="Main navigation"] button[aria-label*="Start" i]').first();
-    await expect(plusBtn).toBeVisible({ timeout: 8000 });
-    await plusBtn.click();
+    const freeSessionBtn = page.getByRole('button', { name: /^(Sesión libre|Freestyle session) ·/ });
+    await expect(freeSessionBtn).toBeVisible({ timeout: 8000 });
+    await freeSessionBtn.click();
 
-    const freestyleOption = page.locator('button:has-text("Sesión libre"), button:has-text("Freestyle")').first();
+    const freestyleOption = page.getByRole('dialog', { name: /Iniciar entrenamiento|Start training/ })
+        .getByRole('button', { name: /Sesión libre|Freestyle/ });
     await expect(freestyleOption).toBeVisible({ timeout: 6000 });
     await freestyleOption.click();
 
-    const startFreeBtn = page.locator('button:has-text("Iniciar Sesión Libre"), button:has-text("Start Free Session"), button:has-text("Iniciar sesión libre")').first();
+    const startFreeBtn = page.getByRole('dialog', { name: /Nueva Sesión|New Session/ })
+        .getByRole('button', { name: /Iniciar Sesión Libre|Start Free Session/i });
     await expect(startFreeBtn).toBeVisible({ timeout: 8000 });
     await startFreeBtn.scrollIntoViewIfNeeded();
     await startFreeBtn.click();

@@ -280,6 +280,12 @@ pantallas; se conservaron los cambios preexistentes del árbol de trabajo.
 - Formularios y confirmaciones: validación de comida y cardio; límites para duración, distancia,
   frecuencia cardiaca, CSV y filas parseadas; confirmación al borrar comidas guardadas y
   ejercicios; `ConfirmModal` admite Escape, foco inicial, ciclo de Tab y restauración del foco.
+- Corrección de overlays anidados: `useModalLayer` conserva el propietario del `pointerdown`
+  original para que el click diferido de Radix no cierre también la hoja inferior cuando
+  desaparece una confirmación. La restauración de backups conserva Perfil abierto según
+  `history.state.profile`; el e2e comprueba los datos restaurados y luego cierra y reabre
+  la hoja con taps reales. Se añadió una regresión unitaria con Vaul/Radix reales; estos
+  cambios requieren la verificación integrada posterior.
 - Seguridad y datos: el borrado de cuenta limpia las colecciones V2 aunque el flag de rollout
   esté apagado; exportación CSV neutraliza fórmulas; FileProvider limita acceso a `cache/shared`;
   escritura/base64 de `shareFile` sale del hilo UI; el panel admin ya no ofrece cambios de

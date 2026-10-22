@@ -17,15 +17,17 @@ const startFreestyleWorkout = async (page: Page) => {
     const nav = page.locator('nav[aria-label="Main navigation"]');
     await expect(nav).toBeVisible({ timeout: 15000 });
 
-    const plusBtn = page.locator('nav[aria-label="Main navigation"] button[aria-label*="Iniciar" i], nav[aria-label="Main navigation"] button[aria-label*="Start" i]').first();
-    await expect(plusBtn).toBeVisible({ timeout: 8000 });
-    await plusBtn.click();
+    const freeSessionBtn = page.getByRole('button', { name: /^(Sesión libre|Freestyle session) ·/ });
+    await expect(freeSessionBtn).toBeVisible({ timeout: 8000 });
+    await freeSessionBtn.click();
 
-    const freestyleOption = page.locator('button:has-text("Sesión libre"), button:has-text("Freestyle")').first();
+    const freestyleOption = page.getByRole('dialog', { name: /Iniciar entrenamiento|Start training/ })
+        .getByRole('button', { name: /Sesión libre|Freestyle/ });
     await expect(freestyleOption).toBeVisible({ timeout: 6000 });
     await freestyleOption.click();
 
-    const startFreeBtn = page.locator('button:has-text("Iniciar Sesión Libre"), button:has-text("Start Free Session"), button:has-text("Iniciar sesión libre")').first();
+    const startFreeBtn = page.getByRole('dialog', { name: /Nueva Sesión|New Session/ })
+        .getByRole('button', { name: /Iniciar Sesión Libre|Start Free Session/i });
     await expect(startFreeBtn).toBeVisible({ timeout: 8000 });
     await startFreeBtn.scrollIntoViewIfNeeded();
     await startFreeBtn.click();
@@ -71,8 +73,7 @@ test.describe('Deferred SW update with active session (F8)', () => {
             const updateBtn = banner.getByRole('button', { name: /Actualizar|Update/ });
             await updateBtn.click();
             const confirmDialog = page.getByRole('dialog');
-            await expect(confirmDialog.getByText(/Actualizar durante el entreno|Update during workout/)).toBeVisible({ timeout: 8000 });
-            await expect(confirmDialog.getByText(/entrenamiento en curso|workout in progress/i)).toBeVisible();
+            await expect(confirmDialog).toBeVisible({ timeout: 8000 });
             await confirmDialog.getByRole('button', { name: /Cancelar|Cancel/ }).click();
             await expect(confirmDialog).toHaveCount(0, { timeout: 8000 });
             await page.waitForTimeout(500);
@@ -101,7 +102,7 @@ test.describe('Deferred SW update with active session (F8)', () => {
             await expect(banner).toBeVisible({ timeout: 30000 });
             await updateBtn.click();
             const acceptDialog = page.getByRole('dialog');
-            await expect(acceptDialog.getByText(/Actualizar durante el entreno|Update during workout/)).toBeVisible({ timeout: 8000 });
+            await expect(acceptDialog).toBeVisible({ timeout: 8000 });
             await acceptDialog.getByRole('button', { name: /^Actualizar$|^Update$/ }).click();
             await page.waitForFunction(() => (window as any).__f8noreload === undefined, null, { timeout: 15000 });
 

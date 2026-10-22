@@ -49,8 +49,8 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope, statsPeriod = 
     const scopeMesoId = scopeMesoIdFor(statsScope, activeMeso?.id);
     // Single entry for every scope+period-derived surface: scope and period
     // apply exactly once here. Worker inputs, caches, cards, PRs and insights
-    // all derive from this array (rep maxes and the plan-week report keep
-    // their historical inputs; see below).
+    // all derive from this array; only the plan-week report keeps its
+    // independent plan coordinates.
     const filteredLogs = useMemo(
         () => filterLogsByScopeAndPeriod(safeLogs, scopeMesoId, statsPeriod),
         [safeLogs, scopeMesoId, statsPeriod],
@@ -220,7 +220,7 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope, statsPeriod = 
         return () => {
             cancelled = true;
         };
-    }, [isWorkerReady, filteredLogs, statsScope, statsPeriod, scopeMesoId, exerciseMetaById, exsFromFrequency, selectedExId, calculateOverview, logsSignature]);
+    }, [isWorkerReady, filteredLogs, statsScope, statsPeriod, scopeMesoId, exerciseMetaById, exsFromFrequency, calculateOverview, logsSignature]);
 
     useEffect(() => {
         if (!isWorkerReady || !selectedExId || (activeTab && activeTab !== 'progress')) return;
@@ -340,12 +340,11 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope, statsPeriod = 
         [currentEx, exercises, lang, rawMuscleCounts, filteredLogs, userProfile?.bodyWeight, scopeMesoId, unit, weightSuffix, s]
     );
 
-    // Rep maxes keep their historical definition (no scope filter, as before)
-    // and only honor the period window; the default window reproduces old numbers.
+    // Rep maxes share the chart, KPI and insight scope and period.
     const repMaxRows = useMemo(() => {
         if (!currentEx || currentEx.isBodyweight || currentEx.isIsometric || currentEx.muscle === 'CARDIO') return [];
-        return computeRepMaxTable(filterLogsByScopeAndPeriod(safeLogs, null, statsPeriod), new Set(selectedGroupIds.map(String)));
-    }, [currentEx, safeLogs, statsPeriod, selectedGroupIds]);
+        return computeRepMaxTable(filteredLogs, new Set(selectedGroupIds.map(String)));
+    }, [currentEx, filteredLogs, selectedGroupIds]);
 
     const statsTutorialSteps = [
         { targetId: 'tut-progress-chart', title: t.tutorial.stats[0].title, text: t.tutorial.stats[0].text, position: 'bottom' as const },

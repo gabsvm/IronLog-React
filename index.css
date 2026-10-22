@@ -37,10 +37,11 @@
   --primary-800: 101 134  15;
   --primary-900:  77 101  12;
   --accent-text: 200 244  90;
-  /* Shared expressive shape + motion tokens; never override users' accent choice. */
-  --shape-card-radius: 24px;
-  --shape-segment-radius: 18px;
-  --shape-hero-radius: 30px;
+  --accent-ink: 0 0 0;
+  /* Shared shape and motion tokens; preserve the selected accent. */
+  --shape-card-radius: 16px;
+  --shape-segment-radius: 12px;
+  --shape-hero-radius: 20px;
   --motion-expressive: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
@@ -281,10 +282,10 @@ body {
     .gl-panel {
         background-color: rgb(var(--surface-base));
         border: 1px solid rgb(var(--border-subtle));
-        border-radius: 16px;
+        border-radius: var(--shape-card-radius);
     }
     .gl-eyebrow {
-        font-size: 10px;
+        font-size: 12px;
         font-weight: 700;
         letter-spacing: 0.14em;
         text-transform: uppercase;
@@ -299,7 +300,7 @@ body {
         padding: 5px 10px;
         min-height: 28px;
         border-radius: 7px;
-        font-size: 10px;
+        font-size: 12px;
         line-height: 1.3;
         background-color: rgb(var(--surface-raised));
         color: rgb(var(--text-muted));
@@ -315,15 +316,12 @@ body {
         justify-content: center;
         gap: 9px;
         min-height: 48px;
-        border-radius: 10px;
+        border-radius: 12px;
         padding: 0 20px;
         background-color: rgb(var(--primary-500));
-        color: #18200b;
+        color: rgb(var(--accent-ink));
         font-weight: 700;
         font-size: 13px;
-    }
-    html.light .gl-primary {
-        color: rgb(24 32 11);
     }
     .gl-quiet {
         display: inline-flex;
@@ -332,7 +330,7 @@ body {
         gap: 9px;
         min-height: 44px;
         border: 1px solid rgb(var(--border-subtle));
-        border-radius: 9px;
+        border-radius: 12px;
         padding: 0 15px;
         font-size: 12px;
         font-weight: 600;
@@ -352,7 +350,7 @@ body {
         height: 48px;
         width: 100%;
         border: 1px solid rgb(var(--border-subtle));
-        border-radius: 9px;
+        border-radius: 12px;
         background-color: rgb(var(--surface-app));
         color: rgb(var(--text-primary));
         padding: 0 14px;
@@ -397,8 +395,11 @@ body {
     a:focus-visible,
     [role="button"]:focus-visible,
     [role="tab"]:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible,
     summary:focus-visible {
-        outline: 2px solid rgb(var(--primary-500));
+        outline: 2px solid rgb(var(--accent-text));
         outline-offset: 2px;
         border-radius: 8px;
     }
@@ -466,19 +467,15 @@ input, textarea {
   to { transform: translateX(0); opacity: 1; }
 }
 
-/* Revamp Glassmorphism & Neon Glow Styles */
+/* Legacy surface primitives share the same calm, opaque panel vocabulary. */
 .glass-card {
-  background: rgb(var(--surface-raised) / 0.85);
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
-  border: 1px solid rgb(var(--modal-border) / 0.05);
+  background: rgb(var(--surface-raised));
+  border: 1px solid rgb(var(--border-subtle));
 }
 
 .glass-panel {
-  background: rgb(var(--surface-base) / 0.95);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgb(var(--modal-border) / 0.06);
+  background: rgb(var(--surface-base));
+  border: 1px solid rgb(var(--border-subtle));
 }
 
 /* Balanced profile: keeps transitions and contextual glass, disables continuous loop animations and heavy background blurs */
@@ -542,17 +539,12 @@ input, textarea {
 }
 
 .glow-btn-success {
-  box-shadow: 0 0 15px rgba(193, 241, 59, 0.15);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.glow-btn-success:active {
-  transform: scale(0.92);
-  box-shadow: 0 0 25px rgba(193, 241, 59, 0.45);
+  transition: background-color 160ms var(--motion-expressive);
 }
 
-.glow-input-neon:focus {
-  border-color: rgb(var(--primary-500) / 0.3);
-  box-shadow: 0 0 12px rgb(var(--primary-500) / 0.15);
+.glow-input-neon:focus-visible {
+  outline: 2px solid rgb(var(--accent-text));
+  outline-offset: 2px;
 }
 
 /* Horizontal calendar timeline container */
@@ -615,9 +607,6 @@ html.light .bg-orange-600.text-white,
 html.light .bg-amber-500.text-white,
 html.light .bg-amber-600.text-white { color: #fff !important; }
 
-html.light .premium-paywall-hero .text-white,
-html.light .premium-landing .text-white,
-html.light .premium-landing-preview .text-white,
 html.light .bg-black\/95 .text-white,
 html.light .bg-black\/70 .text-white,
 html.light .bg-black\/60 .text-white,
@@ -652,7 +641,7 @@ html.dark .tonal-1, html.dark .tonal-2, html.dark .tonal-3, html.dark .tonal-4 {
   background-color: color-mix(in srgb, rgb(var(--surface-raised)) 92%, rgb(var(--primary-500)));
 }
 /* Larger readable tap targets and softly emphasized actions. */
-.btn-primary-reference { min-height: 48px; border-radius: 9999px; }
+.btn-primary-reference { min-height: 48px; border-radius: 12px; }
 .expressive-press { transition: transform 260ms var(--motion-expressive), background-color 260ms var(--motion-expressive), color 260ms var(--motion-expressive); }
 .expressive-press:active { transform: scale(0.96); }
 @keyframes expressive-reveal { from { opacity: 0.4; } to { opacity: 1; } }
@@ -665,82 +654,17 @@ html.dark .tonal-1, html.dark .tonal-2, html.dark .tonal-3, html.dark .tonal-4 {
 [data-effects="reduced"] .expressive-press:active { transform: none; }
 
 
-/* Premium Expressive — scoped primitives, shared across both modes. */
-.premium-hero {
-  border-radius: var(--shape-hero-radius);
-  padding: 22px 20px 20px;
-  color: rgb(var(--text-primary));
-  border: 1px solid color-mix(in srgb, rgb(var(--primary-500)) 27%, rgb(var(--border-subtle)));
-  background: linear-gradient(130deg,
-    color-mix(in srgb, rgb(var(--primary-500)) 32%, rgb(var(--surface-raised))) 0%,
-    color-mix(in srgb, rgb(var(--primary-500)) 10%, rgb(var(--surface-base))) 100%);
-  box-shadow: 0 16px 46px -28px rgb(0 0 0 / 0.68);
-}
-.premium-hero__content { position: relative; z-index: 2; }
-.premium-hero__art {
-  position: absolute; pointer-events: none; z-index: 0;
-  top: 28px; right: -38px; width: 224px; height: 210px;
-  color: rgb(var(--primary-500)); opacity: 0.20;
-  transform: rotate(-4deg);
-}
-.premium-hero__eyebrow { font-size: 11px; letter-spacing: .09em; font-weight: 760; color: rgb(var(--text-secondary)); }
-.premium-hero__title {
-  max-width: 80%; font-size: clamp(1.75rem, 7vw, 2.35rem);
-  line-height: 1.08; letter-spacing: -0.055em;
-  font-weight: 860; margin: 18px 0 15px;
-  overflow-wrap: anywhere;
-}
-.premium-hero__skip { color: rgb(var(--text-secondary)); background: rgb(var(--surface-base) / .55); }
-.premium-hero__skip:hover { color: rgb(var(--text-primary)); }
-.premium-hero__metrics { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
-.premium-hero__metrics > span {
-  display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;
-  border-radius: 999px; padding: 6px 9px; font-size: 11px; font-weight: 650;
-  background: rgb(var(--surface-base) / .53); color: rgb(var(--text-primary));
-}
-.premium-hero__preview { max-width: 100%; display: grid; gap: 6px; }
-.premium-hero__exercise {
-  display: flex; align-items: center; gap: 12px; border-radius: 12px;
-  background: rgb(var(--surface-base) / .46); padding: 10px 11px;
-  color: rgb(var(--text-primary)); font-size: 12px;
-}
-.premium-hero__exercise > span:last-child { color: rgb(var(--text-secondary)); }
-.premium-hero__more { margin: 2px 4px; font-size: 12px; color: rgb(var(--text-secondary)); }
-.premium-hero__cta { background: rgb(var(--primary-500)); color: #10130a; box-shadow: 0 9px 24px -16px rgb(var(--primary-500) / .55); }
-.premium-hero__cta:hover { background: rgb(var(--primary-400)); }
-html.light .premium-hero {
-  color: #20251c; border-color: rgb(var(--primary-500) / .18);
-  background: linear-gradient(128deg,
-    color-mix(in srgb, rgb(var(--primary-500)) 75%, #fffefa) 0%,
-    color-mix(in srgb, rgb(var(--primary-500)) 42%, #f4f4ee) 100%);
-}
-html.light .premium-hero__eyebrow, html.light .premium-hero__more { color: #344232; }
-html.light .premium-hero__art { color: #1f3725; opacity: .16; }
-html.light .premium-hero__metrics > span, html.light .premium-hero__exercise {
-  color: #20251c; background: rgb(255 255 255 / .36);
-}
-html.light .premium-hero__exercise > span:last-child { color: #344232; }
-html.light .premium-hero__skip { color: #263522; background: rgb(255 255 255 / .46); }
-html.light .premium-hero__cta { background: #111d15; color: #fffefa; }
-html.light .premium-hero__cta:hover { background: #25392b; }
 .premium-theme-panel {
-  border: 1px solid rgb(var(--border-subtle) / .8);
+  border: 1px solid rgb(var(--border-subtle));
   border-radius: var(--shape-card-radius);
-  background: rgb(var(--surface-raised));
-  box-shadow: 0 10px 30px -25px rgb(0 0 0 / .38);
+  background: rgb(var(--surface-base));
 }
-.premium-theme-quiet { background: color-mix(in srgb, rgb(var(--surface-raised)) 90%, rgb(var(--primary-500))); }
+.premium-theme-quiet { background: rgb(var(--surface-raised)); }
 .premium-history-row { transition: background-color 180ms var(--motion-expressive), transform 200ms var(--motion-expressive), border-color 180ms; }
 .premium-history-row:active { transform: scale(.992); }
 .premium-trend-line { stroke-dasharray: 520; stroke-dashoffset: 520; animation: premium-trend-draw .7s var(--motion-expressive) forwards; }
 @keyframes premium-trend-draw { to { stroke-dashoffset: 0; } }
 .premium-progress-feedback { transition: background-color 250ms var(--motion-expressive), box-shadow 250ms var(--motion-expressive), border-color 250ms var(--motion-expressive); }
-@media (max-width: 350px) {
-  .premium-hero { padding: 18px 15px; }
-  .premium-hero__art { width: 175px; right: -50px; opacity: .12; }
-  .premium-hero__title { font-size: 1.75rem; }
-  .premium-hero__metrics > span { font-size: 10px; padding: 5px 7px; }
-}
 @media (prefers-reduced-motion: reduce) {
   .premium-trend-line { animation: none; stroke-dashoffset: 0; }
   .premium-history-row, .premium-progress-feedback { transition: none; }
@@ -750,50 +674,37 @@ html.light .premium-hero__cta:hover { background: #25392b; }
 [data-effects="reduced"] .premium-history-row, [data-effects="reduced"] .premium-progress-feedback { transition: none; }
 [data-effects="reduced"] .premium-history-row:active { transform: none; }
 
-/* The neutral accent needs white ink; black fails 4.5:1 on #6b7280. */
-[data-theme='monochrome'] .premium-hero__cta { color: #fff; }
-[data-theme='monochrome'] button[aria-pressed='true'].expressive-press { color: #fff; }
-[data-theme='monochrome'] button[aria-pressed='true'].expressive-press span.text-zinc-950 { color: #fff; }
 
-/* Profile uses the same quiet tonal hierarchy as History and Diet. */
-.premium-profile .card-reference {
-  background-color: color-mix(in srgb, rgb(var(--surface-raised)) 93%, rgb(var(--primary-500)));
-  border-color: rgb(var(--border-subtle));
-}
-.premium-profile .label-reference { font-size: 12px; letter-spacing: .025em; }
-
-/* Expressive final pass — editorial closure and reusable form controls. */
+/* Shared summary and form surfaces used by program and editor screens. */
 .premium-summary-hero {
-  border: 1px solid color-mix(in srgb, rgb(var(--primary-500)) 25%, rgb(var(--border-subtle)));
+  border: 1px solid rgb(var(--border-subtle));
   border-radius: var(--shape-hero-radius);
-  background: linear-gradient(145deg, color-mix(in srgb, rgb(var(--primary-500)) 18%, rgb(var(--surface-raised))), rgb(var(--surface-raised)));
-  box-shadow: 0 14px 38px -30px rgb(0 0 0 / .6);
+  background: rgb(var(--surface-base));
 }
-.premium-summary-medal { box-shadow: 0 0 0 8px rgb(var(--primary-500) / .04); }
 .premium-form-input {
   background: rgb(var(--surface-elevated) / .66);
   color: rgb(var(--text-primary));
   border: 1px solid rgb(var(--border-subtle));
-  border-radius: 16px;
+  border-radius: 12px;
   min-height: 44px;
-  font-size: 14px;
+  font-size: 16px;
   transition: border-color 160ms var(--motion-expressive), background-color 160ms var(--motion-expressive);
 }
 .premium-form-input:focus-visible {
-  outline: 2px solid rgb(var(--primary-500));
+  outline: 2px solid rgb(var(--accent-text));
   outline-offset: 1px;
 }
 .premium-filter-pill {
   min-height: 44px;
-  border-radius: 9999px;
+  border-radius: 12px;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   padding: 8px 12px;
   transition: background-color 160ms var(--motion-expressive), color 160ms var(--motion-expressive);
 }
 .premium-filter-pill[data-selected="true"] {
   background: rgb(var(--primary-500));
-  color: #151910;
+  color: rgb(var(--accent-ink));
 }
 .premium-filter-pill[data-selected="false"] {
   background: rgb(var(--surface-elevated) / .8);
@@ -807,14 +718,11 @@ html.light .premium-hero__cta:hover { background: #25392b; }
 }
 .premium-section-heading {
   font-size: 13px;
-  font-weight: 750;
-  letter-spacing: -.01em;
+  font-weight: 600;
+  letter-spacing: normal;
   color: rgb(var(--text-primary));
 }
 .premium-quiet-row { background: rgb(var(--surface-elevated) / .48); }
-html.light .premium-summary-hero {
-  background: linear-gradient(145deg, color-mix(in srgb, rgb(var(--primary-500)) 26%, #fffefa), #fffefa);
-}
 @media (prefers-reduced-motion: reduce) {
   .premium-form-input, .premium-filter-pill { transition: none; }
 }
@@ -824,8 +732,8 @@ html.light .premium-summary-hero {
 
 /* Native rest experience: one tonal vocabulary on web and in Capacitor WebView. */
 .premium-rest-pill {
-  background: color-mix(in srgb, rgb(var(--surface-raised)) 90%, rgb(var(--primary-500)));
-  box-shadow: 0 12px 30px -22px rgb(0 0 0 / .65), inset 0 1px 0 rgb(var(--primary-500) / .12);
+  background: rgb(var(--surface-raised));
+  box-shadow: 0 8px 24px -18px rgb(0 0 0 / .45);
 }
 .premium-rest-sheet {
   background: rgb(var(--surface-base));
@@ -833,12 +741,12 @@ html.light .premium-summary-hero {
 }
 .premium-rest-ring {
   border-radius: 50%;
-  background: radial-gradient(circle, rgb(var(--primary-500) / .075), transparent 68%);
+  background: rgb(var(--surface-base));
 }
 html.light .premium-rest-sheet { background: rgb(var(--surface-base)); }
 html.light .premium-rest-pill {
-  background: color-mix(in srgb, rgb(var(--surface-raised)) 91%, rgb(var(--primary-500)));
-  box-shadow: 0 12px 25px -18px rgb(36 53 30 / .3);
+  background: rgb(var(--surface-raised));
+  box-shadow: 0 8px 24px -18px rgb(36 53 30 / .2);
 }
 @media (prefers-reduced-motion: reduce) {
   .premium-rest-pill, .premium-rest-sheet { animation: none; transition: none; }
@@ -846,21 +754,11 @@ html.light .premium-rest-pill {
 [data-effects="reduced"] .premium-rest-pill,
 [data-effects="reduced"] .premium-rest-sheet { animation: none; transition: none; }
 
-/* Landing is intentionally an immersive dark cover in both appearance modes.
-   These classes prevent hardcoded dark primitives leaking into app components. */
-.premium-landing { background: #101511; color: #fff; }
-.premium-landing-preview { background: #18201a; }
-.premium-landing-input { background: #273325; }
-@media (prefers-reduced-motion: reduce) {
-  .premium-landing .expressive-reveal { animation: none; }
-}
-[data-effects="reduced"] .premium-landing .expressive-reveal { animation: none; }
 
-/* The Pro header is intentionally cinematic in both color schemes, with
-   legible white ink rather than low-contrast white on bright lime. */
+/* The upgrade header uses the same theme-aware surface as secondary screens. */
 .premium-paywall-hero {
-  background: radial-gradient(ellipse at 75% 5%, rgb(var(--primary-500) / .25), transparent 60%),
-              linear-gradient(145deg, #15291d, #243d2d 70%, #142017);
+  background: rgb(var(--surface-raised));
+  color: rgb(var(--text-primary));
 }
 
 /* Fase 6 — Diario/Nutrición: 16px floor for nutrition form text (iOS focus

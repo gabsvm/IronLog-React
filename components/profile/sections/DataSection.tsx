@@ -52,7 +52,7 @@ export const DataSection: React.FC<DataSectionProps> = ({
                     <div className="flex items-center justify-between text-xs">
                         <span className="font-semibold text-muted">{ty.cloudStatus}</span>
                         {user && (
-                            <span className={`font-black uppercase ${isOnline ? 'text-emerald-500' : 'text-amber-400'}`}>
+                            <span className={`font-semibold ${isOnline ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'}`}>
                                 {isOnline ? ty.online : ty.offline}
                             </span>
                         )}

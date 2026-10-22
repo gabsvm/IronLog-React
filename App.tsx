@@ -31,11 +31,11 @@ import { scheduleWhenIdle } from './lib/idle';
 const SharedCsvImport = React.lazy(() => import('./components/app/SharedCsvImport').then((module) => ({ default: module.SharedCsvImport })));
 const RestTimerOverlay = React.lazy(() => import('./components/ui/RestTimerOverlay').then((module) => ({ default: module.RestTimerOverlay })));
 
-export const VIEW_LOADERS: Partial<Record<string, () => Promise<any>>> = {
+const VIEW_LOADERS: Partial<Record<AppView, () => Promise<unknown>>> = {
     workout: () => import('./views/WorkoutView'),
-    history: () => import('./views/HistoryView'),
-    stats: () => import('./views/StatsView'),
-    nutrition: () => import('./views/NutriView'),
+    routine: () => import('./views/RoutineView'),
+    progress: () => import('./views/StatsView'),
+    diary: () => import('./views/DiaryView'),
     exercises: () => import('./views/ExercisesView'),
     program: () => import('./views/ProgramEditView'),
     summary: () => import('./views/SessionSummaryView'),
@@ -56,9 +56,6 @@ export const shouldRestoreWeekAfterUndoSkip = (
     return currentMeso.id === snapshot.mesoId && currentMeso.week === snapshot.week + 1;
 };
 
-// Q18: transition helpers live in hooks/useAppHistory; re-exported so existing
-// importers (tests) keep working without changes.
-export { withTransition, VIEW_DEPTH };
 
 const AppContent = () => {
     const {

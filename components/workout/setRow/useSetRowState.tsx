@@ -305,16 +305,15 @@ export const useSetRowState = ({
         focusPrimaryField();
     }, [focusPrimaryField]);
 
-    const inputBaseClass = "h-[38px] w-full rounded-[9px] bg-surface-elevated text-center text-[15px] font-semibold text-zinc-200 outline-none transition-colors border border-transparent focus:border-primary-500 focus:bg-surface-raised tabular-nums";
-    const inputActiveClass = "h-[38px] w-full rounded-[9px] bg-surface-raised border border-primary-500/70 text-center text-[15px] font-semibold text-white outline-none focus:border-primary-500 tabular-nums shadow-sm";
-    const inputDoneClass = "h-[38px] w-full rounded-[9px] bg-transparent text-center text-[15px] font-semibold text-primary-400 outline-none tabular-nums";
+    const inputBaseClass = "h-11 w-full rounded-[var(--shape-segment-radius)] bg-surface-elevated text-center text-base font-semibold text-[rgb(var(--text-primary))] outline-none transition-colors border border-transparent focus:border-primary-500 focus:bg-surface-raised tabular-nums";
+    const inputActiveClass = "h-11 w-full rounded-[var(--shape-segment-radius)] bg-surface-raised border border-primary-500/70 text-center text-base font-semibold text-[rgb(var(--text-primary))] outline-none focus:border-primary-500 tabular-nums shadow-sm";
+    const inputDoneClass = "h-11 w-full rounded-[var(--shape-segment-radius)] bg-transparent text-center text-base font-semibold text-[rgb(var(--accent-text))] outline-none tabular-nums";
     const currentInputClass = isDone ? inputDoneClass : isNextSet ? inputActiveClass : inputBaseClass;
 
-    const rowClass = `premium-progress-feedback relative rounded-[14px] ${
+    const rowClass = `premium-progress-feedback relative rounded-[var(--shape-segment-radius)] ${
         isDone
             ? 'bg-primary-500/10 border border-primary-500/25'
             : isNextSet
-            // S9: theme surface in light mode (was a hard-coded dark island); dark unchanged.
             ? 'bg-surface-base dark:bg-[#1b1b20] border border-primary-500/50 shadow-sm'
             : 'bg-surface-raised border border-border-subtle'
     }`;
@@ -345,14 +344,14 @@ export const useSetRowState = ({
             return set.hintReps ? String(set.hintReps) : '—';
         }
         if (set.prevReps || set.prevWeight) {
-            if (set.prevReps && set.prevWeight) return `${shownWeight(set.prevWeight)}${weightSuffix}`;
-            return set.prevWeight && !set.prevReps ? String(shownWeight(set.prevWeight)) : String(set.prevReps || set.prevWeight);
+            if (set.prevReps && set.prevWeight) return `${shownWeight(set.prevWeight)} ${unit} × ${set.prevReps}`;
+            return set.prevWeight && !set.prevReps ? `${shownWeight(set.prevWeight)} ${unit}` : String(set.prevReps || set.prevWeight);
         }
         if (set.hintReps || set.hintWeight) {
             return set.hintWeight && !set.hintReps ? String(shownWeight(set.hintWeight)) : String(set.hintReps || set.hintWeight);
         }
         return '—';
-    }, [isBodyweight, isIsometric, set.duration, set.hintReps, set.hintWeight, set.prevReps, set.prevWeight, shownWeight, weightSuffix]);
+    }, [isBodyweight, isIsometric, set.duration, set.hintReps, set.hintWeight, set.prevReps, set.prevWeight, shownWeight, unit, weightSuffix]);
 
     const setNumber = (setIndex ?? 0) + 1;
     const badgeAriaLabel = `${sr.setWord} ${setNumber}${(!disableTypeChange && !isDone) ? sr.changeType : ''}`;

@@ -83,7 +83,7 @@ export const DriveBackupCard: React.FC<DriveBackupCardProps> = ({
     return (
         <div className="gl-panel space-y-2 p-4" data-testid="drive-backup-card">
             <div className="flex items-start gap-3">
-                <span className="w-8 h-8 rounded-lg bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
+                <span className="w-8 h-8 rounded-lg bg-surface-elevated flex items-center justify-center text-accent shrink-0">
                     <Icon name="Cloud" size={17} />
                 </span>
                 <div>
@@ -110,9 +110,9 @@ export const DriveBackupCard: React.FC<DriveBackupCardProps> = ({
                     {status === 'loading' ? t.driveLoading : t.driveShowList}
                 </button>
             </div>
-            {status === 'saved' && <p role="status" className="text-xs font-bold text-emerald-500">{t.driveSaved}</p>}
-            {status === 'failed' && <p role="alert" className="text-xs font-bold text-red-500">{t.driveFailed}</p>}
-            {status === 'restoreFailed' && <p role="alert" className="text-xs font-bold text-red-500">{t.driveRestoreFailed}</p>}
+            {status === 'saved' && <p role="status" className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">{t.driveSaved}</p>}
+            {status === 'failed' && <p role="alert" className="text-xs font-semibold text-red-700 dark:text-red-400">{t.driveFailed}</p>}
+            {status === 'restoreFailed' && <p role="alert" className="text-xs font-semibold text-red-700 dark:text-red-400">{t.driveRestoreFailed}</p>}
 
             {files !== null && (
                 files.length === 0 ? (

@@ -1,6 +1,6 @@
 import React from 'react';
-import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { HomeRecapStrip } from '../../views/home/HomeRecapStrip';
 import { TRANSLATIONS } from '../../constants';
 
@@ -35,7 +35,7 @@ describe('Q16: HomeRecapStrip', () => {
         expect(screen.getByText('semana de racha')).toBeTruthy();
 
         expect(screen.getByText('Última sesión')).toBeTruthy();
-        expect(screen.getByText('1.200 kg')).toBeTruthy();
+        expect(screen.getAllByText(/1.200 kg/).length).toBeGreaterThanOrEqual(1);
         // Week time (30 min trained) duplicates the last-session duration text.
         expect(screen.getAllByText('30 min').length).toBeGreaterThanOrEqual(2);
         // 60x10 beats the 50x10 best → one PR chip.
@@ -55,5 +55,15 @@ describe('Q16: HomeRecapStrip', () => {
         renderStrip([], 'en');
         expect(screen.getByText('This week')).toBeTruthy();
         expect(screen.getByText('No sessions logged this week yet.')).toBeTruthy();
+    });
+
+    it('opens the real Diary sessions destination from a named recent record', () => {
+        const listener = vi.fn();
+        window.addEventListener('gainslab:navigate', listener);
+        renderStrip([log(1, 2, 0, [set('60', '10')], Date.now())], 'en');
+        fireEvent.click(screen.getByRole('button', { name: 's1 · Completed · View in Diary' }));
+        expect(listener).toHaveBeenCalledOnce();
+        expect((listener.mock.calls[0][0] as CustomEvent).detail).toEqual({ view: 'diary', section: 'sessions' });
+        window.removeEventListener('gainslab:navigate', listener);
     });
 });

@@ -81,7 +81,7 @@ export const BodyMetricsModal: React.FC<BodyMetricsModalProps> = ({
                             value={bodyWeight}
                             onChange={(e) => setBodyWeight(e.target.value)}
                             placeholder="e.g. 75"
-                            className="gl-input font-bold"
+                            className="gl-input min-h-11 text-base font-medium"
                         />
                     </div>
 
@@ -96,7 +96,7 @@ export const BodyMetricsModal: React.FC<BodyMetricsModalProps> = ({
                                 value={height}
                                 onChange={(e) => setHeight(e.target.value)}
                                 placeholder="e.g. 175"
-                            className="gl-input font-bold"
+                            className="gl-input min-h-11 text-base font-medium"
                             />
                         </div>
 
@@ -109,7 +109,7 @@ export const BodyMetricsModal: React.FC<BodyMetricsModalProps> = ({
                                 step="0.5"
                                 value={bodyFat}
                                 onChange={(e) => setBodyFat(e.target.value)}
-                            className="gl-input font-bold"
+                            className="gl-input min-h-11 text-base font-medium"
                         />
                         </div>
                     </div>

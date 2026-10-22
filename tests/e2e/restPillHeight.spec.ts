@@ -11,23 +11,25 @@ const seedShowRirProfile = (page: Page) =>
         localStorage.setItem('il_cfg_rir', 'true');
     });
 
-test.describe('Rest pill height compensation (G2)', () => {
-    test('padded list scrolls last content above the pill; effort chips are >=44px', async ({ page }) => {
+test.describe('Rest surfaces remain reachable without overlap (G2)', () => {
+    test('focused workout scrolls to its rest controls and final action; effort chips are >=44px', async ({ page }) => {
         await seedShowRirProfile(page);
         await page.goto('/');
 
         const nav = page.locator('nav[aria-label="Main navigation"]');
         await expect(nav).toBeVisible({ timeout: 15000 });
 
-        const plusBtn = page.locator('nav[aria-label="Main navigation"] button[aria-label*="Iniciar" i], nav[aria-label="Main navigation"] button[aria-label*="Start" i]').first();
-        await expect(plusBtn).toBeVisible({ timeout: 8000 });
-        await plusBtn.click();
+        const freeSessionBtn = page.getByRole('button', { name: /^(Sesión libre|Freestyle session) ·/ });
+        await expect(freeSessionBtn).toBeVisible({ timeout: 8000 });
+        await freeSessionBtn.click();
 
-        const freestyleOption = page.locator('button:has-text("Sesión libre"), button:has-text("Freestyle")').first();
+        const freestyleOption = page.getByRole('dialog', { name: /Iniciar entrenamiento|Start training/ })
+            .getByRole('button', { name: /Sesión libre|Freestyle/ });
         await expect(freestyleOption).toBeVisible({ timeout: 6000 });
         await freestyleOption.click();
 
-        const startFreeBtn = page.locator('button:has-text("Iniciar Sesión Libre"), button:has-text("Start Free Session"), button:has-text("Iniciar sesión libre")').first();
+        const startFreeBtn = page.getByRole('dialog', { name: /Nueva Sesión|New Session/ })
+            .getByRole('button', { name: /Iniciar Sesión Libre|Start Free Session/i });
         await expect(startFreeBtn).toBeVisible({ timeout: 8000 });
         await startFreeBtn.scrollIntoViewIfNeeded();
         await startFreeBtn.click();
@@ -53,7 +55,8 @@ test.describe('Rest pill height compensation (G2)', () => {
         await expect(completeSetBtn).toBeVisible({ timeout: 6000 });
         await completeSetBtn.click();
 
-        const pill = page.locator('aside');
+        const pill = page.locator('[data-workout-rest-dock]');
+        await pill.scrollIntoViewIfNeeded();
         await expect(pill.getByRole('button', { name: '-10s' })).toBeVisible({ timeout: 8000 });
         await expect(pill.getByRole('button', { name: /Fácil|Easy/ })).toBeVisible({ timeout: 8000 });
 
@@ -64,45 +67,47 @@ test.describe('Rest pill height compensation (G2)', () => {
             expect(box!.height, `chip ${name} height`).toBeGreaterThanOrEqual(44);
         }
 
-        // The CSS var tracks the real pill height.
-        const pillBox = await pill.boundingBox();
-        expect(pillBox).not.toBeNull();
-        const pillVar = await page.evaluate(() =>
-            document.documentElement.style.getPropertyValue('--rest-pill-height'));
-        expect(Math.abs(parseFloat(pillVar) - pillBox!.height)).toBeLessThanOrEqual(1);
 
-        // Scroll the list to the very end: padding must clear the pill zone.
         const list = page.locator('#tut-exercise-list');
-        await list.evaluate((el) => el.scrollTo(0, el.scrollHeight));
-        const paddingBottom = await list.evaluate((el) => parseFloat(getComputedStyle(el).paddingBottom));
-        expect(paddingBottom).toBeGreaterThanOrEqual(48 + 16 + pillBox!.height - 1);
-
-        // The end-of-list "add exercise" button sits fully above the pill.
-        const endBtn = list.locator('button', { hasText: /Añadir ejercicio|Add exercise/i }).last();
-        await expect(endBtn).toBeVisible();
+        const endBtn = list.getByRole('button', { name: /Añadir ejercicio|Add exercise/i }).last();
+        await endBtn.scrollIntoViewIfNeeded();
         const btnBox = await endBtn.boundingBox();
+        const listBox = await list.boundingBox();
+        const restBox = await pill.boundingBox();
         expect(btnBox).not.toBeNull();
-        expect(btnBox!.y + btnBox!.height).toBeLessThanOrEqual(pillBox!.y + 1);
+        expect(listBox).not.toBeNull();
+        expect(restBox).not.toBeNull();
+        expect(btnBox!.y).toBeGreaterThanOrEqual(listBox!.y);
+        expect(btnBox!.y + btnBox!.height).toBeLessThanOrEqual(listBox!.y + listBox!.height + 1);
+        const overlapsRest = btnBox!.y < restBox!.y + restBox!.height && btnBox!.y + btnBox!.height > restBox!.y;
+        expect(overlapsRest).toBe(false);
 
         await expect(page.getByText(ERROR_BOUNDARY_TEXT)).toHaveCount(0);
     });
 
     test('H1: notif prompt renders above the visible pill without overlap', async ({ page }) => {
         await seedShowRirProfile(page);
+        await page.addInitScript(() => {
+            if (typeof window.Notification !== 'undefined') {
+                Object.defineProperty(window.Notification, 'permission', { value: 'default', configurable: true });
+            }
+        });
         await page.goto('/');
 
         const nav = page.locator('nav[aria-label="Main navigation"]');
         await expect(nav).toBeVisible({ timeout: 15000 });
 
-        const plusBtn = page.locator('nav[aria-label="Main navigation"] button[aria-label*="Iniciar" i], nav[aria-label="Main navigation"] button[aria-label*="Start" i]').first();
-        await expect(plusBtn).toBeVisible({ timeout: 8000 });
-        await plusBtn.click();
+        const freeSessionBtn = page.getByRole('button', { name: /^(Sesión libre|Freestyle session) ·/ });
+        await expect(freeSessionBtn).toBeVisible({ timeout: 8000 });
+        await freeSessionBtn.click();
 
-        const freestyleOption = page.locator('button:has-text("Sesión libre"), button:has-text("Freestyle")').first();
+        const freestyleOption = page.getByRole('dialog', { name: /Iniciar entrenamiento|Start training/ })
+            .getByRole('button', { name: /Sesión libre|Freestyle/ });
         await expect(freestyleOption).toBeVisible({ timeout: 6000 });
         await freestyleOption.click();
 
-        const startFreeBtn = page.locator('button:has-text("Iniciar Sesión Libre"), button:has-text("Start Free Session"), button:has-text("Iniciar sesión libre")').first();
+        const startFreeBtn = page.getByRole('dialog', { name: /Nueva Sesión|New Session/ })
+            .getByRole('button', { name: /Iniciar Sesión Libre|Start Free Session/i });
         await expect(startFreeBtn).toBeVisible({ timeout: 8000 });
         await startFreeBtn.scrollIntoViewIfNeeded();
         await startFreeBtn.click();
@@ -122,6 +127,8 @@ test.describe('Rest pill height compensation (G2)', () => {
         const completeSetBtn = page.locator('button[aria-label*="Completar serie" i], button[aria-label*="Complete set" i]').first();
         await expect(completeSetBtn).toBeVisible({ timeout: 6000 });
         await completeSetBtn.click();
+        await page.getByLabel(/Atrás|Back/, { exact: true }).first().click();
+        await expect(page.locator('nav[aria-label="Main navigation"]')).toBeVisible();
 
         const pill = page.locator('aside');
         await expect(pill.getByRole('button', { name: '-10s' })).toBeVisible({ timeout: 8000 });

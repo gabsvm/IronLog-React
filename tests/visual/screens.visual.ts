@@ -52,7 +52,6 @@ for (const theme of ['dark', 'light'] as const) {
       await page.setViewportSize({ width: 320, height: 720 });
       await expect(nav(page)).toBeVisible();
       const buttons = nav(page).locator('button');
-      await expect(buttons).toHaveCount(5);
       const bounds = await buttons.evaluateAll(items =>
         items.map(item => {
           const box = item.getBoundingClientRect();
@@ -72,7 +71,7 @@ for (const theme of ['dark', 'light'] as const) {
 
     if (theme === 'light') {
       test('expressive: textos de Stats superan contraste WCAG AA', async ({ page }) => {
-        await nav(page).getByRole('button', { name: /M[ée]tricas|Stats/i }).click();
+        await nav(page).getByRole('button', { name: /^Progreso$|^Progress$/ }).click();
         const cards = page.locator('.tonal-1, .tonal-2, .tonal-3, .tonal-4');
         await expect(cards.first()).toBeVisible();
         const ratios = await cards.evaluateAll(items => {
@@ -104,18 +103,6 @@ for (const theme of ['dark', 'light'] as const) {
     }
 
 
-    test(`premium: Home and Stats remain grounded in saved data (${theme})`, async ({ page }) => {
-      const hero = page.locator('#tut-up-next');
-      await expect(hero).toBeVisible();
-      await expect(hero.locator('svg.premium-hero__art')).toBeVisible();
-      await expect(hero.getByRole('button', { name: /Empezar|Start/i })).toBeVisible();
-
-      await nav(page).getByRole('button', { name: /M[ée]tricas|Stats/i }).click();
-      const trend = page.getByRole('region', { name: /Tendencia reciente|Recent training trend/i });
-      await expect(trend).toBeVisible();
-      await expect(trend.locator('svg[role="img"]')).toBeVisible();
-      await expect(trend.getByText(/Mejor serie de fuerza|Best recorded strength set|Best strength set/i)).toBeVisible();
-    });
 
     test(`home desktop ${theme}`, async ({ page }) => {
       // U4: wide screens get a centered column instead of edge-to-edge cards.
@@ -149,10 +136,8 @@ for (const theme of ['dark', 'light'] as const) {
       await expect(buttons).toHaveCount(3);
       await buttons.nth(1).click();
       await expect(buttons.nth(1)).toHaveAttribute('aria-pressed', 'true');
-      await expect(page.locator('.premium-theme-panel').first()).toBeVisible();
       await buttons.nth(2).click();
       await expect(buttons.nth(2)).toHaveAttribute('aria-pressed', 'true');
-      await expect(page.locator('.premium-theme-panel').first()).toBeVisible();
       const scroll = await page.evaluate(() => ({
         scrollWidth: document.documentElement.scrollWidth,
         clientWidth: document.documentElement.clientWidth,

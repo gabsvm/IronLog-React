@@ -17,7 +17,7 @@ export const SetRowBodyweight: React.FC<{ state: SetRowState }> = ({ state }) =>
                             {effectiveBadgeLabel}
                         </BadgeEl>
                     </div>
-                    <div className="text-center text-[12px] text-muted tabular-nums truncate font-medium">
+                    <div className="min-w-0 whitespace-normal break-words text-center text-xs leading-tight text-muted tabular-nums font-medium">
                         {prevText}
                     </div>
                     <div>

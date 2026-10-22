@@ -1,16 +1,17 @@
 import React, { Suspense } from 'react';
-import { Icon } from '../components/ui/Icon';
-import { Button } from '../components/ui/Button';
-import { HomeRecapStrip } from './home/HomeRecapStrip';
+import { LoadingSpinner } from '../components/app/AppLoading';
 import { resolveWeightUnit } from '../utils/units';
 import { useHomeViewState, type HomeViewProps } from './home/useHomeViewState';
 import { HomeEmptyState } from './home/HomeEmptyState';
 import { HomeTopSection } from './home/HomeTopSection';
 import { HomeHeroCard } from './home/HomeHeroCard';
+import { HomeQuickActions, HomeResumeSession } from './home/HomeQuickActions';
+import { TemplateChangeConfirmation } from './home/TemplateChangeConfirmation';
 
 // S6: state lives in views/home/useHomeViewState; render blocks in views/home/.
 export type { HomeViewProps } from './home/useHomeViewState';
 
+const HomeRecapStrip = React.lazy(() => import('./home/HomeRecapStrip').then(m => ({ default: m.HomeRecapStrip })));
 const GuidelinesModal = React.lazy(() => import('./home/GuidelinesModal').then(m => ({ default: m.GuidelinesModal })));
 const ProgramBlockTransition = React.lazy(() => import('../components/programs/ProgramBlockTransition').then(m => ({ default: m.ProgramBlockTransition })));
 const PlanActionsSheet = React.lazy(() => import('../components/home/PlanActionsSheet').then(m => ({ default: m.PlanActionsSheet })));
@@ -23,49 +24,33 @@ const TemplateSelector = React.lazy(() => import('./home/TemplateSelector').then
 
 export const HomeView: React.FC<HomeViewProps> = (props) => {
     const state = useHomeViewState(props);
-    const { onEditProgram, onStartFreeSession, logs, lang, tutorialProgress, markTutorialSeen, config, activeMeso, t, h, showPaywall, setShowPaywall, featureAttempted, showCompleteModal, setShowCompleteModal, showMesoSettings, setShowMesoSettings, showPlanActions, setShowPlanActions, showTemplateSelector, setShowTemplateSelector, handleOpenTemplateSelector, handleSelectTemplate, handleSelectProgram, handleCreateCustom, personalTemplates, globalTemplates, skipConfirmationId, setSkipConfirmationId, showGuidelines, setShowGuidelines, transitionBlock, showKongHub, setShowKongHub, closeTransition, currentGuidelineImages, safeProgram, safeLogs, confirmSkip, handleFinishMeso, handleFinishWeek, homeTutorialSteps } = state;
+    const { onEditProgram, logs, lang, tutorialProgress, markTutorialSeen, config, activeMeso, t, h, showPaywall, setShowPaywall, featureAttempted, showCompleteModal, setShowCompleteModal, showMesoSettings, setShowMesoSettings, showPlanActions, setShowPlanActions, showTemplateSelector, setShowTemplateSelector, handleOpenTemplateSelector, handleSelectTemplate, handleSelectProgram, handleCreateCustom, personalTemplates, globalTemplates, skipConfirmationId, setSkipConfirmationId, showGuidelines, setShowGuidelines, transitionBlock, showKongHub, setShowKongHub, closeTransition, currentGuidelineImages, safeProgram, safeLogs, confirmSkip, handleFinishMeso, handleFinishWeek, homeTutorialSteps } = state;
 
     if (!activeMeso) {
-        return <HomeEmptyState state={state} />;
+        return <><HomeEmptyState state={state} /><TemplateChangeConfirmation lang={lang} confirmation={state.templateChangeConfirmation} /></>;
     }
 
     return (
-        <div className="px-4 space-y-4 pb-28 pt-2">
+        <div className="space-y-4 px-4 pb-28 pt-2">
             <HomeTopSection state={state} />
-
-            {/* 4. Dominant Selected Day Hero Card */}
-            <HomeHeroCard state={state} />
-
-            {/* 4b. Week at a glance (Q16): done/planned, streak, last session. */}
-            <HomeRecapStrip
-                logs={safeLogs}
-                meso={activeMeso}
-                plannedDays={safeProgram.length}
-                lang={lang}
-                t={t}
-                unit={resolveWeightUnit(config)}
-            />
-
-            {/* 5. Secondary Quick Start */}
-            <div className="space-y-3 pt-2">
-                {onStartFreeSession && (
-                    <button
-                        type="button"
-                        onClick={onStartFreeSession}
-                        className="w-full flex items-center gap-3 card-reference p-3.5 hover:border-zinc-500 active:scale-[0.99] transition-all"
-                    >
-                        <div className="flex gap-1 shrink-0">
-                            <div className="w-7 h-7 rounded-lg bg-primary-500/10 text-primary-500 flex items-center justify-center"><Icon name="Dumbbell" size={14} /></div>
-                            <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center"><Icon name="Zap" size={14} /></div>
-                            <div className="w-7 h-7 rounded-lg bg-violet-500/10 text-violet-500 flex items-center justify-center"><Icon name="User" size={14} /></div>
-                        </div>
-                        <span className="flex-1 text-left text-xs font-semibold text-zinc-300">
-                            {h.freeRow}
-                        </span>
-                        <Icon name="ChevronRight" size={16} className="text-muted shrink-0" />
-                    </button>
-                )}
+            <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+                <div className="min-w-0 space-y-4">
+                    <HomeResumeSession state={state} />
+                    <HomeHeroCard state={state} />
+                    <HomeQuickActions state={state} />
+                </div>
+                <Suspense fallback={<div className="gl-panel flex min-h-48 items-center justify-center"><LoadingSpinner /></div>}>
+                <HomeRecapStrip
+                    logs={safeLogs}
+                    meso={activeMeso}
+                    plannedDays={safeProgram.length}
+                    lang={lang}
+                    t={t}
+                    unit={resolveWeightUnit(config)}
+                />
+                </Suspense>
             </div>
+            <TemplateChangeConfirmation lang={lang} confirmation={state.templateChangeConfirmation} />
 
 
             <Suspense fallback={null}>
@@ -157,29 +142,17 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
             )}
 
             {showCompleteModal && (
-                <div className="fixed inset-0 z-modal bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in">
-                    <div className="glass-panel w-full max-w-sm rounded-2xl p-6 text-center">
-                        {showCompleteModal === 'meso' ? (
-                            <>
-                                <h3 className="text-white font-bold text-xl mb-2">{t.finishCycle}</h3>
-                                <p className="text-zinc-400 text-sm mb-6">{t.finishMesoConfirm}</p>
-                                <div className="flex gap-3">
-                                    <Button variant="secondary" onClick={() => setShowCompleteModal(null)} fullWidth>{t.cancel}</Button>
-                                    <Button onClick={() => handleFinishMeso()} fullWidth>{t.completed}</Button>
-                                </div>
-                            </>
-                        ) : ( // 'week'
-                            <>
-                                <h3 className="text-white font-bold text-xl mb-2">{t.completeWeek}</h3>
-                                <p className="text-zinc-400 text-sm mb-6">{t.completeWeekConfirm}</p>
-                                <div className="flex gap-3">
-                                    <Button variant="secondary" onClick={() => setShowCompleteModal(null)} fullWidth>{t.cancel}</Button>
-                                    <Button onClick={handleFinishWeek} fullWidth>{h.nextWeek}</Button>
-                                </div>
-                            </>
-                        )}
-                    </div>
-                </div>
+                <Suspense fallback={null}>
+                    <ConfirmModal
+                        isOpen
+                        title={showCompleteModal === 'meso' ? t.finishCycle : t.completeWeek}
+                        description={showCompleteModal === 'meso' ? t.finishMesoConfirm : t.completeWeekConfirm}
+                        onConfirm={showCompleteModal === 'meso' ? handleFinishMeso : handleFinishWeek}
+                        onCancel={() => setShowCompleteModal(null)}
+                        confirmText={showCompleteModal === 'meso' ? t.completed : h.nextWeek}
+                        cancelText={t.cancel}
+                    />
+                </Suspense>
             )}
             {transitionBlock && (
                 <Suspense fallback={null}>

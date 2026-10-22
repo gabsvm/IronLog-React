@@ -16,13 +16,13 @@ export const SetupWizard: React.FC<SetupWizardProps> = (props) => {
         return (
             <div className="fixed inset-0 z-modal bg-[rgb(var(--surface-app))] flex flex-col items-center justify-center gap-6 p-8">
                 <div className="relative">
-                    <div className="w-20 h-20 border-4 border-zinc-100 dark:border-zinc-800 border-t-primary-600 rounded-full animate-spin" />
+                    <div className="w-20 h-20 border-4 border-[rgb(var(--border-subtle))] border-t-primary-500 rounded-full animate-spin" />
                     <div className="absolute inset-0 flex items-center justify-center">
                         <Icon name="Dumbbell" size={28} className="text-primary-600" />
                     </div>
                 </div>
                 <div className="text-center">
-                    <h3 className="text-xl font-black text-[rgb(var(--text-primary))]">{w.generating}</h3>
+                    <h3 className="text-xl font-semibold text-[rgb(var(--text-primary))]">{w.generating}</h3>
                     <p className="text-sm text-muted mt-2">{TRANSLATIONS[lang].copy.setupWizard.analyzingYourProfile}</p>
                 </div>
             </div>
@@ -44,13 +44,14 @@ export const SetupWizard: React.FC<SetupWizardProps> = (props) => {
                     </div>
                     <div className="flex min-w-0 items-center gap-2">
                         {/* Language Toggle */}
-                        <div className="flex shrink-0 bg-[rgb(var(--surface-elevated))] rounded-full p-1">
+                        <div className="flex shrink-0 bg-[rgb(var(--surface-elevated))] border border-[rgb(var(--border-subtle))] rounded-xl p-1">
                             {(['en', 'es'] as const).map(l => (
                                 <button
                                     key={l}
                                     onClick={() => setLang(l)}
-                                    className={`px-2 py-1 rounded-full text-xs font-black transition-all uppercase ${
-                                        lang === l ? 'bg-primary-500 shadow-sm text-zinc-950' : 'text-muted hover:text-zinc-600 dark:hover:text-[rgb(var(--text-primary))]'
+                                    aria-pressed={lang === l}
+                                    className={`min-h-11 min-w-11 px-2 rounded-lg text-xs font-semibold transition-colors uppercase focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 ${
+                                        lang === l ? 'bg-primary-500 text-zinc-950' : 'text-muted hover:text-[rgb(var(--text-primary))]'
                                     }`}
                                 >
                                     {l}
@@ -58,7 +59,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = (props) => {
                             ))}
                         </div>
                         {step < 3 && (
-                            <button onClick={() => handleApply('custom')} className="min-w-0 text-right text-xs font-black uppercase leading-tight tracking-wider text-muted hover:text-zinc-700 dark:hover:text-[rgb(var(--text-primary))]">
+                            <button onClick={() => handleApply('custom')} className="min-h-11 min-w-0 rounded-lg px-2 text-right text-xs font-semibold leading-tight text-muted hover:text-[rgb(var(--text-primary))] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500">
                                 {w.manual}
                             </button>
                         )}
@@ -78,8 +79,8 @@ export const SetupWizard: React.FC<SetupWizardProps> = (props) => {
                             {stepTitles.map((title, i) => (
                                 <span
                                     key={i}
-                                    className={`text-xs font-black uppercase tracking-wider transition-colors ${
-                                        i <= step ? 'text-primary-600' : 'text-zinc-300 dark:text-zinc-700'
+                                    className={`text-xs font-semibold transition-colors ${
+                                        i <= step ? 'text-accent' : 'text-muted'
                                     }`}
                                 >
                                     {title}
@@ -93,12 +94,12 @@ export const SetupWizard: React.FC<SetupWizardProps> = (props) => {
             {/* Step title */}
             {step < totalSteps && (
                 <div className="px-6 pt-8 pb-4">
-                    <h2 className="text-2xl font-black text-[rgb(var(--text-primary))]">
+                    <h2 className="text-2xl font-semibold text-[rgb(var(--text-primary))]">
                         {step === 0 && (TRANSLATIONS[lang].copy.setupWizard.howManyDaysPer)}
                         {step === 1 && (TRANSLATIONS[lang].copy.setupWizard.whatSYourGoal)}
                         {step === 2 && (TRANSLATIONS[lang].copy.setupWizard.howMuchTimeDo)}
                     </h2>
-                    <p className="text-sm text-muted dark:text-zinc-500 mt-1">
+                    <p className="text-sm text-muted mt-1">
                         {step === 0 && (TRANSLATIONS[lang].copy.setupWizard.considerYourCommitmentsAnd)}
                         {step === 1 && (TRANSLATIONS[lang].copy.setupWizard.youCanChangeThis)}
                         {step === 2 && (TRANSLATIONS[lang].copy.setupWizard.perTrainingSession)}
@@ -119,7 +120,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = (props) => {
                         onClick={() => setStep(Math.max(0, step - 1))}
                         disabled={step === 0}
                         aria-label={t.back}
-                        className="w-14 h-12 rounded-2xl bg-[rgb(var(--surface-elevated))] flex items-center justify-center text-zinc-500 dark:text-muted disabled:opacity-30 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all active:scale-90"
+                        className="w-14 h-12 rounded-xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated))] flex items-center justify-center text-[rgb(var(--text-secondary))] disabled:opacity-30 hover:bg-[rgb(var(--surface-raised))] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
                     >
                         <Icon name="ChevronLeft" size={22} />
                     </button>
@@ -127,7 +128,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = (props) => {
                         <button
                             type="button"
                             onClick={handleNext}
-                            className="expressive-press flex-1 h-12 rounded-full bg-primary-500 hover:bg-primary-400 text-zinc-950 font-black text-sm shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2"
+                            className="flex-1 h-12 rounded-xl bg-primary-500 hover:bg-primary-400 text-zinc-950 font-semibold text-base transition-colors flex items-center justify-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
                         >
                             {step === 2
                                 ? (TRANSLATIONS[lang].copy.setupWizard.analyzeMyProfile)

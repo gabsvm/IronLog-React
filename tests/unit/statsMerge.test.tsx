@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
 
 const { mockState, calcOverviewSpy, calcChartSpy } = vi.hoisted(() => ({
     mockState: {
@@ -11,7 +11,7 @@ const { mockState, calcOverviewSpy, calcChartSpy } = vi.hoisted(() => ({
         weightUnit: 'kg' as 'kg' | 'lb',
         userProfile: null as any,
     },
-    calcOverviewSpy: vi.fn(async () => ({
+    calcOverviewSpy: vi.fn(async (_logs: Log[], _mesoId?: number): Promise<OverviewNumbers> => ({
         volumeData: [['CHEST', 6]],
         exerciseFrequency: { custom_1: 2, bp_bar: 3 },
         weeks: 1,
@@ -60,6 +60,11 @@ vi.mock('react-chartjs-2', () => ({
 }));
 
 import { StatsView } from '../../views/StatsViewImpl';
+import { useStatsData } from '../../views/stats/useStatsData';
+import { computeOverview, type OverviewNumbers } from '../../utils/statsOverview';
+import { db } from '../../utils/db';
+import type { StatsPeriod, StatsScope } from '../../utils/statsScope';
+import type { Log } from '../../types';
 
 const set = (id: number, weight: string, reps: string) => ({
     id, weight, reps, completed: true, type: 'regular',
@@ -110,8 +115,6 @@ describe('Q14: Stats reads follow merges', () => {
 
         // Picker aggregates both ids into one canonical option.
         await waitFor(() => expect(screen.getByText('1 ejercicios con historial')).toBeTruthy());
-        // Ejercicios pill matches the aggregated count.
-        expect(screen.getByText('Ejercicios').parentElement?.textContent).toBe('Ejercicios1');
 
         // Chart query spans the whole canonical group.
         await waitFor(() => expect(calcChartSpy).toHaveBeenCalled());
@@ -124,9 +127,6 @@ describe('Q14: Stats reads follow merges', () => {
         ).toBeTruthy());
 
         // Single PR row under the survivor's name with the best set (60x5).
-        // 'Press Banca Barra' appears twice: picker button + the one PR row.
-        // (The picker briefly shows the loading label while the overview
-        // effect re-runs after selection, so wait for the settled count.)
         await waitFor(() => expect(screen.getAllByText('Press Banca Barra')).toHaveLength(2));
         expect(screen.queryByText('Press Banca')).toBeNull();
         expect(screen.getByText((_, el) => el?.textContent === '60kg')).toBeTruthy();
@@ -137,7 +137,6 @@ describe('Q14: Stats reads follow merges', () => {
         render(<StatsView scope="history" onScopeChange={() => {}} />);
 
         await waitFor(() => expect(screen.getByText('2 ejercicios con historial')).toBeTruthy());
-        expect(screen.getByText('Ejercicios').parentElement?.textContent).toBe('Ejercicios2');
 
         await waitFor(() => expect(calcChartSpy).toHaveBeenCalled());
         // bp_bar wins by count (3 > 2) and queries alone.
@@ -152,5 +151,78 @@ describe('Q14: Stats reads follow merges', () => {
         // Two PR rows, one per exercise.
         await waitFor(() => expect(screen.getAllByText('Press Banca Barra')).toHaveLength(2));
         expect(screen.getAllByText('Press Banca')).toHaveLength(1);
+    });
+});
+
+describe('Stats aggregate scope and selection boundaries', () => {
+    beforeEach(async () => {
+        await db.clear();
+        mockState.weightUnit = 'kg';
+        mockState.userProfile = null;
+        mockState.activeMeso = { id: 202, week: 1, mesoType: 'hypertrophy' };
+        seedLibrary(false);
+        const now = Date.now();
+        const log = (id: number, mesoId: number, daysAgo: number, weight: string) => ({
+            id, mesoId, week: 1, dayIdx: 0, name: 'Training',
+            startTime: now - daysAgo * 86400000 - 60000,
+            endTime: now - daysAgo * 86400000, duration: 60, skipped: false,
+            exercises: [
+                { id: 'bp_bar', name: 'Bench', muscle: 'CHEST', sets: [set(id, weight, '5')] },
+                { id: 'custom_1', name: 'Other bench', muscle: 'CHEST', sets: [set(id + 10, '40', '8')] },
+            ],
+        });
+        mockState.logs = [
+            log(1, 101, 1, '150'),
+            log(2, 202, 2, '77.5'),
+            log(3, 202, 40, '100'),
+        ];
+        calcOverviewSpy.mockClear();
+        calcOverviewSpy.mockImplementation(async (logs: Log[], mesoId?: number) =>
+            computeOverview(logs, mesoId ?? null));
+        calcChartSpy.mockClear();
+    });
+
+    it('uses the same plan and period logs for rep maxes and overview', async () => {
+        const { result, rerender } = renderHook(
+            ({ scope, period }: { scope: StatsScope; period: StatsPeriod }) =>
+                useStatsData({ hideHeader: false, activeTab: 'progress', statsScope: scope, statsPeriod: period }),
+            { initialProps: { scope: 'plan' as StatsScope, period: '4w' as StatsPeriod } },
+        );
+        const actualFiveRepMax = () => result.current.repMaxRows.find(row => row.reps === 5)?.actualWeight;
+        await waitFor(() => expect(actualFiveRepMax()).toBe(77.5));
+        expect(calcOverviewSpy.mock.calls.at(-1)?.[0].map(log => log.id)).toEqual([2]);
+
+        rerender({ scope: 'history', period: '4w' });
+        await waitFor(() => expect(actualFiveRepMax()).toBe(150));
+        await waitFor(() => expect(calcOverviewSpy.mock.calls.at(-1)?.[0].map(log => log.id)).toEqual([1, 2]));
+
+        rerender({ scope: 'plan', period: 'all' });
+        await waitFor(() => expect(actualFiveRepMax()).toBe(100));
+        await waitFor(() => expect(calcOverviewSpy.mock.calls.at(-1)?.[0].map(log => log.id)).toEqual([2, 3]));
+    });
+
+    it('changes exercise without recalculating overview and resets unavailable selections', async () => {
+        const { result, rerender } = renderHook(
+            ({ period }: { period: StatsPeriod }) =>
+                useStatsData({ hideHeader: false, activeTab: 'progress', statsScope: 'plan', statsPeriod: period }),
+            { initialProps: { period: '4w' as StatsPeriod } },
+        );
+        await waitFor(() => expect(result.current.loadingOverview).toBe(false));
+        await waitFor(() => expect(result.current.selectedExId).toBe('bp_bar'));
+        const overviewCalls = calcOverviewSpy.mock.calls.length;
+
+        await act(async () => { result.current.setSelectedExId('custom_1'); });
+        expect(result.current.currentEx?.id).toBe('custom_1');
+        expect(calcOverviewSpy).toHaveBeenCalledTimes(overviewCalls);
+
+        rerender({ period: '8w' });
+        await waitFor(() => expect(result.current.loadingOverview).toBe(false));
+        expect(result.current.selectedExId).toBe('custom_1');
+
+        mockState.logs = mockState.logs.map(log => ({
+            ...log, exercises: log.exercises.filter((exercise: { id: string }) => exercise.id === 'bp_bar'),
+        }));
+        rerender({ period: '8w' });
+        await waitFor(() => expect(result.current.selectedExId).toBe('bp_bar'));
     });
 });

@@ -129,8 +129,8 @@ export const Layout: React.FC<LayoutProps> = ({
     const activeSessionDayIdx = useStore(state => state.activeSession?.dayIdx);
     const setActiveSession = useStore(state => state.setActiveSession);
     const t = TRANSLATIONS[lang];
-    const [showProfile, setShowProfile] = React.useState(false);
-    const [profileSection, setProfileSection] = React.useState<ProfileSection | null>(null);
+    const [showProfile, setShowProfile] = React.useState(() => Boolean(window.history.state?.profile));
+    const [profileSection, setProfileSection] = React.useState<ProfileSection | null>(() => window.history.state?.profileSection ?? null);
     const ly = t.layoutKeys;
     const [showActiveSessionAlert, setShowActiveSessionAlert] = React.useState(false);
     const [showKongConvertConfirm, setShowKongConvertConfirm] = React.useState(false);
@@ -172,10 +172,8 @@ export const Layout: React.FC<LayoutProps> = ({
     React.useEffect(() => {
         const handlePop = (event: Event) => {
             const detail = (event as CustomEvent).detail;
-            if (!detail?.profile) {
-                setProfileSection(null);
-                setShowProfile(false);
-            }
+            setProfileSection(detail?.profile ? (detail.profileSection ?? null) : null);
+            setShowProfile(Boolean(detail?.profile));
         };
         window.addEventListener('ironlog:popstate', handlePop);
         return () => window.removeEventListener('ironlog:popstate', handlePop);
@@ -185,7 +183,7 @@ export const Layout: React.FC<LayoutProps> = ({
         if (!showProfile) {
             try {
                 // Snapshot current view and push exactly ONE entry per sheet open.
-                window.history.pushState({ ...(window.history.state || {}), view, profile: true }, '', '#profile');
+                window.history.pushState({ ...(window.history.state || {}), view, profile: true, profileSection: section ?? null }, '', '#profile');
             } catch { }
             setShowProfile(true);
         }
@@ -340,20 +338,7 @@ export const Layout: React.FC<LayoutProps> = ({
                         onResume={() => setView('workout')}
                         onToday={() => {
                             setShowQuickStart(false);
-                            if (useStore.getState().activeSession) {
-                                setView('workout');
-                            } else if (view === 'home') {
-                                window.dispatchEvent(new CustomEvent('gainslab:start-scheduled'));
-                                const heroCta = document.querySelector<HTMLElement>('[data-testid="hero-start-workout"], #hero-start-workout, .hero-cta-btn');
-                                if (heroCta) {
-                                    heroCta.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                    heroCta.click();
-                                } else {
-                                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                                }
-                            } else {
-                                setView('home');
-                            }
+                            window.dispatchEvent(new CustomEvent('gainslab:start-scheduled'));
                         }}
                         onFreestyle={() => setShowFreestyle(true)}
                         onEditProgram={editProgram}

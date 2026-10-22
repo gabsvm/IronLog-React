@@ -1,7 +1,9 @@
 
-import React, { useEffect, useRef } from 'react';
+import React, { useId } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from './Button';
 import { Icon } from './Icon';
+import { useModalLayer } from './useModalLayer';
 
 interface ConfirmModalProps {
     title: string;
@@ -24,62 +26,32 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
     onCancel,
     isOpen 
 }) => {
-    const dialogRef = useRef<HTMLDivElement>(null);
-    useEffect(() => {
-        if (!isOpen) return;
-        const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-        const dialog = dialogRef.current;
-        const controls = () => Array.from(dialog?.querySelectorAll<HTMLElement>('button:not(:disabled), [href], input:not(:disabled), [tabindex]:not([tabindex="-1"])') ?? []);
-        controls()[0]?.focus();
-        const onKeyDown = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') {
-                event.preventDefault();
-                onCancel();
-            } else if (event.key === 'Tab') {
-                const items = controls();
-                if (!items.length) {
-                    event.preventDefault();
-                    dialog?.focus();
-                    return;
-                }
-                const first = items[0]!;
-                const last = items[items.length - 1]!;
-                if (event.shiftKey && (document.activeElement === first || !dialog?.contains(document.activeElement))) {
-                    event.preventDefault();
-                    last.focus();
-                } else if (!event.shiftKey && (document.activeElement === last || !dialog?.contains(document.activeElement))) {
-                    event.preventDefault();
-                    first.focus();
-                }
-            }
-        };
-        document.addEventListener('keydown', onKeyDown);
-        return () => {
-            document.removeEventListener('keydown', onKeyDown);
-            previousFocus?.focus();
-        };
-    }, [isOpen, onCancel]);
+    const { contentRef, isTopLayer } = useModalLayer(isOpen, onCancel, true);
+    const titleId = useId();
+    const descriptionId = useId();
     if (!isOpen) return null;
 
     // pointer-events-auto on the backdrop is REQUIRED, not decoration: Radix's
     // dismissable layer (under Vaul sheets) sets body{pointer-events:none} while
     // a sheet is open and only its own layer re-enables events — without this,
     // the dialog paints on top but taps fall through to whatever is beneath it.
-    return (
+    return createPortal(
         <div
             className="modal-backdrop fixed inset-0 z-confirm backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-base pointer-events-auto"
-            onClick={onCancel}
+            onClick={event => {
+                if (event.target === event.currentTarget && isTopLayer()) onCancel();
+            }}
             role="dialog"
             aria-modal="true"
-            aria-labelledby="confirm-modal-title"
-            aria-describedby="confirm-modal-desc"
+            aria-labelledby={titleId}
+            aria-describedby={descriptionId}
         >
-            <div ref={dialogRef} className="modal-surface gl-confirm-surface w-full max-w-sm border p-6 text-center shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div ref={contentRef} tabIndex={-1} className="modal-surface gl-confirm-surface w-full max-w-sm border p-6 text-center shadow-2xl" onClick={e => e.stopPropagation()}>
                 <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${variant === 'danger' ? 'bg-red-500/10 text-red-500' : 'bg-primary-500/10 text-primary-500'}`}>
                     <Icon name={variant === 'danger' ? "AlertTriangle" : "Info"} size={32} />
                 </div>
-                <h3 id="confirm-modal-title" className="text-xl font-bold text-zinc-900 dark:text-white mb-2">{title}</h3>
-                <p id="confirm-modal-desc" className="mb-6 text-sm leading-relaxed text-[rgb(var(--text-secondary))]">{description}</p>
+                <h3 id={titleId} className="text-xl font-bold text-zinc-900 dark:text-white mb-2">{title}</h3>
+                <p id={descriptionId} className="mb-6 text-sm leading-relaxed text-[rgb(var(--text-secondary))]">{description}</p>
                 {cancelText ? (
                     <div className="grid grid-cols-2 gap-3">
                         <Button variant="secondary" onClick={onCancel}>{cancelText}</Button>
@@ -91,6 +63,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
                     </div>
                 )}
             </div>
-        </div>
+        </div>,
+        document.body,
     );
 };

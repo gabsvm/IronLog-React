@@ -68,7 +68,7 @@ export const AccountSection: React.FC<AccountSectionProps> = ({ onClose, onLogin
             {!isStandalone && (
                 <div data-install-banner className="gl-panel flex items-center justify-between gap-3 p-4">
                     <div className="min-w-0">
-                        <h3 className="flex items-center gap-2 text-sm font-black uppercase tracking-wide text-[rgb(var(--text-primary))]">
+                        <h3 className="flex items-center gap-2 text-sm font-semibold text-[rgb(var(--text-primary))]">
                             <Icon name="Download" size={16} className="text-primary-500" />
                             {t.installApp}
                         </h3>
@@ -88,7 +88,7 @@ export const AccountSection: React.FC<AccountSectionProps> = ({ onClose, onLogin
 
             <div className="label-reference px-1">{ty.account}</div>
             <div className="gl-panel flex items-center gap-3 p-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-amber-400/90 bg-[rgb(var(--surface-elevated))] text-xl font-bold text-[rgb(var(--text-primary))]">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-border-strong bg-surface-elevated text-xl font-semibold text-[rgb(var(--text-primary))]">
                     {userInitial}
                 </div>
                 <div className="min-w-0 flex-1">

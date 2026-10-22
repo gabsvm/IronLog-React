@@ -26,7 +26,7 @@ export const AdvancedSection: React.FC<AdvancedSectionProps> = ({ syncStatusText
     return (
         <div id="profile-section-advanced">
             <details>
-                <summary className="label-reference px-1 mb-1.5 cursor-pointer list-none flex items-center gap-1.5 [&::-webkit-details-marker]:hidden">
+                <summary className="label-reference min-h-11 px-1 mb-1.5 cursor-pointer list-none flex items-center gap-1.5 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 [&::-webkit-details-marker]:hidden">
                     {ty.advanced}
                     <Icon name="ChevronDown" size={14} className="text-muted" />
                 </summary>
@@ -35,22 +35,22 @@ export const AdvancedSection: React.FC<AdvancedSectionProps> = ({ syncStatusText
                         <div className="label-reference px-1 mb-1">{ty.diagnostics}</div>
                         <div className="flex items-center justify-between text-xs">
                             <span className="font-bold text-muted">{ty.network}</span>
-                            <span className={`font-black ${isOnline ? 'text-emerald-500' : 'text-amber-400'}`}>{isOnline ? ty.online : ty.offline}</span>
+                            <span className={`font-semibold ${isOnline ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'}`}>{isOnline ? ty.online : ty.offline}</span>
                         </div>
                         <div className="flex items-center justify-between text-xs">
                             <span className="font-bold text-muted">{ty.pendingQueue}</span>
-                            <span className="gl-num font-black text-[rgb(var(--text-primary))]">{syncStatus.pending}</span>
+                            <span className="gl-num font-semibold text-[rgb(var(--text-primary))]">{syncStatus.pending}</span>
                         </div>
                         <div className="flex items-center justify-between text-xs">
                             <span className="font-bold text-muted">{ty.status}</span>
-                            <span className="font-black text-[rgb(var(--text-primary))]">{syncStatus.isSyncing ? ty.syncingState : ty.idleState}</span>
+                            <span className="font-semibold text-[rgb(var(--text-primary))]">{syncStatus.isSyncing ? ty.syncingState : ty.idleState}</span>
                         </div>
                         <div className="text-xs text-muted">
                             {ty.lastChange} {localLastUpdated ? new Date(localLastUpdated).toLocaleString() : 'n/a'}
                         </div>
                         <StoragePersistRow lang={lang} />
                         {pendingCloudSections.length > 0 && (
-                            <div className="text-xs text-amber-500">
+                            <div className="text-xs text-amber-700 dark:text-amber-400">
                                 {ty.cloudNewer}{' '}
                                 {pendingCloudSections.map(s => ((t.syncSections as any)?.[s]) || s).join(', ')}
                             </div>

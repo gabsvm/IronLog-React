@@ -93,6 +93,14 @@ export const useShortcutLaunch = ({
         setView('workout');
     }, [activeSession, activeMeso, logs, program, exercises, lang, rpFeedback, config, setActiveSession, setView]);
 
+    // In-app quick start uses the same launch rules as shortcuts/widgets,
+    // without querying a Home button that may not be mounted.
+    useEffect(() => {
+        if (isAppLoading) return;
+        window.addEventListener('gainslab:start-scheduled', runStartAction);
+        return () => window.removeEventListener('gainslab:start-scheduled', runStartAction);
+    }, [isAppLoading, runStartAction]);
+
     // Handle PWA shortcut actions (e.g. /?action=start&source=shortcut)
     useEffect(() => {
         if (isAppLoading) return;

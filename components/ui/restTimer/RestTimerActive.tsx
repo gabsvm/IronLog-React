@@ -9,10 +9,9 @@ import { RestTimerNotifPrompt } from './RestTimerPrompts';
 import { isWorkoutRestDocked, subscribeWorkoutRestDocked } from '../../workout/workoutRestDockSignal';
 export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ state }) => {
     const { restTimer, setRestTimer, lang, reducedEffects, t, mode, setMode, keyboardOffset, pillRef, currentSourceSet, showEffortFeedback, handleRateEffort, nextExerciseInfo } = state;
-    // The bottom nav mounts/unmounts with the view, not with the 1 Hz tick:
-    // read once per rest (this component mounts fresh per active rest).
-    // Must stay above the early return to keep hook order stable.
-    const [hasBottomNav] = React.useState(() => typeof document !== 'undefined' && Boolean(document.querySelector('nav[aria-label="Main navigation"]')));
+    // Dynamically check whether bottom nav is in the DOM so the pill clears
+    // it on Home/Diary/Progress but hugs the bottom when in full-screen views.
+    const hasBottomNav = typeof document !== 'undefined' && Boolean(document.querySelector('nav[aria-label="Main navigation"]'));
     // Workout dock signal: re-render the moment the in-flow dock mounts or
     // unmounts so only one rest surface is ever visible.
     const [, setDockBump] = React.useState(0);

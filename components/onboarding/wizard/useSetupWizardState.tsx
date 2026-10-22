@@ -94,29 +94,36 @@ export const useSetupWizardState = ({ onComplete }: SetupWizardProps) => {
     };
 
     // ── Sub-components ────────────────────────────────────────────────
-    const OptionBtn = ({ label, description, selected, onClick, icon }: any) => (
+    const OptionBtn = ({ label, description, selected, onClick, icon }: {
+        label: string;
+        description?: string;
+        selected: boolean;
+        onClick: () => void;
+        icon: string;
+    }) => (
         <button
             onClick={onClick}
-            className={`w-full p-4 rounded-2xl border-2 flex items-start gap-4 transition-all duration-200 active:scale-[0.98] text-left ${
+            aria-pressed={selected}
+            className={`w-full min-h-11 p-4 rounded-2xl border flex items-start gap-4 transition-colors text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 ${
                 selected
-                    ? 'border-primary-600 bg-primary-50 dark:bg-primary-900/20'
-                    : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-zinc-300 dark:hover:border-zinc-700'
+                    ? 'border-primary-500 bg-primary-500/10'
+                    : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] hover:border-[rgb(var(--border-strong))]'
             }`}
         >
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
-                selected ? 'bg-primary-600 text-white' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400'
+                selected ? 'bg-primary-500 text-zinc-950' : 'bg-[rgb(var(--surface-elevated))] text-muted'
             }`}>
                 <Icon name={icon} size={20} />
             </div>
             <div className="flex-1 min-w-0">
-                <div className={`font-black text-sm ${selected ? 'text-primary-700 dark:text-primary-400' : 'text-zinc-900 dark:text-white'}`}>{label}</div>
+                <div className={`font-semibold text-base ${selected ? 'text-accent' : 'text-[rgb(var(--text-primary))]'}`}>{label}</div>
                 {description && (
-                    <div className={`text-xs mt-1 leading-relaxed font-medium ${selected ? 'text-primary-600/70 dark:text-primary-400/70' : 'text-zinc-500 dark:text-zinc-400'}`}>
+                    <div className="text-sm mt-1 leading-relaxed text-[rgb(var(--text-secondary))]">
                         {description}
                     </div>
                 )}
             </div>
-            {selected && <Icon name="Check" size={18} className="text-primary-600 mt-1 flex-shrink-0" />}
+            {selected && <Icon name="Check" size={18} className="text-accent mt-1 flex-shrink-0" />}
         </button>
     );
 

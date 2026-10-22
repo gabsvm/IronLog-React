@@ -17,7 +17,7 @@ export const WaterTracker: React.FC<Props> = React.memo(({ waterMl, onAdd, lang 
     const cups = Math.round(waterMl / 250);
     const w = TRANSLATIONS[lang].water;
     return (
-        <div className="premium-theme-panel p-4" aria-label={w.trackerLabel}>
+        <div className="gl-panel p-4" aria-label={w.trackerLabel}>
             <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                     <span className="text-lg" aria-hidden="true">💧</span>
@@ -53,7 +53,7 @@ export const WaterTracker: React.FC<Props> = React.memo(({ waterMl, onAdd, lang 
                         key={ml}
                         onClick={() => onAdd(ml)}
                         aria-label={`${pickLang(lang, { es: 'Añadir', en: 'Add' })} ${ml} ml`}
-                        className="expressive-press min-h-11 flex-1 rounded-full border border-sky-500/25 bg-sky-500/10 px-2 text-xs font-bold text-sky-600 dark:text-sky-300 hover:bg-sky-500/20"
+                        className="min-h-11 flex-1 rounded-xl border border-border-subtle bg-surface-raised px-2 text-xs font-semibold text-sky-800 dark:text-sky-300 hover:bg-surface-elevated"
                     >
                         +{ml}ml
                     </button>

@@ -122,7 +122,7 @@ export const AppBanners: React.FC<AppBannersProps> = React.memo(({
 
             {updateRegistration && !dismissedUpdate && (
                 <div className="fixed top-safe left-0 right-0 z-toast flex justify-center px-4 pt-3 pointer-events-none">
-                    <div role="status" aria-live="polite" className="pointer-events-auto flex items-center gap-3 bg-zinc-950/95 border border-primary-500/30 text-zinc-100 text-xs font-semibold px-4 py-3 rounded-2xl shadow-xl backdrop-blur-md max-w-md w-full">
+                    <div role="status" aria-live="polite" className="pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-2xl border border-border-strong bg-surface-base px-4 py-3 text-xs font-semibold text-[rgb(var(--text-primary))] shadow-xl">
                         <Icon name="Download" size={16} className="text-primary-400 shrink-0" />
                         <span className="flex-1">
                             {t.updateBannerReady}
@@ -135,13 +135,13 @@ export const AppBanners: React.FC<AppBannersProps> = React.memo(({
                                 }
                                 applySwUpdate();
                             }}
-                            className="rounded-xl bg-primary-500 px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-black transition-colors hover:bg-primary-400"
+                            className="gl-primary shrink-0 px-3 text-xs"
                         >
                             {t.updateBannerAction}
                         </button>
                         <button
                             onClick={() => setDismissedUpdate(true)}
-                            className="text-zinc-500 hover:text-white transition-colors"
+                            className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl text-muted transition-colors hover:bg-surface-raised hover:text-[rgb(var(--text-primary))]"
                             aria-label={t.updateBannerDismiss}
                         >
                             <Icon name="X" size={16} />

@@ -138,43 +138,43 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
         if (discipline === 'crossfit') {
             return {
                 label: TRANSLATIONS[lang].copy.sessionSummary.wodFunctional,
-                color: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+                color: 'bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-500/30',
             };
         }
         if (discipline === 'calisthenics') {
             return {
                 label: TRANSLATIONS[lang].copy.sessionSummary.calisthenicsSkill,
-                color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+                color: 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border-emerald-500/30',
             };
         }
         if (isDetached) {
             return {
                 label: TRANSLATIONS[lang].copy.sessionSummary.freestyleSession,
-                color: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+                color: 'bg-blue-500/10 text-blue-800 dark:text-blue-300 border-blue-500/30',
             };
         }
         return {
             label: formatMessage(TRANSLATIONS[lang].copy.sessionSummary.week, { week: log.week }),
-            color: 'bg-primary-500/20 text-primary-400 border-primary-500/30',
+            color: 'bg-primary-500/10 text-accent border-primary-500/30',
         };
     };
 
     const badge = getSessionTypeBadge();
 
     return (
-        <div className="flex h-full flex-col bg-[rgb(var(--surface-app))] text-[rgb(var(--text-primary))] expressive-reveal">
+        <div className="flex h-full flex-col bg-[rgb(var(--surface-app))] text-[rgb(var(--text-primary))]">
             <div className="flex-1 overflow-y-auto scroll-container px-4 py-5 sm:px-6">
                 {/* Closing moment; no fabricated metrics or rewards. */}
-                <section className="premium-summary-hero mx-auto w-full max-w-sm p-5 text-center">
-                    <div className="premium-summary-medal mb-4 inline-flex h-20 w-20 items-center justify-center rounded-full border border-primary-500/25 bg-primary-500/15 text-primary-500">
+                <section className="mx-auto w-full max-w-sm rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-5 text-center">
+                    <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated))] text-accent">
                         <Icon name="Trophy" size={36} />
                     </div>
                     <div>
-                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider border mb-2 ${badge.color}`}>
+                        <span className={`inline-block px-2.5 py-1 rounded-lg text-xs font-semibold border mb-2 ${badge.color}`}>
                             {badge.label}
                         </span>
                     </div>
-                    <h1 className="text-[clamp(1.65rem,7vw,2.3rem)] font-black tracking-[-0.05em] text-[rgb(var(--text-primary))] leading-[1.08]">
+                    <h1 className="text-2xl font-semibold tracking-tight text-[rgb(var(--text-primary))] leading-tight">
                         {TRANSLATIONS[lang].copy.sessionSummary.workoutComplete}
                     </h1>
                     <p className="mt-2 text-[rgb(var(--text-secondary))] font-medium text-sm">
@@ -184,25 +184,25 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
 
                 {/* Stats Grid */}
                 <div className="mx-auto mt-4 grid w-full max-w-sm grid-cols-2 gap-3">
-                    <div className="premium-theme-panel tonal-1 flex min-h-[120px] flex-col items-center justify-center p-4 text-center">
-                        <Icon name="Clock" size={18} className="text-blue-500 dark:text-blue-400 mb-1.5" />
-                        <div className="text-2xl font-black tabular-nums tracking-tight text-[rgb(var(--text-primary))]">{formatDurationShort(log.duration)}</div>
+                    <div className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] flex min-h-[120px] flex-col items-center justify-center p-4 text-center">
+                        <Icon name="Clock" size={18} className="text-blue-700 dark:text-blue-400 mb-1.5" />
+                        <div className="text-2xl font-semibold tabular-nums tracking-tight text-[rgb(var(--text-primary))]">{formatDurationShort(log.duration)}</div>
                         <div className="mt-1 text-xs font-semibold text-muted">
                             {TRANSLATIONS[lang].copy.sessionSummary.time}
                         </div>
                     </div>
 
-                    <div className="premium-theme-panel tonal-2 flex min-h-[120px] flex-col items-center justify-center p-4 text-center">
-                        <Icon name="CheckCircle" size={18} className="text-green-500 dark:text-green-400 mb-1.5" />
-                        <div className="text-2xl font-black tabular-nums tracking-tight text-[rgb(var(--text-primary))]">{stats.sets}</div>
+                    <div className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] flex min-h-[120px] flex-col items-center justify-center p-4 text-center">
+                        <Icon name="CheckCircle" size={18} className="text-green-700 dark:text-green-400 mb-1.5" />
+                        <div className="text-2xl font-semibold tabular-nums tracking-tight text-[rgb(var(--text-primary))]">{stats.sets}</div>
                         <div className="mt-1 text-xs font-semibold text-muted">
                             {TRANSLATIONS[lang].copy.sessionSummary.sets}
                         </div>
                     </div>
 
-                    <div className="premium-theme-panel tonal-3 col-span-2 flex min-h-[130px] flex-col items-center justify-center p-4 text-center">
-                        <Icon name="Dumbbell" size={18} className="text-amber-500 dark:text-amber-400 mb-1.5" />
-                        <div className="text-2xl font-black tabular-nums tracking-tight text-[rgb(var(--text-primary))]">{formatInteger(toDisplay(stats.volume, unit), lang)} {unitLabel(unit).toLowerCase()}</div>
+                    <div className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] col-span-2 flex min-h-[130px] flex-col items-center justify-center p-4 text-center">
+                        <Icon name="Dumbbell" size={18} className="text-amber-700 dark:text-amber-400 mb-1.5" />
+                        <div className="text-2xl font-semibold tabular-nums tracking-tight text-[rgb(var(--text-primary))]">{formatInteger(toDisplay(stats.volume, unit), lang)} {unitLabel(unit).toLowerCase()}</div>
                         <div className="mt-1 text-xs font-semibold text-muted">
                             {TRANSLATIONS[lang].copy.sessionSummary.totalVolume}
                         </div>
@@ -227,16 +227,16 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
             </div>
 
             {/* Footer */}
-            <div className="p-4 bg-[rgb(var(--surface-app))] pb-safe border-t border-[rgb(var(--border-subtle)/0.4)]">
+            <div className="p-4 bg-[rgb(var(--surface-app))] pb-safe border-t border-[rgb(var(--border-subtle))]">
                 <button
                     type="button"
                     onClick={() => setShowShareSheet(true)}
-                    className="expressive-press mb-2 flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] text-sm font-bold text-[rgb(var(--text-primary))] disabled:opacity-60"
+                    className="mb-2 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] text-base font-semibold text-[rgb(var(--text-primary))] disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
                 >
                     <Icon name="Share2" size={16} />
                     {TRANSLATIONS[lang].copy.sessionSummary.shareImage}
                 </button>
-                <Button fullWidth onClick={onClose} className="h-12 text-base font-bold">
+                <Button fullWidth onClick={onClose} className="h-12 text-base font-semibold">
                     {TRANSLATIONS[lang].copy.sessionSummary.finishGoHome}
                 </Button>
             </div>
@@ -251,7 +251,7 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
                         type="button"
                         disabled={shareState === 'busy' || !previewUrl}
                         onClick={() => void handleShareImage()}
-                        className="expressive-press flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-primary-500 px-5 font-bold text-zinc-950 disabled:opacity-50"
+                        className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary-500 px-5 text-base font-semibold text-zinc-950 disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
                     >
                         <Icon name="Share2" size={18} />
                         {shareState === 'busy'
@@ -261,7 +261,7 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
                 }
             >
                 <div className="space-y-4 px-5 pb-6 pt-1">
-                    <div className="mx-auto flex aspect-[4/5] w-full max-w-[232px] items-center justify-center overflow-hidden rounded-[24px] border border-primary-500/15 bg-[rgb(var(--surface-elevated))] shadow-xl">
+                    <div className="mx-auto flex aspect-[4/5] w-full max-w-[232px] items-center justify-center overflow-hidden rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated))]">
                         {previewUrl ? (
                             <img
                                 src={previewUrl}
@@ -292,7 +292,7 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
                                     type="button"
                                     aria-pressed={shareVariant === variant.id}
                                     onClick={() => { setShareState('idle'); setShareVariant(variant.id); }}
-                                    className={'expressive-press min-h-11 rounded-[16px] border px-2 py-2 text-xs font-bold transition-colors ' + (
+                                    className={'min-h-11 rounded-xl border px-2 py-2 text-xs font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 ' + (
                                         shareVariant === variant.id
                                             ? 'border-primary-500 bg-primary-500/15 text-[rgb(var(--text-primary))]'
                                             : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] text-muted'
@@ -304,7 +304,7 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
                         </div>
                     </div>
                     {shareState === 'failed' && (
-                        <p role="alert" className="text-center text-xs font-semibold text-red-500">
+                        <p role="alert" className="text-center text-xs font-semibold text-red-700 dark:text-red-400">
                             {TRANSLATIONS[lang].copy.sessionSummary.shareImageFailed}
                         </p>
                     )}
@@ -312,7 +312,7 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
                         <button
                             type="button"
                             onClick={() => setPreviewRetry((attempt) => attempt + 1)}
-                            className="mx-auto block min-h-11 rounded-full border border-[rgb(var(--border-subtle))] px-5 text-sm font-semibold text-[rgb(var(--text-primary))]"
+                            className="mx-auto block min-h-11 rounded-xl border border-[rgb(var(--border-subtle))] px-5 text-sm font-semibold text-[rgb(var(--text-primary))] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
                         >
                             {pickLang(lang, { es: 'Reintentar vista previa', en: 'Retry preview' })}
                         </button>

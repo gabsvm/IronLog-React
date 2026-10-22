@@ -98,10 +98,11 @@ export const AddCardioModal: React.FC<AddCardioModalProps> = ({ isOpen, onClose,
             <button
               key={a.id}
               onClick={() => setActivity(a.id)}
-              className={`flex items-center gap-2 px-3 py-2.5 rounded-[18px] min-h-11 text-xs font-bold border transition-colors active:scale-95 duration-fast ease-natural
-                ${activity === a.id 
-                  ? 'bg-primary-500 text-zinc-950 border-primary-500 shadow-[0_4px_12px] shadow-primary-500/30' 
-                  : 'bg-[rgb(var(--surface-elevated))] text-muted border-[rgb(var(--border-subtle))] hover:border-zinc-600'}`}
+              aria-pressed={activity === a.id}
+              className={`flex items-center gap-2 px-3 py-2.5 rounded-xl min-h-11 text-xs font-semibold border transition-colors duration-fast ease-natural
+                ${activity === a.id
+                  ? 'bg-surface-elevated text-[rgb(var(--text-primary))] border-border-strong'
+                  : 'bg-surface-base text-muted border-border-subtle hover:border-border-strong'}`}
             >
               <span aria-hidden="true">{a.emoji}</span>
               <span>{pickLang(lang, a)}</span>
@@ -127,9 +128,9 @@ export const AddCardioModal: React.FC<AddCardioModalProps> = ({ isOpen, onClose,
           </div>
           
           {duration && (
-            <div className="bg-primary-500/10 border border-primary-500/20 rounded-2xl px-4 py-3 flex justify-between items-center animate-in fade-in duration-slow">
+            <div className="bg-surface-raised border border-border-subtle rounded-2xl px-4 py-3 flex justify-between items-center">
               <span className="text-xs text-muted">{t.estimated}</span>
-              <span className="text-sm font-bold text-primary-400">~{calEstimate} kcal</span>
+              <span className="text-sm font-semibold text-accent">~{calEstimate} kcal</span>
             </div>
           )}
 
@@ -167,8 +168,9 @@ export const AddCardioModal: React.FC<AddCardioModalProps> = ({ isOpen, onClose,
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-muted mb-1 px-1">{t.notes}</label>
+            <label htmlFor="cardio-notes" className="block text-sm font-semibold text-muted mb-1 px-1">{t.notes}</label>
             <input
+              id="cardio-notes"
               value={notes}
               onChange={e => setNotes(e.target.value)}
               placeholder="..."

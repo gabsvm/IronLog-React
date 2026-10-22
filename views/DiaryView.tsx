@@ -1,14 +1,22 @@
 import React, { Suspense } from 'react';
 import type { DiarySection } from '../components/layout/navigation';
+import type { NutriSubTab } from './NutriView';
 import { TRANSLATIONS } from '../constants';
 import { useAppPreferences } from '../context/AppContext';
 import { Icon } from '../components/ui/Icon';
+import { LoadingSpinner } from '../components/app/AppLoading';
 const HistoryView = React.lazy(() => import('./HistoryView').then((m) => ({ default: m.HistoryView })));
 const NutriView = React.lazy(() => import('./NutriView').then((m) => ({ default: m.NutriView })));
 
 interface DiaryViewProps {
     section: DiarySection;
     onSectionChange: (section: DiarySection) => void;
+    search: string;
+    onSearchChange: (search: string) => void;
+    nutritionTab: NutriSubTab;
+    onNutritionTabChange: (tab: NutriSubTab) => void;
+    addMealRequested: boolean;
+    onAddMealHandled: () => void;
 }
 
 /**
@@ -16,7 +24,10 @@ interface DiaryViewProps {
  * needs the h-full chain + a non-scrolling parent) and Nutrition reuses
  * NutriView (normal page flow). No data logic is duplicated here.
  */
-export const DiaryView: React.FC<DiaryViewProps> = ({ section, onSectionChange }) => {
+export const DiaryView: React.FC<DiaryViewProps> = ({
+    section, onSectionChange, search, onSearchChange,
+    nutritionTab, onNutritionTabChange, addMealRequested, onAddMealHandled,
+}) => {
     const { lang } = useAppPreferences();
     const t = TRANSLATIONS[lang];
     const tabs: Array<{ id: DiarySection; label: string; icon: string }> = [
@@ -38,7 +49,7 @@ export const DiaryView: React.FC<DiaryViewProps> = ({ section, onSectionChange }
                             aria-selected={section === tab.id}
                             type="button"
                             onClick={() => onSectionChange(tab.id)}
-                            className={`flex min-h-[44px] items-center justify-center gap-2 rounded-[14px] text-xs font-bold transition-colors ${section === tab.id ? 'bg-primary-500 text-zinc-950' : 'text-muted hover:text-[rgb(var(--text-primary))]'}`}
+                            className={`flex min-h-[44px] items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-colors ${section === tab.id ? 'bg-primary-500 text-[rgb(var(--accent-ink))]' : 'text-muted hover:text-[rgb(var(--text-primary))]'}`}
                         >
                             <Icon name={tab.icon as any} size={15} />
                             {tab.label}
@@ -47,8 +58,10 @@ export const DiaryView: React.FC<DiaryViewProps> = ({ section, onSectionChange }
                 </div>
             </div>
             <div className="flex min-h-0 flex-1 flex-col">
-                <Suspense fallback={null}>
-                    {section === 'sessions' ? <HistoryView /> : <NutriView />}
+                <Suspense fallback={<LoadingSpinner />}>
+                    {section === 'sessions'
+                        ? <HistoryView search={search} onSearchChange={onSearchChange} />
+                        : <NutriView subTab={nutritionTab} onSubTabChange={onNutritionTabChange} addMealRequested={addMealRequested} onAddMealHandled={onAddMealHandled} />}
                 </Suspense>
             </div>
         </div>

@@ -15,6 +15,8 @@ interface HomeViewProps {
     onEditProgram: () => void;
     onSkipSession?: (dayIdx: number) => void;
     onStartFreeSession?: () => void;
+    onResumeSession?: () => void;
+    onAddMeal?: () => void;
 }
 
 export const HomeView: React.FC<HomeViewProps> = (props) => {

@@ -98,8 +98,7 @@ export const useAppHistory = (
             isFirstMountRef.current = false;
             return;
         }
-        const state = { view };
-    const isNav = view === 'home' || view === 'routine' || view === 'progress' || view === 'diary';
+        const isNav = view === 'home' || view === 'routine' || view === 'progress' || view === 'diary';
 
         try {
             if (typeof window !== 'undefined' && window.history) {
@@ -107,13 +106,20 @@ export const useAppHistory = (
                 // A popstate already moved the browser to the entry matching
                 // this render: writing again would fork or duplicate history.
                 // Extra keys pushed by sheets (profile: true) are ignored.
-                if (current && current.view === state.view) {
+                if (current && current.view === view) {
                     return;
                 }
+                const parentView = current && VIEW_DEPTH[current.view ?? ''] === 1
+                    ? current.view
+                    : (current as { parentView?: string } | null)?.parentView;
                 if (isNav) {
-                    window.history.replaceState(state, '', `#${view}`);
+                    window.history.replaceState({ view }, '', `#${view}`);
+                } else if (current && VIEW_DEPTH[current.view ?? ''] === 2) {
+                    // Completing a workout replaces its entry; Back must not
+                    // resurrect a finished session underneath its summary.
+                    window.history.replaceState({ view, parentView }, '', `#${view}`);
                 } else {
-                    window.history.pushState(state, '', `#${view}`);
+                    window.history.pushState({ view, parentView }, '', `#${view}`);
                 }
             }
         } catch (e) { }

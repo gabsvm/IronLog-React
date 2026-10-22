@@ -15,9 +15,11 @@ test.describe('U8: share session summary image', () => {
         await page.goto('/');
         const nav = page.locator('nav[aria-label="Main navigation"]');
         await expect(nav).toBeVisible({ timeout: 15000 });
-        await nav.locator('button[aria-label*="Iniciar" i], button[aria-label*="Start" i]').first().click();
-        await page.locator('button:has-text("Sesión libre"), button:has-text("Freestyle")').first().click();
-        const startFree = page.locator('button:has-text("Iniciar Sesión Libre"), button:has-text("Start Free Session"), button:has-text("Iniciar sesión libre")').first();
+        await page.getByRole('button', { name: /^(Sesión libre|Freestyle session) ·/ }).click();
+        await page.getByRole('dialog', { name: /Iniciar entrenamiento|Start training/ })
+            .getByRole('button', { name: /Sesión libre|Freestyle/ }).click();
+        const startFree = page.getByRole('dialog', { name: /Nueva Sesión|New Session/ })
+            .getByRole('button', { name: /Iniciar Sesión Libre|Start Free Session/i });
         await startFree.scrollIntoViewIfNeeded();
         await startFree.click();
         await page.locator('#tut-finish-btn').click();
