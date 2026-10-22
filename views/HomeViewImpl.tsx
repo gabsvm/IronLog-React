@@ -33,13 +33,14 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
     return (
         <div className="space-y-4 px-4 pb-28 pt-2">
             <HomeTopSection state={state} />
+            {/* Desktop: hero column spans the week + trend rows; recent sessions run full width below. */}
             <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-                <div className="min-w-0 space-y-4">
+                <div className="min-w-0 space-y-4 lg:col-start-1 lg:row-span-2 lg:row-start-1">
                     <HomeResumeSession state={state} />
                     <HomeHeroCard state={state} />
                     <HomeQuickActions state={state} />
                 </div>
-                <Suspense fallback={<div className="gl-panel flex min-h-48 items-center justify-center"><LoadingSpinner /></div>}>
+                <Suspense fallback={<div className="gl-panel flex min-h-48 items-center justify-center lg:col-start-2 lg:row-start-1"><LoadingSpinner /></div>}>
                 <HomeRecapStrip
                     logs={safeLogs}
                     meso={activeMeso}

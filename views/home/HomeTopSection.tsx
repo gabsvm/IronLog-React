@@ -3,6 +3,7 @@ import React from 'react';
 import { pickLang } from '../../utils/i18n';
 import { Icon } from '../../components/ui/Icon';
 import { triggerHaptic } from '../../utils/audio';
+import { getTranslated } from '../../utils';
 import { BackupReminderBanner } from '../../components/home/BackupReminderBanner';
 import type { HomeViewState } from './useHomeViewState';
 
@@ -86,15 +87,16 @@ export const HomeTopSection: React.FC<{ state: HomeViewState }> = ({ state }) =>
                         >
                             <div className="flex h-4 items-center justify-center text-xs font-medium">
                                 {isTodayOrNext ? (
-                                    <span className="font-semibold">{h.today}</span>
+                                    <span className="font-semibold text-[rgb(var(--accent-text))]">{h.today}</span>
                                 ) : isDone ? (
-                                    <span className="text-muted"><Icon name="Check" size={11} strokeWidth={3} /></span>
+                                    <span className="text-[rgb(var(--accent-text))]" aria-label={t.completed}><Icon name="Check" size={12} strokeWidth={3} /></span>
                                 ) : (
-                                    <span>&nbsp;</span>
+                                    <span className="tabular-nums text-muted">{idx + 1}</span>
                                 )}
                             </div>
-                            <div className="mt-0.5 truncate text-sm font-medium">
-                                {`${h.dayWord} ${idx + 1}`}
+                            {/* The routine's own day name says more than "Day N"; the number stays as the fallback. */}
+                            <div className="mt-0.5 line-clamp-2 break-words text-sm font-medium leading-tight">
+                                {String(getTranslated(day.dayName, lang) || `${h.dayWord} ${idx + 1}`)}
                             </div>
                         </button>
                     );

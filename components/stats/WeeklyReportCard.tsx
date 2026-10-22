@@ -11,10 +11,10 @@ interface WeeklyReportCardProps {
 }
 
 const ZONE_STYLES: Record<string, string> = {
-    MV: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
-    MEV: 'bg-green-500/15 text-green-400 border-green-500/30',
-    MAV: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
-    MRV: 'bg-red-500/15 text-red-400 border-red-500/30',
+    MV: 'bg-yellow-500/15 text-yellow-800 dark:text-yellow-400 border-yellow-500/40',
+    MEV: 'bg-green-500/15 text-green-800 dark:text-green-400 border-green-500/40',
+    MAV: 'bg-blue-500/15 text-blue-800 dark:text-blue-400 border-blue-500/40',
+    MRV: 'bg-red-500/15 text-red-800 dark:text-red-400 border-red-500/40',
 };
 
 /**
@@ -32,7 +32,7 @@ export const WeeklyReportCard: React.FC<WeeklyReportCardProps> = ({ report, week
         : `${change > 0 ? '+' : ''}${change}%`;
     const changeTone = change == null
         ? 'text-zinc-500'
-        : change > 0 ? 'text-green-400' : change < 0 ? 'text-red-400' : 'text-zinc-300';
+        : change > 0 ? 'text-green-700 dark:text-green-400' : change < 0 ? 'text-red-700 dark:text-red-400' : 'text-zinc-700 dark:text-zinc-300';
 
     return (
         <div className="glass-card rounded-[1.7rem] border border-white/6 p-5 shadow-md">
@@ -93,7 +93,7 @@ export const WeeklyReportCard: React.FC<WeeklyReportCardProps> = ({ report, week
                         <div className="mt-4 space-y-1.5">
                             {report.lowMuscles.length > 0 && (
                                 <p className="text-xs text-zinc-400">
-                                    <span className="font-bold uppercase tracking-wide text-yellow-400">{w.low}: </span>
+                                    <span className="font-bold uppercase tracking-wide text-yellow-800 dark:text-yellow-400">{w.low}: </span>
                                     {report.muscles
                                         .filter((m) => m.sets > 0 && m.zone === 'MV')
                                         .map((m) => `${muscleName(m.muscle)} ${m.sets}`)
@@ -102,7 +102,7 @@ export const WeeklyReportCard: React.FC<WeeklyReportCardProps> = ({ report, week
                             )}
                             {report.highMuscles.length > 0 && (
                                 <p className="text-xs text-zinc-400">
-                                    <span className="font-bold uppercase tracking-wide text-red-400">{w.high}: </span>
+                                    <span className="font-bold uppercase tracking-wide text-red-700 dark:text-red-400">{w.high}: </span>
                                     {report.muscles
                                         .filter((m) => m.zone === 'MRV')
                                         .map((m) => `${muscleName(m.muscle)} ${m.sets}`)

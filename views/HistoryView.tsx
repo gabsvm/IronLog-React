@@ -211,7 +211,8 @@ export const HistoryView: React.FC<{ search: string; onSearchChange: (search: st
     }, [isDetailDirty]);
 
     const { visibleLogs, hasLockedLogs } = useMemo(() => {
-        let result = safeLogs;
+        // Imports and cloud restores don't guarantee order, so sort newest first here.
+        let result = [...safeLogs].sort((a, b) => (b.endTime || b.startTime || 0) - (a.endTime || a.startTime || 0));
         if (deferredSearch.trim()) {
             const q = deferredSearch.trim().toLowerCase();
             result = result.filter(log =>

@@ -26,7 +26,7 @@ export const Logo: React.FC<LogoProps> = ({ className = "w-10 h-10", size, showT
 
             {showText && (
                 <span className="whitespace-nowrap text-xl font-black tracking-tighter text-zinc-900 dark:text-white uppercase italic">
-                    Gains<span className="text-[rgb(var(--primary-500))] font-black">Lab</span>
+                    Gains<span className="text-[rgb(var(--accent-text))] font-black">Lab</span>
                 </span>
             )}
         </div>

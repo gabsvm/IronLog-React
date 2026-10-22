@@ -24,11 +24,11 @@ export const HomeHeroCard: React.FC<{ state: HomeViewState }> = ({ state }) => {
     const ui = pickLang(lang, HERO_COPY);
 
     return (
-        <article id="tut-up-next" className="gl-panel space-y-5 p-5 sm:p-6">
+        <article id="tut-up-next" className="gl-panel space-y-5 p-5 sm:p-7">
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                    <p className="gl-eyebrow">{`${ui.day} ${selectedDayIdx + 1} · ${isSelectedActive ? ui.inProgress : isDone ? ui.completed : ui.next}`}</p>
-                    <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[rgb(var(--text-primary))] sm:text-3xl">{dayName}</h2>
+                    <p className={`gl-eyebrow ${isDone ? '' : '!text-[rgb(var(--accent-text))]'}`}>{`${ui.day} ${selectedDayIdx + 1} · ${isSelectedActive ? ui.inProgress : isDone ? ui.completed : ui.next}`}</p>
+                    <h2 className="mt-2 text-3xl font-semibold tracking-tight text-[rgb(var(--text-primary))] sm:text-4xl">{dayName}</h2>
                 </div>
                 {!isDone && !isSelectedActive && <button type="button" onClick={event => handleSkipClick(event, selectedDayIdx)} className="gl-quiet flex h-11 w-11 shrink-0 items-center justify-center" aria-label={t.skipSession} title={t.skipSession}><Icon name="SkipForward" size={18} /></button>}
             </div>
@@ -38,21 +38,22 @@ export const HomeHeroCard: React.FC<{ state: HomeViewState }> = ({ state }) => {
                 <span className="inline-flex items-center gap-1.5"><Icon name="Layers" size={16} />{totalSets} {h.setsLower}</span>
             </div>
             {/* The action precedes the exercise preview at every viewport size. */}
-            {!(isSelectedActive && onResumeSession) && <button type="button" data-testid="hero-start-workout" id="hero-start-workout" onClick={() => isSelectedActive && onResumeSession ? onResumeSession() : startSession(selectedDayIdx)} className={`${activeSession ? 'gl-quiet' : 'gl-primary'} flex min-h-[48px] w-full items-center justify-center gap-2 px-4 text-sm font-semibold`}>
+            {!(isSelectedActive && onResumeSession) && <button type="button" data-testid="hero-start-workout" id="hero-start-workout" onClick={() => isSelectedActive && onResumeSession ? onResumeSession() : startSession(selectedDayIdx)} className={`${activeSession ? 'gl-quiet' : 'gl-primary'} flex min-h-[52px] w-full items-center justify-center gap-2 px-4 text-[15px] font-semibold`}>
                 <Icon name={isSelectedActive ? 'Play' : isDone ? 'Repeat' : 'ArrowRight'} size={18} />
                 <span>{isSelectedActive ? h.resume : isDone ? h.trainAgain : `${h.start} ${dayName}`}</span>
             </button>}
-            {previewSlots.length > 0 && <div className="border-t border-[rgb(var(--border-subtle))] pt-2">
+            {previewSlots.length > 0 && <ol className="border-t border-[rgb(var(--border-subtle))] pt-2">
                 {previewSlots.map((slot, index) => {
                     const exerciseDef = exercises?.find(exercise => exercise.id === slot.exerciseId);
                     const name = exerciseDef ? getTranslated(exerciseDef.name, lang) : slot.exerciseId || tm(slot.muscle);
-                    return <div key={index} className="flex items-start justify-between gap-3 py-2.5 text-sm">
-                        <span className="min-w-0 font-medium text-[rgb(var(--text-primary))]">{String(name)}</span>
+                    return <li key={index} className="flex items-start gap-3 py-2.5 text-sm">
+                        <span className="w-5 shrink-0 pt-px text-xs tabular-nums text-[rgb(var(--text-muted))]" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+                        <span className="min-w-0 flex-1 font-medium text-[rgb(var(--text-primary))]">{String(name)}</span>
                         <span className="shrink-0 tabular-nums text-[rgb(var(--text-secondary))]">{slot.setTarget || 3} × {slot.reps || '8–12'}</span>
-                    </div>;
+                    </li>;
                 })}
-                {extraSlotsCount > 0 && <p className="pt-2 text-xs text-[rgb(var(--text-secondary))]">{h.andMoreA} {extraSlotsCount} {extraSlotsCount === 1 ? h.andMoreOneB : h.andMoreB}</p>}
-            </div>}
+                {extraSlotsCount > 0 && <li className="pl-8 pt-2 text-xs text-[rgb(var(--text-secondary))]">{h.andMoreA} {extraSlotsCount} {extraSlotsCount === 1 ? h.andMoreOneB : h.andMoreB}</li>}
+            </ol>}
         </article>
     );
 };
