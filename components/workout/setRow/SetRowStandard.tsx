@@ -11,7 +11,7 @@ export const SetRowStandard: React.FC<{ state: SetRowState }> = ({ state }) => {
             onClick={handleRowClick}
             className={rowClass}>
             {SwipeOverlay}
-            <div className={`grid ${showRIR ? 'grid-cols-[28px_38px_1fr_1fr_38px_36px]' : 'grid-cols-[28px_44px_1fr_1fr_36px]'} items-center gap-2 px-2.5 py-1.5`}>
+            <div className={`grid ${showRIR ? 'grid-cols-[28px_52px_1fr_1fr_40px_36px]' : 'grid-cols-[28px_60px_1fr_1fr_36px]'} items-center gap-2 px-2.5 py-1.5`}>
                 <div className="flex justify-center">
                     <BadgeEl {...badgeProps as any} className={badgeClass}>
                         {effectiveBadgeLabel}

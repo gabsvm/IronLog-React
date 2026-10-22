@@ -65,7 +65,7 @@ export const ExerciseCardSets: React.FC<Props> = React.memo(({
     <>
         {/* Column header row */}
         {isCardio ? (
-            <div className="grid grid-cols-[28px_44px_1fr_1fr_1fr_36px] items-center gap-1.5 border-b border-border-subtle px-2.5 py-1.5 text-center text-xs font-semibold uppercase tracking-wide text-muted">
+            <div className="grid grid-cols-[28px_60px_1fr_1fr_1fr_36px] items-center gap-1.5 border-b border-border-subtle px-2.5 py-1.5 text-center text-xs font-semibold uppercase tracking-wide text-muted">
                 <div className={isEMOM ? 'text-cyan-400' : ''}>#</div>
                 <div>{h.prevCol}</div>
                 {isInterval ? (
@@ -102,7 +102,7 @@ export const ExerciseCardSets: React.FC<Props> = React.memo(({
                 <div></div>
             </div>
         ) : (
-            <div className={`grid ${config?.showRIR ? 'grid-cols-[28px_38px_1fr_1fr_38px_36px]' : 'grid-cols-[28px_44px_1fr_1fr_36px]'} items-center gap-2 border-b border-border-subtle px-2.5 py-1.5 text-center text-xs font-semibold uppercase tracking-wide text-muted`}>
+            <div className={`grid ${config?.showRIR ? 'grid-cols-[28px_52px_1fr_1fr_40px_36px]' : 'grid-cols-[28px_60px_1fr_1fr_36px]'} items-center gap-2 border-b border-border-subtle px-2.5 py-1.5 text-center text-xs font-semibold uppercase tracking-wide text-muted`}>
                 <div className={isEMOM ? 'text-cyan-400' : isMyorep ? 'text-purple-400' : isCluster ? 'text-emerald-400' : ''}>
                     {isEMOM ? 'Min' : isMyorep ? 'Set' : '#'}
                 </div>

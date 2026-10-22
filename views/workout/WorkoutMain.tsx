@@ -49,6 +49,12 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
 
     if (!activeSession) return null;
 
+    const focusedRailItem = focusedIdx >= 0 ? railItems[focusedIdx] : null;
+    // Next unfinished exercise after the focused one, wrapping to earlier skipped ones.
+    const nextExercise = focusedIdx >= 0
+        ? [...railItems.slice(focusedIdx + 1), ...railItems.slice(0, focusedIdx)].find((item) => !item.complete) ?? null
+        : null;
+
     const scrollPanelIntoView = () => {
         panelRef.current?.scrollIntoView({ block: 'start' });
     };
@@ -57,13 +63,8 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
         // Let the newly focused card mount its expanded view first.
         requestAnimationFrame(scrollPanelIntoView);
     };
-    const goPrev = () => {
-        if (focusedIdx > 0) selectExercise(sessionExercises[focusedIdx - 1].instanceId);
-    };
     const goNext = () => {
-        if (focusedIdx >= 0 && focusedIdx < sessionExercises.length - 1) {
-            selectExercise(sessionExercises[focusedIdx + 1].instanceId);
-        }
+        if (nextExercise) selectExercise(nextExercise.instanceId);
     };
 
     return (
@@ -88,14 +89,7 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                                     ? activeSession.name.replace(new RegExp(`^${activeSession.week}\\s*[•·-]\\s*`), '')
                                     : activeSession.name)}
                         </h1>
-                        <div className="flex min-w-0 items-center gap-2">
-                            <div className="min-w-0 truncate text-xs text-muted">
-                            {activeSession.week >= 1 ? `${t.week} ${activeSession.week} · ` : ''}
-                            {remainingSets === 0
-                                ? t.allDone
-                                : `${remainingSets} ${t.setsLeft}`}
-                        </div>
-                        </div>
+                        <WorkoutTimer startTime={activeSession.startTime} className="block text-xs font-medium tabular-nums text-muted" />
                     </div>
 
                     
@@ -135,31 +129,19 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                             e.stopPropagation();
                             setShowFinishModal(true);
                         }}
-                        className="relative flex h-8 after:absolute after:-inset-y-1.5 after:-inset-x-1 after:content-[''] shrink-0 items-center justify-center rounded-lg bg-primary-500 px-3.5 text-xs font-semibold text-zinc-950 transition-all hover:bg-primary-400 active:scale-95 shadow-sm"
+                        className={`${remainingSets === 0 ? 'gl-primary' : 'gl-quiet'} relative !min-h-[40px] shrink-0 !px-3.5 text-xs font-semibold active:scale-95`}
                     >
                         {t.finish}
                     </button>
+                </div>
+                <div role="progressbar" aria-label={t.yourSession} aria-valuemin={0} aria-valuemax={totalWorkingSets || 1} aria-valuenow={completedWorkingSets} className="h-1 w-full bg-surface-elevated">
+                    <div className="h-full bg-primary-500 transition-[width] duration-300 ease-natural effects-reduced:transition-none" style={{ width: `${Math.min(100, Math.max(0, progressPct))}%` }} />
                 </div>
             </div>
 
             <div className="flex-1 overflow-hidden flex flex-col">
                 <div id="tut-exercise-list" className="flex-1 overflow-y-auto scroll-container px-3 space-y-2.5" style={{ paddingTop: 'calc(1rem + var(--rest-pill-top-offset, 0px))', paddingBottom: 'calc(3rem + var(--safe-area-bottom) + var(--rest-pill-height, 0px) + 16px)' }}>
-                    <section aria-label={t.yourSession} className="gl-panel flex items-center gap-4 px-4 py-3.5">
-                        <div className="min-w-0">
-                            <p className="text-xs font-semibold tracking-normal text-[rgb(var(--text-muted))]">{t.yourSession}</p>
-                            <WorkoutTimer startTime={activeSession.startTime} className="text-3xl font-black leading-tight text-white" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                            <p className="text-right text-xs font-semibold tabular-nums text-secondary">
-                                <span className="text-sm text-white">{completedWorkingSets}</span> {t.setsDoneOf} {totalWorkingSets} {t.sets.toLowerCase()}
-                            </p>
-                            <div role="progressbar" aria-label={t.yourSession} aria-valuemin={0} aria-valuemax={totalWorkingSets || 1} aria-valuenow={completedWorkingSets} className="mt-2 h-2 w-full overflow-hidden rounded-full bg-surface-elevated">
-                                <div className="h-full rounded-full bg-primary-500 transition-[width] duration-300 ease-natural effects-reduced:transition-none" style={{ width: `${Math.min(100, Math.max(0, progressPct))}%` }} />
-                            </div>
-                        </div>
-                    </section>
-
-                    <div className="lg:grid lg:grid-cols-[248px_minmax(0,1fr)] lg:items-start lg:gap-4">
+                    <div className="lg:mx-auto lg:grid lg:max-w-5xl lg:grid-cols-[248px_minmax(0,1fr)] lg:items-start lg:gap-4">
                         <WorkoutExerciseRail
                             items={railItems}
                             activeId={focusedId}
@@ -169,35 +151,6 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                         />
 
                         <div ref={panelRef} className="min-w-0 scroll-mt-24 space-y-2.5">
-                            {focusedExercise && sessionExercises.length > 1 && (
-                                <div className="flex items-center justify-between gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={goPrev}
-                                        disabled={focusedIdx <= 0}
-                                        className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-border-subtle bg-surface-raised/40 px-3 text-xs font-bold text-muted transition-colors hover:text-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
-                                        aria-label={w.prevExercise}
-                                        title={w.prevExercise}
-                                    >
-                                        <Icon name="ChevronLeft" size={16} strokeWidth={2.5} />
-                                    </button>
-                                    <p className="min-w-0 flex-1 truncate text-center text-xs font-semibold tabular-nums text-muted" aria-live="polite">
-                                        {focusedIdx + 1} {t.timer.ofWord} {sessionExercises.length}
-                                    </p>
-                                    <button
-                                        type="button"
-                                        onClick={goNext}
-                                        disabled={focusedIdx < 0 || focusedIdx >= sessionExercises.length - 1}
-                                        className="flex min-h-[44px] min-w-[44px] items-center gap-1.5 justify-center rounded-full border border-border-subtle bg-surface-raised/40 px-3 text-xs font-bold text-muted transition-colors hover:text-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
-                                        aria-label={t.timer.nextExercise}
-                                        title={t.timer.nextExercise}
-                                    >
-                                        <span className="hidden sm:inline">{t.timer.nextExercise}</span>
-                                        <Icon name="ChevronRight" size={16} strokeWidth={2.5} />
-                                    </button>
-                                </div>
-                            )}
-
                             {partnerExercise && (
                                 <button
                                     type="button"
@@ -257,13 +210,25 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                             </Suspense>
 
                             <WorkoutRestDock />
+
+                            {/* Once the focused exercise is complete, the next step becomes the primary action. */}
+                            {focusedRailItem?.complete && (nextExercise ? (
+                                <button type="button" onClick={goNext} className="gl-primary w-full !min-h-[52px] text-[15px]" aria-label={`${t.timer.nextExercise}: ${nextExercise.label}`}>
+                                    <span className="min-w-0 truncate">{t.timer.nextExercise} · {nextExercise.label}</span>
+                                    <Icon name="ArrowRight" size={18} />
+                                </button>
+                            ) : remainingSets === 0 && (
+                                <button type="button" onClick={() => setShowFinishModal(true)} className="gl-primary w-full !min-h-[52px] text-[15px]">
+                                    {t.finishSession}
+                                </button>
+                            ))}
                         </div>
                     </div>
 
                     <button
                         type="button"
                         onClick={() => setAddingExercise(true)}
-                        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl border border-dashed border-border-strong bg-surface-raised/40 text-xs font-semibold text-muted hover:text-white hover:border-zinc-500 transition-colors active:scale-98"
+                        className="w-full lg:mx-auto lg:max-w-5xl flex items-center justify-center gap-2 py-3.5 rounded-xl border border-dashed border-border-strong bg-surface-raised/40 text-xs font-semibold text-muted hover:text-white hover:border-zinc-500 transition-colors active:scale-98"
                     >
                         <Icon name="Plus" size={15} />
                         {t.addExercise}

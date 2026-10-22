@@ -5,6 +5,7 @@ import { Icon } from '../../ui/Icon';
 import { triggerHaptic } from '../../../utils/audio';
 import { TRANSLATIONS } from '../../../constants/translations';
 import { fromDisplay, toDisplay } from '../../../utils/units';
+import { pickLang } from '../../../utils/i18n';
 import { getTypeLabel } from './HoldTimer';
 
 export interface SetRowProps {
@@ -343,15 +344,17 @@ export const useSetRowState = ({
             }
             return set.hintReps ? String(set.hintReps) : '—';
         }
+        // The column header already names the unit; decimals follow the UI language.
+        const prevWeight = () => Number(shownWeight(set.prevWeight)).toLocaleString(pickLang(lang, { es: 'es-ES', en: 'en-US' }), { maximumFractionDigits: 2 });
         if (set.prevReps || set.prevWeight) {
-            if (set.prevReps && set.prevWeight) return `${shownWeight(set.prevWeight)} ${unit} × ${set.prevReps}`;
-            return set.prevWeight && !set.prevReps ? `${shownWeight(set.prevWeight)} ${unit}` : String(set.prevReps || set.prevWeight);
+            if (set.prevReps && set.prevWeight) return `${prevWeight()} × ${set.prevReps}`;
+            return set.prevWeight && !set.prevReps ? prevWeight() : String(set.prevReps || set.prevWeight);
         }
         if (set.hintReps || set.hintWeight) {
             return set.hintWeight && !set.hintReps ? String(shownWeight(set.hintWeight)) : String(set.hintReps || set.hintWeight);
         }
         return '—';
-    }, [isBodyweight, isIsometric, set.duration, set.hintReps, set.hintWeight, set.prevReps, set.prevWeight, shownWeight, unit, weightSuffix]);
+    }, [isBodyweight, isIsometric, lang, set.duration, set.hintReps, set.hintWeight, set.prevReps, set.prevWeight, shownWeight, weightSuffix]);
 
     const setNumber = (setIndex ?? 0) + 1;
     const badgeAriaLabel = `${sr.setWord} ${setNumber}${(!disableTypeChange && !isDone) ? sr.changeType : ''}`;

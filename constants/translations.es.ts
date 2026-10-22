@@ -1045,7 +1045,6 @@ export const ES: TranslationDict = {
         kongSubDesc: "¿Deseas mantener este reemplazo durante todo el programa KONG o aplicarlo solo para la sesión de hoy?",
         kongReorderDesc: "El orden de ejercicios forma parte de la metodología KONG. Weak Points First y Fatigued Strength dependen del orden. ¿Reordenar solo para la sesión de hoy?",
         exerciseNav: "Ejercicios",
-        prevExercise: "Ejercicio anterior",
     },
     tutorialExtra: {
         setTypesTitle: "Tipos de serie",

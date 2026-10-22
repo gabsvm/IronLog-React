@@ -1043,7 +1043,6 @@ export const EN = {
         kongSubDesc: "Keep this replacement for all of KONG, or apply it only for today?",
         kongReorderDesc: "Exercise order is part of KONG methodology. Weak Points First and Fatigued Strength depend on order. Reorder for today only?",
         exerciseNav: "Exercises",
-        prevExercise: "Previous exercise",
     },
     tutorialExtra: {
         setTypesTitle: "Set Types",

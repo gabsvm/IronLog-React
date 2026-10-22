@@ -1,19 +1,15 @@
 // U5: SortableExerciseCard expanded view, moved verbatim from components/workout/SortableExerciseCardImpl.tsx.
 import React from 'react';
 import { Icon } from '../../ui/Icon';
-import { MuscleTag } from '../MuscleTag';
-import { ExerciseCardStats } from '../ExerciseCardStats';
 import { ExerciseVolumeLine } from '../ExerciseVolumeLine';
 import { ExerciseCardMenu } from '../ExerciseCardMenu';
 import { ExerciseCardSets } from '../ExerciseCardSets';
 import { ExerciseProtocolBanners } from '../ExerciseProtocolBanners';
 import { getTranslated } from '../../../utils';
-import { resolveMuscleLabel } from '../../../utils/muscle';
-import { TRANSLATIONS } from '../../../constants';
 import type { ExerciseCardState } from './useSortableExerciseCardState';
 
 export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ state }) => {
-    const { ex, onSetUpdate, onSetComplete, onSetTypeChange, onAddSet, onDeleteSet, onOpenDetail, onLink, onReplace, onOpenWarmup, openMenuId, setOpenMenuId, t, lang, isLinkingTarget, config, stageConfig, dragEnabled, tutorialId, onToggleExpand, attributes, listeners, setNodeRef, isDragging, exDoneFlash, activeEmomMinute, setActiveEmomMinute, style, sets, c, ssStyle, unit, unitLabel, isCardio, cardioMode, isInterval, regularSets, completedCount, volumeComparison, allDone, isSuperseted, isLinkSource, canWarmup, isEMOM, isMyorep, isCluster, isGiant, hasTopBackoff, isTabata, isHIIT, isRestPause, isDrop, isTimeVolume, isTripleAdd, isSpecialProtocol, nextSetIdx, setBadgeLabels, handleInjectWarmup, canFillPrevious, copyFromIndex, handleFillFromPrevious, handleCopyToFollowing, removedSet, handleRemoveLastSet, handleUndoRemoveSet, handleCardioModeChange, confirmDelete, handleSupersetAction, heroMetric } = state;
+    const { ex, onSetUpdate, onSetComplete, onSetTypeChange, onAddSet, onDeleteSet, onOpenDetail, onLink, onReplace, onOpenWarmup, openMenuId, setOpenMenuId, t, lang, isLinkingTarget, config, stageConfig, dragEnabled, tutorialId, attributes, listeners, setNodeRef, isDragging, exDoneFlash, activeEmomMinute, setActiveEmomMinute, style, sets, c, ssStyle, unit, unitLabel, isCardio, cardioMode, isInterval, regularSets, volumeComparison, allDone, isLinkSource, canWarmup, isEMOM, isMyorep, isCluster, isGiant, hasTopBackoff, isTabata, isHIIT, isRestPause, isDrop, isTimeVolume, isTripleAdd, isSpecialProtocol, nextSetIdx, setBadgeLabels, handleInjectWarmup, canFillPrevious, copyFromIndex, handleFillFromPrevious, handleCopyToFollowing, removedSet, handleRemoveLastSet, handleUndoRemoveSet, handleCardioModeChange, confirmDelete, handleSupersetAction, heroMetric } = state;
     return (
         <div
             ref={setNodeRef}
@@ -27,55 +23,32 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                 ${allDone ? 'shadow-[0_20px_50px_-24px_rgba(34,197,94,0.32)]' : ''}
             `}
         >
-            <div className="border-b border-border-subtle bg-surface-elevated/40 px-3 pb-2 pt-2">
-                <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0 space-y-1">
-                        <div className="flex flex-wrap items-center gap-1">
+            <div className="border-b border-border-subtle px-4 pb-3 pt-3">
+                <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1 space-y-1.5">
+                        <div className="flex min-w-0 items-center gap-1">
                             {dragEnabled && (
                                 <div
-                                    className="mr-0.5 -ml-2 rounded-full p-1 text-zinc-500 touch-none cursor-grab active:cursor-grabbing hover:text-zinc-200"
+                                    className="-ml-2 rounded-full p-1 text-zinc-500 touch-none cursor-grab active:cursor-grabbing hover:text-zinc-200"
                                     {...attributes}
                                     {...listeners}
                                 >
                                     <Icon name="GripVertical" size={15} />
                                 </div>
                             )}
-
-                            <MuscleTag label={resolveMuscleLabel(ex.slotLabel || ex.muscle || 'CHEST', lang)} />
-
-                            {isCardio ? (
-                                <span className="inline-flex items-center rounded-full border border-cyan-500/20 bg-cyan-500/10 px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em] text-cyan-300">
-                                    {String(t.cardioModes?.[cardioMode] || cardioMode)}
-                                </span>
-                            ) : ex.targetReps ? (
-                                <span className="inline-flex items-center rounded-full border border-zinc-700/70 bg-zinc-900/70 px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em] text-zinc-300">
-                                    {String(ex.targetReps)} Reps
-                                </span>
-                            ) : null}
-
-                            {ex.isBodyweight && (
-                                <span className="inline-flex items-center rounded-full border border-blue-500/20 bg-blue-500/10 px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em] text-blue-300">
-                                    BW
-                                </span>
-                            )}
-
-                        </div>
-
-                        <div className="flex items-center gap-2 min-w-0">
-                            <h3
-                                onClick={(event) => {
-                                    event.stopPropagation();
-                                    if (onOpenDetail) onOpenDetail(ex);
-                                }}
-                                className="cursor-pointer truncate pl-0.5 text-[1.06rem] font-black leading-none tracking-[-0.04em] text-white transition-colors hover:text-primary-400"
-                            >
-                                {String(getTranslated(ex.name, lang))}
+                            {/* Muscle, target and type labels live in the rail, the set rows and the detail view. */}
+                            <h3 className="min-w-0 text-xl font-semibold leading-tight tracking-tight text-[rgb(var(--text-primary))]">
+                                <button
+                                    type="button"
+                                    onClick={(event) => {
+                                        event.stopPropagation();
+                                        if (onOpenDetail) onOpenDetail(ex);
+                                    }}
+                                    className="text-left transition-colors hover:text-[rgb(var(--accent-text))]"
+                                >
+                                    {String(getTranslated(ex.name, lang))}
+                                </button>
                             </h3>
-                            {isSuperseted && (
-                                <span className={`inline-flex shrink-0 items-center rounded-full border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em] ${ssStyle?.badge || 'border-violet-500/20 bg-violet-500/10 text-violet-300'}`}>
-                                    SS
-                                </span>
-                            )}
                         </div>
 
                         {((heroMetric && !allDone) || isLinkSource || isLinkingTarget) && (
@@ -147,18 +120,6 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                             );
                         })()}
 
-                        <button
-                            type="button"
-                            onClick={(event) => {
-                                event.stopPropagation();
-                                handleSupersetAction();
-                            }}
-                            className={`relative flex h-8 w-8 after:absolute after:-inset-1 after:content-[''] items-center justify-center rounded-full border transition-colors ${isSuperseted ? 'border-violet-500/30 bg-violet-500/15 text-violet-200' : isLinkSource ? 'border-amber-400/30 bg-amber-500/15 text-amber-200' : 'border-zinc-700/80 bg-zinc-900/80 text-zinc-400 hover:border-zinc-500/70 hover:bg-zinc-800 hover:text-white'}`}
-                            aria-label={isSuperseted ? TRANSLATIONS[lang].cardMenu.unlink : TRANSLATIONS[lang].cardMenu.link}
-                        >
-                            <Icon name={isSuperseted ? 'Unlink' : 'Link'} size={15} />
-                        </button>
-
                         <div className="relative">
                             <button
                                 aria-label={c.moreOptions}
@@ -194,23 +155,10 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                             />
                         </div>
 
-                        {onToggleExpand && (
-                            <button
-                                type="button"
-                                onClick={(event) => {
-                                    event.stopPropagation();
-                                    onToggleExpand(ex.instanceId);
-                                }}
-                                className="relative flex h-8 w-8 after:absolute after:-inset-1 after:content-[''] items-center justify-center rounded-full border border-zinc-700/80 bg-zinc-900/80 text-zinc-400 hover:border-zinc-500/70 hover:bg-zinc-800 hover:text-white transition-colors"
-                                aria-label={c.collapse}
-                            >
-                                <Icon name="ChevronUp" size={17} />
-                            </button>
-                        )}
                     </div>
                 </div>
 
-                <div className="mt-2">
+                <div className="empty:hidden">
                     {(isEMOM || isMyorep || isCluster || isGiant || isRestPause || isDrop || isTimeVolume || isTripleAdd || hasTopBackoff || isTabata || isHIIT) && (
                         <div className="mb-1.5">
                             <ExerciseProtocolBanners
@@ -231,17 +179,12 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                             />
                         </div>
                     )}
-                    <ExerciseCardStats
-                        completedCount={completedCount}
-                        totalSets={regularSets.length}
-                    />
-                    {volumeComparison && (
-                        <div className="mt-1">
+                    {allDone && volumeComparison && (
+                        <div className="mt-2">
                             <ExerciseVolumeLine comparison={volumeComparison} unit={unit} unitLabel={unitLabel} lang={lang} labels={c.volumeLine} />
                         </div>
                     )}
                 </div>
-
             </div>
 
             <ExerciseCardSets

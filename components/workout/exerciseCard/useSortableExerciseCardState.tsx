@@ -395,7 +395,7 @@ export const useSortableExerciseCardState = ({
         ? {
             icon: overloadSuggest.action === 'up' ? 'TrendingUp' : overloadSuggest.action === 'down' ? 'TrendingDown' : 'Minus',
             label: formatProgressionReason(t.progression, overloadSuggest, unit, lang),
-            tone: overloadSuggest.action === 'up' ? 'text-cyan-700 dark:text-cyan-300' : overloadSuggest.action === 'down' ? 'text-amber-800 dark:text-amber-300' : 'text-secondary',
+            tone: overloadSuggest.action === 'up' ? 'text-[rgb(var(--accent-text))]' : overloadSuggest.action === 'down' ? 'text-amber-800 dark:text-amber-300' : 'text-secondary',
         }
         : historicalBest
             ? { icon: 'Trophy', label: historicalBest, tone: 'text-amber-800 dark:text-amber-300' }
