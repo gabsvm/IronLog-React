@@ -1,6 +1,6 @@
 # Cierre de design-preview — plan para Gemini 3.8 Flash
 
-Estado: IMPLEMENTADO (Bloques A–F1 completos). Fecha: 2026-10-22.
+Estado: IMPLEMENTADO Y PUBLICADO (Bloques A–F2 completos). Fecha: 2026-10-22.
 Verificación final:
 - TypeScript limpio (`tsc --noEmit` sin errores).
 - Verificación integrada (`npm run verify`): 151 archivos / 835 pruebas unitarias en verde, validate-kong passed, bundle within budget (entry 64.45 KB ≤ 68300 B).
@@ -8,6 +8,7 @@ Verificación final:
 - Playwright Visual: 21/21 pruebas en verde (`node node_modules/@playwright/test/cli.js test --config playwright.visual.config.ts`).
 - APK debug final: `com.gainslab.pro.debug` v421 (`4.0.3-kong.13-debug`), SHA-256 `EEE1180539BD5240A605393D807E9D5161B7CBD3F73E8F7E91282F335FD0F845`.
 - Smoke Android: 6/6 escenarios obligatorios ejecutados y verificados en emulador `medium_phone` (Android 36).
+- Release de producción: `com.gainslab.pro` v422 (`4.0.3-kong.14`), SHA-256 `ef6dac6d4fb7f99778177a89becf761a0d52af71c944278151c4af32767fc86d`, publicada en GitHub y verificada por descarga.
 
 ## 1. Objetivo y límites
 
@@ -332,7 +333,7 @@ Actualizar este documento (estado/checklist), `docs/specs/design-preview-impleme
 - [x] D: checks integrados y cobertura visual/a11y ampliada, con resultados observados.
 - [x] E: debug final identificado y smoke completo; físicos validados o bloqueo explícito (smoke emulador 6/6 verde; validación física de TalkBack/vibración retenida como limitación explícita sin dispositivo físico conectado).
 - [x] F1: documentación refleja el estado real y permite rastrear cada artefacto.
-- [ ] F2: no ejecutado (sin autorización explícita para publicar nueva release; release v4.0.3-kong.13 permanece intacta).
+- [x] F2: ejecutado tras autorización explícita; release v4.0.3-kong.14 creada en GitHub con APK firmado y checksum verificado por descarga (SHA-256 ef6dac6d4fb7f99778177a89becf761a0d52af71c944278151c4af32767fc86d).
 
 ## Prompt de arranque para Gemini 3.8 Flash
 
