@@ -73,19 +73,24 @@ export const useAppHistory = (
         const handlePop = (e: PopStateEvent) => {
             const state = e.state;
             if (state) {
-                withTransition('back', () => {
-                    flushSync(() => {
-                        if (state.view) { targetViewRef.current = state.view; setViewState(state.view); }
+                if (state.view && state.view !== targetViewRef.current) {
+                    withTransition('back', () => {
+                        flushSync(() => {
+                            targetViewRef.current = state.view;
+                            setViewState(state.view);
+                        });
                     });
-                });
+                }
             } else {
-                // 'home' needs no preload: flip the view atomically like setView does.
-                targetViewRef.current = 'home';
-                withTransition('back', () => {
-                    flushSync(() => {
-                        setViewState('home');
+                if (targetViewRef.current !== 'home') {
+                    // 'home' needs no preload: flip the view atomically like setView does.
+                    targetViewRef.current = 'home';
+                    withTransition('back', () => {
+                        flushSync(() => {
+                            setViewState('home');
+                        });
                     });
-                });
+                }
             }
             window.dispatchEvent(new CustomEvent('ironlog:popstate', { detail: state }));
         };

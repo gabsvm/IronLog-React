@@ -37,4 +37,12 @@ describe('child navigation preserves the originating root', () => {
         act(() => window.history.forward());
         await waitFor(() => expect(result.current.view).toBe('summary'));
     });
+    it('modal popstate leaves the current root view intact without triggering a transition away', async () => {
+        const { result } = renderHook(useNavigation);
+        act(() => result.current.setView('home'));
+        act(() => {
+            window.dispatchEvent(new PopStateEvent('popstate', { state: { view: 'home' } }));
+        });
+        await waitFor(() => expect(result.current.view).toBe('home'));
+    });
 });

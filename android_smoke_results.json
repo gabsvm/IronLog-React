@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-10-22T16:07:57.893Z",
+  "package": "com.gainslab.pro.debug",
+  "device": "emulator-5554",
+  "model": "sdk_gphone64_x86_64",
+  "apkSha256": "EEE1180539BD5240A605393D807E9D5161B7CBD3F73E8F7E91282F335FD0F845",
+  "results": {
+    "scenario1": true,
+    "scenario2": true,
+    "scenario3": true,
+    "scenario4": true,
+    "scenario5": true,
+    "scenario6": true
+  },
+  "allPassed": true
+}

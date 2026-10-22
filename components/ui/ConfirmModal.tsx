@@ -1,9 +1,9 @@
 
-import React, { useId } from 'react';
+import React, { useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from './Button';
 import { Icon } from './Icon';
-import { useModalLayer } from './useModalLayer';
+import { useModalLayer, consumeModalHistory } from './useModalLayer';
 
 interface ConfirmModalProps {
     title: string;
@@ -14,6 +14,7 @@ interface ConfirmModalProps {
     onConfirm: () => void;
     onCancel: () => void;
     isOpen: boolean;
+    manageHistory?: boolean;
 }
 
 export const ConfirmModal: React.FC<ConfirmModalProps> = ({ 
@@ -23,13 +24,24 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
     cancelText = "Cancel", 
     variant = 'primary',
     onConfirm, 
-    onCancel,
-    isOpen 
+    onCancel, 
+    isOpen,
+    manageHistory = true,
 }) => {
-    const { contentRef, isTopLayer } = useModalLayer(isOpen, onCancel, true);
+    const { contentRef, isTopLayer } = useModalLayer(isOpen, onCancel, { manualFocus: true, manageHistory });
     const titleId = useId();
     const descriptionId = useId();
+    const confirmedRef = useRef(false);
+
     if (!isOpen) return null;
+
+    const handleConfirm = () => {
+        if (confirmedRef.current) return;
+        confirmedRef.current = true;
+        consumeModalHistory(() => {
+            onConfirm();
+        });
+    };
 
     // pointer-events-auto on the backdrop is REQUIRED, not decoration: Radix's
     // dismissable layer (under Vaul sheets) sets body{pointer-events:none} while
@@ -55,11 +67,11 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
                 {cancelText ? (
                     <div className="grid grid-cols-2 gap-3">
                         <Button variant="secondary" onClick={onCancel}>{cancelText}</Button>
-                        <Button variant={variant} onClick={onConfirm}>{confirmText}</Button>
+                        <Button variant={variant} onClick={handleConfirm}>{confirmText}</Button>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 gap-3">
-                        <Button variant={variant} onClick={onConfirm}>{confirmText}</Button>
+                        <Button variant={variant} onClick={handleConfirm}>{confirmText}</Button>
                     </div>
                 )}
             </div>

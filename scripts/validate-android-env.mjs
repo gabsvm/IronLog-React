@@ -51,6 +51,44 @@ if (missing.length > 0) {
 const MIN_JDK = 21;
 
 const findJava = () => {
+  const checkCandidate = (dir) => {
+    if (!dir) return null;
+    const bin = join(dir, 'bin', process.platform === 'win32' ? 'java.exe' : 'java');
+    if (existsSync(bin)) return { dir, bin };
+    return null;
+  };
+
+  const candidates = [];
+  if (process.env.JAVA_HOME) candidates.push(process.env.JAVA_HOME);
+  if (process.platform === 'win32') {
+    candidates.push('C:\\Program Files\\Microsoft\\jdk-21.0.12.101-hotspot');
+    const roots = ['C:\\Program Files\\Microsoft', 'C:\\Program Files\\Eclipse Adoptium', 'C:\\Program Files\\Java'];
+    for (const r of roots) {
+      if (existsSync(r)) {
+        try {
+          for (const d of readdirSync(r)) {
+            if (d.includes('21')) candidates.push(join(r, d));
+          }
+        } catch {}
+      }
+    }
+  }
+
+  for (const c of candidates) {
+    const res = checkCandidate(c);
+    if (res) {
+      try {
+        const text = String(execSync(`"${res.bin}" -version 2>&1`, { encoding: 'utf8' }));
+        const match = text.match(/version "(\d+)/);
+        const major = match ? Number(match[1]) : 0;
+        if (major >= MIN_JDK) {
+          process.env.JAVA_HOME = res.dir;
+          return res.bin;
+        }
+      } catch {}
+    }
+  }
+
   const fromHome = process.env.JAVA_HOME
     ? join(process.env.JAVA_HOME, 'bin', process.platform === 'win32' ? 'java.exe' : 'java')
     : null;

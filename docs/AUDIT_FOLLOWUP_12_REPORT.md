@@ -343,3 +343,30 @@ pantallas; se conservaron los cambios preexistentes del árbol de trabajo.
   `usesCleartextTraffic`.
   La búsqueda en `dist` y los assets Android tampoco encontró hosts/proyecto de emulador.
 - Los servicios Emulator/AVD y datos temporales de la prueba se cerraron/eliminaron al terminar.
+## U15 — Cierre de design-preview (Bloques A–F1, 2026-10-22)
+
+- **Bloque A (Overlays, foco y Back)**:
+  - Integración de `useModalLayer` con el historial del navegador (`window.history` / `popstate`).
+  - Capas modales administradas (`Sheet`, `ConfirmModal`, `AuthModal`, `PaywallModal`, `ProgramEditDialogs`) gestionan una entrada única en historial.
+  - Cierre por Back nativo (`onPopState`) consume la entrada y cierra únicamente la capa superior en estricto orden LIFO sin afectar la vista subyacente.
+  - Consumo explícito (`consumeModalHistory`) antes de ejecutar navegaciones posteriores para evitar desajustes en el stack.
+  - Modales `AuthModal` y `PaywallModal` migrados a portales de `document.body` con foco accesible, trampa de Tab/Shift+Tab y restauración al disparador.
+- **Bloque B (Edición, conversión y reanudación)**:
+  - Unificación del boundary de edición/conversión de programa: `handleEditProgram` comprueba `activeSession` en tiempo de ejecución. Con sesión activa, muestra la alerta no destructiva "Sesión en curso" e impide editar o convertir KONG.
+  - Eliminación de la duplicación de modales de conversión KONG entre `Layout.tsx` y `AppModals.tsx`.
+  - Rutina (`RoutineView`): el día activo detecta la sesión en curso (`mesoId` y `dayIdx`), destaca visualmente el panel, muestra "En curso" / botón "Retomar" e interactúa directamente sin diálogo de reemplazo ni reconstrucción de sesión.
+- **Bloque C (Accesibilidad visual y limpieza)**:
+  - `Sheet.tsx`: botones de cierre (X) y atrás (Back) actualizados a un área de contacto mínima efectiva de 44×44 px con foco visible (`focus-visible:outline-primary-500`).
+  - `useSetRowState.tsx`: retirado color oscuro fijo `#1b1b20` en favor del token semántico `bg-surface-elevated`; aserción de color exacto retirada de `lightTheme.spec.ts`.
+  - Retiradas reglas CSS obsoletas de compatibilidad en `styles/app-polish.css` (`button[class~="mx-4"]...`).
+  - Tipografía y badges en Inicio Rápido, selector de plantillas y KONG elevados a 12–14 px legibles.
+- **Bloque D (Verificación integrada y matriz visual)**:
+  - `npm run verify`: 151 archivos de test / 835 pruebas unitarias en verde; KONG validator OK; reporte de bundle dentro de presupuesto (entry 64.45 KB ≤ 68.30 KB).
+  - Playwright E2E: 49/49 pruebas en verde (`criticalJourneys`, `finishFlow`, `reorderDrag`, `profileBackNav`, etc.).
+  - Playwright Visual: 21/21 pruebas en verde (`screens.visual.ts`, oscuro y claro, móvil y escritorio).
+- **Bloque E (Smoke Android sobre artefacto debug final)**:
+  - Build debug con JDK 21 y `--no-daemon`: `com.gainslab.pro.debug` v421 (`4.0.3-kong.13-debug`), SHA-256 `EEE1180539BD5240A605393D807E9D5161B7CBD3F73E8F7E91282F335FD0F845`.
+  - Smoke interactivo ejecutado sobre emulador `medium_phone` (Android 36) con red deshabilitada: los 6 escenarios obligatorios verificados en verde (`android_smoke_results.json`, captura `android_debug_smoke_final.png`).
+- **Bloque F1 (Documentación y procesos)**:
+  - Emulador y procesos propios detenidos limpiamente; puertos libres.
+  - Release v4.0.3-kong.13 intacta (no se publica sin autorización explícita).

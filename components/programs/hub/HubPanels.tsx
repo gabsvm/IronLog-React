@@ -284,7 +284,7 @@ export const HubProgram: React.FC<{ s: HubState }> = ({ s }) => {
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-[10px] font-black uppercase tracking-wider text-[rgb(var(--text-muted))]">#{index + 1}</span>
-                      {slot.supersetId && <span className="rounded-full bg-primary-500/10 px-2 py-0.5 text-[9px] font-black uppercase text-primary-500">SUPERSET</span>}
+                      {slot.supersetId && <span className="rounded-full bg-primary-500/10 px-2 py-0.5 text-xs font-black uppercase text-primary-500">SUPERSET</span>}
                     </div>
                     <h4 className="mt-1 text-sm font-black">{slot.programSourceName || slot.exerciseId || slot.muscle}</h4>
                   </div>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Sheet } from '../ui/Sheet';
 import { Icon } from '../ui/Icon';
+import { consumeModalHistory } from '../ui/useModalLayer';
 import { useStore } from '../../lib/store';
 import { TRANSLATIONS } from '../../constants';
 
@@ -25,7 +26,7 @@ const Row = ({ icon, title, description, badge, primary, onClick }: {
     <button
         type="button"
         onClick={onClick}
-        className={`flex w-full items-center gap-3 rounded-2xl border p-3.5 text-left transition-transform active:scale-[0.985] ${primary ? 'border-primary-500/20 bg-primary-500/[0.07]' : 'border-[rgb(var(--border-subtle)/0.75)] bg-[rgb(var(--surface-raised)/0.72)]'}`}
+        className={`flex w-full min-h-[52px] items-center gap-3 rounded-2xl border p-3.5 text-left transition-transform active:scale-[0.985] ${primary ? 'border-primary-500/20 bg-primary-500/[0.07]' : 'border-[rgb(var(--border-subtle)/0.75)] bg-[rgb(var(--surface-raised)/0.72)]'}`}
     >
         <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${primary ? 'bg-primary-500 text-black' : 'bg-primary-500/10 text-primary-500'}`}>
             <Icon name={icon} size={19} />
@@ -33,9 +34,9 @@ const Row = ({ icon, title, description, badge, primary, onClick }: {
         <span className="min-w-0 flex-1">
             <span className="flex items-center gap-2">
                 <span className="truncate text-sm font-black text-zinc-950 dark:text-white">{title}</span>
-                {badge && <span className="shrink-0 rounded-full bg-primary-500/12 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-primary-600 dark:text-primary-400">{badge}</span>}
+                {badge && <span className="shrink-0 rounded-full bg-primary-500/12 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-primary-600 dark:text-primary-400">{badge}</span>}
             </span>
-            <span className="mt-0.5 block truncate text-[11px] text-zinc-500">{description}</span>
+            <span className="mt-0.5 block truncate text-xs text-muted">{description}</span>
         </span>
         <Icon name="ChevronRight" size={17} className="shrink-0 text-zinc-400" />
     </button>
@@ -44,7 +45,10 @@ const Row = ({ icon, title, description, badge, primary, onClick }: {
 export const QuickStartSheet: React.FC<Props> = ({ open, onClose, lang, onResume, onToday, onFreestyle, onEditProgram }) => {
     const activeSession = useStore(state => state.activeSession);
     const activeMeso = useStore(state => state.activeMeso);
-    const run = (fn: () => void) => { onClose(); window.setTimeout(fn, 300); };
+    const run = (fn: () => void) => {
+        onClose();
+        consumeModalHistory(fn);
+    };
     const q = TRANSLATIONS[lang].quickStart;
 
     return (
@@ -60,7 +64,7 @@ export const QuickStartSheet: React.FC<Props> = ({ open, onClose, lang, onResume
                             description={activeSession.name}
                             onClick={() => run(onResume)}
                         />
-                        <div className="rounded-2xl border border-amber-500/15 bg-amber-500/[0.06] px-4 py-3 text-[11px] leading-relaxed text-amber-600 dark:text-amber-300">
+                        <div className="rounded-2xl border border-amber-500/15 bg-amber-500/[0.06] px-4 py-3 text-xs leading-relaxed text-amber-600 dark:text-amber-300">
                             {q.activeWarning}
                         </div>
                     </>
@@ -76,7 +80,7 @@ export const QuickStartSheet: React.FC<Props> = ({ open, onClose, lang, onResume
                             />
                         )}
 
-                        <div className="pt-1 text-[9px] font-black uppercase tracking-[0.17em] text-zinc-500">
+                        <div className="pt-1 text-xs font-bold uppercase tracking-wider text-muted">
                             {q.noPlan}
                         </div>
                         <Row
@@ -86,7 +90,7 @@ export const QuickStartSheet: React.FC<Props> = ({ open, onClose, lang, onResume
                             onClick={() => run(onFreestyle)}
                         />
 
-                        <div className="pt-1 text-[9px] font-black uppercase tracking-[0.17em] text-zinc-500">
+                        <div className="pt-1 text-xs font-bold uppercase tracking-wider text-muted">
                             {q.manage}
                         </div>
                         <Row

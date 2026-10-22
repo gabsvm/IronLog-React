@@ -9,7 +9,7 @@ import { ActiveSession, SessionExercise } from '../../../types';
 import { TRANSLATIONS } from '../../../constants';
 import { CF_WODS, CAL_SKILLS, makeSessionExercise } from './freestyleData';
 import type { Discipline } from './freestyleData';
-
+import { consumeModalHistory } from '../../ui/useModalLayer';
 export interface FreestyleSessionModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -33,16 +33,18 @@ export const useFreestyleSessionState = ({ isOpen, onClose, onStart }: Freestyle
     ], [gymExercises]);
 
     const handleStartBlank = (label: string) => {
-        onStart({
-            id: Date.now(),
-            dayIdx: -1,
-            name: label,
-            startTime: Date.now(),
-            mesoId: -1,
-            week: -1,
-            exercises: [],
+        consumeModalHistory(() => {
+            onStart({
+                id: Date.now(),
+                dayIdx: -1,
+                name: label,
+                startTime: Date.now(),
+                mesoId: -1,
+                week: -1,
+                exercises: [],
+            });
+            onClose();
         });
-        onClose();
     };
 
     const handleStartFreeGym = () => handleStartBlank(f.freeGym);
@@ -55,16 +57,18 @@ export const useFreestyleSessionState = ({ isOpen, onClose, onStart }: Freestyle
             const reps = wod.sets[idx] || 10;
             return makeSessionExercise(ex, reps, 1);
         });
-        onStart({
-            id: Date.now(),
-            dayIdx: -1,
-            name: `WOD: ${wod.name} — ${wod.schema}`,
-            startTime: Date.now(),
-            mesoId: -1,
-            week: -1,
-            exercises: exs,
+        consumeModalHistory(() => {
+            onStart({
+                id: Date.now(),
+                dayIdx: -1,
+                name: `WOD: ${wod.name} — ${wod.schema}`,
+                startTime: Date.now(),
+                mesoId: -1,
+                week: -1,
+                exercises: exs,
+            });
+            onClose();
         });
-        onClose();
     };
 
     const handleStartSkill = () => {
@@ -75,16 +79,18 @@ export const useFreestyleSessionState = ({ isOpen, onClose, onStart }: Freestyle
             const isIso = !!(ex as any).isIsometric;
             return makeSessionExercise(ex, isIso ? 0 : 8, isIso ? 5 : 4);
         });
-        onStart({
-            id: Date.now(),
-            dayIdx: -1,
-            name: pickLang(lang, skill.name),
-            startTime: Date.now(),
-            mesoId: -1,
-            week: -1,
-            exercises: exs,
+        consumeModalHistory(() => {
+            onStart({
+                id: Date.now(),
+                dayIdx: -1,
+                name: pickLang(lang, skill.name),
+                startTime: Date.now(),
+                mesoId: -1,
+                week: -1,
+                exercises: exs,
+            });
+            onClose();
         });
-        onClose();
     };
 
     const handleStartSkillFamily = () => {
@@ -97,16 +103,18 @@ export const useFreestyleSessionState = ({ isOpen, onClose, onStart }: Freestyle
             const isIso = !!(ex as any).isIsometric;
             return makeSessionExercise(ex, isIso ? 0 : 6, isIso ? 5 : 4);
         }).filter(Boolean) as SessionExercise[];
-        onStart({
-            id: Date.now(),
-            dayIdx: -1,
-            name: `🎯 ${pickLang(lang, family.name)}`,
-            startTime: Date.now(),
-            mesoId: -1,
-            week: -1,
-            exercises: exs,
+        consumeModalHistory(() => {
+            onStart({
+                id: Date.now(),
+                dayIdx: -1,
+                name: `🎯 ${pickLang(lang, family.name)}`,
+                startTime: Date.now(),
+                mesoId: -1,
+                week: -1,
+                exercises: exs,
+            });
+            onClose();
         });
-        onClose();
     };
 
     const tabStyle = (active: boolean, color: string) =>

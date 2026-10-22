@@ -203,12 +203,12 @@ export const ProgramDetailView: React.FC<Props> = ({ lang, onBack, onStart }) =>
                             <div className="flex flex-wrap items-center gap-2">
                               <span className="text-[10px] font-black uppercase tracking-wider text-[rgb(var(--text-muted))]">#{index + 1}</span>
                               {slot.supersetId && (
-                                <span className="rounded-full bg-primary-500/10 px-2 py-0.5 text-[9px] font-black uppercase text-primary-500">SUPERSET</span>
+                                <span className="rounded-full bg-primary-500/10 px-2 py-0.5 text-xs font-black uppercase text-primary-500">SUPERSET</span>
                               )}
                             </div>
                             <h4 className="mt-1 text-sm font-black">{slot.programSourceName || slot.exerciseId || slot.muscle}</h4>
                           </div>
-                          <span className="shrink-0 rounded-lg bg-[rgb(var(--surface-raised))] px-2 py-1 text-[9px] font-black uppercase text-[rgb(var(--text-muted))]">{slot.muscle}</span>
+                          <span className="shrink-0 rounded-lg bg-[rgb(var(--surface-raised))] px-2.5 py-1 text-xs font-black uppercase text-[rgb(var(--text-muted))]">{slot.muscle}</span>
                         </div>
                         <div className="mt-3 flex flex-wrap items-center gap-2">
                           <span className="rounded-lg bg-primary-500/10 px-2.5 py-1.5 text-xs font-black text-primary-500">{repsText}</span>

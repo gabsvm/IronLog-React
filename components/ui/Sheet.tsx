@@ -25,6 +25,10 @@ interface SheetProps {
     contentId?: string;
     /** Only the drag handle may move the sheet; leave content gestures for scrolling. */
     dragHandleOnly?: boolean;
+    /** If true, browser history is managed by an outer coordinator (e.g. ProfileSheet). */
+    hasExternalHistory?: boolean;
+    /** If false, history push/pop is completely disabled for this sheet instance. */
+    manageHistory?: boolean;
 }
 
 const ACCENT_HANDLE: Record<string, string> = {
@@ -64,6 +68,8 @@ export const Sheet: React.FC<SheetProps> = ({
     onBack,
     contentId,
     dragHandleOnly = false,
+    hasExternalHistory = false,
+    manageHistory = true,
 }) => {
     const isFull = variant === 'full';
     const [fullViewport, setFullViewport] = useState<{ height: number; top: number } | null>(null);
@@ -129,7 +135,11 @@ export const Sheet: React.FC<SheetProps> = ({
         };
     }, [clearViewportRefresh, isFull, open, syncFullViewport]);
 
-    const { contentRef, isTopLayer, ownsInteraction, focusInitial, onCloseAutoFocus } = useModalLayer(open, () => onOpenChange(false));
+    const { contentRef, isTopLayer, ownsInteraction, focusInitial, onCloseAutoFocus } = useModalLayer(
+        open,
+        () => onOpenChange(false),
+        { hasExternalHistory, manageHistory },
+    );
 
     const fullViewportStyle: React.CSSProperties | undefined = isFull
         ? fullViewport
@@ -203,7 +213,7 @@ export const Sheet: React.FC<SheetProps> = ({
                                 <button
                                     onClick={onBack}
                                     aria-label="Back"
-                                    className="-ml-2 p-2 text-zinc-500 hover:text-zinc-900 dark:hover:text-white rounded-lg transition-colors duration-fast ease-natural"
+                                    className="-ml-2 flex min-h-[44px] min-w-[44px] items-center justify-center text-zinc-500 hover:text-zinc-900 dark:hover:text-white rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 transition-colors duration-fast ease-natural"
                                 >
                                     <Icon name="ArrowLeft" size={20} />
                                 </button>
@@ -217,9 +227,11 @@ export const Sheet: React.FC<SheetProps> = ({
                                 <button
                                     onClick={() => onOpenChange(false)}
                                     aria-label="Close"
-                                    className="w-9 h-9 flex items-center justify-center rounded-full bg-zinc-200/60 dark:bg-white/5 text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors duration-fast ease-natural"
+                                    className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full text-zinc-500 hover:text-zinc-900 dark:hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 transition-colors duration-fast ease-natural"
                                 >
-                                    <Icon name="X" size={18} />
+                                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-200/60 dark:bg-white/5">
+                                        <Icon name="X" size={18} />
+                                    </span>
                                 </button>
                             )}
                         </div>

@@ -9,6 +9,7 @@ import { LazyViewBoundary } from '../ui/LazyViewBoundary';
 import { LoadingSpinner, FullScreenLoading } from './AppLoading';
 import { SessionBuilder } from '../../services/SessionBuilder';
 import { KONG_4DAY_V1 } from '../../programs/kong/kong4Day';
+import { KONG_4DAY_ID } from '../../programs/kong/constants';
 import { resolveProgramDay } from '../../programs/engine/ProgramResolver';
 import { completeWorkoutPipeline } from '../../services/workoutCompletionService';
 import { maybeCreateAutoBackup } from '../../services/autoBackup';
@@ -42,6 +43,8 @@ interface AppViewsProps {
     setShowResetModal: (show: boolean) => void;
     setShowMesoCompleteModal: (show: boolean) => void;
     setShowKongConvertModal: (show: boolean) => void;
+    showActiveSessionAlert?: boolean;
+    setShowActiveSessionAlert?: (show: boolean) => void;
     onSkipSession: (dayIdx: number) => void;
 }
 
@@ -56,6 +59,7 @@ export const AppViews: React.FC<AppViewsProps> = ({
     onExport, onForceSync, onImportFile, isSyncing,
     setShowAuthModal, setShowCommandPalette, setShowResetModal,
     setShowMesoCompleteModal, setShowKongConvertModal,
+    showActiveSessionAlert = false, setShowActiveSessionAlert,
     onSkipSession,
 }) => {
     const {
@@ -91,16 +95,29 @@ export const AppViews: React.FC<AppViewsProps> = ({
     };
 
     // Shared routine editor entry (KONG-aware); Home and Routine reuse it.
+    // Shared routine editor entry (KONG-aware and activeSession-protected).
     const handleEditProgram = React.useCallback(() => {
-        if (activeMeso?.programSystem?.systemId === KONG_4DAY_V1.id) {
+        if (useStore.getState().activeSession) {
+            setShowActiveSessionAlert?.(true);
+            return;
+        }
+        const isKong = activeMeso?.programSystem?.systemId === KONG_4DAY_V1.id || activeMeso?.programSystem?.systemId === 'kong_4day' || activeMeso?.programSystem?.systemId === KONG_4DAY_ID;
+        if (isKong && activeMeso) {
             setShowKongConvertModal(true);
             return;
         }
         setView('program');
-    }, [activeMeso, setView, setShowKongConvertModal]);
-    const buildAndSetSession = (idx: number) => {
-        if (!activeMeso) { setView('program'); return; }
+    }, [activeMeso, setView, setShowKongConvertModal, setShowActiveSessionAlert]);
 
+    React.useEffect(() => {
+        if (view === 'program' && activeSession) {
+            setShowActiveSessionAlert?.(true);
+            setView('routine');
+        }
+    }, [view, activeSession, setView, setShowActiveSessionAlert]);
+
+    const buildAndSetSession = (idx: number) => {
+        if (!activeMeso) { handleEditProgram(); return; }
         const safeProgram = Array.isArray(program) ? program : [];
         const dayDef = activeMeso.programSystem?.systemId === KONG_4DAY_V1.id
             ? resolveProgramDay(KONG_4DAY_V1, activeMeso.week, idx, activeMeso.programSystem.substitutions)
@@ -205,7 +222,7 @@ export const AppViews: React.FC<AppViewsProps> = ({
                     setView={setView}
                     diarySection={diarySection}
                     onDiarySection={setDiarySection}
-                    onOpenProgram={() => setView('program')}
+                    onOpenProgram={handleEditProgram}
                     onOpenExercises={() => setView('exercises')}
                     onReset={() => setShowResetModal(true)}
                     onExport={onExport}
@@ -243,6 +260,10 @@ export const AppViews: React.FC<AppViewsProps> = ({
                         <Suspense fallback={<LoadingSpinner />}>
                             <RoutineView
                                 onStartDay={(idx) => {
+                                    if (activeSession && activeSession.mesoId === activeMeso?.id && activeSession.dayIdx === idx) {
+                                        setView('workout');
+                                        return;
+                                    }
                                     if (activeSession) {
                                         setPendingStartDayIdx(idx);
                                         return;

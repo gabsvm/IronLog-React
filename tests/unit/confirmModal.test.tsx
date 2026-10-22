@@ -258,4 +258,71 @@ describe('ConfirmModal keyboard interaction', () => {
         await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
         await waitFor(() => expect(trigger).toHaveFocus());
     });
+    it('dismisses three nested overlays in exact LIFO order via popstate (Back) without double pops', async () => {
+        const rootBack = vi.fn();
+        function NestedOverlays() {
+            const [outer, setOuter] = useState(false);
+            const [inner, setInner] = useState(false);
+            const [confirm, setConfirm] = useState(false);
+
+            return (
+                <div>
+                    <button onClick={() => setOuter(true)}>Open Outer</button>
+                    <Sheet open={outer} title="Outer Sheet" onOpenChange={setOuter}>
+                        <button onClick={() => setInner(true)}>Open Inner</button>
+                    </Sheet>
+                    <Sheet open={inner} title="Inner Sheet" onOpenChange={setInner}>
+                        <button onClick={() => setConfirm(true)}>Open Confirm</button>
+                    </Sheet>
+                    <ConfirmModal
+                        isOpen={confirm}
+                        title="Top Confirm"
+                        description="Confirmation above inner sheet"
+                        confirmText="OK"
+                        cancelText="Cancel"
+                        onConfirm={() => setConfirm(false)}
+                        onCancel={() => setConfirm(false)}
+                    />
+                </div>
+            );
+        }
+
+        render(<NestedOverlays />);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Open Outer' }));
+        expect(await screen.findByRole('dialog', { name: 'Outer Sheet' })).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Open Inner' }));
+        expect(await screen.findByRole('dialog', { name: 'Inner Sheet' })).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Open Confirm' }));
+        expect(await screen.findByRole('dialog', { name: 'Top Confirm' })).toBeInTheDocument();
+
+        // 1st Back: closes Top Confirm
+        act(() => {
+            window.dispatchEvent(new PopStateEvent('popstate', { state: {} }));
+        });
+        await waitFor(() => {
+            expect(screen.queryByRole('dialog', { name: 'Top Confirm' })).not.toBeInTheDocument();
+            expect(screen.getByRole('dialog', { name: 'Inner Sheet' })).toBeInTheDocument();
+        });
+
+        // 2nd Back: closes Inner Sheet
+        act(() => {
+            window.dispatchEvent(new PopStateEvent('popstate', { state: {} }));
+        });
+        await waitFor(() => {
+            expect(screen.queryByRole('dialog', { name: 'Inner Sheet' })).not.toBeInTheDocument();
+            expect(screen.getByRole('dialog', { name: 'Outer Sheet' })).toBeInTheDocument();
+        });
+
+        // 3rd Back: closes Outer Sheet
+        act(() => {
+            window.dispatchEvent(new PopStateEvent('popstate', { state: {} }));
+        });
+        await waitFor(() => {
+            expect(screen.queryByRole('dialog', { name: 'Outer Sheet' })).not.toBeInTheDocument();
+            expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+        });
+    });
 });

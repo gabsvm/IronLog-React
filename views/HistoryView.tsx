@@ -121,7 +121,7 @@ const HistoryCard = memo(({ log, lang, id, onOpen, unit = 'kg' }: HistoryCardPro
             id={id}
             type="button"
             onClick={onOpen}
-            className="premium-theme-panel premium-history-row mx-4 mb-3 block p-4 text-left"
+            className="premium-theme-panel premium-history-row mx-4 mb-3 block w-[calc(100%-2rem)] max-w-[calc(100%-2rem)] min-w-0 box-border p-4 text-left"
         >
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">

@@ -118,12 +118,6 @@ div[data-item-index] {
   box-sizing: border-box;
 }
 
-button[class~="mx-4"][class~="mb-3"][class~="block"] {
-  width: calc(100% - 2rem) !important;
-  max-width: calc(100% - 2rem) !important;
-  min-width: 0 !important;
-  box-sizing: border-box;
-}
 
 /* ======================================================================
  * KONG program polish  (was views/kong-final-polish.css)

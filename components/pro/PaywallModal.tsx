@@ -1,17 +1,19 @@
 
-import { formatMessage, pickLang } from '../../utils/i18n';
 import React from 'react';
+import { createPortal } from 'react-dom';
+import { formatMessage, pickLang } from '../../utils/i18n';
 import { useAuth } from '../../context/AuthContext';
 import { Icon } from '../ui/Icon';
 import { useAppPreferences } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
-
+import { useModalLayer } from '../ui/useModalLayer';
 interface PaywallModalProps {
     onClose: () => void;
     feature?: string;
 }
 
 export const PaywallModal: React.FC<PaywallModalProps> = ({ onClose, feature }) => {
+    const { contentRef, isTopLayer } = useModalLayer(true, onClose, { manualFocus: true });
     const { user } = useAuth();
     const { lang } = useAppPreferences();
     const t = TRANSLATIONS[lang].pro;
@@ -30,15 +32,17 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ onClose, feature }) 
         window.open(`https://wa.me/${WA_NUMBER}?text=${message}`, '_blank');
     };
 
-    return (
+    return createPortal(
         <div
-            className="fixed inset-0 z-confirm bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-slow pointer-events-auto"
+            className="modal-backdrop fixed inset-0 z-confirm bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-slow pointer-events-auto"
+            onClick={e => {
+                if (e.target === e.currentTarget && isTopLayer()) onClose();
+            }}
             role="dialog"
             aria-modal="true"
             aria-label="GainsLab Pro upgrade"
         >
-            <div className="premium-theme-panel w-full max-w-md overflow-hidden shadow-lg relative max-h-[90vh] overflow-y-auto scroll-container">
-
+            <div ref={contentRef} tabIndex={-1} className="premium-theme-panel w-full max-w-md overflow-hidden shadow-lg relative max-h-[90vh] overflow-y-auto scroll-container outline-none" onClick={e => e.stopPropagation()}>
                 <div className="premium-paywall-hero min-h-40 relative flex flex-col items-center justify-center px-6 py-6 shrink-0">
                     <div className="w-12 h-12 bg-surface-elevated rounded-xl flex items-center justify-center mb-3">
                         <Icon name="Crown" size={24} className="text-accent" />
@@ -110,6 +114,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ onClose, feature }) 
                     </div>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body,
     );
 };

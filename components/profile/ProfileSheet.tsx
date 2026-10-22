@@ -62,6 +62,7 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
             variant="full"
             title={ty.title}
             accent="primary"
+            hasExternalHistory={true}
         >
             <div className="mx-auto w-full max-w-md space-y-4 px-4 pb-24 pt-2">
                 {/* 1. Cuenta */}

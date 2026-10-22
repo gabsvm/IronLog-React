@@ -21,6 +21,7 @@ export const WorkoutFinishSheet: React.FC<{ state: WorkoutViewState }> = ({ stat
                         onOpenChange={(open) => !open && setShowFinishModal(false)}
                         title={t.finishSession}
                         accent="primary"
+                        manageHistory={false}
                     >
                         <div className="p-4 space-y-3.5">
                             {/* Summary Cards */}

@@ -9,7 +9,7 @@ import { MesoType } from '../../types';
 import { getTranslated } from '../../utils';
 import { triggerHaptic } from '../../utils/audio';
 import { useStore } from '../../lib/store';
-
+import { consumeModalHistory } from '../../components/ui/useModalLayer';
 export interface ProgramEditViewProps {
     onBack: () => void;
 }
@@ -161,9 +161,11 @@ export const useProgramEditState = ({ onBack }: ProgramEditViewProps) => {
             duration: mesoConfig.weeks
         });
         triggerHaptic('success');
-        onBack();
+        setShowStartModal(false);
+        consumeModalHistory(() => {
+            onBack();
+        });
     };
-
     return {
         onBack,
         program,

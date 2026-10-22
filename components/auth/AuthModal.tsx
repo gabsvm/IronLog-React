@@ -1,11 +1,13 @@
 
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { pickLang } from '../../utils/i18n';
 import { useAuth } from '../../context/AuthContext';
 import { useAppPreferences } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
 import { Button } from '../ui/Button';
 import { Icon } from '../ui/Icon';
+import { useModalLayer } from '../ui/useModalLayer';
 
 interface AuthModalProps {
     onClose: () => void;
@@ -78,22 +80,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
         }
     };
 
-    // ESC closes (only when no typed data, same rule as backdrop) + initial focus on email.
+    const { contentRef, isTopLayer } = useModalLayer(true, onClose, { manualFocus: true });
+
     useEffect(() => {
         emailRef.current?.focus();
-        const onKeyDown = (e: KeyboardEvent) => {
-            if (e.key !== 'Escape') return;
-            const hasTyped = Boolean(
-                (emailRef.current?.value ?? '') ||
-                document.querySelector<HTMLInputElement>('#auth-modal-pass')?.value
-            );
-            if (!hasTyped) onClose();
-        };
-        document.addEventListener('keydown', onKeyDown);
-        return () => document.removeEventListener('keydown', onKeyDown);
-    }, [onClose]);
+    }, []);
 
     const handleBackdropClick = (e: React.MouseEvent) => {
+        if (e.target !== e.currentTarget || !isTopLayer()) return;
         if (email || pass || name) return; // Don't close if there's data
         onClose();
     };
@@ -103,15 +97,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
         onClose();
     };
 
-    return (
+    return createPortal(
         <div
-            className="fixed inset-0 z-confirm bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-base pointer-events-auto"
+            className="modal-backdrop fixed inset-0 z-confirm bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-base pointer-events-auto"
             onClick={handleBackdropClick}
             role="dialog"
             aria-modal="true"
             aria-labelledby="auth-modal-title"
         >
-            <div className="w-full max-w-sm max-h-[calc(100dvh-3rem)] overflow-y-auto rounded-2xl border border-border-subtle bg-surface-base p-6" onClick={e => e.stopPropagation()}>
+            <div ref={contentRef} tabIndex={-1} className="modal-surface w-full max-w-sm max-h-[calc(100dvh-3rem)] overflow-y-auto rounded-2xl border border-border-subtle bg-surface-base p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-center mb-6">
                     <h3 id="auth-modal-title" className="text-xl font-semibold text-[rgb(var(--text-primary))]">
                         {isLogin ? t.signIn : t.register}
@@ -123,8 +117,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {!isLogin && (
                         <div>
-                            <label className="text-sm font-semibold text-muted block mb-2">{t.name || "Name"}</label>
+                            <label htmlFor="auth-modal-name" className="text-sm font-semibold text-muted block mb-2">{t.name || "Name"}</label>
                             <input
+                                id="auth-modal-name"
                                 type="text"
                                 autoComplete="name"
                                 className="gl-input min-h-11 text-base w-full focus:ring-2 focus:ring-primary-500"
@@ -135,21 +130,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                         </div>
                     )}
                     <div>
-                        <label className="text-sm font-semibold text-muted block mb-2">{t.email}</label>
-                            <input
-                                ref={emailRef}
-                                type="email"
-                                required
-                                autoComplete="email"
-                                className="gl-input min-h-11 text-base w-full focus:ring-2 focus:ring-primary-500"
-                                value={email}
-                                onChange={e => { setEmail(e.target.value); clearError(); }}
-                                placeholder="you@example.com"
-                            />
+                        <label htmlFor="auth-modal-email" className="text-sm font-semibold text-muted block mb-2">{t.email}</label>
+                        <input
+                            ref={emailRef}
+                            id="auth-modal-email"
+                            type="email"
+                            required
+                            autoComplete="email"
+                            className="gl-input min-h-11 text-base w-full focus:ring-2 focus:ring-primary-500"
+                            value={email}
+                            onChange={e => { setEmail(e.target.value); clearError(); }}
+                            placeholder="you@example.com"
+                        />
                     </div>
                     <div>
                         <div className="flex justify-between items-center mb-2">
-                            <label className="text-sm font-semibold text-muted block">{t.password}</label>
+                            <label htmlFor="auth-modal-pass" className="text-sm font-semibold text-muted block">{t.password}</label>
                             {isLogin && (
                                 <button 
                                     type="button" 
@@ -257,6 +253,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                     </p>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body,
     );
 };

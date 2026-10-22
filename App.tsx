@@ -24,7 +24,7 @@ import {
 import { useStore } from './lib/store';
 import { TRANSLATIONS } from './constants/translations';
 import { scheduleWhenIdle } from './lib/idle';
-
+import { KONG_4DAY_ID } from './programs/kong/constants';
 // Q20: the rest pill only renders during an active rest; the timer engine itself
 // runs in TimerProvider, so deferring the overlay keeps it out of the entry chunk.
 // S3: only loaded when the PWA was launched with a shared/opened CSV.
@@ -96,7 +96,7 @@ const AppContent = () => {
     const [forceSyncFeedback, setForceSyncFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
     const [skippedSessionToast, setSkippedSessionToast] = useState<{ id: number; name: string; weekSnapshot: SkippedWeekSnapshot } | null>(null);
     const [showKongConvertModal, setShowKongConvertModal] = useState(false);
-
+    const [showActiveSessionAlert, setShowActiveSessionAlert] = useState(false);
 
 
     const targetViewRef = useRef(view);
@@ -175,7 +175,19 @@ const AppContent = () => {
             description: { en: 'Open the routine editor', es: 'Abrir el editor de rutinas' },
             icon: 'Edit',
             accent: 'zinc',
-            onSelect: () => setView('program'),
+            onSelect: () => {
+                if (useStore.getState().activeSession) {
+                    setShowActiveSessionAlert(true);
+                    return;
+                }
+                const currentMeso = useStore.getState().activeMeso;
+                const isKong = currentMeso?.programSystem?.systemId === KONG_4DAY_ID || currentMeso?.programSystem?.systemId === 'kong_4day';
+                if (isKong && currentMeso) {
+                    setShowKongConvertModal(true);
+                    return;
+                }
+                setView('program');
+            },
             keywords: ['routine', 'rutina', 'template', 'plantilla'],
         });
         return actions;
@@ -352,6 +364,8 @@ const AppContent = () => {
                     setShowResetModal={setShowResetModal}
                     setShowMesoCompleteModal={setShowMesoCompleteModal}
                     setShowKongConvertModal={setShowKongConvertModal}
+                    showActiveSessionAlert={showActiveSessionAlert}
+                    setShowActiveSessionAlert={setShowActiveSessionAlert}
                     onSkipSession={handleSkipSession}
                 />
             )}
@@ -402,6 +416,8 @@ const AppContent = () => {
                 setShowResetModal={setShowResetModal}
                 showKongConvertModal={showKongConvertModal}
                 setShowKongConvertModal={setShowKongConvertModal}
+                showActiveSessionAlert={showActiveSessionAlert}
+                setShowActiveSessionAlert={setShowActiveSessionAlert}
                 setIsSyncing={setIsSyncing}
                 setView={setView}
             />

@@ -174,10 +174,15 @@ test.describe('GainsLab Critical Journeys', () => {
         await page.waitForTimeout(400);
 
         // Confirm finish in modal
-        const confirmFinishBtn = page.locator('button:has-text("Terminar"), button:has-text("Finish")').last();
+        const confirmFinishBtn = page.getByRole('dialog').getByRole('button', { name: /Guardar y Finalizar|Save & Finish|Terminar|Finish/i }).last();
         await expect(confirmFinishBtn).toBeVisible({ timeout: 5000 });
         await confirmFinishBtn.click();
 
+        // If PR celebration or feedback modal opens, advance past it
+        const prBtn = page.getByRole('dialog').getByRole('button', { name: /Continuar|Continue|Omitir|Skip/i }).first();
+        if (await prBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+            await prBtn.click();
+        }
         // Arrive at SessionSummaryView
         const summaryDoneBtn = page.locator('button:has-text("Finalizar y Volver"), button:has-text("Finish & Go Home")').first();
         await expect(summaryDoneBtn).toBeVisible({ timeout: 10000 });

@@ -1,13 +1,24 @@
 import { useCallback, useLayoutEffect, useRef } from 'react';
 
+export interface ModalLayerOptions {
+    manualFocus?: boolean;
+    manageHistory?: boolean;
+    hasExternalHistory?: boolean;
+    layerName?: string;
+}
+
 interface ModalLayer {
     id: symbol;
     element: () => HTMLElement | null;
     dismiss: () => void;
     manualFocus: boolean;
     previousFocus: HTMLElement | null;
+    manageHistory: boolean;
+    hasExternalHistory: boolean;
+    pushedHistory: boolean;
+    closedByPopstate: boolean;
+    sessionKey: string | null;
 }
-
 const layers: ModalLayer[] = [];
 // Radix may defer outside-pointer dispatch until click, after React has
 // already removed the layer that received the original pointerdown.
@@ -77,14 +88,66 @@ function onPointerDown(event: PointerEvent) {
     if (layer) pointerOwners.set(event, layer.id);
 }
 
+function onPopState(event: PopStateEvent) {
+    const layer = topLayer();
+    if (!layer) return;
+
+    // If the top layer was managed by us and the active history state no longer
+    // matches its session key, the browser went Back past this layer.
+    if (layer.pushedHistory && !layer.closedByPopstate) {
+        const stateKey = (event.state as { _modalKey?: string } | null)?._modalKey;
+        if (stateKey !== layer.sessionKey) {
+            layer.closedByPopstate = true;
+            layer.dismiss();
+        }
+    }
+}
+
 function listen(add: boolean) {
     const method = add ? 'addEventListener' : 'removeEventListener';
     window[method]('keydown', onKeyDown, true);
     window[method]('pointerdown', onPointerDown, true);
     window[method]('focusin', onFocus, true);
     window[method]('focusout', onFocus, true);
+    window[method]('popstate', onPopState, true);
 }
 
+/** Explicitly consumes a modal's history entry before performing actions/navigation. */
+export function consumeModalHistory(action: () => void) {
+    if (typeof window === 'undefined' || !window.history) {
+        action();
+        return;
+    }
+    const layer = topLayer();
+    if (!layer || !layer.pushedHistory || layer.closedByPopstate) {
+        action();
+        return;
+    }
+    layer.closedByPopstate = true;
+
+    const isJsdom = typeof navigator !== 'undefined' && /jsdom/i.test(navigator.userAgent);
+    if (isJsdom) {
+        action();
+        return;
+    }
+
+    let done = false;
+    const finish = () => {
+        if (done) return;
+        done = true;
+        window.removeEventListener('popstate', onPop, true);
+        window.clearTimeout(timer);
+        window.setTimeout(action, 0);
+    };
+    const onPop = () => finish();
+    window.addEventListener('popstate', onPop, true);
+    const timer = window.setTimeout(finish, 150);
+    try {
+        window.history.back();
+    } catch {
+        finish();
+    }
+}
 function restoreLayerFocus(layer: ModalLayer) {
     // A delayed Radix close callback may belong to a StrictMode probe or an
     // earlier opening of a sheet that is already open again.
@@ -105,9 +168,21 @@ function restoreLayerFocus(layer: ModalLayer) {
     }
 }
 
-/** Shared Escape/focus ownership only; browser Back remains Layout's concern. */
-export function useModalLayer(open: boolean, onDismiss: () => void, manualFocus = false) {
+/** Shared Escape/focus ownership and unified browser/Android Back integration. */
+export function useModalLayer(
+    open: boolean,
+    onDismiss: () => void,
+    optionsOrManualFocus: boolean | ModalLayerOptions = false,
+) {
+    const options: ModalLayerOptions = typeof optionsOrManualFocus === 'boolean'
+        ? { manualFocus: optionsOrManualFocus }
+        : (optionsOrManualFocus || {});
+    const manualFocus = !!options.manualFocus;
+    const manageHistory = options.manageHistory !== false;
+    const hasExternalHistory = !!options.hasExternalHistory;
+
     const id = useRef(Symbol('modal-layer'));
+    const sessionKeyRef = useRef<string | null>(null);
     const lastContent = useRef<HTMLDivElement | null>(null);
     const previousOpening = useRef<ModalLayer | null>(null);
     const contentRef = useCallback((element: HTMLDivElement | null) => {
@@ -150,12 +225,36 @@ export function useModalLayer(open: boolean, onDismiss: () => void, manualFocus 
             element: () => lastContent.current,
             dismiss: () => dismissRef.current(),
             manualFocus,
-            // StrictMode replays setup before a sheet's asynchronous native
-            // teardown. Do not mistake focus in that same sheet for its opener.
             previousFocus: activeElement && previousLayer?.element()?.contains(activeElement)
                 ? previousLayer.previousFocus : activeElement,
+            manageHistory,
+            hasExternalHistory,
+            pushedHistory: false,
+            closedByPopstate: false,
+            sessionKey: null,
         };
         previousOpening.current = layer;
+
+        if (manageHistory && !hasExternalHistory && typeof window !== 'undefined' && window.history) {
+            if (!sessionKeyRef.current) {
+                sessionKeyRef.current = 'ml_' + Math.random().toString(36).slice(2, 9);
+            }
+            const key = sessionKeyRef.current;
+            if (window.history.state?._modalKey !== key) {
+                try {
+                    window.history.pushState(
+                        { ...(window.history.state || {}), _modalKey: key },
+                        '',
+                        window.location.href,
+                    );
+                    layer.pushedHistory = true;
+                    layer.sessionKey = key;
+                } catch { }
+            } else {
+                layer.pushedHistory = true;
+                layer.sessionKey = key;
+            }
+        }
         if (!layers.length) {
             originalOverflow = document.body.style.overflow;
             document.body.style.overflow = 'hidden';
@@ -189,12 +288,24 @@ export function useModalLayer(open: boolean, onDismiss: () => void, manualFocus 
                     }
                 }
             }
+            if (
+                layer.pushedHistory &&
+                !layer.closedByPopstate &&
+                typeof window !== 'undefined' &&
+                window.history &&
+                window.history.state?._modalKey === layer.sessionKey
+            ) {
+                try {
+                    window.history.back();
+                } catch { }
+            }
+            sessionKeyRef.current = null;
             if (!layers.length) {
                 document.body.style.overflow = originalOverflow;
                 listen(false);
             }
         };
-    }, [open, manualFocus, focusInitial]);
+    }, [open, manualFocus, manageHistory, hasExternalHistory, focusInitial]);
 
     return { contentRef, isTopLayer, ownsInteraction, focusInitial, onCloseAutoFocus };
 }

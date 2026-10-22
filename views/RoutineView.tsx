@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import { useStore } from '../lib/store';
 import { TRANSLATIONS } from '../constants';
 import { getTranslated } from '../utils';
+import { pickLang } from '../utils/i18n';
 import { Icon } from '../components/ui/Icon';
 import { requestQuickStart } from '../components/layout/navigation';
 import { usePro } from '../hooks/usePro';
@@ -30,6 +31,7 @@ export const RoutineView: React.FC<RoutineViewProps> = ({ onStartDay, onEditProg
     const { program, lang, logs, setProgram, globalTemplates, personalTemplates, userProfile } = useApp();
     const activeMeso = useStore((state) => state.activeMeso);
     const setActiveMeso = useStore((state) => state.setActiveMeso);
+    const activeSession = useStore((state) => state.activeSession);
     const { checkPro, showPaywall, setShowPaywall, featureAttempted } = usePro();
     const t = TRANSLATIONS[lang];
     const tp = TRANSLATIONS[lang].copy.programEdit;
@@ -89,9 +91,12 @@ export const RoutineView: React.FC<RoutineViewProps> = ({ onStartDay, onEditProg
                     {safeProgram.map((day, idx) => {
                         const slots = day.slots || [];
                         const totalSets = slots.reduce((sum: number, slot: { setTarget?: number }) => sum + (slot.setTarget || 3), 0);
+                        const isDayActiveSession = Boolean(
+                            activeSession && activeSession.mesoId === activeMeso?.id && activeSession.dayIdx === idx,
+                        );
                         return (
-                            <div key={day.id ?? idx} className="gl-panel flex items-center gap-3 p-4">
-                                <span className="gl-num flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[rgb(var(--surface-raised))] text-sm font-bold text-muted">
+                            <div key={day.id ?? idx} className={`gl-panel flex items-center gap-3 p-4 transition-colors ${isDayActiveSession ? 'border-primary-500/40 bg-primary-500/5' : ''}`}>
+                                <span className={`gl-num flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-bold ${isDayActiveSession ? 'bg-primary-500 text-[rgb(var(--accent-ink))]' : 'bg-[rgb(var(--surface-raised))] text-muted'}`}>
                                     {idx + 1}
                                 </span>
                                 <span className="min-w-0 flex-1">
@@ -99,16 +104,32 @@ export const RoutineView: React.FC<RoutineViewProps> = ({ onStartDay, onEditProg
                                         {String(getTranslated(day.dayName, lang))}
                                     </span>
                                     <span className="gl-num block text-xs text-muted">
-                                        {slots.length} ex · {totalSets} series
+                                        {isDayActiveSession ? (
+                                            <span className="font-semibold text-primary-500 inline-flex items-center gap-1.5">
+                                                <span className="h-1.5 w-1.5 rounded-full bg-primary-500 animate-pulse" />
+                                                {pickLang(lang, { es: 'En curso', en: 'In progress' })}
+                                            </span>
+                                        ) : (
+                                            `${slots.length} ex · ${totalSets} series`
+                                        )}
                                     </span>
                                 </span>
                                 <button
                                     type="button"
                                     onClick={() => onStartDay(idx)}
-                                    aria-label={`${t.startWorkout}: ${String(getTranslated(day.dayName, lang))}`}
-                                    className="gl-primary min-h-[44px] px-4"
+                                    aria-label={isDayActiveSession
+                                        ? `${pickLang(lang, { es: 'Retomar', en: 'Resume' })}: ${String(getTranslated(day.dayName, lang))}`
+                                        : `${t.startWorkout}: ${String(getTranslated(day.dayName, lang))}`}
+                                    className={`gl-primary min-h-[44px] px-4 inline-flex items-center gap-1.5 font-bold text-xs ${isDayActiveSession ? 'bg-primary-500 text-[rgb(var(--accent-ink))] shadow-md' : ''}`}
                                 >
-                                    <Icon name="Play" size={16} fill="currentColor" />
+                                    {isDayActiveSession ? (
+                                        <>
+                                            <Icon name="RotateCcw" size={15} />
+                                            <span>{pickLang(lang, { es: 'Retomar', en: 'Resume' })}</span>
+                                        </>
+                                    ) : (
+                                        <Icon name="Play" size={16} fill="currentColor" />
+                                    )}
                                 </button>
                             </div>
                         );

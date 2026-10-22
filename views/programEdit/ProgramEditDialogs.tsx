@@ -1,16 +1,80 @@
 // T2: exercise picker, unresolved-slots dialog, meso sheet and confirm, moved verbatim from views/ProgramEditView.tsx.
 import { formatMessage } from '../../utils/i18n';
 import React, { Suspense } from 'react';
+import { createPortal } from 'react-dom';
 import { TRANSLATIONS } from '../../constants';
 import { Icon } from '../../components/ui/Icon';
 import { Button } from '../../components/ui/Button';
 import { MesoType } from '../../types';
 import { Sheet } from '../../components/ui/Sheet';
+import { useModalLayer } from '../../components/ui/useModalLayer';
 import type { ProgramEditState } from './useProgramEditState';
 
 const ExerciseSelector = React.lazy(() => import('../../components/ui/ExerciseSelector').then(m => ({ default: m.ExerciseSelector })));
 const ConfirmModal = React.lazy(() => import('../../components/ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
 
+const UnresolvedSlotsModal: React.FC<{
+    unresolvedSlots: { dayName: string; slotIdx: number; muscle: string }[];
+    onClose: () => void;
+    lang: 'es' | 'en';
+}> = ({ unresolvedSlots, onClose, lang }) => {
+    const { contentRef, isTopLayer } = useModalLayer(true, onClose, { manualFocus: true });
+    return createPortal(
+        <div
+            className="modal-backdrop fixed inset-0 z-confirm flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm animate-in fade-in duration-fast pointer-events-auto"
+            onClick={e => {
+                if (e.target === e.currentTarget && isTopLayer()) onClose();
+            }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="unresolved-title"
+        >
+            <div ref={contentRef} tabIndex={-1} className="gl-panel w-full max-w-md space-y-4 p-6 shadow-2xl outline-none" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center gap-3 text-amber-500">
+                    <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center">
+                        <Icon name="AlertTriangle" size={22} />
+                    </div>
+                    <div>
+                        <h3 id="unresolved-title" className="text-base font-bold text-[rgb(var(--text-primary))]">
+                            {TRANSLATIONS[lang].copy.programEdit.unassignedExercises}
+                        </h3>
+                        <p className="text-xs text-muted">
+                            {formatMessage(TRANSLATIONS[lang].copy.programEdit.slotSWithoutSelected, { count: unresolvedSlots.length })}
+                        </p>
+                    </div>
+                </div>
+
+                <p className="text-xs leading-relaxed text-[rgb(var(--text-secondary))]">
+                    {TRANSLATIONS[lang].copy.programEdit.eachSlotMustHave}
+                </p>
+
+                <div className="max-h-40 space-y-1.5 overflow-y-auto rounded-xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated)/0.5)] p-3 text-xs">
+                    {unresolvedSlots.map((item, idx) => (
+                        <div key={idx} className="flex items-center justify-between py-0.5 text-[rgb(var(--text-secondary))]">
+                            <span>
+                                <strong className="font-semibold">{item.dayName}</strong> · Slot #{item.slotIdx}
+                            </span>
+                            <span className="px-2 py-0.5 rounded-md text-xs font-bold uppercase bg-amber-500/20 text-amber-400">
+                                {item.muscle}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="pt-2">
+                    <Button
+                        fullWidth
+                        variant="primary"
+                        onClick={onClose}
+                    >
+                        {TRANSLATIONS[lang].copy.programEdit.assignExercises}
+                    </Button>
+                </div>
+            </div>
+        </div>,
+        document.body,
+    );
+};
 export const ProgramEditDialogs: React.FC<{ state: ProgramEditState }> = ({ state }) => {
     const { lang, t, pickingForSlot, setPickingForSlot, showStartModal, setShowStartModal, unresolvedSlots, setUnresolvedSlots, dayToDelete, setDayToDelete, mesoConfig, setMesoConfig, hasKnownPhase, handleDeleteDay, handleSelectExercise, handleStartMeso } = state;
     return (
@@ -26,55 +90,11 @@ export const ProgramEditDialogs: React.FC<{ state: ProgramEditState }> = ({ stat
 
             {/* Unresolved Slots Validation Dialog */}
             {unresolvedSlots.length > 0 && (
-                <div
-                    className="modal-backdrop fixed inset-0 z-confirm flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm animate-in fade-in duration-fast pointer-events-auto"
-                    role="dialog"
-                    aria-modal="true"
-                    aria-labelledby="unresolved-title"
-                >
-                    <div className="gl-panel w-full max-w-md space-y-4 p-6 shadow-2xl">
-                        <div className="flex items-center gap-3 text-amber-500">
-                            <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center">
-                                <Icon name="AlertTriangle" size={22} />
-                            </div>
-                            <div>
-                                <h3 id="unresolved-title" className="text-base font-bold text-[rgb(var(--text-primary))]">
-                                    {TRANSLATIONS[lang].copy.programEdit.unassignedExercises}
-                                </h3>
-                                <p className="text-xs text-muted">
-                                    {formatMessage(TRANSLATIONS[lang].copy.programEdit.slotSWithoutSelected, { count: unresolvedSlots.length })}
-                                </p>
-                            </div>
-                        </div>
-
-                        <p className="text-xs leading-relaxed text-[rgb(var(--text-secondary))]">
-                            {TRANSLATIONS[lang].copy.programEdit.eachSlotMustHave}
-                        </p>
-
-                        <div className="max-h-40 space-y-1.5 overflow-y-auto rounded-xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated)/0.5)] p-3 text-xs">
-                            {unresolvedSlots.map((item, idx) => (
-                                <div key={idx} className="flex items-center justify-between py-0.5 text-[rgb(var(--text-secondary))]">
-                                    <span>
-                                        <strong className="font-semibold">{item.dayName}</strong> · Slot #{item.slotIdx}
-                                    </span>
-                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-amber-500/20 text-amber-400">
-                                        {item.muscle}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-
-                        <div className="pt-2">
-                            <Button
-                                fullWidth
-                                variant="primary"
-                                onClick={() => setUnresolvedSlots([])}
-                            >
-                                {TRANSLATIONS[lang].copy.programEdit.assignExercises}
-                            </Button>
-                        </div>
-                    </div>
-                </div>
+                <UnresolvedSlotsModal
+                    unresolvedSlots={unresolvedSlots}
+                    onClose={() => setUnresolvedSlots([])}
+                    lang={lang}
+                />
             )}
 
             <Sheet

@@ -40,9 +40,10 @@ test.describe('S9: next-set row follows the theme', () => {
         expect(luminance(bg), bg).toBeGreaterThan(200);
     });
 
-    test('dark theme: the next set row keeps #1b1b20', async ({ page }) => {
+    test('dark theme: the next set row follows the dark surface token', async ({ page }) => {
         await seed(page, 'dark');
         await page.goto('/');
-        expect(await nextRowBackground(page)).toBe('rgb(27, 27, 32)');
+        const bg = await nextRowBackground(page);
+        expect(luminance(bg), bg).toBeLessThan(50);
     });
 });

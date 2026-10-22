@@ -1,5 +1,11 @@
 # Plan de implementación — GainsLab / design-preview
 
+> Estado actual — 2026-10-22: IMPLEMENTADO Y CERRADO (Bloques A–F1). Verificación: tsc limpio; npm run verify en verde (151 archivos / 835 pruebas unitarias, validate-kong, bundle entry 64.45 KB ≤ 68300 B); e2e 49/49 en verde; visual 21/21 en verde; APK debug com.gainslab.pro.debug v421 (SHA-256 EEE1180539BD5240A605393D807E9D5161B7CBD3F73E8F7E91282F335FD0F845); smoke en emulador medium_phone con 6/6 escenarios obligatorios verificados. Detalles y trazabilidad en [design-preview-closure-plan.md](design-preview-closure-plan.md).
+
+### Registro histórico de la entrega anterior
+
+La declaración siguiente se conserva como registro de esa entrega; no acredita el cumplimiento actual ni la validación de APK posteriores.
+
 > Estado: IMPLEMENTADO 2026-10-21 (fases 0–8). Verificación final: `tsc` limpio; unit 146 archivos / 808 pruebas en verde; e2e 32/32 en verde (incluye navegación, shortcuts, back-stack, modales sobre sheets y burbujas); visual 18/18 con baselines regenerados y revisados (home/desktop, history=diario, stats=progreso, nutrition, workout, profile × claro/oscuro); bundle dentro de presupuesto (entry 66.48 KB ≤ 68300 B tras separar sidebar/Rutina/Diario); smoke en emulador `medium_phone` (instalación y arranque del APK debug sin errores); release firmada v2 con el certificado Gainslab (`4C:69:…:18:3B`), `com.gainslab.pro` v421, sin `usesCleartextTraffic` ni endpoints de emulador (SHA-256 `d73177f1…05d`). Hallazgo corregido en la recta final: el `<style>` del splash en `index.html` fijaba `.dark body #050506` para siempre; ahora está acotado al splash y alineado con los tokens. La app compila, la suite unitaria está en verde y la navegación es Hoy/Rutina/Progreso/Diario con Rutina y Diario como contenedores nuevos. Desviaciones respecto al borrador: (1) el presupuesto de entry subió de 67827 a 68300 bytes gzip tras medir el coste real del shell y separar sidebar/Rutina/Diario en chunks diferidos; (2) la paleta de comandos conserva un acceso en el sidebar de escritorio (botón «Acciones rápidas») ya que el botón central + desapareció; (3) los tests e2e que apuntaban a Historial/Estadísticas/Dieta o al botón + se actualizaron a Progreso/Diario/Rutina y al sidebar. Referencia visual: `design-preview/index.html` (Propuesta.jsx + proposal.css).
 
 Hacer que la app real tenga la composición, jerarquía, superficies y respuesta del preview:
@@ -287,10 +293,19 @@ plausibles; inspección visual y smoke para apariencia.
   verificar certificado, identidad y ausencia de endpoints de emulador. Informar la versión real;
   cualquier incremento de versión se decide como parte de esa entrega, no se presume en este plan.
 
-## 8. Evidencia de esta planificación
+## 8. Registro histórico de la planificación original
 
 Inspección de `design-preview/index.html` en Chromium con viewport 390×844 y 1440×1000:
 Hoy, filtro Rutina, detalle de estructura, Progreso, Diario/Nutrición, tema claro y entrenamiento
 con serie completada y descanso. Lectura de sus fuentes y de los archivos de aplicación citados.
 No se modificó la aplicación ni se ejecutaron builds/tests de producto en esta tarea: es un plan.
 Better Design MCP no está conectado; no se atribuye a esa herramienta ninguna revisión.
+
+## 9. Ejecución pendiente tras la auditoría de cierre
+
+El trabajo restante se define en [Cierre de design-preview — plan para Gemini 3.8 Flash](design-preview-closure-plan.md).
+Ese documento fija contratos, propietarios, secuencia A–F, regresiones, matriz visual/Android
+y trazabilidad de APK. Mantener vigentes las invariantes de este plan original.
+La implementación y la publicación son pasos distintos; una suite en verde o un APK debug
+anterior no acreditan el release final ni las pruebas físicas pendientes.
+

@@ -20,49 +20,6 @@ const FreestyleSessionModal = React.lazy(() => import('../workout/FreestyleSessi
 const ConfirmModal = React.lazy(() => import('../ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
 const Sidebar = React.lazy(() => import('./Sidebar').then(m => ({ default: m.Sidebar })));
 
-interface KongConvertConfirmModalProps {
-    isOpen: boolean;
-    lang: 'es' | 'en';
-    cancelText: string;
-    onClose: () => void;
-    onConverted: () => void;
-}
-
-const KongConvertConfirmModal: React.FC<KongConvertConfirmModalProps> = ({
-    isOpen,
-    lang,
-    cancelText,
-    onClose,
-    onConverted,
-}) => {
-    const { setProgram } = useApp();
-    const activeMeso = useStore(state => state.activeMeso);
-    const setActiveMeso = useStore(state => state.setActiveMeso);
-    const t = TRANSLATIONS[lang];
-    const ly = t.layoutKeys;
-
-    const handleConfirm = () => {
-        if (!activeMeso) return;
-        const { editableProgram, convertedMeso } = convertKongToPersonalRoutine(activeMeso, lang);
-        setProgram(editableProgram);
-        setActiveMeso(convertedMeso);
-        onConverted();
-    };
-
-    return (
-        <React.Suspense fallback={<SheetFallback />}>
-            <ConfirmModal
-                isOpen={isOpen}
-                title={t.convertKongTitle}
-                description={ly.convertDesc}
-                confirmText={t.convertKongConfirm}
-                cancelText={cancelText}
-                onConfirm={handleConfirm}
-                onCancel={onClose}
-            />
-        </React.Suspense>
-    );
-};
 
 /** Visible while a lazy sheet chunk loads (slow 4G) so the trigger never looks dead. */
 const SheetFallback: React.FC = () => (
@@ -132,8 +89,6 @@ export const Layout: React.FC<LayoutProps> = ({
     const [showProfile, setShowProfile] = React.useState(() => Boolean(window.history.state?.profile));
     const [profileSection, setProfileSection] = React.useState<ProfileSection | null>(() => window.history.state?.profileSection ?? null);
     const ly = t.layoutKeys;
-    const [showActiveSessionAlert, setShowActiveSessionAlert] = React.useState(false);
-    const [showKongConvertConfirm, setShowKongConvertConfirm] = React.useState(false);
     // Single nav in the DOM: duplicate landmarks break strict selectors and
     // screen readers. Mobile-first; upgrades to the sidebar at lg.
     const [isDesktop, setIsDesktop] = React.useState(
@@ -240,18 +195,7 @@ export const Layout: React.FC<LayoutProps> = ({
 
     const editProgram = () => {
         setShowQuickStart(false);
-
-        if (useStore.getState().activeSession) {
-            setShowActiveSessionAlert(true);
-            return;
-        }
-
-        if (isKong && activeMeso) {
-            setShowKongConvertConfirm(true);
-            return;
-        }
-
-        setView('program');
+        onOpenProgram();
     };
 
     const startDetached = (session: any) => {
@@ -353,34 +297,6 @@ export const Layout: React.FC<LayoutProps> = ({
             )}
 
             {/* Active Session Warning Modal */}
-            {showActiveSessionAlert && (
-                <React.Suspense fallback={<SheetFallback />}>
-                    <ConfirmModal
-                        isOpen={true}
-                        title={t.sessionInProgressTitle}
-                        description={ly.sessionActiveDesc}
-                        confirmText={t.understood}
-                        cancelText=""
-                        variant="primary"
-                        onConfirm={() => setShowActiveSessionAlert(false)}
-                        onCancel={() => setShowActiveSessionAlert(false)}
-                    />
-                </React.Suspense>
-            )}
-
-            {/* KONG Convert Confirmation Modal */}
-            {showKongConvertConfirm && (
-                <KongConvertConfirmModal
-                    isOpen={true}
-                    lang={lang}
-                    cancelText={t.cancel}
-                    onClose={() => setShowKongConvertConfirm(false)}
-                    onConverted={() => {
-                        setShowKongConvertConfirm(false);
-                        setView('program');
-                    }}
-                />
-            )}
         </div>
     );
 };

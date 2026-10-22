@@ -4,14 +4,13 @@ import { test, expect } from '@playwright/test';
 // new order must persist to the store on save.
 test.describe('K1: reorder exercises drag', () => {
     test('sheet stays put while dragging row 3, order saved on drop+save', async ({ page }) => {
-        await page.goto('/');
-        await page.evaluate(() => {
+        page.addInitScript(() => {
             localStorage.setItem('il_onboarded_v2', 'true');
             localStorage.setItem('il_tutorial_v2', JSON.stringify({
                 home: true, workout: true, history: true, stats: true, mesoSettings: true, nutrition: true
             }));
         });
-        await page.reload();
+        await page.goto('/');
 
         // Home free session -> Quick Start -> Freestyle -> start.
         const freeSessionBtn = page.getByRole('button', { name: /^(Sesión libre|Freestyle session) ·/ });

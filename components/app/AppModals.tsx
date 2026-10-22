@@ -1,4 +1,4 @@
-import { formatMessage } from '../../utils/i18n';
+import { formatMessage, pickLang } from '../../utils/i18n';
 import React, { Suspense, useCallback } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
@@ -44,6 +44,8 @@ interface AppModalsProps {
     setShowResetModal: (show: boolean) => void;
     showKongConvertModal: boolean;
     setShowKongConvertModal: (show: boolean) => void;
+    showActiveSessionAlert?: boolean;
+    setShowActiveSessionAlert?: (show: boolean) => void;
     setIsSyncing: (syncing: boolean) => void;
     setView: (view: any) => void;
 }
@@ -63,6 +65,7 @@ export const AppModals: React.FC<AppModalsProps> = ({
     forceSyncFeedback, setForceSyncFeedback,
     showResetModal, setShowResetModal,
     showKongConvertModal, setShowKongConvertModal,
+    showActiveSessionAlert = false, setShowActiveSessionAlert,
     setIsSyncing, setView,
 }) => {
     const {
@@ -262,6 +265,24 @@ export const AppModals: React.FC<AppModalsProps> = ({
                 </Suspense>
             )}
 
+            {/* Active session warning modal */}
+            {showActiveSessionAlert && (
+                <Suspense fallback={null}>
+                    <ConfirmModal
+                        isOpen={true}
+                        title={t.sessionInProgressTitle}
+                        description={t.layoutKeys.sessionActiveDesc}
+                        confirmText={pickLang(lang, { es: 'Ir al entreno', en: 'View workout' })}
+                        cancelText={t.close}
+                        onConfirm={() => {
+                            setShowActiveSessionAlert?.(false);
+                            setView('workout');
+                        }}
+                        onCancel={() => setShowActiveSessionAlert?.(false)}
+                    />
+                </Suspense>
+            )}
+
             {/* KONG CONVERSION MODAL */}
             {showKongConvertModal && (
                 <Suspense fallback={null}>
@@ -272,8 +293,14 @@ export const AppModals: React.FC<AppModalsProps> = ({
                         confirmText={t.convertKongConfirm}
                         cancelText={t.cancel}
                         onConfirm={() => {
-                            if (!activeMeso) return;
-                            const { editableProgram, convertedMeso } = convertKongToPersonalRoutine(activeMeso, lang);
+                            if (useStore.getState().activeSession) {
+                                setShowKongConvertModal(false);
+                                setShowActiveSessionAlert?.(true);
+                                return;
+                            }
+                            const currentMeso = useStore.getState().activeMeso;
+                            if (!currentMeso) return;
+                            const { editableProgram, convertedMeso } = convertKongToPersonalRoutine(currentMeso, lang);
                             setProgram(editableProgram);
                             setActiveMeso(convertedMeso);
                             setShowKongConvertModal(false);
