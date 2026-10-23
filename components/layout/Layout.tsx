@@ -8,6 +8,7 @@ import { convertKongToPersonalRoutine } from '../../programs/engine/ProgramConve
 import { Icon } from '../ui/Icon';
 import { Logo } from '../ui/Logo';
 import { Avatar } from '../ui/Avatar';
+import { pickLang } from '../../utils/i18n';
 import { scheduleWhenIdle } from '../../lib/idle';
 import { runAfterProfileClosed } from '../../utils/profileNav';
 import { resolveAppView, isValidDiarySection, QUICK_START_EVENT, ROOT_NAV_ITEMS, type AppView, type DiarySection } from './navigation';

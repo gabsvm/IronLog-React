@@ -72,10 +72,10 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ dataPoints, metric
                     return gradient;
                 },
                 borderWidth: 3,
-                pointBackgroundColor: '#fff',
-                pointBorderColor: chartColor,
+                pointBackgroundColor: chartColor,
+                pointBorderColor: '#0a0c0e',
                 pointBorderWidth: 2,
-                pointRadius: 4,
+                pointRadius: 5,
                 pointHoverRadius: 6,
                 fill: true,
                 tension: 0.4, // Smooth curves

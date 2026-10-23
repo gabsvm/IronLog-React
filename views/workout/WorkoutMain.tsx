@@ -11,6 +11,7 @@ import { WorkoutRestDock } from '../../components/workout/WorkoutRestDock';
 import { WorkoutTimer } from '../../components/workout/WorkoutTimer';
 import { getTranslated } from '../../utils';
 import { isWorkingSet } from '../../utils/workoutProgress';
+import { pickLang } from '../../utils/i18n';
 import type { WorkoutViewState } from './useWorkoutViewState';
 
 const WorkoutSortableList = React.lazy(() => import('../../components/workout/WorkoutSortableList'));

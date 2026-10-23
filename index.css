@@ -11,18 +11,18 @@
   /* Shared surfaces/text tokens. Components can keep their existing utility
      classes while the selected light/dark mode changes the whole shell.
      Dark mode values directly match the GainsLab reference package. */
-  --surface-app: 16 17 18;      /* #101112 */
-  --surface-base: 25 27 28;     /* #191b1c */
-  --surface-raised: 34 37 38;   /* #222526 */
-  --surface-elevated: 44 47 48; /* #2c2f30 */
+  --surface-app: 10 12 14;      /* #0a0c0e */
+  --surface-base: 18 21 27;     /* #12151b */
+  --surface-raised: 24 28 36;   /* #181c24 */
+  --surface-elevated: 31 36 45; /* #1f242d */
   --text-primary: 240 241 237;  /* #f0f1ed */
   --text-secondary: 168 170 166;/* #a8aaa6 */
   --text-muted: 138 140 138;    /* #8a8c8a */
-  --border-subtle: 52 56 55;    /* #343837 */
-  --border-strong: 66 71 70;
-  --modal-surface: 25 27 28;
-  --modal-footer: 25 27 28;
-  --modal-border: 52 56 55;
+  --border-subtle: 36 42 52;    /* #242a34 */
+  --border-strong: 50 58 72;    /* #323a48 */
+  --modal-surface: 18 21 27;
+  --modal-footer: 18 21 27;
+  --modal-border: 36 42 52;
 
   /* --- DEFAULT THEME: HYPERTROPHY (RP LIME-GREEN) --- */
   /* Brand color is the reference RP lime #C4F13A (196 241 58) anchored at 500. */
@@ -31,17 +31,17 @@
   --primary-200: 217 249 157;
   --primary-300: 207 246 120;
   --primary-400: 200 244  90;
-  --primary-500: 196 241  58; /* Reference RP lime #c4f13a */
+  --primary-500: 212 252  56; /* Concepto 01 Expressive RP lime #d4fc38 */
   --primary-600: 163 215  35;
   --primary-700: 132 174  22;
   --primary-800: 101 134  15;
   --primary-900:  77 101  12;
-  --accent-text: 200 244  90;
-  --accent-ink: 0 0 0;
+  --accent-text: 200 244 90;
+  --accent-ink: 10 12 14;
   /* Shared shape and motion tokens; preserve the selected accent. */
-  --shape-card-radius: 16px;
-  --shape-segment-radius: 12px;
-  --shape-hero-radius: 20px;
+  --shape-card-radius: 24px;
+  --shape-segment-radius: 16px;
+  --shape-hero-radius: 28px;
   --motion-expressive: cubic-bezier(0.2, 0.8, 0.2, 1);
   /* Material 3 Expressive-style "fast spatial" spring, near-critical damping:
      settles in ~320ms with ~3% overshoot. Used for state-carrying shape morphs. */
@@ -58,7 +58,7 @@ html.light {
   --surface-elevated: 230 233 223;
   --text-primary: 32 37 28;
   --text-secondary: 100 107 98;
-  --text-muted: 83 94 78; /* #535e4e — >=5:1 on all four light tonal cards */
+  --text-muted: 83 94 78; /* #535e4e â€” >=5:1 on all four light tonal cards */
   --border-subtle: 227 230 220;
   --border-strong: 211 216 200;
   --modal-surface: 255 254 250;
@@ -320,7 +320,8 @@ body {
         justify-content: center;
         gap: 9px;
         min-height: 48px;
-        border-radius: 12px;
+        border-radius: 9999px;
+        box-shadow: 0 4px 20px -2px rgb(var(--primary-500) / 0.35);
         padding: 0 20px;
         background-color: rgb(var(--primary-500));
         color: rgb(var(--accent-ink));
@@ -334,7 +335,7 @@ body {
         gap: 9px;
         min-height: 44px;
         border: 1px solid rgb(var(--border-subtle));
-        border-radius: 12px;
+        border-radius: 14px;
         padding: 0 15px;
         font-size: 12px;
         font-weight: 600;
@@ -354,7 +355,7 @@ body {
         height: 48px;
         width: 100%;
         border: 1px solid rgb(var(--border-subtle));
-        border-radius: 12px;
+        border-radius: 14px;
         background-color: rgb(var(--surface-app));
         color: rgb(var(--text-primary));
         padding: 0 14px;
@@ -443,7 +444,7 @@ html.light .gl-wave {
 }
 
 /* --- A11Y: prefers-reduced-motion --------------------------------------- */
-/* WCAG 2.3.3 — if the user has requested reduced motion at the OS level,
+/* WCAG 2.3.3 â€” if the user has requested reduced motion at the OS level,
    collapse all animations and transitions to a near-instant cross-fade.
    Keeps the UX usable for vestibular-sensitive users without breaking layout. */
 @media (prefers-reduced-motion: reduce) {
@@ -509,7 +510,7 @@ input, textarea {
   -webkit-user-select: text;
 }
 
-/* View Transitions — Directional */
+/* View Transitions â€” Directional */
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation-duration: 0.32s;
@@ -837,7 +838,7 @@ html.light .premium-rest-pill {
   color: rgb(var(--text-primary));
 }
 
-/* Fase 6 — Diario/Nutrición: 16px floor for nutrition form text (iOS focus
+/* Fase 6 â€” Diario/NutriciÃ³n: 16px floor for nutrition form text (iOS focus
    zoom + legibility). Additive helper; premium-form-input keeps its own rule,
    so this class must stay declared after it to win at equal specificity. */
 .nutri-field { font-size: 16px; }

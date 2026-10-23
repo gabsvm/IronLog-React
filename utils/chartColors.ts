@@ -5,9 +5,9 @@
  * instead. Theme vars in index.css use the space-separated "R G B" format.
  */
 
-export const PRIMARY_500_FALLBACK = '#c4f13a';
+export const PRIMARY_500_FALLBACK = '#d4fc38';
 
-const FIXED_INTENSITY_COLORS = ['#ea580c', '#ca8a04', '#16a34a', '#2563eb', '#9333ea'];
+const FIXED_INTENSITY_COLORS = ['#14b8a6', '#3b82f6', '#d946ef', '#a855f7', '#f59e0b'];
 
 export const resolveCssVarColor = (varName: string, fallback: string): string => {
     if (typeof window === 'undefined' || typeof getComputedStyle === 'undefined') {

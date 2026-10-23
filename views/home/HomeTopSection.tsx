@@ -9,66 +9,78 @@ import type { HomeViewState } from './useHomeViewState';
 
 export const HomeTopSection: React.FC<{ state: HomeViewState }> = ({ state }) => {
     const { uniqueDaysDone, nextWorkoutIdx, activeMeso, t, h, lang, kongBlock, setShowPlanActions, setShowGuidelines, setShowKongHub, currentGuidelineImages, safeProgram, selectedDayIdx, setSelectedDayIdx } = state;
-    const todayLabel = new Date().toLocaleDateString(pickLang(lang, { es: 'es-ES', en: 'en-US' }), { weekday: 'long', day: 'numeric', month: 'long' });
     if (!activeMeso) return null;
+
     return (
-        <>
+        <div className="space-y-4 pt-1">
             <BackupReminderBanner />
-            {/* 1. Program Name, Badges & Plan Actions */}
-            <div className={`flex items-start justify-between gap-3 pt-1 ${kongBlock ? 'kong-home-header' : ''}`}>
-                <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium text-[rgb(var(--text-secondary))] first-letter:uppercase">{todayLabel}</p>
-                    <div className="mt-1 flex items-center gap-2 flex-wrap">
-                        <h1 className="text-2xl font-semibold tracking-tight text-[rgb(var(--text-primary))]">{activeMeso.name}</h1>
-                        {kongBlock && (
-                            <button
-                                type="button"
-                                onClick={() => setShowKongHub(true)}
-                                className="gl-quiet min-h-[44px] px-3 text-xs font-semibold"
-                            >
-                                {`KONG · B${kongBlock.block.number}`}
-                            </button>
-                        )}
-                        {currentGuidelineImages && currentGuidelineImages.length > 0 && (
-                            <button
-                                id="tut-guidelines"
-                                type="button"
-                                onClick={() => setShowGuidelines(true)}
-                                className="gl-quiet flex min-h-[44px] items-center gap-1 px-3 text-xs font-semibold"
-                            >
-                                <Icon name="Info" size={12} /> {pickLang(lang, { en: 'GUIDELINES', es: 'GUÍA' })}
-                            </button>
-                        )}
-                    </div>
-                    <div className="text-xs text-muted mt-0.5">
-                        {t.week} {activeMeso.week} {h.ofWord} {activeMeso.targetWeeks || activeMeso.duration} · {uniqueDaysDone.size} {h.ofWord} {safeProgram.length} {h.daysWord}
-                    </div>
-                </div>
-                <button
-                    id="tut-settings-btn"
-                    type="button"
-                    onClick={() => setShowPlanActions(true)}
-                    className="gl-quiet flex h-11 w-11 shrink-0 items-center justify-center"
-                    aria-label={h.planOptions}
-                    title={h.planOptions}
-                >
-                    <Icon name="MoreHorizontal" size={20} />
-                </button>
+
+            {/* Title & Subtitle matching Concepto 01 */}
+            <div>
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[rgb(var(--text-primary))]">
+                    {pickLang(lang, { es: 'Tu entrenamiento', en: 'Your workout' })}
+                </h1>
+                <p className="mt-0.5 text-xs sm:text-sm font-medium text-[rgb(var(--text-secondary))]">
+                    {pickLang(lang, { es: 'Disciplina hoy, resultados mañana.', en: 'Discipline today, results tomorrow.' })}
+                </p>
             </div>
 
-            {/* 3. Compact Day Selector */}
-            <div
-                className={`grid gap-1.5 ${safeProgram.length <= 5 ? '' : 'overflow-x-auto scroll-container'}`}
-                style={{
-                    gridTemplateColumns: safeProgram.length <= 5
-                        ? `repeat(${safeProgram.length}, minmax(0, 1fr))`
-                        : `repeat(${safeProgram.length}, minmax(70px, 1fr))`
-                }}
-            >
+            {/* Active Routine / Meso Card */}
+            <div className={`flex items-center justify-between gap-3 rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base))] p-3.5 transition-colors ${kongBlock ? 'kong-home-header' : ''}`}>
+                <button
+                    type="button"
+                    onClick={() => {
+                        if (kongBlock) setShowKongHub(true);
+                        else setShowPlanActions(true);
+                    }}
+                    className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                >
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[rgb(var(--primary-500))] text-[rgb(var(--accent-ink))] shadow-[0_2px_12px_rgba(212,252,56,0.35)]">
+                        <Icon name="Dumbbell" size={20} strokeWidth={2.75} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                            <span className="truncate text-sm font-bold tracking-tight text-[rgb(var(--text-primary))]">
+                                {kongBlock ? `KONG · BLOQUE ${kongBlock.block.number}` : activeMeso.name}
+                            </span>
+                        </div>
+                        <p className="truncate text-xs text-[rgb(var(--text-secondary))]">
+                            {pickLang(lang, { es: 'Hipertrofia', en: 'Hypertrophy' })} · {activeMeso.targetWeeks || activeMeso.duration} {pickLang(lang, { es: 'semanas', en: 'weeks' })}
+                        </p>
+                    </div>
+                    <Icon name="ChevronRight" size={18} className="shrink-0 text-muted" />
+                </button>
+
+                <div className="flex items-center gap-1 shrink-0">
+                    {currentGuidelineImages && currentGuidelineImages.length > 0 && (
+                        <button
+                            id="tut-guidelines"
+                            type="button"
+                            onClick={() => setShowGuidelines(true)}
+                            className="gl-quiet flex h-10 items-center gap-1 rounded-xl px-2.5 text-xs font-semibold"
+                            aria-label={pickLang(lang, { en: 'GUIDELINES', es: 'GUÍA' })}
+                        >
+                            <Icon name="Info" size={13} />
+                        </button>
+                    )}
+                    <button
+                        id="tut-settings-btn"
+                        type="button"
+                        onClick={() => setShowPlanActions(true)}
+                        className="gl-quiet flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+                        aria-label={h.planOptions}
+                        title={h.planOptions}
+                    >
+                        <Icon name="MoreHorizontal" size={18} />
+                    </button>
+                </div>
+            </div>
+
+            {/* Horizontal Pill Carousel Day Selector */}
+            <div className="no-scrollbar flex gap-2.5 overflow-x-auto pb-1 pt-0.5">
                 {safeProgram.map((day, idx) => {
-                    const isDone = uniqueDaysDone.has(idx);
-                    const isTodayOrNext = idx === nextWorkoutIdx;
                     const isSelected = idx === selectedDayIdx;
+                    const dayName = String(getTranslated(day.dayName, lang) || `${h.dayWord} ${idx + 1}`);
 
                     return (
                         <button
@@ -79,29 +91,22 @@ export const HomeTopSection: React.FC<{ state: HomeViewState }> = ({ state }) =>
                                 setSelectedDayIdx(idx);
                             }}
                             aria-pressed={isSelected}
-                            className={`min-h-[56px] rounded-xl border px-1.5 py-2.5 text-center ${
+                            className={`flex min-w-[96px] flex-1 shrink-0 flex-col items-center justify-center rounded-2xl py-2.5 px-3 transition-all duration-200 ${
                                 isSelected
-                                    ? 'border-primary-500 bg-primary-500/10 text-[rgb(var(--text-primary))]'
-                                    : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base))] text-[rgb(var(--text-secondary))]'
+                                    ? 'bg-[rgb(var(--primary-500))] text-[rgb(var(--accent-ink))] shadow-[0_4px_16px_rgba(212,252,56,0.35)] scale-[1.02]'
+                                    : 'border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base))] text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--surface-raised))]'
                             }`}
                         >
-                            <div className="flex h-4 items-center justify-center text-xs font-medium">
-                                {isTodayOrNext ? (
-                                    <span className="font-semibold text-[rgb(var(--accent-text))]">{h.today}</span>
-                                ) : isDone ? (
-                                    <span className="text-[rgb(var(--accent-text))]" aria-label={t.completed}><Icon name="Check" size={12} strokeWidth={3} /></span>
-                                ) : (
-                                    <span className="tabular-nums text-muted">{idx + 1}</span>
-                                )}
-                            </div>
-                            {/* The routine's own day name says more than "Day N"; the number stays as the fallback. */}
-                            <div className="mt-0.5 line-clamp-2 break-words text-sm font-medium leading-tight">
-                                {String(getTranslated(day.dayName, lang) || `${h.dayWord} ${idx + 1}`)}
-                            </div>
+                            <span className={`text-[11px] font-bold uppercase tracking-wider ${isSelected ? 'text-[rgb(var(--accent-ink))]' : 'text-muted'}`}>
+                                {pickLang(lang, { es: 'Día', en: 'Day' })} {idx + 1}
+                            </span>
+                            <span className={`mt-0.5 truncate max-w-full text-xs font-semibold ${isSelected ? 'text-[rgb(var(--accent-ink))]' : 'text-[rgb(var(--text-primary))]'}`}>
+                                {dayName}
+                            </span>
                         </button>
                     );
                 })}
             </div>
-        </>
+        </div>
     );
 };

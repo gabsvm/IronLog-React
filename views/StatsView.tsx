@@ -9,6 +9,8 @@ import { buildPremiumInsights } from '../utils/premiumInsights';
 import { resolveWeightUnit } from '../utils/units';
 import { useStore } from '../lib/store';
 import { TRANSLATIONS } from '../constants';
+import { Icon } from '../components/ui/Icon';
+import { pickLang } from '../utils/i18n';
 import { buildStatsLogsSignature, statsCache } from '../services/statsCache';
 import { StatsScope, StatsSection, StatsPeriod, effectiveScopeFor, scopeMesoId as scopeMesoIdFor, summarizeLogsByScope, filterLogsByScopeAndPeriod } from '../utils/statsScope';
 

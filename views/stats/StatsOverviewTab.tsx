@@ -6,6 +6,7 @@ import { WeeklyReportCard } from '../../components/stats/WeeklyReportCard';
 import { Icon } from '../../components/ui/Icon';
 import { Doughnut } from 'react-chartjs-2';
 import type { StatsData } from './useStatsData';
+import { pickLang } from '../../utils/i18n';
 
 export const StatsOverviewTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
     const { lang, t, s, volumeData, rawMuscleCounts, setTypeDist, loadingOverview, totalSets, hasData, doughnutData, intensityPalette, weeklyReport, weekPRs } = stats;
