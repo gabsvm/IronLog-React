@@ -102,9 +102,6 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
                         open={showPlanActions}
                         onClose={() => setShowPlanActions(false)}
                         lang={lang}
-                        planName={activeMeso?.name}
-                        week={activeMeso?.week}
-                        totalWeeks={activeMeso?.targetWeeks || activeMeso?.duration}
                         onConfigure={() => {
                             setShowPlanActions(false);
                             setShowMesoSettings(true);

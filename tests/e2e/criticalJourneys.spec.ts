@@ -86,7 +86,7 @@ test.describe('GainsLab Critical Journeys', () => {
         await expect(page.getByRole('heading', { name: /nueva rutina|new routine|editar rutina/i })).toBeVisible({ timeout: 10000 });
 
         // Add a slot
-        const addSlotBtn = page.locator('button:has-text("Añadir Slot"), button:has-text("+ Slot"), button:has-text("Add Exercise Slot")').first();
+        const addSlotBtn = page.getByRole('button', { name: /^(Añadir ejercicio|Add exercise)$/ }).first();
         await expect(addSlotBtn).toBeVisible({ timeout: 6000 });
         await addSlotBtn.click();
         await page.waitForTimeout(400);

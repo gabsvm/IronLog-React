@@ -35,19 +35,27 @@ const VirtuosoHeader = ({ context }: { context?: HistoryVirtuosoContext }) => {
     if (!context) return null;
     const { lang, search, setSearch, onExportCSV, isPro } = context;
     return (
-        <div className="space-y-3 px-5 pb-4 pt-4">
-            <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                    <h2 className="text-2xl font-black tracking-tight text-zinc-950 dark:text-white">{TRANSLATIONS[lang].copy.history.history}</h2>
-                    <p className="mt-0.5 text-xs font-medium text-muted">
-                        {TRANSLATIONS[lang].copy.history.yourCompletedWorkouts}
-                    </p>
-                </div>
+        <div className="px-4 pb-3 pt-3">
+            {/* The Sessions tab already names this list; the heading stays for assistive tech. */}
+            <h2 className="sr-only">{TRANSLATIONS[lang].copy.history.history}</h2>
+            <div className="flex items-center gap-2">
+            <div id="tut-history-search" className="relative min-w-0 flex-1">
+                <Icon name="Search" size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
+                <input
+                    type="search"
+                    inputMode="search"
+                    enterKeyHint="search"
+                    placeholder={TRANSLATIONS[lang].copy.history.searchWorkouts}
+                    className="min-h-[44px] w-full rounded-xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base))] py-2.5 pl-10 pr-4 text-base text-[rgb(var(--text-primary))] outline-none placeholder-zinc-500 transition-colors focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                />
+            </div>
                 {onExportCSV && (
                     <button
                         type="button"
                         onClick={onExportCSV}
-                        className="flex shrink-0 items-center gap-1.5 rounded-full border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised)/0.95)] px-3.5 py-1.5 text-xs font-bold text-zinc-600 shadow-sm transition-transform active:scale-95 dark:text-zinc-300"
+                        className="gl-quiet shrink-0 gap-1.5 !px-3.5"
                         aria-label={pickLang(lang, { es: 'Descargar CSV', en: 'Download CSV' })}
                     >
                         <Icon name="Download" size={13} />
@@ -55,18 +63,6 @@ const VirtuosoHeader = ({ context }: { context?: HistoryVirtuosoContext }) => {
                         {!isPro && <Icon name="Lock" size={10} className="text-yellow-500" />}
                     </button>
                 )}
-            </div>
-            <div id="tut-history-search" className="relative">
-                <Icon name="Search" size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
-                <input
-                    type="search"
-                    inputMode="search"
-                    enterKeyHint="search"
-                    placeholder={TRANSLATIONS[lang].copy.history.searchWorkouts}
-                    className="w-full rounded-2xl border border-[rgb(var(--border-subtle)/0.8)] bg-[rgb(var(--surface-raised)/0.8)] py-3 pl-10 pr-4 text-sm font-medium text-zinc-950 outline-none placeholder-zinc-500 transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:text-white"
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                />
             </div>
         </div>
     );
@@ -126,12 +122,12 @@ const HistoryCard = memo(({ log, lang, id, onOpen, unit = 'kg' }: HistoryCardPro
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                     <div className="mb-1 text-xs font-semibold tracking-normal text-muted">{formatDate(log.endTime, lang)}</div>
-                    <h3 className="truncate text-base font-black tracking-tight text-zinc-950 dark:text-white">{log.name}</h3>
+                    <h3 className="truncate text-base font-semibold tracking-tight text-[rgb(var(--text-primary))]">{log.name}</h3>
                     {log.programSystem && <span className="mt-1 inline-flex rounded-full bg-primary-500/10 px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wider text-primary-600 dark:text-primary-300">KONG · B{log.programSystem.blockNumber} · W{log.week}</span>}
                 </div>
-                <div className="flex shrink-0 items-center gap-1.5 rounded-full bg-zinc-100 px-2.5 py-1 text-[11px] font-bold text-zinc-500 dark:bg-white/5">
-                    <Icon name="Clock" size={12} />
+                <div className="flex shrink-0 items-center gap-2 text-xs tabular-nums text-muted">
                     {formatDurationShort(log.duration)}
+                    <Icon name="ChevronRight" size={16} />
                 </div>
             </div>
 
@@ -139,16 +135,10 @@ const HistoryCard = memo(({ log, lang, id, onOpen, unit = 'kg' }: HistoryCardPro
                 {previews.slice(0, 3).map((preview: any) => (
                     <div key={preview.name} className="flex items-center justify-between gap-3 text-xs">
                         <span className="min-w-0 flex-1 truncate text-zinc-500">{preview.name}</span>
-                        <span className="shrink-0 font-mono font-bold text-zinc-700 dark:text-zinc-300">{preview.value}</span>
+                        <span className="shrink-0 font-semibold tabular-nums text-[rgb(var(--text-primary))]">{preview.value}</span>
                     </div>
                 ))}
-            </div>
-
-            <div className="mt-3 flex items-center justify-between border-t border-[rgb(var(--border-subtle)/0.45)] pt-3">
-                <span className="text-xs font-semibold text-muted">
-                    {(log.exercises || []).length} {TRANSLATIONS[lang].copy.history.exercises}
-                </span>
-                <Icon name="ChevronRight" size={16} className="text-zinc-400" />
+                {previews.length > 3 && <div className="text-xs text-muted">+{previews.length - 3}</div>}
             </div>
         </button>
     );

@@ -16,18 +16,18 @@ export const BodySection: React.FC = () => {
 
     return (
         <div id="profile-section-body">
-            <div className="label-reference px-1 mb-1.5">{ty.body}</div>
-            <div className="gl-panel p-4">
-                <div className="mb-3 flex items-center justify-between gap-2">
-                    <p className="text-xs text-muted">{ty.bodySubtitle}</p>
-                    <button
-                        type="button"
-                        onClick={() => setShowBodyModal(true)}
-                        className="gl-quiet min-h-[44px] px-4 text-xs"
-                    >
-                        {ty.edit}
-                    </button>
-                </div>
+            {/* The edit action sits with the section title, so the panel holds only the values. */}
+            <div className="mb-1.5 mt-4 flex items-center justify-between px-1">
+                <div className="label-reference !m-0">{ty.body}</div>
+                <button
+                    type="button"
+                    onClick={() => setShowBodyModal(true)}
+                    className="gl-textbtn px-2"
+                >
+                    {ty.edit}
+                </button>
+            </div>
+            <div className="gl-panel p-3">
                 <div className="grid grid-cols-3 gap-2">
                     <div className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated)/0.5)] p-2.5 text-center">
                         <div className="text-xs font-semibold text-muted">{ty.weight}</div>

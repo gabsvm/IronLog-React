@@ -18,7 +18,7 @@ interface Props {
 const Row = ({ icon, title, description, badge, primary, onClick }: {
     icon: string;
     title: string;
-    description: string;
+    description?: string;
     badge?: string;
     primary?: boolean;
     onClick: () => void;
@@ -36,7 +36,7 @@ const Row = ({ icon, title, description, badge, primary, onClick }: {
                 <span className="truncate text-sm font-black text-zinc-950 dark:text-white">{title}</span>
                 {badge && <span className="shrink-0 rounded-full bg-primary-500/12 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-primary-600 dark:text-primary-400">{badge}</span>}
             </span>
-            <span className="mt-0.5 block truncate text-xs text-muted">{description}</span>
+            {description && <span className="mt-0.5 block truncate text-xs text-muted">{description}</span>}
         </span>
         <Icon name="ChevronRight" size={17} className="shrink-0 text-zinc-400" />
     </button>
@@ -64,9 +64,6 @@ export const QuickStartSheet: React.FC<Props> = ({ open, onClose, lang, onResume
                             description={activeSession.name}
                             onClick={() => run(onResume)}
                         />
-                        <div className="rounded-2xl border border-amber-500/15 bg-amber-500/[0.06] px-4 py-3 text-xs leading-relaxed text-amber-600 dark:text-amber-300">
-                            {q.activeWarning}
-                        </div>
                     </>
                 ) : (
                     <>
@@ -79,24 +76,14 @@ export const QuickStartSheet: React.FC<Props> = ({ open, onClose, lang, onResume
                                 onClick={() => run(onToday)}
                             />
                         )}
-
-                        <div className="pt-1 text-xs font-bold uppercase tracking-wider text-muted">
-                            {q.noPlan}
-                        </div>
                         <Row
                             icon="Dumbbell"
                             title={q.freestyle}
-                            description={q.freestyleDesc}
                             onClick={() => run(onFreestyle)}
                         />
-
-                        <div className="pt-1 text-xs font-bold uppercase tracking-wider text-muted">
-                            {q.manage}
-                        </div>
                         <Row
                             icon="Edit"
                             title={q.editRoutine}
-                            description={q.editRoutineDesc}
                             onClick={() => run(onEditProgram)}
                         />
                     </>

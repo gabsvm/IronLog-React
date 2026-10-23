@@ -200,10 +200,7 @@ export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat
                             <article key={ex.instanceId ?? ex.id ?? exIndex} className="overflow-hidden premium-theme-panel">
                                 <div className="flex items-start justify-between gap-3 px-4 pb-3 pt-4">
                                     <div className="min-w-0">
-                                        <h2 className="truncate text-sm font-black text-zinc-950 dark:text-white">{getTranslated(ex.name, lang)}</h2>
-                                        <div className="mt-0.5 text-xs font-medium text-muted">
-                                            {completed.length} {TRANSLATIONS[lang].copy.historyDetail.completedSets}
-                                        </div>
+                                        <h2 className="truncate text-sm font-semibold text-[rgb(var(--text-primary))]">{getTranslated(ex.name, lang)}</h2>
                                     </div>
                                     {ex.note && <span className="max-w-[42%] truncate text-xs italic text-muted">{ex.note}</span>}
                                 </div>
@@ -218,7 +215,7 @@ export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat
                                                 <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[10px] font-black ${set.type === 'warmup' ? 'bg-amber-500/12 text-amber-500' : 'bg-primary-500/10 text-primary-500'}`}>
                                                     {set.type === 'warmup' ? 'W' : index + 1}
                                                 </div>
-                                                <div className="min-w-0 flex-1 font-mono text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                                                <div className="min-w-0 flex-1 text-sm font-medium tabular-nums text-zinc-700 dark:text-zinc-300">
                                                     {isCardio ? (
                                                         <>
                                                             <span>{displayDuration(set.duration)}</span>
@@ -229,7 +226,6 @@ export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat
                                                             <span className="text-zinc-950 dark:text-white">{toDisplay(Number(set.weight || 0), unit)} {weightSuffix}</span>
                                                             <span className="mx-2 text-zinc-500">×</span>
                                                             <span className="text-zinc-950 dark:text-white">{set.reps || 0}</span>
-                                                            <span className="ml-1 text-[9px] text-zinc-500">REPS</span>
                                                         </>
                                                     )}
                                                 </div>
@@ -268,8 +264,8 @@ const SummaryCell = ({ icon, label, value }: { icon: string; label: string; valu
     <div className="premium-theme-panel p-3">
         <div className="flex items-center gap-1.5 text-zinc-500">
             <Icon name={icon} size={12} />
-            <span className="text-[9px] font-black uppercase tracking-[0.14em]">{label}</span>
+            <span className="text-xs font-medium">{label}</span>
         </div>
-        <div className="mt-1.5 truncate text-base font-black tracking-tight text-zinc-950 dark:text-white">{value}</div>
+        <div className="mt-1 truncate text-lg font-semibold tabular-nums text-[rgb(var(--text-primary))]">{value}</div>
     </div>
 );

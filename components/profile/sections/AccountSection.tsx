@@ -72,9 +72,6 @@ export const AccountSection: React.FC<AccountSectionProps> = ({ onClose, onLogin
                             <Icon name="Download" size={16} className="text-primary-500" />
                             {t.installApp}
                         </h3>
-                        <p className="mt-1 text-xs font-medium leading-snug text-muted">
-                            {t.installDesc}
-                        </p>
                     </div>
                     <button
                         type="button"

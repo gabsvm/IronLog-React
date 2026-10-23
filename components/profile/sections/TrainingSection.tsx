@@ -182,9 +182,10 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                         <span className="block text-sm font-bold text-[rgb(var(--text-primary))]">
                             {ty.saveTemplate}
                         </span>
-                        <span className="mt-0.5 block text-xs text-muted">
-                            {activeMeso && program.length > 0 ? ty.saveTemplatePrivate : ty.saveTemplateEmpty}
-                        </span>
+                        {/* Only the disabled state needs an explanation. */}
+                        {!(activeMeso && program.length > 0) && (
+                            <span className="mt-0.5 block text-xs text-muted">{ty.saveTemplateEmpty}</span>
+                        )}
                     </div>
                 </div>
                 <Icon name="ChevronRight" size={16} className="shrink-0 text-muted" />
@@ -226,9 +227,10 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                         <span className={`absolute top-0.5 w-5 h-5 rounded-full shadow transition-all ${config.keepScreenOn ? 'left-[22px] bg-white' : 'left-0.5 bg-white'}`} />
                     </button>
                 </div>
-                <div className="flex items-center justify-between gap-2 p-3">
+                {/* Wraps below the label on narrow screens instead of running off the edge. */}
+                <div className="flex flex-wrap items-center justify-between gap-2 p-3">
                     <span className="text-sm font-medium text-[rgb(var(--text-primary))]">{t.restTimerDisplay}</span>
-                    <div className="flex gap-1 rounded-xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated))] p-1 shrink-0" role="group" aria-label={t.restTimerDisplay}>
+                    <div className="flex w-full gap-1 rounded-xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated))] p-1 sm:w-auto [&>button]:flex-1" role="group" aria-label={t.restTimerDisplay}>
                         <button
                             type="button"
                             onClick={() => setConfig({ ...config, restTimerDisplay: 'compact' })}
@@ -279,7 +281,6 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                     <div className="flex items-center justify-between gap-2 p-3">
                         <div className="flex flex-col pr-2">
                             <span className="text-sm font-medium text-[rgb(var(--text-primary))]">{t.restNotifications}</span>
-                            <span className="text-xs text-muted">{t.restNotificationsDesc}</span>
                             {/* S4: be honest about web timers (frozen with the screen off). */}
                             {!Capacitor.isNativePlatform() && (
                                 <span data-testid="web-timer-caveat" className="mt-1 text-xs text-amber-400/90">{t.notifWebCaveat}</span>

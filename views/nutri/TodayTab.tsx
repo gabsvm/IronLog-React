@@ -37,7 +37,6 @@ interface Props {
     nutritionGoal: NutritionGoal;
     caloriesRemaining: number;
     caloriesBurned: number;
-    proteinRemaining: number;
     expandedMeal: string | null;
     setExpandedMeal: (m: string | null) => void;
     onAddMeal: () => void;
@@ -64,7 +63,6 @@ export const TodayTab: React.FC<Props> = ({
     nutritionGoal,
     caloriesRemaining,
     caloriesBurned,
-    proteinRemaining,
     expandedMeal,
     setExpandedMeal,
     onAddMeal,
@@ -82,12 +80,9 @@ export const TodayTab: React.FC<Props> = ({
             <div className="gl-panel p-4 sm:p-5">
                 <div className="flex items-start justify-between mb-4">
                     <div>
-                        <p className="text-xs font-semibold text-muted mb-1">
-                            {TRANSLATIONS[lang].copy.todayTab.today}
-                            {streak > 1 && (
-                                <span className="ml-2 text-orange-700 dark:text-orange-400">🔥 {streak} {TRANSLATIONS[lang].copy.todayTab.dayStreak}</span>
-                            )}
-                        </p>
+                        {streak > 1 && (
+                            <p className="mb-1 text-xs font-semibold text-orange-700 dark:text-orange-400">🔥 {streak} {TRANSLATIONS[lang].copy.todayTab.dayStreak}</p>
+                        )}
                         <div className={`text-4xl font-semibold tabular-nums leading-none ${caloriesRemaining < 0 ? 'text-orange-700 dark:text-orange-400' : caloriesRemaining < 200 ? 'text-yellow-800 dark:text-yellow-400' : 'text-[rgb(var(--text-primary))]'}`}>
                             {caloriesRemaining > 0 ? caloriesRemaining : Math.abs(caloriesRemaining)}
                         </div>
@@ -114,17 +109,6 @@ export const TodayTab: React.FC<Props> = ({
                     <MacroBar value={todayMacros.fat} goal={nutritionGoal.fat} tone="fat" label={TRANSLATIONS[lang].copy.todayTab.fat} />
                 </div>
 
-                {/* Protein callout */}
-                {proteinRemaining > 0 && (
-                    <div className="mt-3 pt-3 border-t border-border-subtle flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
-                        <p className="text-xs text-secondary">
-                            <span className="text-blue-700 dark:text-blue-400 font-semibold">{Math.round(proteinRemaining)}g</span>{' '}
-                            {TRANSLATIONS[lang].copy.todayTab.proteinToHitYour}
-                        </p>
-                    </div>
-                )}
-
                 {/* Cardio burned row */}
                 {caloriesBurned > 0 && (
                     <div className="mt-2 flex items-center gap-2">
@@ -150,24 +134,22 @@ export const TodayTab: React.FC<Props> = ({
             {/* Quick actions */}
             <div className="grid grid-cols-2 gap-2">
                 <button
+                    type="button"
                     onClick={onAddMeal}
                     aria-label={TRANSLATIONS[lang].copy.todayTab.addFoodEntry}
-                    className="gl-panel flex min-h-[64px] items-center justify-center gap-2 p-4 hover:border-border-strong"
+                    className="gl-primary min-h-[52px] text-sm"
                 >
-                    <div className="w-8 h-8 rounded-xl bg-surface-raised flex items-center justify-center">
-                        <Icon name="Plus" size={16} className="text-secondary" />
-                    </div>
-                    <span className="text-sm font-bold text-[rgb(var(--text-primary))]">{TRANSLATIONS[lang].copy.todayTab.addFood}</span>
+                    <Icon name="Plus" size={16} />
+                    <span>{TRANSLATIONS[lang].copy.todayTab.addFood}</span>
                 </button>
                 <button
+                    type="button"
                     onClick={onAddCardio}
                     aria-label={TRANSLATIONS[lang].copy.todayTab.logCardioSession}
-                    className="gl-panel flex min-h-[64px] items-center justify-center gap-2 p-4 hover:border-border-strong"
+                    className="gl-quiet min-h-[52px] text-sm"
                 >
-                    <div className="w-8 h-8 rounded-xl bg-surface-raised flex items-center justify-center">
-                        <Icon name="Flame" size={16} className="text-secondary" />
-                    </div>
-                    <span className="text-sm font-bold text-[rgb(var(--text-primary))]">{TRANSLATIONS[lang].copy.todayTab.logCardio}</span>
+                    <Icon name="Flame" size={16} />
+                    <span>{TRANSLATIONS[lang].copy.todayTab.logCardio}</span>
                 </button>
             </div>
 
@@ -270,11 +252,7 @@ export const TodayTab: React.FC<Props> = ({
             })}
 
             {todayLog.entries.length === 0 && (
-                <div className="text-center py-8 space-y-2">
-                    <div className="text-4xl" aria-hidden="true">🥗</div>
-                    <p className="text-secondary text-sm">{TRANSLATIONS[lang].copy.todayTab.noFoodLoggedYet}</p>
-                    <p className="text-muted text-xs">{TRANSLATIONS[lang].copy.todayTab.tapAddFoodTo}</p>
-                </div>
+                <p className="py-6 text-center text-sm text-secondary">{TRANSLATIONS[lang].copy.todayTab.noFoodLoggedYet}</p>
             )}
         </div>
     );

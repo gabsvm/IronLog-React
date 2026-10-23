@@ -257,7 +257,8 @@ export const useExercisesViewState = ({ onBack }: ExercisesViewProps) => {
                             </button>
                         ) : null}
 
-                        {!isBuiltIn ? (
+                        {/* Built-in exercises simply have no delete action; no lock badge needed. */}
+                        {!isBuiltIn && (
                             <button
                                 type="button"
                                 onClick={() => handleInitiateDelete(ex)}
@@ -267,10 +268,6 @@ export const useExercisesViewState = ({ onBack }: ExercisesViewProps) => {
                             >
                                 <Icon name="Trash2" size={18} />
                             </button>
-                        ) : (
-                            <div className="flex min-h-[44px] min-w-[44px] items-center justify-center text-muted" title={ev.officialCatalog}>
-                                <Icon name="Lock" size={16} />
-                            </div>
                         )}
 
                         {isMerged ? (

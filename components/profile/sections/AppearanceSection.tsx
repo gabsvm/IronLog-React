@@ -93,15 +93,7 @@ export const AppearanceSection: React.FC = () => {
                     <span className="w-8 h-8 rounded-lg bg-surface-elevated flex items-center justify-center text-accent shrink-0">
                         <Icon name="Zap" size={17} />
                     </span>
-                    <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-[rgb(var(--text-primary))]">{ty.effectsTitle}</div>
-                        <div className="text-xs text-muted truncate">
-                            {effectsMode === 'system' && ty.effectsSystemDesc}
-                            {effectsMode === 'full' && ty.effectsFullDesc}
-                            {effectsMode === 'balanced' && ty.effectsBalancedDesc}
-                            {effectsMode === 'reduced' && ty.effectsReducedDesc}
-                        </div>
-                    </div>
+                    <div className="flex-1 min-w-0 text-sm font-medium text-[rgb(var(--text-primary))]">{ty.effectsTitle}</div>
                     <span className="gl-pill text-xs">
                         {({ full: ty.effectsFull, balanced: ty.effectsBalanced, reduced: ty.effectsReduced } as Record<string, string>)[resolvedEffects] ?? resolvedEffects}
                     </span>
@@ -161,12 +153,6 @@ export const AppearanceSection: React.FC = () => {
                         <span>{ty.effectsReduced}</span>
                     </button>
                 </div>
-                <p className="text-xs text-muted leading-relaxed px-1">
-                    {effectsMode === 'system' && ty.effectsSystemLong}
-                    {effectsMode === 'full' && ty.effectsFullLong}
-                    {effectsMode === 'balanced' && ty.effectsBalancedLong}
-                    {effectsMode === 'reduced' && ty.effectsReducedLong}
-                </p>
             </div>
         </div>
     );

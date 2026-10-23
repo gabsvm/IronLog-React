@@ -82,7 +82,6 @@ export const NutriView: React.FC<NutriViewProps> = ({ subTab, onSubTabChange, ad
 
   const caloriesBurned    = useMemo(() => todayCardio.reduce((a, s) => a + (s.caloriesBurned || 0), 0), [todayCardio]);
   const caloriesRemaining = nutritionGoal.calories + caloriesBurned - todayMacros.calories;
-  const proteinRemaining  = nutritionGoal.protein - todayMacros.protein;
 
   // Last 14 days for history (show more data)
   const last14Days = useMemo(() => {
@@ -233,25 +232,10 @@ export const NutriView: React.FC<NutriViewProps> = ({ subTab, onSubTabChange, ad
   const latestWeight = weightTrend.length > 0 ? weightTrend[weightTrend.length - 1] : null;
 
   // ─── RENDER ──────────────────────────────────────────────────────
-    const todayLabel = new Date().toLocaleDateString(pickLang(lang, { es: 'es-AR', en: 'en-US' }), { weekday: 'long', day: 'numeric', month: 'long' });
     return (
         <div className="space-y-4 px-4 pb-8">
-            {/* ── Section header: title + Add-meal shortcut (same AddMealModal flow) ── */}
-            <div className="flex items-center justify-between gap-3 pt-1">
-                <div className="min-w-0">
-                    <h2 className="text-2xl font-semibold tracking-tight text-[rgb(var(--text-primary))]">{TRANSLATIONS[lang].navDiaryNutrition}</h2>
-                    <p className="mt-0.5 text-xs font-medium capitalize text-muted">{todayLabel}</p>
-                </div>
-                <button
-                    type="button"
-                    onClick={() => setShowAddMeal(true)}
-                    aria-label={TRANSLATIONS[lang].copy.todayTab.addFoodEntry}
-                    className="gl-primary shrink-0 px-4 text-xs"
-                >
-                    <Icon name="Plus" size={14} />
-                    {TRANSLATIONS[lang].copy.todayTab.addFood}
-                </button>
-            </div>
+            {/* The Diary tab names the section; adding a meal lives in Today's primary action. */}
+            <h2 className="sr-only">{TRANSLATIONS[lang].navDiaryNutrition}</h2>
             {/* ── Sub-tabs ── */}
             <div className="sticky top-0 z-10 -mx-4 px-4 py-2 bg-[rgb(var(--surface-app))]">
                 <div className="seg-reference grid-cols-3">
@@ -288,7 +272,6 @@ export const NutriView: React.FC<NutriViewProps> = ({ subTab, onSubTabChange, ad
             nutritionGoal={nutritionGoal}
             caloriesRemaining={caloriesRemaining}
             caloriesBurned={caloriesBurned}
-            proteinRemaining={proteinRemaining}
             expandedMeal={expandedMeal}
             setExpandedMeal={setExpandedMeal}
             onAddMeal={() => setShowAddMeal(true)}

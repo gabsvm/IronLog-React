@@ -26,8 +26,8 @@ describe('Q19: migrated screens render in es and en', () => {
                 t={TRANSLATIONS[lang]}
             />,
         );
-        expect(screen.getByText(lang === 'es' ? 'PLAN DE ENTRENAMIENTO' : 'TRAINING PLAN')).toBeTruthy();
-        expect(screen.getByText(lang === 'es' ? 'PROGRAMAS' : 'PROGRAMS')).toBeTruthy();
+        expect(screen.getByRole('heading', { name: TRANSLATIONS[lang].startMeso })).toBeTruthy();
+        expect(screen.getByText(lang === 'es' ? '12 semanas · 4 días · 3 bloques' : '12 weeks · 4 days · 3 blocks')).toBeTruthy();
         expect(screen.getByText(lang === 'es' ? 'Crear desde Cero' : 'Design from Scratch')).toBeTruthy();
         expectNoUndefined();
         unmount();

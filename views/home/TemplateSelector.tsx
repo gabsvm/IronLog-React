@@ -93,12 +93,7 @@ export const TemplateSelector: React.FC<Props> = ({
         >
             <header className="shrink-0 border-b border-[rgb(var(--border-subtle)/0.75)] bg-[rgb(var(--surface-app)/0.98)] px-4 pt-safe">
                 <div className="mx-auto flex h-16 w-full max-w-xl items-center justify-between gap-4">
-                    <div>
-                        <p className="gl-eyebrow">
-                            {ts.trainingPlan}
-                        </p>
-                        <h2 className="mt-0.5 text-2xl font-semibold">{t.startMeso}</h2>
-                    </div>
+                    <h2 className="text-2xl font-semibold">{t.startMeso}</h2>
                     <button
                         type="button"
                         onClick={onClose}
@@ -112,20 +107,11 @@ export const TemplateSelector: React.FC<Props> = ({
 
             <div className="flex-1 overflow-y-auto scroll-container">
                 <div className="mx-auto w-full max-w-xl space-y-5 p-4 pb-[calc(var(--safe-area-bottom)+2rem)]">
-                    <section className="gl-panel p-4">
-                        <div className="mb-3 flex items-center justify-between">
-                            <p className="gl-eyebrow">
-                                {ts.programs}
-                            </p>
-                            <span className="rounded-lg bg-[rgb(var(--surface-raised))] px-2.5 py-1 text-xs font-medium text-[rgb(var(--text-secondary))]">
-                                {ts.fullSystem}
-                            </span>
-                        </div>
-
+                    <section>
                         <button
                             type="button"
                             onClick={() => setShowKongDetail(true)}
-                            className="w-full rounded-2xl border border-primary-500/30 bg-[rgb(var(--surface-raised))] p-5 text-left transition-transform active:scale-[0.99]"
+                            className="gl-panel w-full !border-primary-500/30 p-5 text-left transition-transform active:scale-[0.99]"
                         >
                             <div className="flex items-start justify-between gap-4">
                                 <div>
@@ -137,19 +123,8 @@ export const TemplateSelector: React.FC<Props> = ({
                             <p className="mt-4 text-xs font-medium text-[rgb(var(--text-secondary))]">
                                 12 {ts.weeks} · 4 {ts.days} · 3 {ts.blocks}
                             </p>
-                            <span className="gl-quiet mt-4 inline-flex min-h-11 items-center px-4 text-sm">
-                                {ts.viewProgram}
-                            </span>
                         </button>
                     </section>
-
-                    <div className="flex items-center gap-4 px-1">
-                        <div className="h-px flex-1 bg-[rgb(var(--border-subtle))]" />
-                        <span className="gl-eyebrow">
-                            {ts.templates}
-                        </span>
-                        <div className="h-px flex-1 bg-[rgb(var(--border-subtle))]" />
-                    </div>
 
                     <button
                         type="button"
@@ -161,9 +136,6 @@ export const TemplateSelector: React.FC<Props> = ({
                         </div>
                         <div className="min-w-0 flex-1">
                             <h3 className="text-lg font-semibold">{ts.designTitle}</h3>
-                            <p className="mt-1 text-sm text-[rgb(var(--text-secondary))]">
-                                {ts.designDesc}
-                            </p>
                         </div>
                         <Icon name="ChevronRight" size={19} className="shrink-0 text-[rgb(var(--text-muted))]" />
                     </button>
@@ -214,10 +186,6 @@ export const TemplateSelector: React.FC<Props> = ({
                             ))}
                         </div>
                     )}
-
-                    <p className="gl-eyebrow px-1">
-                        {ts.chooseByAuthor}
-                    </p>
 
                     <div className="space-y-3">
                         {Object.entries(grouped).map(([author, groupTemplates]) => {

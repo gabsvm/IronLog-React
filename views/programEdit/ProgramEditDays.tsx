@@ -49,7 +49,7 @@ export const ProgramEditDays: React.FC<{ state: ProgramEditState }> = ({ state }
                                                 </select>
 
                                                 <div className="flex items-center gap-1 bg-[rgb(var(--surface-elevated)/0.7)] rounded-xl px-2 py-2 border border-[rgb(var(--border-subtle))]">
-                                                    <span className="text-xs font-semibold text-muted">SETS</span>
+                                                    <span className="text-xs font-semibold text-muted">{t.sets}</span>
                                                     <input
                                                         type="number"
                                                         className="w-8 bg-transparent text-center text-base font-bold text-[rgb(var(--text-primary))] outline-none"
@@ -59,7 +59,7 @@ export const ProgramEditDays: React.FC<{ state: ProgramEditState }> = ({ state }
                                                 </div>
 
                                                 <div className="flex items-center gap-1 bg-[rgb(var(--surface-elevated)/0.7)] rounded-xl px-2 py-2 flex-1 min-w-[80px] border border-[rgb(var(--border-subtle))]">
-                                                    <span className="whitespace-nowrap text-xs font-semibold text-muted">REPS</span>
+                                                    <span className="whitespace-nowrap text-xs font-semibold text-muted">{t.reps}</span>
                                                     <input
                                                         type="text"
                                                         className="w-full bg-transparent text-center text-base font-bold text-[rgb(var(--text-primary))] outline-none"
