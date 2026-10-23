@@ -99,11 +99,10 @@ export const SetupWizard: React.FC<SetupWizardProps> = (props) => {
                         {step === 1 && (TRANSLATIONS[lang].copy.setupWizard.whatSYourGoal)}
                         {step === 2 && (TRANSLATIONS[lang].copy.setupWizard.howMuchTimeDo)}
                     </h2>
-                    <p className="text-sm text-muted mt-1">
-                        {step === 0 && (TRANSLATIONS[lang].copy.setupWizard.considerYourCommitmentsAnd)}
-                        {step === 1 && (TRANSLATIONS[lang].copy.setupWizard.youCanChangeThis)}
-                        {step === 2 && (TRANSLATIONS[lang].copy.setupWizard.perTrainingSession)}
-                    </p>
+                    {/* Only the time question needs its unit spelled out. */}
+                    {step === 2 && (
+                        <p className="text-sm text-muted mt-1">{TRANSLATIONS[lang].copy.setupWizard.perTrainingSession}</p>
+                    )}
                 </div>
             )}
 

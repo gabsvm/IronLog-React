@@ -17,7 +17,7 @@ export const AppearanceSection: React.FC = () => {
         <div id="profile-section-appearance">
             <div className="label-reference px-1 mb-1.5">{ty.appearance}</div>
             <div className="label-reference px-1 mb-1.5">{t.theme}</div>
-            <div className="gl-panel grid grid-cols-3 gap-1 p-1 mb-4">
+            <div className="gl-panel gl-connected grid grid-cols-3 gap-1 p-1 mb-4">
                 <button
                     type="button"
                     onClick={() => setTheme('dark')}
@@ -69,7 +69,7 @@ export const AppearanceSection: React.FC = () => {
             </div>
 
             <div className="label-reference px-1 mb-1.5">{t.language}</div>
-            <div className="gl-panel grid grid-cols-2 gap-1 p-1 mb-4">
+            <div className="gl-panel gl-connected grid grid-cols-2 gap-1 p-1 mb-4">
                 {/* Autonyms stay literal by convention; one mapped control instead of a branch per language. */}
                 {(['en', 'es'] as const).map((code) => (
                     <button
@@ -99,7 +99,7 @@ export const AppearanceSection: React.FC = () => {
                     </span>
                 </div>
 
-                <div className="gl-panel grid grid-cols-4 gap-1 p-1" role="group" aria-label={ty.effectsTitle}>
+                <div className="gl-panel gl-connected grid grid-cols-4 gap-1 p-1" role="group" aria-label={ty.effectsTitle}>
                     <button
                         type="button"
                         onClick={() => setEffectsMode('system')}

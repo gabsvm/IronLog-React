@@ -378,8 +378,6 @@ export const EN = {
         subtitle: "The professional training log for serious athletes. Track every set, rep, and RPE with precision.",
         getStarted: "Get Started Free",
         featuresTitle: "Why GainsLab?",
-        appVersion: "v4.1 Professional",
-        socialProof: "+2,400 athletes tracking progress",
         features: [
             { title: "Smart Tracking", desc: "Predictive RPE and volume tracking designed for hypertrophy.", icon: "Zap" },
             { title: "GainsLab AI", desc: "Real-time volume adjustments based on your recovery.", icon: "Activity" },
@@ -1050,7 +1048,6 @@ export const EN = {
             bgPrimary600Text: 'bg-primary-600 text-white shadow-lg',
         },
         setupWizard: {
-            daysWeek: 'days / week',
             buildMuscleMassAnd: 'Build muscle mass and size.',
             increase1rmOnMain: 'Increase 1RM on main lifts.',
             improveEnduranceAndConditioning: 'Improve endurance and conditioning.',
@@ -1070,8 +1067,6 @@ export const EN = {
             whatSYourGoal: "What's your goal?",
             howMuchTimeDo: 'How much time do you have?',
             beHonestThisPersonalizes: 'Be honest, this personalizes your routine.',
-            considerYourCommitmentsAnd: 'Consider your commitments and recovery.',
-            youCanChangeThis: 'You can change this later.',
             perTrainingSession: 'Per training session.',
             analyzeMyProfile: 'Analyze my profile →',
             next: 'Next →',

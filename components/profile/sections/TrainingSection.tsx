@@ -230,7 +230,7 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                 {/* Wraps below the label on narrow screens instead of running off the edge. */}
                 <div className="flex flex-wrap items-center justify-between gap-2 p-3">
                     <span className="text-sm font-medium text-[rgb(var(--text-primary))]">{t.restTimerDisplay}</span>
-                    <div className="flex w-full gap-1 rounded-xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated))] p-1 sm:w-auto [&>button]:flex-1" role="group" aria-label={t.restTimerDisplay}>
+                    <div className="gl-connected flex w-full gap-1 rounded-xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated))] p-1 sm:w-auto [&>button]:flex-1" role="group" aria-label={t.restTimerDisplay}>
                         <button
                             type="button"
                             onClick={() => setConfig({ ...config, restTimerDisplay: 'compact' })}
@@ -259,7 +259,7 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                 </div>
                 <div className="flex items-center justify-between gap-2 p-3">
                     <span className="text-sm font-medium text-[rgb(var(--text-primary))]">{ty.weightUnit}</span>
-                    <div className="flex gap-1 rounded-xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated))] p-1 shrink-0" role="group" aria-label={ty.weightUnit}>
+                    <div className="gl-connected flex gap-1 rounded-xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated))] p-1 shrink-0" role="group" aria-label={ty.weightUnit}>
                         {(['kg', 'lb'] as const).map((option) => (
                             <button
                                 key={option}

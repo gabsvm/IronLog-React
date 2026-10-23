@@ -394,6 +394,39 @@ body {
     }
 }
 
+/* --- Connected segments (M3 Expressive button group) ------------------------
+   Shared by every segmented control (.seg-reference, the Stats sections and
+   .gl-connected): inner corners stay tight, the outer ends are round, and the
+   selected segment morphs into a full pill. Colours stay with each component.
+   :is() gives class specificity and this rule comes after Tailwind's output, so it wins
+   over per-button rounded-* utilities without !important. */
+:is(.seg-reference, .product-stats-segments-inner, .gl-connected) {
+    border-radius: 9999px;
+}
+:is(.seg-reference, .product-stats-segments-inner, .gl-connected) > button {
+    border-radius: 0.375rem;
+}
+:is(.seg-reference, .product-stats-segments-inner, .gl-connected) > button:first-child {
+    border-top-left-radius: 9999px;
+    border-bottom-left-radius: 9999px;
+}
+:is(.seg-reference, .product-stats-segments-inner, .gl-connected) > button:last-child {
+    border-top-right-radius: 9999px;
+    border-bottom-right-radius: 9999px;
+}
+:is(.seg-reference, .product-stats-segments-inner, .gl-connected) > button:is([aria-selected='true'], [aria-pressed='true'], [aria-checked='true'], [data-active='true']) {
+    border-radius: 9999px;
+}
+@media (prefers-reduced-motion: no-preference) {
+    :root:not([data-effects='reduced']) :is(.seg-reference, .product-stats-segments-inner, .gl-connected) > button {
+        transition:
+            border-radius var(--motion-spring-fast-duration) var(--motion-spring-fast),
+            background-color 160ms ease-out,
+            color 160ms ease-out,
+            transform 120ms ease-out;
+    }
+}
+
 /* --- Wavy progress (M3 Expressive) ----------------------------------------
    Elapsed part drawn as a wave via a repeating mask tile (crisp at any width);
    the remaining part stays a flat track. Static on purpose: looping decorative

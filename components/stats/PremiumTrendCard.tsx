@@ -78,7 +78,8 @@ export const PremiumTrendCard: React.FC<Props> = ({ insights, lang, unit, scope 
                 </div>
             </div>
             {hasRecentWork ? (
-                <div className="mt-3">
+                // Chart and its week labels scale together; capped so desktop doesn't blow it up to ~450px tall.
+                <div className="mx-auto mt-3 w-full max-w-xl">
                     <svg className="h-auto w-full" viewBox="0 0 340 145" role="img" aria-label={`${ui.chartAria}: ${counts.join(', ')}`}>
                         <defs>
                             <linearGradient id="premium-trend-fill" x1="0" y1="0" x2="0" y2="1">
@@ -96,7 +97,7 @@ export const PremiumTrendCard: React.FC<Props> = ({ insights, lang, unit, scope 
                             </g>
                         ))}
                     </svg>
-                    <div className="grid grid-cols-4 gap-1 text-center text-[11px] font-medium text-muted">
+                    <div className="grid grid-cols-4 gap-1 text-center text-xs font-medium text-muted">
                         {ui.weeks.map(label => <span key={label}>{label}</span>)}
                     </div>
                     <p className="mt-3 text-xs font-medium text-muted">{deltaText}</p>

@@ -26,14 +26,6 @@ export const SetupWizardStep: React.FC<{ state: SetupWizardState }> = ({ state }
                             </button>
                         ))}
                     </div>
-                    <div className="text-center">
-                        <p className="text-3xl font-semibold text-[rgb(var(--text-primary))]">
-                            {profile.daysPerWeek}
-                            <span className="text-base font-medium text-muted ml-2">
-                                {TRANSLATIONS[lang].copy.setupWizard.daysWeek}
-                            </span>
-                        </p>
-                    </div>
                 </div>
             );
             case 1: return (

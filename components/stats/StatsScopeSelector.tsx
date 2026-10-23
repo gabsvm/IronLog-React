@@ -16,7 +16,7 @@ interface StatsScopeSelectorProps {
 export const StatsScopeSelector: React.FC<StatsScopeSelectorProps> = ({ scope, onChange, lang }) => {
     const t = TRANSLATIONS[lang];
     return (
-        <div className="flex rounded-xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base))] p-1" role="tablist" aria-label={t.statsScopeLabel}>
+        <div className="gl-connected flex rounded-xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base))] p-1" role="tablist" aria-label={t.statsScopeLabel}>
             {(['plan', 'history'] as StatsScope[]).map(option => (
                 <button
                     key={option}

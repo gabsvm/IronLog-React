@@ -265,7 +265,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                   placeholder={TRANSLATIONS[lang].copy.addMealModal.searchFoods}
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  className="gl-input pl-9"
+                  className="gl-input !pl-9"
                 />
               </div>
 
@@ -316,7 +316,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                       placeholder={TRANSLATIONS[lang].copy.addMealModal.searchMyFoods}
                       value={search}
                       onChange={(event) => setSearch(event.target.value)}
-                      className="gl-input pl-9"
+                      className="gl-input !pl-9"
                     />
                   </div>
                   {sortedMyFoods.length === 0 ? (

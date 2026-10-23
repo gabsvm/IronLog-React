@@ -143,7 +143,8 @@ const AppContent = () => {
     const activeSessionName = activeSession?.name ?? '';
     const activeMesoId = activeMeso?.id ?? null;
     const activeMesoWeek = activeMeso?.week ?? null;
-    const activeMesoType = activeMeso?.mesoType ?? '';
+    // The palette shows the plan's own name; mesoType is an internal id (e.g. hyp_1).
+    const activeMesoName = activeMeso?.name ?? '';
     const commandActions = useMemo<CommandAction[]>(() => {
         const actions: CommandAction[] = [];
         if (activeSessionId) {
@@ -162,7 +163,7 @@ const AppContent = () => {
             actions.push({
                 id: 'meso_today',
                 label: { en: 'Continue mesocycle (today)', es: 'Continuar mesociclo (hoy)' },
-                description: { en: `${activeMesoType || ''} · Week ${activeMesoWeek}`, es: `${activeMesoType || ''} · Semana ${activeMesoWeek}` },
+                description: { en: `${activeMesoName} · Week ${activeMesoWeek}`, es: `${activeMesoName} · Semana ${activeMesoWeek}` },
                 icon: 'Calendar',
                 accent: 'primary',
                 onSelect: () => setView('home'),
@@ -191,7 +192,7 @@ const AppContent = () => {
             keywords: ['routine', 'rutina', 'template', 'plantilla'],
         });
         return actions;
-    }, [activeSessionId, activeSessionName, activeMesoId, activeMesoWeek, activeMesoType, lang, setView]);
+    }, [activeSessionId, activeSessionName, activeMesoId, activeMesoWeek, activeMesoName, lang, setView]);
 
     // Q18: history management lives in hooks/useAppHistory.
     useAppHistory(view, setViewState, targetViewRef);
