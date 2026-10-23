@@ -20,7 +20,7 @@ import { setWorkoutRestDocked } from './workoutRestDockSignal';
 export const WorkoutRestDock: React.FC = () => {
     const restTimer = useTimerState();
     const { setRestTimer } = useTimerActions();
-    const { lang, reducedEffects } = useAppPreferences();
+    const { lang } = useAppPreferences();
     const { config } = useAppConfig();
     const activeSession = useStore((state) => state.activeSession);
     const setActiveSession = useStore((state) => state.setActiveSession);
@@ -59,12 +59,8 @@ export const WorkoutRestDock: React.FC = () => {
 
     if (!restTimer || !restTimer.active) return null;
 
-    const formatSeconds = (seconds: number): string => {
-        const safe = Math.max(0, Math.floor(Number(seconds) || 0));
-        return `${Math.floor(safe / 60)}:${(safe % 60).toString().padStart(2, '0')}`;
-    };
-
     const percentage = calculateTimerPercentage(restTimer.timeLeft, restTimer.duration);
+    const remainingPct = Math.min(100, Math.max(0, percentage));
 
     const adjustTimer = (deltaSeconds: number): void => {
         triggerHaptic('light');
@@ -109,24 +105,9 @@ export const WorkoutRestDock: React.FC = () => {
             className="card-reference pointer-events-auto px-3 py-2.5"
         >
             <div className="flex items-center gap-2.5">
-                <svg viewBox="0 0 36 36" className="h-11 w-11 shrink-0 -rotate-90" aria-hidden="true">
-                    <circle cx="18" cy="18" r="15" fill="none" strokeWidth="3.5" className="stroke-surface-elevated" />
-                    <circle
-                        cx="18"
-                        cy="18"
-                        r="15"
-                        fill="none"
-                        strokeWidth="3.5"
-                        strokeLinecap="round"
-                        className="stroke-primary-500"
-                        strokeDasharray={2 * Math.PI * 15}
-                        strokeDashoffset={2 * Math.PI * 15 * (1 - Math.min(100, Math.max(0, percentage)) / 100)}
-                        style={{ transition: reducedEffects ? 'none' : 'stroke-dashoffset 1s linear' }}
-                    />
-                </svg>
                 <div className="min-w-0 flex-1">
-                    <p className="text-[11px] font-bold uppercase tracking-widest text-muted">{t.timer.resting}</p>
-                    <p className="font-mono text-2xl font-black tabular-nums leading-tight text-white">
+                    <p className="text-xs font-medium text-muted">{t.timer.resting}</p>
+                    <p className="text-3xl font-semibold tabular-nums leading-tight text-[rgb(var(--text-primary))]">
                         {restTimeLabel}
                     </p>
                 </div>
@@ -158,11 +139,12 @@ export const WorkoutRestDock: React.FC = () => {
                     </button>
                 </div>
             </div>
-            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-surface-elevated" aria-hidden="true">
-                <div
-                    className="h-full rounded-full bg-primary-500 transition-[width] duration-300 ease-natural effects-reduced:transition-none"
-                    style={{ width: `${Math.min(100, Math.max(0, percentage))}%` }}
-                />
+            {/* One progress indicator: the rest still to go is the wave, the time already spent is a flat track. */}
+            <div className="mt-2 flex items-center gap-1" aria-hidden="true">
+                {remainingPct > 0 && (
+                    <div className="gl-wave shrink-0 transition-[width] duration-300 ease-natural effects-reduced:transition-none" style={{ width: `${remainingPct}%` }} />
+                )}
+                <div className="h-1 min-w-0 flex-1 rounded-full bg-surface-elevated" />
             </div>
             {(nextExerciseInfo || (showEffortFeedback && currentSourceSet)) && (
                 <div className="mt-2 border-t border-border-subtle/60 pt-2">

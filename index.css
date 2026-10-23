@@ -394,6 +394,21 @@ body {
     }
 }
 
+/* --- Wavy progress (M3 Expressive) ----------------------------------------
+   Elapsed part drawn as a wave via a repeating mask tile (crisp at any width);
+   the remaining part stays a flat track. Static on purpose: looping decorative
+   motion is off in the balanced profile. */
+.gl-wave {
+    height: 0.75rem;
+    background-color: rgb(var(--primary-500));
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='12'%3E%3Cpath d='M0 6 Q5 1.5 10 6 T20 6' fill='none' stroke='black' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") repeat-x left center / 1.25rem 0.75rem;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='12'%3E%3Cpath d='M0 6 Q5 1.5 10 6 T20 6' fill='none' stroke='black' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") repeat-x left center / 1.25rem 0.75rem;
+}
+/* Lime on the warm light surface falls under 3:1 for a graphic; use the theme's dark accent. */
+html.light .gl-wave {
+    background-color: rgb(var(--accent-text));
+}
+
 /* --- A11Y: prefers-reduced-motion --------------------------------------- */
 /* WCAG 2.3.3 — if the user has requested reduced motion at the OS level,
    collapse all animations and transitions to a near-instant cross-fade.
