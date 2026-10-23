@@ -48,7 +48,7 @@ export const CircularTimer: React.FC<{
                 />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="font-mono text-[40px] font-black text-[rgb(var(--text-primary))] tabular-nums tracking-[-0.06em]">
+                <span className="tabular-nums text-[40px] font-black text-[rgb(var(--text-primary))] tabular-nums tracking-[-0.06em]">
                     {formatSeconds(timeLeft)}
                 </span>
                 <span className="text-xs text-muted mt-0.5">

@@ -12,7 +12,7 @@ test.describe('Flat tab history (F8)', () => {
 
         const nav = page.locator('nav[aria-label="Main navigation"]');
         await expect(nav).toBeVisible({ timeout: 15000 });
-        await expect(page.getByText(/Nuevo Mesociclo|New Mesocycle/)).toBeVisible({ timeout: 8000 });
+        await expect(page.getByText(/Nuevo Mesociclo|New Mesocycle/i)).toBeVisible({ timeout: 8000 });
         // Baseline includes the about:blank entry behind the fresh page.
         const baselineLength = await page.evaluate(() => window.history.length);
 
@@ -31,7 +31,7 @@ test.describe('Flat tab history (F8)', () => {
 
         const homeNavBtn = page.locator('nav[aria-label="Main navigation"] button', { hasText: /^Hoy$|^Today$/ });
         await homeNavBtn.click();
-        await expect(page.getByText(/Nuevo Mesociclo|New Mesocycle/)).toBeVisible({ timeout: 10000 });
+        await expect(page.getByText(/Nuevo Mesociclo|New Mesocycle/i)).toBeVisible({ timeout: 10000 });
 
         // Four tab switches push no entries: tabs use replaceState.
         expect(await page.evaluate(() => window.history.length)).toBe(baselineLength);

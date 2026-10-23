@@ -108,7 +108,7 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
                                     style={{ transition: reducedEffects ? 'none' : 'stroke-dashoffset 1s linear' }}
                                 />
                             </svg>
-                            <span className="font-mono text-lg font-black text-[rgb(var(--text-primary))] tabular-nums tracking-tight">
+                            <span className="tabular-nums text-lg font-black text-[rgb(var(--text-primary))] tabular-nums tracking-tight">
                                 {formatSeconds(restTimer.timeLeft)}
                             </span>
                             <Icon name="ChevronUp" size={14} className="text-muted shrink-0" />

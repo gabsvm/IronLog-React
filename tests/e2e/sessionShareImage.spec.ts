@@ -18,7 +18,7 @@ test.describe('U8: share session summary image', () => {
         await page.getByRole('button', { name: /^(Sesión libre|Freestyle session) ·/ }).click();
         await page.getByRole('dialog', { name: /Iniciar entrenamiento|Start training/ })
             .getByRole('button', { name: /Sesión libre|Freestyle/ }).click();
-        const startFree = page.getByRole('dialog', { name: /Nueva Sesión|New Session/ })
+        const startFree = page.getByRole('dialog', { name: /Nueva Sesión|New Session/i })
             .getByRole('button', { name: /Iniciar Sesión Libre|Start Free Session/i });
         await startFree.scrollIntoViewIfNeeded();
         await startFree.click();

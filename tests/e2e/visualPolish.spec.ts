@@ -82,7 +82,7 @@ test.describe('K7 visual polish', () => {
         await expect(sheet.getByText('Mostrar columna RIR')).toBeVisible();
         await expect(sheet.getByText(/Pantalla Encendida|Mostrar Columna RIR/)).toHaveCount(0);
         // Selected segment = lime fill + black text, like the other tabs.
-        const compactBtn = sheet.getByRole('button', { name: /Píldora Compacta|Compact Pill/ });
+        const compactBtn = sheet.getByRole('button', { name: /Píldora Compacta|Compact Pill/i });
         await expect(compactBtn).toBeVisible();
         const colors = await compactBtn.evaluate((el) => {
             const cs = getComputedStyle(el);

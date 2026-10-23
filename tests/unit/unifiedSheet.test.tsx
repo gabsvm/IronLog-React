@@ -103,7 +103,7 @@ describe('N6: unified sheet signed-in coverage (labels the guest e2e cannot see)
         renderSheet();
 
         expect(screen.getAllByText(/Vitalicio/)).toHaveLength(1);
-        expect(screen.getAllByText('Panel Admin')).toHaveLength(1);
+        expect(screen.getAllByText('Panel admin')).toHaveLength(1);
         expect(screen.getAllByText('Gestionar plantillas')).toHaveLength(1);
         sheetState.user = null;
         sheetState.pro = false;

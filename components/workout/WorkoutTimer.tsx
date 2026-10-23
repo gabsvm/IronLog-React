@@ -67,11 +67,11 @@ export const WorkoutTimer: React.FC<{ startTime: number | null; className?: stri
     const elapsed = startTime ? Math.floor((now - startTime) / 1000) : 0;
 
     if (className) {
-        return <p className={`font-mono tabular-nums ${className}`}>{formatWorkoutElapsed(elapsed)}</p>;
+        return <p className={`tabular-nums ${className}`}>{formatWorkoutElapsed(elapsed)}</p>;
     }
 
     return (
-        <div className="chip-reference text-zinc-100 font-mono text-xs shrink-0">
+        <div className="chip-reference text-zinc-100 tabular-nums text-xs shrink-0">
             <Icon name="Clock" size={12} className="text-muted" />
             <span>{formatWorkoutElapsed(elapsed)}</span>
         </div>

@@ -224,7 +224,7 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
             {removedSet && (
                 <div className="flex items-center justify-between px-3 py-1.5 border-t border-border-subtle bg-surface-base/30 text-xs text-muted" role="status">
                     <span>{c.setRemoved}</span>
-                    <button type="button" onClick={handleUndoRemoveSet} className="font-bold uppercase tracking-wider text-primary-400 active:scale-95">{c.undo}</button>
+                    <button type="button" onClick={handleUndoRemoveSet} className="font-bold text-primary-400 active:scale-95">{c.undo}</button>
                 </div>
             )}
 

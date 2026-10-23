@@ -43,8 +43,8 @@ export const MuscleHeatmapGrid: React.FC<MuscleHeatmapGridProps> = ({ volumeData
                             ${heatStyle}
                         `}
                     >
-                        <span className="text-[10px] font-black uppercase tracking-wider text-center leading-tight mb-1 opacity-90">{translated}</span>
-                        <span className="text-xl font-mono font-black">{formatSets(count, lang)}</span>
+                        <span className="mb-1 text-center text-xs font-semibold leading-tight opacity-90">{translated}</span>
+                        <span className="text-xl font-semibold tabular-nums">{formatSets(count, lang)}</span>
                     </div>
                 );
             })}

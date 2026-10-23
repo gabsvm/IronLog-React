@@ -73,7 +73,7 @@ test.describe('Profile import dialogs own only their overlay', () => {
         await upload.setInputFiles({
             name: 'invalid.json', mimeType: 'application/json', buffer: Buffer.from('{broken'),
         });
-        const error = page.getByRole('dialog', { name: /Error de Importación|Import Error/ });
+        const error = page.getByRole('dialog', { name: /Error de Importación|Import Error/i });
         await expect(error).toBeVisible();
         const dismiss = error.getByRole('button', { name: /Entendido|OK/ });
         await expect(dismiss).toBeFocused();
@@ -124,10 +124,10 @@ test.describe('Profile import dialogs own only their overlay', () => {
         });
         const upload = profile.locator('input[type="file"][accept=".json"]');
         await upload.setInputFiles({ name: 'backup.json', mimeType: 'application/json', buffer: Buffer.from(backup) });
-        const confirm = page.getByRole('dialog', { name: /^Importar Datos$|^Import Data$/ });
+        const confirm = page.getByRole('dialog', { name: /^Importar Datos$|^Import Data$/i });
         await expect(confirm).toBeVisible();
         const cancel = confirm.getByRole('button', { name: /^Cancelar$|^Cancel$/ });
-        const restore = confirm.getByRole('button', { name: /^Importar Datos$|^Import Data$/ });
+        const restore = confirm.getByRole('button', { name: /^Importar Datos$|^Import Data$/i });
         await expect(cancel).toBeFocused();
         await page.keyboard.press('Tab');
         await expect(restore).toBeFocused();
@@ -142,7 +142,7 @@ test.describe('Profile import dialogs own only their overlay', () => {
         await expect(confirm).toBeVisible();
         await Promise.all([
             page.waitForEvent('load'),
-            confirm.getByRole('button', { name: /^Importar Datos$|^Import Data$/ }).tap(),
+            confirm.getByRole('button', { name: /^Importar Datos$|^Import Data$/i }).tap(),
         ]);
         await expect(page.locator('nav[aria-label="Main navigation"]')).toBeVisible({ timeout: 15000 });
         // Reload preserves the #profile history entry, so Profile is already

@@ -23,7 +23,7 @@ export const WaterTracker: React.FC<Props> = React.memo(({ waterMl, onAdd, lang 
                     <span className="text-lg" aria-hidden="true">💧</span>
                     <span className="text-sm font-bold text-[rgb(var(--text-primary))]">{w.title}</span>
                 </div>
-                <span className="text-xs font-mono text-[rgb(var(--text-secondary))]">
+                <span className="text-xs tabular-nums text-[rgb(var(--text-secondary))]">
                     {waterMl} <span className="text-muted">/ {WATER_GOAL_ML} ml</span>
                 </span>
             </div>

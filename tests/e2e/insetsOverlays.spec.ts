@@ -230,7 +230,7 @@ test.describe('J1: palette and program editor (wide viewport)', () => {
         await assertControlsClear(page, palette, 'palette');
 
         await palette.getByRole('button', { name: /Editar mi programa|Edit my program/ }).click();
-        await expect(page.getByRole('heading', { name: /Nueva Rutina|New Routine|Editar Rutina Activa|Edit Active Routine/ }).first()).toBeVisible({ timeout: 10000 });
+        await expect(page.getByRole('heading', { name: /Nueva Rutina|New Routine|Editar Rutina Activa|Edit Active Routine/i }).first()).toBeVisible({ timeout: 10000 });
         await assertControlClear(page, page.locator('button[aria-label*="trás" i], button[aria-label*="Back" i]').first(), 'program-back');
         await assertScrollablePhases(page, page.locator('#root'), 'program');
 

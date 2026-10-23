@@ -33,7 +33,7 @@ export const HomeMesoSettingsModal: React.FC<{ state: HomeViewState }> = ({ stat
                                     >
                                         <Icon name="Minus" size={16} />
                                     </button>
-                                    <span className="flex-1 text-center font-mono text-2xl font-bold text-[rgb(var(--text-primary))]">{editWeeks}</span>
+                                    <span className="flex-1 text-center tabular-nums text-2xl font-bold text-[rgb(var(--text-primary))]">{editWeeks}</span>
                                     <button
                                         type="button"
                                         aria-label={`${t.targetWeeks} +`}

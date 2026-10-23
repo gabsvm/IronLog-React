@@ -57,7 +57,7 @@ export const VolumeMuscleList: React.FC<VolumeMuscleListProps> = ({ volumeData, 
                             style={{ width: `${Math.min(100, (count / maxVal) * 100)}%` }}
                         />
                     </div>
-                    <div className={`w-8 text-right text-xs font-mono font-bold ${zone.textColor}`}>{formatSets(count, lang)}</div>
+                    <div className={`w-8 text-right text-xs tabular-nums font-bold ${zone.textColor}`}>{formatSets(count, lang)}</div>
                 </div>
             );
         })}

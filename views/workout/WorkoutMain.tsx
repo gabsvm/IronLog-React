@@ -159,7 +159,7 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                                 >
                                     <Icon name="Link" size={14} className="shrink-0 text-violet-300" />
                                     <span className="min-w-0 flex-1 truncate text-xs text-white">
-                                        <span className="font-bold uppercase tracking-wider text-violet-200">{t.timer.nextInSuperset} · </span>
+                                        <span className="font-medium text-violet-200">{t.timer.nextInSuperset} · </span>
                                         <span className="font-semibold">{String(getTranslated(partnerExercise.name, lang))}</span>
                                     </span>
                                 </button>

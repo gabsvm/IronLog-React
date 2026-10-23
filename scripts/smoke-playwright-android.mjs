@@ -96,7 +96,7 @@ async function runAndroidSmoke() {
     });
     await page.waitForTimeout(800);
 
-    const errorDialog = page.getByRole('dialog', { name: /Error de Importación|Import Error/ });
+    const errorDialog = page.getByRole('dialog', { name: /Error de Importación|Import Error/i });
     await expect(errorDialog).toBeVisible({ timeout: 6000 });
     console.log('1.4 Import error modal opened above Profile');
 

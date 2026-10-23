@@ -258,7 +258,7 @@ export const TabataTimer: React.FC<TabataTimerProps> = React.memo(({ totalRounds
                     <p className="text-xs font-black uppercase tracking-wider text-red-400">
                         Tabata - {totalRounds} {TRANSLATIONS[lang].copy.protocolTimers.rounds}
                     </p>
-                    <p className="font-mono text-xs text-red-600 dark:text-red-300">20s {TRANSLATIONS[lang].copy.protocolTimers.work} / 10s {TRANSLATIONS[lang].copy.protocolTimers.rest}</p>
+                    <p className="tabular-nums text-xs text-red-600 dark:text-red-300">20s {TRANSLATIONS[lang].copy.protocolTimers.work} / 10s {TRANSLATIONS[lang].copy.protocolTimers.rest}</p>
                 </div>
                 <button
                     onClick={start}

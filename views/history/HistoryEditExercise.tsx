@@ -26,7 +26,7 @@ interface Props {
 }
 
 const inputClass = (bad: boolean) =>
-    `h-10 w-full min-w-0 rounded-xl border bg-[rgb(var(--surface-base))] px-2 text-center font-mono text-sm font-bold text-zinc-950 outline-none focus:ring-2 focus:ring-primary-500 dark:text-white ${bad ? 'border-red-500' : 'border-[rgb(var(--border-subtle))]'}`;
+    `h-10 w-full min-w-0 rounded-xl border bg-[rgb(var(--surface-base))] px-2 text-center tabular-nums text-sm font-bold text-zinc-950 outline-none focus:ring-2 focus:ring-primary-500 dark:text-white ${bad ? 'border-red-500' : 'border-[rgb(var(--border-subtle))]'}`;
 
 /** Edit-mode card for one exercise of a finished workout (weight/reps inputs, remove and add set). */
 export const HistoryEditExercise: React.FC<Props> = ({ ex, unit, lang, errors, labels, onChange, onRemove, onAdd }) => {
@@ -43,7 +43,7 @@ export const HistoryEditExercise: React.FC<Props> = ({ ex, unit, lang, errors, l
 
             <div className="space-y-1.5 border-t border-[rgb(var(--border-subtle)/0.55)] px-3 py-2">
                 {canEdit && sets.length > 0 && (
-                    <div className="grid grid-cols-[1.5rem_1fr_1fr_2.25rem] items-center gap-2 pb-1 text-center font-mono text-[10px] font-bold uppercase tracking-wider text-muted">
+                    <div className="grid grid-cols-[1.5rem_1fr_1fr_2.25rem] items-center gap-2 pb-1 text-center tabular-nums text-[10px] font-bold uppercase tracking-wider text-muted">
                         <span>#</span>
                         <span>{unitLabel(unit).toUpperCase()}</span>
                         <span>REPS</span>
@@ -55,7 +55,7 @@ export const HistoryEditExercise: React.FC<Props> = ({ ex, unit, lang, errors, l
                     const bad = errors[key];
                     if (!canEdit || !isEditableSet(ex, set)) {
                         return (
-                            <div key={set.id} className="flex min-h-10 items-center gap-3 px-1 font-mono text-xs font-bold text-zinc-500">
+                            <div key={set.id} className="flex min-h-10 items-center gap-3 px-1 tabular-nums text-xs font-bold text-zinc-500">
                                 <span className="w-6 text-center text-[10px]">{index + 1}</span>
                                 <span>{set.duration ? String(set.duration) : '—'}{set.distance ? ` · ${set.distance} km` : ''}</span>
                             </div>

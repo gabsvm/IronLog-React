@@ -24,7 +24,7 @@ test.describe('Rest pill touch targets (F3)', () => {
         await expect(freestyleOption).toBeVisible({ timeout: 6000 });
         await freestyleOption.click();
 
-        const startFreeBtn = page.getByRole('dialog', { name: /Nueva Sesión|New Session/ })
+        const startFreeBtn = page.getByRole('dialog', { name: /Nueva Sesión|New Session/i })
             .getByRole('button', { name: /Iniciar Sesión Libre|Start Free Session/i });
         await expect(startFreeBtn).toBeVisible({ timeout: 8000 });
         await startFreeBtn.scrollIntoViewIfNeeded();

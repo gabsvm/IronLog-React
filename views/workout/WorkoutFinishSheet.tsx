@@ -110,7 +110,7 @@ export const WorkoutFinishSheet: React.FC<{ state: WorkoutViewState }> = ({ stat
                                         // against the confirm's fresh entry.
                                         setShowDiscardConfirm(true);
                                     }}
-                                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-400 hover:text-red-300 transition-colors uppercase tracking-wider active:scale-95"
+                                    className="inline-flex min-h-[44px] items-center gap-1.5 text-sm font-semibold text-red-700 transition-colors hover:text-red-600 active:scale-95 dark:text-red-400 dark:hover:text-red-300"
                                 >
                                     <Icon name="Trash2" size={13} />
                                     {t.discardSession}

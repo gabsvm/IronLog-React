@@ -72,7 +72,7 @@ describe('Task U4: Warmup button eligibility and weight communication', () => {
             />
         );
 
-        const warmupBtn = screen.getByLabelText(/Calentamiento Inteligente: Ingresa el peso en la serie 1/i);
+        const warmupBtn = screen.getByLabelText(/Calentamiento inteligente: Ingresa el peso en la serie 1/i);
         expect(warmupBtn).toBeDefined();
         expect((warmupBtn as HTMLButtonElement).disabled).toBe(true);
 
@@ -98,7 +98,7 @@ describe('Task U4: Warmup button eligibility and weight communication', () => {
             />
         );
 
-        const warmupBtn = screen.getByTitle('Calentamiento Inteligente');
+        const warmupBtn = screen.getByTitle('Calentamiento inteligente');
         expect(warmupBtn).toBeDefined();
         expect((warmupBtn as HTMLButtonElement).disabled).toBe(false);
 

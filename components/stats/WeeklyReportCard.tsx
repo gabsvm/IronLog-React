@@ -39,11 +39,11 @@ export const WeeklyReportCard: React.FC<WeeklyReportCardProps> = ({ report, week
     return (
         <div className="glass-card rounded-[1.7rem] border border-white/6 p-5 shadow-md">
             <div className="mb-4 flex items-center justify-between gap-3">
-                <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-500">
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-[rgb(var(--text-primary))]">
                     <Icon name="Calendar" size={14} />
                     {w.title}
                 </h3>
-                <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">
+                <span className="text-xs font-medium text-muted">
                     {weekLabel}
                 </span>
             </div>
@@ -95,7 +95,7 @@ export const WeeklyReportCard: React.FC<WeeklyReportCardProps> = ({ report, week
                         <div className="mt-4 space-y-1.5">
                             {report.lowMuscles.length > 0 && (
                                 <p className="text-xs text-zinc-400">
-                                    <span className="font-bold uppercase tracking-wide text-yellow-800 dark:text-yellow-400">{w.low}: </span>
+                                    <span className="font-semibold text-yellow-800 dark:text-yellow-400">{w.low}: </span>
                                     {report.muscles
                                         .filter((m) => m.sets > 0 && m.zone === 'MV')
                                         .map((m) => `${muscleName(m.muscle)} ${m.sets}`)
@@ -104,7 +104,7 @@ export const WeeklyReportCard: React.FC<WeeklyReportCardProps> = ({ report, week
                             )}
                             {report.highMuscles.length > 0 && (
                                 <p className="text-xs text-zinc-400">
-                                    <span className="font-bold uppercase tracking-wide text-red-700 dark:text-red-400">{w.high}: </span>
+                                    <span className="font-semibold text-red-700 dark:text-red-400">{w.high}: </span>
                                     {report.muscles
                                         .filter((m) => m.zone === 'MRV')
                                         .map((m) => `${muscleName(m.muscle)} ${m.sets}`)

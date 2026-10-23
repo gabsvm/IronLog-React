@@ -152,7 +152,7 @@ export const WorkoutRestDock: React.FC = () => {
                         <div className="flex items-center gap-1.5 px-1 pb-1.5 text-left">
                             <Icon name="ArrowRight" size={13} className="shrink-0 text-primary-400" />
                             <p className="min-w-0 flex-1 truncate text-xs text-white">
-                                <span className="font-bold uppercase tracking-wider text-muted">{nextExerciseInfo.category} · </span>
+                                <span className="font-medium text-muted">{nextExerciseInfo.category} · </span>
                                 <span className="font-semibold">{nextExerciseInfo.name}{nextExerciseInfo.target ? ` · ${nextExerciseInfo.target}` : ''}</span>
                             </p>
                         </div>

@@ -32,7 +32,7 @@ test.describe('H2: deep-view Back returns to the previous tab', () => {
         await palette.getByRole('button', { name: /Editar mi programa|Edit my program/ }).click();
 
         // 3. Program editor is showing.
-        await expect(page.getByRole('heading', { name: /Nueva Rutina|New Routine|Editar Rutina Activa|Edit Active Routine/ }).first()).toBeVisible({ timeout: 10000 });
+        await expect(page.getByRole('heading', { name: /Nueva Rutina|New Routine|Editar Rutina Activa|Edit Active Routine/i }).first()).toBeVisible({ timeout: 10000 });
 
         // 4. Back returns to Progress — not Home, not out of the app.
         await page.goBack();

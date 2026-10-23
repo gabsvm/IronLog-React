@@ -45,14 +45,14 @@ describe('U5: Friendly text, sync sections, and error handling', () => {
         const sections: DirtySyncSection[] = ['activeMeso', 'nutritionLogs', 'exercises'];
         
         const mappedEs = sections.map(sec => ((TRANSLATIONS.es as any).syncSections?.[sec]) || sec);
-        expect(mappedEs).toEqual(['Mesociclo Activo', 'Registros de Nutrición', 'Biblioteca de Ejercicios']);
+        expect(mappedEs).toEqual(['Mesociclo activo', 'Registros de nutrición', 'Biblioteca de ejercicios']);
 
         const mappedEn = sections.map(sec => ((TRANSLATIONS.en as any).syncSections?.[sec]) || sec);
         expect(mappedEn).toEqual(['Active Mesocycle', 'Nutrition Logs', 'Exercise Library']);
     });
 
     it('has translated setTypes and smartWarmup tutorial strings', () => {
-        expect((TRANSLATIONS.es.tutorial as any).setTypesTitle).toBe('Tipos de Serie');
+        expect((TRANSLATIONS.es.tutorial as any).setTypesTitle).toBe('Tipos de serie');
         expect((TRANSLATIONS.en.tutorial as any).setTypesTitle).toBe('Set Types');
         expect((TRANSLATIONS.es.tutorial as any).setTypesText).toContain('tipo de serie');
         expect((TRANSLATIONS.en.tutorial as any).setTypesText).toContain('set type');
@@ -65,7 +65,7 @@ describe('U5: Friendly text, sync sections, and error handling', () => {
         expect((TRANSLATIONS.en as any).undo).toBe('Undo');
         expect((TRANSLATIONS.es as any).forceSyncSuccess).toBeDefined();
         expect((TRANSLATIONS.en as any).forceSyncError).toBeDefined();
-        expect((TRANSLATIONS.es as any).forceSyncTitle).toBe('Forzar Sincronización');
+        expect((TRANSLATIONS.es as any).forceSyncTitle).toBe('Forzar sincronización');
         expect((TRANSLATIONS.en as any).forceSyncTitle).toBe('Force Sync');
     });
 });
