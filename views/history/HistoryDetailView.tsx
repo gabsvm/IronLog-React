@@ -4,7 +4,7 @@ import { HistoryEditExercise } from './HistoryEditExercise';
 import { buildEditedLog, draftAddSet, draftRemoveSet, draftSetNote, draftUpdateSet, toDraft, type EditErrors } from '../../utils/historyEdit';
 import { Icon } from '../../components/ui/Icon';
 import { formatDate, formatDurationShort, getTranslated } from '../../utils';
-import { toDisplay, unitLabel } from '../../utils/units';
+import { formatWeight, toDisplay, unitLabel } from '../../utils/units';
 import { TRANSLATIONS } from '../../constants/translations';
 import { formatInteger } from '../../utils/i18n';
 import { AppContext } from '../../context/app/appContexts';
@@ -223,7 +223,7 @@ export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat
                                                         </>
                                                     ) : (
                                                         <>
-                                                            <span className="text-zinc-950 dark:text-white">{toDisplay(Number(set.weight || 0), unit)} {weightSuffix}</span>
+                                                            <span className="text-zinc-950 dark:text-white">{formatWeight(Number(set.weight || 0), unit, lang)} {weightSuffix}</span>
                                                             <span className="mx-2 text-zinc-500">×</span>
                                                             <span className="text-zinc-950 dark:text-white">{set.reps || 0}</span>
                                                         </>

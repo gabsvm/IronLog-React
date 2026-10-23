@@ -166,9 +166,6 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
             <div className="flex-1 overflow-y-auto scroll-container px-4 py-5 sm:px-6">
                 {/* Closing moment; no fabricated metrics or rewards. */}
                 <section className="mx-auto w-full max-w-sm rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-5 text-center">
-                    <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated))] text-accent">
-                        <Icon name="Trophy" size={36} />
-                    </div>
                     <div>
                         <span className={`inline-block px-2.5 py-1 rounded-lg text-xs font-semibold border mb-2 ${badge.color}`}>
                             {badge.label}
@@ -178,30 +175,28 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
                         {TRANSLATIONS[lang].copy.sessionSummary.workoutComplete}
                     </h1>
                     <p className="mt-2 text-[rgb(var(--text-secondary))] font-medium text-sm">
-                        {log.name}
+                        {/* The badge already names the week; drop the "4 • " prefix from the session name. */}
+                        {String(log.name || '').replace(/^\d+\s*[•·-]\s*/, '')}
                     </p>
                 </section>
 
                 {/* Stats Grid */}
                 <div className="mx-auto mt-4 grid w-full max-w-sm grid-cols-2 gap-3">
-                    <div className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] flex min-h-[120px] flex-col items-center justify-center p-4 text-center">
-                        <Icon name="Clock" size={18} className="text-blue-700 dark:text-blue-400 mb-1.5" />
+                    <div className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] flex flex-col items-center justify-center p-4 text-center">
                         <div className="text-2xl font-semibold tabular-nums tracking-tight text-[rgb(var(--text-primary))]">{formatDurationShort(log.duration)}</div>
                         <div className="mt-1 text-xs font-semibold text-muted">
                             {TRANSLATIONS[lang].copy.sessionSummary.time}
                         </div>
                     </div>
 
-                    <div className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] flex min-h-[120px] flex-col items-center justify-center p-4 text-center">
-                        <Icon name="CheckCircle" size={18} className="text-green-700 dark:text-green-400 mb-1.5" />
+                    <div className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] flex flex-col items-center justify-center p-4 text-center">
                         <div className="text-2xl font-semibold tabular-nums tracking-tight text-[rgb(var(--text-primary))]">{stats.sets}</div>
                         <div className="mt-1 text-xs font-semibold text-muted">
                             {TRANSLATIONS[lang].copy.sessionSummary.sets}
                         </div>
                     </div>
 
-                    <div className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] col-span-2 flex min-h-[130px] flex-col items-center justify-center p-4 text-center">
-                        <Icon name="Dumbbell" size={18} className="text-amber-700 dark:text-amber-400 mb-1.5" />
+                    <div className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] col-span-2 flex flex-col items-center justify-center p-4 text-center">
                         <div className="text-2xl font-semibold tabular-nums tracking-tight text-[rgb(var(--text-primary))]">{formatInteger(toDisplay(stats.volume, unit), lang)} {unitLabel(unit).toLowerCase()}</div>
                         <div className="mt-1 text-xs font-semibold text-muted">
                             {TRANSLATIONS[lang].copy.sessionSummary.totalVolume}

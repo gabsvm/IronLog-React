@@ -8,7 +8,7 @@ import { Button } from '../components/ui/Button';
 import { usePro } from '../hooks/usePro';
 import { useStore } from '../lib/store';
 import { Log, WeightUnit } from '../types';
-import { resolveWeightUnit, toDisplay, unitLabel } from '../utils/units';
+import { formatWeight, resolveWeightUnit, unitLabel } from '../utils/units';
 import { buildUndoLog } from '../utils/historyEdit';
 import { uid } from '../utils';
 import { buildTrainingCsv } from '../services/trainingCsv';
@@ -72,19 +72,15 @@ const VirtuosoFooter = ({ context }: { context?: HistoryVirtuosoContext }) => {
     if (!context || !context.hasLockedLogs) return <div className="h-24" />;
     return (
         <div className="px-4 pb-28 pt-4">
-            <div className="rounded-2xl border border-dashed border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised)/0.7)] p-6 text-center">
-                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-zinc-200 text-zinc-400 dark:bg-zinc-800">
-                    <Icon name="Lock" size={24} />
-                </div>
-                <h4 className="mb-2 font-bold text-zinc-900 dark:text-white">
-                    {pickLang(context.lang, { es: 'Historial bloqueado', en: 'History Locked' })}
-                </h4>
-                <p className="mx-auto mb-6 max-w-[220px] text-xs text-zinc-500">
-                    {pickLang(context.lang, { es: 'Los entrenamientos anteriores están archivados. Desbloquea Premium para acceder a todo tu historial de entrenamiento.', en: 'Older workouts are archived. Unlock Premium to access your full training history.' })}
-                </p>
-                <Button size="sm" onClick={() => context.checkPro('history')} className="mx-auto bg-zinc-900 text-white dark:bg-white dark:text-black">
+            {/* Same compact unlock row as ProLock; the gate itself is unchanged. */}
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-dashed border-[rgb(var(--border-subtle))] px-3 py-2">
+                <span className="inline-flex min-w-0 items-center gap-2 text-sm text-muted">
+                    <Icon name="Lock" size={16} className="shrink-0" />
+                    {pickLang(context.lang, { es: 'Historial bloqueado', en: 'History locked' })}
+                </span>
+                <button type="button" onClick={() => context.checkPro('history')} className="gl-quiet shrink-0">
                     {pickLang(context.lang, { es: 'Desbloquear PRO', en: 'Unlock PRO' })}
-                </Button>
+                </button>
             </div>
         </div>
     );
@@ -109,7 +105,7 @@ const HistoryCard = memo(({ log, lang, id, onOpen, unit = 'kg' }: HistoryCardPro
             return { name: getTranslated(ex.name, lang), value: distance > 0 ? `${distance.toFixed(1)} km` : `${completed.length} ${pickLang(lang, { es: 'series', en: 'sets' })}` };
         }
         const best = completed.reduce((current, set) => Number(set.weight || 0) > Number(current.weight || 0) ? set : current, completed[0]);
-        return { name: getTranslated(ex.name, lang), value: `${toDisplay(Number(best.weight || 0), unit)} ${unitLabel(unit).toLowerCase()} × ${best.reps || 0}` };
+        return { name: getTranslated(ex.name, lang), value: `${formatWeight(Number(best.weight || 0), unit, lang)} ${unitLabel(unit).toLowerCase()} × ${best.reps || 0}` };
     }).filter(Boolean), [log.exercises, lang, unit]);
 
     return (

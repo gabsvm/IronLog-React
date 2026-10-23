@@ -22,7 +22,7 @@ export const StatsOverviewTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
                         />
                     )}
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <div id="tut-radar-chart" className="premium-theme-panel flex min-h-[320px] h-full flex-col overflow-hidden p-5 shadow-md">
+                        <div id="tut-radar-chart" className="premium-theme-panel flex h-full flex-col overflow-hidden p-5 shadow-md">
                             <h3 className="mb-4 flex items-center gap-2 text-sm font-bold tracking-tight text-[rgb(var(--text-primary))]">
                                 <Icon name="Activity" size={14} /> {t.statsBalance}
                             </h3>
@@ -35,7 +35,7 @@ export const StatsOverviewTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
                             </div>
                         </div>
 
-                        <div className="premium-theme-panel flex min-h-[320px] h-full flex-col p-5 shadow-md">
+                        <div className="premium-theme-panel flex h-full flex-col p-5 shadow-md">
                             <h3 className="mb-4 flex items-center gap-2 text-sm font-bold tracking-tight text-[rgb(var(--text-primary))]">
                                 <Icon name="Layers" size={14} /> {t.statsIntensity}
                             </h3>
@@ -90,7 +90,6 @@ export const StatsOverviewTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
                     </div>
 
                     <div className="premium-theme-panel relative overflow-hidden p-5 shadow-md">
-                        <div className="pointer-events-none absolute right-0 top-0 h-64 w-64 rounded-full bg-primary-500/5 blur-[80px]"></div>
                         <div className="relative z-10 mb-5 flex items-center justify-between">
                             <h3 className="flex items-center gap-2 text-sm font-bold tracking-tight text-[rgb(var(--text-primary))]">
                                 <Icon name="Grid3x3" size={14} />

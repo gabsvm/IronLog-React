@@ -2,7 +2,6 @@
 import React, { useState, Suspense } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Icon } from '../ui/Icon';
-import { Button } from '../ui/Button';
 import { useApp } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants/translations';
 
@@ -11,10 +10,13 @@ const PaywallModal = React.lazy(() => import('./PaywallModal').then(m => ({ defa
 interface ProLockProps {
     children: React.ReactNode;
     featureName: string;
-    blur?: boolean;
 }
 
-export const ProLock: React.FC<ProLockProps> = ({ children, featureName, blur = true }) => {
+/**
+ * Free users get a compact unlock row instead of the feature: the card title
+ * already names it, and skipping the hidden chart avoids rendering work nobody sees.
+ */
+export const ProLock: React.FC<ProLockProps> = ({ children, featureName }) => {
     const { subscription } = useAuth();
     const { lang } = useApp();
     const [showModal, setShowModal] = useState(false);
@@ -24,22 +26,16 @@ export const ProLock: React.FC<ProLockProps> = ({ children, featureName, blur = 
     }
 
     return (
-        <div className="relative overflow-hidden rounded-xl">
-            <div className={`${blur ? 'blur-sm pointer-events-none select-none opacity-50' : ''}`}>
-                {children}
-            </div>
-            
-            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-zinc-100/50 dark:bg-black/50 backdrop-blur-[2px]">
-                <div className="bg-white dark:bg-zinc-900 p-4 rounded-2xl shadow-xl text-center border border-zinc-200 dark:border-white/10 max-w-[200px]">
-                    <div className="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-2 text-white shadow-lg shadow-yellow-500/30">
-                        <Icon name="Lock" size={18} />
-                    </div>
-                    <h4 className="font-bold text-sm text-zinc-900 dark:text-white mb-2">{featureName}</h4>
-                    <Button size="sm" onClick={() => setShowModal(true)} className="text-xs bg-zinc-900 dark:bg-white text-white dark:text-black">
-                        {TRANSLATIONS[lang].copy.paywallModal.unlockPro}
-                    </Button>
-                </div>
-            </div>
+        <div className="flex w-full items-center justify-between gap-3 rounded-xl border border-dashed border-[rgb(var(--border-subtle))] px-3 py-2">
+            <Icon name="Lock" size={16} className="shrink-0 text-muted" />
+            <button
+                type="button"
+                onClick={() => setShowModal(true)}
+                aria-label={`${TRANSLATIONS[lang].copy.paywallModal.unlockPro}: ${featureName}`}
+                className="gl-quiet"
+            >
+                {TRANSLATIONS[lang].copy.paywallModal.unlockPro}
+            </button>
 
             {showModal && (
                 <Suspense fallback={null}>

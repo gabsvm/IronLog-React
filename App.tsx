@@ -202,6 +202,16 @@ const AppContent = () => {
     // a merge against the seed (a) missed real duplicates and (b) got overwritten by the
     // stored value. We rebuild the list keyed by id, which is idempotent AND self-heals
     // any pre-existing duplicate ids already persisted from the previous buggy version.
+    // Warm the root tabs and the workout chunk once the app is idle, so the first
+    // tap on a tab doesn't pay for parsing its module (measured on Android WebView).
+    useEffect(() => {
+        if (isAppLoading) return;
+        // Generous timeout: this must never compete with first render or input.
+        return scheduleWhenIdle(() => {
+            for (const view of ['routine', 'progress', 'diary', 'workout'] as const) void VIEW_LOADERS[view]?.();
+        }, 4000);
+    }, [isAppLoading]);
+
     const mergedExtrasRef = useRef(false);
     useEffect(() => {
         if (isAppLoading || mergedExtrasRef.current) return;
