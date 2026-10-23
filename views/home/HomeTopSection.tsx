@@ -35,7 +35,7 @@ export const HomeTopSection: React.FC<{ state: HomeViewState }> = ({ state }) =>
                     }}
                     className="flex min-w-0 flex-1 items-center gap-3 text-left"
                 >
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[rgb(var(--primary-500))] text-[rgb(var(--accent-ink))] shadow-[0_2px_12px_rgba(212,252,56,0.35)]">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[rgb(var(--primary-500))]/15 border border-[rgb(var(--primary-500))]/30 text-[rgb(var(--accent-text))] shadow-sm transition-colors duration-200">
                         <Icon name="Dumbbell" size={20} strokeWidth={2.75} />
                     </div>
                     <div className="min-w-0 flex-1">
@@ -93,14 +93,14 @@ export const HomeTopSection: React.FC<{ state: HomeViewState }> = ({ state }) =>
                             aria-pressed={isSelected}
                             className={`flex min-w-[96px] flex-1 shrink-0 flex-col items-center justify-center rounded-2xl py-2.5 px-3 transition-all duration-200 ${
                                 isSelected
-                                    ? 'bg-[rgb(var(--primary-500))] text-[rgb(var(--accent-ink))] shadow-[0_4px_16px_rgba(212,252,56,0.35)] scale-[1.02]'
+                                    ? 'border-2 border-[rgb(var(--primary-500))] bg-[rgb(var(--primary-500))]/18 text-[rgb(var(--text-primary))] shadow-[0_4px_16px_rgba(var(--primary-500),0.22)] scale-[1.02]'
                                     : 'border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base))] text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--surface-raised))]'
                             }`}
                         >
-                            <span className={`text-[11px] font-bold uppercase tracking-wider ${isSelected ? 'text-[rgb(var(--accent-ink))]' : 'text-muted'}`}>
+                            <span className={`text-[11px] font-bold uppercase tracking-wider ${isSelected ? 'text-[rgb(var(--accent-text))] font-black' : 'text-muted'}`}>
                                 {pickLang(lang, { es: 'Día', en: 'Day' })} {idx + 1}
                             </span>
-                            <span className={`mt-0.5 truncate max-w-full text-xs font-semibold ${isSelected ? 'text-[rgb(var(--accent-ink))]' : 'text-[rgb(var(--text-primary))]'}`}>
+                            <span className={`mt-0.5 truncate max-w-full text-xs font-semibold ${isSelected ? 'text-[rgb(var(--text-primary))] font-bold' : 'text-[rgb(var(--text-primary))]'}`}>
                                 {dayName}
                             </span>
                         </button>

@@ -27,7 +27,7 @@ export const HomeHeroCard: React.FC<{ state: HomeViewState }> = ({ state }) => {
             id="tut-up-next"
             className="relative overflow-hidden rounded-[26px] border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base))] p-5 sm:p-6 shadow-xl"
             style={{
-                backgroundImage: 'radial-gradient(circle at 85% 15%, rgba(212, 252, 56, 0.14) 0%, rgba(18, 21, 27, 0) 65%)',
+                backgroundImage: 'radial-gradient(circle at 85% 15%, rgba(var(--primary-500), 0.08) 0%, rgba(18, 21, 27, 0) 65%)',
             }}
         >
             {/* Header: Día X · Nombre + Arrow */}
@@ -120,7 +120,7 @@ export const HomeHeroCard: React.FC<{ state: HomeViewState }> = ({ state }) => {
                     data-testid="hero-start-workout"
                     id="hero-start-workout"
                     onClick={() => isSelectedActive && onResumeSession ? onResumeSession() : startSession(selectedDayIdx)}
-                    className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-full bg-[rgb(var(--primary-500))] px-6 text-base font-extrabold text-[rgb(var(--accent-ink))] shadow-[0_6px_22px_rgba(212,252,56,0.38)] transition-all duration-200 active:scale-[0.98] hover:brightness-105"
+                    className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-full bg-[rgb(var(--primary-500))] px-6 text-base font-extrabold text-[rgb(var(--accent-ink))] shadow-[0_8px_24px_rgba(var(--primary-500),0.32)] transition-all duration-200 active:scale-[0.98] hover:brightness-105"
                 >
                     <Icon name={isSelectedActive ? 'Play' : isDone ? 'Repeat' : 'Play'} size={20} strokeWidth={2.8} />
                     <span>{isSelectedActive ? ui.resumeTraining : isDone ? ui.repeatTraining : ui.startTraining}</span>
