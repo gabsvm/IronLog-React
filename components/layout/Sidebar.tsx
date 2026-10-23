@@ -1,7 +1,6 @@
 import React from 'react';
 import { useAppPreferences } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
-import { usePro } from '../../hooks/usePro';
 import { useStore } from '../../lib/store';
 import { TRANSLATIONS } from '../../constants';
 import { Icon } from '../ui/Icon';
@@ -24,7 +23,6 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ view, onNavigate, onOpenProfile, onOpenCommandPalette }) => {
     const { lang } = useAppPreferences();
     const { user } = useAuth();
-    const { isPro } = usePro();
     const hasActiveSession = useStore((state) => Boolean(state.activeSession));
     const t = TRANSLATIONS[lang];
     return (
@@ -82,7 +80,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ view, onNavigate, onOpenProfil
             </div>
             <div className="mt-auto pt-4">
                 <button type="button" onClick={onOpenProfile} aria-label={t.openProfile} className="flex min-h-11 w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-surface-raised">
-                    <Avatar email={user?.email} photoURL={(user as any)?.photoURL} isPro={isPro} />
+                    <Avatar email={user?.email} photoURL={(user as any)?.photoURL} />
                     <span className="min-w-0 flex-1 truncate text-xs font-semibold text-muted">
                         {user?.email ?? t.openProfile}
                     </span>

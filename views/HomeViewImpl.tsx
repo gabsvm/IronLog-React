@@ -18,13 +18,12 @@ const PlanActionsSheet = React.lazy(() => import('../components/home/PlanActions
 const HomeMesoSettingsModal = React.lazy(() => import('./home/HomeMesoSettingsModal').then(m => ({ default: m.HomeMesoSettingsModal })));
 const ProgramHub = React.lazy(() => import('../components/programs/ProgramHub').then((module) => ({ default: module.ProgramHub })));
 const TutorialOverlay = React.lazy(() => import('../components/ui/TutorialOverlay').then(m => ({ default: m.TutorialOverlay })));
-const PaywallModal = React.lazy(() => import('../components/pro/PaywallModal').then(m => ({ default: m.PaywallModal })));
 const ConfirmModal = React.lazy(() => import('../components/ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
 const TemplateSelector = React.lazy(() => import('./home/TemplateSelector').then(m => ({ default: m.TemplateSelector })));
 
 export const HomeView: React.FC<HomeViewProps> = (props) => {
     const state = useHomeViewState(props);
-    const { onEditProgram, logs, lang, tutorialProgress, markTutorialSeen, config, activeMeso, t, h, showPaywall, setShowPaywall, featureAttempted, showCompleteModal, setShowCompleteModal, showMesoSettings, setShowMesoSettings, showPlanActions, setShowPlanActions, showTemplateSelector, setShowTemplateSelector, handleOpenTemplateSelector, handleSelectTemplate, handleSelectProgram, handleCreateCustom, personalTemplates, globalTemplates, skipConfirmationId, setSkipConfirmationId, showGuidelines, setShowGuidelines, transitionBlock, showKongHub, setShowKongHub, closeTransition, currentGuidelineImages, safeProgram, safeLogs, confirmSkip, handleFinishMeso, handleFinishWeek, homeTutorialSteps } = state;
+    const { onEditProgram, logs, lang, tutorialProgress, markTutorialSeen, config, activeMeso, t, h, showCompleteModal, setShowCompleteModal, showMesoSettings, setShowMesoSettings, showPlanActions, setShowPlanActions, showTemplateSelector, setShowTemplateSelector, handleOpenTemplateSelector, handleSelectTemplate, handleSelectProgram, handleCreateCustom, personalTemplates, globalTemplates, skipConfirmationId, setSkipConfirmationId, showGuidelines, setShowGuidelines, transitionBlock, showKongHub, setShowKongHub, closeTransition, currentGuidelineImages, safeProgram, safeLogs, confirmSkip, handleFinishMeso, handleFinishWeek, homeTutorialSteps } = state;
 
     if (!activeMeso) {
         return <><HomeEmptyState state={state} /><TemplateChangeConfirmation lang={lang} confirmation={state.templateChangeConfirmation} /></>;
@@ -63,12 +62,6 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
             </Suspense>
 
             {/* --- MODALS --- */}
-
-            {showPaywall && (
-                <Suspense fallback={null}>
-                    <PaywallModal onClose={() => setShowPaywall(false)} feature={featureAttempted} />
-                </Suspense>
-            )}
 
             {/* Guidelines Modal */}
             {showGuidelines && (

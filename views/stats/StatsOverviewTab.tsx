@@ -4,7 +4,6 @@ import { SymmetryRadar } from '../../components/stats/SymmetryRadar';
 import { MuscleHeatmapGrid } from '../../components/stats/MuscleHeatmapGrid';
 import { WeeklyReportCard } from '../../components/stats/WeeklyReportCard';
 import { Icon } from '../../components/ui/Icon';
-import { ProLock } from '../../components/pro/ProLock';
 import { Doughnut } from 'react-chartjs-2';
 import type { StatsData } from './useStatsData';
 
@@ -27,11 +26,9 @@ export const StatsOverviewTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
                                 <Icon name="Activity" size={14} /> {t.statsBalance}
                             </h3>
                             <div className="relative flex flex-1 items-center justify-center">
-                                <ProLock featureName={t.statsBalance}>
                                     <div className="h-64 w-full">
                                         <SymmetryRadar volumeData={rawMuscleCounts} />
                                     </div>
-                                </ProLock>
                             </div>
                         </div>
 
@@ -40,7 +37,6 @@ export const StatsOverviewTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
                                 <Icon name="Layers" size={14} /> {t.statsIntensity}
                             </h3>
                             <div className="relative flex flex-1 flex-col items-center justify-center">
-                                <ProLock featureName={t.statsIntensity}>
                                     {hasData ? (
                                         <div className="flex w-full flex-col items-center">
                                             <div className="relative h-48 w-48">
@@ -84,7 +80,6 @@ export const StatsOverviewTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
                                             <span className="text-xs font-medium text-muted">{t.statsNoData}</span>
                                         </div>
                                     )}
-                                </ProLock>
                             </div>
                         </div>
                     </div>

@@ -9,6 +9,7 @@ import { AppearanceSection } from './sections/AppearanceSection';
 import { DataSection } from './sections/DataSection';
 import { AdvancedSection } from './sections/AdvancedSection';
 import { DangerSection } from './sections/DangerSection';
+import { ProjectSection } from './sections/ProjectSection';
 import { useSyncStatusText } from './sections/useSyncStatusText';
 
 export type ProfileSection = 'account' | 'body' | 'training' | 'appearance' | 'data' | 'advanced' | 'danger';
@@ -89,7 +90,10 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
                 {/* 6. Avanzado (plegable) */}
                 <AdvancedSection syncStatusText={syncStatusText} />
 
-                {/* 7. Zona peligrosa */}
+                {/* 7. Proyecto open source: código fuente y apoyo */}
+                <ProjectSection />
+
+                {/* 8. Zona peligrosa */}
                 <DangerSection onClose={onClose} onReset={onReset} />
             </div>
         </Sheet>

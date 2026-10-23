@@ -21,8 +21,12 @@ sustituyen a las de las secciones siguientes donde choquen:
   reporte semanal neutra mientras la semana está abierta.
 - **Diario / Nutrición / Perfil / hojas:** títulos duplicados como sr-only; un solo «Agregar comida»;
   sin descripciones de ayuda salvo estados deshabilitados o advertencias de comportamiento real.
-- **Bloqueos PRO:** fila compacta (candado + «Desbloquear PRO»); no se renderiza el contenido oculto.
-  Gate, paywall y textos comerciales sin cambios.
+- **Sin PRO (2026-10-23):** el propietario decidió publicar GainsLab como open source (AGPL-3.0)
+  financiado por donaciones. Se eliminan paywall, `usePro`, `ProLock`, el límite de 7 días del
+  historial y todos los candados; la sincronización en la nube queda libre para cualquier cuenta.
+  Pendiente (fase 2): retirar el sistema de suscripción del servidor (`users/{uid}/data/subscription`,
+  `entitlementService`, aviso de suscripción retenida al borrar la cuenta) una vez resuelto qué pasa
+  con quienes pagaron PRO.
 - **Orden y formato:** el Diario ordena por fecha descendente; los pesos usan el locale de la app.
 - **Rendimiento:** precarga en reposo de Rutina, Progreso, Diario y Entreno (timeout 4 s).
 

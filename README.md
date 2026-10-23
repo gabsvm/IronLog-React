@@ -1,20 +1,49 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# GainsLab
 
-# Run and deploy your AI Studio app
+Diario de entrenamiento de fuerza e hipertrofia, gratuito y de código abierto.
+PWA para web y app Android (Capacitor), en español e inglés, que funciona sin conexión.
 
-This contains everything you need to run your app locally.
+## Qué hace
 
-View your app in AI Studio: https://ai.studio/apps/drive/1rbus8u3HQKWF9kEB6RUJeU_skjtjYrSA
+- **Registro de series** con peso, repeticiones y RIR, superseries, calentamientos y protocolos
+  (myo-reps, drop sets, cluster, rest-pause, EMOM, top/back-off), temporizador de descanso y
+  sugerencias de progresión basadas en tus sesiones anteriores.
+- **Rutinas y mesociclos**: plantillas, editor de rutinas, semanas y descargas, programa KONG.
+- **Progreso**: series de trabajo por semana, mejores marcas, volumen por músculo y constancia.
+- **Diario**: historial completo con edición, importación CSV (Hevy, Strong) y exportación CSV/JSON.
+- **Nutrición y cuerpo**: calorías y macros, agua, cardio, peso y medidas.
+- **Tus datos**: todo se guarda en el dispositivo; la cuenta y la sincronización en la nube son opcionales.
 
-## Run Locally
+Todas las funciones son gratuitas. No hay planes de pago.
 
-**Prerequisites:**  Node.js
+## Desarrollo
 
+Requisitos: Node.js 20+ (para Android, JDK 21 y Android SDK).
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+```bash
+npm install
+npm run dev
+```
+
+La app funciona sin backend. Para cuentas y sincronización, copia `.env.example` a `.env.local`
+y rellena la configuración de tu propio proyecto de Firebase (Auth + Firestore). Las reglas están
+en `firestore.rules`.
+
+Comprobaciones:
+
+```bash
+npm run verify                                   # lint, tipos, build, tests unitarios, KONG y bundle
+node node_modules/@playwright/test/cli.js test   # E2E sobre el build
+npm run test:visual                              # regresión visual
+```
+
+APK de depuración: `npm run android-debug-apk`.
+
+## Apoyar el proyecto
+
+GainsLab se mantiene con donaciones. El enlace aparecerá aquí y en Perfil → Proyecto.
+
+## Licencia
+
+[GNU AGPL-3.0](LICENSE). Puedes usar, estudiar, modificar y redistribuir el código; si ofreces una
+versión modificada como servicio en red, debes publicar su código fuente bajo la misma licencia.

@@ -82,11 +82,9 @@ describe('K4: Spanish UI has no raw English enums or strings', () => {
         expect(screen.queryByText(/Complete at least 2 workouts/)).toBeNull();
     });
 
-    it('stats title, levels and plan types resolve in both languages', () => {
+    it('stats title and levels resolve in both languages', () => {
         expect(TRANSLATIONS.es.statsTitle).toBe('Estadísticas');
         expect(TRANSLATIONS.en.statsTitle).toBe('Stats');
         expect(TRANSLATIONS.es.statsLevels).toEqual({ beginner: 'Principiante', intermediate: 'Intermedio', advanced: 'Avanzado' });
-        expect(TRANSLATIONS.es.planTypes.lifetime).toBe('Vitalicio');
-        expect(TRANSLATIONS.en.planTypes.lifetime).toBe('Lifetime');
     });
 });

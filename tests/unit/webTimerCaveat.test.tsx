@@ -46,18 +46,6 @@ vi.mock('../../context/AuthContext', () => ({
     useAuth: () => ({ user: sheetState.user, logout: vi.fn(), deleteAccount: vi.fn(), isAdmin: sheetState.isAdmin }),
 }));
 
-vi.mock('../../hooks/usePro', () => ({
-    usePro: () => ({
-        isPro: sheetState.pro,
-        tier: sheetState.pro ? 'lifetime' : null,
-        expiryDate: null,
-        checkPro: () => true,
-        showPaywall: false,
-        setShowPaywall: vi.fn(),
-        featureAttempted: '',
-    }),
-}));
-
 vi.mock('../../lib/store', () => ({
     useStore: (selector: any) => selector({ activeMeso: null }),
 }));

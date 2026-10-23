@@ -6,13 +6,11 @@ import { getTranslated } from '../utils';
 import { pickLang } from '../utils/i18n';
 import { Icon } from '../components/ui/Icon';
 import { requestQuickStart } from '../components/layout/navigation';
-import { usePro } from '../hooks/usePro';
 import { useTemplateActions } from './home/applyTemplate';
 import { TemplateChangeConfirmation } from './home/TemplateChangeConfirmation';
 
 const ProgramHub = React.lazy(() => import('../components/programs/ProgramHub').then((m) => ({ default: m.ProgramHub })));
 const TemplateSelector = React.lazy(() => import('./home/TemplateSelector').then((m) => ({ default: m.TemplateSelector })));
-const PaywallModal = React.lazy(() => import('../components/pro/PaywallModal').then((m) => ({ default: m.PaywallModal })));
 
 interface RoutineViewProps {
     onStartDay: (idx: number) => void;
@@ -32,7 +30,6 @@ export const RoutineView: React.FC<RoutineViewProps> = ({ onStartDay, onEditProg
     const activeMeso = useStore((state) => state.activeMeso);
     const setActiveMeso = useStore((state) => state.setActiveMeso);
     const activeSession = useStore((state) => state.activeSession);
-    const { checkPro, showPaywall, setShowPaywall, featureAttempted } = usePro();
     const t = TRANSLATIONS[lang];
     const tp = TRANSLATIONS[lang].copy.programEdit;
     const rv = t.routineView;
@@ -47,7 +44,6 @@ export const RoutineView: React.FC<RoutineViewProps> = ({ onStartDay, onEditProg
         setActiveMeso,
         setShowTemplateSelector: setShowTemplates,
         onEditProgram,
-        checkPro,
         userProfile,
         lang,
     });
@@ -195,11 +191,6 @@ export const RoutineView: React.FC<RoutineViewProps> = ({ onStartDay, onEditProg
 
             <TemplateChangeConfirmation lang={lang} confirmation={templateChangeConfirmation} />
 
-            {showPaywall && (
-                <Suspense fallback={null}>
-                    <PaywallModal onClose={() => setShowPaywall(false)} feature={featureAttempted} />
-                </Suspense>
-            )}
         </div>
     );
 };

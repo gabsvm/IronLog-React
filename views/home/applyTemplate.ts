@@ -14,7 +14,6 @@ interface TemplateActionDeps {
     setActiveMeso: (val: MesoCycle | null | ((prev: MesoCycle | null) => MesoCycle | null)) => void;
     setShowTemplateSelector: (open: boolean) => void;
     onEditProgram: () => void;
-    checkPro: (feature: string) => boolean;
     userProfile?: UserProfile | null;
     lang: Lang;
 }
@@ -26,7 +25,7 @@ export interface TemplateActions {
     templateChangeConfirmation: { isOpen: boolean; onConfirm: () => void; onCancel: () => void };
 }
 
-export const useTemplateActions = ({ setProgram, setActiveMeso, setShowTemplateSelector, onEditProgram, checkPro, userProfile, lang }: TemplateActionDeps): TemplateActions => {
+export const useTemplateActions = ({ setProgram, setActiveMeso, setShowTemplateSelector, onEditProgram, userProfile, lang }: TemplateActionDeps): TemplateActions => {
     const { setRestTimer } = useTimerActions();
     const pendingChange = useRef<(() => void) | null>(null);
     const [isOpen, setIsOpen] = useState(false);
@@ -57,7 +56,6 @@ export const useTemplateActions = ({ setProgram, setActiveMeso, setShowTemplateS
     };
 
     const handleSelectTemplate = (tpl: GlobalTemplate) => {
-        if (tpl.isPro && !checkPro('Pro Template')) return;
         requestChange(() => {
             setProgram(tpl.program);
             const plan = tpl.program.map(day => (day.slots || []).map(slot => slot.exerciseId || null));

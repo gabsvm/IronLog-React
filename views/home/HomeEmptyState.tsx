@@ -4,10 +4,9 @@ import { HomeQuickActions, HomeResumeSession } from './HomeQuickActions';
 import type { HomeViewState } from './useHomeViewState';
 
 const TemplateSelector = React.lazy(() => import('./TemplateSelector').then(m => ({ default: m.TemplateSelector })));
-const PaywallModal = React.lazy(() => import('../../components/pro/PaywallModal').then(m => ({ default: m.PaywallModal })));
 
 export const HomeEmptyState: React.FC<{ state: HomeViewState }> = ({ state }) => {
-    const { globalTemplates, personalTemplates, lang, t, h, showPaywall, setShowPaywall, featureAttempted, showTemplateSelector, setShowTemplateSelector, handleOpenTemplateSelector, handleSelectTemplate, handleSelectProgram, handleCreateCustom } = state;
+    const { globalTemplates, personalTemplates, lang, t, h, showTemplateSelector, setShowTemplateSelector, handleOpenTemplateSelector, handleSelectTemplate, handleSelectProgram, handleCreateCustom } = state;
     return <div className="mx-auto max-w-2xl space-y-4 px-4 pb-28 pt-4">
         <HomeResumeSession state={state} />
         <section className="gl-panel space-y-4 p-6">
@@ -18,6 +17,5 @@ export const HomeEmptyState: React.FC<{ state: HomeViewState }> = ({ state }) =>
         </section>
         <HomeQuickActions state={state} />
         {showTemplateSelector && <Suspense fallback={null}><TemplateSelector onClose={() => setShowTemplateSelector(false)} onSelectTemplate={handleSelectTemplate} onCreateCustom={handleCreateCustom} templates={[...personalTemplates, ...globalTemplates]} t={t} lang={lang} onSelectProgram={handleSelectProgram} /></Suspense>}
-        {showPaywall && <Suspense fallback={null}><PaywallModal onClose={() => setShowPaywall(false)} feature={featureAttempted} /></Suspense>}
     </div>;
 };

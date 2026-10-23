@@ -4,7 +4,6 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useApp, useAppConfig, useAppPreferences, useTutorial } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
 import { getTranslated } from '../../utils';
-import { usePro } from '../../hooks/usePro';
 import { triggerHaptic, updateWidgetData } from '../../utils/audio';
 import { scheduleWhenIdle } from '../../lib/idle';
 import { useStore } from '../../lib/store';
@@ -33,7 +32,6 @@ export const useHomeViewState = ({ startSession, onEditProgram, onSkipSession, o
     const h = t.homeView;
     const kongBlock = activeMeso?.programSystem?.systemId === KONG_4DAY_V1.id ? getProgramBlockForWeek(KONG_4DAY_V1, activeMeso.week) : null;
 
-    const { isPro, checkPro, showPaywall, setShowPaywall, featureAttempted } = usePro();
 
     const tm = (key: string) => {
         if (!key || typeof key !== 'string') return 'Unknown';
@@ -231,7 +229,6 @@ export const useHomeViewState = ({ startSession, onEditProgram, onSkipSession, o
         setActiveMeso,
         setShowTemplateSelector,
         onEditProgram,
-        checkPro,
         userProfile,
         lang,
     });
@@ -284,11 +281,6 @@ export const useHomeViewState = ({ startSession, onEditProgram, onSkipSession, o
         t,
         h,
         kongBlock,
-        isPro,
-        checkPro,
-        showPaywall,
-        setShowPaywall,
-        featureAttempted,
         tm,
         showCompleteModal,
         setShowCompleteModal,

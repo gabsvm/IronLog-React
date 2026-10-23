@@ -24,7 +24,7 @@ if (typeof window !== 'undefined') {
 export type { SyncMetaContextType, SyncStatusContextType } from './app/appContexts';
 
 export const AppProvider = ({ children }: PropsWithChildren) => {
-    const { user, subscription } = useAuth();
+    const { user } = useAuth();
 
     // --- Synchronous Config ---
     // S7: language preference + lazy dictionary loading.
@@ -252,7 +252,6 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
 
     const { confirmCloudSync, cancelCloudSync } = useCloudUploads({
         user,
-        subscription,
         showRIR,
         setShowRIR,
         rpEnabled,

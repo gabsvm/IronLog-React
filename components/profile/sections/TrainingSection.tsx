@@ -1,7 +1,6 @@
-import React, { Suspense, useState } from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../../../context/AppContext';
 import { useAuth } from '../../../context/AuthContext';
-import { usePro } from '../../../hooks/usePro';
 import { useStore } from '../../../lib/store';
 import { TRANSLATIONS } from '../../../constants';
 import { GlobalTemplate } from '../../../types';
@@ -22,7 +21,6 @@ import {
     type WorkoutReminderConfig,
 } from '../../../utils/reminders';
 
-const PaywallModal = React.lazy(() => import('../../pro/PaywallModal').then(m => ({ default: m.PaywallModal })));
 
 interface TrainingSectionProps {
     onClose: () => void;
@@ -34,7 +32,6 @@ interface TrainingSectionProps {
 export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpenProgram, onOpenExercises }) => {
     const { lang, config, setConfig, program, personalTemplates, setPersonalTemplates } = useApp();
     const { isAdmin } = useAuth();
-    const { isPro, checkPro, showPaywall, setShowPaywall, featureAttempted } = usePro();
     const activeMeso = useStore(state => state.activeMeso);
     const t = TRANSLATIONS[lang];
     const ty = t.you;
@@ -94,14 +91,12 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
         setConfig({ keepScreenOn: !config.keepScreenOn });
     };
 
-    const openProgramGated = () => {
-        if (!checkPro('Custom Routines')) return;
+    const openProgram = () => {
         onClose();
         onOpenProgram();
     };
 
-    const openExercisesGated = () => {
-        if (!checkPro('Exercise Library')) return;
+    const openExercises = () => {
         onClose();
         onOpenExercises();
     };
@@ -129,29 +124,25 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                 )}
                 <button
                     type="button"
-                    onClick={openProgramGated}
+                    onClick={openProgram}
                     className="flex min-h-[56px] w-full items-center gap-3 p-3 text-left transition-colors hover:bg-surface-elevated/40"
                 >
                     <span className="w-8 h-8 rounded-xl bg-surface-elevated flex items-center justify-center text-accent shrink-0">
                         <Icon name="Layout" size={17} />
                     </span>
                     <div className="flex-1 text-sm font-medium text-[rgb(var(--text-primary))]">{t.programEditor}</div>
-                    {!isPro
-                        ? <Icon name="Lock" size={16} className="text-yellow-500 shrink-0" />
-                        : <Icon name="ChevronRight" size={16} className="text-muted shrink-0" />}
+                    <Icon name="ChevronRight" size={16} className="text-muted shrink-0" />
                 </button>
                 <button
                     type="button"
-                    onClick={openExercisesGated}
+                    onClick={openExercises}
                     className="flex min-h-[56px] w-full items-center gap-3 p-3 text-left transition-colors hover:bg-surface-elevated/40"
                 >
                     <span className="w-8 h-8 rounded-xl bg-surface-elevated flex items-center justify-center text-accent shrink-0">
                         <Icon name="Dumbbell" size={17} />
                     </span>
                     <div className="flex-1 text-sm font-medium text-[rgb(var(--text-primary))]">{ty.exercisesRow}</div>
-                    {!isPro
-                        ? <Icon name="Lock" size={16} className="text-yellow-500 shrink-0" />
-                        : <Icon name="ChevronRight" size={16} className="text-muted shrink-0" />}
+                    <Icon name="ChevronRight" size={16} className="text-muted shrink-0" />
                 </button>
                 {isAdmin && (
                     <button
@@ -315,12 +306,6 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                     <ReminderSettingsRow lang={lang} config={reminderConfig} onChange={handleReminderChange} />
                 )}
             </div>
-
-            {showPaywall && (
-                <Suspense fallback={null}>
-                    <PaywallModal onClose={() => setShowPaywall(false)} feature={featureAttempted} />
-                </Suspense>
-            )}
 
             <Sheet
                 open={showSaveTemplate}

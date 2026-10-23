@@ -18,7 +18,7 @@ vi.mock('../../utils/audio', () => ({ triggerHaptic: vi.fn() }));
 const session: ActiveSession = { id: 9, dayIdx: 2, name: 'Other day in progress', startTime: 100, mesoId: 7, week: 1, exercises: [] };
 const template: GlobalTemplate = { id: 'custom-template', name: 'Plan', title: { es: 'Plan', en: 'Plan' }, description: { es: '', en: '' }, isPro: false, order: 1, program: [{ id: 'd1', dayName: { es: 'Día 1', en: 'Day 1' }, slots: [] }] };
 const setup = () => {
-    const deps = { setProgram: vi.fn(), setActiveMeso: vi.fn(), setShowTemplateSelector: vi.fn(), onEditProgram: vi.fn(), checkPro: vi.fn(() => true), lang: 'en' as const };
+    const deps = { setProgram: vi.fn(), setActiveMeso: vi.fn(), setShowTemplateSelector: vi.fn(), onEditProgram: vi.fn(), lang: 'en' as const };
     const hook = renderHook(() => useTemplateActions(deps));
     return { ...hook, deps };
 };
@@ -71,14 +71,14 @@ describe('shared Home/Routine live-session plan-change guard', () => {
         expect(mocks.setRestTimer).not.toHaveBeenCalled();
         expect(result.current.templateChangeConfirmation.isOpen).toBe(false);
     });
-    it('checks the actual session at click time and keeps the Pro gate ahead of discard', () => {
+    it('checks the actual session at click time; templates flagged isPro are no longer gated', () => {
         mocks.current = null;
         const { result, deps } = setup();
         mocks.current = session;
-        deps.checkPro.mockReturnValue(false);
         act(() => result.current.handleSelectTemplate({ ...template, isPro: true }));
-        expect(result.current.templateChangeConfirmation.isOpen).toBe(false);
+        expect(result.current.templateChangeConfirmation.isOpen).toBe(true);
         expect(deps.setProgram).not.toHaveBeenCalled();
+        act(() => result.current.templateChangeConfirmation.onCancel());
         act(() => result.current.handleCreateCustom());
         expect(result.current.templateChangeConfirmation.isOpen).toBe(true);
         expect(mocks.current).toBe(session);

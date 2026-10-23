@@ -8,7 +8,7 @@ import { BackupReminderBanner } from '../../components/home/BackupReminderBanner
 import type { HomeViewState } from './useHomeViewState';
 
 export const HomeTopSection: React.FC<{ state: HomeViewState }> = ({ state }) => {
-    const { uniqueDaysDone, nextWorkoutIdx, activeMeso, t, h, lang, kongBlock, isPro, checkPro, setShowPlanActions, setShowGuidelines, setShowKongHub, currentGuidelineImages, safeProgram, selectedDayIdx, setSelectedDayIdx } = state;
+    const { uniqueDaysDone, nextWorkoutIdx, activeMeso, t, h, lang, kongBlock, setShowPlanActions, setShowGuidelines, setShowKongHub, currentGuidelineImages, safeProgram, selectedDayIdx, setSelectedDayIdx } = state;
     const todayLabel = new Date().toLocaleDateString(pickLang(lang, { es: 'es-ES', en: 'en-US' }), { weekday: 'long', day: 'numeric', month: 'long' });
     if (!activeMeso) return null;
     return (
@@ -33,10 +33,10 @@ export const HomeTopSection: React.FC<{ state: HomeViewState }> = ({ state }) =>
                             <button
                                 id="tut-guidelines"
                                 type="button"
-                                onClick={() => checkPro("Guidelines") && setShowGuidelines(true)}
+                                onClick={() => setShowGuidelines(true)}
                                 className="gl-quiet flex min-h-[44px] items-center gap-1 px-3 text-xs font-semibold"
                             >
-                                <Icon name="Info" size={12} /> {pickLang(lang, { en: 'GUIDELINES', es: 'GUÍA' })} {!isPro && <Icon name="Lock" size={10} className="text-yellow-500 ml-0.5" />}
+                                <Icon name="Info" size={12} /> {pickLang(lang, { en: 'GUIDELINES', es: 'GUÍA' })}
                             </button>
                         )}
                     </div>

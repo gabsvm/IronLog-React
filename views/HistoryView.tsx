@@ -5,7 +5,6 @@ import { TRANSLATIONS } from '../constants';
 import { formatDate, formatDurationShort, getTranslated } from '../utils';
 import { Icon } from '../components/ui/Icon';
 import { Button } from '../components/ui/Button';
-import { usePro } from '../hooks/usePro';
 import { useStore } from '../lib/store';
 import { Log, WeightUnit } from '../types';
 import { formatWeight, resolveWeightUnit, unitLabel } from '../utils/units';
@@ -18,22 +17,18 @@ import { pickLang } from '../utils/i18n';
 
 const HistoryDetailView = React.lazy(() => import('./history/HistoryDetailView').then(m => ({ default: m.HistoryDetailView })));
 const TutorialOverlay = React.lazy(() => import('../components/ui/TutorialOverlay').then(m => ({ default: m.TutorialOverlay })));
-const PaywallModal = React.lazy(() => import('../components/pro/PaywallModal').then(m => ({ default: m.PaywallModal })));
 const ConfirmModal = React.lazy(() => import('../components/ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
 
 interface HistoryVirtuosoContext {
     lang: 'en' | 'es';
     search: string;
     setSearch: (s: string) => void;
-    hasLockedLogs: boolean;
-    checkPro: (feature: string) => boolean;
     onExportCSV?: () => void;
-    isPro?: boolean;
 }
 
 const VirtuosoHeader = ({ context }: { context?: HistoryVirtuosoContext }) => {
     if (!context) return null;
-    const { lang, search, setSearch, onExportCSV, isPro } = context;
+    const { lang, search, setSearch, onExportCSV } = context;
     return (
         <div className="px-4 pb-3 pt-3">
             {/* The Sessions tab already names this list; the heading stays for assistive tech. */}
@@ -60,7 +55,6 @@ const VirtuosoHeader = ({ context }: { context?: HistoryVirtuosoContext }) => {
                     >
                         <Icon name="Download" size={13} />
                         <span>CSV</span>
-                        {!isPro && <Icon name="Lock" size={10} className="text-yellow-500" />}
                     </button>
                 )}
             </div>
@@ -68,23 +62,7 @@ const VirtuosoHeader = ({ context }: { context?: HistoryVirtuosoContext }) => {
     );
 };
 
-const VirtuosoFooter = ({ context }: { context?: HistoryVirtuosoContext }) => {
-    if (!context || !context.hasLockedLogs) return <div className="h-24" />;
-    return (
-        <div className="px-4 pb-28 pt-4">
-            {/* Same compact unlock row as ProLock; the gate itself is unchanged. */}
-            <div className="flex items-center justify-between gap-3 rounded-xl border border-dashed border-[rgb(var(--border-subtle))] px-3 py-2">
-                <span className="inline-flex min-w-0 items-center gap-2 text-sm text-muted">
-                    <Icon name="Lock" size={16} className="shrink-0" />
-                    {pickLang(context.lang, { es: 'Historial bloqueado', en: 'History locked' })}
-                </span>
-                <button type="button" onClick={() => context.checkPro('history')} className="gl-quiet shrink-0">
-                    {pickLang(context.lang, { es: 'Desbloquear PRO', en: 'Unlock PRO' })}
-                </button>
-            </div>
-        </div>
-    );
-};
+const VirtuosoFooter = () => <div className="h-24" />;
 
 const VIRTUOSO_COMPONENTS = { Header: VirtuosoHeader, Footer: VirtuosoFooter };
 
@@ -149,7 +127,6 @@ export const HistoryView: React.FC<{ search: string; onSearchChange: (search: st
     const activeSession = useStore(state => state.activeSession);
     const setActiveSession = useStore(state => state.setActiveSession);
     const t = TRANSLATIONS[lang];
-    const { isPro, showPaywall, setShowPaywall, checkPro } = usePro();
     const [selectedLogId, setSelectedLogId] = useState<number | null>(null);
     const [deletingLogId, setDeletingLogId] = useState<number | null>(null);
     const [deletedLogBackup, setDeletedLogBackup] = useState<{ log: Log; index: number } | null>(null);
@@ -196,7 +173,7 @@ export const HistoryView: React.FC<{ search: string; onSearchChange: (search: st
         return () => window.removeEventListener('popstate', onPop);
     }, [isDetailDirty]);
 
-    const { visibleLogs, hasLockedLogs } = useMemo(() => {
+    const visibleLogs = useMemo(() => {
         // Imports and cloud restores don't guarantee order, so sort newest first here.
         let result = [...safeLogs].sort((a, b) => (b.endTime || b.startTime || 0) - (a.endTime || a.startTime || 0));
         if (deferredSearch.trim()) {
@@ -206,12 +183,8 @@ export const HistoryView: React.FC<{ search: string; onSearchChange: (search: st
                 (log.exercises || []).some(ex => getTranslated(ex.name, lang).toLowerCase().includes(q))
             );
         }
-        if (isPro) return { visibleLogs: result, hasLockedLogs: false };
-        const sevenDays = 7 * 24 * 60 * 60 * 1000;
-        const now = Date.now();
-        const visible = result.filter(log => now - log.endTime < sevenDays);
-        return { visibleLogs: visible, hasLockedLogs: visible.length !== result.length };
-    }, [safeLogs, deferredSearch, isPro, lang]);
+        return result;
+    }, [safeLogs, deferredSearch, lang]);
 
     const openDetail = useCallback((log: Log) => {
         try {
@@ -264,11 +237,10 @@ export const HistoryView: React.FC<{ search: string; onSearchChange: (search: st
     }, [activeSession, setActiveSession]);
 
     const handleExportCSV = useCallback(async () => {
-        if (!checkPro('csv_export')) return;
         const csv = buildTrainingCsv(safeLogs, resolveWeightUnit(config));
         const filename = `gainslab_history_${todayLocalDateKey()}.csv`;
         await shareFileOrDownload(csv, filename, 'text/csv');
-    }, [checkPro, config, safeLogs]);
+    }, [config, safeLogs]);
 
     const historyTutorialSteps = [
         { targetId: 'tut-history-search', title: t.tutorial.history[1].title, text: t.tutorial.history[1].text, position: 'bottom' as const },
@@ -276,8 +248,8 @@ export const HistoryView: React.FC<{ search: string; onSearchChange: (search: st
     ];
 
     const context = useMemo<HistoryVirtuosoContext>(
-        () => ({ lang, search, setSearch, hasLockedLogs, checkPro, onExportCSV: handleExportCSV, isPro }),
-        [lang, search, setSearch, hasLockedLogs, checkPro, handleExportCSV, isPro]
+        () => ({ lang, search, setSearch, onExportCSV: handleExportCSV }),
+        [lang, search, setSearch, handleExportCSV]
     );
     const renderItem = useCallback((index: number, log: Log) => (
         <HistoryCard id={index === 0 ? 'tut-first-card' : undefined} log={log} lang={lang} onOpen={() => openDetail(log)} unit={unit} />
@@ -323,7 +295,6 @@ export const HistoryView: React.FC<{ search: string; onSearchChange: (search: st
                 </Suspense>
             )}
 
-            {showPaywall && <Suspense fallback={null}><PaywallModal onClose={() => setShowPaywall(false)} feature="history" /></Suspense>}
 
             {deletingLogId !== null && (
                 <Suspense fallback={null}>

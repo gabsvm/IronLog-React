@@ -1,7 +1,7 @@
 import React, { Suspense, useMemo, useState } from 'react';
 import { useApp } from '../../../context/AppContext';
 import { useAuth } from '../../../context/AuthContext';
-import { usePro } from '../../../hooks/usePro';
+import { isProUser } from '../../../services/entitlementService';
 import { TRANSLATIONS } from '../../../constants';
 import { countSessionsByScope, filterLogsByScope } from '../../../utils/statsScope';
 import { Icon } from '../../ui/Icon';
@@ -18,20 +18,15 @@ interface AccountSectionProps {
 /** Q18: "Cuenta" section, moved verbatim from ProfileSheet. */
 export const AccountSection: React.FC<AccountSectionProps> = ({ onClose, onLogin }) => {
     const { lang, deferredPrompt, installApp, isStandalone, logs } = useApp();
-    const { user, logout } = useAuth();
-    const { isPro, tier, expiryDate } = usePro();
+    const { user, logout, subscription } = useAuth();
+    // No paid tier anymore; only kept so account deletion still warns past PRO buyers.
+    const hadPaidSubscription = isProUser(subscription);
     const t = TRANSLATIONS[lang];
     const ty = t.you;
 
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [installInstructions, setInstallInstructions] = useState<string | null>(null);
 
-    const daysRemaining = useMemo(() => {
-        if (!expiryDate) return null;
-        const diff = expiryDate - Date.now();
-        if (diff <= 0) return 0;
-        return Math.ceil(diff / (1000 * 60 * 60 * 24));
-    }, [expiryDate]);
 
     const stats = useMemo(() => {
         const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
@@ -51,14 +46,6 @@ export const AccountSection: React.FC<AccountSectionProps> = ({ onClose, onLogin
         }
     };
 
-    const accountLabel = !user
-        ? ty.localMode
-        : tier === 'demo'
-            ? `${ty.demoAccount}${daysRemaining != null ? ` · ${daysRemaining} ${daysRemaining === 1 ? ty.dayLeft : ty.daysLeft}` : ''}`
-            : isPro ? ty.proMember : ty.freeMember;
-    const planLabel = isPro && tier && tier !== 'demo'
-        ? ((t.planTypes as Record<string, string>)[tier] || tier)
-        : null;
 
     const userName = user?.displayName || user?.email?.split('@')[0] || ty.defaultUser;
     const userInitial = (userName[0] || 'G').toUpperCase();
@@ -91,14 +78,9 @@ export const AccountSection: React.FC<AccountSectionProps> = ({ onClose, onLogin
                 <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                         <span className="truncate text-sm font-bold text-[rgb(var(--text-primary))]">{userName}</span>
-                        {isPro && (
-                            <span className="gl-pill gl-pill-accent">
-                                Pro
-                            </span>
-                        )}
                     </div>
                     <div className="mt-0.5 truncate text-xs text-muted">
-                        {user?.email ? `${user.email} · ` : ''}{planLabel || accountLabel}
+                        {user?.email || ty.localMode}
                     </div>
                 </div>
             </div>
@@ -165,7 +147,7 @@ export const AccountSection: React.FC<AccountSectionProps> = ({ onClose, onLogin
                     setShowDeleteDialog(false);
                     onClose();
                 }}
-                isPro={isPro}
+                isPro={hadPaidSubscription}
             />
 
             {installInstructions && (

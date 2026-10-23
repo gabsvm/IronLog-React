@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { flushSync } from 'react-dom';
 import { AppProvider, useApp } from './context/AppContext';
 import { useAuth, AuthProvider } from './context/AuthContext';
-import { usePro } from './hooks/usePro';
 import { useAppHistory, withTransition, VIEW_DEPTH } from './hooks/useAppHistory';
 import { resolveAppView, type AppView } from './components/layout/navigation';
 import { useShortcutLaunch } from './hooks/useShortcutLaunch';
@@ -72,7 +71,6 @@ const AppContent = () => {
     const setActiveMeso = useStore(state => state.setActiveMeso);
 
     const { user } = useAuth();
-    const { checkPro } = usePro();
 
     const [view, setViewState] = useState<AppView>('home');
     const [completedWorkoutLog, setCompletedWorkoutLog] = useState<any>(null);
@@ -263,8 +261,6 @@ const AppContent = () => {
             return;
         }
 
-        // CHECK PRO before allowing sync
-        if (!checkPro("sync")) return;
 
         setShowForceSyncModal(true);
     };

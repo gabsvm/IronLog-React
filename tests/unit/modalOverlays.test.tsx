@@ -2,7 +2,6 @@ import React from 'react';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AuthModal } from '../../components/auth/AuthModal';
-import { PaywallModal } from '../../components/pro/PaywallModal';
 
 afterEach(() => {
     cleanup();
@@ -28,7 +27,7 @@ vi.mock('../../context/AppContext', () => ({
     useApp: () => ({ lang: 'es' }),
 }));
 
-describe('AuthModal and PaywallModal accessibility and overlay layer contract', () => {
+describe('AuthModal accessibility and overlay layer contract', () => {
     it('AuthModal traps Tab and Shift+Tab within the dialog and closes on Escape', async () => {
         const onClose = vi.fn();
         const backgroundBtn = document.createElement('button');
@@ -58,28 +57,4 @@ describe('AuthModal and PaywallModal accessibility and overlay layer contract', 
         backgroundBtn.remove();
     });
 
-    it('PaywallModal closes on Escape and traps focus within dialog', async () => {
-        const onClose = vi.fn();
-        const trigger = document.createElement('button');
-        trigger.textContent = 'Export CSV';
-        document.body.appendChild(trigger);
-        trigger.focus();
-
-        const { unmount } = render(<PaywallModal onClose={onClose} feature="history" />);
-
-        const dialog = screen.getByRole('dialog', { name: /GainsLab Pro/i });
-        expect(dialog).toBeInTheDocument();
-
-        // Tab stays inside the paywall dialog.
-        fireEvent.keyDown(document, { key: 'Tab' });
-        expect(dialog.contains(document.activeElement)).toBe(true);
-
-        // Escape closes PaywallModal and restores the trigger.
-        fireEvent.keyDown(document, { key: 'Escape' });
-        expect(onClose).toHaveBeenCalledOnce();
-        unmount();
-        expect(trigger).toHaveFocus();
-
-        trigger.remove();
-    });
 });

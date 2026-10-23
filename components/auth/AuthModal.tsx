@@ -14,7 +14,7 @@ interface AuthModalProps {
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
-    const { login, register, error, clearError, continueAsGuest, startDemo, resetPassword } = useAuth();
+    const { login, register, error, clearError, continueAsGuest, resetPassword } = useAuth();
     const { lang } = useAppPreferences();
     const t = TRANSLATIONS[lang].auth; // Get auth translations
 
@@ -68,17 +68,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
         }
     };
 
-    const handleStartDemo = async () => {
-        setLoading(true);
-        try {
-            await startDemo();
-            onClose();
-        } catch (e) {
-            // Error handled
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const { contentRef, isTopLayer } = useModalLayer(true, onClose, { manualFocus: true });
 
@@ -224,15 +213,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
 
                 </div>
 
-                <div className={import.meta.env.DEV ? "grid grid-cols-2 gap-3" : "flex flex-col gap-3"}>
+                <div className="flex flex-col gap-3">
                     <Button variant="secondary" fullWidth onClick={handleGuest} className="text-xs">
                         {t.continueGuest}
                     </Button>
-                    {import.meta.env.DEV && (
-                        <Button variant="secondary" fullWidth onClick={handleStartDemo} className="text-xs text-accent">
-                            {t.startDemo || "Try 7 Days Free"}
-                        </Button>
-                    )}
                 </div>
 
                 <div className="mt-6 text-center">

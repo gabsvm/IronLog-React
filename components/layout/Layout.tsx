@@ -1,7 +1,6 @@
 import React from 'react';
 import { useApp, useAppPreferences, useSyncStatus } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
-import { usePro } from '../../hooks/usePro';
 import { useStore } from '../../lib/store';
 import { TRANSLATIONS } from '../../constants';
 import { KONG_4DAY_ID } from '../../programs/kong/constants';
@@ -80,7 +79,6 @@ export const Layout: React.FC<LayoutProps> = ({
     const { lang } = useAppPreferences();
     const { isOnline, syncStatus } = useSyncStatus();
     const { user } = useAuth();
-    const { isPro } = usePro();
     const activeMeso = useStore(state => state.activeMeso);
     const hasActiveSession = useStore(state => Boolean(state.activeSession));
     const activeSessionDayIdx = useStore(state => state.activeSession?.dayIdx);
@@ -234,7 +232,7 @@ export const Layout: React.FC<LayoutProps> = ({
                             )}
                         </div>
                         <div id="tut-profile-btn">
-                            <Avatar email={user?.email} photoURL={(user as any)?.photoURL} isPro={isPro} onClick={() => openProfile()} ariaLabel={t.openProfile} />
+                            <Avatar email={user?.email} photoURL={(user as any)?.photoURL} onClick={() => openProfile()} ariaLabel={t.openProfile} />
                         </div>
                     </div>
                 </div>

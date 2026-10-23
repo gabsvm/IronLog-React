@@ -280,34 +280,6 @@ export const EN = {
     phases: { hyp_1: "Base Hypertrophy 1", hyp_2: "Base Hypertrophy 2", metabolite: "Metabolite Phase", resensitization: "Resensitization", full_body: "Aesthetic V-Taper", wizard: "The Wizard v3 (Full Body)", male_physique: "Male Physique (Upper/Lower)", toji_fushiguro: "Toji (Natural Hypertrophy)", tokita: "Tokita Ohma Program", jacked_in_3: "Jacked in 3 — Paul Carter" },
     phaseDesc: { hyp_1: "Standard PPL. Balanced volume.", hyp_2: "Upper/Lower Split (4 Days). Focus on basics.", metabolite: "High reps (20-30), short rests, the 'burn'.", resensitization: "Low volume, heavy weight to reset fatigue.", full_body: "Dr. Mike Style. Focus on V-Taper (Lats/Side Delts).", wizard: "3-Days Heavy/Light/Medium. Classic intensity cycling for steady gains.", male_physique: "4-Days Bodybuilding Focus. Higher volume, arm & shoulder specialization.", toji_fushiguro: "4-Day Elite Split. Giant Sets, Neck, Forearms & Aesthetic focus. (Pro)", tokita: "4-Day Hybrid Split. High volume, supersets, and functional strength focus.", jacked_in_3: "Accumulative Volume Training (AVT). 3 days per week. Upper/Lower with ascending pyramid of hops." },
 
-    // PAYWALL & PRO
-    pro: {
-        title: "Unlock Your Maximum Potential",
-        subtitle: "Access advanced analytics, AI, and professional tracking.",
-        features: [
-            "Advanced analytics & full mesocycles",
-            "AI auto-regulation & progress adjustments",
-            "Unlimited templates & complete history"
-        ],
-        plans: {
-            monthly: "$5.99 / month",
-            yearly: "$34.99 / year",
-            lifetime: "$49.99 lifetime"
-        },
-        tiers: {
-            monthly:  { label: 'Monthly',  price: 'USD 4.99 / month' },
-            yearly:   { label: 'Annual',   price: 'USD 39.99 / year' },
-            lifetime: { label: 'Lifetime', price: 'USD 99.99 one-time' },
-        },
-        bestValue: "Save 50%",
-        guarantee: "Cancel anytime. Your data is always yours.",
-        triggers: {
-            history: "Unlock full history to see your real progress.",
-            analytics: "Advanced analytics are available in Premium.",
-            ai: "AI training features are part of Premium.",
-            sync: "Cloud Sync is a Premium feature."
-        }
-    },
 
     // Template Categories
     cat: {
@@ -411,7 +383,6 @@ export const EN = {
         logout: "Sign out",
         guestUser: "Guest User",
         localStorage: "Local Storage Only",
-        proMember: "Pro Member",
         signInRegister: "Sign in or register"
     },
 
@@ -478,7 +449,6 @@ export const EN = {
     statsNoData: "No Data",
     statsTitle: "Stats",
     statsLevels: { beginner: "Beginner", intermediate: "Intermediate", advanced: "Advanced" },
-    planTypes: { free: "Free", monthly: "Monthly", yearly: "Yearly", lifetime: "Lifetime", demo: "Demo" },
     progressEmptyTitle: "Not enough data",
     progressEmptyBody: "Complete at least 2 workouts with this exercise to see progress.",
     adminPanel: "Admin Panel",
@@ -566,15 +536,13 @@ export const EN = {
         },
     },
     you: {
+        project: "Project",
+        sourceCode: "Source code",
+        supportProject: "Support the project",
         title: "You",
         account: "Account",
         sessions: "Sessions",
         last30: "Last 30 d",
-        proMember: "Pro Member",
-        freeMember: "Free Member",
-        demoAccount: "Demo account",
-        dayLeft: "day left",
-        daysLeft: "days left",
         localMode: "Local mode",
         defaultUser: "User",
         body: "Your body",
@@ -1265,24 +1233,6 @@ export const EN = {
             notesOptional: 'Notes (optional)',
             estBurned: 'Est. Burned',
             saveSession: 'Save Session',
-        },
-        paywallModal: {
-            close: 'Close',
-            unlockPro: 'Unlock PRO',
-            sendAWhatsappMessage: 'Send a WhatsApp message to request early access. We will activate your account within 24 hours.',
-            alreadyHaveAnApproved: 'Already have an approved account? Sign in with your email to sync Pro entitlement.',
-            processing: 'Processing...',
-            welcomePro: 'Welcome Pro!',
-            locked: "Locked: {feature}",
-            featureNames: {
-                history: "Full history",
-                csv_export: "CSV export",
-                "Exercise Library": "Exercise library",
-                "Custom Routines": "Custom routines",
-                sync: "Cloud sync",
-                "Pro Template": "Pro template",
-                Guidelines: "Guidelines",
-            } as Record<string, string>,
         },
         warmupModal: {
             performTheseSetsTo: 'Perform these sets to potentiate your CNS without accumulating fatigue.',

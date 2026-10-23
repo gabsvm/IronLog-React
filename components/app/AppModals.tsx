@@ -2,7 +2,6 @@ import { formatMessage, pickLang } from '../../utils/i18n';
 import React, { Suspense, useCallback } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
-import { usePro } from '../../hooks/usePro';
 import { useStore } from '../../lib/store';
 import { TRANSLATIONS } from '../../constants';
 import type { CommandAction } from '../../components/ui/CommandPalette';
@@ -21,7 +20,6 @@ const ProgramCompletionView = React.lazy(() => import('../../components/programs
 const CommandPalette = React.lazy(() => import('../../components/ui/CommandPalette').then(m => ({ default: m.CommandPalette })));
 const AuthModal = React.lazy(() => import('../../components/auth/AuthModal').then(m => ({ default: m.AuthModal })));
 const ConfirmModal = React.lazy(() => import('../../components/ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
-const PaywallModal = React.lazy(() => import('../../components/pro/PaywallModal').then(m => ({ default: m.PaywallModal })));
 
 interface AppModalsProps {
     showCommandPalette: boolean;
@@ -78,7 +76,6 @@ export const AppModals: React.FC<AppModalsProps> = ({
     const activeMeso = useStore(state => state.activeMeso);
     const setActiveMeso = useStore(state => state.setActiveMeso);
     const { user } = useAuth();
-    const { showPaywall, setShowPaywall, featureAttempted } = usePro();
 
     const t = TRANSLATIONS[lang];
 
@@ -155,12 +152,6 @@ export const AppModals: React.FC<AppModalsProps> = ({
             {showAuthModal && (
                 <Suspense fallback={null}>
                     <AuthModal onClose={() => setShowAuthModal(false)} />
-                </Suspense>
-            )}
-
-            {showPaywall && (
-                <Suspense fallback={null}>
-                    <PaywallModal onClose={() => setShowPaywall(false)} feature={featureAttempted} />
                 </Suspense>
             )}
 

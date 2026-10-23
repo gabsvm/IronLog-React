@@ -38,18 +38,6 @@ vi.mock('../../context/AuthContext', () => ({
     useAuth: () => ({ user: { email: 'test@gainslab.app' }, isPro: false, logout: vi.fn(), deleteAccount: vi.fn(), isAdmin: false }),
 }));
 
-vi.mock('../../hooks/usePro', () => ({
-    usePro: () => ({
-        isPro: false,
-        tier: null,
-        expiryDate: null,
-        checkPro: () => true,
-        showPaywall: false,
-        setShowPaywall: vi.fn(),
-        featureAttempted: '',
-    }),
-}));
-
 vi.mock('../../lib/store', () => ({
     useStore: (selector: any) => selector({
         activeSession: null,
@@ -89,7 +77,7 @@ describe('L2: Lazy loaded ProfileSheet and QuickStartSheet', () => {
         );
 
         // ProfileSheet should not be mounted initially in DOM
-        expect(document.body.textContent).not.toContain('Cuenta gratuita');
+        expect(document.body.textContent).not.toContain('test@gainslab.app');
 
         // Open profile via avatar click (mobile topbar and desktop sidebar both
         // render one; jsdom ignores the lg:hidden breakpoint, so take the first).
@@ -101,7 +89,7 @@ describe('L2: Lazy loaded ProfileSheet and QuickStartSheet', () => {
         // Profile sheet should now mount in Suspense into portal in document.body.
         // The lazy chunk transform shares CPU with every parallel worker, so
         // keep the condition wait but give it a load-tolerant budget.
-        const profileEl = await screen.findByText(/Cuenta gratuita/, {}, { timeout: 15000 });
+        const profileEl = await screen.findByText('test@gainslab.app', {}, { timeout: 15000 });
         expect(profileEl).toBeDefined();
     });
 });

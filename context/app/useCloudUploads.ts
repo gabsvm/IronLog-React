@@ -5,12 +5,11 @@ import { syncService } from '../../services/syncService';
 import { useStore } from '../../lib/store';
 import { dirtySyncState } from '../../services/dirtySyncState';
 import type { Dispatch, SetStateAction } from 'react';
-import type { FeedbackEntry, UserSubscription } from '../../types';
+import type { FeedbackEntry } from '../../types';
 import type { User } from 'firebase/auth';
 
 export interface UseCloudUploadsDeps {
     user: User;
-    subscription: UserSubscription;
     showRIR: boolean;
     setShowRIR: (value: boolean | ((val: boolean) => boolean)) => void;
     rpEnabled: boolean;
@@ -65,7 +64,6 @@ export interface UseCloudUploadsDeps {
 /** S6: online flush, session/state upload debounces and cloud-merge confirm/cancel (moved verbatim from AppProvider; same hook order). */
 export const useCloudUploads = ({
     user,
-    subscription,
     showRIR,
     setShowRIR,
     rpEnabled,
@@ -120,28 +118,24 @@ export const useCloudUploads = ({
     useEffect(() => {
         const handleOnline = () => {
             setIsOnline(true);
+            // Cloud sync is free for every signed-in user (open source, no PRO tier).
             if (user) {
-                if (subscription.isPro) {
-                    void (async () => {
-                        const dirtySections = await dirtySyncState.list();
-                        await syncService.flushQueue();
-                        if (dirtySections.length === 0) return;
+                void (async () => {
+                    const dirtySections = await dirtySyncState.list();
+                    await syncService.flushQueue();
+                    if (dirtySections.length === 0) return;
 
-                        const now = Date.now();
-                        setLocalLastUpdated(now);
-                        await syncService.uploadState(user.uid, {
-                            program, activeMeso, exercises, logs,
-                            config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, restTimerDisplay },
-                            rpFeedback,
-                            userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, personalTemplates,
-                            email: user.email || null,
-                            lastUpdated: now,
-                        }, dirtySections);
-                    })();
-                } else {
-                    void syncService.flushQueue();
-                    syncService.uploadUserIdentity(user.uid, user.email || "");
-                }
+                    const now = Date.now();
+                    setLocalLastUpdated(now);
+                    await syncService.uploadState(user.uid, {
+                        program, activeMeso, exercises, logs,
+                        config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, restTimerDisplay },
+                        rpFeedback,
+                        userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, personalTemplates,
+                        email: user.email || null,
+                        lastUpdated: now,
+                    }, dirtySections);
+                })();
             }
         };
 
@@ -150,14 +144,13 @@ export const useCloudUploads = ({
         window.addEventListener('offline', handleOffline);
         return () => { window.removeEventListener('online', handleOnline); window.removeEventListener('offline', handleOffline); };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- S6: dependency list moved verbatim from AppProvider; the omitted names are useState setters/refs (stable) or the per-render withDirtyTrackingSuppressed, exactly as before.
-    }, [user, subscription.isPro, program, activeMeso, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, restTimerDisplay, rpFeedback, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, personalTemplates, setLocalLastUpdated]);
+    }, [user, program, activeMeso, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, restTimerDisplay, rpFeedback, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, personalTemplates, setLocalLastUpdated]);
 
     // ── Debounce A: session-only write (fast, lightweight) ─────────────────────
     // Watches state.activeSession via useStore.subscribe with a 5000ms debounce
     // so active workout edits don't trigger AppProvider re-renders.
     useEffect(() => {
         if (!user || isAppLoading || !hasCheckedSync || !!pendingCloudData) return;
-        if (!subscription.isPro) return; // free users: identity-only (handled in online handler)
 
         let timer: ReturnType<typeof setTimeout> | null = null;
         let lastSession = useStore.getState().activeSession;
@@ -181,7 +174,7 @@ export const useCloudUploads = ({
             unsubscribe();
             if (timer) clearTimeout(timer);
         };
-    }, [user, subscription.isPro, isAppLoading, hasCheckedSync, pendingCloudData, setLocalLastUpdated]);
+    }, [user, isAppLoading, hasCheckedSync, pendingCloudData, setLocalLastUpdated]);
 
     // ── Debounce B: full-state write (slower, only when program/data changes) ──
     // Excludes activeSession (handled above). Fires only when program, exercises,
@@ -190,29 +183,25 @@ export const useCloudUploads = ({
     useEffect(() => {
         if (!user || isAppLoading || !hasCheckedSync || !!pendingCloudData) return;
         const timer = setTimeout(() => {
-            if (subscription.isPro) {
-                void (async () => {
-                    const dirtySections = await dirtySyncState.list();
-                    if (dirtySections.length === 0) return;
+            void (async () => {
+                const dirtySections = await dirtySyncState.list();
+                if (dirtySections.length === 0) return;
 
-                    const now = Date.now();
-                    setLocalLastUpdated(now);
-                    void syncService.flushQueue();
-                    syncService.uploadState(user.uid, {
-                        program, activeMeso, exercises, logs,
-                        config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, restTimerDisplay },
-                        rpFeedback,
-                        userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, personalTemplates,
-                        email: user.email || null,
-                        lastUpdated: now,
-                    }, dirtySections);
-                })();
-            } else {
-                syncService.uploadUserIdentity(user.uid, user.email || "");
-            }
+                const now = Date.now();
+                setLocalLastUpdated(now);
+                void syncService.flushQueue();
+                syncService.uploadState(user.uid, {
+                    program, activeMeso, exercises, logs,
+                    config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, restTimerDisplay },
+                    rpFeedback,
+                    userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, personalTemplates,
+                    email: user.email || null,
+                    lastUpdated: now,
+                }, dirtySections);
+            })();
         }, 10000);
         return () => clearTimeout(timer);
-    }, [user, subscription.isPro, program, activeMeso, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, restTimerDisplay, rpFeedback, isAppLoading, hasCheckedSync, pendingCloudData, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, personalTemplates, setLocalLastUpdated]);
+    }, [user, program, activeMeso, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, restTimerDisplay, rpFeedback, isAppLoading, hasCheckedSync, pendingCloudData, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, personalTemplates, setLocalLastUpdated]);
 
     const confirmCloudSync = useCallback(() => {
         if (!pendingCloudData) return;

@@ -43,18 +43,6 @@ vi.mock('../../context/AuthContext', () => ({
     useAuth: () => ({ user: sheetState.user, logout: vi.fn(), deleteAccount: vi.fn(), isAdmin: sheetState.isAdmin }),
 }));
 
-vi.mock('../../hooks/usePro', () => ({
-    usePro: () => ({
-        isPro: sheetState.pro,
-        tier: sheetState.pro ? 'lifetime' : null,
-        expiryDate: null,
-        checkPro: () => true,
-        showPaywall: false,
-        setShowPaywall: vi.fn(),
-        featureAttempted: '',
-    }),
-}));
-
 vi.mock('../../lib/store', () => ({
     useStore: (selector: any) => selector({ activeMeso: null }),
 }));
@@ -87,7 +75,8 @@ describe('N6: unified sheet signed-in coverage (labels the guest e2e cannot see)
         expect(screen.getAllByText('Sincronizar ahora')).toHaveLength(1);
         expect(screen.getAllByText('Cerrar sesión')).toHaveLength(1);
         expect(screen.getAllByText('Eliminar cuenta')).toHaveLength(1);
-        expect(screen.getAllByText(/Cuenta gratuita/)).toHaveLength(1);
+        // No paid tier: the account row shows the signed-in email instead of a plan label.
+        expect(screen.getAllByText('a@b.c').length).toBeGreaterThanOrEqual(1);
         expect(screen.queryByText('Gestionar plantillas')).toBeNull();
         expect(screen.queryByText('Panel de administración')).toBeNull();
         // Advanced content (diagnostics + credits) renders for everyone.
@@ -96,13 +85,12 @@ describe('N6: unified sheet signed-in coverage (labels the guest e2e cannot see)
         sheetState.user = null;
     });
 
-    it('shows the Pro plan label and admin items for the admin user', () => {
+    it('shows admin items for the admin user', () => {
         sheetState.user = { email: 'gabsvm@gmail.com', displayName: 'Owner' };
         sheetState.pro = true;
         sheetState.isAdmin = true;
         renderSheet();
 
-        expect(screen.getAllByText(/Vitalicio/)).toHaveLength(1);
         expect(screen.getAllByText('Panel admin')).toHaveLength(1);
         expect(screen.getAllByText('Gestionar plantillas')).toHaveLength(1);
         sheetState.user = null;

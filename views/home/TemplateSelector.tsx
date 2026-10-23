@@ -221,11 +221,6 @@ export const TemplateSelector: React.FC<Props> = ({
                                                     onClick={() => onSelectTemplate(tpl)}
                                                     className="relative w-full rounded-xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4 text-left transition-transform active:scale-[0.99]"
                                                 >
-                                                    {tpl.isPro && (
-                                                        <div className="absolute right-3 top-3 rounded-lg border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base))] px-2 py-0.5 text-xs font-semibold text-[rgb(var(--text-primary))]">
-                                                            PRO
-                                                        </div>
-                                                    )}
                                                     <h4 className="pr-12 text-base font-semibold">{getTranslated(tpl.title, lang as 'en' | 'es')}</h4>
                                                     <p className="mt-1 pr-2 text-xs leading-relaxed text-[rgb(var(--text-secondary))]">
                                                         {getTranslated(tpl.description, lang as 'en' | 'es')}

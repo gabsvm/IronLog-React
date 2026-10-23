@@ -283,34 +283,6 @@ export const ES: TranslationDict = {
     phases: { hyp_1: "Hipertrofia Base 1", hyp_2: "Hipertrofia Base 2", metabolite: "Fase Metabolitos", resensitization: "Resensitization", full_body: "Aesthetic V-Taper", wizard: "The Wizard v3 (Full Body)", male_physique: "Male Physique (Torso/Pierna)", toji_fushiguro: "Toji (Natural Hypertrophy)", tokita: "Tokita Ohma Program", jacked_in_3: "Jacked in 3 — Paul Carter" },
     phaseDesc: { hyp_1: "Hipertrofia Base 1", hyp_2: "Torso/Pierna (4 Días). Foco en básicos.", metabolite: "Reps altas (20-30), descanso corto, 'quemazón'.", resensitization: "Bajo volumen, peso alto para resetear fatiga.", full_body: "Estilo Dr. Mike. Foco en V-Taper (Dorsal/Hombro Lateral).", wizard: "3-Días Pesado/Liviano/Medio. Ciclo de intensidad clásico para ganancias constantes.", male_physique: "4-Días Foco Culturismo. Mayor volumen, especialización en brazos y hombros.", toji_fushiguro: "Rutina Élite de 4 Días. Series Gigantes, Cuello, Antebrazo y Estética. (Pro)", tokita: "Rutina Híbrida 4 Días. Alto volumen, superseries y fuerza funcional.", jacked_in_3: "Accumulative Volume Training (AVT). 3 días por semana. Torso/Pierna con pirámide ascendente de hops." },
 
-    // PAYWALL & PRO
-    pro: {
-        title: "Desbloquea tu máximo potencial",
-        subtitle: "Accede a analíticas avanzadas, IA y seguimiento profesional.",
-        features: [
-            "Analíticas avanzadas y mesociclos completos",
-            "IA que ajusta tu progreso automáticamente",
-            "Plantillas ilimitadas y historial completo"
-        ],
-        plans: {
-            monthly: "$5.99 / mes",
-            yearly: "$34.99 / año",
-            lifetime: "$49.99 de por vida"
-        },
-        tiers: {
-            monthly:  { label: 'Mensual',  price: 'USD 4.99 / mes' },
-            yearly:   { label: 'Anual',    price: 'USD 39.99 / año' },
-            lifetime: { label: 'De por vida', price: 'USD 99.99 único pago' },
-        },
-        bestValue: "Ahorra 50%",
-        guarantee: "Cancela cuando quieras. Tus datos siempre son tuyos.",
-        triggers: {
-            history: "Has llegado al límite. Desbloquea el historial completo.",
-            analytics: "Las analíticas avanzadas están disponibles en Premium.",
-            ai: "La IA de entrenamiento es parte de Premium.",
-            sync: "Sincronización en nube es Premium."
-        }
-    },
 
     // Template Categories
     cat: {
@@ -406,7 +378,6 @@ export const ES: TranslationDict = {
         logout: "Cerrar sesión",
         guestUser: "Usuario invitado",
         localStorage: "Solo almacenamiento local",
-        proMember: "Miembro Pro",
         signInRegister: "Iniciar sesión / registro"
     },
 
@@ -473,7 +444,6 @@ export const ES: TranslationDict = {
     statsNoData: "Sin datos",
     statsTitle: "Estadísticas",
     statsLevels: { beginner: "Principiante", intermediate: "Intermedio", advanced: "Avanzado" },
-    planTypes: { free: "Gratuito", monthly: "Mensual", yearly: "Anual", lifetime: "Vitalicio", demo: "Demo" },
     progressEmptyTitle: "Datos insuficientes",
     progressEmptyBody: "Completa al menos 2 entrenamientos con este ejercicio para ver el progreso.",
     adminPanel: "Panel admin",
@@ -568,15 +538,13 @@ export const ES: TranslationDict = {
         },
     },
     you: {
+        project: "Proyecto",
+        sourceCode: "Código fuente",
+        supportProject: "Apoyar el proyecto",
         title: "Tú",
         account: "Cuenta",
         sessions: "Sesiones",
         last30: "Últimos 30 d",
-        proMember: "Miembro Pro",
-        freeMember: "Cuenta gratuita",
-        demoAccount: "Cuenta demo",
-        dayLeft: "día restante",
-        daysLeft: "días restantes",
         localMode: "Modo local",
         defaultUser: "Usuario",
         body: "Tu cuerpo",
@@ -1267,24 +1235,6 @@ export const ES: TranslationDict = {
             notesOptional: 'Notas (opcional)',
             estBurned: 'Est. Quemadas',
             saveSession: 'Guardar sesión',
-        },
-        paywallModal: {
-            close: 'Cerrar',
-            unlockPro: 'Desbloquear PRO',
-            sendAWhatsappMessage: 'Envíanos un mensaje por WhatsApp para solicitar acceso temprano. Activamos tu cuenta en menos de 24 hs.',
-            alreadyHaveAnApproved: '¿Ya tienes una cuenta aprobada? Inicia sesión con tu email para sincronizar tu acceso Pro.',
-            processing: 'Procesando...',
-            welcomePro: '¡Bienvenido Pro!',
-            locked: "Bloqueado: {feature}",
-            featureNames: {
-                history: "Historial completo",
-                csv_export: "Exportar CSV",
-                "Exercise Library": "Biblioteca de ejercicios",
-                "Custom Routines": "Rutinas personalizadas",
-                sync: "Sincronización",
-                "Pro Template": "Plantilla Pro",
-                Guidelines: "Guías",
-            } as Record<string, string>,
         },
         warmupModal: {
             performTheseSetsTo: 'Realiza estas series para potenciar tu SNC sin acumular fatiga antes de tus series efectivas.',
