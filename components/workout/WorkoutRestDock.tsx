@@ -149,12 +149,19 @@ export const WorkoutRestDock: React.FC = () => {
             {(nextExerciseInfo || (showEffortFeedback && currentSourceSet)) && (
                 <div className="mt-2 border-t border-border-subtle/60 pt-2">
                     {nextExerciseInfo && (
-                        <div className="flex items-center gap-1.5 px-1 pb-1.5 text-left">
-                            <Icon name="ArrowRight" size={13} className="shrink-0 text-primary-400" />
-                            <p className="min-w-0 flex-1 truncate text-xs text-white">
-                                <span className="font-medium text-muted">{nextExerciseInfo.category} · </span>
-                                <span className="font-semibold">{nextExerciseInfo.name}{nextExerciseInfo.target ? ` · ${nextExerciseInfo.target}` : ''}</span>
-                            </p>
+                        <div className="flex items-center justify-between gap-2 px-1 pb-1.5 text-left text-xs">
+                            <div className="flex min-w-0 items-center gap-1.5">
+                                <Icon name="ArrowRight" size={13} className="shrink-0 text-primary-400" />
+                                <span className="truncate text-white">
+                                    <span className="font-medium text-muted">{nextExerciseInfo.category} · </span>
+                                    <span className="font-semibold">{nextExerciseInfo.name}</span>
+                                </span>
+                            </div>
+                            {nextExerciseInfo.target && (
+                                <span className="shrink-0 rounded-full border border-primary-500/30 bg-primary-500/10 px-2 py-0.5 text-[11px] font-semibold text-primary-300">
+                                    {nextExerciseInfo.target}
+                                </span>
+                            )}
                         </div>
                     )}
                     {showEffortFeedback && currentSourceSet && (

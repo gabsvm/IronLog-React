@@ -152,7 +152,23 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                         />
 
                         <div ref={panelRef} className="min-w-0 scroll-mt-24 space-y-2.5">
-                            {partnerExercise && (
+                            {linkingId && (
+                                <div className="flex items-center justify-between gap-3 rounded-2xl border border-cyan-500/40 bg-cyan-950/40 p-3 text-cyan-200 shadow-lg backdrop-blur-md">
+                                    <div className="flex items-center gap-2 text-xs font-semibold">
+                                        <Icon name="Link" size={16} className="text-cyan-400 shrink-0" />
+                                        <span>{pickLang(lang, { es: 'Toca "Unir aquí" en el ejercicio a emparejar', en: 'Tap "Pair here" on the exercise to link' })}</span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setLinkingId(null)}
+                                        className="shrink-0 rounded-full border border-cyan-500/30 bg-surface-base px-3 py-1 text-xs font-bold text-white hover:bg-surface-elevated transition-colors"
+                                    >
+                                        {t.cancel || pickLang(lang, { es: 'Cancelar', en: 'Cancel' })}
+                                    </button>
+                                </div>
+                            )}
+
+                            {partnerExercise && !linkingId && (
                                 <button
                                     type="button"
                                     onClick={() => selectExercise(partnerExercise.instanceId)}
@@ -169,15 +185,18 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                             <Suspense fallback={null}>
                                 <WorkoutSortableList itemIds={sortableItems} onReorder={handleReorder}>
                                     {sessionExercises.map((ex) => {
+                                        const isLinkingMode = !!linkingId;
                                         const isActive = ex.instanceId === focusedId;
+                                        const isVisible = isLinkingMode || isActive;
+                                        const isExpanded = isLinkingMode ? ex.instanceId === linkingId : isActive;
                                         const supersetColorIndex = ex.supersetId ? supersetColorIndexes[ex.supersetId] : undefined;
-                                        const isLinkingTarget = !!linkingId && linkingId !== ex.instanceId;
+                                        const isLinkingTarget = isLinkingMode && linkingId !== ex.instanceId;
 
                                         return (
-                                            <div key={ex.instanceId} className={isActive ? undefined : 'hidden'} aria-hidden={isActive ? undefined : true}>
+                                            <div key={ex.instanceId} className={isVisible ? undefined : 'hidden'} aria-hidden={isVisible ? undefined : true}>
                                                 <SortableExerciseCard
                                                     exercise={ex}
-                                                    isExpanded={ex.instanceId === focusedId}
+                                                    isExpanded={isExpanded}
                                                     onToggleExpand={handleToggleExpand}
                                                     onSetUpdate={handleSetUpdate}
                                                     onSetComplete={handleSetComplete}

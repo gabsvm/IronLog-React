@@ -167,6 +167,17 @@ export const useWorkoutViewState = ({ onFinish, onDiscard, onBack, onOpenReorder
         toggleSetComplete(exInstanceId, setId);
 
         if (isCompleting && ex) {
+            // If this exercise is in a superset, automatically alternate focus to its partner
+            if (ex.supersetId) {
+                const partner = currentExercises.find(
+                    e => e.supersetId === ex.supersetId && e.instanceId !== exInstanceId && (e.sets || []).some(s => !s.completed)
+                );
+                if (partner) {
+                    setActiveExerciseId(partner.instanceId);
+                    return;
+                }
+            }
+
             const otherPending = (ex.sets || []).filter(s => s.id !== setId && !s.completed);
             if (otherPending.length === 0) {
                 const nextEx = currentExercises.find(e => e.instanceId !== exInstanceId && (e.sets || []).some(s => !s.completed));

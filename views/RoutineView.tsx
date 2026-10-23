@@ -96,7 +96,7 @@ export const RoutineView: React.FC<RoutineViewProps> = ({ onStartDay, onEditProg
             )}
 
             {hasPlan ? (
-                <ul className="gl-panel divide-y divide-[rgb(var(--border-subtle))]">
+                <ul className="gl-panel divide-y divide-[rgb(var(--border-subtle))] overflow-hidden shadow-sm">
                     {safeProgram.map((day, idx) => {
                         const slots = day.slots || [];
                         const dayName = String(getTranslated(day.dayName, lang));
@@ -107,9 +107,9 @@ export const RoutineView: React.FC<RoutineViewProps> = ({ onStartDay, onEditProg
                         // One primary action: the session in progress, else the next day to train.
                         const isPrimary = isDayActiveSession || (!activeSession && idx === nextIdx);
                         return (
-                            <li key={day.id ?? idx} className="flex items-center gap-3 px-4 py-3.5">
-                                <span className={`gl-num flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-semibold ${isDone ? 'bg-primary-500/15 text-[rgb(var(--accent-text))]' : 'bg-[rgb(var(--surface-raised))] text-muted'}`}>
-                                    {isDone ? <Icon name="Check" size={16} strokeWidth={3} aria-label={t.completed} /> : idx + 1}
+                            <li key={day.id ?? idx} className="flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.02]">
+                                <span className={`gl-num flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${isDone ? 'bg-primary-500/15 text-[rgb(var(--accent-text))]' : 'bg-[rgb(var(--surface-raised))] text-muted'}`}>
+                                    {isDone ? <Icon name="Check" size={15} strokeWidth={3} aria-label={t.completed} /> : idx + 1}
                                 </span>
                                 <span className="min-w-0 flex-1">
                                     <span className="block truncate text-sm font-semibold text-[rgb(var(--text-primary))]">{dayName}</span>
@@ -125,15 +125,15 @@ export const RoutineView: React.FC<RoutineViewProps> = ({ onStartDay, onEditProg
                                     aria-label={isDayActiveSession
                                         ? `${pickLang(lang, { es: 'Retomar', en: 'Resume' })}: ${dayName}`
                                         : `${t.startWorkout}: ${dayName}`}
-                                    className={`${isPrimary ? 'gl-primary' : 'gl-quiet'} !min-h-[44px] shrink-0 !px-3.5`}
+                                    className={`${isPrimary ? 'gl-primary' : 'gl-quiet'} !min-h-[40px] shrink-0 !px-3 rounded-xl text-xs font-semibold`}
                                 >
                                     {isDayActiveSession ? (
                                         <>
-                                            <Icon name="RotateCcw" size={15} />
+                                            <Icon name="RotateCcw" size={14} />
                                             <span>{pickLang(lang, { es: 'Retomar', en: 'Resume' })}</span>
                                         </>
                                     ) : (
-                                        <Icon name="Play" size={16} fill="currentColor" />
+                                        <Icon name="Play" size={15} fill="currentColor" />
                                     )}
                                 </button>
                             </li>
@@ -156,7 +156,7 @@ export const RoutineView: React.FC<RoutineViewProps> = ({ onStartDay, onEditProg
             )}
             </div>
 
-            <ul className="gl-panel divide-y divide-[rgb(var(--border-subtle))]">
+            <ul className="gl-panel divide-y divide-[rgb(var(--border-subtle))] overflow-hidden shadow-sm">
                 {actions.map((action) => (
                     <li key={action.key}>
                         <button type="button" onClick={action.onClick} className="flex min-h-[52px] w-full items-center gap-3 px-4 text-left text-sm font-medium text-[rgb(var(--text-primary))]">
