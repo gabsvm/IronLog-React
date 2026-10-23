@@ -2,6 +2,34 @@
 
 > Estado actual — 2026-10-22: CANDIDATA v4.0.3-kong.15 PUBLICADA (M0–M5 implementados; smoke físico pendiente por Gemini 3.8). Verificación: tsc limpio; npm run verify en verde (151 archivos / 836 pruebas unitarias, validate-kong, bundle entry 66.43 KB ≤ 68300 B); e2e 49/49 en verde; visual 41/41 en verde (incluye Rutina, Resumen y matriz 1440); APK release firmada com.gainslab.pro v423 (SHA-256 bfabff79c842bbf09c3497a4b263289cb8661104cad59eb3606a7d45ac58ac37); protocolo de aceptación física en [gemini-3.8-device-release-smoke.md](gemini-3.8-device-release-smoke.md). Detalles en [muse-spark-1.3-release-remediation-plan.md](muse-spark-1.3-release-remediation-plan.md).
 
+### Revisión de contenido y jerarquía — 2026-10-22 (commits a8f1e14…3964a49)
+
+Criterio aprobado por el propietario: recortar taglines, textos de ayuda y etiquetas secundarias; si una
+pantalla los necesita para entenderse, corregir la composición. Una acción principal por vista. Las
+acciones existentes se conservan (los E2E dependen de sus nombres accesibles). Estas decisiones
+sustituyen a las de las secciones siguientes donde choquen:
+
+- **Hoy:** selector con el nombre real de cada día; hero con ejercicios numerados; «Sesión libre» y
+  «Añadir comida» como secundarias; anillo semanal; recientes con fecha destacada. Escritorio: hero a la
+  izquierda, semana y tendencia a la derecha, recientes a ancho completo.
+- **Entreno:** reloj bajo el título y barra fina de progreso (se elimina la tarjeta «Tu sesión»); sin fila
+  ← 1 de N →; «Terminar» discreto hasta completar todo; al cerrar un ejercicio, «Siguiente ejercicio · X»
+  o «Terminar sesión» como acción principal; tarjeta sin etiquetas de músculo/reps/BW/SS ni iconos de
+  enlazar/plegar (superserie sigue en el menú); volumen solo al completar el ejercicio.
+- **Rutina:** días en un panel, solo el siguiente (o en curso) es primario; acciones en un panel de filas.
+- **Progreso:** sin título visible (sr-only); la subpestaña «Progreso» pasa a **«Fuerza»**; variación del
+  reporte semanal neutra mientras la semana está abierta.
+- **Diario / Nutrición / Perfil / hojas:** títulos duplicados como sr-only; un solo «Agregar comida»;
+  sin descripciones de ayuda salvo estados deshabilitados o advertencias de comportamiento real.
+- **Bloqueos PRO:** fila compacta (candado + «Desbloquear PRO»); no se renderiza el contenido oculto.
+  Gate, paywall y textos comerciales sin cambios.
+- **Orden y formato:** el Diario ordena por fecha descendente; los pesos usan el locale de la app.
+- **Rendimiento:** precarga en reposo de Rutina, Progreso, Diario y Entreno (timeout 4 s).
+
+Evidencia: `npm run verify`, E2E 50/50 y visual 41/41 en cada bloque; revisión en emulador
+`medium_phone` con APK debug y datos locales (sin red). Pendiente: validación en dispositivo físico.
+Fuera de alcance: etiquetas fijadas por `tests/e2e/inventory/profile-settings.*.json`.
+
 ### Registro histórico de la entrega anterior
 
 La declaración siguiente se conserva como registro de esa entrega; no acredita el cumplimiento actual ni la validación de APK posteriores.
@@ -192,7 +220,7 @@ reabrir tras segundo plano recupera sesión y reloj. No se remonta el input enfo
 Archivos: `views/StatsView.tsx`, `StatsViewImpl.tsx`, `views/stats/*`,
 `components/stats/*`, `hooks/useStatsWorker.ts`, `services/statsCache.ts`.
 
-- Aplicar jerarquía del preview sin borrar Resumen / Progreso / Volumen, radar, distribución,
+- Aplicar jerarquía del preview sin borrar Resumen / Fuerza (antes «Progreso») / Volumen, radar, distribución,
   selección de ejercicios, tabla de rep-max, insights y sus gates actuales.
 - Selector de período (4/8 semanas e histórico) y ámbito plan/histórico, claramente diferenciados.
 - Aplicar ámbito + período una sola vez antes de resúmenes/cálculos. La clave del cache y el
