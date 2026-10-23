@@ -50,11 +50,12 @@ export const WorkoutExerciseRail: React.FC<WorkoutExerciseRailProps> = React.mem
                             }`}
                         >
                             <span
-                                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-black tabular-nums ${
+                                // Same shape morph as the set check: selected or complete settles into a rounded square.
+                                className={`gl-morph [--morph-on-radius:0.5rem] flex h-7 w-7 shrink-0 items-center justify-center text-xs font-black tabular-nums ${
                                     item.complete
-                                        ? 'bg-green-500/20 text-green-400'
+                                        ? 'gl-morph-on bg-primary-500/15 text-[rgb(var(--accent-text))]'
                                         : isActive
-                                            ? 'bg-primary-500 text-zinc-950'
+                                            ? 'gl-morph-on bg-primary-500 text-zinc-950'
                                             : 'bg-surface-elevated text-muted'
                                 }`}
                             >

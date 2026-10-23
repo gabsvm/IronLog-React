@@ -319,9 +319,10 @@ export const useSetRowState = ({
             : 'bg-surface-raised border border-border-subtle'
     }`;
 
-    const checkBtnClass = `premium-progress-feedback relative flex h-[34px] w-[34px] after:absolute after:-inset-[6px] after:content-[''] shrink-0 items-center justify-center rounded-full transition-all duration-150 active:scale-90 ${
+    // gl-morph: the check settles from circle to rounded square when the set is done (see index.css).
+    const checkBtnClass = `premium-progress-feedback gl-morph relative flex h-[34px] w-[34px] after:absolute after:-inset-[6px] after:content-[''] shrink-0 items-center justify-center active:scale-90 ${
         isDone
-            ? 'bg-primary-500 text-zinc-950 font-black shadow-sm'
+            ? 'gl-morph-on bg-primary-500 text-zinc-950 font-black shadow-sm'
             : 'border border-zinc-700 bg-surface-elevated text-zinc-500 hover:border-zinc-500 hover:text-white'
     }`;
 

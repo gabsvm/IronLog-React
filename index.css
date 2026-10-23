@@ -43,6 +43,10 @@
   --shape-segment-radius: 12px;
   --shape-hero-radius: 20px;
   --motion-expressive: cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* Material 3 Expressive-style "fast spatial" spring, near-critical damping:
+     settles in ~320ms with ~3% overshoot. Used for state-carrying shape morphs. */
+  --motion-spring-fast: linear(0, 0.21 6%, 0.6 14%, 0.87 22%, 1.01 31%, 1.03 37%, 1.02 46%, 1 60%, 1);
+  --motion-spring-fast-duration: 320ms;
 }
 
 html.light {
@@ -366,6 +370,30 @@ body {
         border-radius: 20px;
     }
 }
+/* --- Shape morph (M3 Expressive) ------------------------------------------
+   The shape carries state: pending is a circle, done/selected settles into a
+   rounded square. Motion only when the user allows it and effects aren't reduced;
+   otherwise the shape still changes, instantly. */
+/* 50% (not 9999px) keeps the interpolated radius on the visible range, so the spring's
+   small overshoot can't flash a hard square corner on the way. */
+.gl-morph {
+    border-radius: 50%;
+}
+/* Smaller elements override --morph-on-radius so the change stays visible. */
+.gl-morph.gl-morph-on {
+    border-radius: var(--morph-on-radius, 0.75rem);
+}
+@media (prefers-reduced-motion: no-preference) {
+    :root:not([data-effects='reduced']) .gl-morph {
+        transition:
+            border-radius var(--motion-spring-fast-duration) var(--motion-spring-fast),
+            transform var(--motion-spring-fast-duration) var(--motion-spring-fast),
+            background-color 160ms ease-out,
+            border-color 160ms ease-out,
+            color 160ms ease-out;
+    }
+}
+
 /* --- A11Y: prefers-reduced-motion --------------------------------------- */
 /* WCAG 2.3.3 — if the user has requested reduced motion at the OS level,
    collapse all animations and transitions to a near-instant cross-fade.
