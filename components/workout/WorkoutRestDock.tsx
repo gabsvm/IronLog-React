@@ -45,11 +45,16 @@ export const WorkoutRestDock: React.FC = () => {
         wasActiveRef.current = nowActive;
     }, [restTimer?.active]);
 
-    const currentSourceSet = useMemo(() => {
+    const currentSourceExercise = useMemo(() => {
         if (!restTimer?.source || !activeSession?.exercises) return null;
-        const ex = activeSession.exercises.find((e) => e.instanceId === restTimer.source?.exerciseInstanceId);
-        return ex?.sets?.find((s) => s.id === restTimer.source?.setId) || null;
+        return activeSession.exercises.find((e) => e.instanceId === restTimer.source?.exerciseInstanceId) || null;
     }, [activeSession?.exercises, restTimer?.source]);
+
+    const currentSourceSet = useMemo(() => {
+        return currentSourceExercise?.sets?.find((s) => s.id === restTimer?.source?.setId) || null;
+    }, [currentSourceExercise, restTimer?.source]);
+
+    const isDensityMode = currentSourceExercise?.progressionMode === 'density';
 
     const showEffortFeedback = Boolean(config?.showRIR || config?.rpEnabled);
 
@@ -106,7 +111,15 @@ export const WorkoutRestDock: React.FC = () => {
         >
             <div className="flex items-center gap-2.5">
                 <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium text-muted">{t.timer.resting}</p>
+                    <div className="flex items-center gap-1.5">
+                        <p className="text-xs font-medium text-muted">{t.timer.resting}</p>
+                        {isDensityMode && (
+                            <span className="inline-flex items-center gap-1 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-400">
+                                <Icon name="Zap" size={10} />
+                                {t.progression?.densityBadge || 'Densidad'}
+                            </span>
+                        )}
+                    </div>
                     <p className="text-3xl font-semibold tabular-nums leading-tight text-[rgb(var(--text-primary))]">
                         {restTimeLabel}
                     </p>

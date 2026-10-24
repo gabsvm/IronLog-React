@@ -19,6 +19,7 @@ interface Props {
     onSupersetAction: () => void;
     onReplace: (id: number | null) => void;
     onRequestDelete: () => void;
+    onToggleProgressionMode?: () => void;
     t: any;
     lang: 'en' | 'es';
 }
@@ -39,6 +40,7 @@ export const ExerciseCardMenu: React.FC<Props> = ({
     onSupersetAction,
     onReplace,
     onRequestDelete,
+    onToggleProgressionMode,
     t,
     lang,
 }) => {
@@ -87,6 +89,22 @@ export const ExerciseCardMenu: React.FC<Props> = ({
                                     {hasSuperset ? m.unlink : isLinking ? m.linking : m.link}
                                 </span>
                             </button>
+
+                            {onToggleProgressionMode && (
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); onToggleProgressionMode(); onClose(); }}
+                                    role="menuitem"
+                                    className="flex min-h-11 w-full items-center gap-3 px-4 py-3 text-left text-sm font-bold text-[rgb(var(--text-primary))] transition-colors hover:bg-[rgb(var(--surface-elevated))]"
+                                >
+                                    <Icon name={ex.progressionMode === 'density' ? 'Zap' : 'TrendingUp'} size={16} className={ex.progressionMode === 'density' ? 'text-amber-400' : 'text-primary-400'} />
+                                    <div className="flex flex-col">
+                                        <span>{ex.progressionMode === 'density' ? t.progression?.switchToLoad : t.progression?.switchToDensity}</span>
+                                        <span className="text-[11px] font-normal text-muted">
+                                            {ex.progressionMode === 'density' ? t.progression?.modeDensity : t.progression?.modeLoad}
+                                        </span>
+                                    </div>
+                                </button>
+                            )}
                         </>
                     )}
 

@@ -52,6 +52,10 @@ export interface ExerciseDef {
   progressionNext?: string;      // ID of next-level exercise in progression
   progressionPrev?: string;      // ID of previous-level exercise in progression
   defaultRestSeconds?: number;   // Per-exercise rest timer override
+  progressionMode?: 'load' | 'density';
+  densityTargetRestSeconds?: number;
+  densityMinRestSeconds?: number;
+  densityStepSeconds?: number;
   source?: 'nilsson_bw';         // Origin tag (e.g. Nick Nilsson Best Bodyweight Exercises)
   isCustom?: boolean;            // User-created exercise
   archived?: boolean;            // Archived exercise (hidden from selectors, preserved for references)
@@ -102,6 +106,10 @@ export interface SessionExercise extends ExerciseDef {
   cardioType?: CardioType;
   programSlotId?: string;
   recommendedRestSeconds?: number;
+  progressionMode?: 'load' | 'density';
+  densityTargetRestSeconds?: number;
+  densityMinRestSeconds?: number;
+  densityStepSeconds?: number;
   substitutionGroup?: string;
   programSourceName?: string;
   targetMuscle?: MuscleGroup;
@@ -138,6 +146,10 @@ export interface ProgramSlot {
   prescription?: SetPrescription[];
   programSlotId?: string;
   recommendedRestSeconds?: number;
+  progressionMode?: 'load' | 'density';
+  densityTargetRestSeconds?: number;
+  densityMinRestSeconds?: number;
+  densityStepSeconds?: number;
   substitutionGroup?: string;
   programSourceName?: string;
   targetMuscle?: MuscleGroup;

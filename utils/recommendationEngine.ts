@@ -8,6 +8,11 @@ import {
     WIZARD_TEMPLATE
 } from "../data/defaultTemplates";
 import { PROGRESSION_STEP, formatWeight, toDisplay, unitLabel } from "./units";
+import {
+    recommendDensityProgression,
+    formatDensityProgressionReason,
+    type DensityProgressionSuggestion,
+} from "./densityProgression";
 
 export interface RecommendationResult {
     template: ProgramDay[];
@@ -90,6 +95,7 @@ export interface ProgressionSet {
 }
 
 export interface ProgressionSuggestion {
+    mode?: 'load';
     action: 'up' | 'hold' | 'down';
     /** Load change in display units (+step / 0 / negative). */
     deltaDisplay: number;
@@ -102,18 +108,75 @@ export interface ProgressionSuggestion {
     targetReps: number;
 }
 
+export function isDensitySuggestion(
+    suggestion: ProgressionSuggestion | DensityProgressionSuggestion
+): suggestion is DensityProgressionSuggestion {
+    return 'mode' in suggestion && suggestion.mode === 'density';
+}
+
 /**
  * Q15: per-exercise progression from the last session's working sets.
  * Extends the legacy overload rule (up-or-nothing) without changing its
  * null cases: no data, incomplete sets and zero load still return null,
  * and up without RIR data or without a rep range keeps the legacy step.
  */
-export const recommendProgression = (input: {
+export function recommendProgression(input: {
     sets: ProgressionSet[];
     range: { min: number; max: number } | null;
     rirTarget?: number;
     unit: WeightUnit;
-}): ProgressionSuggestion | null => {
+    mode: 'density';
+    currentRestSeconds?: number;
+    baseRestSeconds?: number;
+    minRestSeconds?: number;
+    restStepSeconds?: number;
+}): DensityProgressionSuggestion | null;
+export function recommendProgression(input: {
+    sets: ProgressionSet[];
+    range: { min: number; max: number } | null;
+    rirTarget?: number;
+    unit: WeightUnit;
+    mode?: 'load';
+    currentRestSeconds?: number;
+    baseRestSeconds?: number;
+    minRestSeconds?: number;
+    restStepSeconds?: number;
+}): ProgressionSuggestion | null;
+export function recommendProgression(input: {
+    sets: ProgressionSet[];
+    range: { min: number; max: number } | null;
+    rirTarget?: number;
+    unit: WeightUnit;
+    mode?: 'load' | 'density';
+    currentRestSeconds?: number;
+    baseRestSeconds?: number;
+    minRestSeconds?: number;
+    restStepSeconds?: number;
+}): ProgressionSuggestion | DensityProgressionSuggestion | null;
+export function recommendProgression(input: {
+    sets: ProgressionSet[];
+    range: { min: number; max: number } | null;
+    rirTarget?: number;
+    unit: WeightUnit;
+    mode?: 'load' | 'density';
+    currentRestSeconds?: number;
+    baseRestSeconds?: number;
+    minRestSeconds?: number;
+    restStepSeconds?: number;
+}): ProgressionSuggestion | DensityProgressionSuggestion | null {
+    if (input.mode === 'density') {
+        return recommendDensityProgression({
+            sets: input.sets,
+            range: input.range,
+            currentRestSeconds: input.currentRestSeconds,
+            baseRestSeconds: input.baseRestSeconds,
+            minRestSeconds: input.minRestSeconds,
+            restStepSeconds: input.restStepSeconds,
+            rirTarget: input.rirTarget,
+            unit: input.unit,
+        });
+    }
+
     const { sets, range, unit } = input;
     const rirTarget = input.rirTarget ?? 2;
     if (!Array.isArray(sets) || sets.length === 0) return null;
@@ -165,10 +228,13 @@ export interface ProgressionTexts {
 /** One-line reason for a suggestion, via TRANSLATIONS templates. */
 export const formatProgressionReason = (
     t: ProgressionTexts,
-    suggestion: ProgressionSuggestion,
+    suggestion: ProgressionSuggestion | DensityProgressionSuggestion,
     unit: WeightUnit,
     lang: 'es' | 'en',
 ): string => {
+    if (isDensitySuggestion(suggestion)) {
+        return formatDensityProgressionReason(t, suggestion, unit, lang);
+    }
     const suffix = unitLabel(unit).toLowerCase();
     const rirPart = suggestion.rir == null ? '' : t.withRir.replace('{rir}', String(suggestion.rir));
     if (suggestion.action === 'up') {

@@ -1,10 +1,11 @@
 // U5: SortableExerciseCard state and handlers, moved verbatim from components/workout/SortableExerciseCardImpl.tsx.
-import { useMemo, useState, useEffect, useRef } from 'react';
+import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { SessionExercise, WorkoutSet, CardioType, SetType } from '../../../types';
 import { parseTargetReps, roundWeight } from '../../../utils';
 import { getVolumeComparison } from '../../../utils/volumeComparison';
+import { calculateWorkDensity, compareWorkDensity } from '../../../utils/densityProgression';
 import { canFillFromPrevious, copySourceIndex, copyToFollowing, fillFromPrevious, restoreSet } from '../../../utils/setConvenience';
 import { formatWeight, resolveWeightUnit, toDisplay, unitLabel as unitLabelFor } from '../../../utils/units';
 import { formatProgressionReason, recommendProgression } from '../../../utils/recommendationEngine';
@@ -203,10 +204,15 @@ export const useSortableExerciseCardState = ({
                 range: parseTargetReps(ex.targetReps),
                 rirTarget: typeof config?.rpTargetRIR === 'number' ? config.rpTargetRIR : 2,
                 unit,
+                mode: ex.progressionMode,
+                currentRestSeconds: ex.densityTargetRestSeconds ?? ex.defaultRestSeconds,
+                baseRestSeconds: ex.defaultRestSeconds ?? 90,
+                minRestSeconds: ex.densityMinRestSeconds ?? 45,
+                restStepSeconds: ex.densityStepSeconds ?? 15,
             });
         }
         return null;
-    }, [logs, ex.id, ex.targetReps, isCardio, ex.isBodyweight, ex.isIsometric, unit, config?.rpTargetRIR]);
+    }, [logs, ex.id, ex.targetReps, ex.progressionMode, ex.densityTargetRestSeconds, ex.defaultRestSeconds, ex.densityMinRestSeconds, ex.densityStepSeconds, isCardio, ex.isBodyweight, ex.isIsometric, unit, config?.rpTargetRIR]);
 
 
 
@@ -391,11 +397,55 @@ export const useSortableExerciseCardState = ({
         onLink(ex.instanceId);
     };
 
+    const handleToggleProgressionMode = useCallback(() => {
+        onUpdateSession((prev: any) => !prev ? null : {
+            ...prev,
+            exercises: prev.exercises.map((item: any) => {
+                if (item.instanceId !== ex.instanceId) return item;
+                const nextMode = item.progressionMode === 'density' ? 'load' : 'density';
+                return {
+                    ...item,
+                    progressionMode: nextMode,
+                    densityTargetRestSeconds: nextMode === 'density'
+                        ? (item.densityTargetRestSeconds ?? item.defaultRestSeconds ?? 90)
+                        : undefined,
+                };
+            }),
+        });
+        setOpenMenuId(null);
+    }, [onUpdateSession, ex.instanceId, setOpenMenuId]);
+
+    const workDensity = useMemo(() => {
+        if (isCardio || regularSets.length === 0) return null;
+        const currentDensity = calculateWorkDensity(regularSets as any, { isBodyweight: ex.isBodyweight });
+        if (currentDensity.volume === 0) return null;
+        const prevDensity = previousSets && previousSets.length > 0
+            ? calculateWorkDensity(previousSets as any, { isBodyweight: ex.isBodyweight })
+            : null;
+        const comparison = prevDensity ? compareWorkDensity(currentDensity, prevDensity) : null;
+        return {
+            ...currentDensity,
+            comparison,
+        };
+    }, [regularSets, previousSets, isCardio, ex.isBodyweight]);
+
     const heroMetric = overloadSuggest
         ? {
-            icon: overloadSuggest.action === 'up' ? 'TrendingUp' : overloadSuggest.action === 'down' ? 'TrendingDown' : 'Minus',
+            icon: overloadSuggest.action === 'up'
+                ? 'TrendingUp'
+                : overloadSuggest.action === 'density_up'
+                    ? 'Zap'
+                    : overloadSuggest.action === 'density_cycle_complete'
+                        ? 'Award'
+                        : overloadSuggest.action === 'down' || overloadSuggest.action === 'density_down'
+                            ? 'TrendingDown'
+                            : 'Minus',
             label: formatProgressionReason(t.progression, overloadSuggest, unit, lang),
-            tone: overloadSuggest.action === 'up' ? 'text-[rgb(var(--accent-text))]' : overloadSuggest.action === 'down' ? 'text-amber-800 dark:text-amber-300' : 'text-secondary',
+            tone: overloadSuggest.action === 'up' || overloadSuggest.action === 'density_up' || overloadSuggest.action === 'density_cycle_complete'
+                ? 'text-[rgb(var(--accent-text))]'
+                : overloadSuggest.action === 'down' || overloadSuggest.action === 'density_down'
+                    ? 'text-amber-800 dark:text-amber-300'
+                    : 'text-secondary',
         }
         : historicalBest
             ? { icon: 'Trophy', label: historicalBest, tone: 'text-amber-800 dark:text-amber-300' }
@@ -487,6 +537,8 @@ export const useSortableExerciseCardState = ({
         confirmDelete,
         handleSupersetAction,
         heroMetric,
+        workDensity,
+        handleToggleProgressionMode,
         isMenuOpen,
     };
 };

@@ -252,8 +252,10 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
             const isMetabolite = currentMeso?.mesoType === 'metabolite';
             let dur = isMetabolite ? 60 : 120;
 
-            // Per-exercise custom rest preset takes highest priority
-            if (ex?.defaultRestSeconds && ex.defaultRestSeconds > 0) {
+            // Density mode custom rest or per-exercise preset takes highest priority
+            if (ex?.progressionMode === 'density' && ex.densityTargetRestSeconds && ex.densityTargetRestSeconds > 0) {
+                dur = ex.densityTargetRestSeconds;
+            } else if (ex?.defaultRestSeconds && ex.defaultRestSeconds > 0) {
                 dur = ex.defaultRestSeconds;
             } else {
                 // Calisthenics Specific Durations

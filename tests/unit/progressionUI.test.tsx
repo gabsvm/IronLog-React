@@ -111,4 +111,44 @@ describe('Q15: progression hero line on the workout card', () => {
         );
         expect(screen.queryByText(/Llegaste|Misma carga|Bajá/)).toBeNull();
     });
+
+    it('shows density progression hero suggestion when in density mode', () => {
+        render(
+            <SortableExerciseCardImpl
+                {...baseProps({
+                    exercise: {
+                        id: 'bp', instanceId: 1, name: 'Press Banca', muscle: 'CHEST',
+                        targetReps: '8-12',
+                        progressionMode: 'density',
+                        densityTargetRestSeconds: 90,
+                        sets: [
+                            { id: 11, weight: '', reps: '', completed: false, type: 'regular' },
+                        ],
+                    },
+                    logs: [pastLog([pastSet(1, '60', '12', '2'), pastSet(2, '60', '12', '2')])],
+                })}
+            />,
+        );
+        expect(screen.getByText(/Densidad: 12 reps logradas · Descanso 75s/)).toBeTruthy();
+    });
+
+    it('shows density pace line when exercise is completed', () => {
+        render(
+            <SortableExerciseCardImpl
+                {...baseProps({
+                    exercise: {
+                        id: 'bp', instanceId: 1, name: 'Press Banca', muscle: 'CHEST',
+                        targetReps: '8-12',
+                        progressionMode: 'density',
+                        sets: [
+                            { id: 11, weight: '60', reps: '10', completed: true, type: 'regular' },
+                            { id: 12, weight: '60', reps: '10', completed: true, type: 'regular' },
+                        ],
+                    },
+                    logs: [pastLog([pastSet(1, '60', '10'), pastSet(2, '60', '10')])],
+                })}
+            />,
+        );
+        expect(screen.getByTestId('exercise-density-line')).toBeTruthy();
+    });
 });

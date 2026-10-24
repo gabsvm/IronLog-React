@@ -9,7 +9,7 @@ import { getTranslated } from '../../../utils';
 import type { ExerciseCardState } from './useSortableExerciseCardState';
 
 export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ state }) => {
-    const { ex, onSetUpdate, onSetComplete, onSetTypeChange, onAddSet, onDeleteSet, onOpenDetail, onLink, onReplace, onOpenWarmup, openMenuId, setOpenMenuId, t, lang, isLinkingTarget, config, stageConfig, dragEnabled, tutorialId, attributes, listeners, setNodeRef, isDragging, exDoneFlash, activeEmomMinute, setActiveEmomMinute, style, sets, c, ssStyle, unit, unitLabel, isCardio, cardioMode, isInterval, regularSets, volumeComparison, allDone, isLinkSource, canWarmup, isEMOM, isMyorep, isCluster, isGiant, hasTopBackoff, isTabata, isHIIT, isRestPause, isDrop, isTimeVolume, isTripleAdd, isSpecialProtocol, nextSetIdx, setBadgeLabels, handleInjectWarmup, canFillPrevious, copyFromIndex, handleFillFromPrevious, handleCopyToFollowing, removedSet, handleRemoveLastSet, handleUndoRemoveSet, handleCardioModeChange, confirmDelete, handleSupersetAction, heroMetric } = state;
+    const { ex, onSetUpdate, onSetComplete, onSetTypeChange, onAddSet, onDeleteSet, onOpenDetail, onLink, onReplace, onOpenWarmup, openMenuId, setOpenMenuId, t, lang, isLinkingTarget, config, stageConfig, dragEnabled, tutorialId, attributes, listeners, setNodeRef, isDragging, exDoneFlash, activeEmomMinute, setActiveEmomMinute, style, sets, c, ssStyle, unit, unitLabel, isCardio, cardioMode, isInterval, regularSets, volumeComparison, allDone, isLinkSource, canWarmup, isEMOM, isMyorep, isCluster, isGiant, hasTopBackoff, isTabata, isHIIT, isRestPause, isDrop, isTimeVolume, isTripleAdd, isSpecialProtocol, nextSetIdx, setBadgeLabels, handleInjectWarmup, canFillPrevious, copyFromIndex, handleFillFromPrevious, handleCopyToFollowing, removedSet, handleRemoveLastSet, handleUndoRemoveSet, handleCardioModeChange, confirmDelete, handleSupersetAction, heroMetric, workDensity, handleToggleProgressionMode } = state;
     return (
         <div
             ref={setNodeRef}
@@ -150,6 +150,7 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                                 onSupersetAction={handleSupersetAction}
                                 onReplace={onReplace}
                                 onRequestDelete={confirmDelete}
+                                onToggleProgressionMode={handleToggleProgressionMode}
                                 t={t}
                                 lang={lang}
                             />
@@ -182,6 +183,26 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                     {allDone && volumeComparison && (
                         <div className="mt-2">
                             <ExerciseVolumeLine comparison={volumeComparison} unit={unit} unitLabel={unitLabel} lang={lang} labels={c.volumeLine} />
+                        </div>
+                    )}
+                    {allDone && workDensity && workDensity.densityRate > 0 && (
+                        <div className="mt-1 flex items-center justify-between gap-2 px-0.5 text-xs tabular-nums text-muted" data-testid="exercise-density-line">
+                            <span className="flex items-center gap-1.5">
+                                <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold ${
+                                    ex.progressionMode === 'density' ? 'bg-amber-500/15 text-amber-400' : 'bg-surface-elevated text-secondary'
+                                }`}>
+                                    <Icon name="Zap" size={10} />
+                                    {ex.progressionMode === 'density' ? (t.progression?.densityBadge || 'Densidad') : 'Ritmo'}
+                                </span>
+                                <span className="font-bold text-white">
+                                    {Math.round(workDensity.densityRate)} {ex.isBodyweight ? 'reps/min' : `${unitLabel.toLowerCase()}/min`}
+                                </span>
+                            </span>
+                            {workDensity.comparison ? (
+                                <span className={workDensity.comparison.percentChange >= 0 ? 'font-bold text-green-500' : 'text-muted'}>
+                                    {c.volumeLine.vsPrevious.replace('{delta}', `${workDensity.comparison.percentChange >= 0 ? '+' : ''}${workDensity.comparison.percentChange}%`)}
+                                </span>
+                            ) : null}
                         </div>
                     )}
                 </div>
