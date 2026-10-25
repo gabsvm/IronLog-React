@@ -170,7 +170,7 @@ export const EN = {
     types: { regular: "Regular", myorep: "Myorep", myorep_match: "Myorep Match", cluster: "Cluster", top: "Top Set", backoff: "Back-off Set", giant: "Giant Set", warmup: "Warmup", emom: "EMOM", drop: "Drop Set", rest_pause: "Rest-Pause", time_volume: "Time-Volume", triple_add: "Triple Add" },
     typeDesc: { regular: "Standard straight set", myorep: "Activation set + mini-sets (short rest)", myorep_match: "Match reps of previous set", cluster: "Intra-set rest periods", top: "Heaviest set (High Intensity)", backoff: "Volume work after Top Set", giant: "High reps to failure (Metabolite)", warmup: "Low fatigue preparation", emom: "Every Minute On the Minute — perform target reps at the start of each minute", drop: "Reduce weight ~20% each set, no rest between", rest_pause: "1 work set, 20s rest, more reps, 20s rest, more reps. Stay 1 rep shy of failure.", time_volume: "3-rep mini-sets, 10s rest, escalate rest when you can't hit 3 reps. 15-min blocks (or 7.5 for small muscles).", triple_add: "light 20–30 reps → 10s → moderate 6–8 reps → 10s → heavy 1–3 reps. Hits all fiber types." },
     muscle: { CHEST: "Chest", BACK: "Back", QUADS: "Quads", HAMSTRINGS: "Hamstrings", GLUTES: "Glutes", CALVES: "Calves", SHOULDERS: "Shoulders", BICEPS: "Biceps", TRICEPS: "Triceps", TRAPS: "Traps", ABS: "Abs", FOREARMS: "Forearms", NECK: "Neck", CARDIO: "Cardio" },
-    rpEnabled: "GainsLab AI Suggestions",
+    rpEnabled: "Repyntra AI Suggestions",
     rpTargetRIR: "Target RIR",
     editTemplate: "Edit routine",
     addDay: "Add Day",
@@ -303,7 +303,7 @@ export const EN = {
     saveAsMeso: "Use this program to create a new active mesocycle immediately.",
     units: { kg: "KG", pl: "Plates", lb: "LBS", toggle: "Change Unit (KG/Plates)", plateWeight: "Weight per Plate", setPlateWeight: "Set Weight per Plate (kg)", enterWeight: "e.g. 5, 10..." },
     fb: { sorenessLabel: "Soreness / Recovery", performanceLabel: "Pump / Capacity", soreness: { 1: "Healed Early / Fresh", 2: "Healed on Time (Ideal)", 3: "Still Sore / Ouch" }, performance: { 1: "Bad / Grind", 2: "Good / Target", 3: "Great / Too Easy" }, adjust: { add: "+1/2 Sets", sub: "-1 Set", keep: "Keep (Optimal)" } },
-    onb: { skip: "Skip", next: "Next", start: "Start", s1_title: "Welcome to GainsLab", s1_desc: "The ultimate hypertrophy tool, powered by GainsLab AI.", s2_title: "Mesocycles", s2_desc: "Organize your training by weeks. GainsLab AI auto-regulates volume based on your feedback.", s3_title: "Smart Tracking", s3_desc: "Log RIR, use the built-in timer, and calculate warmups instantly.", s4_title: "Progress", s4_desc: "Visualize your volume landmarks (MEV/MRV) and ensure progressive overload." },
+    onb: { skip: "Skip", next: "Next", start: "Start", s1_title: "Welcome to Repyntra", s1_desc: "The ultimate hypertrophy tool, powered by Repyntra AI.", s2_title: "Mesocycles", s2_desc: "Organize your training by weeks. Repyntra AI auto-regulates volume based on your feedback.", s3_title: "Smart Tracking", s3_desc: "Log RIR, use the built-in timer, and calculate warmups instantly.", s4_title: "Progress", s4_desc: "Visualize your volume landmarks (MEV/MRV) and ensure progressive overload." },
     createAndSelect: "Create and Select",
     newRecord: "New Record!",
     prMessage: "You beat your previous bests!",
@@ -320,7 +320,7 @@ export const EN = {
             intermediate: "1-3 years. Familiar with RPE and compound lifting.",
             advanced: "3+ years. High volume requirements and advanced recovery needs."
         },
-        expNote: "GainsLab AI will adjust initial volume based on your training age.",
+        expNote: "Repyntra AI will adjust initial volume based on your training age.",
         goalOptions: { hypertrophy: "Hypertrophy", strength: "Strength", endurance: "Endurance" },
         goalDesc: {
             hypertrophy: "Maximize muscle size and body composition.",
@@ -359,10 +359,10 @@ export const EN = {
         titleSuffix: "",
         subtitle: "The professional training log for serious athletes. Track every set, rep, and RPE with precision.",
         getStarted: "Get Started Free",
-        featuresTitle: "Why GainsLab?",
+        featuresTitle: "Why Repyntra?",
         features: [
             { title: "Smart Tracking", desc: "Predictive RPE and volume tracking designed for hypertrophy.", icon: "Zap" },
-            { title: "GainsLab AI", desc: "Real-time volume adjustments based on your recovery.", icon: "Activity" },
+            { title: "Repyntra AI", desc: "Real-time volume adjustments based on your recovery.", icon: "Activity" },
             { title: "100% Secure", desc: "Private data sync across all your devices.", icon: "Shield" },
             { title: "Offline First", desc: "Works deep in the gym with zero internet connection.", icon: "Cloud" }
         ]
@@ -611,8 +611,8 @@ export const EN = {
         idleState: "Idle",
         lastChange: "Last local change:",
         cloudNewer: "Cloud-newer sections:",
-        installHow: "How to install GainsLab",
-        installIos: "In Safari, tap the Share button (square icon with upward arrow) and select \"Add to Home Screen\" (+) to install GainsLab.",
+        installHow: "How to install Repyntra",
+        installIos: "In Safari, tap the Share button (square icon with upward arrow) and select \"Add to Home Screen\" (+) to install Repyntra.",
         installOther: "Tap the browser menu (⋮) and select \"Install app\" or \"Add to Home Screen\".",
         understood: "Got it",
         errorLogTitle: "Error log",
@@ -707,7 +707,7 @@ export const EN = {
         rpeTip3: "• In high-rep work, RPE can feel different than in triples or singles; use it as an effort guide.",
         subsEyebrow: "KONG SUBSTITUTIONS",
         subsTitle: "Adapt equipment, preserve intent",
-        subsIntro: "During a workout, open the exercise ⋮ menu and choose replace. GainsLab will ask whether the change is only for today or for all KONG.",
+        subsIntro: "During a workout, open the exercise ⋮ menu and choose replace. Repyntra will ask whether the change is only for today or for all KONG.",
         subsScope: "Today only changes the current session. “All KONG” stores the replacement in the active program and reapplies it when that slot appears again.",
         subsPersistent: "Persistent replacements",
         subsNone: "You have not made any all-KONG replacements yet.",
@@ -1159,7 +1159,7 @@ export const EN = {
         },
         pRCelebrationOverlay: {
             newPr: 'New PR!',
-            checkOutMyNew: 'Check out my new PR on GainsLab Pro! 🔥',
+            checkOutMyNew: 'Check out my new PR on Repyntra! 🔥',
             sharePr: 'Share PR',
         },
         useShortcutLaunch: {

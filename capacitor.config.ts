@@ -3,7 +3,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.gainslab.pro',
-  appName: 'GainsLab',
+  appName: 'Repyntra',
   webDir: process.env.CAPACITOR_WEB_DIR || 'dist',
   server: {
     androidScheme: 'https'

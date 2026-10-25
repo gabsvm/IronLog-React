@@ -31,7 +31,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     const { lang, setLang } = useLanguage();
 
     const [theme, setTheme] = useLocalStorage<Theme>('il_theme_v1', 'dark');
-    const [colorTheme, setColorTheme] = useLocalStorage<ColorTheme>('il_color_theme_v1', 'iron');
+    const [colorTheme, setColorTheme] = useLocalStorage<ColorTheme>('il_color_theme_v1', 'royal');
 
     // FIXED: Default to FALSE for PRO features
     const [showRIR, setShowRIR] = useLocalStorage('il_cfg_rir', false);
