@@ -244,9 +244,9 @@ export const AppleExerciseMotion: React.FC<AppleExerciseMotionProps> = ({
     };
 
     return (
-        <div className="w-full rounded-2xl overflow-hidden border border-[rgb(var(--border-subtle))] bg-[#071424] shadow-md transition-all">
+        <div className="w-full rounded-2xl overflow-hidden border border-[rgb(var(--border-subtle))] bg-zinc-950 dark:bg-[#071424] shadow-md transition-all">
             {/* ── Apple Fitness+ Vector Stage ───────────────────────────────── */}
-            <div className="relative w-full aspect-[16/10] sm:aspect-video flex items-center justify-center overflow-hidden select-none">
+            <div className="relative w-full aspect-[16/10] sm:aspect-video flex items-center justify-center overflow-hidden select-none bg-[#071424]">
                 <div
                     className="absolute inset-0 pointer-events-none transition-colors duration-500"
                     style={{
