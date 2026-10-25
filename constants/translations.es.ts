@@ -1146,6 +1146,8 @@ export const ES: TranslationDict = {
             pause: 'Pausar',
             resume: 'Reanudar',
             tempoBadge: 'Tempo 3-1-1',
+            startPosition: 'Inicio / Estiramiento',
+            endPosition: 'Contracción Máxima',
             cuesPress1: 'Retracción escapular activa',
             cuesPress2: 'Codos a 45° respecto al torso',
             cuesPress3: 'Pausa de 1s en máximo estiramiento',

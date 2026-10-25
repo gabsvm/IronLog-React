@@ -1144,6 +1144,8 @@ export const EN = {
             pause: 'Pause',
             resume: 'Resume',
             tempoBadge: 'Tempo 3-1-1',
+            startPosition: 'Start / Stretch',
+            endPosition: 'Peak Contraction',
             cuesPress1: 'Retract & depress scapulae',
             cuesPress2: 'Elbows at 45° angle to torso',
             cuesPress3: '1s pause at full stretch',
