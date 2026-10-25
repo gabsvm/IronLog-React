@@ -715,6 +715,26 @@ html.light .text-primary-500 {
   color: rgb(var(--accent-text));
 }
 
+/* Dynamic Repyntra Logo wordmark accent */
+.logo-wordmark-accent {
+  color: rgb(var(--accent-text));
+  transition: color 250ms ease-out;
+}
+html.light .logo-wordmark-accent {
+  color: rgb(var(--accent-text));
+}
+html:not(.light) :is([data-theme='royal'], [data-theme='cyan']) .logo-wordmark-accent {
+  background: linear-gradient(135deg, #B79CFF 0%, #00E5DB 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+html.light :is([data-theme='royal'], [data-theme='cyan']) .logo-wordmark-accent {
+  background: linear-gradient(135deg, #6B1EB8 0%, #00877F 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+
 html.light .text-zinc-100,
 html.light .text-zinc-200,
 html.light .text-zinc-300,

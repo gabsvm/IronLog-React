@@ -10,6 +10,7 @@ import { MuscleTag } from '../workout/MuscleTag';
 import { Button } from './Button';
 import { ProgressChart } from '../stats/ProgressChart';
 import { Sheet } from './Sheet';
+import { AppleExerciseMotion } from '../exercises/AppleExerciseMotion';
 import { useStatsWorker } from '../../hooks/useStatsWorker';
 import { buildStatsLogsSignature } from '../../services/statsCache';
 import { resolveMuscleLabel } from '../../utils/muscle';
@@ -255,36 +256,13 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
             <div data-vaul-no-drag className="min-w-0 pb-8">
                     {activeTab === 'guide' ? (
                         <>
-                            {/* Video / Visual Section */}
-                            <div className="mt-4 overflow-hidden">
-                                {exercise.videoId ? (
-                                    <YouTubeCard
-                                        videoId={exercise.videoId}
-                                        title={String(translatedName)}
-                                        youtubeUrl={youtubeUrl}
-                                    />
-                                ) : (
-                                    <ExerciseVisualHint exercise={exercise} lang={lang} />
-                                )}
-                            </div>
-
-                            {/* Search on YouTube link (always shown) */}
-                            <div className="flex items-center justify-between px-4 py-2.5 border-b border-[rgb(var(--border-subtle))]">
-                                <div className="text-xs font-semibold text-muted">
-                                    {exercise.videoId
-                                        ? (TRANSLATIONS[lang].copy.exerciseDetailModal.tapToOpenIn)
-                                        : (TRANSLATIONS[lang].copy.exerciseDetailModal.searchTutorialOnline)
-                                    }
-                                </div>
-                                <a
-                                    href={youtubeUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-1.5 text-xs font-bold text-red-500 hover:text-red-400 transition-colors"
-                                >
-                                    <Icon name="ExternalLink" size={12} />
-                                    {t.watchVideo || 'Watch Video'}
-                                </a>
+                            {/* Apple Fitness+ Style Biomechanic Motion */}
+                            <div className="mt-3 px-1">
+                                <AppleExerciseMotion
+                                    exercise={exercise}
+                                    lang={lang}
+                                    youtubeUrl={youtubeUrl}
+                                />
                             </div>
 
                             {/* Instructions & Tip */}

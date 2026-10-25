@@ -19,12 +19,12 @@ export const Logo: React.FC<LogoProps> = ({ className = "w-10 h-10", size, showT
     return (
         <div className="relative inline-flex shrink-0 items-center gap-2.5">
             <div
-                className={`relative inline-flex shrink-0 items-center justify-center rounded-[24%] shadow-sm transition-colors duration-200 overflow-hidden ring-1 ring-white/10 ${className}`}
+                className={`relative inline-flex shrink-0 items-center justify-center rounded-[24%] shadow-sm transition-all duration-300 overflow-hidden ring-1 ring-primary-500/25 border border-primary-500/20 shadow-[0_0_12px_rgb(var(--primary-500)/0.2)] ${className}`}
                 style={style}
             >
                 <img
                     src="/assets/branding/repyntra-glyph.png"
-                    className="w-full h-full object-contain pointer-events-none p-1"
+                    className="w-full h-full object-contain pointer-events-none p-1 transition-transform duration-200"
                     alt="Repyntra"
                     draggable={false}
                 />
@@ -32,7 +32,7 @@ export const Logo: React.FC<LogoProps> = ({ className = "w-10 h-10", size, showT
 
             {showText && (
                 <span className="whitespace-nowrap text-xl font-bold tracking-tight text-zinc-900 dark:text-white">
-                    Rep<span className="bg-gradient-to-r from-[#972BFF] to-[#00E5DB] bg-clip-text text-transparent font-extrabold">yntra</span>
+                    Rep<span className="logo-wordmark-accent font-extrabold">yntra</span>
                 </span>
             )}
         </div>
