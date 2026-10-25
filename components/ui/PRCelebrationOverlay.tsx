@@ -80,7 +80,7 @@ export const PRCelebrationOverlay: React.FC<PRCelebrationOverlayProps> = ({ onDi
                     </p>
 
                     <div className="opacity-40 text-xs font-bold tracking-widest uppercase mb-10 flex gap-1 items-center">
-                        <Icon name="Activity" size={12} /> GainsLab Pro
+                        <Icon name="Activity" size={12} /> Repyntra Pro
                     </div>
                 </div>
 

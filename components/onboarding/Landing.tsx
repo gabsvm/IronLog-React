@@ -67,7 +67,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onLogin }) => {
                     ))}
                 </section>
                 <footer className="text-center text-muted text-xs mt-auto pb-[calc(1rem+var(--safe-area-bottom))]">
-                    GainsLab v4.0 &copy; {new Date().getFullYear()} &bull; Professional Edition
+                    Repyntra v4.0 &copy; {new Date().getFullYear()} &bull; Professional Edition
                 </footer>
             </div>
         </div>

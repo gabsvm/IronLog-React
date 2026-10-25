@@ -58,12 +58,72 @@ export const AppearanceSection: React.FC = () => {
 
             <div className="label-reference px-1 mb-1.5">{ty.accent}</div>
             <div className="gl-panel p-4 mb-4">
+                <div className="text-[11px] font-bold text-muted tracking-wider uppercase mb-2 px-1">
+                    {ty.brandPalette}
+                </div>
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                    <button
+                        type="button"
+                        onClick={() => setColorTheme('royal')}
+                        aria-pressed={colorTheme === 'royal'}
+                        className={`flex min-h-[56px] items-center gap-3 p-2.5 rounded-2xl border transition-all text-left ${
+                            colorTheme === 'royal'
+                                ? 'bg-[rgb(var(--surface-elevated))] border-primary-500 ring-1 ring-primary-500 shadow-sm'
+                                : 'bg-[rgb(var(--surface-raised))] border-[rgb(var(--border-subtle))] hover:border-[rgb(var(--border-strong))]'
+                        }`}
+                    >
+                        <div className="relative w-9 h-9 shrink-0 rounded-full bg-[#b79cff] flex items-center justify-center shadow-sm">
+                            {colorTheme === 'royal' && (
+                                <Icon name="Check" size={16} strokeWidth={3} className="text-zinc-950" />
+                            )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                            <div className="text-xs font-bold text-[rgb(var(--text-primary))] flex items-center gap-1.5">
+                                <span>{ty.pillRoyal}</span>
+                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-primary-500/15 text-primary-500 font-extrabold uppercase tracking-wide">
+                                    Signature
+                                </span>
+                            </div>
+                            <div className="text-[10px] text-muted truncate">Violet #B79CFF</div>
+                        </div>
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() => setColorTheme('cyan')}
+                        aria-pressed={colorTheme === 'cyan'}
+                        className={`flex min-h-[56px] items-center gap-3 p-2.5 rounded-2xl border transition-all text-left ${
+                            colorTheme === 'cyan'
+                                ? 'bg-[rgb(var(--surface-elevated))] border-primary-500 ring-1 ring-primary-500 shadow-sm'
+                                : 'bg-[rgb(var(--surface-raised))] border-[rgb(var(--border-subtle))] hover:border-[rgb(var(--border-strong))]'
+                        }`}
+                    >
+                        <div className="relative w-9 h-9 shrink-0 rounded-full bg-[#00e5db] flex items-center justify-center shadow-sm">
+                            {colorTheme === 'cyan' && (
+                                <Icon name="Check" size={16} strokeWidth={3} className="text-zinc-950" />
+                            )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                            <div className="text-xs font-bold text-[rgb(var(--text-primary))] flex items-center gap-1.5">
+                                <span>{ty.pillCyan}</span>
+                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-500 font-extrabold uppercase tracking-wide">
+                                    Peak
+                                </span>
+                            </div>
+                            <div className="text-[10px] text-muted truncate">Cyan #00E5DB</div>
+                        </div>
+                    </button>
+                </div>
+
+                <div className="text-[11px] font-bold text-muted tracking-wider uppercase mb-2 px-1">
+                    {ty.classicPalette}
+                </div>
                 <div className="grid grid-cols-3 gap-y-4 gap-x-2 text-center text-xs">
                     <ColorPill color="bg-[#c4f13a]" checkDark label={ty.pillIron} active={colorTheme === 'iron'} onClick={() => setColorTheme('iron')} />
                     <ColorPill color="bg-[#378add]" label={ty.pillOcean} active={colorTheme === 'ocean'} onClick={() => setColorTheme('ocean')} />
                     <ColorPill color="bg-[#1d9e75]" label={ty.pillForest} active={colorTheme === 'forest'} onClick={() => setColorTheme('forest')} />
-                    <ColorPill color="bg-[#8f4fc9]" label={ty.pillRoyal} active={colorTheme === 'royal'} onClick={() => setColorTheme('royal')} />
                     <ColorPill color="bg-[#d4631a]" label={ty.pillSunset} active={colorTheme === 'sunset'} onClick={() => setColorTheme('sunset')} />
+                    <ColorPill color="bg-[#ff7fa8]" label={ty.pillRose} active={colorTheme === 'rose'} onClick={() => setColorTheme('rose')} />
                     <ColorPill color="bg-[#5f6068]" label={ty.pillMono} active={colorTheme === 'monochrome'} onClick={() => setColorTheme('monochrome')} />
                 </div>
             </div>
