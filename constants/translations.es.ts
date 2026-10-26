@@ -186,6 +186,8 @@ export const ES: TranslationDict = {
     addEx: "Nuevo ejercicio",
     exName: "Nombre",
     selectMuscle: "Músculo",
+    illustration: "Animación anatómica",
+    illustrationPlaceholder: "Automático (detección inteligente)",
     deleteConfirm: "¿Eliminar este ejercicio?",
     merge: {
         badge: "Fusionado",
@@ -1132,6 +1134,9 @@ export const ES: TranslationDict = {
             bodyweight: 'Peso corporal',
             weighted: 'Con peso',
             strength: 'Fuerza',
+            anatomicalIllustration: 'Ilustración anatómica',
+            autoSmartMatch: 'Automático (detección inteligente)',
+            chooseIllustration: 'Elegir movimiento ilustrado',
             tapToOpenIn: 'Toca para abrir en YouTube',
             searchTutorialOnline: 'Buscar tutorial en línea',
             motionCuesTitle: 'Puntos clave de técnica',

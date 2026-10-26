@@ -183,6 +183,8 @@ export const EN = {
     addEx: "Add New Exercise",
     exName: "Exercise Name",
     selectMuscle: "Select Muscle",
+    illustration: "Anatomical Animation",
+    illustrationPlaceholder: "Auto (smart match)",
     deleteConfirm: "Delete this exercise?",
     merge: {
         badge: "Merged",
@@ -1130,6 +1132,9 @@ export const EN = {
             bodyweight: 'Bodyweight',
             weighted: 'Weighted',
             strength: 'Strength',
+            anatomicalIllustration: 'Anatomical illustration',
+            autoSmartMatch: 'Auto (smart match)',
+            chooseIllustration: 'Choose illustration motion',
             tapToOpenIn: 'Tap to open in YouTube',
             searchTutorialOnline: 'Search tutorial online',
             motionCuesTitle: 'Key Technique Cues',

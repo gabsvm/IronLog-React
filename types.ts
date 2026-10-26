@@ -63,6 +63,8 @@ export interface ExerciseDef {
   aliases?: string[];
   /** Q14: id this exercise was merged into (reads resolve to it; logs untouched). */
   mergedInto?: string;
+  /** Explicit or overridden anatomical illustration key (from EXERCISE_ILLUSTRATIONS). */
+  illustrationId?: string;
 }
 
 export type SetType = 'regular' | 'myorep' | 'myorep_match' | 'cluster' | 'top' | 'backoff' | 'giant' | 'warmup' | 'avt_hop' | 'emom' | 'drop' | 'rest_pause' | 'time_volume' | 'triple_add';

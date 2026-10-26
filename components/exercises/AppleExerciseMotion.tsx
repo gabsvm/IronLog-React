@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Icon } from '../ui/Icon';
 import type { ExerciseDef, Lang } from '../../types';
 import { TRANSLATIONS } from '../../constants';
-import { EXERCISE_ILLUSTRATIONS } from '../../constants/exerciseIllustrationsMap';
+import { EXERCISE_ILLUSTRATIONS, resolveExerciseIllustration } from '../../constants/exerciseIllustrationsMap';
 
 interface AppleExerciseMotionProps {
     exercise: ExerciseDef;
@@ -347,14 +347,10 @@ export const AppleExerciseMotion: React.FC<AppleExerciseMotionProps> = ({
     const pattern = useMemo(() => getMotionPattern(exercise), [exercise]);
     const cues = useMemo(() => getTechniqueCues(pattern, copy), [pattern, copy]);
 
-    // Look up real high-definition anatomical illustrations
+    // Look up real high-definition anatomical illustrations (resolves customs by name, equipment, or muscle fallback)
     const illustrationPaths = useMemo(() => {
-        const key = exercise.id?.toLowerCase();
-        if (key && EXERCISE_ILLUSTRATIONS[key]) {
-            return EXERCISE_ILLUSTRATIONS[key];
-        }
-        return null;
-    }, [exercise.id]);
+        return resolveExerciseIllustration(exercise);
+    }, [exercise]);
 
     // Biological cadence cycle: 3.2s total at 1.0x
     const phaseDuration = (activePhaseIndex === 0 ? 1800 : 1400) / speed;

@@ -11,6 +11,7 @@ import { Button } from './Button';
 import { ProgressChart } from '../stats/ProgressChart';
 import { Sheet } from './Sheet';
 import { AppleExerciseMotion } from '../exercises/AppleExerciseMotion';
+import { CURATED_ILLUSTRATION_OPTIONS } from '../../constants/exerciseIllustrationsMap';
 import { useStatsWorker } from '../../hooks/useStatsWorker';
 import { buildStatsLogsSignature } from '../../services/statsCache';
 import { resolveMuscleLabel } from '../../utils/muscle';
@@ -157,7 +158,13 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
     const t = TRANSLATIONS[lang];
     const [activeTab, setActiveTab] = useState<'guide' | 'history'>('guide');
     const [volumeCountingMode, setVolumeCountingMode] = useState<VolumeCountingMode>(exercise.volumeCountingMode || 'total');
+    const [illustrationId, setIllustrationId] = useState<string>(exercise.illustrationId || '');
     const setActiveSession = useStore(state => state.setActiveSession);
+
+    const previewExercise = useMemo(() => ({
+        ...exercise,
+        illustrationId: illustrationId || undefined,
+    }), [exercise, illustrationId]);
 
     const { isWorkerReady, calculateChartData } = useStatsWorker();
     const [chartData, setChartData] = useState<any[]>([]);
@@ -167,7 +174,8 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
     const logsSignature = useMemo(() => buildStatsLogsSignature(safeLogs), [safeLogs]);
     useEffect(() => {
         setVolumeCountingMode(exercise.volumeCountingMode || 'total');
-    }, [exercise.id, exercise.volumeCountingMode]);
+        setIllustrationId(exercise.illustrationId || '');
+    }, [exercise.id, exercise.volumeCountingMode, exercise.illustrationId]);
 
     useEffect(() => {
         if (activeTab === 'history' && isWorkerReady) {
@@ -191,9 +199,9 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
         ? `https://www.youtube.com/watch?v=${exercise.videoId}`
         : `https://www.youtube.com/results?search_query=${encodeURIComponent(String(translatedName) + ' technique tutorial')}`;
 
-    const saveVolumeCountingMode = () => {
+    const saveExerciseConfig = () => {
         const updateExercise = <T extends ExerciseDef>(item: T): T => (
-            item.id === exercise.id ? { ...item, volumeCountingMode } : item
+            item.id === exercise.id ? { ...item, volumeCountingMode, illustrationId: illustrationId || undefined } : item
         ) as T;
 
         setExercises(prev => prev.map(updateExercise));
@@ -222,7 +230,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
             footer={
                 <div className="flex gap-3">
                     <Button fullWidth onClick={onClose} variant="secondary">{t.close}</Button>
-                    <Button fullWidth onClick={saveVolumeCountingMode}>{TRANSLATIONS[lang].copy.exerciseDetailModal.save}</Button>
+                    <Button fullWidth onClick={saveExerciseConfig}>{TRANSLATIONS[lang].copy.exerciseDetailModal.save}</Button>
                 </div>
             }
         >
@@ -259,7 +267,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                             {/* Apple Fitness+ Style Biomechanic Motion */}
                             <div className="mt-3 px-1">
                                 <AppleExerciseMotion
-                                    exercise={exercise}
+                                    exercise={previewExercise}
                                     lang={lang}
                                     youtubeUrl={youtubeUrl}
                                 />
@@ -311,6 +319,25 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                                         </div>
                                     </div>
                                 )}
+
+                                {/* Anatomical Illustration Selector / Override */}
+                                <div>
+                                    <h4 className="text-sm font-bold tracking-tight text-[rgb(var(--text-primary))] mb-3 flex items-center gap-2">
+                                        <Icon name="Eye" size={13} /> {TRANSLATIONS[lang].copy.exerciseDetailModal.anatomicalIllustration}
+                                    </h4>
+                                    <select
+                                        value={illustrationId}
+                                        onChange={e => setIllustrationId(e.target.value)}
+                                        className="gl-input font-medium"
+                                    >
+                                        <option value="">{TRANSLATIONS[lang].copy.exerciseDetailModal.autoSmartMatch}</option>
+                                        {CURATED_ILLUSTRATION_OPTIONS.map(opt => (
+                                            <option key={opt.id} value={opt.id}>
+                                                {opt.name[lang] || opt.name.en}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
                         </>
                     ) : (

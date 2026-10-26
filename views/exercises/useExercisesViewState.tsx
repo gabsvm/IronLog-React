@@ -48,6 +48,7 @@ export const useExercisesViewState = ({ onBack }: ExercisesViewProps) => {
     const [newName, setNewName] = useState('');
     const [newMuscle, setNewMuscle] = useState<MuscleGroup>('CHEST');
     const [newVolumeCountingMode, setNewVolumeCountingMode] = useState<VolumeCountingMode>('total');
+    const [newIllustrationId, setNewIllustrationId] = useState<string>('');
 
     const handleCreate = () => {
         if (!newName.trim()) return;
@@ -56,11 +57,13 @@ export const useExercisesViewState = ({ onBack }: ExercisesViewProps) => {
             name: newName.trim(),
             muscle: newMuscle,
             volumeCountingMode: newVolumeCountingMode,
+            illustrationId: newIllustrationId || undefined,
             isCustom: true,
         };
         setExercises(prev => [...prev, newEx]);
         setMode('list');
         setNewName('');
+        setNewIllustrationId('');
         triggerHaptic('success');
     };
 
@@ -348,6 +351,8 @@ export const useExercisesViewState = ({ onBack }: ExercisesViewProps) => {
         setNewMuscle,
         newVolumeCountingMode,
         setNewVolumeCountingMode,
+        newIllustrationId,
+        setNewIllustrationId,
         handleCreate,
         handleInitiateDelete,
         handleConfirmPermanentDelete,
