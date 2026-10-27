@@ -3,9 +3,9 @@ import { Log } from '../types';
 import { useApp } from '../context/AppContext';
 import { getHistoricalBest1RMIndex } from '../utils/exerciseHistoryIndex';
 import { buildStatsLogsSignature } from '../services/statsCache';
+import type { OneRmFormula, WeekStart } from '../utils/strongTraining';
 
 export type ChartMetric = '1rm' | 'volume' | 'duration' | 'distance' | 'max_reps' | 'hold_time';
-
 type OverviewResult = { volumeData: [string, number][], exerciseFrequency: Record<string, number>, weeks: number };
 type ChartPoint = { date: number, value: number, weight: number, reps: number };
 
@@ -76,17 +76,17 @@ export const useStatsWorker = () => {
         return requestIdRef.current;
     }, []);
 
-    const calculateOverview = useCallback((logs: Log[], activeMesoId?: number): Promise<OverviewResult> => {
+    const calculateOverview = useCallback((logs: Log[], activeMesoId?: number, weekStart: WeekStart = 'monday'): Promise<OverviewResult> => {
         const worker = ensureLogs(logs);
         if (!worker) return Promise.resolve({ volumeData: [], exerciseFrequency: {}, weeks: 1 });
         const reqId = nextRequestId();
         return new Promise((resolve) => {
             pendingRef.current.set(reqId, { type: 'OVERVIEW_READY', resolve });
-            worker.postMessage({ type: 'CALCULATE_OVERVIEW', activeMesoId, reqId });
+            worker.postMessage({ type: 'CALCULATE_OVERVIEW', activeMesoId, weekStart, reqId });
         });
     }, [ensureLogs, nextRequestId]);
 
-    const calculateChartData = useCallback((logs: Log[], exerciseId: string | string[], metric: ChartMetric, activeMesoId?: number | null): Promise<ChartPoint[]> => {
+    const calculateChartData = useCallback((logs: Log[], exerciseId: string | string[], metric: ChartMetric, activeMesoId?: number | null, oneRmFormula: OneRmFormula = 'epley'): Promise<ChartPoint[]> => {
         const worker = ensureLogs(logs);
         if (!worker) return Promise.resolve([]);
         const reqId = nextRequestId();
@@ -98,6 +98,7 @@ export const useStatsWorker = () => {
                 metric,
                 activeMesoId: activeMesoId ?? undefined,
                 userBodyWeight: userProfile?.bodyWeight,
+                oneRmFormula,
                 reqId,
             });
         });
@@ -105,9 +106,10 @@ export const useStatsWorker = () => {
 
     // Workout PR detection does not need a Worker at all. Reuse the same
     // WeakMap-backed history index used by the workout cards and preserve the
-    // effective-load/bodyweight semantics of EXPERIMENTAL.
-    const calculateAllBest1RMs = useCallback((logs: Log[]): Promise<Map<string, number>> => {
-        return Promise.resolve(getHistoricalBest1RMIndex(logs, userProfile?.bodyWeight, exercises));
+    // effective-load/bodyweight semantics of EXPERIMENTAL. The formula selects
+    // the estimate (default 'epley' = legacy behavior).
+    const calculateAllBest1RMs = useCallback((logs: Log[], oneRmFormula: OneRmFormula = 'epley'): Promise<Map<string, number>> => {
+        return Promise.resolve(getHistoricalBest1RMIndex(logs, userProfile?.bodyWeight, exercises, oneRmFormula));
     }, [userProfile?.bodyWeight, exercises]);
 
     // No eager Worker startup: consumers can call immediately and the first

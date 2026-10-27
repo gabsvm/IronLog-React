@@ -13,11 +13,15 @@
 // to split / re-join its local array.
 // Migration source: the capped arrays already in users/{uid}; the local device
 // contributes its full history. Marker: users/{uid}.collectionsFormat.<collection> = 2.
-import type { BodyLog, CardioSession, CustomFood, FoodEntry, NutritionLog } from '../types';
+import type { BodyLog, CardioSession, CustomFood, FoodEntry, MeasurementLog, NutritionLog } from '../types';
 import { MIGRATED_FORMAT, type CollectionSpec } from './cloudCollectionSync';
 
-export const CLOUD_SECTIONS_V2 = ['nutritionLogs', 'bodyLogs', 'cardioSessions', 'customFoods'] as const;
+export const CLOUD_SECTIONS_V2 = ['nutritionLogs', 'bodyLogs', 'cardioSessions', 'customFoods', 'measurementLogs'] as const;
 export type CloudSectionV2 = (typeof CLOUD_SECTIONS_V2)[number];
+
+// MeasurementLog is canonical in types.ts (contract A). No weight mirroring
+// into bodyLogs: measurements stay independent; charts fuse visually only.
+export type { MeasurementLog };
 
 /** First finite positive number among the candidates (0 when none). */
 const firstStamp = (...candidates: unknown[]): number => {
@@ -159,6 +163,25 @@ export const FOODS_SPEC: CollectionSpec<Stamped<CustomFood>> = {
     readLegacy: legacyFromUserDoc<Stamped<CustomFood>>('customFoods'),
 };
 
+export const MEASUREMENT_SPEC: CollectionSpec<Stamped<MeasurementLog>> = {
+    collection: 'measurementLogs',
+    idField: 'id',
+    keys: [
+        'id', 'date', 'weight', 'bodyFat', 'calories', 'neck', 'shoulders',
+        'chest', 'bicepsL', 'bicepsR', 'forearmL', 'forearmR', 'upperAbs',
+        'lowerAbs', 'waist', 'hips', 'thighL', 'thighR', 'calfL', 'calfR',
+        'notes', 'updatedAt', 'deleted',
+    ],
+    stampOf: (log) => firstStamp(log.updatedAt, log.date, log.id),
+    // The app prepends measurements: newest first (mirror bodyLogs).
+    compare: (a, b) => desc(a.date ?? 0, b.date ?? 0) || desc(Number(a.id) || 0, Number(b.id) || 0),
+    marker: markerFor('measurementLogs'),
+    readLegacy: legacyFromUserDoc<Stamped<MeasurementLog>>('measurementLogs'),
+};
+
+/** Alias for contract A–N readers expecting the plural name. */
+export const MEASUREMENTS_SPEC = MEASUREMENT_SPEC;
+
 /** How a local section array maps onto one or more V2 collections. */
 export interface SectionAdapter {
     parts: CollectionSpec<any>[];
@@ -181,6 +204,7 @@ export const SECTION_ADAPTERS: Record<CloudSectionV2, SectionAdapter> = {
     bodyLogs: single(BODY_SPEC),
     cardioSessions: single(CARDIO_SPEC),
     customFoods: single(FOODS_SPEC),
+    measurementLogs: single(MEASUREMENT_SPEC),
 };
 
 /** Every V2 collection used by the section adapters (rules + account deletion). */

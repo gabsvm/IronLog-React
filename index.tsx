@@ -6,6 +6,7 @@ import '@fontsource-variable/inter';
 import './index.css';
 import './native-performance.css';
 import './styles/app-polish.css';
+import './components/layout/strong.css';
 import App from './App';
 import { CRASH_SCREEN_COPY } from './constants/crashScreenCopy';
 import { bootLanguage, loadTranslations } from './constants/translations';

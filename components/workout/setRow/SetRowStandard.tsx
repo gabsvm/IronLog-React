@@ -5,14 +5,14 @@ import { SetKeypad } from '../SetKeypad';
 import type { SetRowState } from './useSetRowState';
 
 export const SetRowStandard: React.FC<{ state: SetRowState }> = ({ state }) => {
-    const { set, showRIR, t, isDone, effectiveBadgeLabel, storedWeight, localWeight, setLocalWeight, localReps, setLocalReps, localRpe, setLocalRpe, weightRef, repsRef, scheduleCommit, handleToggleComplete, handleWeightKeyDown, handleWeightFocus, handleRepsFocus, handleKeypadChange, handleKeypadNext, handleKeypadDone, keypadOpen, keypadValue, handleWeightBlur, handleBlur, onSwipeTouchStart, onSwipeTouchMove, onSwipeTouchEnd, handleRowClick, currentInputClass, rowClass, checkBtnClass, weightPlaceholder, repsPlaceholder, prescriptionHint, prevText, BadgeEl, badgeProps, completeSetAriaLabel, badgeClass, SwipeOverlay } = state;
+    const { set, showRIR, t, isDone, effectiveBadgeLabel, storedWeight, localWeight, setLocalWeight, localReps, setLocalReps, localRpe, setLocalRpe, weightRef, repsRef, scheduleCommit, handleToggleComplete, handleWeightKeyDown, handleRepsKeyDown, handleWeightFocus, handleRepsFocus, handleKeypadChange, handleKeypadNext, handleKeypadDone, keypadOpen, keypadValue, handleWeightBlur, handleBlur, onSwipeTouchStart, onSwipeTouchMove, onSwipeTouchEnd, handleRowClick, currentInputClass, rowClass, checkBtnClass, weightPlaceholder, repsPlaceholder, prescriptionHint, prevText, BadgeEl, badgeProps, completeSetAriaLabel, badgeClass, SwipeOverlay } = state;
     return (
         <div id={`set-row-${set.id}`}
             onTouchStart={onSwipeTouchStart} onTouchMove={onSwipeTouchMove} onTouchEnd={onSwipeTouchEnd}
             onClick={handleRowClick}
             className={rowClass}>
             {SwipeOverlay}
-            <div className={`grid ${showRIR ? 'grid-cols-[28px_52px_1fr_1fr_40px_36px]' : 'grid-cols-[28px_60px_1fr_1fr_36px]'} items-center gap-2 px-2.5 py-1.5`}>
+            <div className={`grid ${showRIR ? 'grid-cols-[28px_52px_1fr_1fr_40px_36px]' : 'grid-cols-[28px_60px_1fr_1fr_36px]'} items-center gap-2 px-2 py-1.5`}>
                 <div className="flex justify-center">
                     <BadgeEl {...badgeProps as any} className={badgeClass}>
                         {effectiveBadgeLabel}
@@ -54,6 +54,7 @@ export const SetRowStandard: React.FC<{ state: SetRowState }> = ({ state }) => {
                             scheduleCommit('reps', e.target.value, 180);
                         }}
                         onBlur={() => handleBlur('reps', localReps)}
+                        onKeyDown={handleRepsKeyDown}
                         onFocus={handleRepsFocus}
                         enterKeyHint="done"
                     />

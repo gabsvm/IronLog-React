@@ -8,6 +8,7 @@ import { KONG_4DAY_V1 } from '../../programs/kong/kong4Day';
 import { resolveProgramWeek } from '../../programs/engine/ProgramResolver';
 import { startProgramRun } from '../../programs/engine/ProgramRunHelpers';
 import type { GlobalTemplate, Lang, MesoCycle, ProgramDay, UserProfile } from '../../types';
+import { resolveTemplateDayKeys } from '../../utils/templateIdentity';
 
 interface TemplateActionDeps {
     setProgram: (program: ProgramDay[]) => void;
@@ -57,9 +58,18 @@ export const useTemplateActions = ({ setProgram, setActiveMeso, setShowTemplateS
 
     const handleSelectTemplate = (tpl: GlobalTemplate) => {
         requestChange(() => {
-            setProgram(tpl.program);
-            const plan = tpl.program.map(day => (day.slots || []).map(slot => slot.exerciseId || null));
-            setActiveMeso({ id: Date.now(), name: getTranslated(tpl.title, lang), mesoType: tpl.id, week: 1, targetWeeks: 5, isDeload: false, plan, duration: 5 });
+            // Deep-clone: the live program is rewritten by template updates
+            // (toTemplateSlots) and must never alias the GlobalTemplate object.
+            const programCopy: ProgramDay[] = JSON.parse(JSON.stringify(tpl.program));
+            // Freeze stable day identity: same template + same day re-links
+            // previous-set history even after the plan is recreated.
+            const templateDayKeys = resolveTemplateDayKeys(programCopy);
+            programCopy.forEach((day, i) => {
+                if (day && !String(day.templateDayKey ?? '').trim()) day.templateDayKey = templateDayKeys[i];
+            });
+            setProgram(programCopy);
+            const plan = programCopy.map(day => (day.slots || []).map(slot => slot.exerciseId || null));
+            setActiveMeso({ id: Date.now(), name: getTranslated(tpl.title, lang), mesoType: tpl.id, week: 1, targetWeeks: 5, isDeload: false, plan, duration: 5, templateId: tpl.id, templateDayKeys });
             setShowTemplateSelector(false);
             triggerHaptic('success');
         });

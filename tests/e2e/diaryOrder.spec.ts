@@ -18,7 +18,7 @@ test('Diario lista las sesiones de la más reciente a la más antigua aunque est
     await page.goto('/');
     const nav = page.locator('nav[aria-label="Main navigation"]');
     await expect(nav).toBeVisible({ timeout: 15000 });
-    await nav.locator('button', { hasText: /^Diario$|^Diary$/ }).click();
+    await nav.locator('button', { hasText: /^Historial$|^History$/ }).click();
 
     const names = page.getByText(/^Sesión (antigua|reciente|media)$/);
     await expect(names).toHaveCount(3, { timeout: 10000 });

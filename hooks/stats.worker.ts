@@ -1,5 +1,6 @@
 import { getEffectiveSetLoad, getLogBodyWeight, getSetLoadVolume } from '../utils/trainingMetrics';
 import { computeOverview } from '../utils/statsOverview';
+import { estimateOneRm } from '../utils/strongTraining';
 
 type MetricType = '1rm' | 'volume' | 'duration' | 'distance' | 'max_reps' | 'hold_time';
 
@@ -16,7 +17,8 @@ const parseDuration = (val: any) => {
 };
 
 self.onmessage = function(e: MessageEvent) {
-    const { type, logs, activeMesoId, exerciseId, metric, userBodyWeight, reqId } = e.data || {};
+    const { type, logs, activeMesoId, exerciseId, metric, userBodyWeight, reqId, oneRmFormula, weekStart } = e.data || {};
+    const formula = oneRmFormula === 'brzycki' || oneRmFormula === 'lombardi' ? oneRmFormula : 'epley';
 
     if (type === 'SET_LOGS') {
         cachedLogs = Array.isArray(logs) ? logs : [];
@@ -26,7 +28,7 @@ self.onmessage = function(e: MessageEvent) {
     const sourceLogs = cachedLogs;
 
     if (type === 'CALCULATE_OVERVIEW') {
-        const { volumeData, exerciseFrequency, weeks } = computeOverview(sourceLogs, activeMesoId ?? null);
+        const { volumeData, exerciseFrequency, weeks } = computeOverview(sourceLogs, activeMesoId ?? null, weekStart === 'sunday' ? 'sunday' : 'monday');
         self.postMessage({ type: 'OVERVIEW_READY', volumeData, exerciseFrequency, weeks, reqId });
         return;
     }
@@ -57,7 +59,7 @@ self.onmessage = function(e: MessageEvent) {
                     if (s.completed && !s.skipped && (s.weight || s.weight === 0 || s.weight === '0') && s.reps) {
                         const w = getEffectiveSetLoad(s, ex, logBodyWeight);
                         const r = Number(s.reps);
-                        const est1rm = w * (1 + r / 30);
+                        const est1rm = r === 1 ? w : estimateOneRm(w, r, formula);
                         if (est1rm > bestValue) {
                             bestValue = est1rm;
                             bestSetDetails = { w: Number(s.weight), r };

@@ -53,8 +53,8 @@ service cloud.firestore {
       return [
         'email', 'lastSeen', 'uid', 'lastUpdated',
         'program', 'activeMeso', 'activeSession', 'config', 'exercises',
-        'rpFeedback', 'nutritionLogs', 'cardioSessions', 'bodyLogs',
-        'customFoods', 'personalTemplates', 'nutritionGoal', 'macroGoals',
+        'rpFeedback', 'nutritionLogs', 'cardioSessions', 'bodyLogs', 'measurementLogs',
+        'customFoods', 'personalTemplates', 'templateFolders', 'nutritionGoal', 'macroGoals',
         'userProfile', 'sectionSyncMeta', 'historyFormat', 'collectionsFormat'
       ];
     }
@@ -84,6 +84,15 @@ service cloud.firestore {
 
     function bodyDocAllowedKeys() {
       return ['id', 'date', 'weight', 'bodyFat', 'notes', 'updatedAt', 'deleted'];
+    }
+
+    function measurementDocAllowedKeys() {
+      return [
+        'id', 'date', 'weight', 'bodyFat', 'calories', 'neck', 'shoulders',
+        'chest', 'bicepsL', 'bicepsR', 'forearmL', 'forearmR', 'upperAbs',
+        'lowerAbs', 'waist', 'hips', 'thighL', 'thighR', 'calfL', 'calfR',
+        'notes', 'updatedAt', 'deleted'
+      ];
     }
 
     function cardioDocAllowedKeys() {
@@ -123,6 +132,14 @@ service cloud.firestore {
         && (!('date' in data) || data.date is number);
     }
 
+    function measurementDocOk() {
+      let data = request.resource.data;
+      return itemDocBase(measurementDocAllowedKeys())
+        && (data.id is number || data.id is string)
+        && (!('weight' in data) || data.weight is number)
+        && (!('date' in data) || data.date is number);
+    }
+
     function cardioDocOk() {
       let data = request.resource.data;
       return itemDocBase(cardioDocAllowedKeys())
@@ -145,6 +162,7 @@ service cloud.firestore {
         'id', 'dayIdx', 'name', 'startTime', 'endTime', 'duration',
         'bodyWeightSnapshot', 'skipped', 'mesoId', 'week', 'exercises', 'note',
         'importKey', 'importedFrom', 'discipline', 'programSystem',
+        'templateId', 'templateDayKey',
         'updatedAt', 'deleted'
       ];
     }
@@ -183,8 +201,10 @@ service cloud.firestore {
         && (!affected.hasAny(['nutritionLogs']) || !('nutritionLogs' in data) || (data.nutritionLogs is list && data.nutritionLogs.size() <= 120))
         && (!affected.hasAny(['cardioSessions']) || !('cardioSessions' in data) || (data.cardioSessions is list && data.cardioSessions.size() <= 120))
         && (!affected.hasAny(['bodyLogs']) || !('bodyLogs' in data) || (data.bodyLogs is list && data.bodyLogs.size() <= 200))
+        && (!affected.hasAny(['measurementLogs']) || !('measurementLogs' in data) || (data.measurementLogs is list && data.measurementLogs.size() <= 200))
         && (!affected.hasAny(['customFoods']) || !('customFoods' in data) || (data.customFoods is list && data.customFoods.size() <= 200))
         && (!affected.hasAny(['personalTemplates']) || !('personalTemplates' in data) || data.personalTemplates is list)
+        && (!affected.hasAny(['templateFolders']) || !('templateFolders' in data) || data.templateFolders is list)
         && (!affected.hasAny(['nutritionGoal']) || !('nutritionGoal' in data) || data.nutritionGoal is map || data.nutritionGoal == null)
         && (!affected.hasAny(['macroGoals']) || !('macroGoals' in data) || data.macroGoals is map || data.macroGoals == null)
         && (!affected.hasAny(['userProfile']) || !('userProfile' in data) || data.userProfile is map || data.userProfile == null)
@@ -220,8 +240,10 @@ service cloud.firestore {
         && (!('nutritionLogs' in request.resource.data) || (request.resource.data.nutritionLogs is list && request.resource.data.nutritionLogs.size() <= 120))
         && (!('cardioSessions' in request.resource.data) || (request.resource.data.cardioSessions is list && request.resource.data.cardioSessions.size() <= 120))
         && (!('bodyLogs' in request.resource.data) || (request.resource.data.bodyLogs is list && request.resource.data.bodyLogs.size() <= 200))
+        && (!('measurementLogs' in request.resource.data) || (request.resource.data.measurementLogs is list && request.resource.data.measurementLogs.size() <= 200))
         && (!('customFoods' in request.resource.data) || (request.resource.data.customFoods is list && request.resource.data.customFoods.size() <= 200))
         && (!('personalTemplates' in request.resource.data) || request.resource.data.personalTemplates is list)
+        && (!('templateFolders' in request.resource.data) || request.resource.data.templateFolders is list)
         && (!('nutritionGoal' in request.resource.data) || request.resource.data.nutritionGoal is map || request.resource.data.nutritionGoal == null)
         && (!('macroGoals' in request.resource.data) || request.resource.data.macroGoals is map || request.resource.data.macroGoals == null)
         && (!('userProfile' in request.resource.data) || request.resource.data.userProfile is map || request.resource.data.userProfile == null)
@@ -244,6 +266,11 @@ service cloud.firestore {
       // account deletion needs a backend flow (see
       // docs/ACCOUNT_DELETION_SUBSCRIPTION.md); the client reports the
       // remainder via AccountDeletionResult.subscriptionRetained.
+      // N4: the client (AuthContext + accountDeletion) reads this single doc;
+      // get-only keeps collection queries over /data denied like before.
+      match /data/subscription {
+        allow get: if isOwner(uid);
+      }
 
       // Only real data documents (today: history). Any other name is denied.
       // history carries exactly { logs: [...] } (see syncService.uploadStateNow,
@@ -269,6 +296,10 @@ service cloud.firestore {
       match /bodyLogs/{itemId} {
         allow read, delete: if isOwner(uid);
         allow create, update: if isOwner(uid) && bodyDocOk();
+      }
+      match /measurementLogs/{itemId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && measurementDocOk();
       }
       match /cardioSessions/{itemId} {
         allow read, delete: if isOwner(uid);

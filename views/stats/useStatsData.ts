@@ -12,6 +12,8 @@ import { buildStatsLogsSignature, statsCache } from '../../services/statsCache';
 import { scopeMesoId as scopeMesoIdFor, StatsScope, StatsPeriod, filterLogsByScopeAndPeriod } from '../../utils/statsScope';
 import { buildDoughnutData, buildIntensityPalette } from '../../utils/chartColors';
 import { resolveWeightUnit, unitLabel } from '../../utils/units';
+import { estimateOneRm } from '../../utils/strongTraining';
+import { useTrainingConfig } from '../../hooks/useTrainingConfig';
 import { aggregateExerciseFrequency, exerciseIdGroup, matchesExerciseQuery, resolveExerciseId } from '../../utils/exerciseLibrary';
 import { buildSelectedExerciseInsight } from './exerciseInsight';
 import { computeRepMaxTable } from '../../utils/repMaxTable';
@@ -22,6 +24,12 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope, statsPeriod = 
     const { config } = useAppConfig();
     const { tutorialProgress, markTutorialSeen } = useTutorial();
     const activeMeso = useStore(state => state.activeMeso);
+    // Strong-parity training prefs (SettingsParity live binding until the
+    // config migration lands): formula + week start flow into every
+    // calculation and cache key below.
+    const [trainingPrefs] = useTrainingConfig();
+    const oneRmFormula = trainingPrefs.oneRmFormula;
+    const weekStart = trainingPrefs.weekStart;
     const t = TRANSLATIONS[lang];
     const s = t.statsView;
     const unit = resolveWeightUnit(config);
@@ -170,7 +178,7 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope, statsPeriod = 
 
         const loadOverview = async () => {
             setLoadingOverview(true);
-            const cached = await statsCache.readOverview(logsSignature, mesoId, statsScope, statsPeriod);
+            const cached = await statsCache.readOverview(logsSignature, mesoId, statsScope, statsPeriod, weekStart);
             if (cached && !cancelled) {
                 setVolumeData(cached.volumeData);
                 setRawMuscleCounts(Object.fromEntries(cached.volumeData));
@@ -181,7 +189,7 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope, statsPeriod = 
                 setLoadingOverview(false);
             }
 
-            const result = await calculateOverview(filteredLogs, scopeMesoId ?? undefined);
+            const result = await calculateOverview(filteredLogs, scopeMesoId ?? undefined, weekStart);
             if (cancelled || !result) return;
 
             const { volumeData = [], exerciseFrequency = {}, weeks = 1 } = result;
@@ -212,7 +220,7 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope, statsPeriod = 
                 exerciseFrequency,
                 setTypeDist: typeCounts,
                 weeks,
-            }, statsScope, statsPeriod);
+            }, statsScope, statsPeriod, weekStart);
             setLoadingOverview(false);
         };
 
@@ -220,7 +228,7 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope, statsPeriod = 
         return () => {
             cancelled = true;
         };
-    }, [isWorkerReady, filteredLogs, statsScope, statsPeriod, scopeMesoId, exerciseMetaById, exsFromFrequency, calculateOverview, logsSignature]);
+    }, [isWorkerReady, filteredLogs, statsScope, statsPeriod, scopeMesoId, exerciseMetaById, exsFromFrequency, calculateOverview, logsSignature, weekStart]);
 
     useEffect(() => {
         if (!isWorkerReady || !selectedExId || (activeTab && activeTab !== 'progress')) return;
@@ -233,16 +241,16 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope, statsPeriod = 
 
         const loadChart = async () => {
             setLoadingChart(true);
-            const cached = await statsCache.readChart(logsSignature, cacheId, chartMetric, scopeMesoId, statsScope, statsPeriod);
+            const cached = await statsCache.readChart(logsSignature, cacheId, chartMetric, scopeMesoId, statsScope, statsPeriod, oneRmFormula);
             if (cached && !cancelled) {
                 setChartPoints(cached.dataPoints);
                 setLoadingChart(false);
             }
 
-            const points = await calculateChartData(filteredLogs, groupIds, chartMetric, scopeMesoId);
+            const points = await calculateChartData(filteredLogs, groupIds, chartMetric, scopeMesoId, oneRmFormula);
             if (cancelled) return;
             setChartPoints(Array.isArray(points) ? points : []);
-            await statsCache.writeChart(logsSignature, cacheId, chartMetric, scopeMesoId, points, statsScope, statsPeriod);
+            await statsCache.writeChart(logsSignature, cacheId, chartMetric, scopeMesoId, points, statsScope, statsPeriod, oneRmFormula);
             setLoadingChart(false);
         };
 
@@ -250,8 +258,7 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope, statsPeriod = 
         return () => {
             cancelled = true;
         };
-    }, [isWorkerReady, selectedExId, selectedGroupIds, canonicalSelectedExId, chartMetric, filteredLogs, calculateChartData, logsSignature, activeTab, scopeMesoId, statsScope, statsPeriod]);
-
+    }, [isWorkerReady, selectedExId, selectedGroupIds, canonicalSelectedExId, chartMetric, filteredLogs, calculateChartData, logsSignature, activeTab, scopeMesoId, statsScope, statsPeriod, oneRmFormula]);
     const filteredExercises = useMemo(() => {
         return availableExercises.filter(ex =>
             matchesExerciseQuery(ex, pickerSearch)
@@ -287,7 +294,7 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope, statsPeriod = 
                     const weight = Number(set.weight || 0);
                     const reps = Number(set.reps || 0);
                     if (weight <= 0 || reps <= 0) return;
-                    const e1rm = weight * (1 + reps / 30);
+                    const e1rm = reps === 1 ? weight : estimateOneRm(weight, reps, oneRmFormula);
                     const existing = bestMap[canonicalId];
                     if (!existing || e1rm > existing.e1rm) {
                         const canonicalDef = canonicalId !== String(ex.id)
@@ -309,7 +316,7 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope, statsPeriod = 
         return Object.entries(bestMap)
             .sort((a, b) => b[1].date - a[1].date)
             .slice(0, 20);
-    }, [filteredLogs, lang, exercises]);
+    }, [filteredLogs, lang, exercises, oneRmFormula]);
 
     const [showAllPRs, setShowAllPRs] = useState(false);
     const displayedPRs = showAllPRs ? prHistory : prHistory.slice(0, 6);
@@ -336,15 +343,15 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope, statsPeriod = 
     })();
 
     const selectedExerciseInsight = useMemo(
-        () => buildSelectedExerciseInsight({ currentEx, exercises, lang, rawMuscleCounts, safeLogs: filteredLogs, bodyWeight: userProfile?.bodyWeight, scopeMesoId, unit, weightSuffix, s }),
-        [currentEx, exercises, lang, rawMuscleCounts, filteredLogs, userProfile?.bodyWeight, scopeMesoId, unit, weightSuffix, s]
+        () => buildSelectedExerciseInsight({ currentEx, exercises, lang, rawMuscleCounts, safeLogs: filteredLogs, bodyWeight: userProfile?.bodyWeight, scopeMesoId, unit, weightSuffix, s, formula: oneRmFormula }),
+        [currentEx, exercises, lang, rawMuscleCounts, filteredLogs, userProfile?.bodyWeight, scopeMesoId, unit, weightSuffix, s, oneRmFormula]
     );
 
     // Rep maxes share the chart, KPI and insight scope and period.
     const repMaxRows = useMemo(() => {
         if (!currentEx || currentEx.isBodyweight || currentEx.isIsometric || currentEx.muscle === 'CARDIO') return [];
-        return computeRepMaxTable(filteredLogs, new Set(selectedGroupIds.map(String)));
-    }, [currentEx, filteredLogs, selectedGroupIds]);
+        return computeRepMaxTable(filteredLogs, new Set(selectedGroupIds.map(String)), oneRmFormula);
+    }, [currentEx, filteredLogs, selectedGroupIds, oneRmFormula]);
 
     const statsTutorialSteps = [
         { targetId: 'tut-progress-chart', title: t.tutorial.stats[0].title, text: t.tutorial.stats[0].text, position: 'bottom' as const },
@@ -370,6 +377,9 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope, statsPeriod = 
         s,
         unit,
         weightSuffix,
+        oneRmFormula,
+        weekStart,
+        distanceUnit: trainingPrefs.distanceUnit,
         selectedExId,
         setSelectedExId,
         chartMetric,

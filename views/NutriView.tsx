@@ -11,6 +11,7 @@ import { Sheet } from '../components/ui/Sheet';
 import { triggerHaptic } from '../utils/audio';
 import { TRANSLATIONS } from '../constants';
 import { resolveWeightUnit } from '../utils/units';
+import { useTrainingConfig } from '../hooks/useTrainingConfig';
 
 
 // Extracted in Phase 6.3 to views/nutri/ for clarity
@@ -18,6 +19,7 @@ import { todayStr, getTodayLog, sumMacros, calcStreak, calcTDEE } from './nutri/
 import { formatLocalDateKey, addLocalDays } from '../utils/localDate';
 import { TodayTab } from './nutri/TodayTab';
 import { BodyTab } from './nutri/BodyTab';
+import { MeasurementsSection } from '../components/measurements/MeasurementsSection';
 import { HistoryTab } from './nutri/HistoryTab';
 
 // ─── COMPONENT ──────────────────────────────────────────────────────
@@ -39,7 +41,12 @@ export const NutriView: React.FC<NutriViewProps> = ({ subTab, onSubTabChange, ad
   } = useApp();
   const { lang } = useAppPreferences();
   const { config } = useAppConfig();
-  const unit = resolveWeightUnit(config);
+  // Strong-parity independent units (SettingsParity live binding until the
+  // config migration lands). Storage stays canonical (kg/km); prefs affect
+  // display and entry only — historical sessions are never rewritten.
+  const [trainingPrefs] = useTrainingConfig();
+  const unit = trainingPrefs.bodyWeightUnit ?? resolveWeightUnit(config);
+  const distanceUnit = trainingPrefs.distanceUnit;
 
   const nutritionLogsRef = useRef(nutritionLogs);
   nutritionLogsRef.current = nutritionLogs;
@@ -268,6 +275,7 @@ export const NutriView: React.FC<NutriViewProps> = ({ subTab, onSubTabChange, ad
             todayMacros={todayMacros}
             todayWater={todayWater}
             todayCardio={todayCardio}
+            distanceUnit={distanceUnit}
             todayLog={todayLog}
             nutritionGoal={nutritionGoal}
             caloriesRemaining={caloriesRemaining}
@@ -297,6 +305,7 @@ export const NutriView: React.FC<NutriViewProps> = ({ subTab, onSubTabChange, ad
             bodyFat={userProfile?.bodyFat}
             onLogWeight={() => setShowLogWeight(true)}
             unit={unit}
+            measurements={<MeasurementsSection />}
           />
         )}
 

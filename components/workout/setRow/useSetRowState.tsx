@@ -205,6 +205,14 @@ export const useSetRowState = ({
             repsRef.current?.focus();
         }
     };
+    // Strong-like series navigation: Enter on reps completes the set; the
+    // controller + view state advance rest, scroll and focus from there.
+    const handleRepsKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleToggleComplete();
+        }
+    };
 
     // Task 5: keypad focus tracking. Same activeFieldRef source as physical
     // typing; keypadField mirrors it as render state for the panel.
@@ -378,7 +386,9 @@ export const useSetRowState = ({
         isDone
             ? 'bg-primary-500/10 border border-primary-500/25'
             : isNextSet
-            ? 'border border-primary-500/50 shadow-sm'
+            // S9: explicit theme-following surface (transparent read as dark
+            // in light mode and broke the light-theme contract).
+            ? 'bg-[rgb(var(--surface-raised))] border border-primary-500/50 shadow-sm'
             : 'border-b border-border-subtle'
     }`;
 
@@ -499,6 +509,7 @@ export const useSetRowState = ({
         handleToggleComplete,
         prevUnitRef,
         handleWeightKeyDown,
+        handleRepsKeyDown,
         handleWeightFocus,
         handleRepsFocus,
         handleKeypadChange,

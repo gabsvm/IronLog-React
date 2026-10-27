@@ -1,6 +1,9 @@
 import React, { useMemo } from 'react';
 import type { Log, WorkoutSet } from '../../types';
 import { getExerciseHistorySummary } from '../../utils/exerciseHistoryIndex';
+import { filterLogsByPreviousScope } from '../../utils/strongTraining';
+import { useTrainingConfig } from '../../hooks/useTrainingConfig';
+import { useStore } from '../../lib/store';
 import { SortableExerciseCard as SortableExerciseCardImpl } from './SortableExerciseCardImpl';
 
 type SortableExerciseCardProps = React.ComponentProps<typeof SortableExerciseCardImpl>;
@@ -26,6 +29,19 @@ export const SortableExerciseCard = React.memo((props: SortableExerciseCardProps
     // NOTE: the library arrives as a prop (not via useApp) so AppContext
     // updates cannot pierce this memo and re-render every card (R1).
     const { logs, exercise, library } = props;
+    // Strong "same template only": planDay restricts previous-performance
+    // resolution to logs of the same template day (templateId + templateDayKey),
+    // falling back to the plan day (mesoId + dayIdx) without identity.
+    // 'any' keeps the current behavior. Primitive selectors keep this memo boundary intact.
+    const [{ previousScope }] = useTrainingConfig();
+    const scopeMesoId = useStore((s) => s.activeMeso?.id ?? null);
+    const scopeDayIdx = useStore((s) => s.activeSession?.dayIdx ?? null);
+    const scopeTemplateId = useStore((s) => s.activeSession?.templateId ?? s.activeMeso?.templateId ?? null);
+    const scopeDayKey = useStore((s) => s.activeSession?.templateDayKey ?? (s.activeSession && s.activeMeso?.templateDayKeys ? s.activeMeso.templateDayKeys[s.activeSession.dayIdx] ?? null : null) ?? null);
+    const scopedLogs = useMemo(
+        () => (Array.isArray(logs) ? filterLogsByPreviousScope(logs, previousScope, scopeMesoId, scopeDayIdx, scopeTemplateId, scopeDayKey) : []),
+        [logs, previousScope, scopeMesoId, scopeDayIdx, scopeTemplateId, scopeDayKey],
+    );
 
     const programTargetSummary = useMemo(() => {
         if (!exercise?.programSlotId || !Array.isArray(exercise.sets) || exercise.sets.length === 0) return null;
@@ -43,7 +59,7 @@ export const SortableExerciseCard = React.memo((props: SortableExerciseCardProps
     const compactHistory = useMemo<Log[]>(() => {
         if (!Array.isArray(logs) || logs.length === 0 || exercise?.id == null) return [];
 
-        const summary = getExerciseHistorySummary(logs, String(exercise.id), undefined, library);
+        const summary = getExerciseHistorySummary(scopedLogs, String(exercise.id), undefined, library);
         const synthetic: any[] = [];
         let bestSet: WorkoutSet | null = null;
 
@@ -98,7 +114,7 @@ export const SortableExerciseCard = React.memo((props: SortableExerciseCardProps
         }
 
         return synthetic as Log[];
-    }, [logs, library, exercise.id, exercise.isBodyweight, exercise.isIsometric, exercise.programSlotId]);
+    }, [logs, scopedLogs, library, exercise.id, exercise.isBodyweight, exercise.isIsometric, exercise.programSlotId]);
 
     const displayExercise = useMemo(
         () => programTargetSummary ? { ...exercise, targetReps: programTargetSummary } : exercise,
@@ -107,9 +123,9 @@ export const SortableExerciseCard = React.memo((props: SortableExerciseCardProps
 
     const previousSets = useMemo(
         () => (Array.isArray(logs) && exercise?.id != null
-            ? getExerciseHistorySummary(logs, String(exercise.id), undefined, library).latestWorkingSets
+            ? getExerciseHistorySummary(scopedLogs, String(exercise.id), undefined, library).latestWorkingSets
             : null),
-        [logs, library, exercise.id],
+        [logs, scopedLogs, library, exercise.id],
     );
 
     return <SortableExerciseCardImpl {...props} exercise={displayExercise} logs={compactHistory} previousSets={previousSets} />;

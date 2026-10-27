@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { goHistory, goProgress, openProfileSheet } from './strongNav';
 
 // GainsLab is free and open source: no paywall, no locks, full history and
 // every Progreso chart for everyone.
@@ -25,19 +26,20 @@ test.describe('All features are open', () => {
     });
 
     test('the Diary shows the full history', async ({ page }) => {
-        await page.locator('nav[aria-label="Main navigation"]').getByRole('button', { name: /^Diario$|^Diary$/ }).click();
+        await goHistory(page);
         await expect(page.getByText('Sesión antigua')).toBeVisible({ timeout: 10000 });
         await expect(page.getByRole('button', { name: /Desbloquear PRO|Unlock PRO/ })).toHaveCount(0);
     });
 
     test('Profile links to the AGPL source code', async ({ page }) => {
-        await page.getByRole('button', { name: /Abrir perfil|Open profile/ }).first().click();
+        const sheet = await openProfileSheet(page);
+        await sheet.locator('#profile-section-project').scrollIntoViewIfNeeded();
         const source = page.getByRole('link', { name: /Código fuente|Source code/ });
         await expect(source).toHaveAttribute('href', 'https://github.com/gabsvm/IronLog-React');
     });
 
     test('Progreso renders its charts without locks', async ({ page }) => {
-        await page.locator('nav[aria-label="Main navigation"]').getByRole('button', { name: /^Progreso$|^Progress$/ }).click();
+        await goProgress(page);
         await expect(page.locator('#tut-radar-chart canvas, #tut-radar-chart svg').first()).toBeVisible({ timeout: 10000 });
         await expect(page.getByRole('button', { name: /Desbloquear PRO|Unlock PRO/ })).toHaveCount(0);
     });

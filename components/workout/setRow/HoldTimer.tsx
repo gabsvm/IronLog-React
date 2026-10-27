@@ -18,6 +18,7 @@ export const getTypeLabel = (type: SetType) => {
         avt_hop: 'H',
         emom: 'E',
         drop: 'D',
+        failure: 'F',
         rest_pause: 'RP',
         time_volume: 'TV',
         triple_add: 'TA',

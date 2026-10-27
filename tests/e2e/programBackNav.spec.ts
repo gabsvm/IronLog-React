@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { openStrongPanel } from './strongNav';
 
 // The command palette opens from the desktop sidebar (lg+); the mobile shell
 // uses the bottom nav + QuickStart sheet instead of a center button.
@@ -14,14 +15,9 @@ test.describe('H2: deep-view Back returns to the previous tab', () => {
         });
         await page.goto('/');
 
-        // Two navs exist in the DOM (sidebar + bottom bar) but only one is
-        // visible per breakpoint; scope to the visible one.
-        const nav = page.locator('nav[aria-label="Main navigation"]:visible');
-        await expect(nav).toBeVisible({ timeout: 15000 });
-
-        // 1. Go to the Progress tab.
-        const progressNavBtn = nav.locator('button', { hasText: /^Progreso$|^Progress$/ });
-        await progressNavBtn.click();
+        // 1. Go to the Progress view via the Profile panel tile.
+        const dashboard = await openStrongPanel(page);
+        await dashboard.getByRole('button', { name: /^Progreso$|^Progress$/ }).click();
         await expect(page.getByRole('tablist').first()).toBeVisible({ timeout: 10000 });
 
         // 2. Open the command palette and pick "Edit my program" (depth-2 push).

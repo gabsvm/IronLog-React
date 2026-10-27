@@ -2,13 +2,15 @@
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { SessionExercise, WorkoutSet, CardioType, SetType } from '../../../types';
+import { SessionExercise, WorkoutSet, CardioType, SetType, ActiveSession } from '../../../types';
 import { parseTargetReps, roundWeight } from '../../../utils';
 import { getVolumeComparison } from '../../../utils/volumeComparison';
 import { calculateWorkDensity, compareWorkDensity } from '../../../utils/densityProgression';
 import { canFillFromPrevious, copySourceIndex, copyToFollowing, fillFromPrevious, restoreSet } from '../../../utils/setConvenience';
 import { formatWeight, resolveWeightUnit, toDisplay, unitLabel as unitLabelFor } from '../../../utils/units';
 import { formatProgressionReason, recommendProgression } from '../../../utils/recommendationEngine';
+import { estimateOneRm } from '../../../utils/strongTraining';
+import { readWorkoutPrefs } from '../../../utils/workoutPrefs';
 import { triggerHaptic, playTimerFinishSound } from '../../../utils/audio';
 import { TRANSLATIONS } from '../../../constants';
 
@@ -44,7 +46,7 @@ export interface SortableExerciseCardProps {
     isExpanded?: boolean;
     onToggleExpand?: (id: number) => void;
     /** Manual rest entry: WorkoutMain passes startManualRest (defaults to manualRestPreset). */
-    onStartRest?: (seconds: number) => void;
+    onStartRest?: (seconds: number, exerciseInstanceId?: number) => void;
     /** Fallback rest duration when the exercise has no defaultRestSeconds override. */
     restPresetSeconds?: number;
 }
@@ -82,6 +84,9 @@ export const useSortableExerciseCardState = ({
 }: SortableExerciseCardProps) => {
     const [exDoneFlash, setExDoneFlash] = useState(false);
     const [activeEmomMinute, setActiveEmomMinute] = useState(0);
+    // Strong parity: per-exercise note / sticky (pinned) note / rest override editors.
+    const [editingNote, setEditingNote] = useState<null | 'note' | 'sticky'>(null);
+    const [editingRest, setEditingRest] = useState(false);
 
     const {
         attributes,
@@ -174,7 +179,7 @@ export const useSortableExerciseCardState = ({
             if (!pastEx) return;
             (pastEx.sets || []).forEach((set) => {
                 if (set.completed && set.weight && set.reps) {
-                    const e1rm = Number(set.weight) * (1 + Number(set.reps) / 30);
+                    const e1rm = estimateOneRm(Number(set.weight), Number(set.reps), readWorkoutPrefs(config).oneRmFormula ?? 'epley');
                     if (e1rm > best1RM) {
                         best1RM = e1rm;
                         bestStr = `${formatWeight(Number(set.weight), unit, lang)}${unitLabel.toLowerCase()} x ${set.reps} (1RM: ${Math.round(toDisplay(e1rm, unit))})`;
@@ -183,7 +188,7 @@ export const useSortableExerciseCardState = ({
             });
         });
         return best1RM > 0 ? bestStr : null;
-    }, [logs, ex.id, isCardio, ex.isIsometric, ex.isBodyweight, unit, unitLabel, lang]);
+    }, [logs, ex.id, isCardio, ex.isIsometric, ex.isBodyweight, unit, unitLabel, lang, config]);
 
     const regularSets = useMemo(() => ex.sets.filter((set) => set.type !== 'avt_hop'), [ex.sets]);
     const completedCount = regularSets.filter((set) => set.completed).length;
@@ -324,6 +329,41 @@ export const useSortableExerciseCardState = ({
         const idx = copySourceIndex(sets);
         if (idx >= 0) patchSets((current) => copyToFollowing(current, idx));
         setOpenMenuId(null);
+    };
+    // Strong parity: note (per-exercise journal) and sticky note (pinned on top
+    // of the card). Kept as two separate fields — never merged into one.
+    const handleEditNote = (mode: 'note' | 'sticky') => {
+        setEditingNote(mode);
+        setOpenMenuId(null);
+    };
+    const handleSaveNote = (text: string) => {
+        const trimmed = text.trim();
+        const sticky = editingNote === 'sticky';
+        onUpdateSession((prev: ActiveSession | null) => !prev ? null : {
+            ...prev,
+            exercises: prev.exercises.map((item: SessionExercise) =>
+                item.instanceId !== ex.instanceId ? item
+                    : sticky ? { ...item, stickyNote: trimmed === '' ? undefined : trimmed }
+                    : { ...item, note: trimmed === '' ? undefined : trimmed }
+            ),
+        });
+        setEditingNote(null);
+    };
+    // Strong parity "update rest timers": per-exercise defaultRestSeconds
+    // override. Clearing the field restores the preset fallback.
+    const handleEditRest = () => {
+        setEditingRest(true);
+        setOpenMenuId(null);
+    };
+    const handleSaveRest = (seconds: number) => {
+        const valid = Number.isFinite(seconds) && seconds > 0 ? Math.min(600, Math.round(seconds)) : undefined;
+        onUpdateSession((prev: ActiveSession | null) => !prev ? null : {
+            ...prev,
+            exercises: prev.exercises.map((item: SessionExercise) =>
+                item.instanceId === ex.instanceId ? { ...item, defaultRestSeconds: valid } : item
+            ),
+        });
+        setEditingRest(false);
     };
 
     // Removing the last set can be undone for a few seconds.
@@ -538,6 +578,14 @@ export const useSortableExerciseCardState = ({
         copyFromIndex,
         handleFillFromPrevious,
         handleCopyToFollowing,
+        editingNote,
+        setEditingNote,
+        editingRest,
+        setEditingRest,
+        handleEditNote,
+        handleSaveNote,
+        handleEditRest,
+        handleSaveRest,
         removedSet,
         handleRemoveLastSet,
         handleUndoRemoveSet,

@@ -69,6 +69,8 @@ export interface MeaningfulLocalStateInput {
     bodyLogs?: any[] | null;
     customFoods?: any[] | null;
     personalTemplates?: any[] | null;
+    templateFolders?: unknown[] | null;
+    measurementLogs?: unknown[] | null;
     exercises?: any[] | null;
     userProfile?: any | null;
 }
@@ -120,6 +122,16 @@ export const isMeaningfullyEmptyLocalState = (state: MeaningfulLocalStateInput |
 
     // 8. Personal routines / templates created by user
     if (Array.isArray(state.personalTemplates) && state.personalTemplates.length > 0) {
+        return false;
+    }
+
+    // 8b. Template folders created by user
+    if (Array.isArray(state.templateFolders) && state.templateFolders.length > 0) {
+        return false;
+    }
+
+    // 8c. Body measurements (Strong parity; independent from bodyLogs weigh-ins)
+    if (Array.isArray(state.measurementLogs) && state.measurementLogs.length > 0) {
         return false;
     }
 

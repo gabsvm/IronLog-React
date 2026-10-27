@@ -5,12 +5,17 @@ import { BodyMetricsModal } from '../BodyMetricsModal';
 import { HealthConnectCard } from '../HealthConnectCard';
 import { formatWeight, resolveWeightUnit, unitLabel } from '../../../utils/units';
 import { todayLocalDateKey, formatLocalDateKey } from '../../../utils/localDate';
+import { formatSize, sizeUnitLabel } from '../../../utils/strongTraining';
+import { useTrainingConfig } from '../../../hooks/useTrainingConfig';
 
 /** Q18: "Tu cuerpo" section, moved verbatim from ProfileSheet. */
 export const BodySection: React.FC = () => {
     const { lang, userProfile, setUserProfile, config, bodyLogs, setBodyLogs } = useApp();
     const t = TRANSLATIONS[lang];
     const ty = t.you;
+    // Independent body-weight unit (display/entry only; profile stores kg).
+    const [trainingPrefs] = useTrainingConfig();
+    const bodyUnit = trainingPrefs.bodyWeightUnit ?? resolveWeightUnit(config);
 
     const [showBodyModal, setShowBodyModal] = useState(false);
 
@@ -32,13 +37,13 @@ export const BodySection: React.FC = () => {
                     <div className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated)/0.5)] p-2.5 text-center">
                         <div className="text-xs font-semibold text-muted">{ty.weight}</div>
                         <div className="gl-num mt-0.5 text-sm font-bold text-[rgb(var(--text-primary))]">
-                            {userProfile?.bodyWeight ? `${formatWeight(userProfile.bodyWeight, resolveWeightUnit(config), lang)} ${unitLabel(resolveWeightUnit(config)).toLowerCase()}` : '—'}
+                            {userProfile?.bodyWeight ? `${formatWeight(userProfile.bodyWeight, bodyUnit, lang)} ${unitLabel(bodyUnit).toLowerCase()}` : '—'}
                         </div>
                     </div>
                     <div className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated)/0.5)] p-2.5 text-center">
                         <div className="text-xs font-semibold text-muted">{ty.height}</div>
                         <div className="gl-num mt-0.5 text-sm font-bold text-[rgb(var(--text-primary))]">
-                            {userProfile?.height ? `${userProfile.height} cm` : '—'}
+                            {userProfile?.height ? `${formatSize(userProfile.height, trainingPrefs.sizeUnit, lang)} ${sizeUnitLabel(trainingPrefs.sizeUnit)}` : '—'}
                         </div>
                     </div>
                     <div className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated)/0.5)] p-2.5 text-center">
@@ -75,7 +80,8 @@ export const BodySection: React.FC = () => {
                     }
                 }}
                 lang={lang}
-                unit={resolveWeightUnit(config)}
+                unit={bodyUnit}
+                sizeUnit={trainingPrefs.sizeUnit}
             />
         </div>
     );

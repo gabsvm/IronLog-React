@@ -1,9 +1,11 @@
 import { pickLang } from '../utils/i18n';
-import { ProgramDay, MesoCycle, ExerciseDef, Log, ActiveSession, SessionExercise } from '../types';
+import { ProgramDay, MesoCycle, ExerciseDef, Log, ActiveSession, SessionExercise, PreviousScope } from '../types';
 import { getLastLogForExercise, uid } from '../utils';
 import { KONG_4DAY_V1 } from '../programs/kong/kong4Day';
 import { getProgramBlockForWeek, resolveProgramDay } from '../programs/engine/ProgramResolver';
 import { getKongDayDisplay } from '../programs/kong/kongDisplay';
+import { filterLogsByPreviousScope } from '../utils/strongTraining';
+import { getSessionTemplateContext } from '../utils/templateIdentity';
 
 export class SessionBuilder {
     static buildFromProgramDay(
@@ -14,7 +16,7 @@ export class SessionBuilder {
         logs: Log[],
         lang: string,
         rpFeedback: Record<string, Record<string, Record<string, any>>>,
-        config: { rpEnabled: boolean }
+        config: { rpEnabled: boolean; previousScope?: PreviousScope }
     ): ActiveSession | null {
         if (!programDay) return null;
 
@@ -39,6 +41,12 @@ export class SessionBuilder {
         const safeExercises = Array.isArray(exercises) ? exercises.filter(e => !!e) : [];
         const safeLogs = Array.isArray(logs) ? logs : [];
         const isDeload = !!activeMeso.isDeload;
+
+        // Strong parity: initial suggestions resolve over the same scope as the
+        // Previous column. KONG/custom/pre-feature contexts fall back to the
+        // legacy plan-day pair inside the filter; 'any' keeps global history.
+        const templateCtx = getSessionTemplateContext(activeMeso, dayIdx, programDay);
+        const scopedLogs = filterLogsByPreviousScope(safeLogs, config.previousScope ?? 'any', activeMeso.id, dayIdx, templateCtx?.templateId ?? null, templateCtx?.templateDayKey ?? null);
 
         const sessionExs = (resolvedDay.slots || []).map((slotDef, sIdx) => {
             if (!slotDef) return null;
@@ -66,7 +74,7 @@ export class SessionBuilder {
             }
             if (!slotDef.prescription && isDeload) setTarget = Math.max(1, Math.ceil(setTarget / 2));
 
-            const lastSets = getLastLogForExercise(exDef.id, safeLogs, safeExercises);
+            const lastSets = getLastLogForExercise(exDef.id, scopedLogs, safeExercises);
 
             const initialSets = (slotDef.prescription || Array.from({ length: setTarget }, () => undefined)).map((prescription, i) => ({
                 id: uid(),
@@ -108,7 +116,9 @@ export class SessionBuilder {
             exercises: sessionExs as SessionExercise[],
             startTime: Date.now(),
             mesoId: activeMeso.id,
-            week: activeMeso.week
+            week: activeMeso.week,
+            templateId: templateCtx?.templateId ?? null,
+            templateDayKey: templateCtx?.templateDayKey ?? null
         };
     }
 }

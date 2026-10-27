@@ -5,23 +5,38 @@ import { keys as idbKeys } from 'idb-keyval';
 import type { StatsPeriod, StatsScope } from '../utils/statsScope';
 import { db } from '../utils/db';
 
-// v5/v4 keys carry the full filter fingerprint (scope + period + meso) so a
-// cached summary from one filter can never serve another. Older generations
-// are pruned as legacy (see LEGACY_KEY_PREFIXES / pruneLegacyStatsKeys).
-const overviewKey = (signature: string, mesoId: number | null, scope: StatsScope = 'history', period: StatsPeriod = 'all') =>
-    `il_stats_overview_v5:${signature}:${scope}:${mesoId ?? 'all'}:${period}`;
+// v5/v4 keys carry the full filter fingerprint (scope + period + meso) plus the
+// training prefs that change the math (oneRmFormula for 1RM charts/PRs, weekStart
+// for the overview week divisor), so a cached summary from one formula or week
+// start can never serve another. Older generations are pruned as legacy (see
+// LEGACY_KEY_PREFIXES / pruneLegacyStatsKeys).
+import type { OneRmFormula, WeekStart } from '../utils/strongTraining';
+
+const overviewKey = (
+    signature: string,
+    mesoId: number | null,
+    scope: StatsScope = 'history',
+    period: StatsPeriod = 'all',
+    weekStart: WeekStart = 'monday',
+) => `il_stats_overview_v5:${signature}:${scope}:${mesoId ?? 'all'}:${period}:${weekStart}`;
+const chartKey = (
+    signature: string,
+    exerciseId: string,
+    metric: ChartMetric,
+    mesoId: number | null,
+    scope: StatsScope = 'history',
+    period: StatsPeriod = 'all',
+    oneRmFormula: OneRmFormula = 'epley',
+) => `il_stats_chart_v4:${signature}:${exerciseId}:${metric}:${scope}:${mesoId ?? 'all'}:${period}:${oneRmFormula}`;
 const LEGACY_SCOPE_KEYS = ['il_stats_scope_v1'];
 const LEGACY_KEY_PREFIXES = ['il_stats_overview_v2:', 'il_stats_overview_v3:', 'il_stats_overview_v4:', 'il_stats_chart_v2:', 'il_stats_chart_v3:'];
 let legacyPruned = false;
 const CURRENT_KEY_PREFIXES = ['il_stats_overview_v5:', 'il_stats_chart_v4:'];
 const CHART_KEY_PREFIX = 'il_stats_chart_v4:';
 const prunedSignatures = new Set<string>();
-const chartKey = (signature: string, exerciseId: string, metric: ChartMetric, mesoId: number | null, scope: StatsScope = 'history', period: StatsPeriod = 'all') =>
-    `il_stats_chart_v4:${signature}:${exerciseId}:${metric}:${scope}:${mesoId ?? 'all'}:${period}`;
 const selectedExerciseKey = 'il_stats_selected_exercise_v1';
 const selectedScopeKeyV2 = 'il_stats_scope_v2';
 const selectedPeriodKeyV1 = 'il_stats_period_v1';
-
 export interface StatsOverviewCache {
     volumeData: [string, number][];
     exerciseFrequency: Record<string, number>;
@@ -96,23 +111,23 @@ export const buildStatsLogsSignature = (logs: Log[]) => {
 };
 
 export const statsCache = {
-    readOverview(signature: string, mesoId: number | null, scope: StatsScope = 'history', period: StatsPeriod = 'all') {
-        return db.get<StatsOverviewCache | null>(overviewKey(signature, mesoId, scope, period), null);
+    readOverview(signature: string, mesoId: number | null, scope: StatsScope = 'history', period: StatsPeriod = 'all', weekStart: WeekStart = 'monday') {
+        return db.get<StatsOverviewCache | null>(overviewKey(signature, mesoId, scope, period, weekStart), null);
     },
 
-    writeOverview(signature: string, mesoId: number | null, payload: Omit<StatsOverviewCache, 'savedAt'>, scope: StatsScope = 'history', period: StatsPeriod = 'all') {
-        return db.set(overviewKey(signature, mesoId, scope, period), {
+    writeOverview(signature: string, mesoId: number | null, payload: Omit<StatsOverviewCache, 'savedAt'>, scope: StatsScope = 'history', period: StatsPeriod = 'all', weekStart: WeekStart = 'monday') {
+        return db.set(overviewKey(signature, mesoId, scope, period, weekStart), {
             ...payload,
             savedAt: Date.now(),
         });
     },
 
-    readChart(signature: string, exerciseId: string, metric: ChartMetric, mesoId: number | null, scope: StatsScope = 'history', period: StatsPeriod = 'all') {
-        return db.get<StatsChartCache | null>(chartKey(signature, exerciseId, metric, mesoId, scope, period), null);
+    readChart(signature: string, exerciseId: string, metric: ChartMetric, mesoId: number | null, scope: StatsScope = 'history', period: StatsPeriod = 'all', oneRmFormula: OneRmFormula = 'epley') {
+        return db.get<StatsChartCache | null>(chartKey(signature, exerciseId, metric, mesoId, scope, period, oneRmFormula), null);
     },
 
-    writeChart(signature: string, exerciseId: string, metric: ChartMetric, mesoId: number | null, dataPoints: ChartDataPoint[], scope: StatsScope = 'history', period: StatsPeriod = 'all') {
-        return db.set(chartKey(signature, exerciseId, metric, mesoId, scope, period), {
+    writeChart(signature: string, exerciseId: string, metric: ChartMetric, mesoId: number | null, dataPoints: ChartDataPoint[], scope: StatsScope = 'history', period: StatsPeriod = 'all', oneRmFormula: OneRmFormula = 'epley') {
+        return db.set(chartKey(signature, exerciseId, metric, mesoId, scope, period, oneRmFormula), {
             dataPoints,
             savedAt: Date.now(),
         });

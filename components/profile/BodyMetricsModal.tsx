@@ -5,6 +5,8 @@ import { Button } from '../ui/Button';
 import { UserProfile, WeightUnit } from '../../types';
 import { fromDisplay, toDisplay, unitLabel } from '../../utils/units';
 import { TRANSLATIONS } from '../../constants/translations';
+import { fromDisplaySize, sizeUnitLabel, type SizeUnit } from '../../utils/strongTraining';
+import { toSizeDisplay } from '../../utils/measurements';
 
 interface BodyMetricsModalProps {
     open: boolean;
@@ -13,6 +15,8 @@ interface BodyMetricsModalProps {
     onSave: (updated: Partial<UserProfile>) => void;
     lang: 'es' | 'en';
     unit?: WeightUnit;
+    /** Display/entry unit for height (stored canonical cm). */
+    sizeUnit?: SizeUnit;
 }
 
 export const BodyMetricsModal: React.FC<BodyMetricsModalProps> = ({
@@ -22,6 +26,7 @@ export const BodyMetricsModal: React.FC<BodyMetricsModalProps> = ({
     onSave,
     lang,
     unit = 'kg',
+    sizeUnit = 'cm',
 }) => {
     const [bodyWeight, setBodyWeight] = useState<string>('');
     const [height, setHeight] = useState<string>('');
@@ -30,19 +35,19 @@ export const BodyMetricsModal: React.FC<BodyMetricsModalProps> = ({
     useEffect(() => {
         if (open) {
             setBodyWeight(userProfile?.bodyWeight ? String(toDisplay(userProfile.bodyWeight, unit)) : '');
-            setHeight(userProfile?.height ? String(userProfile.height) : '');
+            setHeight(userProfile?.height ? String(toSizeDisplay(userProfile.height, sizeUnit)) : '');
             setBodyFat(userProfile?.bodyFat ? String(userProfile.bodyFat) : '');
         }
-    }, [open, userProfile, unit]);
+    }, [open, userProfile, unit, sizeUnit]);
 
     const handleSave = () => {
         const parsedWeight = fromDisplay(parseFloat(bodyWeight), unit);
-        const parsedHeight = parseFloat(height);
+        const parsedHeightCm = fromDisplaySize(parseFloat(height), sizeUnit);
         const parsedFat = parseFloat(bodyFat);
 
         onSave({
             bodyWeight: Number.isFinite(parsedWeight) && parsedWeight > 0 ? parsedWeight : undefined,
-            height: Number.isFinite(parsedHeight) && parsedHeight > 0 ? parsedHeight : undefined,
+            height: Number.isFinite(parsedHeightCm) && parsedHeightCm > 0 ? Math.round(parsedHeightCm * 100) / 100 : undefined,
             bodyFat: Number.isFinite(parsedFat) && parsedFat > 0 ? parsedFat : undefined,
         });
         onClose();
@@ -88,7 +93,7 @@ export const BodyMetricsModal: React.FC<BodyMetricsModalProps> = ({
                     <div className="grid grid-cols-2 gap-3">
                         <div>
                             <label className="text-sm font-semibold text-muted block mb-1">
-                                {TRANSLATIONS[lang].copy.bodyMetricsModal.heightCm}
+                                {TRANSLATIONS[lang].copy.bodyMetricsModal.heightCm.replace('cm', sizeUnitLabel(sizeUnit))}
                             </label>
                             <input
                                 type="number"

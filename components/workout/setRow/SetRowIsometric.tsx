@@ -11,7 +11,7 @@ export const SetRowIsometric: React.FC<{ state: SetRowState }> = ({ state }) => 
                 onTouchStart={onSwipeTouchStart} onTouchMove={onSwipeTouchMove} onTouchEnd={onSwipeTouchEnd}
                 className={rowClass}>
                 {SwipeOverlay}
-                <div className="grid grid-cols-[28px_44px_1fr_36px] gap-2 items-center px-2.5 py-1.5">
+                <div className="grid grid-cols-[28px_44px_1fr_36px] gap-2 items-center px-2 py-1.5">
                     <div className="flex justify-center">
                         <BadgeEl {...badgeProps as any} className={badgeClass}>
                             {effectiveBadgeLabel}

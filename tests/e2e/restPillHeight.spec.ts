@@ -58,7 +58,7 @@ test.describe('Rest surfaces remain reachable without overlap (G2)', () => {
 
         const pill = page.locator('[data-workout-rest-dock]');
         await pill.scrollIntoViewIfNeeded();
-        await expect(pill.getByRole('button', { name: '-10s' })).toBeVisible({ timeout: 8000 });
+        await expect(pill.getByRole('button', { name: '-15s' })).toBeVisible({ timeout: 8000 });
         await expect(pill.getByRole('button', { name: /Fácil|Easy/ })).toBeVisible({ timeout: 8000 });
 
         // Effort chips measure >=44px tall for real.
@@ -133,7 +133,7 @@ test.describe('Rest surfaces remain reachable without overlap (G2)', () => {
         await expect(page.locator('nav[aria-label="Main navigation"]')).toBeVisible();
 
         const pill = page.locator('aside');
-        await expect(pill.getByRole('button', { name: '-10s' })).toBeVisible({ timeout: 8000 });
+        await expect(pill.getByRole('button', { name: '-15s' })).toBeVisible({ timeout: 8000 });
 
         // Fire the real event the timer hook emits on natural rest completion.
         // (A real 90 s rest is impractical in e2e; the event contract itself is

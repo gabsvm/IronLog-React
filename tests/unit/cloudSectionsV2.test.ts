@@ -13,6 +13,7 @@ import {
     CARDIO_SPEC,
     CLOUD_SECTIONS_V2,
     FOODS_SPEC,
+    MEASUREMENT_SPEC,
     NUTRITION_DAY_SPEC,
     NUTRITION_ENTRY_SPEC,
     SECTION_ADAPTERS,
@@ -247,6 +248,7 @@ describe('S5: client lists match firestore.rules', () => {
         expect(ruleKeys('nutritionEntryAllowedKeys')).toEqual([...NUTRITION_ENTRY_SPEC.keys].sort());
         expect(ruleKeys('nutritionDayAllowedKeys')).toEqual([...NUTRITION_DAY_SPEC.keys].sort());
         expect(ruleKeys('bodyDocAllowedKeys')).toEqual([...BODY_SPEC.keys].sort());
+        expect(ruleKeys('measurementDocAllowedKeys')).toEqual([...MEASUREMENT_SPEC.keys].sort());
         expect(ruleKeys('cardioDocAllowedKeys')).toEqual([...CARDIO_SPEC.keys].sort());
         expect(ruleKeys('foodDocAllowedKeys')).toEqual([...FOODS_SPEC.keys].sort());
     });

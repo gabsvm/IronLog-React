@@ -11,10 +11,25 @@ import { Avatar } from '../ui/Avatar';
 import { pickLang } from '../../utils/i18n';
 import { scheduleWhenIdle } from '../../lib/idle';
 import { runAfterProfileClosed } from '../../utils/profileNav';
-import { resolveAppView, isValidDiarySection, QUICK_START_EVENT, ROOT_NAV_ITEMS, type AppView, type DiarySection } from './navigation';
+import {
+    resolveAppView,
+    isValidDiarySection,
+    QUICK_START_EVENT,
+    STRONG_NAV_ITEMS,
+    STRONG_MEASURE_EVENT,
+    STRONG_PROFILE_EVENT,
+    strongActiveId,
+    strongLabel,
+    setPendingMeasureDetail,
+    type AppView,
+    type DiarySection,
+    type StrongRootId,
+    type OpenMeasureDetail,
+} from './navigation';
 
 const ProfileSheet = React.lazy(() => import('../profile/ProfileSheet').then(m => ({ default: m.ProfileSheet })));
 import type { ProfileSection } from '../profile/ProfileSheet';
+const ProfileDashboard = React.lazy(() => import('../profile/ProfileDashboard').then(m => ({ default: m.ProfileDashboard })));
 const QuickStartSheet = React.lazy(() => import('../home/QuickStartSheet').then(m => ({ default: m.QuickStartSheet })));
 const FreestyleSessionModal = React.lazy(() => import('../workout/FreestyleSessionModal').then(m => ({ default: m.FreestyleSessionModal })));
 const ConfirmModal = React.lazy(() => import('../ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
@@ -32,9 +47,9 @@ const SheetFallback: React.FC = () => (
 export interface NavBtnProps {
     id: string;
     label: string;
-    icon: any;
+    icon: string;
     isActive: boolean;
-    onSelect: (id: any) => void;
+    onSelect: (id: string) => void;
 }
 
 export const NavBtn: React.FC<NavBtnProps> = React.memo(({ id, label, icon, isActive, onSelect }) => {
@@ -53,7 +68,6 @@ export const NavBtn: React.FC<NavBtnProps> = React.memo(({ id, label, icon, isAc
     );
 });
 NavBtn.displayName = 'NavBtn';
-
 interface LayoutProps {
     children: React.ReactNode;
     view: AppView;
@@ -102,8 +116,13 @@ export const Layout: React.FC<LayoutProps> = ({
     }, []);
     const [showQuickStart, setShowQuickStart] = React.useState(false);
     const [showFreestyle, setShowFreestyle] = React.useState(false);
+    /** Strong Profile destination renders as a Layout overlay (no AppView change). */
+    const [showStrongProfile, setShowStrongProfile] = React.useState(() => Boolean(window.history.state?.strongProfile));
     const hasOpenedProfileRef = React.useRef(false);
     const hasOpenedQuickStartRef = React.useRef(false);
+    const panelFocusRef = React.useRef<HTMLDivElement>(null);
+    /** Control that opened the panel (avatar or Profile tab): focus returns here on close. */
+    const openerRef = React.useRef<HTMLElement | null>(null);
 
     if (showProfile) hasOpenedProfileRef.current = true;
     if (showQuickStart) hasOpenedQuickStartRef.current = true;
@@ -111,6 +130,7 @@ export const Layout: React.FC<LayoutProps> = ({
     React.useEffect(() => {
         const cancel = scheduleWhenIdle(() => {
             void import('../profile/ProfileSheet');
+            void import('../profile/ProfileDashboard');
             void import('../home/QuickStartSheet');
         });
         return cancel;
@@ -128,6 +148,9 @@ export const Layout: React.FC<LayoutProps> = ({
             const detail = (event as CustomEvent).detail;
             setProfileSection(detail?.profile ? (detail.profileSection ?? null) : null);
             setShowProfile(Boolean(detail?.profile));
+            // The Strong panel owns its own entry (strongProfile): Back
+            // closes it via this sync without touching the underlying view.
+            setShowStrongProfile(Boolean(detail?.strongProfile));
         };
         window.addEventListener('ironlog:popstate', handlePop);
         return () => window.removeEventListener('ironlog:popstate', handlePop);
@@ -155,6 +178,138 @@ export const Layout: React.FC<LayoutProps> = ({
         return () => window.removeEventListener('gainslab:open-profile', handleOpenProfile);
     }, [openProfile]);
 
+    /** Drops a stale strongProfile flag from the current entry (sync path
+     * for programmatic closes: a setView follows and rewrites history). */
+    const stripStrongEntry = React.useCallback(() => {
+        try {
+            const state = window.history.state;
+            if (state?.strongProfile) {
+                window.history.replaceState({ ...state, strongProfile: false }, '');
+            }
+        } catch { }
+    }, []);
+
+    const openStrongProfile = React.useCallback(() => {
+        openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        if (!showStrongProfile) {
+            try {
+                // Exactly ONE entry per panel open: Back closes the panel
+                // without changing the underlying view.
+                window.history.pushState({ ...(window.history.state || {}), view, strongProfile: true }, '', '#strong-profile');
+            } catch { }
+            setShowStrongProfile(true);
+        }
+    }, [showStrongProfile, view]);
+
+    /** User-initiated close (X): history owns the panel, go back to it. */
+    const closeStrongProfile = React.useCallback(() => {
+        try {
+            if (window.history.state?.strongProfile) {
+                window.history.back();
+                return;
+            }
+        } catch { }
+        setShowStrongProfile(false);
+    }, []);
+
+    /** Programmatic close (a setView follows): strip the flag synchronously. */
+    const dismissStrongProfile = React.useCallback(() => {
+        stripStrongEntry();
+        setShowStrongProfile(false);
+    }, [stripStrongEntry]);
+
+    // Strong Measure destination is a real route ('measure' AppView, owned by
+    // MeasurementsParity). The event detail travels via the shared
+    // pending-detail store; MeasureView consumes it on mount. A mounted
+    // MeasurementsSection may preventDefault to handle the event itself
+    // (open the form in place); the microtask keeps listener order
+    // irrelevant.
+    const routeToMeasure = React.useCallback((detail: OpenMeasureDetail | null) => {
+        setPendingMeasureDetail(detail);
+        dismissStrongProfile();
+        setView('measure');
+    }, [setView, dismissStrongProfile]);
+
+    React.useEffect(() => {
+        const handleMeasure = (event: Event) => {
+            const ev = event as CustomEvent<OpenMeasureDetail | null>;
+            queueMicrotask(() => {
+                if (ev.defaultPrevented) return;
+                routeToMeasure(ev.detail ?? null);
+            });
+        };
+        window.addEventListener(STRONG_MEASURE_EVENT, handleMeasure);
+        return () => window.removeEventListener(STRONG_MEASURE_EVENT, handleMeasure);
+    }, [routeToMeasure]);
+
+    React.useEffect(() => {
+        window.addEventListener(STRONG_PROFILE_EVENT, openStrongProfile);
+        return () => window.removeEventListener(STRONG_PROFILE_EVENT, openStrongProfile);
+    }, [openStrongProfile]);
+
+    // The workout renderer owns the screen: the Strong profile panel never covers it.
+    React.useEffect(() => {
+        if (view === 'workout') {
+            dismissStrongProfile();
+        }
+    }, [view, dismissStrongProfile]);
+
+    // Move focus into the panel on open; restore it to the opener on close.
+    // The opener (avatar/tab) stays mounted, so Tab resumes where it left.
+    React.useEffect(() => {
+        if (showStrongProfile) {
+            panelFocusRef.current?.focus({ preventScroll: true });
+            return;
+        }
+        const opener = openerRef.current;
+        openerRef.current = null;
+        if (opener && document.contains(opener)) {
+            opener.focus({ preventScroll: true });
+        }
+    }, [showStrongProfile]);
+
+    const handleStrongSelect = React.useCallback((id: StrongRootId) => {
+        switch (id) {
+            case 'profile':
+                openStrongProfile();
+                return;
+            // The Measure TAB always takes the real route: no event is
+            // dispatched, so a mounted MeasurementsSection (BodyTab) can
+            // never intercept it. Detail-carrying CTAs still go through
+            // STRONG_MEASURE_EVENT and its preventDefault protocol.
+            case 'measure':
+                routeToMeasure(null);
+                return;
+            case 'history':
+                dismissStrongProfile();
+                if (view !== 'diary' || diarySection !== 'sessions') {
+                    onDiarySection?.('sessions');
+                    setView('diary');
+                }
+                return;
+            case 'workout':
+                dismissStrongProfile();
+                if (hasActiveSession) {
+                    setView('workout');
+                } else {
+                    setShowQuickStart(true);
+                }
+                return;
+            case 'exercises':
+                dismissStrongProfile();
+                setView('exercises');
+                return;
+        }
+    }, [view, diarySection, hasActiveSession, onDiarySection, setView, routeToMeasure, openStrongProfile, dismissStrongProfile]);
+
+    const handleLegacyNavigate = React.useCallback((target: AppView, section?: DiarySection) => {
+        dismissStrongProfile();
+        if (target === 'diary' && section) {
+            onDiarySection?.(section);
+        }
+        setView(target);
+    }, [onDiarySection, setView, dismissStrongProfile]);
+
     React.useEffect(() => {
         const handleNavigate = (event: Event) => {
             const detail = (event as CustomEvent<{ view?: string; section?: string }>).detail;
@@ -163,11 +318,12 @@ export const Layout: React.FC<LayoutProps> = ({
             if (resolved === 'diary' && isValidDiarySection(detail?.section)) {
                 onDiarySection?.(detail.section as DiarySection);
             }
+            dismissStrongProfile();
             setView(resolved);
         };
         window.addEventListener('gainslab:navigate', handleNavigate);
         return () => window.removeEventListener('gainslab:navigate', handleNavigate);
-    }, [setView, onDiarySection]);
+    }, [setView, onDiarySection, dismissStrongProfile]);
 
     // Freestyle/session entry from anywhere (Hoy/Rutina/sidebar) without a
     // floating action button: emitters dispatch QUICK_START_EVENT.
@@ -190,38 +346,48 @@ export const Layout: React.FC<LayoutProps> = ({
         setShowProfile(false);
     };
 
-    const isVirtualized = view === 'diary' && diarySection === 'sessions';
+    const strongActive = strongActiveId({
+        view,
+        diarySection,
+        strongProfileOpen: showStrongProfile,
+        measureOpen: false,
+    });
+    const isVirtualized = !showStrongProfile && view === 'diary' && diarySection === 'sessions';
+    const showStrongChrome = view !== 'workout';
 
     const editProgram = () => {
         setShowQuickStart(false);
         onOpenProgram();
     };
 
-    const startDetached = (session: any) => {
+    const startDetached = (session: Parameters<typeof setActiveSession>[0]) => {
         setActiveSession(session);
         setShowFreestyle(false);
         setView('workout');
     };
 
+    const strongPanelTitle = pickLang(lang, { es: 'Perfil', en: 'Profile' });
 
 
     return (
-        <div className="flex h-full w-full overflow-hidden bg-[rgb(var(--surface-app))] font-sans text-[rgb(var(--text-primary))]">
+        <div className="strong-shell flex h-full w-full overflow-hidden bg-[rgb(var(--surface-app))] font-sans text-[rgb(var(--text-primary))]" data-strong-nav="true">
             {/* Desktop sidebar (own lazy chunk) XOR mobile chrome: a single nav landmark in the DOM. */}
-            {view !== 'workout' && isDesktop && (
+            {showStrongChrome && isDesktop && (
                 <React.Suspense fallback={null}>
                     <Sidebar
                         view={view}
-                        onNavigate={setView}
-                        onOpenProfile={() => openProfile()}
+                        diarySection={diarySection}
+                        strongActive={strongActive}
+                        onSelectStrong={handleStrongSelect}
+                        onNavigateLegacy={handleLegacyNavigate}
                         onOpenCommandPalette={onOpenCommandPalette}
                     />
                 </React.Suspense>
             )}
 
             <div className="flex min-w-0 flex-1 flex-col">
-            {view !== 'workout' && !isDesktop && (
-                <div className="app-topbar pointer-events-none absolute left-0 right-0 top-0 z-20 bg-[rgb(var(--surface-app))] px-6 pb-2 pt-safe">
+            {showStrongChrome && !isDesktop && (
+                <div className="app-topbar strong-topbar pointer-events-none absolute left-0 right-0 top-0 z-20 px-6 pb-2 pt-safe">
                     <div className="pointer-events-auto mx-auto flex h-14 w-full max-w-2xl items-center justify-between">
                         <div className="flex items-center gap-3">
                             <Logo className="h-10 w-10" showText />
@@ -233,23 +399,76 @@ export const Layout: React.FC<LayoutProps> = ({
                             )}
                         </div>
                         <div id="tut-profile-btn">
-                            <Avatar email={user?.email} photoURL={(user as any)?.photoURL} onClick={() => openProfile()} ariaLabel={t.openProfile} />
+                            <Avatar email={user?.email} photoURL={(user as { photoURL?: string | null } | null | undefined)?.photoURL} onClick={() => handleStrongSelect('profile')} ariaLabel={t.openProfile} />
                         </div>
                     </div>
                 </div>
             )}
 
-            <div className={`relative flex-1 ${isVirtualized ? 'overflow-hidden' : 'overflow-y-auto scroll-container'} ${view !== 'workout' ? 'pt-[calc(var(--safe-area-top)+60px)] pb-32 lg:pt-[calc(var(--safe-area-top)+24px)] lg:pb-10' : 'pt-safe pb-0'}`}>
+            <div className={`relative flex-1 ${isVirtualized ? 'overflow-hidden' : 'overflow-y-auto scroll-container'} ${showStrongChrome ? 'pt-[calc(var(--safe-area-top)+60px)] pb-36 lg:pt-[calc(var(--safe-area-top)+24px)] lg:pb-10' : 'pt-safe pb-0'}`}>
                 {/* U4: centered column on wide screens (phones are narrower than max-w-2xl). */}
+                {/* The Strong panel superimposes instead of replacing children:
+                    the underlying view (and its scroll/state) stays mounted. */}
                 <div className={`mx-auto w-full max-w-2xl lg:max-w-5xl ${isVirtualized ? 'h-full' : ''}`}>{children}</div>
+                {showStrongProfile && (
+                    <div
+                        ref={panelFocusRef}
+                        tabIndex={-1}
+                        role="region"
+                        aria-label={strongPanelTitle}
+                        className="absolute inset-0 z-10 overflow-y-auto scroll-container bg-[rgb(var(--surface-app))] pt-[calc(var(--safe-area-top)+60px)] outline-none lg:pt-[calc(var(--safe-area-top)+24px)]"
+                    data-testid="strong-profile-panel"
+                    >
+                        <React.Suspense fallback={<SheetFallback />}>
+                            <ProfileDashboard
+                                onClose={closeStrongProfile}
+                                onOpenProfileSection={(section) => openProfile(section ?? null)}
+                                onOpenMeasure={() => handleStrongSelect('measure')}
+                            />
+                        </React.Suspense>
+                    </div>
+                )}
             </div>
 
-            {view !== 'workout' && !isDesktop && (
-                <nav aria-label="Main navigation" className="fixed bottom-0 left-0 right-0 z-30 border-t border-[rgb(var(--border-subtle)/0.7)] bg-[rgb(var(--surface-base)/0.96)] pb-safe backdrop-blur-xl">
-                    <div className="mx-auto grid h-16 w-full max-w-lg grid-cols-4 items-stretch px-2">
-                        {ROOT_NAV_ITEMS.map((item) => (
-                            <NavBtn key={item.id} id={item.id} label={t[item.labelKey]} icon={item.icon} isActive={view === item.id} onSelect={setView} />
-                        ))}
+            {showStrongChrome && !isDesktop && (
+                <nav aria-label="Main navigation" className="strong-tabbar fixed bottom-0 left-0 right-0 z-30 pb-safe">
+                    <div className="mx-auto grid h-[68px] w-full max-w-lg grid-cols-5 items-stretch px-2">
+                        {STRONG_NAV_ITEMS.map((item) => {
+                            const isActive = strongActive === item.id;
+                            if (item.isFab) {
+                                return (
+                                    <button
+                                        key={item.id}
+                                        type="button"
+                                        onClick={() => handleStrongSelect(item.id)}
+                                        aria-current={isActive ? 'page' : undefined}
+                                        aria-label={strongLabel(item, lang)}
+                                        className="flex min-w-0 flex-col items-center justify-start gap-1 pt-1"
+                                    >
+                                        <span className={`strong-fab ${hasActiveSession ? 'is-live' : ''}`}>
+                                            <Icon name={hasActiveSession ? 'Play' : item.icon} size={24} strokeWidth={2.5} />
+                                        </span>
+                                        <span className={`strong-tab-label text-[11px] font-bold leading-none ${isActive ? 'text-[rgb(var(--strong-action-soft))]' : 'text-muted'}`}>
+                                            {strongLabel(item, lang)}
+                                        </span>
+                                    </button>
+                                );
+                            }
+                            return (
+                                <button
+                                    key={item.id}
+                                    type="button"
+                                    onClick={() => handleStrongSelect(item.id)}
+                                    aria-current={isActive ? 'page' : undefined}
+                                    className="strong-tab min-w-0"
+                                >
+                                    <span className="strong-tab-pill">
+                                        <Icon name={item.icon} size={21} strokeWidth={isActive ? 2.5 : 2} />
+                                    </span>
+                                    <span className="strong-tab-label">{strongLabel(item, lang)}</span>
+                                </button>
+                            );
+                        })}
                     </div>
                 </nav>
             )}
@@ -288,7 +507,6 @@ export const Layout: React.FC<LayoutProps> = ({
                     />
                 </React.Suspense>
             )}
-
             {showFreestyle && (
                 <React.Suspense fallback={<SheetFallback />}>
                     <FreestyleSessionModal isOpen={showFreestyle} onClose={() => setShowFreestyle(false)} onStart={startDetached} />

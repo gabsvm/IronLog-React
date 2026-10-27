@@ -190,6 +190,7 @@ describe('Task U2: Rest Timer Notification Permission and Visibility Scoping', (
                 endAt, TRANSLATIONS.es.timer.finished, TRANSLATIONS.es.timer.getBack,
                 'Descansando · Press banca', 'Próxima serie: 3 de 4', 120,
                 { exerciseInstanceId: 3, setId: 12 }, 'Omitir',
+                { soundEnabled: true, vibrateEnabled: true },
             ));
         } finally {
             lookup.mockRestore();
@@ -218,6 +219,7 @@ describe('Task U2: Rest Timer Notification Permission and Visibility Scoping', (
             90,
             undefined,
             'Omitir',
+            { soundEnabled: true, vibrateEnabled: true },
         ));
         expect(cancelNativeRestTimer).not.toHaveBeenCalled();
     });
@@ -274,6 +276,7 @@ describe('Task U2: Rest Timer Notification Permission and Visibility Scoping', (
             90,
             undefined,
             'Skip',
+            { soundEnabled: true, vibrateEnabled: true },
         );
         expect(cancelNativeRestTimer).not.toHaveBeenCalled();
     });

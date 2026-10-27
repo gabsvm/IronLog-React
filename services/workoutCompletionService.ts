@@ -57,6 +57,11 @@ export const buildWorkoutLog = (
     bodyWeightSnapshot: userProfile?.bodyWeight,
     mesoId: activeSession.mesoId ?? -1,
     week: activeSession.week ?? -1,
+    // Stable template identity: copied only for attached sessions, so detached
+    // (freestyle/repeat/imported) logs never claim a template. KONG and
+    // pre-feature sessions carry null and fall back to (mesoId, dayIdx).
+    templateId: !isDetached ? (activeSession.templateId ?? null) : null,
+    templateDayKey: !isDetached ? (activeSession.templateDayKey ?? null) : null,
     exercises: (activeSession.exercises || []).map((ex) => ({
       ...ex,
       sets: (ex.sets || []).map((s) => ({ ...s })),

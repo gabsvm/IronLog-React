@@ -116,6 +116,7 @@ export const SESSION_DOC_KEYS = [
     'id', 'dayIdx', 'name', 'startTime', 'endTime', 'duration',
     'bodyWeightSnapshot', 'skipped', 'mesoId', 'week', 'exercises', 'note',
     'importKey', 'importedFrom', 'discipline', 'programSystem',
+    'templateId', 'templateDayKey',
     'updatedAt', 'deleted',
 ] as const;
 

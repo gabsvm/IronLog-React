@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useRef, useState, PropsWithChildren, useMemo, useCallback } from 'react';
-import { AppState, Lang, Theme, ColorTheme, EffectsMode, ResolvedEffects, ExerciseDef, Log, ProgramDay, TutorialState, GlobalTemplate, UserProfile, BeforeInstallPromptEvent, NutritionLog, CardioSession, NutritionGoal, MacroGoals, BodyLog, CustomFood, DirtySyncSection, SectionSyncMeta, WeightUnit } from '../types';
+import { AppState, Lang, Theme, ColorTheme, EffectsMode, ResolvedEffects, ExerciseDef, Log, ProgramDay, TutorialState, GlobalTemplate, TemplateFolder, UserProfile, BeforeInstallPromptEvent, NutritionLog, CardioSession, NutritionGoal, MacroGoals, BodyLog, MeasurementLog, CustomFood, DirtySyncSection, SectionSyncMeta, WeightUnit, PreviousScope, IncompleteSets, RestIncrement, BodyWeightUnit, DistanceUnit, SizeUnit, WeekStart, OneRmFormula, TrainingConfigFields } from '../types';
+import { TRAINING_CONFIG_DEFAULTS, TRAINING_CONFIG_KEYS, sanitizeTrainingConfig } from '../utils/strongTraining';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { usePersistedState } from '../hooks/usePersistedState';
 import { TimerProvider } from './TimerContext';
@@ -41,6 +42,24 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     const [keepScreenOn, setKeepScreenOn] = useLocalStorage('il_cfg_screen', false);
     const [weightUnit, setWeightUnit] = useLocalStorage<WeightUnit>('il_cfg_weight_unit', 'kg');
     const [restTimerDisplay, setRestTimerDisplay] = useLocalStorage<'compact' | 'expanded'>('il_cfg_rest_display', 'compact');
+    // Strong-parity training prefs: same keys/encoding as TRAINING_CONFIG_KEYS,
+    // so values stored by earlier versions are picked up verbatim.
+    const [previousScope, setPreviousScope] = useLocalStorage<PreviousScope>(TRAINING_CONFIG_KEYS.previousScope, TRAINING_CONFIG_DEFAULTS.previousScope);
+    const [incompleteSets, setIncompleteSets] = useLocalStorage<IncompleteSets>(TRAINING_CONFIG_KEYS.incompleteSets, TRAINING_CONFIG_DEFAULTS.incompleteSets);
+    const [defaultSets, setDefaultSets] = useLocalStorage<number>(TRAINING_CONFIG_KEYS.defaultSets, TRAINING_CONFIG_DEFAULTS.defaultSets);
+    const [defaultRestSeconds, setDefaultRestSeconds] = useLocalStorage<number>(TRAINING_CONFIG_KEYS.defaultRestSeconds, TRAINING_CONFIG_DEFAULTS.defaultRestSeconds);
+    const [warmupRestSeconds, setWarmupRestSeconds] = useLocalStorage<number>(TRAINING_CONFIG_KEYS.warmupRestSeconds, TRAINING_CONFIG_DEFAULTS.warmupRestSeconds);
+    const [restIncrementSeconds, setRestIncrementSeconds] = useLocalStorage<RestIncrement>(TRAINING_CONFIG_KEYS.restIncrementSeconds, TRAINING_CONFIG_DEFAULTS.restIncrementSeconds);
+    const [restSound, setRestSound] = useLocalStorage<boolean>(TRAINING_CONFIG_KEYS.restSound, TRAINING_CONFIG_DEFAULTS.restSound);
+    const [restVibrate, setRestVibrate] = useLocalStorage<boolean>(TRAINING_CONFIG_KEYS.restVibrate, TRAINING_CONFIG_DEFAULTS.restVibrate);
+    const [autoStartRest, setAutoStartRest] = useLocalStorage<boolean>(TRAINING_CONFIG_KEYS.autoStartRest, TRAINING_CONFIG_DEFAULTS.autoStartRest);
+    const [bodyWeightUnit, setBodyWeightUnit] = useLocalStorage<BodyWeightUnit>(TRAINING_CONFIG_KEYS.bodyWeightUnit, TRAINING_CONFIG_DEFAULTS.bodyWeightUnit);
+    const [distanceUnit, setDistanceUnit] = useLocalStorage<DistanceUnit>(TRAINING_CONFIG_KEYS.distanceUnit, TRAINING_CONFIG_DEFAULTS.distanceUnit);
+    const [sizeUnit, setSizeUnit] = useLocalStorage<SizeUnit>(TRAINING_CONFIG_KEYS.sizeUnit, TRAINING_CONFIG_DEFAULTS.sizeUnit);
+    const [weekStart, setWeekStart] = useLocalStorage<WeekStart>(TRAINING_CONFIG_KEYS.weekStart, TRAINING_CONFIG_DEFAULTS.weekStart);
+    const [oneRmFormula, setOneRmFormula] = useLocalStorage<OneRmFormula>(TRAINING_CONFIG_KEYS.oneRmFormula, TRAINING_CONFIG_DEFAULTS.oneRmFormula);
+    const [plateBarKg, setPlateBarKg] = useLocalStorage<number>(TRAINING_CONFIG_KEYS.plateBarKg, TRAINING_CONFIG_DEFAULTS.plateBarKg);
+    const [platePlatesKg, setPlatePlatesKg] = useLocalStorage<number[]>(TRAINING_CONFIG_KEYS.platePlatesKg, TRAINING_CONFIG_DEFAULTS.platePlatesKg);
     const [tutorialProgress, setTutorialProgress] = useLocalStorage<TutorialState>('il_tutorial_v2', INITIAL_TUTORIAL_STATE);
 
     // --- Heavy Data (IndexedDB) ---
@@ -62,6 +81,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
 
     const [globalTemplates, setGlobalTemplates] = useState<GlobalTemplate[]>([]);
     const [personalTemplates, setPersonalTemplates] = usePersistedState<GlobalTemplate[]>('il_personal_templates_v1', [], 1000);
+    const [templateFolders, setTemplateFolders] = usePersistedState<TemplateFolder[]>('il_template_folders_v1', [], 1000);
     const [defaultLibrary, setDefaultLibrary] = useState<ExerciseDef[] | null>(null);
     const [defaultTemplate, setDefaultTemplate] = useState<ProgramDay[] | null>(null);
     const [baseTemplates, setBaseTemplates] = useState<GlobalTemplate[] | null>(null);
@@ -81,6 +101,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
 
     // NEW: Nutrition & Body Tracking Persistence
     const [bodyLogs, setBodyLogs] = usePersistedState<BodyLog[]>('il_body_v1', [], 1000);
+    const [measurementLogs, setMeasurementLogs] = usePersistedState<MeasurementLog[]>('il_measurements_v1', [], 1000);
     const [macroGoals, setMacroGoals] = usePersistedState<MacroGoals | null>('il_macros_v1', null, 500);
     const [customFoods, setCustomFoods] = usePersistedState<CustomFood[]>('il_custom_foods_v1', [], 1000);
 
@@ -174,6 +195,23 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         rpTargetRIR,
         keepScreenOn,
         weightUnit,
+        restTimerDisplay,
+        previousScope,
+        incompleteSets,
+        defaultSets,
+        defaultRestSeconds,
+        warmupRestSeconds,
+        restIncrementSeconds,
+        restSound,
+        restVibrate,
+        autoStartRest,
+        bodyWeightUnit,
+        distanceUnit,
+        sizeUnit,
+        weekStart,
+        oneRmFormula,
+        plateBarKg,
+        platePlatesKg,
         program,
         exercises,
         setExercises,
@@ -184,10 +222,12 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         userProfile,
         setGlobalTemplates,
         personalTemplates,
+        templateFolders,
         baseTemplates,
         defaultsLoading,
         rpFeedback,
         bodyLogs,
+        measurementLogs,
         macroGoals,
         customFoods,
         hasCheckedSync,
@@ -213,6 +253,22 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         setRpTargetRIR,
         setKeepScreenOn,
         setWeightUnit,
+        setPreviousScope,
+        setIncompleteSets,
+        setDefaultSets,
+        setDefaultRestSeconds,
+        setWarmupRestSeconds,
+        setRestIncrementSeconds,
+        setRestSound,
+        setRestVibrate,
+        setAutoStartRest,
+        setBodyWeightUnit,
+        setDistanceUnit,
+        setSizeUnit,
+        setWeekStart,
+        setOneRmFormula,
+        setPlateBarKg,
+        setPlatePlatesKg,
         setProgram,
         exercises,
         setExercises,
@@ -226,6 +282,8 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         userProfile,
         setUserProfile,
         personalTemplates,
+        templateFolders,
+        setTemplateFolders,
         setPersonalTemplates,
         setRpFeedback,
         setHasSeenOnboarding,
@@ -235,6 +293,8 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         localSectionSyncMetaRef,
         bodyLogs,
         setBodyLogs,
+        measurementLogs,
+        setMeasurementLogs,
         setMacroGoals,
         customFoods,
         setCustomFoods,
@@ -261,7 +321,39 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         keepScreenOn,
         setKeepScreenOn,
         weightUnit,
+        previousScope,
+        incompleteSets,
+        defaultSets,
+        defaultRestSeconds,
+        warmupRestSeconds,
+        restIncrementSeconds,
+        restSound,
+        restVibrate,
+        autoStartRest,
+        bodyWeightUnit,
+        distanceUnit,
+        sizeUnit,
+        weekStart,
+        oneRmFormula,
+        plateBarKg,
+        platePlatesKg,
         setWeightUnit,
+        setPreviousScope,
+        setIncompleteSets,
+        setDefaultSets,
+        setDefaultRestSeconds,
+        setWarmupRestSeconds,
+        setRestIncrementSeconds,
+        setRestSound,
+        setRestVibrate,
+        setAutoStartRest,
+        setBodyWeightUnit,
+        setDistanceUnit,
+        setSizeUnit,
+        setWeekStart,
+        setOneRmFormula,
+        setPlateBarKg,
+        setPlatePlatesKg,
         program,
         setProgram,
         exercises,
@@ -278,6 +370,8 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         setUserProfile,
         personalTemplates,
         setPersonalTemplates,
+        templateFolders,
+        setTemplateFolders,
         rpFeedback,
         setRpFeedback,
         setHasSeenOnboarding,
@@ -285,6 +379,8 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         setLocalSectionSyncMeta,
         bodyLogs,
         setBodyLogs,
+        measurementLogs,
+        setMeasurementLogs,
         macroGoals,
         setMacroGoals,
         customFoods,
@@ -310,27 +406,81 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         wakeLockRef,
     });
 
-    const setConfig = useCallback((newConfig: any) => {
+    const setConfig = useCallback((newConfig: Partial<AppState['config']>) => {
         if (newConfig.showRIR !== undefined) setShowRIR(newConfig.showRIR);
         if (newConfig.rpEnabled !== undefined) setRpEnabled(newConfig.rpEnabled);
         if (newConfig.rpTargetRIR !== undefined) setRpTargetRIR(newConfig.rpTargetRIR);
         if (newConfig.keepScreenOn !== undefined) setKeepScreenOn(newConfig.keepScreenOn);
-        if (newConfig.restTimerDisplay !== undefined) setRestTimerDisplay(newConfig.restTimerDisplay);
+        const rawDisplay = newConfig.restTimerDisplay as string | undefined;
+        if (rawDisplay === 'compact' || rawDisplay === 'expanded') {
+            setRestTimerDisplay(rawDisplay);
+        } else if (rawDisplay === 'Overlay' || rawDisplay === 'Banner') {
+            // Legacy pre-compact/expanded values: both rendered as the compact pill.
+            setRestTimerDisplay('compact');
+        }
         if (newConfig.weightUnit === 'kg' || newConfig.weightUnit === 'lb') setWeightUnit(newConfig.weightUnit);
-    }, [setShowRIR, setRpEnabled, setRpTargetRIR, setKeepScreenOn, setRestTimerDisplay, setWeightUnit]);
+        const p = newConfig as Partial<TrainingConfigFields>;
+        if (
+            p.previousScope !== undefined || p.incompleteSets !== undefined || p.defaultSets !== undefined ||
+            p.defaultRestSeconds !== undefined || p.warmupRestSeconds !== undefined || p.restIncrementSeconds !== undefined ||
+            p.restSound !== undefined || p.restVibrate !== undefined || p.autoStartRest !== undefined ||
+            p.bodyWeightUnit !== undefined || p.distanceUnit !== undefined || p.sizeUnit !== undefined ||
+            p.weekStart !== undefined || p.oneRmFormula !== undefined || p.plateBarKg !== undefined || p.platePlatesKg !== undefined
+        ) {
+            // Single sanitized write: invalid values fall back to defaults (cross-device consistency).
+            const next = sanitizeTrainingConfig({
+                previousScope, incompleteSets, defaultSets, defaultRestSeconds, warmupRestSeconds,
+                restIncrementSeconds, restSound, restVibrate, autoStartRest, bodyWeightUnit,
+                distanceUnit, sizeUnit, weekStart, oneRmFormula, plateBarKg, platePlatesKg,
+                ...p,
+            });
+            setPreviousScope(next.previousScope);
+            setIncompleteSets(next.incompleteSets);
+            setDefaultSets(next.defaultSets);
+            setDefaultRestSeconds(next.defaultRestSeconds);
+            setWarmupRestSeconds(next.warmupRestSeconds);
+            setRestIncrementSeconds(next.restIncrementSeconds);
+            setRestSound(next.restSound);
+            setRestVibrate(next.restVibrate);
+            setAutoStartRest(next.autoStartRest);
+            setBodyWeightUnit(next.bodyWeightUnit);
+            setDistanceUnit(next.distanceUnit);
+            setSizeUnit(next.sizeUnit);
+            setWeekStart(next.weekStart);
+            setOneRmFormula(next.oneRmFormula);
+            setPlateBarKg(next.plateBarKg);
+            setPlatePlatesKg(next.platePlatesKg);
+        }
+    }, [setShowRIR, setRpEnabled, setRpTargetRIR, setKeepScreenOn, setRestTimerDisplay, setWeightUnit, previousScope, incompleteSets, defaultSets, defaultRestSeconds, warmupRestSeconds, restIncrementSeconds, restSound, restVibrate, autoStartRest, bodyWeightUnit, distanceUnit, sizeUnit, weekStart, oneRmFormula, plateBarKg, platePlatesKg, setPreviousScope, setIncompleteSets, setDefaultSets, setDefaultRestSeconds, setWarmupRestSeconds, setRestIncrementSeconds, setRestSound, setRestVibrate, setAutoStartRest, setBodyWeightUnit, setDistanceUnit, setSizeUnit, setWeekStart, setOneRmFormula, setPlateBarKg, setPlatePlatesKg]);
 
     const markTutorialSeen = useCallback((section: keyof TutorialState) => setTutorialProgress(prev => ({ ...prev, [section]: true })), [setTutorialProgress]);
     const resetTutorials = useCallback(() => setTutorialProgress(INITIAL_TUTORIAL_STATE), [setTutorialProgress]);
 
 
-    const configState = useMemo(() => ({
+    const configState: AppState['config'] = useMemo(() => ({
         showRIR,
         rpEnabled,
         rpTargetRIR,
         keepScreenOn,
         restTimerDisplay,
         weightUnit,
-    }), [showRIR, rpEnabled, rpTargetRIR, keepScreenOn, restTimerDisplay, weightUnit]);
+        previousScope,
+        incompleteSets,
+        defaultSets,
+        defaultRestSeconds,
+        warmupRestSeconds,
+        restIncrementSeconds,
+        restSound,
+        restVibrate,
+        autoStartRest,
+        bodyWeightUnit,
+        distanceUnit,
+        sizeUnit,
+        weekStart,
+        oneRmFormula,
+        plateBarKg,
+        platePlatesKg,
+    }), [showRIR, rpEnabled, rpTargetRIR, keepScreenOn, restTimerDisplay, weightUnit, previousScope, incompleteSets, defaultSets, defaultRestSeconds, warmupRestSeconds, restIncrementSeconds, restSound, restVibrate, autoStartRest, bodyWeightUnit, distanceUnit, sizeUnit, weekStart, oneRmFormula, plateBarKg, platePlatesKg]);
     const preferencesValue = useMemo(() => ({
         lang, setLang, theme, setTheme, colorTheme, setColorTheme,
         effectsMode, setEffectsMode, resolvedEffects,
@@ -362,11 +512,13 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         deferredPrompt, installApp, isStandalone,
         globalTemplates, setGlobalTemplates,
         personalTemplates, setPersonalTemplates,
+        templateFolders, setTemplateFolders,
         userProfile, setUserProfile,
         nutritionLogs, setNutritionLogs,
         cardioSessions, setCardioSessions,
         nutritionGoal, setNutritionGoal,
         bodyLogs, setBodyLogs,
+        measurementLogs, setMeasurementLogs,
         macroGoals, setMacroGoals,
         customFoods, setCustomFoods,
     }), [
@@ -385,11 +537,13 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         deferredPrompt, installApp, isStandalone,
         globalTemplates, setGlobalTemplates,
         personalTemplates, setPersonalTemplates,
+        templateFolders, setTemplateFolders,
         userProfile, setUserProfile,
         nutritionLogs, setNutritionLogs,
         cardioSessions, setCardioSessions,
         nutritionGoal, setNutritionGoal,
         bodyLogs, setBodyLogs,
+        measurementLogs, setMeasurementLogs,
         macroGoals, setMacroGoals,
         customFoods, setCustomFoods,
     ]);
@@ -416,7 +570,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                     <AppPreferencesContext.Provider value={preferencesValue}>
                         <AppConfigContext.Provider value={configValue}>
                             <TutorialContext.Provider value={tutorialValue}>
-                                <TimerProvider>
+                                <TimerProvider lang={lang} soundEnabled={configState.restSound} vibrateEnabled={configState.restVibrate}>
                                     {children}
                                 </TimerProvider>
                             </TutorialContext.Provider>

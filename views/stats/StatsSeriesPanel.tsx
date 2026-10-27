@@ -4,6 +4,7 @@ import type { ChartMetric } from '../../hooks/useStatsWorker';
 import type { WeightUnit } from '../../types';
 import { formatDate } from '../../utils';
 import { formatInteger, pickLang } from '../../utils/i18n';
+import { formatDistance, type DistanceUnit } from '../../utils/strongTraining';
 import { toDisplay, unitLabel } from '../../utils/units';
 
 /**
@@ -16,6 +17,8 @@ interface StatsSeriesPanelProps {
     metric: ChartMetric;
     unit: WeightUnit;
     lang: 'es' | 'en';
+    /** Display unit for distance (stored values are canonical km). */
+    distanceUnit?: DistanceUnit;
     labels: {
         seriesSummaryTitle: string;
         seriesLatest: string;
@@ -29,18 +32,18 @@ interface StatsSeriesPanelProps {
     };
 }
 
-const formatSeriesValue = (value: number, metric: ChartMetric, unit: WeightUnit, lang: 'es' | 'en'): string => {
+const formatSeriesValue = (value: number, metric: ChartMetric, unit: WeightUnit, lang: 'es' | 'en', distanceUnit: DistanceUnit = 'km'): string => {
     if (metric === '1rm' || metric === 'volume') {
         const shown = toDisplay(value, unit);
         return `${formatInteger(shown, lang)} ${unitLabel(unit).toLowerCase()}`;
     }
     if (metric === 'duration') return `${value.toLocaleString(pickLang(lang, { es: 'es-ES', en: 'en-US' }), { maximumFractionDigits: 1 })} min`;
-    if (metric === 'distance') return `${value.toLocaleString(pickLang(lang, { es: 'es-ES', en: 'en-US' }), { maximumFractionDigits: 2 })} km`;
+    if (metric === 'distance') return `${formatDistance(value, distanceUnit, lang)} ${distanceUnit === 'mi' ? 'mi' : 'km'}`;
     if (metric === 'hold_time') return `${formatInteger(value, lang)} s`;
     return `${formatInteger(value, lang)} reps`;
 };
 
-export const StatsSeriesPanel: React.FC<StatsSeriesPanelProps> = ({ points, metric, unit, lang, labels }) => {
+export const StatsSeriesPanel: React.FC<StatsSeriesPanelProps> = ({ points, metric, unit, lang, labels, distanceUnit = 'km' }) => {
     const summary = useMemo(() => {
         const first = points[0];
         const latest = points[points.length - 1];
@@ -51,7 +54,7 @@ export const StatsSeriesPanel: React.FC<StatsSeriesPanelProps> = ({ points, metr
     const isEstimate = metric === '1rm';
     const deltaText = summary.delta === 0
         ? '±0'
-        : `${summary.delta > 0 ? '+' : '−'}${formatSeriesValue(Math.abs(summary.delta), metric, unit, lang)}`;
+        : `${summary.delta > 0 ? '+' : '−'}${formatSeriesValue(Math.abs(summary.delta), metric, unit, lang, distanceUnit)}`;
 
     return (
         <div className="mt-4 rounded-[1.2rem] border border-[rgb(var(--border-subtle)/0.7)] bg-white/[0.02] p-4">
@@ -60,7 +63,7 @@ export const StatsSeriesPanel: React.FC<StatsSeriesPanelProps> = ({ points, metr
                 <div>
                     <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">{labels.seriesLatest}</div>
                     <div className="mt-1 text-lg font-black tabular-nums text-[rgb(var(--text-primary))]">
-                        {formatSeriesValue(summary.latest.value, metric, unit, lang)}
+                        {formatSeriesValue(summary.latest.value, metric, unit, lang, distanceUnit)}
                     </div>
                     {isEstimate && summary.latest.reps > 0 && (
                         <div className="text-[11px] font-semibold text-muted">
@@ -99,7 +102,7 @@ export const StatsSeriesPanel: React.FC<StatsSeriesPanelProps> = ({ points, metr
                     {points.map(point => (
                         <tr key={point.date} className="border-b border-[rgb(var(--border-subtle)/0.4)] text-[rgb(var(--text-primary))] last:border-0">
                             <td className="py-1.5 pr-2">{formatDate(point.date, lang)}</td>
-                            <td className="py-1.5 pr-2 text-right font-bold">{formatSeriesValue(point.value, metric, unit, lang)}</td>
+                            <td className="py-1.5 pr-2 text-right font-bold">{formatSeriesValue(point.value, metric, unit, lang, distanceUnit)}</td>
                             {isEstimate && (
                                 <td className="py-1.5 text-right text-muted">
                                     {point.reps > 0 ? `${formatInteger(toDisplay(point.weight, unit), lang)} × ${point.reps}` : '—'}

@@ -1,6 +1,7 @@
 // S6: initial cloud download on login (apply on empty device / offer newer sections), moved verbatim from context/AppContext.tsx.
 import { useEffect } from 'react';
-import { AppState, ExerciseDef, ActiveSession, MesoCycle, Log, ProgramDay, GlobalTemplate, UserProfile, NutritionLog, CardioSession, NutritionGoal, MacroGoals, BodyLog, CustomFood, DirtySyncSection, WeightUnit } from '../../types';
+import { AppState, ExerciseDef, ActiveSession, MesoCycle, Log, ProgramDay, GlobalTemplate, TemplateFolder, UserProfile, NutritionLog, CardioSession, NutritionGoal, MacroGoals, BodyLog, MeasurementLog, CustomFood, DirtySyncSection, WeightUnit, PreviousScope, IncompleteSets, RestIncrement, BodyWeightUnit, DistanceUnit, SizeUnit, WeekStart, OneRmFormula, TrainingConfigFields } from '../../types';
+import { sanitizeTrainingConfig } from '../../utils/strongTraining';
 import { syncService } from '../../services/syncService';
 import { useStore } from '../../lib/store';
 import { dirtySyncState } from '../../services/dirtySyncState';
@@ -16,6 +17,22 @@ export interface UseInitialCloudDownloadDeps {
     setRpTargetRIR: (value: number | ((val: number) => number)) => void;
     setKeepScreenOn: (value: boolean | ((val: boolean) => boolean)) => void;
     setWeightUnit: (value: WeightUnit | ((val: WeightUnit) => WeightUnit)) => void;
+    setPreviousScope: (value: PreviousScope | ((val: PreviousScope) => PreviousScope)) => void;
+    setIncompleteSets: (value: IncompleteSets | ((val: IncompleteSets) => IncompleteSets)) => void;
+    setDefaultSets: (value: number | ((val: number) => number)) => void;
+    setDefaultRestSeconds: (value: number | ((val: number) => number)) => void;
+    setWarmupRestSeconds: (value: number | ((val: number) => number)) => void;
+    setRestIncrementSeconds: (value: RestIncrement | ((val: RestIncrement) => RestIncrement)) => void;
+    setRestSound: (value: boolean | ((val: boolean) => boolean)) => void;
+    setRestVibrate: (value: boolean | ((val: boolean) => boolean)) => void;
+    setAutoStartRest: (value: boolean | ((val: boolean) => boolean)) => void;
+    setBodyWeightUnit: (value: BodyWeightUnit | ((val: BodyWeightUnit) => BodyWeightUnit)) => void;
+    setDistanceUnit: (value: DistanceUnit | ((val: DistanceUnit) => DistanceUnit)) => void;
+    setSizeUnit: (value: SizeUnit | ((val: SizeUnit) => SizeUnit)) => void;
+    setWeekStart: (value: WeekStart | ((val: WeekStart) => WeekStart)) => void;
+    setOneRmFormula: (value: OneRmFormula | ((val: OneRmFormula) => OneRmFormula)) => void;
+    setPlateBarKg: (value: number | ((val: number) => number)) => void;
+    setPlatePlatesKg: (value: number[] | ((val: number[]) => number[])) => void;
     setProgram: (value: ProgramDay[] | ((val: ProgramDay[]) => ProgramDay[])) => void;
     exercises: ExerciseDef[];
     setExercises: (value: ExerciseDef[] | ((val: ExerciseDef[]) => ExerciseDef[])) => void;
@@ -29,6 +46,8 @@ export interface UseInitialCloudDownloadDeps {
     userProfile: UserProfile;
     setUserProfile: (value: UserProfile | ((val: UserProfile) => UserProfile)) => void;
     personalTemplates: GlobalTemplate[];
+    templateFolders: TemplateFolder[];
+    setTemplateFolders: (value: TemplateFolder[] | ((val: TemplateFolder[]) => TemplateFolder[])) => void;
     setPersonalTemplates: (value: GlobalTemplate[] | ((val: GlobalTemplate[]) => GlobalTemplate[])) => void;
     setRpFeedback: (value: Record<string, Record<string, Record<string, FeedbackEntry>>> | ((val: Record<string, Record<string, Record<string, FeedbackEntry>>>) => Record<string, Record<string, Record<string, FeedbackEntry>>>)) => void;
     setHasSeenOnboarding: (value: boolean | ((val: boolean) => boolean)) => void;
@@ -38,6 +57,8 @@ export interface UseInitialCloudDownloadDeps {
     localSectionSyncMetaRef: MutableRefObject<Partial<Record<DirtySyncSection, number>>>;
     bodyLogs: BodyLog[];
     setBodyLogs: (value: BodyLog[] | ((val: BodyLog[]) => BodyLog[])) => void;
+    measurementLogs: MeasurementLog[];
+    setMeasurementLogs: (value: MeasurementLog[] | ((val: MeasurementLog[]) => MeasurementLog[])) => void;
     setMacroGoals: (value: MacroGoals | ((val: MacroGoals) => MacroGoals)) => void;
     customFoods: CustomFood[];
     setCustomFoods: (value: CustomFood[] | ((val: CustomFood[]) => CustomFood[])) => void;
@@ -62,6 +83,22 @@ export const useInitialCloudDownload = ({
     setRpTargetRIR,
     setKeepScreenOn,
     setWeightUnit,
+    setPreviousScope,
+    setIncompleteSets,
+    setDefaultSets,
+    setDefaultRestSeconds,
+    setWarmupRestSeconds,
+    setRestIncrementSeconds,
+    setRestSound,
+    setRestVibrate,
+    setAutoStartRest,
+    setBodyWeightUnit,
+    setDistanceUnit,
+    setSizeUnit,
+    setWeekStart,
+    setOneRmFormula,
+    setPlateBarKg,
+    setPlatePlatesKg,
     setProgram,
     exercises,
     setExercises,
@@ -75,6 +112,8 @@ export const useInitialCloudDownload = ({
     userProfile,
     setUserProfile,
     personalTemplates,
+    templateFolders,
+    setTemplateFolders,
     setPersonalTemplates,
     setRpFeedback,
     setHasSeenOnboarding,
@@ -84,6 +123,8 @@ export const useInitialCloudDownload = ({
     localSectionSyncMetaRef,
     bodyLogs,
     setBodyLogs,
+    measurementLogs,
+    setMeasurementLogs,
     setMacroGoals,
     customFoods,
     setCustomFoods,
@@ -117,8 +158,10 @@ export const useInitialCloudDownload = ({
                         nutritionLogs,
                         cardioSessions,
                         bodyLogs,
+                        measurementLogs,
                         customFoods,
                         personalTemplates,
+                        templateFolders,
                         exercises,
                         userProfile,
                     });
@@ -145,7 +188,35 @@ export const useInitialCloudDownload = ({
                                 if (cloudData.config.rpTargetRIR !== undefined) setRpTargetRIR(cloudData.config.rpTargetRIR);
                                 if (cloudData.config.keepScreenOn !== undefined) setKeepScreenOn(cloudData.config.keepScreenOn);
                                 if (cloudData.config.weightUnit === 'kg' || cloudData.config.weightUnit === 'lb') setWeightUnit(cloudData.config.weightUnit);
-                                if (setRestTimerDisplay && cloudData.config.restTimerDisplay !== undefined) setRestTimerDisplay(cloudData.config.restTimerDisplay as any);
+                                const rawDisplay = cloudData.config.restTimerDisplay as string | undefined;
+                                if (setRestTimerDisplay && (rawDisplay === 'compact' || rawDisplay === 'expanded')) {
+                                    setRestTimerDisplay(rawDisplay);
+                                } else if (setRestTimerDisplay && (rawDisplay === 'Overlay' || rawDisplay === 'Banner')) {
+                                    // Legacy pre-compact/expanded values: both rendered as the compact pill.
+                                    setRestTimerDisplay('compact');
+                                }
+                                const cloudTraining = cloudData.config as Partial<TrainingConfigFields>;
+                                const hasTraining = cloudTraining.previousScope !== undefined || cloudTraining.incompleteSets !== undefined || cloudTraining.defaultSets !== undefined || cloudTraining.defaultRestSeconds !== undefined || cloudTraining.warmupRestSeconds !== undefined || cloudTraining.restIncrementSeconds !== undefined || cloudTraining.restSound !== undefined || cloudTraining.restVibrate !== undefined || cloudTraining.autoStartRest !== undefined || cloudTraining.bodyWeightUnit !== undefined || cloudTraining.distanceUnit !== undefined || cloudTraining.sizeUnit !== undefined || cloudTraining.weekStart !== undefined || cloudTraining.oneRmFormula !== undefined || cloudTraining.plateBarKg !== undefined || cloudTraining.platePlatesKg !== undefined;
+                                if (hasTraining) {
+                                    // Full sanitize: a fresh device adopts cloud values, invalid ones fall back to defaults.
+                                    const next = sanitizeTrainingConfig(cloudTraining);
+                                    setPreviousScope(next.previousScope);
+                                    setIncompleteSets(next.incompleteSets);
+                                    setDefaultSets(next.defaultSets);
+                                    setDefaultRestSeconds(next.defaultRestSeconds);
+                                    setWarmupRestSeconds(next.warmupRestSeconds);
+                                    setRestIncrementSeconds(next.restIncrementSeconds);
+                                    setRestSound(next.restSound);
+                                    setRestVibrate(next.restVibrate);
+                                    setAutoStartRest(next.autoStartRest);
+                                    setBodyWeightUnit(next.bodyWeightUnit);
+                                    setDistanceUnit(next.distanceUnit);
+                                    setSizeUnit(next.sizeUnit);
+                                    setWeekStart(next.weekStart);
+                                    setOneRmFormula(next.oneRmFormula);
+                                    setPlateBarKg(next.plateBarKg);
+                                    setPlatePlatesKg(next.platePlatesKg);
+                                }
                             }
 
                             if (cloudData.userProfile) setUserProfile(cloudData.userProfile);
@@ -153,10 +224,12 @@ export const useInitialCloudDownload = ({
                             if (cloudData.cardioSessions) setCardioSessions(cloudData.cardioSessions);
                             if (cloudData.nutritionGoal) setNutritionGoal(cloudData.nutritionGoal);
                             if (cloudData.bodyLogs) setBodyLogs(cloudData.bodyLogs);
+                            if (cloudData.measurementLogs) setMeasurementLogs(cloudData.measurementLogs);
                             if (cloudData.macroGoals) setMacroGoals(cloudData.macroGoals);
                             if (cloudData.customFoods) setCustomFoods(cloudData.customFoods);
                             await syncService.adoptCloudSections(user.uid, cloudData);
                             if (cloudData.personalTemplates) setPersonalTemplates(cloudData.personalTemplates);
+                            if (cloudData.templateFolders) setTemplateFolders(cloudData.templateFolders);
 
                             setLocalLastUpdated(cloudData.lastUpdated ?? Date.now());
                             setLocalSectionSyncMeta(cloudSyncMeta);
@@ -186,9 +259,9 @@ export const useInitialCloudDownload = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- S6: dependency list moved verbatim from AppProvider; the omitted names are useState setters/refs (stable) or the per-render withDirtyTrackingSuppressed, exactly as before.
     }, [
         user, isOnline, isAppLoading, pendingCloudData, hasCheckedSync, activeMeso, logs, nutritionLogs,
-        cardioSessions, bodyLogs, customFoods, personalTemplates, exercises, userProfile,
+        cardioSessions, bodyLogs, measurementLogs, customFoods, personalTemplates, templateFolders, exercises, userProfile,
         setProgram, setExercises, setLogs, setRpFeedback, setShowRIR, setRpEnabled, setLocalLastUpdated,
-        setHasSeenOnboarding, setBodyLogs, setCustomFoods, setPersonalTemplates, setKeepScreenOn, setWeightUnit, setRestTimerDisplay, setMacroGoals, setNutritionLogs, setLocalSectionSyncMeta,
-        setRpTargetRIR, setUserProfile, setCardioSessions, setNutritionGoal
+        setHasSeenOnboarding, setBodyLogs, setMeasurementLogs, setCustomFoods, setPersonalTemplates, setTemplateFolders, setKeepScreenOn, setWeightUnit, setRestTimerDisplay, setMacroGoals, setNutritionLogs, setLocalSectionSyncMeta,
+        setRpTargetRIR, setUserProfile, setCardioSessions, setNutritionGoal, setPreviousScope, setIncompleteSets, setDefaultSets, setDefaultRestSeconds, setWarmupRestSeconds, setRestIncrementSeconds, setRestSound, setRestVibrate, setAutoStartRest, setBodyWeightUnit, setDistanceUnit, setSizeUnit, setWeekStart, setOneRmFormula, setPlateBarKg, setPlatePlatesKg
     ]); // Re-run when dependencies change
 };

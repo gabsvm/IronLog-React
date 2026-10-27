@@ -16,7 +16,13 @@ import { StatsSeriesPanel } from './StatsSeriesPanel';
 import { formatInteger } from '../../utils/i18n';
 
 export const StatsProgressTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
-    const { lang, t, s, unit, weightSuffix, selectedExId, chartMetric, setChartMetric, setShowPicker, setPickerSearch, availableExercises, chartPoints, loadingOverview, loadingChart, currentEx, hasExerciseHistory, prHistory, showAllPRs, setShowAllPRs, displayedPRs, metricButtons, selectedExerciseInsight, repMaxRows } = stats;
+    const { lang, t, s, unit, weightSuffix, oneRmFormula, distanceUnit, selectedExId, chartMetric, setChartMetric, setShowPicker, setPickerSearch, availableExercises, chartPoints, loadingOverview, loadingChart, currentEx, hasExerciseHistory, prHistory, showAllPRs, setShowAllPRs, displayedPRs, metricButtons, selectedExerciseInsight, repMaxRows } = stats;
+    // Translations name the legacy estimate explicitly; keep them untouched and
+    // relabel only when another formula produced the numbers on screen.
+    const formulaName = oneRmFormula === 'brzycki' ? 'Brzycki' : oneRmFormula === 'lombardi' ? 'Lombardi' : 'Epley';
+    const seriesLabels = chartMetric === '1rm' && formulaName !== 'Epley'
+        ? { ...s, seriesEstimatedNote: s.seriesEstimatedNote.replace('Epley', formulaName) }
+        : s;
     return (
         <>
                 <>
@@ -105,13 +111,15 @@ export const StatsProgressTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
                             metric={chartMetric}
                             loading={loadingChart}
                             unit={unit}
+                            distanceUnit={distanceUnit}
                         />
                         <StatsSeriesPanel
                             points={chartPoints}
                             metric={chartMetric}
                             unit={unit}
                             lang={lang}
-                            labels={s}
+                            labels={seriesLabels}
+                            distanceUnit={distanceUnit}
                         />
                     </>
                 )}

@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { bottomNav, goHistory, goProgress, openProfileSheet, startFreestyleWorkout } from './strongNav';
 
 const ERROR_BOUNDARY_TEXT = /ERROR CRÍTICO|CRITICAL ERROR/;
 
@@ -55,20 +56,10 @@ async function expectNoOverflow(page: Page, viewName: string) {
 }
 
 async function startFreestyleWithExercises(page: Page, count: number) {
-    const nav = page.locator('nav[aria-label="Main navigation"]');
-    await nav.getByRole('button', { name: /^Rutina$|^Routine$/ }).click();
-    const quickBtn = page.getByRole('button', { name: /Iniciar entreno|Start workout/ }).first();
-    await expect(quickBtn).toBeVisible({ timeout: 8000 });
-    await quickBtn.click();
-
-    const freestyleOption = page.locator('button:has-text("Sesión libre"), button:has-text("Freestyle")').first();
-    await expect(freestyleOption).toBeVisible({ timeout: 6000 });
-    await freestyleOption.click();
-
-    const startFreeBtn = page.locator('button:has-text("Iniciar Sesión Libre"), button:has-text("Start Free Session"), button:has-text("Iniciar sesión libre")').first();
-    await expect(startFreeBtn).toBeVisible({ timeout: 8000 });
-    await startFreeBtn.scrollIntoViewIfNeeded();
-    await startFreeBtn.click();
+    const nav = bottomNav(page);
+    await expect(nav).toBeVisible({ timeout: 15000 });
+    // Strong shell: freestyle starts from the Entreno FAB + QuickStart sheet.
+    await startFreestyleWorkout(page);
 
     // End-of-list add button (header dup-add removed in Strong parity T1/T2).
     const addExBtn = page.getByRole('button', { name: /Añadir ejercicio|Add exercise/ }).last();
@@ -96,18 +87,18 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 360, height: 800 }
             await expect(nav).toBeVisible({ timeout: 15000 });
             await expectNoOverflow(page, 'home');
 
-            await nav.locator('button', { hasText: /^Diario$|^Diary$/ }).click();
+            await goHistory(page);
             await expect(page.getByText(/Historial|History|Sin entrenamientos|No workouts/).first()).toBeVisible({ timeout: 10000 });
             await expectNoOverflow(page, 'diary');
 
-            await nav.locator('button', { hasText: /^Progreso$|^Progress$/ }).click();
+            await goProgress(page);
             await expect(page.locator('#root')).toContainText(/Estadísticas|Progreso|Sin datos|No data/i, { timeout: 10000 });
             await expectNoOverflow(page, 'progress');
 
-            // Unified "You" sheet: scroll through every section, including the
-            // collapsible Advanced section.
-            await page.getByLabel(/Abrir perfil|Open profile/).click();
-            const sheet = page.locator('[role="dialog"]').first();
+            // Unified profile sheet (via the Strong panel's Ajustes gear):
+            // scroll through every section, including the collapsible
+            // Advanced section.
+            const sheet = await openProfileSheet(page);
             await expect(sheet).toBeVisible({ timeout: 10000 });
             await sheet.locator('summary', { hasText: /Avanzado|Advanced/ }).click();
             for (const section of ['account', 'body', 'training', 'appearance', 'data', 'advanced', 'danger']) {
@@ -118,7 +109,10 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 360, height: 800 }
             await expect(sheet).toHaveCount(0, { timeout: 8000 });
 
             // Workout last: the bottom nav and header hide while training.
-            await nav.locator('button', { hasText: /^Hoy$|^Today$/ }).click();
+            // Dismiss the Strong panel left open behind the sheet, then start
+            // freestyle from the Entreno FAB (available from any view).
+            await page.getByTestId('strong-profile-panel').getByRole('button', { name: /^Cerrar$|^Close$/ }).click();
+            await expect(page.getByTestId('strong-profile-panel')).toHaveCount(0);
             await startFreestyleWithExercises(page, 4);
 
             // Complete a set so the rest controls are on screen (in-flow dock
@@ -126,7 +120,7 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 360, height: 800 }
             const completeSetBtn = page.locator('button[aria-label*="Completar serie" i], button[aria-label*="Complete set" i]').first();
             await expect(completeSetBtn).toBeVisible({ timeout: 6000 });
             await completeSetBtn.click();
-            await expect(page.getByRole('button', { name: '-10s' }).first()).toBeVisible({ timeout: 8000 });
+            await expect(page.getByRole('button', { name: '-15s' }).first()).toBeVisible({ timeout: 8000 });
             await expectNoOverflow(page, 'workout+pill');
 
             await expect(page.getByText(ERROR_BOUNDARY_TEXT)).toHaveCount(0);

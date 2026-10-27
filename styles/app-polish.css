@@ -71,7 +71,9 @@ html.light .product-workout-polish .divide-white\/10 > :not([hidden]) ~ :not([hi
 .product-stats-segments {
   position: sticky;
   top: 0;
-  z-index: 12;
+  /* Below the Strong Profile panel (z-10): sticky tabs must never float
+     above the open panel and steal its top controls. */
+  z-index: 9;
   padding: 8px 16px 6px;
   background: rgb(var(--surface-app));
 }

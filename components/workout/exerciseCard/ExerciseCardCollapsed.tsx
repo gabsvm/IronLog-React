@@ -29,6 +29,8 @@ export const ExerciseCardCollapsed: React.FC<{ state: ExerciseCardState }> = ({ 
         isLinkingTarget,
         onLink,
         handleInjectWarmup,
+        handleEditNote,
+        handleEditRest,
         handleCardioModeChange,
         confirmDelete,
         handleSupersetAction,
@@ -182,6 +184,8 @@ export const ExerciseCardCollapsed: React.FC<{ state: ExerciseCardState }> = ({ 
                 onOpenDetail={onOpenDetail}
                 onCardioModeChange={handleCardioModeChange}
                 onInjectWarmup={handleInjectWarmup}
+                onEditNote={handleEditNote}
+                onEditRest={handleEditRest}
                 onFillFromPrevious={state.handleFillFromPrevious}
                 onCopyToFollowing={state.handleCopyToFollowing}
                 onSupersetAction={handleSupersetAction}

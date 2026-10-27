@@ -1,5 +1,6 @@
 import { pickLang } from './i18n';
 import type { Log } from '../types';
+import { startOfWeekKey, type WeekStart } from './strongTraining';
 
 export interface OverviewNumbers {
     volumeData: [string, number][];
@@ -10,25 +11,15 @@ export interface OverviewNumbers {
 
 const MUSCLES = ['CHEST', 'BACK', 'QUADS', 'HAMSTRINGS', 'GLUTES', 'CALVES', 'SHOULDERS', 'BICEPS', 'TRICEPS', 'TRAPS', 'ABS', 'FOREARMS', 'CARDIO'];
 
-/** ISO calendar week key (UTC) for logs without meso/week coordinates. */
-const isoWeekKey = (ts: number): string => {
-    const d = new Date(ts);
-    const mondayBased = (d.getUTCDay() + 6) % 7;
-    const thursday = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - mondayBased + 3));
-    const isoYear = thursday.getUTCFullYear();
-    const firstThursday = Date.UTC(isoYear, 0, 4);
-    const week = 1 + Math.round((thursday.getTime() - firstThursday) / (7 * 86400000));
-    return `${isoYear}-W${week}`;
-};
-
 /**
  * Pure weekly-volume overview: completed sets per muscle averaged over the
  * REAL weeks in scope. A week is a distinct (mesoId, week) pair; logs without
- * mesoId/week fall back to their ISO calendar week. Skipped logs and sets
- * that are not completed (or are skipped) never count. CARDIO stays in the
- * counts (views filter it for display) so cached math is untouched.
+ * mesoId/week fall back to their calendar week bucket keyed by the user's
+ * week start (SettingsParity `weekStart`, default 'monday'). Skipped logs and
+ * sets that are not completed (or are skipped) never count. CARDIO stays in
+ * the counts (views filter it for display) so cached math is untouched.
  */
-export const computeOverview = (logs: Log[], mesoId?: number | null): OverviewNumbers => {
+export const computeOverview = (logs: Log[], mesoId?: number | null, weekStart: WeekStart = 'monday'): OverviewNumbers => {
     const safeLogs = Array.isArray(logs) ? logs : [];
     const muscleCounts: Record<string, number> = {};
     const exFreq: Record<string, number> = {};
@@ -42,7 +33,7 @@ export const computeOverview = (logs: Log[], mesoId?: number | null): OverviewNu
         if (log.mesoId != null && log.week != null) {
             weeksFound.add(`meso:${log.mesoId}:week:${log.week}`);
         } else {
-            weeksFound.add(`iso:${isoWeekKey(log.startTime ?? log.endTime ?? 0)}`);
+            weeksFound.add(`cal:${startOfWeekKey(log.startTime ?? log.endTime ?? 0, weekStart)}`);
         }
 
         for (const ex of (log.exercises || [])) {

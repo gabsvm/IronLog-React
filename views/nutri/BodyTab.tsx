@@ -18,6 +18,8 @@ interface Props {
     bodyFat?: number;
     onLogWeight: () => void;
     unit?: WeightUnit;
+    /** Strong-parity measurements surface (needs AppProvider): injected by NutriView, absent in isolated tests. */
+    measurements?: React.ReactNode;
 }
 
 /**
@@ -37,6 +39,7 @@ export const BodyTab: React.FC<Props> = ({
     bodyFat,
     onLogWeight,
     unit = 'kg',
+    measurements,
 }) => {
     const weightSuffix = unitLabel(unit).toLowerCase();
 
@@ -223,6 +226,9 @@ export const BodyTab: React.FC<Props> = ({
                     </div>
                 </div>
             )}
+
+            {/* Strong parity: full measurements (weight, fat, calories, girths) */}
+            {measurements}
         </div>
     );
 };

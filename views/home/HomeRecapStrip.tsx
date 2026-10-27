@@ -5,6 +5,7 @@ import React, { useMemo } from 'react';
 import { Icon } from '../../components/ui/Icon';
 import { toDisplay, unitLabel } from '../../utils/units';
 import { lastSessionSummary, streakWeeks, weekProgress } from '../../utils/homeSummary';
+import { useTrainingConfig } from '../../hooks/useTrainingConfig';
 import { homeStrengthTrend, HOME_TREND_WEEKS } from './homeTrend';
 import type { Log, MesoCycle, WeightUnit } from '../../types';
 
@@ -25,9 +26,11 @@ const volumeKg = (log: Log) => {
 };
 
 export const HomeRecapStrip: React.FC<Props> = React.memo(({ logs, meso, plannedDays, lang, t, unit = 'kg' }) => {
+    // Selected 1RM formula for the last-session PR count (default epley = legacy).
+    const [trainingPrefs] = useTrainingConfig();
     const progress = useMemo(() => weekProgress(logs, meso.id, meso.week, plannedDays), [logs, meso.id, meso.week, plannedDays]);
     const streak = useMemo(() => streakWeeks(logs, meso.id, meso.week, plannedDays), [logs, meso.id, meso.week, plannedDays]);
-    const last = useMemo(() => lastSessionSummary(logs, meso.id), [logs, meso.id]);
+    const last = useMemo(() => lastSessionSummary(logs, meso.id, trainingPrefs.oneRmFormula), [logs, meso.id, trainingPrefs.oneRmFormula]);
     const context = useMemo(() => {
         let seconds = 0;
         const recent: Log[] = [];

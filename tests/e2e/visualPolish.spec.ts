@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { goProgress, openProfileSheet } from './strongNav';
 
 // K7: visual polish verified through computed styles.
 const ERROR_BOUNDARY_TEXT = /ERROR CRÍTICO|CRITICAL ERROR/;
@@ -12,10 +13,8 @@ const seed = (page: Page) =>
     });
 
 async function openUnifiedSheet(page: Page) {
-    await page.getByLabel(/Abrir perfil|Open profile/).click();
-    const sheet = page.locator('[role="dialog"]').first();
-    await expect(sheet).toBeVisible({ timeout: 10000 });
-    return sheet;
+    // Unified sheet opens from the Strong panel's Ajustes gear.
+    return openProfileSheet(page);
 }
 
 function alphasOf(colorFn: string): number[] {
@@ -39,7 +38,7 @@ test.describe('K7 visual polish', () => {
     test('L6: topbar background is fully opaque in balanced mode', async ({ page }) => {
         await seed(page);
         await page.goto('/');
-        await page.locator('nav[aria-label="Main navigation"] button', { hasText: /^Progreso$|^Progress$/ }).click();
+        await goProgress(page);
         await expect(page.locator('.app-topbar')).toBeVisible({ timeout: 10000 });
         const bg = await page.evaluate(() => {
             const el = document.querySelector('.app-topbar') as HTMLElement;
@@ -98,9 +97,8 @@ test.describe('K7 visual polish', () => {
     test('profile toggle knobs are white like settings toggles', async ({ page }) => {
         await seed(page);
         await page.goto('/');
-        await page.getByLabel(/Abrir perfil|Open profile/).click();
-        const dialog = page.locator('[role="dialog"]').first();
-        await expect(dialog).toBeVisible({ timeout: 10000 });
+        // Appearance toggles live in the unified sheet (Strong panel gear).
+        const dialog = await openProfileSheet(page);
         const knobs = await dialog.evaluate((d) =>
             [...d.querySelectorAll('button > span[class*="absolute"]')]
                 .filter((s) => s.className.includes('w-5') && s.className.includes('h-5'))
@@ -116,7 +114,7 @@ test.describe('K7 visual polish', () => {
     test('diet sub-views share the body background (no lighter band)', async ({ page }) => {
         await seed(page);
         await page.goto('/');
-        await page.locator('nav[aria-label="Main navigation"] button', { hasText: /^Diario$|^Diary$/ }).click();
+        await page.locator('nav[aria-label="Main navigation"] button', { hasText: /^Historial$|^History$/ }).click();
         await page.getByRole('tab', { name: /Nutrición|Nutrition/ }).click();
         await expect(page.getByRole('button', { name: /^Hoy$|^Today$/ })).toBeVisible({ timeout: 10000 });
         // The NutriView sub-tab bar (Hoy/Cuerpo/Tendencias): the diary adds its

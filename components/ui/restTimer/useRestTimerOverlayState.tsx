@@ -174,7 +174,7 @@ export const useRestTimerOverlayState = () => {
     const showEffortFeedback = Boolean(config?.showRIR || config?.rpEnabled);
 
     const handleRateEffort = (effort: 'easy' | 'ok' | 'hard') => {
-        if (!restTimer?.source) return;
+        if (!restTimer?.source || restTimer.source.setId === undefined) return;
         const { exerciseInstanceId, setId } = restTimer.source;
         triggerHaptic('light');
         setActiveSession(prev => {

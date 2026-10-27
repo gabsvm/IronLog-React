@@ -30,6 +30,7 @@ vi.mock('../../context/AppContext', () => ({
         isOnline: true,
     }),
     useAppPreferences: () => ({ lang: 'es', setLang: vi.fn() }),
+    useAppConfig: () => ({ config: { showRIR: false, keepScreenOn: false }, setConfig: vi.fn() }),
     useSyncMeta: () => ({ localLastUpdated: null, localSectionSyncMeta: {} }),
     useSyncStatus: () => ({ isOnline: true, syncStatus: { pending: 0, isSyncing: false, lastSyncedAt: null } }),
 }));

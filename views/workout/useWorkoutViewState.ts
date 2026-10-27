@@ -4,13 +4,15 @@ import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import { useApp, useAppConfig, useAppPreferences, useTutorial } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
 import { ExerciseDef, SetType } from '../../types';
-import { getMesoStageConfig, getLastLogForExercise } from '../../utils';
+import { getLastLogForExercise, getMesoStageConfig } from '../../utils';
+import { filterLogsByPreviousScope } from '../../utils/strongTraining';
 import { useWorkoutController } from '../../hooks/useWorkoutController';
 import { useTimerActions } from '../../context/TimerContext';
 import { countWorkingSets, resolveInitialActiveExerciseId, toggleExerciseCardExpansion } from '../../utils/workoutProgress';
 import { useStore } from '../../lib/store';
 import { scheduleWhenIdle } from '../../lib/idle';
 import { MANUAL_REST_PRESETS } from './workoutConstants';
+import { readWorkoutPrefs } from '../../utils/workoutPrefs';
 
 export interface WorkoutViewProps {
     onFinish: () => void;
@@ -63,7 +65,7 @@ export const useWorkoutViewState = ({ onFinish, onDiscard, onBack, onOpenReorder
     } = ctrl;
 
     const [showAdvancedSetTypes, setShowAdvancedSetTypes] = useState(false);
-    const [manualRestPreset, setManualRestPreset] = useState<number>(90);
+    const [manualRestPreset, setManualRestPreset] = useState<number>(() => readWorkoutPrefs(config).defaultRestSeconds ?? 90);
     const [kongSubPrompt, setKongSubPrompt] = useState<{ slotId: string; exId: string } | null>(null);
     const [kongReorderPrompt, setKongReorderPrompt] = useState<{ oldIndex: number; newIndex: number } | null>(null);
     useEffect(() => {
@@ -178,12 +180,25 @@ export const useWorkoutViewState = ({ onFinish, onDiscard, onBack, onOpenReorder
                 }
             }
 
-            const otherPending = (ex.sets || []).filter(s => s.id !== setId && !s.completed);
+            const otherPending = (ex.sets || []).filter(s => s.id !== setId && !s.completed && s.type !== 'avt_hop');
             if (otherPending.length === 0) {
                 const nextEx = currentExercises.find(e => e.instanceId !== exInstanceId && (e.sets || []).some(s => !s.completed));
                 if (nextEx) {
                     setActiveExerciseId(prev => (prev !== null ? nextEx.instanceId : null));
                 }
+            } else if (typeof document !== 'undefined') {
+                // Strong-like series navigation: move keyboard focus to the next
+                // pending set so weight/reps entry (and the in-app keypad) continue
+                // without an extra tap. The card's scroll-into-view still owns scrolling.
+                const nextSet = otherPending[0];
+                const weightEmpty = String(nextSet.weight ?? '').trim() === '';
+                window.setTimeout(() => {
+                    const row = document.getElementById(`set-row-${nextSet.id}`);
+                    const inputs = row?.querySelectorAll<HTMLInputElement>('input');
+                    if (!inputs || inputs.length === 0) return;
+                    const target = weightEmpty ? inputs[0] : (inputs[1] ?? inputs[0]);
+                    target.focus({ preventScroll: true });
+                }, 80);
             }
         }
     }, [toggleSetComplete]);
@@ -193,10 +208,14 @@ export const useWorkoutViewState = ({ onFinish, onDiscard, onBack, onOpenReorder
         if (!newDef) return;
 
         const safeLogs = Array.isArray(logs) ? logs : [];
-        const lastSets = getLastLogForExercise(newExId, safeLogs, exercises);
+        // Strong parity: added exercises hint from the same scope as Previous.
+        const scopedHintLogs = filterLogsByPreviousScope(safeLogs, readWorkoutPrefs(config).previousScope ?? 'any', activeSession?.mesoId, activeSession?.dayIdx, activeSession?.templateId ?? null, activeSession?.templateDayKey ?? null);
+        const lastSets = getLastLogForExercise(newExId, scopedHintLogs, exercises);
 
+        // Settings-owned default set count (3 = historical default until SettingsParity lands config.defaultSets).
+        const setCount = readWorkoutPrefs(config).defaultSets ?? 3;
         const newInstanceId = Date.now();
-        const initialSets = Array(3).fill(null).map((_, i) => {
+        const initialSets = Array(setCount).fill(null).map((_, i) => {
             const historySet = lastSets && lastSets[i] ? lastSets[i] : null;
             return {
                 id: newInstanceId + i + 1,
@@ -204,7 +223,7 @@ export const useWorkoutViewState = ({ onFinish, onDiscard, onBack, onOpenReorder
                 reps: '',
                 rpe: '',
                 completed: false,
-                type: 'regular',
+                type: 'regular' as const,
                 hintWeight: historySet ? historySet.weight : undefined,
                 hintReps: historySet ? historySet.reps : undefined,
                 prevWeight: historySet ? historySet.weight : undefined,
@@ -214,7 +233,7 @@ export const useWorkoutViewState = ({ onFinish, onDiscard, onBack, onOpenReorder
 
         updateSession(prev => !prev ? null : {
             ...prev,
-            exercises: [...(prev.exercises || []), { ...newDef, instanceId: newInstanceId, slotLabel: newDef.muscle, sets: initialSets as any }]
+            exercises: [...(prev.exercises || []), { ...newDef, instanceId: newInstanceId, slotLabel: newDef.muscle, sets: initialSets }]
         });
         setAddingExercise(false);
         setActiveExerciseId(newInstanceId);
@@ -226,7 +245,9 @@ export const useWorkoutViewState = ({ onFinish, onDiscard, onBack, onOpenReorder
         if (!newDef) return;
 
         const safeLogs = Array.isArray(logs) ? logs : [];
-        const lastSets = getLastLogForExercise(newExId, safeLogs, exercises);
+        // Strong parity: replacements hint from the same scope as Previous.
+        const scopedHintLogs = filterLogsByPreviousScope(safeLogs, readWorkoutPrefs(config).previousScope ?? 'any', activeSession?.mesoId, activeSession?.dayIdx, activeSession?.templateId ?? null, activeSession?.templateDayKey ?? null);
+        const lastSets = getLastLogForExercise(newExId, scopedHintLogs, exercises);
 
         let replacedSlotId: string | undefined;
         updateSession(prev => !prev ? null : {
@@ -297,12 +318,13 @@ export const useWorkoutViewState = ({ onFinish, onDiscard, onBack, onOpenReorder
     const quickAccessExercise = useMemo(() => {
         return sessionExercises.find(ex => ex.sets.some(set => !set.completed && set.type !== 'warmup')) || sessionExercises[0] || null;
     }, [sessionExercises]);
-    const startManualRest = useCallback((duration = manualRestPreset) => {
+    const startManualRest = useCallback((duration = manualRestPreset, source?: { exerciseInstanceId: number; setId?: number }) => {
         setRestTimer({
             active: true,
             duration,
             timeLeft: duration,
             endAt: Date.now() + duration * 1000,
+            ...(source ? { source } : {}),
         });
     }, [manualRestPreset, setRestTimer]);
     const stopRest = useCallback(() => {

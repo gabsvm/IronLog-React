@@ -5,7 +5,7 @@ import { dirtySyncState } from "./dirtySyncState";
 import { cloudSyncCache } from "./cloudSyncCache";
 import { isCloudLogsV2Enabled } from "./cloudLogsV2Flag";
 import type { CloudLogsV2Firestore } from "./cloudLogsV2";
-import { capBodyLogs, capCardioSessions, capCustomFoods, capNutritionLogs } from "./syncCaps";
+import { capBodyLogs, capCardioSessions, capCustomFoods, capMeasurementLogs, capNutritionLogs } from "./syncCaps";
 
 // Q21: V2 is loaded on demand so the flag-OFF build keeps it off the entry chunk.
 const loadCloudLogsV2 = async () => {
@@ -77,8 +77,10 @@ const uploadStateNow = async (userId: string, state: Partial<AppState> & { email
     if (shouldInclude('nutritionLogs')) rawMainData.nutritionLogs = capNutritionLogs(state.nutritionLogs);
     if (shouldInclude('cardioSessions')) rawMainData.cardioSessions = capCardioSessions(state.cardioSessions);
     if (shouldInclude('bodyLogs')) rawMainData.bodyLogs = capBodyLogs(state.bodyLogs);
+    if (shouldInclude('measurementLogs')) rawMainData.measurementLogs = capMeasurementLogs(state.measurementLogs);
     if (shouldInclude('customFoods')) rawMainData.customFoods = capCustomFoods(state.customFoods);
     if (shouldInclude('personalTemplates')) rawMainData.personalTemplates = state.personalTemplates || [];
+    if (shouldInclude('templateFolders')) rawMainData.templateFolders = state.templateFolders || [];
     if (shouldInclude('nutritionGoal')) rawMainData.nutritionGoal = state.nutritionGoal || null;
     if (shouldInclude('macroGoals')) rawMainData.macroGoals = state.macroGoals || null;
     if (shouldInclude('userProfile')) rawMainData.userProfile = state.userProfile || null;
@@ -86,7 +88,7 @@ const uploadStateNow = async (userId: string, state: Partial<AppState> & { email
         ? buildSectionSyncMeta([
             'program', 'activeMeso', 'exercises', 'logs', 'config', 'rpFeedback',
             'userProfile', 'nutritionLogs', 'cardioSessions', 'nutritionGoal',
-            'bodyLogs', 'macroGoals', 'customFoods', 'personalTemplates'
+            'bodyLogs', 'measurementLogs', 'macroGoals', 'customFoods', 'personalTemplates', 'templateFolders'
         ], lastUpdated)
         : buildSectionSyncMeta(sections, lastUpdated);
 
@@ -162,7 +164,7 @@ export const syncService = {
      */
     adoptCloudSections: async (
         userId: string,
-        applied: Partial<Pick<AppState, 'nutritionLogs' | 'bodyLogs' | 'cardioSessions' | 'customFoods'>>,
+        applied: Partial<Pick<AppState, 'nutritionLogs' | 'bodyLogs' | 'measurementLogs' | 'cardioSessions' | 'customFoods'>>,
     ) => {
         if (!isCloudLogsV2Enabled() || !userId) return;
         try {
@@ -261,12 +263,13 @@ export const syncService = {
             const data = userSnap.data();
             const safeActiveMeso = deserializeMeso(data.activeMeso);
             let logsData;
-            // S5: with V2 on, the four array sections come from their own
+            // S5: with V2 on, the array sections come from their own
             // collections (complete history) instead of the capped arrays.
             const sectionData: Record<string, unknown> = {
                 nutritionLogs: data.nutritionLogs,
                 cardioSessions: data.cardioSessions,
                 bodyLogs: data.bodyLogs,
+                measurementLogs: data.measurementLogs,
                 customFoods: data.customFoods,
             };
             if (isCloudLogsV2Enabled()) {
@@ -318,10 +321,12 @@ export const syncService = {
                 nutritionLogs: sectionData.nutritionLogs as CloudSyncSnapshot['nutritionLogs'],
                 cardioSessions: sectionData.cardioSessions as CloudSyncSnapshot['cardioSessions'],
                 nutritionGoal: data.nutritionGoal,
-                bodyLogs: sectionData.bodyLogs as CloudSyncSnapshot['bodyLogs'],
                 macroGoals: data.macroGoals,
+                bodyLogs: sectionData.bodyLogs as CloudSyncSnapshot['bodyLogs'],
+                measurementLogs: sectionData.measurementLogs as CloudSyncSnapshot['measurementLogs'],
                 customFoods: sectionData.customFoods as CloudSyncSnapshot['customFoods'],
                 personalTemplates: data.personalTemplates,
+                templateFolders: data.templateFolders,
                 logs: logsData,
                 lastUpdated: data.lastUpdated || Date.now(),
                 syncMeta: data.sectionSyncMeta || {},

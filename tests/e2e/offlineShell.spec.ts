@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { goProgress } from './strongNav';
 
 const ERROR_BOUNDARY_TEXT = /ERROR CRÍTICO|CRITICAL ERROR/;
 const VIEW_LOAD_FAILED_TEXT = /No se pudo cargar esta pantalla|This screen couldn't be loaded/;
@@ -55,7 +56,7 @@ test.describe('Offline shell with lazy views precached (F1)', () => {
         await expect(nav).toBeVisible({ timeout: 8000 });
 
         // 5. History renders offline from precache.
-        const historyNavBtn = page.locator('nav[aria-label="Main navigation"] button', { hasText: /^Diario$|^Diary$/ });
+        const historyNavBtn = page.locator('nav[aria-label="Main navigation"] button', { hasText: /^Historial$|^History$/ });
         await expect(historyNavBtn).toBeVisible({ timeout: 8000 });
         await historyNavBtn.click();
         // Populated history shows an h2; a fresh profile shows the empty-state h3.
@@ -63,10 +64,8 @@ test.describe('Offline shell with lazy views precached (F1)', () => {
         await expect(page.getByText(ERROR_BOUNDARY_TEXT)).toHaveCount(0);
         await expect(page.getByText(VIEW_LOAD_FAILED_TEXT)).toHaveCount(0);
 
-        // 6. Stats renders offline from precache.
-        const statsNavBtn = page.locator('nav[aria-label="Main navigation"] button', { hasText: /^Progreso$|^Progress$/ });
-        await expect(statsNavBtn).toBeVisible({ timeout: 8000 });
-        await statsNavBtn.click();
+        // 6. Stats renders offline from precache (via the Profile panel tile).
+        await goProgress(page);
         await expect(page.getByRole('tablist').first()).toBeVisible({ timeout: 15000 });
         await expect(page.getByText(ERROR_BOUNDARY_TEXT)).toHaveCount(0);
         await expect(page.getByText(VIEW_LOAD_FAILED_TEXT)).toHaveCount(0);

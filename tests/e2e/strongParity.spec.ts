@@ -125,7 +125,7 @@ test.describe('Strong parity T2: Strong-style session header', () => {
 // exercise band holding the name + a rest chip (m:ss) that starts the
 // existing rest dock/overlay.
 test.describe('Strong parity T3: flat exercise band with rest chip', () => {
-    test('card radius 0, rest chip 1:30 opens rest dock', async ({ page }) => {
+    test('card radius 0, rest chip 2:00 opens rest dock', async ({ page }) => {
         await page.addInitScript(() => {
             localStorage.setItem('il_onboarded_v2', 'true');
             localStorage.setItem('il_tutorial_v2', JSON.stringify({
@@ -157,10 +157,10 @@ test.describe('Strong parity T3: flat exercise band with rest chip', () => {
         const radius = await card.evaluate((el) => getComputedStyle(el).borderRadius);
         expect(radius).toBe('0px');
 
-        // Rest chip next to the name shows the resolved duration (default 90s -> 1:30).
+        // Rest chip next to the name shows the resolved duration (default 120s -> 2:00).
         const chip = page.getByTestId('exercise-rest-chip').first();
         await expect(chip).toBeVisible({ timeout: 8000 });
-        await expect(chip).toContainText('1:30');
+        await expect(chip).toContainText('2:00');
 
         // Clicking the chip opens the existing rest surface (in-flow dock).
         await chip.click();
@@ -310,7 +310,8 @@ test.describe('Strong parity T5: no keypad on desktop', () => {
             }));
         });
         await page.goto('/');
-        await expect(page.locator('nav[aria-label="Main navigation"]')).toBeVisible({ timeout: 20000 });
+        // Desktop shell: sidebar Strong navigation, no bottom bar.
+        await expect(page.locator('nav[aria-label="Strong navigation"]')).toBeVisible({ timeout: 20000 });
 
         await page.getByRole('button', { name: /^(Sesión libre|Freestyle session) ·/ }).click();
         await page.getByRole('dialog', { name: /Iniciar entrenamiento|Start training/ })

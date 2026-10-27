@@ -180,7 +180,7 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                                                     exercise={ex}
                                                     isExpanded={isExpanded}
                                                     onToggleExpand={handleToggleExpand}
-                                                    onStartRest={startManualRest}
+                                                    onStartRest={(seconds, exerciseInstanceId) => startManualRest(seconds, exerciseInstanceId != null ? { exerciseInstanceId } : undefined)}
                                                     restPresetSeconds={manualRestPreset}
                                                     onSetUpdate={handleSetUpdate}
                                                     onSetComplete={handleSetComplete}

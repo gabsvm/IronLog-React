@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { openProfileSheet } from './strongNav';
 import { writeFileSync, readFileSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -80,7 +81,7 @@ const RENAMED: Record<string, string[]> = {
     'editor de programa': ['editar rutina'],
     'forest': ['bosque'],
     'ocean': ['océano'],
-    'royal': ['real'],
+    'royal': ['[repyntra]'],
     'sunset': ['atardecer'],
 };
 
@@ -102,9 +103,8 @@ test.describe('N6: unified sheet control mapping', () => {
         const nav = page.locator('nav[aria-label="Main navigation"]');
         await expect(nav).toBeVisible({ timeout: 15000 });
 
-        await page.getByLabel(/Abrir perfil|Open profile/).click();
-        const sheet = page.locator('[role="dialog"]').first();
-        await expect(sheet).toBeVisible({ timeout: 10000 });
+        // Unified sheet opens from the Strong panel's Ajustes gear.
+        const sheet = await openProfileSheet(page);
         // Open the collapsible Advanced section so its controls are reachable.
         await sheet.locator('summary', { hasText: /Avanzado|Advanced/ }).click();
 
@@ -184,9 +184,8 @@ test.describe('N6: unified sheet entry points', () => {
         const nav = page.locator('nav[aria-label="Main navigation"]');
         await expect(nav).toBeVisible({ timeout: 15000 });
 
-        await page.getByLabel(/Abrir perfil|Open profile/).click();
-        const sheet = page.locator('[role="dialog"]').first();
-        await expect(sheet).toBeVisible({ timeout: 10000 });
+        // Back closes the sheet; the Strong panel stays open behind it.
+        const sheet = await openProfileSheet(page);
 
         await page.goBack();
         await expect(sheet).toHaveCount(0, { timeout: 8000 });

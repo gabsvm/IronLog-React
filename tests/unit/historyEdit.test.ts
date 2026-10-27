@@ -93,14 +93,35 @@ describe('buildEditedLog', () => {
         expect(buildEditedLog(original, draft, 'kg', 9000)).toMatchObject({ ok: false, empty: true });
     });
 
-    it('does not edit or add sets on cardio / isometric exercises', () => {
+    it('keeps strength weight/reps read-only on cardio / isometric sets, but edits their time and distance', () => {
         const original = log();
         let draft = toDraft(original, 'kg');
+        // Strength fields stay a no-op on isometric sets (read-only there).
         draft = draftUpdateSet(draft, 2, 10, 'reps', '9');
-        draft = draftRemoveSet(draft, 3, 20);
-        draft = draftAddSet(draft, 3);
+        const untouched = buildEditedLog(original, draft, 'kg', 9000);
+        expect(untouched).toEqual({ ok: true, changed: false, log: original });
+        // Duration / distance are editable on cardio sets.
+        draft = draftUpdateSet(toDraft(original, 'kg'), 3, 20, 'duration', '25:00');
+        draft = draftUpdateSet(draft, 3, 20, 'distance', '5');
         const res = buildEditedLog(original, draft, 'kg', 9000);
-        expect(res).toEqual({ ok: true, changed: false, log: original });
+        if (!res.ok) throw new Error('expected ok');
+        expect(res.changed).toBe(true);
+        expect(res.log.exercises[2].sets[0]).toMatchObject({ duration: '25:00', distance: 5 });
+    });
+
+    it('removes and adds sets on cardio exercises', () => {
+        const original = log();
+        let draft = draftRemoveSet(toDraft(original, 'kg'), 3, 20);
+        draft = draftAddSet(draft, 3);
+        // The added set takes the next free id in the draft (removed ids are
+        // not reused by the assertion: allocation only guarantees uniqueness).
+        const addedId = draft.exercises[2].sets.find((s) => !original.exercises[2].sets.some((o) => o.id === s.id))!.id;
+        draft = draftUpdateSet(draft, 3, addedId, 'duration', '30:00');
+        const res = buildEditedLog(original, draft, 'kg', 9000);
+        if (!res.ok) throw new Error('expected ok');
+        expect(res.changed).toBe(true);
+        const added = res.log.exercises[2].sets.find((s) => s.id === addedId)!;
+        expect(added).toMatchObject({ completed: true, type: 'regular', duration: '30:00', distance: '' });
     });
 
     it('undo restores the original content with a newer stamp than the edit', () => {

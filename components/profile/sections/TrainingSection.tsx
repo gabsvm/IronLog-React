@@ -20,6 +20,19 @@ import {
     syncReminderSchedule,
     type WorkoutReminderConfig,
 } from '../../../utils/reminders';
+import {
+    formatRestSeconds,
+    type DistanceUnit,
+    type IncompleteSets,
+    type OneRmFormula,
+    type PreviousScope,
+    type SizeUnit,
+    type WeekStart,
+} from '../../../utils/strongTraining';
+import { useTrainingConfig } from '../../../hooks/useTrainingConfig';
+import { getStrongTrainingCopy } from './training/strongTrainingCopy';
+import { PrefSegmented, PrefStepper, PrefToggle } from './training/prefControls';
+import { PlateCalculatorCard } from './training/PlateCalculatorCard';
 
 
 interface TrainingSectionProps {
@@ -35,7 +48,9 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
     const activeMeso = useStore(state => state.activeMeso);
     const t = TRANSLATIONS[lang];
     const ty = t.you;
-
+    // Strong-parity prefs: context-backed binding over AppState['config'] (see utils/strongTraining).
+    const [prefs, patchPrefs] = useTrainingConfig();
+    const sc = getStrongTrainingCopy(lang);
     const [showSaveTemplate, setShowSaveTemplate] = useState(false);
     const [templateSaved, setTemplateSaved] = useState(false);
     const [showTemplateManager, setShowTemplateManager] = useState(false);
@@ -307,6 +322,112 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                 )}
             </div>
 
+            <div className="label-reference px-1 mt-4 mb-1.5">{sc.restGroup}</div>
+            <div className="gl-panel divide-y divide-[rgb(var(--border-subtle))] overflow-hidden">
+                <PrefStepper
+                    label={sc.defaultRest}
+                    value={prefs.defaultRestSeconds}
+                    options={[30, 60, 90, 120, 150, 180, 240]}
+                    format={formatRestSeconds}
+                    onChange={(defaultRestSeconds) => patchPrefs({ defaultRestSeconds })}
+                />
+                <PrefStepper
+                    label={sc.warmupRest}
+                    value={prefs.warmupRestSeconds}
+                    options={[15, 30, 45, 60, 90, 120]}
+                    format={formatRestSeconds}
+                    onChange={(warmupRestSeconds) => patchPrefs({ warmupRestSeconds })}
+                />
+                <PrefSegmented
+                    label={sc.restIncrement}
+                    options={[5, 10, 15, 30] as const}
+                    value={prefs.restIncrementSeconds}
+                    onChange={(restIncrementSeconds) => patchPrefs({ restIncrementSeconds })}
+                    format={(n) => `${n} ${sc.secondsShort}`}
+                />
+                <PrefToggle label={sc.restSound} pressed={prefs.restSound} onChange={(restSound) => patchPrefs({ restSound })} />
+                <PrefToggle label={sc.restVibrate} pressed={prefs.restVibrate} onChange={(restVibrate) => patchPrefs({ restVibrate })} />
+                <PrefToggle label={sc.autoStartRest} pressed={prefs.autoStartRest} onChange={(autoStartRest) => patchPrefs({ autoStartRest })} />
+            </div>
+
+            <div className="label-reference px-1 mt-4 mb-1.5">{sc.setsGroup}</div>
+            <div className="gl-panel divide-y divide-[rgb(var(--border-subtle))] overflow-hidden">
+                <PrefStepper
+                    label={sc.defaultSets}
+                    hint={sc.defaultSetsHint}
+                    value={prefs.defaultSets}
+                    options={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+                    format={(n) => String(n)}
+                    onChange={(defaultSets) => patchPrefs({ defaultSets })}
+                />
+                <PrefSegmented<PreviousScope>
+                    label={sc.previousScope}
+                    options={['any', 'planDay'] as const}
+                    value={prefs.previousScope}
+                    onChange={(previousScope) => patchPrefs({ previousScope })}
+                    format={(o) => o === 'any' ? sc.previousAny : sc.previousPlanDay}
+                />
+                <PrefSegmented<IncompleteSets>
+                    label={sc.incompleteSets}
+                    options={['ask', 'complete', 'discard'] as const}
+                    value={prefs.incompleteSets}
+                    onChange={(incompleteSets) => patchPrefs({ incompleteSets })}
+                    format={(o) => o === 'ask' ? sc.incompleteAsk : o === 'complete' ? sc.incompleteComplete : sc.incompleteDiscard}
+                />
+            </div>
+
+            <div className="label-reference px-1 mt-4 mb-1.5">{sc.unitsGroup}</div>
+            <div className="gl-panel divide-y divide-[rgb(var(--border-subtle))] overflow-hidden">
+                <PrefSegmented
+                    label={sc.bodyUnit}
+                    options={['kg', 'lb'] as const}
+                    value={prefs.bodyWeightUnit}
+                    onChange={(bodyWeightUnit) => patchPrefs({ bodyWeightUnit })}
+                    format={(u) => unitLabel(u)}
+                />
+                <PrefSegmented<DistanceUnit>
+                    label={sc.distanceUnit}
+                    options={['km', 'mi'] as const}
+                    value={prefs.distanceUnit}
+                    onChange={(distanceUnit) => patchPrefs({ distanceUnit })}
+                />
+                <PrefSegmented<SizeUnit>
+                    label={sc.sizeUnit}
+                    options={['cm', 'in'] as const}
+                    value={prefs.sizeUnit}
+                    onChange={(sizeUnit) => patchPrefs({ sizeUnit })}
+                />
+            </div>
+
+            <div className="label-reference px-1 mt-4 mb-1.5">{sc.weekFormulaGroup}</div>
+            <div className="gl-panel divide-y divide-[rgb(var(--border-subtle))] overflow-hidden">
+                <PrefSegmented<WeekStart>
+                    label={sc.weekStart}
+                    options={['monday', 'sunday'] as const}
+                    value={prefs.weekStart}
+                    onChange={(weekStart) => patchPrefs({ weekStart })}
+                    format={(w) => w === 'monday' ? sc.weekMonday : sc.weekSunday}
+                />
+                <PrefSegmented<OneRmFormula>
+                    label={sc.oneRmFormula}
+                    options={['epley', 'brzycki', 'lombardi'] as const}
+                    value={prefs.oneRmFormula}
+                    onChange={(oneRmFormula) => patchPrefs({ oneRmFormula })}
+                    format={(f) => f.charAt(0).toUpperCase() + f.slice(1)}
+                />
+            </div>
+
+            <div className="label-reference px-1 mt-4 mb-1.5">{sc.plateGroup}</div>
+            <div className="gl-panel divide-y divide-[rgb(var(--border-subtle))] overflow-hidden">
+                <PlateCalculatorCard
+                    lang={lang}
+                    weightUnit={resolveWeightUnit(config)}
+                    barKg={prefs.plateBarKg}
+                    platesKg={prefs.platePlatesKg}
+                    onBarChange={(plateBarKg) => patchPrefs({ plateBarKg })}
+                    onPlatesChange={(platePlatesKg) => patchPrefs({ platePlatesKg })}
+                />
+            </div>
             <Sheet
                 open={showSaveTemplate}
                 onOpenChange={setShowSaveTemplate}

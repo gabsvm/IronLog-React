@@ -7,6 +7,7 @@ import { MacroRing } from '../../components/nutrition/MacroRing';
 import { MacroBar } from './MacroBar';
 import { WaterTracker } from './WaterTracker';
 import { MEAL_ORDER, MEAL_META, ACTIVITY_EMOJI } from './nutritionHelpers';
+import { formatDistance, distanceUnitLabel, type DistanceUnit } from '../../utils/strongTraining';
 
 const CARDIO_ACTIVITY_LABELS: Record<string, { en: string; es: string }> = {
     running: { en: 'Running', es: 'Correr' },
@@ -34,6 +35,8 @@ interface Props {
     todayWater: number;
     todayCardio: CardioSession[];
     todayLog: NutritionLog;
+    /** Display unit for cardio distances (stored values stay canonical km). */
+    distanceUnit?: DistanceUnit;
     nutritionGoal: NutritionGoal;
     caloriesRemaining: number;
     caloriesBurned: number;
@@ -60,6 +63,7 @@ export const TodayTab: React.FC<Props> = ({
     todayWater,
     todayCardio,
     todayLog,
+    distanceUnit = 'km',
     nutritionGoal,
     caloriesRemaining,
     caloriesBurned,
@@ -165,7 +169,7 @@ export const TodayTab: React.FC<Props> = ({
                                 <div className="flex items-center gap-2 text-sm">
                                     <span aria-hidden="true">{ACTIVITY_EMOJI[s.activityType] || '🏋️'}</span>
                                     <span className="text-secondary capitalize text-xs">
-                                        {CARDIO_ACTIVITY_LABELS[s.activityType]?.[lang] || s.activityType.replace('_', ' ')} · {s.durationMin}min
+                                        {CARDIO_ACTIVITY_LABELS[s.activityType]?.[lang] || s.activityType.replace('_', ' ')} · {s.durationMin}min{s.distanceKm != null && s.distanceKm > 0 ? ` · ${formatDistance(s.distanceKm, distanceUnit, lang)} ${distanceUnitLabel(distanceUnit)}` : ''}
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2">

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Icon } from '../../components/ui/Icon';
 import { GlobalTemplate } from '../../types';
 import { getTranslated } from '../../utils';
+import { PersonalTemplatesSection } from './PersonalTemplatesSection';
 
 const ProgramDetailView = React.lazy(() =>
     import('../../components/programs/ProgramDetailView').then((module) => ({ default: module.ProgramDetailView }))
@@ -46,34 +47,36 @@ export const TemplateSelector: React.FC<Props> = ({
     const [authorFilter, setAuthorFilter] = useState<string | null>(null);
     const [daysFilter, setDaysFilter] = useState<number | null>(null);
 
+    // Personal templates live in the folders section below; the catalog lists
+    // built-in templates only so personal routines are never duplicated.
+    const catalog = useMemo(() => templates.filter((tpl) => tpl.scope !== 'personal'), [templates]);
     // Filter options are derived from the available templates, never hardcoded.
     const availableAuthors = useMemo(() => {
         const authors: string[] = [];
-        templates.forEach((tpl) => {
+        catalog.forEach((tpl) => {
             const author = getTemplateAuthor(tpl, ts);
             if (!authors.includes(author)) authors.push(author);
         });
         return authors.sort((a, b) => a.localeCompare(b));
-    }, [templates, ts]);
+    }, [catalog, ts]);
     const availableDayCounts = useMemo(() => {
         const counts: number[] = [];
-        templates.forEach((tpl) => {
+        catalog.forEach((tpl) => {
             if (!counts.includes(tpl.program.length)) counts.push(tpl.program.length);
         });
         return counts.sort((a, b) => a - b);
-    }, [templates]);
+    }, [catalog]);
 
     const visibleTemplates = useMemo(() => {
         const q = query.trim().toLowerCase();
-        return templates.filter((tpl) => {
+        return catalog.filter((tpl) => {
             if (authorFilter && getTemplateAuthor(tpl, ts) !== authorFilter) return false;
             if (daysFilter !== null && tpl.program.length !== daysFilter) return false;
             if (!q) return true;
             const hay = `${getTranslated(tpl.title, lang as 'en' | 'es')} ${getTranslated(tpl.description, lang as 'en' | 'es')}`.toLowerCase();
             return hay.includes(q);
         });
-    }, [templates, ts, authorFilter, daysFilter, query, lang]);
-
+    }, [catalog, ts, authorFilter, daysFilter, query, lang]);
     const grouped = useMemo(() => {
         const groups: Record<string, GlobalTemplate[]> = {};
         visibleTemplates.forEach((tpl) => {
@@ -151,6 +154,8 @@ export const TemplateSelector: React.FC<Props> = ({
                             className="min-h-[48px] w-full rounded-xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] py-3 pl-11 pr-4 text-base text-[rgb(var(--text-primary))] placeholder:text-[rgb(var(--text-muted))]"
                         />
                     </div>
+
+                    <PersonalTemplatesSection query={query} lang={lang} t={t} onSelectTemplate={onSelectTemplate} />
 
                     {(availableAuthors.length > 1 || availableDayCounts.length > 1) && (
                         <div className="flex gap-1.5 overflow-x-auto scroll-container px-1 py-0.5" role="group" aria-label={ts.filterBy}>

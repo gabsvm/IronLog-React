@@ -69,6 +69,8 @@ describe('Task U1: RestTimerOverlay as non-modal compact floating pill by defaul
                 showRIR: false,
                 rpEnabled: false,
                 restTimerDisplay: 'compact',
+                // Configurable Strong-parity decrement (default 15s, see resolveRestIncrement).
+                restIncrementSeconds: 15,
             } as any,
             setConfig: vi.fn(),
         } as any);
@@ -79,7 +81,7 @@ describe('Task U1: RestTimerOverlay as non-modal compact floating pill by defaul
 
         // In compact mode, the floating pill is rendered
         expect(screen.getByText('1:30')).toBeDefined();
-        expect(screen.getByText('-10s')).toBeDefined();
+        expect(screen.getByText('-15s')).toBeDefined();
         expect(screen.getByText('+30s')).toBeDefined();
 
         // Should NOT have dialog role or circular timer svg in compact mode
@@ -125,7 +127,7 @@ describe('Task U1: RestTimerOverlay as non-modal compact floating pill by defaul
     it('triggers adjustTimer and skipTimer from compact pill buttons', () => {
         render(<RestTimerOverlay />);
 
-        const minusBtn = screen.getByLabelText('-10s');
+        const minusBtn = screen.getByLabelText('-15s');
         fireEvent.click(minusBtn);
         expect(mockSetRestTimer).toHaveBeenCalled();
 

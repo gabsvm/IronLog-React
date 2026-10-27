@@ -6,8 +6,9 @@ import { formatDate, formatDurationShort, getTranslated } from '../utils';
 import { Icon } from '../components/ui/Icon';
 import { Button } from '../components/ui/Button';
 import { useStore } from '../lib/store';
-import { Log, WeightUnit } from '../types';
+import { Log, WeightUnit, type DistanceUnit } from '../types';
 import { formatWeight, resolveWeightUnit, unitLabel } from '../utils/units';
+import { distanceUnitLabel, formatDistance } from '../utils/strongTraining';
 import { buildUndoLog } from '../utils/historyEdit';
 import { uid } from '../utils';
 import { buildTrainingCsv } from '../services/trainingCsv';
@@ -72,19 +73,20 @@ interface HistoryCardProps {
     id?: string;
     onOpen: () => void;
     unit?: WeightUnit;
+    distanceUnit?: DistanceUnit;
 }
 
-const HistoryCard = memo(({ log, lang, id, onOpen, unit = 'kg' }: HistoryCardProps) => {
+const HistoryCard = memo(({ log, lang, id, onOpen, unit = 'kg', distanceUnit = 'km' }: HistoryCardProps) => {
     const previews = useMemo(() => (log.exercises || []).map(ex => {
         const completed = (ex.sets || []).filter(set => set.completed && set.type !== 'avt_hop' && !set.skipped);
         if (!completed.length) return null;
         if (ex.muscle === 'CARDIO') {
             const distance = completed.reduce((sum, set) => sum + Number(set.distance || 0), 0);
-            return { name: getTranslated(ex.name, lang), value: distance > 0 ? `${distance.toFixed(1)} km` : `${completed.length} ${pickLang(lang, { es: 'series', en: 'sets' })}` };
+            return { name: getTranslated(ex.name, lang), value: distance > 0 ? `${formatDistance(distance, distanceUnit, lang)} ${distanceUnitLabel(distanceUnit)}` : `${completed.length} ${pickLang(lang, { es: 'series', en: 'sets' })}` };
         }
         const best = completed.reduce((current, set) => Number(set.weight || 0) > Number(current.weight || 0) ? set : current, completed[0]);
         return { name: getTranslated(ex.name, lang), value: `${formatWeight(Number(best.weight || 0), unit, lang)} ${unitLabel(unit).toLowerCase()} × ${best.reps || 0}` };
-    }).filter(Boolean), [log.exercises, lang, unit]);
+    }).filter(Boolean), [log.exercises, lang, unit, distanceUnit]);
 
     return (
         <button
@@ -215,6 +217,9 @@ export const HistoryView: React.FC<{ search: string; onSearchChange: (search: st
             dayIdx: -1,
             mesoId: -1,
             week: -1,
+            // Detached by design: a repeat never claims the source template.
+            templateId: null,
+            templateDayKey: null,
             name: log.name,
             exercises: (log.exercises || []).map((exercise: any) => ({
                 ...exercise,
@@ -252,8 +257,8 @@ export const HistoryView: React.FC<{ search: string; onSearchChange: (search: st
         [lang, search, setSearch, handleExportCSV]
     );
     const renderItem = useCallback((index: number, log: Log) => (
-        <HistoryCard id={index === 0 ? 'tut-first-card' : undefined} log={log} lang={lang} onOpen={() => openDetail(log)} unit={unit} />
-    ), [lang, openDetail, unit]);
+        <HistoryCard id={index === 0 ? 'tut-first-card' : undefined} log={log} lang={lang} onOpen={() => openDetail(log)} unit={unit} distanceUnit={config.distanceUnit ?? 'km'} />
+    ), [lang, openDetail, unit, config]);
 
     if (!safeLogs.length) {
         return (

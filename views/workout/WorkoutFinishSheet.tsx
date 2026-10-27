@@ -3,17 +3,22 @@ import React from 'react';
 import { Icon } from '../../components/ui/Icon';
 import { Sheet } from '../../components/ui/Sheet';
 import { formatSeconds } from '../../utils';
+import { readWorkoutPrefs } from '../../utils/workoutPrefs';
 import { isTemplateUpdateEligible } from '../../utils/workoutProgress';
 import type { WorkoutViewState } from './useWorkoutViewState';
-
 export const WorkoutFinishSheet: React.FC<{ state: WorkoutViewState }> = ({ state }) => {
-    const { showFinishModal, setShowFinishModal, handleConfirmFinish, setShowDiscardConfirm, updateSession, updateTemplate, setUpdateTemplate, activeSession, activeMeso, t, completedWorkingSets, totalWorkingSets } = state;
+    const { showFinishModal, setShowFinishModal, handleConfirmFinish, setShowDiscardConfirm, updateSession, updateTemplate, setUpdateTemplate, activeSession, activeMeso, t, config, completedWorkingSets, totalWorkingSets } = state;
     if (!activeSession) return null;
     return (
         <>
             {showFinishModal && (() => {
                 const elapsedSecs = activeSession.startTime ? Math.max(0, Math.floor((Date.now() - activeSession.startTime) / 1000)) : 0;
                 const canUpdateTemplate = isTemplateUpdateEligible(activeSession, activeMeso);
+                // Strong-real 'ask': with unfinished sets, offer Complete vs Discard
+                // (+ cancel). 'keep'/'complete'/'discard' modes resolve without prompting.
+                const incompleteCount = (activeSession.exercises || []).reduce(
+                    (n, ex) => n + (ex.sets || []).filter((s) => !s.completed && !s.skipped && s.type !== 'avt_hop').length, 0);
+                const askIncomplete = (readWorkoutPrefs(config).incompleteSets ?? 'ask') === 'ask' && incompleteCount > 0;
 
                 return (
                     <Sheet
@@ -82,22 +87,51 @@ export const WorkoutFinishSheet: React.FC<{ state: WorkoutViewState }> = ({ stat
                             </div>
 
                             {/* Primary & Secondary Actions */}
-                            <div className="space-y-2 pt-1">
-                                <button
-                                    type="button"
-                                    onClick={handleConfirmFinish}
-                                    className="expressive-press w-full min-h-12 rounded-full bg-primary-500 text-zinc-950 font-semibold text-sm hover:bg-primary-400 active:scale-98 transition-all shadow-sm"
-                                >
-                                    {t.saveAndFinish}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setShowFinishModal(false)}
-                                    className="expressive-press w-full min-h-12 rounded-full bg-surface-elevated text-[rgb(var(--text-primary))] font-semibold text-sm hover:bg-[rgb(var(--surface-elevated))] active:scale-98 transition-all"
-                                >
-                                    {t.continueTraining}
-                                </button>
-                            </div>
+                            {askIncomplete ? (
+                                <div className="space-y-2 pt-1" role="group" aria-label={`${incompleteCount} ${t.setsLeft}`}>
+                                    <p className="px-0.5 text-center text-sm font-bold tabular-nums text-[rgb(var(--text-primary))]">
+                                        {incompleteCount} {t.setsLeft}
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleConfirmFinish('complete')}
+                                        className="expressive-press w-full min-h-12 rounded-full bg-primary-500 text-zinc-950 font-semibold text-sm hover:bg-primary-400 active:scale-98 transition-all shadow-sm"
+                                    >
+                                        {t.complete}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleConfirmFinish('strip')}
+                                        className="expressive-press w-full min-h-12 rounded-full bg-surface-elevated text-[rgb(var(--text-primary))] font-semibold text-sm hover:bg-[rgb(var(--surface-elevated))] active:scale-98 transition-all"
+                                    >
+                                        {t.discard}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowFinishModal(false)}
+                                        className="expressive-press w-full min-h-12 rounded-full bg-surface-elevated text-[rgb(var(--text-primary))] font-semibold text-sm hover:bg-[rgb(var(--surface-elevated))] active:scale-98 transition-all"
+                                    >
+                                        {t.continueTraining}
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="space-y-2 pt-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleConfirmFinish()}
+                                        className="expressive-press w-full min-h-12 rounded-full bg-primary-500 text-zinc-950 font-semibold text-sm hover:bg-primary-400 active:scale-98 transition-all shadow-sm"
+                                    >
+                                        {t.saveAndFinish}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowFinishModal(false)}
+                                        className="expressive-press w-full min-h-12 rounded-full bg-surface-elevated text-[rgb(var(--text-primary))] font-semibold text-sm hover:bg-[rgb(var(--surface-elevated))] active:scale-98 transition-all"
+                                    >
+                                        {t.continueTraining}
+                                    </button>
+                                </div>
+                            )}
 
                             {/* Destructive Discard Session */}
                             <div className="text-center pt-3 border-t border-border-subtle mt-2">

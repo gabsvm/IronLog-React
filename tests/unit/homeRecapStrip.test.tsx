@@ -2,6 +2,8 @@ import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { HomeRecapStrip } from '../../views/home/HomeRecapStrip';
+import { AppConfigContext } from '../../context/app/appContexts';
+import type { AppState } from '../../types';
 import { TRANSLATIONS } from '../../constants';
 
 let setSeq = 700;
@@ -17,9 +19,13 @@ const log = (id: number, week: number, dayIdx: number, sets: any[], endTime: num
 
 const meso: any = { id: 7, mesoType: 'hyp_1', week: 2, duration: 5, plan: [[null], [null], [null]] };
 
+const defaultTestConfig: AppState['config'] = { showRIR: false, rpEnabled: false, rpTargetRIR: 2, keepScreenOn: false, restTimerDisplay: 'compact', weightUnit: 'kg', previousScope: 'any', incompleteSets: 'ask', defaultSets: 3, defaultRestSeconds: 120, warmupRestSeconds: 60, restIncrementSeconds: 15, restSound: true, restVibrate: true, autoStartRest: true, bodyWeightUnit: 'kg', distanceUnit: 'km', sizeUnit: 'cm', weekStart: 'monday', oneRmFormula: 'epley', plateBarKg: 20, platePlatesKg: [25, 20, 15, 10, 5, 2.5, 1.25] };
+
 const renderStrip = (logs: any[], lang: 'es' | 'en' = 'es') =>
     render(
-        <HomeRecapStrip logs={logs} meso={meso} plannedDays={3} lang={lang} t={TRANSLATIONS[lang]} unit="kg" />,
+        <AppConfigContext.Provider value={{ config: defaultTestConfig, setConfig: vi.fn() }}>
+            <HomeRecapStrip logs={logs} meso={meso} plannedDays={3} lang={lang} t={TRANSLATIONS[lang]} unit="kg" />
+        </AppConfigContext.Provider>,
     );
 
 describe('Q16: HomeRecapStrip', () => {

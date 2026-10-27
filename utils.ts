@@ -1,6 +1,8 @@
 
 import { Lang, Log, WorkoutSet, MesoType, ExerciseDef } from "./types";
 import { exerciseIdGroup } from "./utils/exerciseLibrary";
+import type { OneRmFormula } from './utils/strongTraining';
+import { estimateOneRm } from './utils/strongTraining';
 
 // Monotonically increasing unique integer ID — safe against Date.now() collisions
 // when multiple IDs are generated in the same millisecond (e.g. bulk set creation).
@@ -18,9 +20,12 @@ export const uid = (): number => {
     return _uidSeq;
 };
 
-// Epley 1RM estimate — single source of truth used by controller and stats worker.
-export const estimate1RM = (weight: number, reps: number): number =>
-    weight * (1 + reps / 30);
+// Epley default 1RM estimate — legacy single source of truth. New code prefers
+// estimateOneRm(weight, reps, formula) from utils/strongTraining so the
+// user-selected formula (SettingsParity) applies coherently; this wrapper
+// keeps the historical default ('epley') for callers not yet wired.
+export const estimate1RM = (weight: number, reps: number, formula: OneRmFormula = 'epley'): number =>
+    estimateOneRm(weight, reps, formula);
 
 export const formatDate = (d: number, l: Lang) => 
     new Date(d).toLocaleDateString(l==='en'?'en-US':'es-ES', {weekday:'short', month:'short', day:'numeric'});

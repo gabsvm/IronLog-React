@@ -36,6 +36,7 @@ const VIEW_LOADERS: Partial<Record<AppView, () => Promise<unknown>>> = {
     progress: () => import('./views/StatsView'),
     diary: () => import('./views/DiaryView'),
     exercises: () => import('./views/ExercisesView'),
+    measure: () => import('./views/MeasureView'),
     program: () => import('./views/ProgramEditView'),
     summary: () => import('./views/SessionSummaryView'),
 };
@@ -62,8 +63,8 @@ const AppContent = () => {
         setExercises,
         config, rpFeedback, hasSeenOnboarding,
         isAppLoading,
-        userProfile, nutritionLogs, cardioSessions, bodyLogs, macroGoals, nutritionGoal,
-        personalTemplates, customFoods
+        userProfile, nutritionLogs, cardioSessions, bodyLogs, measurementLogs, macroGoals, nutritionGoal,
+        personalTemplates, customFoods, templateFolders
     } = useApp();
     const activeSession = useStore(state => state.activeSession);
     const activeMeso = useStore(state => state.activeMeso);
@@ -250,8 +251,8 @@ const AppContent = () => {
     const handleExport = () => {
         void exportCurrentBackup({
             program, exercises, logs, activeMeso, activeSession,
-            userProfile, nutritionLogs, cardioSessions, bodyLogs, macroGoals, nutritionGoal,
-            personalTemplates, customFoods, rpFeedback, config
+            userProfile, nutritionLogs, cardioSessions, bodyLogs, measurementLogs, macroGoals, nutritionGoal,
+            personalTemplates, customFoods, templateFolders, rpFeedback, config
         });
     };
 

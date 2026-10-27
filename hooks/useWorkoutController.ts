@@ -2,11 +2,12 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useApp, useAppConfig } from '../context/AppContext';
 import { useTimerActions } from '../context/TimerContext';
-import { SessionExercise, ExerciseDef, SetType, Log, WorkoutSet } from '../types';
+import { SessionExercise, ExerciseDef, SetType, Log, WorkoutSet, ActiveSession } from '../types';
 import { triggerHaptic } from '../utils/audio';
 import { getLastLogForExercise, uid, estimate1RM } from '../utils';
 import { useStatsWorker } from './useStatsWorker';
 import { getEffectiveSetLoad } from '../utils/trainingMetrics';
+import { readWorkoutPrefs } from '../utils/workoutPrefs';
 import { isTemplateUpdateEligible } from '../utils/workoutProgress';
 
 import { useStore } from '../lib/store';
@@ -29,6 +30,25 @@ const normalizeTemplateSetType = (sets: WorkoutSet[]): SetType => {
     if (!firstWorkingSet) return 'regular';
     return TEMPLATE_SET_TYPES.has(firstWorkingSet.type) ? firstWorkingSet.type : 'regular';
 };
+/**
+ * Template derivation from an explicit exercise list (not render-time state).
+ * `handleConfirmFinish` feeds the EFFECTIVE session (post complete/strip) so
+ * the routine update never sees pre-resolution sets.
+ */
+const toTemplateSlots = (exercises: SessionExercise[]) => exercises.map(ex => {
+    const workingSetCount = (ex.sets || []).filter(set => set.type !== 'warmup').length;
+    return {
+        muscle: ex.muscle,
+        setTarget: Math.max(1, workingSetCount || (ex.sets || []).length || 1),
+        exerciseId: ex.id,
+        programSlotId: ex.programSlotId,
+        reps: ex.targetReps,
+        setType: normalizeTemplateSetType(ex.sets || []),
+        supersetId: ex.supersetId,
+        label: ex.slotLabel && ex.slotLabel !== ex.muscle ? ex.slotLabel : undefined,
+        notes: ex.note?.trim() || undefined,
+    };
+});
 
 const reorderList = <T,>(items: T[], from: number, to: number): T[] => {
     if (from === to) return items;
@@ -37,6 +57,41 @@ const reorderList = <T,>(items: T[], from: number, to: number): T[] => {
     next.splice(to, 0, moved);
     return next;
 };
+/**
+ * Strong-real incomplete-set resolution (SettingsParity `incompleteSets`).
+ * 'complete' marks unfinished sets done, filling empty weight/reps from hints
+ * with the same rule as `toggleSetComplete`; invalid numerics fall back to
+ * empty. Sets are never removed here — completion cannot lose data.
+ */
+const completeUnfinishedSets = (session: ActiveSession): ActiveSession => ({
+    ...session,
+    exercises: (session.exercises || []).map((ex) => ({
+        ...ex,
+        sets: (ex.sets || []).map((s) => {
+            if (s.completed || s.skipped || s.type === 'avt_hop') return s;
+            let weight = s.weight;
+            let reps = s.reps;
+            if (weight === '' || weight === undefined || weight === null) {
+                if (s.hintWeight !== undefined && s.hintWeight !== '') weight = s.hintWeight;
+            }
+            if (reps === '' || reps === undefined || reps === null) {
+                const hintReps = s.hintReps ?? (typeof s.prescribedReps === 'number' ? s.prescribedReps : undefined);
+                if (hintReps !== undefined && hintReps !== '') reps = String(hintReps);
+            }
+            if (weight !== '' && weight !== undefined && weight !== null && !Number.isFinite(Number(weight))) weight = '';
+            if (reps !== '' && reps !== undefined && reps !== null && !Number.isFinite(Number(reps))) reps = '';
+            return { ...s, weight, reps, completed: true };
+        }),
+    })),
+});
+
+/** 'discard' drops unfinished sets (and exercises left empty) from the saved log. */
+const stripIncompleteSets = (session: ActiveSession): ActiveSession => ({
+    ...session,
+    exercises: (session.exercises || [])
+        .map((ex) => ({ ...ex, sets: (ex.sets || []).filter((s) => s.completed) }))
+        .filter((ex) => (ex.sets || []).length > 0),
+});
 
 export const useWorkoutController = (onFinishCallback: () => void, onDiscardCallback: () => void) => {
     const { setProgram, exercises, rpFeedback, setRpFeedback, logs, userProfile } = useApp();
@@ -72,29 +127,14 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
         (activeSession?.exercises || []).filter((e): e is SessionExercise => !!e),
         [activeSession?.exercises]);
 
-    const normalizedTemplateSlots = useMemo(() => sessionExercises.map(ex => {
-        const workingSetCount = ex.sets.filter(set => set.type !== 'warmup').length;
-        return {
-            muscle: ex.muscle,
-            setTarget: Math.max(1, workingSetCount || ex.sets.length || 1),
-            exerciseId: ex.id,
-            reps: ex.targetReps,
-            setType: normalizeTemplateSetType(ex.sets),
-            supersetId: ex.supersetId,
-            label: ex.slotLabel && ex.slotLabel !== ex.muscle ? ex.slotLabel : undefined,
-            notes: ex.note?.trim() || undefined,
-        };
-    }), [sessionExercises]);
-
-    const normalizedTemplatePlan = useMemo(
-        () => sessionExercises.map(ex => ex.id),
-        [sessionExercises]
-    );
+    // Template derivation reads the EFFECTIVE session inside handleConfirmFinish
+    // (post complete/strip) via toTemplateSlots — no render-time memo.
 
     // Pre-built best-1RM index from full history — O(total_history) computed once
     // when logs change, not on every call to detectPRs.
     const [historicalBest1RM, setHistoricalBest1RM] = useState<Map<string, number>>(new Map());
     const [historicalReady, setHistoricalReady] = useState(false);
+    const oneRmFormula = readWorkoutPrefs(config).oneRmFormula ?? 'epley';
 
     useEffect(() => {
         if (!logs || logs.length === 0) {
@@ -103,7 +143,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
         }
         setHistoricalReady(false);
         let cancelled = false;
-        calculateAllBest1RMs(logs).then((resultMap) => {
+        calculateAllBest1RMs(logs, oneRmFormula).then((resultMap) => {
             if (!cancelled) {
                 setHistoricalBest1RM(resultMap);
                 setHistoricalReady(true);
@@ -114,7 +154,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
             }
         });
         return () => { cancelled = true; };
-    }, [logs, calculateAllBest1RMs]);
+    }, [logs, calculateAllBest1RMs, oneRmFormula]);
 
     // Data Mutations
     const handleSetUpdate = useCallback((exInstanceId: number, setId: number, field: keyof WorkoutSet, value: any) => {
@@ -249,8 +289,11 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
 
         if (willComplete) {
             triggerHaptic('success');
+            // Settings-owned rest prefs (back-compat defaults until AppState.config carries them).
+            const restPrefs = readWorkoutPrefs(config);
+            if (restPrefs.autoStartRest === false) return;
             const isMetabolite = currentMeso?.mesoType === 'metabolite';
-            let dur = isMetabolite ? 60 : 120;
+            let dur = restPrefs.defaultRestSeconds ?? (isMetabolite ? 60 : 120);
 
             // Density mode custom rest or per-exercise preset takes highest priority
             if (ex?.progressionMode === 'density' && ex.densityTargetRestSeconds && ex.densityTargetRestSeconds > 0) {
@@ -266,6 +309,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
                 }
 
                 if (set.type === 'myorep' || set.type === 'myorep_match' || set.type === 'giant') dur = 30;
+                if (set.type === 'warmup') dur = restPrefs.warmupRestSeconds ?? 60;
                 if (set.type === 'cluster') dur = 15;
                 if (set.type === 'drop') dur = 0; // Drop sets have no rest — skip timer
                 if (set.type === 'rest_pause') dur = 20;     // 20s between rest-pause mini-sets
@@ -324,7 +368,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
             });
         }
 
-    }, [setActiveSession, setRestTimer]);
+    }, [setActiveSession, setRestTimer, config]);
 
     const detectPRs = useCallback((): boolean => {
         if (!historicalReady) return false;
@@ -334,7 +378,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
             for (const s of (ex.sets || [])) {
                 if (s.completed && (s.weight || s.weight === 0 || s.weight === '0') && s.reps) {
                     const effectiveLoad = getEffectiveSetLoad(s, ex, userProfile?.bodyWeight);
-                    const e1rm = estimate1RM(effectiveLoad, Number(s.reps));
+                    const e1rm = estimate1RM(effectiveLoad, Number(s.reps), readWorkoutPrefs(config).oneRmFormula ?? 'epley');
                     if (e1rm > currentBest1RM) currentBest1RM = e1rm;
                 }
             }
@@ -345,7 +389,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
             }
         }
         return false;
-    }, [historicalReady, historicalBest1RM, userProfile]);
+    }, [historicalReady, historicalBest1RM, userProfile, config]);
 
     const fireConfetti = useCallback(async () => {
         try {
@@ -365,22 +409,39 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
         } catch (e) { console.warn("Confetti failed", e); }
     }, []);
 
-    const handleConfirmFinish = useCallback(() => {
+    const handleConfirmFinish = useCallback((resolution?: 'keep' | 'strip' | 'complete') => {
         triggerHaptic('medium');
         setShowFinishModal(false);
 
-        const currentActiveSession = useStore.getState().activeSession;
+        // Strong-real incomplete-set handling (SettingsParity `incompleteSets`).
+        // The EFFECTIVE session is resolved first and persisted; every step
+        // below (template update, PRs, save pipeline) reads it — never the
+        // pre-resolution render state. Nothing is deleted except the sets that
+        // 'strip' explicitly discards; exercises keep all their other data.
+        const configured = readWorkoutPrefs(config).incompleteSets ?? 'ask';
+        const effective = resolution ?? (configured === 'ask' ? 'keep' : configured);
+        const storedSession = useStore.getState().activeSession;
+        const currentActiveSession = !storedSession ? null
+            : effective === 'strip' ? stripIncompleteSets(storedSession)
+            : effective === 'complete' ? completeUnfinishedSets(storedSession)
+            : storedSession;
+        if (currentActiveSession && currentActiveSession !== storedSession) {
+            setActiveSession(currentActiveSession);
+        }
         const currentActiveMeso = useStore.getState().activeMeso;
 
-        // --- UPDATE TEMPLATE LOGIC ---
+        // --- UPDATE TEMPLATE LOGIC (derived from the effective session) ---
         if (updateTemplate && currentActiveMeso && currentActiveSession && isTemplateUpdateEligible(currentActiveSession, currentActiveMeso)) {
+            const effectiveExercises = (currentActiveSession.exercises || []).filter((e): e is SessionExercise => !!e);
+            const effectiveSlots = toTemplateSlots(effectiveExercises);
+            const effectivePlan = effectiveExercises.map(ex => ex.id);
             // 2. Update Global Program
             setProgram(prev => {
                 const newProg = [...prev];
                 if (newProg[currentActiveSession.dayIdx]) {
                     newProg[currentActiveSession.dayIdx] = {
                         ...newProg[currentActiveSession.dayIdx],
-                        slots: normalizedTemplateSlots
+                        slots: effectiveSlots
                     };
                 }
                 return newProg;
@@ -390,7 +451,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
             setActiveMeso(prev => {
                 if (!prev) return null;
                 const newPlan = [...(prev.plan || [])];
-                newPlan[currentActiveSession.dayIdx] = normalizedTemplatePlan;
+                newPlan[currentActiveSession.dayIdx] = effectivePlan;
                 return { ...prev, plan: newPlan };
             });
         }
@@ -411,7 +472,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
                 onFinishCallback();
             }
         }
-    }, [onFinishCallback, config, detectPRs, fireConfetti, updateTemplate, normalizedTemplateSlots, normalizedTemplatePlan, setProgram, setActiveMeso, setRestTimer]);
+    }, [onFinishCallback, config, detectPRs, fireConfetti, updateTemplate, setProgram, setActiveMeso, setRestTimer, setActiveSession]);
 
     // --- NEW: Handle Discard/Reset Session ---
     const handleDiscardSession = useCallback(() => {

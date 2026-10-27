@@ -1,6 +1,5 @@
 import type { Log } from '../types';
-import { estimate1RM } from '../utils';
-
+import { estimateOneRm, type OneRmFormula } from './strongTraining';
 export const REP_MAX_ROWS = 12;
 
 export interface RepMaxRow {
@@ -20,11 +19,16 @@ const positive = (value: unknown): number => {
 /**
  * Rep-max table for one exercise (1..12 reps). "Actual" is the heaviest real set
  * at that exact rep count (ties go to the most recent); "predicted" inverts the
- * app's own 1RM estimate (Epley, see utils.estimate1RM) from the best set in
- * the 1..12 range, so it agrees with the 1RM shown elsewhere. Only completed,
- * non-warmup sets count. Returns [] when there is no qualifying history.
+ * app's own 1RM estimate (see estimateOneRm in ./strongTraining) from the best
+ * set in the 1..12 range, so it agrees with the 1RM shown elsewhere. Only
+ * completed, non-warmup sets count. Returns [] when there is no qualifying
+ * history. `formula` selects the estimate (default 'epley' = legacy behavior).
  */
-export const computeRepMaxTable = (logs: readonly Log[], exerciseIds: ReadonlySet<string>): RepMaxRow[] => {
+export const computeRepMaxTable = (
+    logs: readonly Log[],
+    exerciseIds: ReadonlySet<string>,
+    formula: OneRmFormula = 'epley',
+): RepMaxRow[] => {
     const actual = new Map<number, { weight: number; date: number }>();
     let best1RM = 0;
 
@@ -38,8 +42,7 @@ export const computeRepMaxTable = (logs: readonly Log[], exerciseIds: ReadonlySe
                 const weight = positive(set.weight);
                 const reps = Math.round(positive(set.reps));
                 if (weight <= 0 || reps < 1 || reps > REP_MAX_ROWS) continue;
-
-                best1RM = Math.max(best1RM, reps === 1 ? weight : estimate1RM(weight, reps));
+                best1RM = Math.max(best1RM, reps === 1 ? weight : estimateOneRm(weight, reps, formula));
                 const current = actual.get(reps);
                 if (!current || weight > current.weight || (weight === current.weight && date > current.date)) {
                     actual.set(reps, { weight, date });
@@ -56,7 +59,29 @@ export const computeRepMaxTable = (logs: readonly Log[], exerciseIds: ReadonlySe
             reps,
             actualWeight: hit?.weight ?? null,
             actualDate: hit?.date ?? null,
-            predictedWeight: reps === 1 ? best1RM : best1RM / (1 + reps / 30),
+            predictedWeight: predictWeightForReps(best1RM, reps, formula),
         };
     });
+};
+
+/**
+ * Invert the estimate: weight that would yield `best1RM` at `reps`.
+ * Shared contract (ExercisesParity reuses it in RecordsTab): brzycki with
+ * reps >= 37 degenerates to the best itself (estimateOneRm returns the load
+ * unchanged there), otherwise the algebraic inverse per formula.
+ */
+export const predictWeightForReps = (best1RM: number, reps: number, formula: OneRmFormula = 'epley'): number | null => {
+    if (reps === 1) return best1RM;
+    switch (formula) {
+        case 'brzycki':
+            if (reps >= 37) return best1RM;
+            // best = w * 36 / (37 - r)  →  w = best * (37 - r) / 36.
+            return (best1RM * (37 - reps)) / 36;
+        case 'lombardi':
+            // best = w * r^0.1  →  w = best / r^0.1.
+            return best1RM / Math.pow(reps, 0.1);
+        case 'epley':
+        default:
+            return best1RM / (1 + reps / 30);
+    }
 };

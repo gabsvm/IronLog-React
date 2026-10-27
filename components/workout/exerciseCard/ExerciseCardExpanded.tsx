@@ -1,15 +1,117 @@
 // U5: SortableExerciseCard expanded view, moved verbatim from components/workout/SortableExerciseCardImpl.tsx.
-import React from 'react';
+import React, { useState } from 'react';
 import { Icon } from '../../ui/Icon';
+import { Sheet } from '../../ui/Sheet';
 import { ExerciseVolumeLine } from '../ExerciseVolumeLine';
 import { ExerciseCardMenu } from '../ExerciseCardMenu';
 import { ExerciseCardSets } from '../ExerciseCardSets';
 import { ExerciseProtocolBanners } from '../ExerciseProtocolBanners';
 import { getTranslated } from '../../../utils';
 import type { ExerciseCardState } from './useSortableExerciseCardState';
+const REST_PRESET_OPTIONS = [60, 90, 120, 180] as const;
 
+const NoteEditorSheet: React.FC<{
+    title: string;
+    initial: string;
+    saveLabel: string;
+    cancelLabel: string;
+    placeholder: string;
+    onSave: (text: string) => void;
+    onClose: () => void;
+}> = ({ title, initial, saveLabel, cancelLabel, placeholder, onSave, onClose }) => {
+    const [draft, setDraft] = useState(initial);
+    return (
+        <Sheet open onOpenChange={(open) => { if (!open) onClose(); }} title={title} accent="primary">
+            <div className="space-y-3 p-4">
+                <textarea
+                    autoFocus
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    placeholder={placeholder}
+                    rows={4}
+                    className="w-full rounded-[20px] border border-border-subtle bg-surface-raised px-3.5 py-3 text-sm text-[rgb(var(--text-primary))] outline-none transition-all placeholder:text-muted focus:border-primary-500"
+                />
+                <div className="flex gap-2">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="min-h-[48px] flex-1 rounded-full bg-surface-elevated text-sm font-bold text-[rgb(var(--text-secondary))] active:scale-98"
+                    >
+                        {cancelLabel}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => onSave(draft)}
+                        className="min-h-[48px] flex-1 rounded-full bg-primary-500 text-sm font-bold text-zinc-950 active:scale-98"
+                    >
+                        {saveLabel}
+                    </button>
+                </div>
+            </div>
+        </Sheet>
+    );
+};
+
+const RestEditorSheet: React.FC<{
+    title: string;
+    secondsLabel: string;
+    saveLabel: string;
+    cancelLabel: string;
+    current: number;
+    fallback: number;
+    onSave: (seconds: number) => void;
+    onClose: () => void;
+}> = ({ title, secondsLabel, saveLabel, cancelLabel, current, fallback, onSave, onClose }) => {
+    const [draft, setDraft] = useState(String(current > 0 ? current : fallback));
+    return (
+        <Sheet open onOpenChange={(open) => { if (!open) onClose(); }} title={title} accent="primary">
+            <div className="space-y-3 p-4">
+                <div className="grid grid-cols-4 gap-2">
+                    {REST_PRESET_OPTIONS.map((preset) => (
+                        <button
+                            key={preset}
+                            type="button"
+                            onClick={() => setDraft(String(preset))}
+                            className={`min-h-[48px] rounded-[10px] text-sm font-bold tabular-nums transition-colors active:scale-95 ${Number(draft) === preset ? 'bg-primary-500 text-zinc-950' : 'bg-surface-elevated text-[rgb(var(--text-primary))]'}`}
+                        >
+                            {preset}s
+                        </button>
+                    ))}
+                </div>
+                <label className="block text-xs font-semibold text-muted">
+                    {secondsLabel}
+                    <input
+                        type="number"
+                        inputMode="numeric"
+                        min={0}
+                        max={600}
+                        value={draft}
+                        onChange={(e) => setDraft(e.target.value)}
+                        className="mt-1 h-11 w-full rounded-[10px] bg-surface-raised px-3 text-center text-base font-semibold text-[rgb(var(--text-primary))] outline-none focus:border-primary-500"
+                    />
+                </label>
+                <div className="flex gap-2">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="min-h-[48px] flex-1 rounded-full bg-surface-elevated text-sm font-bold text-[rgb(var(--text-secondary))] active:scale-98"
+                    >
+                        {cancelLabel}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => onSave(Number(draft))}
+                        className="min-h-[48px] flex-1 rounded-full bg-primary-500 text-sm font-bold text-zinc-950 active:scale-98"
+                    >
+                        {saveLabel}
+                    </button>
+                </div>
+            </div>
+        </Sheet>
+    );
+};
 export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ state }) => {
-    const { ex, onSetUpdate, onSetComplete, onSetTypeChange, onAddSet, onDeleteSet, onOpenDetail, onLink, onReplace, onOpenWarmup, openMenuId, setOpenMenuId, t, lang, isLinkingTarget, config, stageConfig, dragEnabled, tutorialId, attributes, listeners, setNodeRef, isDragging, exDoneFlash, activeEmomMinute, setActiveEmomMinute, style, sets, c, ssStyle, unit, unitLabel, isCardio, cardioMode, isInterval, regularSets, volumeComparison, allDone, isLinkSource, canWarmup, isEMOM, isMyorep, isCluster, isGiant, hasTopBackoff, isTabata, isHIIT, isRestPause, isDrop, isTimeVolume, isTripleAdd, isSpecialProtocol, nextSetIdx, setBadgeLabels, handleInjectWarmup, canFillPrevious, copyFromIndex, handleFillFromPrevious, handleCopyToFollowing, removedSet, handleRemoveLastSet, handleUndoRemoveSet, handleCardioModeChange, confirmDelete, handleSupersetAction, heroMetric, workDensity, handleToggleProgressionMode, onStartRest, restPresetSeconds } = state;
+    const { ex, onSetUpdate, onSetComplete, onSetTypeChange, onAddSet, onDeleteSet, onOpenDetail, onLink, onReplace, onOpenWarmup, openMenuId, setOpenMenuId, t, lang, isLinkingTarget, config, stageConfig, dragEnabled, tutorialId, attributes, listeners, setNodeRef, isDragging, exDoneFlash, activeEmomMinute, setActiveEmomMinute, style, sets, c, ssStyle, unit, unitLabel, isCardio, cardioMode, isInterval, regularSets, volumeComparison, allDone, isLinkSource, canWarmup, isEMOM, isMyorep, isCluster, isGiant, hasTopBackoff, isTabata, isHIIT, isRestPause, isDrop, isTimeVolume, isTripleAdd, isSpecialProtocol, nextSetIdx, setBadgeLabels, handleInjectWarmup, canFillPrevious, copyFromIndex, handleFillFromPrevious, handleCopyToFollowing, removedSet, handleRemoveLastSet, handleUndoRemoveSet, handleCardioModeChange, confirmDelete, handleSupersetAction, heroMetric, workDensity, handleToggleProgressionMode, onStartRest, restPresetSeconds, editingNote, setEditingNote, editingRest, setEditingRest, handleEditNote, handleSaveNote, handleEditRest, handleSaveRest } = state;
     const restSeconds = ex.defaultRestSeconds && ex.defaultRestSeconds > 0 ? ex.defaultRestSeconds : (restPresetSeconds ?? 90);
     const restLabel = `${Math.floor(restSeconds / 60)}:${String(restSeconds % 60).padStart(2, '0')}`;
     // Below-band wrapper carries px-4/pb-3/pt-2: skip it entirely when every inner
@@ -60,7 +162,7 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                                 data-testid="exercise-rest-chip"
                                 onClick={(event) => {
                                     event.stopPropagation();
-                                    if (onStartRest) onStartRest(restSeconds);
+                                    if (onStartRest) onStartRest(restSeconds, ex.instanceId);
                                 }}
                                 className="relative flex h-[28px] min-w-[40px] shrink-0 items-center gap-1 rounded-md bg-surface-elevated px-2 text-[13px] font-bold tabular-nums text-[rgb(var(--text-primary))] transition-colors after:absolute after:-inset-2 after:content-[''] hover:bg-surface-elevated/80 active:scale-95"
                             >
@@ -120,7 +222,9 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                                 isLinking={isLinkSource}
                                 onOpenDetail={onOpenDetail}
                                 onCardioModeChange={handleCardioModeChange}
+                                onEditNote={handleEditNote}
                                 onInjectWarmup={handleInjectWarmup}
+                                onEditRest={handleEditRest}
                                 onFillFromPrevious={canFillPrevious ? handleFillFromPrevious : undefined}
                                 onCopyToFollowing={copyFromIndex >= 0 ? handleCopyToFollowing : undefined}
                                 onRemoveLastSet={handleRemoveLastSet}
@@ -134,6 +238,12 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                             />
                         </div>
                 </div>
+                {ex.stickyNote && (
+                    <div className="flex items-start gap-2 border-b border-amber-500/20 bg-amber-500/10 px-4 py-2">
+                        <Icon name="FileText" size={13} className="mt-0.5 shrink-0 text-amber-800 dark:text-amber-300" />
+                        <p className="min-w-0 flex-1 whitespace-pre-wrap text-xs leading-relaxed text-amber-900 dark:text-amber-100/90">{ex.stickyNote}</p>
+                    </div>
+                )}
                 {ex.note && (
                     <p className="px-4 pb-2 text-xs text-muted">{ex.note}</p>
                 )}
@@ -276,6 +386,29 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                     <Icon name="Plus" size={14} /> {t.addSetBtn}
                 </button>
             </div>
+            {editingNote !== null && (
+                <NoteEditorSheet
+                    title={editingNote === 'sticky' ? t.cardMenu.addStickyNote : t.cardMenu.addNote}
+                    initial={editingNote === 'sticky' ? (ex.stickyNote ?? '') : (ex.note ?? '')}
+                    saveLabel={t.save}
+                    cancelLabel={t.cancel}
+                    placeholder={t.logWeight.notePlaceholder}
+                    onSave={handleSaveNote}
+                    onClose={() => setEditingNote(null)}
+                />
+            )}
+            {editingRest && (
+                <RestEditorSheet
+                    title={t.restPreset.title}
+                    secondsLabel={t.restPreset.seconds}
+                    saveLabel={t.save}
+                    cancelLabel={t.cancel}
+                    current={ex.defaultRestSeconds ?? 0}
+                    fallback={restPresetSeconds ?? 90}
+                    onSave={handleSaveRest}
+                    onClose={() => setEditingRest(false)}
+                />
+            )}
         </div>
     );
 };

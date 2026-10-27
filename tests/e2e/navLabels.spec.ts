@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 
-// L5: short "Métricas/Stats" nav label with clearance from the viewport edge.
+// L5: short Strong nav labels with clearance from the viewport edge.
 const ERROR_BOUNDARY_TEXT = /ERROR CRÍTICO|CRITICAL ERROR/;
 
 const seed = (page: Page) =>
@@ -15,22 +15,25 @@ for (const viewport of [{ width: 360, height: 800 }, { width: 390, height: 844 }
     test.describe(`L5 nav labels at ${viewport.width}x${viewport.height}`, () => {
         test.use({ viewport });
 
-        test('stats label is short and every label clears the viewport edge', async ({ page }) => {
+        test('Strong labels are short and every label clears the viewport edge', async ({ page }) => {
             await seed(page);
             await page.goto('/');
             const nav = page.locator('nav[aria-label="Main navigation"]');
             await expect(nav).toBeVisible({ timeout: 10000 });
 
-            // Short label (fails on long names) + the four Fase 2 roots.
-            const progressBtn = nav.locator('button', { hasText: /^Progreso$|^Progress$/ });
-            await expect(progressBtn).toBeVisible({ timeout: 8000 });
-            await expect(nav.getByText(/^Métricas$|^Stats$/)).toHaveCount(0);
+            // The five Strong destinations (short labels, no Fase-2 names).
+            for (const name of [/^Perfil$|^Profile$/, /^Historial$|^History$/, /^Entreno$|^Workout$/, /^Ejercicios$|^Exercises$/, /^Medidas$|^Measure$/]) {
+                await expect(nav.getByRole('button', { name }).first()).toBeVisible({ timeout: 8000 });
+            }
+            for (const name of [/^Rutina$|^Routine$/, /^Progreso$|^Progress$/, /^Diario$|^Diary$/, /^Hoy$|^Today$/]) {
+                await expect(nav.getByRole('button', { name })).toHaveCount(0);
+            }
 
-            // Truncation safety net on every label.
+            // Truncation safety net on every label (icon pills excluded).
             const truncations = await page.evaluate(() => {
                 const navEl = document.querySelector('nav[aria-label="Main navigation"]');
                 if (!navEl) return [];
-                return [...navEl.querySelectorAll(':scope button > span')].map((el) => {
+                return [...navEl.querySelectorAll(':scope button > span.strong-tab-label')].map((el) => {
                     const cs = getComputedStyle(el as HTMLElement);
                     return {
                         text: (el.textContent || '').trim(),
@@ -40,16 +43,18 @@ for (const viewport of [{ width: 360, height: 800 }, { width: 390, height: 844 }
                     };
                 });
             });
-            expect(truncations.length).toBe(4);
+            // Five Strong labels: each stays short (<= 10 chars) and readable.
+            expect(truncations.length).toBe(5);
             for (const t of truncations) {
+                expect(t.text.length, `${t.text} is short`).toBeLessThanOrEqual(10);
                 expect(t.overflowX, `${t.text} clips`).toBe('hidden');
                 expect(t.textOverflow, `${t.text} ellipsizes`).toBe('ellipsis');
                 expect(t.minWidth, `${t.text} shrinks`).toBe('0px');
             }
 
             // Geometry: right edge ≥ 8px from the viewport, no overlaps.
-            const labelLocators = await nav.locator(':scope button > span').all();
-            expect(labelLocators.length).toBe(4);
+            const labelLocators = await nav.locator(':scope button > span.strong-tab-label').all();
+            expect(labelLocators.length).toBe(5);
             const boxes = await Promise.all(labelLocators.map((loc) => loc.boundingBox()));
             for (const box of boxes) {
                 expect(box, 'label box').not.toBeNull();

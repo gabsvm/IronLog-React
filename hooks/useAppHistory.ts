@@ -31,6 +31,7 @@ export const VIEW_DEPTH: Record<string, number> = {
     'routine': 1,
     'progress': 1,
     'diary': 1,
+    'measure': 1,
     'workout': 2,
     'summary': 2,
     'exercises': 2,
@@ -114,7 +115,7 @@ export const useAppHistory = (
             isFirstMountRef.current = false;
             return;
         }
-        const isNav = view === 'home' || view === 'routine' || view === 'progress' || view === 'diary';
+        const isNav = view === 'home' || view === 'routine' || view === 'progress' || view === 'diary' || view === 'measure';
 
         try {
             if (typeof window !== 'undefined' && window.history) {

@@ -82,6 +82,9 @@ export function convertKongToPersonalRoutine(
     plan: editablePlan,
     isDeload: false,
     programSystem: undefined,
+    // New personal routine, new identity: never inherit the source template.
+    templateId: null,
+    templateDayKeys: null,
   };
 
   return {

@@ -75,6 +75,12 @@ public class NativeBridgePlugin extends Plugin {
     private static final String KEY_REST_EPOCH = "rest_epoch";
     private static final String KEY_NEXT_COMMAND_ID = "rest_next_command_id";
     private static final String KEY_CMD_PREFIX = "rest_cmd_";
+    /** Strong parity: frozen rest. Alarm cancelled, snapshot (texts/source/epoch) kept. */
+    private static final String KEY_REST_PAUSED = "rest_paused";
+    private static final String KEY_PAUSED_REMAINING = "rest_paused_remaining";
+    /** SettingsParity rest feedback prefs, snapshotted per rest (defaults: enabled). */
+    private static final String KEY_REST_SOUND = "rest_sound_enabled";
+    private static final String KEY_REST_VIBRATE = "rest_vibrate_enabled";
     private static final int ACTION_ADD_30_REQUEST_CODE = 8821;
     private static final int ACTION_SKIP_REQUEST_CODE = 8822;
     private static final String TIMER_COMMAND_EVENT = "restTimerCommand";
@@ -188,6 +194,8 @@ public class NativeBridgePlugin extends Plugin {
         String liveTitle = call.getString("liveTitle", title);
         String liveBody = call.getString("liveBody", body);
         String skipLabel = call.getString("skipLabel", context.getString(R.string.rest_action_skip));
+        boolean soundEnabled = call.getBoolean("soundEnabled", true);
+        boolean vibrateEnabled = call.getBoolean("vibrateEnabled", true);
 
         // Q9: persist everything the action receiver needs to reschedule with
         // frozen JS, and start a fresh command stream for this rest.
@@ -203,8 +211,12 @@ public class NativeBridgePlugin extends Plugin {
                 .putString(KEY_LIVE_TITLE, liveTitle)
                 .putString(KEY_LIVE_BODY, liveBody)
                 .putString(KEY_REST_SKIP_LABEL, skipLabel)
+                .putBoolean(KEY_REST_SOUND, soundEnabled)
+                .putBoolean(KEY_REST_VIBRATE, vibrateEnabled)
                 .putInt(KEY_REST_EPOCH, epoch)
-                .putInt(KEY_NEXT_COMMAND_ID, 1);
+                .putInt(KEY_NEXT_COMMAND_ID, 1)
+                .putBoolean(KEY_REST_PAUSED, false)
+                .remove(KEY_PAUSED_REMAINING);
         for (String key : prefs.getAll().keySet()) {
             if (key.startsWith(KEY_CMD_PREFIX)) editor.remove(key);
         }
@@ -235,6 +247,8 @@ public class NativeBridgePlugin extends Plugin {
     /** Q9: +30s from the notification, fully native (works with frozen JS). */
     static void rescheduleFromAction(Context context) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        // A frozen rest has no live countdown: +30s is only reachable from it.
+        if (prefs.getBoolean(KEY_REST_PAUSED, false)) return;
         long endAt = prefs.getLong(KEY_END_AT, 0);
         if (endAt <= System.currentTimeMillis()) {
             cancelAlarm(context);
@@ -334,14 +348,20 @@ public class NativeBridgePlugin extends Plugin {
     }
 
     /** Read the OS-owned rest state before React runs any native schedule/cancel.
-     * This survives WebView/process recreation; the expiry receiver clears it. */
+     * This survives WebView/process recreation; the expiry receiver clears it.
+     * A frozen (paused) rest reports active with its remaining seconds. */
     @PluginMethod
     public void getRestTimerState(PluginCall call) {
         SharedPreferences prefs = getContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         long endAt = prefs.getLong(KEY_END_AT, 0L);
+        boolean paused = prefs.getBoolean(KEY_REST_PAUSED, false);
+        int remaining = prefs.getInt(KEY_PAUSED_REMAINING, 0);
+        if (paused && remaining <= 0) paused = false;
         JSObject state = new JSObject();
-        state.put("active", endAt > System.currentTimeMillis());
-        state.put("endAt", endAt > System.currentTimeMillis() ? endAt : 0L);
+        state.put("active", paused || endAt > System.currentTimeMillis());
+        state.put("endAt", (!paused && endAt > System.currentTimeMillis()) ? endAt : 0L);
+        state.put("paused", paused);
+        state.put("remaining", paused ? remaining : 0);
         state.put("duration", prefs.getInt(KEY_REST_DURATION, 120));
         state.put("epoch", prefs.getInt(KEY_REST_EPOCH, 0));
         state.put("sourceExerciseInstanceId", prefs.getInt(KEY_SOURCE_EXERCISE, -1));
@@ -363,6 +383,27 @@ public class NativeBridgePlugin extends Plugin {
             return;
         }
         SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        // A frozen rest keeps no deadline: refresh the stored texts and the
+        // paused card without touching the alarm or the command epoch.
+        if (prefs.getBoolean(KEY_REST_PAUSED, false)) {
+            String pausedTitle = call.getString("liveTitle", "");
+            String pausedBody = call.getString("liveBody", "");
+            if (pausedTitle == null || pausedTitle.trim().isEmpty()
+                    || pausedBody == null || pausedBody.trim().isEmpty()) {
+                call.resolve();
+                return;
+            }
+            pausedTitle = pausedTitle.length() > 110 ? pausedTitle.substring(0, 110) : pausedTitle;
+            pausedBody = pausedBody.length() > 120 ? pausedBody.substring(0, 120) : pausedBody;
+            prefs.edit()
+                    .putString(KEY_LIVE_TITLE, pausedTitle)
+                    .putString(KEY_LIVE_BODY, pausedBody)
+                    .apply();
+            postPausedTimerNotification(context, pausedTitle,
+                    prefs.getInt(KEY_PAUSED_REMAINING, 0));
+            call.resolve();
+            return;
+        }
         long currentEndAt = prefs.getLong(KEY_END_AT, 0L);
         if (currentEndAt <= System.currentTimeMillis() || currentEndAt != expectedEndAt) {
             // Not an error: the app may have skipped or extended rest while
@@ -788,14 +829,115 @@ public class NativeBridgePlugin extends Plugin {
     private static void markRestInactive(Context context) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
                 .putLong(KEY_END_AT, 0L)
+                .putBoolean(KEY_REST_PAUSED, false)
+                .remove(KEY_PAUSED_REMAINING)
                 .remove(KEY_SOURCE_EXERCISE)
                 .remove(KEY_SOURCE_SET)
                 .apply();
     }
 
-    /** Restores an active short countdown after a device reboot. */
+    /**
+     * Strong parity: freeze the OS rest. Cancels the alarm and the live
+     * countdown but keeps texts/source/epoch so resume and JS restore stay
+     * coherent. A static paused card (Skip only) replaces the chronometer.
+     * An already-frozen rest just syncs its remaining (in-pause +/-adjust,
+     * deadline-free by design). A pause whose deadline mismatches a still-live
+     * native rest wins: the mismatch means a notification +30s landed after
+     * this pause tap started, so the freeze adopts the live native deadline
+     * instead of dropping the tap as stale.
+     */
+    @PluginMethod
+    public void pauseRestTimer(PluginCall call) {
+        Integer remainingObj = call.getInt("remaining");
+        int remaining = remainingObj != null ? remainingObj : 0;
+        Context context = getContext();
+        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        if (remaining <= 0) {
+            cancelAlarm(context);
+            markRestInactive(context);
+            JSObject ret = new JSObject();
+            ret.put("paused", false);
+            ret.put("remaining", 0);
+            call.resolve(ret);
+            return;
+        }
+        // Already frozen: sync an in-pause +/- adjustment. Frozen rests keep
+        // no deadline by design, so no endAt check applies here.
+        if (prefs.getBoolean(KEY_REST_PAUSED, false)) {
+            prefs.edit().putInt(KEY_PAUSED_REMAINING, remaining).apply();
+            cancelAlarm(context);
+            postPausedTimerNotification(context,
+                    prefs.getString(KEY_LIVE_TITLE, "GainsLab"), remaining);
+            JSObject ret = new JSObject();
+            ret.put("paused", true);
+            ret.put("remaining", remaining);
+            call.resolve(ret);
+            return;
+        }
+        long endAt = prefs.getLong(KEY_END_AT, 0L);
+        Long expectedEndAt = call.getLong("endAt");
+        if (expectedEndAt != null && endAt != expectedEndAt) {
+            if (endAt > System.currentTimeMillis()) {
+                int truthful = (int) Math.max(1L, (long) Math.ceil((endAt - System.currentTimeMillis()) / 1000.0));
+                prefs.edit()
+                        .putBoolean(KEY_REST_PAUSED, true)
+                        .putInt(KEY_PAUSED_REMAINING, truthful)
+                        .putLong(KEY_END_AT, 0L)
+                        .apply();
+                cancelAlarm(context);
+                postPausedTimerNotification(context,
+                        prefs.getString(KEY_LIVE_TITLE, "GainsLab"), truthful);
+                JSObject ret = new JSObject();
+                ret.put("paused", true);
+                ret.put("remaining", truthful);
+                call.resolve(ret);
+                return;
+            }
+            cancelAlarm(context);
+            markRestInactive(context);
+            JSObject ret = new JSObject();
+            ret.put("paused", false);
+            ret.put("remaining", 0);
+            call.resolve(ret);
+            return;
+        }
+        if (endAt <= System.currentTimeMillis()) {
+            cancelAlarm(context);
+            markRestInactive(context);
+            JSObject ret = new JSObject();
+            ret.put("paused", false);
+            ret.put("remaining", 0);
+            call.resolve(ret);
+            return;
+        }
+        prefs.edit()
+                .putBoolean(KEY_REST_PAUSED, true)
+                .putInt(KEY_PAUSED_REMAINING, remaining)
+                .putLong(KEY_END_AT, 0L)
+                .apply();
+        cancelAlarm(context);
+        postPausedTimerNotification(context,
+                prefs.getString(KEY_LIVE_TITLE, "GainsLab"), remaining);
+        JSObject ret = new JSObject();
+        ret.put("paused", true);
+        ret.put("remaining", remaining);
+        call.resolve(ret);
+    }
+
+    /** Restores an active short countdown (or a frozen paused card) after a device reboot. */
     static void restoreRestAfterBoot(Context context) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        if (prefs.getBoolean(KEY_REST_PAUSED, false)) {
+            int remaining = prefs.getInt(KEY_PAUSED_REMAINING, 0);
+            if (remaining <= 0) {
+                markRestInactive(context);
+                cancelLiveTimerNotification(context);
+                return;
+            }
+            postPausedTimerNotification(context,
+                    prefs.getString(KEY_LIVE_TITLE, "GainsLab"), remaining);
+            return;
+        }
         long endAt = prefs.getLong(KEY_END_AT, 0L);
         if (endAt <= System.currentTimeMillis()) {
             markRestInactive(context);
@@ -827,13 +969,36 @@ public class NativeBridgePlugin extends Plugin {
         // duplicate feedback. The native receiver is primarily a background path.
         if (isAppForeground()) return;
 
+        SharedPreferences timerPrefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        boolean sound = timerPrefs.getBoolean(KEY_REST_SOUND, true);
+        boolean vibrate = timerPrefs.getBoolean(KEY_REST_VIBRATE, true);
+
         // The system's high-priority notification channel handles feedback
         // when posting is permitted. A manual beep + channel buzz doubles it.
         if (!canPostNotifications(context)) {
-            fallbackRestFeedback(context);
+            // No card possible (permission denied): manual feedback, each gated.
+            if (vibrate) vibrate(context, "success");
+            if (sound) playFinishTone();
             return;
         }
         createNotificationChannel(context);
+
+        if (!sound && !vibrate) {
+            // Fully quiet finish: the alert channel owns sound+vibration on
+            // Android O+ and cannot be silenced per post, so the card goes to
+            // the silent live channel instead (still user-configurable).
+            postSilentFinishNotification(context, title, body);
+            return;
+        }
+
+        if (!sound || !vibrate) {
+            // Partially quiet: same silent card plus manual tone/haptic only
+            // for whatever feedback remains enabled.
+            postSilentFinishNotification(context, title, body);
+            if (sound) playFinishTone();
+            if (vibrate) vibrate(context, "success");
+            return;
+        }
 
         PendingIntent contentIntent = launchContentIntent(context);
 
@@ -861,11 +1026,37 @@ public class NativeBridgePlugin extends Plugin {
         }
     }
 
-    private static void fallbackRestFeedback(Context context) {
-        vibrate(context, "success");
+    /** Quiet finish card: silent live channel, no heads-up, still tappable. */
+    private static void postSilentFinishNotification(Context context, String title, String body) {
+        Notification.Builder builder;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            builder = new Notification.Builder(context, TIMER_LIVE_CHANNEL);
+        } else {
+            builder = new Notification.Builder(context)
+                    .setPriority(Notification.PRIORITY_LOW);
+        }
+        builder.setSmallIcon(R.drawable.ic_stat_rest_timer)
+                .setContentTitle(title != null ? title : "GainsLab")
+                .setContentText(body != null ? body : "")
+                .setCategory(Notification.CATEGORY_ALARM)
+                .setAutoCancel(true)
+                .setOnlyAlertOnce(true);
+        PendingIntent contentIntent = launchContentIntent(context);
+        if (contentIntent != null) builder.setContentIntent(contentIntent);
+        NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (manager != null) manager.notify(TIMER_NOTIFICATION_ID, builder.build());
+    }
+
+    private static void playFinishTone() {
         ToneGenerator tone = new ToneGenerator(AudioManager.STREAM_NOTIFICATION, 90);
         tone.startTone(ToneGenerator.TONE_PROP_BEEP2, 450);
         new Handler(Looper.getMainLooper()).postDelayed(tone::release, 550);
+    }
+
+    private static void fallbackRestFeedback(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        if (prefs.getBoolean(KEY_REST_VIBRATE, true)) vibrate(context, "success");
+        if (prefs.getBoolean(KEY_REST_SOUND, true)) playFinishTone();
     }
 
     private static PendingIntent launchContentIntent(Context context) {
@@ -953,6 +1144,53 @@ public class NativeBridgePlugin extends Plugin {
     private static void cancelLiveTimerNotification(Context context) {
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         if (manager != null) manager.cancel(TIMER_LIVE_NOTIFICATION_ID);
+    }
+
+    /**
+     * Static paused card (same live id): no chronometer, no alarm, Skip only.
+     * Tapping the body reopens the app so the user resumes in-app.
+     */
+    private static void postPausedTimerNotification(Context context, String liveTitle, int remainingSeconds) {
+        if (!canPostNotifications(context)) return;
+        createNotificationChannel(context);
+
+        int safeRemaining = Math.max(0, remainingSeconds);
+        String remaining = String.format(Locale.US, "%d:%02d", safeRemaining / 60, safeRemaining % 60);
+        String text = context.getString(R.string.rest_paused) + " · " + remaining;
+
+        Notification.Builder builder;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            builder = new Notification.Builder(context, TIMER_LIVE_CHANNEL);
+        } else {
+            builder = new Notification.Builder(context)
+                    .setPriority(Notification.PRIORITY_LOW);
+        }
+
+        builder.setSmallIcon(R.drawable.ic_stat_rest_timer)
+                .setContentTitle(liveTitle != null ? liveTitle : "GainsLab")
+                .setContentText(text)
+                .setOngoing(true)
+                .setOnlyAlertOnce(true)
+                .setCategory(Notification.CATEGORY_STOPWATCH)
+                .setVisibility(Notification.VISIBILITY_PUBLIC)
+                .setColor(0xFFC4F13A);
+        PendingIntent contentIntent = launchContentIntent(context);
+        if (contentIntent != null) builder.setContentIntent(contentIntent);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Intent skipIntent = new Intent(context, RestTimerActionReceiver.class);
+            skipIntent.setAction(RestTimerActionReceiver.ACTION_SKIP);
+            PendingIntent skipPending = PendingIntent.getBroadcast(
+                    context, ACTION_SKIP_REQUEST_CODE, skipIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+            builder.addAction(new Notification.Action.Builder(
+                    Icon.createWithResource(context, android.R.drawable.ic_media_next),
+                    context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(
+                            KEY_REST_SKIP_LABEL, context.getString(R.string.rest_action_skip)),
+                    skipPending).build());
+        }
+
+        NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (manager != null) manager.notify(TIMER_LIVE_NOTIFICATION_ID, builder.build());
     }
 
     private static boolean isAppForeground() {

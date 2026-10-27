@@ -35,6 +35,7 @@ export const SECTION_CAPS = {
     cardioSessions: 60,
     bodyLogs: 100,
     customFoods: 100,
+    measurementLogs: 100,
 } as const;
 
 export const capNutritionLogs = <T extends { date?: unknown }>(items: T[] | undefined | null) =>
@@ -48,3 +49,6 @@ export const capBodyLogs = <T extends { date?: unknown; id?: unknown }>(items: T
 
 export const capCustomFoods = <T extends { createdAt?: unknown }>(items: T[] | undefined | null) =>
     keepNewest(items, SECTION_CAPS.customFoods, (food) => num(food?.createdAt));
+
+export const capMeasurementLogs = <T extends { date?: unknown; id?: unknown }>(items: T[] | undefined | null) =>
+    keepNewest(items, SECTION_CAPS.measurementLogs, (log) => num(log?.date) || num(log?.id));

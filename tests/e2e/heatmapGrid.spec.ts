@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { goProgress } from './strongNav';
 
 // L7: heatmap cells keep a uniform box even at high volume (no scale overlap).
 const ERROR_BOUNDARY_TEXT = /ERROR CRÍTICO|CRITICAL ERROR/;
@@ -30,7 +31,7 @@ test.describe('L7 muscle heatmap grid', () => {
     test('all 12 cells share one box size and never overlap', async ({ page }) => {
         await seedHighVolume(page);
         await page.goto('/');
-        await page.locator('nav[aria-label="Main navigation"] button', { hasText: /^Progreso$|^Progress$/ }).click();
+        await goProgress(page);
         // Overview section with the heatmap; BACK/CHEST average 30 → top heat.
         await expect(page.getByText('Espalda').first()).toBeVisible({ timeout: 15000 });
         await page.waitForTimeout(700);

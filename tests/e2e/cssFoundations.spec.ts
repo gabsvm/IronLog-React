@@ -47,7 +47,7 @@ test.describe('CSS foundations, real computed values (F8)', () => {
         expect(overscroll.root).toContain('contain');
 
         // 4. Tap delay guard: interactive controls use touch-action manipulation.
-        const dietBtn = nav.locator('button', { hasText: /^Diario$|^Diary$/ });
+        const dietBtn = nav.locator('button', { hasText: /^Historial$|^History$/ });
         await expect(dietBtn).toBeVisible();
         const touchAction = await dietBtn.evaluate((el) => getComputedStyle(el).touchAction);
         expect(touchAction).toContain('manipulation');
@@ -55,15 +55,16 @@ test.describe('CSS foundations, real computed values (F8)', () => {
         // 5. Minimum text-size floor + muted token on the inactive nav label
         // (proves the real pixel value of the shared `text-[11px]` utility;
         // see also tests/unit/textSizeFloor.test.tsx).
-        const label = dietBtn.locator('span');
+        const label = dietBtn.locator('span.strong-tab-label');
         const labelStyle = await label.evaluate((el) => {
             const style = getComputedStyle(el);
             return { fontSize: style.fontSize, color: style.color };
         });
         expect(parseFloat(labelStyle.fontSize)).toBeGreaterThanOrEqual(11);
-        const mutedToken = await page.evaluate(() => {
-            const triplet = getComputedStyle(document.documentElement)
-                .getPropertyValue('--text-muted').trim().split(/\s+/).map(Number);
+        const mutedToken = await dietBtn.evaluate((el) => {
+            // Scoped to the Strong shell: the parity re-tones text tokens
+            // inside .strong-shell, so read the token where the label lives.
+            const triplet = getComputedStyle(el).getPropertyValue('--text-muted').trim().split(/\s+/).map(Number);
             return `rgb(${triplet[0]}, ${triplet[1]}, ${triplet[2]})`;
         });
         expect(labelStyle.color).toBe(mutedToken);

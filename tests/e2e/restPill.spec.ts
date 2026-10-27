@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 const ERROR_BOUNDARY_TEXT = /ERROR CRÍTICO|CRITICAL ERROR/;
 
 test.describe('Rest pill touch targets (F3)', () => {
-    test('compact -10s, +30s and skip buttons measure at least 44x44px', async ({ page }) => {
+    test('compact -15s, +30s and skip buttons measure at least 44x44px', async ({ page }) => {
         await page.addInitScript(() => {
             localStorage.setItem('il_onboarded_v2', 'true');
             localStorage.setItem('il_tutorial_v2', JSON.stringify({
@@ -46,9 +46,9 @@ test.describe('Rest pill touch targets (F3)', () => {
         await expect(page.locator('nav[aria-label="Main navigation"]')).toBeVisible();
 
         const pill = page.locator('aside');
-        await expect(pill.getByRole('button', { name: '-10s' })).toBeVisible({ timeout: 8000 });
+        await expect(pill.getByRole('button', { name: '-15s' })).toBeVisible({ timeout: 8000 });
 
-        for (const name of ['-10s', '+30s']) {
+        for (const name of ['-15s', '+30s']) {
             const box = await pill.getByRole('button', { name }).boundingBox();
             expect(box, `${name} bounding box`).not.toBeNull();
             expect(box!.width, `${name} width`).toBeGreaterThanOrEqual(44);

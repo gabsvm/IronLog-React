@@ -71,7 +71,9 @@ for (const theme of ['dark', 'light'] as const) {
 
     if (theme === 'light') {
       test('expressive: textos de Stats superan contraste WCAG AA', async ({ page }) => {
-        await nav(page).getByRole('button', { name: /^Progreso$|^Progress$/ }).click();
+        // Progress lives behind the Profile panel tile in the Strong shell.
+        await page.getByRole('button', { name: /Abrir perfil|Open profile/ }).first().click();
+        await page.getByTestId('profile-dashboard').getByRole('button', { name: /^Progreso$|^Progress$/ }).click();
         const cards = page.locator('.tonal-1, .tonal-2, .tonal-3, .tonal-4');
         await expect(cards.first()).toBeVisible();
         const ratios = await cards.evaluateAll(items => {
@@ -116,26 +118,28 @@ for (const theme of ['dark', 'light'] as const) {
     });
 
     test(`routine ${theme}`, async ({ page }) => {
-        await nav(page).getByRole('button', { name: /^Rutina$|^Routine$/ }).click();
+        await page.getByRole('button', { name: /Abrir perfil|Open profile/ }).first().click();
+        await page.getByTestId('profile-dashboard').getByRole('button', { name: /^Rutina$|^Routine$/ }).click();
         await page.waitForTimeout(800);
         await expect(page).toHaveScreenshot(`routine-${theme}.png`, { fullPage: true });
     });
 
     test(`history ${theme}`, async ({ page }) => {
-      await nav(page).getByRole('button', { name: /^Diario$|^Diary$/ }).click();
+      await nav(page).getByRole('button', { name: /^Historial$|^History$/ }).click();
       await page.waitForTimeout(800);
       await expect(page).toHaveScreenshot(`history-${theme}.png`, { fullPage: true });
     });
 
     test(`stats ${theme}`, async ({ page }) => {
-      await nav(page).getByRole('button', { name: /^Progreso$|^Progress$/ }).click();
+      await page.getByRole('button', { name: /Abrir perfil|Open profile/ }).first().click();
+      await page.getByTestId('profile-dashboard').getByRole('button', { name: /^Progreso$|^Progress$/ }).click();
       await page.waitForTimeout(1500);
       await expect(page).toHaveScreenshot(`stats-${theme}.png`, { fullPage: true });
     });
 
     test(`expressive: Dieta mantiene superficies y pestañas accesibles (${theme})`, async ({ page }) => {
       await page.setViewportSize({ width: 320, height: 720 });
-      await nav(page).getByRole('button', { name: /^Diario$|^Diary$/ }).click();
+      await nav(page).getByRole('button', { name: /^Historial$|^History$/ }).click();
       await page.getByRole('tab', { name: /Nutrición|Nutrition/ }).click();
       const tabs = page.locator('.seg-reference').filter({ has: page.locator('button[aria-pressed]') }).first();
       const buttons = tabs.locator('button[aria-pressed]');
@@ -152,7 +156,7 @@ for (const theme of ['dark', 'light'] as const) {
     });
 
     test(`nutrition ${theme}`, async ({ page }) => {
-      await nav(page).getByRole('button', { name: /^Diario$|^Diary$/ }).click();
+      await nav(page).getByRole('button', { name: /^Historial$|^History$/ }).click();
       await page.getByRole('tab', { name: /Nutrición|Nutrition/ }).click();
       await page.waitForTimeout(800);
       await expect(page).toHaveScreenshot(`nutrition-${theme}.png`, { fullPage: true });
@@ -182,9 +186,14 @@ for (const theme of ['dark', 'light'] as const) {
         await completeBtn.click();
         await expect(completeBtn).toHaveAttribute('aria-pressed', 'true');
         await page.locator('#tut-finish-btn').click();
+        // Unfinished sets ask to complete/discard (Strong flow); a fully
+        // logged session saves directly.
         const saveBtn = page.getByRole('button', { name: /Guardar y terminar|Save and finish/ });
-        await expect(saveBtn).toBeVisible({ timeout: 8000 });
-        await saveBtn.click();
+        if (await saveBtn.isVisible({ timeout: 8000 }).catch(() => false)) {
+            await saveBtn.click();
+        } else {
+            await page.getByRole('button', { name: /^Completar$|^Complete$/ }).click();
+        }
         await page.waitForURL('**#summary', { timeout: 15000 });
         await expect(page.locator('h1', { hasText: /Completado|Complete/i })).toBeVisible({ timeout: 15000 });
         await page.waitForTimeout(500);
@@ -193,7 +202,7 @@ for (const theme of ['dark', 'light'] as const) {
 
     test(`profile ${theme}`, async ({ page }) => {
       await page.getByLabel(/Abrir perfil|Open profile/).click();
-      await expect(page.locator('[role="dialog"]').first()).toBeVisible({ timeout: 10000 });
+      await expect(page.getByTestId('profile-dashboard')).toBeVisible({ timeout: 10000 });
       await page.waitForTimeout(800);
       await expect(page).toHaveScreenshot(`profile-${theme}.png`);
     });
@@ -201,11 +210,11 @@ for (const theme of ['dark', 'light'] as const) {
     // D2: 1440 px desktop composition for every root + workout + summary.
     const desktopShots: Array<{ name: string; go: (page: import('@playwright/test').Page) => Promise<void> }> = [
       { name: 'home', go: async () => { } },
-      { name: 'routine', go: async (p) => { await nav(p).getByRole('button', { name: /^Rutina$|^Routine$/ }).click(); } },
-      { name: 'history', go: async (p) => { await nav(p).getByRole('button', { name: /^Diario$|^Diary$/ }).click(); } },
-      { name: 'stats', go: async (p) => { await nav(p).getByRole('button', { name: /^Progreso$|^Progress$/ }).click(); } },
-      { name: 'nutrition', go: async (p) => { await nav(p).getByRole('button', { name: /^Diario$|^Diary$/ }).click(); await p.getByRole('tab', { name: /Nutrición|Nutrition/ }).click(); } },
-      { name: 'profile', go: async (p) => { await p.getByLabel(/Abrir perfil|Open profile/).click(); await p.locator('[role="dialog"]').first().waitFor({ timeout: 10000 }); } },
+      { name: 'routine', go: async (p) => { await p.locator('nav[aria-label="Tu plan"]').getByRole('button', { name: /^Rutina$|^Routine$/ }).click(); } },
+      { name: 'history', go: async (p) => { await p.locator('nav[aria-label="Strong navigation"]').getByRole('button', { name: /^Historial$|^History$/ }).click(); } },
+      { name: 'stats', go: async (p) => { await p.locator('nav[aria-label="Tu plan"]').getByRole('button', { name: /^Progreso$|^Progress$/ }).click(); } },
+      { name: 'nutrition', go: async (p) => { await p.locator('nav[aria-label="Strong navigation"]').getByRole('button', { name: /^Historial$|^History$/ }).click(); await p.getByRole('tab', { name: /Nutrición|Nutrition/ }).click(); } },
+      { name: 'profile', go: async (p) => { await p.locator('nav[aria-label="Strong navigation"]').getByRole('button', { name: /^Perfil$|^Profile$/ }).click(); await p.getByTestId('profile-dashboard').waitFor({ timeout: 10000 }); } },
     ];
     for (const shot of desktopShots) {
       test(`desktop-1440 ${shot.name} ${theme}`, async ({ page }) => {
@@ -238,8 +247,11 @@ for (const theme of ['dark', 'light'] as const) {
       await expect(completeBtn).toHaveAttribute('aria-pressed', 'true');
       await page.locator('#tut-finish-btn').click();
       const desktopSaveBtn = page.getByRole('button', { name: /Guardar y terminar|Save and finish/ });
-      await expect(desktopSaveBtn).toBeVisible({ timeout: 8000 });
-      await desktopSaveBtn.click();
+      if (await desktopSaveBtn.isVisible({ timeout: 8000 }).catch(() => false)) {
+        await desktopSaveBtn.click();
+      } else {
+        await page.getByRole('button', { name: /^Completar$|^Complete$/ }).click();
+      }
       await page.waitForURL('**#summary', { timeout: 15000 });
       await expect(page.locator('h1', { hasText: /Completado|Complete/i })).toBeVisible({ timeout: 15000 });
       await page.waitForTimeout(500);

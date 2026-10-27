@@ -45,10 +45,11 @@ test.describe('GainsLab Critical Journeys', () => {
         // Should land on home with semantic navigation bar
         await expect(page.locator('nav[aria-label="Main navigation"]')).toBeVisible({ timeout: 10000 });
 
-        // Up next card exists and can actually be opened
+        // Up next card exists and can actually be opened (hero CTA; the
+        // Strong header adds a second icon-only start button, so pin the hero).
         const upNextCard = page.locator('#tut-up-next');
         await expect(upNextCard).toBeVisible({ timeout: 8000 });
-        await upNextCard.getByRole('button', { name: /^Empezar|^Start/i }).click();
+        await page.getByTestId('hero-start-workout').click();
 
         // Proves workout view is mounted with finish button
         const finishBtn = page.locator('#tut-finish-btn');
@@ -174,10 +175,15 @@ test.describe('GainsLab Critical Journeys', () => {
         await finishBtn.click();
         await page.waitForTimeout(400);
 
-        // Confirm finish in modal
-        const confirmFinishBtn = page.getByRole('dialog').getByRole('button', { name: /Guardar y Finalizar|Save & Finish|Terminar|Finish/i }).last();
-        await expect(confirmFinishBtn).toBeVisible({ timeout: 5000 });
-        await confirmFinishBtn.click();
+        // Confirm finish in modal (Strong parity: unfinished sets ask to
+        // complete/discard; a fully-logged session saves directly).
+        const finishDialog = page.getByRole('dialog');
+        const saveBtn = finishDialog.getByRole('button', { name: /Guardar y terminar|Save and finish/i });
+        if (await saveBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
+            await saveBtn.click();
+        } else {
+            await finishDialog.getByRole('button', { name: /^Completar$|^Complete$/ }).click();
+        }
 
         // If PR celebration or feedback modal opens, advance past it
         const prBtn = page.getByRole('dialog').getByRole('button', { name: /Continuar|Continue|Omitir|Skip/i }).first();
@@ -194,7 +200,7 @@ test.describe('GainsLab Critical Journeys', () => {
         await expect(nav).toBeVisible({ timeout: 8000 });
 
         // Diary must contain the session that was actually completed.
-        await nav.getByRole('button', { name: /^Diario$|^Diary$/ }).click();
+        await nav.getByRole('button', { name: /^Historial$|^History$/ }).click();
         await expect(page.getByRole('heading', { name: /^Sesión Libre \(Gym\)$|^Freestyle \(Gym\)$/i })).toBeVisible({ timeout: 8000 });
     });
 

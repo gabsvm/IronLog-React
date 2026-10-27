@@ -1,0 +1,184 @@
+/* Strong v6.2.4 parity shell: bluish-gray surfaces in dark mode, blue actions.
+ * Dark surface overrides apply ONLY outside html.light, so the user's light
+ * theme choice is respected; blue action styling works in both schemes via
+ * --strong-action-soft (light-blue on dark, darker blue on light).
+ * All chrome meets 44px targets + focus-visible rings.
+ */
+
+.strong-shell {
+    --strong-action: 47 124 246;  /* Strong blue #2f7cf6 */
+    --strong-action-ink: 255 255 255;
+    --strong-action-soft: 147 190 252;
+}
+
+html:not(.light) .strong-shell {
+    --surface-app: 15 19 26;      /* #0f131a bluish ink */
+    --surface-base: 25 31 41;     /* #191f29 */
+    --surface-raised: 33 40 53;   /* #212835 */
+    --surface-elevated: 42 50 65; /* #2a3241 */
+    --border-subtle: 44 53 67;    /* #2c3543 */
+    --border-strong: 61 72 90;    /* #3d485a */
+    --text-primary: 236 239 244;
+    --text-secondary: 167 177 191;
+    --text-muted: 136 146 161;
+}
+
+html.light .strong-shell {
+    --strong-action-soft: 29 78 216; /* blue-700: contrast on light surfaces */
+}
+
+.strong-shell .strong-topbar {
+    /* K7: fully opaque (no backdrop blur on this bar, so any translucency
+       shows scrolling content ghosting through). */
+    background: rgb(var(--surface-app));
+    border-bottom: 1px solid rgb(var(--border-subtle) / 0.8);
+}
+
+.strong-tabbar {
+    border-top: 1px solid rgb(var(--border-subtle) / 0.9);
+    background: rgb(var(--surface-base) / 0.97);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+
+.strong-tab {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-height: 56px;
+    min-width: 44px;
+    border-radius: 14px;
+    color: rgb(var(--text-muted));
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    transition: color 180ms ease, background-color 180ms ease, transform 180ms ease;
+}
+
+.strong-tab:hover { color: rgb(var(--text-primary)); background: rgb(var(--surface-raised) / 0.6); }
+.strong-tab:focus-visible {
+    outline: 2px solid rgb(var(--strong-action));
+    outline-offset: 2px;
+}
+.strong-tab[aria-current="page"] { color: rgb(var(--strong-action-soft)); }
+.strong-tab[aria-current="page"] .strong-tab-pill {
+    background: rgb(var(--strong-action) / 0.22);
+    color: rgb(var(--strong-action-soft));
+}
+.strong-tab-pill {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 30px;
+    min-width: 52px;
+    padding: 0 14px;
+    border-radius: 9999px;
+    transition: background-color 180ms ease, transform 180ms ease;
+}
+
+.strong-fab {
+    width: 58px;
+    height: 58px;
+    margin-top: -26px;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgb(var(--strong-action));
+    color: rgb(var(--strong-action-ink));
+    border: 3px solid rgb(var(--surface-app));
+    box-shadow: 0 8px 24px -6px rgb(var(--strong-action) / 0.65), 0 2px 8px rgb(0 0 0 / 0.45);
+    transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+}
+.strong-fab:hover { filter: brightness(1.08); }
+.strong-fab:active { transform: scale(0.94); }
+.strong-fab:focus-visible { outline: 2px solid rgb(var(--strong-action)); outline-offset: 3px; }
+.strong-fab.is-live { background: rgb(34 197 94); border-color: rgb(var(--surface-app)); }
+
+.strong-tab-label { max-width: 72px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.strong-side-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 44px;
+    width: 100%;
+    border-radius: 12px;
+    padding: 0 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: rgb(var(--text-secondary));
+    transition: background-color 160ms ease, color 160ms ease;
+}
+.strong-side-item:hover { background: rgb(var(--surface-raised)); color: rgb(var(--text-primary)); }
+.strong-side-item:focus-visible { outline: 2px solid rgb(var(--strong-action)); outline-offset: 2px; }
+.strong-side-item[aria-current="page"] {
+    background: rgb(var(--strong-action) / 0.16);
+    color: rgb(var(--strong-action-soft));
+}
+.strong-side-fab {
+    background: rgb(var(--strong-action));
+    color: #fff;
+    box-shadow: 0 6px 18px -6px rgb(var(--strong-action) / 0.7);
+}
+.strong-side-fab:hover { background: rgb(var(--strong-action)); color: #fff; filter: brightness(1.07); }
+
+.strong-card {
+    background: rgb(var(--surface-base));
+    border: 1px solid rgb(var(--border-subtle));
+    border-radius: 20px;
+}
+.strong-tile {
+    background: rgb(var(--surface-raised));
+    border: 1px solid rgb(var(--border-subtle));
+    border-radius: 16px;
+}
+.strong-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 48px;
+    padding: 0 20px;
+    border-radius: 9999px;
+    background: rgb(var(--strong-action));
+    color: #fff;
+    font-weight: 700;
+    font-size: 13px;
+    box-shadow: 0 4px 20px -4px rgb(var(--strong-action) / 0.55);
+    transition: filter 160ms ease, transform 160ms ease;
+}
+.strong-action-btn:hover { filter: brightness(1.08); }
+.strong-action-btn:active { transform: scale(0.98); }
+.strong-action-btn:focus-visible { outline: 2px solid rgb(var(--strong-action)); outline-offset: 2px; }
+
+.strong-quiet-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 14px;
+    border-radius: 12px;
+    border: 1px solid rgb(var(--border-subtle));
+    background: rgb(var(--surface-raised));
+    color: rgb(var(--text-primary));
+    font-size: 12px;
+    font-weight: 600;
+}
+.strong-quiet-btn:focus-visible { outline: 2px solid rgb(var(--strong-action)); outline-offset: 2px; }
+
+.strong-eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgb(var(--text-muted));
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .strong-tab, .strong-tab-pill, .strong-fab, .strong-action-btn { transition: none; }
+}

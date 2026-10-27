@@ -16,14 +16,15 @@ export const SET_TYPE_COLORS: Record<string, string> = {
     cluster: 'bg-emerald-500/20 text-emerald-400',
     emom: 'bg-cyan-500/20 text-cyan-400',
     drop: 'bg-teal-500/20 text-teal-400',
+    failure: 'bg-red-500/20 text-red-400',
     rest_pause: 'bg-rose-500/20 text-rose-400',
 };
 export const SET_TYPE_ICONS: Record<string, string> = {
     regular: 'Circle', warmup: 'Zap', myorep: 'Repeat',
     giant: 'Layers', top: 'TrendingUp', backoff: 'TrendingDown', cluster: 'Grid3x3',
-    emom: 'Timer', drop: 'TrendingDown',
+    emom: 'Timer', drop: 'TrendingDown', failure: 'X',
     rest_pause: 'Pause',
 };
-export const CORE_SET_TYPES: SetType[] = ['regular', 'warmup', 'drop', 'myorep', 'top', 'backoff'];
+export const CORE_SET_TYPES: SetType[] = ['regular', 'warmup', 'drop', 'failure', 'myorep', 'top', 'backoff'];
 export const ADVANCED_SET_TYPES: SetType[] = ['giant', 'cluster', 'emom', 'rest_pause'];
 export const MANUAL_REST_PRESETS = [60, 90, 120, 180] as const;

@@ -1,4 +1,5 @@
 import { test, expect, type Page, type Locator } from '@playwright/test';
+import { bottomNav, goProgress, openProfileSheet, openStrongPanel, startFreestyleWorkout as startFreestyleWorkoutViaFab } from './strongNav';
 
 // Same simulated SystemBars insets as insets.spec.ts.
 const INSET_TOP = 40;
@@ -81,10 +82,11 @@ const assertControlClear = async (page: Page, control: Locator, label: string) =
     expect(box!.y + box!.height, `${label} bottom`).toBeLessThanOrEqual(height - INSET_BOTTOM + 1);
 };
 
-// Scroll the scope's scroll container (or itself for a virtuoso scroller).
+// Scroll the scope's scroll container (or itself when it is the scroller,
+// like the Strong Profile panel; or a virtuoso scroller).
 const scrollScope = (scope: Locator, toEnd: boolean) =>
     scope.evaluate((root, end) => {
-        const target = root.hasAttribute('data-virtuoso-scroller')
+        const target = root.hasAttribute('data-virtuoso-scroller') || root.classList?.contains('scroll-container')
             ? root
             : root.querySelector('.overflow-y-auto');
         const el = (target ?? root) as HTMLElement;
@@ -104,25 +106,11 @@ const assertScrollablePhases = async (page: Page, scope: Locator, label: string)
 
 const startFreestyleWorkout = async (page: Page) => {
     await page.goto('/');
-    const nav = page.locator('nav[aria-label="Main navigation"]');
+    const nav = bottomNav(page);
     await expect(nav).toBeVisible({ timeout: 15000 });
 
-    // Fase 2 shell: freestyle entry lives in Rutina (no center + button).
-    await nav.getByRole('button', { name: /^Rutina$|^Routine$/ }).click();
-    const quickBtn = page.getByRole('button', { name: /Iniciar entreno|Start workout/ }).first();
-    await expect(quickBtn).toBeVisible({ timeout: 8000 });
-    await quickBtn.click();
-
-    const freestyleOption = page.locator('button:has-text("Sesión libre"), button:has-text("Freestyle")').first();
-    await expect(freestyleOption).toBeVisible({ timeout: 6000 });
-    await freestyleOption.click();
-
-    const startFreeBtn = page.locator('button:has-text("Iniciar Sesión Libre"), button:has-text("Start Free Session"), button:has-text("Iniciar sesión libre")').first();
-    await expect(startFreeBtn).toBeVisible({ timeout: 8000 });
-    await startFreeBtn.scrollIntoViewIfNeeded();
-    await startFreeBtn.click();
-
-    await expect(page.locator('#tut-finish-btn')).toBeVisible({ timeout: 10000 });
+    // Strong shell: freestyle starts from the Entreno FAB + QuickStart sheet.
+    await startFreestyleWorkoutViaFab(page);
 };
 
 test.describe('J1: fullscreen overlays respect safe-area insets', () => {
@@ -156,14 +144,12 @@ test.describe('J1: fullscreen overlays respect safe-area insets', () => {
         await page.goto('/');
         await injectInsets(page);
 
-        const nav = page.locator('nav[aria-label="Main navigation"]');
-        await expect(nav).toBeVisible({ timeout: 15000 });
-        await page.getByLabel(/Abrir perfil|Open profile/).click();
-
-        const dialog = page.locator('[role="dialog"]').first();
-        await expect(dialog).toBeVisible({ timeout: 6000 });
-        await assertControlClear(page, dialog.locator('button[aria-label*="Cerrar" i], button[aria-label*="Close" i]').first(), 'profile-close');
-        await assertScrollablePhases(page, dialog, 'profile');
+        // Strong shell: the Profile surface is a scrollable panel.
+        await openStrongPanel(page);
+        const panel = page.getByTestId('strong-profile-panel');
+        await expect(panel).toBeVisible({ timeout: 10000 });
+        await assertControlClear(page, panel.getByRole('button', { name: /^Cerrar$|^Close$/ }).first(), 'profile-close');
+        await assertScrollablePhases(page, panel, 'profile');
 
         await expect(page.getByText(/ERROR CR.TICO|CRITICAL ERROR/)).toHaveCount(0);
     });
@@ -173,12 +159,8 @@ test.describe('J1: fullscreen overlays respect safe-area insets', () => {
         await page.goto('/');
         await injectInsets(page);
 
-        const nav = page.locator('nav[aria-label="Main navigation"]');
-        await expect(nav).toBeVisible({ timeout: 15000 });
-        await page.getByLabel(/Abrir perfil|Open profile/).click();
-
-        const sheet = page.locator('[role="dialog"]').first();
-        await expect(sheet).toBeVisible({ timeout: 10000 });
+        // Unified sheet opens from the Strong panel's Ajustes gear.
+        const sheet = await openProfileSheet(page);
         await assertControlClear(page, sheet.locator('button[aria-label*="Cerrar" i], button[aria-label*="Close" i]').first(), 'you-close');
 
         // Open the collapsible Advanced section so its controls are measurable.
@@ -216,11 +198,13 @@ test.describe('J1: palette and program editor (wide viewport)', () => {
         await page.goto('/');
         await injectInsets(page);
 
-        const nav = page.locator('nav[aria-label="Main navigation"]:visible');
-        await expect(nav).toBeVisible({ timeout: 15000 });
+        // Desktop sidebar keeps the legacy plan nav (Tu plan): routine/progress
+        // reach the same views the old bottom tabs covered.
+        const planNav = page.locator('nav[aria-label="Tu plan"]');
+        await expect(planNav).toBeVisible({ timeout: 15000 });
 
-        const statsNavBtn = page.locator('nav[aria-label="Main navigation"]:visible button', { hasText: /^Progreso$|^Progress$/ });
-        await statsNavBtn.click();
+        // Progress now lives behind the Profile panel tile.
+        await goProgress(page);
         await expect(page.getByRole('tablist').first()).toBeVisible({ timeout: 10000 });
 
         const paletteBtn = page.getByRole('button', { name: /Acciones rápidas|Quick actions/ });

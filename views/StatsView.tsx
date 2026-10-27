@@ -6,6 +6,7 @@ import { StatsScopeSelector } from '../components/stats/StatsScopeSelector';
 import { StatsPeriodSelector } from '../components/stats/StatsPeriodSelector';
 import { PremiumTrendCard } from '../components/stats/PremiumTrendCard';
 import { buildPremiumInsights } from '../utils/premiumInsights';
+import { useTrainingConfig } from '../hooks/useTrainingConfig';
 import { resolveWeightUnit } from '../utils/units';
 import { useStore } from '../lib/store';
 import { TRANSLATIONS } from '../constants';
@@ -23,6 +24,9 @@ export const StatsView: React.FC = () => {
     const { lang } = useAppPreferences();
     const { logs } = useApp();
     const { config } = useAppConfig();
+    // Same live prefs as the Stats data hook (formula for insights; the data
+    // hook owns worker + cache wiring). Drops into config on migration.
+    const [trainingPrefs] = useTrainingConfig();
     const activeMeso = useStore(state => state.activeMeso);
     const [section, setSection] = useState<StatsSection>('overview');
     const safeLogs = useMemo(() => Array.isArray(logs) ? logs : [], [logs]);
@@ -86,8 +90,8 @@ export const StatsView: React.FC = () => {
         [filteredLogs, scopeMesoId],
     );
     const premiumInsights = useMemo(
-        () => buildPremiumInsights(filteredLogs, scopeMesoId),
-        [filteredLogs, scopeMesoId],
+        () => buildPremiumInsights(filteredLogs, scopeMesoId, Date.now(), trainingPrefs.oneRmFormula),
+        [filteredLogs, scopeMesoId, trainingPrefs.oneRmFormula],
     );
 
     const items: Array<{ id: StatsSection; es: string; en: string }> = [

@@ -87,7 +87,7 @@ test.describe('P7-4: edge-to-edge insets', () => {
         await expect(page.locator('nav[aria-label="Main navigation"]')).toBeVisible();
 
         const pill = page.locator('aside');
-        await expect(pill.getByRole('button', { name: '-10s' })).toBeVisible({ timeout: 8000 });
+        await expect(pill.getByRole('button', { name: '-15s' })).toBeVisible({ timeout: 8000 });
         const pillBox = await pill.boundingBox();
         expect(pillBox).not.toBeNull();
         // Above the nav-bar zone AND above the 80px float gap on top of it.

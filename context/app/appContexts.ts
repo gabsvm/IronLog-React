@@ -1,7 +1,7 @@
 // S6: AppContext types, context objects and constants, moved verbatim from
 // context/AppContext.tsx (the provider and the consumer hooks stay there).
 import React, { createContext } from 'react';
-import { AppState, Lang, Theme, ColorTheme, EffectsMode, ResolvedEffects, ExerciseDef, Log, ProgramDay, TutorialState, GlobalTemplate, UserProfile, BeforeInstallPromptEvent, NutritionLog, CardioSession, NutritionGoal, MacroGoals, BodyLog, CustomFood, DirtySyncSection, SectionSyncMeta } from '../../types';
+import { AppState, Lang, Theme, ColorTheme, EffectsMode, ResolvedEffects, ExerciseDef, Log, ProgramDay, TutorialState, GlobalTemplate, TemplateFolder, UserProfile, BeforeInstallPromptEvent, NutritionLog, CardioSession, NutritionGoal, MacroGoals, BodyLog, MeasurementLog, CustomFood, DirtySyncSection, SectionSyncMeta } from '../../types';
 
 export interface AppContextType extends Omit<AppState, 'activeSession' | 'activeMeso'> {
     lang: Lang;
@@ -24,6 +24,8 @@ export interface AppContextType extends Omit<AppState, 'activeSession' | 'active
     setGlobalTemplates: (val: GlobalTemplate[] | ((prev: GlobalTemplate[]) => GlobalTemplate[])) => void;
     personalTemplates: GlobalTemplate[];
     setPersonalTemplates: (val: GlobalTemplate[] | ((prev: GlobalTemplate[]) => GlobalTemplate[])) => void;
+    templateFolders: TemplateFolder[];
+    setTemplateFolders: (val: TemplateFolder[] | ((prev: TemplateFolder[]) => TemplateFolder[])) => void;
 
     // NEW: User Profile Setter
     setUserProfile: (val: UserProfile | ((prev: UserProfile) => UserProfile)) => void;
@@ -38,8 +40,9 @@ export interface AppContextType extends Omit<AppState, 'activeSession' | 'active
 
     // Body Tracking
     setBodyLogs: (val: BodyLog[] | ((prev: BodyLog[]) => BodyLog[])) => void;
+    measurementLogs: MeasurementLog[];
+    setMeasurementLogs: (val: MeasurementLog[] | ((prev: MeasurementLog[]) => MeasurementLog[])) => void;
     setMacroGoals: (val: MacroGoals | null | ((prev: MacroGoals | null) => MacroGoals | null)) => void;
-
     // Custom Food Database
     customFoods: CustomFood[];
     setCustomFoods: (val: CustomFood[] | ((prev: CustomFood[]) => CustomFood[])) => void;

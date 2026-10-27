@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { enterViaKeypad as enterWeightViaKeypad } from './helpers/keypad';
+import { openProfileSheet } from './strongNav';
 
 // Q11: the kg/lb preference changes presentation and entry only — stored
 // data stays canonical kg. Switching units never rewrites stored values.
@@ -44,16 +45,19 @@ const startFreestyleWithTwoExercises = async (page: Page) => {
 };
 
 const setWeightUnitFromHome = async (page: Page, unit: 'KG' | 'LBS') => {
-    await page.getByLabel(/Abrir perfil|Open profile/).click();
-    const sheet = page.locator('[role="dialog"]').first();
-    await expect(sheet).toBeVisible({ timeout: 10000 });
+    // Weight unit lives in the unified sheet (Strong panel gear).
+    const sheet = await openProfileSheet(page);
     const training = sheet.locator('#profile-section-training');
     await training.scrollIntoViewIfNeeded();
     const group = training.getByRole('group', { name: /Unidad de peso|Weight unit/ });
     await expect(group).toBeVisible({ timeout: 6000 });
     await group.getByRole('button', { name: unit, exact: true }).click();
+    // Back closes the sheet; the Strong panel stays open behind it, so go
+    // back once more to return to a clean home (panel owns one entry).
     await page.goBack();
     await expect(sheet).toBeHidden({ timeout: 6000 });
+    await page.goBack();
+    await expect(page.getByTestId('profile-dashboard')).toHaveCount(0, { timeout: 6000 });
 };
 
 const resumeWorkoutFromHome = async (page: Page) => {
@@ -92,8 +96,9 @@ test.describe('Q11: weight units kg/lb', () => {
         await startFreestyleWithTwoExercises(page);
 
         const card = page.locator('#tut-exercise-list');
-        const firstCardUnit = (unit: string) => card.locator('[id^="exercise-card-"]').first().getByText(unit, { exact: false });
-        await expect(firstCardUnit('(KG)')).toBeVisible({ timeout: 6000 });
+        // Strong parity flat header shows the unit badge (KG/LBS, no parens).
+        const firstCardUnit = (unit: string) => card.getByTestId('sets-header').first().getByText(unit, { exact: true });
+        await expect(firstCardUnit('KG')).toBeVisible({ timeout: 6000 });
         const weightInput = card.locator('input[type="number"][inputmode="decimal"]').first();
         await enterWeightViaKeypad(page, weightInput, '60');
         // Stored raw in kg mode (no conversion on either side).
@@ -105,7 +110,7 @@ test.describe('Q11: weight units kg/lb', () => {
         await resumeWorkoutFromHome(page);
 
         // Same stored 60 kg now presented as lb.
-        await expect(firstCardUnit('(LBS)')).toBeVisible({ timeout: 6000 });
+        await expect(firstCardUnit('LBS')).toBeVisible({ timeout: 6000 });
         await expect(weightInput).toHaveValue('132.3');
 
         // Typing in lb commits canonical kg.
@@ -116,7 +121,7 @@ test.describe('Q11: weight units kg/lb', () => {
         await goHomeFromWorkout(page);
         await setWeightUnitFromHome(page, 'KG');
         await resumeWorkoutFromHome(page);
-        await expect(firstCardUnit('(KG)')).toBeVisible({ timeout: 6000 });
+        await expect(firstCardUnit('KG')).toBeVisible({ timeout: 6000 });
         await expect(weightInput).toHaveValue('61.235');
     });
 });

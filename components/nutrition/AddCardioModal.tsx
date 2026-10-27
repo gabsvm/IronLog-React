@@ -8,7 +8,8 @@ import { Button } from '../ui/Button';
 import { Sheet } from '../ui/Sheet';
 import { todayLocalDateKey } from '../../utils/localDate';
 import { isValidCardioEntry } from '../../utils/cardioValidation';
-
+import { fromDisplayDistance, distanceUnitLabel } from '../../utils/strongTraining';
+import { useTrainingConfig } from '../../hooks/useTrainingConfig';
 interface AddCardioModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -45,9 +46,15 @@ export const AddCardioModal: React.FC<AddCardioModalProps> = ({ isOpen, onClose,
   const [distance, setDistance]   = useState('');
   const [heartRate, setHeartRate] = useState('');
   const [notes, setNotes]         = useState('');
+  // Independent distance unit: entry/display only, storage stays canonical km
+  // (historical sessions are never rewritten on unit change).
+  const [trainingPrefs] = useTrainingConfig();
+  const distanceUnit = trainingPrefs.distanceUnit;
+  const distLabel = distanceUnitLabel(distanceUnit);
 
   const durationMin = Number(duration);
-  const distanceKm = distance === '' ? undefined : Number(distance);
+  // Typed in the display unit; converted to canonical km for storage.
+  const distanceKm = distance === '' ? undefined : fromDisplayDistance(Number(distance), distanceUnit);
   const avgHeartRate = heartRate === '' ? undefined : Number(heartRate);
   const canSubmit = isValidCardioEntry(durationMin, distanceKm, avgHeartRate);
   const calEstimate = canSubmit ? getCalEstimate(activity, durationMin, bodyWeight) : 0;
@@ -72,7 +79,9 @@ export const AddCardioModal: React.FC<AddCardioModalProps> = ({ isOpen, onClose,
   const t = {
     title:     TRANSLATIONS[lang].copy.addCardioModal.logCardio,
     duration:  TRANSLATIONS[lang].copy.addCardioModal.durationMin,
-    distance:  TRANSLATIONS[lang].copy.addCardioModal.distanceKm,
+    // Translation key stays `distanceKm` (canonical storage); the suffix
+    // follows the display unit without touching shared translations.
+    distance:  TRANSLATIONS[lang].copy.addCardioModal.distanceKm.replace('km', distLabel).replace('KM', distLabel.toUpperCase()),
     heartRate: TRANSLATIONS[lang].copy.addCardioModal.avgHeartRate,
     notes:     TRANSLATIONS[lang].copy.addCardioModal.notesOptional,
     estimated: TRANSLATIONS[lang].copy.addCardioModal.estBurned,

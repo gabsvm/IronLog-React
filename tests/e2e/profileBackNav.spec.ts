@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { bottomNav, openProfileSheet, openStrongPanel, startFreestyleWorkout } from './strongNav';
 
 const ERROR_BOUNDARY_TEXT = /ERROR CRÍTICO|CRITICAL ERROR/;
 
@@ -15,44 +16,28 @@ test.describe('Profile back-button then workout back stays in app (G3)', () => {
         await seedOnboardedProfile(page);
         await page.goto('/');
 
-        const nav = page.locator('nav[aria-label="Main navigation"]');
+        const nav = bottomNav(page);
         await expect(nav).toBeVisible({ timeout: 15000 });
 
-        // 1. Open the profile sheet (pushes a #profile entry).
-        const avatarBtn = page.getByLabel(/Abrir perfil|Open profile/);
-        await expect(avatarBtn).toBeVisible({ timeout: 8000 });
-        await avatarBtn.click();
-        const profileSheet = page.locator('[role="dialog"]', { hasText: /Modo local|Local mode/ });
-        await expect(profileSheet).toBeVisible({ timeout: 8000 });
+        // 1. Open the Strong Profile panel (pushes a #strong-profile entry).
+        const dashboard = await openStrongPanel(page);
+        await expect(dashboard).toBeVisible({ timeout: 8000 });
 
         // 2. Close it with the Back button: no App-level view/settings change.
         await page.goBack();
-        await expect(profileSheet).toHaveCount(0, { timeout: 8000 });
+        await expect(page.getByTestId('profile-dashboard')).toHaveCount(0, { timeout: 8000 });
         await expect(nav).toBeVisible();
 
-        // 3. Start a freestyle workout (must pushState a workout entry).
-        // Fase 2 shell: freestyle entry lives in Rutina (no center + button).
-        await nav.getByRole('button', { name: /^Rutina$|^Routine$/ }).click();
-        const quickBtn = page.getByRole('button', { name: /Iniciar entreno|Start workout/ }).first();
-        await expect(quickBtn).toBeVisible({ timeout: 8000 });
-        await quickBtn.click();
-
-        const freestyleOption = page.locator('button:has-text("Sesión libre"), button:has-text("Freestyle")').first();
-        await expect(freestyleOption).toBeVisible({ timeout: 6000 });
-        await freestyleOption.click();
-
-        const startFreeBtn = page.locator('button:has-text("Iniciar Sesión Libre"), button:has-text("Start Free Session"), button:has-text("Iniciar sesión libre")').first();
-        await expect(startFreeBtn).toBeVisible({ timeout: 8000 });
-        await startFreeBtn.scrollIntoViewIfNeeded();
-        await startFreeBtn.click();
-        await expect(page.locator('#tut-finish-btn')).toBeVisible({ timeout: 10000 });
+        // 3. Start a freestyle workout from the Entreno FAB (must push a workout entry).
+        await startFreestyleWorkout(page);
 
         // 4. Back from the workout returns to the origin tab inside the app (no exit).
         await page.goBack();
         expect(page.url()).toContain('localhost');
         await expect(nav).toBeVisible();
-        const routineBtn = nav.locator('button[aria-current="page"]', { hasText: /^Rutina$|^Routine$/ });
-        await expect(routineBtn).toBeVisible({ timeout: 8000 });
+        // Home and routine belong to the training family: Entreno stays active.
+        const workoutBtn = nav.locator('button[aria-current="page"]', { hasText: /^Entreno$|^Workout$/ });
+        await expect(workoutBtn).toBeVisible({ timeout: 8000 });
         await expect(page.locator('#tut-finish-btn')).toHaveCount(0);
 
         await expect(page.getByText(ERROR_BOUNDARY_TEXT)).toHaveCount(0);
@@ -64,9 +49,9 @@ test.describe('Profile import dialogs own only their overlay', () => {
         await seedOnboardedProfile(page);
         await page.goto('/');
         const avatar = page.getByLabel(/Abrir perfil|Open profile/);
-        await avatar.click();
-        const profile = page.locator('[data-vaul-drawer][role="dialog"]');
-        await expect(profile).toBeVisible();
+        // Unified sheet opens from the Strong panel's Ajustes gear.
+        const profile = await openProfileSheet(page);
+        const gear = page.getByTestId('profile-dashboard').getByRole('button', { name: /^Ajustes$|^Settings$/ });
         const close = profile.getByRole('button', { name: /^(Close|Cerrar)$/ });
         await close.focus();
         const upload = profile.locator('input[type="file"][accept=".json"]');
@@ -99,23 +84,25 @@ test.describe('Profile import dialogs own only their overlay', () => {
         await expect(close).toBeFocused();
         await close.tap();
         await expect(profile).toHaveCount(0);
-        await expect(avatar).toBeFocused();
+        // Focus returns to the sheet trigger (panel gear), not the avatar.
+        await expect(gear).toBeFocused();
         await expect.poll(() => page.evaluate(() => ({
             pointerEvents: document.body.style.pointerEvents,
             overflow: document.body.style.overflow,
         }))).toEqual({ pointerEvents: '', overflow: '' });
-        // Verify interaction, not just a style reset, after the final close.
+        // Verify interaction, not just a style reset, after the final close:
+        // dismiss the panel (focus returns to the avatar), then reopen fully.
+        await page.getByTestId('profile-dashboard').getByRole('button', { name: /^Cerrar$|^Close$/ }).click();
+        await expect(avatar).toBeFocused();
+        await expect(page.getByTestId('profile-dashboard')).toHaveCount(0);
         await avatar.tap();
-        await expect(profile).toBeVisible();
+        await expect(page.getByTestId('profile-dashboard')).toBeVisible();
     });
 
     test('Cancel and Import accept real taps above Profile and import restores actual data', async ({ page }) => {
         await seedOnboardedProfile(page);
         await page.goto('/');
-        const avatar = page.getByLabel(/Abrir perfil|Open profile/);
-        await avatar.click();
-        const profile = page.locator('[data-vaul-drawer][role="dialog"]');
-        await expect(profile).toBeVisible();
+        const profile = await openProfileSheet(page);
         const backup = JSON.stringify({
             schema: 'gainslab-backup', version: 1, exportedAt: Date.now(), appVersion: '4.0.3',
             state: {
@@ -145,16 +132,13 @@ test.describe('Profile import dialogs own only their overlay', () => {
             confirm.getByRole('button', { name: /^Importar Datos$|^Import Data$/i }).tap(),
         ]);
         await expect(page.locator('nav[aria-label="Main navigation"]')).toBeVisible({ timeout: 15000 });
-        // Reload preserves the #profile history entry, so Profile is already
-        // open with the restored data; the avatar is correctly behind it.
-        await expect(profile).toBeVisible();
-        await expect(profile.locator('#profile-section-body').getByText(/79[.,]5\s*kg/i)).toBeVisible();
-        await profile.getByRole('button', { name: /^(Close|Cerrar)$/ }).tap();
-        await expect(profile).toHaveCount(0);
-        await avatar.tap();
-        await expect(profile.locator('#profile-section-body').getByText(/79[.,]5\s*kg/i)).toBeVisible();
-        await profile.getByRole('button', { name: /^(Close|Cerrar)$/ }).tap();
-        await expect(profile).toHaveCount(0);
+        // Reload preserves the sheet entry with the restored data (the panel
+        // stays mounted behind it); the avatar is correctly behind both.
+        const reopened = page.locator('[role="dialog"]').first();
+        await expect(reopened).toBeVisible();
+        await expect(reopened.locator('#profile-section-body').getByText(/79[.,]5\s*kg/i)).toBeVisible();
+        await reopened.getByRole('button', { name: /^(Close|Cerrar)$/ }).tap();
+        await expect(reopened).toHaveCount(0);
         await expect.poll(() => page.evaluate(() => ({
             pointerEvents: document.body.style.pointerEvents,
             overflow: document.body.style.overflow,

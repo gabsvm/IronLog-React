@@ -1,4 +1,5 @@
-import { AppState, ExerciseDef, GlobalTemplate, Log, MesoCycle, NutritionGoal, NutritionLog, ProgramDay, UserProfile, CardioSession, BodyLog, MacroGoals, CustomFood, ActiveSession } from '../types';
+import { AppState, ExerciseDef, GlobalTemplate, TemplateFolder, Log, MesoCycle, NutritionGoal, NutritionLog, ProgramDay, UserProfile, CardioSession, BodyLog, MeasurementLog, MacroGoals, CustomFood, ActiveSession, TrainingConfigFields } from '../types';
+import { sanitizeTrainingConfig, TRAINING_CONFIG_KEYS } from '../utils/strongTraining';
 import { db } from '../utils/db';
 import { useStore } from '../lib/store';
 import { todayLocalDateKey } from '../utils/localDate';
@@ -8,14 +9,14 @@ export const BACKUP_SCHEMA = 'gainslab-backup';
 export const CURRENT_BACKUP_VERSION = 1;
 export const APP_VERSION = '4.0.3';
 
-export interface GainsLabBackupConfig {
+export type GainsLabBackupConfig = {
     showRIR?: boolean;
     rpEnabled?: boolean;
     rpTargetRIR?: number;
     keepScreenOn?: boolean;
     weightUnit?: 'kg' | 'lb';
     restTimerDisplay?: 'Overlay' | 'Banner' | 'compact' | 'expanded';
-}
+} & Partial<TrainingConfigFields>;
 
 export interface GainsLabBackupState {
     program?: ProgramDay[];
@@ -27,9 +28,11 @@ export interface GainsLabBackupState {
     nutritionLogs?: NutritionLog[];
     cardioSessions?: CardioSession[];
     bodyLogs?: BodyLog[];
+    measurementLogs?: MeasurementLog[];
     macroGoals?: MacroGoals | null;
     nutritionGoal?: NutritionGoal;
     personalTemplates?: GlobalTemplate[];
+    templateFolders?: TemplateFolder[];
     customFoods?: CustomFood[];
     rpFeedback?: Record<string, any>;
     config?: GainsLabBackupConfig;
@@ -58,7 +61,9 @@ export interface BackupDomainSummary {
     nutritionDaysCount: number;
     cardioSessionsCount: number;
     bodyLogsCount: number;
+    measurementLogsCount: number;
     personalTemplatesCount: number;
+    templateFoldersCount: number;
     customFoodsCount: number;
 }
 
@@ -76,9 +81,11 @@ export const createBackupEnvelope = (state: GainsLabBackupState): GainsLabBackup
         nutritionLogs: state.nutritionLogs ?? [],
         cardioSessions: state.cardioSessions ?? [],
         bodyLogs: state.bodyLogs ?? [],
+        measurementLogs: state.measurementLogs ?? [],
         macroGoals: state.macroGoals ?? null,
         nutritionGoal: state.nutritionGoal,
         personalTemplates: state.personalTemplates ?? [],
+        templateFolders: state.templateFolders ?? [],
         customFoods: state.customFoods ?? [],
         rpFeedback: state.rpFeedback ?? {},
         config: state.config,
@@ -110,9 +117,28 @@ export const summarizeBackup = (state: GainsLabBackupState): BackupDomainSummary
         nutritionDaysCount: Array.isArray(state.nutritionLogs) ? state.nutritionLogs.length : 0,
         cardioSessionsCount: Array.isArray(state.cardioSessions) ? state.cardioSessions.length : 0,
         bodyLogsCount: Array.isArray(state.bodyLogs) ? state.bodyLogs.length : 0,
+        measurementLogsCount: Array.isArray(state.measurementLogs) ? state.measurementLogs.length : 0,
         personalTemplatesCount: Array.isArray(state.personalTemplates) ? state.personalTemplates.length : 0,
+        templateFoldersCount: Array.isArray(state.templateFolders) ? state.templateFolders.length : 0,
         customFoodsCount: Array.isArray(state.customFoods) ? state.customFoods.length : 0,
     };
+};
+
+/**
+ * Sanitizes the training slice of a stored config in place: present keys keep
+ * valid values ('ask' | 'complete' | 'discard', previousScope, numeric ranges,
+ * units, plates), invalid ones fall back to defaults so a foreign backup can
+ * never poison local config. Absent keys are left absent (back-compat).
+ */
+const sanitizeStoredTrainingConfig = (config: GainsLabBackupConfig | undefined): void => {
+    if (!config || typeof config !== 'object') return;
+    const sanitized = sanitizeTrainingConfig(config);
+    const raw = config as Partial<TrainingConfigFields>;
+    (Object.keys(sanitized) as (keyof TrainingConfigFields)[]).forEach((k) => {
+        if (raw[k] !== undefined) {
+            (config as unknown as Record<keyof TrainingConfigFields, unknown>)[k] = sanitized[k];
+        }
+    });
 };
 
 /**
@@ -151,11 +177,13 @@ export const validateAndMigrateBackup = (raw: unknown): BackupValidationResult =
             if (state.config.restTimerDisplay !== undefined && typeof state.config.restTimerDisplay !== 'string') {
                 delete state.config.restTimerDisplay;
             }
+            sanitizeStoredTrainingConfig(state.config);
         }
 
         const summary = summarizeBackup(state);
         const hasAnyData = summary.programsCount > 0 || summary.exercisesCount > 0 || summary.logsCount > 0 ||
-            summary.hasActiveMeso || summary.hasProfile || summary.nutritionDaysCount > 0 || summary.bodyLogsCount > 0;
+            summary.hasActiveMeso || summary.hasActiveSession || summary.hasProfile || summary.nutritionDaysCount > 0 || summary.cardioSessionsCount > 0 || summary.bodyLogsCount > 0 ||
+            summary.measurementLogsCount > 0 || summary.personalTemplatesCount > 0 || summary.templateFoldersCount > 0 || summary.customFoodsCount > 0;
 
         if (!hasAnyData) {
             return { valid: false, errorKey: 'backup_empty', errorDetails: 'Backup contains no usable domain data' };
@@ -180,7 +208,10 @@ export const validateAndMigrateBackup = (raw: unknown): BackupValidationResult =
     // Case 2: Legacy 4.0.x un-enveloped backup compatibility
     // Has top-level arrays like program, exercises, logs, etc.
     const hasLegacyDomain = Array.isArray(obj.program) || Array.isArray(obj.exercises) || Array.isArray(obj.logs) ||
-        Array.isArray(obj.nutritionLogs) || (obj.userProfile && typeof obj.userProfile === 'object');
+        Array.isArray(obj.nutritionLogs) || Array.isArray(obj.cardioSessions) || Array.isArray(obj.bodyLogs) ||
+        Array.isArray(obj.measurementLogs) || Array.isArray(obj.personalTemplates) || Array.isArray(obj.templateFolders) ||
+        Array.isArray(obj.customFoods) || (obj.activeMeso && typeof obj.activeMeso === 'object') ||
+        (obj.activeSession && typeof obj.activeSession === 'object') || (obj.userProfile && typeof obj.userProfile === 'object');
 
     if (hasLegacyDomain) {
         const legacyState: GainsLabBackupState = {
@@ -193,14 +224,17 @@ export const validateAndMigrateBackup = (raw: unknown): BackupValidationResult =
             nutritionLogs: Array.isArray(obj.nutritionLogs) ? obj.nutritionLogs : undefined,
             cardioSessions: Array.isArray(obj.cardioSessions) ? obj.cardioSessions : undefined,
             bodyLogs: Array.isArray(obj.bodyLogs) ? obj.bodyLogs : undefined,
+            measurementLogs: Array.isArray(obj.measurementLogs) ? obj.measurementLogs : undefined,
             macroGoals: obj.macroGoals ?? undefined,
             nutritionGoal: obj.nutritionGoal ?? undefined,
             personalTemplates: Array.isArray(obj.personalTemplates) ? obj.personalTemplates : undefined,
+            templateFolders: Array.isArray(obj.templateFolders) ? obj.templateFolders : undefined,
             customFoods: Array.isArray(obj.customFoods) ? obj.customFoods : undefined,
             rpFeedback: obj.rpFeedback ?? undefined,
             config: obj.config ?? undefined,
         };
 
+        sanitizeStoredTrainingConfig(legacyState.config);
         const migratedBackup: GainsLabBackupV1 = {
             schema: BACKUP_SCHEMA,
             version: 1,
@@ -244,9 +278,11 @@ export const restoreBackupToStorage = async (backup: GainsLabBackupV1): Promise<
     if (s.nutritionLogs !== undefined) writeTasks.push(db.set('il_nutrition_v1', s.nutritionLogs));
     if (s.cardioSessions !== undefined) writeTasks.push(db.set('il_cardio_v1', s.cardioSessions));
     if (s.bodyLogs !== undefined) writeTasks.push(db.set('il_body_v1', s.bodyLogs));
+    if (s.measurementLogs !== undefined) writeTasks.push(db.set('il_measurements_v1', s.measurementLogs));
     if (s.macroGoals !== undefined) writeTasks.push(db.set('il_macros_v1', s.macroGoals));
     if (s.nutritionGoal !== undefined) writeTasks.push(db.set('il_nut_goal_v1', s.nutritionGoal));
     if (s.personalTemplates !== undefined) writeTasks.push(db.set('il_personal_templates_v1', s.personalTemplates));
+    if (s.templateFolders !== undefined) writeTasks.push(db.set('il_template_folders_v1', s.templateFolders));
     if (s.customFoods !== undefined) writeTasks.push(db.set('il_custom_foods_v1', s.customFoods));
     if (s.rpFeedback !== undefined) writeTasks.push(db.set('il_rp_fb_v1', s.rpFeedback));
 
@@ -273,6 +309,14 @@ export const restoreBackupToStorage = async (backup: GainsLabBackupV1): Promise<
         if (s.config.restTimerDisplay !== undefined) {
             window.localStorage.setItem('il_cfg_rest_display', JSON.stringify(s.config.restTimerDisplay));
         }
+        // Training slice (validated + sanitized above): same keys the AppContext
+        // atoms read, so a restore lands verbatim with cross-device consistency.
+        const training = s.config as Partial<TrainingConfigFields>;
+        (Object.keys(TRAINING_CONFIG_KEYS) as (keyof TrainingConfigFields)[]).forEach((k) => {
+            if (training[k] !== undefined) {
+                window.localStorage.setItem(TRAINING_CONFIG_KEYS[k], JSON.stringify(training[k]));
+            }
+        });
     }
 
     if (typeof window !== 'undefined' && window.localStorage) {

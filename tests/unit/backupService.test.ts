@@ -56,6 +56,50 @@ describe('backupService', () => {
         }
     });
 
+    it('accepts a backup containing only personal templates (never empty)', () => {
+        const envelope = createBackupEnvelope({
+            personalTemplates: [{
+                id: 'tpl_personal_1',
+                name: 'My Routine',
+                title: { en: 'My Routine', es: 'Mi rutina' },
+                description: { en: 'Personal routine', es: 'Rutina personal' },
+                isPro: false,
+                program: [],
+                order: 0,
+                scope: 'personal',
+            }],
+        });
+        const result = validateAndMigrateBackup(envelope);
+        expect(result.valid).toBe(true);
+    });
+
+    it('migrates a legacy backup containing only personal templates and folders', () => {
+        const legacyExport = {
+            personalTemplates: [{
+                id: 'tpl_personal_1',
+                name: 'My Routine',
+                title: { en: 'My Routine', es: 'Mi rutina' },
+                description: { en: 'Personal routine', es: 'Rutina personal' },
+                isPro: false,
+                program: [],
+                order: 0,
+                scope: 'personal',
+            }],
+            templateFolders: [{ id: 'fold_1', name: 'Strength', order: 0, createdAt: 1000, updatedAt: 1000 }],
+            version: '4.0.3',
+        };
+
+        const result = validateAndMigrateBackup(legacyExport);
+        expect(result.valid).toBe(true);
+        if (result.valid) {
+            expect(result.backup.schema).toBe(BACKUP_SCHEMA);
+            expect(result.backup.state.personalTemplates).toHaveLength(1);
+            expect(result.backup.state.templateFolders).toHaveLength(1);
+            expect(result.summary.personalTemplatesCount).toBe(1);
+            expect(result.summary.templateFoldersCount).toBe(1);
+        }
+    });
+
     it('migrates legacy 4.0.3 un-enveloped backup into standard v1 envelope', () => {
         const legacyExport = {
             program: [{ id: 'leg_p1', dayName: { en: 'Legs', es: 'Piernas' }, slots: [] }],

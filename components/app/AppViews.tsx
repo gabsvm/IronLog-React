@@ -27,6 +27,7 @@ const WorkoutView = React.lazy(() => import('../../views/WorkoutView').then(m =>
 const ConfirmModal = React.lazy(() => import('../ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
 const RoutineView = React.lazy(() => import('../../views/RoutineView').then(m => ({ default: m.RoutineView })));
 const DiaryView = React.lazy(() => import('../../views/DiaryView').then(m => ({ default: m.DiaryView })));
+const MeasureView = React.lazy(() => import('../../views/MeasureView').then(m => ({ default: m.MeasureView })));
 
 interface AppViewsProps {
     view: AppView;
@@ -66,8 +67,8 @@ export const AppViews: React.FC<AppViewsProps> = ({
     const {
         program, exercises, lang, logs, setLogs,
         config, rpFeedback,
-        userProfile, nutritionLogs, cardioSessions, bodyLogs, macroGoals, nutritionGoal,
-        personalTemplates, customFoods,
+        userProfile, nutritionLogs, cardioSessions, bodyLogs, measurementLogs, macroGoals, nutritionGoal,
+        personalTemplates, customFoods, templateFolders,
     } = useApp();
     const activeMeso = useStore(state => state.activeMeso);
     const setActiveMeso = useStore(state => state.setActiveMeso);
@@ -153,10 +154,11 @@ export const AppViews: React.FC<AppViewsProps> = ({
                 <Suspense fallback={<LoadingSpinner />}>
                     <WorkoutView
                         onFinish={() => {
-                            if (!activeSession) return;
+                            const liveSession = useStore.getState().activeSession;
+                            if (!liveSession) return;
 
                             const result = completeWorkoutPipeline({
-                                activeSession,
+                                activeSession: liveSession,
                                 activeMeso,
                                 program: Array.isArray(program) ? program : [],
                                 logs: Array.isArray(logs) ? logs : [],
@@ -177,8 +179,8 @@ export const AppViews: React.FC<AppViewsProps> = ({
                                 exercises: Array.isArray(exercises) ? exercises : [],
                                 logs: result.updatedLogs,
                                 activeMeso: result.updatedMeso ?? activeMeso,
-                                userProfile, nutritionLogs, cardioSessions, bodyLogs,
-                                macroGoals, nutritionGoal, personalTemplates, customFoods,
+                                userProfile, nutritionLogs, cardioSessions, bodyLogs, measurementLogs,
+                                macroGoals, nutritionGoal, personalTemplates, customFoods, templateFolders,
                                 rpFeedback, config,
                             });
 
@@ -295,6 +297,13 @@ export const AppViews: React.FC<AppViewsProps> = ({
                                     nutritionTab={nutritionTab} onNutritionTabChange={setNutritionTab}
                                     addMealRequested={addMealRequested} onAddMealHandled={handleAddMealHandled}
                                 />
+                            </LazyViewBoundary>
+                        </Suspense>
+                    )}
+                    {view === 'measure' && (
+                        <Suspense fallback={<LoadingSpinner />}>
+                            <LazyViewBoundary lang={lang} resetKey="measure">
+                                <MeasureView onBack={() => returnFromChild('home')} />
                             </LazyViewBoundary>
                         </Suspense>
                     )}

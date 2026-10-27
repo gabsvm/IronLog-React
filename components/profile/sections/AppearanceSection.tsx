@@ -66,6 +66,7 @@ export const AppearanceSection: React.FC = () => {
                         type="button"
                         onClick={() => setColorTheme('royal')}
                         aria-pressed={colorTheme === 'royal'}
+                        aria-label={ty.pillRoyal}
                         className={`flex min-h-[56px] items-center gap-3 p-2.5 rounded-2xl border transition-all text-left ${
                             colorTheme === 'royal'
                                 ? 'bg-[rgb(var(--surface-elevated))] border-primary-500 ring-1 ring-primary-500 shadow-sm'

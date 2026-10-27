@@ -18,6 +18,7 @@ describe('S9: CSS layers', () => {
             "import './index.css';",
             "import './native-performance.css';",
             "import './styles/app-polish.css';",
+            "import './components/layout/strong.css';",
         ]);
     });
 

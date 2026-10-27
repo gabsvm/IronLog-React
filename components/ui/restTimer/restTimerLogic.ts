@@ -41,7 +41,7 @@ const NOTIFICATION_COPY = {
 /** Identical exercise selection to the in-app rest overlay; no invented next set. */
 export function resolveRestNotificationContent(
     exercises: SessionExercise[] | undefined,
-    source: { exerciseInstanceId: number; setId: number } | undefined,
+    source: { exerciseInstanceId: number; setId?: number } | undefined,
     lang: 'es' | 'en',
 ): RestNotificationContent | null {
     const info = resolveRestNextAction(exercises, source, lang);
@@ -76,7 +76,7 @@ export function applyEffortRatingToExercises(
 
 export function resolveRestNextAction(
     exercises: SessionExercise[] | undefined,
-    source?: { exerciseInstanceId: number; setId: number },
+    source?: { exerciseInstanceId: number; setId?: number },
     lang: 'es' | 'en' = 'es',
     unit: WeightUnit = 'kg'
 ): RestNextAction | null {

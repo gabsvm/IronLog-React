@@ -9,7 +9,8 @@ export const CircularTimer: React.FC<{
     totalDuration: number;
     lang: 'en' | 'es';
     reducedEffects?: boolean;
-}> = ({ percentage, timeLeft, totalDuration, lang, reducedEffects }) => {
+    paused?: boolean;
+}> = ({ percentage, timeLeft, totalDuration, lang, reducedEffects, paused }) => {
     const tm = TRANSLATIONS[lang].timer;
     const size = 170;
     const strokeWidth = 7;
@@ -52,7 +53,7 @@ export const CircularTimer: React.FC<{
                     {formatSeconds(timeLeft)}
                 </span>
                 <span className="text-xs text-muted mt-0.5">
-                    {`${tm.ofWord} ${formatSeconds(totalDuration)}`}
+                    {paused ? tm.paused : `${tm.ofWord} ${formatSeconds(totalDuration)}`}
                 </span>
             </div>
         </div>

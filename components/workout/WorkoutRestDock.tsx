@@ -11,6 +11,15 @@ import { useStore } from '../../lib/store';
 import { resolveWeightUnit } from '../../utils/units';
 import { Icon } from '../ui/Icon';
 import {
+    adjustRestTimer,
+    getRestControlLabels,
+    pauseRestTimer,
+    resolveRestIncrement,
+    restartRestTimer,
+    resumeRestTimer,
+    skipRestTimer,
+} from '../ui/restTimer/restTimerControls';
+import {
     applyEffortRatingToExercises,
     calculateTimerPercentage,
     resolveRestNextAction,
@@ -67,27 +76,31 @@ export const WorkoutRestDock: React.FC = () => {
     const percentage = calculateTimerPercentage(restTimer.timeLeft, restTimer.duration);
     const remainingPct = Math.min(100, Math.max(0, percentage));
 
+    const restLabels = getRestControlLabels(lang);
+    const restStep = resolveRestIncrement(config);
+
     const adjustTimer = (deltaSeconds: number): void => {
         triggerHaptic('light');
-        setRestTimer((prev) => {
-            if (!prev.active) return prev;
-            const nextTime = Math.max(0, prev.timeLeft + deltaSeconds);
-            return {
-                ...prev,
-                endAt: (prev.endAt || Date.now()) + deltaSeconds * 1000,
-                timeLeft: nextTime,
-                duration: deltaSeconds > 0 ? prev.duration + deltaSeconds : prev.duration,
-            };
-        });
+        setRestTimer((prev) => adjustRestTimer(prev, deltaSeconds));
     };
 
     const skipTimer = (): void => {
         triggerHaptic('medium');
-        setRestTimer((prev) => ({ ...prev, active: false, timeLeft: 0, endAt: 0, source: undefined }));
+        setRestTimer((prev) => skipRestTimer(prev));
+    };
+
+    const togglePauseTimer = (): void => {
+        triggerHaptic('light');
+        setRestTimer((prev) => (prev.paused ? resumeRestTimer(prev) : pauseRestTimer(prev)));
+    };
+
+    const restartTimer = (): void => {
+        triggerHaptic('light');
+        setRestTimer((prev) => restartRestTimer(prev));
     };
 
     const handleRateEffort = (effort: 'easy' | 'ok' | 'hard'): void => {
-        if (!restTimer?.source) return;
+        if (!restTimer?.source || restTimer.source.setId === undefined) return;
         const { exerciseInstanceId, setId } = restTimer.source;
         triggerHaptic('light');
         setActiveSession((prev) => {
@@ -112,7 +125,13 @@ export const WorkoutRestDock: React.FC = () => {
             <div className="flex items-center gap-2.5">
                 <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
-                        <p className="text-xs font-medium text-muted">{t.timer.resting}</p>
+                        <p className="text-xs font-medium text-muted">{restTimer.source ? t.timer.resting : restLabels.manualRest}</p>
+                        {restTimer.paused && (
+                            <span className="inline-flex items-center gap-1 rounded bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-sky-400">
+                                <Icon name="Pause" size={10} />
+                                {restLabels.pausedBadge}
+                            </span>
+                        )}
                         {isDensityMode && (
                             <span className="inline-flex items-center gap-1 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-400">
                                 <Icon name="Zap" size={10} />
@@ -127,11 +146,29 @@ export const WorkoutRestDock: React.FC = () => {
                 <div className="flex shrink-0 items-center gap-1.5">
                     <button
                         type="button"
-                        onClick={() => adjustTimer(-10)}
-                        className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-border-subtle bg-surface-elevated px-3 text-[11px] font-bold text-white transition-all hover:border-primary-500/30 active:scale-90"
-                        aria-label="-10s"
+                        onClick={togglePauseTimer}
+                        className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-border-subtle bg-surface-elevated text-white transition-all hover:border-primary-500/30 active:scale-90"
+                        aria-label={restTimer.paused ? restLabels.resume : restLabels.pause}
+                        title={restTimer.paused ? restLabels.resume : restLabels.pause}
                     >
-                        -10s
+                        <Icon name={restTimer.paused ? 'Play' : 'Pause'} size={16} />
+                    </button>
+                    <button
+                        type="button"
+                        onClick={restartTimer}
+                        className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-border-subtle bg-surface-elevated text-white transition-all hover:border-primary-500/30 active:scale-90"
+                        aria-label={restLabels.restart}
+                        title={restLabels.restart}
+                    >
+                        <Icon name="RotateCcw" size={16} />
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => adjustTimer(-restStep)}
+                        className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-border-subtle bg-surface-elevated px-3 text-[11px] font-bold text-white transition-all hover:border-primary-500/30 active:scale-90"
+                        aria-label={`-${restStep}s`}
+                    >
+                        -{restStep}s
                     </button>
                     <button
                         type="button"

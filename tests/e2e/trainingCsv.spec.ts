@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { openProfileSheet } from './strongNav';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -31,9 +32,8 @@ const seedOnboarded = (page: Page) =>
     });
 
 const openProfileData = async (page: Page) => {
-    await page.getByLabel(/Abrir perfil|Open profile/).click();
-    const sheet = page.locator('[role="dialog"]').first();
-    await expect(sheet).toBeVisible({ timeout: 10000 });
+    // Unified sheet opens from the Strong panel's Ajustes gear.
+    const sheet = await openProfileSheet(page);
     const data = sheet.locator('#profile-section-data');
     await data.scrollIntoViewIfNeeded();
     return { sheet, data };
@@ -68,7 +68,7 @@ test.describe('Q12: training CSV import/export', () => {
         await expect(sheet).toBeHidden({ timeout: 6000 });
 
         // ── 2. Imported session lands in the diary sessions section ──
-        await page.locator('nav[aria-label="Main navigation"]').getByRole('button', { name: /^Diario$|^Diary$/ }).click();
+        await page.locator('nav[aria-label="Main navigation"]').getByRole('button', { name: /^Historial$|^History$/ }).click();
         await expect(page.getByText('Morning Push')).toBeVisible({ timeout: 8000 });
 
         // ── 3. Reimport is idempotent ─────────────────────────────────

@@ -13,7 +13,9 @@ interface Props {
     isLinking: boolean;
     onOpenDetail?: (ex: SessionExercise) => void;
     onCardioModeChange: (m: CardioType) => void;
+    onEditNote: (mode: 'note' | 'sticky') => void;
     onInjectWarmup: () => void;
+    onEditRest: () => void;
     onFillFromPrevious?: () => void;
     onCopyToFollowing?: () => void;
     onSupersetAction: () => void;
@@ -26,6 +28,13 @@ interface Props {
     lang: 'en' | 'es';
 }
 
+/**
+ * Strong-parity exercise menu (v6.2.4 order): detail, add note, add sticky
+ * note, create/remove superset, warmup, update rest timers, replace, create
+ * superset, preferences, remove. Non-destructive helpers from the existing
+ * system (fill previous, copy to following, remove last set) stay grouped
+ * between rest and replace.
+ */
 export const ExerciseCardMenu: React.FC<Props> = ({
     ex,
     isOpen,
@@ -36,13 +45,15 @@ export const ExerciseCardMenu: React.FC<Props> = ({
     isLinking,
     onOpenDetail,
     onCardioModeChange,
+    onEditNote,
     onInjectWarmup,
+    onEditRest,
     onFillFromPrevious,
     onCopyToFollowing,
     onSupersetAction,
-    onReplace,
     onRemoveLastSet,
     canRemoveLastSet = true,
+    onReplace,
     onRequestDelete,
     onToggleProgressionMode,
     t,
@@ -84,6 +95,22 @@ export const ExerciseCardMenu: React.FC<Props> = ({
                         <>
                             <div className="my-1 h-px bg-[rgb(var(--surface-elevated)/0.66)]" />
                             <button
+                                onClick={(e) => { e.stopPropagation(); onEditNote('note'); onClose(); }}
+                                role="menuitem"
+                                className="flex min-h-11 w-full items-center gap-3 px-4 py-3 text-left text-sm font-bold text-[rgb(var(--text-primary))] transition-colors hover:bg-[rgb(var(--surface-elevated))]"
+                            >
+                                <Icon name="Pencil" size={16} className="text-muted" /> {m.addNote}
+                            </button>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onEditNote('sticky'); onClose(); }}
+                                role="menuitem"
+                                className="flex min-h-11 w-full items-center gap-3 px-4 py-3 text-left text-sm font-bold text-[rgb(var(--text-primary))] transition-colors hover:bg-[rgb(var(--surface-elevated))]"
+                            >
+                                <Icon name="FileText" size={16} className="text-muted" /> {m.addStickyNote}
+                            </button>
+
+                            <div className="my-1 h-px bg-[rgb(var(--surface-elevated)/0.66)]" />
+                            <button
                                 onClick={(e) => { e.stopPropagation(); onSupersetAction(); onClose(); }}
                                 role="menuitem"
                                 className="flex min-h-11 w-full items-center gap-3 px-4 py-3 text-left text-sm font-bold text-[rgb(var(--text-primary))] transition-colors hover:bg-[rgb(var(--surface-elevated))]"
@@ -94,43 +121,6 @@ export const ExerciseCardMenu: React.FC<Props> = ({
                                 </span>
                             </button>
 
-                            {onToggleProgressionMode && (
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); onToggleProgressionMode(); onClose(); }}
-                                    role="menuitem"
-                                    className="flex min-h-11 w-full items-center gap-3 px-4 py-3 text-left text-sm font-bold text-[rgb(var(--text-primary))] transition-colors hover:bg-[rgb(var(--surface-elevated))]"
-                                >
-                                    <Icon name={ex.progressionMode === 'density' ? 'Zap' : 'TrendingUp'} size={16} className={ex.progressionMode === 'density' ? 'text-amber-400' : 'text-primary-400'} />
-                                    <div className="flex flex-col">
-                                        <span>{ex.progressionMode === 'density' ? t.progression?.switchToLoad : t.progression?.switchToDensity}</span>
-                                        <span className="text-[11px] font-normal text-muted">
-                                            {ex.progressionMode === 'density' ? t.progression?.modeDensity : t.progression?.modeLoad}
-                                        </span>
-                                    </div>
-                                </button>
-                            )}
-                        </>
-                    )}
-
-                    {isCardio && (
-                        <>
-                            <div className="my-1 h-px bg-[rgb(var(--surface-elevated)/0.66)]" />
-                            {(['steady', 'hiit', 'tabata'] as const).map((m) => (
-                                <button
-                                    key={m}
-                                    onClick={(e) => { e.stopPropagation(); onCardioModeChange(m); }}
-                                    role="menuitemradio"
-                                    aria-checked={cardioMode === m}
-                                    className={`flex min-h-11 w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-bold transition-colors hover:bg-[rgb(var(--surface-elevated))] ${cardioMode === m ? 'text-blue-700 dark:text-blue-300' : 'text-[rgb(var(--text-secondary))]'}`}
-                                >
-                                    {cardioMode === m && <Icon name="Check" size={14} />} {String(t.cardioModes?.[m])}
-                                </button>
-                            ))}
-                        </>
-                    )}
-
-                    {!isCardio && (
-                        <>
                             <div className="my-1 h-px bg-[rgb(var(--surface-elevated)/0.66)]" />
                             <button
                                 onClick={(e) => { e.stopPropagation(); onInjectWarmup(); }}
@@ -138,6 +128,13 @@ export const ExerciseCardMenu: React.FC<Props> = ({
                                 className="flex min-h-11 w-full items-center gap-3 px-4 py-3 text-left text-sm font-bold text-amber-700 dark:text-amber-300 transition-colors hover:bg-[rgb(var(--surface-elevated))]"
                             >
                                 <Icon name="Zap" size={16} /> {m.addWarmup}
+                            </button>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onEditRest(); onClose(); }}
+                                role="menuitem"
+                                className="flex min-h-11 w-full items-center gap-3 px-4 py-3 text-left text-sm font-bold text-[rgb(var(--text-primary))] transition-colors hover:bg-[rgb(var(--surface-elevated))]"
+                            >
+                                <Icon name="Timer" size={16} className="text-muted" /> {String(t.workoutImpl.changeRestPreset)}
                             </button>
                             {onFillFromPrevious && (
                                 <button
@@ -160,6 +157,23 @@ export const ExerciseCardMenu: React.FC<Props> = ({
                         </>
                     )}
 
+                    {isCardio && (
+                        <>
+                            <div className="my-1 h-px bg-[rgb(var(--surface-elevated)/0.66)]" />
+                            {(['steady', 'hiit', 'tabata'] as const).map((m) => (
+                                <button
+                                    key={m}
+                                    onClick={(e) => { e.stopPropagation(); onCardioModeChange(m); }}
+                                    role="menuitemradio"
+                                    aria-checked={cardioMode === m}
+                                    className={`flex min-h-11 w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-bold transition-colors hover:bg-[rgb(var(--surface-elevated))] ${cardioMode === m ? 'text-blue-700 dark:text-blue-300' : 'text-[rgb(var(--text-secondary))]'}`}
+                                >
+                                    {cardioMode === m && <Icon name="Check" size={14} />} {String(t.cardioModes?.[m])}
+                                </button>
+                            ))}
+                        </>
+                    )}
+
                     {onRemoveLastSet && (
                         <>
                             <div className="my-1 h-px bg-[rgb(var(--surface-elevated)/0.66)]" />
@@ -170,6 +184,25 @@ export const ExerciseCardMenu: React.FC<Props> = ({
                                 className="flex min-h-11 w-full items-center gap-3 px-4 py-3 text-left text-sm font-bold text-[rgb(var(--text-primary))] transition-colors hover:bg-[rgb(var(--surface-elevated))] disabled:opacity-25"
                             >
                                 <Icon name="Minus" size={16} className="text-muted" /> {String(t.removeSetBtn)}
+                            </button>
+                        </>
+                    )}
+
+                    {onToggleProgressionMode && !isCardio && (
+                        <>
+                            <div className="my-1 h-px bg-[rgb(var(--surface-elevated)/0.66)]" />
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onToggleProgressionMode(); onClose(); }}
+                                role="menuitem"
+                                className="flex min-h-11 w-full items-center gap-3 px-4 py-3 text-left text-sm font-bold text-[rgb(var(--text-primary))] transition-colors hover:bg-[rgb(var(--surface-elevated))]"
+                            >
+                                <Icon name={ex.progressionMode === 'density' ? 'Zap' : 'TrendingUp'} size={16} className={ex.progressionMode === 'density' ? 'text-amber-400' : 'text-primary-400'} />
+                                <div className="flex flex-col">
+                                    <span>{ex.progressionMode === 'density' ? t.progression?.switchToLoad : t.progression?.switchToDensity}</span>
+                                    <span className="text-[11px] font-normal text-muted">
+                                        {ex.progressionMode === 'density' ? t.progression?.modeDensity : t.progression?.modeLoad}
+                                    </span>
+                                </div>
                             </button>
                         </>
                     )}

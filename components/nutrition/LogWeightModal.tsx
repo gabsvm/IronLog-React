@@ -4,6 +4,7 @@ import { Sheet } from '../ui/Sheet';
 import { Button } from '../ui/Button';
 import { TRANSLATIONS } from '../../constants';
 import { fromDisplay, resolveWeightUnit, toDisplay, unitLabel } from '../../utils/units';
+import { useTrainingConfig } from '../../hooks/useTrainingConfig';
 
 interface LogWeightModalProps {
     isOpen: boolean;
@@ -13,7 +14,9 @@ interface LogWeightModalProps {
 
 export const LogWeightModal: React.FC<LogWeightModalProps> = ({ isOpen, onClose, onLog }) => {
     const { lang, userProfile, config } = useApp();
-    const unit = resolveWeightUnit(config);
+    // Independent body-weight unit (display/entry only; profile/bodyLogs store kg).
+    const [trainingPrefs] = useTrainingConfig();
+    const unit = trainingPrefs.bodyWeightUnit ?? resolveWeightUnit(config);
     const [weight, setWeight] = useState<string>(userProfile?.bodyWeight ? String(toDisplay(userProfile.bodyWeight, unit)) : '');
     const [bodyFat, setBodyFat] = useState<string>(String(userProfile?.bodyFat || ''));
     const [notes, setNotes] = useState<string>('');

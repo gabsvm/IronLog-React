@@ -3,12 +3,13 @@ import React from 'react';
 import { Icon } from '../Icon';
 import { triggerHaptic } from '../../../utils/audio';
 import { calculateTimerPercentage } from './restTimerLogic';
+import { adjustRestTimer, getRestControlLabels, pauseRestTimer, resolveRestIncrement, restartRestTimer, resumeRestTimer, skipRestTimer } from './restTimerControls';
 import { CircularTimer } from './CircularTimer';
 import type { RestTimerOverlayState } from './useRestTimerOverlayState';
 import { RestTimerNotifPrompt } from './RestTimerPrompts';
 import { isWorkoutRestDocked, subscribeWorkoutRestDocked } from '../../workout/workoutRestDockSignal';
 export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ state }) => {
-    const { restTimer, setRestTimer, lang, reducedEffects, t, mode, setMode, keyboardOffset, pillRef, currentSourceSet, showEffortFeedback, handleRateEffort, nextExerciseInfo } = state;
+    const { restTimer, setRestTimer, lang, reducedEffects, t, mode, setMode, keyboardOffset, pillRef, currentSourceSet, showEffortFeedback, handleRateEffort, nextExerciseInfo, config } = state;
     // Dynamically check whether bottom nav is in the DOM so the pill clears
     // it on Home/Diary/Progress but hugs the bottom when in full-screen views.
     const hasBottomNav = typeof document !== 'undefined' && Boolean(document.querySelector('nav[aria-label="Main navigation"]'));
@@ -42,23 +43,27 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
         : { bottom: `calc(var(--safe-area-bottom) + ${floatingBottom}px)` };
     const showCompactExtras = !keyboardOpen && showEffortFeedback && (Boolean(currentSourceSet) || Boolean(nextExerciseInfo));
 
+    const restLabels = getRestControlLabels(lang);
+    const restStep = resolveRestIncrement(config);
+
     const adjustTimer = (deltaSeconds: number) => {
         triggerHaptic('light');
-        setRestTimer((prev) => {
-            if (!prev.active) return prev;
-            const nextTime = Math.max(0, prev.timeLeft + deltaSeconds);
-            return {
-                ...prev,
-                endAt: (prev.endAt || Date.now()) + deltaSeconds * 1000,
-                timeLeft: nextTime,
-                duration: deltaSeconds > 0 ? prev.duration + deltaSeconds : prev.duration,
-            };
-        });
+        setRestTimer((prev) => adjustRestTimer(prev, deltaSeconds));
     };
 
     const skipTimer = () => {
         triggerHaptic('medium');
-        setRestTimer((prev) => ({ ...prev, active: false, timeLeft: 0, endAt: 0, source: undefined }));
+        setRestTimer((prev) => skipRestTimer(prev));
+    };
+
+    const togglePauseTimer = () => {
+        triggerHaptic('light');
+        setRestTimer((prev) => (prev.paused ? resumeRestTimer(prev) : pauseRestTimer(prev)));
+    };
+
+    const restartTimer = () => {
+        triggerHaptic('light');
+        setRestTimer((prev) => restartRestTimer(prev));
     };
 
     const setQuickTimer = (seconds: number) => {
@@ -66,6 +71,8 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
         setRestTimer((prev) => ({
             ...prev,
             active: true,
+            paused: false,
+            pausedRemaining: undefined,
             duration: seconds,
             timeLeft: seconds,
             endAt: Date.now() + seconds * 1000,
@@ -111,18 +118,32 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
                             <span className="tabular-nums text-lg font-black text-[rgb(var(--text-primary))] tabular-nums tracking-tight">
                                 {formatSeconds(restTimer.timeLeft)}
                             </span>
+                            {restTimer.paused && (
+                                <span className="rounded bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-sky-400">
+                                    {restLabels.pausedBadge}
+                                </span>
+                            )}
                             <Icon name="ChevronUp" size={14} className="text-muted shrink-0" />
-                        </button>
+                            </button>
 
                         {/* Hide secondary controls during keyboard editing; remain available when dismissed. */}
                         {!keyboardOpen && <div className="ml-auto flex items-center gap-1 shrink-0">
                             <button
                                 type="button"
-                                onClick={() => adjustTimer(-10)}
-                                className="flex min-h-[44px] min-w-[44px] px-3 items-center justify-center rounded-full bg-surface-elevated border border-border-subtle text-[11px] font-bold text-[rgb(var(--text-primary))] hover:border-primary-500/30 active:scale-90 transition-all"
-                                aria-label="-10s"
+                                onClick={togglePauseTimer}
+                                className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-surface-elevated border border-border-subtle text-[rgb(var(--text-primary))] hover:border-primary-500/30 active:scale-90 transition-all"
+                                aria-label={restTimer.paused ? restLabels.resume : restLabels.pause}
+                                title={restTimer.paused ? restLabels.resume : restLabels.pause}
                             >
-                                -10s
+                                <Icon name={restTimer.paused ? 'Play' : 'Pause'} size={16} />
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => adjustTimer(-restStep)}
+                                className="flex min-h-[44px] min-w-[44px] px-3 items-center justify-center rounded-full bg-surface-elevated border border-border-subtle text-[11px] font-bold text-[rgb(var(--text-primary))] hover:border-primary-500/30 active:scale-90 transition-all"
+                                aria-label={`-${restStep}s`}
+                            >
+                                -{restStep}s
                             </button>
                             <button
                                 type="button"
@@ -242,7 +263,29 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
                     totalDuration={restTimer.duration}
                     lang={lang}
                     reducedEffects={reducedEffects}
+                    paused={restTimer.paused}
                 />
+
+                {/* Pause / resume + restart (Strong parity) */}
+                <div className="grid grid-cols-2 gap-2 mt-3">
+                    <button
+                        type="button"
+                        onClick={togglePauseTimer}
+                        className="min-h-[44px] rounded-full bg-[rgb(var(--surface-elevated))] border border-[rgb(var(--border-subtle))] flex items-center justify-center gap-1.5 text-sm font-medium text-[rgb(var(--text-primary))] hover:border-zinc-500 active:scale-95 transition-all"
+                        aria-label={restTimer.paused ? restLabels.resume : restLabels.pause}
+                    >
+                        <Icon name={restTimer.paused ? 'Play' : 'Pause'} size={14} />
+                        {restTimer.paused ? restLabels.resume : restLabels.pause}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={restartTimer}
+                        className="min-h-[44px] rounded-full bg-[rgb(var(--surface-elevated))] border border-[rgb(var(--border-subtle))] flex items-center justify-center gap-1.5 text-sm font-medium text-[rgb(var(--text-primary))] hover:border-zinc-500 active:scale-95 transition-all"
+                        aria-label={restLabels.restart}
+                    >
+                        <Icon name="RotateCcw" size={14} /> {restLabels.restart}
+                    </button>
+                </div>
 
                 {/* Next exercise / Superset context card */}
                 {nextExerciseInfo && (
@@ -303,14 +346,15 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
                     </div>
                 )}
 
-                {/* Quick adjustments (-10s / +30s) */}
-                <div className="grid grid-cols-2 gap-2 mt-3">
+                {/* Quick adjustments (-step / +30s) */}
+                <div className="grid grid-cols-2 gap-2 mt-2">
                     <button
                         type="button"
-                        onClick={() => adjustTimer(-10)}
+                        onClick={() => adjustTimer(-restStep)}
                         className="min-h-[44px] rounded-full bg-[rgb(var(--surface-elevated))] border border-[rgb(var(--border-subtle))] flex items-center justify-center gap-1.5 text-sm font-medium text-[rgb(var(--text-primary))] hover:border-zinc-500 active:scale-95 transition-all"
+                        aria-label={`-${restStep}s`}
                     >
-                        <Icon name="Minus" size={14} /> 10 s
+                        <Icon name="Minus" size={14} /> {restStep} s
                     </button>
                     <button
                         type="button"

@@ -67,7 +67,9 @@ describe('shared Home/Routine live-session plan-change guard', () => {
         mocks.current = null;
         const { result, deps } = setup();
         act(() => result.current.handleSelectTemplate(template));
-        expect(deps.setProgram).toHaveBeenCalledWith(template.program);
+        // Template application freezes stable day identity (templateDayKey),
+        // so previous-set history re-links even after the plan is recreated.
+        expect(deps.setProgram).toHaveBeenCalledWith([{ ...template.program[0], templateDayKey: 'd1' }]);
         expect(mocks.setRestTimer).not.toHaveBeenCalled();
         expect(result.current.templateChangeConfirmation.isOpen).toBe(false);
     });

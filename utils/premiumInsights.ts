@@ -1,5 +1,6 @@
 import type { Log } from '../types';
 import { filterLogsByScope } from './statsScope';
+import { estimateOneRm, type OneRmFormula } from './strongTraining';
 
 export interface PremiumBestSet {
     name: Log['exercises'][number]['name'];
@@ -21,7 +22,12 @@ export interface PremiumInsights {
 }
 
 /** Derive a modest, truthful chart from completed working sets and saved logs. */
-export const buildPremiumInsights = (logs: Log[], mesoId: number | null, now = Date.now()): PremiumInsights => {
+export const buildPremiumInsights = (
+    logs: Log[],
+    mesoId: number | null,
+    now = Date.now(),
+    formula: OneRmFormula = 'epley',
+): PremiumInsights => {
     const end = new Date(now);
     end.setHours(0, 0, 0, 0);
     end.setDate(end.getDate() + 1);
@@ -49,7 +55,7 @@ export const buildPremiumInsights = (logs: Log[], mesoId: number | null, now = D
                 const weight = Number(set.weight);
                 const reps = Number(set.reps);
                 if (!Number.isFinite(weight) || !Number.isFinite(reps) || weight <= 0 || reps <= 0) continue;
-                const e1rm = weight * (1 + reps / 30);
+                const e1rm = estimateOneRm(weight, reps, formula);
                 if (!bestSet || e1rm > bestSet.estimatedOneRepMax) {
                     bestSet = { name: exercise.name, weight, reps, estimatedOneRepMax: e1rm, date: timestamp };
                 }

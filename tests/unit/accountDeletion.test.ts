@@ -229,6 +229,8 @@ describe('Q21: deleteCloudAccount wipes V2 collections regardless of the rollout
             'batchDelete:3',
             'getDocs:users/uid-1/customFoods',
             'batchDelete:3',
+            'getDocs:users/uid-1/measurementLogs',
+            'batchDelete:3',
             'deleteDoc:users/uid-1/data/history',
             'deleteDoc:users/uid-1',
             'deleteUser',

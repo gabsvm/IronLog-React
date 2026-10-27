@@ -3,8 +3,9 @@ import { Capacitor, registerPlugin } from '@capacitor/core';
 export type HapticType = 'light' | 'medium' | 'heavy' | 'success' | 'warning';
 
 interface NativeBridgePlugin {
+    pauseRestTimer(options: { remaining: number; endAt?: number }): Promise<{ paused: boolean; remaining: number }>;
     haptic(options: { type: HapticType }): Promise<void>;
-    scheduleRestTimer(options: { endAt: number; title: string; body: string; liveTitle?: string; liveBody?: string; skipLabel?: string; duration: number; sourceExerciseInstanceId: number; sourceSetId: number }): Promise<void>;
+    scheduleRestTimer(options: { endAt: number; title: string; body: string; liveTitle?: string; liveBody?: string; skipLabel?: string; duration: number; sourceExerciseInstanceId: number; sourceSetId: number; soundEnabled?: boolean; vibrateEnabled?: boolean }): Promise<void>;
     getRestTimerState(): Promise<NativeRestTimerSnapshot>;
     updateRestTimerContent(options: { endAt: number; liveTitle: string; liveBody: string; skipLabel?: string }): Promise<void>;
     cancelRestTimer(): Promise<void>;
@@ -25,6 +26,10 @@ export interface NativeRestTimerSnapshot {
     epoch: number;
     sourceExerciseInstanceId: number;
     sourceSetId: number;
+    /** True when the OS holds a frozen rest (alarm cancelled, no countdown). */
+    paused?: boolean;
+    /** Whole seconds left, meaningful only when paused is true. */
+    remaining?: number;
 }
 
 export interface TimerCommandPayload {
@@ -131,8 +136,9 @@ export const scheduleNativeRestTimer = (
     liveTitle?: string,
     liveBody?: string,
     duration = 120,
-    source?: { exerciseInstanceId: number; setId: number },
+    source?: { exerciseInstanceId: number; setId?: number },
     skipLabel?: string,
+    feedback?: { soundEnabled?: boolean; vibrateEnabled?: boolean },
 ) => {
     if (!Capacitor.isNativePlatform()) return;
     const options = {
@@ -140,6 +146,8 @@ export const scheduleNativeRestTimer = (
         duration: Math.max(1, Math.round(duration)),
         sourceExerciseInstanceId: source?.exerciseInstanceId ?? -1,
         sourceSetId: source?.setId ?? -1,
+        soundEnabled: feedback?.soundEnabled ?? true,
+        vibrateEnabled: feedback?.vibrateEnabled ?? true,
     };
     void NativeBridge.scheduleRestTimer(options).catch((error) => {
         console.warn('Native rest timer schedule failed', error);
@@ -157,10 +165,44 @@ export const getNativeRestTimerState = async (): Promise<NativeRestTimerSnapshot
             || !Number.isFinite(state.endAt) || !Number.isFinite(state.duration)
             || !Number.isInteger(state.epoch) || !Number.isInteger(state.sourceExerciseInstanceId)
             || !Number.isInteger(state.sourceSetId)) return null;
+        if (state.paused !== undefined && typeof state.paused !== 'boolean') return null;
+        if (state.remaining !== undefined && !Number.isFinite(state.remaining)) return null;
         return state;
     } catch {
         return null;
     }
+};
+
+/**
+ * Freeze the OS rest: cancels the alarm and live countdown but keeps the
+ * native snapshot (texts, source, epoch) so resume/background-restore stay
+ * coherent. Falls back to a plain cancel on older bridges. endAt serializes
+ * against a later resume: a stale pause never clobbers a newer schedule.
+ */
+export interface PauseRestResult {
+    paused: boolean;
+    remaining: number;
+}
+export const pauseNativeRestTimer = (
+    remainingSeconds: number,
+    endAt?: number,
+): Promise<PauseRestResult | null> => {
+    if (!Capacitor.isNativePlatform()) return Promise.resolve(null);
+    const remaining = Math.max(1, Math.round(Number(remainingSeconds) || 0));
+    const bridge = NativeBridge as Partial<NativeBridgePlugin> & Pick<NativeBridgePlugin, 'cancelRestTimer'>;
+    if (typeof bridge.pauseRestTimer !== 'function') {
+        cancelNativeRestTimer();
+        return Promise.resolve(null);
+    }
+    const options: { remaining: number; endAt?: number } = { remaining };
+    if (Number.isFinite(endAt) && (endAt as number) > 0) options.endAt = endAt as number;
+    return bridge.pauseRestTimer(options).then((res) => ({
+        paused: res?.paused === true,
+        remaining: Number.isFinite(res?.remaining) ? Number(res.remaining) : 0,
+    })).catch(() => {
+        cancelNativeRestTimer();
+        return null;
+    });
 };
 
 /** Update the same Android countdown notification without touching its alarm,

@@ -4,27 +4,34 @@ import {
     cancelNativeRestTimer,
     consumePendingTimerCommands,
     getNativeRestTimerState,
+    pauseNativeRestTimer,
     playTimerFinishSound,
     scheduleNativeRestTimer,
     subscribeTimerCommands,
     triggerHaptic,
     type TimerCommandPayload,
 } from '../utils/audio';
-import { TRANSLATIONS } from '../constants';
 import { resolveRestNotificationContent } from '../components/ui/restTimer/restTimerLogic';
 import { useStore } from '../lib/store';
 import { pickLang } from '../utils/i18n';
+import { TRANSLATIONS } from '../constants';
 import { Lang } from '../types';
 
 export interface TimerState {
     active: boolean;
     timeLeft: number;
     duration: number;
+    /** Absolute epoch (ms) deadline for the running rest; 0 when inactive. */
     endAt: number;
     source?: {
         exerciseInstanceId: number;
-        setId: number;
+        /** Absent for exercise-level manual rests (native uses -1 as sentinel). */
+        setId?: number;
     };
+    /** Strong parity: frozen countdown (native alarm cancelled, no ticks). */
+    paused?: boolean;
+    /** Whole seconds left at the moment of pausing; resume deadline derives from it. */
+    pausedRemaining?: number;
 }
 
 /**
@@ -98,7 +105,7 @@ export const applyTimerCommands = (
         if (cmd.action === 'skip') {
             cursor.lastId = cmd.id;
             applied = true;
-            setRestTimer((prev) => ({ ...prev, active: false, timeLeft: 0, endAt: 0, source: undefined }));
+            setRestTimer((prev) => ({ ...prev, active: false, timeLeft: 0, endAt: 0, source: undefined, paused: false, pausedRemaining: undefined }));
         } else if (cmd.action === 'add30') {
             if (!Number.isFinite(cmd.endAt) || cmd.endAt <= 0) continue;
             cursor.lastId = cmd.id;
@@ -106,6 +113,10 @@ export const applyTimerCommands = (
             const endAt = cmd.endAt;
             setRestTimer((prev) => {
                 if (!prev.active) return prev;
+                if (prev.paused) {
+                    const remaining = Math.max(0, Math.ceil(Number(prev.pausedRemaining) || 0)) + 30;
+                    return { ...prev, pausedRemaining: remaining, timeLeft: remaining, duration: prev.duration + 30 };
+                }
                 return {
                     ...prev,
                     endAt,
@@ -118,12 +129,22 @@ export const applyTimerCommands = (
     if (applied) writeCommandCursor(cursor);
 };
 
-export const useTimer = (lang: Lang) => {
+export interface UseTimerOptions {
+    /** SettingsParity prefs (AppState.config.restSound/restVibrate); absent = enabled. */
+    soundEnabled?: boolean;
+    vibrateEnabled?: boolean;
+}
+
+export const useTimer = (lang: Lang, opts?: UseTimerOptions) => {
     const [timer, setTimer] = useState<TimerState>({ active: false, timeLeft: 0, duration: 120, endAt: 0 });
     const timerRef = useRef<TimerState>(timer);
     timerRef.current = timer;
     const workerRef = useRef<Worker | null>(null);
     const langRef = useRef(lang);
+    const soundRef = useRef(opts?.soundEnabled ?? true);
+    const vibrateRef = useRef(opts?.vibrateEnabled ?? true);
+    soundRef.current = opts?.soundEnabled ?? true;
+    vibrateRef.current = opts?.vibrateEnabled ?? true;
     const isNative = Capacitor.isNativePlatform();
     const [nativeReady, setNativeReady] = useState(!isNative);
     const [nativeUserRevision, setNativeUserRevision] = useState(0);
@@ -166,9 +187,31 @@ export const useTimer = (lang: Lang) => {
     // Only explicit JS controls schedule/cancel native alarms. Native actions,
     // process restoration and countdown ticks MUST NOT rewrite the native
     // deadline/epoch: doing so can erase a +30s action while JS is suspended.
+    // A paused rest cancels the OS alarm but keeps the native snapshot (texts,
+    // source, epoch) so resume/background-restore stay coherent.
     useEffect(() => {
         if (!isNative || !nativeReady || nativeUserRevision === 0) return;
-        if (timer.active && timer.endAt > Date.now()) {
+        if (timer.active && timer.paused) {
+            const remaining = Math.max(1, Math.ceil(Number(timer.pausedRemaining ?? timer.timeLeft) || 0));
+            // Adopt the native freeze truth (a notification +30s may have extended
+            // the deadline after this pause tap started; native wins those races).
+            // setTimer (not setRestTimer): this never re-arms the OS alarm.
+            const revision = nativeUserRevisionRef.current;
+            void pauseNativeRestTimer(remaining, timer.endAt).then((res) => {
+                if (!res || revision !== nativeUserRevisionRef.current) return;
+                if (res.paused && res.remaining > 0) {
+                    setTimer((prev) => (prev.active && prev.paused)
+                        ? { ...prev, pausedRemaining: res.remaining, timeLeft: res.remaining }
+                        : prev);
+                } else if (!res.paused) {
+                    // Native holds nothing freezable (expired or skipped while the
+                    // call was in flight): never linger as a paused ghost.
+                    setTimer((prev) => (prev.active && prev.paused)
+                        ? { ...prev, active: false, paused: false, pausedRemaining: undefined, timeLeft: 0, endAt: 0, source: undefined }
+                        : prev);
+                }
+            });
+        } else if (timer.active && timer.endAt > Date.now()) {
             const t = TRANSLATIONS[lang]?.timer || TRANSLATIONS.en.timer;
             const context = resolveRestNotificationContent(
                 useStore.getState().activeSession?.exercises, timer.source, lang,
@@ -179,6 +222,7 @@ export const useTimer = (lang: Lang) => {
                 context?.liveBody ?? t.restingBody,
                 timer.duration, timer.source,
                 pickLang(lang, { es: 'Omitir', en: 'Skip' }),
+                { soundEnabled: soundRef.current, vibrateEnabled: vibrateRef.current },
             );
         } else {
             cancelNativeRestTimer();
@@ -189,7 +233,7 @@ export const useTimer = (lang: Lang) => {
 
     const handleTick = useCallback((suppressFeedback = false) => {
         const current = timerRef.current;
-        if (!current || !current.active) return;
+        if (!current || !current.active || current.paused) return;
         // Android is the sole owner while backgrounded or during a native
         // reconciliation; a delayed JS tick must never end an extended rest.
         if (isNative && (nativeReconcilingRef.current || document.visibilityState !== 'visible')) return;
@@ -210,8 +254,8 @@ export const useTimer = (lang: Lang) => {
             // a native alarm does not beep/vibrate a second time.
             const shouldEmitFeedback = !suppressFeedback && (!isNative || document.visibilityState === 'visible');
             if (shouldEmitFeedback) {
-                playTimerFinishSound();
-                triggerHaptic('success');
+                if (soundRef.current) playTimerFinishSound();
+                if (vibrateRef.current) triggerHaptic('success');
             }
 
             const isWebInBackground = !isNative && document.visibilityState !== 'visible';
@@ -309,19 +353,52 @@ export const useTimer = (lang: Lang) => {
                 if (cancelled || generation !== nativeRefreshGeneration.current
                     || userRevision !== nativeUserRevisionRef.current) return;
                 if (native) {
-                    const validActive = native.active && native.endAt > Date.now();
-                    setTimer(prev => validActive ? {
-                        ...prev,
-                        active: true,
-                        endAt: native.endAt,
-                        timeLeft: Math.ceil((native.endAt - Date.now()) / 1000),
-                        duration: Math.max(1, native.duration),
-                        source: native.sourceExerciseInstanceId >= 0 && native.sourceSetId >= 0
-                            ? { exerciseInstanceId: native.sourceExerciseInstanceId, setId: native.sourceSetId }
-                            : undefined,
-                    } : {
-                        ...prev, active: false, timeLeft: 0, endAt: 0, source: undefined,
-                    });
+                    if (native.paused) {
+                        // A Skip tapped on the frozen card drains here but the snapshot
+                        // still exists: honor it instead of guarding the paused rest.
+                        // Conditional on still-paused so a newer rest is never killed.
+                        const skipped = stream.commands.some((cmd) => cmd?.action === 'skip');
+                        if (skipped) {
+                            setTimer((prev) => (prev.active && prev.paused)
+                                ? { ...prev, active: false, paused: false, pausedRemaining: undefined, timeLeft: 0, endAt: 0, source: undefined }
+                                : prev);
+                        } else {
+                            const remaining = Math.max(1, Math.round(Number(native.remaining) || 0));
+                            setTimer(prev => ({
+                                ...prev,
+                                active: true,
+                                paused: true,
+                                pausedRemaining: remaining,
+                                timeLeft: remaining,
+                                duration: Math.max(1, native.duration),
+                                source: native.sourceExerciseInstanceId >= 0
+                                    ? { exerciseInstanceId: native.sourceExerciseInstanceId, ...(native.sourceSetId >= 0 ? { setId: native.sourceSetId } : {}) }
+                                    : undefined,
+                            }));
+                        }
+                    } else {
+                        const validActive = native.active && native.endAt > Date.now();
+                        setTimer(prev => {
+                            if (validActive) {
+                                return {
+                                    ...prev,
+                                    active: true,
+                                    paused: false,
+                                    pausedRemaining: undefined,
+                                    endAt: native.endAt,
+                                    timeLeft: Math.ceil((native.endAt - Date.now()) / 1000),
+                                    duration: Math.max(1, native.duration),
+                                    source: native.sourceExerciseInstanceId >= 0
+                                        ? { exerciseInstanceId: native.sourceExerciseInstanceId, ...(native.sourceSetId >= 0 ? { setId: native.sourceSetId } : {}) }
+                                        : undefined,
+                                };
+                            }
+                            // A frozen JS rest outlives an inactive native snapshot
+                            // (older bridge, or a pause that fell back to cancel).
+                            if (prev.paused && prev.active) return prev;
+                            return { ...prev, active: false, paused: false, pausedRemaining: undefined, timeLeft: 0, endAt: 0, source: undefined };
+                        });
+                    }
                 } else {
                     // Older native shell / test double without snapshot API.
                     const commands = stream.commands.length ? stream.commands : fallbackCommands;

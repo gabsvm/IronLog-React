@@ -66,9 +66,11 @@ export const generateEmergencyBackup = async (): Promise<EmergencyBackupResult> 
       nutritionLogs: idbData.il_nutrition_v1 ?? lsData.il_nutrition_v1 ?? [],
       cardioSessions: idbData.il_cardio_v1 ?? lsData.il_cardio_v1 ?? [],
       bodyLogs: idbData.il_body_v1 ?? lsData.il_body_v1 ?? [],
+      measurementLogs: idbData.il_measurements_v1 ?? lsData.il_measurements_v1 ?? [],
       macroGoals: idbData.il_macros_v1 ?? lsData.il_macros_v1 ?? null,
       nutritionGoal: idbData.il_nut_goal_v1 ?? lsData.il_nut_goal_v1,
       personalTemplates: idbData.il_personal_templates_v1 ?? lsData.il_personal_templates_v1 ?? [],
+      templateFolders: idbData.il_template_folders_v1 ?? lsData.il_template_folders_v1 ?? [],
       customFoods: idbData.il_custom_foods_v1 ?? lsData.il_custom_foods_v1 ?? [],
       rpFeedback: idbData.il_rp_fb_v1 ?? lsData.il_rp_fb_v1 ?? {},
       config: {

@@ -2,6 +2,7 @@
 import type { ExerciseDef, Lang, Log, WeightUnit } from '../../types';
 import { exerciseIdGroup } from '../../utils/exerciseLibrary';
 import { getEffectiveSetLoad, getLogBodyWeight, getSetLoadVolume } from '../../utils/trainingMetrics';
+import { estimateOneRm, type OneRmFormula } from '../../utils/strongTraining';
 import { formatWeight, toDisplay } from '../../utils/units';
 import { getBodyweightLevel, getExerciseStrengthProfile, getWeightedLevel, type PerformanceBand } from './statsHelpers';
 
@@ -11,6 +12,7 @@ import { getBodyweightLevel, getExerciseStrengthProfile, getWeightedLevel, type 
  */
 export const buildSelectedExerciseInsight = ({
     currentEx, exercises, lang, rawMuscleCounts, safeLogs, bodyWeight, scopeMesoId, unit, weightSuffix, s,
+    formula = 'epley',
 }: {
     currentEx: any;
     exercises: ExerciseDef[];
@@ -22,6 +24,7 @@ export const buildSelectedExerciseInsight = ({
     unit: WeightUnit;
     weightSuffix: string;
     s: any;
+    formula?: OneRmFormula;
 }) => {
     if (!currentEx) return null;
 
@@ -52,7 +55,7 @@ export const buildSelectedExerciseInsight = ({
                 if (Number(set.duration || 0) > bestHoldSeconds) bestHoldSeconds = Number(set.duration || 0);
 
                 if (effectiveLoad > 0 && reps > 0 && !exercise.isIsometric && exercise.muscle !== 'CARDIO') {
-                    const e1rm = effectiveLoad * (1 + reps / 30);
+                    const e1rm = estimateOneRm(effectiveLoad, reps, formula);
                     if (e1rm > bestEstimated1RM) bestEstimated1RM = e1rm;
                 }
             });

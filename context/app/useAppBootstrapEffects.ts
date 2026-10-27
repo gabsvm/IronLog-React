@@ -1,7 +1,7 @@
 // S6: global data fetch, PWA install, connectivity/sync listeners, effects mode, dirty tracking and installApp, moved verbatim from context/AppContext.tsx.
 import { useDirtySection, type DirtyTrackingContext } from './useDirtySection';
 import { useEffect, useCallback } from 'react';
-import { EffectsMode, ResolvedEffects, ExerciseDef, MesoCycle, Log, ProgramDay, GlobalTemplate, UserProfile, BeforeInstallPromptEvent, NutritionLog, CardioSession, NutritionGoal, MacroGoals, BodyLog, CustomFood, DirtySyncSection, WeightUnit } from '../../types';
+import { EffectsMode, ResolvedEffects, ExerciseDef, MesoCycle, Log, ProgramDay, GlobalTemplate, TemplateFolder, UserProfile, BeforeInstallPromptEvent, NutritionLog, CardioSession, NutritionGoal, MacroGoals, BodyLog, MeasurementLog, CustomFood, DirtySyncSection, WeightUnit, PreviousScope, IncompleteSets, RestIncrement, BodyWeightUnit, DistanceUnit, SizeUnit, WeekStart, OneRmFormula } from '../../types';
 import { resolveEffectsMode } from '../../utils/effectsProfile';
 import { syncService } from '../../services/syncService';
 import { getFirebaseFirestoreServices, isFirebaseConfigured } from '../../lib/firebaseLoader';
@@ -18,6 +18,23 @@ export interface UseAppBootstrapEffectsDeps {
     rpTargetRIR: number;
     keepScreenOn: boolean;
     weightUnit: WeightUnit;
+    restTimerDisplay?: 'compact' | 'expanded';
+    previousScope: PreviousScope;
+    incompleteSets: IncompleteSets;
+    defaultSets: number;
+    defaultRestSeconds: number;
+    warmupRestSeconds: number;
+    restIncrementSeconds: RestIncrement;
+    restSound: boolean;
+    restVibrate: boolean;
+    autoStartRest: boolean;
+    bodyWeightUnit: BodyWeightUnit;
+    distanceUnit: DistanceUnit;
+    sizeUnit: SizeUnit;
+    weekStart: WeekStart;
+    oneRmFormula: OneRmFormula;
+    plateBarKg: number;
+    platePlatesKg: number[];
     program: ProgramDay[];
     exercises: ExerciseDef[];
     setExercises: (value: ExerciseDef[] | ((val: ExerciseDef[]) => ExerciseDef[])) => void;
@@ -28,11 +45,13 @@ export interface UseAppBootstrapEffectsDeps {
     userProfile: UserProfile;
     setGlobalTemplates: Dispatch<SetStateAction<GlobalTemplate[]>>;
     personalTemplates: GlobalTemplate[];
+    templateFolders: TemplateFolder[];
     baseTemplates: GlobalTemplate[];
     defaultsLoading: boolean;
     rpFeedback: Record<string, Record<string, Record<string, FeedbackEntry>>>;
     bodyLogs: BodyLog[];
-    macroGoals: MacroGoals;
+    measurementLogs: MeasurementLog[];
+    macroGoals: MacroGoals | null;
     customFoods: CustomFood[];
     hasCheckedSync: boolean;
     isOnline: boolean;
@@ -58,6 +77,23 @@ export const useAppBootstrapEffects = ({
     rpTargetRIR,
     keepScreenOn,
     weightUnit,
+    restTimerDisplay,
+    previousScope,
+    incompleteSets,
+    defaultSets,
+    defaultRestSeconds,
+    warmupRestSeconds,
+    restIncrementSeconds,
+    restSound,
+    restVibrate,
+    autoStartRest,
+    bodyWeightUnit,
+    distanceUnit,
+    sizeUnit,
+    weekStart,
+    oneRmFormula,
+    plateBarKg,
+    platePlatesKg,
     program,
     exercises,
     setExercises,
@@ -68,10 +104,12 @@ export const useAppBootstrapEffects = ({
     userProfile,
     setGlobalTemplates,
     personalTemplates,
+    templateFolders,
     baseTemplates,
     defaultsLoading,
     rpFeedback,
     bodyLogs,
+    measurementLogs,
     macroGoals,
     customFoods,
     hasCheckedSync,
@@ -281,16 +319,18 @@ export const useAppBootstrapEffects = ({
     useDirtySection('activeMeso', [activeMeso, isAppLoading, hasCheckedSync], dirtyTracking);
     useDirtySection('exercises', [exercises, isAppLoading, hasCheckedSync], dirtyTracking);
     useDirtySection('logs', [logs, isAppLoading, hasCheckedSync], dirtyTracking);
-    useDirtySection('config', [showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, isAppLoading, hasCheckedSync], dirtyTracking);
+    useDirtySection('config', [showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, restTimerDisplay, previousScope, incompleteSets, defaultSets, defaultRestSeconds, warmupRestSeconds, restIncrementSeconds, restSound, restVibrate, autoStartRest, bodyWeightUnit, distanceUnit, sizeUnit, weekStart, oneRmFormula, plateBarKg, platePlatesKg, isAppLoading, hasCheckedSync], dirtyTracking);
     useDirtySection('rpFeedback', [rpFeedback, isAppLoading, hasCheckedSync], dirtyTracking);
     useDirtySection('userProfile', [userProfile, isAppLoading, hasCheckedSync], dirtyTracking);
     useDirtySection('nutritionLogs', [nutritionLogs, isAppLoading, hasCheckedSync], dirtyTracking);
     useDirtySection('cardioSessions', [cardioSessions, isAppLoading, hasCheckedSync], dirtyTracking);
     useDirtySection('nutritionGoal', [nutritionGoal, isAppLoading, hasCheckedSync], dirtyTracking);
     useDirtySection('bodyLogs', [bodyLogs, isAppLoading, hasCheckedSync], dirtyTracking);
+    useDirtySection('measurementLogs', [measurementLogs, isAppLoading, hasCheckedSync], dirtyTracking);
     useDirtySection('macroGoals', [macroGoals, isAppLoading, hasCheckedSync], dirtyTracking);
     useDirtySection('customFoods', [customFoods, isAppLoading, hasCheckedSync], dirtyTracking);
     useDirtySection('personalTemplates', [personalTemplates, isAppLoading, hasCheckedSync], dirtyTracking);
+    useDirtySection('templateFolders', [templateFolders, isAppLoading, hasCheckedSync], dirtyTracking);
 
     const installApp = useCallback(async () => {
         const promptEvent = deferredPrompt || window.deferredPrompt;

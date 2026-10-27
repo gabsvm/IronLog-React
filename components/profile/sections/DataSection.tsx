@@ -122,13 +122,13 @@ export const DataSection: React.FC<DataSectionProps> = ({
                     lang={lang}
                     getState={() => {
                         const {
-                            program, exercises, userProfile, nutritionLogs, cardioSessions, bodyLogs, macroGoals,
-                            nutritionGoal, personalTemplates, customFoods, rpFeedback,
+                            program, exercises, userProfile, nutritionLogs, cardioSessions, bodyLogs, measurementLogs, macroGoals,
+                            nutritionGoal, personalTemplates, customFoods, templateFolders, rpFeedback,
                         } = appState;
                         return {
                             program, exercises, logs, activeMeso, activeSession,
-                            userProfile, nutritionLogs, cardioSessions, bodyLogs, macroGoals, nutritionGoal,
-                            personalTemplates, customFoods, rpFeedback, config,
+                            userProfile, nutritionLogs, cardioSessions, bodyLogs, measurementLogs, macroGoals, nutritionGoal,
+                            personalTemplates, customFoods, templateFolders, rpFeedback, config,
                         };
                     }}
                 />
