@@ -8,6 +8,7 @@ import { getLastLogForExercise, uid, estimate1RM } from '../utils';
 import { useStatsWorker } from './useStatsWorker';
 import { getEffectiveSetLoad } from '../utils/trainingMetrics';
 import { readWorkoutPrefs } from '../utils/workoutPrefs';
+import { resolveSetRestSeconds } from '../utils/resolveSetRest';
 import { isTemplateUpdateEligible } from '../utils/workoutProgress';
 
 import { useStore } from '../lib/store';
@@ -135,6 +136,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
     const [historicalBest1RM, setHistoricalBest1RM] = useState<Map<string, number>>(new Map());
     const [historicalReady, setHistoricalReady] = useState(false);
     const oneRmFormula = readWorkoutPrefs(config).oneRmFormula ?? 'epley';
+    const factorInRpe = readWorkoutPrefs(config).factorInRpe === true;
 
     useEffect(() => {
         if (!logs || logs.length === 0) {
@@ -143,7 +145,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
         }
         setHistoricalReady(false);
         let cancelled = false;
-        calculateAllBest1RMs(logs, oneRmFormula).then((resultMap) => {
+        calculateAllBest1RMs(logs, oneRmFormula, factorInRpe).then((resultMap) => {
             if (!cancelled) {
                 setHistoricalBest1RM(resultMap);
                 setHistoricalReady(true);
@@ -154,7 +156,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
             }
         });
         return () => { cancelled = true; };
-    }, [logs, calculateAllBest1RMs, oneRmFormula]);
+    }, [logs, calculateAllBest1RMs, oneRmFormula, factorInRpe]);
 
     // Data Mutations
     const handleSetUpdate = useCallback((exInstanceId: number, setId: number, field: keyof WorkoutSet, value: any) => {
@@ -292,39 +294,10 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
             // Settings-owned rest prefs (back-compat defaults until AppState.config carries them).
             const restPrefs = readWorkoutPrefs(config);
             if (restPrefs.autoStartRest === false) return;
-            const isMetabolite = currentMeso?.mesoType === 'metabolite';
-            let dur = restPrefs.defaultRestSeconds ?? (isMetabolite ? 60 : 120);
-
-            // Density mode custom rest or per-exercise preset takes highest priority
-            if (ex?.progressionMode === 'density' && ex.densityTargetRestSeconds && ex.densityTargetRestSeconds > 0) {
-                dur = ex.densityTargetRestSeconds;
-            } else if (ex?.defaultRestSeconds && ex.defaultRestSeconds > 0) {
-                dur = ex.defaultRestSeconds;
-            } else {
-                // Calisthenics Specific Durations
-                if (ex?.isIsometric) {
-                    dur = 150; // CNS heavy skills need more rest (~2.5m)
-                } else if (ex?.isBodyweight) {
-                    dur = isMetabolite ? 45 : 90;
-                }
-
-                if (set.type === 'myorep' || set.type === 'myorep_match' || set.type === 'giant') dur = 30;
-                if (set.type === 'warmup') dur = restPrefs.warmupRestSeconds ?? 60;
-                if (set.type === 'cluster') dur = 15;
-                if (set.type === 'drop') dur = 0; // Drop sets have no rest — skip timer
-                if (set.type === 'rest_pause') dur = 20;     // 20s between rest-pause mini-sets
-                if (set.type === 'time_volume') dur = 10;    // starts at 10s (escalates manually per protocol)
-                if (set.type === 'triple_add') dur = 10;     // 10s between fiber-type drops within Triple Add
-
-                // Interval cardio: use the set's programmed rest, or protocol default
-                if (ex?.cardioType === 'tabata') dur = 10;
-                else if (ex?.cardioType === 'hiit') dur = set.restSeconds || 60;
-            }
-
-            // EMOM self-regulates rest via minute intervals — skip auto rest timer
-            if (set.type === 'emom') return;
-            // Drop sets: no rest between drops
-            if (set.type === 'drop' && !ex?.defaultRestSeconds) return;
+            // Shared duration resolution (per-exercise preset > type rules).
+            const resolved = resolveSetRestSeconds(set, ex ?? null, config, currentMeso);
+            if (resolved === null) return;
+            const dur = resolved;
 
             // Superset: only start rest timer after BOTH sides of the superset complete
             // the same round (i.e. both have the same number of completed working sets).
@@ -378,7 +351,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
             for (const s of (ex.sets || [])) {
                 if (s.completed && (s.weight || s.weight === 0 || s.weight === '0') && s.reps) {
                     const effectiveLoad = getEffectiveSetLoad(s, ex, userProfile?.bodyWeight);
-                    const e1rm = estimate1RM(effectiveLoad, Number(s.reps), readWorkoutPrefs(config).oneRmFormula ?? 'epley');
+                    const e1rm = estimate1RM(effectiveLoad, Number(s.reps), readWorkoutPrefs(config).oneRmFormula ?? 'epley', s.rpe, readWorkoutPrefs(config).factorInRpe === true);
                     if (e1rm > currentBest1RM) currentBest1RM = e1rm;
                 }
             }

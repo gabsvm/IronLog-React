@@ -1,8 +1,9 @@
 import React, { Suspense, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from '../../components/ui/Icon';
-import { GlobalTemplate } from '../../types';
-import { getTranslated } from '../../utils';
+import { GlobalTemplate, type Lang } from '../../types';
+import { getTranslated, lastPerformedForTemplate, formatLastPerformed } from '../../utils';
+import { pickLang } from '../../utils/i18n';
 import { PersonalTemplatesSection } from './PersonalTemplatesSection';
 
 const ProgramDetailView = React.lazy(() =>
@@ -14,6 +15,7 @@ interface Props {
     onSelectTemplate: (tpl: GlobalTemplate) => void;
     onCreateCustom: () => void;
     templates: GlobalTemplate[];
+    logs?: unknown[];
     t: any;
     lang: string;
     onSelectProgram?: (programId: string) => void;
@@ -34,6 +36,7 @@ export const TemplateSelector: React.FC<Props> = ({
     onSelectTemplate,
     onCreateCustom,
     templates,
+    logs = [],
     t,
     lang,
     onSelectProgram,
@@ -219,7 +222,9 @@ export const TemplateSelector: React.FC<Props> = ({
 
                                     {isExpanded && (
                                         <div className="grid gap-3 border-t border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base)/0.55)] p-3">
-                                            {groupTemplates.map((tpl) => (
+                                            {groupTemplates.map((tpl) => {
+                                                const last = lastPerformedForTemplate(tpl.id, logs as any);
+                                                return (
                                                 <button
                                                     key={tpl.id}
                                                     type="button"
@@ -231,12 +236,18 @@ export const TemplateSelector: React.FC<Props> = ({
                                                         {getTranslated(tpl.description, lang as 'en' | 'es')}
                                                     </p>
                                                     <div className="mt-3 flex gap-2">
+                                                        {last !== null && (
+                                                            <span className="rounded-lg bg-[rgb(var(--surface-base))] px-2 py-1 text-xs font-medium text-[rgb(var(--text-secondary))]">
+                                                                {formatLastPerformed(last, pickLang(lang as string, { es: 'es', en: 'en' }) as Lang)}
+                                                            </span>
+                                                        )}
                                                         <span className="rounded-lg bg-[rgb(var(--surface-base))] px-2 py-1 text-xs font-medium text-[rgb(var(--text-secondary))]">
                                                             {tpl.program.length} {ts.daysLower}
                                                         </span>
                                                     </div>
                                                 </button>
-                                            ))}
+                                                );
+                                            })}
                                         </div>
                                     )}
                                 </section>

@@ -6,6 +6,7 @@ import { TRANSLATIONS } from '../../constants';
 import { ExerciseDef, SetType } from '../../types';
 import { getLastLogForExercise, getMesoStageConfig } from '../../utils';
 import { filterLogsByPreviousScope } from '../../utils/strongTraining';
+import { getExerciseRestOverride } from '../../utils/exerciseRestOverrides';
 import { useWorkoutController } from '../../hooks/useWorkoutController';
 import { useTimerActions } from '../../context/TimerContext';
 import { countWorkingSets, resolveInitialActiveExerciseId, toggleExerciseCardExpansion } from '../../utils/workoutProgress';
@@ -215,12 +216,19 @@ export const useWorkoutViewState = ({ onFinish, onDiscard, onBack, onOpenReorder
         // Settings-owned default set count (3 = historical default until SettingsParity lands config.defaultSets).
         const setCount = readWorkoutPrefs(config).defaultSets ?? 3;
         const newInstanceId = Date.now();
+        const restOverride = getExerciseRestOverride(newDef.id);
         const initialSets = Array(setCount).fill(null).map((_, i) => {
             const historySet = lastSets && lastSets[i] ? lastSets[i] : null;
+            // Strong parity: prefill inputs with previous values (empty only
+            // without history). Hints stay for display.
+            const fillWeight = historySet && historySet.weight !== '' && historySet.weight != null && Number.isFinite(Number(historySet.weight))
+                ? String(historySet.weight) : '';
+            const fillReps = historySet && historySet.reps !== '' && historySet.reps != null && /^\d+$/.test(String(historySet.reps))
+                ? String(historySet.reps) : '';
             return {
                 id: newInstanceId + i + 1,
-                weight: '',
-                reps: '',
+                weight: fillWeight,
+                reps: fillReps,
                 rpe: '',
                 completed: false,
                 type: 'regular' as const,
@@ -233,7 +241,7 @@ export const useWorkoutViewState = ({ onFinish, onDiscard, onBack, onOpenReorder
 
         updateSession(prev => !prev ? null : {
             ...prev,
-            exercises: [...(prev.exercises || []), { ...newDef, instanceId: newInstanceId, slotLabel: newDef.muscle, sets: initialSets }]
+            exercises: [...(prev.exercises || []), { ...newDef, instanceId: newInstanceId, slotLabel: newDef.muscle, sets: initialSets, ...(restOverride !== undefined ? { defaultRestSeconds: restOverride } : null) }]
         });
         setAddingExercise(false);
         setActiveExerciseId(newInstanceId);
@@ -258,10 +266,14 @@ export const useWorkoutViewState = ({ onFinish, onDiscard, onBack, onOpenReorder
 
                 const resetSets = (ex.sets || []).map((s, i) => {
                     const historySet = lastSets && lastSets[i] ? lastSets[i] : null;
+                    const fillWeight = historySet && historySet.weight !== '' && historySet.weight != null && Number.isFinite(Number(historySet.weight))
+                        ? String(historySet.weight) : '';
+                    const fillReps = historySet && historySet.reps !== '' && historySet.reps != null && /^\d+$/.test(String(historySet.reps))
+                        ? String(historySet.reps) : '';
                     return {
                         ...s,
-                        weight: '',
-                        reps: '',
+                        weight: fillWeight,
+                        reps: fillReps,
                         rpe: '',
                         completed: false,
                         hintWeight: historySet ? historySet.weight : undefined,

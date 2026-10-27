@@ -27,12 +27,13 @@ const chartKey = (
     scope: StatsScope = 'history',
     period: StatsPeriod = 'all',
     oneRmFormula: OneRmFormula = 'epley',
-) => `il_stats_chart_v4:${signature}:${exerciseId}:${metric}:${scope}:${mesoId ?? 'all'}:${period}:${oneRmFormula}`;
+    factorInRpe = false,
+) => `il_stats_chart_v5:${signature}:${exerciseId}:${metric}:${scope}:${mesoId ?? 'all'}:${period}:${oneRmFormula}:rpe${factorInRpe ? 1 : 0}`;
 const LEGACY_SCOPE_KEYS = ['il_stats_scope_v1'];
-const LEGACY_KEY_PREFIXES = ['il_stats_overview_v2:', 'il_stats_overview_v3:', 'il_stats_overview_v4:', 'il_stats_chart_v2:', 'il_stats_chart_v3:'];
+const LEGACY_KEY_PREFIXES = ['il_stats_overview_v2:', 'il_stats_overview_v3:', 'il_stats_overview_v4:', 'il_stats_chart_v2:', 'il_stats_chart_v3:', 'il_stats_chart_v4:'];
 let legacyPruned = false;
-const CURRENT_KEY_PREFIXES = ['il_stats_overview_v5:', 'il_stats_chart_v4:'];
-const CHART_KEY_PREFIX = 'il_stats_chart_v4:';
+const CURRENT_KEY_PREFIXES = ['il_stats_overview_v5:', 'il_stats_chart_v5:'];
+const CHART_KEY_PREFIX = 'il_stats_chart_v5:';
 const prunedSignatures = new Set<string>();
 const selectedExerciseKey = 'il_stats_selected_exercise_v1';
 const selectedScopeKeyV2 = 'il_stats_scope_v2';
@@ -122,12 +123,12 @@ export const statsCache = {
         });
     },
 
-    readChart(signature: string, exerciseId: string, metric: ChartMetric, mesoId: number | null, scope: StatsScope = 'history', period: StatsPeriod = 'all', oneRmFormula: OneRmFormula = 'epley') {
-        return db.get<StatsChartCache | null>(chartKey(signature, exerciseId, metric, mesoId, scope, period, oneRmFormula), null);
+    readChart(signature: string, exerciseId: string, metric: ChartMetric, mesoId: number | null, scope: StatsScope = 'history', period: StatsPeriod = 'all', oneRmFormula: OneRmFormula = 'epley', factorInRpe = false) {
+        return db.get<StatsChartCache | null>(chartKey(signature, exerciseId, metric, mesoId, scope, period, oneRmFormula, factorInRpe), null);
     },
 
-    writeChart(signature: string, exerciseId: string, metric: ChartMetric, mesoId: number | null, dataPoints: ChartDataPoint[], scope: StatsScope = 'history', period: StatsPeriod = 'all', oneRmFormula: OneRmFormula = 'epley') {
-        return db.set(chartKey(signature, exerciseId, metric, mesoId, scope, period, oneRmFormula), {
+    writeChart(signature: string, exerciseId: string, metric: ChartMetric, mesoId: number | null, dataPoints: ChartDataPoint[], scope: StatsScope = 'history', period: StatsPeriod = 'all', oneRmFormula: OneRmFormula = 'epley', factorInRpe = false) {
+        return db.set(chartKey(signature, exerciseId, metric, mesoId, scope, period, oneRmFormula, factorInRpe), {
             dataPoints,
             savedAt: Date.now(),
         });

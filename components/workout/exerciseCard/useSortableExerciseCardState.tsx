@@ -2,6 +2,7 @@
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { setExerciseRestOverride } from '../../../utils/exerciseRestOverrides';
 import { SessionExercise, WorkoutSet, CardioType, SetType, ActiveSession } from '../../../types';
 import { parseTargetReps, roundWeight } from '../../../utils';
 import { getVolumeComparison } from '../../../utils/volumeComparison';
@@ -179,7 +180,7 @@ export const useSortableExerciseCardState = ({
             if (!pastEx) return;
             (pastEx.sets || []).forEach((set) => {
                 if (set.completed && set.weight && set.reps) {
-                    const e1rm = estimateOneRm(Number(set.weight), Number(set.reps), readWorkoutPrefs(config).oneRmFormula ?? 'epley');
+                    const e1rm = estimateOneRm(Number(set.weight), Number(set.reps), readWorkoutPrefs(config).oneRmFormula ?? 'epley', set.rpe, readWorkoutPrefs(config).factorInRpe === true);
                     if (e1rm > best1RM) {
                         best1RM = e1rm;
                         bestStr = `${formatWeight(Number(set.weight), unit, lang)}${unitLabel.toLowerCase()} x ${set.reps} (1RM: ${Math.round(toDisplay(e1rm, unit))})`;
@@ -236,7 +237,7 @@ export const useSortableExerciseCardState = ({
             if (completedCount === regularSets.length && regularSets.length > 0) {
                 setExDoneFlash(true);
                 triggerHaptic('success');
-                playTimerFinishSound();
+                playTimerFinishSound(readWorkoutPrefs(config).restSoundName ?? 'boxingBell');
                 if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
                 flashTimerRef.current = setTimeout(() => setExDoneFlash(false), 1200);
             }
@@ -253,7 +254,7 @@ export const useSortableExerciseCardState = ({
             if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
             if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
         };
-    }, [completedCount, regularSets]);
+    }, [completedCount, regularSets, config]);
 
     const isProtocol = !isCardio && !ex.isIsometric;
     const canWarmup = !ex.isBodyweight && !ex.isIsometric && !isCardio;
@@ -357,6 +358,8 @@ export const useSortableExerciseCardState = ({
     };
     const handleSaveRest = (seconds: number) => {
         const valid = Number.isFinite(seconds) && seconds > 0 ? Math.min(600, Math.round(seconds)) : undefined;
+        // Persist per-exercise so future sessions inherit it (Strong parity).
+        setExerciseRestOverride(ex.id, valid);
         onUpdateSession((prev: ActiveSession | null) => !prev ? null : {
             ...prev,
             exercises: prev.exercises.map((item: SessionExercise) =>

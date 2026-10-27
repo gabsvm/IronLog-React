@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useMemo, PropsWithChildren, useCallback } from 'react';
 import { useTimer, TimerState } from '../hooks/useTimer';
-import type { Lang } from '../types';
+import type { Lang, RestSoundName } from '../types';
 import {
     adjustRestTimer,
     pauseRestTimer,
@@ -28,18 +28,20 @@ export interface TimerProviderProps extends PropsWithChildren {
     /** SettingsParity prefs; AppProvider passes AppState.config values. Absent = enabled. */
     soundEnabled?: boolean;
     vibrateEnabled?: boolean;
+    soundName?: RestSoundName;
 }
 
-const TimerStateContext = createContext<TimerState | undefined>(undefined);
-const TimerActionsContext = createContext<TimerActions | undefined>(undefined);
+export const TimerStateContext = createContext<TimerState | undefined>(undefined);
+export const TimerActionsContext = createContext<TimerActions | undefined>(undefined);
 
 export const TimerProvider = ({
     children,
     lang = 'es',
     soundEnabled = true,
     vibrateEnabled = true,
+    soundName = 'boxingBell',
 }: TimerProviderProps) => {
-    const { restTimer, setRestTimer } = useTimer(lang, { soundEnabled, vibrateEnabled });
+    const { restTimer, setRestTimer } = useTimer(lang, { soundEnabled, vibrateEnabled, soundName });
     const pauseRest = useCallback(() => setRestTimer((prev) => pauseRestTimer(prev)), [setRestTimer]);
     const resumeRest = useCallback(() => setRestTimer((prev) => resumeRestTimer(prev)), [setRestTimer]);
     const restartRest = useCallback(() => setRestTimer((prev) => restartRestTimer(prev)), [setRestTimer]);

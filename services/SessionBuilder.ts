@@ -5,6 +5,7 @@ import { KONG_4DAY_V1 } from '../programs/kong/kong4Day';
 import { getProgramBlockForWeek, resolveProgramDay } from '../programs/engine/ProgramResolver';
 import { getKongDayDisplay } from '../programs/kong/kongDisplay';
 import { filterLogsByPreviousScope } from '../utils/strongTraining';
+import { getExerciseRestOverride } from '../utils/exerciseRestOverrides';
 import { getSessionTemplateContext } from '../utils/templateIdentity';
 
 export class SessionBuilder {
@@ -76,10 +77,21 @@ export class SessionBuilder {
 
             const lastSets = getLastLogForExercise(exDef.id, scopedLogs, safeExercises);
 
+            // Strong parity: prefill inputs with the previous workout's values
+            // (hints stay for display). Empty when there is no history.
+            const fillWeight = (i: number): string => {
+                const v = lastSets?.[i]?.weight;
+                return v === '' || v === undefined || v === null || !Number.isFinite(Number(v)) ? '' : String(v);
+            };
+            const fillReps = (i: number): string => {
+                const v = lastSets?.[i]?.reps;
+                return v === '' || v === undefined || v === null || !/^\d+$/.test(String(v)) ? '' : String(v);
+            };
+
             const initialSets = (slotDef.prescription || Array.from({ length: setTarget }, () => undefined)).map((prescription, i) => ({
                 id: uid(),
-                weight: '',
-                reps: '',
+                weight: fillWeight(i),
+                reps: fillReps(i),
                 rpe: '',
                 completed: false,
                 type: prescription?.role === 'top' ? 'top' : prescription?.role === 'backoff' || prescription?.role === 'high_rep_backoff' ? 'backoff' : slotDef.setType || 'regular',
@@ -96,6 +108,7 @@ export class SessionBuilder {
             return {
                 ...exDef,
                 instanceId: uid(),
+                defaultRestSeconds: getExerciseRestOverride(exDef.id) ?? (exDef as { defaultRestSeconds?: number }).defaultRestSeconds,
                 slotLabel: slotDef.label || slotDef.muscle,
                 targetReps: slotDef.reps,
                 note: slotDef.notes,

@@ -1,7 +1,7 @@
 import { TRANSLATIONS } from '../../constants/translations';
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Icon } from '../ui/Icon';
-import { triggerHaptic, playTimerFinishSound } from '../../utils/audio';
+import { triggerHaptic, playTimerFinishSound, useRestSoundName } from '../../utils/audio';
 
 const fmt = (s: number) =>
     s >= 60 ? `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}` : `${s}s`;
@@ -25,6 +25,7 @@ export const EMOMTimer: React.FC<EMOMTimerProps> = React.memo(({ totalSets, lang
     const phaseStartRef = useRef<number>(0);
     const minuteRef = useRef<number>(0);
     const totalSetsRef = useRef(totalSets);
+    const restSound = useRestSoundName();
     totalSetsRef.current = totalSets;
 
     const clear = useCallback(() => {
@@ -46,7 +47,7 @@ export const EMOMTimer: React.FC<EMOMTimerProps> = React.memo(({ totalSets, lang
             setState('done');
             onMinuteChange(0);
             triggerHaptic('success');
-            playTimerFinishSound();
+            playTimerFinishSound(restSound);
             return;
         }
 
@@ -56,7 +57,7 @@ export const EMOMTimer: React.FC<EMOMTimerProps> = React.memo(({ totalSets, lang
         phaseStartRef.current = Date.now();
         onMinuteChange(next);
         triggerHaptic('heavy');
-    }, [clear, onMinuteChange]);
+    }, [clear, onMinuteChange, restSound]);
 
     const start = useCallback(() => {
         setState('running');
@@ -176,6 +177,7 @@ export const TabataTimer: React.FC<TabataTimerProps> = React.memo(({ totalRounds
     const phaseRef = useRef<'work' | 'rest'>('work');
     const roundRef = useRef<number>(1);
     const totalRoundsRef = useRef(totalRounds);
+    const restSound = useRestSoundName();
     totalRoundsRef.current = totalRounds;
 
     const clear = useCallback(() => {
@@ -206,7 +208,7 @@ export const TabataTimer: React.FC<TabataTimerProps> = React.memo(({ totalRounds
             clear();
             setState('done');
             triggerHaptic('success');
-            playTimerFinishSound();
+            playTimerFinishSound(restSound);
             return;
         }
 
@@ -217,7 +219,7 @@ export const TabataTimer: React.FC<TabataTimerProps> = React.memo(({ totalRounds
         setTimeLeft(WORK_SEC);
         phaseStartRef.current = Date.now();
         triggerHaptic('heavy');
-    }, [clear]);
+    }, [clear, restSound]);
 
     const start = useCallback(() => {
         setState('running');

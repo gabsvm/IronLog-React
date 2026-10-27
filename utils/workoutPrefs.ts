@@ -1,4 +1,4 @@
-import type { IncompleteSets, OneRmFormula, PreviousScope } from './strongTraining';
+import type { IncompleteSets, OneRmFormula, PreviousScope, RestSoundName } from './strongTraining';
 
 /**
  * Back-compat reader for Settings-owned workout prefs.
@@ -11,6 +11,7 @@ import type { IncompleteSets, OneRmFormula, PreviousScope } from './strongTraini
  * its own runtime shape at this boundary.
  */
 export interface WorkoutPrefs {
+    simpleTimers?: boolean;
     defaultRestSeconds?: number;
     warmupRestSeconds?: number;
     autoStartRest?: boolean;
@@ -18,6 +19,8 @@ export interface WorkoutPrefs {
     previousScope?: PreviousScope;
     defaultSets?: number;
     oneRmFormula?: OneRmFormula;
+    factorInRpe?: boolean;
+    restSoundName?: RestSoundName;
 }
 
 export const readWorkoutPrefs = (config: unknown): WorkoutPrefs => {
@@ -54,7 +57,17 @@ export const readWorkoutPrefs = (config: unknown): WorkoutPrefs => {
     }
     if ('oneRmFormula' in config) {
         const v: unknown = config.oneRmFormula;
-        if (v === 'epley' || v === 'brzycki' || v === 'lombardi') prefs.oneRmFormula = v;
+        if (v === 'epley' || v === 'brzycki' || v === 'lombardi' || v === 'hybrid') prefs.oneRmFormula = v;
+    }
+    if ('simpleTimers' in config) {
+        prefs.simpleTimers = (config as { simpleTimers?: unknown }).simpleTimers === true;
+    }
+    if ('factorInRpe' in config) {
+        prefs.factorInRpe = (config as { factorInRpe?: unknown }).factorInRpe === true;
+    }
+    if ('restSoundName' in config) {
+        const v: unknown = (config as { restSoundName?: unknown }).restSoundName;
+        if (v === 'boxingBell' || v === 'chime' || v === 'triTone' || v === 'shortBell') prefs.restSoundName = v;
     }
     return prefs;
 };

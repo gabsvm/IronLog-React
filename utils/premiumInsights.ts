@@ -27,6 +27,7 @@ export const buildPremiumInsights = (
     mesoId: number | null,
     now = Date.now(),
     formula: OneRmFormula = 'epley',
+    factorInRpe = false,
 ): PremiumInsights => {
     const end = new Date(now);
     end.setHours(0, 0, 0, 0);
@@ -55,7 +56,7 @@ export const buildPremiumInsights = (
                 const weight = Number(set.weight);
                 const reps = Number(set.reps);
                 if (!Number.isFinite(weight) || !Number.isFinite(reps) || weight <= 0 || reps <= 0) continue;
-                const e1rm = estimateOneRm(weight, reps, formula);
+                const e1rm = estimateOneRm(weight, reps, formula, set.rpe, factorInRpe);
                 if (!bestSet || e1rm > bestSet.estimatedOneRepMax) {
                     bestSet = { name: exercise.name, weight, reps, estimatedOneRepMax: e1rm, date: timestamp };
                 }

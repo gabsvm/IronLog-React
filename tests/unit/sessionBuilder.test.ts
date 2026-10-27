@@ -173,4 +173,39 @@ describe('SessionBuilder', () => {
         // Standard setTarget is 3, deload should ceil(3 / 2) = 2
         expect(session!.exercises[0].sets.length).toBe(2);
     });
+
+    it('prefills set inputs with previous values when history exists (Strong parity)', () => {
+        const log = {
+            id: 1, dayIdx: 0, name: 'Push', startTime: 1000, endTime: 2000, duration: 1000,
+            exercises: [{
+                id: 'bench_press', instanceId: 1, name: 'Barbell Bench Press', muscle: 'CHEST',
+                sets: [{ id: 1, weight: 100, reps: 8, completed: true, type: 'regular' }],
+            }],
+        };
+        const session = SessionBuilder.buildFromProgramDay(
+            0,
+            standardProgramDay,
+            mockMeso,
+            mockExercises,
+            [log] as any,
+            'es',
+            {},
+            { rpEnabled: false }
+        );
+        expect(session!.exercises[0].sets[0]).toMatchObject({ weight: '100', reps: '8' });
+    });
+
+    it('leaves inputs empty without history', () => {
+        const session = SessionBuilder.buildFromProgramDay(
+            0,
+            standardProgramDay,
+            mockMeso,
+            mockExercises,
+            [],
+            'es',
+            {},
+            { rpEnabled: false }
+        );
+        expect(session!.exercises[0].sets[0]).toMatchObject({ weight: '', reps: '' });
+    });
 });

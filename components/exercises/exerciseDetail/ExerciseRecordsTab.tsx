@@ -26,6 +26,7 @@ interface ExerciseRecordsTabProps {
     labels: ExerciseDetailStrings;
     repLabels: RepMaxLabels;
     formula: OneRmFormula;
+    factorInRpe?: boolean;
 }
 
 // Records: personal bests plus the actual-vs-estimated rep table. Estimated
@@ -40,6 +41,7 @@ export const ExerciseRecordsTab: React.FC<ExerciseRecordsTabProps> = ({
     labels,
     repLabels,
     formula,
+    factorInRpe = false,
 }) => {
     const suffix = unitLabel(unit).toLowerCase();
     const isCardio = exercise.muscle === 'CARDIO';
@@ -48,8 +50,8 @@ export const ExerciseRecordsTab: React.FC<ExerciseRecordsTabProps> = ({
 
     const repMaxRows = useMemo(() => {
         if (!showRepTable) return [];
-        return computeRepMaxTable(safeLogs, new Set(groupIds.map(String)), formula);
-    }, [showRepTable, safeLogs, groupIds, formula]);
+        return computeRepMaxTable(safeLogs, new Set(groupIds.map(String)), formula, factorInRpe);
+    }, [showRepTable, safeLogs, groupIds, formula, factorInRpe]);
 
     const hasRecords = records.sessions > 0 && (
         records.best1RM > 0 || records.maxWeight > 0 || records.maxReps > 0 ||

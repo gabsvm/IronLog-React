@@ -86,7 +86,7 @@ export const useStatsWorker = () => {
         });
     }, [ensureLogs, nextRequestId]);
 
-    const calculateChartData = useCallback((logs: Log[], exerciseId: string | string[], metric: ChartMetric, activeMesoId?: number | null, oneRmFormula: OneRmFormula = 'epley'): Promise<ChartPoint[]> => {
+    const calculateChartData = useCallback((logs: Log[], exerciseId: string | string[], metric: ChartMetric, activeMesoId?: number | null, oneRmFormula: OneRmFormula = 'epley', factorInRpe = false): Promise<ChartPoint[]> => {
         const worker = ensureLogs(logs);
         if (!worker) return Promise.resolve([]);
         const reqId = nextRequestId();
@@ -99,6 +99,7 @@ export const useStatsWorker = () => {
                 activeMesoId: activeMesoId ?? undefined,
                 userBodyWeight: userProfile?.bodyWeight,
                 oneRmFormula,
+                factorInRpe,
                 reqId,
             });
         });
@@ -108,8 +109,8 @@ export const useStatsWorker = () => {
     // WeakMap-backed history index used by the workout cards and preserve the
     // effective-load/bodyweight semantics of EXPERIMENTAL. The formula selects
     // the estimate (default 'epley' = legacy behavior).
-    const calculateAllBest1RMs = useCallback((logs: Log[], oneRmFormula: OneRmFormula = 'epley'): Promise<Map<string, number>> => {
-        return Promise.resolve(getHistoricalBest1RMIndex(logs, userProfile?.bodyWeight, exercises, oneRmFormula));
+    const calculateAllBest1RMs = useCallback((logs: Log[], oneRmFormula: OneRmFormula = 'epley', factorInRpe = false): Promise<Map<string, number>> => {
+        return Promise.resolve(getHistoricalBest1RMIndex(logs, userProfile?.bodyWeight, exercises, oneRmFormula, factorInRpe));
     }, [userProfile?.bodyWeight, exercises]);
 
     // No eager Worker startup: consumers can call immediately and the first

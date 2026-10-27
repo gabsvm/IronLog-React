@@ -53,11 +53,15 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     const [restSound, setRestSound] = useLocalStorage<boolean>(TRAINING_CONFIG_KEYS.restSound, TRAINING_CONFIG_DEFAULTS.restSound);
     const [restVibrate, setRestVibrate] = useLocalStorage<boolean>(TRAINING_CONFIG_KEYS.restVibrate, TRAINING_CONFIG_DEFAULTS.restVibrate);
     const [autoStartRest, setAutoStartRest] = useLocalStorage<boolean>(TRAINING_CONFIG_KEYS.autoStartRest, TRAINING_CONFIG_DEFAULTS.autoStartRest);
+    const [autoFullscreen, setAutoFullscreen] = useLocalStorage(TRAINING_CONFIG_KEYS.autoFullscreen, TRAINING_CONFIG_DEFAULTS.autoFullscreen);
+    const [simpleTimers, setSimpleTimers] = useLocalStorage(TRAINING_CONFIG_KEYS.simpleTimers, TRAINING_CONFIG_DEFAULTS.simpleTimers);
     const [bodyWeightUnit, setBodyWeightUnit] = useLocalStorage<BodyWeightUnit>(TRAINING_CONFIG_KEYS.bodyWeightUnit, TRAINING_CONFIG_DEFAULTS.bodyWeightUnit);
     const [distanceUnit, setDistanceUnit] = useLocalStorage<DistanceUnit>(TRAINING_CONFIG_KEYS.distanceUnit, TRAINING_CONFIG_DEFAULTS.distanceUnit);
     const [sizeUnit, setSizeUnit] = useLocalStorage<SizeUnit>(TRAINING_CONFIG_KEYS.sizeUnit, TRAINING_CONFIG_DEFAULTS.sizeUnit);
     const [weekStart, setWeekStart] = useLocalStorage<WeekStart>(TRAINING_CONFIG_KEYS.weekStart, TRAINING_CONFIG_DEFAULTS.weekStart);
     const [oneRmFormula, setOneRmFormula] = useLocalStorage<OneRmFormula>(TRAINING_CONFIG_KEYS.oneRmFormula, TRAINING_CONFIG_DEFAULTS.oneRmFormula);
+    const [factorInRpe, setFactorInRpe] = useLocalStorage<boolean>(TRAINING_CONFIG_KEYS.factorInRpe, TRAINING_CONFIG_DEFAULTS.factorInRpe);
+    const [restSoundName, setRestSoundName] = useLocalStorage(TRAINING_CONFIG_KEYS.restSoundName, TRAINING_CONFIG_DEFAULTS.restSoundName);
     const [plateBarKg, setPlateBarKg] = useLocalStorage<number>(TRAINING_CONFIG_KEYS.plateBarKg, TRAINING_CONFIG_DEFAULTS.plateBarKg);
     const [platePlatesKg, setPlatePlatesKg] = useLocalStorage<number[]>(TRAINING_CONFIG_KEYS.platePlatesKg, TRAINING_CONFIG_DEFAULTS.platePlatesKg);
     const [tutorialProgress, setTutorialProgress] = useLocalStorage<TutorialState>('il_tutorial_v2', INITIAL_TUTORIAL_STATE);
@@ -205,11 +209,15 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         restSound,
         restVibrate,
         autoStartRest,
+        autoFullscreen,
+        simpleTimers,
+        restSoundName,
         bodyWeightUnit,
         distanceUnit,
         sizeUnit,
         weekStart,
         oneRmFormula,
+        factorInRpe,
         plateBarKg,
         platePlatesKg,
         program,
@@ -262,11 +270,15 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         setRestSound,
         setRestVibrate,
         setAutoStartRest,
+        setAutoFullscreen,
+        setSimpleTimers,
+        setRestSoundName,
         setBodyWeightUnit,
         setDistanceUnit,
         setSizeUnit,
         setWeekStart,
         setOneRmFormula,
+        setFactorInRpe,
         setPlateBarKg,
         setPlatePlatesKg,
         setProgram,
@@ -330,11 +342,15 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         restSound,
         restVibrate,
         autoStartRest,
+        autoFullscreen,
+        simpleTimers,
+        restSoundName,
         bodyWeightUnit,
         distanceUnit,
         sizeUnit,
         weekStart,
         oneRmFormula,
+        factorInRpe,
         plateBarKg,
         platePlatesKg,
         setWeightUnit,
@@ -347,11 +363,15 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         setRestSound,
         setRestVibrate,
         setAutoStartRest,
+        setAutoFullscreen,
+        setSimpleTimers,
+        setRestSoundName,
         setBodyWeightUnit,
         setDistanceUnit,
         setSizeUnit,
         setWeekStart,
         setOneRmFormula,
+        setFactorInRpe,
         setPlateBarKg,
         setPlatePlatesKg,
         program,
@@ -423,15 +443,15 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         if (
             p.previousScope !== undefined || p.incompleteSets !== undefined || p.defaultSets !== undefined ||
             p.defaultRestSeconds !== undefined || p.warmupRestSeconds !== undefined || p.restIncrementSeconds !== undefined ||
-            p.restSound !== undefined || p.restVibrate !== undefined || p.autoStartRest !== undefined ||
+            p.restSound !== undefined || p.restVibrate !== undefined || p.autoStartRest !== undefined || p.autoFullscreen !== undefined || p.simpleTimers !== undefined || p.restSoundName !== undefined ||
             p.bodyWeightUnit !== undefined || p.distanceUnit !== undefined || p.sizeUnit !== undefined ||
-            p.weekStart !== undefined || p.oneRmFormula !== undefined || p.plateBarKg !== undefined || p.platePlatesKg !== undefined
+            p.weekStart !== undefined || p.oneRmFormula !== undefined || p.factorInRpe !== undefined || p.plateBarKg !== undefined || p.platePlatesKg !== undefined
         ) {
             // Single sanitized write: invalid values fall back to defaults (cross-device consistency).
             const next = sanitizeTrainingConfig({
                 previousScope, incompleteSets, defaultSets, defaultRestSeconds, warmupRestSeconds,
-                restIncrementSeconds, restSound, restVibrate, autoStartRest, bodyWeightUnit,
-                distanceUnit, sizeUnit, weekStart, oneRmFormula, plateBarKg, platePlatesKg,
+                restIncrementSeconds, restSound, restVibrate, autoStartRest, autoFullscreen, simpleTimers, restSoundName, bodyWeightUnit,
+                distanceUnit, sizeUnit, weekStart, oneRmFormula, factorInRpe, plateBarKg, platePlatesKg,
                 ...p,
             });
             setPreviousScope(next.previousScope);
@@ -443,15 +463,19 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
             setRestSound(next.restSound);
             setRestVibrate(next.restVibrate);
             setAutoStartRest(next.autoStartRest);
+            setAutoFullscreen(next.autoFullscreen);
+            setSimpleTimers(next.simpleTimers);
+            setRestSoundName(next.restSoundName);
             setBodyWeightUnit(next.bodyWeightUnit);
             setDistanceUnit(next.distanceUnit);
             setSizeUnit(next.sizeUnit);
             setWeekStart(next.weekStart);
             setOneRmFormula(next.oneRmFormula);
+            setFactorInRpe(next.factorInRpe);
             setPlateBarKg(next.plateBarKg);
             setPlatePlatesKg(next.platePlatesKg);
         }
-    }, [setShowRIR, setRpEnabled, setRpTargetRIR, setKeepScreenOn, setRestTimerDisplay, setWeightUnit, previousScope, incompleteSets, defaultSets, defaultRestSeconds, warmupRestSeconds, restIncrementSeconds, restSound, restVibrate, autoStartRest, bodyWeightUnit, distanceUnit, sizeUnit, weekStart, oneRmFormula, plateBarKg, platePlatesKg, setPreviousScope, setIncompleteSets, setDefaultSets, setDefaultRestSeconds, setWarmupRestSeconds, setRestIncrementSeconds, setRestSound, setRestVibrate, setAutoStartRest, setBodyWeightUnit, setDistanceUnit, setSizeUnit, setWeekStart, setOneRmFormula, setPlateBarKg, setPlatePlatesKg]);
+    }, [setShowRIR, setRpEnabled, setRpTargetRIR, setKeepScreenOn, setRestTimerDisplay, setWeightUnit, previousScope, incompleteSets, defaultSets, defaultRestSeconds, warmupRestSeconds, restIncrementSeconds, restSound, restVibrate, autoStartRest, autoFullscreen, simpleTimers, restSoundName, bodyWeightUnit, distanceUnit, sizeUnit, weekStart, oneRmFormula, factorInRpe, plateBarKg, platePlatesKg, setPreviousScope, setIncompleteSets, setDefaultSets, setDefaultRestSeconds, setWarmupRestSeconds, setRestIncrementSeconds, setRestSound, setRestVibrate, setAutoStartRest, setAutoFullscreen, setSimpleTimers, setRestSoundName, setBodyWeightUnit, setDistanceUnit, setSizeUnit, setWeekStart, setOneRmFormula, setFactorInRpe, setPlateBarKg, setPlatePlatesKg]);
 
     const markTutorialSeen = useCallback((section: keyof TutorialState) => setTutorialProgress(prev => ({ ...prev, [section]: true })), [setTutorialProgress]);
     const resetTutorials = useCallback(() => setTutorialProgress(INITIAL_TUTORIAL_STATE), [setTutorialProgress]);
@@ -473,14 +497,18 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         restSound,
         restVibrate,
         autoStartRest,
+        autoFullscreen,
+        simpleTimers,
+        restSoundName,
         bodyWeightUnit,
         distanceUnit,
         sizeUnit,
         weekStart,
         oneRmFormula,
+        factorInRpe,
         plateBarKg,
         platePlatesKg,
-    }), [showRIR, rpEnabled, rpTargetRIR, keepScreenOn, restTimerDisplay, weightUnit, previousScope, incompleteSets, defaultSets, defaultRestSeconds, warmupRestSeconds, restIncrementSeconds, restSound, restVibrate, autoStartRest, bodyWeightUnit, distanceUnit, sizeUnit, weekStart, oneRmFormula, plateBarKg, platePlatesKg]);
+    }), [showRIR, rpEnabled, rpTargetRIR, keepScreenOn, restTimerDisplay, weightUnit, previousScope, incompleteSets, defaultSets, defaultRestSeconds, warmupRestSeconds, restIncrementSeconds, restSound, restVibrate, autoStartRest, autoFullscreen, simpleTimers, restSoundName, bodyWeightUnit, distanceUnit, sizeUnit, weekStart, oneRmFormula, factorInRpe, plateBarKg, platePlatesKg]);
     const preferencesValue = useMemo(() => ({
         lang, setLang, theme, setTheme, colorTheme, setColorTheme,
         effectsMode, setEffectsMode, resolvedEffects,
@@ -570,7 +598,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                     <AppPreferencesContext.Provider value={preferencesValue}>
                         <AppConfigContext.Provider value={configValue}>
                             <TutorialContext.Provider value={tutorialValue}>
-                                <TimerProvider lang={lang} soundEnabled={configState.restSound} vibrateEnabled={configState.restVibrate}>
+                                <TimerProvider lang={lang} soundEnabled={configState.restSound} vibrateEnabled={configState.restVibrate} soundName={configState.restSoundName ?? 'boxingBell'}>
                                     {children}
                                 </TimerProvider>
                             </TutorialContext.Provider>

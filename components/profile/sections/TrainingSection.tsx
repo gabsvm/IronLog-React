@@ -3,7 +3,7 @@ import { useApp } from '../../../context/AppContext';
 import { useAuth } from '../../../context/AuthContext';
 import { useStore } from '../../../lib/store';
 import { TRANSLATIONS } from '../../../constants';
-import { GlobalTemplate } from '../../../types';
+import { GlobalTemplate, type RestSoundName } from '../../../types';
 import { Icon } from '../../ui/Icon';
 import { Button } from '../../ui/Button';
 import { Sheet } from '../../ui/Sheet';
@@ -340,14 +340,24 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                 />
                 <PrefSegmented
                     label={sc.restIncrement}
-                    options={[5, 10, 15, 30] as const}
+                    options={[5, 15, 30] as const}
                     value={prefs.restIncrementSeconds}
                     onChange={(restIncrementSeconds) => patchPrefs({ restIncrementSeconds })}
                     format={(n) => `${n} ${sc.secondsShort}`}
                 />
                 <PrefToggle label={sc.restSound} pressed={prefs.restSound} onChange={(restSound) => patchPrefs({ restSound })} />
+                <PrefSegmented<RestSoundName>
+                    label={sc.restSoundName}
+                    options={['boxingBell', 'chime', 'triTone', 'shortBell'] as const}
+                    value={prefs.restSoundName}
+                    onChange={(restSoundName) => patchPrefs({ restSoundName })}
+                    format={(v) => v === 'boxingBell' ? sc.restSoundBoxing : v === 'chime' ? sc.restSoundChime : v === 'triTone' ? sc.restSoundTri : sc.restSoundShort}
+                />
                 <PrefToggle label={sc.restVibrate} pressed={prefs.restVibrate} onChange={(restVibrate) => patchPrefs({ restVibrate })} />
                 <PrefToggle label={sc.autoStartRest} pressed={prefs.autoStartRest} onChange={(autoStartRest) => patchPrefs({ autoStartRest })} />
+                <PrefToggle label={sc.simpleTimers} hint={sc.simpleTimersHint} pressed={prefs.simpleTimers} onChange={(simpleTimers) => patchPrefs({ simpleTimers })} />
+                <PrefToggle label={sc.autoFullscreen} hint={sc.autoFullscreenHint} pressed={prefs.autoFullscreen} onChange={(autoFullscreen) => patchPrefs({ autoFullscreen })} />
+                <PrefToggle label={sc.factorInRpe} hint={sc.factorInRpeHint} pressed={prefs.factorInRpe} onChange={(factorInRpe) => patchPrefs({ factorInRpe })} />
             </div>
 
             <div className="label-reference px-1 mt-4 mb-1.5">{sc.setsGroup}</div>
@@ -410,11 +420,12 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                 />
                 <PrefSegmented<OneRmFormula>
                     label={sc.oneRmFormula}
-                    options={['epley', 'brzycki', 'lombardi'] as const}
+                    options={['epley', 'brzycki', 'lombardi', 'hybrid'] as const}
                     value={prefs.oneRmFormula}
                     onChange={(oneRmFormula) => patchPrefs({ oneRmFormula })}
-                    format={(f) => f.charAt(0).toUpperCase() + f.slice(1)}
+                    format={(f) => f === 'hybrid' ? `Hybrid ${sc.oneRmHybridRecommended}` : f.charAt(0).toUpperCase() + f.slice(1)}
                 />
+                <PrefToggle label={sc.factorInRpe} hint={sc.factorInRpeHint} pressed={prefs.factorInRpe} onChange={(factorInRpe) => patchPrefs({ factorInRpe })} />
             </div>
 
             <div className="label-reference px-1 mt-4 mb-1.5">{sc.plateGroup}</div>

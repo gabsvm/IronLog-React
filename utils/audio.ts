@@ -1,4 +1,6 @@
 import { Capacitor, registerPlugin } from '@capacitor/core';
+import { useContext } from 'react';
+import { AppContext } from '../context/app/appContexts';
 
 export type HapticType = 'light' | 'medium' | 'heavy' | 'success' | 'warning';
 
@@ -67,30 +69,51 @@ const getAudioCtx = (): AudioContext | null => {
     }
 };
 
-// Simple oscillator beep to avoid loading external assets
-export const playTimerFinishSound = () => {
+import type { RestSoundName } from '../types';
+
+export type { RestSoundName };
+
+const playTone = (ctx: AudioContext, freq: number, at: number, dur: number, peak = 0.4, type: OscillatorType = 'sine') => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, ctx.currentTime + at);
+    gain.gain.setValueAtTime(0.0001, ctx.currentTime + at);
+    gain.gain.exponentialRampToValueAtTime(peak, ctx.currentTime + at + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + at + dur);
+    osc.start(ctx.currentTime + at);
+    osc.stop(ctx.currentTime + at + dur + 0.05);
+};
+
+// Simple oscillator sounds to avoid loading external assets
+// (Strong offers Boxing bell / Chime / Tri tone / Short bell).
+export const playTimerFinishSound = (name: RestSoundName = 'boxingBell') => {
     try {
         const ctx = getAudioCtx();
         if (!ctx) return;
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.5);
-
-        gain.gain.setValueAtTime(0.5, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.5);
-    } catch (e) {
-        console.error('Audio play failed', e);
+        if (name === 'chime') {
+            playTone(ctx, 880, 0, 0.5);
+            playTone(ctx, 1318.5, 0.18, 0.6);
+        } else if (name === 'triTone') {
+            playTone(ctx, 660, 0, 0.25);
+            playTone(ctx, 880, 0.2, 0.25);
+            playTone(ctx, 1320, 0.4, 0.5);
+        } else if (name === 'shortBell') {
+            playTone(ctx, 1567, 0, 0.25, 0.5, 'triangle');
+        } else {
+            // boxingBell: low thump + bright strike.
+            playTone(ctx, 196, 0, 0.3, 0.5, 'triangle');
+            playTone(ctx, 880, 0.05, 0.4);
+        }
+    } catch (err) {
+        console.error('Audio play failed', err);
     }
 };
+
+/** Back-compat single beep (legacy callers without a sound choice). */
+export const playTimerBeep = () => playTimerFinishSound('boxingBell');
 
 const webHaptic = (type: HapticType) => {
     if (typeof navigator === 'undefined' || !navigator.vibrate) return;
@@ -382,3 +405,11 @@ export const shouldShowExactAlarmNotice = (input: {
     && input.sdkInt >= 31
     && !input.granted
     && !input.alreadyNoticed;
+
+/** Reads the configured rest sound without requiring a provider (falls back to default). */
+export const useRestSoundName = (): RestSoundName => {
+    const ctx = useContext(AppContext);
+    const name = ctx?.config?.restSoundName;
+    if (name === 'chime' || name === 'triTone' || name === 'shortBell' || name === 'boxingBell') return name;
+    return 'boxingBell';
+};

@@ -58,7 +58,7 @@ test.describe('Rest surfaces remain reachable without overlap (G2)', () => {
 
         const pill = page.locator('[data-workout-rest-dock]');
         await pill.scrollIntoViewIfNeeded();
-        await expect(pill.getByRole('button', { name: '-15s' })).toBeVisible({ timeout: 8000 });
+        await expect(pill.getByRole('button', { name: /Pausar|Pause/ })).toBeVisible({ timeout: 8000 });
         await expect(pill.getByRole('button', { name: /Fácil|Easy/ })).toBeVisible({ timeout: 8000 });
 
         // Effort chips measure >=44px tall for real.
@@ -132,7 +132,7 @@ test.describe('Rest surfaces remain reachable without overlap (G2)', () => {
         await completeSetBtn.click();
 
         const pill = page.locator('[data-workout-rest-dock]');
-        await expect(pill.getByRole('button', { name: '-15s' })).toBeVisible({ timeout: 8000 });
+        await expect(pill.getByRole('button', { name: /Pausar|Pause/ })).toBeVisible({ timeout: 8000 });
         // Center the dock so the bottom-anchored prompt cannot cover it
         // regardless of scroll position.
         await pill.scrollIntoViewIfNeeded();

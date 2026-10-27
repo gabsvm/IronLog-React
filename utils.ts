@@ -1,5 +1,6 @@
 
 import { Lang, Log, WorkoutSet, MesoType, ExerciseDef } from "./types";
+import { pickLang } from './utils/i18n';
 import { exerciseIdGroup } from "./utils/exerciseLibrary";
 import type { OneRmFormula } from './utils/strongTraining';
 import { estimateOneRm } from './utils/strongTraining';
@@ -24,11 +25,34 @@ export const uid = (): number => {
 // estimateOneRm(weight, reps, formula) from utils/strongTraining so the
 // user-selected formula (SettingsParity) applies coherently; this wrapper
 // keeps the historical default ('epley') for callers not yet wired.
-export const estimate1RM = (weight: number, reps: number, formula: OneRmFormula = 'epley'): number =>
-    estimateOneRm(weight, reps, formula);
+export const estimate1RM = (weight: number, reps: number, formula: OneRmFormula = 'epley', rpe?: unknown, factorInRpe = false): number =>
+    estimateOneRm(weight, reps, formula, rpe, factorInRpe);
 
-export const formatDate = (d: number, l: Lang) => 
+export const formatDate = (d: number, l: Lang) =>
     new Date(d).toLocaleDateString(l==='en'?'en-US':'es-ES', {weekday:'short', month:'short', day:'numeric'});
+
+/** Latest log endTime for a template id (Strong "Last performed" line), or null. */
+export const lastPerformedForTemplate = (templateId: string | null | undefined, logs: readonly { templateId?: string | null; endTime?: number; startTime?: number }[] | null | undefined): number | null => {
+    if (!templateId || !Array.isArray(logs)) return null;
+    let best: number | null = null;
+    for (const log of logs) {
+        if (!log || log.templateId !== templateId) continue;
+        const ts = Number(log.endTime) || Number(log.startTime) || 0;
+        if (ts > 0 && (best === null || ts > best)) best = ts;
+    }
+    return best;
+};
+
+/** "Yesterday" / localized date for the template "last performed" line. */
+export const formatLastPerformed = (ts: number, lang: Lang, now = Date.now()): string => {
+    const day = 86400000;
+    const startOfToday = new Date(now); startOfToday.setHours(0, 0, 0, 0);
+    const startOfDay = new Date(ts); startOfDay.setHours(0, 0, 0, 0);
+    const diffDays = Math.round((startOfToday.getTime() - startOfDay.getTime()) / day);
+    if (diffDays <= 0) return pickLang(lang, { es: 'Hoy', en: 'Today' });
+    if (diffDays === 1) return pickLang(lang, { es: 'Ayer', en: 'Yesterday' });
+    return new Date(ts).toLocaleDateString(pickLang(lang, { es: 'es-ES', en: 'en-US' }), { month: 'short', day: 'numeric', year: 'numeric' });
+};
 
 export const formatSeconds = (s: number) => {
     const sec = Math.max(0, Math.floor(Number(s) || 0));

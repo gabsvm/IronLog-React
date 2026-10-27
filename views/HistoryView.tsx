@@ -13,6 +13,7 @@ import { buildUndoLog } from '../utils/historyEdit';
 import { uid } from '../utils';
 import { buildTrainingCsv } from '../services/trainingCsv';
 import { shareFileOrDownload } from '../utils/shareFile';
+import { HistoryCalendar } from './history/HistoryCalendar';
 import { todayLocalDateKey } from '../utils/localDate';
 import { pickLang } from '../utils/i18n';
 
@@ -25,16 +26,26 @@ interface HistoryVirtuosoContext {
     search: string;
     setSearch: (s: string) => void;
     onExportCSV?: () => void;
+    onOpenCalendar?: () => void;
+    calendarActive?: boolean;
 }
 
 const VirtuosoHeader = ({ context }: { context?: HistoryVirtuosoContext }) => {
     if (!context) return null;
-    const { lang, search, setSearch, onExportCSV } = context;
+    const { lang, search, setSearch, onExportCSV, onOpenCalendar, calendarActive } = context;
     return (
         <div className="px-4 pb-3 pt-3">
             {/* The Sessions tab already names this list; the heading stays for assistive tech. */}
             <h2 className="sr-only">{TRANSLATIONS[lang].copy.history.history}</h2>
             <div className="flex items-center gap-2">
+                <button
+                    type="button"
+                    onClick={onOpenCalendar}
+                    aria-label={pickLang(lang, { es: 'Calendario', en: 'Calendar' })}
+                    className={`flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-xl border ${calendarActive ? 'border-primary-500 bg-primary-500/10 text-[rgb(var(--text-primary))]' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base))] text-[rgb(var(--text-secondary))]'}`}
+                >
+                    <Icon name="Calendar" size={16} />
+                </button>
             <div id="tut-history-search" className="relative min-w-0 flex-1">
                 <Icon name="Search" size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
                 <input
@@ -130,6 +141,8 @@ export const HistoryView: React.FC<{ search: string; onSearchChange: (search: st
     const setActiveSession = useStore(state => state.setActiveSession);
     const t = TRANSLATIONS[lang];
     const [selectedLogId, setSelectedLogId] = useState<number | null>(null);
+    const [showCalendar, setShowCalendar] = useState(false);
+    const [calendarDay, setCalendarDay] = useState<string | null>(null);
     const [deletingLogId, setDeletingLogId] = useState<number | null>(null);
     const [deletedLogBackup, setDeletedLogBackup] = useState<{ log: Log; index: number } | null>(null);
     const [editBackup, setEditBackup] = useState<{ original: Log; edited: Log } | null>(null);
@@ -178,6 +191,14 @@ export const HistoryView: React.FC<{ search: string; onSearchChange: (search: st
     const visibleLogs = useMemo(() => {
         // Imports and cloud restores don't guarantee order, so sort newest first here.
         let result = [...safeLogs].sort((a, b) => (b.endTime || b.startTime || 0) - (a.endTime || a.startTime || 0));
+        if (calendarDay) {
+            result = result.filter((log) => {
+                const ts = Number(log.endTime) || Number(log.startTime) || 0;
+                if (!ts) return false;
+                const d = new Date(ts);
+                return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` === calendarDay;
+            });
+        }
         if (deferredSearch.trim()) {
             const q = deferredSearch.trim().toLowerCase();
             result = result.filter(log =>
@@ -186,7 +207,7 @@ export const HistoryView: React.FC<{ search: string; onSearchChange: (search: st
             );
         }
         return result;
-    }, [safeLogs, deferredSearch, lang]);
+    }, [safeLogs, deferredSearch, lang, calendarDay]);
 
     const openDetail = useCallback((log: Log) => {
         try {
@@ -253,8 +274,8 @@ export const HistoryView: React.FC<{ search: string; onSearchChange: (search: st
     ];
 
     const context = useMemo<HistoryVirtuosoContext>(
-        () => ({ lang, search, setSearch, onExportCSV: handleExportCSV }),
-        [lang, search, setSearch, handleExportCSV]
+        () => ({ lang, search, setSearch, onExportCSV: handleExportCSV, onOpenCalendar: () => setShowCalendar(true), calendarActive: calendarDay !== null }),
+        [lang, search, setSearch, handleExportCSV, calendarDay]
     );
     const renderItem = useCallback((index: number, log: Log) => (
         <HistoryCard id={index === 0 ? 'tut-first-card' : undefined} log={log} lang={lang} onOpen={() => openDetail(log)} unit={unit} distanceUnit={config.distanceUnit ?? 'km'} />
@@ -284,6 +305,9 @@ export const HistoryView: React.FC<{ search: string; onSearchChange: (search: st
                 <TutorialOverlay steps={historyTutorialSteps} isActive={!tutorialProgress.history} onComplete={() => markTutorialSeen('history')} />
             </Suspense>
 
+            {showCalendar && (
+                <HistoryCalendar logs={safeLogs} lang={lang} initialDay={calendarDay} onApply={setCalendarDay} onClose={() => setShowCalendar(false)} />
+            )}
             {selectedLog && (
                 <Suspense fallback={null}>
                     <HistoryDetailView

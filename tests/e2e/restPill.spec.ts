@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 const ERROR_BOUNDARY_TEXT = /ERROR CRÍTICO|CRITICAL ERROR/;
 
 test.describe('Rest controls touch targets (F3)', () => {
-    test('in-flow dock -15s, +30s and skip buttons measure at least 44x44px', async ({ page }) => {
+    test('in-flow dock pause, restart and skip buttons measure at least 44x44px', async ({ page }) => {
         await page.addInitScript(() => {
             localStorage.setItem('il_onboarded_v2', 'true');
             localStorage.setItem('il_tutorial_v2', JSON.stringify({
@@ -45,18 +45,14 @@ test.describe('Rest controls touch targets (F3)', () => {
         await completeSetBtn.click();
 
         const pill = page.locator('[data-workout-rest-dock]');
-        await expect(pill.getByRole('button', { name: '-15s' })).toBeVisible({ timeout: 8000 });
+        await expect(pill.getByRole('button', { name: /Pausar|Pause/ })).toBeVisible({ timeout: 8000 });
 
-        for (const name of ['-15s', '+30s']) {
+        for (const name of [/Pausar|Pause/, /Reiniciar|Restart/, /Saltar descanso|Skip rest/]) {
             const box = await pill.getByRole('button', { name }).boundingBox();
             expect(box, `${name} bounding box`).not.toBeNull();
             expect(box!.width, `${name} width`).toBeGreaterThanOrEqual(44);
             expect(box!.height, `${name} height`).toBeGreaterThanOrEqual(44);
         }
-        const skipBox = await pill.getByRole('button', { name: /Saltar descanso|Skip rest/ }).boundingBox();
-        expect(skipBox, 'skip bounding box').not.toBeNull();
-        expect(skipBox!.width, 'skip width').toBeGreaterThanOrEqual(44);
-        expect(skipBox!.height, 'skip height').toBeGreaterThanOrEqual(44);
 
         await expect(page.getByText(ERROR_BOUNDARY_TEXT)).toHaveCount(0);
     });

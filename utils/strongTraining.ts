@@ -12,6 +12,7 @@
 // and entry, exactly like utils/units.ts does for weightUnit.
 
 import type {
+    RestSoundName,
     BodyWeightUnit,
     DistanceUnit,
     IncompleteSets,
@@ -27,6 +28,7 @@ import { formatWeight } from './units';
 import { pickLang } from './i18n';
 
 export type {
+    RestSoundName,
     BodyWeightUnit,
     DistanceUnit,
     IncompleteSets,
@@ -46,13 +48,17 @@ export const TRAINING_CONFIG_DEFAULTS: TrainingConfigFields = {
     warmupRestSeconds: 60,
     restIncrementSeconds: 15,
     restSound: true,
+    restSoundName: 'boxingBell',
     restVibrate: true,
     autoStartRest: true,
+    autoFullscreen: false,
+    simpleTimers: false,
     bodyWeightUnit: 'kg',
     distanceUnit: 'km',
     sizeUnit: 'cm',
     weekStart: 'monday',
-    oneRmFormula: 'epley',
+    oneRmFormula: 'hybrid',
+    factorInRpe: false,
     plateBarKg: 20,
     platePlatesKg: [25, 20, 15, 10, 5, 2.5, 1.25],
 };
@@ -66,13 +72,17 @@ export const TRAINING_CONFIG_KEYS = {
     warmupRestSeconds: 'il_training_rest_warmup',
     restIncrementSeconds: 'il_training_rest_increment',
     restSound: 'il_training_rest_sound',
+    restSoundName: 'il_training_rest_sound_name',
     restVibrate: 'il_training_rest_vibrate',
     autoStartRest: 'il_training_rest_autostart',
+    autoFullscreen: 'il_training_rest_autofullscreen',
+    simpleTimers: 'il_training_rest_simple',
     bodyWeightUnit: 'il_training_unit_body',
     distanceUnit: 'il_training_unit_distance',
     sizeUnit: 'il_training_unit_size',
     weekStart: 'il_training_week_start',
     oneRmFormula: 'il_training_1rm_formula',
+    factorInRpe: 'il_training_1rm_rpe_factor',
     plateBarKg: 'il_training_plate_bar',
     platePlatesKg: 'il_training_plate_plates',
 } as const;
@@ -113,13 +123,17 @@ export const sanitizeTrainingConfig = (raw: unknown): TrainingConfigFields => {
         warmupRestSeconds: clampInt(src.warmupRestSeconds, 60, 0, 1800),
         restIncrementSeconds: sanitizeRestIncrement(src.restIncrementSeconds),
         restSound: typeof src.restSound === 'boolean' ? src.restSound : true,
+        restSoundName: isOneOf(src.restSoundName, ['boxingBell', 'chime', 'triTone', 'shortBell'], 'boxingBell'),
         restVibrate: typeof src.restVibrate === 'boolean' ? src.restVibrate : true,
         autoStartRest: typeof src.autoStartRest === 'boolean' ? src.autoStartRest : true,
+        autoFullscreen: typeof src.autoFullscreen === 'boolean' ? src.autoFullscreen : false,
+        simpleTimers: typeof src.simpleTimers === 'boolean' ? src.simpleTimers : false,
         bodyWeightUnit: isOneOf(src.bodyWeightUnit, ['kg', 'lb'], 'kg'),
         distanceUnit: isOneOf(src.distanceUnit, ['km', 'mi'], 'km'),
         sizeUnit: isOneOf(src.sizeUnit, ['cm', 'in'], 'cm'),
         weekStart: isOneOf(src.weekStart, ['monday', 'sunday'], 'monday'),
-        oneRmFormula: isOneOf(src.oneRmFormula, ['epley', 'brzycki', 'lombardi'], 'epley'),
+        oneRmFormula: isOneOf(src.oneRmFormula, ['epley', 'brzycki', 'lombardi', 'hybrid'], 'hybrid'),
+        factorInRpe: typeof src.factorInRpe === 'boolean' ? src.factorInRpe : false,
         plateBarKg: sanitizeBar(src.plateBarKg),
         platePlatesKg: sanitizePlates(src.platePlatesKg),
     };
@@ -169,14 +183,24 @@ const ONE_RM_FORMULAS: Record<OneRmFormula, (w: number, r: number) => number> = 
     epley: (w, r) => w * (1 + r / 30),
     brzycki: (w, r) => (r >= 37 ? w : (w * 36) / (37 - r)),
     lombardi: (w, r) => w * Math.pow(r, 0.1),
+    // Strong "Hybrid (Recommended)": Brzycki below 10 reps, Epley above.
+    hybrid: (w, r) => (r < 10 ? (r >= 37 ? w : (w * 36) / (37 - r)) : w * (1 + r / 30)),
 };
 
-/** Estimated 1RM in kg from a set (weight canonical kg). Reps<=0 → 0, 1 rep → weight. */
-export const estimateOneRm = (weightKg: number, reps: number, formula: OneRmFormula = 'epley'): number => {
+/** Estimated 1RM in kg from a set (weight canonical kg). Reps<=0 → 0, 1 rep → weight.
+ * With factorInRpe, effective reps = reps + max(0, 10 - RPE) (RIR-adjusted). */
+export const estimateOneRm = (weightKg: number, reps: number, formula: OneRmFormula = 'epley', rpe?: unknown, factorInRpe = false): number => {
     const w = Number(weightKg);
-    const r = Math.floor(Number(reps));
+    let r = Math.floor(Number(reps));
     if (!Number.isFinite(w) || w <= 0 || !Number.isFinite(r) || r <= 0) return 0;
     if (r === 1) return w;
+    if (factorInRpe) {
+        const rpeNum = Number(rpe);
+        if (Number.isFinite(rpeNum) && rpeNum >= 0 && rpeNum <= 10) {
+            r = Math.max(1, r + Math.max(0, Math.round((10 - rpeNum) * 10) / 10));
+            if (r === 1) return w;
+        }
+    }
     const fn = ONE_RM_FORMULAS[formula] ?? ONE_RM_FORMULAS.epley;
     const out = fn(w, r);
     return Number.isFinite(out) && out > 0 ? out : 0;

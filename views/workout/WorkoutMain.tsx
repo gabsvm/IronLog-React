@@ -7,6 +7,7 @@ import { Icon } from '../../components/ui/Icon';
 import type { WorkoutRailItem } from '../../components/workout/WorkoutExerciseRail';
 import { SortableExerciseCard } from '../../components/workout/SortableExerciseCard';
 import { WorkoutRestDock } from '../../components/workout/WorkoutRestDock';
+import { SimpleRestFullscreen } from '../../components/workout/SimpleRestFullscreen';
 import { useTimerState } from '../../context/TimerContext';
 import { WorkoutTimer } from '../../components/workout/WorkoutTimer';
 import { getTranslated } from '../../utils';
@@ -50,9 +51,12 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
     // The in-flow dock lives right under the rest's source exercise (not at
     // the end of the list): mounting it causes no long jump, so no
     // scroll-into-view is needed on activation (see WorkoutRestDock).
-    const restSourceInstanceId = useTimerState()?.source?.exerciseInstanceId ?? null;
+    const restTimer = useTimerState();
+    const restSourceInstanceId = restTimer?.source?.exerciseInstanceId ?? null;
     const dockAnchored = restSourceInstanceId !== null
         && sessionExercises.some((ex) => ex.instanceId === restSourceInstanceId);
+    // Strong simple/autoFullscreen: the fullscreen rest replaces the in-flow dock.
+    const showFullscreenRest = Boolean(restTimer?.active && (config?.simpleTimers || config?.autoFullscreen));
 
     if (!activeSession) return null;
     const focusedRailItem = focusedIdx >= 0 ? railItems[focusedIdx] : null;
@@ -217,7 +221,7 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                                                 />
                                             </div>
                                             {/* The rest dock anchors under its source exercise. */}
-                                            {restSourceInstanceId === ex.instanceId && <WorkoutRestDock />}
+                                            {restSourceInstanceId === ex.instanceId && !showFullscreenRest && <WorkoutRestDock />}
                                             </React.Fragment>
                                         );
                                     })}
@@ -225,7 +229,8 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                             </Suspense>
 
                             {/* Sourceless rests (manual chip) keep the end-of-list dock. */}
-                            {!dockAnchored && <WorkoutRestDock />}
+                            {!dockAnchored && !showFullscreenRest && <WorkoutRestDock />}
+                            {showFullscreenRest && <SimpleRestFullscreen />}
 
                             {/* Once the focused exercise is complete, the next step becomes the primary action. */}
                             {focusedRailItem?.complete && (nextExercise ? (

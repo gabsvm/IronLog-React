@@ -1,6 +1,6 @@
 // S6: online flush, session/state upload debounces and cloud-merge confirm/cancel, moved verbatim from context/AppContext.tsx.
 import { useEffect, useCallback } from 'react';
-import { AppState, ExerciseDef, ActiveSession, MesoCycle, Log, ProgramDay, GlobalTemplate, TemplateFolder, UserProfile, NutritionLog, CardioSession, NutritionGoal, MacroGoals, BodyLog, MeasurementLog, CustomFood, DirtySyncSection, SectionSyncMeta, WeightUnit, PreviousScope, IncompleteSets, RestIncrement, BodyWeightUnit, DistanceUnit, SizeUnit, WeekStart, OneRmFormula, TrainingConfigFields } from '../../types';
+import { AppState, ExerciseDef, ActiveSession, MesoCycle, Log, ProgramDay, GlobalTemplate, TemplateFolder, UserProfile, NutritionLog, CardioSession, NutritionGoal, MacroGoals, BodyLog, MeasurementLog, CustomFood, DirtySyncSection, SectionSyncMeta, WeightUnit, PreviousScope, IncompleteSets, RestIncrement, BodyWeightUnit, DistanceUnit, SizeUnit, WeekStart, OneRmFormula, RestSoundName, TrainingConfigFields } from '../../types';
 import { sanitizeTrainingConfig } from '../../utils/strongTraining';
 import { syncService } from '../../services/syncService';
 import { useStore } from '../../lib/store';
@@ -29,11 +29,15 @@ export interface UseCloudUploadsDeps {
     restSound: boolean;
     restVibrate: boolean;
     autoStartRest: boolean;
+    autoFullscreen: boolean;
+    simpleTimers: boolean;
+    restSoundName: RestSoundName;
     bodyWeightUnit: BodyWeightUnit;
     distanceUnit: DistanceUnit;
     sizeUnit: SizeUnit;
     weekStart: WeekStart;
     oneRmFormula: OneRmFormula;
+    factorInRpe: boolean;
     plateBarKg: number;
     platePlatesKg: number[];
     setWeightUnit: (value: WeightUnit | ((val: WeightUnit) => WeightUnit)) => void;
@@ -51,6 +55,10 @@ export interface UseCloudUploadsDeps {
     setSizeUnit: (value: SizeUnit | ((val: SizeUnit) => SizeUnit)) => void;
     setWeekStart: (value: WeekStart | ((val: WeekStart) => WeekStart)) => void;
     setOneRmFormula: (value: OneRmFormula | ((val: OneRmFormula) => OneRmFormula)) => void;
+    setFactorInRpe: (value: boolean | ((val: boolean) => boolean)) => void;
+    setAutoFullscreen: (value: boolean | ((val: boolean) => boolean)) => void;
+    setSimpleTimers: (value: boolean | ((val: boolean) => boolean)) => void;
+    setRestSoundName: (value: RestSoundName | ((val: RestSoundName) => RestSoundName)) => void;
     setPlateBarKg: (value: number | ((val: number) => number)) => void;
     setPlatePlatesKg: (value: number[] | ((val: number[]) => number[])) => void;
     program: ProgramDay[];
@@ -119,11 +127,15 @@ export const useCloudUploads = ({
     restSound,
     restVibrate,
     autoStartRest,
+    autoFullscreen,
+    simpleTimers,
+    restSoundName,
     bodyWeightUnit,
     distanceUnit,
     sizeUnit,
     weekStart,
     oneRmFormula,
+    factorInRpe,
     plateBarKg,
     platePlatesKg,
     setWeightUnit,
@@ -136,11 +148,15 @@ export const useCloudUploads = ({
     setRestSound,
     setRestVibrate,
     setAutoStartRest,
+    setAutoFullscreen,
+    setSimpleTimers,
+    setRestSoundName,
     setBodyWeightUnit,
     setDistanceUnit,
     setSizeUnit,
     setWeekStart,
     setOneRmFormula,
+    setFactorInRpe,
     setPlateBarKg,
     setPlatePlatesKg,
     program,
@@ -202,7 +218,7 @@ export const useCloudUploads = ({
                     setLocalLastUpdated(now);
                     await syncService.uploadState(user.uid, {
                         program, activeMeso, exercises, logs,
-                        config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, restTimerDisplay, previousScope, incompleteSets, defaultSets, defaultRestSeconds, warmupRestSeconds, restIncrementSeconds, restSound, restVibrate, autoStartRest, bodyWeightUnit, distanceUnit, sizeUnit, weekStart, oneRmFormula, plateBarKg, platePlatesKg },
+                        config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, restTimerDisplay, previousScope, incompleteSets, defaultSets, defaultRestSeconds, warmupRestSeconds, restIncrementSeconds, restSound, restVibrate, autoStartRest, autoFullscreen, simpleTimers, restSoundName, bodyWeightUnit, distanceUnit, sizeUnit, weekStart, oneRmFormula, factorInRpe, plateBarKg, platePlatesKg },
                         rpFeedback,
                         userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, measurementLogs, macroGoals, customFoods, personalTemplates, templateFolders,
                         email: user.email || null,
@@ -217,7 +233,7 @@ export const useCloudUploads = ({
         window.addEventListener('offline', handleOffline);
         return () => { window.removeEventListener('online', handleOnline); window.removeEventListener('offline', handleOffline); };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- S6: dependency list moved verbatim from AppProvider; the omitted names are useState setters/refs (stable) or the per-render withDirtyTrackingSuppressed, exactly as before.
-    }, [user, program, activeMeso, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, restTimerDisplay, previousScope, incompleteSets, defaultSets, defaultRestSeconds, warmupRestSeconds, restIncrementSeconds, restSound, restVibrate, autoStartRest, bodyWeightUnit, distanceUnit, sizeUnit, weekStart, oneRmFormula, plateBarKg, platePlatesKg, rpFeedback, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, measurementLogs, macroGoals, customFoods, personalTemplates, templateFolders, setLocalLastUpdated]);
+    }, [user, program, activeMeso, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, restTimerDisplay, previousScope, incompleteSets, defaultSets, defaultRestSeconds, warmupRestSeconds, restIncrementSeconds, restSound, restVibrate, autoStartRest, autoFullscreen, simpleTimers, restSoundName, bodyWeightUnit, distanceUnit, sizeUnit, weekStart, oneRmFormula, factorInRpe, plateBarKg, platePlatesKg, rpFeedback, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, measurementLogs, macroGoals, customFoods, personalTemplates, templateFolders, setLocalLastUpdated]);
 
     // ── Debounce A: session-only write (fast, lightweight) ─────────────────────
     // Watches state.activeSession via useStore.subscribe with a 5000ms debounce
@@ -265,7 +281,7 @@ export const useCloudUploads = ({
                 void syncService.flushQueue();
                 syncService.uploadState(user.uid, {
                     program, activeMeso, exercises, logs,
-                    config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, restTimerDisplay, previousScope, incompleteSets, defaultSets, defaultRestSeconds, warmupRestSeconds, restIncrementSeconds, restSound, restVibrate, autoStartRest, bodyWeightUnit, distanceUnit, sizeUnit, weekStart, oneRmFormula, plateBarKg, platePlatesKg },
+                    config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, restTimerDisplay, previousScope, incompleteSets, defaultSets, defaultRestSeconds, warmupRestSeconds, restIncrementSeconds, restSound, restVibrate, autoStartRest, autoFullscreen, simpleTimers, restSoundName, bodyWeightUnit, distanceUnit, sizeUnit, weekStart, oneRmFormula, factorInRpe, plateBarKg, platePlatesKg },
                     rpFeedback,
                     userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, measurementLogs, macroGoals, customFoods, personalTemplates, templateFolders,
                     email: user.email || null,
@@ -274,7 +290,7 @@ export const useCloudUploads = ({
             })();
         }, 10000);
         return () => clearTimeout(timer);
-    }, [user, program, activeMeso, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, restTimerDisplay, previousScope, incompleteSets, defaultSets, defaultRestSeconds, warmupRestSeconds, restIncrementSeconds, restSound, restVibrate, autoStartRest, bodyWeightUnit, distanceUnit, sizeUnit, weekStart, oneRmFormula, plateBarKg, platePlatesKg, rpFeedback, isAppLoading, hasCheckedSync, pendingCloudData, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, measurementLogs, macroGoals, customFoods, personalTemplates, templateFolders, setLocalLastUpdated]);
+    }, [user, program, activeMeso, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, restTimerDisplay, previousScope, incompleteSets, defaultSets, defaultRestSeconds, warmupRestSeconds, restIncrementSeconds, restSound, restVibrate, autoStartRest, autoFullscreen, simpleTimers, restSoundName, bodyWeightUnit, distanceUnit, sizeUnit, weekStart, oneRmFormula, factorInRpe, plateBarKg, platePlatesKg, rpFeedback, isAppLoading, hasCheckedSync, pendingCloudData, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, measurementLogs, macroGoals, customFoods, personalTemplates, templateFolders, setLocalLastUpdated]);
 
     const confirmCloudSync = useCallback(() => {
         if (!pendingCloudData) return;
@@ -306,7 +322,7 @@ export const useCloudUploads = ({
                     setRestTimerDisplay('compact');
                 }
                 // Sanitized merge over local values: unknown/invalid cloud values fall back to defaults.
-                const currentTraining = { previousScope, incompleteSets, defaultSets, defaultRestSeconds, warmupRestSeconds, restIncrementSeconds, restSound, restVibrate, autoStartRest, bodyWeightUnit, distanceUnit, sizeUnit, weekStart, oneRmFormula, plateBarKg, platePlatesKg };
+                const currentTraining = { previousScope, incompleteSets, defaultSets, defaultRestSeconds, warmupRestSeconds, restIncrementSeconds, restSound, restVibrate, autoStartRest, autoFullscreen, simpleTimers, restSoundName, bodyWeightUnit, distanceUnit, sizeUnit, weekStart, oneRmFormula, factorInRpe, plateBarKg, platePlatesKg };
                 const cloudTraining = pendingCloudData.config as Partial<TrainingConfigFields>;
                 const hasTraining = (Object.keys(currentTraining) as (keyof TrainingConfigFields)[]).some((k) => cloudTraining[k] !== undefined);
                 if (hasTraining) {
@@ -320,11 +336,15 @@ export const useCloudUploads = ({
                     setRestSound(merged.restSound);
                     setRestVibrate(merged.restVibrate);
                     setAutoStartRest(merged.autoStartRest);
+                    setSimpleTimers(merged.simpleTimers);
+                    setRestSoundName(merged.restSoundName);
+                    setAutoFullscreen(merged.autoFullscreen);
                     setBodyWeightUnit(merged.bodyWeightUnit);
                     setDistanceUnit(merged.distanceUnit);
                     setSizeUnit(merged.sizeUnit);
                     setWeekStart(merged.weekStart);
                     setOneRmFormula(merged.oneRmFormula);
+                    setFactorInRpe(merged.factorInRpe);
                     setPlateBarKg(merged.plateBarKg);
                     setPlatePlatesKg(merged.platePlatesKg);
                 }
@@ -366,7 +386,7 @@ export const useCloudUploads = ({
             console.log("Cloud sections applied.");
         });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- S6: dependency list moved verbatim from AppProvider; the omitted names are useState setters/refs (stable) or the per-render withDirtyTrackingSuppressed, exactly as before.
-    }, [user, pendingCloudData, pendingCloudSections, setProgram, setExercises, setLogs, setRpFeedback, setShowRIR, setRpEnabled, setLocalLastUpdated, setHasSeenOnboarding, setBodyLogs, setMeasurementLogs, setCustomFoods, setPersonalTemplates, setTemplateFolders, setKeepScreenOn, setWeightUnit, setRestTimerDisplay, setMacroGoals, setNutritionLogs, setRpTargetRIR, setUserProfile, setLocalSectionSyncMeta, setCardioSessions, setNutritionGoal, previousScope, incompleteSets, defaultSets, defaultRestSeconds, warmupRestSeconds, restIncrementSeconds, restSound, restVibrate, autoStartRest, bodyWeightUnit, distanceUnit, sizeUnit, weekStart, oneRmFormula, plateBarKg, platePlatesKg, setPreviousScope, setIncompleteSets, setDefaultSets, setDefaultRestSeconds, setWarmupRestSeconds, setRestIncrementSeconds, setRestSound, setRestVibrate, setAutoStartRest, setBodyWeightUnit, setDistanceUnit, setSizeUnit, setWeekStart, setOneRmFormula, setPlateBarKg, setPlatePlatesKg]);
+    }, [user, pendingCloudData, pendingCloudSections, setProgram, setExercises, setLogs, setRpFeedback, setShowRIR, setRpEnabled, setLocalLastUpdated, setHasSeenOnboarding, setBodyLogs, setMeasurementLogs, setCustomFoods, setPersonalTemplates, setTemplateFolders, setKeepScreenOn, setWeightUnit, setRestTimerDisplay, setMacroGoals, setNutritionLogs, setRpTargetRIR, setUserProfile, setLocalSectionSyncMeta, setCardioSessions, setNutritionGoal, previousScope, incompleteSets, defaultSets, defaultRestSeconds, warmupRestSeconds, restIncrementSeconds, restSound, restVibrate, autoStartRest, bodyWeightUnit, distanceUnit, sizeUnit, weekStart, oneRmFormula, factorInRpe, plateBarKg, platePlatesKg, setPreviousScope, setIncompleteSets, setDefaultSets, setDefaultRestSeconds, setWarmupRestSeconds, setRestIncrementSeconds, setRestSound, setRestVibrate, setAutoStartRest, setAutoFullscreen, setSimpleTimers, setBodyWeightUnit, setDistanceUnit, setSizeUnit, setWeekStart, setOneRmFormula, setFactorInRpe, setPlateBarKg, setPlatePlatesKg]);
 
     const cancelCloudSync = useCallback(() => {
         // "Keep Local": user explicitly decided to retain their local state for the conflicting sections.

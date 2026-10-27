@@ -8,6 +8,9 @@ import { ExerciseCardSets } from '../ExerciseCardSets';
 import { ExerciseProtocolBanners } from '../ExerciseProtocolBanners';
 import { getTranslated } from '../../../utils';
 import type { ExerciseCardState } from './useSortableExerciseCardState';
+import { formatRestSeconds } from '../../../utils/strongTraining';
+import { resolveSetRestSeconds } from '../../../utils/resolveSetRest';
+import { useStore } from '../../../lib/store';
 const REST_PRESET_OPTIONS = [60, 90, 120, 180] as const;
 
 const NoteEditorSheet: React.FC<{
@@ -383,7 +386,10 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                     onClick={() => onAddSet(ex.instanceId)}
                     className="flex min-h-[48px] w-full items-center justify-center gap-1.5 text-sm font-semibold text-[rgb(var(--accent-text))] transition-colors hover:opacity-80 active:scale-95"
                 >
-                    <Icon name="Plus" size={14} /> {t.addSetBtn}
+                    <Icon name="Plus" size={14} /> {t.addSetBtn}{(() => {
+                        const secs = resolveSetRestSeconds({ type: 'regular' }, ex, config, useStore.getState().activeMeso);
+                        return secs && secs > 0 ? ` (${formatRestSeconds(secs)})` : '';
+                    })()}
                 </button>
             </div>
             {editingNote !== null && (

@@ -60,3 +60,4 @@ apk-out/
 .vercel
 .env*
 .serena/
+strong-audit/

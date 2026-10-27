@@ -90,8 +90,8 @@ export const StatsView: React.FC = () => {
         [filteredLogs, scopeMesoId],
     );
     const premiumInsights = useMemo(
-        () => buildPremiumInsights(filteredLogs, scopeMesoId, Date.now(), trainingPrefs.oneRmFormula),
-        [filteredLogs, scopeMesoId, trainingPrefs.oneRmFormula],
+        () => buildPremiumInsights(filteredLogs, scopeMesoId, Date.now(), trainingPrefs.oneRmFormula, trainingPrefs.factorInRpe === true),
+        [filteredLogs, scopeMesoId, trainingPrefs.oneRmFormula, trainingPrefs.factorInRpe],
     );
 
     const items: Array<{ id: StatsSection; es: string; en: string }> = [

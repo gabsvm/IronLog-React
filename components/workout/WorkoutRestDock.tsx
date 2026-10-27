@@ -11,10 +11,8 @@ import { useStore } from '../../lib/store';
 import { resolveWeightUnit } from '../../utils/units';
 import { Icon } from '../ui/Icon';
 import {
-    adjustRestTimer,
     getRestControlLabels,
     pauseRestTimer,
-    resolveRestIncrement,
     restartRestTimer,
     resumeRestTimer,
     skipRestTimer,
@@ -93,12 +91,6 @@ export const WorkoutRestDock: React.FC = () => {
     const remainingPct = Math.min(100, Math.max(0, percentage));
 
     const restLabels = getRestControlLabels(lang);
-    const restStep = resolveRestIncrement(config);
-
-    const adjustTimer = (deltaSeconds: number): void => {
-        triggerHaptic('light');
-        setRestTimer((prev) => adjustRestTimer(prev, deltaSeconds));
-    };
 
     const skipTimer = (): void => {
         triggerHaptic('medium');
@@ -177,22 +169,6 @@ export const WorkoutRestDock: React.FC = () => {
                         title={restLabels.restart}
                     >
                         <Icon name="RotateCcw" size={16} />
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => adjustTimer(-restStep)}
-                        className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-border-subtle bg-surface-elevated px-3 text-[11px] font-bold text-white transition-all hover:border-primary-500/30 active:scale-90"
-                        aria-label={`-${restStep}s`}
-                    >
-                        -{restStep}s
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => adjustTimer(30)}
-                        className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-border-subtle bg-surface-elevated px-3 text-[11px] font-bold text-white transition-all hover:border-primary-500/30 active:scale-90"
-                        aria-label="+30s"
-                    >
-                        +30s
                     </button>
                     <button
                         type="button"

@@ -37,7 +37,7 @@ vi.mock('../../context/AppContext', () => ({
         config: { weightUnit: mockState.weightUnit },
     }),
     useAppPreferences: () => ({ lang: 'es' }),
-    useAppConfig: () => ({ config: { weightUnit: mockState.weightUnit }, setConfig: vi.fn() }),
+    useAppConfig: () => ({ config: { weightUnit: mockState.weightUnit, oneRmFormula: 'epley' }, setConfig: vi.fn() }),
     useTutorial: () => ({ tutorialProgress: mockState.tutorial, markTutorialSeen: vi.fn(), resetTutorials: vi.fn() }),
 }));
 

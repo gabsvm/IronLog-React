@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { Icon } from '../../components/ui/Icon';
 import { useApp } from '../../context/AppContext';
-import { getTranslated } from '../../utils';
+import { getTranslated, lastPerformedForTemplate, formatLastPerformed } from '../../utils';
 import { pickLang } from '../../utils/i18n';
 import { shareFileOrDownload } from '../../utils/shareFile';
 import type { GlobalTemplate } from '../../types';
@@ -85,7 +85,7 @@ export const PersonalTemplatesSection: React.FC<SectionProps> = (props) => {
 };
 
 const PersonalTemplatesInner: React.FC<SectionProps> = ({ query, lang, t, onSelectTemplate }) => {
-    const { personalTemplates, setPersonalTemplates, exercises } = useApp();
+    const { personalTemplates, setPersonalTemplates, exercises, logs } = useApp();
     const { folders, setFolders } = useTemplateFolders();
     const normLang = pickLang(lang, { es: 'es', en: 'en' } as const);
     const txt = resolveTFText(t, normLang);
@@ -234,6 +234,11 @@ const PersonalTemplatesInner: React.FC<SectionProps> = ({ query, lang, t, onSele
                     className="min-w-0 flex-1 p-4 text-left"
                 >
                     <span className="block truncate text-base font-semibold text-[rgb(var(--text-primary))]">{titleOf(tpl)}</span>
+                    {(() => {
+                        const last = lastPerformedForTemplate(tpl.id, logs);
+                        if (!last) return null;
+                        return <span className="mt-1 block text-xs text-[rgb(var(--text-secondary))]">{formatLastPerformed(last, normLang)}</span>;
+                    })()}
                     <span className="mt-1 block text-xs text-[rgb(var(--text-secondary))]">
                         {program.length} {txt.days}
                     </span>

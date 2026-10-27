@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { SetType } from '../../../types';
 import { Icon } from '../../ui/Icon';
-import { playTimerFinishSound, triggerHaptic } from '../../../utils/audio';
+import { playTimerFinishSound, triggerHaptic, useRestSoundName } from '../../../utils/audio';
 import { TRANSLATIONS } from '../../../constants/translations';
 
 export const getTypeLabel = (type: SetType) => {
@@ -35,6 +35,7 @@ export const HoldTimer: React.FC<{
     isDone: boolean;
 }> = ({ initialSeconds, targetSeconds, onSave, lang, isDone }) => {
     const t = TRANSLATIONS[lang];
+    const restSound = useRestSoundName();
     const [elapsed, setElapsed] = useState(initialSeconds);
     const [running, setRunning] = useState(false);
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -78,9 +79,9 @@ export const HoldTimer: React.FC<{
         if (targetSeconds && running && elapsed >= targetSeconds && !hasTriggeredZeroAlertRef.current) {
             hasTriggeredZeroAlertRef.current = true;
             triggerHaptic('success');
-            playTimerFinishSound();
+            playTimerFinishSound(restSound);
         }
-    }, [elapsed, running, targetSeconds]);
+    }, [elapsed, running, targetSeconds, restSound]);
 
     useEffect(() => {
         return () => { if (intervalRef.current) clearInterval(intervalRef.current); };

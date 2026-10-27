@@ -1,6 +1,6 @@
 // S6: initial cloud download on login (apply on empty device / offer newer sections), moved verbatim from context/AppContext.tsx.
 import { useEffect } from 'react';
-import { AppState, ExerciseDef, ActiveSession, MesoCycle, Log, ProgramDay, GlobalTemplate, TemplateFolder, UserProfile, NutritionLog, CardioSession, NutritionGoal, MacroGoals, BodyLog, MeasurementLog, CustomFood, DirtySyncSection, WeightUnit, PreviousScope, IncompleteSets, RestIncrement, BodyWeightUnit, DistanceUnit, SizeUnit, WeekStart, OneRmFormula, TrainingConfigFields } from '../../types';
+import { AppState, ExerciseDef, ActiveSession, MesoCycle, Log, ProgramDay, GlobalTemplate, TemplateFolder, UserProfile, NutritionLog, CardioSession, NutritionGoal, MacroGoals, BodyLog, MeasurementLog, CustomFood, DirtySyncSection, WeightUnit, PreviousScope, IncompleteSets, RestIncrement, BodyWeightUnit, DistanceUnit, SizeUnit, WeekStart, OneRmFormula, RestSoundName, TrainingConfigFields } from '../../types';
 import { sanitizeTrainingConfig } from '../../utils/strongTraining';
 import { syncService } from '../../services/syncService';
 import { useStore } from '../../lib/store';
@@ -26,11 +26,15 @@ export interface UseInitialCloudDownloadDeps {
     setRestSound: (value: boolean | ((val: boolean) => boolean)) => void;
     setRestVibrate: (value: boolean | ((val: boolean) => boolean)) => void;
     setAutoStartRest: (value: boolean | ((val: boolean) => boolean)) => void;
+    setAutoFullscreen: (value: boolean | ((val: boolean) => boolean)) => void;
+    setSimpleTimers: (value: boolean | ((val: boolean) => boolean)) => void;
+    setRestSoundName: (value: RestSoundName | ((val: RestSoundName) => RestSoundName)) => void;
     setBodyWeightUnit: (value: BodyWeightUnit | ((val: BodyWeightUnit) => BodyWeightUnit)) => void;
     setDistanceUnit: (value: DistanceUnit | ((val: DistanceUnit) => DistanceUnit)) => void;
     setSizeUnit: (value: SizeUnit | ((val: SizeUnit) => SizeUnit)) => void;
     setWeekStart: (value: WeekStart | ((val: WeekStart) => WeekStart)) => void;
     setOneRmFormula: (value: OneRmFormula | ((val: OneRmFormula) => OneRmFormula)) => void;
+    setFactorInRpe: (value: boolean | ((val: boolean) => boolean)) => void;
     setPlateBarKg: (value: number | ((val: number) => number)) => void;
     setPlatePlatesKg: (value: number[] | ((val: number[]) => number[])) => void;
     setProgram: (value: ProgramDay[] | ((val: ProgramDay[]) => ProgramDay[])) => void;
@@ -92,11 +96,15 @@ export const useInitialCloudDownload = ({
     setRestSound,
     setRestVibrate,
     setAutoStartRest,
+    setAutoFullscreen,
+    setSimpleTimers,
+    setRestSoundName,
     setBodyWeightUnit,
     setDistanceUnit,
     setSizeUnit,
     setWeekStart,
     setOneRmFormula,
+    setFactorInRpe,
     setPlateBarKg,
     setPlatePlatesKg,
     setProgram,
@@ -196,7 +204,7 @@ export const useInitialCloudDownload = ({
                                     setRestTimerDisplay('compact');
                                 }
                                 const cloudTraining = cloudData.config as Partial<TrainingConfigFields>;
-                                const hasTraining = cloudTraining.previousScope !== undefined || cloudTraining.incompleteSets !== undefined || cloudTraining.defaultSets !== undefined || cloudTraining.defaultRestSeconds !== undefined || cloudTraining.warmupRestSeconds !== undefined || cloudTraining.restIncrementSeconds !== undefined || cloudTraining.restSound !== undefined || cloudTraining.restVibrate !== undefined || cloudTraining.autoStartRest !== undefined || cloudTraining.bodyWeightUnit !== undefined || cloudTraining.distanceUnit !== undefined || cloudTraining.sizeUnit !== undefined || cloudTraining.weekStart !== undefined || cloudTraining.oneRmFormula !== undefined || cloudTraining.plateBarKg !== undefined || cloudTraining.platePlatesKg !== undefined;
+                                const hasTraining = cloudTraining.previousScope !== undefined || cloudTraining.incompleteSets !== undefined || cloudTraining.defaultSets !== undefined || cloudTraining.defaultRestSeconds !== undefined || cloudTraining.warmupRestSeconds !== undefined || cloudTraining.restIncrementSeconds !== undefined || cloudTraining.restSound !== undefined || cloudTraining.restVibrate !== undefined || cloudTraining.autoStartRest !== undefined || cloudTraining.autoFullscreen !== undefined || cloudTraining.simpleTimers !== undefined || cloudTraining.restSoundName !== undefined || cloudTraining.bodyWeightUnit !== undefined || cloudTraining.distanceUnit !== undefined || cloudTraining.sizeUnit !== undefined || cloudTraining.weekStart !== undefined || cloudTraining.oneRmFormula !== undefined || cloudTraining.factorInRpe !== undefined || cloudTraining.plateBarKg !== undefined || cloudTraining.platePlatesKg !== undefined;
                                 if (hasTraining) {
                                     // Full sanitize: a fresh device adopts cloud values, invalid ones fall back to defaults.
                                     const next = sanitizeTrainingConfig(cloudTraining);
@@ -209,11 +217,15 @@ export const useInitialCloudDownload = ({
                                     setRestSound(next.restSound);
                                     setRestVibrate(next.restVibrate);
                                     setAutoStartRest(next.autoStartRest);
+                                    setAutoFullscreen(next.autoFullscreen);
+                    setRestSoundName(next.restSoundName);
+                    setSimpleTimers(next.simpleTimers);
                                     setBodyWeightUnit(next.bodyWeightUnit);
                                     setDistanceUnit(next.distanceUnit);
                                     setSizeUnit(next.sizeUnit);
                                     setWeekStart(next.weekStart);
                                     setOneRmFormula(next.oneRmFormula);
+                    setFactorInRpe(next.factorInRpe);
                                     setPlateBarKg(next.plateBarKg);
                                     setPlatePlatesKg(next.platePlatesKg);
                                 }
@@ -262,6 +274,6 @@ export const useInitialCloudDownload = ({
         cardioSessions, bodyLogs, measurementLogs, customFoods, personalTemplates, templateFolders, exercises, userProfile,
         setProgram, setExercises, setLogs, setRpFeedback, setShowRIR, setRpEnabled, setLocalLastUpdated,
         setHasSeenOnboarding, setBodyLogs, setMeasurementLogs, setCustomFoods, setPersonalTemplates, setTemplateFolders, setKeepScreenOn, setWeightUnit, setRestTimerDisplay, setMacroGoals, setNutritionLogs, setLocalSectionSyncMeta,
-        setRpTargetRIR, setUserProfile, setCardioSessions, setNutritionGoal, setPreviousScope, setIncompleteSets, setDefaultSets, setDefaultRestSeconds, setWarmupRestSeconds, setRestIncrementSeconds, setRestSound, setRestVibrate, setAutoStartRest, setBodyWeightUnit, setDistanceUnit, setSizeUnit, setWeekStart, setOneRmFormula, setPlateBarKg, setPlatePlatesKg
+        setRpTargetRIR, setUserProfile, setCardioSessions, setNutritionGoal, setPreviousScope, setIncompleteSets, setDefaultSets, setDefaultRestSeconds, setWarmupRestSeconds, setRestIncrementSeconds, setRestSound, setRestVibrate, setAutoStartRest, setAutoFullscreen, setSimpleTimers, setRestSoundName, setBodyWeightUnit, setDistanceUnit, setSizeUnit, setWeekStart, setOneRmFormula, setFactorInRpe, setPlateBarKg, setPlatePlatesKg
     ]); // Re-run when dependencies change
 };

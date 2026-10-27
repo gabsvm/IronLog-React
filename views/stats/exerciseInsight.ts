@@ -13,6 +13,7 @@ import { getBodyweightLevel, getExerciseStrengthProfile, getWeightedLevel, type 
 export const buildSelectedExerciseInsight = ({
     currentEx, exercises, lang, rawMuscleCounts, safeLogs, bodyWeight, scopeMesoId, unit, weightSuffix, s,
     formula = 'epley',
+    factorInRpe = false,
 }: {
     currentEx: any;
     exercises: ExerciseDef[];
@@ -25,6 +26,7 @@ export const buildSelectedExerciseInsight = ({
     weightSuffix: string;
     s: any;
     formula?: OneRmFormula;
+    factorInRpe?: boolean;
 }) => {
     if (!currentEx) return null;
 
@@ -55,7 +57,7 @@ export const buildSelectedExerciseInsight = ({
                 if (Number(set.duration || 0) > bestHoldSeconds) bestHoldSeconds = Number(set.duration || 0);
 
                 if (effectiveLoad > 0 && reps > 0 && !exercise.isIsometric && exercise.muscle !== 'CARDIO') {
-                    const e1rm = estimateOneRm(effectiveLoad, reps, formula);
+                    const e1rm = estimateOneRm(effectiveLoad, reps, formula, set.rpe, factorInRpe);
                     if (e1rm > bestEstimated1RM) bestEstimated1RM = e1rm;
                 }
             });

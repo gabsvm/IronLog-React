@@ -387,7 +387,7 @@ const AppContent = () => {
 
 
             <React.Suspense fallback={null}>
-                <RestTimerOverlay activeView={view} />
+                <RestTimerOverlay />
             </React.Suspense>
 
             {(sharedCsvLaunch || nativeSharedCsv) && (

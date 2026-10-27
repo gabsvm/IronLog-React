@@ -36,6 +36,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
     const { config } = useAppConfig();
     const [trainingPrefs] = useTrainingConfig();
     const formula = trainingPrefs.oneRmFormula;
+    const factorInRpe = trainingPrefs.factorInRpe === true;
     const t = TRANSLATIONS[lang];
     const labels = EXERCISE_DETAIL_STRINGS[lang];
     const unit = resolveWeightUnit(config);
@@ -59,8 +60,8 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
     }, [exercise.id, exercise.volumeCountingMode, exercise.illustrationId, exercise.defaultRestSeconds]);
 
     const entries = useMemo(
-        () => getExerciseHistoryEntries(safeLogs, groupIds.length > 0 ? groupIds : [String(exercise.id)], userProfile?.bodyWeight, formula),
-        [safeLogs, groupIds, exercise.id, userProfile?.bodyWeight, formula],
+        () => getExerciseHistoryEntries(safeLogs, groupIds.length > 0 ? groupIds : [String(exercise.id)], userProfile?.bodyWeight, formula, factorInRpe),
+        [safeLogs, groupIds, exercise.id, userProfile?.bodyWeight, formula, factorInRpe],
     );
     const records = useMemo(() => computeExerciseRecords(entries), [entries]);
 
@@ -206,6 +207,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                         labels={labels}
                         repLabels={t.statsView}
                         formula={formula}
+                        factorInRpe={factorInRpe}
                     />
                 )}
             </div>

@@ -29,6 +29,7 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope, statsPeriod = 
     // calculation and cache key below.
     const [trainingPrefs] = useTrainingConfig();
     const oneRmFormula = trainingPrefs.oneRmFormula;
+    const factorInRpe = trainingPrefs.factorInRpe === true;
     const weekStart = trainingPrefs.weekStart;
     const t = TRANSLATIONS[lang];
     const s = t.statsView;
@@ -241,16 +242,16 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope, statsPeriod = 
 
         const loadChart = async () => {
             setLoadingChart(true);
-            const cached = await statsCache.readChart(logsSignature, cacheId, chartMetric, scopeMesoId, statsScope, statsPeriod, oneRmFormula);
+            const cached = await statsCache.readChart(logsSignature, cacheId, chartMetric, scopeMesoId, statsScope, statsPeriod, oneRmFormula, factorInRpe);
             if (cached && !cancelled) {
                 setChartPoints(cached.dataPoints);
                 setLoadingChart(false);
             }
 
-            const points = await calculateChartData(filteredLogs, groupIds, chartMetric, scopeMesoId, oneRmFormula);
+            const points = await calculateChartData(filteredLogs, groupIds, chartMetric, scopeMesoId, oneRmFormula, factorInRpe);
             if (cancelled) return;
             setChartPoints(Array.isArray(points) ? points : []);
-            await statsCache.writeChart(logsSignature, cacheId, chartMetric, scopeMesoId, points, statsScope, statsPeriod, oneRmFormula);
+            await statsCache.writeChart(logsSignature, cacheId, chartMetric, scopeMesoId, points, statsScope, statsPeriod, oneRmFormula, factorInRpe);
             setLoadingChart(false);
         };
 
@@ -258,7 +259,7 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope, statsPeriod = 
         return () => {
             cancelled = true;
         };
-    }, [isWorkerReady, selectedExId, selectedGroupIds, canonicalSelectedExId, chartMetric, filteredLogs, calculateChartData, logsSignature, activeTab, scopeMesoId, statsScope, statsPeriod, oneRmFormula]);
+    }, [isWorkerReady, selectedExId, selectedGroupIds, canonicalSelectedExId, chartMetric, filteredLogs, calculateChartData, logsSignature, activeTab, scopeMesoId, statsScope, statsPeriod, oneRmFormula, factorInRpe]);
     const filteredExercises = useMemo(() => {
         return availableExercises.filter(ex =>
             matchesExerciseQuery(ex, pickerSearch)
@@ -294,7 +295,7 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope, statsPeriod = 
                     const weight = Number(set.weight || 0);
                     const reps = Number(set.reps || 0);
                     if (weight <= 0 || reps <= 0) return;
-                    const e1rm = reps === 1 ? weight : estimateOneRm(weight, reps, oneRmFormula);
+                    const e1rm = reps === 1 ? weight : estimateOneRm(weight, reps, oneRmFormula, set.rpe, factorInRpe);
                     const existing = bestMap[canonicalId];
                     if (!existing || e1rm > existing.e1rm) {
                         const canonicalDef = canonicalId !== String(ex.id)
@@ -316,7 +317,7 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope, statsPeriod = 
         return Object.entries(bestMap)
             .sort((a, b) => b[1].date - a[1].date)
             .slice(0, 20);
-    }, [filteredLogs, lang, exercises, oneRmFormula]);
+    }, [filteredLogs, lang, exercises, oneRmFormula, factorInRpe]);
 
     const [showAllPRs, setShowAllPRs] = useState(false);
     const displayedPRs = showAllPRs ? prHistory : prHistory.slice(0, 6);
@@ -343,15 +344,15 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope, statsPeriod = 
     })();
 
     const selectedExerciseInsight = useMemo(
-        () => buildSelectedExerciseInsight({ currentEx, exercises, lang, rawMuscleCounts, safeLogs: filteredLogs, bodyWeight: userProfile?.bodyWeight, scopeMesoId, unit, weightSuffix, s, formula: oneRmFormula }),
-        [currentEx, exercises, lang, rawMuscleCounts, filteredLogs, userProfile?.bodyWeight, scopeMesoId, unit, weightSuffix, s, oneRmFormula]
+        () => buildSelectedExerciseInsight({ currentEx, exercises, lang, rawMuscleCounts, safeLogs: filteredLogs, bodyWeight: userProfile?.bodyWeight, scopeMesoId, unit, weightSuffix, s, formula: oneRmFormula, factorInRpe }),
+        [currentEx, exercises, lang, rawMuscleCounts, filteredLogs, userProfile?.bodyWeight, scopeMesoId, unit, weightSuffix, s, oneRmFormula, factorInRpe]
     );
 
     // Rep maxes share the chart, KPI and insight scope and period.
     const repMaxRows = useMemo(() => {
         if (!currentEx || currentEx.isBodyweight || currentEx.isIsometric || currentEx.muscle === 'CARDIO') return [];
-        return computeRepMaxTable(filteredLogs, new Set(selectedGroupIds.map(String)), oneRmFormula);
-    }, [currentEx, filteredLogs, selectedGroupIds, oneRmFormula]);
+        return computeRepMaxTable(filteredLogs, new Set(selectedGroupIds.map(String)), oneRmFormula, factorInRpe);
+    }, [currentEx, filteredLogs, selectedGroupIds, oneRmFormula, factorInRpe]);
 
     const statsTutorialSteps = [
         { targetId: 'tut-progress-chart', title: t.tutorial.stats[0].title, text: t.tutorial.stats[0].text, position: 'bottom' as const },

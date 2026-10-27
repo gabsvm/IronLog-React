@@ -33,7 +33,7 @@ export interface LastSessionSummary {
  * set beating the exercise's previous all-time e1rm best by >1%,
  * counted once per exercise (first-time exercises never count).
  */
-export const lastSessionSummary = (logs: Log[], mesoId?: number | null, formula: OneRmFormula = 'epley'): LastSessionSummary | null => {
+export const lastSessionSummary = (logs: Log[], mesoId?: number | null, formula: OneRmFormula = 'epley', factorInRpe = false): LastSessionSummary | null => {
     const candidates = (Array.isArray(logs) ? logs : []).filter(
         (log) => !!log && !log.skipped && (mesoId == null || log.mesoId === mesoId),
     );
@@ -57,7 +57,7 @@ export const lastSessionSummary = (logs: Log[], mesoId?: number | null, formula:
                 const w = Number(set?.weight);
                 const r = Number(set?.reps);
                 if (!set?.completed || !(w > 0) || !(r > 0)) continue;
-                const e1rm = estimateOneRm(w, r, formula);
+                const e1rm = estimateOneRm(w, r, formula, set?.rpe, factorInRpe);
                 if (e1rm > (oldBests.get(String(ex.id)) ?? 0)) oldBests.set(String(ex.id), e1rm);
             }
         }
@@ -71,7 +71,7 @@ export const lastSessionSummary = (logs: Log[], mesoId?: number | null, formula:
             const w = Number(set?.weight);
             const r = Number(set?.reps);
             if (!set?.completed || !(w > 0) || !(r > 0)) continue;
-            if (estimateOneRm(w, r, formula) > best * 1.01) {
+            if (estimateOneRm(w, r, formula, set?.rpe, factorInRpe) > best * 1.01) {
                 prCounted.add(String(ex.id));
                 break;
             }

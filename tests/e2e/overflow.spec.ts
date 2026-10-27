@@ -120,7 +120,7 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 360, height: 800 }
             const completeSetBtn = page.locator('button[aria-label*="Completar serie" i], button[aria-label*="Complete set" i]').first();
             await expect(completeSetBtn).toBeVisible({ timeout: 6000 });
             await completeSetBtn.click();
-            await expect(page.getByRole('button', { name: '-15s' }).first()).toBeVisible({ timeout: 8000 });
+            await expect(page.getByRole('button', { name: /Pausar|Pause/ }).first()).toBeVisible({ timeout: 8000 });
             await expectNoOverflow(page, 'workout+pill');
 
             await expect(page.getByText(ERROR_BOUNDARY_TEXT)).toHaveCount(0);

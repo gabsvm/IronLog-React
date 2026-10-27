@@ -11,19 +11,19 @@ describe('N1: pruneStaleSignatureKeys drops cache entries from older log signatu
         const sig = 'n1-current';
         await db.set(`il_stats_overview_v5:${sig}:history:all:all`, { fresh: true });
         await db.set(`il_stats_overview_v5:${sig}:history:202:8w`, { fresh: true });
-        await db.set(`il_stats_chart_v4:${sig}:ex1:weight:history:all:all`, { fresh: true });
+        await db.set(`il_stats_chart_v5:${sig}:ex1:weight:history:all:all`, { fresh: true });
         await db.set('il_stats_overview_v5:n1-old-a:history:all:all', { stale: true });
         await db.set('il_stats_overview_v5:n1-old-b:history:202:8w', { stale: true });
-        await db.set('il_stats_chart_v4:n1-old-a:ex1:weight:history:all:all', { stale: true });
+        await db.set('il_stats_chart_v5:n1-old-a:ex1:weight:history:all:all', { stale: true });
 
         await statsCache.pruneStaleSignatureKeys(sig);
 
         expect(await db.get(`il_stats_overview_v5:${sig}:history:all:all`, null)).toEqual({ fresh: true });
         expect(await db.get(`il_stats_overview_v5:${sig}:history:202:8w`, null)).toEqual({ fresh: true });
-        expect(await db.get(`il_stats_chart_v4:${sig}:ex1:weight:history:all:all`, null)).toEqual({ fresh: true });
+        expect(await db.get(`il_stats_chart_v5:${sig}:ex1:weight:history:all:all`, null)).toEqual({ fresh: true });
         expect(await db.get('il_stats_overview_v5:n1-old-a:history:all:all', 'gone')).toBe('gone');
         expect(await db.get('il_stats_overview_v5:n1-old-b:history:202:8w', 'gone')).toBe('gone');
-        expect(await db.get('il_stats_chart_v4:n1-old-a:ex1:weight:history:all:all', 'gone')).toBe('gone');
+        expect(await db.get('il_stats_chart_v5:n1-old-a:ex1:weight:history:all:all', 'gone')).toBe('gone');
     });
 
     it('compares signatures with inner colons by exact prefix, never by split', async () => {

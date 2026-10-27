@@ -60,9 +60,10 @@ export const buildExerciseHistoryIndex = (
     fallbackBodyWeight?: number,
     library?: readonly ExerciseDef[],
     formula: OneRmFormula = 'epley',
+    factorInRpe = false,
 ): Map<string, ExerciseHistorySummary> => {
     const normalizedFallback = normalizeBodyWeight(fallbackBodyWeight);
-    const cacheKey = `${cacheKeyForBodyWeight(normalizedFallback)}|${mergeSignature(library)}|f:${formula}`;
+    const cacheKey = `${cacheKeyForBodyWeight(normalizedFallback)}|${mergeSignature(library)}|f:${formula}|rpe:${factorInRpe ? 1 : 0}`;
     const bucket = historyCache.get(logs);
     const cached = bucket?.get(cacheKey);
     if (cached) return cached;
@@ -122,7 +123,7 @@ export const buildExerciseHistoryIndex = (
                 }
 
                 if (externalWeight > 0 && reps > 0) {
-                    const external1RM = estimateOneRm(externalWeight, reps, formula);
+                    const external1RM = estimateOneRm(externalWeight, reps, formula, set.rpe, factorInRpe);
                     if (external1RM > summary.bestWeighted1RM) {
                         summary.bestWeighted1RM = external1RM;
                         summary.bestWeightedWeight = set.weight;
@@ -133,7 +134,7 @@ export const buildExerciseHistoryIndex = (
                 if (reps > 0) {
                     const effectiveLoad = getEffectiveSetLoad(set, exercise, logBodyWeight);
                     if (effectiveLoad > 0) {
-                        const effective1RM = estimateOneRm(effectiveLoad, reps, formula);
+                        const effective1RM = estimateOneRm(effectiveLoad, reps, formula, set.rpe, factorInRpe);
                         if (effective1RM > summary.bestEffective1RM) {
                             summary.bestEffective1RM = effective1RM;
                         }
@@ -155,10 +156,11 @@ export const getExerciseHistorySummary = (
     fallbackBodyWeight?: number,
     library?: readonly ExerciseDef[],
     formula: OneRmFormula = 'epley',
+    factorInRpe = false,
 ): ExerciseHistorySummary => {
     if (!Array.isArray(logs) || logs.length === 0 || !exerciseId) return EMPTY_SUMMARY;
     const canonicalId = library ? resolveExerciseId(library, String(exerciseId)) : String(exerciseId);
-    return buildExerciseHistoryIndex(logs, fallbackBodyWeight, library, formula).get(canonicalId) || EMPTY_SUMMARY;
+    return buildExerciseHistoryIndex(logs, fallbackBodyWeight, library, formula, factorInRpe).get(canonicalId) ?? EMPTY_SUMMARY;
 };
 
 export const getHistoricalBest1RMIndex = (
@@ -166,8 +168,9 @@ export const getHistoricalBest1RMIndex = (
     fallbackBodyWeight?: number,
     library?: readonly ExerciseDef[],
     formula: OneRmFormula = 'epley',
+    factorInRpe = false,
 ): Map<string, number> => {
-    const summaries = buildExerciseHistoryIndex(logs, fallbackBodyWeight, library, formula);
+    const summaries = buildExerciseHistoryIndex(logs, fallbackBodyWeight, library, formula, factorInRpe);
     const best = new Map<string, number>();
     for (const [exerciseId, summary] of summaries) {
         if (summary.bestEffective1RM > 0) best.set(exerciseId, summary.bestEffective1RM);

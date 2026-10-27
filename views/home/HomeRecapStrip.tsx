@@ -30,7 +30,7 @@ export const HomeRecapStrip: React.FC<Props> = React.memo(({ logs, meso, planned
     const [trainingPrefs] = useTrainingConfig();
     const progress = useMemo(() => weekProgress(logs, meso.id, meso.week, plannedDays), [logs, meso.id, meso.week, plannedDays]);
     const streak = useMemo(() => streakWeeks(logs, meso.id, meso.week, plannedDays), [logs, meso.id, meso.week, plannedDays]);
-    const last = useMemo(() => lastSessionSummary(logs, meso.id, trainingPrefs.oneRmFormula), [logs, meso.id, trainingPrefs.oneRmFormula]);
+    const last = useMemo(() => lastSessionSummary(logs, meso.id, trainingPrefs.oneRmFormula, trainingPrefs.factorInRpe === true), [logs, meso.id, trainingPrefs.oneRmFormula, trainingPrefs.factorInRpe]);
     const context = useMemo(() => {
         let seconds = 0;
         const recent: Log[] = [];

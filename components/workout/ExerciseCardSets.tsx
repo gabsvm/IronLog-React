@@ -3,6 +3,10 @@ import { SetRow } from './SetRow';
 import { Icon } from '../ui/Icon';
 import { SessionExercise, WorkoutSet, SetType, CardioType } from '../../types';
 import { TRANSLATIONS } from '../../constants';
+import { useTimerActions } from '../../context/TimerContext';
+import { useStore } from '../../lib/store';
+import { formatRestSeconds } from '../../utils/strongTraining';
+import { resolveSetRestSeconds } from '../../utils/resolveSetRest';
 
 interface Props {
     ex: SessionExercise;
@@ -64,6 +68,34 @@ export const ExerciseCardSets: React.FC<Props> = React.memo(({
 }) => {
     const h = TRANSLATIONS[lang].setsHeader;
     const showRIR = Boolean(config?.showRIR);
+    // Null-safe outside a TimerProvider (isolated unit tests): real app always provides it.
+    let timerActions: ReturnType<typeof useTimerActions> | null = null;
+    try {
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        timerActions = useTimerActions();
+    } catch {
+        timerActions = null;
+    }
+    const activeMeso = useStore((state) => state.activeMeso);
+    // Strong parity: tapping a rest label starts the rest for that gap.
+    const startRestFor = (set: WorkoutSet) => {
+        if (!timerActions) return;
+        const seconds = resolveSetRestSeconds(set, ex, config, activeMeso);
+        if (!seconds || seconds <= 0) return;
+        const now = Date.now();
+        timerActions.setRestTimer({
+            active: true,
+            duration: seconds,
+            timeLeft: seconds,
+            endAt: now + seconds * 1000,
+            source: { exerciseInstanceId: ex.instanceId, setId: set.id },
+        });
+    };
+    const restLabelFor = (set: WorkoutSet): string | null => {
+        if (!set.completed || set.skipped) return null;
+        const seconds = resolveSetRestSeconds(set, ex, config, activeMeso);
+        return seconds && seconds > 0 ? formatRestSeconds(seconds) : null;
+    };
     const setWord = TRANSLATIONS[lang].setRow.setWord;
     const firstColLabel = isEMOM ? 'Min' : isMyorep ? 'Set' : setWord;
     const checkHead = <Icon name="Check" size={12} className="mx-auto" aria-hidden />;
@@ -122,9 +154,11 @@ export const ExerciseCardSets: React.FC<Props> = React.memo(({
 
         {/* Sets list */}
         <div className="space-y-1 px-2 py-1.5">
-            {regularSets.map((set, idx) => (
-                <SetRow
-                    key={set.id}
+            {regularSets.map((set, idx) => {
+                const restLabel = restLabelFor(set);
+                return (
+                    <React.Fragment key={set.id}>
+                        <SetRow
                     set={set}
                     exInstanceId={ex.instanceId}
                     onUpdate={onSetUpdate}
@@ -144,7 +178,19 @@ export const ExerciseCardSets: React.FC<Props> = React.memo(({
                     showRIR={showRIR}
                     unit={unit}
                 />
-            ))}
+                {restLabel !== null && (
+                    <button
+                        type="button"
+                        onClick={() => startRestFor(set)}
+                        aria-label={`${t.timer?.resting ?? 'Rest'} ${restLabel}`}
+                        className="mx-auto block px-4 py-0.5 text-center text-sm font-semibold text-[rgb(var(--accent-text))]"
+                    >
+                        {restLabel}
+                    </button>
+                )}
+                    </React.Fragment>
+                );
+            })}
         </div>
     </>
     );

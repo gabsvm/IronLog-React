@@ -9,8 +9,17 @@ interface StrongTrainingCopy {
     warmupRest: string;
     restIncrement: string;
     restSound: string;
+    restSoundName: string;
+    restSoundBoxing: string;
+    restSoundChime: string;
+    restSoundTri: string;
+    restSoundShort: string;
     restVibrate: string;
     autoStartRest: string;
+    simpleTimers: string;
+    simpleTimersHint: string;
+    autoFullscreen: string;
+    autoFullscreenHint: string;
     setsGroup: string;
     defaultSets: string;
     defaultSetsHint: string;
@@ -30,6 +39,9 @@ interface StrongTrainingCopy {
     weekMonday: string;
     weekSunday: string;
     oneRmFormula: string;
+    oneRmHybridRecommended: string;
+    factorInRpe: string;
+    factorInRpeHint: string;
     plateGroup: string;
     plateBar: string;
     platePlates: string;
@@ -49,8 +61,17 @@ const ES: StrongTrainingCopy = {
     warmupRest: 'Descanso de calentamiento',
     restIncrement: 'Incremento (+/−)',
     restSound: 'Sonido al terminar',
+    restSoundName: 'Tono',
+    restSoundBoxing: 'Campana',
+    restSoundChime: 'Campanadas',
+    restSoundTri: 'Triple tono',
+    restSoundShort: 'Corto',
     restVibrate: 'Vibración al terminar',
     autoStartRest: 'Iniciar descanso solo',
+    simpleTimers: 'Temporizadores simples',
+    simpleTimersHint: 'Pantalla completa al iniciar el descanso',
+    autoFullscreen: 'Pantalla completa automática',
+    autoFullscreenHint: 'Abre el temporizador a pantalla completa',
     setsGroup: 'Series',
     defaultSets: 'Series por defecto',
     defaultSetsHint: 'Al añadir un ejercicio',
@@ -70,6 +91,9 @@ const ES: StrongTrainingCopy = {
     weekMonday: 'Lunes',
     weekSunday: 'Domingo',
     oneRmFormula: 'Fórmula 1RM',
+    oneRmHybridRecommended: '(recomendado)',
+    factorInRpe: 'Ajustar por RPE',
+    factorInRpeHint: 'Ajusta el 1RM estimado según el RPE registrado',
     plateGroup: 'Calculadora de discos',
     plateBar: 'Barra',
     platePlates: 'Discos disponibles',
@@ -89,8 +113,17 @@ const EN: StrongTrainingCopy = {
     warmupRest: 'Warm-up rest',
     restIncrement: 'Step (+/−)',
     restSound: 'Finish sound',
+    restSoundName: 'Tone',
+    restSoundBoxing: 'Boxing bell',
+    restSoundChime: 'Chime',
+    restSoundTri: 'Tri tone',
+    restSoundShort: 'Short',
     restVibrate: 'Finish vibration',
     autoStartRest: 'Auto-start rest',
+    simpleTimers: 'Simple timers',
+    simpleTimersHint: 'Fullscreen rest screen on start',
+    autoFullscreen: 'Auto full screen',
+    autoFullscreenHint: 'Open the timer fullscreen',
     setsGroup: 'Sets',
     defaultSets: 'Default sets',
     defaultSetsHint: 'When adding an exercise',
@@ -110,6 +143,9 @@ const EN: StrongTrainingCopy = {
     weekMonday: 'Monday',
     weekSunday: 'Sunday',
     oneRmFormula: '1RM formula',
+    oneRmHybridRecommended: '(recommended)',
+    factorInRpe: 'Factor in RPE',
+    factorInRpeHint: 'Adjusts the estimated 1RM from logged RPE',
     plateGroup: 'Plate calculator',
     plateBar: 'Bar',
     platePlates: 'Available plates',

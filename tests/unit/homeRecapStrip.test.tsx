@@ -19,7 +19,7 @@ const log = (id: number, week: number, dayIdx: number, sets: any[], endTime: num
 
 const meso: any = { id: 7, mesoType: 'hyp_1', week: 2, duration: 5, plan: [[null], [null], [null]] };
 
-const defaultTestConfig: AppState['config'] = { showRIR: false, rpEnabled: false, rpTargetRIR: 2, keepScreenOn: false, restTimerDisplay: 'compact', weightUnit: 'kg', previousScope: 'any', incompleteSets: 'ask', defaultSets: 3, defaultRestSeconds: 120, warmupRestSeconds: 60, restIncrementSeconds: 15, restSound: true, restVibrate: true, autoStartRest: true, bodyWeightUnit: 'kg', distanceUnit: 'km', sizeUnit: 'cm', weekStart: 'monday', oneRmFormula: 'epley', plateBarKg: 20, platePlatesKg: [25, 20, 15, 10, 5, 2.5, 1.25] };
+const defaultTestConfig: AppState['config'] = { showRIR: false, rpEnabled: false, rpTargetRIR: 2, keepScreenOn: false, restTimerDisplay: 'compact', weightUnit: 'kg', previousScope: 'any', incompleteSets: 'ask', defaultSets: 3, defaultRestSeconds: 120, warmupRestSeconds: 60, restIncrementSeconds: 15, restSound: true, restVibrate: true, autoStartRest: true, autoFullscreen: false, simpleTimers: false, restSoundName: 'boxingBell', bodyWeightUnit: 'kg', distanceUnit: 'km', sizeUnit: 'cm', weekStart: 'monday', oneRmFormula: 'epley', factorInRpe: false, plateBarKg: 20, platePlatesKg: [25, 20, 15, 10, 5, 2.5, 1.25] };
 
 const renderStrip = (logs: any[], lang: 'es' | 'en' = 'es') =>
     render(

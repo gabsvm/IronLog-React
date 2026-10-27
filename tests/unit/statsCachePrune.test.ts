@@ -14,10 +14,11 @@ describe('M2: pruneLegacyStatsKeys removes orphaned cache versions once', () => 
         await db.set('il_stats_overview_v4:sig:all', { stale: true });
         await db.set('il_stats_chart_v2:sig:ex', { stale: true });
         await db.set('il_stats_chart_v3:sig:ex', { stale: true });
+        await db.set('il_stats_chart_v4:sig:ex', { stale: true });
         await db.set('il_stats_scope_v2', 'plan');
         await db.set('il_stats_period_v1', '8w');
         await db.set('il_stats_overview_v5:sig:history:all:all', { fresh: true });
-        await db.set('il_stats_chart_v4:sig:ex:weight:history:all:all', { fresh: true });
+        await db.set('il_stats_chart_v5:sig:ex:weight:history:all:all', { fresh: true });
 
         await statsCache.pruneLegacyStatsKeys();
 
@@ -27,9 +28,10 @@ describe('M2: pruneLegacyStatsKeys removes orphaned cache versions once', () => 
         expect(await db.get('il_stats_overview_v4:sig:all', 'gone')).toBe('gone');
         expect(await db.get('il_stats_chart_v2:sig:ex', 'gone')).toBe('gone');
         expect(await db.get('il_stats_chart_v3:sig:ex', 'gone')).toBe('gone');
+        expect(await db.get('il_stats_chart_v4:sig:ex', 'gone')).toBe('gone');
         expect(await db.get('il_stats_scope_v2', null)).toBe('plan');
         expect(await db.get('il_stats_period_v1', null)).toBe('8w');
         expect(await db.get('il_stats_overview_v5:sig:history:all:all', null)).toEqual({ fresh: true });
-        expect(await db.get('il_stats_chart_v4:sig:ex:weight:history:all:all', null)).toEqual({ fresh: true });
+        expect(await db.get('il_stats_chart_v5:sig:ex:weight:history:all:all', null)).toEqual({ fresh: true });
     });
 });

@@ -19,7 +19,7 @@ export const StatsProgressTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
     const { lang, t, s, unit, weightSuffix, oneRmFormula, distanceUnit, selectedExId, chartMetric, setChartMetric, setShowPicker, setPickerSearch, availableExercises, chartPoints, loadingOverview, loadingChart, currentEx, hasExerciseHistory, prHistory, showAllPRs, setShowAllPRs, displayedPRs, metricButtons, selectedExerciseInsight, repMaxRows } = stats;
     // Translations name the legacy estimate explicitly; keep them untouched and
     // relabel only when another formula produced the numbers on screen.
-    const formulaName = oneRmFormula === 'brzycki' ? 'Brzycki' : oneRmFormula === 'lombardi' ? 'Lombardi' : 'Epley';
+    const formulaName = oneRmFormula === 'brzycki' ? 'Brzycki' : oneRmFormula === 'lombardi' ? 'Lombardi' : oneRmFormula === 'hybrid' ? 'Hybrid' : 'Epley';
     const seriesLabels = chartMetric === '1rm' && formulaName !== 'Epley'
         ? { ...s, seriesEstimatedNote: s.seriesEstimatedNote.replace('Epley', formulaName) }
         : s;

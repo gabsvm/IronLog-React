@@ -353,7 +353,8 @@ export interface MeasurementLog {
 // utils/strongTraining.ts (TRAINING_CONFIG_DEFAULTS, TRAINING_CONFIG_KEYS,
 // sanitizeTrainingConfig); this interface is the single type source —
 // utils/strongTraining.ts re-exports these names for existing importers.
-export type OneRmFormula = 'epley' | 'brzycki' | 'lombardi';
+export type OneRmFormula = 'epley' | 'brzycki' | 'lombardi' | 'hybrid';
+export type RestSoundName = 'boxingBell' | 'chime' | 'triTone' | 'shortBell';
 export type WeekStart = 'monday' | 'sunday';
 export type BodyWeightUnit = 'kg' | 'lb';
 export type DistanceUnit = 'km' | 'mi';
@@ -387,13 +388,18 @@ export interface TrainingConfigFields {
     /** Step for the rest timer +/- buttons, seconds. */
     restIncrementSeconds: RestIncrement;
     restSound: boolean;
+    restSoundName: RestSoundName;
     restVibrate: boolean;
     autoStartRest: boolean;
+    autoFullscreen: boolean;
+    simpleTimers: boolean;
     bodyWeightUnit: BodyWeightUnit;
     distanceUnit: DistanceUnit;
     sizeUnit: SizeUnit;
     weekStart: WeekStart;
     oneRmFormula: OneRmFormula;
+    /** Adjust the xRM estimate by RPE (Strong "Factor in RPE"). */
+    factorInRpe: boolean;
     /** Selected bar, canonical kg. */
     plateBarKg: number;
     /** Enabled plate denominations, canonical kg, descending. */

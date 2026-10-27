@@ -28,6 +28,7 @@ export const computeRepMaxTable = (
     logs: readonly Log[],
     exerciseIds: ReadonlySet<string>,
     formula: OneRmFormula = 'epley',
+    factorInRpe = false,
 ): RepMaxRow[] => {
     const actual = new Map<number, { weight: number; date: number }>();
     let best1RM = 0;
@@ -42,7 +43,7 @@ export const computeRepMaxTable = (
                 const weight = positive(set.weight);
                 const reps = Math.round(positive(set.reps));
                 if (weight <= 0 || reps < 1 || reps > REP_MAX_ROWS) continue;
-                best1RM = Math.max(best1RM, reps === 1 ? weight : estimateOneRm(weight, reps, formula));
+                best1RM = Math.max(best1RM, reps === 1 ? weight : estimateOneRm(weight, reps, formula, set.rpe, factorInRpe));
                 const current = actual.get(reps);
                 if (!current || weight > current.weight || (weight === current.weight && date > current.date)) {
                     actual.set(reps, { weight, date });
@@ -73,6 +74,11 @@ export const computeRepMaxTable = (
 export const predictWeightForReps = (best1RM: number, reps: number, formula: OneRmFormula = 'epley'): number | null => {
     if (reps === 1) return best1RM;
     switch (formula) {
+        case 'hybrid':
+            // Piecewise inverse: brzycki below 10 reps, epley at/above.
+            return reps < 10
+                ? (reps >= 37 ? best1RM : (best1RM * (37 - reps)) / 36)
+                : best1RM / (1 + reps / 30);
         case 'brzycki':
             if (reps >= 37) return best1RM;
             // best = w * 36 / (37 - r)  →  w = best * (37 - r) / 36.

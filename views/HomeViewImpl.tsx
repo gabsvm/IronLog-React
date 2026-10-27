@@ -120,6 +120,7 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
                         onCreateCustom={handleCreateCustom}
                         lang={lang}
                         t={t}
+                        logs={safeLogs}
                         templates={[...personalTemplates, ...globalTemplates]}
                     />
                 </Suspense>

@@ -17,7 +17,7 @@ export const useTrainingConfig = (): [TrainingConfigFields, (patch: Partial<Trai
     const fields = useMemo<TrainingConfigFields>(
         () => sanitizeTrainingConfig(config),
         // eslint-disable-next-line react-hooks/exhaustive-deps -- sanitized snapshot of the whole config slice; recompute when any field changes.
-        [config.previousScope, config.incompleteSets, config.defaultSets, config.defaultRestSeconds, config.warmupRestSeconds, config.restIncrementSeconds, config.restSound, config.restVibrate, config.autoStartRest, config.bodyWeightUnit, config.distanceUnit, config.sizeUnit, config.weekStart, config.oneRmFormula, config.plateBarKg, config.platePlatesKg],
+        [config.previousScope, config.incompleteSets, config.defaultSets, config.defaultRestSeconds, config.warmupRestSeconds, config.restIncrementSeconds, config.restSound, config.restVibrate, config.autoStartRest, config.autoFullscreen, config.simpleTimers, config.restSoundName, config.bodyWeightUnit, config.distanceUnit, config.sizeUnit, config.weekStart, config.oneRmFormula, config.factorInRpe, config.plateBarKg, config.platePlatesKg],
     );
 
     const patch = useCallback((p: Partial<TrainingConfigFields>) => {

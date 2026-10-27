@@ -12,7 +12,8 @@ import {
 import { Icon } from '../../components/ui/Icon';
 import { formatDate, formatDurationShort, getTranslated, uid } from '../../utils';
 import { formatWeight, toDisplay, unitLabel } from '../../utils/units';
-import { distanceUnitLabel, formatDistance } from '../../utils/strongTraining';
+import { distanceUnitLabel, formatDistance, estimateOneRm, type OneRmFormula } from '../../utils/strongTraining';
+import { readWorkoutPrefs } from '../../utils/workoutPrefs';
 import { TRANSLATIONS } from '../../constants/translations';
 import { formatInteger, formatMessage } from '../../utils/i18n';
 import { AppContext } from '../../context/app/appContexts';
@@ -146,6 +147,9 @@ export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat
     };
 
     const weightSuffix = unitLabel(unit).toLowerCase();
+    const estPrefs = readWorkoutPrefs(app?.config);
+    const estFormula: OneRmFormula = estPrefs.oneRmFormula ?? 'epley';
+    const estFactorRpe = estPrefs.factorInRpe === true;
     const summary = useMemo(() => {
         let sets = 0;
         let volume = 0;
@@ -407,6 +411,14 @@ export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat
                                                         </>
                                                     )}
                                                 </div>
+                                                {(() => {
+                                                        if (isCardio || isIso || !set.completed || set.skipped) return null;
+                                                        const w = Number(set.weight);
+                                                        const r = Number(set.reps);
+                                                        const v = Number.isFinite(w) && Number.isFinite(r) && w > 0 && r > 0 ? estimateOneRm(w, r, estFormula, set.rpe, estFactorRpe) : 0;
+                                                        if (!v) return null;
+                                                        return <span className="ml-3 text-[11px] font-semibold text-muted tabular-nums">{formatWeight(v, unit, lang)} {weightSuffix} 1RM</span>;
+                                                    })()}
                                                 {set.rpe !== '' && set.rpe != null && !isCardio && (
                                                     <div className="shrink-0 text-xs font-bold text-muted">RIR {set.rpe}</div>
                                                 )}

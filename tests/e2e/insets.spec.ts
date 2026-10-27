@@ -87,7 +87,7 @@ test.describe('P7-4: edge-to-edge insets', () => {
         // --- Rest dock: in-flow surface (no floating pill outside the
         // workout). Every control clears the bottom inset wherever it sits.
         const pill = page.locator('[data-workout-rest-dock]');
-        await expect(pill.getByRole('button', { name: '-15s' })).toBeVisible({ timeout: 8000 });
+        await expect(pill.getByRole('button', { name: /Pausar|Pause/ })).toBeVisible({ timeout: 8000 });
         const pillBox = await pill.boundingBox();
         expect(pillBox).not.toBeNull();
 

@@ -71,6 +71,7 @@ export const getExerciseHistoryEntries = (
     groupIds: ExerciseGroupIds,
     fallbackBodyWeight?: number,
     formula: OneRmFormula = 'epley',
+    factorInRpe = false,
 ): ExerciseHistoryEntry[] => {
     if (groupIds.length === 0) return [];
     const wanted = new Set(groupIds.map(String));
@@ -122,7 +123,7 @@ export const getExerciseHistoryEntries = (
                     bestReps = reps;
                 }
                 if (reps > 0 && effective > 0) {
-                    best1RM = Math.max(best1RM, estimateOneRm(effective, reps, formula));
+                    best1RM = Math.max(best1RM, estimateOneRm(effective, reps, formula, set.rpe, factorInRpe));
                 }
             }
         }

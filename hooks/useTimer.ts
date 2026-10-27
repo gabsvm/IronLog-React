@@ -16,6 +16,7 @@ import { useStore } from '../lib/store';
 import { pickLang } from '../utils/i18n';
 import { TRANSLATIONS } from '../constants';
 import { Lang } from '../types';
+import type { RestSoundName } from '../types';
 
 export interface TimerState {
     active: boolean;
@@ -133,6 +134,7 @@ export interface UseTimerOptions {
     /** SettingsParity prefs (AppState.config.restSound/restVibrate); absent = enabled. */
     soundEnabled?: boolean;
     vibrateEnabled?: boolean;
+    soundName?: RestSoundName;
 }
 
 export const useTimer = (lang: Lang, opts?: UseTimerOptions) => {
@@ -143,8 +145,10 @@ export const useTimer = (lang: Lang, opts?: UseTimerOptions) => {
     const langRef = useRef(lang);
     const soundRef = useRef(opts?.soundEnabled ?? true);
     const vibrateRef = useRef(opts?.vibrateEnabled ?? true);
+    const soundNameRef = useRef<RestSoundName>(opts?.soundName ?? 'boxingBell');
     soundRef.current = opts?.soundEnabled ?? true;
     vibrateRef.current = opts?.vibrateEnabled ?? true;
+    soundNameRef.current = opts?.soundName ?? 'boxingBell';
     const isNative = Capacitor.isNativePlatform();
     const [nativeReady, setNativeReady] = useState(!isNative);
     const [nativeUserRevision, setNativeUserRevision] = useState(0);
@@ -254,7 +258,7 @@ export const useTimer = (lang: Lang, opts?: UseTimerOptions) => {
             // a native alarm does not beep/vibrate a second time.
             const shouldEmitFeedback = !suppressFeedback && (!isNative || document.visibilityState === 'visible');
             if (shouldEmitFeedback) {
-                if (soundRef.current) playTimerFinishSound();
+                if (soundRef.current) playTimerFinishSound(soundNameRef.current);
                 if (vibrateRef.current) triggerHaptic('success');
             }
 

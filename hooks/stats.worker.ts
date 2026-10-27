@@ -17,8 +17,9 @@ const parseDuration = (val: any) => {
 };
 
 self.onmessage = function(e: MessageEvent) {
-    const { type, logs, activeMesoId, exerciseId, metric, userBodyWeight, reqId, oneRmFormula, weekStart } = e.data || {};
-    const formula = oneRmFormula === 'brzycki' || oneRmFormula === 'lombardi' ? oneRmFormula : 'epley';
+    const { type, logs, activeMesoId, exerciseId, metric, userBodyWeight, reqId, oneRmFormula, factorInRpe, weekStart } = e.data || {};
+    const formula = oneRmFormula === 'brzycki' || oneRmFormula === 'lombardi' || oneRmFormula === 'hybrid' ? oneRmFormula : 'epley';
+    const factorRpe = factorInRpe === true;
 
     if (type === 'SET_LOGS') {
         cachedLogs = Array.isArray(logs) ? logs : [];
@@ -59,7 +60,7 @@ self.onmessage = function(e: MessageEvent) {
                     if (s.completed && !s.skipped && (s.weight || s.weight === 0 || s.weight === '0') && s.reps) {
                         const w = getEffectiveSetLoad(s, ex, logBodyWeight);
                         const r = Number(s.reps);
-                        const est1rm = r === 1 ? w : estimateOneRm(w, r, formula);
+                        const est1rm = r === 1 ? w : estimateOneRm(w, r, formula, s.rpe, factorRpe);
                         if (est1rm > bestValue) {
                             bestValue = est1rm;
                             bestSetDetails = { w: Number(s.weight), r };

@@ -4,11 +4,15 @@ import { triggerHaptic } from '../../../../utils/audio';
 
 export const PrefToggle: React.FC<{
     label: string;
+    hint?: string;
     pressed: boolean;
     onChange: (next: boolean) => void;
-}> = ({ label, pressed, onChange }) => (
+}> = ({ label, hint, pressed, onChange }) => (
     <div className="flex items-center gap-3 p-3">
-        <div className="flex-1 text-sm font-medium text-[rgb(var(--text-primary))]">{label}</div>
+        <div className="flex-1">
+            <div className="text-sm font-medium text-[rgb(var(--text-primary))]">{label}</div>
+            {hint && <div className="mt-0.5 text-xs text-muted">{hint}</div>}
+        </div>
         <button
             type="button"
             onClick={() => { triggerHaptic('light'); onChange(!pressed); }}
