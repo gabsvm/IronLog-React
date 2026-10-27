@@ -35,10 +35,11 @@ test.describe('Rest surfaces remain reachable without overlap (G2)', () => {
         await startFreeBtn.click();
 
         // Add 4 exercises so the list overflows and the pill can cover content.
-        const addExHeaderBtn = page.locator('button[title*="Añadir ejercicio" i], button[title*="Add exercise" i], button[title*="Añadir Ejercicio" i]').first();
-        await expect(addExHeaderBtn).toBeVisible({ timeout: 6000 });
+        // End-of-list add button (header dup-add removed in Strong parity T1/T2).
+        const addExBtn = page.getByRole('button', { name: /Añadir ejercicio|Add exercise/ }).last();
+        await expect(addExBtn).toBeVisible({ timeout: 6000 });
         for (let i = 0; i < 4; i++) {
-            await addExHeaderBtn.click();
+            await addExBtn.click();
             // The dialog excludes already-added exercises, so always take
             // the first remaining match.
             const option = page.locator('[role="dialog"] button, .modal button')
@@ -113,9 +114,10 @@ test.describe('Rest surfaces remain reachable without overlap (G2)', () => {
         await startFreeBtn.click();
 
         // Add one exercise so the session has a set to complete.
-        const addExHeaderBtn = page.locator('button[title*="Añadir ejercicio" i], button[title*="Add exercise" i], button[title*="Añadir Ejercicio" i]').first();
-        await expect(addExHeaderBtn).toBeVisible({ timeout: 6000 });
-        await addExHeaderBtn.click();
+        // End-of-list add button (header dup-add removed in Strong parity T1/T2).
+        const addExBtn = page.getByRole('button', { name: /Añadir ejercicio|Add exercise/ }).last();
+        await expect(addExBtn).toBeVisible({ timeout: 6000 });
+        await addExBtn.click();
         const option = page.locator('[role="dialog"] button, .modal button')
             .filter({ hasText: /press|squat|curl|banca|remo|row|peso muerto|deadlift/i })
             .first();

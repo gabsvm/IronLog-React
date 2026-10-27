@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Locator, type Page } from '@playwright/test';
 
 // Q11: the kg/lb preference changes presentation and entry only — stored
 // data stays canonical kg. Switching units never rewrites stored values.
@@ -69,6 +69,26 @@ const goHomeFromWorkout = async (page: Page) => {
     await expect(page.locator('nav[aria-label="Main navigation"]')).toBeVisible({ timeout: 8000 });
 };
 
+// Task 5 (Strong parity): on coarse pointers the set inputs are readOnly and
+// entry goes through the in-app keypad (physical fill() no longer sticks).
+// Clears first because keypad digits append to the current text.
+const enterWeightViaKeypad = async (page: Page, input: Locator, digits: string) => {
+    await input.click();
+    const keypad = page.getByTestId('set-keypad');
+    await expect(keypad).toBeVisible({ timeout: 6000 });
+    // Number inputs sanitize trailing-dot intermediates ('132.' reads as ''),
+    // so a read-until-empty loop exits early and later digits append to the
+    // hidden remainder. Tap a fixed over-count instead: backspace on '' is a
+    // no-op, and spec values stay well under 10 chars.
+    for (let i = 0; i < 10; i++) {
+        await keypad.getByTestId('set-keypad-back').click();
+    }
+    for (const d of digits) {
+        await keypad.getByRole('button', { name: d, exact: true }).click();
+    }
+    await keypad.getByTestId('set-keypad-done').click();
+    await expect(page.getByTestId('set-keypad')).toHaveCount(0);
+};
 /** Raw stored weight of the first set, straight from IndexedDB. */
 const storedFirstSetWeight = (page: Page) =>
     page.evaluate(() => new Promise((resolve, reject) => {
@@ -95,7 +115,7 @@ test.describe('Q11: weight units kg/lb', () => {
         const firstCardUnit = (unit: string) => card.locator('[id^="exercise-card-"]').first().getByText(unit, { exact: false });
         await expect(firstCardUnit('(KG)')).toBeVisible({ timeout: 6000 });
         const weightInput = card.locator('input[type="number"][inputmode="decimal"]').first();
-        await weightInput.fill('60');
+        await enterWeightViaKeypad(page, weightInput, '60');
         // Stored raw in kg mode (no conversion on either side).
         await expect.poll(() => storedFirstSetWeight(page), { timeout: 8000 }).toBe('60');
 
@@ -109,7 +129,7 @@ test.describe('Q11: weight units kg/lb', () => {
         await expect(weightInput).toHaveValue('132.3');
 
         // Typing in lb commits canonical kg.
-        await weightInput.fill('135');
+        await enterWeightViaKeypad(page, weightInput, '135');
         await expect.poll(() => storedFirstSetWeight(page), { timeout: 8000 }).toBe(61.235);
 
         // Back in kg the exact canonical value shows: nothing was rewritten.
