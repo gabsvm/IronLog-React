@@ -306,6 +306,19 @@ body {
         border-radius: 0;
     }
 
+    /* Task 5: in-app set keypad. Slide-in only when motion is allowed;
+       safe-area padding comes from the .pb-safe utility on the panel. */
+    .set-keypad {
+        animation: set-keypad-in 180ms ease-out;
+    }
+    @keyframes set-keypad-in {
+        from { transform: translateY(16px); }
+        to { transform: translateY(0); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .set-keypad { animation: none; }
+    }
+
     .chip-reference {
         display: inline-flex;
         align-items: center;

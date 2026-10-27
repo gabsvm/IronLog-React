@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import type { Page } from '@playwright/test';
 
 // Task 1 (Strong parity): the in-progress workout screen renders ALL exercises
 // stacked in one continuous scroll — no focused-exercise + rail model.
@@ -222,5 +223,122 @@ test.describe('Strong parity T4: flat header/rows, single Add set', () => {
         // The capability survives inside the card menu.
         await card.getByRole('button', { name: /More options|M\u00e1s opciones/ }).click();
         await expect(card.getByRole('menuitem', { name: /Quitar serie|Remove set/ })).toBeVisible({ timeout: 6000 });
+    });
+});
+// Task 5 (Strong parity): in-app numeric keypad when editing weight/reps.
+// Mobile (coarse pointer): focusing a weight input shows [data-testid="set-keypad"];
+// typing 2,0 yields 20; next moves focus to reps; done closes and the value
+// persists after completing the set. Desktop: no keypad, native entry intact.
+test.describe('Strong parity T5: in-app numeric keypad (mobile)', () => {
+    const startFreestyleWithBench = async (page: Page) => {
+        await page.addInitScript(() => {
+            localStorage.setItem('il_onboarded_v2', 'true');
+            localStorage.setItem('il_tutorial_v2', JSON.stringify({
+                home: true, workout: true, history: true, stats: true, mesoSettings: true, nutrition: true,
+            }));
+        });
+        await page.goto('/');
+        await expect(page.locator('nav[aria-label="Main navigation"]')).toBeVisible({ timeout: 20000 });
+
+        await page.getByRole('button', { name: /^(Sesión libre|Freestyle session) ·/ }).click();
+        await page.getByRole('dialog', { name: /Iniciar entrenamiento|Start training/ })
+            .getByRole('button', { name: /Sesión libre|Freestyle/ }).click();
+        await page.getByRole('dialog', { name: /Nueva Sesión|New Session/i })
+            .getByRole('button', { name: /Iniciar Sesión Libre|Start Free Session/i }).click();
+        await expect(page.locator('#tut-finish-btn')).toBeVisible({ timeout: 10000 });
+
+        await page.getByRole('button', { name: /Añadir ejercicio|Add exercise/ }).last().click();
+        const dialog = page.locator('[role="dialog"]').last();
+        await expect(dialog).toBeVisible({ timeout: 6000 });
+        // Deterministic barbell pick: guarantees weight + reps inputs.
+        await dialog.getByLabel(/Buscar ejercicios|Search exercises/).fill('press banca');
+        const option = dialog.locator('button[class*="text-left"]').first();
+        await expect(option).toBeVisible({ timeout: 6000 });
+        await option.click();
+        await page.waitForTimeout(400);
+    };
+
+    test('weight focus shows keypad; 2,0 -> 20; next focuses reps; done closes, value persists', async ({ page }) => {
+        await startFreestyleWithBench(page);
+        const card = page.locator('#tut-exercise-list .card-strong').first();
+        await expect(card).toBeVisible({ timeout: 8000 });
+
+        const weightInput = card.getByLabel(/^(peso|weight)$/i).first();
+        const repsInput = card.getByLabel(/^reps$/i).first();
+        await expect(weightInput).toBeVisible({ timeout: 8000 });
+
+        // No keypad before focusing anything.
+        await expect(page.getByTestId('set-keypad')).toHaveCount(0);
+
+        await weightInput.click();
+        const keypad = page.getByTestId('set-keypad');
+        await expect(keypad).toBeVisible({ timeout: 6000 });
+
+        // Type 2,0 through the in-app keypad only (no physical typing).
+        await keypad.getByRole('button', { name: '2', exact: true }).click();
+        await keypad.getByRole('button', { name: '0', exact: true }).click();
+        await expect(weightInput).toHaveValue('20');
+
+        // "Next" moves focus to reps, keypad stays open on the reps value.
+        await keypad.getByTestId('set-keypad-next').click();
+        await expect(repsInput).toBeFocused({ timeout: 6000 });
+        await expect(keypad).toBeVisible();
+        await keypad.getByRole('button', { name: '8', exact: true }).click();
+        await expect(repsInput).toHaveValue('8');
+
+        // "Done" closes the keypad; values stay in the inputs.
+        await keypad.getByTestId('set-keypad-done').click();
+        await expect(page.getByTestId('set-keypad')).toHaveCount(0);
+        await expect(weightInput).toHaveValue('20');
+        await expect(repsInput).toHaveValue('8');
+
+        // Completing the set persists the keypad-entered value.
+        await card.getByRole('button', { name: /Completar serie|Complete set/i }).first().click();
+        await expect(weightInput).toHaveValue('20');
+        await expect(repsInput).toHaveValue('8');
+    });
+});
+
+test.describe('Strong parity T5: no keypad on desktop', () => {
+    test.use({ viewport: { width: 1280, height: 800 }, hasTouch: false, isMobile: false });
+
+    test('weight focus never shows the keypad; native entry works', async ({ page }) => {
+        await page.addInitScript(() => {
+            localStorage.setItem('il_onboarded_v2', 'true');
+            localStorage.setItem('il_tutorial_v2', JSON.stringify({
+                home: true, workout: true, history: true, stats: true, mesoSettings: true, nutrition: true,
+            }));
+        });
+        await page.goto('/');
+        await expect(page.locator('nav[aria-label="Main navigation"]')).toBeVisible({ timeout: 20000 });
+
+        await page.getByRole('button', { name: /^(Sesión libre|Freestyle session) ·/ }).click();
+        await page.getByRole('dialog', { name: /Iniciar entrenamiento|Start training/ })
+            .getByRole('button', { name: /Sesión libre|Freestyle/ }).click();
+        await page.getByRole('dialog', { name: /Nueva Sesión|New Session/i })
+            .getByRole('button', { name: /Iniciar Sesión Libre|Start Free Session/i }).click();
+        await expect(page.locator('#tut-finish-btn')).toBeVisible({ timeout: 10000 });
+
+        await page.getByRole('button', { name: /Añadir ejercicio|Add exercise/ }).last().click();
+        const dialog = page.locator('[role="dialog"]').last();
+        await expect(dialog).toBeVisible({ timeout: 6000 });
+        await dialog.getByLabel(/Buscar ejercicios|Search exercises/).fill('press banca');
+        const option = dialog.locator('button[class*="text-left"]').first();
+        await expect(option).toBeVisible({ timeout: 6000 });
+        await option.click();
+        await page.waitForTimeout(400);
+
+        const card = page.locator('#tut-exercise-list .card-strong').first();
+        await expect(card).toBeVisible({ timeout: 8000 });
+        const weightInput = card.getByLabel(/^(peso|weight)$/i).first();
+        await weightInput.click();
+        await page.waitForTimeout(500);
+        await expect(page.getByTestId('set-keypad')).toHaveCount(0);
+
+        // Native entry is untouched on desktop (input stays editable).
+        const readOnly = await weightInput.evaluate((el) => (el as HTMLInputElement).readOnly);
+        expect(readOnly).toBe(false);
+        await weightInput.fill('20');
+        await expect(weightInput).toHaveValue('20');
     });
 });
