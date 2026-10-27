@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 
-// Q16: week-at-a-glance strip under the Home hero card.
+// Q16: week-at-a-glance strip under the Home train action (Task 2 hub).
 const ERROR_BOUNDARY_TEXT = /ERROR CRÍTICO|CRITICAL ERROR/;
 
 const seedHome = (page: Page) =>
@@ -36,7 +36,7 @@ const seedHome = (page: Page) =>
 test.describe('Q16 home recap strip', () => {
     test.use({ viewport: { width: 390, height: 844 } });
 
-    test('shows week progress, streak and last session below the hero', async ({ page }) => {
+    test('shows week progress, streak and last session below the train action', async ({ page }) => {
         await seedHome(page);
         await page.goto('/');
         await expect(page.getByText('Esta semana')).toBeVisible({ timeout: 15000 });
@@ -50,8 +50,8 @@ test.describe('Q16 home recap strip', () => {
         await expect(page.getByText('1.200 kg')).toBeVisible();
         await expect(page.getByText('×1')).toBeVisible();
 
-        // The strip sits below the hero day card, and the K8 skip label survives.
-        const heroBtn = page.locator('button:has-text("Empezar Espalda")');
+        // The strip sits below the hub train action, and the K8 skip label survives.
+        const heroBtn = page.locator('button:has-text("Entrenar Espalda")');
         await expect(heroBtn).toBeVisible();
         const heroBox = await heroBtn.boundingBox();
         const stripBox = await page.getByText('Esta semana').boundingBox();

@@ -11,6 +11,11 @@ export const SetRowStandard: React.FC<{ state: SetRowState }> = ({ state }) => {
             onClick={handleRowClick}
             className={rowClass}>
             {SwipeOverlay}
+            {prescriptionHint && (
+                <div className="flex justify-center px-2.5 pt-1.5">
+                    <span data-testid="set-target" className="text-[11px] font-bold tracking-wide text-primary-400">{prescriptionHint}</span>
+                </div>
+            )}
             <div className={`grid ${showRIR ? 'grid-cols-[28px_38px_1fr_1fr_38px_36px]' : 'grid-cols-[28px_44px_1fr_1fr_36px]'} items-center gap-2 px-2.5 py-1.5`}>
                 <div className="flex justify-center">
                     <BadgeEl {...badgeProps as any} className={badgeClass}>
@@ -83,11 +88,9 @@ export const SetRowStandard: React.FC<{ state: SetRowState }> = ({ state }) => {
                     </button>
                 </div>
             </div>
-            {prescriptionHint && !isDone && (
-                <div className="flex justify-center pb-1 -mt-0.5">
-                    <span className="text-[11px] font-bold tracking-wide text-primary-400">{prescriptionHint}</span>
-                </div>
-            )}
+            
+                
+                    
         </div>
     );
 };

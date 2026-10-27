@@ -81,37 +81,6 @@ export const TemplateSelector: React.FC<Props> = ({
 
             <div className="flex-1 overflow-y-auto scroll-container">
                 <div className="mx-auto w-full max-w-xl space-y-5 p-4 pb-[calc(var(--safe-area-bottom)+2rem)]">
-                    <section className="rounded-3xl border border-primary-500/30 bg-primary-500/10 p-4">
-                        <div className="mb-3 flex items-center justify-between">
-                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary-500">
-                                {ts.programs}
-                            </p>
-                            <span className="rounded-full bg-primary-500/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-primary-500">
-                                {ts.fullSystem}
-                            </span>
-                        </div>
-
-                        <button
-                            type="button"
-                            onClick={() => setShowKongDetail(true)}
-                            className="w-full rounded-2xl border border-primary-500/30 bg-[rgb(var(--surface-raised))] p-5 text-left transition-transform active:scale-[0.99]"
-                        >
-                            <div className="flex items-start justify-between gap-4">
-                                <div>
-                                    <p className="text-2xl font-black">KONG</p>
-                                    <p className="mt-1 text-sm font-bold text-primary-500">SAVAGE SIZE · Alexander Bromley</p>
-                                </div>
-                                <Icon name="ChevronRight" size={20} className="mt-1 shrink-0 text-primary-500" />
-                            </div>
-                            <p className="mt-4 text-[10px] font-black uppercase tracking-[0.16em] text-[rgb(var(--text-muted))]">
-                                12 {ts.weeks} · 4 {ts.days} · 3 {ts.blocks}
-                            </p>
-                            <span className="mt-4 inline-flex min-h-11 items-center rounded-xl bg-primary-500 px-4 text-xs font-black text-black">
-                                {ts.viewProgram}
-                            </span>
-                        </button>
-                    </section>
-
                     <div className="flex items-center gap-4 px-1">
                         <div className="h-px flex-1 bg-[rgb(var(--border-subtle))]" />
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[rgb(var(--text-muted))]">
@@ -119,23 +88,6 @@ export const TemplateSelector: React.FC<Props> = ({
                         </span>
                         <div className="h-px flex-1 bg-[rgb(var(--border-subtle))]" />
                     </div>
-
-                    <button
-                        type="button"
-                        onClick={onCreateCustom}
-                        className="flex w-full items-center gap-4 rounded-2xl border-2 border-dashed border-[rgb(var(--border-strong))] bg-[rgb(var(--surface-raised))] p-5 text-left transition-transform active:scale-[0.99]"
-                    >
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[rgb(var(--surface-base))] text-primary-500">
-                            <Icon name="Edit" size={21} />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                            <h3 className="text-lg font-black">{ts.designTitle}</h3>
-                            <p className="mt-1 text-sm text-[rgb(var(--text-secondary))]">
-                                {ts.designDesc}
-                            </p>
-                        </div>
-                        <Icon name="ChevronRight" size={19} className="shrink-0 text-[rgb(var(--text-muted))]" />
-                    </button>
 
                     <p className="px-1 text-[10px] font-black uppercase tracking-[0.2em] text-[rgb(var(--text-muted))]">
                         {ts.chooseByAuthor}
@@ -196,6 +148,54 @@ export const TemplateSelector: React.FC<Props> = ({
                             );
                         })}
                     </div>
+
+                    <button
+                        type="button"
+                        onClick={onCreateCustom}
+                        className="flex w-full items-center gap-4 rounded-2xl border-2 border-dashed border-[rgb(var(--border-strong))] bg-[rgb(var(--surface-raised))] p-5 text-left transition-transform active:scale-[0.99]"
+                    >
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[rgb(var(--surface-base))] text-primary-500">
+                            <Icon name="Edit" size={21} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                            <h3 className="text-lg font-black">{ts.designTitle}</h3>
+                            <p className="mt-1 text-sm text-[rgb(var(--text-secondary))]">
+                                {ts.designDesc}
+                            </p>
+                        </div>
+                        <Icon name="ChevronRight" size={19} className="shrink-0 text-[rgb(var(--text-muted))]" />
+                    </button>
+
+                    <section className="rounded-3xl border border-primary-500/30 bg-primary-500/10 p-4">
+                        <div className="mb-3 flex items-center justify-between">
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary-500">
+                                {ts.programs}
+                            </p>
+                            <span className="rounded-full bg-primary-500/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-primary-500">
+                                {ts.fullSystem}
+                            </span>
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={() => setShowKongDetail(true)}
+                            className="w-full rounded-2xl border border-primary-500/30 bg-[rgb(var(--surface-raised))] p-5 text-left transition-transform active:scale-[0.99]"
+                        >
+                            <div className="flex items-start justify-between gap-4">
+                                <div>
+                                    <p className="text-2xl font-black">KONG</p>
+                                    <p className="mt-1 text-sm font-bold text-primary-500">SAVAGE SIZE · Alexander Bromley</p>
+                                </div>
+                                <Icon name="ChevronRight" size={20} className="mt-1 shrink-0 text-primary-500" />
+                            </div>
+                            <p className="mt-4 text-[10px] font-black uppercase tracking-[0.16em] text-[rgb(var(--text-muted))]">
+                                12 {ts.weeks} · 4 {ts.days} · 3 {ts.blocks}
+                            </p>
+                            <span className="mt-4 inline-flex min-h-11 items-center rounded-xl bg-primary-500 px-4 text-xs font-black text-black">
+                                {ts.viewProgram}
+                            </span>
+                        </button>
+                    </section>
                 </div>
             </div>
 

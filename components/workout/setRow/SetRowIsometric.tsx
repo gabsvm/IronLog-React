@@ -11,6 +11,11 @@ export const SetRowIsometric: React.FC<{ state: SetRowState }> = ({ state }) => 
                 onTouchStart={onSwipeTouchStart} onTouchMove={onSwipeTouchMove} onTouchEnd={onSwipeTouchEnd}
                 className={rowClass}>
                 {SwipeOverlay}
+                {prescriptionHint && (
+                    <div className="flex justify-center px-2.5 pt-1.5">
+                        <span data-testid="set-target" className="text-[11px] font-bold tracking-wide text-primary-400">{prescriptionHint}</span>
+                    </div>
+                )}
                 <div className="grid grid-cols-[28px_44px_1fr_36px] gap-2 items-center px-2.5 py-1.5">
                     <div className="flex justify-center">
                         <BadgeEl {...badgeProps as any} className={badgeClass}>
@@ -40,11 +45,6 @@ export const SetRowIsometric: React.FC<{ state: SetRowState }> = ({ state }) => 
                         </button>
                     </div>
                 </div>
-                {prescriptionHint && !isDone && (
-                    <div className="flex justify-center pb-1 -mt-0.5">
-                        <span className="text-[11px] font-bold tracking-wide text-primary-400">{prescriptionHint}</span>
-                    </div>
-                )}
             </div>
     );
 };

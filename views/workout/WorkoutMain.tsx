@@ -87,7 +87,7 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
             </div>
 
             <div className="flex-1 overflow-hidden flex flex-col">
-                <div id="tut-exercise-list" className="flex-1 overflow-y-auto scroll-container px-3 space-y-2.5" style={{ paddingTop: 'calc(1rem + var(--rest-pill-top-offset, 0px))', paddingBottom: 'calc(3rem + var(--safe-area-bottom) + var(--rest-pill-height, 0px) + 16px)' }}>
+                <div id="tut-exercise-list" data-testid="workout-main" className="flex-1 overflow-y-auto scroll-container px-3 space-y-2.5" style={{ paddingTop: 'calc(1rem + var(--rest-pill-top-offset, 0px))', paddingBottom: 'calc(3rem + var(--safe-area-bottom) + var(--rest-pill-height, 0px) + 16px)' }}>
                     <section aria-label={t.yourSession} className="tonal-3 flex items-center gap-4 rounded-3xl border border-border-subtle px-4 py-3.5">
                         <div className="min-w-0">
                             <p className="text-xs font-semibold tracking-normal text-[rgb(var(--text-muted))]">{t.yourSession}</p>

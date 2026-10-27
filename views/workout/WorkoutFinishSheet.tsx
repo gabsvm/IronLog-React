@@ -22,7 +22,7 @@ export const WorkoutFinishSheet: React.FC<{ state: WorkoutViewState }> = ({ stat
                         title={t.finishSession}
                         accent="primary"
                     >
-                        <div className="p-4 space-y-3.5">
+                        <div className="p-4 space-y-3.5" data-testid="workout-finish-sheet">
                             {/* Summary Cards */}
                             <div className="grid grid-cols-2 gap-2.5">
                                 <div className="rounded-[20px] border border-border-subtle bg-surface-raised p-3">
@@ -81,10 +81,16 @@ export const WorkoutFinishSheet: React.FC<{ state: WorkoutViewState }> = ({ stat
                                 />
                             </div>
 
+                            {/* Feedback por musculo: paso final antes del resumen (mismo guardado de hoy) */}
+                            <p data-testid="finish-feedback-step" className="px-0.5 text-xs text-muted">
+                                {t.copy.feedbackModal.postWorkoutCheckIn}
+                            </p>
+
                             {/* Primary & Secondary Actions */}
                             <div className="space-y-2 pt-1">
                                 <button
                                     type="button"
+                                    data-testid="finish-confirm-btn"
                                     onClick={handleConfirmFinish}
                                     className="expressive-press w-full min-h-12 rounded-full bg-primary-500 text-zinc-950 font-semibold text-sm hover:bg-primary-400 active:scale-98 transition-all shadow-sm"
                                 >

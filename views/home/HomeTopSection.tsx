@@ -7,13 +7,15 @@ import { BackupReminderBanner } from '../../components/home/BackupReminderBanner
 import type { HomeViewState } from './useHomeViewState';
 
 export const HomeTopSection: React.FC<{ state: HomeViewState }> = ({ state }) => {
-    const { uniqueDaysDone, nextWorkoutIdx, activeMeso, t, h, lang, kongBlock, isPro, checkPro, setShowPlanActions, setShowGuidelines, setShowKongHub, currentGuidelineImages, safeProgram, selectedDayIdx, setSelectedDayIdx } = state;
+    const { uniqueDaysDone, activeMeso, setActiveMeso, t, h, lang, kongBlock, isPro, checkPro, setShowPlanActions, setShowGuidelines, setShowKongHub, currentGuidelineImages, safeProgram } = state;
     if (!activeMeso) return null;
+    const totalWeeks = activeMeso.targetWeeks || activeMeso.duration || 1;
+    const goWeek = (delta: number) => { const next = Math.min(totalWeeks, Math.max(1, activeMeso.week + delta)); if (next === activeMeso.week) return; triggerHaptic('light'); setActiveMeso(prev => (prev ? { ...prev, week: next } : prev)); };
     return (
         <>
             <BackupReminderBanner />
             {/* 1. Program Name, Badges & Plan Actions */}
-            <div className={`flex items-start justify-between gap-3 pt-1 ${kongBlock ? 'kong-home-header' : ''}`}>
+            <div data-testid="home-hub-header" className={`flex items-start justify-between gap-3 pt-1 ${kongBlock ? 'kong-home-header' : ''}`}>
                 <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                         <h2 className="text-2xl font-black text-white tracking-[-0.03em] truncate">{activeMeso.name}</h2>
@@ -53,52 +55,14 @@ export const HomeTopSection: React.FC<{ state: HomeViewState }> = ({ state }) =>
                 </button>
             </div>
 
-            {/* 3. Compact Day Selector */}
-            <div
-                className={`grid gap-1.5 ${safeProgram.length <= 5 ? '' : 'overflow-x-auto scroll-container'}`}
-                style={{
-                    gridTemplateColumns: safeProgram.length <= 5
-                        ? `repeat(${safeProgram.length}, minmax(0, 1fr))`
-                        : `repeat(${safeProgram.length}, minmax(70px, 1fr))`
-                }}
-            >
-                {safeProgram.map((day, idx) => {
-                    const isDone = uniqueDaysDone.has(idx);
-                    const isTodayOrNext = idx === nextWorkoutIdx;
-                    const isSelected = idx === selectedDayIdx;
-
-                    return (
-                        <button
-                            key={idx}
-                            type="button"
-                            onClick={() => {
-                                triggerHaptic('light');
-                                setSelectedDayIdx(idx);
-                            }}
-                            aria-pressed={isSelected}
-                            className={`expressive-press min-h-[56px] py-2.5 px-1.5 text-center rounded-[20px] transition-all ${
-                                isSelected
-                                    ? 'border border-primary-500 bg-primary-500 text-zinc-950 font-semibold shadow-sm'
-                                    : isDone
-                                    ? 'card-reference bg-surface-raised/40 text-muted'
-                                    : 'card-reference bg-surface-raised text-zinc-300'
-                            }`}
-                        >
-                            <div className="text-[11px] font-semibold tracking-normal h-4 flex items-center justify-center">
-                                {isTodayOrNext ? (
-                                    <span className={isSelected ? 'font-bold text-zinc-950' : 'font-bold text-primary-400'}>{h.today}</span>
-                                ) : isDone ? (
-                                    <span className="text-muted"><Icon name="Check" size={11} strokeWidth={3} /></span>
-                                ) : (
-                                    <span>&nbsp;</span>
-                                )}
-                            </div>
-                            <div className="text-[13px] font-semibold mt-0.5 truncate">
-                                {`${h.dayWord} ${idx + 1}`}
-                            </div>
-                        </button>
-                    );
-                })}
+            {/* 2. Week selector (prev/next + deload) */}
+            <div data-testid="home-week-selector" className="flex items-center justify-between gap-2 rounded-[24px] card-reference px-2 py-2">
+                <button type="button" onClick={() => goWeek(-1)} disabled={activeMeso.week <= 1} aria-label={pickLang(lang, { en: 'Previous week', es: 'Semana anterior' })} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-zinc-300 transition-colors active:bg-surface-raised disabled:opacity-30"><Icon name="ChevronLeft" size={20} /></button>
+                <div className="flex min-w-0 items-center gap-2 text-center">
+                    <span className="text-sm font-bold text-white">{t.week} {activeMeso.week} {h.ofWord} {totalWeeks}</span>
+                    {activeMeso.isDeload && <span className="rounded-full bg-surface-raised px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary-400 border border-border-subtle">DELOAD</span>}
+                </div>
+                <button type="button" onClick={() => goWeek(1)} disabled={activeMeso.week >= totalWeeks} aria-label={pickLang(lang, { en: 'Next week', es: 'Semana siguiente' })} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-zinc-300 transition-colors active:bg-surface-raised disabled:opacity-30"><Icon name="ChevronRight" size={20} /></button>
             </div>
         </>
     );

@@ -16,7 +16,7 @@ export const ExercisesListMode: React.FC<{ state: ExercisesViewState }> = ({ sta
         <>
                 <div className="flex-1 flex flex-col overflow-hidden relative">
                     {/* Controls: Search and Filter Chips */}
-                    <div className="shrink-0 space-y-3 border-b border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base)/0.95)] p-4 backdrop-blur-md">
+                    <div className="sticky top-0 z-20 shrink-0 space-y-3 border-b border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base)/0.95)] p-4 backdrop-blur-md">
                         {/* Search input */}
                         <div className="relative">
                             <Icon name="Search" size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />

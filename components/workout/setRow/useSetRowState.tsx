@@ -194,7 +194,7 @@ export const useSetRowState = ({
     };
 
     // Set by the unit-switch guard after flushing: the next blur must not
-    // re-commit the resynced display value (display→stored is not bit-exact).
+    // re-commit the resynced display value (displayâ†’stored is not bit-exact).
     const skipWeightBlurRef = useRef(false);
     const handleWeightBlur = (value: any) => {
         activeFieldRef.current = null;
@@ -327,22 +327,19 @@ export const useSetRowState = ({
 
     const weightPlaceholder = set.hintWeight ? String(shownWeight(set.hintWeight)) : '0';
     const repsPlaceholder = set.hintReps ? String(set.hintReps) : '0';
-    const prescriptionHint = set.prescribedReps !== undefined
-        ? (set.prescribedReps === 'FAILURE'
-            ? t.targetFailure
-            : `OBJ: ${set.prescribedReps}${set.targetRpe !== undefined ? ` · RPE ${set.targetRpe}` : ''}`)
-        : null;
+    // Target (before the actual inputs) from fields the state already exposes: hintWeight x prescribedReps/hintReps, plus targetRpe as RIR when present.
+    const targetWeightText = set.hintWeight !== undefined && set.hintWeight !== '' ? `${shownWeight(set.hintWeight)}${weightSuffix}` : null; const targetRirText = set.targetRpe !== undefined ? `RIR ${set.targetRpe}` : null; const targetRepsValue = set.prescribedReps ?? set.hintReps; const prescriptionHint = set.prescribedReps === 'FAILURE' ? [t.targetFailure, targetWeightText, targetRirText].filter(Boolean).join(' - ') : (targetWeightText || targetRepsValue !== undefined || targetRirText) ? `OBJ: ${[targetWeightText && targetRepsValue !== undefined ? `${targetWeightText} x ${targetRepsValue}` : targetWeightText ?? (targetRepsValue !== undefined ? `${targetRepsValue}` : null), targetRirText].filter(Boolean).join(' - ')}` : null;
 
     const prevText = useMemo(() => {
         if (isIsometric) {
             if (set.duration) return `${set.duration}s`;
-            return '—';
+            return 'â€”';
         }
         if (isBodyweight) {
             if (set.prevReps) {
                 return set.prevWeight && Number(set.prevWeight) > 0 ? `+${shownWeight(set.prevWeight)}${weightSuffix}` : `${set.prevReps}`;
             }
-            return set.hintReps ? String(set.hintReps) : '—';
+            return set.hintReps ? String(set.hintReps) : 'â€”';
         }
         if (set.prevReps || set.prevWeight) {
             if (set.prevReps && set.prevWeight) return `${shownWeight(set.prevWeight)}${weightSuffix}`;
@@ -351,7 +348,7 @@ export const useSetRowState = ({
         if (set.hintReps || set.hintWeight) {
             return set.hintWeight && !set.hintReps ? String(shownWeight(set.hintWeight)) : String(set.hintReps || set.hintWeight);
         }
-        return '—';
+        return 'â€”';
     }, [isBodyweight, isIsometric, set.duration, set.hintReps, set.hintWeight, set.prevReps, set.prevWeight, shownWeight, weightSuffix]);
 
     const setNumber = (setIndex ?? 0) + 1;

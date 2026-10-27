@@ -157,11 +157,11 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
                 </div>
             }
         >
-            <div className="px-5 pb-6 pt-2">
+            <div className="px-5 pb-6 pt-2" data-testid="feedback-modal">
                 <div className="mb-5 flex items-center gap-3">
                     <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-3">
-                            <span className="truncate text-lg font-black text-[rgb(var(--text-primary))]">{muscleLabel}</span>
+                            <span data-testid="feedback-muscle" className="truncate text-lg font-black text-[rgb(var(--text-primary))]">{muscleLabel}</span>
                             <span className="shrink-0 text-[10px] font-black tabular-nums text-[rgb(var(--text-muted))]">{step + 1}/{uniqueMuscles.length}</span>
                         </div>
                         <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[rgb(var(--surface-elevated))]">

@@ -25,7 +25,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ onClose, feature }) 
             lifetime: 'Lifetime'
         };
         const message = encodeURIComponent(
-            `Hola! Quiero activar GainsLab Pro (${tierLabels[tier]}). Mi email registrado es: ${user?.email || '(sin cuenta)'}`
+            `Hola! Quiero activar Repyntra Pro (${tierLabels[tier]}). Mi email registrado es: ${user?.email || '(sin cuenta)'}`
         );
         window.open(`https://wa.me/${WA_NUMBER}?text=${message}`, '_blank');
     };
@@ -35,7 +35,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ onClose, feature }) 
             className="fixed inset-0 z-confirm bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-slow"
             role="dialog"
             aria-modal="true"
-            aria-label="GainsLab Pro upgrade"
+            aria-label="Repyntra Pro upgrade"
         >
             <div className="premium-theme-panel w-full max-w-md overflow-hidden shadow-2xl relative max-h-[90vh] overflow-y-auto scroll-container">
                 

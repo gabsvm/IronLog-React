@@ -162,7 +162,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onLogin }) => {
 
                 {/* Footer */}
                 <div className="text-center text-zinc-600 text-xs md:text-xs uppercase tracking-widest mt-auto pb-[calc(1rem+var(--safe-area-bottom))] animate-in-up" style={{ animationDelay: '1s' }}>
-                    GainsLab v4.0 &copy; {new Date().getFullYear()} &bull; Professional Edition
+                    Repyntra v4.0 &copy; {new Date().getFullYear()} &bull; Professional Edition
                 </div>
             </div>
         </div>

@@ -6,7 +6,9 @@ import { resolveWeightUnit } from '../utils/units';
 import { useHomeViewState, type HomeViewProps } from './home/useHomeViewState';
 import { HomeEmptyState } from './home/HomeEmptyState';
 import { HomeTopSection } from './home/HomeTopSection';
-import { HomeHeroCard } from './home/HomeHeroCard';
+import { HomeWeekDayList } from './home/HomeWeekDayList';
+import { pickLang } from '../utils/i18n';
+import { getTranslated } from '../utils';
 
 // S6: state lives in views/home/useHomeViewState; render blocks in views/home/.
 export type { HomeViewProps } from './home/useHomeViewState';
@@ -23,7 +25,7 @@ const TemplateSelector = React.lazy(() => import('./home/TemplateSelector').then
 
 export const HomeView: React.FC<HomeViewProps> = (props) => {
     const state = useHomeViewState(props);
-    const { onEditProgram, onStartFreeSession, logs, lang, tutorialProgress, markTutorialSeen, config, activeMeso, t, h, showPaywall, setShowPaywall, featureAttempted, showCompleteModal, setShowCompleteModal, showMesoSettings, setShowMesoSettings, showPlanActions, setShowPlanActions, showTemplateSelector, setShowTemplateSelector, handleOpenTemplateSelector, handleSelectTemplate, handleSelectProgram, handleCreateCustom, personalTemplates, globalTemplates, skipConfirmationId, setSkipConfirmationId, showGuidelines, setShowGuidelines, transitionBlock, showKongHub, setShowKongHub, closeTransition, currentGuidelineImages, safeProgram, safeLogs, confirmSkip, handleFinishMeso, handleFinishWeek, homeTutorialSteps } = state;
+    const { onEditProgram, onStartFreeSession, logs, lang, tutorialProgress, markTutorialSeen, config, activeMeso, t, h, showPaywall, setShowPaywall, featureAttempted, showCompleteModal, setShowCompleteModal, showMesoSettings, setShowMesoSettings, showPlanActions, setShowPlanActions, showTemplateSelector, setShowTemplateSelector, handleOpenTemplateSelector, handleSelectTemplate, handleSelectProgram, handleCreateCustom, personalTemplates, globalTemplates, skipConfirmationId, setSkipConfirmationId, showGuidelines, setShowGuidelines, transitionBlock, showKongHub, setShowKongHub, closeTransition, currentGuidelineImages, safeProgram, safeLogs, confirmSkip, handleFinishMeso, handleFinishWeek, homeTutorialSteps, selectedDayIdx, startSession, activeSession, uniqueDaysDone, handleSkipClick } = state;
 
     if (!activeMeso) {
         return <HomeEmptyState state={state} />;
@@ -33,8 +35,35 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
         <div className="px-4 space-y-4 pb-28 pt-2">
             <HomeTopSection state={state} />
 
-            {/* 4. Dominant Selected Day Hero Card */}
-            <HomeHeroCard state={state} />
+            {/* 3. Week day rows */}
+            <HomeWeekDayList state={state} />
+
+            {/* 4. Primary action for the selected day */}
+            {safeProgram[selectedDayIdx] && (
+                <div className="flex items-stretch gap-2">
+                    <button
+                        id="tut-up-next"
+                        data-testid="home-train-action"
+                        type="button"
+                        onClick={() => startSession(selectedDayIdx)}
+                        className="expressive-press flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-[24px] bg-primary-500 px-4 text-sm font-bold text-zinc-950 transition-colors"
+                    >
+                        <Icon name={activeSession && activeSession.mesoId === activeMeso.id && activeSession.dayIdx === selectedDayIdx ? 'Play' : uniqueDaysDone.has(selectedDayIdx) ? 'Repeat' : 'ArrowRight'} size={18} />
+                        <span>{activeSession && activeSession.mesoId === activeMeso.id && activeSession.dayIdx === selectedDayIdx ? h.resume : uniqueDaysDone.has(selectedDayIdx) ? h.trainAgain : `${pickLang(lang, { es: 'Entrenar', en: 'Train' })} ${String(getTranslated(safeProgram[selectedDayIdx].dayName, lang))}`}</span>
+                    </button>
+                    {!uniqueDaysDone.has(selectedDayIdx) && !(activeSession && activeSession.mesoId === activeMeso.id && activeSession.dayIdx === selectedDayIdx) && (
+                        <button
+                            type="button"
+                            onClick={(event) => handleSkipClick(event, selectedDayIdx)}
+                            aria-label={t.skipSession}
+                            title={t.skipSession}
+                            className="flex min-h-[52px] w-[52px] shrink-0 items-center justify-center rounded-[24px] card-reference text-zinc-300 transition-colors"
+                        >
+                            <Icon name="SkipForward" size={18} />
+                        </button>
+                    )}
+                </div>
+            )}
 
             {/* 4b. Week at a glance (Q16): done/planned, streak, last session. */}
             <HomeRecapStrip
@@ -51,8 +80,9 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
                 {onStartFreeSession && (
                     <button
                         type="button"
+                        data-testid="home-free-session"
                         onClick={onStartFreeSession}
-                        className="w-full flex items-center gap-3 card-reference p-3.5 hover:border-zinc-500 active:scale-[0.99] transition-all"
+                        className="w-full flex min-h-[44px] items-center gap-3 card-reference rounded-[24px] p-3.5 hover:border-zinc-500 active:scale-[0.99] transition-all"
                     >
                         <div className="flex gap-1 shrink-0">
                             <div className="w-7 h-7 rounded-lg bg-primary-500/10 text-primary-500 flex items-center justify-center"><Icon name="Dumbbell" size={14} /></div>

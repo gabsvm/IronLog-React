@@ -107,8 +107,8 @@ for (const theme of ['dark', 'light'] as const) {
     test(`premium: Home and Stats remain grounded in saved data (${theme})`, async ({ page }) => {
       const hero = page.locator('#tut-up-next');
       await expect(hero).toBeVisible();
-      await expect(hero.locator('svg.premium-hero__art')).toBeVisible();
-      await expect(hero.getByRole('button', { name: /Empezar|Start/i })).toBeVisible();
+      await expect(page.getByTestId('home-day-list')).toBeVisible();
+      await expect(hero).toBeVisible();
 
       await nav(page).getByRole('button', { name: /M[ée]tricas|Stats/i }).click();
       const trend = page.getByRole('region', { name: /Tendencia reciente|Recent training trend/i });
@@ -166,14 +166,14 @@ for (const theme of ['dark', 'light'] as const) {
     });
 
     test(`workout ${theme}`, async ({ page }) => {
-      await page.getByRole('button', { name: /Empezar|Start/ }).first().click();
+      await page.getByTestId('home-train-action').click();
       await expect(page.locator('#tut-finish-btn')).toBeVisible({ timeout: 15000 });
       await page.waitForTimeout(800);
       await expect(page).toHaveScreenshot(`workout-${theme}.png`);
     });
 
     test(`workout menu ${theme}`, async ({ page }) => {
-      await page.getByRole('button', { name: /Empezar|Start/ }).first().click();
+      await page.getByTestId('home-train-action').click();
       await expect(page.locator('#tut-finish-btn')).toBeVisible({ timeout: 15000 });
       await page.getByRole('button', { name: /M[aá]s opciones|More options/ }).first().click();
       await expect(page.getByRole('menu').first()).toBeVisible();
