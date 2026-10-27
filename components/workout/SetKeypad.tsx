@@ -3,6 +3,7 @@
 // row owns the text via localWeight/localReps + scheduleCommit; the keypad
 // only maps taps to onChange/onNext/onDone. Rendered only when visible.
 import React, { useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { TRANSLATIONS } from '../../constants/translations';
 
 export interface SetKeypadProps {
@@ -68,7 +69,11 @@ export const SetKeypad: React.FC<SetKeypadProps> = ({ value, onChange, onNext, o
         'flex min-h-[44px] w-full items-center justify-center rounded-[10px] tabular-nums select-none touch-manipulation ' +
         'transition-colors active:bg-primary-500 active:text-zinc-950';
 
-    return (
+    // Fixed panel must escape the card's stacking context (card root is
+    // position:relative + z-index:1 for drag/menu layering): with 2+ exercises
+    // a later card otherwise paints over this card's keypad and taps land on
+    // the card beneath. Same document.body portal pattern as the modals.
+    const panel = (
         <div
             data-testid="set-keypad"
             className="set-keypad fixed inset-x-0 bottom-0 z-40 border-t border-border-subtle bg-surface-raised/95 backdrop-blur"
@@ -120,4 +125,5 @@ export const SetKeypad: React.FC<SetKeypadProps> = ({ value, onChange, onNext, o
             </div>
         </div>
     );
+    return typeof document !== 'undefined' ? createPortal(panel, document.body) : panel;
 };
