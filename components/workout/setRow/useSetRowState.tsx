@@ -79,6 +79,18 @@ export const useSetRowState = ({
     const repsRef = useRef<HTMLInputElement>(null);
     const extraWeightRef = useRef<HTMLInputElement>(null);
     const commitTimersRef = useRef<Partial<Record<'weight' | 'reps' | 'rpe', ReturnType<typeof setTimeout>>>>({});
+    // Task 5: in-app keypad field tracking. activeFieldRef stays the source
+    // for the resync guards; keypadField mirrors it as state so the panel
+    // renders. Coarse-pointer (touch) only — never on desktop.
+    const [keypadField, setKeypadField] = useState<'weight' | 'reps' | null>(null);
+    const [isCoarsePointer, setIsCoarsePointer] = useState(false);
+    useEffect(() => {
+        const mq = window.matchMedia('(pointer: coarse)');
+        const update = () => setIsCoarsePointer(mq.matches);
+        update();
+        mq.addEventListener('change', update);
+        return () => mq.removeEventListener('change', update);
+    }, []);
 
     useEffect(() => { if (activeFieldRef.current !== 'weight') setLocalWeight(shownWeight(set.weight)); }, [set.weight, shownWeight]);
     useEffect(() => { if (activeFieldRef.current !== 'reps') setLocalReps(set.reps ?? ''); }, [set.reps]);
@@ -194,11 +206,61 @@ export const useSetRowState = ({
         }
     };
 
+    // Task 5: keypad focus tracking. Same activeFieldRef source as physical
+    // typing; keypadField mirrors it as render state for the panel.
+    const handleWeightFocus = useCallback(() => {
+        activeFieldRef.current = 'weight';
+        setKeypadField('weight');
+    }, []);
+
+    const handleRepsFocus = useCallback(() => {
+        activeFieldRef.current = 'reps';
+        setKeypadField('reps');
+    }, []);
+
+    // Task 5: the keypad writes through the same local state + scheduleCommit
+    // path as the inputs — no second commit system. ',' is normalized to '.'
+    // so both decimal keys commit a parseable number.
+    const handleKeypadChange = useCallback((v: string) => {
+        const normalized = v.replace(/,/g, '.');
+        if (keypadField === 'reps') {
+            setLocalReps(normalized);
+            scheduleCommit('reps', normalized, 180);
+        } else {
+            setLocalWeight(normalized);
+            scheduleCommit('weight', storedWeight(normalized), 180);
+        }
+    }, [keypadField, scheduleCommit, storedWeight]);
+
+    const handleKeypadNext = useCallback(() => {
+        if (keypadField === 'weight') {
+            flushScheduledCommit('weight', storedWeight(localWeight));
+        } else if (keypadField === 'reps') {
+            flushScheduledCommit('reps', localReps);
+        }
+        repsRef.current?.focus();
+    }, [flushScheduledCommit, keypadField, localReps, localWeight, storedWeight]);
+
+    const handleKeypadDone = useCallback(() => {
+        if (keypadField === 'weight') {
+            flushScheduledCommit('weight', storedWeight(localWeight));
+        } else if (keypadField === 'reps') {
+            flushScheduledCommit('reps', localReps);
+        }
+        activeFieldRef.current = null;
+        setKeypadField(null);
+        (document.activeElement as HTMLElement | null)?.blur?.();
+    }, [flushScheduledCommit, keypadField, localReps, localWeight, storedWeight]);
+
+    const keypadOpen = isCoarsePointer && keypadField !== null;
+    const keypadValue = keypadField === 'reps' ? String(localReps ?? '') : String(localWeight ?? '');
+
     // Set by the unit-switch guard after flushing: the next blur must not
     // re-commit the resynced display value (display→stored is not bit-exact).
     const skipWeightBlurRef = useRef(false);
     const handleWeightBlur = (value: any) => {
         activeFieldRef.current = null;
+        setKeypadField(null);
         if (skipWeightBlurRef.current && !commitTimersRef.current['weight']) {
             skipWeightBlurRef.current = false;
             return;
@@ -209,6 +271,7 @@ export const useSetRowState = ({
 
     const handleBlur = (field: string, value: any) => {
         activeFieldRef.current = null;
+        setKeypadField(null);
         flushScheduledCommit(field as 'weight' | 'reps' | 'rpe', value);
     };
     // Swipe-to-complete handlers
@@ -306,17 +369,17 @@ export const useSetRowState = ({
         focusPrimaryField();
     }, [focusPrimaryField]);
 
-    const inputBaseClass = "h-11 w-full rounded-[var(--shape-segment-radius)] bg-surface-elevated text-center text-base font-semibold text-[rgb(var(--text-primary))] outline-none transition-colors border border-transparent focus:border-primary-500 focus:bg-surface-raised tabular-nums";
-    const inputActiveClass = "h-11 w-full rounded-[var(--shape-segment-radius)] bg-surface-raised border border-primary-500/70 text-center text-base font-semibold text-[rgb(var(--text-primary))] outline-none focus:border-primary-500 tabular-nums shadow-sm";
-    const inputDoneClass = "h-11 w-full rounded-[var(--shape-segment-radius)] bg-transparent text-center text-base font-semibold text-[rgb(var(--accent-text))] outline-none tabular-nums";
+    const inputBaseClass = "h-11 w-full rounded-[10px] bg-surface-app text-center text-base font-semibold text-[rgb(var(--text-primary))] outline-none transition-colors border border-transparent focus:border-primary-500 tabular-nums";
+    const inputActiveClass = "h-11 w-full rounded-[10px] bg-surface-raised border border-primary-500/70 text-center text-base font-semibold text-[rgb(var(--text-primary))] outline-none focus:border-primary-500 tabular-nums shadow-sm";
+    const inputDoneClass = "h-11 w-full rounded-[10px] bg-transparent text-center text-base font-semibold text-[rgb(var(--accent-text))] outline-none tabular-nums";
     const currentInputClass = isDone ? inputDoneClass : isNextSet ? inputActiveClass : inputBaseClass;
 
     const rowClass = `premium-progress-feedback relative rounded-[var(--shape-segment-radius)] ${
         isDone
             ? 'bg-primary-500/10 border border-primary-500/25'
             : isNextSet
-            ? 'bg-surface-elevated border border-primary-500/50 shadow-sm'
-            : 'bg-surface-raised border border-border-subtle'
+            ? 'border border-primary-500/50 shadow-sm'
+            : 'border-b border-border-subtle'
     }`;
 
     // gl-morph: the check settles from circle to rounded square when the set is done (see index.css).
@@ -436,6 +499,14 @@ export const useSetRowState = ({
         handleToggleComplete,
         prevUnitRef,
         handleWeightKeyDown,
+        handleWeightFocus,
+        handleRepsFocus,
+        handleKeypadChange,
+        handleKeypadNext,
+        handleKeypadDone,
+        keypadField,
+        keypadOpen,
+        keypadValue,
         skipWeightBlurRef,
         handleWeightBlur,
         handleBlur,

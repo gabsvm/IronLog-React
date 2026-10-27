@@ -17,6 +17,8 @@ interface Props {
     onFillFromPrevious?: () => void;
     onCopyToFollowing?: () => void;
     onSupersetAction: () => void;
+    onRemoveLastSet?: () => void;
+    canRemoveLastSet?: boolean;
     onReplace: (id: number | null) => void;
     onRequestDelete: () => void;
     onToggleProgressionMode?: () => void;
@@ -39,6 +41,8 @@ export const ExerciseCardMenu: React.FC<Props> = ({
     onCopyToFollowing,
     onSupersetAction,
     onReplace,
+    onRemoveLastSet,
+    canRemoveLastSet = true,
     onRequestDelete,
     onToggleProgressionMode,
     t,
@@ -153,6 +157,20 @@ export const ExerciseCardMenu: React.FC<Props> = ({
                                     <Icon name="Copy" size={16} className="text-muted" /> {m.copyToFollowing}
                                 </button>
                             )}
+                        </>
+                    )}
+
+                    {onRemoveLastSet && (
+                        <>
+                            <div className="my-1 h-px bg-[rgb(var(--surface-elevated)/0.66)]" />
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onRemoveLastSet(); onClose(); }}
+                                disabled={!canRemoveLastSet}
+                                role="menuitem"
+                                className="flex min-h-11 w-full items-center gap-3 px-4 py-3 text-left text-sm font-bold text-[rgb(var(--text-primary))] transition-colors hover:bg-[rgb(var(--surface-elevated))] disabled:opacity-25"
+                            >
+                                <Icon name="Minus" size={16} className="text-muted" /> {String(t.removeSetBtn)}
+                            </button>
                         </>
                     )}
 

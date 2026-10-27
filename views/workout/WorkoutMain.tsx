@@ -1,12 +1,11 @@
 // S6: header + exercise list, moved verbatim from views/WorkoutViewImpl.tsx.
-// Phase 4: focused mode — exercise rail (horizontal mobile / lateral desktop)
-// governed by the existing activeExerciseId; a single main panel reusing the
-// current cards/set-rows; docked rest reusing TimerContext.
-import React, { Suspense, useMemo, useRef } from 'react';
+// Strong parity (T1): stacked continuous list — every exercise card renders
+// expanded in a single scroll; activeExerciseId only marks highlight/scroll.
+// Docked rest reuses TimerContext.
+import React, { Suspense, useMemo } from 'react';
 import { Icon } from '../../components/ui/Icon';
-import { SortableExerciseCard } from '../../components/workout/SortableExerciseCard';
-import { WorkoutExerciseRail } from '../../components/workout/WorkoutExerciseRail';
 import type { WorkoutRailItem } from '../../components/workout/WorkoutExerciseRail';
+import { SortableExerciseCard } from '../../components/workout/SortableExerciseCard';
 import { WorkoutRestDock } from '../../components/workout/WorkoutRestDock';
 import { WorkoutTimer } from '../../components/workout/WorkoutTimer';
 import { getTranslated } from '../../utils';
@@ -17,8 +16,7 @@ import type { WorkoutViewState } from './useWorkoutViewState';
 const WorkoutSortableList = React.lazy(() => import('../../components/workout/WorkoutSortableList'));
 
 export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) => {
-    const { onBack, onOpenReorder, sessionExercises, openMenuId, setOpenMenuId, setShowFinishModal, setReplacingExId, setAddingExercise, linkingId, setLinkingId, setEditingMuscleId, setWarmupExId, setDetailExercise, handleSetUpdate, handleAddSet, handleDeleteSet, updateSession, exercises, logs, lang, config, activeSession, t, w, stageConfig, isCalisthenicsSession, supersetColorIndexes, handleSetTypeChange, sortableItems, activeExerciseId, setActiveExerciseId, handleToggleExpand, handleSetComplete, handleReorder, remainingSets, progressPct, completedWorkingSets, totalWorkingSets, quickAccessExercise } = state;
-    const panelRef = useRef<HTMLDivElement>(null);
+    const { onBack, onOpenReorder, sessionExercises, openMenuId, setOpenMenuId, setShowFinishModal, setReplacingExId, setAddingExercise, linkingId, setLinkingId, setEditingMuscleId, setWarmupExId, setDetailExercise, handleSetUpdate, handleAddSet, handleDeleteSet, updateSession, exercises, logs, lang, config, activeSession, t, stageConfig, isCalisthenicsSession, supersetColorIndexes, handleSetTypeChange, sortableItems, activeExerciseId, setActiveExerciseId, handleToggleExpand, handleSetComplete, handleReorder, remainingSets, completedWorkingSets, totalWorkingSets, quickAccessExercise, startManualRest, manualRestPreset } = state;
 
     const focusedId = useMemo(() => {
         if (activeExerciseId !== null && sessionExercises.some((ex) => ex.instanceId === activeExerciseId)) {
@@ -56,16 +54,21 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
         ? [...railItems.slice(focusedIdx + 1), ...railItems.slice(0, focusedIdx)].find((item) => !item.complete) ?? null
         : null;
 
-    const scrollPanelIntoView = () => {
-        panelRef.current?.scrollIntoView({ block: 'start' });
-    };
     const selectExercise = (instanceId: number) => {
         setActiveExerciseId(instanceId);
-        // Let the newly focused card mount its expanded view first.
-        requestAnimationFrame(scrollPanelIntoView);
+        // Stacked list: every card stays expanded; land on the tapped card
+        // (partner banner included) like goNext does.
+        requestAnimationFrame(() => {
+            document.getElementById(`exercise-card-${instanceId}`)?.scrollIntoView({ block: 'start' });
+        });
     };
     const goNext = () => {
-        if (nextExercise) selectExercise(nextExercise.instanceId);
+        if (!nextExercise) return;
+        setActiveExerciseId(nextExercise.instanceId);
+        // Stacked list: every card stays expanded; just bring the next one into view.
+        requestAnimationFrame(() => {
+            document.getElementById(`exercise-card-${nextExercise.instanceId}`)?.scrollIntoView({ block: 'start' });
+        });
     };
 
     return (
@@ -90,7 +93,10 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                                     ? activeSession.name.replace(new RegExp(`^${activeSession.week}\\s*[•·-]\\s*`), '')
                                     : activeSession.name)}
                         </h1>
-                        <WorkoutTimer startTime={activeSession.startTime} className="block text-xs font-medium tabular-nums text-muted" />
+                        <div data-testid="workout-session-stats" className="flex items-center gap-1 text-xs text-muted tabular-nums">
+                            <WorkoutTimer startTime={activeSession.startTime} className="block text-xs font-medium tabular-nums text-muted" />
+                            <span>· {completedWorkingSets}/{totalWorkingSets}</span>
+                        </div>
                     </div>
 
                     
@@ -111,47 +117,22 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                     )}
 
                     <button
-                        type="button"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setAddingExercise(true);
-                        }}
-                        className="relative flex h-11 w-11 after:absolute after:-inset-1.5 after:content-[''] shrink-0 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:text-white active:bg-surface-raised"
-                        title={t.addExercise}
-                        aria-label={t.addExercise}
-                    >
-                        <Icon name="Plus" size={18} strokeWidth={2.5} />
-                    </button>
-
-                    <button
                         id="tut-finish-btn"
                         type="button"
                         onClick={(e) => {
                             e.stopPropagation();
                             setShowFinishModal(true);
                         }}
-                        className={`${remainingSets === 0 ? 'gl-primary' : 'gl-quiet'} relative !min-h-[40px] shrink-0 !px-3.5 text-xs font-semibold active:scale-95`}
+                        className="relative flex min-h-[44px] shrink-0 items-center px-2 text-[15px] font-semibold text-[rgb(var(--accent-text))] transition-opacity active:opacity-70"
                     >
                         {t.finish}
                     </button>
-                </div>
-                <div role="progressbar" aria-label={t.yourSession} aria-valuemin={0} aria-valuemax={totalWorkingSets || 1} aria-valuenow={completedWorkingSets} className="h-1 w-full bg-surface-elevated">
-                    <div className="h-full bg-primary-500 transition-[width] duration-300 ease-natural effects-reduced:transition-none" style={{ width: `${Math.min(100, Math.max(0, progressPct))}%` }} />
                 </div>
             </div>
 
             <div className="flex-1 overflow-hidden flex flex-col">
                 <div id="tut-exercise-list" className="flex-1 overflow-y-auto scroll-container px-3 space-y-2.5" style={{ paddingTop: 'calc(1rem + var(--rest-pill-top-offset, 0px))', paddingBottom: 'calc(3rem + var(--safe-area-bottom) + var(--rest-pill-height, 0px) + 16px)' }}>
-                    <div className="lg:mx-auto lg:grid lg:max-w-5xl lg:grid-cols-[248px_minmax(0,1fr)] lg:items-start lg:gap-4">
-                        <WorkoutExerciseRail
-                            items={railItems}
-                            activeId={focusedId}
-                            onSelect={selectExercise}
-                            navLabel={w.exerciseNav}
-                            setsOfWord={t.timer.ofWord}
-                        />
-
-                        <div ref={panelRef} className="min-w-0 scroll-mt-24 space-y-2.5">
+                    <div className="mx-auto w-full max-w-3xl space-y-0 px-0 sm:px-3">
                             {linkingId && (
                                 <div className="flex items-center justify-between gap-3 rounded-2xl border border-cyan-500/40 bg-cyan-950/40 p-3 text-cyan-200 shadow-lg backdrop-blur-md">
                                     <div className="flex items-center gap-2 text-xs font-semibold">
@@ -187,17 +168,20 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                                     {sessionExercises.map((ex) => {
                                         const isLinkingMode = !!linkingId;
                                         const isActive = ex.instanceId === focusedId;
-                                        const isVisible = isLinkingMode || isActive;
-                                        const isExpanded = isLinkingMode ? ex.instanceId === linkingId : isActive;
+                                        // Stacked list: every card is visible and expanded; the linking
+                                        // source keeps isExpanded as the pairing anchor.
+                                        const isExpanded = isLinkingMode ? ex.instanceId === linkingId : true;
                                         const supersetColorIndex = ex.supersetId ? supersetColorIndexes[ex.supersetId] : undefined;
                                         const isLinkingTarget = isLinkingMode && linkingId !== ex.instanceId;
 
                                         return (
-                                            <div key={ex.instanceId} className={isVisible ? undefined : 'hidden'} aria-hidden={isVisible ? undefined : true}>
+                                            <div key={ex.instanceId} id={`exercise-card-${ex.instanceId}`}>
                                                 <SortableExerciseCard
                                                     exercise={ex}
                                                     isExpanded={isExpanded}
                                                     onToggleExpand={handleToggleExpand}
+                                                    onStartRest={startManualRest}
+                                                    restPresetSeconds={manualRestPreset}
                                                     onSetUpdate={handleSetUpdate}
                                                     onSetComplete={handleSetComplete}
                                                     onSetTypeChange={handleSetTypeChange}
@@ -243,12 +227,11 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                                 </button>
                             ))}
                         </div>
-                    </div>
 
                     <button
                         type="button"
                         onClick={() => setAddingExercise(true)}
-                        className="w-full lg:mx-auto lg:max-w-5xl flex items-center justify-center gap-2 py-3.5 rounded-xl border border-dashed border-border-strong bg-surface-raised/40 text-xs font-semibold text-muted hover:text-white hover:border-zinc-500 transition-colors active:scale-98"
+                        className="w-full lg:mx-auto lg:max-w-5xl flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-surface-raised/40 text-sm font-semibold text-muted hover:text-white transition-colors active:scale-98"
                     >
                         <Icon name="Plus" size={15} />
                         {t.addExercise}

@@ -70,10 +70,11 @@ async function startFreestyleWithExercises(page: Page, count: number) {
     await startFreeBtn.scrollIntoViewIfNeeded();
     await startFreeBtn.click();
 
-    const addExHeaderBtn = page.locator('button[title*="Añadir ejercicio" i], button[title*="Add exercise" i], button[title*="Añadir Ejercicio" i]').first();
-    await expect(addExHeaderBtn).toBeVisible({ timeout: 6000 });
+    // End-of-list add button (header dup-add removed in Strong parity T1/T2).
+    const addExBtn = page.getByRole('button', { name: /Añadir ejercicio|Add exercise/ }).last();
+    await expect(addExBtn).toBeVisible({ timeout: 6000 });
     for (let i = 0; i < count; i++) {
-        await addExHeaderBtn.click();
+        await addExBtn.click();
         const option = page.locator('[role="dialog"] button, .modal button')
             .filter({ hasText: /press|squat|curl|banca|remo|row|peso muerto|deadlift/i })
             .first();

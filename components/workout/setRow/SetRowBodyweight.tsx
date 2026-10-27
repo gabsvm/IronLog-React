@@ -1,10 +1,11 @@
 // U5: SetRow bodyweight mode, moved verbatim from components/workout/SetRow.tsx.
 import React from 'react';
 import { Icon } from '../../ui/Icon';
+import { SetKeypad } from '../SetKeypad';
 import type { SetRowState } from './useSetRowState';
 
 export const SetRowBodyweight: React.FC<{ state: SetRowState }> = ({ state }) => {
-    const { set, showRIR, t, isDone, effectiveBadgeLabel, storedWeight, localWeight, setLocalWeight, localReps, setLocalReps, localRpe, setLocalRpe, activeFieldRef, repsRef, extraWeightRef, scheduleCommit, handleToggleComplete, handleWeightKeyDown, handleWeightBlur, handleBlur, onSwipeTouchStart, onSwipeTouchMove, onSwipeTouchEnd, handleRowClick, currentInputClass, rowClass, checkBtnClass, weightPlaceholder, repsPlaceholder, prescriptionHint, prevText, BadgeEl, badgeProps, completeSetAriaLabel, badgeClass, SwipeOverlay } = state;
+    const { set, showRIR, t, isDone, effectiveBadgeLabel, storedWeight, localWeight, setLocalWeight, localReps, setLocalReps, localRpe, setLocalRpe, repsRef, extraWeightRef, scheduleCommit, handleToggleComplete, handleWeightKeyDown, handleWeightFocus, handleRepsFocus, handleKeypadChange, handleKeypadNext, handleKeypadDone, keypadOpen, keypadValue, handleWeightBlur, handleBlur, onSwipeTouchStart, onSwipeTouchMove, onSwipeTouchEnd, handleRowClick, currentInputClass, rowClass, checkBtnClass, weightPlaceholder, repsPlaceholder, prescriptionHint, prevText, BadgeEl, badgeProps, completeSetAriaLabel, badgeClass, SwipeOverlay } = state;
     return (
             <div id={`set-row-${set.id}`}
                 onTouchStart={onSwipeTouchStart} onTouchMove={onSwipeTouchMove} onTouchEnd={onSwipeTouchEnd}
@@ -28,13 +29,14 @@ export const SetRowBodyweight: React.FC<{ state: SetRowState }> = ({ state }) =>
                             placeholder={weightPlaceholder}
                             aria-label={t.weight}
                             value={localWeight}
+                            readOnly={keypadOpen}
                             onChange={e => {
                                 setLocalWeight(e.target.value);
                                 scheduleCommit('weight', storedWeight(e.target.value), 180);
                             }}
                             onKeyDown={handleWeightKeyDown}
                             onBlur={() => handleWeightBlur(localWeight)}
-                            onFocus={() => activeFieldRef.current = 'weight'}
+                            onFocus={handleWeightFocus}
                             enterKeyHint="next"
                         />
                     </div>
@@ -46,12 +48,13 @@ export const SetRowBodyweight: React.FC<{ state: SetRowState }> = ({ state }) =>
                             placeholder={repsPlaceholder}
                             aria-label={t.reps}
                             value={localReps}
+                            readOnly={keypadOpen}
                             onChange={e => {
                                 setLocalReps(e.target.value);
                                 scheduleCommit('reps', e.target.value, 180);
                             }}
                             onBlur={() => handleBlur('reps', localReps)}
-                            onFocus={() => activeFieldRef.current = 'reps'}
+                            onFocus={handleRepsFocus}
                             enterKeyHint="done"
                         />
                     </div>
@@ -88,6 +91,7 @@ export const SetRowBodyweight: React.FC<{ state: SetRowState }> = ({ state }) =>
                         <span className="text-[11px] font-bold tracking-wide text-primary-400">{prescriptionHint}</span>
                     </div>
                 )}
+            <SetKeypad value={keypadValue} onChange={handleKeypadChange} onNext={handleKeypadNext} onDone={handleKeypadDone} visible={keypadOpen} />
             </div>
     );
 };

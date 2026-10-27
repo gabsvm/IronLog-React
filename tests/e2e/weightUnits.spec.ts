@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { enterViaKeypad as enterWeightViaKeypad } from './helpers/keypad';
 
 // Q11: the kg/lb preference changes presentation and entry only — stored
 // data stays canonical kg. Switching units never rewrites stored values.
@@ -11,7 +12,7 @@ const seedOnboarded = (page: Page) =>
         }));
     });
 
-const startFreestyleWithOneExercise = async (page: Page) => {
+const startFreestyleWithTwoExercises = async (page: Page) => {
     await page.getByRole('button', { name: /^(Sesión libre|Freestyle session) ·/ }).click();
     const freestyleOption = page.getByRole('dialog', { name: /Iniciar entrenamiento|Start training/ })
         .getByRole('button', { name: /Sesión libre|Freestyle/ });
@@ -24,16 +25,22 @@ const startFreestyleWithOneExercise = async (page: Page) => {
     await startFreeBtn.click();
     await expect(page.locator('#tut-finish-btn')).toBeVisible({ timeout: 10000 });
 
-    const addExHeaderBtn = page.locator('button[title*="Añadir ejercicio" i], button[title*="Add exercise" i]').first();
-    await addExHeaderBtn.click();
-    const dialog = page.locator('[role="dialog"]').last();
-    await expect(dialog).toBeVisible({ timeout: 6000 });
-    // Deterministic pick: a barbell strength exercise (has weight inputs).
-    await dialog.getByLabel(/Buscar ejercicios|Search exercises/).fill('press banca');
-    const option = dialog.locator('button[class*="text-left"]').first();
-    await expect(option).toBeVisible({ timeout: 6000 });
-    await option.click();
-    await expect(page.locator('#tut-exercise-list h3')).toHaveCount(1, { timeout: 8000 });
+    // End-of-list add button (header dup-add removed in Strong parity T1/T2).
+    const addExHeaderBtn = page.getByRole('button', { name: /Añadir ejercicio|Add exercise/ }).last();
+    // Stacked list (Strong parity T1): every added exercise renders expanded —
+    // assert the total count, not just the focused card.
+    for (let n = 0; n < 2; n++) {
+        await addExHeaderBtn.click();
+        const dialog = page.locator('[role="dialog"]').last();
+        await expect(dialog).toBeVisible({ timeout: 6000 });
+        // Deterministic picks: barbell strength exercises (have weight inputs).
+        await dialog.getByLabel(/Buscar ejercicios|Search exercises/).fill('press banca');
+        const option = dialog.locator('button[class*="text-left"]').nth(n);
+        await expect(option).toBeVisible({ timeout: 6000 });
+        await option.click();
+        await page.waitForTimeout(400);
+    }
+    await expect(page.locator('#tut-exercise-list h3')).toHaveCount(2, { timeout: 8000 });
 };
 
 const setWeightUnitFromHome = async (page: Page, unit: 'KG' | 'LBS') => {
@@ -62,7 +69,6 @@ const goHomeFromWorkout = async (page: Page) => {
     await page.getByLabel(/Atrás|Back/, { exact: true }).first().click();
     await expect(page.locator('nav[aria-label="Main navigation"]')).toBeVisible({ timeout: 8000 });
 };
-
 /** Raw stored weight of the first set, straight from IndexedDB. */
 const storedFirstSetWeight = (page: Page) =>
     page.evaluate(() => new Promise((resolve, reject) => {
@@ -83,12 +89,13 @@ test.describe('Q11: weight units kg/lb', () => {
         await seedOnboarded(page);
         await page.goto('/');
         await expect(page.locator('nav[aria-label="Main navigation"]')).toBeVisible({ timeout: 15000 });
-        await startFreestyleWithOneExercise(page);
+        await startFreestyleWithTwoExercises(page);
 
         const card = page.locator('#tut-exercise-list');
-        await expect(card.getByText('(KG)', { exact: false })).toBeVisible({ timeout: 6000 });
+        const firstCardUnit = (unit: string) => card.locator('[id^="exercise-card-"]').first().getByText(unit, { exact: false });
+        await expect(firstCardUnit('(KG)')).toBeVisible({ timeout: 6000 });
         const weightInput = card.locator('input[type="number"][inputmode="decimal"]').first();
-        await weightInput.fill('60');
+        await enterWeightViaKeypad(page, weightInput, '60');
         // Stored raw in kg mode (no conversion on either side).
         await expect.poll(() => storedFirstSetWeight(page), { timeout: 8000 }).toBe('60');
 
@@ -98,18 +105,18 @@ test.describe('Q11: weight units kg/lb', () => {
         await resumeWorkoutFromHome(page);
 
         // Same stored 60 kg now presented as lb.
-        await expect(card.getByText('(LBS)', { exact: false })).toBeVisible({ timeout: 6000 });
+        await expect(firstCardUnit('(LBS)')).toBeVisible({ timeout: 6000 });
         await expect(weightInput).toHaveValue('132.3');
 
         // Typing in lb commits canonical kg.
-        await weightInput.fill('135');
+        await enterWeightViaKeypad(page, weightInput, '135');
         await expect.poll(() => storedFirstSetWeight(page), { timeout: 8000 }).toBe(61.235);
 
         // Back in kg the exact canonical value shows: nothing was rewritten.
         await goHomeFromWorkout(page);
         await setWeightUnitFromHome(page, 'KG');
         await resumeWorkoutFromHome(page);
-        await expect(card.getByText('(KG)', { exact: false })).toBeVisible({ timeout: 6000 });
+        await expect(firstCardUnit('(KG)')).toBeVisible({ timeout: 6000 });
         await expect(weightInput).toHaveValue('61.235');
     });
 });
