@@ -24,7 +24,8 @@ const startFreestyleWithTwoExercises = async (page: Page) => {
     await startFreeBtn.click();
     await expect(page.locator('#tut-finish-btn')).toBeVisible({ timeout: 10000 });
 
-    const addExHeaderBtn = page.locator('button[title*="Añadir ejercicio" i], button[title*="Add exercise" i]').first();
+    // End-of-list add button (header dup-add removed in Strong parity T1/T2).
+    const addExHeaderBtn = page.getByRole('button', { name: /Añadir ejercicio|Add exercise/ }).last();
     // Stacked list (Strong parity T1): every added exercise renders expanded —
     // assert the total count, not just the focused card.
     for (let n = 0; n < 2; n++) {
