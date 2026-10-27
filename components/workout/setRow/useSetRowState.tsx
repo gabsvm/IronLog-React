@@ -306,17 +306,17 @@ export const useSetRowState = ({
         focusPrimaryField();
     }, [focusPrimaryField]);
 
-    const inputBaseClass = "h-11 w-full rounded-[var(--shape-segment-radius)] bg-surface-elevated text-center text-base font-semibold text-[rgb(var(--text-primary))] outline-none transition-colors border border-transparent focus:border-primary-500 focus:bg-surface-raised tabular-nums";
-    const inputActiveClass = "h-11 w-full rounded-[var(--shape-segment-radius)] bg-surface-raised border border-primary-500/70 text-center text-base font-semibold text-[rgb(var(--text-primary))] outline-none focus:border-primary-500 tabular-nums shadow-sm";
-    const inputDoneClass = "h-11 w-full rounded-[var(--shape-segment-radius)] bg-transparent text-center text-base font-semibold text-[rgb(var(--accent-text))] outline-none tabular-nums";
+    const inputBaseClass = "h-11 w-full rounded-[10px] bg-surface-app text-center text-base font-semibold text-[rgb(var(--text-primary))] outline-none transition-colors border border-transparent focus:border-primary-500 tabular-nums";
+    const inputActiveClass = "h-11 w-full rounded-[10px] bg-surface-raised border border-primary-500/70 text-center text-base font-semibold text-[rgb(var(--text-primary))] outline-none focus:border-primary-500 tabular-nums shadow-sm";
+    const inputDoneClass = "h-11 w-full rounded-[10px] bg-transparent text-center text-base font-semibold text-[rgb(var(--accent-text))] outline-none tabular-nums";
     const currentInputClass = isDone ? inputDoneClass : isNextSet ? inputActiveClass : inputBaseClass;
 
     const rowClass = `premium-progress-feedback relative rounded-[var(--shape-segment-radius)] ${
         isDone
             ? 'bg-primary-500/10 border border-primary-500/25'
             : isNextSet
-            ? 'bg-surface-elevated border border-primary-500/50 shadow-sm'
-            : 'bg-surface-raised border border-border-subtle'
+            ? 'border border-primary-500/50 shadow-sm'
+            : 'border-b border-border-subtle'
     }`;
 
     // gl-morph: the check settles from circle to rounded square when the set is done (see index.css).

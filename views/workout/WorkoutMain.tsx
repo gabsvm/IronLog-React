@@ -232,7 +232,7 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                     <button
                         type="button"
                         onClick={() => setAddingExercise(true)}
-                        className="w-full lg:mx-auto lg:max-w-5xl flex items-center justify-center gap-2 py-3.5 rounded-xl border border-dashed border-border-strong bg-surface-raised/40 text-xs font-semibold text-muted hover:text-white hover:border-zinc-500 transition-colors active:scale-98"
+                        className="w-full lg:mx-auto lg:max-w-5xl flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-surface-raised/40 text-sm font-semibold text-muted hover:text-white transition-colors active:scale-98"
                     >
                         <Icon name="Plus" size={15} />
                         {t.addExercise}

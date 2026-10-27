@@ -166,3 +166,61 @@ test.describe('Strong parity T3: flat exercise band with rest chip', () => {
         await expect(page.locator('[data-workout-rest-dock="true"]')).toBeVisible({ timeout: 8000 });
     });
 });
+// Task 4 (Strong parity): flat 36dp sets header, flat set rows, exactly one
+// centered 48dp "Add set" per exercise; remove-set lives only in the card menu.
+test.describe('Strong parity T4: flat header/rows, single Add set', () => {
+    test('36px header, one Add set >=44px, no footer remove button, remove in menu', async ({ page }) => {
+        await page.addInitScript(() => {
+            localStorage.setItem('il_onboarded_v2', 'true');
+            localStorage.setItem('il_tutorial_v2', JSON.stringify({
+                home: true, workout: true, history: true, stats: true, mesoSettings: true, nutrition: true,
+            }));
+        });
+        await page.goto('/');
+        await expect(page.locator('nav[aria-label="Main navigation"]')).toBeVisible({ timeout: 20000 });
+
+        await page.getByRole('button', { name: /^(Sesi\u00f3n libre|Freestyle session) \u00b7/ }).click();
+        await page.getByRole('dialog', { name: /Iniciar entrenamiento|Start training/ })
+            .getByRole('button', { name: /Sesi\u00f3n libre|Freestyle/ }).click();
+        await page.getByRole('dialog', { name: /Nueva Sesi\u00f3n|New Session/i })
+            .getByRole('button', { name: /Iniciar Sesi\u00f3n Libre|Start Free Session/i }).click();
+        await expect(page.locator('#tut-finish-btn')).toBeVisible({ timeout: 10000 });
+
+        // Add one exercise via the end-of-list add button.
+        await page.getByRole('button', { name: /A\u00f1adir ejercicio|Add exercise/ }).last().click();
+        const dialog = page.locator('[role="dialog"]').last();
+        await expect(dialog).toBeVisible({ timeout: 6000 });
+        const option = dialog.locator('button[class*="text-left"]').first();
+        await expect(option).toBeVisible({ timeout: 6000 });
+        await option.click();
+        await page.waitForTimeout(400);
+
+        const card = page.locator('#tut-exercise-list .card-strong').first();
+        await expect(card).toBeVisible({ timeout: 8000 });
+
+        // Sets header is exactly 36px tall (h-9) with the raised surface.
+        const header = card.getByTestId('sets-header');
+        await expect(header).toBeVisible({ timeout: 8000 });
+        const headerBox = await header.boundingBox();
+        expect(headerBox).not.toBeNull();
+        expect(Math.round(headerBox!.height)).toBe(36);
+
+        // Exactly one "Add set" button per exercise, centered and >=44px tall.
+        const addBtns = card.getByRole('button', { name: /A\u00f1adir serie|Add set/ });
+        await expect(addBtns).toHaveCount(1, { timeout: 8000 });
+        const addBox = await addBtns.first().boundingBox();
+        expect(addBox).not.toBeNull();
+        expect(addBox!.height).toBeGreaterThanOrEqual(44);
+        const cardBox = await card.boundingBox();
+        const addCenterX = addBox!.x + addBox!.width / 2;
+        const cardCenterX = cardBox!.x + cardBox!.width / 2;
+        expect(Math.abs(addCenterX - cardCenterX)).toBeLessThan(24);
+
+        // No remove-set button in the footer (menu closed => not rendered at all).
+        await expect(page.getByRole('button', { name: /Quitar serie|Remove set/ })).toHaveCount(0);
+
+        // The capability survives inside the card menu.
+        await card.getByRole('button', { name: /More options|M\u00e1s opciones/ }).click();
+        await expect(card.getByRole('menuitem', { name: /Quitar serie|Remove set/ })).toBeVisible({ timeout: 6000 });
+    });
+});

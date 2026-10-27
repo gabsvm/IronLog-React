@@ -117,6 +117,8 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                                 onInjectWarmup={handleInjectWarmup}
                                 onFillFromPrevious={canFillPrevious ? handleFillFromPrevious : undefined}
                                 onCopyToFollowing={copyFromIndex >= 0 ? handleCopyToFollowing : undefined}
+                                onRemoveLastSet={handleRemoveLastSet}
+                                canRemoveLastSet={sets.length > 1}
                                 onSupersetAction={handleSupersetAction}
                                 onReplace={onReplace}
                                 onRequestDelete={confirmDelete}
@@ -259,21 +261,13 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                 </div>
             )}
 
-            <div className="flex items-center justify-between px-3 py-2 border-t border-border-subtle bg-surface-base/30 text-xs text-muted">
-                <button
-                    type="button"
-                    onClick={handleRemoveLastSet}
-                    disabled={sets.length <= 1}
-                    className="flex items-center gap-1.5 py-2.5 text-muted transition-colors hover:text-red-400 active:scale-95 disabled:opacity-25"
-                >
-                    <Icon name="Minus" size={13} /> {String(t.removeSetBtn)}
-                </button>
+            <div className="flex items-center justify-center border-t border-border-subtle px-3 py-1">
                 <button
                     type="button"
                     onClick={() => onAddSet(ex.instanceId)}
-                    className="flex items-center gap-1.5 py-2.5 text-primary-400 font-semibold transition-colors hover:text-primary-300 active:scale-95"
+                    className="flex min-h-[48px] w-full items-center justify-center gap-1.5 text-sm font-semibold text-[rgb(var(--accent-text))] transition-colors hover:opacity-80 active:scale-95"
                 >
-                    <Icon name="Plus" size={13} /> {t.addSetBtn}
+                    <Icon name="Plus" size={14} /> {t.addSetBtn}
                 </button>
             </div>
         </div>
