@@ -12,6 +12,12 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
     const { ex, onSetUpdate, onSetComplete, onSetTypeChange, onAddSet, onDeleteSet, onOpenDetail, onLink, onReplace, onOpenWarmup, openMenuId, setOpenMenuId, t, lang, isLinkingTarget, config, stageConfig, dragEnabled, tutorialId, attributes, listeners, setNodeRef, isDragging, exDoneFlash, activeEmomMinute, setActiveEmomMinute, style, sets, c, ssStyle, unit, unitLabel, isCardio, cardioMode, isInterval, regularSets, volumeComparison, allDone, isLinkSource, canWarmup, isEMOM, isMyorep, isCluster, isGiant, hasTopBackoff, isTabata, isHIIT, isRestPause, isDrop, isTimeVolume, isTripleAdd, isSpecialProtocol, nextSetIdx, setBadgeLabels, handleInjectWarmup, canFillPrevious, copyFromIndex, handleFillFromPrevious, handleCopyToFollowing, removedSet, handleRemoveLastSet, handleUndoRemoveSet, handleCardioModeChange, confirmDelete, handleSupersetAction, heroMetric, workDensity, handleToggleProgressionMode, onStartRest, restPresetSeconds } = state;
     const restSeconds = ex.defaultRestSeconds && ex.defaultRestSeconds > 0 ? ex.defaultRestSeconds : (restPresetSeconds ?? 90);
     const restLabel = `${Math.floor(restSeconds / 60)}:${String(restSeconds % 60).padStart(2, '0')}`;
+    // Below-band wrapper carries px-4/pb-3/pt-2: skip it entirely when every inner
+    // block is empty so no 20px strip renders (inner empty:hidden alone can't
+    // collapse the outer padding).
+    const hasBelowBand = Boolean(((heroMetric && !allDone) || isLinkSource || isLinkingTarget)
+        || isEMOM || isMyorep || isCluster || isGiant || isRestPause || isDrop || isTimeVolume || isTripleAdd || hasTopBackoff || isTabata || isHIIT
+        || (allDone && volumeComparison) || (allDone && workDensity && workDensity.densityRate > 0));
     return (
         <div
             ref={setNodeRef}
@@ -131,7 +137,7 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                 {ex.note && (
                     <p className="px-4 pb-2 text-xs text-muted">{ex.note}</p>
                 )}
-                <div className="px-4 pb-3 pt-2">
+                {hasBelowBand && (<div className="px-4 pb-3 pt-2">
                         {((heroMetric && !allDone) || isLinkSource || isLinkingTarget) && (
                             <div className="flex flex-wrap items-center gap-1 pl-0.5">
                                 {heroMetric && !allDone && (
@@ -217,7 +223,7 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                         </div>
                     )}
                 </div>
-                </div>
+                </div>)}
             </div>
 
             <ExerciseCardSets

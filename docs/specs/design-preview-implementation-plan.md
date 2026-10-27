@@ -16,6 +16,8 @@ sustituyen a las de las secciones siguientes donde choquen:
   ← 1 de N →; «Terminar» discreto hasta completar todo; al cerrar un ejercicio, «Siguiente ejercicio · X»
   o «Terminar sesión» como acción principal; tarjeta sin etiquetas de músculo/reps/BW/SS ni iconos de
   enlazar/plegar (superserie sigue en el menú); volumen solo al completar el ejercicio.
+  **Nota Strong parity (2026-10-26):** la barra fina de progreso y el modelo de ejercicio enfocado/rail quedan
+  reemplazados por lista apilada continua con bandas planas de 48dp, header sin progreso y chip de descanso.
 - **Rutina:** días en un panel, solo el siguiente (o en curso) es primario; acciones en un panel de filas.
 - **Progreso:** sin título visible (sr-only); la subpestaña «Progreso» pasa a **«Fuerza»**; variación del
   reporte semanal neutra mientras la semana está abierta.
