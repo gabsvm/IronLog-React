@@ -129,6 +129,7 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                 {ex.note && (
                     <p className="px-4 pb-2 text-xs text-muted">{ex.note}</p>
                 )}
+                <div className="px-4 pb-3 pt-2">
                         {((heroMetric && !allDone) || isLinkSource || isLinkingTarget) && (
                             <div className="flex flex-wrap items-center gap-1 pl-0.5">
                                 {heroMetric && !allDone && (
@@ -213,6 +214,7 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                             ) : null}
                         </div>
                     )}
+                </div>
                 </div>
             </div>
 
