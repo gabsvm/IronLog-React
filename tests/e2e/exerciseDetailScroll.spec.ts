@@ -22,7 +22,7 @@ test.describe('Exercise details can scroll above sticky footer', () => {
         await page.getByRole('dialog', { name: /Nueva Sesión|New Session/i })
             .getByRole('button', { name: /Iniciar Sesión Libre|Start Free Session/i }).click();
         await expect(page.locator('#tut-finish-btn')).toBeVisible({ timeout: 10000 });
-        await page.locator('button[title*="Añadir ejercicio" i], button[title*="Add exercise" i]').first().click();
+        await page.getByRole('button', { name: /Añadir ejercicio|Add exercise/ }).last().click();
         const picker = page.locator('[role="dialog"]');
         await expect(picker).toBeVisible();
         await picker.locator('input[type="text"]').first().fill('press banca barra');

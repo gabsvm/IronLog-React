@@ -70,7 +70,7 @@ test.describe('P7-4: edge-to-edge insets', () => {
         expect(finishBox!.y, 'workout finish button top').toBeGreaterThanOrEqual(INSET_TOP - 1);
 
         // --- Rest pill: floats above the inset + the 80px float gap. ---
-        const addExHeaderBtn = page.locator('button[title*="Añadir ejercicio" i], button[title*="Add exercise" i], button[title*="Añadir Ejercicio" i]').first();
+        const addExHeaderBtn = page.getByRole('button', { name: /Añadir ejercicio|Add exercise/ }).last();
         await expect(addExHeaderBtn).toBeVisible({ timeout: 6000 });
         await addExHeaderBtn.click();
         const option = page.locator('[role="dialog"] button, .modal button')

@@ -4,7 +4,7 @@
 // only maps taps to onChange/onNext/onDone. Rendered only when visible.
 import React, { useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { TRANSLATIONS } from '../../constants/translations';
+import { TRANSLATIONS, bootLanguage } from '../../constants/translations';
 
 export interface SetKeypadProps {
     value: string;
@@ -14,18 +14,9 @@ export interface SetKeypadProps {
     visible: boolean;
 }
 
-// Mirrors bootLanguage's default (Spanish) for the fixed-signature keypad:
-// the lang store lives in AppContext, which this signature cannot receive.
-const readKeypadLang = (): 'en' | 'es' => {
-    try {
-        const raw = window.localStorage.getItem('il_lang_v1');
-        const parsed = raw ? JSON.parse(raw) : null;
-        if (parsed === 'en' || parsed === 'es') return parsed;
-    } catch {
-        /* fall through to default */
-    }
-    return 'es';
-};
+// Keypad language: the lang store lives in AppContext, which this
+// fixed signature cannot receive — reuse the shared bootLanguage default
+// (Stored il_lang_v1 choice, else Spanish).
 
 const appendDigit = (value: string, digit: string): string => {
     if (value === '' || value === '0') return digit;
@@ -39,7 +30,7 @@ const appendDecimal = (value: string): string => {
 };
 
 export const SetKeypad: React.FC<SetKeypadProps> = ({ value, onChange, onNext, onDone, visible }) => {
-    const t = TRANSLATIONS[readKeypadLang()];
+    const t = TRANSLATIONS[bootLanguage()];
 
     const handleDigit = useCallback((digit: string) => {
         onChange(appendDigit(value, digit));

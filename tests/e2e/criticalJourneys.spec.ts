@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { enterViaKeypad } from './helpers/keypad';
 
 test.describe('GainsLab Critical Journeys', () => {
     test.beforeEach(async ({ page }) => {
@@ -151,8 +152,8 @@ test.describe('GainsLab Critical Journeys', () => {
         const finishBtn = page.locator('#tut-finish-btn');
         await expect(finishBtn).toBeVisible({ timeout: 10000 });
 
-        // Add an exercise via header plus button
-        const addExHeaderBtn = page.locator('button[title*="Añadir ejercicio" i], button[title*="Add exercise" i], button[title*="Añadir Ejercicio" i]').first();
+        // Add an exercise via the end-of-list button (header dup-add removed in Strong parity T1/T2).
+        const addExHeaderBtn = page.getByRole('button', { name: /Añadir ejercicio|Add exercise/ }).last();
         await expect(addExHeaderBtn).toBeVisible({ timeout: 6000 });
         await addExHeaderBtn.click();
         await page.waitForTimeout(500);
@@ -225,8 +226,8 @@ test.describe('GainsLab Critical Journeys', () => {
         await startFreeBtn.click();
         await page.waitForTimeout(500);
 
-        // Add an exercise
-        const addExHeaderBtn = page.locator('button[title*="Añadir ejercicio" i], button[title*="Add exercise" i], button[title*="Añadir Ejercicio" i]').first();
+        // Add an exercise via the end-of-list button (header dup-add removed in Strong parity T1/T2).
+        const addExHeaderBtn = page.getByRole('button', { name: /Añadir ejercicio|Add exercise/ }).last();
         await expect(addExHeaderBtn).toBeVisible({ timeout: 6000 });
         await addExHeaderBtn.click();
         await page.waitForTimeout(500);
@@ -236,14 +237,15 @@ test.describe('GainsLab Critical Journeys', () => {
         await firstExOption.click();
         await page.waitForTimeout(500);
 
-        // Edit weight and reps in first set
+        // Edit weight and reps in first set via the in-app keypad: on coarse
+        // pointers these inputs are readOnly (physical fill() no longer sticks).
         const weightInput = page.locator('input[type="number"][inputmode="decimal"], input[placeholder="kg"]').first();
         await expect(weightInput).toBeVisible({ timeout: 5000 });
-        await weightInput.fill('92.5');
+        await enterViaKeypad(page, weightInput, '92.5');
 
         const repsInput = page.locator('input[placeholder="reps"], input[placeholder="8-12"]').first();
         if (await repsInput.isVisible()) {
-            await repsInput.fill('11');
+            await enterViaKeypad(page, repsInput, '11');
         }
 
         // Complete the set

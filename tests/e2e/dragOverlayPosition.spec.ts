@@ -29,7 +29,7 @@ test.describe('L8: drag overlay position in reorder sheet', () => {
         await startFreeBtn.click();
         await expect(page.locator('#tut-finish-btn')).toBeVisible({ timeout: 10000 });
 
-        const addExHeaderBtn = page.locator('button[title*="Añadir ejercicio" i], button[title*="Add exercise" i]').first();
+        const addExHeaderBtn = page.getByRole('button', { name: /Añadir ejercicio|Add exercise/ }).last();
         for (let i = 0; i < 3; i++) {
             await addExHeaderBtn.click();
             const dialog = page.locator('[role="dialog"]').last();

@@ -27,8 +27,8 @@ test.describe('K1: reorder exercises drag', () => {
         await startFreeBtn.click();
         await expect(page.locator('#tut-finish-btn')).toBeVisible({ timeout: 10000 });
 
-        // Add 3 distinct exercises via the header add button.
-        const addExHeaderBtn = page.locator('button[title*="Añadir ejercicio" i], button[title*="Add exercise" i]').first();
+        // Add 3 distinct exercises via the end-of-list add button.
+        const addExHeaderBtn = page.getByRole('button', { name: /Añadir ejercicio|Add exercise/ }).last();
         for (let i = 0; i < 3; i++) {
             await addExHeaderBtn.click();
             const dialog = page.locator('[role="dialog"]').last();

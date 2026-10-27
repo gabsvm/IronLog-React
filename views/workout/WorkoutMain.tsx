@@ -2,7 +2,7 @@
 // Strong parity (T1): stacked continuous list — every exercise card renders
 // expanded in a single scroll; activeExerciseId only marks highlight/scroll.
 // Docked rest reuses TimerContext.
-import React, { Suspense, useMemo, useRef } from 'react';
+import React, { Suspense, useMemo } from 'react';
 import { Icon } from '../../components/ui/Icon';
 import type { WorkoutRailItem } from '../../components/workout/WorkoutExerciseRail';
 import { SortableExerciseCard } from '../../components/workout/SortableExerciseCard';
@@ -17,7 +17,6 @@ const WorkoutSortableList = React.lazy(() => import('../../components/workout/Wo
 
 export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) => {
     const { onBack, onOpenReorder, sessionExercises, openMenuId, setOpenMenuId, setShowFinishModal, setReplacingExId, setAddingExercise, linkingId, setLinkingId, setEditingMuscleId, setWarmupExId, setDetailExercise, handleSetUpdate, handleAddSet, handleDeleteSet, updateSession, exercises, logs, lang, config, activeSession, t, stageConfig, isCalisthenicsSession, supersetColorIndexes, handleSetTypeChange, sortableItems, activeExerciseId, setActiveExerciseId, handleToggleExpand, handleSetComplete, handleReorder, remainingSets, completedWorkingSets, totalWorkingSets, quickAccessExercise, startManualRest, manualRestPreset } = state;
-    const panelRef = useRef<HTMLDivElement>(null);
 
     const focusedId = useMemo(() => {
         if (activeExerciseId !== null && sessionExercises.some((ex) => ex.instanceId === activeExerciseId)) {
@@ -55,13 +54,13 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
         ? [...railItems.slice(focusedIdx + 1), ...railItems.slice(0, focusedIdx)].find((item) => !item.complete) ?? null
         : null;
 
-    const scrollPanelIntoView = () => {
-        panelRef.current?.scrollIntoView({ block: 'start' });
-    };
     const selectExercise = (instanceId: number) => {
         setActiveExerciseId(instanceId);
-        // Let the newly focused card mount its expanded view first.
-        requestAnimationFrame(scrollPanelIntoView);
+        // Stacked list: every card stays expanded; land on the tapped card
+        // (partner banner included) like goNext does.
+        requestAnimationFrame(() => {
+            document.getElementById(`exercise-card-${instanceId}`)?.scrollIntoView({ block: 'start' });
+        });
     };
     const goNext = () => {
         if (!nextExercise) return;
@@ -133,7 +132,7 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
 
             <div className="flex-1 overflow-hidden flex flex-col">
                 <div id="tut-exercise-list" className="flex-1 overflow-y-auto scroll-container px-3 space-y-2.5" style={{ paddingTop: 'calc(1rem + var(--rest-pill-top-offset, 0px))', paddingBottom: 'calc(3rem + var(--safe-area-bottom) + var(--rest-pill-height, 0px) + 16px)' }}>
-                    <div ref={panelRef} className="mx-auto w-full max-w-3xl space-y-0 px-0 sm:px-3">
+                    <div className="mx-auto w-full max-w-3xl space-y-0 px-0 sm:px-3">
                             {linkingId && (
                                 <div className="flex items-center justify-between gap-3 rounded-2xl border border-cyan-500/40 bg-cyan-950/40 p-3 text-cyan-200 shadow-lg backdrop-blur-md">
                                     <div className="flex items-center gap-2 text-xs font-semibold">

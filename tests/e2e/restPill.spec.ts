@@ -30,7 +30,7 @@ test.describe('Rest pill touch targets (F3)', () => {
         await startFreeBtn.scrollIntoViewIfNeeded();
         await startFreeBtn.click();
 
-        const addExHeaderBtn = page.locator('button[title*="Añadir ejercicio" i], button[title*="Add exercise" i], button[title*="Añadir Ejercicio" i]').first();
+        const addExHeaderBtn = page.getByRole('button', { name: /Añadir ejercicio|Add exercise/ }).last();
         await expect(addExHeaderBtn).toBeVisible({ timeout: 6000 });
         await addExHeaderBtn.click();
 

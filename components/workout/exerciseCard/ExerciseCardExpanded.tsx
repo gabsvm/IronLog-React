@@ -62,7 +62,7 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                                     event.stopPropagation();
                                     if (onStartRest) onStartRest(restSeconds);
                                 }}
-                                className="relative flex h-[28px] min-w-[40px] shrink-0 items-center gap-1 rounded-md bg-surface-elevated px-2 text-[13px] font-bold tabular-nums text-white transition-colors after:absolute after:-inset-2 after:content-[''] hover:bg-surface-elevated/80 active:scale-95"
+                                className="relative flex h-[28px] min-w-[40px] shrink-0 items-center gap-1 rounded-md bg-surface-elevated px-2 text-[13px] font-bold tabular-nums text-[rgb(var(--text-primary))] transition-colors after:absolute after:-inset-2 after:content-[''] hover:bg-surface-elevated/80 active:scale-95"
                             >
                                 <Icon name="Timer" size={13} />
                                 <span>{restLabel}</span>
@@ -82,7 +82,7 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                                             onOpenWarmup(ex.instanceId);
                                         }
                                     }}
-                                    className={`relative flex h-8 w-8 after:absolute after:-inset-1 after:content-[''] items-center justify-center rounded-full border transition-colors ${
+                                    className={`relative flex h-8 w-8 after:absolute after:-inset-[6px] after:content-[''] items-center justify-center rounded-full border transition-colors ${
                                         hasFirstSetWeight
                                             ? 'border-zinc-700/80 bg-zinc-900/80 text-amber-400 hover:border-amber-400/60 hover:bg-zinc-800'
                                             : 'border-zinc-800 bg-zinc-900/40 text-zinc-600 opacity-50 cursor-not-allowed'
@@ -105,7 +105,7 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                                     event.stopPropagation();
                                     setOpenMenuId(openMenuId === ex.instanceId ? null : ex.instanceId);
                                 }}
-                                className={`relative flex h-8 w-8 after:absolute after:-inset-1 after:content-[''] items-center justify-center rounded-full border transition-colors duration-fast ease-natural ${openMenuId === ex.instanceId ? 'border-zinc-500/70 bg-zinc-800 text-white' : 'border-zinc-700/80 bg-zinc-900/80 text-zinc-400 hover:border-zinc-500/70 hover:bg-zinc-800 hover:text-white'}`}
+                                className={`relative flex h-8 w-8 after:absolute after:-inset-[6px] after:content-[''] items-center justify-center rounded-full border transition-colors duration-fast ease-natural ${openMenuId === ex.instanceId ? 'border-zinc-500/70 bg-zinc-800 text-white' : 'border-zinc-700/80 bg-zinc-900/80 text-zinc-400 hover:border-zinc-500/70 hover:bg-zinc-800 hover:text-white'}`}
                             >
                                 <Icon name="MoreVertical" size={18} />
                             </button>
@@ -252,7 +252,7 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
             />
 
             {exDoneFlash && (
-                <div className="absolute inset-0 z-10 flex items-center justify-center rounded-[1.35rem] bg-green-500/5 ring-2 ring-green-500/60 pointer-events-none animate-in fade-in duration-150">
+                <div className="absolute inset-0 z-10 flex items-center justify-center rounded-none bg-green-500/5 ring-2 ring-green-500/60 pointer-events-none animate-in fade-in duration-150">
                     <div className="animate-bounce rounded-full bg-green-500 px-3 py-1.5 text-xs font-black text-white shadow-lg shadow-green-500/30">
                         <Icon name="CheckCircle" size={14} className="mr-1 inline" />
                         {c.done}
