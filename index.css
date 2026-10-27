@@ -300,6 +300,12 @@ body {
         transition: background-color 220ms var(--motion-expressive), border-color 220ms var(--motion-expressive), box-shadow 220ms var(--motion-expressive);
     }
 
+    .card-strong {
+        background-color: rgb(var(--surface-base));
+        border: 0.5px solid rgb(var(--border-subtle));
+        border-radius: 0;
+    }
+
     .chip-reference {
         display: inline-flex;
         align-items: center;

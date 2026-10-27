@@ -119,3 +119,50 @@ test.describe('Strong parity T2: Strong-style session header', () => {
         await expect(page.getByTestId('workout-session-stats')).toContainText(/\d+\/\d+/);
     });
 });
+
+// Task 3 (Strong parity): flat exercise card (radius 0) with a single 48dp
+// exercise band holding the name + a rest chip (m:ss) that starts the
+// existing rest dock/overlay.
+test.describe('Strong parity T3: flat exercise band with rest chip', () => {
+    test('card radius 0, rest chip 1:30 opens rest dock', async ({ page }) => {
+        await page.addInitScript(() => {
+            localStorage.setItem('il_onboarded_v2', 'true');
+            localStorage.setItem('il_tutorial_v2', JSON.stringify({
+                home: true, workout: true, history: true, stats: true, mesoSettings: true, nutrition: true,
+            }));
+        });
+        await page.goto('/');
+        await expect(page.locator('nav[aria-label="Main navigation"]')).toBeVisible({ timeout: 20000 });
+
+        await page.getByRole('button', { name: /^(Sesi\u00f3n libre|Freestyle session) \u00b7/ }).click();
+        await page.getByRole('dialog', { name: /Iniciar entrenamiento|Start training/ })
+            .getByRole('button', { name: /Sesi\u00f3n libre|Freestyle/ }).click();
+        await page.getByRole('dialog', { name: /Nueva Sesi\u00f3n|New Session/i })
+            .getByRole('button', { name: /Iniciar Sesi\u00f3n Libre|Start Free Session/i }).click();
+        await expect(page.locator('#tut-finish-btn')).toBeVisible({ timeout: 10000 });
+
+        // Add one exercise via the end-of-list add button.
+        await page.getByRole('button', { name: /A\u00f1adir ejercicio|Add exercise/ }).last().click();
+        const dialog = page.locator('[role="dialog"]').last();
+        await expect(dialog).toBeVisible({ timeout: 6000 });
+        const option = dialog.locator('button[class*="text-left"]').first();
+        await expect(option).toBeVisible({ timeout: 6000 });
+        await option.click();
+        await page.waitForTimeout(400);
+
+        // Flat card: computed border-radius is 0px.
+        const card = page.locator('#tut-exercise-list .card-strong').first();
+        await expect(card).toBeVisible({ timeout: 8000 });
+        const radius = await card.evaluate((el) => getComputedStyle(el).borderRadius);
+        expect(radius).toBe('0px');
+
+        // Rest chip next to the name shows the resolved duration (default 90s -> 1:30).
+        const chip = page.getByTestId('exercise-rest-chip').first();
+        await expect(chip).toBeVisible({ timeout: 8000 });
+        await expect(chip).toContainText('1:30');
+
+        // Clicking the chip opens the existing rest surface (in-flow dock).
+        await chip.click();
+        await expect(page.locator('[data-workout-rest-dock="true"]')).toBeVisible({ timeout: 8000 });
+    });
+});

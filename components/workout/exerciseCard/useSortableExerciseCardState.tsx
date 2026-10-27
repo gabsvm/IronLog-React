@@ -43,6 +43,10 @@ export interface SortableExerciseCardProps {
     tutorialId?: string;
     isExpanded?: boolean;
     onToggleExpand?: (id: number) => void;
+    /** Manual rest entry: WorkoutMain passes startManualRest (defaults to manualRestPreset). */
+    onStartRest?: (seconds: number) => void;
+    /** Fallback rest duration when the exercise has no defaultRestSeconds override. */
+    restPresetSeconds?: number;
 }
 
 export const useSortableExerciseCardState = ({
@@ -73,6 +77,8 @@ export const useSortableExerciseCardState = ({
     tutorialId,
     isExpanded = true,
     onToggleExpand,
+    onStartRest,
+    restPresetSeconds,
 }: SortableExerciseCardProps) => {
     const [exDoneFlash, setExDoneFlash] = useState(false);
     const [activeEmomMinute, setActiveEmomMinute] = useState(0);
@@ -479,6 +485,8 @@ export const useSortableExerciseCardState = ({
         tutorialId,
         isExpanded,
         onToggleExpand,
+        onStartRest,
+        restPresetSeconds,
         attributes,
         listeners,
         setNodeRef,

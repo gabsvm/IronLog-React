@@ -9,13 +9,15 @@ import { getTranslated } from '../../../utils';
 import type { ExerciseCardState } from './useSortableExerciseCardState';
 
 export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ state }) => {
-    const { ex, onSetUpdate, onSetComplete, onSetTypeChange, onAddSet, onDeleteSet, onOpenDetail, onLink, onReplace, onOpenWarmup, openMenuId, setOpenMenuId, t, lang, isLinkingTarget, config, stageConfig, dragEnabled, tutorialId, attributes, listeners, setNodeRef, isDragging, exDoneFlash, activeEmomMinute, setActiveEmomMinute, style, sets, c, ssStyle, unit, unitLabel, isCardio, cardioMode, isInterval, regularSets, volumeComparison, allDone, isLinkSource, canWarmup, isEMOM, isMyorep, isCluster, isGiant, hasTopBackoff, isTabata, isHIIT, isRestPause, isDrop, isTimeVolume, isTripleAdd, isSpecialProtocol, nextSetIdx, setBadgeLabels, handleInjectWarmup, canFillPrevious, copyFromIndex, handleFillFromPrevious, handleCopyToFollowing, removedSet, handleRemoveLastSet, handleUndoRemoveSet, handleCardioModeChange, confirmDelete, handleSupersetAction, heroMetric, workDensity, handleToggleProgressionMode } = state;
+    const { ex, onSetUpdate, onSetComplete, onSetTypeChange, onAddSet, onDeleteSet, onOpenDetail, onLink, onReplace, onOpenWarmup, openMenuId, setOpenMenuId, t, lang, isLinkingTarget, config, stageConfig, dragEnabled, tutorialId, attributes, listeners, setNodeRef, isDragging, exDoneFlash, activeEmomMinute, setActiveEmomMinute, style, sets, c, ssStyle, unit, unitLabel, isCardio, cardioMode, isInterval, regularSets, volumeComparison, allDone, isLinkSource, canWarmup, isEMOM, isMyorep, isCluster, isGiant, hasTopBackoff, isTabata, isHIIT, isRestPause, isDrop, isTimeVolume, isTripleAdd, isSpecialProtocol, nextSetIdx, setBadgeLabels, handleInjectWarmup, canFillPrevious, copyFromIndex, handleFillFromPrevious, handleCopyToFollowing, removedSet, handleRemoveLastSet, handleUndoRemoveSet, handleCardioModeChange, confirmDelete, handleSupersetAction, heroMetric, workDensity, handleToggleProgressionMode, onStartRest, restPresetSeconds } = state;
+    const restSeconds = ex.defaultRestSeconds && ex.defaultRestSeconds > 0 ? ex.defaultRestSeconds : (restPresetSeconds ?? 90);
+    const restLabel = `${Math.floor(restSeconds / 60)}:${String(restSeconds % 60).padStart(2, '0')}`;
     return (
         <div
             ref={setNodeRef}
             style={style}
             className={`
-                card-reference expressive-reveal flex flex-col ${state.isMenuOpen ? 'overflow-visible' : 'overflow-hidden'} transition-shadow
+                card-strong expressive-reveal flex flex-col ${state.isMenuOpen ? 'overflow-visible' : 'overflow-hidden'} transition-shadow
                 ${ssStyle ? `border-l-4 ${ssStyle.border}` : ''}
                 ${isDragging ? 'shadow-2xl ring-2 ring-red-500/20' : ''}
                 ${isLinkSource ? 'ring-2 ring-amber-400/40 shadow-[0_0_0_1px_rgba(251,191,36,0.15)]' : ''}
@@ -23,10 +25,8 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                 ${allDone ? 'shadow-[0_20px_50px_-24px_rgba(34,197,94,0.32)]' : ''}
             `}
         >
-            <div className="border-b border-border-subtle px-4 pb-3 pt-3">
-                <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1 space-y-1.5">
-                        <div className="flex min-w-0 items-center gap-1">
+            <div className="border-b border-border-subtle">
+                <div className="flex min-h-[48px] items-center gap-2 bg-surface-raised px-4">
                             {dragEnabled && (
                                 <div
                                     className="-ml-2 rounded-full p-1 text-zinc-500 touch-none cursor-grab active:cursor-grabbing hover:text-zinc-200"
@@ -37,7 +37,7 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                                 </div>
                             )}
                             {/* Muscle, target and type labels live in the rail, the set rows and the detail view. */}
-                            <h3 className="min-w-0 text-xl font-semibold leading-tight tracking-tight text-[rgb(var(--text-primary))]">
+                            <h3 className="min-w-0 flex-1 text-[17px] font-semibold leading-tight tracking-tight text-[rgb(var(--text-primary))]">
                                 <button
                                     type="button"
                                     onClick={(event) => {
@@ -49,49 +49,19 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                                     {String(getTranslated(ex.name, lang))}
                                 </button>
                             </h3>
-                        </div>
+                            <button
+                                type="button"
+                                data-testid="exercise-rest-chip"
+                                onClick={(event) => {
+                                    event.stopPropagation();
+                                    if (onStartRest) onStartRest(restSeconds);
+                                }}
+                                className="relative flex h-[28px] min-w-[40px] shrink-0 items-center gap-1 rounded-md bg-surface-elevated px-2 text-[13px] font-bold tabular-nums text-white transition-colors after:absolute after:-inset-2 after:content-[''] hover:bg-surface-elevated/80 active:scale-95"
+                            >
+                                <Icon name="Timer" size={13} />
+                                <span>{restLabel}</span>
+                            </button>
 
-                        {((heroMetric && !allDone) || isLinkSource || isLinkingTarget) && (
-                            <div className="flex flex-wrap items-center gap-1 pl-0.5">
-                                {heroMetric && !allDone && (
-                                    <div className={`inline-flex max-w-full items-start gap-1 rounded-full px-1 py-0.5 text-xs font-semibold ${heroMetric.tone}`}>
-                                        <Icon name={heroMetric.icon} size={12} className="mt-0.5 shrink-0" />
-                                        <span>{heroMetric.label}</span>
-                                    </div>
-                                )}
-
-                                {isLinkSource && (
-                                    <button
-                                        type="button"
-                                        onClick={(event) => {
-                                            event.stopPropagation();
-                                            onLink(null);
-                                        }}
-                                        className="inline-flex items-center gap-1 rounded-full border border-amber-400/20 bg-amber-500/10 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-amber-200 transition-colors hover:bg-amber-500/15"
-                                    >
-                                        <Icon name="Link" size={10} />
-                                        <span>{c.pickPair}</span>
-                                    </button>
-                                )}
-
-                                {isLinkingTarget && (
-                                    <button
-                                        type="button"
-                                        onClick={(event) => {
-                                            event.stopPropagation();
-                                            handleSupersetAction();
-                                        }}
-                                        className="inline-flex items-center gap-1 rounded-full border border-cyan-400/20 bg-cyan-500/10 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-cyan-200 transition-colors hover:bg-cyan-500/15"
-                                    >
-                                        <Icon name="Link" size={10} />
-                                        <span>{c.pairHere}</span>
-                                    </button>
-                                )}
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="flex items-center gap-1.5">
                         {onOpenWarmup && canWarmup && (() => {
                             const firstSetWeight = Number(ex.sets?.[0]?.weight || 0);
                             const hasFirstSetWeight = firstSetWeight > 0;
@@ -155,10 +125,48 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                                 lang={lang}
                             />
                         </div>
-
-                    </div>
                 </div>
+                {ex.note && (
+                    <p className="px-4 pb-2 text-xs text-muted">{ex.note}</p>
+                )}
+                        {((heroMetric && !allDone) || isLinkSource || isLinkingTarget) && (
+                            <div className="flex flex-wrap items-center gap-1 pl-0.5">
+                                {heroMetric && !allDone && (
+                                    <div className={`inline-flex max-w-full items-start gap-1 rounded-full px-1 py-0.5 text-xs font-semibold ${heroMetric.tone}`}>
+                                        <Icon name={heroMetric.icon} size={12} className="mt-0.5 shrink-0" />
+                                        <span>{heroMetric.label}</span>
+                                    </div>
+                                )}
 
+                                {isLinkSource && (
+                                    <button
+                                        type="button"
+                                        onClick={(event) => {
+                                            event.stopPropagation();
+                                            onLink(null);
+                                        }}
+                                        className="inline-flex items-center gap-1 rounded-full border border-amber-400/20 bg-amber-500/10 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-amber-200 transition-colors hover:bg-amber-500/15"
+                                    >
+                                        <Icon name="Link" size={10} />
+                                        <span>{c.pickPair}</span>
+                                    </button>
+                                )}
+
+                                {isLinkingTarget && (
+                                    <button
+                                        type="button"
+                                        onClick={(event) => {
+                                            event.stopPropagation();
+                                            handleSupersetAction();
+                                        }}
+                                        className="inline-flex items-center gap-1 rounded-full border border-cyan-400/20 bg-cyan-500/10 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-cyan-200 transition-colors hover:bg-cyan-500/15"
+                                    >
+                                        <Icon name="Link" size={10} />
+                                        <span>{c.pairHere}</span>
+                                    </button>
+                                )}
+                            </div>
+                        )}
                 <div className="empty:hidden">
                     {(isEMOM || isMyorep || isCluster || isGiant || isRestPause || isDrop || isTimeVolume || isTripleAdd || hasTopBackoff || isTabata || isHIIT) && (
                         <div className="mb-1.5">

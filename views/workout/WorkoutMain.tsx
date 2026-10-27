@@ -16,7 +16,7 @@ import type { WorkoutViewState } from './useWorkoutViewState';
 const WorkoutSortableList = React.lazy(() => import('../../components/workout/WorkoutSortableList'));
 
 export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) => {
-    const { onBack, onOpenReorder, sessionExercises, openMenuId, setOpenMenuId, setShowFinishModal, setReplacingExId, setAddingExercise, linkingId, setLinkingId, setEditingMuscleId, setWarmupExId, setDetailExercise, handleSetUpdate, handleAddSet, handleDeleteSet, updateSession, exercises, logs, lang, config, activeSession, t, stageConfig, isCalisthenicsSession, supersetColorIndexes, handleSetTypeChange, sortableItems, activeExerciseId, setActiveExerciseId, handleToggleExpand, handleSetComplete, handleReorder, remainingSets, completedWorkingSets, totalWorkingSets, quickAccessExercise } = state;
+    const { onBack, onOpenReorder, sessionExercises, openMenuId, setOpenMenuId, setShowFinishModal, setReplacingExId, setAddingExercise, linkingId, setLinkingId, setEditingMuscleId, setWarmupExId, setDetailExercise, handleSetUpdate, handleAddSet, handleDeleteSet, updateSession, exercises, logs, lang, config, activeSession, t, stageConfig, isCalisthenicsSession, supersetColorIndexes, handleSetTypeChange, sortableItems, activeExerciseId, setActiveExerciseId, handleToggleExpand, handleSetComplete, handleReorder, remainingSets, completedWorkingSets, totalWorkingSets, quickAccessExercise, startManualRest, manualRestPreset } = state;
     const panelRef = useRef<HTMLDivElement>(null);
 
     const focusedId = useMemo(() => {
@@ -181,6 +181,8 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                                                     exercise={ex}
                                                     isExpanded={isExpanded}
                                                     onToggleExpand={handleToggleExpand}
+                                                    onStartRest={startManualRest}
+                                                    restPresetSeconds={manualRestPreset}
                                                     onSetUpdate={handleSetUpdate}
                                                     onSetComplete={handleSetComplete}
                                                     onSetTypeChange={handleSetTypeChange}
