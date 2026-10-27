@@ -2,8 +2,8 @@ import { test, expect } from '@playwright/test';
 
 const ERROR_BOUNDARY_TEXT = /ERROR CRÍTICO|CRITICAL ERROR/;
 
-test.describe('Rest pill touch targets (F3)', () => {
-    test('compact -15s, +30s and skip buttons measure at least 44x44px', async ({ page }) => {
+test.describe('Rest controls touch targets (F3)', () => {
+    test('in-flow dock -15s, +30s and skip buttons measure at least 44x44px', async ({ page }) => {
         await page.addInitScript(() => {
             localStorage.setItem('il_onboarded_v2', 'true');
             localStorage.setItem('il_tutorial_v2', JSON.stringify({
@@ -38,14 +38,13 @@ test.describe('Rest pill touch targets (F3)', () => {
         await expect(firstExOption).toBeVisible({ timeout: 6000 });
         await firstExOption.click();
 
-        // Completing a set starts the rest timer pill (compact by default).
+        // Completing a set starts the rest timer in the in-flow dock.
+        // (The floating pill never renders outside the workout.)
         const completeSetBtn = page.locator('button[aria-label*="Completar serie" i], button[aria-label*="Complete set" i]').first();
         await expect(completeSetBtn).toBeVisible({ timeout: 6000 });
         await completeSetBtn.click();
-        await page.getByLabel(/Atrás|Back/, { exact: true }).first().click();
-        await expect(page.locator('nav[aria-label="Main navigation"]')).toBeVisible();
 
-        const pill = page.locator('aside');
+        const pill = page.locator('[data-workout-rest-dock]');
         await expect(pill.getByRole('button', { name: '-15s' })).toBeVisible({ timeout: 8000 });
 
         for (const name of ['-15s', '+30s']) {

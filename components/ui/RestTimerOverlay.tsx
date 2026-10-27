@@ -7,8 +7,8 @@ export { CircularTimer } from './restTimer/CircularTimer';
 export { TIMER_RING_RADIUS, TIMER_RING_CIRCUMFERENCE, calculateTimerPercentage, calculateRingDashOffset, applyEffortRatingToExercises, resolveRestNextAction } from './restTimer/restTimerLogic';
 export type { RestNextAction } from './restTimer/restTimerLogic';
 
-export const RestTimerOverlay: React.FC = () => {
+export const RestTimerOverlay: React.FC<{ activeView?: string }> = ({ activeView }) => {
     const state = useRestTimerOverlayState();
     if (!state.restTimer || !state.restTimer.active) return <RestTimerPrompts state={state} />;
-    return <RestTimerActive state={state} />;
+    return <RestTimerActive state={state} floatingUnlessWorkout={activeView} />;
 };

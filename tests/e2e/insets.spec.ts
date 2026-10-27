@@ -83,15 +83,13 @@ test.describe('P7-4: edge-to-edge insets', () => {
         const completeSetBtn = page.locator('button[aria-label*="Completar serie" i], button[aria-label*="Complete set" i]').first();
         await expect(completeSetBtn).toBeVisible({ timeout: 6000 });
         await completeSetBtn.click();
-        await page.getByLabel(/Atrás|Back/, { exact: true }).first().click();
-        await expect(page.locator('nav[aria-label="Main navigation"]')).toBeVisible();
 
-        const pill = page.locator('aside');
+        // --- Rest dock: in-flow surface (no floating pill outside the
+        // workout). Every control clears the bottom inset wherever it sits.
+        const pill = page.locator('[data-workout-rest-dock]');
         await expect(pill.getByRole('button', { name: '-15s' })).toBeVisible({ timeout: 8000 });
         const pillBox = await pill.boundingBox();
         expect(pillBox).not.toBeNull();
-        // Above the nav-bar zone AND above the 80px float gap on top of it.
-        expect(pillBox!.y + pillBox!.height, 'pill bottom').toBeLessThanOrEqual(height - INSET_BOTTOM - 80 + 2);
 
         const pillButtons = pill.locator('button');
         for (let i = 0; i < (await pillButtons.count()); i++) {

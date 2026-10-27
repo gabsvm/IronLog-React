@@ -8,7 +8,7 @@ import { CircularTimer } from './CircularTimer';
 import type { RestTimerOverlayState } from './useRestTimerOverlayState';
 import { RestTimerNotifPrompt } from './RestTimerPrompts';
 import { isWorkoutRestDocked, subscribeWorkoutRestDocked } from '../../workout/workoutRestDockSignal';
-export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ state }) => {
+export const RestTimerActive: React.FC<{ state: RestTimerOverlayState; floatingUnlessWorkout?: string }> = ({ state, floatingUnlessWorkout }) => {
     const { restTimer, setRestTimer, lang, reducedEffects, t, mode, setMode, keyboardOffset, pillRef, currentSourceSet, showEffortFeedback, handleRateEffort, nextExerciseInfo, config } = state;
     // Dynamically check whether bottom nav is in the DOM so the pill clears
     // it on Home/Diary/Progress but hugs the bottom when in full-screen views.
@@ -23,6 +23,12 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
     // Phase 4: the workout shows its own in-flow rest dock (same TimerContext
     // motor). Suppress the floating pill/sheet while it is mounted so there
     // is a single visual rest instance; one-time prompts still render below.
+    // Same rule outside the workout: the floating pill never covers other
+    // destinations. The rest keeps running; the FAB and the native alarm own
+    // the return path. Prompts stay reachable.
+    if (floatingUnlessWorkout !== undefined && floatingUnlessWorkout !== 'workout') {
+        return <RestTimerNotifPrompt state={state} />;
+    }
     if (isWorkoutRestDocked()) {
         return <RestTimerNotifPrompt state={state} />;
     }

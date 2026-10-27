@@ -113,19 +113,21 @@ export const HomeHeroCard: React.FC<{ state: HomeViewState }> = ({ state }) => {
                 </div>
             )}
 
-            {/* Primary Action Button: Full width lime pill */}
-            <div className="mt-5">
+            {/* Primary Action Button: hidden while this day's session is
+                active — the EN CURSO card above already owns resume (no
+                double CTA). */}
+            {!isSelectedActive && (
                 <button
                     type="button"
                     data-testid="hero-start-workout"
                     id="hero-start-workout"
                     onClick={() => isSelectedActive && onResumeSession ? onResumeSession() : startSession(selectedDayIdx)}
-                    className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-full bg-[rgb(var(--primary-500))] px-6 text-base font-extrabold text-[rgb(var(--accent-ink))] shadow-[0_8px_24px_rgba(var(--primary-500),0.32)] transition-all duration-200 active:scale-[0.98] hover:brightness-105"
+                    className="mt-5 flex min-h-[54px] w-full items-center justify-center gap-2 rounded-full bg-[rgb(var(--primary-500))] px-6 text-base font-extrabold text-[rgb(var(--accent-ink))] shadow-[0_8px_24px_rgba(var(--primary-500),0.32)] transition-all duration-200 active:scale-[0.98] hover:brightness-105"
                 >
                     <Icon name={isSelectedActive ? 'Play' : isDone ? 'Repeat' : 'Play'} size={20} strokeWidth={2.8} />
-                    <span>{isSelectedActive ? ui.resumeTraining : isDone ? ui.repeatTraining : ui.startTraining}</span>
+                    <span>{isDone ? ui.repeatTraining : ui.startTraining}</span>
                 </button>
-            </div>
+            )}
         </article>
     );
 };

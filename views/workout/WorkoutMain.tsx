@@ -7,6 +7,7 @@ import { Icon } from '../../components/ui/Icon';
 import type { WorkoutRailItem } from '../../components/workout/WorkoutExerciseRail';
 import { SortableExerciseCard } from '../../components/workout/SortableExerciseCard';
 import { WorkoutRestDock } from '../../components/workout/WorkoutRestDock';
+import { useTimerState } from '../../context/TimerContext';
 import { WorkoutTimer } from '../../components/workout/WorkoutTimer';
 import { getTranslated } from '../../utils';
 import { isWorkingSet } from '../../utils/workoutProgress';
@@ -46,8 +47,14 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
         return sessionExercises.find((ex) => ex.supersetId === focusedExercise.supersetId && ex.instanceId !== focusedExercise.instanceId) || null;
     }, [sessionExercises, focusedExercise]);
 
-    if (!activeSession) return null;
+    // The in-flow dock lives right under the rest's source exercise (not at
+    // the end of the list): mounting it causes no long jump, so no
+    // scroll-into-view is needed on activation (see WorkoutRestDock).
+    const restSourceInstanceId = useTimerState()?.source?.exerciseInstanceId ?? null;
+    const dockAnchored = restSourceInstanceId !== null
+        && sessionExercises.some((ex) => ex.instanceId === restSourceInstanceId);
 
+    if (!activeSession) return null;
     const focusedRailItem = focusedIdx >= 0 ? railItems[focusedIdx] : null;
     // Next unfinished exercise after the focused one, wrapping to earlier skipped ones.
     const nextExercise = focusedIdx >= 0
@@ -175,7 +182,8 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                                         const isLinkingTarget = isLinkingMode && linkingId !== ex.instanceId;
 
                                         return (
-                                            <div key={ex.instanceId} id={`exercise-card-${ex.instanceId}`}>
+                                            <React.Fragment key={ex.instanceId}>
+                                            <div id={`exercise-card-${ex.instanceId}`}>
                                                 <SortableExerciseCard
                                                     exercise={ex}
                                                     isExpanded={isExpanded}
@@ -208,12 +216,16 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                                                     tutorialId={isActive ? 'tut-set-type' : undefined}
                                                 />
                                             </div>
+                                            {/* The rest dock anchors under its source exercise. */}
+                                            {restSourceInstanceId === ex.instanceId && <WorkoutRestDock />}
+                                            </React.Fragment>
                                         );
                                     })}
                                 </WorkoutSortableList>
                             </Suspense>
 
-                            <WorkoutRestDock />
+                            {/* Sourceless rests (manual chip) keep the end-of-list dock. */}
+                            {!dockAnchored && <WorkoutRestDock />}
 
                             {/* Once the focused exercise is complete, the next step becomes the primary action. */}
                             {focusedRailItem?.complete && (nextExercise ? (

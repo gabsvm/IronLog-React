@@ -5,7 +5,7 @@ import type { RestTimerOverlayState } from './useRestTimerOverlayState';
 export const RestTimerNotifPrompt: React.FC<{ state: RestTimerOverlayState }> = ({ state }) => {
     const { t, showNotifPrompt, dismissNotifPrompt, enableNotifFromPrompt } = state;
     const notifPrompt = showNotifPrompt ? (
-        <div role="status" className="fixed inset-x-0 z-sheet mx-auto max-w-md px-3 pointer-events-none" style={{ bottom: 'calc(var(--safe-area-bottom) + 80px + var(--rest-pill-height, 0px) + 16px)' }}>
+        <div role="status" className="fixed inset-x-0 z-sheet mx-auto max-w-md px-3 pointer-events-none" style={{ top: 'calc(var(--safe-area-top) + 76px)' }}>
             <div className="premium-theme-panel pointer-events-auto rounded-3xl p-4 shadow-xl">
                 <p className="text-sm font-semibold text-[rgb(var(--text-primary))]">{t.notifPromptTitle}</p>
                 <p className="mt-2 text-xs text-muted">{t.notifWebCaveat}</p>
@@ -36,7 +36,7 @@ export const RestTimerNotifPrompt: React.FC<{ state: RestTimerOverlayState }> = 
 export const RestTimerAlarmNotice: React.FC<{ state: RestTimerOverlayState }> = ({ state }) => {
     const { t, showAlarmNotice, dismissAlarmNotice, enableAlarmFromNotice } = state;
     const alarmNotice = showAlarmNotice ? (
-        <div role="status" className="fixed inset-x-0 z-sheet mx-auto max-w-md px-3 pointer-events-none" style={{ bottom: 'calc(var(--safe-area-bottom) + 80px + var(--rest-pill-height, 0px) + 16px)' }}>
+        <div role="status" className="fixed inset-x-0 z-sheet mx-auto max-w-md px-3 pointer-events-none" style={{ top: 'calc(var(--safe-area-top) + 76px)' }}>
             <div className="premium-theme-panel pointer-events-auto rounded-3xl p-4 shadow-xl">
                 <p className="text-sm font-semibold text-[rgb(var(--text-primary))]">{t.exactAlarmNoticeTitle}</p>
                 <div className="mt-2 grid grid-cols-2 gap-2">

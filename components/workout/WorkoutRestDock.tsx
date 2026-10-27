@@ -35,7 +35,10 @@ export const WorkoutRestDock: React.FC = () => {
     const setActiveSession = useStore((state) => state.setActiveSession);
     const t = TRANSLATIONS[lang];
     const dockRef = useRef<HTMLElement>(null);
-    const wasActiveRef = useRef(false);
+
+    // The dock renders right under the rest's source exercise (WorkoutMain
+    // anchors it there), so mounting never needs to move the scroll: the
+    // next-set smooth scroll in the card owns post-tap motion.
 
     // Announce the dock so the global overlay hides its floating views.
     useEffect(() => {
@@ -44,15 +47,6 @@ export const WorkoutRestDock: React.FC = () => {
             setWorkoutRestDocked(false);
         };
     }, []);
-
-    // Bring a fresh rest into view without moving focus or remounting inputs.
-    useEffect(() => {
-        const nowActive = Boolean(restTimer?.active);
-        if (nowActive && !wasActiveRef.current) {
-            dockRef.current?.scrollIntoView({ block: 'nearest' });
-        }
-        wasActiveRef.current = nowActive;
-    }, [restTimer?.active]);
 
     const currentSourceExercise = useMemo(() => {
         if (!restTimer?.source || !activeSession?.exercises) return null;
@@ -70,6 +64,28 @@ export const WorkoutRestDock: React.FC = () => {
     const nextExerciseInfo = useMemo(() => {
         return resolveRestNextAction(activeSession?.exercises, restTimer?.source, lang, resolveWeightUnit(config));
     }, [activeSession?.exercises, restTimer?.source, lang, config]);
+
+    // Expose the dock height as --rest-dock-height so the fixed one-time
+    // prompts stack above it (same contract as --rest-pill-height for the
+    // floating pill). '0px' whenever the dock is not mounted.
+    useEffect(() => {
+        const root = document.documentElement;
+        const el = dockRef.current;
+        if (!el) {
+            root.style.setProperty('--rest-dock-height', '0px');
+            return;
+        }
+        const apply = () => {
+            root.style.setProperty('--rest-dock-height', `${Math.ceil(el.getBoundingClientRect().height)}px`);
+        };
+        apply();
+        const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(apply) : null;
+        ro?.observe(el);
+        return () => {
+            ro?.disconnect();
+            root.style.setProperty('--rest-dock-height', '0px');
+        };
+    }, [restTimer?.active, showEffortFeedback, nextExerciseInfo, restTimer?.paused]);
 
     if (!restTimer || !restTimer.active) return null;
 

@@ -77,7 +77,7 @@ describe('Task U1: RestTimerOverlay as non-modal compact floating pill by defaul
     });
 
     it('renders in compact non-modal pill mode by default without backdrop-blur', () => {
-        render(<RestTimerOverlay />);
+        render(<RestTimerOverlay activeView="workout" />);
 
         // In compact mode, the floating pill is rendered
         expect(screen.getByText('1:30')).toBeDefined();
@@ -87,6 +87,16 @@ describe('Task U1: RestTimerOverlay as non-modal compact floating pill by defaul
         // Should NOT have dialog role or circular timer svg in compact mode
         expect(screen.queryByRole('dialog')).toBeNull();
         expect(screen.queryByText(/Saltar descanso/i)).toBeNull();
+    });
+
+    it('hides the floating pill outside the workout (prompts stay reachable)', () => {
+        render(<RestTimerOverlay activeView="home" />);
+
+        // No floating pill, no expanded sheet outside the workout...
+        expect(screen.queryByText('1:30')).toBeNull();
+        expect(screen.queryByText('-15s')).toBeNull();
+        expect(screen.queryByRole('dialog')).toBeNull();
+        // ...while the timer itself keeps running underneath.
     });
 
     it('expands to full panel when the pill is clicked', () => {

@@ -86,7 +86,7 @@ test.describe('Rest surfaces remain reachable without overlap (G2)', () => {
         await expect(page.getByText(ERROR_BOUNDARY_TEXT)).toHaveCount(0);
     });
 
-    test('H1: notif prompt renders above the visible pill without overlap', async ({ page }) => {
+    test('H1: notif prompt never covers the rest dock', async ({ page }) => {
         await seedShowRirProfile(page);
         await page.addInitScript(() => {
             if (typeof window.Notification !== 'undefined') {
@@ -125,30 +125,34 @@ test.describe('Rest surfaces remain reachable without overlap (G2)', () => {
         await option.click();
         await expect(page.locator('[role="dialog"], .modal')).toHaveCount(0, { timeout: 6000 });
 
-        // Completing a set starts the rest pill.
+        // Completing a set starts the rest dock in-flow (the floating pill
+        // never renders outside the workout).
         const completeSetBtn = page.locator('button[aria-label*="Completar serie" i], button[aria-label*="Complete set" i]').first();
         await expect(completeSetBtn).toBeVisible({ timeout: 6000 });
         await completeSetBtn.click();
-        await page.getByLabel(/Atrás|Back/, { exact: true }).first().click();
-        await expect(page.locator('nav[aria-label="Main navigation"]')).toBeVisible();
 
-        const pill = page.locator('aside');
+        const pill = page.locator('[data-workout-rest-dock]');
         await expect(pill.getByRole('button', { name: '-15s' })).toBeVisible({ timeout: 8000 });
+        // Center the dock so the bottom-anchored prompt cannot cover it
+        // regardless of scroll position.
+        await pill.scrollIntoViewIfNeeded();
 
         // Fire the real event the timer hook emits on natural rest completion.
         // (A real 90 s rest is impractical in e2e; the event contract itself is
         // covered by timerNotifications.test.ts against the real hook.)
         await page.evaluate(() => window.dispatchEvent(new Event('ironlog:rest-completed')));
 
-        const prompt = page.locator('[role="status"]');
+        const prompt = page.locator('[role="status"]', { hasText: /aviso|notif/i });
         await expect(prompt).toBeVisible({ timeout: 6000 });
 
-        // The prompt sits fully above the pill: no overlap, gap of ~16px.
+        // The prompt never covers the rest surface (in-flow dock: they must
+        // simply not overlap, wherever the dock sits in the list).
         const promptBox = await prompt.boundingBox();
         const pillBox = await pill.boundingBox();
         expect(promptBox).not.toBeNull();
         expect(pillBox).not.toBeNull();
-        expect(promptBox!.y + promptBox!.height).toBeLessThanOrEqual(pillBox!.y + 1);
+        const overlaps = promptBox!.y < pillBox!.y + pillBox!.height && promptBox!.y + promptBox!.height > pillBox!.y;
+        expect(overlaps, 'notif prompt overlaps the rest dock').toBe(false);
 
         await expect(page.getByText(ERROR_BOUNDARY_TEXT)).toHaveCount(0);
     });
