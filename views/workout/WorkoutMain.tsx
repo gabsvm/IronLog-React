@@ -16,7 +16,7 @@ import type { WorkoutViewState } from './useWorkoutViewState';
 const WorkoutSortableList = React.lazy(() => import('../../components/workout/WorkoutSortableList'));
 
 export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) => {
-    const { onBack, onOpenReorder, sessionExercises, openMenuId, setOpenMenuId, setShowFinishModal, setReplacingExId, setAddingExercise, linkingId, setLinkingId, setEditingMuscleId, setWarmupExId, setDetailExercise, handleSetUpdate, handleAddSet, handleDeleteSet, updateSession, exercises, logs, lang, config, activeSession, t, stageConfig, isCalisthenicsSession, supersetColorIndexes, handleSetTypeChange, sortableItems, activeExerciseId, setActiveExerciseId, handleToggleExpand, handleSetComplete, handleReorder, remainingSets, progressPct, completedWorkingSets, totalWorkingSets, quickAccessExercise } = state;
+    const { onBack, onOpenReorder, sessionExercises, openMenuId, setOpenMenuId, setShowFinishModal, setReplacingExId, setAddingExercise, linkingId, setLinkingId, setEditingMuscleId, setWarmupExId, setDetailExercise, handleSetUpdate, handleAddSet, handleDeleteSet, updateSession, exercises, logs, lang, config, activeSession, t, stageConfig, isCalisthenicsSession, supersetColorIndexes, handleSetTypeChange, sortableItems, activeExerciseId, setActiveExerciseId, handleToggleExpand, handleSetComplete, handleReorder, remainingSets, completedWorkingSets, totalWorkingSets, quickAccessExercise } = state;
     const panelRef = useRef<HTMLDivElement>(null);
 
     const focusedId = useMemo(() => {
@@ -94,7 +94,10 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                                     ? activeSession.name.replace(new RegExp(`^${activeSession.week}\\s*[•·-]\\s*`), '')
                                     : activeSession.name)}
                         </h1>
-                        <WorkoutTimer startTime={activeSession.startTime} className="block text-xs font-medium tabular-nums text-muted" />
+                        <div data-testid="workout-session-stats" className="flex items-center gap-1 text-xs text-muted tabular-nums">
+                            <WorkoutTimer startTime={activeSession.startTime} className="block text-xs font-medium tabular-nums text-muted" />
+                            <span>· {completedWorkingSets}/{totalWorkingSets}</span>
+                        </div>
                     </div>
 
                     
@@ -115,32 +118,16 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                     )}
 
                     <button
-                        type="button"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setAddingExercise(true);
-                        }}
-                        className="relative flex h-11 w-11 after:absolute after:-inset-1.5 after:content-[''] shrink-0 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:text-white active:bg-surface-raised"
-                        title={t.addExercise}
-                        aria-label={t.addExercise}
-                    >
-                        <Icon name="Plus" size={18} strokeWidth={2.5} />
-                    </button>
-
-                    <button
                         id="tut-finish-btn"
                         type="button"
                         onClick={(e) => {
                             e.stopPropagation();
                             setShowFinishModal(true);
                         }}
-                        className={`${remainingSets === 0 ? 'gl-primary' : 'gl-quiet'} relative !min-h-[40px] shrink-0 !px-3.5 text-xs font-semibold active:scale-95`}
+                        className="relative flex min-h-[44px] shrink-0 items-center px-2 text-[15px] font-semibold text-[rgb(var(--accent-text))] transition-opacity active:opacity-70"
                     >
                         {t.finish}
                     </button>
-                </div>
-                <div role="progressbar" aria-label={t.yourSession} aria-valuemin={0} aria-valuemax={totalWorkingSets || 1} aria-valuenow={completedWorkingSets} className="h-1 w-full bg-surface-elevated">
-                    <div className="h-full bg-primary-500 transition-[width] duration-300 ease-natural effects-reduced:transition-none" style={{ width: `${Math.min(100, Math.max(0, progressPct))}%` }} />
                 </div>
             </div>
 

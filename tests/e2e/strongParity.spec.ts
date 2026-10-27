@@ -21,8 +21,8 @@ test.describe('Strong parity T1: stacked continuous exercise list', () => {
             .getByRole('button', { name: /Iniciar Sesión Libre|Start Free Session/i }).click();
         await expect(page.locator('#tut-finish-btn')).toBeVisible({ timeout: 10000 });
 
-        // Add 2 distinct exercises via the header add button, without touching any rail.
-        const addExHeaderBtn = page.locator('button[title*="Añadir ejercicio" i], button[title*="Add exercise" i]').first();
+        // Add 2 distinct exercises via the end-of-list add button, without touching any rail.
+        const addExHeaderBtn = page.getByRole('button', { name: /Añadir ejercicio|Add exercise/ }).last();
         for (let i = 0; i < 2; i++) {
             await addExHeaderBtn.click();
             const dialog = page.locator('[role="dialog"]').last();
@@ -53,5 +53,69 @@ test.describe('Strong parity T1: stacked continuous exercise list', () => {
         await expect(page.locator(
             '#tut-exercise-list nav[aria-label="Exercises"], #tut-exercise-list nav[aria-label="Ejercicios"]',
         )).toHaveCount(0);
+    });
+});
+
+// Task 2 (Strong parity): single-row Strong-style session header — no progress
+// bar, text-only Finish always visible, session stats under the title.
+test.describe('Strong parity T2: Strong-style session header', () => {
+    test('no progressbar, Finish always visible, X/Y stats under title', async ({ page }) => {
+        await page.addInitScript(() => {
+            localStorage.setItem('il_onboarded_v2', 'true');
+            localStorage.setItem('il_tutorial_v2', JSON.stringify({
+                home: true, workout: true, history: true, stats: true, mesoSettings: true, nutrition: true,
+            }));
+        });
+        await page.goto('/');
+        await expect(page.locator('nav[aria-label="Main navigation"]')).toBeVisible({ timeout: 20000 });
+
+        await page.getByRole('button', { name: /^(Sesión libre|Freestyle session) ·/ }).click();
+        await page.getByRole('dialog', { name: /Iniciar entrenamiento|Start training/ })
+            .getByRole('button', { name: /Sesión libre|Freestyle/ }).click();
+        await page.getByRole('dialog', { name: /Nueva Sesión|New Session/i })
+            .getByRole('button', { name: /Iniciar Sesión Libre|Start Free Session/i }).click();
+        await expect(page.locator('#tut-finish-btn')).toBeVisible({ timeout: 10000 });
+
+        // Add 2 exercises via the end-of-list add button (dup header + is gone).
+        const addExBtn = page.getByRole('button', { name: /Añadir ejercicio|Add exercise/ }).last();
+        for (let i = 0; i < 2; i++) {
+            await addExBtn.click();
+            const dialog = page.locator('[role="dialog"]').last();
+            await expect(dialog).toBeVisible({ timeout: 6000 });
+            const option = dialog.locator('button[class*="text-left"]').nth(i);
+            await expect(option).toBeVisible({ timeout: 6000 });
+            await option.click();
+            await page.waitForTimeout(400);
+        }
+
+        // No progress bar anywhere in the workout view.
+        await expect(page.locator('[role="progressbar"]')).toHaveCount(0);
+
+        // No duplicate "+" add button in the header (only end-of-list remains).
+        await expect(page.locator(
+            'button[title*="Añadir ejercicio" i], button[title*="Add exercise" i]',
+        )).toHaveCount(0);
+
+        // Session stats X/Y visible under the title, next to the timer.
+        await expect(page.getByTestId('workout-session-stats')).toContainText(/\d+\/\d+/, { timeout: 8000 });
+
+        // Finish is a text-only action, visible with 0 sets completed, >=44px target.
+        const finishBtn = page.locator('#tut-finish-btn');
+        await expect(finishBtn).toBeVisible();
+        const box = await finishBtn.boundingBox();
+        expect(box?.height).toBeGreaterThanOrEqual(44);
+
+        // Complete every set — Finish stays visible with all sets done.
+        const completeBtns = page.locator(
+            '#tut-exercise-list button[aria-label*="Completar serie" i], #tut-exercise-list button[aria-label*="Complete set" i]',
+        );
+        const total = await completeBtns.count();
+        expect(total).toBeGreaterThan(0);
+        for (let i = 0; i < total; i++) {
+            await completeBtns.nth(i).click();
+            await page.waitForTimeout(150);
+        }
+        await expect(finishBtn).toBeVisible();
+        await expect(page.getByTestId('workout-session-stats')).toContainText(/\d+\/\d+/);
     });
 });
