@@ -2,6 +2,7 @@ import React from 'react';
 import { SetRow } from './SetRow';
 import { SessionExercise, WorkoutSet, SetType, CardioType } from '../../types';
 import { TRANSLATIONS } from '../../constants';
+import { pickLang } from '../../utils/i18n';
 
 interface Props {
     ex: SessionExercise;
@@ -25,6 +26,9 @@ interface Props {
     onSetUpdate: (exId: number, setId: number, field: string, value: any) => void;
     onSetComplete: (exId: number, setId: number) => void;
     onSetTypeChange: (exId: number, setId: number, type: SetType) => void;
+    onAddSet?: (id: number) => void;
+    onDeleteSet?: (exId: number, setId: number) => void;
+    onModifySets?: (exId: number, delta: number) => void;
 
     // Config/i18n
     config: any;
@@ -55,6 +59,9 @@ export const ExerciseCardSets: React.FC<Props> = React.memo(({
     onSetUpdate,
     onSetComplete,
     onSetTypeChange,
+    onAddSet,
+    onDeleteSet,
+    onModifySets,
     config,
     t,
     lang,
@@ -90,32 +97,29 @@ export const ExerciseCardSets: React.FC<Props> = React.memo(({
                 <div className="text-violet-400">HOLD TIME</div>
                 <div></div>
             </div>
-        ) : ex.isBodyweight ? (
-            <div className={`grid ${config?.showRIR ? 'grid-cols-[28px_38px_1fr_1fr_38px_36px]' : 'grid-cols-[28px_44px_1fr_1fr_36px]'} items-center gap-2 border-b border-border-subtle px-2.5 py-1.5 text-center text-[10px] font-bold uppercase tracking-wider text-muted`}>
-                <div className={isEMOM ? 'text-cyan-400' : isMyorep ? 'text-purple-400' : isCluster ? 'text-emerald-400' : ''}>
-                    {isEMOM ? 'Min' : isMyorep ? 'Set' : '#'}
-                </div>
-                <div>{h.prevCol}</div>
-                <div className="text-violet-400/90">+{unitLabel}</div>
-                <div>{String(t.reps)}</div>
-                {config?.showRIR && <div>{String(t.rir)}</div>}
-                <div></div>
-            </div>
         ) : (
-            <div className={`grid ${config?.showRIR ? 'grid-cols-[28px_38px_1fr_1fr_38px_36px]' : 'grid-cols-[28px_44px_1fr_1fr_36px]'} items-center gap-2 border-b border-border-subtle px-2.5 py-1.5 text-center text-[10px] font-bold uppercase tracking-wider text-muted`}>
-                <div className={isEMOM ? 'text-cyan-400' : isMyorep ? 'text-purple-400' : isCluster ? 'text-emerald-400' : ''}>
-                    {isEMOM ? 'Min' : isMyorep ? 'Set' : '#'}
-                </div>
-                <div>{h.prevCol}</div>
-                <div>{`${String(t.weight)} (${unitLabel})`}</div>
-                <div>{String(t.reps)}</div>
-                {config?.showRIR && <div>{String(t.rir)}</div>}
+            <div
+                className={`grid ${
+                    config?.showRIR
+                        ? 'grid-cols-[32px_1fr_1fr_44px_44px]'
+                        : 'grid-cols-[32px_1fr_1fr_44px]'
+                } items-center gap-3 border-t border-b border-border-subtle/80 px-3 py-2 text-center text-[11px] font-bold uppercase tracking-wider text-zinc-400`}
+            >
                 <div></div>
+                <div>{ex.isBodyweight ? `+${unitLabel}` : pickLang(lang, { es: 'PESO', en: 'WEIGHT' })}</div>
+                <div className="flex items-center justify-center gap-1">
+                    <span>REPS</span>
+                    <span className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border border-zinc-600 text-[9px] text-zinc-400">
+                        i
+                    </span>
+                </div>
+                {config?.showRIR && <div>{String(t.rir)}</div>}
+                <div>LOG</div>
             </div>
         )}
 
         {/* Sets list */}
-        <div className="space-y-1.5 px-2 py-2">
+        <div className="divide-y divide-border-subtle/60">
             {regularSets.map((set, idx) => (
                 <SetRow
                     key={set.id}
@@ -124,6 +128,9 @@ export const ExerciseCardSets: React.FC<Props> = React.memo(({
                     onUpdate={onSetUpdate}
                     onToggleComplete={onSetComplete}
                     onChangeType={onSetTypeChange}
+                    onAddSet={onAddSet}
+                    onDeleteSet={onDeleteSet}
+                    onModifySets={onModifySets}
                     lang={lang}
                     isCardio={isCardio}
                     isBodyweight={ex.isBodyweight}

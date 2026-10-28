@@ -25,7 +25,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = (props) => {
     if (!activeSession) return null;
 
     return (
-        <div className="fixed inset-0 z-40 flex flex-col bg-surface-app font-sans" onClick={() => setOpenMenuId(null)}>
+        <div className="fixed inset-0 bottom-0 pb-[calc(3.5rem+env(safe-area-inset-bottom,0px))] z-30 flex flex-col bg-surface-app font-sans" onClick={() => setOpenMenuId(null)}>
             <WorkoutMain state={state} />
 
             {/* TUTORIAL OVERLAY HOOK */}

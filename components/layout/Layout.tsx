@@ -11,6 +11,7 @@ import { Logo } from '../ui/Logo';
 import { Avatar } from '../ui/Avatar';
 import { scheduleWhenIdle } from '../../lib/idle';
 import { runAfterProfileClosed } from '../../utils/profileNav';
+import { pickLang } from '../../utils/i18n';
 
 const ProfileSheet = React.lazy(() => import('../profile/ProfileSheet').then(m => ({ default: m.ProfileSheet })));
 import type { ProfileSection } from '../profile/ProfileSheet';
@@ -63,7 +64,7 @@ const KongConvertConfirmModal: React.FC<KongConvertConfirmModalProps> = ({
 };
 
 export interface NavBtnProps {
-    id: 'home' | 'workout' | 'history' | 'stats' | 'nutrition' | 'program';
+    id: any;
     label: string;
     icon: any;
     isActive: boolean;
@@ -89,8 +90,8 @@ NavBtn.displayName = 'NavBtn';
 
 interface LayoutProps {
     children: React.ReactNode;
-    view: 'home' | 'workout' | 'history' | 'stats' | 'nutrition';
-    setView: (v: 'home' | 'workout' | 'history' | 'stats' | 'nutrition' | 'program') => void;
+    view: string;
+    setView: (v: any) => void;
     onOpenProgram: () => void;
     onOpenExercises: () => void;
     onReset: () => void;
@@ -105,7 +106,6 @@ interface LayoutProps {
 export const Layout: React.FC<LayoutProps> = ({
     children, view, setView,
     onOpenProgram, onOpenExercises, onReset, onExport, onForceSync, onImportFile, onLogin, isSyncing,
-    onOpenCommandPalette,
 }) => {
     const { lang } = useAppPreferences();
     const { isOnline, syncStatus } = useSyncStatus();
@@ -113,7 +113,6 @@ export const Layout: React.FC<LayoutProps> = ({
     const { isPro } = usePro();
     const activeMeso = useStore(state => state.activeMeso);
     const hasActiveSession = useStore(state => Boolean(state.activeSession));
-    const activeSessionDayIdx = useStore(state => state.activeSession?.dayIdx);
     const setActiveSession = useStore(state => state.setActiveSession);
     const t = TRANSLATIONS[lang];
     const ly = t.layoutKeys;
@@ -123,6 +122,7 @@ export const Layout: React.FC<LayoutProps> = ({
     const [showFreestyle, setShowFreestyle] = React.useState(false);
     const [showActiveSessionAlert, setShowActiveSessionAlert] = React.useState(false);
     const [showKongConvertConfirm, setShowKongConvertConfirm] = React.useState(false);
+    const [showMoreSheet, setShowMoreSheet] = React.useState(false);
     const hasOpenedProfileRef = React.useRef(false);
     const hasOpenedQuickStartRef = React.useRef(false);
 
@@ -159,7 +159,6 @@ export const Layout: React.FC<LayoutProps> = ({
     const openProfile = React.useCallback((section?: ProfileSection | null) => {
         if (!showProfile) {
             try {
-                // Snapshot current view and push exactly ONE entry per sheet open.
                 window.history.pushState({ ...(window.history.state || {}), view, profile: true }, '', '#profile');
             } catch { }
             setShowProfile(true);
@@ -167,8 +166,6 @@ export const Layout: React.FC<LayoutProps> = ({
         setProfileSection(section ?? null);
     }, [showProfile, view]);
 
-    // External entry points (e.g. back from the exercises library) open the
-    // unified sheet, optionally scrolled to a section.
     React.useEffect(() => {
         const handleOpenProfile = (event: Event) => {
             const section = (event as CustomEvent<{ section?: ProfileSection }>).detail?.section;
@@ -181,7 +178,7 @@ export const Layout: React.FC<LayoutProps> = ({
     React.useEffect(() => {
         const handleNavigate = (event: Event) => {
             const target = (event as CustomEvent<{ view?: string }>).detail?.view;
-            if (target === 'home' || target === 'workout' || target === 'history' || target === 'stats' || target === 'nutrition' || target === 'program') {
+            if (target === 'home' || target === 'workout' || target === 'mesos' || target === 'templates' || target === 'exercises' || target === 'history' || target === 'stats' || target === 'nutrition' || target === 'program') {
                 setView(target);
             }
         };
@@ -192,8 +189,6 @@ export const Layout: React.FC<LayoutProps> = ({
     const closeProfile = () => {
         try {
             if (window.history.state?.profile) {
-                // History owns this sheet: go back and let the popstate handler
-                // below close it, so forward/back stay consistent.
                 window.history.back();
                 return;
             }
@@ -220,14 +215,6 @@ export const Layout: React.FC<LayoutProps> = ({
         setView('program');
     };
 
-    const openPrimaryAction = () => {
-        if (typeof window !== 'undefined' && window.matchMedia('(min-width: 640px)').matches && onOpenCommandPalette) {
-            onOpenCommandPalette();
-            return;
-        }
-        setShowQuickStart(true);
-    };
-
     const startDetached = (session: any) => {
         setActiveSession(session);
         setShowFreestyle(false);
@@ -240,7 +227,7 @@ export const Layout: React.FC<LayoutProps> = ({
                 <div className="app-topbar pointer-events-none absolute left-0 right-0 top-0 z-20 bg-[rgb(var(--surface-app))] px-6 pb-2 pt-safe">
                     <div className="pointer-events-auto mx-auto flex h-14 w-full max-w-2xl items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <Logo className="h-10 w-10" showText />
+                            <Logo size={28} showText />
                             {(!isOnline || syncStatus.pending > 0 || syncStatus.isSyncing) && (
                                 <div className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] ${!isOnline ? 'border-amber-500/25 bg-amber-500/10 text-amber-500' : syncStatus.isSyncing ? 'border-cyan-500/25 bg-cyan-500/10 text-cyan-500' : 'border-zinc-700/40 bg-zinc-900/10 text-zinc-500 dark:bg-zinc-900/85 dark:text-zinc-300'}`}>
                                     <span className={`h-1.5 w-1.5 rounded-full ${!isOnline ? 'bg-amber-400' : syncStatus.isSyncing ? 'bg-cyan-400' : 'bg-zinc-400'}`} />
@@ -255,40 +242,170 @@ export const Layout: React.FC<LayoutProps> = ({
                 </div>
             )}
 
-            <div className={`relative flex-1 ${isVirtualized ? 'overflow-hidden' : 'overflow-y-auto scroll-container'} ${view !== 'workout' ? 'pt-[calc(var(--safe-area-top)+60px)] pb-32' : 'pt-safe pb-0'}`}>
+            <div className={`relative flex-1 ${isVirtualized || view === 'workout' ? 'overflow-hidden' : 'overflow-y-auto scroll-container'} ${view !== 'workout' ? 'pt-[calc(var(--safe-area-top)+60px)] pb-32' : 'pt-0 pb-0'}`}>
                 {/* U4: centered column on wide screens (phones are narrower than max-w-2xl). */}
                 <div className={`mx-auto w-full max-w-2xl ${isVirtualized ? 'h-full' : ''}`}>{children}</div>
             </div>
 
-            {view !== 'workout' && (
-                <nav aria-label="Main navigation" className="fixed bottom-0 left-0 right-0 z-30 border-t border-[rgb(var(--border-subtle)/0.7)] bg-[rgb(var(--surface-base)/0.96)] pb-safe backdrop-blur-xl">
-                    <div className="mx-auto flex h-16 w-full max-w-lg items-center justify-between px-2">
-                        <NavBtn id="home" label={t.train} icon="Layout" isActive={view === 'home'} onSelect={setView} />
-                        <NavBtn id="history" label={t.history} icon="Calendar" isActive={view === 'history'} onSelect={setView} />
-                        <button onClick={openPrimaryAction} aria-label={t.startWorkout} className="mx-2 flex h-12 w-12 shrink-0 -translate-y-3 items-center justify-center rounded-full border border-primary-400/20 bg-primary-500 text-black shadow-lg shadow-primary-500/20 transition-transform duration-300 ease-natural active:scale-95">
-                            <Icon name="Plus" size={24} strokeWidth={2.5} />
-                        </button>
-                        <NavBtn id="nutrition" label={t.diet} icon="Utensils" isActive={view === 'nutrition'} onSelect={setView} />
-                        <NavBtn id="stats" label={t.navStats} icon="BarChart2" isActive={view === 'stats'} onSelect={setView} />
+            <nav aria-label="Main navigation" className="fixed bottom-0 left-0 right-0 z-40 border-t border-border-subtle bg-surface-app/95 pb-safe backdrop-blur-md">
+                <div className="mx-auto flex h-16 w-full max-w-lg items-center justify-between px-2">
+                    <NavBtn
+                        id="workout"
+                        label={t.nav?.workout || pickLang(lang, { es: 'Entreno', en: 'Workout' })}
+                        icon="Dumbbell"
+                        isActive={view === 'workout' || view === 'home'}
+                        onSelect={() => {
+                            if (hasActiveSession) {
+                                setView('workout');
+                            } else {
+                                setView('home');
+                            }
+                        }}
+                    />
+                    <NavBtn
+                        id="mesos"
+                        label={t.nav?.mesos || 'Mesos'}
+                        icon="Calendar"
+                        isActive={view === 'mesos'}
+                        onSelect={() => setView('mesos')}
+                    />
+                    <NavBtn
+                        id="templates"
+                        label={t.nav?.templates || pickLang(lang, { es: 'Plantillas', en: 'Templates' })}
+                        icon="Grid3x3"
+                        isActive={view === 'templates'}
+                        onSelect={() => setView('templates')}
+                    />
+                    <NavBtn
+                        id="exercises"
+                        label={t.nav?.exercises || pickLang(lang, { es: 'Ejercicios', en: 'Exercises' })}
+                        icon="Activity"
+                        isActive={view === 'exercises'}
+                        onSelect={() => setView('exercises')}
+                    />
+                    <NavBtn
+                        id="more"
+                        label={t.nav?.more || pickLang(lang, { es: 'Más', en: 'More' })}
+                        icon="MoreHorizontal"
+                        isActive={showMoreSheet || ['history', 'stats', 'nutrition'].includes(view)}
+                        onSelect={() => setShowMoreSheet(prev => !prev)}
+                    />
+                </div>
+            </nav>
+
+            {showMoreSheet && (
+                <div
+                    className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm"
+                    onClick={() => setShowMoreSheet(false)}
+                >
+                    <div
+                        className="w-full max-w-lg rounded-t-[20px] border-t border-border-subtle bg-surface-base p-4 pb-safe animate-in slide-in-from-bottom duration-200"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-zinc-700" />
+                        <div className="flex items-center justify-between pb-3 mb-2 border-b border-border-subtle">
+                            <h3 className="text-base font-bold text-white">{t.nav?.more || pickLang(lang, { es: 'Más', en: 'More' })}</h3>
+                            <button
+                                type="button"
+                                onClick={() => setShowMoreSheet(false)}
+                                className="rounded-lg p-1 text-zinc-400 hover:text-white"
+                                aria-label={t.cancel}
+                            >
+                                <Icon name="X" size={18} />
+                            </button>
+                        </div>
+                        <div className="space-y-1">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowMoreSheet(false);
+                                    setView('history');
+                                }}
+                                className="flex w-full items-center gap-3.5 rounded-xl p-3 text-left transition-colors hover:bg-surface-raised active:scale-[0.98]"
+                            >
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-raised text-primary-400">
+                                    <Icon name="Clock" size={20} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <span className="block text-sm font-semibold text-white">{t.nav?.history || t.history}</span>
+                                    <span className="block text-xs text-muted">{pickLang(lang, { es: 'Registro y sesiones pasadas', en: 'Workout logs & past sessions' })}</span>
+                                </div>
+                                <Icon name="ChevronRight" size={16} className="text-muted shrink-0" />
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowMoreSheet(false);
+                                    setView('stats');
+                                }}
+                                className="flex w-full items-center gap-3.5 rounded-xl p-3 text-left transition-colors hover:bg-surface-raised active:scale-[0.98]"
+                            >
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-raised text-primary-400">
+                                    <Icon name="BarChart2" size={20} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <span className="block text-sm font-semibold text-white">{t.nav?.stats || t.navStats}</span>
+                                    <span className="block text-xs text-muted">{pickLang(lang, { es: 'Volumen, progreso y récords', en: 'Volume, progress & PRs' })}</span>
+                                </div>
+                                <Icon name="ChevronRight" size={16} className="text-muted shrink-0" />
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowMoreSheet(false);
+                                    setView('nutrition');
+                                }}
+                                className="flex w-full items-center gap-3.5 rounded-xl p-3 text-left transition-colors hover:bg-surface-raised active:scale-[0.98]"
+                            >
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-raised text-primary-400">
+                                    <Icon name="Utensils" size={20} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <span className="block text-sm font-semibold text-white">{t.nav?.nutrition || t.diet}</span>
+                                    <span className="block text-xs text-muted">{pickLang(lang, { es: 'Macros, calorías y peso', en: 'Macros, calories & weight' })}</span>
+                                </div>
+                                <Icon name="ChevronRight" size={16} className="text-muted shrink-0" />
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowMoreSheet(false);
+                                    openProfile();
+                                }}
+                                className="flex w-full items-center gap-3.5 rounded-xl p-3 text-left transition-colors hover:bg-surface-raised active:scale-[0.98]"
+                            >
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-raised text-primary-400">
+                                    <Icon name="Settings" size={20} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <span className="block text-sm font-semibold text-white">{t.nav?.profile || pickLang(lang, { es: 'Perfil y Ajustes', en: 'Profile & Settings' })}</span>
+                                    <span className="block text-xs text-muted">{pickLang(lang, { es: 'Ajustes de app, cuenta y sincronización', en: 'App preferences, account & sync' })}</span>
+                                </div>
+                                <Icon name="ChevronRight" size={16} className="text-muted shrink-0" />
+                            </button>
+                        </div>
                     </div>
-                </nav>
+                </div>
             )}
 
             {(showProfile || hasOpenedProfileRef.current) && (
                 <React.Suspense fallback={null}>
                     <ProfileSheet
-                    open={showProfile}
-                    onClose={closeProfile}
-                    initialSection={profileSection}
-                    onOpenProgram={() => runAfterProfileClosed(onOpenProgram)}
-                    onOpenExercises={() => runAfterProfileClosed(onOpenExercises)}
-                    onReset={() => runAfterProfileClosed(onReset)}
-                    onExport={onExport}
-                    onForceSync={onForceSync}
-                    onImportFile={onImportFile}
-                    onLogin={() => runAfterProfileClosed(onLogin)}
-                    isSyncing={isSyncing}
-                />
+                        open={showProfile}
+                        onClose={closeProfile}
+                        initialSection={profileSection}
+                        onOpenProgram={() => runAfterProfileClosed(onOpenProgram)}
+                        onOpenExercises={() => runAfterProfileClosed(onOpenExercises)}
+                        onReset={() => runAfterProfileClosed(onReset)}
+                        onExport={onExport}
+                        onForceSync={onForceSync}
+                        onImportFile={onImportFile}
+                        onLogin={() => runAfterProfileClosed(onLogin)}
+                        isSyncing={isSyncing}
+                    />
                 </React.Suspense>
             )}
             {(showQuickStart || hasOpenedQuickStartRef.current) && (
@@ -327,7 +444,6 @@ export const Layout: React.FC<LayoutProps> = ({
                 </React.Suspense>
             )}
 
-            {/* Active Session Warning Modal */}
             {showActiveSessionAlert && (
                 <React.Suspense fallback={null}>
                     <ConfirmModal
@@ -343,7 +459,6 @@ export const Layout: React.FC<LayoutProps> = ({
                 </React.Suspense>
             )}
 
-            {/* KONG Convert Confirmation Modal */}
             {showKongConvertConfirm && (
                 <KongConvertConfirmModal
                     isOpen={true}

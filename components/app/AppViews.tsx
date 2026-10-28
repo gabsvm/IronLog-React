@@ -94,62 +94,37 @@ export const AppViews: React.FC<AppViewsProps> = ({
         }
     };
 
+    const homeProps = {
+        startSession: (idx: number) => {
+            if (!activeMeso) { setView('program'); return; }
+
+            // If an active session already exists for this exact day/meso, resume it
+            if (activeSession && activeSession.mesoId === activeMeso.id && activeSession.dayIdx === idx) {
+                setView('workout');
+                return;
+            }
+
+            // If an active session already exists for another day/meso, prompt confirmation
+            if (activeSession) {
+                setPendingStartDayIdx(idx);
+                return;
+            }
+
+            buildAndSetSession(idx);
+        },
+        onEditProgram: () => {
+            if (activeMeso?.programSystem?.systemId === KONG_4DAY_V1.id) {
+                setShowKongConvertModal(true);
+                return;
+            }
+            setView('program');
+        },
+        onSkipSession,
+    };
+
     return (
         <>
-            {view === 'workout' && activeSession ? (
-                <LazyViewBoundary lang={lang} resetKey="workout">
-                <Suspense fallback={<LoadingSpinner />}>
-                    <WorkoutView
-                        onFinish={() => {
-                            if (!activeSession) return;
-
-                            const result = completeWorkoutPipeline({
-                                activeSession,
-                                activeMeso,
-                                program: Array.isArray(program) ? program : [],
-                                logs: Array.isArray(logs) ? logs : [],
-                                userProfile,
-                            });
-
-                            setLogs(result.updatedLogs);
-
-                            // Q13: today's training reminder (if any) is satisfied.
-                            notifyWorkoutDone();
-
-                            // U9: Health Connect export (opt-in, Android app only, never throws).
-                            void maybeExportWorkoutToHealth(result.log);
-
-                            // Q6: automatic local snapshot (max 1 per 24 h, last 3 kept).
-                            void maybeCreateAutoBackup({
-                                program: Array.isArray(program) ? program : [],
-                                exercises: Array.isArray(exercises) ? exercises : [],
-                                logs: result.updatedLogs,
-                                activeMeso: result.updatedMeso ?? activeMeso,
-                                userProfile, nutritionLogs, cardioSessions, bodyLogs,
-                                macroGoals, nutritionGoal, personalTemplates, customFoods,
-                                rpFeedback, config,
-                            });
-
-                            if (result.isMesoComplete) {
-                                setShowMesoCompleteModal(true);
-                            } else if (!result.isDetached && result.updatedMeso && result.updatedMeso !== activeMeso) {
-                                setActiveMeso(result.updatedMeso);
-                            }
-
-                            setRestTimer({ active: false, timeLeft: 0, duration: 0, endAt: 0 });
-                            setCompletedWorkoutLog(result.log);
-                            // Cleared atomically with the view flip: clearing before the async
-                            // transition exposes view==='workout' with no session (blank Layout).
-                            setView('summary', () => setActiveSession(null));
-                        }}
-                        onDiscard={() => {
-                            setView('home', () => setActiveSession(null));
-                        }}
-                        onBack={() => setView('home')}
-                    />
-                </Suspense>
-                </LazyViewBoundary>
-            ) : view === 'summary' && completedWorkoutLog ? (
+            {view === 'summary' && completedWorkoutLog ? (
                 <LazyViewBoundary lang={lang} resetKey="summary">
                 <Suspense fallback={<FullScreenLoading />}>
                     <SessionSummaryView
@@ -161,10 +136,6 @@ export const AppViews: React.FC<AppViewsProps> = ({
                     />
                 </Suspense>
                 </LazyViewBoundary>
-            ) : view === 'exercises' ? (
-                <Suspense fallback={<LoadingSpinner />}>
-                    <LazyViewBoundary lang={lang} resetKey="exercises"><ExercisesView onBack={() => { setView('home'); window.dispatchEvent(new CustomEvent('gainslab:open-profile', { detail: { section: 'training' } })); }} /></LazyViewBoundary>
-                </Suspense>
             ) : view === 'program' ? (
                 <Suspense fallback={<LoadingSpinner />}>
                     <LazyViewBoundary lang={lang} resetKey="program"><ProgramEditView onBack={() => setView('home')} /></LazyViewBoundary>
@@ -183,48 +154,82 @@ export const AppViews: React.FC<AppViewsProps> = ({
                     isSyncing={isSyncing}
                     onOpenCommandPalette={() => setShowCommandPalette(true)}
                 >
-                    {view === 'home' && <HomeView
-                        startSession={(idx) => {
-                            if (!activeMeso) { setView('program'); return; }
+                    {view === 'workout' && activeSession ? (
+                        <LazyViewBoundary lang={lang} resetKey="workout">
+                        <Suspense fallback={<LoadingSpinner />}>
+                            <WorkoutView
+                                onFinish={() => {
+                                    if (!activeSession) return;
 
-                            // If an active session already exists for this exact day/meso, resume it
-                            if (activeSession && activeSession.mesoId === activeMeso.id && activeSession.dayIdx === idx) {
-                                setView('workout');
-                                return;
-                            }
+                                    const result = completeWorkoutPipeline({
+                                        activeSession,
+                                        activeMeso,
+                                        program: Array.isArray(program) ? program : [],
+                                        logs: Array.isArray(logs) ? logs : [],
+                                        userProfile,
+                                    });
 
-                            // If an active session already exists for another day/meso, prompt confirmation
-                            if (activeSession) {
-                                setPendingStartDayIdx(idx);
-                                return;
-                            }
+                                    setLogs(result.updatedLogs);
 
-                            buildAndSetSession(idx);
-                        }}
-                        onEditProgram={() => {
-                            if (activeMeso?.programSystem?.systemId === KONG_4DAY_V1.id) {
-                                setShowKongConvertModal(true);
-                                return;
-                            }
-                            setView('program');
-                        }}
-                        onSkipSession={onSkipSession}
-                    />}
-                    {view === 'history' && (
+                                    // Q13: today's training reminder (if any) is satisfied.
+                                    notifyWorkoutDone();
+
+                                    // U9: Health Connect export (opt-in, Android app only, never throws).
+                                    void maybeExportWorkoutToHealth(result.log);
+
+                                    // Q6: automatic local snapshot (max 1 per 24 h, last 3 kept).
+                                    void maybeCreateAutoBackup({
+                                        program: Array.isArray(program) ? program : [],
+                                        exercises: Array.isArray(exercises) ? exercises : [],
+                                        logs: result.updatedLogs,
+                                        activeMeso: result.updatedMeso ?? activeMeso,
+                                        userProfile, nutritionLogs, cardioSessions, bodyLogs,
+                                        macroGoals, nutritionGoal, personalTemplates, customFoods,
+                                        rpFeedback, config,
+                                    });
+
+                                    if (result.isMesoComplete) {
+                                        setShowMesoCompleteModal(true);
+                                    } else if (!result.isDetached && result.updatedMeso && result.updatedMeso !== activeMeso) {
+                                        setActiveMeso(result.updatedMeso);
+                                    }
+
+                                    setRestTimer({ active: false, timeLeft: 0, duration: 0, endAt: 0 });
+                                    setCompletedWorkoutLog(result.log);
+                                    // Cleared atomically with the view flip: clearing before the async
+                                    // transition exposes view==='workout' with no session (blank Layout).
+                                    setView('summary', () => setActiveSession(null));
+                                }}
+                                onDiscard={() => {
+                                    setView('home', () => setActiveSession(null));
+                                }}
+                                onBack={() => setView('home')}
+                            />
+                        </Suspense>
+                        </LazyViewBoundary>
+                    ) : view === 'exercises' ? (
+                        <Suspense fallback={<LoadingSpinner />}>
+                            <LazyViewBoundary lang={lang} resetKey="exercises"><ExercisesView onBack={() => { setView('home'); window.dispatchEvent(new CustomEvent('gainslab:open-profile', { detail: { section: 'training' } })); }} /></LazyViewBoundary>
+                        </Suspense>
+                    ) : view === 'mesos' ? (
+                        <HomeView {...homeProps} {...({ initialSubView: 'mesos' } as any)} />
+                    ) : view === 'templates' ? (
+                        <HomeView {...homeProps} {...({ initialSubView: 'templates' } as any)} />
+                    ) : (view === 'home' || (view === 'workout' && !activeSession)) ? (
+                        <HomeView {...homeProps} {...({ initialSubView: 'workout' } as any)} />
+                    ) : view === 'history' ? (
                         <Suspense fallback={<LoadingSpinner />}>
                             <LazyViewBoundary lang={lang} resetKey={view}><HistoryView /></LazyViewBoundary>
                         </Suspense>
-                    )}
-                    {view === 'stats' && (
+                    ) : view === 'stats' ? (
                         <Suspense fallback={<LoadingSpinner />}>
                             <LazyViewBoundary lang={lang} resetKey={view}><StatsView /></LazyViewBoundary>
                         </Suspense>
-                    )}
-                    {view === 'nutrition' && (
+                    ) : view === 'nutrition' ? (
                         <Suspense fallback={<LoadingSpinner />}>
                             <LazyViewBoundary lang={lang} resetKey={view}><NutriView /></LazyViewBoundary>
                         </Suspense>
-                    )}
+                    ) : null}
                 </Layout>
             )}
 

@@ -36,6 +36,10 @@ const seed = (page: Page, theme: 'dark' | 'light') =>
   }, { theme, now: FIXED_NOW });
 
 const nav = (page: Page) => page.locator('nav[aria-label="Main navigation"]');
+const openFromMore = async (page: Page, pattern: RegExp) => {
+  await nav(page).getByRole('button', { name: /M[aá]s|More/i }).click();
+  await page.getByRole('button', { name: pattern }).first().click();
+};
 
 for (const theme of ['dark', 'light'] as const) {
   test.describe(`visual ${theme}`, () => {
@@ -72,7 +76,7 @@ for (const theme of ['dark', 'light'] as const) {
 
     if (theme === 'light') {
       test('expressive: textos de Stats superan contraste WCAG AA', async ({ page }) => {
-        await nav(page).getByRole('button', { name: /M[ée]tricas|Stats/i }).click();
+        await openFromMore(page, /M[ée]tricas|Estad[ií]sticas|Stats/i);
         const cards = page.locator('.tonal-1, .tonal-2, .tonal-3, .tonal-4');
         await expect(cards.first()).toBeVisible();
         const ratios = await cards.evaluateAll(items => {
@@ -110,7 +114,7 @@ for (const theme of ['dark', 'light'] as const) {
       await expect(page.getByTestId('home-day-list')).toBeVisible();
       await expect(hero).toBeVisible();
 
-      await nav(page).getByRole('button', { name: /M[ée]tricas|Stats/i }).click();
+      await openFromMore(page, /M[ée]tricas|Estad[ií]sticas|Stats/i);
       const trend = page.getByRole('region', { name: /Tendencia reciente|Recent training trend/i });
       await expect(trend).toBeVisible();
       await expect(trend.locator('svg[role="img"]')).toBeVisible();
@@ -129,20 +133,20 @@ for (const theme of ['dark', 'light'] as const) {
     });
 
     test(`history ${theme}`, async ({ page }) => {
-      await nav(page).getByRole('button', { name: /Historial|History/ }).click();
+      await openFromMore(page, /Historial|History/);
       await page.waitForTimeout(800);
       await expect(page).toHaveScreenshot(`history-${theme}.png`, { fullPage: true });
     });
 
     test(`stats ${theme}`, async ({ page }) => {
-      await nav(page).getByRole('button', { name: /M[ée]tricas|Stats/i }).click();
+      await openFromMore(page, /M[ée]tricas|Estad[ií]sticas|Stats/i);
       await page.waitForTimeout(1500);
       await expect(page).toHaveScreenshot(`stats-${theme}.png`, { fullPage: true });
     });
 
     test(`expressive: Dieta mantiene superficies y pestañas accesibles (${theme})`, async ({ page }) => {
       await page.setViewportSize({ width: 320, height: 720 });
-      await nav(page).getByRole('button', { name: /Dieta|Diet/ }).click();
+      await openFromMore(page, /Dieta|Nutrici[oó]n|Diet|Nutrition/i);
       const tabs = page.locator('.seg-reference').filter({ has: page.locator('button[aria-pressed]') }).first();
       const buttons = tabs.locator('button[aria-pressed]');
       await expect(buttons).toHaveCount(3);
@@ -160,7 +164,7 @@ for (const theme of ['dark', 'light'] as const) {
     });
 
     test(`nutrition ${theme}`, async ({ page }) => {
-      await nav(page).getByRole('button', { name: /Dieta|Diet/ }).click();
+      await openFromMore(page, /Dieta|Nutrici[oó]n|Diet|Nutrition/i);
       await page.waitForTimeout(800);
       await expect(page).toHaveScreenshot(`nutrition-${theme}.png`, { fullPage: true });
     });

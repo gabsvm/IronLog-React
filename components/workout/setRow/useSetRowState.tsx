@@ -26,6 +26,9 @@ export interface SetRowProps {
     isNextSet?: boolean;
     showRIR?: boolean;
     unit?: WeightUnit;
+    onAddSet?: (exId: number) => void;
+    onDeleteSet?: (exId: number, setId: number) => void;
+    onModifySets?: (exId: number, delta: number) => void;
 }
 
 export const useSetRowState = ({
@@ -33,7 +36,8 @@ export const useSetRowState = ({
     onUpdate, onToggleComplete, onChangeType,
     lang, isCardio, isBodyweight, isIsometric, isometricTargetSecs,
     setIndex, badgeLabel, tutorialId, disableTypeChange, isActiveProtocolSet, isNextSet, showRIR = false,
-    unit = 'kg'
+    unit = 'kg',
+    onAddSet, onDeleteSet, onModifySets,
 }: SetRowProps) => {
     const t = TRANSLATIONS[lang];
     const sr = t.setRow;
@@ -456,6 +460,9 @@ export const useSetRowState = ({
         completeSetAriaLabel,
         badgeClass,
         SwipeOverlay,
+        onAddSet,
+        onDeleteSet,
+        onModifySets,
     };
 };
 

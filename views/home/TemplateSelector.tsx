@@ -1,8 +1,10 @@
 import React, { Suspense, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from '../../components/ui/Icon';
+import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { GlobalTemplate } from '../../types';
 import { getTranslated } from '../../utils';
+import { pickLang } from '../../utils/i18n';
 
 const ProgramDetailView = React.lazy(() =>
     import('../../components/programs/ProgramDetailView').then((module) => ({ default: module.ProgramDetailView }))
@@ -18,14 +20,66 @@ interface Props {
     onSelectProgram?: (programId: string) => void;
 }
 
+type FilterCategory = 'ALL' | 'WHOLE_BODY' | 'UPPER_LOWER' | 'PPL' | 'SPECIALIZATION' | 'CUSTOM';
+
+const CATEGORIES: { id: FilterCategory; label: { en: string; es: string } }[] = [
+    { id: 'ALL', label: { en: 'ALL', es: 'TODAS' } },
+    { id: 'WHOLE_BODY', label: { en: 'WHOLE BODY', es: 'CUERPO COMPLETO' } },
+    { id: 'UPPER_LOWER', label: { en: 'UPPER / LOWER', es: 'TORSO / PIERNA' } },
+    { id: 'PPL', label: { en: 'PUSH / PULL / LEGS', es: 'PUSH / PULL / LEGS' } },
+    { id: 'SPECIALIZATION', label: { en: 'SPECIALIZATION', es: 'ESPECIALIZACIÓN' } },
+    { id: 'CUSTOM', label: { en: 'CUSTOM', es: 'PERSONALIZADAS' } },
+];
+
 const getTemplateAuthor = (tpl: GlobalTemplate, ts: any): string => {
-    if (tpl.scope === 'personal') return ts.myTemplates;
+    if (tpl.scope === 'personal') return ts.myTemplates || 'Custom';
     const id = tpl.id;
     if (id.startsWith('nh_') || id === 'toji_fushiguro' || id === 'tokita') return 'Natural Hypertrophy';
     if (id === 'ji3') return 'Paul Carter';
     if (id === 'full_body') return 'Dr. Mike Israetel (RP)';
-    if (id.startsWith('cal_')) return ts.calisthenics;
-    return ts.baseSpecials;
+    if (id.startsWith('cal_')) return ts.calisthenics || 'Calisthenics';
+    return ts.baseSpecials || 'Specials';
+};
+
+const getTemplateCategory = (tpl: GlobalTemplate): FilterCategory => {
+    if (tpl.scope === 'personal') return 'CUSTOM';
+    const id = tpl.id.toLowerCase();
+    const title = (tpl.title?.en || '').toLowerCase();
+    if (
+        id.includes('full_body') ||
+        id.includes('whole_body') ||
+        title.includes('full body') ||
+        title.includes('whole body') ||
+        id === 'nh_full_body' ||
+        id === 'nh_ultimate_full_body'
+    ) {
+        return 'WHOLE_BODY';
+    }
+    if (id.includes('upper_lower') || id.includes('ul') || title.includes('upper') || title.includes('torso') || id === 'nh_upper_lower') {
+        return 'UPPER_LOWER';
+    }
+    if (id.includes('ppl') || id.includes('push') || id.includes('pull') || title.includes('push pull') || id === 'nh_pure_bodybuilding_phase1') {
+        return 'PPL';
+    }
+    return 'SPECIALIZATION';
+};
+
+const getCategoryOverline = (tpl: GlobalTemplate, lang: string): string => {
+    if (tpl.scope === 'personal') return pickLang(lang, { es: 'PLANTILLA GUARDADA', en: 'SAVED TEMPLATE' });
+    const cat = getTemplateCategory(tpl);
+    switch (cat) {
+        case 'WHOLE_BODY':
+            return `MALE, ${pickLang(lang, { es: 'CUERPO COMPLETO', en: 'WHOLE BODY' })}`;
+        case 'UPPER_LOWER':
+            return `MALE, ${pickLang(lang, { es: 'TORSO / PIERNA', en: 'UPPER / LOWER' })}`;
+        case 'PPL':
+            return `MALE, PUSH / PULL / LEGS`;
+        case 'CUSTOM':
+            return pickLang(lang, { es: 'PERSONALIZADA', en: 'CUSTOM' });
+        case 'SPECIALIZATION':
+        default:
+            return `MALE, ${pickLang(lang, { es: 'HIPERTROFIA', en: 'HYPERTROPHY FOCUS' })}`;
+    }
 };
 
 export const TemplateSelector: React.FC<Props> = ({
@@ -38,166 +92,286 @@ export const TemplateSelector: React.FC<Props> = ({
     onSelectProgram,
 }) => {
     const [showKongDetail, setShowKongDetail] = useState(false);
-    const ts = t.templateSelector;
-    const [expandedAuthors, setExpandedAuthors] = useState<Record<string, boolean>>({
-        'Natural Hypertrophy': true,
-    });
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState<FilterCategory>('ALL');
+    const [showFilterChips, setShowFilterChips] = useState(true);
+    const [pendingConfirm, setPendingConfirm] = useState<GlobalTemplate | null>(null);
 
-    const grouped = useMemo(() => {
-        const groups: Record<string, GlobalTemplate[]> = {};
-        templates.forEach((tpl) => {
-            const author = getTemplateAuthor(tpl, ts);
-            if (!groups[author]) groups[author] = [];
-            groups[author].push(tpl);
+    const ts = t.templateSelector;
+
+    const filteredTemplates = useMemo(() => {
+        return templates.filter((tpl) => {
+            if (selectedCategory !== 'ALL') {
+                const cat = getTemplateCategory(tpl);
+                if (cat !== selectedCategory) return false;
+            }
+            if (searchQuery.trim()) {
+                const q = searchQuery.toLowerCase().trim();
+                const titleEn = (tpl.title?.en || '').toLowerCase();
+                const titleEs = (tpl.title?.es || '').toLowerCase();
+                const descEn = (tpl.description?.en || '').toLowerCase();
+                const descEs = (tpl.description?.es || '').toLowerCase();
+                const author = getTemplateAuthor(tpl, ts).toLowerCase();
+                if (!titleEn.includes(q) && !titleEs.includes(q) && !descEn.includes(q) && !descEs.includes(q) && !author.includes(q)) {
+                    return false;
+                }
+            }
+            return true;
         });
-        return groups;
-    }, [templates, ts]);
+    }, [templates, selectedCategory, searchQuery, ts]);
 
     const selector = (
         <div
-            className="fixed inset-0 z-modal flex flex-col bg-[rgb(var(--surface-app))] text-[rgb(var(--text-primary))]"
+            className="fixed inset-0 z-modal flex flex-col bg-surface-app text-white"
             role="dialog"
             aria-modal="true"
-            aria-label={t.startMeso}
+            aria-label={pickLang(lang, { es: 'Plantillas', en: 'Templates' })}
         >
-            <header className="shrink-0 border-b border-[rgb(var(--border-subtle)/0.75)] bg-[rgb(var(--surface-app)/0.98)] px-4 pt-safe">
+            {/* Top Header */}
+            <header className="shrink-0 border-b border-border-subtle bg-surface-app px-4 pt-safe">
                 <div className="mx-auto flex h-16 w-full max-w-xl items-center justify-between gap-4">
                     <div>
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary-500">
                             {ts.trainingPlan}
                         </p>
-                        <h2 className="mt-0.5 text-2xl font-black">{t.startMeso}</h2>
+                        <h2 className="text-[22px] font-black tracking-tight text-white">
+                            {pickLang(lang, { es: 'Plantillas', en: 'Templates' })}
+                        </h2>
                     </div>
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        aria-label={ts.close || t.close || 'Close'}
-                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] text-[rgb(var(--text-secondary))] active:scale-95"
-                    >
-                        <Icon name="X" size={21} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={onCreateCustom}
+                            aria-label={ts.designTitle || 'New'}
+                            title={ts.designTitle || 'New'}
+                            className="bg-primary-500 text-zinc-950 rounded-[4px] h-8 w-8 flex items-center justify-center font-bold hover:bg-primary-400 active:scale-95 transition-transform"
+                        >
+                            <Icon name="Plus" size={18} />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            aria-label={ts.close || t.close || 'Close'}
+                            title={ts.close || t.close || 'Close'}
+                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[4px] border border-border-subtle bg-surface-raised text-zinc-400 hover:text-white active:scale-95 transition-colors"
+                        >
+                            <Icon name="X" size={18} />
+                        </button>
+                    </div>
                 </div>
             </header>
 
-            <div className="flex-1 overflow-y-auto scroll-container">
-                <div className="mx-auto w-full max-w-xl space-y-5 p-4 pb-[calc(var(--safe-area-bottom)+2rem)]">
-                    <div className="flex items-center gap-4 px-1">
-                        <div className="h-px flex-1 bg-[rgb(var(--border-subtle))]" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[rgb(var(--text-muted))]">
-                            {ts.templates}
-                        </span>
-                        <div className="h-px flex-1 bg-[rgb(var(--border-subtle))]" />
+            {/* Search Input Row */}
+            <div className="shrink-0 border-b border-border-subtle/40 bg-surface-app px-4 pt-3 pb-2">
+                <div className="mx-auto w-full max-w-xl">
+                    <div className="flex items-center rounded-[4px] border border-border-subtle bg-surface-raised px-3 py-2 text-[14px] text-white">
+                        <Icon name="Search" size={16} className="text-zinc-500 mr-2 shrink-0" />
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder={pickLang(lang, { es: 'Buscar', en: 'Search' })}
+                            className="w-full bg-transparent text-[14px] text-white placeholder:text-zinc-500 outline-none"
+                        />
+                        {searchQuery && (
+                            <button
+                                type="button"
+                                onClick={() => setSearchQuery('')}
+                                className="text-zinc-500 hover:text-zinc-300"
+                                aria-label="Clear search"
+                            >
+                                <Icon name="X" size={14} />
+                            </button>
+                        )}
                     </div>
+                </div>
+            </div>
 
-                    <p className="px-1 text-[10px] font-black uppercase tracking-[0.2em] text-[rgb(var(--text-muted))]">
-                        {ts.chooseByAuthor}
-                    </p>
-
-                    <div className="space-y-3">
-                        {Object.entries(grouped).map(([author, groupTemplates]) => {
-                            const isExpanded = !!expandedAuthors[author];
-                            return (
-                                <section key={author} className="overflow-hidden rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))]">
-                                    <button
-                                        type="button"
-                                        onClick={() => setExpandedAuthors((prev) => ({ ...prev, [author]: !prev[author] }))}
-                                        className="flex min-h-16 w-full items-center justify-between gap-3 px-5 py-4 text-left"
-                                    >
-                                        <div className="flex min-w-0 items-center gap-3">
-                                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-500/10 text-primary-500">
-                                                <Icon name="User" size={17} />
-                                            </div>
-                                            <div className="min-w-0">
-                                                <h3 className="truncate text-sm font-black">{author}</h3>
-                                                <p className="mt-0.5 text-[9px] font-bold uppercase tracking-widest text-[rgb(var(--text-muted))]">
-                                                    {groupTemplates.length} {groupTemplates.length === 1 ? ts.programOne : ts.programMany}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <Icon name={isExpanded ? 'ChevronUp' : 'ChevronDown'} size={18} className="shrink-0 text-[rgb(var(--text-muted))]" />
-                                    </button>
-
-                                    {isExpanded && (
-                                        <div className="grid gap-3 border-t border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base)/0.55)] p-3">
-                                            {groupTemplates.map((tpl) => (
-                                                <button
-                                                    key={tpl.id}
-                                                    type="button"
-                                                    onClick={() => onSelectTemplate(tpl)}
-                                                    className="relative w-full rounded-xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4 text-left transition-transform active:scale-[0.99]"
-                                                >
-                                                    {tpl.isPro && (
-                                                        <div className="absolute right-3 top-3 rounded border border-yellow-500/30 bg-yellow-500/20 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-yellow-500">
-                                                            PRO
-                                                        </div>
-                                                    )}
-                                                    <h4 className="pr-12 text-base font-black">{getTranslated(tpl.title, lang as any)}</h4>
-                                                    <p className="mt-1 pr-2 text-xs leading-relaxed text-[rgb(var(--text-secondary))]">
-                                                        {getTranslated(tpl.description, lang as any)}
-                                                    </p>
-                                                    <div className="mt-3 flex gap-2">
-                                                        <span className="rounded bg-[rgb(var(--surface-base))] px-2 py-1 text-[10px] font-bold text-[rgb(var(--text-muted))]">
-                                                            {tpl.program.length} {ts.daysLower}
-                                                        </span>
-                                                    </div>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-                                </section>
-                            );
-                        })}
-                    </div>
-
+            {/* Filters Bar Row */}
+            <div className="shrink-0 bg-surface-app px-4 py-2">
+                <div className="mx-auto w-full max-w-xl space-y-2">
                     <button
                         type="button"
-                        onClick={onCreateCustom}
-                        className="flex w-full items-center gap-4 rounded-2xl border-2 border-dashed border-[rgb(var(--border-strong))] bg-[rgb(var(--surface-raised))] p-5 text-left transition-transform active:scale-[0.99]"
+                        onClick={() => setShowFilterChips((prev) => !prev)}
+                        className="w-full rounded-[4px] border border-border-subtle bg-surface-raised px-3 py-2 flex items-center justify-between text-[13px] font-semibold text-zinc-300 hover:bg-surface-elevated transition-colors"
                     >
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[rgb(var(--surface-base))] text-primary-500">
-                            <Icon name="Edit" size={21} />
+                        <div className="flex items-center gap-2">
+                            <svg
+                                width={15}
+                                height={15}
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="shrink-0 text-zinc-400"
+                                aria-hidden="true"
+                            >
+                                <line x1="4" y1="6" x2="20" y2="6" />
+                                <line x1="7" y1="12" x2="17" y2="12" />
+                                <line x1="10" y1="18" x2="14" y2="18" />
+                            </svg>
+                            <span>{pickLang(lang, { es: 'Filtros', en: 'Filters' })}</span>
                         </div>
-                        <div className="min-w-0 flex-1">
-                            <h3 className="text-lg font-black">{ts.designTitle}</h3>
-                            <p className="mt-1 text-sm text-[rgb(var(--text-secondary))]">
-                                {ts.designDesc}
-                            </p>
+                        <div className="flex items-center gap-1.5">
+                            <span className="rounded-[3px] bg-surface-elevated border border-border-subtle px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-primary-400">
+                                {selectedCategory === 'ALL'
+                                    ? pickLang(lang, { es: 'TODAS', en: 'ALL' })
+                                    : (CATEGORIES.find((c) => c.id === selectedCategory)?.label[lang as 'en' | 'es'] || selectedCategory)}
+                            </span>
+                            <Icon name={showFilterChips ? 'ChevronUp' : 'ChevronDown'} size={14} className="text-zinc-500" />
                         </div>
-                        <Icon name="ChevronRight" size={19} className="shrink-0 text-[rgb(var(--text-muted))]" />
                     </button>
 
-                    <section className="rounded-3xl border border-primary-500/30 bg-primary-500/10 p-4">
-                        <div className="mb-3 flex items-center justify-between">
+                    {showFilterChips && (
+                        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+                            {CATEGORIES.map((cat) => {
+                                const isSelected = selectedCategory === cat.id;
+                                return (
+                                    <button
+                                        key={cat.id}
+                                        type="button"
+                                        onClick={() => setSelectedCategory(cat.id)}
+                                        className={`shrink-0 rounded-[4px] px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider transition-colors ${
+                                            isSelected
+                                                ? 'bg-white text-zinc-950 font-black'
+                                                : 'bg-surface-raised border border-border-subtle text-zinc-400 hover:text-white'
+                                        }`}
+                                    >
+                                        {cat.label[lang as 'en' | 'es'] || cat.id}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Flat List of Templates */}
+            <div className="flex-1 overflow-y-auto scroll-container">
+                <div className="mx-auto w-full max-w-xl pb-[calc(var(--safe-area-bottom)+2rem)]">
+                    <div className="divide-y divide-border-subtle border-t border-b border-border-subtle">
+                        {filteredTemplates.length === 0 ? (
+                            <div className="py-12 text-center text-xs text-zinc-500 font-semibold">
+                                {pickLang(lang, { es: 'No se encontraron plantillas', en: 'No templates found' })}
+                            </div>
+                        ) : (
+                            filteredTemplates.map((tpl) => {
+                                const overline = getCategoryOverline(tpl, lang);
+                                const title = getTranslated(tpl.title, lang as any);
+                                const daysCount = tpl.program?.length || 0;
+                                return (
+                                    <button
+                                        key={tpl.id}
+                                        type="button"
+                                        onClick={() => setPendingConfirm(tpl)}
+                                        className="w-full flex items-center justify-between gap-3 px-4 py-3.5 bg-surface-app hover:bg-surface-raised transition-colors text-left"
+                                    >
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 truncate">
+                                                {overline}
+                                            </p>
+                                            <h3 className="text-[15px] font-bold text-white leading-snug mt-0.5 truncate">
+                                                {title}
+                                            </h3>
+                                        </div>
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            {tpl.isPro && (
+                                                <span className="rounded-[4px] bg-yellow-500/20 border border-yellow-500/30 px-2 py-1 text-[10px] font-extrabold uppercase tracking-wider text-yellow-500">
+                                                    PRO
+                                                </span>
+                                            )}
+                                            <span className="rounded-[4px] bg-surface-elevated border border-border-subtle px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-wider text-zinc-200">
+                                                {daysCount}/{pickLang(lang, { es: 'SEM', en: 'WEEK' })}
+                                            </span>
+                                            <Icon name="ChevronRight" size={16} className="text-zinc-500" />
+                                        </div>
+                                    </button>
+                                );
+                            })
+                        )}
+                    </div>
+
+                    {/* Design from Scratch Action */}
+                    <div className="px-4 py-3">
+                        <button
+                            type="button"
+                            onClick={onCreateCustom}
+                            className="flex w-full items-center justify-between rounded-[4px] border border-dashed border-border-subtle bg-surface-raised/60 px-3 py-3 text-left hover:bg-surface-raised transition-colors group"
+                        >
+                            <div className="flex items-center gap-2.5">
+                                <div className="flex h-8 w-8 items-center justify-center rounded-[4px] bg-primary-500/10 text-primary-500">
+                                    <Icon name="Plus" size={16} />
+                                </div>
+                                <div>
+                                    <span className="text-[13px] font-bold text-white group-hover:text-primary-400 transition-colors">
+                                        {ts.designTitle}
+                                    </span>
+                                    <p className="text-[11px] text-zinc-400">
+                                        {ts.designDesc}
+                                    </p>
+                                </div>
+                            </div>
+                            <Icon name="ChevronRight" size={16} className="text-zinc-500" />
+                        </button>
+                    </div>
+
+                    {/* Programs Section (KONG) */}
+                    <div className="px-4 py-3 border-t border-border-subtle mt-2">
+                        <div className="flex items-center justify-between mb-2">
                             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary-500">
                                 {ts.programs}
                             </p>
-                            <span className="rounded-full bg-primary-500/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-primary-500">
+                            <span className="rounded-[4px] bg-primary-500/10 border border-primary-500/20 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-primary-400">
                                 {ts.fullSystem}
                             </span>
                         </div>
-
                         <button
                             type="button"
                             onClick={() => setShowKongDetail(true)}
-                            className="w-full rounded-2xl border border-primary-500/30 bg-[rgb(var(--surface-raised))] p-5 text-left transition-transform active:scale-[0.99]"
+                            className="w-full rounded-[4px] border border-border-subtle bg-surface-raised p-3.5 text-left hover:border-primary-500/40 transition-colors"
                         >
-                            <div className="flex items-start justify-between gap-4">
+                            <div className="flex items-start justify-between gap-3">
                                 <div>
-                                    <p className="text-2xl font-black">KONG</p>
-                                    <p className="mt-1 text-sm font-bold text-primary-500">SAVAGE SIZE · Alexander Bromley</p>
+                                    <p className="text-base font-black text-white">KONG · SAVAGE SIZE</p>
+                                    <p className="text-xs font-bold text-primary-400 mt-0.5">Alexander Bromley</p>
                                 </div>
-                                <Icon name="ChevronRight" size={20} className="mt-1 shrink-0 text-primary-500" />
+                                <span className="rounded-[4px] bg-primary-500 px-2.5 py-1 text-[11px] font-black text-zinc-950 uppercase tracking-wider">
+                                    {ts.viewProgram}
+                                </span>
                             </div>
-                            <p className="mt-4 text-[10px] font-black uppercase tracking-[0.16em] text-[rgb(var(--text-muted))]">
+                            <p className="mt-2 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
                                 12 {ts.weeks} · 4 {ts.days} · 3 {ts.blocks}
                             </p>
-                            <span className="mt-4 inline-flex min-h-11 items-center rounded-xl bg-primary-500 px-4 text-xs font-black text-black">
-                                {ts.viewProgram}
-                            </span>
                         </button>
-                    </section>
+                    </div>
                 </div>
             </div>
+
+            {/* Template Selection Confirmation Modal */}
+            {pendingConfirm && (
+                <ConfirmModal
+                    isOpen={!!pendingConfirm}
+                    title={pickLang(lang, { es: '¿Iniciar plantilla?', en: 'Start Template?' })}
+                    description={
+                        pendingConfirm
+                            ? `${getTranslated(pendingConfirm.title, lang as any)}\n\n${pickLang(lang, {
+                                  es: '¿Deseas cargar esta rutina y comenzar el mesociclo?',
+                                  en: 'Do you want to load this routine and start the mesocycle?',
+                              })}`
+                            : ''
+                    }
+                    confirmText={pickLang(lang, { es: 'Iniciar', en: 'Start' })}
+                    cancelText={pickLang(lang, { es: 'Cancelar', en: 'Cancel' })}
+                    onConfirm={() => {
+                        const tpl = pendingConfirm;
+                        setPendingConfirm(null);
+                        onSelectTemplate(tpl);
+                    }}
+                    onCancel={() => setPendingConfirm(null)}
+                />
+            )}
 
             {showKongDetail && (
                 <Suspense fallback={null}>

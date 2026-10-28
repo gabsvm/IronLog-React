@@ -40,19 +40,19 @@ export const HomeWeekDayList: React.FC<{ state: HomeViewState }> = ({ state }) =
                             setSelectedDayIdx(idx);
                         }}
                         aria-pressed={isSelected}
-                        className={`expressive-press flex min-h-[56px] w-full items-center gap-3 rounded-[24px] px-4 py-3 text-left transition-all ${
+                        className={`expressive-press flex min-h-[56px] w-full items-center gap-3 rounded-[6px] border px-4 py-3 text-left transition-all ${
                             isSelected
-                                ? 'border border-primary-500 bg-primary-500/10'
-                                : 'card-reference bg-surface-raised/40'
+                                ? 'border-primary-500 bg-primary-500/10'
+                                : 'border-border-subtle bg-surface-raised/40 hover:bg-surface-raised/70'
                         }`}
                     >
                         <span
-                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[4px] ${
                                 isDone
                                     ? 'bg-primary-500/15 text-primary-400'
                                     : isToday
-                                        ? 'bg-primary-500 text-zinc-950'
-                                        : 'bg-surface-raised text-muted'
+                                        ? 'bg-primary-500 text-zinc-950 font-black'
+                                        : 'bg-surface-raised text-muted border border-border-subtle'
                             }`}
                         >
                             {isDone ? <Icon name="Check" size={14} strokeWidth={3} /> : <span className="text-xs font-black tabular-nums">{idx + 1}</span>}

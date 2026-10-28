@@ -23,9 +23,21 @@ const PaywallModal = React.lazy(() => import('../components/pro/PaywallModal').t
 const ConfirmModal = React.lazy(() => import('../components/ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
 const TemplateSelector = React.lazy(() => import('./home/TemplateSelector').then(m => ({ default: m.TemplateSelector })));
 
-export const HomeView: React.FC<HomeViewProps> = (props) => {
+export interface HomeViewPropsWithSubView extends HomeViewProps {
+    initialSubView?: 'workout' | 'mesos' | 'templates';
+}
+
+export const HomeView: React.FC<HomeViewPropsWithSubView> = (props) => {
     const state = useHomeViewState(props);
     const { onEditProgram, onStartFreeSession, logs, lang, tutorialProgress, markTutorialSeen, config, activeMeso, t, h, showPaywall, setShowPaywall, featureAttempted, showCompleteModal, setShowCompleteModal, showMesoSettings, setShowMesoSettings, showPlanActions, setShowPlanActions, showTemplateSelector, setShowTemplateSelector, handleOpenTemplateSelector, handleSelectTemplate, handleSelectProgram, handleCreateCustom, personalTemplates, globalTemplates, skipConfirmationId, setSkipConfirmationId, showGuidelines, setShowGuidelines, transitionBlock, showKongHub, setShowKongHub, closeTransition, currentGuidelineImages, safeProgram, safeLogs, confirmSkip, handleFinishMeso, handleFinishWeek, homeTutorialSteps, selectedDayIdx, startSession, activeSession, uniqueDaysDone, handleSkipClick } = state;
+
+    React.useEffect(() => {
+        if (props.initialSubView === 'templates') {
+            setShowTemplateSelector(true);
+        } else if (props.initialSubView === 'mesos' || props.initialSubView === 'workout') {
+            setShowTemplateSelector(false);
+        }
+    }, [props.initialSubView, setShowTemplateSelector]);
 
     if (!activeMeso) {
         return <HomeEmptyState state={state} />;
@@ -46,7 +58,7 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
                         data-testid="home-train-action"
                         type="button"
                         onClick={() => startSession(selectedDayIdx)}
-                        className="expressive-press flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-[24px] bg-primary-500 px-4 text-sm font-bold text-zinc-950 transition-colors"
+                        className="expressive-press flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-[4px] bg-primary-500 px-4 text-sm font-bold text-zinc-950 transition-colors shadow-sm hover:bg-primary-400 active:scale-[0.99]"
                     >
                         <Icon name={activeSession && activeSession.mesoId === activeMeso.id && activeSession.dayIdx === selectedDayIdx ? 'Play' : uniqueDaysDone.has(selectedDayIdx) ? 'Repeat' : 'ArrowRight'} size={18} />
                         <span>{activeSession && activeSession.mesoId === activeMeso.id && activeSession.dayIdx === selectedDayIdx ? h.resume : uniqueDaysDone.has(selectedDayIdx) ? h.trainAgain : `${pickLang(lang, { es: 'Entrenar', en: 'Train' })} ${String(getTranslated(safeProgram[selectedDayIdx].dayName, lang))}`}</span>
@@ -57,7 +69,7 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
                             onClick={(event) => handleSkipClick(event, selectedDayIdx)}
                             aria-label={t.skipSession}
                             title={t.skipSession}
-                            className="flex min-h-[52px] w-[52px] shrink-0 items-center justify-center rounded-[24px] card-reference text-zinc-300 transition-colors"
+                            className="flex min-h-[52px] w-[52px] shrink-0 items-center justify-center rounded-[4px] border border-border-subtle bg-surface-raised text-zinc-300 hover:text-white transition-colors"
                         >
                             <Icon name="SkipForward" size={18} />
                         </button>
