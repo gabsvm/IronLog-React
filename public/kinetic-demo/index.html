@@ -66,8 +66,9 @@
       left: 50%;
       top: 50%;
       transform: translate(-50%, -50%);
-      box-shadow: 0 30px 100px rgba(0, 0, 0, 0.9);
       background: #050506;
+      will-change: transform;
+      contain: layout style paint;
     }
 
     .stage {
@@ -77,7 +78,8 @@
       width: 1920px;
       height: 1080px;
       overflow: hidden;
-      background: radial-gradient(ellipse 80% 75% at 50% 45%, color-mix(in srgb, var(--bg), white 5%) 0%, var(--bg) 60%, color-mix(in srgb, var(--bg), black 45%) 100%);
+      background: #050506;
+      contain: layout style paint;
     }
 
     .stage > canvas.fx {
@@ -100,9 +102,8 @@
     .film-scanlines {
       position: absolute;
       inset: 0;
-      background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.16) 0px, rgba(0, 0, 0, 0.16) 1px, transparent 1px, transparent 3px);
-      opacity: 0.45;
-      mix-blend-mode: overlay;
+      background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.18) 0px, rgba(0, 0, 0, 0.18) 1px, transparent 1px, transparent 3px);
+      opacity: 0.22;
       pointer-events: none;
     }
 
@@ -115,11 +116,11 @@
 
     .scenes, .overlay { position: absolute; inset: 0; }
     .ground { position: absolute; inset: 0; }
-    .cam { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; }
+    .cam { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; will-change: transform; }
     .inv { position: absolute; inset: 0; background: #fff; mix-blend-mode: difference; display: none; pointer-events: none; }
     .flash { position: absolute; inset: 0; opacity: 0; pointer-events: none; }
     .vig { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 80% 78% at 50% 46%, rgba(0,0,0,0) 58%, rgba(0,0,0,.42) 100%); }
-    .scene { position: absolute; inset: 0; }
+    .scene { position: absolute; inset: 0; contain: layout style; }
     .persp { perspective: 1500px; perspective-origin: 50% 50%; }
     .fly { perspective: 1100px; }
     .abs { position: absolute; left: 0; top: 0; }
@@ -177,7 +178,7 @@
     .vents { position: absolute; left: 330px; top: 26px; width: 170px; height: 60px; background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--paper) 14%, transparent) 0 3px, transparent 3px 9px); }
 
     .svgmono { font-family: JBM; font-size: 15px; fill: color-mix(in srgb, var(--paper) 45%, transparent); }
-    .glowline { filter: drop-shadow(0 0 8px color-mix(in srgb, var(--accent) 85%, transparent)); }
+    .glowline { stroke-width: 4.5px; }
     .sub { font-size: 26px; color: color-mix(in srgb, var(--paper) 55%, transparent); letter-spacing: .32em; white-space: nowrap; }
 
     .lline { height: 3px; border-radius: 2px; background: var(--accent); box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 90%, transparent), 0 0 50px color-mix(in srgb, var(--accent) 50%, transparent); }

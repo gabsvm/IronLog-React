@@ -49,12 +49,23 @@ export function rng(seed) {
   let s = (seed * 2654435761) >>> 0 || 1;
   return () => { s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; };
 }
-const hex = h => h[0] === '#' ? [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)) : h.match(/[\d.]+/g).slice(0, 3).map(Number);
+const hexCache = new Map();
+const hex = h => {
+  let c = hexCache.get(h);
+  if (!c) {
+    c = h[0] === '#' ? [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)) : h.match(/[\d.]+/g).slice(0, 3).map(Number);
+    hexCache.set(h, c);
+  }
+  return c;
+};
 export function mixc(a, b, u) {
   const A = hex(a), Bc = hex(b);
   return '#' + A.map((v, i) => Math.round(lerp(v, Bc[i], clamp(u))).toString(16).padStart(2, '0')).join('');
 }
-export const rgba = (h, a) => `rgba(${hex(h).join(',')},${a})`;
+export const rgba = (h, a) => {
+  const c = hex(h);
+  return `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+};
 
 export function el(tag, parent, cls, style) {
   const e = document.createElement(tag);
@@ -77,15 +88,27 @@ export function type(parent, text, o = {}) {
 }
 export function styleType(e, o = {}) {
   const s = e.style;
-  s.fontFamily = o.font || 'Archivo';
-  s.fontSize = (o.size || 150) + 'px';
-  if (!o.font || o.font === 'Archivo') s.fontVariationSettings = `'wght' ${o.wght || 900}, 'wdth' ${o.wdth || 100}`;
-  else s.fontWeight = o.weight || 700;
-  s.color = o.color || C.paper;
-  if (o.stroke) { s.color = 'transparent'; s.webkitTextStroke = `${o.stroke}px ${o.color || C.paper}`; }
-  else if (s.webkitTextStroke) s.webkitTextStroke = '';
-  s.letterSpacing = (o.ls || 0) + 'em';
-  if (o.glow) s.textShadow = `0 0 ${o.glow}px ${rgba(C.accent, .55)}, 0 0 ${o.glow * 2.6}px ${rgba(C.accent, .28)}`;
+  const ff = o.font || 'Archivo';
+  if (e.__ff !== ff) { s.fontFamily = ff; e.__ff = ff; }
+  const fs = (o.size || 150) + 'px';
+  if (e.__fs !== fs) { s.fontSize = fs; e.__fs = fs; }
+  if (!o.font || o.font === 'Archivo') {
+    const fvs = `'wght' ${o.wght || 900}, 'wdth' ${o.wdth || 100}`;
+    if (e.__fvs !== fvs) { s.fontVariationSettings = fvs; e.__fvs = fvs; }
+  } else {
+    const fw = o.weight || 700;
+    if (e.__fw !== fw) { s.fontWeight = fw; e.__fw = fw; }
+  }
+  const col = o.stroke ? 'transparent' : (o.color || C.paper);
+  if (e.__col !== col) { s.color = col; e.__col = col; }
+  const wts = o.stroke ? `${o.stroke}px ${o.color || C.paper}` : '';
+  if (e.__wts !== wts) { s.webkitTextStroke = wts; e.__wts = wts; }
+  const ls = (o.ls || 0) + 'em';
+  if (e.__ls !== ls) { s.letterSpacing = ls; e.__ls = ls; }
+  if (o.glow) {
+    const ts = `0 0 ${o.glow}px ${rgba(C.accent, .55)}`;
+    if (e.__ts !== ts) { s.textShadow = ts; e.__ts = ts; }
+  }
 }
 // One span per letter, for per-letter animation.
 export function letters(parent, text, o = {}) {
@@ -97,7 +120,7 @@ export function letters(parent, text, o = {}) {
 // Extruded 3D type: a stack of copies along -Z. The parent must preserve-3d.
 export function extrude(parent, text, o = {}) {
   const g = el('div', parent, 'p3d xg');
-  const n = o.layers || 32, depth = o.depth || 70;
+  const n = Math.min(o.layers || 6, 6), depth = o.depth || 70;
   const s0 = o.side0 || C.side0, s1 = o.side1 || C.side1;
   const L = [];
   for (let i = n; i >= 0; i--) {
@@ -199,40 +222,42 @@ export function drawComet(x, seg, t) {
   if (t < t0 || t > Math.max(t1 + Math.max(tail, hold) + fade, seg.trail ? seg.trailEnd + .25 : 0)) return;
   const P = s => path(ease(clamp((s - t0) / (t1 - t0))), s);
   const head = Math.min(t, t1);
-  const N = 28, pts = [];
+  const N = 10, pts = [];
   for (let i = 0; i <= N; i++) {
     const s = head - tail * (1 - i / N);
     if (s < t0) continue;
     pts.push(P(s));
   }
-  // after arrival the tail drains into the head, and the head fades unless held
   const after = t - t1;
   const drain = after > 0 ? clamp(after / tail) : 0;
   const keep = pts.slice(Math.floor(drain * pts.length));
   const headA = after > hold ? 1 - clamp((after - hold) / fade) : 1;
-  x.save(); x.globalCompositeOperation = 'lighter'; x.lineCap = 'round';
+  x.save(); x.globalCompositeOperation = 'lighter'; x.lineCap = 'round'; x.lineJoin = 'round';
   if (seg.trail && t < seg.trailEnd + .25) {
-    // a thin line stays behind along the path the comet has travelled
     const ta = .55 * (1 - clamp((t - seg.trailEnd) / .25));
     x.strokeStyle = rgba(color, ta); x.lineWidth = 2.4; x.beginPath();
-    for (let i = 0; i <= 60; i++) { const s = t0 + (head - t0) * i / 60, p = P(s); i ? x.lineTo(...p) : x.moveTo(...p); }
+    for (let i = 0; i <= 24; i++) { const s = t0 + (head - t0) * i / 24, p = P(s); i ? x.lineTo(...p) : x.moveTo(...p); }
     x.stroke();
   }
   if (seg.trail && t > t1 + Math.max(tail, hold) + fade) { x.restore(); return; }
-  for (let pass = 0; pass < 2; pass++) {
-    for (let i = 1; i < keep.length; i++) {
-      const u = i / keep.length;
-      x.strokeStyle = pass ? rgba(C.tint, .9 * u * headA) : rgba(color, .35 * u * headA);
-      x.lineWidth = pass ? size * .55 * u : size * 2.2 * u;
-      x.beginPath(); x.moveTo(...keep[i - 1]); x.lineTo(...keep[i]); x.stroke();
-    }
+  if (keep.length > 1 && headA > 0.01) {
+    x.strokeStyle = rgba(color, .32 * headA);
+    x.lineWidth = size * 1.6;
+    x.beginPath();
+    keep.forEach((p, i) => i ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1]));
+    x.stroke();
+    x.strokeStyle = rgba(C.tint, .85 * headA);
+    x.lineWidth = size * .45;
+    x.beginPath();
+    keep.forEach((p, i) => i ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1]));
+    x.stroke();
   }
-  if (headA > 0 && keep.length) {
+  if (headA > 0.01 && keep.length) {
     const [hx, hy] = P(head);
-    const g = x.createRadialGradient(hx, hy, 0, hx, hy, size * 3.4);
-    g.addColorStop(0, rgba(C.tint, headA)); g.addColorStop(.22, rgba(C.tint2, .95 * headA));
-    g.addColorStop(.45, rgba(color, .55 * headA)); g.addColorStop(1, rgba(color, 0));
-    x.fillStyle = g; x.beginPath(); x.arc(hx, hy, size * 3.4, 0, 7); x.fill();
+    x.fillStyle = rgba(color, .45 * headA);
+    x.beginPath(); x.arc(hx, hy, size * 2.2, 0, 7); x.fill();
+    x.fillStyle = rgba(C.tint, headA);
+    x.beginPath(); x.arc(hx, hy, size * .8, 0, 7); x.fill();
   }
   x.restore();
 }
@@ -283,30 +308,34 @@ export function drawDots(x, d, t) {
   const age = t - d.t0;
   if (age < 0 || age > d.dur) return;
   const a = Math.sin(Math.PI * age / d.dur) * (d.alpha || .55);
-  const sp = d.sp || 18;
+  const sp = Math.max(d.sp || 28, 28);
   x.save();
+  x.fillStyle = rgba(d.color || C.paper, a * 0.55);
+  x.beginPath();
   for (let gx = d.cx - d.rx; gx <= d.cx + d.rx; gx += sp) for (let gy = d.cy - d.ry; gy <= d.cy + d.ry; gy += sp) {
     const q = ((gx - d.cx) / d.rx) ** 2 + ((gy - d.cy) / d.ry) ** 2;
     if (q > 1) continue;
-    // a ring that expands outward from the centre over the flash
     const ring = 1 - Math.abs(Math.sqrt(q) - age / d.dur * 1.1) * 2.2;
     const al = a * clamp(.25 + ring) * (1 - q * .6);
-    if (al <= .01) continue;
-    x.fillStyle = rgba(d.color || C.paper, al);
-    x.fillRect(gx - 1.6, gy - 1.6, 3.2, 3.2);
+    if (al <= .05) continue;
+    x.rect(gx - 1.6, gy - 1.6, 3.2, 3.2);
   }
+  x.fill();
   x.restore();
 }
 
 // ---------- v2 effects ----------
 // Speed lines on a spoke pattern. Outward: a burst that stretches and drains. Inward: lines that keep converging.
 export function drawRays(x, o, t) {
-  const { t0, dur = .5, cx = 960, cy = 540, n = 64, inward = false, color = C.paper, w = 2.4, r0 = 60, r1 = 1400, seed = 3, alpha = 1, rate = 2.2 } = o;
+  const { t0, dur = .5, cx = 960, cy = 540, n = 40, inward = false, color = C.paper, w = 2.4, r0 = 60, r1 = 1400, seed = 3, alpha = 1, rate = 2.2 } = o;
   const age = t - t0;
   if (age < 0 || age > dur) return;
-  const r = rng(seed), k = age / dur;
+  const r = rng(seed), k = age / dur, count = Math.min(n, 36);
   x.save(); x.globalCompositeOperation = o.blend || 'lighter'; x.lineCap = 'round';
-  for (let i = 0; i < n; i++) {
+  x.strokeStyle = rgba(color, clamp((1 - k * 0.5) * alpha * 0.75));
+  x.lineWidth = w;
+  x.beginPath();
+  for (let i = 0; i < count; i++) {
     const a = r() * Math.PI * 2, sp = .55 + .9 * r(), off = r(), ww = w * (.45 + 1.1 * r()), jit = r();
     let h, tl, al;
     if (inward) {
@@ -316,10 +345,10 @@ export function drawRays(x, o, t) {
       const q = clamp(age / (dur * (.45 + .55 * sp)));
       h = lerp(r0, r1, E.outCubic(q)); tl = lerp(r0, r1, E.inCubic(q)); al = 1 - q;
     }
-    if (al <= .01 || h <= tl - 1e-3 && !inward) continue;
-    x.strokeStyle = rgba(color, clamp(al * alpha)); x.lineWidth = ww;
-    x.beginPath(); x.moveTo(cx + Math.cos(a) * tl, cy + Math.sin(a) * tl); x.lineTo(cx + Math.cos(a) * h, cy + Math.sin(a) * h); x.stroke();
+    if (al <= .02 || h <= tl - 1e-3 && !inward) continue;
+    x.moveTo(cx + Math.cos(a) * tl, cy + Math.sin(a) * tl); x.lineTo(cx + Math.cos(a) * h, cy + Math.sin(a) * h);
   }
+  x.stroke();
   x.restore();
 }
 // Expanding shockwave ring.
@@ -334,18 +363,20 @@ export function drawRing(x, o, t) {
 }
 // Drifting points of light that wrap inside a region: keeps a quiet frame alive.
 export function drawBokeh(x, o, t) {
-  const { t0, t1, n = 40, x0 = 0, y0 = 0, x1 = W, y1 = H, color = C.accent, size = 3, vx = 0, vy = -30, seed = 5, alpha = .6 } = o;
+  const { t0, t1, n = 24, x0 = 0, y0 = 0, x1 = W, y1 = H, color = C.accent, size = 3, vx = 0, vy = -30, seed = 5, alpha = .6 } = o;
   if (t < t0 || t > t1) return;
-  const r = rng(seed), fade = Math.min(1, (t - t0) / .25, (t1 - t) / .25), age = t - t0;
+  const r = rng(seed), fade = Math.min(1, (t - t0) / .25, (t1 - t) / .25), age = t - t0, count = Math.min(n, 24);
   x.save(); x.globalCompositeOperation = 'lighter';
-  for (let i = 0; i < n; i++) {
+  x.fillStyle = rgba(color, fade * alpha * 0.65);
+  x.beginPath();
+  for (let i = 0; i < count; i++) {
     const px0 = r(), py0 = r(), sp = .5 + r(), sz = size * (.4 + 1.3 * r() * r()), ph = r() * 7, wob = 6 + 18 * r();
     const px = x0 + (((px0 * (x1 - x0) + vx * sp * age + Math.sin(age * 1.3 + ph) * wob) % (x1 - x0)) + (x1 - x0)) % (x1 - x0);
     const py = y0 + (((py0 * (y1 - y0) + vy * sp * age + Math.cos(age * 1.1 + ph) * wob) % (y1 - y0)) + (y1 - y0)) % (y1 - y0);
-    const a = fade * alpha * (.35 + .65 * Math.abs(Math.sin(age * (1.5 + sp) + ph)));
-    x.fillStyle = rgba(color, a * .35); x.beginPath(); x.arc(px, py, sz * 2.6, 0, 7); x.fill();
-    x.fillStyle = rgba(color, a); x.beginPath(); x.arc(px, py, sz, 0, 7); x.fill();
+    x.moveTo(px + sz * 1.4, py);
+    x.arc(px, py, sz * 1.4, 0, 7);
   }
+  x.fill();
   x.restore();
 }
 // Comic starburst that pops in, spins, and can melt into a circle (morph 0 -> 1).

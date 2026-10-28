@@ -954,18 +954,31 @@ export class Fly extends Scene {
     this.ease = u => .4 * u + .6 * E.inOutCubic(u);
     this.passes = this.items.slice(0, -1).map(it => { let k = 0; while (k < 8 && this.camZ(this.k(k)) + it.z < 950) k += .05; return k; });
     const rr = rng(77);
-    this.dust = Array.from({ length: 460 }, () => { const a = rr() * Math.PI * 2, rad = 380 + rr() * 1300; return [Math.cos(a) * rad, Math.sin(a) * rad * .7, -(n - 1) * gap - 1300 + rr() * ((n - 1) * gap + 2100), .6 + rr()]; });
+    this.dust = Array.from({ length: 80 }, () => { const a = rr() * Math.PI * 2, rad = 380 + rr() * 1300; return [Math.cos(a) * rad, Math.sin(a) * rad * .7, -(n - 1) * gap - 1300 + rr() * ((n - 1) * gap + 2100), .6 + rr()]; });
     f.paint((x, t) => {
       if (t < this.t0 || t >= this.t1) return;
       const c = this.view(t), c2 = this.view(t - .03);
+      const fadeOut = 1 - clamp((t - this.k(10.6)) / .3);
+      if (fadeOut <= 0.01) return;
       x.save(); x.globalCompositeOperation = 'lighter'; x.lineCap = 'round';
+      x.strokeStyle = rgba(C.paper, 0.32 * fadeOut); x.lineWidth = 2.2;
+      x.beginPath();
       for (const [dx, dy, dz, sz] of this.dust) {
+        if (sz > 1.3) continue;
         const p = this.project(dx, dy, dz, c), q = this.project(dx, dy, dz, c2);
         if (!p || !q) continue;
-        const al = clamp(p[2] * .55) * (1 - clamp((t - this.k(10.6)) / .3));
-        x.strokeStyle = rgba(sz > 1.3 ? C.accent : C.paper, al); x.lineWidth = Math.min(8, 2 * sz * p[2]);
-        x.beginPath(); x.moveTo(q[0], q[1]); x.lineTo(p[0], p[1]); x.stroke();
+        x.moveTo(q[0], q[1]); x.lineTo(p[0], p[1]);
       }
+      x.stroke();
+      x.strokeStyle = rgba(C.accent, 0.55 * fadeOut); x.lineWidth = 3.2;
+      x.beginPath();
+      for (const [dx, dy, dz, sz] of this.dust) {
+        if (sz <= 1.3) continue;
+        const p = this.project(dx, dy, dz, c), q = this.project(dx, dy, dz, c2);
+        if (!p || !q) continue;
+        x.moveTo(q[0], q[1]); x.lineTo(p[0], p[1]);
+      }
+      x.stroke();
       x.restore();
     }, true);
     f.fast(this.t0, this.k(8.5), 10); f.fast(this.k(8.5), this.t1, 8);
@@ -989,12 +1002,18 @@ export class Fly extends Scene {
     set(this.world, 'transform', `rotateZ(${c.roll.toFixed(3)}deg) translateZ(${zp.toFixed(1)}px) rotateY(${c.yaw.toFixed(3)}deg) translateZ(${(c.cz - zp).toFixed(1)}px)`);
     for (const it of this.items) {
       const rel = it.z + c.cz, near = 1 - clamp((rel - 650) / 380), far = clamp(1 - (-rel - 900) / 1300);
-      vis(it.w, rel < 1080); vis(it.pw, rel - 260 < 1080);
-      set(it.w, 'transform', `translate3d(${it.dx}px,${it.dy}px,${it.z}px) scale(${it.w.fit})`);
-      set(it.w, 'opacity', Math.min(near, far).toFixed(3));
-      const pn = 1 - clamp((rel - 260 - 600) / 420);
-      set(it.pw, 'transform', `translate3d(${it.dx * .6}px,${it.dy * .6}px,${it.z - 260}px) rotateZ(${it.rot}deg)`);
-      set(it.pw, 'opacity', Math.min(pn, .15 + .85 * clamp(1 - (-(rel - 260) - 900) / 1600)).toFixed(3));
+      const visW = rel < 980 && rel > -2050 && near > 0.01 && far > 0.01;
+      const visPW = (rel - 260) < 980 && (rel - 260) > -2300;
+      vis(it.w, visW); vis(it.pw, visPW);
+      if (visW) {
+        set(it.w, 'transform', `translate3d(${it.dx}px,${it.dy}px,${it.z}px) scale(${it.w.fit})`);
+        set(it.w, 'opacity', Math.min(near, far).toFixed(3));
+      }
+      if (visPW) {
+        const pn = 1 - clamp((rel - 260 - 600) / 420);
+        set(it.pw, 'transform', `translate3d(${it.dx * .6}px,${it.dy * .6}px,${it.z - 260}px) rotateZ(${it.rot}deg)`);
+        set(it.pw, 'opacity', Math.min(pn, .15 + .85 * clamp(1 - (-(rel - 260) - 900) / 1600)).toFixed(3));
+      }
     }
     set(this.root, 'opacity', (1 - tw(t, this.k(10.7), this.t1, E.inExpo)).toFixed(3));
   }
@@ -1118,11 +1137,12 @@ export class Counters extends Scene {
     this.body = el('div', this.plane, 'cbody');
     this.inner = el('div', this.body, 'cinner big');
     this.hlRow = el('div', this.body, 'abs hlrow');
-    const lines = (o.source || f.src.code || '').split('\n');
-    this.nl = lines.length;
-    this.html = lines.map((l, i) => `<span class="ln">${i + 1}</span>${hl(l) || ' '}`);
+    const lines = (o.source || f.src.code || '').split('\n').slice(0, 80);
+    this.nl = Math.max(1, lines.length);
     this.LH = 30;
-    this.vrows = Array.from({ length: 62 }, () => { const d = el('div', this.inner, 'cl abs'); d.style.width = '100%'; return d; });
+    const repeated = [...lines, ...lines];
+    this.inner.innerHTML = repeated.map((l, i) => `<div class="cl"><span class="ln">${(i % this.nl) + 1}</span>${hl(l) || ' '}</div>`).join('');
+    this.loopH = this.nl * this.LH;
     const fill = v => fillVars(f, v);
     const cs = o.counters || (o.items ? o.items.map(it => [String(it.to) + (it.suffix || ''), it.label]) : []), step = 3;
     this.cnt = cs.map(([v, l], i) => {
@@ -1143,12 +1163,8 @@ export class Counters extends Scene {
     const e = tw(t, this.t0, this.t0 + .5, E.outExpo), dim = this.cnt.some(c => t >= c.t && t < c.t1) ? .32 : 1;
     set(this.plane, 'transform', `translateY(${(500 * (1 - e)).toFixed(1)}px) rotateX(${lerp(70, 56, e).toFixed(2)}deg) rotateZ(${(-4 + 3 * Math.sin((t - this.t0) * .9)).toFixed(2)}deg)`);
     set(this.plane, 'opacity', (e * dim).toFixed(3));
-    const y = Math.pow(Math.max(0, t - this.t0), 1.15) * 3900, first = Math.floor(y / this.LH);
-    this.vrows.forEach((d, i) => {
-      const li = (first + i) % this.nl;
-      if (d.__li !== li) { d.innerHTML = this.html[li]; d.__li = li; }
-      set(d, 'transform', `translateY(${((first + i) * this.LH - y).toFixed(1)}px)`);
-    });
+    const y = (Math.pow(Math.max(0, t - this.t0), 1.15) * 1800) % this.loopH;
+    set(this.inner, 'transform', `translateY(${(-y).toFixed(1)}px)`);
     set(this.hlRow, 'transform', `translateY(${(1080 - (y % this.LH)).toFixed(1)}px)`);
     this.cnt.forEach(c => {
       const on = t >= c.t - .01 && t < c.t1;
@@ -1238,7 +1254,8 @@ export class Progress extends Scene {
     set(this.barFill, 'width', (prog * 100).toFixed(2) + '%');
     this.barL.textContent = done ? (o.doneLabel || 'RENDER  ✓ DONE') : (o.label || 'RENDER  4K · 60 FPS');
     this.barR.textContent = done ? (o.doneRight || '') : `${Math.round(prog * 100)}%`;
-    set(this.barL, 'transform', 'translate(210px, 798px)'); set(this.barR, 'transform', `translate(${1710 - this.barR.offsetWidth}px, 798px)`);
+    set(this.barL, 'transform', 'translate(210px, 798px)');
+    set(this.barR, 'right', '210px'); set(this.barR, 'left', 'auto'); set(this.barR, 'top', '798px');
     this.big.textContent = `${String(Math.round(prog * this.frames)).padStart(4, '0')} / ${this.frames}`;
     set(this.big, 'transform', at(960, 905, `scale(${(1 + .12 * (done ? punch(t, this.k(7), 8) : 0)).toFixed(4)})`));
     set(this.big, 'color', done ? C.accent : C.ink);
@@ -1277,7 +1294,7 @@ export class Chain extends Scene {
     f.burst({ t0: this.tn[2], x: c.x, y: c.y, n: 40, speed: 1500, life: .55, seed: 121 });
     this.nodes.forEach((nd, i) => f.ring({ t0: this.tn[i], dur: i === 2 ? .5 : .45, cx: nd.x, cy: nd.y, r0: 40, r1: i === 2 ? 900 : 700, w: i === 2 ? 16 : 12 }));
     f.flash({ t0: this.tn[2], dur: .25, rise: .015, color: C.accent, peak: .2 });
-    f.bokeh({ t0: this.t0, t1: this.t1, n: 120, x0: -600, x1: 5600, y0: -300, y1: 1400, color: C.accent, size: 2.4, vx: 30, vy: -20, alpha: .45, seed: 122 });
+    f.bokeh({ t0: this.t0, t1: this.t1, n: 24, x0: -600, x1: 5600, y0: -300, y1: 1400, color: C.accent, size: 2.4, vx: 30, vy: -20, alpha: .45, seed: 122 });
     this.tn.forEach((k, i) => { f.cue(k, i === 2 ? 'impact_big' : 'impact', i === 2 ? 1 : .75); f.fast(k - .03, k + .25, 10); f.shake(k, i === 2 ? 18 : 10); f.bump(k, i === 2 ? .06 : .035); });
     f.smear(this.c2[0] + .1, this.c2[1] - .2, 2); f.smear(this.c3[0] + .1, this.c3[1] - .2, 2); f.fast(this.c2[0], this.c2[1], 10); f.fast(this.c3[0], this.c3[1], 10); f.fast(this.k(8), this.k(11.5), 6);
     f.cue(this.t0, 'whoosh', .5); f.cue(this.c2[0] + .2, 'whoosh_big', .6); f.cue(this.c3[0] + .2, 'whoosh_big', .7);

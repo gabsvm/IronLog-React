@@ -1,21 +1,24 @@
 // compositor.js: composes a film from its spec (blocks on a beat grid, captions, HUD) into one seekable film.
 // v2: a camera rig moves the whole scene layer every frame (scene drift + whips + shakes + beat bumps),
 // colour grounds swap behind it, and FX draw either in world space (with the camera) or in screen space.
-import { B, C, E, tw, rgba, el, vis, set, Caption, HUD, FX, drawComet, drawBurst, drawSlash, drawDots,
+import { B, C, E, clamp, tw, rgba, el, vis, set, Caption, HUD, FX, drawComet, drawBurst, drawSlash, drawDots,
   drawRays, drawRing, drawBokeh, drawStarburst } from './core.js';
 
 export class Film {
   constructor(root, o = {}) {
     this.nested = !!o.nested; this.src = o.src || {}; this.logo = o.logo || ''; this.spec = o.spec;
     this.LIGHT = new Set([C.accent, C.paper, C.hot, '#FFFFFF']);
-    const dsf = this.nested ? 1 : (o.dsf || window.devicePixelRatio || 1);
+    const vw = typeof window !== 'undefined' ? (window.innerWidth || 1280) : 1920;
+    const vh = typeof window !== 'undefined' ? (window.innerHeight || 720) : 1080;
+    const viewScale = Math.min(vw / 1920, vh / 1080);
+    const dsf = this.nested ? 0.45 : (o.dsf || clamp(viewScale * Math.min((typeof window !== 'undefined' && window.devicePixelRatio) || 1, 1.25), 0.45, 0.85));
     this.stage = el('div', root, 'stage');
     this.groundEl = el('div', this.stage, 'ground');
     this.bgfx = new FX(this.stage, dsf, 'bgfx');
     this.cam = el('div', this.stage, 'cam');
     this.scenesEl = el('div', this.cam, 'scenes');
     this.fx = new FX(this.stage, dsf, 'fxc');
-    this.sfx = new FX(this.stage, dsf, 'sfxc');
+    this.sfx = this.fx;
     this.flashEl = el('div', this.stage, 'flash');
     this.invEl = el('div', this.stage, 'inv');
     el('div', this.stage, 'vig');
@@ -109,11 +112,14 @@ export class Film {
     const world = fx => { fx.clear(); const x = fx.x; x.translate(960, 540); x.rotate(c.r * Math.PI / 180); x.scale(c.s, c.s); x.translate(-960 - c.x, -540 - c.y); return x; };
     const bx = world(this.bgfx);
     if (!light && !this.noGrid(t)) {
-      // dot grid in world space: it moves with the camera, so even an empty frame shows the move
-      const R = Math.hypot(960, 540) / c.s + 140, ox = 960 + c.x, oy = 540 + c.y;
+      // dot grid in world space: clamp c.s so zooming out never explodes the loop count
+      const safeS = Math.max(c.s, 0.75);
+      const R = Math.hypot(960, 540) / safeS + 140, ox = 960 + c.x, oy = 540 + c.y;
       bx.fillStyle = rgba(C.paper, .16);
+      bx.beginPath();
       for (let gx = Math.floor((ox - R) / 128) * 128 + 64; gx < ox + R; gx += 128)
-        for (let gy = Math.floor((oy - R) / 128) * 128 + 76; gy < oy + R; gy += 128) bx.fillRect(gx - 1.3, gy - 1.3, 2.6, 2.6);
+        for (let gy = Math.floor((oy - R) / 128) * 128 + 76; gy < oy + R; gy += 128) bx.rect(gx - 1.3, gy - 1.3, 2.6, 2.6);
+      bx.fill();
     }
     for (const d of this.dots) drawDots(bx, d, t);
     for (const b of this.bokehs) if (!b.screen) drawBokeh(bx, b, t);
@@ -126,8 +132,9 @@ export class Film {
     for (const b of this.bursts) drawBurst(x, b, t);
     for (const r of this.rays) if (!r.screen) drawRays(x, r, t);
     for (const r of this.rings) if (!r.screen) drawRing(x, r, t);
-    this.sfx.clear();
-    const sx = this.sfx.x;
+    // Screen-space foreground pass on the same foreground canvas (saves a 3rd full-screen canvas clear & composite)
+    const sx = this.fx.x;
+    sx.setTransform(this.fx.dsf, 0, 0, this.fx.dsf, 0, 0);
     for (const p of this.paints) if (p.screen) p.fn(sx, t);
     for (const b of this.bokehs) if (b.screen) drawBokeh(sx, b, t);
     for (const r of this.rays) if (r.screen) drawRays(sx, r, t);

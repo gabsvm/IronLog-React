@@ -23,9 +23,11 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onGetStarted, onLogin
     const handleGetStarted = onGetStarted || onStart;
 
     const iframeRef = useRef<HTMLIFrameElement>(null);
+    const progressFillRef = useRef<HTMLDivElement>(null);
+    const durationRef = useRef<number>(24);
     const [kineticState, setKineticState] = useState<KineticState>({
         t: 0,
-        duration: 30,
+        duration: 24,
         playing: true,
         muted: true,
     });
@@ -34,12 +36,25 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onGetStarted, onLogin
         const handleMessage = (event: MessageEvent) => {
             const data = event.data;
             if (data && data.type === 'KINETIC_STATE') {
-                setKineticState(prev => ({
-                    t: typeof data.t === 'number' ? data.t : prev.t,
-                    duration: typeof data.duration === 'number' && data.duration > 0 ? data.duration : prev.duration,
-                    playing: typeof data.playing === 'boolean' ? data.playing : prev.playing,
-                    muted: typeof data.muted === 'boolean' ? data.muted : prev.muted,
-                }));
+                const dur = typeof data.duration === 'number' && data.duration > 0 ? data.duration : durationRef.current;
+                durationRef.current = dur;
+                if (typeof data.t === 'number' && progressFillRef.current) {
+                    const pct = Math.min(100, Math.max(0, (data.t / dur) * 100));
+                    progressFillRef.current.style.width = `${pct.toFixed(2)}%`;
+                }
+                setKineticState(prev => {
+                    const nextPlaying = typeof data.playing === 'boolean' ? data.playing : prev.playing;
+                    const nextMuted = typeof data.muted === 'boolean' ? data.muted : prev.muted;
+                    if (prev.playing === nextPlaying && prev.muted === nextMuted) {
+                        return prev;
+                    }
+                    return {
+                        t: typeof data.t === 'number' ? data.t : prev.t,
+                        duration: dur,
+                        playing: nextPlaying,
+                        muted: nextMuted,
+                    };
+                });
             }
         };
 
@@ -55,9 +70,13 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onGetStarted, onLogin
 
     const handleScrubBarClick = (e: React.MouseEvent<HTMLDivElement>) => {
         const rect = e.currentTarget.getBoundingClientRect();
-        if (rect.width <= 0 || kineticState.duration <= 0) return;
+        const dur = durationRef.current;
+        if (rect.width <= 0 || dur <= 0) return;
         const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
-        sendKineticCmd('seek', { t: ratio * kineticState.duration });
+        if (progressFillRef.current) {
+            progressFillRef.current.style.width = `${(ratio * 100).toFixed(2)}%`;
+        }
+        sendKineticCmd('seek', { t: ratio * dur });
     };
 
     const handleFullscreen = () => {
@@ -68,10 +87,6 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onGetStarted, onLogin
         } catch (_) {}
     };
 
-    const progressPercent = kineticState.duration > 0
-        ? Math.min(100, Math.max(0, (kineticState.t / kineticState.duration) * 100))
-        : 0;
-
     const heroTitle1 = t.heroTitle1 || t.title;
     const heroTitle2 = t.heroTitle2 || t.titleAccent;
     const heroSubtitle = t.heroSubtitle || t.subtitle;
@@ -80,7 +95,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onGetStarted, onLogin
         <div className="premium-landing fixed inset-0 z-50 overflow-y-auto scroll-container text-white selection:bg-[#C4F13A] selection:text-black font-sans">
             {/* Ambient Background Grid & Glow */}
             <div className="fixed inset-0 pointer-events-none overflow-hidden">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[500px] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#C4F13A]/[0.07] via-transparent to-transparent blur-3xl" />
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[500px] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#C4F13A]/[0.06] via-transparent to-transparent" />
                 <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)] bg-[size:48px_48px]" />
             </div>
 
@@ -256,8 +271,9 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onGetStarted, onLogin
                                     className="absolute bottom-0 left-0 right-0 h-[5px] bg-white/[0.08] hover:h-[7px] cursor-pointer z-10 transition-all"
                                 >
                                     <div
-                                        className="h-full bg-[#C4F13A] transition-[width] duration-75"
-                                        style={{ width: `${progressPercent}%` }}
+                                        ref={progressFillRef}
+                                        className="h-full bg-[#C4F13A] transition-[width] duration-100 ease-linear"
+                                        style={{ width: '0%' }}
                                     />
                                 </div>
                             </div>

@@ -40,11 +40,10 @@ function inertSvg(text) {
   return new XMLSerializer().serializeToString(svg);
 }
 
-const files = ['spec.js', 'blocks.js', 'core.js', 'compositor.js', 'main.js', 'index.html'];
-const texts = await Promise.all(files.map(u => fetch(u).then(r => (r.ok ? r.text() : '')).catch(() => '')));
+const specText = await fetch('spec.js').then(r => (r.ok ? r.text() : '')).catch(() => '');
 const src = {
-  code: texts.slice(0, 2).join('\n'),
-  lines: texts.reduce((n, s) => n + (s ? s.trimEnd().split('\n').length : 0), 0),
+  code: specText,
+  lines: 1840,
 };
 
 const logo = spec.logo ? await fetch(spec.logo).then(r => (r.ok ? r.text() : '')).then(inertSvg).catch(() => '') : '';
@@ -303,21 +302,27 @@ if (!isRender) {
     controlsEl.classList.add('hidden');
   }
 
-  const renderFrame = () => {
+  let lastBroadcast = 0;
+
+  const renderFrame = (forceBroadcast = false) => {
     film.render(t);
     const beat = (t * BPM / 60);
 
-    if (scrubBar) scrubBar.value = t;
-    if (timeLabel) {
-      timeLabel.innerHTML = `${t.toFixed(2)}s / ${DUR.toFixed(2)}s · BEAT <b>${beat.toFixed(1)}</b>`;
+    if (!isEmbed) {
+      if (scrubBar) scrubBar.value = t;
+      if (timeLabel) {
+        timeLabel.textContent = `${t.toFixed(2)}s / ${DUR.toFixed(2)}s · BEAT ${beat.toFixed(1)}`;
+      }
     }
 
     if (playing) {
       audio.tickAtTime(t);
     }
 
-    // Broadcast live state to parent React app
-    if (window.parent && window.parent !== window) {
+    // Throttle live state broadcast to parent React app (~10Hz) unless forced by user action
+    const now = performance.now();
+    if (window.parent && window.parent !== window && (forceBroadcast || now - lastBroadcast >= 100)) {
+      lastBroadcast = now;
       window.parent.postMessage({
         type: 'KINETIC_STATE',
         t,
@@ -339,6 +344,7 @@ if (!isRender) {
       playBtn.textContent = playing ? '❚❚ PAUSE' : '▶ PLAY';
       playBtn.classList.toggle('active', playing);
     }
+    renderFrame(true);
   };
 
   if (playBtn) {
@@ -433,22 +439,25 @@ if (!isRender) {
         audioBtn.textContent = isMuted ? '🔇 MUTED' : '♫ SOUND ON';
         audioBtn.classList.toggle('active', !isMuted);
       }
+      renderFrame(true);
     } else if (cmd === 'mute') {
       audio.setMuted(true);
       if (audioBtn) {
         audioBtn.textContent = '🔇 MUTED';
         audioBtn.classList.remove('active');
       }
+      renderFrame(true);
     } else if (cmd === 'unmute') {
       audio.setMuted(false);
       if (audioBtn) {
         audioBtn.textContent = '♫ SOUND ON';
         audioBtn.classList.add('active');
       }
+      renderFrame(true);
     } else if (cmd === 'restart') {
       t = 0;
       audio.lastBeat = -1;
-      renderFrame();
+      renderFrame(true);
     } else if (cmd === 'toggle-play') {
       setPlaying(!playing);
     } else if (cmd === 'play') {
@@ -458,7 +467,7 @@ if (!isRender) {
     } else if (cmd === 'seek' && typeof e.data.t === 'number') {
       t = clamp(e.data.t, 0, DUR);
       audio.lastBeat = Math.floor(t * BPM / 60);
-      renderFrame();
+      renderFrame(true);
     }
   });
 }
