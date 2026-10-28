@@ -21,21 +21,21 @@ export const StatsExercisePicker: React.FC<{ stats: StatsData }> = ({ stats }) =
 
     return (
         <>
-                <div className="fixed inset-0 z-sheet flex flex-col bg-zinc-950 animate-in slide-in-from-bottom duration-200">
-                    <div className="glass flex min-h-16 pt-safe shrink-0 items-center gap-3 border-b border-white/5 px-4">
+                <div className="fixed inset-0 z-sheet flex flex-col bg-surface-app animate-in slide-in-from-bottom duration-200">
+                    <div className="flex min-h-14 pt-safe shrink-0 items-center gap-3 border-b border-border-subtle bg-surface-base px-3">
                         <button
                             onClick={() => setShowPicker(false)}
-                            className="-ml-2 p-2 text-zinc-400 hover:text-white"
+                            className="flex h-9 w-9 items-center justify-center rounded-[4px] border border-border-subtle bg-surface-raised text-zinc-400 hover:text-white active:scale-95"
                             aria-label={pickLang(lang, { es: 'Cerrar', en: 'Close' })}
                         >
-                            <Icon name="X" size={24} />
+                            <Icon name="X" size={18} />
                         </button>
                         <div className="relative flex-1">
                             <Icon name="Search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
                             <input
                                 type="text"
                                 placeholder={t.searchPlaceholder}
-                                className="glow-input-neon w-full rounded-xl border border-zinc-700/50 bg-zinc-800/50 py-2 pl-9 pr-4 text-sm font-medium text-white outline-none transition-all placeholder-zinc-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                                className="w-full rounded-[6px] border border-border-subtle bg-surface-raised py-2 pl-9 pr-3 text-xs font-medium text-white outline-none placeholder-zinc-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
                                 value={pickerSearch}
                                 onChange={event => setPickerSearch(event.target.value)}
                             />
@@ -51,17 +51,17 @@ export const StatsExercisePicker: React.FC<{ stats: StatsData }> = ({ stats }) =
                                         setSelectedExId(String(ex.id));
                                         setShowPicker(false);
                                     }}
-                                    className={`group flex w-full items-center justify-between rounded-xl border p-3 text-left transition-all active:scale-[0.99] ${
+                                    className={`group flex w-full items-center justify-between rounded-[6px] border p-2.5 text-left transition-all active:scale-[0.99] ${
                                         selectedExId === String(ex.id)
-                                            ? 'border-primary-500/30 bg-primary-500/10'
+                                            ? 'border-primary-500/40 bg-primary-500/10'
                                             : 'border-transparent hover:bg-white/5'
                                     }`}
                                 >
                                     <div>
-                                        <div className={`text-sm font-bold ${selectedExId === String(ex.id) ? 'text-primary-400' : 'text-zinc-100'}`}>
+                                        <div className={`text-sm font-black uppercase tracking-tight ${selectedExId === String(ex.id) ? 'text-primary-400' : 'text-white'}`}>
                                             {getTranslated(ex.name, lang)}
                                         </div>
-                                        <div className="mt-0.5 text-[11px] font-bold uppercase tracking-wider text-zinc-400">
+                                        <div className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-muted">
                                             {TRANSLATIONS[lang].muscle[ex.muscle]}
                                         </div>
                                     </div>

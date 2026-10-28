@@ -95,7 +95,7 @@ export const StatsView: React.FC = () => {
     return (
         <div className="product-stats-shell">
             <div className="product-stats-segments" role="tablist" aria-label={sw.sectionsAria}>
-                <div className="product-stats-segments-inner">
+                <div className="product-stats-segments-inner flex rounded-[6px] border border-border-subtle bg-surface-raised p-1">
                     {items.map(item => (
                         <button
                             key={item.id}
@@ -105,7 +105,7 @@ export const StatsView: React.FC = () => {
                             aria-selected={section === item.id}
                             aria-controls={`stats-panel-${item.id}`}
                             data-active={section === item.id}
-                            className="product-stats-segment"
+                            className={`product-stats-segment flex-1 rounded-[4px] py-2 text-center text-[11px] font-extrabold uppercase tracking-wider transition-all ${section === item.id ? 'bg-primary-500 text-zinc-950 shadow-sm' : 'text-zinc-400 hover:text-white'}`}
                             onClick={() => setSection(item.id)}
                         >
                             {item[lang]}
@@ -117,7 +117,7 @@ export const StatsView: React.FC = () => {
             <section className="px-4 pb-3 pt-2">
                 <div className="flex items-end justify-between gap-3 px-1">
                     <div className="min-w-0">
-                        <h2 className="text-[1.7rem] font-black tracking-[-0.05em] text-zinc-950 dark:text-white">{t.statsTitle}</h2>
+                        <h2 className="text-[22px] font-black uppercase tracking-tight text-white">{t.statsTitle}</h2>
                         <p className="text-xs font-semibold tracking-normal text-muted">
                             {scope === 'plan' && activeMeso
                                 ? `${t.currentPlan} · ${t.week} ${activeMeso.week}`
@@ -125,7 +125,7 @@ export const StatsView: React.FC = () => {
                         </p>
                     </div>
                     {publicPlanLabel && (
-                        <span className="max-w-[46%] shrink-0 truncate rounded-full border border-primary-500/15 bg-primary-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-primary-700 dark:text-primary-300">
+                        <span className="max-w-[46%] shrink-0 truncate rounded-[4px] border border-primary-500/40 bg-primary-500/10 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-primary-400">
                             {publicPlanLabel}
                         </span>
                     )}
@@ -142,9 +142,9 @@ export const StatsView: React.FC = () => {
                 )}
                 <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
                     {summaryItems.map((item, itemIdx) => (
-                        <div key={item.label} className={`tonal-${(itemIdx % 4) + 1} rounded-3xl border border-[rgb(var(--border-subtle)/0.65)] px-4 py-4`}>
-                            <div className="text-xs font-semibold tracking-normal text-[rgb(var(--text-muted))]">{item.label}</div>
-                            <div className="mt-1 text-3xl font-black tabular-nums tracking-[-0.04em] text-zinc-950 dark:text-white">{item.value}</div>
+                        <div key={item.label} className={`tonal-${(itemIdx % 4) + 1} rounded-[8px] border border-border-subtle bg-surface-raised px-4 py-3.5`}>
+                            <div className="text-[10px] font-bold uppercase tracking-wider text-[rgb(var(--text-muted))]">{item.label}</div>
+                            <div className="mt-1 font-mono text-2xl font-black tabular-nums tracking-tight text-zinc-950 dark:text-white">{item.value}</div>
                         </div>
                     ))}
                 </div>
@@ -157,7 +157,7 @@ export const StatsView: React.FC = () => {
                 className="product-stats-impl"
             >
                 {section === 'overview' && safeLogs.length > 0 && (
-                    <div className="mx-4 mb-3 rounded-[1.35rem] border border-[rgb(var(--border-subtle)/0.7)] bg-[rgb(var(--surface-raised)/0.65)] p-4">
+                    <div className="mx-4 mb-3 rounded-[8px] border border-border-subtle bg-surface-raised p-4">
                         <div className="mb-3 flex items-center gap-2">
                             <Icon name="Activity" size={14} className="text-primary-500" />
                             <div>

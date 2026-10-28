@@ -138,7 +138,10 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                         </div>
                     )}
 
-                    <MuscleTag label={resolveMuscleLabel(ex.slotLabel || ex.muscle || 'CHEST', lang)} />
+                    <MuscleTag
+                        label={resolveMuscleLabel(ex.slotLabel || ex.muscle || 'CHEST', lang)}
+                        muscle={ex.muscle || ex.slotLabel}
+                    />
 
                     {isCardio ? (
                         <span className="inline-flex items-center rounded-[4px] border border-cyan-500/20 bg-cyan-500/10 px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider text-cyan-300">

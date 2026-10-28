@@ -77,9 +77,10 @@ export const NavBtn: React.FC<NavBtnProps> = React.memo(({ id, label, icon, isAc
             onClick={() => onSelect(id)}
             aria-current={isActive ? 'page' : undefined}
             type="button"
-            className="group expressive-press relative flex h-full min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-2xl py-1"
+            className="group expressive-press relative flex h-full min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-[6px] py-1"
         >
-            <div className={`flex h-8 w-[min(100%,64px)] items-center justify-center rounded-full transition-[background-color,transform] duration-300 ease-natural ${isActive ? 'bg-primary-500/20 scale-[1.03]' : 'bg-transparent'}`}>
+            {isActive && <span className="absolute top-0 inset-x-3 h-[2px] rounded-full bg-primary-500" />}
+            <div className="flex h-7 items-center justify-center">
                 <Icon name={icon} size={21} strokeWidth={isActive ? 2.5 : 2} fill={isActive ? 'currentColor' : 'none'} fillOpacity={isActive ? 0.22 : undefined} className={isActive ? 'text-[rgb(var(--accent-text))]' : 'text-muted group-hover:text-[rgb(var(--text-primary))]'} />
             </div>
             <span className={`min-w-0 max-w-full truncate text-[12px] font-semibold tracking-normal leading-tight transition-colors duration-300 ${isActive ? 'text-[rgb(var(--accent-text))]' : 'text-muted group-hover:text-[rgb(var(--text-primary))]'}`}>{label}</span>
@@ -299,7 +300,7 @@ export const Layout: React.FC<LayoutProps> = ({
                     onClick={() => setShowMoreSheet(false)}
                 >
                     <div
-                        className="w-full max-w-lg rounded-t-[20px] border-t border-border-subtle bg-surface-base p-4 pb-safe animate-in slide-in-from-bottom duration-200"
+                        className="w-full max-w-lg rounded-t-[12px] border-t border-border-subtle bg-surface-base p-4 pb-safe animate-in slide-in-from-bottom duration-200"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-zinc-700" />
@@ -308,7 +309,7 @@ export const Layout: React.FC<LayoutProps> = ({
                             <button
                                 type="button"
                                 onClick={() => setShowMoreSheet(false)}
-                                className="rounded-lg p-1 text-zinc-400 hover:text-white"
+                                className="rounded-[6px] p-1 text-zinc-400 hover:text-white"
                                 aria-label={t.cancel}
                             >
                                 <Icon name="X" size={18} />
@@ -321,9 +322,9 @@ export const Layout: React.FC<LayoutProps> = ({
                                     setShowMoreSheet(false);
                                     setView('history');
                                 }}
-                                className="flex w-full items-center gap-3.5 rounded-xl p-3 text-left transition-colors hover:bg-surface-raised active:scale-[0.98]"
+                                className="flex w-full items-center gap-3.5 rounded-[6px] border border-border-subtle/60 bg-surface-raised/60 hover:bg-surface-raised p-3 text-left transition-colors active:scale-[0.98]"
                             >
-                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-raised text-primary-400">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[6px] bg-surface-raised text-primary-400">
                                     <Icon name="Clock" size={20} />
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -339,9 +340,9 @@ export const Layout: React.FC<LayoutProps> = ({
                                     setShowMoreSheet(false);
                                     setView('stats');
                                 }}
-                                className="flex w-full items-center gap-3.5 rounded-xl p-3 text-left transition-colors hover:bg-surface-raised active:scale-[0.98]"
+                                className="flex w-full items-center gap-3.5 rounded-[6px] border border-border-subtle/60 bg-surface-raised/60 hover:bg-surface-raised p-3 text-left transition-colors active:scale-[0.98]"
                             >
-                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-raised text-primary-400">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[6px] bg-surface-raised text-primary-400">
                                     <Icon name="BarChart2" size={20} />
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -357,9 +358,9 @@ export const Layout: React.FC<LayoutProps> = ({
                                     setShowMoreSheet(false);
                                     setView('nutrition');
                                 }}
-                                className="flex w-full items-center gap-3.5 rounded-xl p-3 text-left transition-colors hover:bg-surface-raised active:scale-[0.98]"
+                                className="flex w-full items-center gap-3.5 rounded-[6px] border border-border-subtle/60 bg-surface-raised/60 hover:bg-surface-raised p-3 text-left transition-colors active:scale-[0.98]"
                             >
-                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-raised text-primary-400">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[6px] bg-surface-raised text-primary-400">
                                     <Icon name="Utensils" size={20} />
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -375,9 +376,9 @@ export const Layout: React.FC<LayoutProps> = ({
                                     setShowMoreSheet(false);
                                     openProfile();
                                 }}
-                                className="flex w-full items-center gap-3.5 rounded-xl p-3 text-left transition-colors hover:bg-surface-raised active:scale-[0.98]"
+                                className="flex w-full items-center gap-3.5 rounded-[6px] border border-border-subtle/60 bg-surface-raised/60 hover:bg-surface-raised p-3 text-left transition-colors active:scale-[0.98]"
                             >
-                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-raised text-primary-400">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[6px] bg-surface-raised text-primary-400">
                                     <Icon name="Settings" size={20} />
                                 </div>
                                 <div className="flex-1 min-w-0">

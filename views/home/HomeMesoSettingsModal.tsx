@@ -12,7 +12,7 @@ export const HomeMesoSettingsModal: React.FC<{ state: HomeViewState }> = ({ stat
         <>
             {showMesoSettings && (
                 <div className="fixed inset-0 z-modal bg-black/65 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in" onClick={() => setShowMesoSettings(false)}>
-                    <div className="premium-theme-panel w-full max-w-sm p-6 shadow-2xl relative" onClick={e => e.stopPropagation()}>
+                    <div className="premium-theme-panel w-full max-w-sm rounded-[8px] p-6 shadow-2xl relative" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-[rgb(var(--text-primary))] font-bold text-xl">{t.mesoConfig}</h3>
                             <button onClick={() => setShowMesoSettings(false)} className="text-muted hover:text-[rgb(var(--text-primary))]">
@@ -24,17 +24,17 @@ export const HomeMesoSettingsModal: React.FC<{ state: HomeViewState }> = ({ stat
                             {/* Target Weeks */}
                             <div id="tut-meso-duration">
                                 <label className="text-xs font-semibold uppercase text-muted tracking-wider block mb-2 px-1">{t.targetWeeks}</label>
-                                <div className="flex items-center gap-4 bg-[rgb(var(--surface-elevated))] p-2 rounded-[20px] border border-[rgb(var(--border-subtle))]">
+                                <div className="flex items-center gap-4 bg-[rgb(var(--surface-elevated))] p-2 rounded-[6px] border border-[rgb(var(--border-subtle))]">
                                     <button
                                         onClick={() => setEditWeeks(Math.max(1, editWeeks - 1))}
-                                        className="w-10 h-10 rounded-full bg-[rgb(var(--surface-raised))] border border-[rgb(var(--border-subtle))] flex items-center justify-center text-muted hover:text-[rgb(var(--text-primary))]"
+                                        className="w-10 h-10 rounded-[4px] bg-[rgb(var(--surface-raised))] border border-[rgb(var(--border-subtle))] flex items-center justify-center text-muted hover:text-[rgb(var(--text-primary))]"
                                     >
                                         <Icon name="Minus" size={16} />
                                     </button>
                                     <span className="flex-1 text-center font-mono text-2xl font-bold text-[rgb(var(--text-primary))]">{editWeeks}</span>
                                     <button
                                         onClick={() => setEditWeeks(editWeeks + 1)}
-                                        className="w-10 h-10 rounded-full bg-[rgb(var(--surface-raised))] border border-[rgb(var(--border-subtle))] flex items-center justify-center text-muted hover:text-[rgb(var(--text-primary))]"
+                                        className="w-10 h-10 rounded-[4px] bg-[rgb(var(--surface-raised))] border border-[rgb(var(--border-subtle))] flex items-center justify-center text-muted hover:text-[rgb(var(--text-primary))]"
                                     >
                                         <Icon name="Plus" size={16} />
                                     </button>
@@ -42,7 +42,7 @@ export const HomeMesoSettingsModal: React.FC<{ state: HomeViewState }> = ({ stat
                             </div>
 
                             {/* Deload Toggle */}
-                            <div id="tut-meso-deload" className="flex items-center justify-between bg-primary-500/10 border border-primary-500/20 p-4 rounded-[20px]">
+                            <div id="tut-meso-deload" className="flex items-center justify-between bg-primary-500/10 border border-primary-500/20 p-4 rounded-[6px]">
                                 <div>
                                     <span className="text-sm font-bold text-[rgb(var(--text-primary))] block mb-1">{t.deloadMode}</span>
                                     <span className="text-xs text-[rgb(var(--text-secondary))] block leading-tight">{t.deloadDesc}</span>
@@ -59,7 +59,7 @@ export const HomeMesoSettingsModal: React.FC<{ state: HomeViewState }> = ({ stat
                             <button
                                 id="tut-meso-edit"
                                 onClick={() => { setShowMesoSettings(false); onEditProgram(); }}
-                                className="w-full py-3 bg-[rgb(var(--surface-elevated))] border border-[rgb(var(--border-subtle))] rounded-[20px] flex items-center justify-center gap-2 text-sm font-bold text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--text-primary))] hover:bg-primary-500/10 transition-colors"
+                                className="w-full py-3 bg-[rgb(var(--surface-elevated))] border border-[rgb(var(--border-subtle))] rounded-[6px] flex items-center justify-center gap-2 text-sm font-bold text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--text-primary))] hover:bg-primary-500/10 transition-colors"
                             >
                                 <Icon name="Layout" size={16} /> {t.editTemplate}
                             </button>
@@ -83,7 +83,7 @@ export const HomeMesoSettingsModal: React.FC<{ state: HomeViewState }> = ({ stat
 
                             <button
                                 onClick={() => { setShowMesoSettings(false); setShowCompleteModal('meso'); }}
-                                className="w-full py-3 text-xs font-bold text-primary-500 hover:text-primary-400 hover:bg-primary-500/10 rounded-[20px] transition-colors"
+                                className="w-full py-3 text-xs font-bold text-primary-500 hover:text-primary-400 hover:bg-primary-500/10 rounded-[6px] transition-colors"
                             >
                                 {t.finishCycle}
                             </button>

@@ -56,10 +56,10 @@ export const BodyMetricsModal: React.FC<BodyMetricsModalProps> = ({
             accent="primary"
             footer={
                 <div className="flex gap-2">
-                    <Button variant="ghost" fullWidth onClick={onClose}>
+                    <Button variant="ghost" fullWidth onClick={onClose} className="rounded-[6px]">
                         {TRANSLATIONS[lang].copy.bodyMetricsModal.cancel}
                     </Button>
-                    <Button variant="primary" fullWidth onClick={handleSave}>
+                    <Button variant="primary" fullWidth onClick={handleSave} className="rounded-[6px]">
                         {TRANSLATIONS[lang].copy.bodyMetricsModal.save}
                     </Button>
                 </div>
@@ -81,7 +81,7 @@ export const BodyMetricsModal: React.FC<BodyMetricsModalProps> = ({
                             value={bodyWeight}
                             onChange={(e) => setBodyWeight(e.target.value)}
                             placeholder="e.g. 75"
-                            className="premium-form-input w-full p-3 !text-base !font-bold"
+                            className="premium-form-input w-full p-3 rounded-[6px] !text-base !font-bold"
                         />
                     </div>
 
@@ -96,7 +96,7 @@ export const BodyMetricsModal: React.FC<BodyMetricsModalProps> = ({
                                 value={height}
                                 onChange={(e) => setHeight(e.target.value)}
                                 placeholder="e.g. 175"
-                                className="premium-form-input w-full p-3 !text-base !font-bold"
+                                className="premium-form-input w-full p-3 rounded-[6px] !text-base !font-bold"
                             />
                         </div>
 
@@ -110,7 +110,7 @@ export const BodyMetricsModal: React.FC<BodyMetricsModalProps> = ({
                                 value={bodyFat}
                                 onChange={(e) => setBodyFat(e.target.value)}
                                 placeholder="e.g. 15"
-                                className="premium-form-input w-full p-3 !text-base !font-bold"
+                                className="premium-form-input w-full p-3 rounded-[6px] !text-base !font-bold"
                             />
                         </div>
                     </div>

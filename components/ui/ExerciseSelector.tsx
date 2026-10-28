@@ -1,8 +1,9 @@
-
 import React, { useState, useMemo, useDeferredValue } from 'react';
 import { useApp, useAppPreferences } from '../../context/AppContext';
 import { TRANSLATIONS, MUSCLE_GROUPS } from '../../constants';
 import { Icon } from './Icon';
+import { MuscleTag } from './MuscleTag';
+import { resolveMuscleLabel } from '../../utils/muscle';
 import { MuscleGroup, ExerciseDef, VolumeCountingMode } from '../../types';
 import { Button } from './Button';
 import { getTranslated } from '../../utils';
@@ -33,7 +34,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
     const [isCreating, setIsCreating] = useState(false);
     const [newName, setNewName] = useState('');
     const [newMuscle, setNewMuscle] = useState<MuscleGroup>('CHEST');
-    const [isBodyweight, setIsBodyweight] = useState(false); // NEW
+    const [isBodyweight, setIsBodyweight] = useState(false);
     const [volumeCountingMode, setVolumeCountingMode] = useState<VolumeCountingMode>('total');
 
     const filtered = useMemo(() => {
@@ -120,23 +121,33 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
     };
 
     // Render Row for Virtualization
-    const Row = (index: number, ex: ExerciseDef) => (
-        <div className="px-2 py-1">
+    const Row = (_index: number, ex: ExerciseDef) => (
+        <div className="px-3 py-1">
             <button
+                type="button"
                 onClick={() => onSelect(ex.id, ex)}
-                className="expressive-press group flex min-h-14 w-full items-center justify-between rounded-[18px] p-3 text-left hover:bg-[rgb(var(--surface-elevated)/0.6)]"
+                className="group flex w-full items-center justify-between rounded-[6px] border border-border-subtle bg-surface-raised hover:border-primary-500/50 p-3 text-left transition-colors mb-1.5"
             >
-                <div>
-                    <div className="font-bold text-zinc-900 dark:text-zinc-100 text-sm">
+                <div className="min-w-0 flex-1 pr-3">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                        <MuscleTag label={resolveMuscleLabel(ex.muscle, lang)} />
+                        {ex.isBodyweight && (
+                            <span className="inline-flex items-center rounded-[4px] border border-blue-500/20 bg-blue-500/10 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-blue-300">
+                                BW
+                            </span>
+                        )}
+                    </div>
+                    <div className="font-bold text-white text-[15px] truncate mt-1">
                         {getTranslated(ex.name, lang)}
                     </div>
-                    <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mt-0.5 flex gap-2">
-                        <span>{TRANSLATIONS[lang].muscle[ex.muscle]}</span>
-                        {ex.isBodyweight && <span className="text-blue-500">BW</span>}
-                    </div>
+                    {ex.volumeCountingMode === 'per_side' && (
+                        <div className="text-[11px] font-medium text-zinc-400 mt-0.5">
+                            {TRANSLATIONS[lang].copy.exerciseSelector.perSide2} (×2)
+                        </div>
+                    )}
                 </div>
-                <div className="text-zinc-300 dark:text-zinc-700 group-hover:text-primary-500">
-                    <Icon name="Plus" size={20} />
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[4px] border border-border-subtle bg-surface-base text-zinc-400 group-hover:border-primary-500 group-hover:bg-primary-500 group-hover:text-zinc-950 transition-colors">
+                    <Icon name="Plus" size={16} />
                 </div>
             </button>
         </div>
@@ -154,18 +165,22 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
             {/* The Sheet body is a plain `overflow-y-auto` block, so we must re-establish
                 a full-height flex column here — otherwise the `flex-1` Virtuoso list
                 below collapses to 0px and the exercise list renders empty. */}
-            <div className="flex flex-col h-full">
+            <div className="flex flex-col h-full bg-surface-app">
             {/* Custom Header (search input replaces the default Sheet title slot) */}
-            <div className={`glass px-4 h-16 shrink-0 flex items-center gap-3 border-b border-zinc-200 dark:border-white/5 ${persistToGlobal ? 'bg-primary-500/10' : ''}`}>
-                <button onClick={onClose} className="p-2 -ml-2 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white" aria-label={pickLang(lang, { es: 'Cerrar', en: 'Close' })}>
-                    <Icon name="X" size={24} />
+            <div className={`px-4 h-16 shrink-0 flex items-center gap-3 border-b border-border-subtle bg-surface-base/95 backdrop-blur-md ${persistToGlobal ? 'bg-primary-500/10' : ''}`}>
+                <button
+                    onClick={onClose}
+                    className="p-2 -ml-2 rounded-[6px] text-zinc-400 hover:text-white hover:bg-surface-raised transition-colors"
+                    aria-label={pickLang(lang, { es: 'Cerrar', en: 'Close' })}
+                >
+                    <Icon name="X" size={22} />
                 </button>
                 {isCreating ? (
-                    <div className="flex-1 font-bold text-lg dark:text-white">
-                        {t.addEx} {persistToGlobal && <span className="text-xs bg-primary-600 text-white px-2 py-0.5 rounded ml-2">GLOBAL</span>}
+                    <div className="flex-1 font-black text-base uppercase tracking-tight text-white flex items-center">
+                        {t.addEx} {persistToGlobal && <span className="text-[10px] bg-primary-500 text-zinc-950 font-bold px-2 py-0.5 rounded-[4px] ml-2">GLOBAL</span>}
                     </div>
                 ) : (
-                    <div className="flex-1 flex gap-2">
+                    <div className="flex-1 flex items-center gap-2">
                         <div className="relative flex-1">
                             <Icon name="Search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
                             <input
@@ -173,7 +188,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
                                 type="text"
                                 placeholder={t.searchPlaceholder}
                                 aria-label={pickLang(lang, { es: 'Buscar ejercicios', en: 'Search exercises' })}
-                                className="premium-form-input w-full py-2 pl-9 pr-4 font-medium"
+                                className="w-full rounded-[6px] bg-surface-raised border border-border-subtle py-2.5 pl-9 pr-4 text-sm text-white placeholder-zinc-500 focus:border-primary-500 outline-none font-medium transition-colors"
                                 value={search}
                                 onChange={e => setSearch(e.target.value)}
                             />
@@ -181,7 +196,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
                         <button
                             onClick={handleCreateStart}
                             aria-label={pickLang(lang, { es: 'Añadir nuevo ejercicio', en: 'Add new exercise' })}
-                            className="w-10 h-10 flex items-center justify-center rounded-xl bg-primary-500 text-black shadow-md shadow-primary-500/20 active:scale-95 transition-transform duration-fast ease-natural"
+                            className="w-10 h-10 flex shrink-0 items-center justify-center rounded-[6px] bg-primary-500 text-zinc-950 shadow-md hover:brightness-110 active:scale-95 transition-all"
                         >
                             <Icon name="Plus" size={20} />
                         </button>
@@ -191,13 +206,13 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
 
             {/* Content Switcher */}
             {isCreating ? (
-                <div className="flex-1 overflow-y-auto p-6 pb-[calc(1.5rem+var(--safe-area-bottom))] scroll-container flex flex-col">
-                    <div className="space-y-6 flex-1">
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-[calc(1.5rem+var(--safe-area-bottom))] scroll-container flex flex-col">
+                    <div className="rounded-[8px] border border-border-subtle bg-surface-raised p-4 sm:p-5 space-y-5 flex-1">
                         <div>
-                            <label className="text-sm font-semibold text-muted mb-2 block">{t.exName}</label>
+                            <label className="text-xs font-bold uppercase tracking-wider text-zinc-400 mb-2 block">{t.exName}</label>
                             <input 
                                 type="text" 
-                                className="premium-form-input w-full p-3 font-medium"
+                                className="w-full rounded-[6px] bg-surface-base border border-border-subtle p-3 text-sm text-white placeholder-zinc-500 focus:border-primary-500 outline-none font-medium transition-colors"
                                 value={newName}
                                 onChange={e => setNewName(e.target.value)}
                                 autoFocus
@@ -205,13 +220,17 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
                         </div>
 
                         <div>
-                            <label className="text-sm font-semibold text-muted mb-2 block">{t.selectMuscle}</label>
+                            <label className="text-xs font-bold uppercase tracking-wider text-zinc-400 mb-2 block">{t.selectMuscle}</label>
                             <div className="grid grid-cols-2 gap-2">
                                 {Object.values(MUSCLE_GROUPS).map(m => (
                                     <button
                                         key={m}
                                         onClick={() => setNewMuscle(m)}
-                                        className={`p-3 rounded-xl text-xs font-bold border transition-all ${newMuscle === m ? 'bg-primary-500/10 border-primary-500/30 text-primary-700 dark:text-primary-400' : 'bg-white dark:bg-zinc-900 border-[rgb(var(--border-subtle))] text-zinc-500'}`}
+                                        className={`p-2.5 rounded-[4px] text-xs font-bold uppercase tracking-wider border transition-colors ${
+                                            newMuscle === m
+                                                ? 'bg-primary-500 border-primary-500 text-zinc-950'
+                                                : 'bg-surface-base border-border-subtle text-zinc-400 hover:text-white'
+                                        }`}
                                     >
                                         {TRANSLATIONS[lang].muscle[m]}
                                     </button>
@@ -219,48 +238,68 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-3 bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-xl">
+                        <div className="flex items-center gap-3 bg-surface-base border border-border-subtle p-3.5 rounded-[6px]">
                             <input 
                                 type="checkbox" 
                                 id="isBW"
                                 checked={isBodyweight}
                                 onChange={e => setIsBodyweight(e.target.checked)}
-                                className="w-5 h-5 accent-primary-500"
+                                className="w-4 h-4 accent-primary-500 rounded-[2px]"
                             />
-                            <label htmlFor="isBW" className="font-bold text-sm text-zinc-700 dark:text-zinc-300 cursor-pointer">
+                            <label htmlFor="isBW" className="font-bold text-xs uppercase tracking-wider text-white cursor-pointer">
                                 {t.profile.isBW}
                             </label>
                         </div>
 
                         <div>
-                            <label className="text-sm font-semibold text-muted mb-2 block">
+                            <label className="text-xs font-bold uppercase tracking-wider text-zinc-400 mb-2 block">
                                 {TRANSLATIONS[lang].copy.exerciseSelector.tonnageCalculation}
                             </label>
                             <div className="grid gap-2">
-                                <button type="button" onClick={() => setVolumeCountingMode('total')} className={`text-left rounded-xl border p-3 ${volumeCountingMode === 'total' ? 'border-primary-500 bg-primary-500/10' : 'border-[rgb(var(--border-subtle))]'}`}>
-                                    <span className="block text-sm font-bold text-zinc-800 dark:text-zinc-100">{TRANSLATIONS[lang].copy.exerciseSelector.recordedTotal1}</span>
-                                    <span className="block mt-1 text-xs text-zinc-500">{TRANSLATIONS[lang].copy.exerciseSelector.barsBilateralMachinesOr}</span>
+                                <button
+                                    type="button"
+                                    onClick={() => setVolumeCountingMode('total')}
+                                    className={`text-left rounded-[6px] border p-3 transition-colors ${
+                                        volumeCountingMode === 'total'
+                                            ? 'border-primary-500 bg-primary-500/10'
+                                            : 'border-border-subtle bg-surface-base hover:border-zinc-600'
+                                    }`}
+                                >
+                                    <span className="block text-sm font-bold text-white">{TRANSLATIONS[lang].copy.exerciseSelector.recordedTotal1}</span>
+                                    <span className="block mt-1 text-xs text-zinc-400">{TRANSLATIONS[lang].copy.exerciseSelector.barsBilateralMachinesOr}</span>
                                 </button>
-                                <button type="button" onClick={() => setVolumeCountingMode('per_side')} className={`text-left rounded-xl border p-3 ${volumeCountingMode === 'per_side' ? 'border-primary-500 bg-primary-500/10' : 'border-[rgb(var(--border-subtle))]'}`}>
-                                    <span className="block text-sm font-bold text-zinc-800 dark:text-zinc-100">{TRANSLATIONS[lang].copy.exerciseSelector.perSide2}</span>
-                                    <span className="block mt-1 text-xs text-zinc-500">{TRANSLATIONS[lang].copy.exerciseSelector.whenLoadAndReps}</span>
+                                <button
+                                    type="button"
+                                    onClick={() => setVolumeCountingMode('per_side')}
+                                    className={`text-left rounded-[6px] border p-3 transition-colors ${
+                                        volumeCountingMode === 'per_side'
+                                            ? 'border-primary-500 bg-primary-500/10'
+                                            : 'border-border-subtle bg-surface-base hover:border-zinc-600'
+                                    }`}
+                                >
+                                    <span className="block text-sm font-bold text-white">{TRANSLATIONS[lang].copy.exerciseSelector.perSide2}</span>
+                                    <span className="block mt-1 text-xs text-zinc-400">{TRANSLATIONS[lang].copy.exerciseSelector.whenLoadAndReps}</span>
                                 </button>
                             </div>
                         </div>
                     </div>
 
-                    <div className="pt-6 mt-auto flex gap-3">
-                        <Button variant="secondary" onClick={() => setIsCreating(false)} fullWidth>{t.cancel}</Button>
-                        <Button onClick={handleCreateSave} disabled={!newName.trim()} fullWidth>{t.createAndSelect}</Button>
+                    <div className="pt-4 mt-auto flex gap-3">
+                        <Button variant="secondary" onClick={() => setIsCreating(false)} fullWidth className="rounded-[6px]">{t.cancel}</Button>
+                        <Button onClick={handleCreateSave} disabled={!newName.trim()} fullWidth className="rounded-[6px]">{t.createAndSelect}</Button>
                     </div>
                 </div>
             ) : (
                 <>
                     {/* Filters */}
-                    <div className="flex shrink-0 gap-2 overflow-x-auto border-b border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base))] p-2 scroll-container">
+                    <div className="flex shrink-0 gap-1.5 overflow-x-auto border-b border-border-subtle bg-surface-base p-2.5 no-scrollbar">
                         <button 
                             onClick={() => setFilterMuscle('ALL')}
-                            className={`premium-filter-pill whitespace-nowrap ${filterMuscle === 'ALL' ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'}`}
+                            className={`shrink-0 whitespace-nowrap rounded-[4px] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-colors ${
+                                filterMuscle === 'ALL'
+                                    ? 'bg-primary-500 text-zinc-950'
+                                    : 'bg-surface-raised border border-border-subtle text-zinc-400 hover:text-white'
+                            }`}
                         >
                             {t.any}
                         </button>
@@ -268,7 +307,11 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
                             <button 
                                 key={m}
                                 onClick={() => setFilterMuscle(m)}
-                                className={`premium-filter-pill whitespace-nowrap ${filterMuscle === m ? 'bg-primary-500 text-black' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'}`}
+                                className={`shrink-0 whitespace-nowrap rounded-[4px] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-colors ${
+                                    filterMuscle === m
+                                        ? 'bg-primary-500 text-zinc-950'
+                                        : 'bg-surface-raised border border-border-subtle text-zinc-400 hover:text-white'
+                                }`}
                             >
                                 {TRANSLATIONS[lang].muscle[m]}
                             </button>
@@ -279,18 +322,18 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
                     <div className="flex-1 overflow-hidden">
                         {filtered.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-16 px-8 text-center gap-4">
-                                <div className="w-16 h-16 rounded-2xl bg-zinc-800/80 flex items-center justify-center">
-                                    <Icon name="Dumbbell" size={28} className="text-zinc-600" />
+                                <div className="w-14 h-14 rounded-[8px] bg-surface-raised border border-border-subtle flex items-center justify-center text-zinc-500">
+                                    <Icon name="Dumbbell" size={28} />
                                 </div>
                                 <div>
                                     <p className="text-white font-bold text-base mb-1">
                                         {search ? pickLang(lang, { es: `Sin resultados para "${search}"`, en: `No results for "${search}"` }) : (t.noExFound || pickLang(lang, { es: 'Sin ejercicios', en: 'No exercises' }))}
                                     </p>
-                                    <p className="text-zinc-500 text-sm">
+                                    <p className="text-zinc-400 text-xs">
                                         {TRANSLATIONS[lang].copy.exerciseSelector.searchByNameOr}
                                     </p>
                                 </div>
-                                <Button onClick={handleCreateStart}>
+                                <Button onClick={handleCreateStart} className="rounded-[6px]">
                                     <Icon name="Plus" size={14} />
                                     {search ? `${t.createEx} "${search}"` : (TRANSLATIONS[lang].copy.exerciseSelector.createExercise)}
                                 </Button>
@@ -303,7 +346,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ onSelect, on
                                 components={{
                                     Footer: () => (
                                         <div className="pt-4 pb-[calc(3rem+var(--safe-area-bottom))] px-4">
-                                            <Button variant="secondary" onClick={handleCreateStart} fullWidth className="border-dashed">
+                                            <Button variant="secondary" onClick={handleCreateStart} fullWidth className="rounded-[6px] border-dashed border-border-subtle hover:border-primary-500 text-zinc-300">
                                                 <Icon name="Plus" size={14} /> {t.createEx} {search ? `"${search}"` : ''}
                                             </Button>
                                         </div>

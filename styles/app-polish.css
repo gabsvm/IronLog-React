@@ -135,13 +135,13 @@ html.light .product-workout-polish .divide-white\/10 > :not([hidden]) ~ :not([hi
   gap: 4px;
   padding: 4px;
   border: 1px solid rgb(var(--border-subtle) / 0.8);
-  border-radius: 14px;
+  border-radius: 6px;
   background: rgb(var(--surface-raised) / 0.9);
 }
 
 .product-stats-segment {
   min-height: 34px;
-  border-radius: 10px;
+  border-radius: 4px;
   font-size: 10px;
   font-weight: 800;
   letter-spacing: .08em;

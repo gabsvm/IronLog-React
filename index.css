@@ -38,9 +38,9 @@
   --primary-900:  77 101  12;
   --accent-text: 200 244  90;
   /* Shared expressive shape + motion tokens; never override users' accent choice. */
-  --shape-card-radius: 24px;
-  --shape-segment-radius: 18px;
-  --shape-hero-radius: 30px;
+  --shape-card-radius: 8px;
+  --shape-segment-radius: 6px;
+  --shape-hero-radius: 8px;
   --motion-expressive: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
@@ -249,7 +249,7 @@ body {
         align-items: center;
         gap: 4px;
         padding: 4px 10px;
-        border-radius: 9999px;
+        border-radius: 4px;
         background-color: rgb(var(--surface-elevated));
         font-size: 12px;
         color: rgb(var(--text-secondary));
@@ -258,6 +258,8 @@ body {
 
     .seg-reference {
         display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: 1fr;
         gap: 6px;
         background-color: rgb(var(--surface-raised));
         border: 0.5px solid rgb(var(--border-subtle));
@@ -599,10 +601,11 @@ html.light .tonal-3 { background-color: color-mix(in srgb, #dbe9fb 90%, rgb(var(
 html.light .tonal-4 { background-color: color-mix(in srgb, #fde8d2 90%, rgb(var(--primary-500))); }
 html.light #tut-up-next.card-reference { background-color: color-mix(in srgb, #fffefa 78%, rgb(var(--primary-500))); }
 html.dark .tonal-1, html.dark .tonal-2, html.dark .tonal-3, html.dark .tonal-4 {
-  background-color: color-mix(in srgb, rgb(var(--surface-raised)) 92%, rgb(var(--primary-500)));
+  background-color: rgb(var(--surface-raised));
+  border: 1px solid rgb(var(--border-subtle));
 }
 /* Larger readable tap targets and softly emphasized actions. */
-.btn-primary-reference { min-height: 48px; border-radius: 9999px; }
+.btn-primary-reference { min-height: 48px; border-radius: 6px; }
 .expressive-press { transition: transform 260ms var(--motion-expressive), background-color 260ms var(--motion-expressive), color 260ms var(--motion-expressive); }
 .expressive-press:active { transform: scale(0.96); }
 @keyframes expressive-reveal { from { opacity: 0.4; } to { opacity: 1; } }
@@ -680,6 +683,7 @@ html.light .premium-hero__cta:hover { background: #25392b; }
   box-shadow: 0 10px 30px -25px rgb(0 0 0 / .38);
 }
 .premium-theme-quiet { background: color-mix(in srgb, rgb(var(--surface-raised)) 90%, rgb(var(--primary-500))); }
+html.dark .premium-theme-quiet { background: rgb(var(--surface-raised)); }
 .premium-history-row { transition: background-color 180ms var(--motion-expressive), transform 200ms var(--motion-expressive), border-color 180ms; }
 .premium-history-row:active { transform: scale(.992); }
 .premium-trend-line { stroke-dasharray: 520; stroke-dashoffset: 520; animation: premium-trend-draw .7s var(--motion-expressive) forwards; }
@@ -707,7 +711,7 @@ html.light .premium-hero__cta:hover { background: #25392b; }
 
 /* Profile uses the same quiet tonal hierarchy as History and Diet. */
 .premium-profile .card-reference {
-  background-color: color-mix(in srgb, rgb(var(--surface-raised)) 93%, rgb(var(--primary-500)));
+  background-color: rgb(var(--surface-raised));
   border-color: rgb(var(--border-subtle));
 }
 .premium-profile .label-reference { font-size: 12px; letter-spacing: .025em; }
@@ -724,7 +728,7 @@ html.light .premium-hero__cta:hover { background: #25392b; }
   background: rgb(var(--surface-elevated) / .66);
   color: rgb(var(--text-primary));
   border: 1px solid rgb(var(--border-subtle));
-  border-radius: 16px;
+  border-radius: 6px;
   min-height: 44px;
   font-size: 14px;
   transition: border-color 160ms var(--motion-expressive), background-color 160ms var(--motion-expressive);
@@ -735,7 +739,9 @@ html.light .premium-hero__cta:hover { background: #25392b; }
 }
 .premium-filter-pill {
   min-height: 40px;
-  border-radius: 9999px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   font-size: 12px;
   font-weight: 700;
   padding: 8px 12px;
@@ -774,7 +780,7 @@ html.light .premium-summary-hero {
 
 /* Native rest experience: one tonal vocabulary on web and in Capacitor WebView. */
 .premium-rest-pill {
-  background: color-mix(in srgb, rgb(var(--surface-raised)) 90%, rgb(var(--primary-500)));
+  background: rgb(var(--surface-base));
   box-shadow: 0 12px 30px -22px rgb(0 0 0 / .65), inset 0 1px 0 rgb(var(--primary-500) / .12);
 }
 .premium-rest-sheet {

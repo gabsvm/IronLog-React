@@ -55,3 +55,26 @@ Documentos de la feature:
 - `npm run build` → **exit 0** (TypeScript + Vite production bundle + SW precache)
 - `npm run test:run` → **145/145 archivos pasados (810/810 tests)**, incluyendo todos los guardrails arquitectónicos (`i18nRatchet.test.ts`, `lightModeContrast.test.ts`, `textSizeFloor.test.tsx`, `progressionUI.test.tsx`, `warmupEligibility.test.tsx`, `accessibleSemantics.test.tsx`, `finishFlow.spec.ts`, `homeHubOrder.spec.ts`).
 - `npx playwright test --config playwright.visual.config.ts` → **23/23 tests visuales y de contraste WCAG AA pasados** (dark & light) con baselines actualizadas e inspeccionadas visualmente (`home-dark.png`, `workout-dark.png`, `workout-menu-dark.png`, `workout-light.png`).
+
+---
+
+## 4. Fase 2 — Unificación Total 1:1 RP Hypertrophy App (Sin "Popurrí")
+
+Spec técnica de la Fase 2: `docs/specs/reestructura-rp-fase2-unificacion-plan.md`.
+
+### A. Fix de Ejercicios Bodyweight e Isométricos + Mojibake + `MuscleTag`
+- **`SetRowBodyweight.tsx` y `SetRowIsometric.tsx`:** Reescritos 1:1 con `SetRowStandard.tsx` (`[⋮] | +KG | REPS | LOG` e `[⋮] | +KG | SEG | LOG`, checkbox cuadrado `rounded-[3px]`, `SetRowActionMenu`, sin el pill viejo `OBJ: 84k x 7` ni el botón redondo `(✓)`).
+- **`useSetRowState.tsx`:** Corregido el mojibake `'â€”'` por `'—'` en los placeholders de recomendaciones vacías.
+- **`utils/muscle.ts` (`resolveMuscleLabel`):** Añadido mapeo de etiquetas de slot KONG (`TRUNK` -> `Abdomen` / `Abs / Core`, `PUSH`, `PULL`, `LEGS`, `ARMS`, `UPPER`, `LOWER`) conservando etiquetas personalizadas (`slotLabel`).
+- **`components/ui/MuscleTag.tsx` y `components/workout/MuscleTag.tsx`:** Unificados con colorización semántica por grupo muscular (rojo pecho, ámbar espalda, violeta hombros, azul piernas, cian brazos, verde abdomen/core).
+
+### B. Tokens Globales, Navegación y Modales de Entrenamiento
+- **`index.css` y `styles/app-polish.css`:** Radios globales reducidos a geometría técnica RP (`--shape-card-radius: 8px`, `--shape-segment-radius: 6px`, `--shape-hero-radius: 8px`), eliminados los tintes oliva de `html.dark .tonal-1..4` en favor de superficies neutras (`#17171a` / `#1f1f24`), y `.seg-reference` ajustado con `grid-auto-flow: column; grid-auto-columns: 1fr` para soportar N segmentos.
+- **`Layout.tsx`, `Sheet.tsx`, `Button.tsx`, `ConfirmModal.tsx`:** Barra inferior de 5 pestañas plana estilo RP (sin óvalo flotante Material-3), drawer `More` con filas técnicas `rounded-[6px]`, y modales/sheets con bordes rectos `rounded-[8px]` / `rounded-t-[12px]`.
+- **Overlays de Workout:** `RestTimerActive.tsx`, `WorkoutFinishSheet.tsx`, `SessionSummaryView.tsx`, `WarmupModal.tsx`, `ReorderExercisesSheet.tsx` y `FreestyleSessionModal.tsx` rediseñados al lenguaje 1:1 RP.
+
+### C. Biblioteca de Ejercicios, Historial, Estadísticas, Nutrición y Perfil
+- **Exercises (`ExercisesView`, `ExercisesListMode`, `ExercisesEditMode`, `ExerciseSelector`, `ExerciseDetailModal`):** Cabecera condensada uppercase, buscador `rounded-[6px]`, chips de filtro `rounded-[4px]` y filas con `MuscleTag` (`|||`).
+- **History & Stats (`HistoryView`, `HistoryDetailView`, `StatsViewImpl`, `StatsHeader`, `StatsOverviewTab`, `StatsProgressTab`, `StatsVolumeTab`, `StatsWidgets`, `RepMaxTable`, `PremiumTrendCard`, `WeeklyReportCard`):** Segmented controls planos `rounded-[6px]`, tarjetas técnicas `#17171a` `rounded-[8px]` y tablas densas tabular-nums.
+- **Nutri & Profile (`NutriView`, `TodayTab`, `BodyTab`, `HistoryTab`, `WaterTracker`, `AddMealModal`, `AddCardioModal`, `LogWeightModal`, `ProfileSheet`, `BodyMetricsModal`, `CsvImportSheet`, `DriveBackupCard`, `HealthConnectCard` y `components/profile/sections/*`):** Unificados con tarjetas `rounded-[8px]` `bg-surface-raised`, inputs `rounded-[6px]` y controles `rounded-[4px]`.
+

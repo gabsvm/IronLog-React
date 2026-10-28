@@ -22,8 +22,8 @@ export const StatsOverviewTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
                         />
                     )}
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <div id="tut-radar-chart" className="premium-theme-panel flex min-h-[320px] h-full flex-col overflow-hidden p-5 shadow-md">
-                            <h3 className="mb-4 flex items-center gap-2 text-sm font-bold tracking-tight text-[rgb(var(--text-primary))]">
+                        <div id="tut-radar-chart" className="premium-theme-panel flex min-h-[320px] h-full flex-col overflow-hidden rounded-[8px] border border-border-subtle bg-surface-raised p-4 sm:p-5 shadow-md">
+                            <h3 className="mb-4 flex items-center gap-2 text-xs font-black uppercase tracking-wider text-white">
                                 <Icon name="Activity" size={14} /> {t.statsBalance}
                             </h3>
                             <div className="relative flex flex-1 items-center justify-center">
@@ -35,8 +35,8 @@ export const StatsOverviewTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
                             </div>
                         </div>
 
-                        <div className="premium-theme-panel flex min-h-[320px] h-full flex-col p-5 shadow-md">
-                            <h3 className="mb-4 flex items-center gap-2 text-sm font-bold tracking-tight text-[rgb(var(--text-primary))]">
+                        <div className="premium-theme-panel flex min-h-[320px] h-full flex-col rounded-[8px] border border-border-subtle bg-surface-raised p-4 sm:p-5 shadow-md">
+                            <h3 className="mb-4 flex items-center gap-2 text-xs font-black uppercase tracking-wider text-white">
                                 <Icon name="Layers" size={14} /> {t.statsIntensity}
                             </h3>
                             <div className="relative flex flex-1 flex-col items-center justify-center">
@@ -63,7 +63,7 @@ export const StatsOverviewTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
                                                 {Object.entries(setTypeDist).map(([type, count], i) => (
                                                     <div key={type} className="flex items-center gap-1.5">
                                                         <span
-                                                            className="h-2.5 w-2.5 shrink-0 rounded-full"
+                                                            className="h-2 w-2 shrink-0 rounded-[2px]"
                                                             style={{ backgroundColor: intensityPalette[i % intensityPalette.length] }}
                                                         />
                                                         <span className="truncate text-xs font-semibold text-[rgb(var(--text-secondary))]">
@@ -89,17 +89,17 @@ export const StatsOverviewTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
                         </div>
                     </div>
 
-                    <div className="premium-theme-panel relative overflow-hidden p-5 shadow-md">
+                    <div className="premium-theme-panel relative overflow-hidden rounded-[8px] border border-border-subtle bg-surface-raised p-4 sm:p-5 shadow-md">
                         <div className="pointer-events-none absolute right-0 top-0 h-64 w-64 rounded-full bg-primary-500/5 blur-[80px]"></div>
                         <div className="relative z-10 mb-5 flex items-center justify-between">
-                            <h3 className="flex items-center gap-2 text-sm font-bold tracking-tight text-[rgb(var(--text-primary))]">
+                            <h3 className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-white">
                                 <Icon name="Grid3x3" size={14} />
                                 {s.heatmapTitle}
                             </h3>
                         </div>
 
                         {loadingOverview ? (
-                            <div className="h-48 animate-pulse rounded-2xl bg-zinc-800/50"></div>
+                            <div className="h-48 animate-pulse rounded-[6px] bg-surface-base"></div>
                         ) : (
                             <div className="relative z-10">
                                 <MuscleHeatmapGrid volumeData={volumeData} lang={lang} />

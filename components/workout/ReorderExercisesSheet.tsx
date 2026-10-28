@@ -88,13 +88,13 @@ export const SortableExerciseRow: React.FC<SortableExerciseRowProps> = ({
                 } ${
                     exercise.supersetId
                         ? isFirstInGroup && isLastInGroup
-                            ? 'rounded-xl'
+                            ? 'rounded-[8px]'
                             : isFirstInGroup
-                            ? 'rounded-t-xl border-b-0'
+                            ? 'rounded-t-[8px] border-b-0'
                             : isLastInGroup
-                            ? 'rounded-b-xl'
+                            ? 'rounded-b-[8px]'
                             : 'rounded-none border-b-0'
-                        : 'rounded-xl'
+                        : 'rounded-[8px]'
                 } ${
                     isDragging ? 'opacity-30' : ''
                 }`}
@@ -120,7 +120,7 @@ export const SortableExerciseRow: React.FC<SortableExerciseRowProps> = ({
                     type="button"
                     {...attributes}
                     {...listeners}
-                    className="w-9 h-9 flex items-center justify-center text-muted hover:text-white shrink-0 touch-none active:text-primary-400 rounded-lg hover:bg-surface-elevated/40"
+                    className="w-9 h-9 flex items-center justify-center text-muted hover:text-white shrink-0 touch-none active:text-primary-400 rounded-[4px] hover:bg-surface-elevated/40"
                     aria-label={`${r.moveEx} ${getTranslated(exercise.name, lang)}`}
                 >
                     <Icon name="GripVertical" size={18} />
@@ -242,7 +242,7 @@ export const ReorderExercisesSheet: React.FC<ReorderExercisesSheetProps> = ({
                 <button
                     type="button"
                     onClick={save}
-                    className="w-full h-11 rounded-xl bg-primary-500 font-semibold text-zinc-950 flex items-center justify-center gap-2 transition-transform active:scale-[0.98]"
+                    className="w-full h-11 rounded-[6px] bg-primary-500 font-semibold text-zinc-950 flex items-center justify-center gap-2 transition-transform active:scale-[0.98]"
                 >
                     <Icon name="Check" size={18} strokeWidth={2.5} />
                     {r.saveOrder}
@@ -251,7 +251,7 @@ export const ReorderExercisesSheet: React.FC<ReorderExercisesSheetProps> = ({
         >
             <div className="px-4 pb-8 pt-2">
                 {methodologyWarning && (
-                    <div className="mb-3 flex gap-3 rounded-xl border border-amber-500/25 bg-amber-500/10 px-3.5 py-2.5 text-xs leading-relaxed text-amber-800 dark:text-amber-300">
+                    <div className="mb-3 flex gap-3 rounded-[8px] border border-amber-500/25 bg-amber-500/10 px-3.5 py-2.5 text-xs leading-relaxed text-amber-800 dark:text-amber-300">
                         <Icon name="AlertTriangle" size={16} className="mt-0.5 shrink-0 text-amber-400" />
                         <span>{methodologyWarning}</span>
                     </div>
@@ -293,7 +293,7 @@ export const ReorderExercisesSheet: React.FC<ReorderExercisesSheetProps> = ({
                     {createPortal(
                         <DragOverlay dropAnimation={null} zIndex={999}>
                             {activeExercise ? (
-                                <div className="card-reference flex items-center gap-2.5 rounded-xl px-3 py-2.5 shadow-2xl shadow-black/60 ring-2 ring-primary-500">
+                                <div className="card-reference flex items-center gap-2.5 rounded-[8px] px-3 py-2.5 shadow-2xl shadow-black/60 ring-2 ring-primary-500">
                                     <div className="flex-1 min-w-0">
                                         <div className="text-sm font-medium text-white truncate">
                                             {getTranslated(activeExercise.name, lang)}

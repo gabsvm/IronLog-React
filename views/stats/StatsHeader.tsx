@@ -10,7 +10,7 @@ export const StatsHeader: React.FC<{ stats: StatsData }> = ({ stats }) => {
                     <div className="px-1">
                         <div className="flex items-center justify-between gap-3">
                             <div>
-                                <h2 className="text-[1.7rem] font-black tracking-[-0.05em] text-white">{t.statsTitle}</h2>
+                                <h2 className="text-[22px] font-black uppercase tracking-tight text-white">{t.statsTitle}</h2>
                                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
                                     {activeMeso
                                         ? `${s.mesoActive} · ${t.week} ${activeMeso.week}`
@@ -18,7 +18,7 @@ export const StatsHeader: React.FC<{ stats: StatsData }> = ({ stats }) => {
                                 </p>
                             </div>
                             {activeMeso && (
-                                <div className="rounded-full border border-primary-500/15 bg-primary-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-primary-300">
+                                <div className="rounded-[4px] border border-primary-500/40 bg-primary-500/10 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-primary-400">
                                     {activeMeso.isDeload ? 'DELOAD' : activeMeso.mesoType}
                                 </div>
                             )}
@@ -27,9 +27,9 @@ export const StatsHeader: React.FC<{ stats: StatsData }> = ({ stats }) => {
 
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                         {overviewPills.map(pill => (
-                            <div key={pill.label} className="rounded-3xl border border-border-subtle bg-surface-raised px-4 py-3.5">
-                                <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-zinc-500">{pill.label}</div>
-                                <div className="mt-1 text-3xl font-black tracking-[-0.04em] text-white">{pill.value}</div>
+                            <div key={pill.label} className="rounded-[8px] border border-border-subtle bg-surface-raised px-4 py-3.5">
+                                <div className="text-[10px] font-bold uppercase tracking-wider text-muted">{pill.label}</div>
+                                <div className="mt-1 font-mono text-2xl font-black tracking-tight text-white">{pill.value}</div>
                             </div>
                         ))}
                     </div>

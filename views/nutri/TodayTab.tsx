@@ -79,7 +79,7 @@ export const TodayTab: React.FC<Props> = ({
     return (
         <div className="space-y-4 pt-1">
             {/* Hero card — calories + key metrics */}
-            <div className="premium-theme-panel premium-theme-quiet p-4 sm:p-5">
+            <div className="premium-theme-panel rounded-[8px] bg-surface-raised border border-border-subtle p-4 sm:p-5">
                 <div className="flex items-start justify-between mb-4">
                     <div>
                         <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">
@@ -138,7 +138,7 @@ export const TodayTab: React.FC<Props> = ({
 
                 <button
                     onClick={onEditGoals}
-                    className="mt-1 w-full py-2.5 text-center text-xs text-muted hover:text-zinc-400 transition-colors duration-fast ease-natural"
+                    className="mt-1 w-full py-2.5 text-center text-xs text-muted hover:text-zinc-400 transition-colors duration-fast ease-natural rounded-[4px]"
                 >
                     {TRANSLATIONS[lang].copy.todayTab.editGoals} →
                 </button>
@@ -152,9 +152,9 @@ export const TodayTab: React.FC<Props> = ({
                 <button
                     onClick={onAddMeal}
                     aria-label={TRANSLATIONS[lang].copy.todayTab.addFoodEntry}
-                    className="premium-theme-panel expressive-press flex min-h-[64px] items-center justify-center gap-2 p-4 hover:border-primary-500/25"
+                    className="premium-theme-panel rounded-[8px] expressive-press flex min-h-[56px] items-center justify-center gap-2 p-3 hover:border-primary-500/25"
                 >
-                    <div className="w-8 h-8 rounded-xl bg-green-500/15 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-[6px] bg-green-500/15 flex items-center justify-center">
                         <Icon name="Plus" size={16} className="text-green-400" />
                     </div>
                     <span className="text-sm font-bold text-white">{TRANSLATIONS[lang].copy.todayTab.addFood}</span>
@@ -162,9 +162,9 @@ export const TodayTab: React.FC<Props> = ({
                 <button
                     onClick={onAddCardio}
                     aria-label={TRANSLATIONS[lang].copy.todayTab.logCardioSession}
-                    className="premium-theme-panel expressive-press flex min-h-[64px] items-center justify-center gap-2 p-4 hover:border-primary-500/25"
+                    className="premium-theme-panel rounded-[8px] expressive-press flex min-h-[56px] items-center justify-center gap-2 p-3 hover:border-primary-500/25"
                 >
-                    <div className="w-8 h-8 rounded-xl bg-red-500/15 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-[6px] bg-red-500/15 flex items-center justify-center">
                         <Icon name="Flame" size={16} className="text-red-400" />
                     </div>
                     <span className="text-sm font-bold text-white">{TRANSLATIONS[lang].copy.todayTab.logCardio}</span>
@@ -173,7 +173,7 @@ export const TodayTab: React.FC<Props> = ({
 
             {/* Today cardio summary */}
             {todayCardio.length > 0 && (
-                <div className="premium-theme-panel p-3">
+                <div className="premium-theme-panel rounded-[8px] p-3">
                     <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">
                         {TRANSLATIONS[lang].copy.todayTab.todaySCardio}
                     </p>
@@ -191,7 +191,7 @@ export const TodayTab: React.FC<Props> = ({
                                     <button
                                         onClick={() => onDeleteCardio(s.id)}
                                         aria-label={TRANSLATIONS[lang].copy.todayTab.deleteCardioEntry}
-                                        className="p-2 -m-1 text-zinc-700 hover:text-red-500 transition-colors duration-fast ease-natural"
+                                        className="p-1.5 -m-1 text-zinc-700 hover:text-red-500 transition-colors duration-fast ease-natural rounded-[4px]"
                                     >
                                         <Icon name="X" size={12} />
                                     </button>
@@ -211,7 +211,7 @@ export const TodayTab: React.FC<Props> = ({
                 const mealProt = entries.reduce((a, e) => a + e.protein, 0);
                 const isExpanded = expandedMeal === mealType;
                 return (
-                    <div key={mealType} className="premium-theme-panel overflow-hidden">
+                    <div key={mealType} className="premium-theme-panel rounded-[8px] overflow-hidden">
                         <button
                             onClick={() => setExpandedMeal(isExpanded ? null : mealType)}
                             aria-expanded={isExpanded}
@@ -249,14 +249,14 @@ export const TodayTab: React.FC<Props> = ({
                                             <button
                                                 onClick={() => onEditEntry(entry)}
                                                 aria-label={TRANSLATIONS[lang].copy.todayTab.editEntry}
-                                                className="text-zinc-600 hover:text-zinc-300 transition-colors duration-fast ease-natural active:scale-90 p-2 rounded-lg"
+                                                className="text-zinc-600 hover:text-zinc-300 transition-colors duration-fast ease-natural active:scale-90 p-2 rounded-[4px]"
                                             >
                                                 <Icon name="Pencil" size={14} />
                                             </button>
                                             <button
                                                 onClick={() => onDeleteEntry(entry.id)}
                                                 aria-label={TRANSLATIONS[lang].copy.todayTab.deleteEntry}
-                                                className="text-zinc-700 hover:text-red-500 transition-colors duration-fast ease-natural active:scale-90 p-2 rounded-lg"
+                                                className="text-zinc-700 hover:text-red-500 transition-colors duration-fast ease-natural active:scale-90 p-2 rounded-[4px]"
                                             >
                                                 <Icon name="Trash2" size={14} />
                                             </button>

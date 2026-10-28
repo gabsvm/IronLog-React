@@ -54,7 +54,7 @@ export const ProgramDetailView: React.FC<Props> = ({ lang, onBack, onStart }) =>
           <button
             type="button"
             onClick={onBack}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] text-[rgb(var(--text-secondary))] active:scale-95"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[6px] border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] text-[rgb(var(--text-secondary))] active:scale-95"
             aria-label={TRANSLATIONS[lang].copy.programDetail.back}
           >
             <Icon name="ChevronLeft" size={22} />
@@ -68,7 +68,7 @@ export const ProgramDetailView: React.FC<Props> = ({ lang, onBack, onStart }) =>
 
       <main className="flex-1 overflow-y-auto scroll-container">
         <div className="mx-auto w-full max-w-xl p-5 pb-6">
-          <section className="rounded-3xl border border-primary-500/30 bg-gradient-to-br from-primary-500/15 to-[rgb(var(--surface-raised))] p-6 text-center">
+          <section className="rounded-[8px] border border-primary-500/30 bg-gradient-to-br from-primary-500/15 to-[rgb(var(--surface-raised))] p-6 text-center">
             <p className="text-xs font-black uppercase tracking-[0.2em] text-primary-500">KONG</p>
             <h1 className="mt-2 text-3xl font-black leading-tight sm:text-4xl">Savage Size · 4 Day</h1>
             <p className="mt-2 text-lg text-[rgb(var(--text-secondary))]">Alexander Bromley</p>
@@ -79,7 +79,7 @@ export const ProgramDetailView: React.FC<Props> = ({ lang, onBack, onStart }) =>
             </div>
           </section>
 
-          <div className="mt-5 grid grid-cols-3 gap-2 rounded-2xl bg-[rgb(var(--surface-raised))] p-1.5">
+          <div className="mt-5 grid grid-cols-3 gap-2 rounded-[8px] bg-[rgb(var(--surface-raised))] p-1.5">
             {([
               ['overview', TRANSLATIONS[lang].copy.programDetail.howItWorks],
               ['weeks', TRANSLATIONS[lang].copy.programDetail.n12Weeks],
@@ -89,7 +89,7 @@ export const ProgramDetailView: React.FC<Props> = ({ lang, onBack, onStart }) =>
                 key={id}
                 type="button"
                 onClick={() => setTab(id)}
-                className={`min-h-11 rounded-xl px-2 text-xs font-black transition-colors ${tab === id ? 'bg-primary-500 text-black' : 'text-[rgb(var(--text-secondary))]'}`}
+                className={`min-h-11 rounded-[6px] px-2 text-xs font-black transition-colors ${tab === id ? 'bg-primary-500 text-black' : 'text-[rgb(var(--text-secondary))]'}`}
               >
                 {label}
               </button>
@@ -99,7 +99,7 @@ export const ProgramDetailView: React.FC<Props> = ({ lang, onBack, onStart }) =>
           {tab === 'overview' && (
             <div className="mt-5 space-y-3">
               {KONG_4DAY_V1.blocks.map((block) => (
-                <article key={block.id} className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-5">
+                <article key={block.id} className="rounded-[8px] border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-5">
                   <p className="text-xs font-black uppercase tracking-wider text-primary-500">
                     {TRANSLATIONS[lang].copy.programDetail.block} {block.number} · {block.globalWeekStart}-{block.globalWeekEnd}
                   </p>
@@ -117,7 +117,7 @@ export const ProgramDetailView: React.FC<Props> = ({ lang, onBack, onStart }) =>
               </p>
 
               {KONG_4DAY_V1.blocks.map((block) => (
-                <section key={block.id} className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4">
+                <section key={block.id} className="rounded-[8px] border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-[10px] font-black uppercase tracking-wider text-primary-500">
@@ -135,7 +135,7 @@ export const ProgramDetailView: React.FC<Props> = ({ lang, onBack, onStart }) =>
                           key={week}
                           type="button"
                           onClick={() => { setSelectedWeek(week); setSelectedDay(0); }}
-                          className={`min-h-11 rounded-xl border text-xs font-black ${selected ? 'border-primary-500 bg-primary-500 text-black' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base))] text-[rgb(var(--text-secondary))]'}`}
+                          className={`min-h-11 rounded-[6px] border text-xs font-black ${selected ? 'border-primary-500 bg-primary-500 text-black' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base))] text-[rgb(var(--text-secondary))]'}`}
                         >
                           {TRANSLATIONS[lang].copy.programDetail.w}{week}
                         </button>
@@ -145,7 +145,7 @@ export const ProgramDetailView: React.FC<Props> = ({ lang, onBack, onStart }) =>
                 </section>
               ))}
 
-              <section className="rounded-3xl border border-primary-500/25 bg-[rgb(var(--surface-raised))] p-4">
+              <section className="rounded-[8px] border border-primary-500/25 bg-[rgb(var(--surface-raised))] p-4">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary-500">
@@ -153,7 +153,7 @@ export const ProgramDetailView: React.FC<Props> = ({ lang, onBack, onStart }) =>
                     </p>
                     <h2 className="mt-1 text-lg font-black">{blockName(selectedResolution.block)}</h2>
                   </div>
-                  <span className="rounded-full bg-primary-500/10 px-3 py-1 text-[10px] font-black text-primary-500">
+                  <span className="rounded-[4px] bg-primary-500/10 px-3 py-1 text-[10px] font-black text-primary-500">
                     {formatMessage(TRANSLATIONS[lang].copy.programDetail.blockWk4, { blockWeek: selectedResolution.blockWeek })}
                   </span>
                 </div>
@@ -164,14 +164,14 @@ export const ProgramDetailView: React.FC<Props> = ({ lang, onBack, onStart }) =>
                       key={day.id}
                       type="button"
                       onClick={() => setSelectedDay(index)}
-                      className={`min-h-12 rounded-xl border text-xs font-black ${selectedDay === index ? 'border-primary-500 bg-primary-500/15 text-primary-500' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base))] text-[rgb(var(--text-secondary))]'}`}
+                      className={`min-h-12 rounded-[6px] border text-xs font-black ${selectedDay === index ? 'border-primary-500 bg-primary-500/15 text-primary-500' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base))] text-[rgb(var(--text-secondary))]'}`}
                     >
                       {TRANSLATIONS[lang].copy.programDetail.day} {index + 1}
                     </button>
                   ))}
                 </div>
 
-                <div className="mt-4 rounded-2xl bg-[rgb(var(--surface-base))] p-4">
+                <div className="mt-4 rounded-[8px] bg-[rgb(var(--surface-base))] p-4">
                   <h3 className="font-black">
                     {pickLang(lang, { es: ES_DAY_COPY[selectedResolution.block.number]?.[selectedDay], en: undefined }) || title(selectedResolvedDay.dayName)}
                   </h3>
@@ -197,22 +197,22 @@ export const ProgramDetailView: React.FC<Props> = ({ lang, onBack, onStart }) =>
                         : '';
 
                     return (
-                      <div key={slot.programSlotId || `${slot.exerciseId}-${index}`} className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base))] p-4">
+                      <div key={slot.programSlotId || `${slot.exerciseId}-${index}`} className="rounded-[8px] border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base))] p-4">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
                               <span className="text-[10px] font-black uppercase tracking-wider text-[rgb(var(--text-muted))]">#{index + 1}</span>
                               {slot.supersetId && (
-                                <span className="rounded-full bg-primary-500/10 px-2 py-0.5 text-[9px] font-black uppercase text-primary-500">SUPERSET</span>
+                                <span className="rounded-[4px] bg-primary-500/10 px-2 py-0.5 text-[9px] font-black uppercase text-primary-500">SUPERSET</span>
                               )}
                             </div>
                             <h4 className="mt-1 text-sm font-black">{slot.programSourceName || slot.exerciseId || slot.muscle}</h4>
                           </div>
-                          <span className="shrink-0 rounded-lg bg-[rgb(var(--surface-raised))] px-2 py-1 text-[9px] font-black uppercase text-[rgb(var(--text-muted))]">{slot.muscle}</span>
+                          <span className="shrink-0 rounded-[4px] bg-[rgb(var(--surface-raised))] px-2 py-1 text-[9px] font-black uppercase text-[rgb(var(--text-muted))]">{slot.muscle}</span>
                         </div>
                         <div className="mt-3 flex flex-wrap items-center gap-2">
-                          <span className="rounded-lg bg-primary-500/10 px-2.5 py-1.5 text-xs font-black text-primary-500">{repsText}</span>
-                          {rpeText && <span className="rounded-lg bg-[rgb(var(--surface-raised))] px-2.5 py-1.5 text-xs font-bold text-[rgb(var(--text-secondary))]">{rpeText}</span>}
+                          <span className="rounded-[4px] bg-primary-500/10 px-2.5 py-1.5 text-xs font-black text-primary-500">{repsText}</span>
+                          {rpeText && <span className="rounded-[4px] bg-[rgb(var(--surface-raised))] px-2.5 py-1.5 text-xs font-bold text-[rgb(var(--text-secondary))]">{rpeText}</span>}
                         </div>
                       </div>
                     );
@@ -230,7 +230,7 @@ export const ProgramDetailView: React.FC<Props> = ({ lang, onBack, onStart }) =>
               {KONG_GUIDE.map((section) => {
                 const open = openGuideId === section.id;
                 return (
-                  <article key={section.id} className="overflow-hidden rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))]">
+                  <article key={section.id} className="overflow-hidden rounded-[8px] border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))]">
                     <button
                       type="button"
                       onClick={() => setOpenGuideId(open ? '' : section.id)}
@@ -257,7 +257,7 @@ export const ProgramDetailView: React.FC<Props> = ({ lang, onBack, onStart }) =>
           <button
             type="button"
             onClick={onStart}
-            className="flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-primary-500 px-5 text-base font-black text-black shadow-lg shadow-primary-500/20 active:scale-[0.99]"
+            className="flex min-h-14 w-full items-center justify-center gap-2 rounded-[8px] bg-primary-500 px-5 text-base font-black text-black shadow-lg shadow-primary-500/20 active:scale-[0.99]"
           >
             <Icon name="Play" size={20} fill="currentColor" />
             {TRANSLATIONS[lang].copy.programDetail.startKong}

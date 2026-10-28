@@ -22,7 +22,10 @@ export const ExerciseCardCollapsed: React.FC<{ state: ExerciseCardState }> = ({ 
                 <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                            <MuscleTag label={resolveMuscleLabel(ex.slotLabel || ex.muscle || 'CHEST', lang)} />
+                            <MuscleTag
+                                label={resolveMuscleLabel(ex.slotLabel || ex.muscle || 'CHEST', lang)}
+                                muscle={ex.muscle || ex.slotLabel}
+                            />
                             {isCardio ? (
                                 <span className="chip-reference text-cyan-300">
                                     {String(t.cardioModes?.[cardioMode] || cardioMode)}

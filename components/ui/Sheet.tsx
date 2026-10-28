@@ -207,7 +207,7 @@ export const Sheet: React.FC<SheetProps> = ({
                         border-t
                         ${isFull
                             ? 'top-0 min-h-0 rounded-none pt-safe'
-                            : 'max-h-[92vh] rounded-t-[1.75rem] shadow-2xl'}
+                            : 'max-h-[92vh] rounded-t-[12px] shadow-2xl'}
                     `}
                 >
                     {/* Drag handle (always present — it's the dismiss affordance) */}
@@ -234,7 +234,7 @@ export const Sheet: React.FC<SheetProps> = ({
                                 <button
                                     onClick={onBack}
                                     aria-label="Back"
-                                    className="-ml-2 p-2 text-zinc-500 hover:text-zinc-900 dark:hover:text-white rounded-lg transition-colors duration-fast ease-natural"
+                                    className="-ml-2 p-2 text-zinc-500 hover:text-zinc-900 dark:hover:text-white rounded-[6px] transition-colors duration-fast ease-natural"
                                 >
                                     <Icon name="ArrowLeft" size={20} />
                                 </button>
@@ -248,7 +248,7 @@ export const Sheet: React.FC<SheetProps> = ({
                                 <button
                                     onClick={() => onOpenChange(false)}
                                     aria-label="Close"
-                                    className="w-9 h-9 flex items-center justify-center rounded-full bg-zinc-200/60 dark:bg-white/5 text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors duration-fast ease-natural"
+                                    className="w-9 h-9 flex items-center justify-center rounded-[6px] bg-zinc-200/60 dark:bg-white/5 text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors duration-fast ease-natural"
                                 >
                                     <Icon name="X" size={18} />
                                 </button>

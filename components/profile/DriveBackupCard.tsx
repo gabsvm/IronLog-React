@@ -81,9 +81,9 @@ export const DriveBackupCard: React.FC<DriveBackupCardProps> = ({
     };
 
     return (
-        <div className="card-reference p-4 space-y-2" data-testid="drive-backup-card">
+        <div className="card-reference rounded-[8px] border border-border-subtle bg-surface-raised p-4 space-y-2" data-testid="drive-backup-card">
             <div className="flex items-start gap-3">
-                <span className="w-8 h-8 rounded-lg bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
+                <span className="w-8 h-8 rounded-[6px] bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
                     <Icon name="Cloud" size={17} />
                 </span>
                 <div>
@@ -96,7 +96,7 @@ export const DriveBackupCard: React.FC<DriveBackupCardProps> = ({
                     type="button"
                     onClick={() => void save()}
                     disabled={busy}
-                    className="py-2.5 rounded-xl bg-primary-500/10 text-primary-600 dark:text-primary-400 text-xs font-black disabled:opacity-60"
+                    className="py-2.5 rounded-[6px] bg-primary-500/10 text-primary-600 dark:text-primary-400 text-xs font-black disabled:opacity-60"
                 >
                     {status === 'saving' ? t.driveSaving : t.driveBackupNow}
                 </button>
@@ -104,7 +104,7 @@ export const DriveBackupCard: React.FC<DriveBackupCardProps> = ({
                     type="button"
                     onClick={() => void loadList()}
                     disabled={busy}
-                    className="py-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-xs font-bold disabled:opacity-60"
+                    className="py-2.5 rounded-[6px] bg-zinc-100 dark:bg-zinc-800 text-xs font-bold disabled:opacity-60"
                 >
                     {status === 'loading' ? t.driveLoading : t.driveShowList}
                 </button>
@@ -126,7 +126,7 @@ export const DriveBackupCard: React.FC<DriveBackupCardProps> = ({
                                 <button
                                     type="button"
                                     onClick={() => setPending(file)}
-                                    className="px-3 py-1.5 text-xs rounded-xl font-bold bg-zinc-100 dark:bg-zinc-800"
+                                    className="px-3 py-1.5 text-xs rounded-[6px] font-bold bg-zinc-100 dark:bg-zinc-800"
                                 >
                                     {t.restore}
                                 </button>

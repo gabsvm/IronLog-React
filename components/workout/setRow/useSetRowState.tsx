@@ -337,13 +337,13 @@ export const useSetRowState = ({
     const prevText = useMemo(() => {
         if (isIsometric) {
             if (set.duration) return `${set.duration}s`;
-            return 'â€”';
+            return '—';
         }
         if (isBodyweight) {
             if (set.prevReps) {
                 return set.prevWeight && Number(set.prevWeight) > 0 ? `+${shownWeight(set.prevWeight)}${weightSuffix}` : `${set.prevReps}`;
             }
-            return set.hintReps ? String(set.hintReps) : 'â€”';
+            return set.hintReps ? String(set.hintReps) : '—';
         }
         if (set.prevReps || set.prevWeight) {
             if (set.prevReps && set.prevWeight) return `${shownWeight(set.prevWeight)}${weightSuffix}`;
@@ -352,7 +352,7 @@ export const useSetRowState = ({
         if (set.hintReps || set.hintWeight) {
             return set.hintWeight && !set.hintReps ? String(shownWeight(set.hintWeight)) : String(set.hintReps || set.hintWeight);
         }
-        return 'â€”';
+        return '—';
     }, [isBodyweight, isIsometric, set.duration, set.hintReps, set.hintWeight, set.prevReps, set.prevWeight, shownWeight, weightSuffix]);
 
     const setNumber = (setIndex ?? 0) + 1;

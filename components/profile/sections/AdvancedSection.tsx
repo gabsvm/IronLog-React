@@ -31,7 +31,7 @@ export const AdvancedSection: React.FC<AdvancedSectionProps> = ({ syncStatusText
                     <Icon name="ChevronDown" size={14} className="text-muted" />
                 </summary>
                 <div className="space-y-4">
-                    <div className="card-reference p-4 space-y-2">
+                    <div className="card-reference rounded-[8px] border border-border-subtle bg-surface-raised p-4 space-y-2">
                         <div className="label-reference px-1 mb-1">{ty.diagnostics}</div>
                         <div className="flex items-center justify-between text-xs">
                             <span className="font-bold text-muted">{ty.network}</span>
@@ -57,7 +57,7 @@ export const AdvancedSection: React.FC<AdvancedSectionProps> = ({ syncStatusText
                         )}
                         <div className="flex flex-wrap gap-1 pt-1">
                             {Object.entries(localSectionSyncMeta).slice(0, 8).map(([section]) => (
-                                <span key={section} className="rounded-full bg-[rgb(var(--surface-elevated))] px-2 py-0.5 text-xs font-bold text-zinc-700  dark:text-zinc-300">
+                                <span key={section} className="rounded-[4px] bg-[rgb(var(--surface-elevated))] px-2 py-0.5 text-xs font-bold text-zinc-700 dark:text-zinc-300">
                                     {((t.syncSections as any)?.[section]) || section}
                                 </span>
                             ))}
@@ -70,7 +70,7 @@ export const AdvancedSection: React.FC<AdvancedSectionProps> = ({ syncStatusText
                         <button
                             type="button"
                             onClick={() => setShowPhilosophy(true)}
-                            className="w-full py-3 bg-zinc-100  rounded-[18px] text-xs font-bold flex justify-center gap-2 items-center text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--surface-elevated))] dark:hover:bg-zinc-700 transition-colors"
+                            className="w-full py-3 bg-zinc-100 rounded-[6px] text-xs font-bold flex justify-center gap-2 items-center text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--surface-elevated))] dark:hover:bg-zinc-700 transition-colors"
                         >
                             <Icon name="BookOpen" size={16} /> {t.nhRule}
                         </button>

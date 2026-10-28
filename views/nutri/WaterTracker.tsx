@@ -17,7 +17,7 @@ export const WaterTracker: React.FC<Props> = React.memo(({ waterMl, onAdd, lang 
     const cups = Math.round(waterMl / 250);
     const w = TRANSLATIONS[lang].water;
     return (
-        <div className="premium-theme-panel p-4" aria-label={w.trackerLabel}>
+        <div className="premium-theme-panel rounded-[8px] p-4" aria-label={w.trackerLabel}>
             <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                     <span className="text-lg" aria-hidden="true">💧</span>
@@ -29,9 +29,9 @@ export const WaterTracker: React.FC<Props> = React.memo(({ waterMl, onAdd, lang 
             </div>
 
             {/* Progress bar */}
-            <div className="h-2 bg-[rgb(var(--surface-elevated))] rounded-full overflow-hidden mb-3">
+            <div className="h-2 bg-[rgb(var(--surface-elevated))] rounded-[4px] overflow-hidden mb-3">
                 <div
-                    className="h-full rounded-full bg-sky-500 transition-all duration-slow ease-natural"
+                    className="h-full rounded-[4px] bg-sky-500 transition-all duration-slow ease-natural"
                     style={{ width: `${pct}%` }}
                 />
             </div>
@@ -41,7 +41,7 @@ export const WaterTracker: React.FC<Props> = React.memo(({ waterMl, onAdd, lang 
                 {Array.from({ length: 10 }).map((_, i) => (
                     <div
                         key={i}
-                        className={`w-6 h-6 rounded-lg border transition-colors duration-fast ${i < cups ? 'bg-sky-500/30 border-sky-500/50' : 'bg-[rgb(var(--surface-elevated))] border-[rgb(var(--border-subtle))]'}`}
+                        className={`w-6 h-6 rounded-[4px] border transition-colors duration-fast ${i < cups ? 'bg-sky-500/30 border-sky-500/50' : 'bg-[rgb(var(--surface-elevated))] border-[rgb(var(--border-subtle))]'}`}
                     />
                 ))}
             </div>
@@ -53,7 +53,7 @@ export const WaterTracker: React.FC<Props> = React.memo(({ waterMl, onAdd, lang 
                         key={ml}
                         onClick={() => onAdd(ml)}
                         aria-label={`${pickLang(lang, { es: 'Añadir', en: 'Add' })} ${ml} ml`}
-                        className="expressive-press min-h-11 flex-1 rounded-full border border-sky-500/25 bg-sky-500/10 px-2 text-xs font-bold text-sky-600 dark:text-sky-300 hover:bg-sky-500/20"
+                        className="expressive-press min-h-11 flex-1 rounded-[6px] border border-sky-500/25 bg-sky-500/10 px-2 text-xs font-bold text-sky-600 dark:text-sky-300 hover:bg-sky-500/20"
                     >
                         +{ml}ml
                     </button>

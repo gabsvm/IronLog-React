@@ -38,7 +38,7 @@ const VirtuosoHeader = ({ context }: { context?: HistoryVirtuosoContext }) => {
         <div className="space-y-3 px-5 pb-4 pt-4">
             <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                    <h2 className="text-2xl font-black tracking-tight text-zinc-950 dark:text-white">{TRANSLATIONS[lang].copy.history.history}</h2>
+                    <h2 className="text-[22px] font-black uppercase tracking-tight text-white">{TRANSLATIONS[lang].copy.history.history}</h2>
                     <p className="mt-0.5 text-xs font-medium text-muted">
                         {TRANSLATIONS[lang].copy.history.yourCompletedWorkouts}
                     </p>
@@ -47,7 +47,7 @@ const VirtuosoHeader = ({ context }: { context?: HistoryVirtuosoContext }) => {
                     <button
                         type="button"
                         onClick={onExportCSV}
-                        className="flex shrink-0 items-center gap-1.5 rounded-full border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised)/0.95)] px-3.5 py-1.5 text-xs font-bold text-zinc-600 shadow-sm transition-transform active:scale-95 dark:text-zinc-300"
+                        className="flex shrink-0 items-center gap-1.5 rounded-[4px] border border-border-subtle bg-surface-raised px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-zinc-300 shadow-sm transition-transform active:scale-95"
                         aria-label={pickLang(lang, { es: 'Descargar CSV', en: 'Download CSV' })}
                     >
                         <Icon name="Download" size={13} />
@@ -63,7 +63,7 @@ const VirtuosoHeader = ({ context }: { context?: HistoryVirtuosoContext }) => {
                     inputMode="search"
                     enterKeyHint="search"
                     placeholder={TRANSLATIONS[lang].copy.history.searchWorkouts}
-                    className="w-full rounded-2xl border border-[rgb(var(--border-subtle)/0.8)] bg-[rgb(var(--surface-raised)/0.8)] py-3 pl-10 pr-4 text-sm font-medium text-zinc-950 outline-none placeholder-zinc-500 transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:text-white"
+                    className="w-full rounded-[6px] border border-border-subtle bg-surface-raised py-2.5 pl-10 pr-4 text-sm font-medium text-white outline-none placeholder-zinc-500 transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
                     value={search}
                     onChange={e => setSearch(e.target.value)}
                 />
@@ -76,17 +76,17 @@ const VirtuosoFooter = ({ context }: { context?: HistoryVirtuosoContext }) => {
     if (!context || !context.hasLockedLogs) return <div className="h-24" />;
     return (
         <div className="px-4 pb-28 pt-4">
-            <div className="rounded-2xl border border-dashed border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised)/0.7)] p-6 text-center">
-                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-zinc-200 text-zinc-400 dark:bg-zinc-800">
+            <div className="rounded-[8px] border border-dashed border-border-subtle bg-surface-raised p-6 text-center">
+                <div className="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-[6px] bg-surface-base text-zinc-400">
                     <Icon name="Lock" size={24} />
                 </div>
-                <h4 className="mb-2 font-bold text-zinc-900 dark:text-white">
+                <h4 className="mb-2 text-sm font-bold uppercase tracking-wider text-white">
                     {pickLang(context.lang, { es: 'Historial bloqueado', en: 'History Locked' })}
                 </h4>
-                <p className="mx-auto mb-6 max-w-[220px] text-xs text-zinc-500">
+                <p className="mx-auto mb-6 max-w-[220px] text-xs text-muted">
                     {pickLang(context.lang, { es: 'Los entrenamientos anteriores están archivados. Desbloquea Premium para acceder a todo tu historial de entrenamiento.', en: 'Older workouts are archived. Unlock Premium to access your full training history.' })}
                 </p>
-                <Button size="sm" onClick={() => context.checkPro('history')} className="mx-auto bg-zinc-900 text-white dark:bg-white dark:text-black">
+                <Button size="sm" onClick={() => context.checkPro('history')} className="mx-auto rounded-[4px] bg-white font-extrabold uppercase tracking-wider text-xs text-black">
                     {pickLang(context.lang, { es: 'Desbloquear PRO', en: 'Unlock PRO' })}
                 </Button>
             </div>
@@ -121,31 +121,31 @@ const HistoryCard = memo(({ log, lang, id, onOpen, unit = 'kg' }: HistoryCardPro
             id={id}
             type="button"
             onClick={onOpen}
-            className="premium-theme-panel premium-history-row mx-4 mb-3 block p-4 text-left"
+            className="premium-theme-panel premium-history-row mx-4 mb-3 block rounded-[8px] border border-border-subtle bg-surface-raised p-3.5 text-left transition-all active:scale-[0.99]"
         >
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                    <div className="mb-1 text-xs font-semibold tracking-normal text-muted">{formatDate(log.endTime, lang)}</div>
-                    <h3 className="truncate text-base font-black tracking-tight text-zinc-950 dark:text-white">{log.name}</h3>
-                    {log.programSystem && <span className="mt-1 inline-flex rounded-full bg-primary-500/10 px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wider text-primary-600 dark:text-primary-300">KONG · B{log.programSystem.blockNumber} · W{log.week}</span>}
+                    <div className="mb-1 flex flex-wrap items-center gap-1.5"><span className="inline-flex items-center rounded-[4px] border border-border-subtle bg-surface-base px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-muted">{formatDate(log.endTime, lang)}</span>{log.programSystem && <span className="inline-flex items-center rounded-[4px] border border-primary-500/40 bg-primary-500/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-primary-400">KONG · B{log.programSystem.blockNumber} · W{log.week}</span>}</div>
+                    <h3 className="truncate text-base font-black uppercase tracking-tight text-white">{log.name}</h3>
+                    {/* KONG badge moved to technical chip header */}
                 </div>
-                <div className="flex shrink-0 items-center gap-1.5 rounded-full bg-zinc-100 px-2.5 py-1 text-[11px] font-bold text-zinc-500 dark:bg-white/5">
+                <div className="flex shrink-0 items-center gap-1 rounded-[4px] border border-border-subtle bg-surface-base px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-muted">
                     <Icon name="Clock" size={12} />
                     {formatDurationShort(log.duration)}
                 </div>
             </div>
 
-            <div className="mt-3 space-y-1.5">
+            <div className="mt-3 divide-y divide-border-subtle/50 rounded-[6px] border border-border-subtle/60 bg-surface-base/60 px-2.5 py-1">
                 {previews.slice(0, 3).map((preview: any) => (
-                    <div key={preview.name} className="flex items-center justify-between gap-3 text-xs">
-                        <span className="min-w-0 flex-1 truncate text-zinc-500">{preview.name}</span>
-                        <span className="shrink-0 font-mono font-bold text-zinc-700 dark:text-zinc-300">{preview.value}</span>
+                    <div key={preview.name} className="flex items-center justify-between gap-3 py-1.5 text-xs">
+                        <span className="min-w-0 flex-1 truncate font-medium text-zinc-400">{preview.name}</span>
+                        <span className="shrink-0 font-mono text-[11px] font-bold text-zinc-200">{preview.value}</span>
                     </div>
                 ))}
             </div>
 
-            <div className="mt-3 flex items-center justify-between border-t border-[rgb(var(--border-subtle)/0.45)] pt-3">
-                <span className="text-xs font-semibold text-muted">
+            <div className="mt-3 flex items-center justify-between border-t border-border-subtle/50 pt-2.5">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-muted">
                     {(log.exercises || []).length} {TRANSLATIONS[lang].copy.history.exercises}
                 </span>
                 <Icon name="ChevronRight" size={16} className="text-zinc-400" />
@@ -356,7 +356,7 @@ export const HistoryView: React.FC = () => {
             )}
 
             {editBackup && !deletedLogBackup && (
-                <div role="status" className="fixed bottom-24 left-4 right-4 z-[80] flex items-center justify-between rounded-2xl bg-zinc-900 border border-zinc-700/80 px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-4 duration-200">
+                <div role="status" className="fixed bottom-24 left-4 right-4 z-[80] flex items-center justify-between rounded-[8px] border border-border-subtle bg-surface-elevated px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-4 duration-200">
                     <span className="text-xs font-semibold text-white">
                         {TRANSLATIONS[lang].copy.history.workoutUpdated}
                     </span>
@@ -371,7 +371,7 @@ export const HistoryView: React.FC = () => {
             )}
 
             {deletedLogBackup && (
-                <div className="fixed bottom-24 left-4 right-4 z-50 flex items-center justify-between rounded-2xl bg-zinc-900 border border-zinc-700/80 px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-4 duration-200">
+                <div className="fixed bottom-24 left-4 right-4 z-50 flex items-center justify-between rounded-[8px] border border-border-subtle bg-surface-elevated px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-4 duration-200">
                     <span className="text-xs font-semibold text-white">
                         {TRANSLATIONS[lang].copy.history.workoutDeleted}
                     </span>

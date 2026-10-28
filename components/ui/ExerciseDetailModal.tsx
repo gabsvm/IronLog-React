@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
@@ -6,7 +5,7 @@ import { ExerciseDef, SessionExercise, VolumeCountingMode } from '../../types';
 import { Icon } from './Icon';
 import { getTranslated } from '../../utils';
 import { exerciseIdGroup } from '../../utils/exerciseLibrary';
-import { MuscleTag } from '../workout/MuscleTag';
+import { MuscleTag } from './MuscleTag';
 import { Button } from './Button';
 import { ProgressChart } from '../stats/ProgressChart';
 import { Sheet } from './Sheet';
@@ -83,15 +82,15 @@ const ExerciseVisualHint: React.FC<{ exercise: ExerciseDef; lang: 'en' | 'es' }>
 
             {/* Center icon + muscle */}
             <div className="relative flex flex-col items-center gap-3">
-                <div className="w-20 h-20 rounded-full bg-white/10 border border-white/20 flex items-center justify-center backdrop-blur-sm">
-                    <Icon name={icon as any} size={36} className="text-white opacity-80" />
+                <div className="w-14 h-14 rounded-[8px] bg-white/10 border border-white/20 flex items-center justify-center backdrop-blur-sm">
+                    <Icon name={icon as any} size={32} className="text-white opacity-80" />
                 </div>
                 <div className="text-white font-black text-lg tracking-tight text-center px-4 leading-tight">
                     {name}
                 </div>
                 <div className="flex gap-2 flex-wrap justify-center px-4">
                     {tags.map((tag, i) => (
-                        <span key={i} className="text-xs font-bold uppercase tracking-widest bg-white/10 border border-white/15 text-white/70 px-2 py-0.5 rounded-full">
+                        <span key={i} className="text-[10px] font-bold uppercase tracking-wider bg-white/10 border border-white/15 text-white/80 px-2 py-0.5 rounded-[4px]">
                             {tag}
                         </span>
                     ))}
@@ -130,20 +129,20 @@ const YouTubeCard: React.FC<{ videoId: string; title: string; youtubeUrl: string
 
             {/* Play button */}
             <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-16 h-16 rounded-full bg-red-600 shadow-[0_0_30px_rgba(220,38,38,0.6)] flex items-center justify-center transition-transform duration-200 group-hover:scale-110 group-active:scale-95">
-                    <Icon name="Play" size={28} className="text-white ml-1" fill="white" />
+                <div className="w-14 h-14 rounded-[8px] bg-red-600 shadow-[0_0_30px_rgba(220,38,38,0.6)] flex items-center justify-center transition-transform duration-200 group-hover:scale-110 group-active:scale-95">
+                    <Icon name="Play" size={26} className="text-white ml-0.5" fill="white" />
                 </div>
             </div>
 
             {/* "Open in YouTube" badge */}
-            <div className="absolute bottom-3 right-3 flex items-center gap-1.5 bg-black/70 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1.5 rounded-full border border-white/10">
+            <div className="absolute bottom-3 right-3 flex items-center gap-1.5 bg-black/70 backdrop-blur-sm text-white text-xs font-bold px-2 py-1 rounded-[4px] border border-white/10">
                 <Icon name="ExternalLink" size={11} />
                 YouTube
             </div>
 
             {/* YouTube logo top-left */}
             <div className="absolute top-3 left-3">
-                <div className="bg-red-600 text-white text-xs font-black px-1.5 py-0.5 rounded">YouTube</div>
+                <div className="bg-red-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-[4px]">YouTube</div>
             </div>
         </a>
     );
@@ -216,8 +215,8 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
             dragHandleOnly
             footer={
                 <div className="flex gap-3">
-                    <Button fullWidth onClick={onClose} variant="secondary">{t.close}</Button>
-                    <Button fullWidth onClick={saveVolumeCountingMode}>{TRANSLATIONS[lang].copy.exerciseDetailModal.save}</Button>
+                    <Button fullWidth onClick={onClose} variant="secondary" className="rounded-[6px]">{t.close}</Button>
+                    <Button fullWidth onClick={saveVolumeCountingMode} className="rounded-[6px]">{TRANSLATIONS[lang].copy.exerciseDetailModal.save}</Button>
                 </div>
             }
         >
@@ -226,12 +225,16 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
             </div>
 
             {/* Tabs */}
-            <div role="tablist" className="seg-reference mx-4 mt-4 flex p-1">
+            <div role="tablist" className="mx-4 mt-3 flex rounded-[6px] border border-border-subtle bg-surface-raised p-1">
                 <button
                     role="tab"
                     aria-selected={activeTab === 'guide'}
                     onClick={() => setActiveTab('guide')}
-                    className={`expressive-press min-h-11 flex-1 rounded-full px-3 text-xs font-bold ${activeTab === 'guide' ? 'bg-primary-500 text-zinc-950 shadow-sm' : 'text-muted'}`}
+                    className={`flex-1 rounded-[4px] py-2 text-xs font-bold uppercase tracking-wider transition-colors ${
+                        activeTab === 'guide'
+                            ? 'bg-primary-500 text-zinc-950 shadow-sm'
+                            : 'text-zinc-400 hover:text-white'
+                    }`}
                 >
                     {t.guide || 'Guide'}
                 </button>
@@ -239,7 +242,11 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                     role="tab"
                     aria-selected={activeTab === 'history'}
                     onClick={() => setActiveTab('history')}
-                    className={`expressive-press min-h-11 flex-1 rounded-full px-3 text-xs font-bold ${activeTab === 'history' ? 'bg-primary-500 text-zinc-950 shadow-sm' : 'text-muted'}`}
+                    className={`flex-1 rounded-[4px] py-2 text-xs font-bold uppercase tracking-wider transition-colors ${
+                        activeTab === 'history'
+                            ? 'bg-primary-500 text-zinc-950 shadow-sm'
+                            : 'text-zinc-400 hover:text-white'
+                    }`}
                 >
                     {t.history || 'History'}
                 </button>
@@ -249,107 +256,125 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                 intercepted vertical touch gestures on Android, leaving the
                 tonnage options trapped beneath the sticky Save footer. */}
             <div data-vaul-no-drag className="min-w-0 pb-8">
-                    {activeTab === 'guide' ? (
-                        <>
-                            {/* Video / Visual Section */}
-                            <div className="mt-4 overflow-hidden">
-                                {exercise.videoId ? (
-                                    <YouTubeCard
-                                        videoId={exercise.videoId}
-                                        title={String(translatedName)}
-                                        youtubeUrl={youtubeUrl}
-                                    />
-                                ) : (
-                                    <ExerciseVisualHint exercise={exercise} lang={lang} />
-                                )}
-                            </div>
-
-                            {/* Search on YouTube link (always shown) */}
-                            <div className="flex items-center justify-between px-4 py-2.5 border-b border-[rgb(var(--border-subtle))]">
-                                <div className="text-xs font-semibold text-muted">
-                                    {exercise.videoId
-                                        ? (TRANSLATIONS[lang].copy.exerciseDetailModal.tapToOpenIn)
-                                        : (TRANSLATIONS[lang].copy.exerciseDetailModal.searchTutorialOnline)
-                                    }
-                                </div>
-                                <a
-                                    href={youtubeUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-1.5 text-xs font-bold text-red-500 hover:text-red-400 transition-colors"
-                                >
-                                    <Icon name="ExternalLink" size={12} />
-                                    {t.watchVideo || 'Watch Video'}
-                                </a>
-                            </div>
-
-                            {/* Instructions & Tip */}
-                            <div className="p-5 space-y-5">
-                                <div>
-                                    <h4 className="text-sm font-bold tracking-tight text-[rgb(var(--text-primary))] mb-3 flex items-center gap-2">
-                                        <Icon name="FileText" size={13} /> {t.instructions}
-                                    </h4>
-                                    <div className="text-sm text-[rgb(var(--text-secondary))] leading-relaxed">
-                                        {translatedInstructions && translatedInstructions !== 'Unknown' ? (
-                                            <p>{String(translatedInstructions)}</p>
-                                        ) : (
-                                            <p className="italic text-zinc-600">{t.noData}</p>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="bg-primary-500/10 rounded-xl p-4 border border-primary-500/15">
-                                    <div className="flex gap-3">
-                                        <div className="bg-primary-500/20 p-1.5 rounded-lg h-fit shrink-0">
-                                            <Icon name="Info" size={16} className="text-primary-400" />
-                                        </div>
-                                        <div className="text-sm text-primary-900 dark:text-primary-100">
-                                            <p className="font-bold mb-1 text-primary-700 dark:text-primary-300">{t.executionTipTitle}</p>
-                                            <p className="opacity-70 text-xs leading-relaxed">{t.executionTipText}</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {exercise.muscle !== 'CARDIO' && (
-                                    <div>
-                                        <h4 className="text-sm font-bold tracking-tight text-[rgb(var(--text-primary))] mb-3 flex items-center gap-2">
-                                            <Icon name="Dumbbell" size={13} /> {TRANSLATIONS[lang].copy.exerciseDetailModal.tonnageCalculation}
-                                        </h4>
-                                        <div className="space-y-2">
-                                            <button type="button" aria-pressed={volumeCountingMode === 'total'} onClick={() => setVolumeCountingMode('total')} className={`w-full text-left rounded-xl border p-3 transition-colors ${volumeCountingMode === 'total' ? 'border-primary-500 bg-primary-500/10' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated)/0.6)]'}`}>
-                                                <span className="block text-sm font-bold text-white">{TRANSLATIONS[lang].copy.exerciseDetailModal.recordedTotal1}</span>
-                                                <span className="block mt-1 text-xs text-zinc-400">{TRANSLATIONS[lang].copy.exerciseDetailModal.forBarsBilateralMachines}</span>
-                                            </button>
-                                            <button type="button" aria-pressed={volumeCountingMode === 'per_side'} onClick={() => setVolumeCountingMode('per_side')} className={`w-full text-left rounded-xl border p-3 transition-colors ${volumeCountingMode === 'per_side' ? 'border-primary-500 bg-primary-500/10' : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated)/0.6)]'}`}>
-                                                <span className="block text-sm font-bold text-white">{TRANSLATIONS[lang].copy.exerciseDetailModal.perSide2}</span>
-                                                <span className="block mt-1 text-xs text-zinc-400">{TRANSLATIONS[lang].copy.exerciseDetailModal.whenYouRecordLoad}</span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </>
-                    ) : (
-                        <div className="p-5">
-                            <div className="premium-theme-panel p-4">
-                                <div className="mb-4">
-                                    <h4 className="text-sm font-bold text-white">{t.statsProgress}</h4>
-                                    <p className="text-xs text-muted">Estimated 1RM / Max Performance</p>
-                                </div>
-                                <ProgressChart
-                                    dataPoints={chartData}
-                                    metric={exercise.muscle === 'CARDIO' ? 'duration' : '1rm'}
-                                    loading={chartLoading}
+                {activeTab === 'guide' ? (
+                    <>
+                        {/* Video / Visual Section */}
+                        <div className="mt-4 mx-4 overflow-hidden rounded-[8px] border border-border-subtle bg-black">
+                            {exercise.videoId ? (
+                                <YouTubeCard
+                                    videoId={exercise.videoId}
+                                    title={String(translatedName)}
+                                    youtubeUrl={youtubeUrl}
                                 />
+                            ) : (
+                                <ExerciseVisualHint exercise={exercise} lang={lang} />
+                            )}
+                        </div>
+
+                        {/* Search on YouTube link (always shown) */}
+                        <div className="flex items-center justify-between px-4 py-2.5 mx-4 mt-2 rounded-[6px] border border-border-subtle bg-surface-raised">
+                            <div className="text-xs font-semibold text-zinc-400">
+                                {exercise.videoId
+                                    ? (TRANSLATIONS[lang].copy.exerciseDetailModal.tapToOpenIn)
+                                    : (TRANSLATIONS[lang].copy.exerciseDetailModal.searchTutorialOnline)
+                                }
                             </div>
-                            {chartData.length === 0 && !chartLoading && (
-                                <div className="text-center py-8 text-muted text-xs italic">
-                                    {t.statsNoData}
+                            <a
+                                href={youtubeUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1.5 text-xs font-bold text-red-500 hover:text-red-400 transition-colors"
+                            >
+                                <Icon name="ExternalLink" size={12} />
+                                {t.watchVideo || 'Watch Video'}
+                            </a>
+                        </div>
+
+                        {/* Instructions & Tip */}
+                        <div className="p-5 space-y-5">
+                            <div>
+                                <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400 mb-3 flex items-center gap-2">
+                                    <Icon name="FileText" size={13} /> {t.instructions}
+                                </h4>
+                                <div className="text-sm text-zinc-300 leading-relaxed">
+                                    {translatedInstructions && translatedInstructions !== 'Unknown' ? (
+                                        <p>{String(translatedInstructions)}</p>
+                                    ) : (
+                                        <p className="italic text-zinc-500">{t.noData}</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="bg-primary-500/10 rounded-[8px] p-4 border border-primary-500/20">
+                                <div className="flex gap-3">
+                                    <div className="bg-primary-500/20 p-1.5 rounded-[4px] h-fit shrink-0">
+                                        <Icon name="Info" size={16} className="text-primary-400" />
+                                    </div>
+                                    <div className="text-sm text-primary-100">
+                                        <p className="font-bold mb-1 text-primary-300">{t.executionTipTitle}</p>
+                                        <p className="opacity-80 text-xs leading-relaxed">{t.executionTipText}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {exercise.muscle !== 'CARDIO' && (
+                                <div>
+                                    <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400 mb-3 flex items-center gap-2">
+                                        <Icon name="Dumbbell" size={13} /> {TRANSLATIONS[lang].copy.exerciseDetailModal.tonnageCalculation}
+                                    </h4>
+                                    <div className="space-y-2">
+                                        <button
+                                            type="button"
+                                            aria-pressed={volumeCountingMode === 'total'}
+                                            onClick={() => setVolumeCountingMode('total')}
+                                            className={`w-full text-left rounded-[6px] border p-3 transition-colors ${
+                                                volumeCountingMode === 'total'
+                                                    ? 'border-primary-500 bg-primary-500/10'
+                                                    : 'border-border-subtle bg-surface-raised hover:border-zinc-600'
+                                            }`}
+                                        >
+                                            <span className="block text-sm font-bold text-white">{TRANSLATIONS[lang].copy.exerciseDetailModal.recordedTotal1}</span>
+                                            <span className="block mt-1 text-xs text-zinc-400">{TRANSLATIONS[lang].copy.exerciseDetailModal.forBarsBilateralMachines}</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            aria-pressed={volumeCountingMode === 'per_side'}
+                                            onClick={() => setVolumeCountingMode('per_side')}
+                                            className={`w-full text-left rounded-[6px] border p-3 transition-colors ${
+                                                volumeCountingMode === 'per_side'
+                                                    ? 'border-primary-500 bg-primary-500/10'
+                                                    : 'border-border-subtle bg-surface-raised hover:border-zinc-600'
+                                            }`}
+                                        >
+                                            <span className="block text-sm font-bold text-white">{TRANSLATIONS[lang].copy.exerciseDetailModal.perSide2}</span>
+                                            <span className="block mt-1 text-xs text-zinc-400">{TRANSLATIONS[lang].copy.exerciseDetailModal.whenYouRecordLoad}</span>
+                                        </button>
+                                    </div>
                                 </div>
                             )}
                         </div>
-                    )}
-                </div>
+                    </>
+                ) : (
+                    <div className="p-5">
+                        <div className="rounded-[8px] border border-border-subtle bg-surface-raised p-4">
+                            <div className="mb-4">
+                                <h4 className="text-sm font-bold text-white uppercase tracking-tight">{t.statsProgress}</h4>
+                                <p className="text-xs text-zinc-400">Estimated 1RM / Max Performance</p>
+                            </div>
+                            <ProgressChart
+                                dataPoints={chartData}
+                                metric={exercise.muscle === 'CARDIO' ? 'duration' : '1rm'}
+                                loading={chartLoading}
+                            />
+                        </div>
+                        {chartData.length === 0 && !chartLoading && (
+                            <div className="text-center py-8 text-zinc-500 text-xs italic">
+                                {t.statsNoData}
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
         </Sheet>
     );
 };

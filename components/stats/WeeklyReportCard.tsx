@@ -35,13 +35,13 @@ export const WeeklyReportCard: React.FC<WeeklyReportCardProps> = ({ report, week
         : change > 0 ? 'text-green-400' : change < 0 ? 'text-red-400' : 'text-zinc-300';
 
     return (
-        <div className="glass-card rounded-[1.7rem] border border-white/6 p-5 shadow-md">
+        <div className="glass-card rounded-[8px] border border-border-subtle bg-surface-raised p-4 sm:p-5 shadow-md">
             <div className="mb-4 flex items-center justify-between gap-3">
-                <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-500">
+                <h3 className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-white">
                     <Icon name="Calendar" size={14} />
                     {w.title}
                 </h3>
-                <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">
+                <span className="rounded-[4px] border border-border-subtle bg-surface-base px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-muted">
                     {weekLabel}
                 </span>
             </div>
@@ -52,21 +52,21 @@ export const WeeklyReportCard: React.FC<WeeklyReportCardProps> = ({ report, week
                 <>
                     {/* Flex (not grid-cols-3): the heatmap e2e counts grid-cols-3 cells. */}
                     <div className="flex gap-2">
-                        <div className="min-w-0 flex-1 rounded-2xl border border-white/6 bg-white/[0.03] px-3 py-3 text-center">
-                            <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-zinc-500">{w.sessions}</div>
-                            <div className="mt-1 text-xl font-black tracking-[-0.04em] text-white">
+                        <div className="min-w-0 flex-1 rounded-[6px] border border-border-subtle bg-surface-base px-3 py-2.5 text-center">
+                            <div className="text-[10px] font-extrabold uppercase tracking-wider text-muted">{w.sessions}</div>
+                            <div className="mt-1 font-mono text-lg font-black tracking-tight text-white">
                                 {report.sessionsDone}/{report.sessionsPlanned}
                             </div>
                         </div>
-                        <div className="min-w-0 flex-1 rounded-2xl border border-white/6 bg-white/[0.03] px-3 py-3 text-center">
-                            <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-zinc-500">{w.volume}</div>
-                            <div className={`mt-1 text-xl font-black tracking-[-0.04em] ${changeTone}`}>
+                        <div className="min-w-0 flex-1 rounded-[6px] border border-border-subtle bg-surface-base px-3 py-2.5 text-center">
+                            <div className="text-[10px] font-extrabold uppercase tracking-wider text-muted">{w.volume}</div>
+                            <div className={`mt-1 font-mono text-lg font-black tracking-tight ${changeTone}`}>
                                 {changeText}
                             </div>
                         </div>
-                        <div className="min-w-0 flex-1 rounded-2xl border border-white/6 bg-white/[0.03] px-3 py-3 text-center">
-                            <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-zinc-500">{w.prs}</div>
-                            <div className={`mt-1 text-xl font-black tracking-[-0.04em] text-white`}>
+                        <div className="min-w-0 flex-1 rounded-[6px] border border-border-subtle bg-surface-base px-3 py-2.5 text-center">
+                            <div className="text-[10px] font-extrabold uppercase tracking-wider text-muted">{w.prs}</div>
+                            <div className={`mt-1 font-mono text-lg font-black tracking-tight text-white`}>
                                 {weekPRs}
                             </div>
                         </div>
@@ -81,7 +81,7 @@ export const WeeklyReportCard: React.FC<WeeklyReportCardProps> = ({ report, week
                                     <span className="min-w-0 flex-1 truncate text-xs font-bold text-zinc-300">
                                         {muscleName(row.muscle)} · <span className="font-black tabular-nums text-white">{row.sets}</span>
                                     </span>
-                                    <span className={`shrink-0 rounded-md border px-1.5 py-0.5 text-[10px] font-black ${ZONE_STYLES[row.zone]}`}>
+                                    <span className={`shrink-0 rounded-[4px] border px-1.5 py-0.5 text-[10px] font-extrabold uppercase ${ZONE_STYLES[row.zone]}`}>
                                         {row.zone}
                                     </span>
                                 </div>
@@ -113,7 +113,7 @@ export const WeeklyReportCard: React.FC<WeeklyReportCardProps> = ({ report, week
                     )}
 
                     {report.deloadSuggested && (
-                        <div className="mt-4 flex items-start gap-2 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-3 py-2.5">
+                        <div className="mt-4 flex items-start gap-2 rounded-[6px] border border-amber-500/30 bg-amber-500/10 px-3 py-2.5">
                             <Icon name="Info" size={16} className="mt-0.5 shrink-0 text-amber-400" />
                             <p className="text-xs font-medium leading-relaxed text-amber-800 dark:text-amber-200">
                                 {report.deloadReason === 'final-week' ? w.deloadFinal : w.deloadFeedback}

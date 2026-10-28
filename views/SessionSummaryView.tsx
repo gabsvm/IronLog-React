@@ -176,7 +176,7 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
                         <Icon name="Trophy" size={36} />
                     </div>
                     <div>
-                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider border mb-2 ${badge.color}`}>
+                        <span className={`inline-block px-2.5 py-0.5 rounded-[4px] text-[11px] font-bold uppercase tracking-wider border mb-2 ${badge.color}`}>
                             {badge.label}
                         </span>
                     </div>
@@ -223,7 +223,7 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
                         </p>
                         <div className="flex flex-wrap justify-center gap-1.5">
                             {stats.muscles.map(m => (
-                                <span key={m} className="rounded-full border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] px-3 py-1.5 text-xs font-semibold text-[rgb(var(--text-primary))]">
+                                <span key={m} className="rounded-[4px] border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] px-3 py-1.5 text-xs font-semibold text-[rgb(var(--text-primary))]">
                                     {m}
                                 </span>
                             ))}
@@ -237,7 +237,7 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
                 <button
                     type="button"
                     onClick={() => setShowShareSheet(true)}
-                    className="expressive-press mb-2 flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] text-sm font-bold text-[rgb(var(--text-primary))] disabled:opacity-60"
+                    className="expressive-press mb-2 flex min-h-12 w-full items-center justify-center gap-2 rounded-[6px] border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] text-sm font-bold text-[rgb(var(--text-primary))] disabled:opacity-60"
                 >
                     <Icon name="Share2" size={16} />
                     {TRANSLATIONS[lang].copy.sessionSummary.shareImage}
@@ -257,7 +257,7 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
                         type="button"
                         disabled={shareState === 'busy' || !previewUrl}
                         onClick={() => void handleShareImage()}
-                        className="expressive-press flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-primary-500 px-5 font-bold text-zinc-950 disabled:opacity-50"
+                        className="expressive-press flex min-h-12 w-full items-center justify-center gap-2 rounded-[6px] bg-primary-500 px-5 font-bold text-zinc-950 disabled:opacity-50"
                     >
                         <Icon name="Share2" size={18} />
                         {shareState === 'busy'
@@ -267,7 +267,7 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
                 }
             >
                 <div className="space-y-4 px-5 pb-6 pt-1">
-                    <div className="mx-auto flex aspect-[4/5] w-full max-w-[232px] items-center justify-center overflow-hidden rounded-[24px] border border-primary-500/15 bg-[rgb(var(--surface-elevated))] shadow-xl">
+                    <div className="mx-auto flex aspect-[4/5] w-full max-w-[232px] items-center justify-center overflow-hidden rounded-[8px] border border-primary-500/15 bg-[rgb(var(--surface-elevated))] shadow-xl">
                         {previewUrl ? (
                             <img
                                 src={previewUrl}
@@ -298,7 +298,7 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
                                     type="button"
                                     aria-pressed={shareVariant === variant.id}
                                     onClick={() => { setShareState('idle'); setShareVariant(variant.id); }}
-                                    className={'expressive-press min-h-11 rounded-[16px] border px-2 py-2 text-xs font-bold transition-colors ' + (
+                                    className={'expressive-press min-h-11 rounded-[6px] border px-2 py-2 text-xs font-bold transition-colors ' + (
                                         shareVariant === variant.id
                                             ? 'border-primary-500 bg-primary-500/15 text-[rgb(var(--text-primary))]'
                                             : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] text-muted'

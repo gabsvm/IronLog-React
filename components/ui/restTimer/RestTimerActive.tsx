@@ -68,7 +68,7 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
                 style={{ ...pillPositionStyle, ...(keyboardOpen ? { left: 'auto', right: '8px', marginLeft: 0, marginRight: 0, width: 'min(220px, calc(100% - 16px))' } : {}) }}
                 aria-label={t.resting}
             >
-                <div className={`premium-rest-pill pointer-events-auto border border-[rgb(var(--border-subtle))] px-3 py-2 shadow-xl ${showCompactExtras ? 'rounded-3xl' : 'rounded-full'}`}>
+                <div className="premium-rest-pill pointer-events-auto rounded-[8px] bg-surface-base border border-border-subtle shadow-2xl px-3 py-2">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                         {/* Time display & tap to expand */}
                         <button
@@ -106,7 +106,7 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
                             <button
                                 type="button"
                                 onClick={() => adjustTimer(-10)}
-                                className="flex min-h-[44px] min-w-[44px] px-3 items-center justify-center rounded-full bg-surface-elevated border border-border-subtle text-[11px] font-bold text-[rgb(var(--text-primary))] hover:border-primary-500/30 active:scale-90 transition-all"
+                                className="flex min-h-[44px] min-w-[44px] px-3 items-center justify-center rounded-[4px] bg-surface-elevated border border-border-subtle text-[11px] font-bold text-[rgb(var(--text-primary))] hover:border-primary-500/30 active:scale-90 transition-all"
                                 aria-label="-10s"
                             >
                                 -10s
@@ -114,7 +114,7 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
                             <button
                                 type="button"
                                 onClick={() => adjustTimer(30)}
-                                className="flex min-h-[44px] min-w-[44px] px-3 items-center justify-center rounded-full bg-surface-elevated border border-border-subtle text-[11px] font-bold text-[rgb(var(--text-primary))] hover:border-primary-500/30 active:scale-90 transition-all"
+                                className="flex min-h-[44px] min-w-[44px] px-3 items-center justify-center rounded-[4px] bg-surface-elevated border border-border-subtle text-[11px] font-bold text-[rgb(var(--text-primary))] hover:border-primary-500/30 active:scale-90 transition-all"
                                 aria-label="+30s"
                             >
                                 +30s
@@ -122,7 +122,7 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
                             <button
                                 type="button"
                                 onClick={skipTimer}
-                                className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-surface-elevated border border-border-subtle text-muted hover:text-[rgb(var(--text-primary))] active:scale-90 transition-all"
+                                className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-[4px] bg-surface-elevated border border-border-subtle text-muted hover:text-[rgb(var(--text-primary))] active:scale-90 transition-all"
                                 aria-label={t.timer.skipRest}
                                 title={t.timer.skipRest}
                             >
@@ -146,7 +146,7 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
                                     <button
                                         type="button"
                                         onClick={() => handleRateEffort('easy')}
-                                        className={`flex-1 min-h-[44px] rounded-[16px] border text-xs font-semibold transition-colors active:scale-95 ${
+                                        className={`flex-1 min-h-[44px] rounded-[6px] border text-xs font-semibold transition-colors active:scale-95 ${
                                             currentSourceSet.rpe === '6'
                                                 ? 'border-emerald-500 bg-emerald-500/20 text-emerald-400 shadow-sm'
                                                 : 'border-border-subtle bg-surface-elevated text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--text-primary))] hover:border-zinc-500'
@@ -157,7 +157,7 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
                                     <button
                                         type="button"
                                         onClick={() => handleRateEffort('ok')}
-                                        className={`flex-1 min-h-[44px] rounded-[16px] border text-xs font-semibold transition-colors active:scale-95 ${
+                                        className={`flex-1 min-h-[44px] rounded-[6px] border text-xs font-semibold transition-colors active:scale-95 ${
                                             currentSourceSet.rpe === '8'
                                                 ? 'border-primary-500 bg-primary-500/20 text-primary-400 shadow-sm'
                                                 : 'border-border-subtle bg-surface-elevated text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--text-primary))] hover:border-zinc-500'
@@ -168,7 +168,7 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
                                     <button
                                         type="button"
                                         onClick={() => handleRateEffort('hard')}
-                                        className={`flex-1 min-h-[44px] rounded-[16px] border text-xs font-semibold transition-colors active:scale-95 ${
+                                        className={`flex-1 min-h-[44px] rounded-[6px] border text-xs font-semibold transition-colors active:scale-95 ${
                                             currentSourceSet.rpe === '10'
                                                 ? 'border-rose-500 bg-rose-500/20 text-rose-400 shadow-sm'
                                                 : 'border-border-subtle bg-surface-elevated text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--text-primary))] hover:border-zinc-500'
@@ -197,7 +197,7 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
             aria-label={t.resting}
         >
             <div className="fixed inset-0 top-16 bg-black/60 backdrop-blur-sm -z-10" onClick={() => setMode('compact')} />
-            <div className="premium-rest-sheet mx-auto max-w-md rounded-t-[32px] border-t border-x border-[rgb(var(--border-subtle))] p-4 pb-safe shadow-2xl max-h-[calc(100dvh-1rem)] overflow-y-auto">
+            <div className="premium-rest-sheet mx-auto max-w-md rounded-t-[12px] border-t border-x border-[rgb(var(--border-subtle))] p-4 pb-safe shadow-2xl max-h-[calc(100dvh-1rem)] overflow-y-auto">
                 {/* Drag Handle */}
                 <div className="mx-auto mb-4 h-1 w-12 rounded-full bg-[rgb(var(--border-strong))]" />
 
@@ -215,7 +215,7 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
                             triggerHaptic('light');
                             setMode('compact');
                         }}
-                        className="flex h-8 w-8 items-center justify-center rounded-full text-muted hover:text-[rgb(var(--text-primary))] transition-colors"
+                        className="flex h-8 w-8 items-center justify-center rounded-[6px] text-muted hover:text-[rgb(var(--text-primary))] transition-colors"
                         aria-label={t.timer.minimize}
                     >
                         <Icon name="ChevronDown" size={20} />
@@ -256,7 +256,7 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
                             <button
                                 type="button"
                                 onClick={() => handleRateEffort('easy')}
-                                className={`flex-1 min-h-[44px] rounded-[16px] border text-xs font-semibold transition-colors active:scale-95 ${
+                                className={`flex-1 min-h-[44px] rounded-[6px] border text-xs font-semibold transition-colors active:scale-95 ${
                                     currentSourceSet.rpe === '6'
                                         ? 'border-emerald-500 bg-emerald-500/20 text-emerald-400 shadow-sm'
                                         : 'border-border-subtle bg-surface-elevated text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--text-primary))] hover:border-zinc-500'
@@ -267,7 +267,7 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
                             <button
                                 type="button"
                                 onClick={() => handleRateEffort('ok')}
-                                className={`flex-1 min-h-[44px] rounded-[16px] border text-xs font-semibold transition-colors active:scale-95 ${
+                                className={`flex-1 min-h-[44px] rounded-[6px] border text-xs font-semibold transition-colors active:scale-95 ${
                                     currentSourceSet.rpe === '8'
                                         ? 'border-primary-500 bg-primary-500/20 text-primary-400 shadow-sm'
                                         : 'border-border-subtle bg-surface-elevated text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--text-primary))] hover:border-zinc-500'
@@ -278,7 +278,7 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
                             <button
                                 type="button"
                                 onClick={() => handleRateEffort('hard')}
-                                className={`flex-1 min-h-[44px] rounded-[16px] border text-xs font-semibold transition-colors active:scale-95 ${
+                                className={`flex-1 min-h-[44px] rounded-[6px] border text-xs font-semibold transition-colors active:scale-95 ${
                                     currentSourceSet.rpe === '10'
                                         ? 'border-rose-500 bg-rose-500/20 text-rose-400 shadow-sm'
                                         : 'border-border-subtle bg-surface-elevated text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--text-primary))] hover:border-zinc-500'
@@ -295,14 +295,14 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
                     <button
                         type="button"
                         onClick={() => adjustTimer(-10)}
-                        className="min-h-[44px] rounded-full bg-[rgb(var(--surface-elevated))] border border-[rgb(var(--border-subtle))] flex items-center justify-center gap-1.5 text-sm font-medium text-[rgb(var(--text-primary))] hover:border-zinc-500 active:scale-95 transition-all"
+                        className="min-h-[44px] rounded-[6px] bg-[rgb(var(--surface-elevated))] border border-[rgb(var(--border-subtle))] flex items-center justify-center gap-1.5 text-sm font-medium text-[rgb(var(--text-primary))] hover:border-zinc-500 active:scale-95 transition-all"
                     >
                         <Icon name="Minus" size={14} /> 10 s
                     </button>
                     <button
                         type="button"
                         onClick={() => adjustTimer(30)}
-                        className="min-h-[44px] rounded-full bg-[rgb(var(--surface-elevated))] border border-[rgb(var(--border-subtle))] flex items-center justify-center gap-1.5 text-sm font-medium text-[rgb(var(--text-primary))] hover:border-zinc-500 active:scale-95 transition-all"
+                        className="min-h-[44px] rounded-[6px] bg-[rgb(var(--surface-elevated))] border border-[rgb(var(--border-subtle))] flex items-center justify-center gap-1.5 text-sm font-medium text-[rgb(var(--text-primary))] hover:border-zinc-500 active:scale-95 transition-all"
                     >
                         <Icon name="Plus" size={14} /> 30 s
                     </button>
@@ -315,7 +315,7 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
                             key={seconds}
                             type="button"
                             onClick={() => setQuickTimer(seconds)}
-                            className={`h-10 rounded-full flex items-center justify-center text-sm transition-all active:scale-95 ${
+                            className={`h-10 rounded-[6px] flex items-center justify-center text-sm transition-all active:scale-95 ${
                                 restTimer.duration === seconds
                                     ? 'border-2 border-primary-500 bg-primary-500/10 text-primary-400 font-semibold'
                                     : 'border border-border-subtle bg-surface-elevated text-muted hover:text-[rgb(var(--text-primary))]'
@@ -330,7 +330,7 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
                 <button
                     type="button"
                     onClick={skipTimer}
-                    className="btn-primary-reference expressive-press w-full h-12 mt-3.5 rounded-full bg-primary-500 text-zinc-950 text-sm font-semibold hover:bg-primary-400 active:scale-98 transition-all shadow-sm"
+                    className="btn-primary-reference expressive-press w-full h-12 mt-3.5 rounded-[6px] bg-primary-500 text-zinc-950 text-sm font-semibold hover:bg-primary-400 active:scale-98 transition-all shadow-sm"
                 >
                     {t.timer.skipRest}
                 </button>

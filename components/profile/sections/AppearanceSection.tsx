@@ -17,11 +17,11 @@ export const AppearanceSection: React.FC = () => {
         <div id="profile-section-appearance">
             <div className="label-reference px-1 mb-1.5">{ty.appearance}</div>
             <div className="label-reference px-1 mb-1.5">{t.theme}</div>
-            <div className="seg-reference grid grid-cols-3 gap-1 p-1 mb-4">
+            <div className="seg-reference grid grid-cols-3 gap-1 p-1 mb-4 rounded-[6px] bg-surface-raised border border-border-subtle">
                 <button
                     type="button"
                     onClick={() => setTheme('dark')}
-                    className={`min-h-11 rounded-2xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                    className={`min-h-11 rounded-[4px] text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
                         theme === 'dark'
                             ? 'bg-surface-elevated text-white border border-border-strong shadow-sm'
                             : 'text-muted hover:text-white'
@@ -32,7 +32,7 @@ export const AppearanceSection: React.FC = () => {
                 <button
                     type="button"
                     onClick={() => setTheme('light')}
-                    className={`min-h-11 rounded-2xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                    className={`min-h-11 rounded-[4px] text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
                         theme === 'light'
                             ? 'bg-surface-elevated text-white border border-border-strong shadow-sm'
                             : 'text-muted hover:text-white'
@@ -43,7 +43,7 @@ export const AppearanceSection: React.FC = () => {
                 <button
                     type="button"
                     onClick={() => setTheme('system')}
-                    className={`min-h-11 rounded-2xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                    className={`min-h-11 rounded-[4px] text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
                         theme === 'system'
                             ? 'bg-surface-elevated text-white border border-border-strong shadow-sm'
                             : 'text-muted hover:text-white'
@@ -54,7 +54,7 @@ export const AppearanceSection: React.FC = () => {
             </div>
 
             <div className="label-reference px-1 mb-1.5">{ty.accent}</div>
-            <div className="card-reference p-4 mb-4">
+            <div className="card-reference rounded-[8px] border border-border-subtle bg-surface-raised p-4 mb-4">
                 <div className="grid grid-cols-3 gap-y-4 gap-x-2 text-center text-xs">
                     <ColorPill color="bg-[#c4f13a]" checkDark label={ty.pillIron} active={colorTheme === 'iron'} onClick={() => setColorTheme('iron')} />
                     <ColorPill color="bg-[#378add]" label={ty.pillOcean} active={colorTheme === 'ocean'} onClick={() => setColorTheme('ocean')} />
@@ -66,11 +66,11 @@ export const AppearanceSection: React.FC = () => {
             </div>
 
             <div className="label-reference px-1 mb-1.5">{t.language}</div>
-            <div className="seg-reference grid grid-cols-2 gap-1 p-1 mb-4">
+            <div className="seg-reference grid grid-cols-2 gap-1 p-1 mb-4 rounded-[6px] bg-surface-raised border border-border-subtle">
                 <button
                     type="button"
                     onClick={() => setLang('en')}
-                    className={`min-h-11 rounded-2xl text-xs font-semibold flex items-center justify-center transition-all ${
+                    className={`min-h-11 rounded-[4px] text-xs font-semibold flex items-center justify-center transition-all ${
                         TRANSLATIONS[lang].copy.appearanceSection.bgSurfaceElevatedText
                     }`}
                 >
@@ -79,7 +79,7 @@ export const AppearanceSection: React.FC = () => {
                 <button
                     type="button"
                     onClick={() => setLang('es')}
-                    className={`min-h-11 rounded-2xl text-xs font-semibold flex items-center justify-center transition-all ${
+                    className={`min-h-11 rounded-[4px] text-xs font-semibold flex items-center justify-center transition-all ${
                         TRANSLATIONS[lang].copy.appearanceSection.textMutedHoverText
                     }`}
                 >
@@ -87,9 +87,9 @@ export const AppearanceSection: React.FC = () => {
                 </button>
             </div>
 
-            <div className="card-reference p-3.5 space-y-3">
+            <div className="card-reference rounded-[8px] border border-border-subtle bg-surface-raised p-3.5 space-y-3">
                 <div className="flex items-center gap-3">
-                    <span className="w-8 h-8 rounded-lg bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
+                    <span className="w-8 h-8 rounded-[6px] bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
                         <Icon name="Zap" size={17} />
                     </span>
                     <div className="flex-1 min-w-0">
@@ -106,11 +106,11 @@ export const AppearanceSection: React.FC = () => {
                     </span>
                 </div>
 
-                <div className="seg-reference grid grid-cols-4 gap-1 p-1">
+                <div className="seg-reference grid grid-cols-4 gap-1 p-1 rounded-[6px] bg-surface-raised border border-border-subtle">
                     <button
                         type="button"
                         onClick={() => setEffectsMode('system')}
-                        className={`min-h-11 py-2 px-1 rounded-2xl text-xs flex flex-col items-center justify-center gap-1 transition-all ${
+                        className={`min-h-11 py-2 px-1 rounded-[4px] text-xs flex flex-col items-center justify-center gap-1 transition-all ${
                             effectsMode === 'system'
                                 ? 'bg-surface-elevated text-white border border-border-strong font-medium shadow-sm'
                                 : 'text-muted hover:text-white'
@@ -122,7 +122,7 @@ export const AppearanceSection: React.FC = () => {
                     <button
                         type="button"
                         onClick={() => setEffectsMode('full')}
-                        className={`min-h-11 py-2 px-1 rounded-2xl text-xs flex flex-col items-center justify-center gap-1 transition-all ${
+                        className={`min-h-11 py-2 px-1 rounded-[4px] text-xs flex flex-col items-center justify-center gap-1 transition-all ${
                             effectsMode === 'full'
                                 ? 'bg-surface-elevated text-white border border-border-strong font-medium shadow-sm'
                                 : 'text-muted hover:text-white'
@@ -134,7 +134,7 @@ export const AppearanceSection: React.FC = () => {
                     <button
                         type="button"
                         onClick={() => setEffectsMode('balanced')}
-                        className={`min-h-11 py-2 px-1 rounded-2xl text-xs flex flex-col items-center justify-center gap-1 transition-all ${
+                        className={`min-h-11 py-2 px-1 rounded-[4px] text-xs flex flex-col items-center justify-center gap-1 transition-all ${
                             effectsMode === 'balanced'
                                 ? 'bg-surface-elevated text-white border border-border-strong font-medium shadow-sm'
                                 : 'text-muted hover:text-white'
@@ -146,7 +146,7 @@ export const AppearanceSection: React.FC = () => {
                     <button
                         type="button"
                         onClick={() => setEffectsMode('reduced')}
-                        className={`min-h-11 py-2 px-1 rounded-2xl text-xs flex flex-col items-center justify-center gap-1 transition-all ${
+                        className={`min-h-11 py-2 px-1 rounded-[4px] text-xs flex flex-col items-center justify-center gap-1 transition-all ${
                             effectsMode === 'reduced'
                                 ? 'bg-surface-elevated text-white border border-border-strong font-medium shadow-sm'
                                 : 'text-muted hover:text-white'

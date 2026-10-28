@@ -2,7 +2,9 @@ import React from 'react';
 import { Icon } from '../../components/ui/Icon';
 import { getTranslated } from '../../utils';
 import { isEditableSet, setKey, type EditErrors, type EditField } from '../../utils/historyEdit';
-import type { SessionExercise, WeightUnit } from '../../types';
+import type { MuscleGroup, SessionExercise, WeightUnit } from '../../types';
+import { MuscleTag } from '../../components/ui/MuscleTag';
+import { TRANSLATIONS } from '../../constants';
 import { unitLabel } from '../../utils/units';
 
 interface Labels {
@@ -26,7 +28,7 @@ interface Props {
 }
 
 const inputClass = (bad: boolean) =>
-    `h-10 w-full min-w-0 rounded-xl border bg-[rgb(var(--surface-base))] px-2 text-center font-mono text-sm font-bold text-zinc-950 outline-none focus:ring-2 focus:ring-primary-500 dark:text-white ${bad ? 'border-red-500' : 'border-[rgb(var(--border-subtle))]'}`;
+    `h-9 w-full min-w-0 rounded-[4px] border bg-surface-base px-2 text-center font-mono text-xs font-bold text-white outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${bad ? 'border-red-500' : 'border-border-subtle'}`;
 
 /** Edit-mode card for one exercise of a finished workout (weight/reps inputs, remove and add set). */
 export const HistoryEditExercise: React.FC<Props> = ({ ex, unit, lang, errors, labels, onChange, onRemove, onAdd }) => {
@@ -35,13 +37,13 @@ export const HistoryEditExercise: React.FC<Props> = ({ ex, unit, lang, errors, l
     const suffix = unitLabel(unit).toLowerCase();
 
     return (
-        <article className="premium-editor-card border-primary-500/30" data-testid={`history-edit-ex-${ex.instanceId}`}>
-            <div className="px-4 pb-2 pt-4">
-                <h2 className="truncate text-sm font-black text-zinc-950 dark:text-white">{getTranslated(ex.name, lang)}</h2>
-                {!canEdit && <div className="mt-0.5 text-xs font-medium text-muted">{labels.readOnly}</div>}
+        <article className="premium-editor-card overflow-hidden rounded-[8px] border border-border-subtle bg-surface-raised" data-testid={`history-edit-ex-${ex.instanceId}`}>
+            <div className="flex items-center justify-between gap-2 px-4 pb-2 pt-3">
+                <div className="flex min-w-0 items-center gap-2"><h2 className="truncate text-sm font-black uppercase tracking-tight text-white">{getTranslated(ex.name, lang)}</h2>{ex.muscle && <MuscleTag label={TRANSLATIONS[lang].muscle[ex.muscle as MuscleGroup] || ex.muscle} />}</div>
+                {!canEdit && <div className="text-[10px] font-bold uppercase tracking-wider text-muted">{labels.readOnly}</div>}
             </div>
 
-            <div className="space-y-1.5 border-t border-[rgb(var(--border-subtle)/0.55)] px-3 py-2">
+            <div className="space-y-1.5 border-t border-border-subtle/50 px-3 py-2">
                 {canEdit && sets.length > 0 && (
                     <div className="grid grid-cols-[1.5rem_1fr_1fr_2.25rem] items-center gap-2 pb-1 text-center font-mono text-[10px] font-bold uppercase tracking-wider text-muted">
                         <span>#</span>
@@ -86,7 +88,7 @@ export const HistoryEditExercise: React.FC<Props> = ({ ex, unit, lang, errors, l
                                 type="button"
                                 aria-label={`${labels.removeSet} #${index + 1}`}
                                 onClick={() => onRemove(ex.instanceId, set.id)}
-                                className="flex h-11 w-11 items-center justify-center rounded-full text-muted transition-colors active:bg-red-500/10 active:text-red-500"
+                                className="flex h-9 w-9 items-center justify-center rounded-[4px] text-muted transition-colors hover:text-red-400 active:bg-red-500/10 active:text-red-500"
                             >
                                 <Icon name="Trash2" size={15} />
                             </button>
@@ -102,7 +104,7 @@ export const HistoryEditExercise: React.FC<Props> = ({ ex, unit, lang, errors, l
                 <button
                     type="button"
                     onClick={() => onAdd(ex.instanceId)}
-                    className="flex w-full items-center justify-center gap-1.5 border-t border-[rgb(var(--border-subtle)/0.55)] py-2.5 text-xs font-bold text-primary-400 transition-colors active:bg-white/5"
+                    className="flex w-full items-center justify-center gap-1.5 border-t border-border-subtle/50 py-2.5 text-xs font-bold uppercase tracking-wider text-primary-400 transition-colors active:bg-white/5"
                 >
                     <Icon name="Plus" size={13} /> {labels.addSet}
                 </button>

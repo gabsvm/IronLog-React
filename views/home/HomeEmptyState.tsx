@@ -16,10 +16,10 @@ export const HomeEmptyState: React.FC<{ state: HomeViewState }> = ({ state }) =>
                     {/* Hero Card Container */}
                     <div
                         onClick={handleOpenTemplateSelector}
-                        className="group w-full aspect-square rounded-[32px] relative overflow-hidden cursor-pointer bg-[rgb(var(--surface-raised))] active:scale-[0.98] transition-all duration-300 border border-[rgb(var(--border-subtle))] flex flex-col items-center justify-center p-8 gap-4"
+                        className="group w-full aspect-square rounded-[8px] relative overflow-hidden cursor-pointer bg-[rgb(var(--surface-raised))] active:scale-[0.98] transition-all duration-300 border border-[rgb(var(--border-subtle))] flex flex-col items-center justify-center p-8 gap-4"
                     >
                         {/* Clean minimal UI replacing abstract art */}
-                        <div className="w-16 h-16 rounded-full bg-primary-500/10 flex items-center justify-center text-primary-500 mb-2">
+                        <div className="w-16 h-16 rounded-[6px] bg-primary-500/10 flex items-center justify-center text-primary-500 mb-2">
                             <Icon name="Plus" size={32} strokeWidth={2} />
                         </div>
                         
@@ -31,7 +31,7 @@ export const HomeEmptyState: React.FC<{ state: HomeViewState }> = ({ state }) =>
                                 {h.startPlan}
                             </p>
                         </div>
-                        <div className="absolute inset-0 rounded-[2.5rem] ring-1 ring-primary-500/15 group-hover:ring-primary-500/30 transition-all duration-500"></div>
+                        <div className="absolute inset-0 rounded-[8px] ring-1 ring-primary-500/15 group-hover:ring-primary-500/30 transition-all duration-500"></div>
                     </div>
                 </div>
 
@@ -47,12 +47,12 @@ export const HomeEmptyState: React.FC<{ state: HomeViewState }> = ({ state }) =>
                     <div className="w-full max-w-xs animate-in fade-in slide-in-from-bottom-4 delay-300">
                         <button
                             onClick={onStartFreeSession}
-                            className="w-full flex items-center gap-3 premium-theme-panel rounded-2xl p-4 hover:border-primary-500/30 active:scale-[0.98] transition-all"
+                            className="w-full flex items-center gap-3 premium-theme-panel rounded-[8px] p-4 hover:border-primary-500/30 active:scale-[0.98] transition-all"
                         >
                             <div className="flex gap-1">
-                                <div className="w-7 h-7 rounded-xl bg-primary-500/10 text-primary-500 flex items-center justify-center"><Icon name="Dumbbell" size={14} /></div>
-                                <div className="w-7 h-7 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center"><Icon name="Zap" size={14} /></div>
-                                <div className="w-7 h-7 rounded-xl bg-violet-500/10 text-violet-500 flex items-center justify-center"><Icon name="User" size={14} /></div>
+                                <div className="w-7 h-7 rounded-[4px] bg-primary-500/10 text-primary-500 flex items-center justify-center"><Icon name="Dumbbell" size={14} /></div>
+                                <div className="w-7 h-7 rounded-[4px] bg-emerald-500/10 text-emerald-500 flex items-center justify-center"><Icon name="Zap" size={14} /></div>
+                                <div className="w-7 h-7 rounded-[4px] bg-violet-500/10 text-violet-500 flex items-center justify-center"><Icon name="User" size={14} /></div>
                             </div>
                             <span className="flex-1 text-left text-xs font-semibold text-[rgb(var(--text-secondary))]">
                                 {h.freeRowShort}

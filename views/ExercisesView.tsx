@@ -8,26 +8,24 @@ import { ExercisesDialogs } from './exercises/ExercisesDialogs';
 // T2: state lives in views/exercises/useExercisesViewState; render blocks in views/exercises/.
 export type { ExercisesViewProps } from './exercises/useExercisesViewState';
 
-
-
 export const ExercisesView: React.FC<ExercisesViewProps> = (props) => {
     const state = useExercisesViewState(props);
     const { onBack, t, mode } = state;
 
     return (
-        <div className="flex h-full flex-col bg-[rgb(var(--surface-app))] text-[rgb(var(--text-primary))]">
+        <div className="flex h-full flex-col bg-surface-app text-[rgb(var(--text-primary))]">
             {/* Header */}
-            <div className="z-10 flex min-h-14 shrink-0 items-center justify-between border-b border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-base)/0.96)] px-4 pt-safe backdrop-blur-md">
+            <div className="z-10 flex min-h-14 shrink-0 items-center justify-between border-b border-border-subtle bg-surface-base/95 px-4 pt-safe backdrop-blur-md">
                 <button
                     onClick={onBack}
-                    className="flex min-h-11 items-center gap-2 rounded-full text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--text-primary))]"
+                    className="flex min-h-9 items-center gap-1.5 rounded-[6px] px-2.5 py-1 text-zinc-400 hover:text-white hover:bg-surface-raised transition-colors"
                     aria-label={t.back}
                 >
-                    <Icon name="ChevronLeft" size={20} />
-                    <span className="font-bold text-sm">{t.back}</span>
+                    <Icon name="ChevronLeft" size={18} />
+                    <span className="font-bold text-xs uppercase tracking-wider">{t.back}</span>
                 </button>
-                <h1 className="text-lg font-black tracking-tight text-[rgb(var(--text-primary))]">{t.manageEx}</h1>
-                <div className="w-8"></div>
+                <h1 className="text-[20px] sm:text-[22px] font-black uppercase tracking-tight text-white">{t.manageEx}</h1>
+                <div className="w-16"></div>
             </div>
 
             {mode === 'list' ? (

@@ -221,9 +221,16 @@ export const NutriView: React.FC = () => {
   // ─── RENDER ──────────────────────────────────────────────────────
   return (
     <div className="space-y-4 px-4 pb-8">
+      {/* ── Header ── */}
+      <div className="pt-2">
+        <h1 className="text-[20px] font-black uppercase tracking-tight text-[rgb(var(--text-primary))]">
+          {pickLang(lang, { es: 'NUTRICIÓN', en: 'NUTRITION' })}
+        </h1>
+      </div>
+
       {/* ── Sub-tabs ── */}
       <div className="sticky top-0 z-10 -mx-4 px-4 py-2 bg-[rgb(var(--surface-app))]">
-        <div className="seg-reference flex gap-1 p-1">
+        <div className="seg-reference grid grid-cols-3 rounded-[6px] p-1 bg-surface-raised border border-border-subtle">
           {([
             { id: 'today',   label: TRANSLATIONS[lang].copy.nutri.today,        icon: 'Utensils' },
             { id: 'body',    label: TRANSLATIONS[lang].copy.nutri.body,      icon: 'Scale' },
@@ -233,12 +240,12 @@ export const NutriView: React.FC = () => {
               key={tab.id}
               onClick={() => setSubTab(tab.id)}
               aria-pressed={subTab === tab.id}
-              className={`expressive-press flex min-h-11 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full px-1 text-xs font-bold tracking-normal ${
+              className={`expressive-press flex min-h-11 min-w-0 items-center justify-center gap-1.5 rounded-[4px] py-2 text-[11px] font-extrabold uppercase tracking-wider transition-all ${
                 subTab === tab.id ? 'bg-primary-500 text-zinc-950 shadow-sm' : 'text-muted hover:text-[rgb(var(--text-primary))]'
               }`}
             >
               <Icon name={tab.icon as any} size={12} />
-              {tab.label}
+              <span className="truncate">{tab.label}</span>
             </button>
           ))}
         </div>
@@ -330,7 +337,7 @@ export const NutriView: React.FC = () => {
                         fat:      Math.round(editingEntry.fat      * mult),
                       });
                     }}
-                    className="flex-1 py-2 rounded-xl bg-zinc-800 text-zinc-300 text-xs font-bold active:scale-95 transition-all hover:bg-zinc-700"
+                    className="flex-1 py-2 rounded-[6px] bg-zinc-800 text-zinc-300 text-xs font-bold active:scale-95 transition-all hover:bg-zinc-700"
                   >
                     ×{mult}
                   </button>
@@ -353,7 +360,7 @@ export const NutriView: React.FC = () => {
                     inputMode="numeric"
                     value={editEntryDraft[key]}
                     onChange={e => setEditEntryDraft(prev => prev ? { ...prev, [key]: Math.max(0, Number(e.target.value)) } : prev)}
-                    className="w-full bg-zinc-800 border border-zinc-700/50 rounded-2xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all glow-input-neon"
+                    className="w-full bg-zinc-800 border border-zinc-700/50 rounded-[6px] px-3 py-2.5 text-white text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all glow-input-neon"
                   />
                 </div>
               ))}
@@ -389,7 +396,7 @@ export const NutriView: React.FC = () => {
                   inputMode="numeric"
                   value={editGoal[key]}
                   onChange={e => setEditGoal(prev => ({ ...prev, [key]: Number(e.target.value) }))}
-                  className="w-full bg-zinc-800 border border-zinc-700/50 rounded-2xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all glow-input-neon"
+                  className="w-full bg-zinc-800 border border-zinc-700/50 rounded-[6px] px-4 py-3 text-white text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all glow-input-neon"
                 />
               </div>
             ))}
@@ -405,23 +412,23 @@ export const NutriView: React.FC = () => {
       {/* Undo Snackbars — stacked, food + cardio */}
       <div className="fixed bottom-24 left-4 right-4 z-modal flex flex-col gap-2 pointer-events-none">
         {lastDeletedEntry && (
-          <div className="flex items-center justify-between bg-zinc-800 text-white px-4 py-3 rounded-2xl shadow-2xl border border-zinc-700 animate-in fade-in slide-in-from-bottom-4 pointer-events-auto">
+          <div className="flex items-center justify-between bg-zinc-800 text-white px-4 py-3 rounded-[8px] shadow-2xl border border-zinc-700 animate-in fade-in slide-in-from-bottom-4 pointer-events-auto">
             <div className="flex items-center gap-2">
               <Icon name="Trash2" size={14} className="text-zinc-400" />
               <span className="text-xs font-bold">{TRANSLATIONS[lang].copy.nutri.itemDeleted}</span>
             </div>
-            <button onClick={handleUndoDelete} className="text-xs font-black text-red-500 uppercase tracking-wider px-2 py-1 active:scale-95 transition-transform">
+            <button onClick={handleUndoDelete} className="text-xs font-black text-red-500 uppercase tracking-wider px-2 py-1 rounded-[4px] active:scale-95 transition-transform">
               {TRANSLATIONS[lang].copy.nutri.undo}
             </button>
           </div>
         )}
         {lastDeletedCardio && (
-          <div className="flex items-center justify-between bg-zinc-800 text-white px-4 py-3 rounded-2xl shadow-2xl border border-zinc-700 animate-in fade-in slide-in-from-bottom-4 pointer-events-auto">
+          <div className="flex items-center justify-between bg-zinc-800 text-white px-4 py-3 rounded-[8px] shadow-2xl border border-zinc-700 animate-in fade-in slide-in-from-bottom-4 pointer-events-auto">
             <div className="flex items-center gap-2">
               <Icon name="Flame" size={14} className="text-zinc-400" />
               <span className="text-xs font-bold">{TRANSLATIONS[lang].copy.nutri.cardioDeleted}</span>
             </div>
-            <button onClick={handleUndoDeleteCardio} className="text-xs font-black text-red-500 uppercase tracking-wider px-2 py-1 active:scale-95 transition-transform">
+            <button onClick={handleUndoDeleteCardio} className="text-xs font-black text-red-500 uppercase tracking-wider px-2 py-1 rounded-[4px] active:scale-95 transition-transform">
               {TRANSLATIONS[lang].copy.nutri.undo}
             </button>
           </div>

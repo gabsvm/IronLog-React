@@ -30,7 +30,7 @@ const FoodCard: React.FC<{
   const protein = Math.round(food.protein * multiplier);
 
   return (
-    <div className="flex items-center gap-3 rounded-2xl p-3 premium-theme-panel expressive-press transition-colors active:scale-[0.98]">
+    <div className="flex items-center gap-3 rounded-[8px] p-3 premium-theme-panel expressive-press transition-colors active:scale-[0.98]">
       <button onClick={() => onSelect(food)} className="min-w-0 flex-1 text-left">
         <p className="truncate text-sm font-semibold text-[rgb(var(--text-primary))]">{food.name}</p>
         <p className="mt-0.5 text-xs text-muted">
@@ -45,7 +45,7 @@ const FoodCard: React.FC<{
           <button
             onClick={() => onToggleFav(food.id)}
             aria-label={pickLang(lang, food.isFavorite ? { en: 'Remove from favorites', es: 'Quitar de favoritos' } : { en: 'Add to favorites', es: 'Agregar a favoritos' })}
-            className={`relative flex h-9 w-9 items-center justify-center rounded-full after:absolute after:-inset-1 after:content-[''] transition-colors ${food.isFavorite ? 'text-yellow-400' : 'text-muted hover:text-muted'}`}
+            className={`relative flex h-9 w-9 items-center justify-center rounded-[6px] after:absolute after:-inset-1 after:content-[''] transition-colors ${food.isFavorite ? 'text-yellow-400' : 'text-muted hover:text-muted'}`}
           >
             <Icon name="Star" size={14} fill={food.isFavorite ? 'currentColor' : 'none'} />
           </button>
@@ -54,7 +54,7 @@ const FoodCard: React.FC<{
           <button
             onClick={() => onDelete(food.id)}
             aria-label={pickLang(lang, { en: `Delete ${food.name}`, es: `Eliminar ${food.name}` })}
-            className="relative flex h-9 w-9 items-center justify-center rounded-full after:absolute after:-inset-1 after:content-[''] text-[rgb(var(--text-secondary))] transition-colors hover:text-red-400"
+            className="relative flex h-9 w-9 items-center justify-center rounded-[6px] after:absolute after:-inset-1 after:content-[''] text-[rgb(var(--text-secondary))] transition-colors hover:text-red-400"
           >
             <Icon name="Trash2" size={13} />
           </button>
@@ -62,7 +62,7 @@ const FoodCard: React.FC<{
         <button
           onClick={() => onSelect(food)}
           aria-label={pickLang(lang, { en: `Add ${food.name}`, es: `Agregar ${food.name}` })}
-          className="relative flex h-9 w-9 items-center justify-center rounded-full after:absolute after:-inset-1 after:content-[''] bg-[rgb(var(--surface-elevated))] text-[rgb(var(--text-secondary))] transition-colors hover:bg-[rgb(var(--surface-elevated))]"
+          className="relative flex h-9 w-9 items-center justify-center rounded-[6px] after:absolute after:-inset-1 after:content-[''] bg-[rgb(var(--surface-elevated))] text-[rgb(var(--text-secondary))] transition-colors hover:bg-[rgb(var(--surface-elevated))]"
         >
           <Icon name="Plus" size={14} />
         </button>
@@ -182,7 +182,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
             <button
               key={meal.id}
               onClick={() => setMealType(meal.id as FoodEntry['mealType'])}
-              className={`duration-fast ease-natural flex flex-shrink-0 items-center gap-1.5 rounded-2xl border px-3 py-2 text-xs font-bold transition-all active:scale-95 ${
+              className={`duration-fast ease-natural flex flex-shrink-0 items-center gap-1.5 rounded-[6px] border px-3 py-2 text-xs font-bold transition-all active:scale-95 ${
                 mealType === meal.id
                   ? 'border-primary-500 bg-primary-500 text-zinc-950 shadow-sm'
                   : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated))] text-muted'
@@ -194,7 +194,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
           ))}
         </div>
 
-        <div className="seg-reference flex gap-1 p-1">
+        <div className="seg-reference grid grid-cols-3 rounded-[6px] p-1 bg-surface-raised border border-border-subtle">
           {([
             { id: 'quick', icon: 'Zap', label: TRANSLATIONS[lang].copy.addMealModal.quickAdd },
             { id: 'myfoods', icon: 'BookOpen', label: TRANSLATIONS[lang].copy.addMealModal.myFoods },
@@ -203,7 +203,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
             <button
               key={item.id}
               onClick={() => setTab(item.id)}
-              className={`flex min-h-11 flex-1 items-center justify-center gap-1 rounded-full px-1 text-xs font-bold transition-all ${
+              className={`flex min-h-11 items-center justify-center gap-1 rounded-[4px] px-1 text-xs font-bold transition-all ${
                 tab === item.id ? 'bg-primary-500 font-black text-zinc-950' : 'text-muted'
               }`}
             >
@@ -224,7 +224,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                   <button
                     key={value}
                     onClick={() => setMultiplier(value)}
-                    className={`duration-fast ease-natural rounded-xl border px-3 py-1.5 text-xs font-bold transition-all active:scale-95 ${
+                    className={`duration-fast ease-natural rounded-[6px] border px-3 py-1.5 text-xs font-bold transition-all active:scale-95 ${
                       multiplier === value
                         ? 'border-primary-500 bg-primary-500 text-zinc-950 shadow-sm'
                         : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated))] text-muted'
@@ -246,7 +246,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                   placeholder={TRANSLATIONS[lang].copy.addMealModal.searchFoods}
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  className="premium-form-input w-full py-2.5 pl-9 pr-4 text-sm text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  className="premium-form-input w-full rounded-[6px] py-2.5 pl-9 pr-4 text-sm text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
                 />
               </div>
 
@@ -282,7 +282,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                   </p>
                   <button
                     onClick={() => setTab('manual')}
-                    className="mt-3 rounded-xl bg-[rgb(var(--surface-elevated))] px-4 py-2 text-xs font-bold text-[rgb(var(--text-secondary))] transition-transform active:scale-95"
+                    className="mt-3 rounded-[6px] bg-[rgb(var(--surface-elevated))] px-4 py-2 text-xs font-bold text-[rgb(var(--text-secondary))] transition-transform active:scale-95"
                   >
                     {TRANSLATIONS[lang].copy.addMealModal.addManually}
                   </button>
@@ -296,7 +296,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                       placeholder={TRANSLATIONS[lang].copy.addMealModal.searchMyFoods}
                       value={search}
                       onChange={(event) => setSearch(event.target.value)}
-                      className="premium-form-input w-full py-2.5 pl-9 pr-4 text-sm text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                      className="premium-form-input w-full rounded-[6px] py-2.5 pl-9 pr-4 text-sm text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
                     />
                   </div>
                   {sortedMyFoods.length === 0 ? (
@@ -332,7 +332,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                     value={name}
                     onChange={(event) => setName(event.target.value)}
                     placeholder="e.g. Greek Yogurt"
-                    className="premium-form-input w-full px-4 py-3 text-sm text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    className="premium-form-input w-full rounded-[6px] px-4 py-3 text-sm text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
                   />
                 </div>
 
@@ -346,7 +346,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                     placeholder="0"
                     type="number"
                     inputMode="numeric"
-                    className="premium-form-input w-full px-4 py-3 text-sm text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    className="premium-form-input w-full rounded-[6px] px-4 py-3 text-sm text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
                   />
                 </div>
 
@@ -361,7 +361,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                       placeholder={TRANSLATIONS[lang].copy.addMealModal.protein}
                       type="number"
                       inputMode="decimal"
-                      className="premium-form-input border-blue-500/30 px-3 py-3 text-center text-sm text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-blue-500 focus:outline-none"
+                      className="premium-form-input rounded-[6px] border-blue-500/30 px-3 py-3 text-center text-sm text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-blue-500 focus:outline-none"
                     />
                     <input
                       value={carbs}
@@ -369,7 +369,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                       placeholder="Carbs"
                       type="number"
                       inputMode="decimal"
-                      className="premium-form-input border-amber-500/30 px-3 py-3 text-center text-sm text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-amber-500 focus:outline-none"
+                      className="premium-form-input rounded-[6px] border-amber-500/30 px-3 py-3 text-center text-sm text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-amber-500 focus:outline-none"
                     />
                     <input
                       value={fat}
@@ -377,7 +377,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                       placeholder={TRANSLATIONS[lang].copy.addMealModal.fat}
                       type="number"
                       inputMode="decimal"
-                      className="premium-form-input border-pink-500/30 px-3 py-3 text-center text-sm text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-pink-500 focus:outline-none"
+                      className="premium-form-input rounded-[6px] border-pink-500/30 px-3 py-3 text-center text-sm text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-pink-500 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -390,7 +390,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                     value={servingSize}
                     onChange={(event) => setServingSize(event.target.value)}
                     placeholder="e.g. 100g, 1 cup"
-                    className="premium-form-input w-full px-4 py-3 text-sm text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    className="premium-form-input w-full rounded-[6px] px-4 py-3 text-sm text-[rgb(var(--text-primary))] placeholder-zinc-600 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
                   />
                 </div>
 
@@ -399,10 +399,10 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                   role="checkbox"
                   aria-checked={saveToMyFoods}
                   onClick={() => setSaveToMyFoods(!saveToMyFoods)}
-                  className="flex w-full items-center gap-3 rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated)/0.6)] p-3.5 transition-all active:scale-[0.99]"
+                  className="flex w-full items-center gap-3 rounded-[8px] border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated)/0.6)] p-3.5 transition-all active:scale-[0.99]"
                 >
                   <div
-                    className={`flex h-5 w-5 items-center justify-center rounded-md border-2 transition-colors ${
+                    className={`flex h-5 w-5 items-center justify-center rounded-[4px] border-2 transition-colors ${
                       saveToMyFoods ? 'border-green-500 bg-green-500' : 'border-zinc-600'
                     }`}
                   >
@@ -417,7 +417,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
                 </button>
               </div>
 
-              <Button onClick={handleSubmitManual} fullWidth disabled={!canSubmitManual} className="mt-2">
+              <Button onClick={handleSubmitManual} fullWidth disabled={!canSubmitManual} className="mt-2 rounded-[6px]">
                 {TRANSLATIONS[lang].copy.addMealModal.addFood}
               </Button>
             </div>

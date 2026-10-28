@@ -64,7 +64,7 @@ export const PremiumTrendCard: React.FC<Props> = ({ insights, lang, unit, scope 
         : ui.noWeighted;
 
     return (
-        <section className="premium-theme-panel premium-theme-quiet relative mt-4 overflow-hidden p-4 sm:p-5" aria-label={ui.region}>
+        <section className="premium-theme-panel premium-theme-quiet relative mt-4 overflow-hidden rounded-[8px] border border-border-subtle bg-surface-raised p-4 sm:p-5" aria-label={ui.region}>
             <div className="relative z-10 flex items-start justify-between gap-3">
                 <div className="min-w-0">
                     <p className="text-xs font-semibold text-muted">{ui.recent}</p>
@@ -72,7 +72,7 @@ export const PremiumTrendCard: React.FC<Props> = ({ insights, lang, unit, scope 
                         {ui.workingSets}
                     </h3>
                 </div>
-                <div className="shrink-0 rounded-full border border-primary-500/20 bg-primary-500/10 px-3 py-1.5 text-xs font-semibold text-[rgb(var(--text-primary))]">
+                <div className="shrink-0 rounded-[4px] border border-primary-500/40 bg-primary-500/10 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-primary-400">
                     <Icon name="TrendingUp" size={13} className="mr-1 inline text-primary-500" />
                     {currentWeekSets} {ui.lastSeven}
                 </div>
@@ -106,8 +106,8 @@ export const PremiumTrendCard: React.FC<Props> = ({ insights, lang, unit, scope 
                     {ui.empty}
                 </p>
             )}
-            <div className="mt-4 flex items-start gap-3 rounded-2xl border border-[rgb(var(--border-subtle)/0.6)] bg-[rgb(var(--surface-base)/0.58)] p-3.5">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-500/10 text-primary-500">
+            <div className="mt-4 flex items-start gap-3 rounded-[6px] border border-border-subtle bg-surface-base p-3.5">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[4px] bg-primary-500/10 text-primary-400">
                     <Icon name="Trophy" size={18} />
                 </div>
                 <div className="min-w-0">

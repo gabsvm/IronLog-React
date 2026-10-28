@@ -94,9 +94,9 @@ export const HealthConnectCard: React.FC<HealthConnectCardProps> = ({
     };
 
     return (
-        <div className="premium-theme-panel mt-3 space-y-3 p-4" data-testid="health-connect-card">
+        <div className="premium-theme-panel rounded-[8px] mt-3 space-y-3 p-4" data-testid="health-connect-card">
             <div className="flex items-start gap-3">
-                <span className="w-8 h-8 rounded-xl bg-surface-elevated flex items-center justify-center text-rose-500 shrink-0">
+                <span className="w-8 h-8 rounded-[6px] bg-surface-elevated flex items-center justify-center text-rose-500 shrink-0">
                     <Icon name="Heart" size={17} />
                 </span>
                 <div>
@@ -108,14 +108,14 @@ export const HealthConnectCard: React.FC<HealthConnectCardProps> = ({
             {status === 'unsupported' && <p className="text-xs text-muted">{t.healthUnavailable}</p>}
 
             {status === 'update_required' && (
-                <button type="button" onClick={() => void api.openApp()} className="expressive-press min-h-11 w-full rounded-full bg-primary-500/10 text-primary-600 dark:text-primary-400 text-xs font-black">
+                <button type="button" onClick={() => void api.openApp()} className="expressive-press min-h-11 w-full rounded-[6px] bg-primary-500/10 text-primary-600 dark:text-primary-400 text-xs font-black">
                     {t.healthUpdate}
                 </button>
             )}
 
             {status === 'available' && !granted && (
                 <>
-                    <button type="button" onClick={() => void connect()} className="expressive-press min-h-11 w-full rounded-full bg-primary-500 text-black text-xs font-black">
+                    <button type="button" onClick={() => void connect()} className="expressive-press min-h-11 w-full rounded-[6px] bg-primary-500 text-black text-xs font-black">
                         {t.healthConnect}
                     </button>
                     {denied && <p role="alert" className="text-xs text-amber-700 dark:text-amber-300">{t.healthDenied}</p>}
@@ -128,7 +128,7 @@ export const HealthConnectCard: React.FC<HealthConnectCardProps> = ({
                         type="button"
                         onClick={() => void importWeight()}
                         disabled={importState.kind === 'busy'}
-                        className="expressive-press min-h-11 w-full rounded-full bg-primary-500/10 text-primary-600 dark:text-primary-400 text-xs font-black disabled:opacity-60"
+                        className="expressive-press min-h-11 w-full rounded-[6px] bg-primary-500/10 text-primary-600 dark:text-primary-400 text-xs font-black disabled:opacity-60"
                     >
                         {importState.kind === 'busy' ? t.healthImporting : t.healthImportWeight}
                     </button>

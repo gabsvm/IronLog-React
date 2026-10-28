@@ -25,13 +25,13 @@ export const WorkoutFinishSheet: React.FC<{ state: WorkoutViewState }> = ({ stat
                         <div className="p-4 space-y-3.5" data-testid="workout-finish-sheet">
                             {/* Summary Cards */}
                             <div className="grid grid-cols-2 gap-2.5">
-                                <div className="rounded-[20px] border border-border-subtle bg-surface-raised p-3">
+                                <div className="rounded-[8px] border border-border-subtle bg-surface-raised p-3">
                                     <div className="text-xs text-muted">{t.duration}</div>
                                     <div className="text-xl font-semibold text-[rgb(var(--text-primary))] mt-0.5 tabular-nums">
                                         {formatSeconds(elapsedSecs)}
                                     </div>
                                 </div>
-                                <div className="rounded-[20px] border border-border-subtle bg-surface-raised p-3">
+                                <div className="rounded-[8px] border border-border-subtle bg-surface-raised p-3">
                                     <div className="text-xs text-muted">{t.sets}</div>
                                     <div className="text-xl font-semibold text-[rgb(var(--text-primary))] mt-0.5 tabular-nums">
                                         {completedWorkingSets} / {totalWorkingSets}
@@ -77,7 +77,7 @@ export const WorkoutFinishSheet: React.FC<{ state: WorkoutViewState }> = ({ stat
                                     value={activeSession.note || ''}
                                     onChange={e => updateSession(prev => prev ? { ...prev, note: e.target.value } : null)}
                                     rows={3}
-                                    className="w-full rounded-[20px] border border-border-subtle bg-surface-raised px-3.5 py-3 text-sm text-[rgb(var(--text-primary))] placeholder-zinc-500 outline-none resize-none transition-all focus:border-zinc-600"
+                                    className="w-full rounded-[8px] border border-border-subtle bg-surface-raised px-3.5 py-3 text-sm text-[rgb(var(--text-primary))] placeholder-zinc-500 outline-none resize-none transition-all focus:border-zinc-600"
                                 />
                             </div>
 
@@ -92,14 +92,14 @@ export const WorkoutFinishSheet: React.FC<{ state: WorkoutViewState }> = ({ stat
                                     type="button"
                                     data-testid="finish-confirm-btn"
                                     onClick={handleConfirmFinish}
-                                    className="expressive-press w-full min-h-12 rounded-full bg-primary-500 text-zinc-950 font-semibold text-sm hover:bg-primary-400 active:scale-98 transition-all shadow-sm"
+                                    className="expressive-press w-full min-h-12 rounded-[6px] bg-primary-500 text-zinc-950 font-semibold text-sm hover:bg-primary-400 active:scale-98 transition-all shadow-sm"
                                 >
                                     {t.saveAndFinish}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setShowFinishModal(false)}
-                                    className="expressive-press w-full min-h-12 rounded-full bg-surface-elevated text-[rgb(var(--text-primary))] font-semibold text-sm hover:bg-[rgb(var(--surface-elevated))] active:scale-98 transition-all"
+                                    className="expressive-press w-full min-h-12 rounded-[6px] bg-surface-elevated text-[rgb(var(--text-primary))] font-semibold text-sm hover:bg-[rgb(var(--surface-elevated))] active:scale-98 transition-all"
                                 >
                                     {t.continueTraining}
                                 </button>

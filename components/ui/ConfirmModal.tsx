@@ -35,8 +35,8 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             aria-labelledby="confirm-modal-title"
             aria-describedby="confirm-modal-desc"
         >
-            <div className="modal-surface w-full max-w-sm rounded-3xl border p-6 text-center shadow-2xl" onClick={e => e.stopPropagation()}>
-                <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${variant === 'danger' ? 'bg-red-500/10 text-red-500' : 'bg-primary-500/10 text-primary-500'}`}>
+            <div className="modal-surface w-full max-w-sm rounded-[8px] border p-6 text-center shadow-2xl" onClick={e => e.stopPropagation()}>
+                <div className={`w-16 h-16 rounded-[8px] flex items-center justify-center mx-auto mb-4 ${variant === 'danger' ? 'bg-red-500/10 text-red-500' : 'bg-primary-500/10 text-primary-500'}`}>
                     <Icon name={variant === 'danger' ? "AlertTriangle" : "Info"} size={32} />
                 </div>
                 <h3 id="confirm-modal-title" className="text-xl font-bold text-zinc-900 dark:text-white mb-2">{title}</h3>

@@ -47,7 +47,7 @@ export const DataSection: React.FC<DataSectionProps> = ({
     return (
         <div id="profile-section-data">
             <div className="label-reference px-1 mb-1.5">{ty.data}</div>
-            <div className="card-reference divide-y divide-border-subtle overflow-hidden">
+            <div className="card-reference rounded-[8px] border border-border-subtle bg-surface-raised divide-y divide-border-subtle overflow-hidden">
                 <div className="p-3 space-y-2">
                     <div className="flex items-center justify-between text-xs">
                         <span className="font-semibold text-muted">{ty.cloudStatus}</span>
@@ -58,7 +58,7 @@ export const DataSection: React.FC<DataSectionProps> = ({
                         )}
                     </div>
                     <div className="flex items-center gap-3">
-                        <span className="w-8 h-8 rounded-lg bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
+                        <span className="w-8 h-8 rounded-[6px] bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
                             <Icon name="Cloud" size={17} />
                         </span>
                         <div className="flex-1 min-w-0 text-xs text-muted truncate">
@@ -70,7 +70,7 @@ export const DataSection: React.FC<DataSectionProps> = ({
                             type="button"
                             onClick={onForceSync}
                             disabled={isSyncing}
-                            className="w-full mt-2 py-2.5 bg-primary-500/10 text-primary-600 dark:text-primary-400 rounded-[18px] text-xs font-bold flex items-center justify-center gap-2 border border-primary-500/20 active:scale-98 transition-transform"
+                            className="w-full mt-2 py-2.5 bg-primary-500/10 text-primary-600 dark:text-primary-400 rounded-[6px] text-xs font-bold flex items-center justify-center gap-2 border border-primary-500/20 active:scale-98 transition-transform"
                         >
                             <Icon name="RefreshCw" size={14} className={isSyncing ? "animate-spin" : ""} />
                             {isSyncing ? ty.syncing : ty.syncNow}
@@ -82,12 +82,12 @@ export const DataSection: React.FC<DataSectionProps> = ({
                         <button
                             type="button"
                             onClick={onExport}
-                            className="min-h-11 bg-[rgb(var(--surface-elevated))] rounded-[18px] text-xs font-bold flex items-center justify-center gap-2 hover:bg-primary-500/10 transition-colors"
+                            className="min-h-11 bg-[rgb(var(--surface-elevated))] rounded-[6px] text-xs font-bold flex items-center justify-center gap-2 hover:bg-primary-500/10 transition-colors"
                             aria-label={t.export}
                         >
                             <Icon name="Download" size={14} /> {t.export}
                         </button>
-                        <label className="min-h-11 bg-[rgb(var(--surface-elevated))] rounded-[18px] text-xs font-bold cursor-pointer text-center flex items-center justify-center gap-2 hover:bg-primary-500/10 transition-colors">
+                        <label className="min-h-11 bg-[rgb(var(--surface-elevated))] rounded-[6px] text-xs font-bold cursor-pointer text-center flex items-center justify-center gap-2 hover:bg-primary-500/10 transition-colors">
                             <Icon name="Upload" size={14} /> {t.import}
                             <input type="file" onChange={onImportFile} accept=".json" className="hidden" />
                         </label>
@@ -96,12 +96,12 @@ export const DataSection: React.FC<DataSectionProps> = ({
                         <button
                             type="button"
                             onClick={handleExportCsv}
-                            className="min-h-11 bg-[rgb(var(--surface-elevated))] rounded-[18px] text-xs font-bold flex items-center justify-center gap-2 hover:bg-primary-500/10 transition-colors"
+                            className="min-h-11 bg-[rgb(var(--surface-elevated))] rounded-[6px] text-xs font-bold flex items-center justify-center gap-2 hover:bg-primary-500/10 transition-colors"
                             aria-label={t.csv.exportBtn}
                         >
                             <Icon name="Download" size={14} /> {t.csv.exportBtn}
                         </button>
-                        <label className="min-h-11 bg-[rgb(var(--surface-elevated))] rounded-[18px] text-xs font-bold cursor-pointer text-center flex items-center justify-center gap-2 hover:bg-primary-500/10 transition-colors">
+                        <label className="min-h-11 bg-[rgb(var(--surface-elevated))] rounded-[6px] text-xs font-bold cursor-pointer text-center flex items-center justify-center gap-2 hover:bg-primary-500/10 transition-colors">
                             <Icon name="Upload" size={14} /> {t.csv.importBtn}
                             <input type="file" onChange={handleImportCsvFile} accept=".csv,text/csv" className="hidden" />
                         </label>

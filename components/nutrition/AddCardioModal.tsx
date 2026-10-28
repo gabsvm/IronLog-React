@@ -81,7 +81,7 @@ export const AddCardioModal: React.FC<AddCardioModalProps> = ({ isOpen, onClose,
       title={t.title}
       accent="primary"
       footer={
-        <Button onClick={handleSubmit} fullWidth variant="primary" disabled={!duration}>
+        <Button onClick={handleSubmit} fullWidth variant="primary" disabled={!duration} className="rounded-[6px]">
           {t.add}
         </Button>
       }
@@ -93,7 +93,7 @@ export const AddCardioModal: React.FC<AddCardioModalProps> = ({ isOpen, onClose,
             <button
               key={a.id}
               onClick={() => setActivity(a.id)}
-              className={`flex items-center gap-2 px-3 py-2.5 rounded-[18px] min-h-11 text-xs font-bold border transition-colors active:scale-95 duration-fast ease-natural
+              className={`flex items-center gap-2 px-3 py-2.5 rounded-[6px] min-h-11 text-xs font-bold border transition-colors active:scale-95 duration-fast ease-natural
                 ${activity === a.id 
                   ? 'bg-primary-500 text-zinc-950 border-primary-500 shadow-[0_4px_12px] shadow-primary-500/30' 
                   : 'bg-[rgb(var(--surface-elevated))] text-muted border-[rgb(var(--border-subtle))] hover:border-zinc-600'}`}
@@ -113,12 +113,12 @@ export const AddCardioModal: React.FC<AddCardioModalProps> = ({ isOpen, onClose,
               placeholder="0"
               type="number"
               inputMode="numeric"
-              className="premium-form-input w-full px-4 py-3 text-[rgb(var(--text-primary))] placeholder-zinc-500 text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all "
+              className="premium-form-input w-full rounded-[6px] px-4 py-3 text-[rgb(var(--text-primary))] placeholder-zinc-500 text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all "
             />
           </div>
           
           {duration && (
-            <div className="bg-primary-500/10 border border-primary-500/20 rounded-2xl px-4 py-3 flex justify-between items-center animate-in fade-in duration-slow">
+            <div className="bg-primary-500/10 border border-primary-500/20 rounded-[6px] px-4 py-3 flex justify-between items-center animate-in fade-in duration-slow">
               <span className="text-xs text-muted">{t.estimated}</span>
               <span className="text-sm font-bold text-primary-400">~{calEstimate} kcal</span>
             </div>
@@ -133,7 +133,7 @@ export const AddCardioModal: React.FC<AddCardioModalProps> = ({ isOpen, onClose,
                 placeholder="0.0"
                 type="number"
                 inputMode="decimal"
-                className="premium-form-input w-full px-4 py-3 text-[rgb(var(--text-primary))] placeholder-zinc-500 text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all "
+                className="premium-form-input w-full rounded-[6px] px-4 py-3 text-[rgb(var(--text-primary))] placeholder-zinc-500 text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all "
               />
             </div>
             <div>
@@ -144,7 +144,7 @@ export const AddCardioModal: React.FC<AddCardioModalProps> = ({ isOpen, onClose,
                 placeholder="0"
                 type="number"
                 inputMode="numeric"
-                className="premium-form-input w-full px-4 py-3 text-[rgb(var(--text-primary))] placeholder-zinc-500 text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all "
+                className="premium-form-input w-full rounded-[6px] px-4 py-3 text-[rgb(var(--text-primary))] placeholder-zinc-500 text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all "
               />
             </div>
           </div>
@@ -155,7 +155,7 @@ export const AddCardioModal: React.FC<AddCardioModalProps> = ({ isOpen, onClose,
               value={notes}
               onChange={e => setNotes(e.target.value)}
               placeholder="..."
-              className="premium-form-input w-full px-4 py-3 text-[rgb(var(--text-primary))] placeholder-zinc-500 text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all "
+              className="premium-form-input w-full rounded-[6px] px-4 py-3 text-[rgb(var(--text-primary))] placeholder-zinc-500 text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all "
             />
           </div>
         </div>

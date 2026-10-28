@@ -50,10 +50,10 @@ export const LogWeightModal: React.FC<LogWeightModalProps> = ({ isOpen, onClose,
             accent="primary"
             footer={
                 <div className="flex gap-3">
-                    <Button variant="secondary" onClick={onClose} fullWidth>
+                    <Button variant="secondary" onClick={onClose} fullWidth className="rounded-[6px]">
                         {t.cancel}
                     </Button>
-                    <Button onClick={handleSubmit} disabled={!isValid} fullWidth>
+                    <Button onClick={handleSubmit} disabled={!isValid} fullWidth className="rounded-[6px]">
                         {t.save}
                     </Button>
                 </div>
@@ -71,10 +71,10 @@ export const LogWeightModal: React.FC<LogWeightModalProps> = ({ isOpen, onClose,
                             value={weight}
                             onChange={(e) => setWeight(e.target.value)}
                             placeholder="0.0"
-                            className="w-full premium-form-input px-6 pr-20 py-5 text-3xl font-black text-[rgb(var(--text-primary))] focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all placeholder:text-muted "
+                            className="w-full premium-form-input rounded-[6px] px-6 pr-20 py-5 text-3xl font-black text-[rgb(var(--text-primary))] focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all placeholder:text-muted "
                             autoFocus
                         />
-                        <div className="absolute right-5 top-1/2 -translate-y-1/2 text-[rgb(var(--text-secondary))] font-black uppercase tracking-tighter text-sm bg-[rgb(var(--surface-elevated))] px-2.5 py-1 rounded-full">{unitLabel(unit).toLowerCase()}</div>
+                        <div className="absolute right-5 top-1/2 -translate-y-1/2 text-[rgb(var(--text-secondary))] font-black uppercase tracking-tighter text-sm bg-[rgb(var(--surface-elevated))] px-2.5 py-1 rounded-[4px]">{unitLabel(unit).toLowerCase()}</div>
                     </div>
                 </div>
 
@@ -89,9 +89,9 @@ export const LogWeightModal: React.FC<LogWeightModalProps> = ({ isOpen, onClose,
                             value={bodyFat}
                             onChange={(e) => setBodyFat(e.target.value)}
                             placeholder="0.0"
-                            className="w-full premium-form-input px-6 pr-16 py-4 text-xl font-bold text-[rgb(var(--text-primary))] focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all placeholder:text-muted "
+                            className="w-full premium-form-input rounded-[6px] px-6 pr-16 py-4 text-xl font-bold text-[rgb(var(--text-primary))] focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all placeholder:text-muted "
                         />
-                        <div className="absolute right-5 top-1/2 -translate-y-1/2 text-[rgb(var(--text-secondary))] font-black text-sm bg-[rgb(var(--surface-elevated))] px-2.5 py-1 rounded-full">%</div>
+                        <div className="absolute right-5 top-1/2 -translate-y-1/2 text-[rgb(var(--text-secondary))] font-black text-sm bg-[rgb(var(--surface-elevated))] px-2.5 py-1 rounded-[4px]">%</div>
                     </div>
                 </div>
 
@@ -103,7 +103,7 @@ export const LogWeightModal: React.FC<LogWeightModalProps> = ({ isOpen, onClose,
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
                         placeholder={w.notePlaceholder}
-                        className="w-full premium-form-input px-4 py-4 min-h-[90px] text-sm font-medium text-[rgb(var(--text-primary))] focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all resize-none placeholder:text-muted "
+                        className="w-full premium-form-input rounded-[6px] px-4 py-4 min-h-[90px] text-sm font-medium text-[rgb(var(--text-primary))] focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all resize-none placeholder:text-muted "
                     />
                 </div>
             </div>

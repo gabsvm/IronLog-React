@@ -91,14 +91,14 @@ export const WarmupModal: React.FC<WarmupModalProps> = ({ targetWeight, exercise
                                 onClick={() => toggleCheck(idx)}
                                 aria-pressed={isChecked}
                                 aria-label={`${step.label} — ${weight} ${weightSuffix.toLowerCase()}, ${step.reps} reps`}
-                                className={`expressive-press flex w-full min-h-14 items-center rounded-[20px] border p-3 text-left
+                                className={`expressive-press flex w-full min-h-14 items-center rounded-[8px] border p-3 text-left
                                     ${isChecked
                                         ? 'bg-primary-500/10 border-primary-500/30'
                                         : 'bg-zinc-50 dark:bg-white/5 border-transparent hover:bg-zinc-100 dark:hover:bg-white/10'
                                     }
                                 `}
                             >
-                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mr-4 transition-colors duration-fast ease-natural ${isChecked ? 'bg-primary-500 border-primary-500 text-black' : 'border-zinc-300 dark:border-zinc-600'}`}>
+                                <div className={`w-6 h-6 rounded-[4px] border-2 flex items-center justify-center mr-4 transition-colors duration-fast ease-natural ${isChecked ? 'bg-primary-500 border-primary-500 text-black' : 'border-zinc-300 dark:border-zinc-600'}`}>
                                     {isChecked && <Icon name="Check" size={14} strokeWidth={3} />}
                                 </div>
 

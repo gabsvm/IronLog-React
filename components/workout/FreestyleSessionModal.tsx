@@ -27,7 +27,7 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = (prop
                 <button
                     onClick={handleStart}
                     disabled={!canStart}
-                    className="w-full py-4 rounded-2xl font-black text-sm text-black bg-primary-500 hover:bg-primary-400 transition-all duration-fast ease-natural active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-primary-500/20"
+                    className="w-full py-4 rounded-[6px] font-black text-sm text-black bg-primary-500 hover:bg-primary-400 transition-all duration-fast ease-natural active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-primary-500/20"
                 >
                     {startLabel}
                 </button>
@@ -35,7 +35,7 @@ export const FreestyleSessionModal: React.FC<FreestyleSessionModalProps> = (prop
         >
             <div className="p-5">
             {/* Discipline Tabs */}
-            <div className="flex bg-zinc-100 dark:bg-zinc-800/50 p-1 rounded-2xl mb-5 gap-1">
+            <div className="flex bg-zinc-100 dark:bg-zinc-800/50 p-1 rounded-[8px] mb-5 gap-1">
                 <button
                     className={tabStyle(discipline === 'gym', 'bg-primary-500 shadow-primary-500/30 text-black')}
                     onClick={() => setDiscipline('gym')}

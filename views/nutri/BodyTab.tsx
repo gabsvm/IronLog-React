@@ -43,7 +43,7 @@ export const BodyTab: React.FC<Props> = ({
     return (
         <div className="space-y-3 pt-1">
             {/* Weight + TDEE hero */}
-            <div className="premium-theme-panel premium-theme-quiet p-4 sm:p-5">
+            <div className="premium-theme-panel rounded-[8px] bg-surface-raised border border-border-subtle p-4 sm:p-5">
                 <div className="flex items-start justify-between mb-4">
                     <div>
                         <p className="text-xs font-semibold tracking-normal text-muted mb-1">
@@ -68,7 +68,7 @@ export const BodyTab: React.FC<Props> = ({
                     <button
                         onClick={onLogWeight}
                         aria-label={TRANSLATIONS[lang].copy.bodyTab.logBodyWeight}
-                        className="expressive-press flex min-h-11 items-center gap-1.5 rounded-full border border-primary-500/30 bg-primary-500/10 px-3.5 text-xs font-bold text-[rgb(var(--text-primary))] hover:bg-primary-500/15"
+                        className="expressive-press flex min-h-11 items-center gap-1.5 rounded-[6px] border border-primary-500/30 bg-primary-500/10 px-3.5 text-xs font-bold text-[rgb(var(--text-primary))] hover:bg-primary-500/15"
                     >
                         <Icon name="Plus" size={14} />
                         {TRANSLATIONS[lang].copy.bodyTab.log}
@@ -120,7 +120,7 @@ export const BodyTab: React.FC<Props> = ({
             </div>
 
             {/* TDEE card */}
-            <div className="premium-theme-panel p-4">
+            <div className="premium-theme-panel rounded-[8px] p-4">
                 <p className="text-sm font-bold tracking-tight text-[rgb(var(--text-primary))] mb-3">
                     {TRANSLATIONS[lang].copy.bodyTab.energyBalance}
                 </p>
@@ -179,7 +179,7 @@ export const BodyTab: React.FC<Props> = ({
                     },
                 ];
                 return (
-                    <div className="premium-theme-panel p-4">
+                    <div className="premium-theme-panel rounded-[8px] p-4">
                         <p className="text-sm font-bold tracking-tight text-[rgb(var(--text-primary))] mb-3">
                             {TRANSLATIONS[lang].copy.bodyTab.yourTargets}
                         </p>
@@ -204,7 +204,7 @@ export const BodyTab: React.FC<Props> = ({
 
             {/* Recent weigh-ins */}
             {weightTrend.length > 0 && (
-                <div className="premium-theme-panel p-4">
+                <div className="premium-theme-panel rounded-[8px] p-4">
                     <p className="text-sm font-bold tracking-tight text-[rgb(var(--text-primary))] mb-3">
                         {TRANSLATIONS[lang].copy.bodyTab.recentWeighIns}
                     </p>
