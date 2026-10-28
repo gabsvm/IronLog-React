@@ -18,6 +18,7 @@ interface Props {
     t: any;
     lang: string;
     onSelectProgram?: (programId: string) => void;
+    inline?: boolean;
 }
 
 type FilterCategory = 'ALL' | 'WHOLE_BODY' | 'UPPER_LOWER' | 'PPL' | 'SPECIALIZATION' | 'CUSTOM';
@@ -90,6 +91,7 @@ export const TemplateSelector: React.FC<Props> = ({
     t,
     lang,
     onSelectProgram,
+    inline = false,
 }) => {
     const [showKongDetail, setShowKongDetail] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -122,13 +124,17 @@ export const TemplateSelector: React.FC<Props> = ({
 
     const selector = (
         <div
-            className="fixed inset-0 z-modal flex flex-col bg-surface-app text-white"
-            role="dialog"
-            aria-modal="true"
+            className={
+                inline
+                    ? 'flex flex-col bg-surface-app text-white'
+                    : 'fixed inset-0 z-modal flex flex-col bg-surface-app text-white'
+            }
+            role={inline ? 'region' : 'dialog'}
+            aria-modal={inline ? undefined : 'true'}
             aria-label={pickLang(lang, { es: 'Plantillas', en: 'Templates' })}
         >
             {/* Top Header */}
-            <header className="shrink-0 border-b border-border-subtle bg-surface-app px-4 pt-safe">
+            <header className={`shrink-0 border-b border-border-subtle bg-surface-app px-4 ${inline ? '' : 'pt-safe'}`}>
                 <div className="mx-auto flex h-16 w-full max-w-xl items-center justify-between gap-4">
                     <div>
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary-500">
@@ -144,19 +150,22 @@ export const TemplateSelector: React.FC<Props> = ({
                             onClick={onCreateCustom}
                             aria-label={ts.designTitle || 'New'}
                             title={ts.designTitle || 'New'}
-                            className="bg-primary-500 text-zinc-950 rounded-[4px] h-8 w-8 flex items-center justify-center font-bold hover:bg-primary-400 active:scale-95 transition-transform"
+                            className="bg-primary-500 text-zinc-950 rounded-[4px] h-8 px-2.5 flex items-center justify-center gap-1 text-xs font-extrabold uppercase tracking-wider hover:bg-primary-400 active:scale-95 transition-transform"
                         >
-                            <Icon name="Plus" size={18} />
+                            <Icon name="Plus" size={16} strokeWidth={2.5} />
+                            {inline && <span>{pickLang(lang, { es: 'Crear', en: 'New' })}</span>}
                         </button>
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            aria-label={ts.close || t.close || 'Close'}
-                            title={ts.close || t.close || 'Close'}
-                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[4px] border border-border-subtle bg-surface-raised text-zinc-400 hover:text-white active:scale-95 transition-colors"
-                        >
-                            <Icon name="X" size={18} />
-                        </button>
+                        {!inline && (
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                aria-label={ts.close || t.close || 'Close'}
+                                title={ts.close || t.close || 'Close'}
+                                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[4px] border border-border-subtle bg-surface-raised text-zinc-400 hover:text-white active:scale-95 transition-colors"
+                            >
+                                <Icon name="X" size={18} />
+                            </button>
+                        )}
                     </div>
                 </div>
             </header>
@@ -388,6 +397,6 @@ export const TemplateSelector: React.FC<Props> = ({
         </div>
     );
 
-    if (typeof document === 'undefined') return selector;
+    if (inline || typeof document === 'undefined') return selector;
     return createPortal(selector, document.body);
 };

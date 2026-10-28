@@ -13,6 +13,8 @@ import { getTranslated } from '../utils';
 // S6: state lives in views/home/useHomeViewState; render blocks in views/home/.
 export type { HomeViewProps } from './home/useHomeViewState';
 
+const HomeMesosView = React.lazy(() => import('./home/HomeMesosView').then(m => ({ default: m.HomeMesosView })));
+
 const GuidelinesModal = React.lazy(() => import('./home/GuidelinesModal').then(m => ({ default: m.GuidelinesModal })));
 const ProgramBlockTransition = React.lazy(() => import('../components/programs/ProgramBlockTransition').then(m => ({ default: m.ProgramBlockTransition })));
 const PlanActionsSheet = React.lazy(() => import('../components/home/PlanActionsSheet').then(m => ({ default: m.PlanActionsSheet })));
@@ -32,12 +34,44 @@ export const HomeView: React.FC<HomeViewPropsWithSubView> = (props) => {
     const { onEditProgram, onStartFreeSession, logs, lang, tutorialProgress, markTutorialSeen, config, activeMeso, t, h, showPaywall, setShowPaywall, featureAttempted, showCompleteModal, setShowCompleteModal, showMesoSettings, setShowMesoSettings, showPlanActions, setShowPlanActions, showTemplateSelector, setShowTemplateSelector, handleOpenTemplateSelector, handleSelectTemplate, handleSelectProgram, handleCreateCustom, personalTemplates, globalTemplates, skipConfirmationId, setSkipConfirmationId, showGuidelines, setShowGuidelines, transitionBlock, showKongHub, setShowKongHub, closeTransition, currentGuidelineImages, safeProgram, safeLogs, confirmSkip, handleFinishMeso, handleFinishWeek, homeTutorialSteps, selectedDayIdx, startSession, activeSession, uniqueDaysDone, handleSkipClick } = state;
 
     React.useEffect(() => {
-        if (props.initialSubView === 'templates') {
-            setShowTemplateSelector(true);
-        } else if (props.initialSubView === 'mesos' || props.initialSubView === 'workout') {
+        if (props.initialSubView === 'mesos' || props.initialSubView === 'workout') {
             setShowTemplateSelector(false);
         }
     }, [props.initialSubView, setShowTemplateSelector]);
+
+    if (props.initialSubView === 'templates') {
+        return (
+            <div className="pb-28">
+                <Suspense fallback={null}>
+                    <TemplateSelector
+                        inline
+                        onClose={() => setShowTemplateSelector(false)}
+                        onSelectTemplate={(tpl) => {
+                            handleSelectTemplate(tpl);
+                            if (typeof window !== 'undefined') {
+                                window.dispatchEvent(new CustomEvent('gainslab:navigate', { detail: { view: 'home' } }));
+                            }
+                        }}
+                        onSelectProgram={(programId) => {
+                            handleSelectProgram(programId);
+                            if (typeof window !== 'undefined') {
+                                window.dispatchEvent(new CustomEvent('gainslab:navigate', { detail: { view: 'home' } }));
+                            }
+                        }}
+                        onCreateCustom={handleCreateCustom}
+                        lang={lang}
+                        t={t}
+                        templates={[...personalTemplates, ...globalTemplates]}
+                    />
+                </Suspense>
+                {showPaywall && (
+                    <Suspense fallback={null}>
+                        <PaywallModal onClose={() => setShowPaywall(false)} feature={featureAttempted} />
+                    </Suspense>
+                )}
+            </div>
+        );
+    }
 
     if (!activeMeso) {
         return <HomeEmptyState state={state} />;
@@ -45,78 +79,85 @@ export const HomeView: React.FC<HomeViewPropsWithSubView> = (props) => {
 
     return (
         <div className="px-4 space-y-4 pb-28 pt-2">
-            <HomeTopSection state={state} />
+            {props.initialSubView === 'mesos' ? (
+                <Suspense fallback={null}>
+                    <HomeMesosView state={state} />
+                </Suspense>
+            ) : (
+                <>
+                    <HomeTopSection state={state} />
 
-            {/* 3. Week day rows */}
-            <HomeWeekDayList state={state} />
+                    {/* 3. Week day rows */}
+                    <HomeWeekDayList state={state} />
 
-            {/* 4. Primary action for the selected day */}
-            {safeProgram[selectedDayIdx] && (
-                <div className="flex items-stretch gap-2">
-                    <button
-                        id="tut-up-next"
-                        data-testid="home-train-action"
-                        type="button"
-                        onClick={() => startSession(selectedDayIdx)}
-                        className="expressive-press flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-[4px] bg-primary-500 px-4 text-sm font-bold text-zinc-950 transition-colors shadow-sm hover:bg-primary-400 active:scale-[0.99]"
-                    >
-                        <Icon name={activeSession && activeSession.mesoId === activeMeso.id && activeSession.dayIdx === selectedDayIdx ? 'Play' : uniqueDaysDone.has(selectedDayIdx) ? 'Repeat' : 'ArrowRight'} size={18} />
-                        <span>{activeSession && activeSession.mesoId === activeMeso.id && activeSession.dayIdx === selectedDayIdx ? h.resume : uniqueDaysDone.has(selectedDayIdx) ? h.trainAgain : `${pickLang(lang, { es: 'Entrenar', en: 'Train' })} ${String(getTranslated(safeProgram[selectedDayIdx].dayName, lang))}`}</span>
-                    </button>
-                    {!uniqueDaysDone.has(selectedDayIdx) && !(activeSession && activeSession.mesoId === activeMeso.id && activeSession.dayIdx === selectedDayIdx) && (
-                        <button
-                            type="button"
-                            onClick={(event) => handleSkipClick(event, selectedDayIdx)}
-                            aria-label={t.skipSession}
-                            title={t.skipSession}
-                            className="flex min-h-[52px] w-[52px] shrink-0 items-center justify-center rounded-[4px] border border-border-subtle bg-surface-raised text-zinc-300 hover:text-white transition-colors"
-                        >
-                            <Icon name="SkipForward" size={18} />
-                        </button>
-                    )}
-                </div>
-            )}
-
-            {/* 4b. Week at a glance (Q16): done/planned, streak, last session. */}
-            <HomeRecapStrip
-                logs={safeLogs}
-                meso={activeMeso}
-                plannedDays={safeProgram.length}
-                lang={lang}
-                t={t}
-                unit={resolveWeightUnit(config)}
-            />
-
-            {/* 5. Secondary Quick Start */}
-            <div className="space-y-3 pt-2">
-                {onStartFreeSession && (
-                    <button
-                        type="button"
-                        data-testid="home-free-session"
-                        onClick={onStartFreeSession}
-                        className="w-full flex min-h-[44px] items-center gap-3 card-reference rounded-[24px] p-3.5 hover:border-zinc-500 active:scale-[0.99] transition-all"
-                    >
-                        <div className="flex gap-1 shrink-0">
-                            <div className="w-7 h-7 rounded-lg bg-primary-500/10 text-primary-500 flex items-center justify-center"><Icon name="Dumbbell" size={14} /></div>
-                            <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center"><Icon name="Zap" size={14} /></div>
-                            <div className="w-7 h-7 rounded-lg bg-violet-500/10 text-violet-500 flex items-center justify-center"><Icon name="User" size={14} /></div>
+                    {/* 4. Primary action for the selected day */}
+                    {safeProgram[selectedDayIdx] && (
+                        <div className="flex items-stretch gap-2">
+                            <button
+                                id="tut-up-next"
+                                data-testid="home-train-action"
+                                type="button"
+                                onClick={() => startSession(selectedDayIdx)}
+                                className="expressive-press flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-[4px] bg-primary-500 px-4 text-sm font-bold text-zinc-950 transition-colors shadow-sm hover:bg-primary-400 active:scale-[0.99]"
+                            >
+                                <Icon name={activeSession && activeSession.mesoId === activeMeso.id && activeSession.dayIdx === selectedDayIdx ? 'Play' : uniqueDaysDone.has(selectedDayIdx) ? 'Repeat' : 'ArrowRight'} size={18} />
+                                <span>{activeSession && activeSession.mesoId === activeMeso.id && activeSession.dayIdx === selectedDayIdx ? h.resume : uniqueDaysDone.has(selectedDayIdx) ? h.trainAgain : `${pickLang(lang, { es: 'Entrenar', en: 'Train' })} ${String(getTranslated(safeProgram[selectedDayIdx].dayName, lang))}`}</span>
+                            </button>
+                            {!uniqueDaysDone.has(selectedDayIdx) && !(activeSession && activeSession.mesoId === activeMeso.id && activeSession.dayIdx === selectedDayIdx) && (
+                                <button
+                                    type="button"
+                                    onClick={(event) => handleSkipClick(event, selectedDayIdx)}
+                                    aria-label={t.skipSession}
+                                    title={t.skipSession}
+                                    className="flex min-h-[52px] w-[52px] shrink-0 items-center justify-center rounded-[4px] border border-border-subtle bg-surface-raised text-zinc-300 hover:text-white transition-colors"
+                                >
+                                    <Icon name="SkipForward" size={18} />
+                                </button>
+                            )}
                         </div>
-                        <span className="flex-1 text-left text-xs font-semibold text-zinc-300">
-                            {h.freeRow}
-                        </span>
-                        <Icon name="ChevronRight" size={16} className="text-muted shrink-0" />
-                    </button>
-                )}
-            </div>
+                    )}
 
+                    {/* 4b. Week at a glance (Q16): done/planned, streak, last session. */}
+                    <HomeRecapStrip
+                        logs={safeLogs}
+                        meso={activeMeso}
+                        plannedDays={safeProgram.length}
+                        lang={lang}
+                        t={t}
+                        unit={resolveWeightUnit(config)}
+                    />
 
-            <Suspense fallback={null}>
-            <TutorialOverlay
-                steps={homeTutorialSteps}
-                isActive={!tutorialProgress.home}
-                onComplete={() => markTutorialSeen('home')}
-            />
-            </Suspense>
+                    {/* 5. Secondary Quick Start */}
+                    <div className="space-y-3 pt-2">
+                        {onStartFreeSession && (
+                            <button
+                                type="button"
+                                data-testid="home-free-session"
+                                onClick={onStartFreeSession}
+                                className="w-full flex min-h-[44px] items-center gap-3 card-reference rounded-[24px] p-3.5 hover:border-zinc-500 active:scale-[0.99] transition-all"
+                            >
+                                <div className="flex gap-1 shrink-0">
+                                    <div className="w-7 h-7 rounded-lg bg-primary-500/10 text-primary-500 flex items-center justify-center"><Icon name="Dumbbell" size={14} /></div>
+                                    <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center"><Icon name="Zap" size={14} /></div>
+                                    <div className="w-7 h-7 rounded-lg bg-violet-500/10 text-violet-500 flex items-center justify-center"><Icon name="User" size={14} /></div>
+                                </div>
+                                <span className="flex-1 text-left text-xs font-semibold text-zinc-300">
+                                    {h.freeRow}
+                                </span>
+                                <Icon name="ChevronRight" size={16} className="text-muted shrink-0" />
+                            </button>
+                        )}
+                    </div>
+
+                    <Suspense fallback={null}>
+                        <TutorialOverlay
+                            steps={homeTutorialSteps}
+                            isActive={!tutorialProgress.home}
+                            onComplete={() => markTutorialSeen('home')}
+                        />
+                    </Suspense>
+                </>
+            )}
 
             {/* --- MODALS --- */}
 
@@ -232,5 +273,3 @@ export const HomeView: React.FC<HomeViewPropsWithSubView> = (props) => {
         </div>
     );
 };
-
-

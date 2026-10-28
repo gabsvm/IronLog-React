@@ -4,6 +4,7 @@ import { TRANSLATIONS } from '../../constants';
 import { ExerciseDef, SessionExercise, VolumeCountingMode } from '../../types';
 import { Icon } from './Icon';
 import { getTranslated } from '../../utils';
+import { pickLang } from '../../utils/i18n';
 import { exerciseIdGroup } from '../../utils/exerciseLibrary';
 import { MuscleTag } from './MuscleTag';
 import { Button } from './Button';
@@ -216,7 +217,9 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
             footer={
                 <div className="flex gap-3">
                     <Button fullWidth onClick={onClose} variant="secondary" className="rounded-[6px]">{t.close}</Button>
-                    <Button fullWidth onClick={saveVolumeCountingMode} className="rounded-[6px]">{TRANSLATIONS[lang].copy.exerciseDetailModal.save}</Button>
+                    {activeTab === 'guide' && exercise.muscle !== 'CARDIO' && (
+                        <Button fullWidth onClick={saveVolumeCountingMode} className="rounded-[6px]">{TRANSLATIONS[lang].copy.exerciseDetailModal.save}</Button>
+                    )}
                 </div>
             }
         >
@@ -359,7 +362,9 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                         <div className="rounded-[8px] border border-border-subtle bg-surface-raised p-4">
                             <div className="mb-4">
                                 <h4 className="text-sm font-bold text-white uppercase tracking-tight">{t.statsProgress}</h4>
-                                <p className="text-xs text-zinc-400">Estimated 1RM / Max Performance</p>
+                                <p className="text-xs text-zinc-400">
+                                    {pickLang(lang, { es: '1RM Estimado / Mejor Rendimiento', en: 'Estimated 1RM / Max Performance' })}
+                                </p>
                             </div>
                             <ProgressChart
                                 dataPoints={chartData}

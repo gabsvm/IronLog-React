@@ -214,7 +214,7 @@ export const useExercisesViewState = ({ onBack }: ExercisesViewProps) => {
                     >
                         {/* Top of row: MuscleTag + badges */}
                         <div className="flex items-center gap-1.5 flex-wrap">
-                            <MuscleTag label={resolveMuscleLabel(ex.muscle, lang)} />
+                            <MuscleTag label={resolveMuscleLabel(ex.muscle, lang)} muscle={ex.muscle} />
                             {ex.isBodyweight && (
                                 <span className="inline-flex items-center rounded-[4px] border border-blue-500/20 bg-blue-500/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-blue-300">
                                     BW

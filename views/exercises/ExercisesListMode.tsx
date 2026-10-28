@@ -1,20 +1,16 @@
-// T2: library list mode (search, filters, virtual list), moved verbatim from views/ExercisesView.tsx.
+// T2: library list mode (search, filters, list), moved from views/ExercisesView.tsx.
 import React from 'react';
 import { TRANSLATIONS, MUSCLE_GROUPS } from '../../constants';
 import { Icon } from '../../components/ui/Icon';
 import { getTranslated } from '../../utils';
 import { pickLang } from '../../utils/i18n';
-import { Virtuoso } from 'react-virtuoso';
 import type { ExercisesViewState } from './useExercisesViewState';
 
-const VirtuosoFooter = () => <div style={{ height: 'calc(5rem + var(--safe-area-bottom))' }} />;
-const VIRTUOSO_COMPONENTS = { Footer: VirtuosoFooter };
-
 export const ExercisesListMode: React.FC<{ state: ExercisesViewState }> = ({ state }) => {
-    const { exercises, lang, t, ev, setMode, searchQuery, setSearchQuery, selectedMuscle, setSelectedMuscle, filterCategory, setFilterCategory, setMergingExerciseId, setMergeCandidate, duplicateSuggestions, filteredExercises, Row } = state;
+    const { exercises, lang, t, ev, searchQuery, setSearchQuery, selectedMuscle, setSelectedMuscle, filterCategory, setFilterCategory, setMergingExerciseId, setMergeCandidate, duplicateSuggestions, filteredExercises, Row } = state;
     return (
         <>
-            <div className="flex-1 flex flex-col overflow-hidden relative">
+            <div className="flex flex-col relative">
                 {/* Controls: Search and Filter Chips */}
                 <div className="sticky top-0 z-20 shrink-0 space-y-3 border-b border-border-subtle bg-surface-base/95 p-4 backdrop-blur-md">
                     {/* Search input */}
@@ -130,7 +126,7 @@ export const ExercisesListMode: React.FC<{ state: ExercisesViewState }> = ({ sta
                 )}
 
                 {/* List */}
-                <div className="flex-1 overflow-hidden relative">
+                <div className="relative">
                     {filteredExercises.length === 0 ? (
                         <div className="h-48 flex flex-col items-center justify-center text-center p-6 text-zinc-500">
                             <Icon name="Dumbbell" size={32} className="mb-2 opacity-40" />
@@ -139,23 +135,10 @@ export const ExercisesListMode: React.FC<{ state: ExercisesViewState }> = ({ sta
                             </p>
                         </div>
                     ) : (
-                        <Virtuoso
-                            style={{ height: '100%' }}
-                            data={filteredExercises}
-                            itemContent={Row}
-                            components={VIRTUOSO_COMPONENTS}
-                        />
+                        <div className="py-1.5">
+                            {filteredExercises.map((ex, index) => Row(index, ex))}
+                        </div>
                     )}
-
-                    <div className="fixed bottom-[calc(1.5rem+var(--safe-area-bottom))] right-6 z-10">
-                        <button
-                            onClick={() => setMode('create')}
-                            className="w-12 h-12 rounded-[8px] bg-primary-500 text-zinc-950 shadow-lg flex items-center justify-center hover:brightness-110 active:scale-95 transition-all"
-                            aria-label={ev.createEx}
-                        >
-                            <Icon name="Plus" size={24} />
-                        </button>
-                    </div>
                 </div>
             </div>
         </>

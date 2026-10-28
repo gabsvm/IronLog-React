@@ -134,6 +134,7 @@ export const Layout: React.FC<LayoutProps> = ({
         const cancel = scheduleWhenIdle(() => {
             void import('../profile/ProfileSheet');
             void import('../home/QuickStartSheet');
+            void import('../../views/ExercisesView');
         });
         return cancel;
     }, []);
