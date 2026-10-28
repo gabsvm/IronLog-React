@@ -804,9 +804,9 @@ html.light .premium-rest-pill {
 
 /* Landing is intentionally an immersive dark cover in both appearance modes.
    These classes prevent hardcoded dark primitives leaking into app components. */
-.premium-landing { background: #101511; color: #fff; }
-.premium-landing-preview { background: #18201a; }
-.premium-landing-input { background: #273325; }
+.premium-landing { background: #050506; color: #fff; }
+.premium-landing-preview { background: #0c0c0e; }
+.premium-landing-input { background: #1a1a1e; }
 @media (prefers-reduced-motion: reduce) {
   .premium-landing .expressive-reveal { animation: none; }
 }

@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 220" width="920" height="220" fill="none">
+  <defs>
+    <filter id="neon-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+    <linearGradient id="lime-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#C4F13A" />
+      <stop offset="100%" stop-color="#10B981" />
+    </linearGradient>
+  </defs>
+
+  <!-- REPYNTRA PEAK SIGNAL MARK -->
+  <!-- Companion stroke (trailing lower signal, lime accent) -->
+  <g id="peak_companion" filter="url(#neon-glow)">
+    <path
+      id="path_companion"
+      d="M 45 168 L 74 168 L 93 104 L 112 143 L 131 74 L 150 126 L 170 126 L 205 58"
+      fill="none"
+      stroke="#C4F13A"
+      stroke-width="7.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-miterlimit="10"
+    />
+    <!-- subtle pulse dot at peak -->
+    <circle cx="205" cy="58" r="4.5" fill="#C4F13A" />
+  </g>
+
+  <!-- Dominant stroke (leading upper signal, pure paper white) -->
+  <g id="peak_dominant">
+    <path
+      id="path_dominant"
+      d="M 45 150 L 74 150 L 93 83 L 112 125 L 131 54 L 150 109 L 170 109 L 205 38"
+      fill="none"
+      stroke="#F2F2F2"
+      stroke-width="15.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-miterlimit="10"
+    />
+    <!-- pulse dot at peak -->
+    <circle cx="205" cy="38" r="6" fill="#F2F2F2" />
+  </g>
+
+  <!-- REPYNTRA WORDMARK -->
+  <!-- REPY (Dominant text primary, paper white #F2F2F2) -->
+  <g id="word_repy">
+    <!-- R -->
+    <path fill="#F2F2F2" d="M 252 64 L 294 64 C 309 64 319 72 319 86 C 319 97 311 104 300 107 L 322 150 L 302 150 L 283 111 L 270 111 L 270 150 L 252 150 Z M 270 96 L 292 96 C 298 96 302 93 302 87 C 302 81 298 78 292 78 L 270 78 Z" />
+    <!-- E -->
+    <path fill="#F2F2F2" d="M 333 64 L 383 64 L 383 79 L 351 79 L 351 99 L 379 99 L 379 113 L 351 113 L 351 135 L 385 135 L 385 150 L 333 150 Z" />
+    <!-- P -->
+    <path fill="#F2F2F2" d="M 399 64 L 439 64 C 454 64 464 73 464 89 C 464 105 454 114 439 114 L 417 114 L 417 150 L 399 150 Z M 417 99 L 437 99 C 444 99 447 96 447 89 C 447 82 444 79 437 79 L 417 79 Z" />
+    <!-- Y -->
+    <path fill="#F2F2F2" d="M 473 64 L 493 64 L 507 98 L 521 64 L 541 64 L 517 114 L 517 150 L 498 150 L 498 114 Z" />
+  </g>
+
+  <!-- NTRA (Companion accent, lime #C4F13A) -->
+  <g id="word_ntra" filter="url(#neon-glow)">
+    <!-- N -->
+    <path fill="#C4F13A" d="M 558 64 L 576 64 L 608 123 L 608 64 L 626 64 L 626 150 L 608 150 L 576 91 L 576 150 L 558 150 Z" />
+    <!-- T -->
+    <path fill="#C4F13A" d="M 637 64 L 691 64 L 691 79 L 673 79 L 673 150 L 655 150 L 655 79 L 637 79 Z" />
+    <!-- R -->
+    <path fill="#C4F13A" d="M 701 64 L 743 64 C 758 64 768 72 768 86 C 768 97 760 104 749 107 L 771 150 L 751 150 L 732 111 L 719 111 L 719 150 L 701 150 Z M 719 96 L 741 96 C 747 96 751 93 751 87 C 751 81 747 78 741 78 L 719 78 Z" />
+    <!-- A -->
+    <path fill="#C4F13A" d="M 793 64 L 811 64 L 837 150 L 818 150 L 812 130 L 791 130 L 785 150 L 767 150 Z M 795 116 L 808 116 L 802 93 Z" />
+  </g>
+</svg>
