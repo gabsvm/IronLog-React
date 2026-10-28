@@ -10,79 +10,66 @@ interface LandingProps {
     onLogin: () => void;
 }
 
-interface KineticState {
-    t: number;
-    duration: number;
-    playing: boolean;
-    muted: boolean;
-}
-
 export const Landing: React.FC<LandingProps> = ({ onStart, onGetStarted, onLogin }) => {
     const { lang, setLang } = useAppPreferences();
     const t = TRANSLATIONS[lang].landing as any;
     const handleGetStarted = onGetStarted || onStart;
 
-    const iframeRef = useRef<HTMLIFrameElement>(null);
+    const videoRef = useRef<HTMLVideoElement>(null);
     const progressFillRef = useRef<HTMLDivElement>(null);
-    const durationRef = useRef<number>(24);
-    const [kineticState, setKineticState] = useState<KineticState>({
-        t: 0,
-        duration: 24,
-        playing: true,
-        muted: true,
-    });
+    const [isPlaying, setIsPlaying] = useState<boolean>(true);
+    const [isMuted, setIsMuted] = useState<boolean>(true);
 
-    useEffect(() => {
-        const handleMessage = (event: MessageEvent) => {
-            const data = event.data;
-            if (data && data.type === 'KINETIC_STATE') {
-                const dur = typeof data.duration === 'number' && data.duration > 0 ? data.duration : durationRef.current;
-                durationRef.current = dur;
-                if (typeof data.t === 'number' && progressFillRef.current) {
-                    const pct = Math.min(100, Math.max(0, (data.t / dur) * 100));
-                    progressFillRef.current.style.width = `${pct.toFixed(2)}%`;
-                }
-                setKineticState(prev => {
-                    const nextPlaying = typeof data.playing === 'boolean' ? data.playing : prev.playing;
-                    const nextMuted = typeof data.muted === 'boolean' ? data.muted : prev.muted;
-                    if (prev.playing === nextPlaying && prev.muted === nextMuted) {
-                        return prev;
-                    }
-                    return {
-                        t: typeof data.t === 'number' ? data.t : prev.t,
-                        duration: dur,
-                        playing: nextPlaying,
-                        muted: nextMuted,
-                    };
-                });
-            }
-        };
+    const handleTimeUpdate = () => {
+        const v = videoRef.current;
+        if (!v || !progressFillRef.current || !v.duration) return;
+        const pct = Math.min(100, Math.max(0, (v.currentTime / v.duration) * 100));
+        progressFillRef.current.style.width = `${pct.toFixed(2)}%`;
+    };
 
-        window.addEventListener('message', handleMessage);
-        return () => window.removeEventListener('message', handleMessage);
-    }, []);
+    const togglePlay = () => {
+        const v = videoRef.current;
+        if (!v) return;
+        if (v.paused) {
+            v.play();
+            setIsPlaying(true);
+        } else {
+            v.pause();
+            setIsPlaying(false);
+        }
+    };
 
-    const sendKineticCmd = (cmd: 'toggle-play' | 'toggle-audio' | 'restart' | 'seek', extra?: { t?: number }) => {
-        try {
-            iframeRef.current?.contentWindow?.postMessage({ type: 'KINETIC_CMD', cmd, ...extra }, '*');
-        } catch (_) {}
+    const toggleAudio = () => {
+        const v = videoRef.current;
+        if (!v) return;
+        v.muted = !v.muted;
+        setIsMuted(v.muted);
+    };
+
+    const restartVideo = () => {
+        const v = videoRef.current;
+        if (!v) return;
+        v.currentTime = 0;
+        v.play();
+        setIsPlaying(true);
     };
 
     const handleScrubBarClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        const v = videoRef.current;
+        if (!v || !v.duration) return;
         const rect = e.currentTarget.getBoundingClientRect();
-        const dur = durationRef.current;
-        if (rect.width <= 0 || dur <= 0) return;
+        if (rect.width <= 0) return;
         const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+        v.currentTime = ratio * v.duration;
         if (progressFillRef.current) {
             progressFillRef.current.style.width = `${(ratio * 100).toFixed(2)}%`;
         }
-        sendKineticCmd('seek', { t: ratio * dur });
     };
 
     const handleFullscreen = () => {
         try {
-            if (iframeRef.current?.requestFullscreen) {
-                iframeRef.current.requestFullscreen();
+            if (videoRef.current?.requestFullscreen) {
+                videoRef.current.requestFullscreen();
             }
         } catch (_) {}
     };
@@ -217,27 +204,27 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onGetStarted, onLogin
                                 <div className="flex items-center gap-1.5">
                                     <button
                                         type="button"
-                                        onClick={() => sendKineticCmd('toggle-play')}
+                                        onClick={togglePlay}
                                         className="text-[10px] font-mono font-bold tracking-wider px-2 py-1 rounded-[4px] premium-landing-input hover:bg-zinc-800 border border-white/[0.08] text-zinc-300 hover:text-white transition-colors"
                                         title="Play or Pause kinetic reel"
                                     >
-                                        {kineticState.playing ? 'PAUSE' : 'PLAY'}
+                                        {isPlaying ? 'PAUSE' : 'PLAY'}
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() => sendKineticCmd('toggle-audio')}
+                                        onClick={toggleAudio}
                                         className={`text-[10px] font-mono font-bold tracking-wider px-2 py-1 rounded-[4px] border transition-colors ${
-                                            !kineticState.muted
+                                            !isMuted
                                                 ? 'bg-[#C4F13A] text-[#09090B] border-[#C4F13A]'
                                                 : 'premium-landing-input hover:bg-zinc-800 border-white/[0.08] text-zinc-300 hover:text-white'
                                         }`}
                                         title="Toggle 128 BPM Synth Soundtrack"
                                     >
-                                        {kineticState.muted ? 'SOUND OFF' : 'SOUND ON'}
+                                        {isMuted ? 'SOUND OFF' : 'SOUND ON'}
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() => sendKineticCmd('restart')}
+                                        onClick={restartVideo}
                                         className="text-[10px] font-mono font-bold tracking-wider px-2 py-1 rounded-[4px] premium-landing-input hover:bg-zinc-800 border border-white/[0.08] text-zinc-300 hover:text-white transition-colors"
                                         title="Restart reel from frame 0"
                                     >
@@ -256,12 +243,18 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onGetStarted, onLogin
 
                             {/* 16:9 Responsive Video Viewport */}
                             <div className="relative aspect-video w-full bg-black overflow-hidden">
-                                <iframe
-                                    ref={iframeRef}
-                                    src="/kinetic-demo/index.html?embed=1"
-                                    title="Repyntra Kinetic Demo"
-                                    className="w-full h-full border-0 block bg-black"
-                                    allow="autoplay; fullscreen"
+                                <video
+                                    ref={videoRef}
+                                    src="/kinetic-demo/repyntra-kinetic.mp4"
+                                    autoPlay
+                                    loop
+                                    muted
+                                    playsInline
+                                    preload="auto"
+                                    className="w-full h-full object-cover block bg-black"
+                                    onTimeUpdate={handleTimeUpdate}
+                                    onPlay={() => setIsPlaying(true)}
+                                    onPause={() => setIsPlaying(false)}
                                 />
 
                                 {/* Interactive #C4F13A Scrub / Progress Bar */}
