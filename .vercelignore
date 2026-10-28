@@ -1,0 +1,10 @@
+android/
+ios/
+.serena/
+*.apk
+*.sha256
+*.keystore
+apk-out/
+tests/
+playwright-report/
+test-results/
