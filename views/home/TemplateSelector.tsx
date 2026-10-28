@@ -258,7 +258,7 @@ export const TemplateSelector: React.FC<Props> = ({
             </div>
 
             {/* Flat List of Templates */}
-            <div className="flex-1 overflow-y-auto scroll-container">
+            <div className={inline ? '' : 'flex-1 min-h-0 overflow-y-auto scroll-container'}>
                 <div className="mx-auto w-full max-w-xl pb-[calc(var(--safe-area-bottom)+2rem)]">
                     <div className="divide-y divide-border-subtle border-t border-b border-border-subtle">
                         {filteredTemplates.length === 0 ? (

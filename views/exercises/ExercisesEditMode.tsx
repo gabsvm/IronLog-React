@@ -8,7 +8,7 @@ import type { ExercisesViewState } from './useExercisesViewState';
 export const ExercisesEditMode: React.FC<{ state: ExercisesViewState }> = ({ state }) => {
     const { lang, t, ev, setMode, newName, setNewName, newMuscle, setNewMuscle, newVolumeCountingMode, setNewVolumeCountingMode, handleCreate } = state;
     return (
-        <div className="mx-auto w-full max-w-2xl overflow-y-auto p-4 pb-[calc(1.5rem+var(--safe-area-bottom))] sm:p-6">
+        <div className="mx-auto w-full max-w-2xl p-4 pb-[calc(1.5rem+var(--safe-area-bottom))] sm:p-6">
             <div className="rounded-[8px] border border-border-subtle bg-surface-raised p-4 sm:p-6 space-y-5">
                 <div>
                     <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-zinc-400">{t.exName}</label>
