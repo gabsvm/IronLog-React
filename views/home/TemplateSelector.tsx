@@ -37,7 +37,7 @@ const getTemplateAuthor = (tpl: GlobalTemplate, ts: any): string => {
     const id = tpl.id;
     if (id.startsWith('nh_') || id === 'toji_fushiguro' || id === 'tokita') return 'Natural Hypertrophy';
     if (id === 'ji3') return 'Paul Carter';
-    if (id === 'full_body') return 'Dr. Mike Israetel (RP)';
+    if (id === 'full_body' || id.startsWith('rp_') || id === 'male_physique' || id === 'hyp_1' || id === 'hyp_2' || id === 'metabolite' || id === 'resensitization') return 'Dr. Mike Israetel (RP)';
     if (id.startsWith('cal_')) return ts.calisthenics || 'Calisthenics';
     return ts.baseSpecials || 'Specials';
 };
@@ -49,6 +49,7 @@ const getTemplateCategory = (tpl: GlobalTemplate): FilterCategory => {
     if (
         id.includes('full_body') ||
         id.includes('whole_body') ||
+        id.startsWith('rp_fb_') ||
         title.includes('full body') ||
         title.includes('whole body') ||
         id === 'nh_full_body' ||
@@ -67,19 +68,22 @@ const getTemplateCategory = (tpl: GlobalTemplate): FilterCategory => {
 
 const getCategoryOverline = (tpl: GlobalTemplate, lang: string): string => {
     if (tpl.scope === 'personal') return pickLang(lang, { es: 'PLANTILLA GUARDADA', en: 'SAVED TEMPLATE' });
+    const id = tpl.id.toLowerCase();
+    const isRP = id.startsWith('rp_') || id === 'full_body' || id === 'male_physique' || id === 'hyp_1' || id === 'hyp_2' || id === 'metabolite' || id === 'resensitization';
     const cat = getTemplateCategory(tpl);
+    const prefix = isRP ? 'RP · ' : 'MALE, ';
     switch (cat) {
         case 'WHOLE_BODY':
-            return `MALE, ${pickLang(lang, { es: 'CUERPO COMPLETO', en: 'WHOLE BODY' })}`;
+            return `${prefix}${pickLang(lang, { es: 'CUERPO COMPLETO', en: 'WHOLE BODY' })}`;
         case 'UPPER_LOWER':
-            return `MALE, ${pickLang(lang, { es: 'TORSO / PIERNA', en: 'UPPER / LOWER' })}`;
+            return `${prefix}${pickLang(lang, { es: 'TORSO / PIERNA', en: 'UPPER / LOWER' })}`;
         case 'PPL':
-            return `MALE, PUSH / PULL / LEGS`;
+            return `${prefix}PUSH / PULL / LEGS`;
         case 'CUSTOM':
             return pickLang(lang, { es: 'PERSONALIZADA', en: 'CUSTOM' });
         case 'SPECIALIZATION':
         default:
-            return `MALE, ${pickLang(lang, { es: 'HIPERTROFIA', en: 'HYPERTROPHY FOCUS' })}`;
+            return `${prefix}${pickLang(lang, { es: 'ESPECIALIZACIÓN', en: 'HYPERTROPHY FOCUS' })}`;
     }
 };
 
