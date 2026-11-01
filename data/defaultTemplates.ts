@@ -1,5 +1,6 @@
 import { ProgramDay, GlobalTemplate, MuscleGroup } from '../types';
 import { NATURAL_HYPERTROPHY_TEMPLATES } from './naturalHypertrophy';
+import { GOLDEN_SIX_REVISITED_TEMPLATE } from './goldenSixRevisited';
 
 const ASSETS_BASE = (import.meta as any).env?.VITE_ASSETS_BASE || '';
 
@@ -633,6 +634,7 @@ export const INITIAL_TEMPLATES: GlobalTemplate[] = [
         order: 12,
         program: CAL_STREET_WORKOUT_TEMPLATE
     },
+    GOLDEN_SIX_REVISITED_TEMPLATE,
 ];
 
 

@@ -115,6 +115,9 @@ export const DEFAULT_LIBRARY: ExerciseDef[] = [
     { id: 'rope_cable_curl', name: { en: 'Rope Cable Curl', es: 'Curl en polea con cuerda' }, muscle: 'BICEPS' },
     { id: 'low_bar_wide_squat', name: { en: 'Low Bar Wide-Stance Squat', es: 'Sentadilla low bar stance ancho' }, muscle: 'QUADS' },
     { id: 'front_squat', name: { en: 'Front Squat', es: 'Sentadilla frontal' }, muscle: 'QUADS' },
-    { id: 'single_leg_extension', name: { en: 'Single Leg Extension', es: 'Extension de cuádriceps a una pierna' }, muscle: 'QUADS' }
+    { id: 'single_leg_extension', name: { en: 'Single Leg Extension', es: 'Extension de cuádriceps a una pierna' }, muscle: 'QUADS' },
+    // Golden Six Revisited additions (see data/goldenSixRevisited.ts).
+    { id: 'sit_up', name: { en: 'Sit-Up', es: 'Abdominales (Sit-Up)' }, muscle: 'ABS', instructions: { en: 'Feet anchored, torso up and down, core tight.', es: 'Pies fijos, sube y baja el torso con el core firme.' }, isBodyweight: true },
+    { id: 'neutral_chinup', name: { en: 'Neutral-Grip Chin-Up', es: 'Dominada Agarre Neutro' }, muscle: 'BACK', instructions: { en: 'Palms facing each other. Full range of motion.', es: 'Palmas enfrentadas. Rango completo.' }, isBodyweight: true }
 ];
 
