@@ -118,6 +118,47 @@ export const DEFAULT_LIBRARY: ExerciseDef[] = [
     { id: 'single_leg_extension', name: { en: 'Single Leg Extension', es: 'Extension de cuádriceps a una pierna' }, muscle: 'QUADS' },
     // Golden Six Revisited additions (see data/goldenSixRevisited.ts).
     { id: 'sit_up', name: { en: 'Sit-Up', es: 'Abdominales (Sit-Up)' }, muscle: 'ABS', instructions: { en: 'Feet anchored, torso up and down, core tight.', es: 'Pies fijos, sube y baja el torso con el core firme.' }, isBodyweight: true },
-    { id: 'neutral_chinup', name: { en: 'Neutral-Grip Chin-Up', es: 'Dominada Agarre Neutro' }, muscle: 'BACK', instructions: { en: 'Palms facing each other. Full range of motion.', es: 'Palmas enfrentadas. Rango completo.' }, isBodyweight: true }
+    { id: 'neutral_chinup', name: { en: 'Neutral-Grip Chin-Up', es: 'Dominada Agarre Neutro' }, muscle: 'BACK', instructions: { en: 'Palms facing each other. Full range of motion.', es: 'Palmas enfrentadas. Rango completo.' }, isBodyweight: true },
+    // David Shaughnessy "Silverback" additions (see data/davidShaughnessy.ts).
+    {
+        id: 'zercher_squat',
+        name: { en: 'Zercher Squat', es: 'Sentadilla Zercher' },
+        muscle: 'QUADS',
+        instructions: {
+            en: 'Hold barbell in the crook of your elbows against the chest. Squat deep, fight for upright posture to build quads, glutes, core, and upper back.',
+            es: 'Sostén la barra en el pliegue de los codos contra el pecho. Baja profundo y mantén el torso erguido para desarrollar cuádriceps, glúteos, core y espalda alta.'
+        },
+        videoId: '9Zknf3s3J-E'
+    },
+    {
+        id: 'powell_raise',
+        name: { en: 'Dumbbell Powell Raise', es: 'Elevación Powell con Mancuerna' },
+        muscle: 'SHOULDERS',
+        instructions: {
+            en: 'Lie on your side on a flat or incline bench. Lower dumbbell in an arc across your body for a deep rear-delt and scapular stretch, then raise with control.',
+            es: 'Túmbate de lado en un banco plano o inclinado. Baja la mancuerna en arco cruzando por delante del torso para estirar el deltoide posterior y eleva con control.'
+        },
+        videoId: 'sL31yU-Gq6I'
+    },
+    {
+        id: 'seal_row',
+        name: { en: 'Barbell Seal Row', es: 'Remo Seal con Barra' },
+        muscle: 'BACK',
+        instructions: {
+            en: 'Lie prone on an elevated bench or 30-45° incline bench. Pull barbell or dumbbells with flared elbows, ripping explosive tension from full stretch.',
+            es: 'Túmbate prono sobre un banco elevado o inclinado a 30-45°. Tracciona con codos abiertos, arrancando con potencia desde el estiramiento completo.'
+        },
+        videoId: 'B64gZ0n9gH0'
+    },
+    {
+        id: 'single_arm_cable_fly',
+        name: { en: 'Single-Arm High-Elbow Cable Chest Fly', es: 'Cruce en Polea Unilateral con Codo Alto' },
+        muscle: 'CHEST',
+        instructions: {
+            en: 'Tristan Jacobs recipe: Unilateral cable fly with elevated elbow mimicking bottom bench press position. Emphasizes clavicular upper pec stretch.',
+            es: 'Técnica de Tristan Jacobs: cruce en polea a una mano con codo alto imitando el fondo de la banca. Enfatiza el estiramiento del pecho superior clavicular.'
+        },
+        videoId: '60Ai9_c60xg'
+    }
 ];
 

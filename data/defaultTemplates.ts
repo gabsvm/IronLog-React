@@ -2,6 +2,7 @@ import { ProgramDay, GlobalTemplate, MuscleGroup } from '../types';
 import { NATURAL_HYPERTROPHY_TEMPLATES } from './naturalHypertrophy';
 import { GOLDEN_SIX_REVISITED_TEMPLATE } from './goldenSixRevisited';
 import { RP_ALL_TEMPLATES, RP_GUIDELINE_IMAGES } from './rpTemplates';
+import { DAVID_SHAUGHNESSY_SILVERBACK_TEMPLATE } from './davidShaughnessy';
 
 const ASSETS_BASE = (import.meta as any).env?.VITE_ASSETS_BASE || '';
 
@@ -636,6 +637,7 @@ export const INITIAL_TEMPLATES: GlobalTemplate[] = [
         program: CAL_STREET_WORKOUT_TEMPLATE
     },
     GOLDEN_SIX_REVISITED_TEMPLATE,
+    DAVID_SHAUGHNESSY_SILVERBACK_TEMPLATE,
     ...RP_ALL_TEMPLATES,
 ];
 

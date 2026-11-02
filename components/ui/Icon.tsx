@@ -11,7 +11,7 @@ import {
     Trophy, Pencil, Target, RotateCcw, CirclePlus, Circle, Repeat, Repeat2, Grid3X3,
     BookOpen, AlertCircle, ArrowLeft, ArrowUpDown, Shield, FastForward, Gauge, Smartphone, Palette, Globe, Cloud,
     Bell,
-    AlignCenter, Archive, ArchiveRestore, ArrowUp, Award, CloudDownload, Edit3, FilePlus, Footprints, Loader, Maximize2, Shuffle, Sunrise
+    Filter, AlignCenter, Archive, ArchiveRestore, ArrowUp, Award, CloudDownload, Edit3, FilePlus, Footprints, Loader, Maximize2, Shuffle, Sunrise
 } from 'lucide-react';
 
 // Static Map of icons used in the app
@@ -25,7 +25,7 @@ export const ICON_MAP: Record<string, React.ElementType> = {
     Trophy, Pencil, Target, RotateCcw, Circle, Repeat, Repeat2,
     BookOpen, AlertCircle, ArrowLeft, ArrowUpDown, Shield, FastForward, Gauge, Smartphone, Palette, Globe, Cloud,
     Bell,
-    AlignCenter, Archive, ArchiveRestore, ArrowUp, Award, CloudDownload, Edit3, FilePlus, Footprints, Loader, Maximize2, Shuffle, Sunrise,
+    Filter, AlignCenter, Archive, ArchiveRestore, ArrowUp, Award, CloudDownload, Edit3, FilePlus, Footprints, Loader, Maximize2, Shuffle, Sunrise,
     // Renamed in lucide-react v0.376+
     PlusCircle: CirclePlus,
     // Grid3X3 lucide naming vs Grid3x3 usage alias
