@@ -1,4 +1,5 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useLayoutEffect, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Icon } from '../../ui/Icon';
 import { pickLang } from '../../../utils/i18n';
 import type { SetType, WorkoutSet } from '../../../types';
@@ -13,6 +14,7 @@ export interface SetRowActionMenuProps {
     onChangeType: (exId: number, setId: number, type: SetType) => void;
     onAddSetBelow?: () => void;
     onDeleteSet?: () => void;
+    anchorRef?: React.RefObject<HTMLElement | null>;
 }
 
 export const SetRowActionMenu: React.FC<SetRowActionMenuProps> = ({
@@ -25,8 +27,100 @@ export const SetRowActionMenu: React.FC<SetRowActionMenuProps> = ({
     onChangeType,
     onAddSetBelow,
     onDeleteSet,
+    anchorRef,
 }) => {
     const menuRef = useRef<HTMLDivElement>(null);
+
+    const [pos, setPos] = useState<{
+        top?: number;
+        bottom?: number;
+        left: number;
+        maxHeight: number;
+    } | null>(() => {
+        if (!anchorRef?.current || typeof window === 'undefined') return null;
+        const rect = anchorRef.current.getBoundingClientRect();
+        const vh = window.innerHeight || 800;
+        const vw = window.innerWidth || 360;
+        const spaceBelow = vh - rect.bottom;
+        const spaceAbove = rect.top;
+        const openUpwards = spaceBelow < 360 && spaceAbove > spaceBelow;
+        const menuWidth = 256;
+        const margin = 8;
+        const left = Math.max(margin, Math.min(rect.left, vw - menuWidth - margin));
+        if (openUpwards) {
+            return {
+                bottom: vh - rect.top + 6,
+                left,
+                maxHeight: Math.max(180, spaceAbove - 20),
+            };
+        }
+        return {
+            top: rect.bottom + 6,
+            left,
+            maxHeight: Math.max(180, spaceBelow - 20),
+        };
+    });
+
+    const updatePosition = useCallback(() => {
+        const el = anchorRef?.current;
+        if (!el || typeof window === 'undefined') return;
+
+        const rect = el.getBoundingClientRect();
+        const vh = window.innerHeight || 800;
+        const vw = window.innerWidth || 360;
+
+        // If trigger button scrolled far out of view, dismiss
+        if (rect.bottom < -50 || rect.top > vh + 50) {
+            onClose();
+            return;
+        }
+
+        const menuHeightEstimate = 360;
+        const spaceBelow = vh - rect.bottom;
+        const spaceAbove = rect.top;
+        const openUpwards = spaceBelow < menuHeightEstimate && spaceAbove > spaceBelow;
+
+        const menuWidth = 256;
+        const margin = 8;
+        const left = Math.max(margin, Math.min(rect.left, vw - menuWidth - margin));
+
+        if (openUpwards) {
+            setPos({
+                bottom: vh - rect.top + 6,
+                left,
+                maxHeight: Math.max(180, spaceAbove - 20),
+            });
+        } else {
+            setPos({
+                top: rect.bottom + 6,
+                left,
+                maxHeight: Math.max(180, spaceBelow - 20),
+            });
+        }
+    }, [anchorRef, onClose]);
+
+    useLayoutEffect(() => {
+        if (!isOpen) {
+            setPos(null);
+            return;
+        }
+        updatePosition();
+
+        const handleScroll = () => {
+            updatePosition();
+        };
+        const handleResize = () => {
+            updatePosition();
+        };
+
+        window.addEventListener('scroll', handleScroll, true);
+        window.addEventListener('resize', handleResize);
+
+        return () => {
+            window.removeEventListener('scroll', handleScroll, true);
+            window.removeEventListener('resize', handleResize);
+        };
+    }, [isOpen, updatePosition]);
 
     useEffect(() => {
         if (!isOpen) return;
@@ -72,11 +166,11 @@ export const SetRowActionMenu: React.FC<SetRowActionMenuProps> = ({
         onClose();
     };
 
-    return (
+    const menuContent = (
         <>
-            {/* Invisible backdrop to dismiss on tap/click outside */}
+            {/* Backdrop to dismiss on tap/click outside */}
             <div
-                className="fixed inset-0 z-40"
+                className="fixed inset-0 z-[9998] bg-black/10"
                 onClick={(e) => {
                     e.stopPropagation();
                     onClose();
@@ -85,7 +179,20 @@ export const SetRowActionMenu: React.FC<SetRowActionMenuProps> = ({
             <div
                 ref={menuRef}
                 onClick={(e) => e.stopPropagation()}
-                className="absolute left-1 top-full mt-1.5 z-50 w-64 rounded-[8px] border border-border-subtle bg-surface-elevated shadow-2xl overflow-hidden text-left animate-in fade-in zoom-in-95 duration-100"
+                style={
+                    pos
+                        ? {
+                              position: 'fixed',
+                              top: pos.top !== undefined ? `${pos.top}px` : undefined,
+                              bottom: pos.bottom !== undefined ? `${pos.bottom}px` : undefined,
+                              left: `${pos.left}px`,
+                              maxHeight: `${pos.maxHeight}px`,
+                          }
+                        : undefined
+                }
+                className={`fixed z-[9999] w-64 rounded-[8px] border border-border-subtle bg-surface-elevated shadow-2xl overflow-y-auto text-left animate-in fade-in zoom-in-95 duration-100 ${
+                    !pos ? 'left-4 top-20' : ''
+                }`}
             >
                 {/* Section 1: Set actions */}
                 <div className="px-3.5 pt-2.5 pb-1 text-[11px] font-semibold text-zinc-400">
@@ -214,4 +321,9 @@ export const SetRowActionMenu: React.FC<SetRowActionMenuProps> = ({
             </div>
         </>
     );
+
+    if (typeof document !== 'undefined') {
+        return createPortal(menuContent, document.body);
+    }
+    return menuContent;
 };

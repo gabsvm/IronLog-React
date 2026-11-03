@@ -1,5 +1,5 @@
 // U5: SetRow standard gym / cardio mode, moved verbatim from components/workout/SetRow.tsx.
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Icon } from '../../ui/Icon';
 import { SetRowActionMenu } from './SetRowActionMenu';
 import type { SetRowState } from './useSetRowState';
@@ -48,6 +48,7 @@ export const SetRowStandard: React.FC<{ state: SetRowState }> = ({ state }) => {
     } = state;
 
     const [menuOpen, setMenuOpen] = useState(false);
+    const buttonRef = useRef<HTMLButtonElement>(null);
 
     return (
         <div
@@ -78,6 +79,7 @@ export const SetRowStandard: React.FC<{ state: SetRowState }> = ({ state }) => {
                 {/* Left cell (32px): Per-Set ⋮ Menu Button + Set Type Indicator */}
                 <div className="relative flex justify-center">
                     <button
+                        ref={buttonRef}
                         type="button"
                         onClick={(e) => {
                             e.stopPropagation();
@@ -99,6 +101,7 @@ export const SetRowStandard: React.FC<{ state: SetRowState }> = ({ state }) => {
                     <SetRowActionMenu
                         isOpen={menuOpen}
                         onClose={() => setMenuOpen(false)}
+                        anchorRef={buttonRef}
                         set={set}
                         exInstanceId={exInstanceId}
                         lang={lang}
