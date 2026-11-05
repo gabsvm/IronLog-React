@@ -10,7 +10,7 @@ import {
     ChevronUp, ChevronDown, Anchor, EyeOff, CheckCircle, Flame, Heart, Apple, UtensilsCrossed, Bike, Timer, Utensils, Droplet, Scale,
     Trophy, Pencil, Target, RotateCcw, CirclePlus, Circle, Repeat, Repeat2, Grid3X3,
     BookOpen, AlertCircle, ArrowLeft, ArrowUpDown, Shield, FastForward, Gauge, Smartphone, Palette, Globe, Cloud,
-    Bell,
+    Bell, Bookmark,
     Filter, AlignCenter, Archive, ArchiveRestore, ArrowUp, Award, CloudDownload, Edit3, FilePlus, Footprints, Loader, Maximize2, Shuffle, Sunrise
 } from 'lucide-react';
 
@@ -24,7 +24,7 @@ export const ICON_MAP: Record<string, React.ElementType> = {
     ChevronUp, ChevronDown, Anchor, EyeOff, CheckCircle, Flame, Heart, Apple, UtensilsCrossed, Bike, Timer, Utensils, Droplet, Scale,
     Trophy, Pencil, Target, RotateCcw, Circle, Repeat, Repeat2,
     BookOpen, AlertCircle, ArrowLeft, ArrowUpDown, Shield, FastForward, Gauge, Smartphone, Palette, Globe, Cloud,
-    Bell,
+    Bell, Bookmark,
     Filter, AlignCenter, Archive, ArchiveRestore, ArrowUp, Award, CloudDownload, Edit3, FilePlus, Footprints, Loader, Maximize2, Shuffle, Sunrise,
     // Renamed in lucide-react v0.376+
     PlusCircle: CirclePlus,

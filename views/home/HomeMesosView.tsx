@@ -87,25 +87,24 @@ export const HomeMesosView: React.FC<{ state: HomeViewState }> = ({ state }) => 
                     </div>
                 </div>
 
-                {/* Progress Bar */}
-                <div className="space-y-1.5">
-                    <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-zinc-400">
-                        <span>{pickLang(lang, { es: 'Progreso del mesociclo', en: 'Mesocycle progress' })}</span>
-                        <span className="text-primary-400 tabular-nums">{weekPct}%</span>
+                {/* Progress Bar & Week Switcher merged */}
+                <div
+                    data-testid="mesos-progress-and-weeks"
+                    className="rounded-[6px] border border-border-subtle/80 bg-surface-base/60 p-3 space-y-2.5"
+                >
+                    <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-[10px] font-extrabold uppercase tracking-wider text-zinc-400">
+                            <span>{pickLang(lang, { es: 'Progreso y semana activa', en: 'Progress & active week' })}</span>
+                            <span className="text-primary-400 tabular-nums">{weekPct}%</span>
+                        </div>
+                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-raised">
+                            <div
+                                className="h-full rounded-full bg-primary-500 transition-all duration-300"
+                                style={{ width: `${weekPct}%` }}
+                            />
+                        </div>
                     </div>
-                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-base">
-                        <div
-                            className="h-full rounded-full bg-primary-500 transition-all duration-300"
-                            style={{ width: `${weekPct}%` }}
-                        />
-                    </div>
-                </div>
 
-                {/* Week Switcher Strip */}
-                <div className="pt-1">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-1.5">
-                        {pickLang(lang, { es: 'Semana activa', en: 'Active week' })}
-                    </div>
                     <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar">
                         {Array.from({ length: totalWeeks }, (_, i) => i + 1).map((wNum) => {
                             const isCurrent = wNum === activeMeso.week;
@@ -120,7 +119,7 @@ export const HomeMesosView: React.FC<{ state: HomeViewState }> = ({ state }) => 
                                     className={`flex h-8 min-w-[38px] px-2.5 items-center justify-center rounded-[4px] text-xs font-bold transition-all ${
                                         isCurrent
                                             ? 'bg-primary-500 text-zinc-950 font-black'
-                                            : 'border border-border-subtle bg-surface-base text-zinc-400 hover:text-white'
+                                            : 'border border-border-subtle bg-surface-raised text-zinc-400 hover:text-white'
                                     }`}
                                 >
                                     W{wNum}
@@ -192,13 +191,9 @@ export const HomeMesosView: React.FC<{ state: HomeViewState }> = ({ state }) => 
                     <h3 className="text-xs font-black uppercase tracking-wider text-zinc-400">
                         {pickLang(lang, { es: 'Estructura semanal', en: 'Weekly structure' })}
                     </h3>
-                    <button
-                        type="button"
-                        onClick={() => setShowCompleteModal('meso')}
-                        className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 hover:text-red-400 transition-colors"
-                    >
-                        {t.finishCycle}
-                    </button>
+                    <span className="text-[11px] font-semibold text-zinc-400">
+                        {safeProgram.length} {h.daysWord}
+                    </span>
                 </div>
 
                 <div className="space-y-2">
@@ -214,12 +209,12 @@ export const HomeMesosView: React.FC<{ state: HomeViewState }> = ({ state }) => 
                                 key={idx}
                                 className="overflow-hidden rounded-[6px] border border-border-subtle bg-surface-raised"
                             >
-                                <button
-                                    type="button"
-                                    onClick={() => setExpandedDayIdx(isExpanded ? null : idx)}
-                                    className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left hover:bg-surface-elevated/50 transition-colors"
-                                >
-                                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                                <div className="flex items-center justify-between gap-2 px-4 py-3 hover:bg-surface-elevated/50 transition-colors">
+                                    <button
+                                        type="button"
+                                        onClick={() => setExpandedDayIdx(isExpanded ? null : idx)}
+                                        className="flex items-center gap-3 min-w-0 flex-1 text-left"
+                                    >
                                         <span
                                             className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-[4px] text-xs font-black ${
                                                 isDone
@@ -235,13 +230,26 @@ export const HomeMesosView: React.FC<{ state: HomeViewState }> = ({ state }) => 
                                                 {slots.length} {h.exercisesLower} · {totalSets} {h.setsLower}
                                             </span>
                                         </div>
+                                    </button>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <button
+                                            type="button"
+                                            onClick={() => startSession(idx)}
+                                            className="inline-flex items-center gap-1.5 rounded-[4px] bg-primary-500/15 border border-primary-500/30 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-primary-400 hover:bg-primary-500/25 transition-colors"
+                                        >
+                                            <Icon name="Play" size={11} />
+                                            <span>{pickLang(lang, { es: 'Entrenar', en: 'Train' })}</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setExpandedDayIdx(isExpanded ? null : idx)}
+                                            aria-label={pickLang(lang, { es: 'Mostrar u ocultar ejercicios', en: 'Toggle exercises' })}
+                                            className="flex h-7 w-7 items-center justify-center rounded-[4px] text-zinc-400 hover:text-white"
+                                        >
+                                            <Icon name={isExpanded ? 'ChevronUp' : 'ChevronDown'} size={16} />
+                                        </button>
                                     </div>
-                                    <Icon
-                                        name={isExpanded ? 'ChevronUp' : 'ChevronDown'}
-                                        size={16}
-                                        className="shrink-0 text-zinc-400"
-                                    />
-                                </button>
+                                </div>
 
                                 {isExpanded && (
                                     <div className="border-t border-border-subtle bg-surface-base/60 px-4 py-3 space-y-2">
@@ -253,42 +261,51 @@ export const HomeMesosView: React.FC<{ state: HomeViewState }> = ({ state }) => 
                                             return (
                                                 <div
                                                     key={slot.id || sIdx}
+                                                    data-testid={`mesos-slot-row-${idx}-${sIdx}`}
                                                     className="flex items-center justify-between gap-2 rounded-[4px] border border-border-subtle/70 bg-surface-raised px-3 py-2"
                                                 >
-                                                    <div className="min-w-0 flex-1">
+                                                    <div className="flex items-center gap-2 min-w-0 flex-1">
                                                         <MuscleTag
                                                             label={resolveMuscleLabel(slot.muscle, lang)}
                                                             muscle={slot.muscle}
                                                         />
-                                                        <p className="mt-1 text-xs font-bold text-white truncate">
+                                                        <p className="text-xs font-bold text-white truncate">
                                                             {exName}
                                                         </p>
                                                     </div>
-                                                    <span className="shrink-0 rounded-[4px] border border-border-subtle bg-surface-base px-2 py-1 text-[11px] font-extrabold uppercase tracking-wider text-zinc-300 tabular-nums">
-                                                        {slot.setTarget || 3} {h.setsLower}
+                                                    <span className="shrink-0 rounded-[4px] border border-border-subtle bg-surface-base px-2 py-0.5 text-[11px] font-mono font-bold text-zinc-300 tabular-nums">
+                                                        {slot.setTarget || 3}{slot.reps ? ` × ${slot.reps}` : ` ${h.setsLower}`}
                                                     </span>
                                                 </div>
                                             );
                                         })}
 
-                                        <div className="pt-1 flex justify-end">
-                                            <button
-                                                type="button"
-                                                onClick={() => startSession(idx)}
-                                                className="inline-flex items-center gap-1.5 rounded-[4px] bg-primary-500/15 border border-primary-500/30 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-primary-400 hover:bg-primary-500/25 transition-colors"
-                                            >
-                                                <Icon name="Play" size={12} />
-                                                <span>
-                                                    {pickLang(lang, { es: 'Ir a entrenar', en: 'Go to workout' })}
-                                                </span>
-                                            </button>
-                                        </div>
                                     </div>
                                 )}
                             </div>
                         );
                     })}
                 </div>
+            </div>
+
+            {/* Safe cycle-completion bar */}
+            <div
+                data-testid="mesos-finish-cycle-bar"
+                className="flex items-center justify-between gap-3 rounded-[6px] border border-red-500/25 bg-red-500/5 px-3.5 py-2.5"
+            >
+                <span className="text-xs font-medium text-zinc-300">
+                    {pickLang(lang, {
+                        es: '¿Quieres dar por finalizado el mesociclo actual?',
+                        en: 'Want to finish the current mesocycle?',
+                    })}
+                </span>
+                <button
+                    type="button"
+                    onClick={() => setShowCompleteModal('meso')}
+                    className="shrink-0 rounded-[4px] border border-red-500/30 bg-red-500/10 px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-wider text-red-400 hover:bg-red-500/20 transition-colors"
+                >
+                    {t.finishCycle}
+                </button>
             </div>
         </div>
     );

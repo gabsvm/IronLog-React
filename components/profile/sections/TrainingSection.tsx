@@ -166,29 +166,25 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                         <Icon name="ChevronRight" size={16} className="text-muted shrink-0" />
                     </button>
                 )}
-            </div>
-
-            <button
-                type="button"
-                onClick={openSaveTemplate}
-                disabled={!activeMeso || program.length === 0}
-                className="premium-theme-panel rounded-[8px] expressive-press group mt-2 flex min-h-[60px] w-full items-center justify-between p-3.5 disabled:opacity-45"
-            >
-                <div className="flex items-center gap-3 text-left">
-                    <div className="p-2 rounded-[6px] bg-[rgb(var(--surface-elevated))] text-zinc-900 dark:text-[rgb(var(--text-primary))]">
-                        <Icon name="Copy" size={18} />
-                    </div>
-                    <div>
-                        <span className="block font-bold text-sm text-[rgb(var(--text-secondary))]">
-                            {ty.saveTemplate}
-                        </span>
-                        <span className="block text-xs text-muted mt-0.5">
+                <button
+                    type="button"
+                    data-testid="training-save-template-row"
+                    onClick={openSaveTemplate}
+                    disabled={!activeMeso || program.length === 0}
+                    className="flex min-h-[56px] w-full items-center gap-3 p-3 text-left transition-colors hover:bg-surface-elevated/40 disabled:opacity-45"
+                >
+                    <span className="w-8 h-8 rounded-[6px] bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
+                        <Icon name="Bookmark" size={17} />
+                    </span>
+                    <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-[rgb(var(--text-primary))]">{ty.saveTemplate}</div>
+                        <div className="text-xs text-muted truncate">
                             {activeMeso && program.length > 0 ? ty.saveTemplatePrivate : ty.saveTemplateEmpty}
-                        </span>
+                        </div>
                     </div>
-                </div>
-                <Icon name="ChevronRight" size={16} className="text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-[rgb(var(--text-primary))]" />
-            </button>
+                    <Icon name="ChevronRight" size={16} className="text-muted shrink-0" />
+                </button>
+            </div>
 
             {templateSaved && (
                 <p role="status" className="mt-2 px-1 text-xs font-bold text-primary-400">{ty.templateSaved}</p>

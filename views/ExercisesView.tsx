@@ -32,7 +32,17 @@ export const ExercisesView: React.FC<ExercisesViewProps> = (props) => {
                     </>
                 ) : (
                     <>
-                        <h1 className="text-[22px] font-black uppercase tracking-tight text-white truncate">{t.nav?.exercises || t.manageEx}</h1>
+                        <div className="flex items-center gap-2 min-w-0">
+                            <h1 className="text-[22px] font-black uppercase tracking-tight text-white truncate">
+                                {t.nav?.exercises || t.manageEx}
+                            </h1>
+                            <span
+                                data-testid="exercises-count-badge"
+                                className="rounded-full border border-border-subtle bg-surface-raised px-2 py-0.5 font-mono text-xs font-bold text-zinc-400 tabular-nums"
+                            >
+                                {state.filteredExercises.length}
+                            </span>
+                        </div>
                         <button
                             type="button"
                             onClick={() => setMode('create')}

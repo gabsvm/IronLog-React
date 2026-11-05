@@ -107,12 +107,7 @@ export const ExerciseCardSets: React.FC<Props> = React.memo(({
             >
                 <div></div>
                 <div>{ex.isBodyweight ? `+${unitLabel}` : pickLang(lang, { es: 'PESO', en: 'WEIGHT' })}</div>
-                <div className="flex items-center justify-center gap-1">
-                    <span>REPS</span>
-                    <span className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border border-zinc-600 text-[9px] text-zinc-400">
-                        i
-                    </span>
-                </div>
+                <div>REPS</div>
                 {config?.showRIR && <div>{String(t.rir)}</div>}
                 <div>LOG</div>
             </div>

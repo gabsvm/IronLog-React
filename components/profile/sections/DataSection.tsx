@@ -82,12 +82,12 @@ export const DataSection: React.FC<DataSectionProps> = ({
                         <button
                             type="button"
                             onClick={onExport}
-                            className="min-h-11 bg-[rgb(var(--surface-elevated))] rounded-[6px] text-xs font-bold flex items-center justify-center gap-2 hover:bg-primary-500/10 transition-colors"
+                            className="min-h-11 bg-[rgb(var(--surface-elevated))] border border-border-subtle rounded-[6px] text-xs font-bold flex items-center justify-center gap-2 hover:bg-primary-500/10 transition-colors"
                             aria-label={t.export}
                         >
                             <Icon name="Download" size={14} /> {t.export}
                         </button>
-                        <label className="min-h-11 bg-[rgb(var(--surface-elevated))] rounded-[6px] text-xs font-bold cursor-pointer text-center flex items-center justify-center gap-2 hover:bg-primary-500/10 transition-colors">
+                        <label className="min-h-11 bg-[rgb(var(--surface-elevated))] border border-border-subtle rounded-[6px] text-xs font-bold cursor-pointer text-center flex items-center justify-center gap-2 hover:bg-primary-500/10 transition-colors">
                             <Icon name="Upload" size={14} /> {t.import}
                             <input type="file" onChange={onImportFile} accept=".json" className="hidden" />
                         </label>
@@ -96,12 +96,12 @@ export const DataSection: React.FC<DataSectionProps> = ({
                         <button
                             type="button"
                             onClick={handleExportCsv}
-                            className="min-h-11 bg-[rgb(var(--surface-elevated))] rounded-[6px] text-xs font-bold flex items-center justify-center gap-2 hover:bg-primary-500/10 transition-colors"
+                            className="min-h-11 bg-[rgb(var(--surface-elevated))] border border-border-subtle rounded-[6px] text-xs font-bold flex items-center justify-center gap-2 hover:bg-primary-500/10 transition-colors"
                             aria-label={t.csv.exportBtn}
                         >
                             <Icon name="Download" size={14} /> {t.csv.exportBtn}
                         </button>
-                        <label className="min-h-11 bg-[rgb(var(--surface-elevated))] rounded-[6px] text-xs font-bold cursor-pointer text-center flex items-center justify-center gap-2 hover:bg-primary-500/10 transition-colors">
+                        <label className="min-h-11 bg-[rgb(var(--surface-elevated))] border border-border-subtle rounded-[6px] text-xs font-bold cursor-pointer text-center flex items-center justify-center gap-2 hover:bg-primary-500/10 transition-colors">
                             <Icon name="Upload" size={14} /> {t.csv.importBtn}
                             <input type="file" onChange={handleImportCsvFile} accept=".csv,text/csv" className="hidden" />
                         </label>

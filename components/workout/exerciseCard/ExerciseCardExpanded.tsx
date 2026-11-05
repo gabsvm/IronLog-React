@@ -108,6 +108,7 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
 
     const targetRepsLabel = ex.targetReps ? String(ex.targetReps) : null;
     const noteOrRepRange = ex.note || (targetRepsLabel ? `${targetRepsLabel} reps` : '8-12 reps');
+    const exerciseSubtitle = (ex as any).equipment || ex.skillFamily || (ex.isBodyweight ? pickLang(lang, { es: 'Peso corporal', en: 'Bodyweight' }) : null);
     const hasSet1Weight = Number(sets?.[0]?.weight || 0) > 0;
     const warmupTitle = hasSet1Weight ? t.warmup : t.warmupRequiresWeight;
     const warmupAriaLabel = hasSet1Weight ? t.warmup : `${t.warmup}: ${t.warmupRequiresWeight}`;
@@ -125,9 +126,9 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                 ${allDone ? 'shadow-[0_20px_50px_-24px_rgba(34,197,94,0.32)]' : ''}
             `}
         >
-            {/* Top row: Muscle Tag + Drag handle + Special protocol badge */}
-            <div className="flex items-center justify-between gap-2 px-3 pt-3 pb-1">
-                <div className="flex items-center gap-1.5 flex-wrap">
+            {/* Top row: Muscle Tag + Drag handle + Special protocol badge + Action Icons */}
+            <div className="flex items-center justify-between gap-2 px-3 pt-2.5 pb-1">
+                <div className="flex items-center gap-1.5 flex-wrap min-w-0">
                     {dragEnabled && (
                         <div
                             className="mr-0.5 -ml-1 rounded-full p-1 text-zinc-500 touch-none cursor-grab active:cursor-grabbing hover:text-zinc-200"
@@ -173,26 +174,8 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                         </span>
                     )}
                 </div>
-            </div>
 
-            {/* Exercise Title + Right Action Icons (ONLY 2 visible: History + ⋮ Menu) */}
-            <div className="flex items-start justify-between gap-3 px-3 pb-2 pt-0.5">
-                <div className="min-w-0 flex-1">
-                    <h3
-                        onClick={(event) => {
-                            event.stopPropagation();
-                            if (onOpenDetail) onOpenDetail(ex);
-                        }}
-                        className="cursor-pointer truncate text-[17px] font-bold leading-snug text-white transition-colors hover:text-primary-400"
-                    >
-                        {String(getTranslated(ex.name, lang))}
-                    </h3>
-                    <div className="text-[12px] font-medium text-zinc-400 truncate mt-0.5">
-                        {(ex as any).equipment || ex.skillFamily || (ex.isBodyweight ? pickLang(lang, { es: 'Peso corporal', en: 'Bodyweight' }) : pickLang(lang, { es: 'Estándar', en: 'Standard' }))}
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-1 shrink-0 pt-0.5">
+                <div className="flex items-center gap-1 shrink-0 -mr-1">
                     {canWarmup && onOpenWarmup && (
                         <button
                             type="button"
@@ -275,6 +258,24 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                 </div>
             </div>
 
+            {/* Exercise Title row spanning full width */}
+            <div className="px-3 pb-2 pt-0.5">
+                <h3
+                    onClick={(event) => {
+                        event.stopPropagation();
+                        if (onOpenDetail) onOpenDetail(ex);
+                    }}
+                    className="cursor-pointer truncate text-[17px] font-bold leading-snug text-white transition-colors hover:text-primary-400"
+                >
+                    {String(getTranslated(ex.name, lang))}
+                </h3>
+                {exerciseSubtitle && (
+                    <div className="text-[12px] font-medium text-zinc-400 truncate mt-0.5">
+                        {exerciseSubtitle}
+                    </div>
+                )}
+            </div>
+
             {/* Pinned Note / Target Rep Range Banner */}
             <div className="mx-3 mb-2 flex items-center justify-between gap-2 rounded-[4px] bg-amber-500/15 border border-amber-500/30 px-2.5 py-1.5 text-[12px] font-medium text-amber-900 dark:text-amber-200/90">
                 {isEditingNote ? (
@@ -309,14 +310,16 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                         onClick={() => setIsEditingNote(true)}
                         className="flex items-center justify-between gap-2 w-full text-left"
                     >
-                        <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
                             <Icon name="Edit3" size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
-                            <span className="truncate">{noteOrRepRange}</span>
-                            {heroMetric && (
-                                <span className="text-[11px] text-amber-800 dark:text-amber-300/90 truncate">
-                                    {heroMetric.label}
-                                </span>
-                            )}
+                            <div className="flex flex-1 min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                                <span className="truncate">{noteOrRepRange}</span>
+                                {heroMetric && (
+                                    <span className="inline-flex items-center rounded-[3px] bg-amber-500/20 border border-amber-500/35 px-1.5 py-0.5 text-[11px] font-semibold text-amber-900 dark:text-amber-200 truncate">
+                                        {heroMetric.label}
+                                    </span>
+                                )}
+                            </div>
                         </div>
                         {/* Pushpin SVG */}
                         <svg

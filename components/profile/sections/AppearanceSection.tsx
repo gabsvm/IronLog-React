@@ -1,6 +1,7 @@
 import React from 'react';
 import { useApp } from '../../../context/AppContext';
 import { TRANSLATIONS } from '../../../constants';
+import { pickLang } from '../../../utils/i18n';
 import { Icon } from '../../ui/Icon';
 import { ColorPill } from './ColorPill';
 
@@ -12,79 +13,93 @@ export const AppearanceSection: React.FC = () => {
     } = useApp();
     const t = TRANSLATIONS[lang];
     const ty = t.you;
+    const isEnglish = pickLang(lang, { en: true, es: false });
+    const isSpanish = pickLang(lang, { en: false, es: true });
 
     return (
         <div id="profile-section-appearance">
             <div className="label-reference px-1 mb-1.5">{ty.appearance}</div>
-            <div className="label-reference px-1 mb-1.5">{t.theme}</div>
-            <div className="seg-reference grid grid-cols-3 gap-1 p-1 mb-4 rounded-[6px] bg-surface-raised border border-border-subtle">
-                <button
-                    type="button"
-                    onClick={() => setTheme('dark')}
-                    className={`min-h-11 rounded-[4px] text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
-                        theme === 'dark'
-                            ? 'bg-surface-elevated text-white border border-border-strong shadow-sm'
-                            : 'text-muted hover:text-white'
-                    }`}
-                >
-                    <Icon name="Moon" size={14} /> {ty.themeDark}
-                </button>
-                <button
-                    type="button"
-                    onClick={() => setTheme('light')}
-                    className={`min-h-11 rounded-[4px] text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
-                        theme === 'light'
-                            ? 'bg-surface-elevated text-white border border-border-strong shadow-sm'
-                            : 'text-muted hover:text-white'
-                    }`}
-                >
-                    <Icon name="Sun" size={14} /> {ty.themeLight}
-                </button>
-                <button
-                    type="button"
-                    onClick={() => setTheme('system')}
-                    className={`min-h-11 rounded-[4px] text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
-                        theme === 'system'
-                            ? 'bg-surface-elevated text-white border border-border-strong shadow-sm'
-                            : 'text-muted hover:text-white'
-                    }`}
-                >
-                    <Icon name="Smartphone" size={14} /> {ty.themeAuto}
-                </button>
-            </div>
-
-            <div className="label-reference px-1 mb-1.5">{ty.accent}</div>
-            <div className="card-reference rounded-[8px] border border-border-subtle bg-surface-raised p-4 mb-4">
-                <div className="grid grid-cols-3 gap-y-4 gap-x-2 text-center text-xs">
-                    <ColorPill color="bg-[#c4f13a]" checkDark label={ty.pillIron} active={colorTheme === 'iron'} onClick={() => setColorTheme('iron')} />
-                    <ColorPill color="bg-[#378add]" label={ty.pillOcean} active={colorTheme === 'ocean'} onClick={() => setColorTheme('ocean')} />
-                    <ColorPill color="bg-[#1d9e75]" label={ty.pillForest} active={colorTheme === 'forest'} onClick={() => setColorTheme('forest')} />
-                    <ColorPill color="bg-[#8f4fc9]" label={ty.pillRoyal} active={colorTheme === 'royal'} onClick={() => setColorTheme('royal')} />
-                    <ColorPill color="bg-[#d4631a]" label={ty.pillSunset} active={colorTheme === 'sunset'} onClick={() => setColorTheme('sunset')} />
-                    <ColorPill color="bg-[#5f6068]" label={ty.pillMono} active={colorTheme === 'monochrome'} onClick={() => setColorTheme('monochrome')} />
+            <div className="card-reference rounded-[8px] border border-border-subtle bg-surface-raised divide-y divide-border-subtle overflow-hidden mb-3">
+                <div className="p-3.5">
+                    <div className="text-xs font-bold uppercase tracking-wider text-muted mb-2">{t.theme}</div>
+                    <div className="seg-reference grid grid-cols-3 gap-1 p-1 rounded-[6px] bg-surface-app/60 border border-border-subtle">
+                        <button
+                            type="button"
+                            onClick={() => setTheme('dark')}
+                            className={`min-h-11 rounded-[4px] text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                                theme === 'dark'
+                                    ? 'bg-surface-elevated text-white border border-border-strong shadow-sm'
+                                    : 'text-muted hover:text-white'
+                            }`}
+                        >
+                            <Icon name="Moon" size={14} /> {ty.themeDark}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setTheme('light')}
+                            className={`min-h-11 rounded-[4px] text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                                theme === 'light'
+                                    ? 'bg-surface-elevated text-white border border-border-strong shadow-sm'
+                                    : 'text-muted hover:text-white'
+                            }`}
+                        >
+                            <Icon name="Sun" size={14} /> {ty.themeLight}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setTheme('system')}
+                            className={`min-h-11 rounded-[4px] text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                                theme === 'system'
+                                    ? 'bg-surface-elevated text-white border border-border-strong shadow-sm'
+                                    : 'text-muted hover:text-white'
+                            }`}
+                        >
+                            <Icon name="Smartphone" size={14} /> {ty.themeAuto}
+                        </button>
+                    </div>
                 </div>
-            </div>
 
-            <div className="label-reference px-1 mb-1.5">{t.language}</div>
-            <div className="seg-reference grid grid-cols-2 gap-1 p-1 mb-4 rounded-[6px] bg-surface-raised border border-border-subtle">
-                <button
-                    type="button"
-                    onClick={() => setLang('en')}
-                    className={`min-h-11 rounded-[4px] text-xs font-semibold flex items-center justify-center transition-all ${
-                        TRANSLATIONS[lang].copy.appearanceSection.bgSurfaceElevatedText
-                    }`}
-                >
-                    English
-                </button>
-                <button
-                    type="button"
-                    onClick={() => setLang('es')}
-                    className={`min-h-11 rounded-[4px] text-xs font-semibold flex items-center justify-center transition-all ${
-                        TRANSLATIONS[lang].copy.appearanceSection.textMutedHoverText
-                    }`}
-                >
-                    Español
-                </button>
+                <div className="p-3.5">
+                    <div className="text-xs font-bold uppercase tracking-wider text-muted mb-2.5">{ty.accent}</div>
+                    <div className="grid grid-cols-3 gap-y-4 gap-x-2 text-center text-xs">
+                        <ColorPill color="bg-[#c4f13a]" checkDark label={ty.pillIron} active={colorTheme === 'iron'} onClick={() => setColorTheme('iron')} />
+                        <ColorPill color="bg-[#378add]" label={ty.pillOcean} active={colorTheme === 'ocean'} onClick={() => setColorTheme('ocean')} />
+                        <ColorPill color="bg-[#1d9e75]" label={ty.pillForest} active={colorTheme === 'forest'} onClick={() => setColorTheme('forest')} />
+                        <ColorPill color="bg-[#8f4fc9]" label={ty.pillRoyal} active={colorTheme === 'royal'} onClick={() => setColorTheme('royal')} />
+                        <ColorPill color="bg-[#d4631a]" label={ty.pillSunset} active={colorTheme === 'sunset'} onClick={() => setColorTheme('sunset')} />
+                        <ColorPill color="bg-[#5f6068]" label={ty.pillMono} active={colorTheme === 'monochrome'} onClick={() => setColorTheme('monochrome')} />
+                    </div>
+                </div>
+
+                <div className="p-3.5">
+                    <div className="text-xs font-bold uppercase tracking-wider text-muted mb-2">{t.language}</div>
+                    <div className="seg-reference grid grid-cols-2 gap-1 p-1 rounded-[6px] bg-surface-app/60 border border-border-subtle">
+                        <button
+                            type="button"
+                            aria-pressed={isEnglish}
+                            onClick={() => setLang('en')}
+                            className={`min-h-10 rounded-[4px] text-xs font-semibold flex items-center justify-center transition-all ${
+                                isEnglish
+                                    ? 'bg-surface-elevated text-white border border-border-strong shadow-sm'
+                                    : 'text-muted hover:text-white'
+                            }`}
+                        >
+                            English
+                        </button>
+                        <button
+                            type="button"
+                            aria-pressed={isSpanish}
+                            onClick={() => setLang('es')}
+                            className={`min-h-10 rounded-[4px] text-xs font-semibold flex items-center justify-center transition-all ${
+                                isSpanish
+                                    ? 'bg-surface-elevated text-white border border-border-strong shadow-sm'
+                                    : 'text-muted hover:text-white'
+                            }`}
+                        >
+                            Español
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <div className="card-reference rounded-[8px] border border-border-subtle bg-surface-raised p-3.5 space-y-3">

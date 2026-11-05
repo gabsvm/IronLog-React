@@ -67,7 +67,6 @@ export const HomeWeekDayList: React.FC<{ state: HomeViewState }> = ({ state }) =
                             <span className={`block text-[11px] font-bold uppercase tracking-wider ${isToday && !isDone ? 'text-primary-400' : 'text-muted'}`}>{status}</span>
                             <span className="block text-xs text-muted tabular-nums">{totalSets} {h.setsLower}</span>
                         </span>
-                        <Icon name="ChevronRight" size={16} className="shrink-0 text-muted" />
                     </button>
                 );
             })}

@@ -2,6 +2,7 @@ import React from 'react';
 import { TRANSLATIONS } from '../constants';
 import { Icon } from '../components/ui/Icon';
 import { Button } from '../components/ui/Button';
+import { pickLang } from '../utils/i18n';
 import { useProgramEditState, type ProgramEditViewProps } from './programEdit/useProgramEditState';
 import { ProgramEditDays } from './programEdit/ProgramEditDays';
 import { ProgramEditDialogs } from './programEdit/ProgramEditDialogs';
@@ -11,7 +12,7 @@ export type { ProgramEditViewProps } from './programEdit/useProgramEditState';
 
 export const ProgramEditView: React.FC<ProgramEditViewProps> = (props) => {
     const state = useProgramEditState(props);
-    const { onBack, lang, t, isStructuredKong, isEditingActiveRoutine, saveStatus, handleValidateAndOpenStartModal } = state;
+    const { onBack, lang, t, isStructuredKong, isEditingActiveRoutine, saveStatus } = state;
 
     if (isStructuredKong) {
         return (
@@ -40,6 +41,12 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = (props) => {
         );
     }
 
+    const totalDays = state.program.length;
+    const totalSets = state.program.reduce(
+        (acc, d) => acc + (d.slots || []).reduce((sAcc, sl) => sAcc + (Number(sl.setTarget) || 0), 0),
+        0
+    );
+
     return (
         <div className="relative flex h-full flex-col bg-surface-app text-white">
             {/* Header: matches RP builder-4.png */}
@@ -53,13 +60,10 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = (props) => {
                     <span>{t.back}</span>
                 </button>
 
-                <h1 className="flex items-center gap-1.5 font-bold text-sm text-white truncate max-w-[200px]">
-                    <span>
-                        {isEditingActiveRoutine
-                            ? TRANSLATIONS[lang].copy.programEdit.editActiveRoutine
-                            : TRANSLATIONS[lang].copy.programEdit.newRoutine}
-                    </span>
-                    <Icon name="Zap" size={14} className="text-primary-400 shrink-0" />
+                <h1 className="font-bold text-sm text-white truncate max-w-[200px]">
+                    {isEditingActiveRoutine
+                        ? TRANSLATIONS[lang].copy.programEdit.editActiveRoutine
+                        : TRANSLATIONS[lang].copy.programEdit.newRoutine}
                 </h1>
 
                 <div className="flex items-center gap-2">
@@ -69,23 +73,15 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = (props) => {
                             <span>{saveStatus === 'saved' ? TRANSLATIONS[lang].copy.programEdit.saved : TRANSLATIONS[lang].copy.programEdit.saving}</span>
                         </div>
                     ) : (
-                        <button
-                            type="button"
-                            onClick={handleValidateAndOpenStartModal}
-                            className="flex items-center gap-1.5 bg-primary-500 hover:bg-primary-400 text-zinc-950 px-3 py-1 rounded-[4px] text-xs font-black shadow-md active:scale-95 transition-all"
+                        <div
+                            data-testid="program-edit-summary-badge"
+                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary-500/10 border border-primary-500/25 text-primary-300 text-[11px] font-bold tabular-nums"
                         >
-                            <Icon name="Play" size={12} fill="currentColor" />
-                            <span>{TRANSLATIONS[lang].copy.programEdit.start}</span>
-                        </button>
+                            <span>
+                                {totalDays} {pickLang(lang, { es: totalDays === 1 ? 'día' : 'días', en: totalDays === 1 ? 'day' : 'days' })} · {totalSets} {pickLang(lang, { es: 'series', en: 'sets' })}
+                            </span>
+                        </div>
                     )}
-                    <button
-                        type="button"
-                        onClick={onBack}
-                        className="flex h-8 w-8 items-center justify-center rounded-[4px] text-zinc-400 hover:text-white transition-colors"
-                        aria-label={t.close || 'Close'}
-                    >
-                        <Icon name="X" size={18} />
-                    </button>
                 </div>
             </header>
 

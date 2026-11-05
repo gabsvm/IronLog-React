@@ -35,15 +35,15 @@ export const ExercisesListMode: React.FC<{ state: ExercisesViewState }> = ({ sta
                     </div>
 
                     {/* Category filter tabs */}
-                    <div className="flex gap-1.5">
+                    <div className="grid grid-cols-3 gap-1 rounded-[6px] border border-border-subtle bg-surface-raised p-1">
                         {(['all', 'custom', 'archived'] as const).map(cat => (
                             <button
                                 key={cat}
                                 onClick={() => setFilterCategory(cat)}
-                                className={`rounded-[4px] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-colors ${
+                                className={`rounded-[4px] py-1.5 text-[11px] font-bold uppercase tracking-wider transition-colors ${
                                     filterCategory === cat
-                                        ? 'bg-primary-500 text-zinc-950'
-                                        : 'bg-surface-raised border border-border-subtle text-zinc-400 hover:text-white'
+                                        ? 'border border-border-strong bg-surface-elevated text-white shadow-sm'
+                                        : 'text-zinc-400 hover:text-white'
                                 }`}
                             >
                                 {cat === 'all'

@@ -32,7 +32,7 @@ export const AdvancedSection: React.FC<AdvancedSectionProps> = ({ syncStatusText
                 </summary>
                 <div className="space-y-4">
                     <div className="card-reference rounded-[8px] border border-border-subtle bg-surface-raised p-4 space-y-2">
-                        <div className="label-reference px-1 mb-1">{ty.diagnostics}</div>
+                        <div className="text-xs font-bold uppercase tracking-wider text-muted mb-1">{ty.diagnostics}</div>
                         <div className="flex items-center justify-between text-xs">
                             <span className="font-bold text-muted">{ty.network}</span>
                             <span className={`font-black ${isOnline ? 'text-emerald-500' : 'text-amber-400'}`}>{isOnline ? ty.online : ty.offline}</span>
@@ -70,9 +70,13 @@ export const AdvancedSection: React.FC<AdvancedSectionProps> = ({ syncStatusText
                         <button
                             type="button"
                             onClick={() => setShowPhilosophy(true)}
-                            className="w-full py-3 bg-zinc-100 rounded-[6px] text-xs font-bold flex justify-center gap-2 items-center text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--surface-elevated))] dark:hover:bg-zinc-700 transition-colors"
+                            className="w-full px-3.5 py-3 bg-surface-raised border border-border-subtle rounded-[8px] text-xs font-bold flex justify-between gap-2 items-center text-[rgb(var(--text-primary))] hover:bg-surface-elevated transition-colors"
                         >
-                            <Icon name="BookOpen" size={16} /> {t.nhRule}
+                            <span className="flex items-center gap-2">
+                                <Icon name="BookOpen" size={16} className="text-primary-400" />
+                                {t.nhRule}
+                            </span>
+                            <Icon name="ChevronRight" size={15} className="text-muted shrink-0" />
                         </button>
                     </div>
 

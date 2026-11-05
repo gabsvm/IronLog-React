@@ -49,41 +49,26 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
 
             {/* --- 1:1 RP Sticky Top Header --- */}
             <div className="z-30 border-b border-border-subtle pt-safe bg-surface-app">
-                <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+                {/* Row 1 */}
+                <div className="flex items-center justify-between gap-2 px-4 pt-2.5 pb-1">
                     {/* Left side */}
-                    <div className="flex-1 min-w-0">
-                        <div className="flex items-center whitespace-nowrap">
-                            {(activeSession as any).isFreestyle ? (
-                                <span className="text-[19px] sm:text-[22px] font-black uppercase tracking-tight text-white">FREESTYLE</span>
-                            ) : (
-                                <>
-                                    <span className="text-[19px] sm:text-[22px] font-black uppercase tracking-tight text-white">
-                                        {pickLang(lang, { es: 'SEMANA', en: 'WEEK' })} {activeSession.week}
-                                    </span>
-                                    <span className="text-[19px] sm:text-[22px] font-black uppercase tracking-tight text-zinc-500 ml-1.5">
-                                        {pickLang(lang, { es: 'DÍA', en: 'DAY' })} {(activeSession.dayIdx ?? 0) + 1}
-                                    </span>
-                                </>
-                            )}
-                        </div>
-                        <div className="mt-0.5 flex items-center gap-1.5 text-[12px] font-medium text-zinc-400 truncate">
-                            <span className="truncate">{dayName}{mesoTitle ? ` · ${mesoTitle}` : ''}</span>
-                            <span className="font-mono text-[11px] text-primary-400 flex items-center gap-1 shrink-0">
-                                · <WorkoutTimer startTime={activeSession.startTime} />
-                            </span>
-                        </div>
+                    <div className="flex items-center whitespace-nowrap min-w-0">
+                        {(activeSession as any).isFreestyle ? (
+                            <span className="text-[19px] sm:text-[22px] font-black uppercase tracking-tight text-white">FREESTYLE</span>
+                        ) : (
+                            <>
+                                <span className="text-[19px] sm:text-[22px] font-black uppercase tracking-tight text-white">
+                                    {pickLang(lang, { es: 'SEMANA', en: 'WEEK' })} {activeSession.week}
+                                </span>
+                                <span className="text-[19px] sm:text-[22px] font-black uppercase tracking-tight text-zinc-500 ml-1.5">
+                                    {pickLang(lang, { es: 'DÍA', en: 'DAY' })} {(activeSession.dayIdx ?? 0) + 1}
+                                </span>
+                            </>
+                        )}
                     </div>
 
                     {/* Right side */}
-                    <div className="flex items-center gap-2 shrink-0">
-                        {/* Rest timer badge */}
-                        {restTimer?.active && (
-                            <div className="flex items-center gap-1 rounded-full bg-primary-500/15 px-2 py-0.5 text-[11px] font-mono font-bold text-primary-400 border border-primary-500/30">
-                                <Icon name="Timer" size={12} />
-                                <span>{Math.floor(restTimer.timeLeft / 60)}:{(restTimer.timeLeft % 60).toString().padStart(2, '0')}</span>
-                            </div>
-                        )}
-
+                    <div className="flex items-center gap-1.5 shrink-0">
                         {/* Calendar button */}
                         <button
                             type="button"
@@ -152,17 +137,6 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                                             <span>{t.reorderExercises}</span>
                                         </button>
                                     )}
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setShowSessionMenu(false);
-                                            setShowFinishModal(true);
-                                        }}
-                                        className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-primary-400 hover:bg-primary-500/10 transition-colors"
-                                    >
-                                        <Icon name="Check" size={14} />
-                                        <span>{t.finishWorkout || t.finish}</span>
-                                    </button>
                                     <div className="my-1 border-t border-border-subtle/50" />
                                     <button
                                         type="button"
@@ -178,6 +152,16 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                                 </div>
                             )}
                         </div>
+                    </div>
+                </div>
+
+                {/* Row 2 */}
+                <div className="flex items-center justify-between gap-2.5 px-4 pb-2.5 pt-0.5">
+                    <div className="min-w-0 flex-1 text-[12px] font-medium text-zinc-400 truncate">
+                        <span className="text-zinc-200 font-semibold">{dayName}</span>{mesoTitle ? <span className="text-zinc-400">{` · ${mesoTitle}`}</span> : null}
+                    </div>
+                    <div className="shrink-0 flex items-center">
+                        <WorkoutTimer startTime={activeSession.startTime} />
                     </div>
                 </div>
             </div>
@@ -263,7 +247,7 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                 <div
                     id="tut-exercise-list"
                     data-testid="workout-main"
-                    className="flex-1 overflow-y-auto scroll-container px-3 space-y-2.5 pt-3 pb-8"
+                    className={`flex-1 overflow-y-auto scroll-container px-3 space-y-2.5 pt-3 ${restTimer?.active ? 'pb-36' : 'pb-10'}`}
                 >
                     <Suspense fallback={null}>
                         <WorkoutSortableList itemIds={sortableItems} onReorder={handleReorder}>

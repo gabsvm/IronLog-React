@@ -267,7 +267,7 @@ export const useExercisesViewState = ({ onBack }: ExercisesViewProps) => {
                             </button>
                         ) : null}
 
-                        {!isBuiltIn ? (
+                        {!isBuiltIn && (
                             <button
                                 type="button"
                                 onClick={() => handleInitiateDelete(ex)}
@@ -277,10 +277,6 @@ export const useExercisesViewState = ({ onBack }: ExercisesViewProps) => {
                             >
                                 <Icon name="Trash2" size={18} />
                             </button>
-                        ) : (
-                            <div className="p-2 text-zinc-600" title={ev.officialCatalog}>
-                                <Icon name="Lock" size={16} />
-                            </div>
                         )}
 
                         {isMerged ? (

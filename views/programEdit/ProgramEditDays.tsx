@@ -158,7 +158,7 @@ export const ProgramEditDays: React.FC<{ state: ProgramEditState }> = ({ state }
             </div>
 
             {/* Flat Muscle / Exercise Slot Rows (builder-4.png) */}
-            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2.5 pb-28 scroll-container">
+            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2.5 pb-6 scroll-container">
                 {(currentDay.slots || []).length === 0 ? (
                     <div className="text-center py-12 px-4 rounded-[6px] border border-dashed border-border-subtle bg-surface-raised/40">
                         <p className="text-xs font-semibold text-zinc-400">
@@ -173,119 +173,130 @@ export const ProgramEditDays: React.FC<{ state: ProgramEditState }> = ({ state }
                         </button>
                     </div>
                 ) : (
-                    (currentDay.slots || []).map((slot, idx) => {
-                        const theme = MUSCLE_THEMES[slot.muscle] || {
-                            text: 'text-primary-400',
-                            bg: 'bg-primary-500/10',
-                            border: 'border-primary-500/25',
-                            bar: 'bg-primary-500',
-                        };
-                        const exName = slot.exerciseId
-                            ? getTranslated(exercises.find((e) => e.id === slot.exerciseId)?.name, lang)
-                            : (TRANSLATIONS[lang].copy.programEdit.selectExercise || 'Select exercise');
+                    <>
+                        {(currentDay.slots || []).map((slot, idx) => {
+                            const theme = MUSCLE_THEMES[slot.muscle] || {
+                                text: 'text-primary-400',
+                                bg: 'bg-primary-500/10',
+                                border: 'border-primary-500/25',
+                                bar: 'bg-primary-500',
+                            };
+                            const exName = slot.exerciseId
+                                ? getTranslated(exercises.find((e) => e.id === slot.exerciseId)?.name, lang)
+                                : (TRANSLATIONS[lang].copy.programEdit.selectExercise || 'Select exercise');
 
-                        return (
-                            <div
-                                key={idx}
-                                className="rounded-[6px] border border-border-subtle bg-surface-raised px-3 py-2.5 flex items-center justify-between gap-2.5 transition-colors"
-                            >
-                                {/* Left: Drag handle + vertical accent bar + stacked info */}
-                                <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                                    <Icon name="GripVertical" size={16} className="text-zinc-600 shrink-0 cursor-grab" />
-                                    <div className={`w-1 self-stretch rounded-full ${theme.bar || 'bg-primary-500'} shrink-0 opacity-80`} />
-                                    <div className="flex-1 min-w-0">
-                                        {/* Top line: Rectangular Muscle Tag + sets/reps controls */}
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                            <div
-                                                className={`inline-flex items-center gap-1 rounded-[3px] px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider border ${theme.bg} ${theme.text} ${theme.border}`}
-                                            >
-                                                <svg
-                                                    className="w-2.5 h-2.5 shrink-0"
-                                                    viewBox="0 0 16 16"
-                                                    fill="currentColor"
-                                                    aria-hidden="true"
-                                                >
-                                                    <rect x="2" y="2" width="2.5" height="12" rx="1.25" />
-                                                    <rect x="6.75" y="2" width="2.5" height="12" rx="1.25" />
-                                                    <rect x="11.5" y="2" width="2.5" height="12" rx="1.25" />
-                                                </svg>
-                                                <select
-                                                    className="bg-transparent uppercase font-extrabold cursor-pointer border-none outline-none appearance-none"
-                                                    value={slot.muscle}
-                                                    onChange={(e) => handleUpdateSlot(currentDay.id, idx, 'muscle', e.target.value)}
-                                                >
-                                                    {Object.values(MUSCLE_GROUPS).map((m) => (
-                                                        <option key={m} value={m} className="bg-zinc-900 text-white font-bold">
-                                                            {TRANSLATIONS[lang].muscle[m] || m}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            </div>
-
-                                            <div className="flex items-center gap-1 text-[11px] font-bold text-zinc-400 bg-surface-elevated/70 rounded-[3px] px-1.5 py-0.5 border border-border-subtle">
-                                                <span className="text-[9px] uppercase tracking-wider text-zinc-500 font-extrabold">SETS</span>
-                                                <input
-                                                    type="number"
-                                                    min={1}
-                                                    max={20}
-                                                    className="w-5 bg-transparent text-center font-bold text-white outline-none"
-                                                    value={slot.setTarget || ''}
-                                                    onChange={(e) =>
-                                                        handleUpdateSlot(currentDay.id, idx, 'setTarget', Math.max(1, Number(e.target.value)))
-                                                    }
-                                                />
-                                                <span className="text-zinc-600">×</span>
-                                                <span className="text-[9px] uppercase tracking-wider text-zinc-500 font-extrabold">REPS</span>
-                                                <input
-                                                    type="text"
-                                                    className="w-12 bg-transparent text-center font-bold text-white outline-none"
-                                                    value={slot.reps || ''}
-                                                    placeholder="8-12"
-                                                    onChange={(e) => handleUpdateSlot(currentDay.id, idx, 'reps', e.target.value)}
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Bottom line: Exercise Name */}
-                                        <button
-                                            type="button"
-                                            onClick={() => setPickingForSlot({ dayId: currentDay.id, slotIdx: idx })}
-                                            className="flex items-center gap-1.5 text-[13px] font-semibold text-zinc-200 mt-1 hover:text-white transition-colors text-left truncate w-full"
-                                        >
-                                            <Icon name="Zap" size={12} className="text-zinc-400 shrink-0" />
-                                            <span className={slot.exerciseId ? 'text-zinc-200 truncate' : 'text-primary-400 italic'}>
-                                                {exName}
-                                            </span>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* Right: Delete Slot Button */}
-                                <button
-                                    type="button"
-                                    onClick={() => handleRemoveSlot(currentDay.id, idx)}
-                                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[4px] text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                                    aria-label={t.delete}
-                                    title={t.delete}
+                            return (
+                                <div
+                                    key={idx}
+                                    className="rounded-[6px] border border-border-subtle bg-surface-raised px-3 py-2.5 flex items-center justify-between gap-2.5 transition-colors"
                                 >
-                                    <Icon name="Trash2" size={16} />
-                                </button>
-                            </div>
-                        );
-                    })
+                                    {/* Left: Slot index + vertical accent bar + stacked info */}
+                                    <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                                        <span
+                                            data-testid={`slot-index-${idx}`}
+                                            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-[4px] bg-surface-elevated border border-border-subtle font-mono text-[11px] font-bold text-zinc-400"
+                                        >
+                                            {idx + 1}
+                                        </span>
+                                        <div className={`w-1 self-stretch rounded-full ${theme.bar || 'bg-primary-500'} shrink-0 opacity-80`} />
+                                        <div className="flex-1 min-w-0">
+                                            {/* Top line: Rectangular Muscle Tag + sets/reps controls */}
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <div
+                                                    className={`inline-flex items-center gap-1 rounded-[4px] px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider border ${theme.bg} ${theme.text} ${theme.border}`}
+                                                >
+                                                    <svg
+                                                        className="w-2.5 h-2.5 shrink-0"
+                                                        viewBox="0 0 16 16"
+                                                        fill="currentColor"
+                                                        aria-hidden="true"
+                                                    >
+                                                        <rect x="2" y="2" width="2.5" height="12" rx="1.25" />
+                                                        <rect x="6.75" y="2" width="2.5" height="12" rx="1.25" />
+                                                        <rect x="11.5" y="2" width="2.5" height="12" rx="1.25" />
+                                                    </svg>
+                                                    <select
+                                                        className="bg-transparent uppercase font-extrabold cursor-pointer border-none outline-none appearance-none"
+                                                        value={slot.muscle}
+                                                        onChange={(e) => handleUpdateSlot(currentDay.id, idx, 'muscle', e.target.value)}
+                                                    >
+                                                        {Object.values(MUSCLE_GROUPS).map((m) => (
+                                                            <option key={m} value={m} className="bg-zinc-900 text-white font-bold">
+                                                                {TRANSLATIONS[lang].muscle[m] || m}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                    <Icon name="ChevronDown" size={11} className="shrink-0 opacity-80 pointer-events-none" />
+                                                </div>
+
+                                                <div className="ml-auto flex items-center gap-1.5">
+                                                    <div className="flex items-center gap-1 text-[11px] font-bold text-zinc-400 bg-surface-elevated/80 rounded-[4px] px-2 py-0.5 border border-border-subtle">
+                                                        <span className="text-[9px] uppercase tracking-wider text-zinc-500 font-extrabold">SETS</span>
+                                                        <input
+                                                            type="number"
+                                                            min={1}
+                                                            max={20}
+                                                            className="w-6 bg-transparent text-center font-mono font-bold text-white outline-none"
+                                                            value={slot.setTarget || ''}
+                                                            onChange={(e) =>
+                                                                handleUpdateSlot(currentDay.id, idx, 'setTarget', Math.max(1, Number(e.target.value)))
+                                                            }
+                                                        />
+                                                    </div>
+                                                    <div className="flex items-center gap-1 text-[11px] font-bold text-zinc-400 bg-surface-elevated/80 rounded-[4px] px-2 py-0.5 border border-border-subtle">
+                                                        <span className="text-[9px] uppercase tracking-wider text-zinc-500 font-extrabold">REPS</span>
+                                                        <input
+                                                            type="text"
+                                                            className="w-12 bg-transparent text-center font-mono font-bold text-white outline-none"
+                                                            value={slot.reps || ''}
+                                                            placeholder="8-12"
+                                                            onChange={(e) => handleUpdateSlot(currentDay.id, idx, 'reps', e.target.value)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Bottom line: Exercise Name */}
+                                            <button
+                                                type="button"
+                                                onClick={() => setPickingForSlot({ dayId: currentDay.id, slotIdx: idx })}
+                                                className="mt-1.5 flex w-full items-center justify-between gap-2 rounded-[5px] bg-surface-elevated/60 border border-border-subtle/70 px-2.5 py-1.5 text-left text-[13px] font-semibold transition-colors hover:border-border-strong hover:bg-surface-elevated"
+                                            >
+                                                <span className={slot.exerciseId ? 'text-zinc-100 truncate' : 'text-primary-400 italic truncate'}>
+                                                    {exName}
+                                                </span>
+                                                <Icon name="ChevronRight" size={14} className="text-zinc-400 shrink-0" />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Right: Delete Slot Button */}
+                                    <button
+                                        type="button"
+                                        onClick={() => handleRemoveSlot(currentDay.id, idx)}
+                                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[4px] text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                                        aria-label={t.delete}
+                                        title={t.delete}
+                                    >
+                                        <Icon name="Trash2" size={16} />
+                                    </button>
+                                </div>
+                            );
+                        })}
+
+                        <button
+                            type="button"
+                            data-testid="add-slot-inline-btn"
+                            onClick={() => handleAddSlot(currentDay.id)}
+                            className="w-full rounded-[6px] border border-dashed border-border-strong bg-surface-raised/40 py-3 px-4 text-xs font-bold text-zinc-200 hover:text-white hover:border-primary-500/50 hover:bg-surface-raised/80 active:scale-[0.99] transition-all flex items-center justify-center gap-2"
+                            aria-label={t.addSlot || 'Add exercise'}
+                        >
+                            <Icon name="Plus" size={15} className="text-primary-400" />
+                            <span>{t.addSlot || pickLang(lang, { es: 'Añadir ejercicio', en: 'Add exercise' })}</span>
+                        </button>
+                    </>
                 )}
             </div>
-
-            {/* Floating + button to add exercise to active day */}
-            <button
-                type="button"
-                onClick={() => handleAddSlot(currentDay.id)}
-                className="fixed right-5 bottom-24 z-20 rounded-full h-11 w-11 bg-white text-zinc-950 shadow-lg flex items-center justify-center hover:bg-zinc-200 active:scale-95 transition-all"
-                aria-label={t.addSlot || 'Add exercise'}
-                title={t.addSlot || 'Add exercise'}
-            >
-                <Icon name="Plus" size={22} strokeWidth={2.5} />
-            </button>
 
             {/* Bottom Primary CTA Button */}
             <div className="shrink-0 border-t border-border-subtle bg-surface-app/95 backdrop-blur-md p-4 pb-safe">

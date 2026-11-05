@@ -87,60 +87,65 @@ export const AccountSection: React.FC<AccountSectionProps> = ({ onClose, onLogin
             )}
 
             <div className="label-reference px-1">{ty.account}</div>
-            <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-[8px] bg-surface-raised border border-border-subtle flex items-center justify-center font-bold text-xl text-white shadow-sm shrink-0">
-                    {userInitial}
-                </div>
-                <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                        <span className="text-base font-semibold text-white truncate">{userName}</span>
-                        {isPro && (
-                            <span className="chip-reference text-amber-400 font-semibold">
-                                Pro
-                            </span>
-                        )}
+            <div
+                data-testid="account-unified-card"
+                className="card-reference rounded-[8px] border border-border-subtle bg-surface-raised p-3.5 space-y-3"
+            >
+                <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-[8px] bg-surface-elevated border border-border-subtle flex items-center justify-center font-bold text-lg text-white shadow-sm shrink-0">
+                        {userInitial}
                     </div>
-                    <div className="text-xs text-muted truncate mt-0.5">
-                        {user?.email ? `${user.email} · ` : ''}{planLabel || accountLabel}
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                            <span className="text-base font-semibold text-white truncate">{userName}</span>
+                            {isPro && (
+                                <span className="chip-reference text-amber-400 font-semibold">
+                                    Pro
+                                </span>
+                            )}
+                        </div>
+                        <div className="text-xs text-muted truncate mt-0.5">
+                            {user?.email ? `${user.email} · ` : ''}{planLabel || accountLabel}
+                        </div>
+                    </div>
+                    {user ? (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                triggerHaptic('light');
+                                logout();
+                                onClose();
+                            }}
+                            className="shrink-0 px-3 py-1.5 bg-surface-elevated border border-border-subtle text-zinc-200 rounded-[6px] text-xs font-bold hover:bg-zinc-700/60 transition-colors flex items-center gap-1.5"
+                        >
+                            <Icon name="LogOut" size={13} />
+                            <span>{t.auth.logout}</span>
+                        </button>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                onClose();
+                                onLogin();
+                            }}
+                            className="shrink-0 px-3 py-1.5 bg-primary-500 text-black rounded-[6px] text-xs font-bold hover:bg-primary-400 shadow-sm transition-all active:scale-95"
+                        >
+                            {t.auth.signInRegister}
+                        </button>
+                    )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 pt-2.5 border-t border-border-subtle">
+                    <div className="rounded-[6px] border border-border-subtle bg-surface-app/60 px-3 py-2">
+                        <div className="text-base font-bold text-white tabular-nums">{stats.total}</div>
+                        <div className="text-[11px] text-muted">{ty.sessions}</div>
+                    </div>
+                    <div className="rounded-[6px] border border-border-subtle bg-surface-app/60 px-3 py-2">
+                        <div className="text-base font-bold text-white tabular-nums">{stats.recent}</div>
+                        <div className="text-[11px] text-muted">{ty.last30}</div>
                     </div>
                 </div>
             </div>
-
-            <div className="grid grid-cols-2 gap-2">
-                <div className="card-reference rounded-[8px] border border-border-subtle bg-surface-raised p-3">
-                    <div className="text-lg font-semibold text-white tabular-nums">{stats.total}</div>
-                    <div className="text-xs text-muted">{ty.sessions}</div>
-                </div>
-                <div className="card-reference rounded-[8px] border border-border-subtle bg-surface-raised p-3">
-                    <div className="text-lg font-semibold text-white tabular-nums">{stats.recent}</div>
-                    <div className="text-xs text-muted">{ty.last30}</div>
-                </div>
-            </div>
-
-            {user ? (
-                <button
-                    type="button"
-                    onClick={() => {
-                        triggerHaptic('light');
-                        logout();
-                        onClose();
-                    }}
-                    className="w-full py-2.5 bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-[6px] text-xs font-bold hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors"
-                >
-                    {t.auth.logout}
-                </button>
-            ) : (
-                <button
-                    type="button"
-                    onClick={() => {
-                        onClose();
-                        onLogin();
-                    }}
-                    className="w-full py-2.5 bg-primary-500 text-black rounded-[6px] text-xs font-bold hover:bg-primary-400 shadow-lg shadow-primary-500/20 transition-all active:scale-95"
-                >
-                    {t.auth.signInRegister}
-                </button>
-            )}
 
             {user && (
                 <div className="card-reference rounded-[8px] border border-border-subtle bg-surface-raised divide-y divide-border-subtle overflow-hidden">

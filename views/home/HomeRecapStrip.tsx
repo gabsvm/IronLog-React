@@ -81,7 +81,9 @@ export const HomeRecapStrip: React.FC<Props> = React.memo(({ logs, meso, planned
                     </p>
                     <div className="flex items-center gap-2 text-xs text-zinc-300 flex-wrap">
                         <span className="font-bold text-white">{lastDate}</span>
+                        <span aria-hidden="true" className="text-zinc-600">·</span>
                         <span aria-label={w.duration}>{last.durationMin > 0 ? formatDurationShort(last.durationMin * 60) : '<1 min'}</span>
+                        <span aria-hidden="true" className="text-zinc-600">·</span>
                         <span aria-label={w.volume}>{lastVolume} {unitLabel(unit).toLowerCase()}</span>
                         {last.prCount > 0 && (
                             <span className="inline-flex items-center gap-1 font-bold text-yellow-400 rounded-[4px] bg-yellow-400/10 px-1.5 py-0.5">

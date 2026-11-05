@@ -194,7 +194,7 @@ export const SetRowBodyweight: React.FC<{ state: SetRowState }> = ({ state }) =>
                     <button
                         type="button"
                         onClick={handleToggleComplete}
-                        className={`relative flex h-[22px] w-[22px] items-center justify-center rounded-[3px] border-2 transition-colors active:scale-95 ${
+                        className={`relative flex h-[22px] w-[22px] items-center justify-center rounded-[3px] border-2 transition-colors active:scale-95 after:absolute after:-inset-2 after:content-[''] ${
                             isDone
                                 ? 'bg-primary-500 border-primary-500 text-zinc-950 font-black shadow-sm'
                                 : 'border-zinc-500 bg-transparent hover:border-zinc-300'

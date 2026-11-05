@@ -1,5 +1,5 @@
 // S6: banner, plan header and day selector, moved verbatim from views/HomeViewImpl.tsx.
-import React, { useState } from 'react';
+import React from 'react';
 import { pickLang } from '../../utils/i18n';
 import { Icon } from '../../components/ui/Icon';
 import { triggerHaptic } from '../../utils/audio';
@@ -13,7 +13,6 @@ export const HomeTopSection: React.FC<{ state: HomeViewState }> = ({ state }) =>
         checkPro, setShowPlanActions, setShowGuidelines, setShowKongHub,
         currentGuidelineImages, safeProgram, selectedDayIdx
     } = state;
-    const [showCalendarDrawer, setShowCalendarDrawer] = useState(false);
 
     if (!activeMeso) return null;
     const totalWeeks = activeMeso.targetWeeks || activeMeso.duration || 1;
@@ -28,7 +27,6 @@ export const HomeTopSection: React.FC<{ state: HomeViewState }> = ({ state }) =>
     const effectiveDayIdx = selectedDayIdx >= 0 ? selectedDayIdx : (firstIncompleteDayIdx >= 0 ? firstIncompleteDayIdx : 0);
     const dayName = safeProgram[effectiveDayIdx] ? String(getTranslated(safeProgram[effectiveDayIdx].dayName, lang)) : '';
     const mesoTitle = activeMeso.name || (activeMeso as any).title || '';
-    const calendarAria = pickLang(lang, { es: 'Semanas y días', en: 'Weeks and days' });
 
     return (
         <>
@@ -45,10 +43,14 @@ export const HomeTopSection: React.FC<{ state: HomeViewState }> = ({ state }) =>
                             {pickLang(lang, { es: 'DÍA', en: 'DAY' })} {effectiveDayIdx + 1}
                         </span>
                     </div>
-                    <div className="mt-0.5 flex items-center gap-2 text-xs text-muted truncate">
-                        <span className="truncate">{dayName}{mesoTitle ? ` · ${mesoTitle}` : ''}</span>
-                        <span>·</span>
-                        <span>{uniqueDaysDone.size} {h.ofWord} {safeProgram.length} {h.daysWord}</span>
+                    <div data-testid="home-hub-subtitle" className="mt-0.5 flex items-center gap-1.5 text-xs text-muted truncate">
+                        <span className="font-semibold text-zinc-200 truncate">{dayName}</span>
+                        {mesoTitle && (
+                            <>
+                                <span className="text-zinc-600 shrink-0">·</span>
+                                <span className="truncate">{mesoTitle}</span>
+                            </>
+                        )}
                     </div>
                     {(kongBlock || (currentGuidelineImages && currentGuidelineImages.length > 0)) && (
                         <div className="flex items-center gap-2 mt-2 flex-wrap">
@@ -76,15 +78,6 @@ export const HomeTopSection: React.FC<{ state: HomeViewState }> = ({ state }) =>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                     <button
-                        type="button"
-                        onClick={() => setShowCalendarDrawer(true)}
-                        aria-label={calendarAria}
-                        title={calendarAria}
-                        className="relative flex h-8 w-8 items-center justify-center rounded-[4px] text-zinc-400 hover:text-white hover:bg-surface-raised active:scale-95 transition-all"
-                    >
-                        <Icon name="Calendar" size={19} />
-                    </button>
-                    <button
                         id="tut-settings-btn"
                         type="button"
                         onClick={() => setShowPlanActions(true)}
@@ -96,65 +89,6 @@ export const HomeTopSection: React.FC<{ state: HomeViewState }> = ({ state }) =>
                     </button>
                 </div>
             </div>
-
-            {/* Calendar Drawer */}
-            {showCalendarDrawer && (
-                <div
-                    className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm"
-                    onClick={() => setShowCalendarDrawer(false)}
-                >
-                    <div
-                        className="w-full max-w-lg rounded-t-[20px] border-t border-border-subtle bg-surface-base p-4 pb-safe animate-in slide-in-from-bottom duration-200"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-zinc-700" />
-                        <div className="flex items-center justify-between pb-3 border-b border-border-subtle">
-                            <div>
-                                <h3 className="text-base font-bold text-white">{activeMeso.name || 'Mesocycle'}</h3>
-                                <p className="text-xs text-muted">
-                                    {pickLang(lang, {
-                                        es: `Semana ${activeMeso.week} de ${totalWeeks}`,
-                                        en: `Week ${activeMeso.week} of ${totalWeeks}`,
-                                    })}
-                                </p>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => setShowCalendarDrawer(false)}
-                                className="rounded-lg p-1.5 text-zinc-400 hover:text-white"
-                                aria-label={t.cancel}
-                            >
-                                <Icon name="X" size={18} />
-                            </button>
-                        </div>
-                        <div className="py-3">
-                            <p className="text-xs font-semibold text-zinc-400 mb-2 uppercase tracking-wider">
-                                {pickLang(lang, { es: 'Semanas', en: 'Weeks' })}
-                            </p>
-                            <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                                {Array.from({ length: totalWeeks }, (_, i) => i + 1).map((wNum) => (
-                                    <button
-                                        key={wNum}
-                                        type="button"
-                                        onClick={() => {
-                                            triggerHaptic('light');
-                                            setActiveMeso(prev => prev ? { ...prev, week: wNum } : prev);
-                                            setShowCalendarDrawer(false);
-                                        }}
-                                        className={`flex h-8 min-w-[36px] px-2 items-center justify-center rounded-[6px] text-xs font-bold ${
-                                            wNum === activeMeso.week
-                                                ? 'bg-primary-500 text-zinc-950 font-black'
-                                                : 'bg-surface-raised text-zinc-400 border border-border-subtle hover:text-white'
-                                        }`}
-                                    >
-                                        W{wNum}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {/* 2. Week selector (prev/next + deload) */}
             <div data-testid="home-week-selector" className="flex items-center justify-between gap-2 rounded-[6px] border border-border-subtle bg-surface-raised/40 p-2">
@@ -184,7 +118,7 @@ export const HomeTopSection: React.FC<{ state: HomeViewState }> = ({ state }) =>
                                         : 'border border-border-subtle bg-surface-raised text-zinc-400 hover:text-white'
                                 }`}
                             >
-                                {wNum}
+                                W{wNum}
                             </button>
                         );
                     })}

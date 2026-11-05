@@ -6,7 +6,6 @@ import { Icon } from './Icon';
 import { getTranslated } from '../../utils';
 import { pickLang } from '../../utils/i18n';
 import { exerciseIdGroup } from '../../utils/exerciseLibrary';
-import { MuscleTag } from './MuscleTag';
 import { Button } from './Button';
 import { ProgressChart } from '../stats/ProgressChart';
 import { Sheet } from './Sheet';
@@ -223,10 +222,6 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                 </div>
             }
         >
-            <div className="px-5 pt-1">
-                <MuscleTag label={resolveMuscleLabel(exercise.muscle, lang)} />
-            </div>
-
             {/* Tabs */}
             <div role="tablist" className="mx-4 mt-3 flex rounded-[6px] border border-border-subtle bg-surface-raised p-1">
                 <button
@@ -274,24 +269,26 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                             )}
                         </div>
 
-                        {/* Search on YouTube link (always shown) */}
-                        <div className="flex items-center justify-between px-4 py-2.5 mx-4 mt-2 rounded-[6px] border border-border-subtle bg-surface-raised">
-                            <div className="text-xs font-semibold text-zinc-400">
-                                {exercise.videoId
-                                    ? (TRANSLATIONS[lang].copy.exerciseDetailModal.tapToOpenIn)
-                                    : (TRANSLATIONS[lang].copy.exerciseDetailModal.searchTutorialOnline)
-                                }
-                            </div>
-                            <a
-                                href={youtubeUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-1.5 text-xs font-bold text-red-500 hover:text-red-400 transition-colors"
+                        {/* Search on YouTube fallback link */}
+                        {!exercise.videoId && (
+                            <div
+                                data-testid="youtube-search-fallback-bar"
+                                className="flex items-center justify-between px-4 py-2.5 mx-4 mt-2 rounded-[6px] border border-border-subtle bg-surface-raised"
                             >
-                                <Icon name="ExternalLink" size={12} />
-                                {t.watchVideo || 'Watch Video'}
-                            </a>
-                        </div>
+                                <div className="text-xs font-semibold text-zinc-400">
+                                    {TRANSLATIONS[lang].copy.exerciseDetailModal.searchTutorialOnline}
+                                </div>
+                                <a
+                                    href={youtubeUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1.5 text-xs font-bold text-red-500 hover:text-red-400 transition-colors"
+                                >
+                                    <Icon name="ExternalLink" size={12} />
+                                    {t.watchVideo || 'Watch Video'}
+                                </a>
+                            </div>
+                        )}
 
                         {/* Instructions & Tip */}
                         <div className="p-5 space-y-5">
