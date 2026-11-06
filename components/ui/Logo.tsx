@@ -38,11 +38,11 @@ export const Logo: React.FC<LogoProps> = ({
             ? Boolean(showText)
             : true;
 
-    const renderPeakSignalSvg = (svgClassName?: string) => (
+    const renderPeakSignalSvg = (svgClassName?: string, customSize?: number) => (
         <svg
             viewBox="-6 -6 112 112"
-            width={effectiveSize}
-            height={effectiveSize}
+            width={customSize ?? effectiveSize}
+            height={customSize ?? effectiveSize}
             role="img"
             aria-label={alt}
             className={svgClassName}
@@ -58,6 +58,7 @@ export const Logo: React.FC<LogoProps> = ({
                 className="text-primary-500"
                 stroke="currentColor"
             />
+            <circle cx="100" cy="25" r="4.2" className="fill-primary-500" />
             {/* RepyntraPeakDominant (leading upper stroke, theme text primary) */}
             <polyline
                 points="0,82 18,82 30,40 42,66 54,22 66,56 78,56 100,12"
@@ -68,6 +69,7 @@ export const Logo: React.FC<LogoProps> = ({
                 className="text-[rgb(var(--text-primary))]"
                 stroke="currentColor"
             />
+            <circle cx="100" cy="12" r="5.5" className="fill-[rgb(var(--text-primary))]" />
         </svg>
     );
 
@@ -81,15 +83,22 @@ export const Logo: React.FC<LogoProps> = ({
         className ? className.replace(/\b[wh]-\S+\b/g, '').trim() : ''
     ].filter(Boolean).join(' ');
 
+    const innerSvgSize = Math.round(effectiveSize * 0.72);
+
     return (
         <div className={containerClasses}>
-            {renderPeakSignalSvg('shrink-0')}
             <span
-                className="font-display font-extrabold tracking-[-0.03em] leading-none"
-                style={{ fontSize: Math.round(effectiveSize * 0.72) }}
+                className="inline-flex shrink-0 items-center justify-center rounded-[8px] border border-primary-500/30 bg-primary-500/10"
+                style={{ width: effectiveSize, height: effectiveSize }}
             >
-                <span className="text-[rgb(var(--text-primary))]">Repy</span>
-                <span className="text-primary-500">ntra</span>
+                {renderPeakSignalSvg(undefined, innerSvgSize)}
+            </span>
+            <span
+                className="font-sans font-extrabold tracking-[-0.035em] leading-none"
+                style={{ fontSize: Math.round(effectiveSize * 0.68) }}
+            >
+                <span className="text-[rgb(var(--text-primary))]">Rep</span>
+                <span className="text-primary-500">yntra</span>
             </span>
         </div>
     );

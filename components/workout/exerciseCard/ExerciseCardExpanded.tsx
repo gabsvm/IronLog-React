@@ -246,6 +246,7 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                             onOpenDetail={onOpenDetail}
                             onCardioModeChange={handleCardioModeChange}
                             onInjectWarmup={handleInjectWarmup}
+                            onOpenWarmup={canWarmup && onOpenWarmup && hasSet1Weight ? () => onOpenWarmup(ex.instanceId) : undefined}
                             onFillFromPrevious={canFillPrevious ? handleFillFromPrevious : undefined}
                             onCopyToFollowing={copyFromIndex >= 0 ? handleCopyToFollowing : undefined}
                             onSupersetAction={handleSupersetAction}

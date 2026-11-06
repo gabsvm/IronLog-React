@@ -3,6 +3,7 @@ import { useAppPreferences } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
 import { Icon } from '../ui/Icon';
 import { BrandLogo } from '../BrandLogo';
+import { Logo } from '../ui/Logo';
 
 interface LandingProps {
     onStart?: () => void;
@@ -91,10 +92,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onGetStarted, onLogin
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
                     {/* Brand lockup */}
                     <div className="flex items-center gap-3">
-                        <BrandLogo size={26} className="text-[#C4F13A]" />
-                        <span className="font-black tracking-tight text-lg text-white font-display uppercase">
-                            REPYNTRA
-                        </span>
+                        <Logo size={28} variant="lockup" />
                         <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-[4px] bg-white/[0.05] border border-white/[0.08] text-[10px] font-mono tracking-wider text-zinc-400 uppercase">
                             PEAK SIGNAL · v4.0
                         </span>

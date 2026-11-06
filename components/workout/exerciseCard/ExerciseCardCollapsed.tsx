@@ -106,6 +106,7 @@ export const ExerciseCardCollapsed: React.FC<{ state: ExerciseCardState }> = ({ 
                     onOpenDetail={onOpenDetail}
                     onCardioModeChange={handleCardioModeChange}
                     onInjectWarmup={handleInjectWarmup}
+                    onOpenWarmup={state.canWarmup && state.onOpenWarmup && Number(sets?.[0]?.weight || 0) > 0 ? () => state.onOpenWarmup!(ex.instanceId) : undefined}
                     onFillFromPrevious={state.handleFillFromPrevious}
                     onCopyToFollowing={state.handleCopyToFollowing}
                     onSupersetAction={handleSupersetAction}
