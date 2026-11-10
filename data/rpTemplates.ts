@@ -531,7 +531,7 @@ export const RP_CB_3X_PROGRAM: ProgramDay[] = [
     },
     {
         id: 'rp_cb_3x_d2',
-        dayName: { en: 'Day 3: Back & Pull', es: 'Día 3: Espalda y Tracción' },
+        dayName: { en: 'Day 2: Back & Pull', es: 'Día 2: Espalda y Tracción' },
         slots: [
             { muscle: 'BACK' as MuscleGroup, setTarget: 3, exerciseId: 'lat_pull', reps: '8-12', notes: 'Vertical Pull (Pulldowns / Pullups / Chinups) — Tracción Vertical (Jalones / Dominadas)' },
             { muscle: 'BACK' as MuscleGroup, setTarget: 3, exerciseId: 'bent_barbell_row', reps: '8-12', notes: 'Horizontal Pull (Barbell / DB / Cable Row) — Tracción Horizontal (Remo Barra / Mancuerna / Polea)' },
@@ -545,7 +545,7 @@ export const RP_CB_3X_PROGRAM: ProgramDay[] = [
     },
     {
         id: 'rp_cb_3x_d3',
-        dayName: { en: 'Day 1: Chest & Back', es: 'Día 1: Pecho y Espalda' },
+        dayName: { en: 'Day 3: Chest & Back', es: 'Día 3: Pecho y Espalda' },
         slots: [
             { muscle: 'CHEST' as MuscleGroup, setTarget: 3, exerciseId: 'bp_bar', reps: '8-12', notes: 'Horizontal Push (Bench / DB / Machine Press) — Empuje Horizontal (Banca Plana / Mancuerna / Máquina)' },
             { muscle: 'CHEST' as MuscleGroup, setTarget: 3, exerciseId: 'pec_fly', reps: '8-12', notes: 'Chest Isolation or Triceps — Aislamiento Pecho o Tríceps' },
@@ -1035,7 +1035,7 @@ export const RP_ADV_ARMS_6X_PROGRAM: ProgramDay[] = [
     },
     {
         id: 'rp_adv_arms_6x_d2',
-        dayName: { en: 'Day 1: Legs Day', es: 'Día 1: Día Pierna' },
+        dayName: { en: 'Day 2: Legs Day', es: 'Día 2: Día Pierna' },
         slots: [
             { muscle: 'QUADS' as MuscleGroup, setTarget: 3, exerciseId: 'sq_bar', reps: '8-12', notes: 'Quads (Squat / Leg Press / Hack) — Cuádriceps (Sentadilla / Prensa / Hack)' },
             { muscle: 'QUADS' as MuscleGroup, setTarget: 2, exerciseId: 'sq_bar', reps: '8-12', notes: 'Quads (Squat / Leg Press / Hack) — Cuádriceps (Sentadilla / Prensa / Hack)' },
@@ -1046,7 +1046,7 @@ export const RP_ADV_ARMS_6X_PROGRAM: ProgramDay[] = [
     },
     {
         id: 'rp_adv_arms_6x_d3',
-        dayName: { en: 'Day 1: Pull Day', es: 'Día 1: Día Tirón' },
+        dayName: { en: 'Day 3: Pull Day', es: 'Día 3: Día Tirón' },
         slots: [
             { muscle: 'BICEPS' as MuscleGroup, setTarget: 2, exerciseId: 'curl_bar', reps: '8-12', notes: 'Biceps (Barbell / DB / Cable Curl) — Bíceps (Curl Barra / Mancuerna / Polea)' },
             { muscle: 'BICEPS' as MuscleGroup, setTarget: 2, exerciseId: 'curl_bar', reps: '8-12', notes: 'Biceps (Barbell / DB / Cable Curl) — Bíceps (Curl Barra / Mancuerna / Polea)' },
@@ -1058,7 +1058,7 @@ export const RP_ADV_ARMS_6X_PROGRAM: ProgramDay[] = [
     },
     {
         id: 'rp_adv_arms_6x_d4',
-        dayName: { en: 'Day 1: Push Day', es: 'Día 1: Día Empuje' },
+        dayName: { en: 'Day 4: Push Day', es: 'Día 4: Día Empuje' },
         slots: [
             { muscle: 'TRICEPS' as MuscleGroup, setTarget: 2, exerciseId: 'tri_push', reps: '8-12', notes: 'Horizontal Triceps (Pushdowns / Dips / Skullcrushers) — Tríceps Horizontal (Polea / Fondos / Francés)' },
             { muscle: 'TRICEPS' as MuscleGroup, setTarget: 2, exerciseId: 'tri_push', reps: '8-12', notes: 'Triceps (Pushdowns / Dips / Skullcrushers) — Tríceps (Extensiones en Polea / Fondos / Press Francés)' },
@@ -1069,7 +1069,7 @@ export const RP_ADV_ARMS_6X_PROGRAM: ProgramDay[] = [
     },
     {
         id: 'rp_adv_arms_6x_d5',
-        dayName: { en: 'Day 1: Legs Day', es: 'Día 1: Día Pierna' },
+        dayName: { en: 'Day 5: Legs Day', es: 'Día 5: Día Pierna' },
         slots: [
             { muscle: 'GLUTES' as MuscleGroup, setTarget: 3, exerciseId: 'glute_bridge', reps: '8-12', notes: 'Glutes (Bridge / Lunge / Sumo DL) — Glúteos (Puente / Zancadas / Peso Muerto Sumo)' },
             { muscle: 'GLUTES' as MuscleGroup, setTarget: 3, exerciseId: 'glute_bridge', reps: '8-12', notes: 'Glutes (Bridge / Lunge / Sumo DL) — Glúteos (Puente / Zancadas / Peso Muerto Sumo)' },
@@ -1081,7 +1081,7 @@ export const RP_ADV_ARMS_6X_PROGRAM: ProgramDay[] = [
     },
     {
         id: 'rp_adv_arms_6x_d6',
-        dayName: { en: 'Day 1: Pull Day', es: 'Día 1: Día Tirón' },
+        dayName: { en: 'Day 6: Pull Day', es: 'Día 6: Día Tirón' },
         slots: [
             { muscle: 'SHOULDERS' as MuscleGroup, setTarget: 2, exerciseId: 'rear_delt_fly', reps: '8-12', notes: 'Rear or Side Delts — Deltoide Posterior o Lateral' },
             { muscle: 'SHOULDERS' as MuscleGroup, setTarget: 2, exerciseId: 'rear_delt_fly', reps: '8-12', notes: 'Rear or Side Delts — Deltoide Posterior o Lateral' },

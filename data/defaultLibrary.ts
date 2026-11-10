@@ -41,6 +41,8 @@ export const DEFAULT_LIBRARY: ExerciseDef[] = [
     { id: 'leg_press', name: { en: 'Leg Press', es: 'Prensa de Piernas' }, muscle: 'QUADS', instructions: { en: "Maintenance volume. Full ROM.", es: "Volumen de mantenimiento. Rango completo." }, videoId: "IZxyjW7MPJQ" },
     { id: 'rdl', name: { en: 'Romanian Deadlift', es: 'Peso Muerto Rumano' }, muscle: 'HAMSTRINGS', videoId: "JCXUYuzwNrM" },
     { id: 'deadlift', name: { en: 'Deadlift (Conventional)', es: 'Peso Muerto (Convencional)' }, muscle: 'BACK', instructions: { en: "Total body strength. Keep spine neutral.", es: "Fuerza total. Mantén la columna neutra." }, videoId: "r4MzxtBKyNE" },
+    { id: 'dl_conv', name: { en: 'Deadlift (Conventional)', es: 'Peso Muerto (Convencional)' }, muscle: 'BACK', instructions: { en: "Total body strength. Keep spine neutral.", es: "Fuerza total. Mantén la columna neutra." }, videoId: "r4MzxtBKyNE" },
+    { id: 'ohp_bar', name: { en: 'Barbell Overhead Press', es: 'Press Militar con Barra' }, muscle: 'SHOULDERS', videoId: "QAQ64hK4Xxs" },
     { id: 'sldl', name: { en: 'Stiff Leg Deadlift', es: 'Peso Muerto Piernas Rígidas' }, muscle: 'HAMSTRINGS', instructions: { en: "Minimal knee bend. Hamstring focus.", es: "Mínima flexión de rodilla. Enfoque en isquios." }, videoId: "1uDiW5--rAE" },
     { id: 'good_morning', name: { en: 'Good Morning', es: 'Buenos Días' }, muscle: 'HAMSTRINGS', instructions: { en: "Hinge at hips, keep back straight.", es: "Bisagra de cadera, espalda recta." }, videoId: "d_1D8x_hM7o" },
     { id: 'glute_bridge', name: { en: 'Glute Bridge', es: 'Puente de Glúteos' }, muscle: 'GLUTES', videoId: "8Z7t6j5G9V0" },
@@ -58,6 +60,9 @@ export const DEFAULT_LIBRARY: ExerciseDef[] = [
     { id: 'lat_raise_seat', name: { en: 'Seated Lateral Raise', es: 'Elev. Laterales Sentado' }, muscle: 'SHOULDERS', videoId: "3VcKaXpzqRo" },
     { id: 'face_pull', name: { en: 'Face Pull', es: 'Face Pull' }, muscle: 'SHOULDERS', videoId: "rep-qVOkqgk" },
     { id: 'shrug_db', name: { en: 'Dumbbell Shrugs', es: 'Encogimientos Mancuerna' }, muscle: 'TRAPS', videoId: "g6qbq4Lf1FI" },
+    { id: 'shrug_bar', name: { en: 'Barbell Shrugs', es: 'Encogimientos con Barra' }, muscle: 'TRAPS', videoId: "g6qbq4Lf1FI" },
+    { id: 'bp_db', name: { en: 'Dumbbell Bench Press', es: 'Press Banca con Mancuernas' }, muscle: 'CHEST', videoId: "VmB1G1K7v94" },
+    { id: 'goblet_sq', name: { en: 'Goblet Squat', es: 'Sentadilla Goblet' }, muscle: 'QUADS', videoId: "MeIiIdhvXT4" },
     { id: 'rear_delt_fly', name: { en: 'Rear Delt Fly', es: 'Pájaros (Deltoides Post.)' }, muscle: 'SHOULDERS', videoId: "0P6CNhTR_Y8" },
     // Arms
     { id: 'curl_ez', name: { en: 'EZ Bar Curl', es: 'Curl Barra Z' }, muscle: 'BICEPS', instructions: { en: "Strict curls. Range 5-10 or 10-15.", es: "Curl estricto. Rangos de 5-10 o 10-15 reps." }, videoId: "kwG2ipFRgfo" },

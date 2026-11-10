@@ -10,8 +10,8 @@ import type { HomeViewState } from './useHomeViewState';
 export const HomeTopSection: React.FC<{ state: HomeViewState }> = ({ state }) => {
     const {
         uniqueDaysDone, activeMeso, setActiveMeso, t, h, lang, kongBlock, isPro,
-        checkPro, setShowPlanActions, setShowGuidelines, setShowKongHub,
-        currentGuidelineImages, safeProgram, selectedDayIdx
+        checkPro, setShowPlanActions, setShowGuidelines, setShowKongHub, setShowMesoSettings,
+        currentGuidelineImages, currentStage, safeProgram, selectedDayIdx
     } = state;
 
     if (!activeMeso) return null;
@@ -52,8 +52,18 @@ export const HomeTopSection: React.FC<{ state: HomeViewState }> = ({ state }) =>
                             </>
                         )}
                     </div>
-                    {(kongBlock || (currentGuidelineImages && currentGuidelineImages.length > 0)) && (
+                    {(kongBlock || currentStage || (currentGuidelineImages && currentGuidelineImages.length > 0)) && (
                         <div className="flex items-center gap-2 mt-2 flex-wrap">
+                            {currentStage && (
+                                <button
+                                    type="button"
+                                    data-testid="active-stage-badge"
+                                    onClick={() => setShowMesoSettings(true)}
+                                    className="rounded-[4px] bg-surface-raised px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary-400 border border-border-subtle hover:text-white transition-colors"
+                                >
+                                    {currentStage.label[lang]}
+                                </button>
+                            )}
                             {kongBlock && (
                                 <button
                                     type="button"

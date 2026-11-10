@@ -15,7 +15,7 @@ describe('TemplateSelector School Grouping & Filtering', () => {
         expect(rpTpl).toBeDefined();
         expect(getTemplateSchool(rpTpl!)).toBe('RP');
 
-        const nhTpl = INITIAL_TEMPLATES.find((t) => t.id === 'toji_fushiguro');
+        const nhTpl = INITIAL_TEMPLATES.find((t) => t.id === 'nh_toji');
         expect(nhTpl).toBeDefined();
         expect(getTemplateSchool(nhTpl!)).toBe('NH');
 

@@ -11,46 +11,46 @@ export const TOKITA_TEMPLATE: ProgramDay[] = [
         id: 'tokita_1',
         dayName: { en: 'Day 1: Upper', es: 'Día 1: Torso' },
         slots: [
-            { muscle: 'CHEST', setTarget: 3, exerciseId: 'bp_bar', reps: '6-10' },
+            { muscle: 'CHEST', setTarget: 3, exerciseId: 'bp_bar', reps: '6-10', notes: 'Bench press (3 sets of 6-10)' },
             // Superset 1: DB Shoulder Press + Weighted Chin-ups
-            { muscle: 'SHOULDERS', setTarget: 4, exerciseId: 'ohp_db', reps: '8-12', supersetId: 'tokita_d1_ss1' },
+            { muscle: 'SHOULDERS', setTarget: 4, exerciseId: 'ohp_db', reps: '8-12', supersetId: 'tokita_d1_ss1', notes: 'DB press (4x8-12) + Weighted chin-ups (4x3-6)' },
             { muscle: 'BACK', setTarget: 4, exerciseId: 'chinup', reps: '3-6', supersetId: 'tokita_d1_ss1' },
-            // Tri-set 1: Curls + Knee Raises + Face Pulls
-            { muscle: 'BICEPS', setTarget: 4, exerciseId: 'curl_bar', reps: '8-12', supersetId: 'tokita_d1_ss2' },
-            { muscle: 'ABS', setTarget: 3, exerciseId: 'knee_raise', reps: 'AMRAP', supersetId: 'tokita_d1_ss2' },
+            // Giant Set 1: Curls + Knee Raises + Face Pulls
+            { muscle: 'BICEPS', setTarget: 4, exerciseId: 'curl_bar', reps: '8-12', supersetId: 'tokita_d1_ss2', notes: 'Curls (4x8-12) + Hanging knee raises AMRAP + Face pulls (4x15-20)' },
+            { muscle: 'ABS', setTarget: 4, exerciseId: 'knee_raise', reps: 'AMRAP', supersetId: 'tokita_d1_ss2' },
             { muscle: 'SHOULDERS', setTarget: 4, exerciseId: 'face_pull', reps: '15-20', supersetId: 'tokita_d1_ss2' },
-            // Tri-set 2: Pushups + Lateral Raises + Calves
-            { muscle: 'CHEST', setTarget: 3, exerciseId: 'pushup', reps: 'AMRAP', supersetId: 'tokita_d1_ss3' },
+            // Giant Set 2: Pushups + Lateral Raises + Calves
+            { muscle: 'CHEST', setTarget: 4, exerciseId: 'pushup', reps: 'AMRAP', supersetId: 'tokita_d1_ss3', notes: 'Push-ups AMRAP + Lateral raises (4x8-12) + Calf raises AMRAP' },
             { muscle: 'SHOULDERS', setTarget: 4, exerciseId: 'lat_raise', reps: '8-12', supersetId: 'tokita_d1_ss3' },
-            { muscle: 'CALVES', setTarget: 3, exerciseId: 'calf_raise', reps: 'AMRAP', supersetId: 'tokita_d1_ss3' }
+            { muscle: 'CALVES', setTarget: 4, exerciseId: 'calf_raise', reps: 'AMRAP', supersetId: 'tokita_d1_ss3' }
         ]
     },
     {
         id: 'tokita_2',
         dayName: { en: 'Day 2: Lower', es: 'Día 2: Pierna' },
         slots: [
-            { muscle: 'HAMSTRINGS', setTarget: 3, exerciseId: 'good_morning', reps: '6-12' }, 
+            { muscle: 'HAMSTRINGS', setTarget: 3, exerciseId: 'good_morning', reps: '6-12', notes: 'Good mornings (3 sets of 6-12)' }, 
             // Superset 1: Lunges + Pullups
-            { muscle: 'QUADS', setTarget: 4, exerciseId: 'lunges', reps: '10-15', supersetId: 'tokita_d2_ss1' },
+            { muscle: 'QUADS', setTarget: 4, exerciseId: 'lunges', reps: '10-15', supersetId: 'tokita_d2_ss1', notes: 'Lunges (or HIIT cardio, 4x10-15) + Pull-ups (bodyweight only) AMRAP' },
             { muscle: 'BACK', setTarget: 4, exerciseId: 'pullup', reps: 'AMRAP', supersetId: 'tokita_d2_ss1' },
-            // Tri-set: Finger Curls + Leg Raises + Calves
-            { muscle: 'FOREARMS', setTarget: 4, exerciseId: 'finger_curl', reps: '8-12', supersetId: 'tokita_d2_ss2' },
-            { muscle: 'ABS', setTarget: 3, exerciseId: 'leg_raise', reps: 'AMRAP', supersetId: 'tokita_d2_ss2' },
-            { muscle: 'CALVES', setTarget: 3, exerciseId: 'calf_raise', reps: 'AMRAP', supersetId: 'tokita_d2_ss2' }
+            // Giant Set: Finger Curls + Leg Raises + Calves
+            { muscle: 'FOREARMS', setTarget: 4, exerciseId: 'finger_curl', reps: '8-12', supersetId: 'tokita_d2_ss2', notes: 'Finger curls (4x8-12) + Hanging leg raises AMRAP + Calf raises AMRAP' },
+            { muscle: 'ABS', setTarget: 4, exerciseId: 'leg_raise', reps: 'AMRAP', supersetId: 'tokita_d2_ss2' },
+            { muscle: 'CALVES', setTarget: 4, exerciseId: 'calf_raise', reps: 'AMRAP', supersetId: 'tokita_d2_ss2' }
         ]
     },
     {
         id: 'tokita_3',
         dayName: { en: 'Day 3: Upper', es: 'Día 3: Torso' },
         slots: [
-            { muscle: 'SHOULDERS', setTarget: 4, exerciseId: 'ohp', reps: '6-10' },
+            { muscle: 'SHOULDERS', setTarget: 4, exerciseId: 'ohp', reps: '6-10', notes: 'OHP (4 sets of 6-10)' },
             // Superset 1: Pause Bench + Face Pulls
-            { muscle: 'CHEST', setTarget: 4, exerciseId: 'bp_paused', reps: '4-8', supersetId: 'tokita_d3_ss1' },
+            { muscle: 'CHEST', setTarget: 4, exerciseId: 'bp_paused', reps: '4-8', supersetId: 'tokita_d3_ss1', notes: 'Pause bench (4x4-8) + Face pulls (4x15-20)' },
             { muscle: 'SHOULDERS', setTarget: 4, exerciseId: 'face_pull', reps: '15-20', supersetId: 'tokita_d3_ss1' },
-            // Tri-set: Preacher + Rear Delt + Calves
-            { muscle: 'BICEPS', setTarget: 4, exerciseId: 'curl_preacher', reps: '6-10', supersetId: 'tokita_d3_ss2' },
+            // Giant Set: Preacher + Rear Delt + Calves
+            { muscle: 'BICEPS', setTarget: 4, exerciseId: 'curl_preacher', reps: '6-10', supersetId: 'tokita_d3_ss2', notes: 'Preacher curls (4x6-10) + Bent over lateral raises (4x8-12) + Calf raises AMRAP' },
             { muscle: 'SHOULDERS', setTarget: 4, exerciseId: 'rear_delt_fly', reps: '8-12', supersetId: 'tokita_d3_ss2' },
-            { muscle: 'CALVES', setTarget: 3, exerciseId: 'calf_raise', reps: 'AMRAP', supersetId: 'tokita_d3_ss2' }
+            { muscle: 'CALVES', setTarget: 4, exerciseId: 'calf_raise', reps: 'AMRAP', supersetId: 'tokita_d3_ss2' }
         ]
     },
     {
@@ -58,15 +58,80 @@ export const TOKITA_TEMPLATE: ProgramDay[] = [
         dayName: { en: 'Day 4: Full Body', es: 'Día 4: Cuerpo Completo' },
         slots: [
             // Superset 1: Reverse Lunges + Chest Flies
-            { muscle: 'QUADS', setTarget: 4, exerciseId: 'lunge_reverse', reps: '10-15', supersetId: 'tokita_d4_ss1' },
+            { muscle: 'QUADS', setTarget: 4, exerciseId: 'lunge_reverse', reps: '10-15', supersetId: 'tokita_d4_ss1', notes: 'Reverse lunges (or HIIT cardio, 4x10-15) + Chest flies (4x10-15)' },
             { muscle: 'CHEST', setTarget: 4, exerciseId: 'pec_fly', reps: '10-15', supersetId: 'tokita_d4_ss1' },
             // Superset 2: Weighted Pullups + Pushups
-            { muscle: 'BACK', setTarget: 4, exerciseId: 'pullup', reps: '3-6', supersetId: 'tokita_d4_ss2' },
-            { muscle: 'CHEST', setTarget: 3, exerciseId: 'pushup', reps: 'AMRAP', supersetId: 'tokita_d4_ss2' },
-            // Tri-set: Triceps + Face Pulls + Leg Raises
-            { muscle: 'TRICEPS', setTarget: 4, exerciseId: 'tri_ext', reps: '8-12', supersetId: 'tokita_d4_ss3' },
+            { muscle: 'BACK', setTarget: 4, exerciseId: 'pullup', reps: '3-6', supersetId: 'tokita_d4_ss2', notes: 'Weighted pull-ups (4x3-6) + Push-ups AMRAP' },
+            { muscle: 'CHEST', setTarget: 4, exerciseId: 'pushup', reps: 'AMRAP', supersetId: 'tokita_d4_ss2' },
+            // Giant Set: Triceps + Face Pulls + Leg Raises
+            { muscle: 'TRICEPS', setTarget: 4, exerciseId: 'tri_ext', reps: '8-12', supersetId: 'tokita_d4_ss3', notes: 'Triceps extensions (4x8-12) + Face-pulls (4x15-20) + Leg raises AMRAP' },
             { muscle: 'SHOULDERS', setTarget: 4, exerciseId: 'face_pull', reps: '15-20', supersetId: 'tokita_d4_ss3' },
-            { muscle: 'ABS', setTarget: 3, exerciseId: 'leg_raise', reps: 'AMRAP', supersetId: 'tokita_d4_ss3' }
+            { muscle: 'ABS', setTarget: 4, exerciseId: 'leg_raise', reps: 'AMRAP', supersetId: 'tokita_d4_ss3' }
+        ]
+    }
+];
+
+export const TOKITA_NO_BARBELL_TEMPLATE: ProgramDay[] = [
+    {
+        id: 'tokita_nb_1',
+        dayName: { en: 'Day 1: Upper', es: 'Día 1: Torso' },
+        slots: [
+            { muscle: 'CHEST', setTarget: 4, exerciseId: 'pushup', reps: '8-15', notes: 'Push-ups (4 sets of 8-15)' },
+            // Superset 1: DB Shoulder Press + Weighted Chin-ups
+            { muscle: 'SHOULDERS', setTarget: 4, exerciseId: 'ohp_db', reps: '8-12', supersetId: 'tokita_nb_d1_ss1', notes: 'DB press (4x8-12) + Weighted chin-ups (4x3-6)' },
+            { muscle: 'BACK', setTarget: 4, exerciseId: 'chinup', reps: '3-6', supersetId: 'tokita_nb_d1_ss1' },
+            // Giant Set 1: Curls + Knee Raises + Face Pulls
+            { muscle: 'BICEPS', setTarget: 4, exerciseId: 'curl_db', reps: '8-12', supersetId: 'tokita_nb_d1_ss2', notes: 'Curls (4x8-12) + Hanging knee raises AMRAP + Face pulls (4x15-20)' },
+            { muscle: 'ABS', setTarget: 4, exerciseId: 'knee_raise', reps: 'AMRAP', supersetId: 'tokita_nb_d1_ss2' },
+            { muscle: 'SHOULDERS', setTarget: 4, exerciseId: 'face_pull', reps: '15-20', supersetId: 'tokita_nb_d1_ss2' },
+            // Giant Set 2: Pushups + Lateral Raises + Calves
+            { muscle: 'CHEST', setTarget: 4, exerciseId: 'pushup', reps: 'AMRAP', supersetId: 'tokita_nb_d1_ss3', notes: 'Push-ups AMRAP + Lateral raises (4x8-12) + Calf raises AMRAP' },
+            { muscle: 'SHOULDERS', setTarget: 4, exerciseId: 'lat_raise', reps: '8-12', supersetId: 'tokita_nb_d1_ss3' },
+            { muscle: 'CALVES', setTarget: 4, exerciseId: 'calf_raise', reps: 'AMRAP', supersetId: 'tokita_nb_d1_ss3' }
+        ]
+    },
+    {
+        id: 'tokita_nb_2',
+        dayName: { en: 'Day 2: Lower', es: 'Día 2: Pierna' },
+        slots: [
+            { muscle: 'HAMSTRINGS', setTarget: 3, exerciseId: 'good_morning', reps: '6-12', notes: 'Band good mornings (3 sets of 6-12)' },
+            // Superset 1: Lunges + Pullups
+            { muscle: 'QUADS', setTarget: 4, exerciseId: 'lunges', reps: '10-15', supersetId: 'tokita_nb_d2_ss1', notes: 'Lunges (or HIIT cardio, 4x10-15) + Pull-ups (bodyweight only) AMRAP' },
+            { muscle: 'BACK', setTarget: 4, exerciseId: 'pullup', reps: 'AMRAP', supersetId: 'tokita_nb_d2_ss1' },
+            // Giant Set: Finger Curls + Leg Raises + Calves
+            { muscle: 'FOREARMS', setTarget: 4, exerciseId: 'finger_curl', reps: '8-12', supersetId: 'tokita_nb_d2_ss2', notes: 'Finger curls (4x8-12) + Hanging leg raises AMRAP + Calf raises AMRAP' },
+            { muscle: 'ABS', setTarget: 4, exerciseId: 'leg_raise', reps: 'AMRAP', supersetId: 'tokita_nb_d2_ss2' },
+            { muscle: 'CALVES', setTarget: 4, exerciseId: 'calf_raise', reps: 'AMRAP', supersetId: 'tokita_nb_d2_ss2' }
+        ]
+    },
+    {
+        id: 'tokita_nb_3',
+        dayName: { en: 'Day 3: Upper', es: 'Día 3: Torso' },
+        slots: [
+            { muscle: 'SHOULDERS', setTarget: 4, exerciseId: 'ohp_db', reps: '6-10', notes: 'Standing DB OHP OR Banded OHP (4 sets of 6-10)' },
+            // Superset 1: Pushups + Face Pulls
+            { muscle: 'CHEST', setTarget: 4, exerciseId: 'pushup', reps: '8-15', supersetId: 'tokita_nb_d3_ss1', notes: 'Push-ups (4x8-15) + Face pulls (4x15-20)' },
+            { muscle: 'SHOULDERS', setTarget: 4, exerciseId: 'face_pull', reps: '15-20', supersetId: 'tokita_nb_d3_ss1' },
+            // Giant Set: Preacher + Rear Delt + Calves
+            { muscle: 'BICEPS', setTarget: 4, exerciseId: 'curl_preacher', reps: '6-10', supersetId: 'tokita_nb_d3_ss2', notes: 'Preacher curls (4x6-10) + Bent over lateral raises (4x8-12) + Calf raises AMRAP' },
+            { muscle: 'SHOULDERS', setTarget: 4, exerciseId: 'rear_delt_fly', reps: '8-12', supersetId: 'tokita_nb_d3_ss2' },
+            { muscle: 'CALVES', setTarget: 4, exerciseId: 'calf_raise', reps: 'AMRAP', supersetId: 'tokita_nb_d3_ss2' }
+        ]
+    },
+    {
+        id: 'tokita_nb_4',
+        dayName: { en: 'Day 4: Full Body', es: 'Día 4: Cuerpo Completo' },
+        slots: [
+            // Superset 1: Reverse Lunges + Standing Chest Flies
+            { muscle: 'QUADS', setTarget: 4, exerciseId: 'lunge_reverse', reps: '10-15', supersetId: 'tokita_nb_d4_ss1', notes: 'Reverse lunges (or HIIT cardio, 4x10-15) + Standing chest flies (4x10-15)' },
+            { muscle: 'CHEST', setTarget: 4, exerciseId: 'pec_fly', reps: '10-15', supersetId: 'tokita_nb_d4_ss1' },
+            // Superset 2: Weighted Pullups + Pushups
+            { muscle: 'BACK', setTarget: 4, exerciseId: 'pullup', reps: '3-6', supersetId: 'tokita_nb_d4_ss2', notes: 'Weighted pull-ups (4x3-6) + Push-ups AMRAP' },
+            { muscle: 'CHEST', setTarget: 4, exerciseId: 'pushup', reps: 'AMRAP', supersetId: 'tokita_nb_d4_ss2' },
+            // Giant Set: Triceps + Face Pulls + Leg Raises
+            { muscle: 'TRICEPS', setTarget: 4, exerciseId: 'tri_ext', reps: '8-12', supersetId: 'tokita_nb_d4_ss3', notes: 'Triceps extensions (4x8-12) + Face-pulls (4x15-20) + Leg raises AMRAP' },
+            { muscle: 'SHOULDERS', setTarget: 4, exerciseId: 'face_pull', reps: '15-20', supersetId: 'tokita_nb_d4_ss3' },
+            { muscle: 'ABS', setTarget: 4, exerciseId: 'leg_raise', reps: 'AMRAP', supersetId: 'tokita_nb_d4_ss3' }
         ]
     }
 ];
@@ -425,12 +490,12 @@ export const JACKED_IN_3_TEMPLATE: ProgramDay[] = [
       dayName: { en: 'Upper Body 1', es: 'Tren Superior 1' },
       notes: 'Jalón vertical + Press horizontal. Bíceps y tríceps al final con reps altas.',
       slots: [
-        { muscle: 'CHEST', label: 'Press (Banco / Inclinado / Smith)', setTarget: 4, reps: '6-8', notes: 'Rampa progresiva. Las últimas 1-2 series deben sentirse pesadas.' },
-        { muscle: 'CHEST', label: 'Aislamiento Pecho (Cruces / Fly)', setTarget: 2, reps: '10-12' },
-        { muscle: 'BACK', label: 'Jalón Vertical / Pull-ups / Straight-arm pulldown', setTarget: 4, reps: '6-8', notes: 'Mantén repeticiones limpias y sube la carga sólo si completas todo el rango.' },
-        { muscle: 'SHOULDERS', label: 'Rear Delt (Fly invertido / Face pull)', setTarget: 2, reps: '10-12' },
-        { muscle: 'BICEPS', label: 'Curl (Barra / Mancuerna / Predicador)', setTarget: 2, reps: '20' },
-        { muscle: 'TRICEPS', label: 'Tríceps (Pushdown / Extensión overhead / PJR)', setTarget: 2, reps: '20' },
+        { muscle: 'CHEST', exerciseId: 'bp_bar', setTarget: 4, reps: '6-8', notes: 'Press (Banco / Inclinado / Smith) — Rampa progresiva. Las últimas 1-2 series deben sentirse pesadas.' },
+        { muscle: 'CHEST', exerciseId: 'cable_crossover', setTarget: 2, reps: '10-12', notes: 'Aislamiento Pecho (Cruces / Fly)' },
+        { muscle: 'BACK', exerciseId: 'lat_pull', setTarget: 4, reps: '6-8', notes: 'Jalón Vertical / Pull-ups / Straight-arm pulldown — Mantén repeticiones limpias y sube la carga sólo si completas todo el rango.' },
+        { muscle: 'SHOULDERS', exerciseId: 'rear_delt_fly', setTarget: 2, reps: '10-12', notes: 'Rear Delt (Fly invertido / Face pull)' },
+        { muscle: 'BICEPS', exerciseId: 'curl_preacher', setTarget: 2, reps: '20', notes: 'Curl (Barra / Mancuerna / Predicador) — 2x20' },
+        { muscle: 'TRICEPS', exerciseId: 'tri_push', setTarget: 2, reps: '20', notes: 'Tríceps (Pushdown / Extensión overhead / PJR) — 2x20' },
       ]
     },
     {
@@ -438,11 +503,11 @@ export const JACKED_IN_3_TEMPLATE: ProgramDay[] = [
       dayName: { en: 'Lower Body 1', es: 'Tren Inferior 1' },
       notes: 'Leg Press AVT primero, luego Sentadilla conservadora con peso máximo cómodo.',
       slots: [
-        { muscle: 'QUADS', label: 'Leg Press', setTarget: 3, reps: '10-12', notes: 'Volumen base del día. Busca una subida de carga gradual.' },
-        { muscle: 'QUADS', label: 'Sentadilla (Back / Front / Hack)', setTarget: 2, reps: '6-8', notes: 'Peso conservador post leg press. Enfócate en 1-2 sets de calidad.' },
-        { muscle: 'QUADS', label: 'Extensión de cuádriceps', setTarget: 2, reps: '15-20' },
-        { muscle: 'BICEPS', label: 'Curl', setTarget: 2, reps: '20' },
-        { muscle: 'TRICEPS', label: 'Tríceps', setTarget: 2, reps: '20' },
+        { muscle: 'QUADS', exerciseId: 'leg_press', setTarget: 3, reps: '10-12', notes: 'Leg Press — Volumen base del día. Busca una subida de carga gradual.' },
+        { muscle: 'QUADS', exerciseId: 'sq_bar', setTarget: 2, reps: '6-8', notes: 'Sentadilla (Back / Front / Hack) — Peso conservador post leg press. Enfócate en 1-2 sets de calidad.' },
+        { muscle: 'QUADS', exerciseId: 'leg_ext', setTarget: 2, reps: '15-20', notes: 'Extensión de cuádriceps' },
+        { muscle: 'BICEPS', exerciseId: 'curl_db', setTarget: 2, reps: '20', notes: 'Curl — 2x20' },
+        { muscle: 'TRICEPS', exerciseId: 'tri_ext', setTarget: 2, reps: '20', notes: 'Tríceps — 2x20' },
       ]
     },
     {
@@ -450,12 +515,12 @@ export const JACKED_IN_3_TEMPLATE: ProgramDay[] = [
       dayName: { en: 'Upper Body 2', es: 'Tren Superior 2' },
       notes: 'Jalón horizontal (remo) + Press. Trapecios en lugar de rear delts.',
       slots: [
-        { muscle: 'CHEST', label: 'Press (Banco / Hombro / Smith)', setTarget: 4, reps: '6-8', notes: 'Rampa agresiva pero controlada. Deja 1 rep en reserva en la última serie dura.' },
-        { muscle: 'CHEST', label: 'Aislamiento Hombro/Pecho (Lateral raise / Fly)', setTarget: 2, reps: '10-12' },
-        { muscle: 'BACK', label: 'Remo Horizontal (T-bar / Mancuerna / Cable)', setTarget: 4, reps: '6-8', notes: 'Empieza más liviano y termina pesado sin perder control escapular.' },
-        { muscle: 'TRAPS', label: 'Encogimientos (Mancuerna / Barra / Meadows)', setTarget: 2, reps: '10-12' },
-        { muscle: 'BICEPS', label: 'Curl', setTarget: 2, reps: '20' },
-        { muscle: 'TRICEPS', label: 'Tríceps', setTarget: 2, reps: '20' },
+        { muscle: 'CHEST', exerciseId: 'bp_inc', setTarget: 4, reps: '6-8', notes: 'Press (Banco / Hombro / Smith) — Rampa agresiva pero controlada. Deja 1 rep en reserva en la última serie dura.' },
+        { muscle: 'SHOULDERS', exerciseId: 'lat_raise_cable', setTarget: 2, reps: '10-12', notes: 'Aislamiento Hombro/Pecho (Lateral raise / Fly)' },
+        { muscle: 'BACK', exerciseId: 'tbar_row_chest_supported', setTarget: 4, reps: '6-8', notes: 'Remo Horizontal (T-bar / Mancuerna / Cable) — Empieza más liviano y termina pesado sin perder control escapular.' },
+        { muscle: 'TRAPS', exerciseId: 'shrug_db', setTarget: 2, reps: '10-12', notes: 'Encogimientos (Mancuerna / Barra / Meadows)' },
+        { muscle: 'BICEPS', exerciseId: 'curl_ez', setTarget: 2, reps: '20', notes: 'Curl — 2x20' },
+        { muscle: 'TRICEPS', exerciseId: 'rope_pressdown', setTarget: 2, reps: '20', notes: 'Tríceps — 2x20' },
       ]
     },
     {
@@ -463,11 +528,11 @@ export const JACKED_IN_3_TEMPLATE: ProgramDay[] = [
       dayName: { en: 'Lower Body 2', es: 'Tren Inferior 2' },
       notes: 'Unilateral primero (split squat o leg press sumo). Peso muerto al final.',
       slots: [
-        { muscle: 'GLUTES', label: 'Split Squat / Búlgaro / Leg Press Sumo unilateral', setTarget: 4, reps: '10-12', notes: 'Por pierna. Enfócate en control y en cargar duro las últimas series.' },
-        { muscle: 'HAMSTRINGS', label: 'Peso Muerto (Convencional / Sumo / RDL)', setTarget: 2, reps: '6-8', notes: '1-2 top sets conservadores.' },
-        { muscle: 'HAMSTRINGS', label: 'Curl femoral acostado', setTarget: 2, reps: '10-12' },
-        { muscle: 'BICEPS', label: 'Curl', setTarget: 2, reps: '20' },
-        { muscle: 'TRICEPS', label: 'Tríceps', setTarget: 2, reps: '20' },
+        { muscle: 'GLUTES', exerciseId: 'bulgarian_split_squat', setTarget: 4, reps: '10-12', notes: 'Split Squat / Búlgaro / Leg Press Sumo unilateral — Por pierna. Enfócate en control y en cargar duro las últimas series.' },
+        { muscle: 'HAMSTRINGS', exerciseId: 'rdl', setTarget: 2, reps: '6-8', notes: 'Peso Muerto (Convencional / Sumo / RDL) — 1-2 top sets conservadores.' },
+        { muscle: 'HAMSTRINGS', exerciseId: 'lying_curl', setTarget: 2, reps: '10-12', notes: 'Curl femoral acostado' },
+        { muscle: 'BICEPS', exerciseId: 'curl_cable', setTarget: 2, reps: '20', notes: 'Curl — 2x20' },
+        { muscle: 'TRICEPS', exerciseId: 'skull_crusher', setTarget: 2, reps: '20', notes: 'Tríceps — 2x20' },
       ]
     }
 ];
@@ -588,26 +653,34 @@ export const CAL_STREET_WORKOUT_TEMPLATE: ProgramDay[] = [
 export const INITIAL_TEMPLATES: GlobalTemplate[] = [
     ...NATURAL_HYPERTROPHY_TEMPLATES,
     { id: 'ji3', name: 'jacked_in_3', title: { en: "Jacked in 3 — Paul Carter", es: "Jacked in 3 — Paul Carter" }, description: { en: "4-day upper/lower split with heavy compound ramps and high-rep arm finishers.", es: "Rutina torso/pierna de 4 días con rampas pesadas en compuestos y finalizadores de brazos en reps altas." }, isPro: true, program: JACKED_IN_3_TEMPLATE, order: 0 },
-    { id: 'toji_fushiguro', name: 'toji_fushiguro', title: { en: "Toji (Natural Hypertrophy)", es: "Toji (Natural Hypertrophy)" }, description: { en: "4-Day Elite Split. Giant Sets, Neck, Forearms & Aesthetic focus.", es: "Rutina Élite de 4 Días. Series Gigantes, Cuello, Antebrazo y Estética." }, isPro: true, program: TOJI_TEMPLATE, order: 1 },
     {
         id: 'tokita',
         name: 'tokita',
         title: { en: "Tokita Ohma Program", es: "Programa Tokita Ohma" },
-        description: { en: "4-Day Hybrid Split. High volume, supersets & functional strength.", es: "Rutina Híbrida 4 Días. Alto volumen, superseries y fuerza funcional." },
+        description: { en: "Natural Hypertrophy - 4-Day Hybrid Split (Upper / Lower / Upper / Full Body) with supersets & giant sets.", es: "Natural Hypertrophy - Rutina Híbrida de 4 Días (Torso / Pierna / Torso / Cuerpo Completo) con superseries y series gigantes." },
         isPro: false,
         program: TOKITA_TEMPLATE,
+        defaultStageId: 'barbell',
+        stages: [
+            {
+                id: 'barbell',
+                label: { en: 'Stage 1 · Barbell', es: 'Stage 1 · Con Barra' },
+                subtitle: { en: '4 Days · Standard Barbell & DB', es: '4 Días · Barra y Mancuernas' },
+                program: TOKITA_TEMPLATE,
+            },
+            {
+                id: 'no_barbell',
+                label: { en: 'Stage 2 · No Barbell', es: 'Stage 2 · Sin Barra' },
+                subtitle: { en: '4 Days · Bodyweight, DB & Bands', es: '4 Días · Peso Corporal y Mancuernas' },
+                program: TOKITA_NO_BARBELL_TEMPLATE,
+            },
+        ],
         order: 2,
         guidelineImages: Array.from({length: 8}, (_, i) => 
             `${ASSETS_BASE}/assets/templates/tokita/Tokita${i === 0 ? '' : `-${i+1}`}.png`
         )
     },
-    { id: 'wizard', name: 'wizard', title: { en: "The Wizard v3 (Full Body)", es: "The Wizard v3 (Full Body)" }, description: { en: "3-Days Heavy/Light/Medium. Classic intensity cycling.", es: "3-Días Pesado/Liviano/Medio. Ciclo de intensidad clásico." }, isPro: true, program: WIZARD_TEMPLATE, order: 3 },
     { id: 'full_body', name: 'full_body', title: { en: "Aesthetic V-Taper", es: "Aesthetic V-Taper" }, description: { en: "Dr. Mike Style. Focus on V-Taper (Lats/Side Delts).", es: "Estilo Dr. Mike. Foco en V-Taper (Dorsal/Hombro Lateral)." }, isPro: true, program: FULL_BODY_TEMPLATE, order: 4, guidelineImages: RP_GUIDELINE_IMAGES },
-    { id: 'male_physique', name: 'male_physique', title: { en: "Male Physique (Upper/Lower)", es: "Male Physique (Torso/Pierna)" }, description: { en: "4-Days Bodybuilding Focus. Higher volume.", es: "4-Días Foco Culturismo. Mayor volumen." }, isPro: false, program: MALE_PHYSIQUE_TEMPLATE, order: 5, guidelineImages: RP_GUIDELINE_IMAGES },
-    { id: 'hyp_1', name: 'hyp_1', title: { en: "Base Hypertrophy 1", es: "Hipertrofia Base 1" }, description: { en: "Standard PPL. Balanced volume.", es: "PPL Estándar. Volumen equilibrado." }, isPro: false, program: DEFAULT_TEMPLATE, order: 6, guidelineImages: RP_GUIDELINE_IMAGES },
-    { id: 'hyp_2', name: 'hyp_2', title: { en: "Base Hypertrophy 2", es: "Hipertrofia Base 2" }, description: { en: "Upper/Lower Split (4 Days). Focus on basics.", es: "Torso/Pierna (4 Días). Foco en básicos." }, isPro: false, program: UPPER_LOWER_TEMPLATE, order: 7, guidelineImages: RP_GUIDELINE_IMAGES },
-    { id: 'metabolite', name: 'metabolite', title: { en: "Metabolite Phase", es: "Fase Metabolitos" }, description: { en: "High reps (20-30), short rests, the 'burn'.", es: "Reps altas (20-30), descanso corto, 'quemazón'." }, isPro: false, program: METABOLITE_TEMPLATE, order: 8, guidelineImages: RP_GUIDELINE_IMAGES },
-    { id: 'resensitization', name: 'resensitization', title: { en: "Resensitization", es: "Resensitization" }, description: { en: "Low volume, heavy weight to reset fatigue.", es: "Bajo volumen, peso alto para resetear fatiga." }, isPro: false, program: RESENS_TEMPLATE, order: 9, guidelineImages: RP_GUIDELINE_IMAGES },
     // ── CALISTHENICS TEMPLATES ─────────────────────────────────────────────────
     {
         id: 'cal_beginner',
@@ -640,5 +713,3 @@ export const INITIAL_TEMPLATES: GlobalTemplate[] = [
     DAVID_SHAUGHNESSY_SILVERBACK_TEMPLATE,
     ...RP_ALL_TEMPLATES,
 ];
-
-

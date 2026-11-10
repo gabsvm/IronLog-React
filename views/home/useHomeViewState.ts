@@ -77,14 +77,31 @@ export const useHomeViewState = ({ startSession, onEditProgram, onSkipSession, o
     };
     const [editDeload, setEditDeload] = useState(false);
     const [editNote, setEditNote] = useState('');
+    const [editStageId, setEditStageId] = useState<string>('');
+
+    const activeTemplate = useMemo(() => {
+        if (!activeMeso) return null;
+        const all = [...(personalTemplates || []), ...(globalTemplates || [])];
+        return all.find(tpl => tpl.id === activeMeso.mesoType) || null;
+    }, [activeMeso, personalTemplates, globalTemplates]);
+
+    const availableStages = useMemo(() => {
+        return activeTemplate?.stages && activeTemplate.stages.length > 1 ? activeTemplate.stages : null;
+    }, [activeTemplate]);
+
+    const currentStage = useMemo(() => {
+        if (!availableStages) return null;
+        return availableStages.find(s => s.id === (activeMeso?.stageId || activeTemplate?.defaultStageId)) || availableStages[0];
+    }, [availableStages, activeMeso?.stageId, activeTemplate?.defaultStageId]);
 
     useEffect(() => {
         if (activeMeso && showMesoSettings) {
             setEditWeeks(activeMeso.targetWeeks || 4);
             setEditDeload(activeMeso.isDeload || false);
             setEditNote(activeMeso.note || '');
+            setEditStageId(activeMeso.stageId || activeTemplate?.defaultStageId || activeTemplate?.stages?.[0]?.id || '');
         }
-    }, [activeMeso, showMesoSettings]);
+    }, [activeMeso, showMesoSettings, activeTemplate]);
 
     // Find the current active guideline images
     const currentGuidelineImages = useMemo(() => {
@@ -96,12 +113,30 @@ export const useHomeViewState = ({ startSession, onEditProgram, onSkipSession, o
 
     const handleSaveSettings = () => {
         if (!activeMeso) return;
-        setActiveMeso(prev => prev ? {
-            ...prev,
-            targetWeeks: editWeeks,
-            isDeload: editDeload,
-            note: editNote
-        } : null);
+        const selectedStage = availableStages && editStageId ? availableStages.find(s => s.id === editStageId) : undefined;
+        const prevStageId = activeMeso.stageId || activeTemplate?.defaultStageId;
+        const stageChanged = !!(selectedStage && selectedStage.id !== prevStageId);
+
+        if (selectedStage && stageChanged) {
+            setProgram(selectedStage.program);
+            const newPlan = selectedStage.program.map(day => (day.slots || []).map(slot => slot.exerciseId || null));
+            setActiveMeso(prev => prev ? {
+                ...prev,
+                stageId: selectedStage.id,
+                plan: newPlan,
+                targetWeeks: editWeeks,
+                isDeload: editDeload,
+                note: editNote
+            } : null);
+        } else {
+            setActiveMeso(prev => prev ? {
+                ...prev,
+                stageId: selectedStage ? selectedStage.id : prev.stageId,
+                targetWeeks: editWeeks,
+                isDeload: editDeload,
+                note: editNote
+            } : null);
+        }
         setShowMesoSettings(false);
     };
 
@@ -242,7 +277,8 @@ export const useHomeViewState = ({ startSession, onEditProgram, onSkipSession, o
             targetWeeks: 5,
             isDeload: false,
             plan: plan,
-            duration: 5
+            duration: 5,
+            ...(tpl.stages && tpl.stages.length > 0 ? { stageId: tpl.defaultStageId || tpl.stages[0].id } : {})
         });
 
         setShowTemplateSelector(false);
@@ -350,6 +386,10 @@ export const useHomeViewState = ({ startSession, onEditProgram, onSkipSession, o
         setEditDeload,
         editNote,
         setEditNote,
+        availableStages,
+        currentStage,
+        editStageId,
+        setEditStageId,
         currentGuidelineImages,
         handleSaveSettings,
         safeProgram,

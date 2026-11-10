@@ -152,6 +152,13 @@ export interface ProgramDay {
 
 export type MesoType = 'hyp_1' | 'hyp_2' | 'metabolite' | 'resensitization' | 'full_body' | 'wizard' | 'male_physique' | 'toji_fushiguro' | 'tokita' | string;
 
+export interface ProgramStage {
+  id: string;
+  label: { en: string; es: string };
+  subtitle?: { en: string; es: string };
+  program: ProgramDay[];
+}
+
 export interface GlobalTemplate {
   id: string;
   name: string;
@@ -163,6 +170,8 @@ export interface GlobalTemplate {
   /** Private templates are stored in the owner's account and never published. */
   scope?: 'personal';
   guidelineImages?: string[]; // NEW: Array of images for guidelines
+  stages?: ProgramStage[];
+  defaultStageId?: string;
 }
 
 export interface MesoCycle {
@@ -176,6 +185,7 @@ export interface MesoCycle {
   note?: string; // NEW: General mesocycle notes
   duration: number;
   programSystem?: ProgramRunState;
+  stageId?: string;
 }
 
 export interface Log {

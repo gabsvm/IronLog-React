@@ -1,4 +1,4 @@
-// S6: meso settings modal, moved verbatim from views/HomeViewImpl.tsx.
+import { pickLang } from '../../utils/i18n';
 import React, { Suspense } from 'react';
 import { Icon } from '../../components/ui/Icon';
 import { Button } from '../../components/ui/Button';
@@ -7,12 +7,12 @@ import type { HomeViewState } from './useHomeViewState';
 const TutorialOverlay = React.lazy(() => import('../../components/ui/TutorialOverlay').then(m => ({ default: m.TutorialOverlay })));
 
 export const HomeMesoSettingsModal: React.FC<{ state: HomeViewState }> = ({ state }) => {
-    const { onEditProgram, tutorialProgress, markTutorialSeen, t, h, setShowCompleteModal, showMesoSettings, setShowMesoSettings, editWeeks, setEditWeeks, editDeload, setEditDeload, editNote, setEditNote, handleSaveSettings, mesoSettingsTutorialSteps } = state;
+    const { onEditProgram, tutorialProgress, markTutorialSeen, t, h, lang, availableStages, editStageId, setEditStageId, setShowCompleteModal, showMesoSettings, setShowMesoSettings, editWeeks, setEditWeeks, editDeload, setEditDeload, editNote, setEditNote, handleSaveSettings, mesoSettingsTutorialSteps } = state;
     return (
         <>
             {showMesoSettings && (
                 <div className="fixed inset-0 z-modal bg-black/65 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in" onClick={() => setShowMesoSettings(false)}>
-                    <div className="premium-theme-panel w-full max-w-sm rounded-[8px] p-6 shadow-2xl relative" onClick={e => e.stopPropagation()}>
+                    <div className="premium-theme-panel w-full max-w-sm rounded-[8px] p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-[rgb(var(--text-primary))] font-bold text-xl">{t.mesoConfig}</h3>
                             <button onClick={() => setShowMesoSettings(false)} className="text-muted hover:text-[rgb(var(--text-primary))]">
@@ -21,6 +21,47 @@ export const HomeMesoSettingsModal: React.FC<{ state: HomeViewState }> = ({ stat
                         </div>
 
                         <div className="space-y-6">
+                            {/* Program Stage Selector */}
+                            {availableStages && availableStages.length > 1 && (
+                                <div data-testid="meso-stage-selector">
+                                    <label className="text-xs font-semibold uppercase text-muted tracking-wider block mb-2 px-1">
+                                        {pickLang(lang, { es: 'Etapa del programa (Stage)', en: 'Program Stage' })}
+                                    </label>
+                                    <div className="space-y-1.5">
+                                        {availableStages.map((stage) => {
+                                            const isSelected = editStageId === stage.id;
+                                            return (
+                                                <button
+                                                    key={stage.id}
+                                                    type="button"
+                                                    data-testid={`meso-stage-option-${stage.id}`}
+                                                    onClick={() => setEditStageId(stage.id)}
+                                                    className={`w-full rounded-[6px] border px-3 py-2.5 text-left transition-all flex items-center justify-between gap-2 ${
+                                                        isSelected
+                                                            ? 'border-primary-500 bg-primary-500/15 text-[rgb(var(--text-primary))]'
+                                                            : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated))] text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--text-primary))]'
+                                                    }`}
+                                                >
+                                                    <div className="min-w-0">
+                                                        <span className="block text-xs font-bold text-[rgb(var(--text-primary))] truncate">
+                                                            {stage.label[lang]}
+                                                        </span>
+                                                        {stage.subtitle?.[lang] && (
+                                                            <span className="block text-[11px] text-muted truncate">
+                                                                {stage.subtitle[lang]}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    {isSelected && (
+                                                        <Icon name="Check" size={16} className="text-primary-400 shrink-0" />
+                                                    )}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Target Weeks */}
                             <div id="tut-meso-duration">
                                 <label className="text-xs font-semibold uppercase text-muted tracking-wider block mb-2 px-1">{t.targetWeeks}</label>

@@ -18,6 +18,7 @@ export const HomeMesosView: React.FC<{ state: HomeViewState }> = ({ state }) => 
         t,
         h,
         kongBlock,
+        currentStage,
         onEditProgram,
         setShowMesoSettings,
         setShowCompleteModal,
@@ -72,6 +73,16 @@ export const HomeMesosView: React.FC<{ state: HomeViewState }> = ({ state }) => 
                                     en: `WEEK ${activeMeso.week} OF ${totalWeeks}`,
                                 })}
                             </span>
+                            {currentStage && (
+                                <button
+                                    type="button"
+                                    data-testid="active-stage-badge"
+                                    onClick={() => setShowMesoSettings(true)}
+                                    className="inline-flex items-center rounded-[4px] border border-primary-500/30 bg-primary-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary-400 hover:text-white transition-colors"
+                                >
+                                    {currentStage.label[lang]}
+                                </button>
+                            )}
                             {activeMeso.isDeload && (
                                 <span className="inline-flex items-center rounded-[4px] border border-amber-500/30 bg-amber-500/15 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-amber-400">
                                     DELOAD

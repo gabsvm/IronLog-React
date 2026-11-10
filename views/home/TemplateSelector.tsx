@@ -148,21 +148,49 @@ const getTemplateCategory = (tpl: GlobalTemplate): FilterCategory => {
     if (tpl.scope === 'personal') return 'CUSTOM';
     const id = tpl.id.toLowerCase();
     const title = (tpl.title?.en || '').toLowerCase();
+    if (id === 'full_body' || id === 'nh_toji' || id === 'nh_guts') {
+        return 'SPECIALIZATION';
+    }
     if (
-        id.includes('full_body') ||
+        id === 'nh_ult_beginner' ||
+        id === 'nh_ult_novice' ||
+        id === 'nh_baki' ||
+        id === 'nh_silver_era' ||
+        id === 'nh_superman' ||
+        id === 'nh_kinobody' ||
+        (id !== 'full_body' && id.includes('full_body')) ||
         id.includes('whole_body') ||
         id.startsWith('rp_fb_') ||
         title.includes('full body') ||
         title.includes('whole body') ||
         id === 'nh_full_body' ||
-        id === 'nh_ultimate_full_body'
+        id === 'nh_ultimate_full_body' ||
+        id === 'gsr' ||
+        id.includes('golden_six') ||
+        id.includes('silverback')
     ) {
         return 'WHOLE_BODY';
     }
-    if (id.includes('upper_lower') || id.includes('ul') || title.includes('upper') || title.includes('torso') || id === 'nh_upper_lower') {
+    if (
+        id === 'nh_ult_bridge' ||
+        id === 'nh_ult_intermediate' ||
+        id === 'nh_ult_advanced' ||
+        id === 'nh_gentleman_split' ||
+        id === 'nh_apollonian' ||
+        id === 'nh_alex_eubank' ||
+        id === 'nh_bald_omni_hybrid' ||
+        id === 'nh_kratos' ||
+        id === 'tokita' ||
+        id === 'ji3' ||
+        id.includes('upper_lower') ||
+        id.startsWith('rp_ul_') ||
+        title.includes('upper') ||
+        title.includes('torso') ||
+        id === 'nh_upper_lower'
+    ) {
         return 'UPPER_LOWER';
     }
-    if (id.includes('ppl') || id.includes('push') || id.includes('pull') || title.includes('push pull') || id === 'nh_pure_bodybuilding_phase1') {
+    if (id.includes('ppl') || id.includes('push') || id.includes('pull') || title.includes('push pull') || id === 'nh_pure_bodybuilding_phase1' || id === 'cal_beginner') {
         return 'PPL';
     }
     return 'SPECIALIZATION';
