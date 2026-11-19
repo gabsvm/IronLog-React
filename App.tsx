@@ -15,6 +15,7 @@ import { AppOnboarding } from './components/app/AppOnboarding';
 import { AppBanners } from './components/app/AppBanners';
 import type { CommandAction } from './components/ui/CommandPalette';
 import { exportCurrentBackup } from './services/autoBackup';
+import { calculateWorkoutProgression } from './services/workoutCompletionService';
 import {
     validateAndMigrateBackup,
     type GainsLabBackupV1,
@@ -65,8 +66,8 @@ const AppContent = () => {
         setExercises,
         config, rpFeedback, hasSeenOnboarding,
         isAppLoading,
-        userProfile, nutritionLogs, cardioSessions, bodyLogs, macroGoals, nutritionGoal,
-        personalTemplates, customFoods
+        userProfile,
+        personalTemplates, getNutritionSnapshot
     } = useApp();
     const activeSession = useStore(state => state.activeSession);
     const activeMeso = useStore(state => state.activeMeso);
@@ -224,8 +225,8 @@ const AppContent = () => {
     const handleExport = () => {
         void exportCurrentBackup({
             program, exercises, logs, activeMeso, activeSession,
-            userProfile, nutritionLogs, cardioSessions, bodyLogs, macroGoals, nutritionGoal,
-            personalTemplates, customFoods, rpFeedback, config
+            userProfile, ...getNutritionSnapshot(),
+            personalTemplates, rpFeedback, config
         });
     };
 
@@ -290,19 +291,34 @@ const AppContent = () => {
             skipped: true
         };
 
-        setLogs([skippedLog, ...(Array.isArray(logs) ? logs : [])]);
+        const existingLogs = Array.isArray(logs) ? logs : [];
+        const weekSnapshot: SkippedWeekSnapshot = {
+            mesoId: activeMeso.id,
+            week: activeMeso.week,
+            isDeload: !!activeMeso.isDeload,
+        };
+
+        setLogs([skippedLog, ...existingLogs]);
+
+        const progression = calculateWorkoutProgression(skippedLog, activeMeso, safeProgram, existingLogs);
+        if (progression.isMesoComplete) {
+            setShowMesoCompleteModal(true);
+        } else if (progression.updatedMeso && progression.updatedMeso !== activeMeso) {
+            setActiveMeso(progression.updatedMeso);
+        }
+
         setSkippedSessionToast({
             id: logId,
             name: sessionName,
-            weekSnapshot: { mesoId: activeMeso.id, week: activeMeso.week, isDeload: !!activeMeso.isDeload },
+            weekSnapshot,
         });
     };
 
     const handleUndoSkip = () => {
         if (!skippedSessionToast) return;
         setLogs(prev => Array.isArray(prev) ? prev.filter(l => l.id !== skippedSessionToast.id) : []);
-        // If skipping the last pending day auto-advanced the week (KONG wrapper
-        // effect), undoing the skip restores the snapshotted week.
+        setShowMesoCompleteModal(false);
+        // If skipping the last pending day auto-advanced the week, undoing the skip restores the snapshotted week.
         const snapshot = skippedSessionToast.weekSnapshot;
         const currentMeso = useStore.getState().activeMeso;
         if (shouldRestoreWeekAfterUndoSkip(snapshot, currentMeso)) {

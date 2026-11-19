@@ -103,12 +103,21 @@ describe('Active Plan Multi-Stage Selection UI & State', () => {
         // Select Stage 2
         fireEvent.click(stage2Opt);
 
-        // Click Save
+        // Save Stage 2 and adjust weeks from 5 to 8
+        const durationButtons = document.querySelectorAll('#tut-meso-duration button');
+        const plusWeekBtn = durationButtons[1];
+        expect(plusWeekBtn).toBeTruthy();
+        fireEvent.click(plusWeekBtn);
+        fireEvent.click(plusWeekBtn);
+        fireEvent.click(plusWeekBtn);
+
         const saveBtn = screen.getByRole('button', { name: /save/i });
         fireEvent.click(saveBtn);
 
         const updatedMeso = useStore.getState().activeMeso;
         expect(updatedMeso?.stageId).toBe('stage_2');
+        expect(updatedMeso?.targetWeeks).toBe(8);
+        expect(updatedMeso?.duration).toBe(8);
         expect(updatedMeso?.plan.length).toBe(3);
         expect(mockSetProgram).toHaveBeenCalledWith(NH_TOJI_STAGE_2);
         expect(currentProgram.length).toBe(3);

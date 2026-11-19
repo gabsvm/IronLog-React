@@ -85,7 +85,7 @@ describe('onboarding outcomes (real SetupWizard)', () => {
             goal: 'hypertrophy',
         });
         expect(rec.template.length).toBe(4);
-        expect(rec.mesoType).toBe('hyp_2');
+        expect(rec.mesoType).toBe('nh_ult_bridge');
         expect(rec.reasonKey).toBe('rec_4_day');
 
         // The wizard applies the recommendation it computed.

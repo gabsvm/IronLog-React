@@ -40,7 +40,7 @@ export const DataSection: React.FC<DataSectionProps> = ({
     const handleExportCsv = () => {
         const unit = resolveWeightUnit(config);
         const csv = buildTrainingCsv(logs, unit);
-        const filename = `gainslab_history_${new Date().toISOString().slice(0, 10)}.csv`;
+        const filename = `repyntra_history_${new Date().toISOString().slice(0, 10)}.csv`;
         void shareFileOrDownload(csv, filename, 'text/csv');
     };
 
@@ -122,9 +122,11 @@ export const DataSection: React.FC<DataSectionProps> = ({
                     lang={lang}
                     getState={() => {
                         const {
-                            program, exercises, userProfile, nutritionLogs, cardioSessions, bodyLogs, macroGoals,
-                            nutritionGoal, personalTemplates, customFoods, rpFeedback,
+                            program, exercises, userProfile, personalTemplates, rpFeedback,
                         } = appState;
+                        const {
+                            nutritionLogs, cardioSessions, bodyLogs, macroGoals, nutritionGoal, customFoods,
+                        } = appState.getNutritionSnapshot ? appState.getNutritionSnapshot() : (appState as any);
                         return {
                             program, exercises, logs, activeMeso, activeSession,
                             userProfile, nutritionLogs, cardioSessions, bodyLogs, macroGoals, nutritionGoal,

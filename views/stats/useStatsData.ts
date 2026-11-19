@@ -211,7 +211,7 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope }: { activeTab?
         return () => {
             cancelled = true;
         };
-    }, [isWorkerReady, safeLogs, scopeMesoId, exerciseMetaById, exsFromFrequency, selectedExId, calculateOverview, logsSignature]);
+    }, [isWorkerReady, safeLogs, scopeMesoId, exsFromFrequency, calculateOverview, logsSignature]);
 
     useEffect(() => {
         if (!isWorkerReady || !selectedExId || (activeTab && activeTab !== 'progress')) return;

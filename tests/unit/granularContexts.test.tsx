@@ -71,7 +71,7 @@ vi.mock('../../hooks/usePersistedState', () => ({
     },
 }));
 
-import { AppProvider, useApp, useAppPreferences, useSyncStatus } from '../../context/AppContext';
+import { AppProvider, useApp, useAppPreferences, useNutrition, useSyncStatus } from '../../context/AppContext';
 
 describe('R3: Granular Contexts Isolation', () => {
     it('isolates useAppPreferences consumers from AppContext/logs/sync changes', async () => {
@@ -132,5 +132,44 @@ describe('R3: Granular Contexts Isolation', () => {
 
         // SyncStatusConsumer must NOT re-render
         expect(syncStatusRenderCount).toBe(initialSyncStatusRenders);
+    });
+
+    it('isolates AppContext consumers from NutritionContext updates', async () => {
+        let nutritionRenderCount = 0;
+        let appRenderCount = 0;
+        let setNutritionLogsFn: any = null;
+
+        const NutritionConsumer = () => {
+            const { nutritionLogs, setNutritionLogs } = useNutrition();
+            nutritionRenderCount++;
+            setNutritionLogsFn = setNutritionLogs;
+            return <div data-testid="nutrition-consumer">{nutritionLogs.length}</div>;
+        };
+
+        const AppConsumer = () => {
+            const { logs } = useApp();
+            appRenderCount++;
+            return <div data-testid="app-consumer-isolated">logs:{logs.length}</div>;
+        };
+
+        const { findByTestId } = render(
+            <AppProvider>
+                <NutritionConsumer />
+                <AppConsumer />
+            </AppProvider>
+        );
+
+        await findByTestId('nutrition-consumer');
+        await findByTestId('app-consumer-isolated');
+
+        const initialNutritionRenders = nutritionRenderCount;
+        const initialAppRenders = appRenderCount;
+
+        act(() => {
+            setNutritionLogsFn([{ date: '2026-11-19', entries: [], waterMl: 500 }]);
+        });
+
+        expect(nutritionRenderCount).toBe(initialNutritionRenders + 1);
+        expect(appRenderCount).toBe(initialAppRenders);
     });
 });

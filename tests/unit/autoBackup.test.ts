@@ -144,7 +144,7 @@ describe('Q6: export with Web Share fallback', () => {
         expect(share).toHaveBeenCalledTimes(1);
         const file = share.mock.calls[0][0].files[0] as File;
         expect(file).toBeInstanceOf(File);
-        expect(file.name).toMatch(/^gainslab_backup_.*\.json$/);
+        expect(file.name).toMatch(/^repyntra_backup_.*\.json$/);
         expect(file.size).toBeGreaterThan(0);
         expect(await getLastBackupAt()).toBeGreaterThan(0);
     });

@@ -28,8 +28,7 @@ export interface UseAppBootstrapEffectsDeps {
     userProfile: UserProfile;
     setGlobalTemplates: Dispatch<SetStateAction<GlobalTemplate[]>>;
     personalTemplates: GlobalTemplate[];
-    baseTemplates: GlobalTemplate[];
-    defaultsLoading: boolean;
+    baseTemplates: GlobalTemplate[] | null;
     rpFeedback: Record<string, Record<string, Record<string, FeedbackEntry>>>;
     bodyLogs: BodyLog[];
     macroGoals: MacroGoals;
@@ -69,7 +68,6 @@ export const useAppBootstrapEffects = ({
     setGlobalTemplates,
     personalTemplates,
     baseTemplates,
-    defaultsLoading,
     rpFeedback,
     bodyLogs,
     macroGoals,
@@ -89,11 +87,11 @@ export const useAppBootstrapEffects = ({
     foregroundFlushRef,
     dirtyTracking,
 }: UseAppBootstrapEffectsDeps) => {
-    // --- FETCH GLOBAL DATA ---
+    // --- FETCH GLOBAL TEMPLATES (when template catalog is loaded) ---
     useEffect(() => {
-        if (!isFirebaseConfigured() || !isOnline || !baseTemplates || defaultsLoading) return;
+        if (!isFirebaseConfigured() || !isOnline || !baseTemplates) return;
         let cancelled = false;
-        const fetchData = async () => {
+        const fetchTemplates = async () => {
             try {
                 const { db, firestoreApi } = await getFirebaseFirestoreServices();
                 if (!db || cancelled) return;
@@ -109,8 +107,11 @@ export const useAppBootstrapEffects = ({
                 fetchedTemplates.forEach(remote => {
                     const idx = mergedTemplates.findIndex(local => local.id === remote.id);
                     if (idx >= 0) {
-                        // Remote overrides local (allows updating content via CMS)
-                        mergedTemplates[idx] = remote;
+                        // Remote overrides local (allows updating content via CMS), but never overwrite official multi-stage definitions.
+                        const local = mergedTemplates[idx];
+                        mergedTemplates[idx] = local.stages && local.stages.length > 0
+                            ? { ...remote, program: local.program, stages: local.stages, defaultStageId: local.defaultStageId }
+                            : remote;
                     } else {
                         // Append new remote templates
                         mergedTemplates.push(remote);
@@ -121,6 +122,27 @@ export const useAppBootstrapEffects = ({
                 mergedTemplates.sort((a, b) => a.order - b.order);
 
                 if (!cancelled && mergedTemplates.length > 0) setGlobalTemplates(mergedTemplates);
+            } catch (e: any) {
+                if (!e.code || e.code !== 'permission-denied') console.error("Global Templates Fetch Error", e);
+            }
+        };
+
+        const cancelIdle = scheduleWhenIdle(fetchTemplates, 1500);
+        return () => {
+            cancelled = true;
+            cancelIdle();
+        };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- S6: setGlobalTemplates is a stable useState setter.
+    }, [baseTemplates, isOnline, user]);
+
+    // --- FETCH GLOBAL EXERCISES ---
+    useEffect(() => {
+        if (!isFirebaseConfigured() || !isOnline || isAppLoading) return;
+        let cancelled = false;
+        const fetchExercises = async () => {
+            try {
+                const { db, firestoreApi } = await getFirebaseFirestoreServices();
+                if (!db || cancelled) return;
 
                 const qEx = firestoreApi.collection(db, "global_exercises");
                 const exSnapshot = await firestoreApi.getDocs(qEx);
@@ -135,23 +157,23 @@ export const useAppBootstrapEffects = ({
                     });
                 }
             } catch (e: any) {
-                if (!e.code || e.code !== 'permission-denied') console.error("Global Data Fetch Error", e);
+                if (!e.code || e.code !== 'permission-denied') console.error("Global Exercises Fetch Error", e);
             }
         };
 
-        const cancelIdle = scheduleWhenIdle(fetchData, 1500);
+        const cancelIdle = scheduleWhenIdle(fetchExercises, 1500);
         return () => {
             cancelled = true;
             cancelIdle();
         };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- S6: dependency list moved verbatim from AppProvider; the omitted names are useState setters/refs (stable) or the per-render withDirtyTrackingSuppressed, exactly as before.
-    }, [baseTemplates, defaultsLoading, isOnline, user, setExercises]);
+    }, [isAppLoading, isOnline, user, setExercises]);
 
     // --- PWA INSTALL HANDLER ---
     useEffect(() => {
         const isStandaloneQuery = window.matchMedia('(display-mode: standalone)');
         setIsStandalone(isStandaloneQuery.matches);
-        isStandaloneQuery.addEventListener('change', (e) => setIsStandalone(e.matches));
+        const handleStandaloneChange = (e: MediaQueryListEvent) => setIsStandalone(e.matches);
+        isStandaloneQuery.addEventListener?.('change', handleStandaloneChange);
 
         // Ensure we catch it if it happens after mount
         const handler = (e: BeforeInstallPromptEvent) => {
@@ -160,7 +182,10 @@ export const useAppBootstrapEffects = ({
             setDeferredPrompt(e);
         };
         window.addEventListener('beforeinstallprompt', handler);
-        return () => window.removeEventListener('beforeinstallprompt', handler);
+        return () => {
+            isStandaloneQuery.removeEventListener?.('change', handleStandaloneChange);
+            window.removeEventListener('beforeinstallprompt', handler);
+        };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- S6: dependency list moved verbatim from AppProvider; the omitted names are useState setters/refs (stable) or the per-render withDirtyTrackingSuppressed, exactly as before.
     }, []);
 

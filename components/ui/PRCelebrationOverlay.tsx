@@ -1,9 +1,11 @@
 
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { useAppPreferences } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
 import { Button } from './Button';
 import { Icon } from './Icon';
+import { renderPRCard } from '../../utils/prCard';
+import { shareFileOrDownload } from '../../utils/shareFile';
 
 interface PRCelebrationOverlayProps {
     onDismiss: () => void;
@@ -12,54 +14,22 @@ interface PRCelebrationOverlayProps {
 export const PRCelebrationOverlay: React.FC<PRCelebrationOverlayProps> = ({ onDismiss }) => {
     const { lang } = useAppPreferences();
     const t = TRANSLATIONS[lang];
-    const cardRef = useRef<HTMLDivElement>(null);
     const [isSharing, setIsSharing] = useState(false);
 
     const handleShare = async () => {
         try {
             setIsSharing(true);
-            if (!(window as any).html2canvas) {
-                await new Promise((resolve, reject) => {
-                    const script = document.createElement('script');
-                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-                    script.onload = resolve;
-                    script.onerror = reject;
-                    document.head.appendChild(script);
-                });
-            }
-            if (!cardRef.current) return;
-
-            // Add temp styling for screenshot
-            cardRef.current.classList.add('bg-zinc-950', 'p-8', 'rounded-3xl');
-            const h2c = (window as any).html2canvas;
-            const canvas = await h2c(cardRef.current, {
-                backgroundColor: '#09090b', // zinc-950
-                scale: 3,
-                useCORS: true,
-                logging: false,
+            const blob = await renderPRCard({
+                title: t.newRecord,
+                message: t.prMessage,
+                watermark: 'REPYNTRA PRO',
             });
-            cardRef.current.classList.remove('bg-zinc-950', 'p-8', 'rounded-3xl');
-
-            canvas.toBlob(async (blob: Blob | null) => {
-                if (!blob) return;
-                const file = new File([blob], 'gainslab-pr.png', { type: 'image/png' });
-                const shareData = {
-                    title: TRANSLATIONS[lang].copy.pRCelebrationOverlay.newPr,
-                    text: TRANSLATIONS[lang].copy.pRCelebrationOverlay.checkOutMyNew,
-                    files: [file]
-                };
-
-                if (navigator.canShare && navigator.canShare(shareData)) {
-                    await navigator.share(shareData);
-                } else {
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'gainslab-pr.png';
-                    a.click();
-                    URL.revokeObjectURL(url);
-                }
-            }, 'image/png');
+            await shareFileOrDownload(
+                blob,
+                'repyntra-pr.png',
+                'image/png',
+                TRANSLATIONS[lang].copy.pRCelebrationOverlay.newPr,
+            );
         } catch (e) {
             console.error('Share failed', e);
         } finally {
@@ -76,8 +46,7 @@ export const PRCelebrationOverlay: React.FC<PRCelebrationOverlayProps> = ({ onDi
         >
             <div className="w-full max-w-sm flex flex-col items-center text-center animate-in zoom-in-95 duration-500 delay-100">
 
-                {/* Reference for the screenshot */}
-                <div ref={cardRef} className="flex flex-col items-center w-full relative">
+                <div className="flex flex-col items-center w-full relative">
                     {/* Trophy Animation Container */}
                     <div className="relative mb-8 mt-4">
                         {/* Glowing effect */}

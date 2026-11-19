@@ -225,4 +225,142 @@ describe('workoutCompletionService', () => {
     expect(result.isWeekComplete).toBe(false);
     expect(result.isMesoComplete).toBe(false);
   });
+
+  it('prefers targetWeeks over stale duration when checking mesocycle completion', () => {
+    const extendedMeso: MesoCycle = {
+      ...dummyMeso,
+      week: 4,
+      duration: 4,
+      targetWeeks: 6,
+    };
+
+    const day0Log: Log = {
+      id: 701,
+      name: 'Day 1',
+      startTime: 1000,
+      endTime: 2000,
+      duration: 1000,
+      mesoId: 10,
+      week: 4,
+      dayIdx: 0,
+      exercises: [],
+    };
+    const day1Log: Log = {
+      id: 702,
+      name: 'Day 2',
+      startTime: 3000,
+      endTime: 4000,
+      duration: 1000,
+      mesoId: 10,
+      week: 4,
+      dayIdx: 1,
+      exercises: [],
+    };
+
+    const extendedResult = calculateWorkoutProgression(day1Log, extendedMeso, dummyProgram, [day0Log]);
+    expect(extendedResult.isWeekComplete).toBe(true);
+    expect(extendedResult.isMesoComplete).toBe(false);
+    expect(extendedResult.updatedMeso?.week).toBe(5);
+
+    const shortenedMeso: MesoCycle = {
+      ...dummyMeso,
+      week: 3,
+      duration: 6,
+      targetWeeks: 3,
+    };
+    const shortenedDay0: Log = { ...day0Log, id: 703, week: 3 };
+    const shortenedDay1: Log = { ...day1Log, id: 704, week: 3 };
+
+    const shortenedResult = calculateWorkoutProgression(shortenedDay1, shortenedMeso, dummyProgram, [shortenedDay0]);
+    expect(shortenedResult.isWeekComplete).toBe(true);
+    expect(shortenedResult.isMesoComplete).toBe(true);
+  });
+
+  it('advances week when a scheduled day was skipped and remaining days are completed', () => {
+    const skippedDay0: Log = {
+      id: 801,
+      name: 'Day 1',
+      startTime: 1000,
+      endTime: 1000,
+      duration: 0,
+      mesoId: 10,
+      week: 1,
+      dayIdx: 0,
+      exercises: [],
+      skipped: true,
+    };
+    const completedDay1: Log = {
+      id: 802,
+      name: 'Day 2',
+      startTime: 2000,
+      endTime: 3000,
+      duration: 1000,
+      mesoId: 10,
+      week: 1,
+      dayIdx: 1,
+      exercises: [],
+    };
+
+    const result = calculateWorkoutProgression(completedDay1, dummyMeso, dummyProgram, [skippedDay0]);
+    expect(result.isWeekComplete).toBe(true);
+    expect(result.isMesoComplete).toBe(false);
+    expect(result.updatedMeso?.week).toBe(2);
+  });
+
+  it('signals mesocycle complete when skipping the final remaining day of the final week', () => {
+    const finalWeekMeso: MesoCycle = {
+      ...dummyMeso,
+      week: 4,
+      targetWeeks: 4,
+    };
+    const completedDay0: Log = {
+      id: 901,
+      name: 'Day 1',
+      startTime: 1000,
+      endTime: 2000,
+      duration: 1000,
+      mesoId: 10,
+      week: 4,
+      dayIdx: 0,
+      exercises: [],
+    };
+    const skippedDay1: Log = {
+      id: 902,
+      name: 'Day 2',
+      startTime: 3000,
+      endTime: 3000,
+      duration: 0,
+      mesoId: 10,
+      week: 4,
+      dayIdx: 1,
+      exercises: [],
+      skipped: true,
+    };
+
+    const result = calculateWorkoutProgression(skippedDay1, finalWeekMeso, dummyProgram, [completedDay0]);
+    expect(result.isWeekComplete).toBe(true);
+    expect(result.isMesoComplete).toBe(true);
+  });
+
+  it('never marks week complete when program has zero scheduled slots', () => {
+    const emptyProgram: ProgramDay[] = [
+      { id: 'rest_1', dayName: { en: 'Rest', es: 'Descanso' }, slots: [] },
+    ];
+    const log: Log = {
+      id: 950,
+      name: 'Ad-hoc',
+      startTime: 1000,
+      endTime: 2000,
+      duration: 1000,
+      mesoId: 10,
+      week: 1,
+      dayIdx: 0,
+      exercises: [],
+    };
+
+    const result = calculateWorkoutProgression(log, dummyMeso, emptyProgram, []);
+    expect(result.isWeekComplete).toBe(false);
+    expect(result.isMesoComplete).toBe(false);
+    expect(result.updatedMeso?.week).toBe(1);
+  });
 });

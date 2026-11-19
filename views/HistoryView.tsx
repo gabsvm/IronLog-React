@@ -277,7 +277,7 @@ export const HistoryView: React.FC = () => {
     const handleExportCSV = useCallback(async () => {
         if (!checkPro('csv_export')) return;
         const csv = buildTrainingCsv(safeLogs, resolveWeightUnit(config));
-        const filename = `gainslab_history_${todayLocalDateKey()}.csv`;
+        const filename = `repyntra_history_${todayLocalDateKey()}.csv`;
         await shareFileOrDownload(csv, filename, 'text/csv');
     }, [checkPro, config, safeLogs]);
 

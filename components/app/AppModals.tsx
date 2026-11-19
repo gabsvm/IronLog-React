@@ -68,7 +68,7 @@ export const AppModals: React.FC<AppModalsProps> = ({
     const {
         lang, program, exercises, logs, config, rpFeedback,
         pendingCloudData, pendingCloudSections, confirmCloudSync, cancelCloudSync,
-        userProfile, nutritionLogs, cardioSessions, bodyLogs, macroGoals, nutritionGoal,
+        userProfile, getNutritionSnapshot,
         setProgram,
     } = useApp();
     const activeMeso = useStore(state => state.activeMeso);
@@ -83,11 +83,14 @@ export const AppModals: React.FC<AppModalsProps> = ({
         setIsSyncing(true);
         setShowForceSyncModal(false);
         const currentActiveSession = useStore.getState().activeSession;
+        const { nutritionLogs, cardioSessions, bodyLogs, macroGoals, nutritionGoal } = getNutritionSnapshot();
         try {
             await syncService.uploadState(user.uid, {
                 program, activeMeso, activeSession: currentActiveSession, exercises, logs,
                 config, rpFeedback,
-                userProfile, nutritionLogs, cardioSessions, bodyLogs, macroGoals, nutritionGoal,
+                userProfile, nutritionLogs, cardioSessions, bodyLogs,
+                macroGoals: macroGoals ?? undefined,
+                nutritionGoal,
                 email: user.email || null,
                 lastUpdated: Date.now(),
             });
@@ -104,7 +107,7 @@ export const AppModals: React.FC<AppModalsProps> = ({
         } finally {
             setIsSyncing(false);
         }
-    }, [user, program, activeMeso, exercises, logs, config, rpFeedback, userProfile, nutritionLogs, cardioSessions, bodyLogs, macroGoals, nutritionGoal, t, lang, setIsSyncing, setShowForceSyncModal, setForceSyncFeedback]);
+    }, [user, program, activeMeso, exercises, logs, config, rpFeedback, userProfile, getNutritionSnapshot, t, lang, setIsSyncing, setShowForceSyncModal, setForceSyncFeedback]);
 
     const confirmImport = useCallback(async () => {
         if (!validatedBackup) return;

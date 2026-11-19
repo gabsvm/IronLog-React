@@ -8,6 +8,7 @@
 // auth to create); at most REPORTS_PER_SESSION per session, never the same
 // message twice. Firebase is imported lazily so the entry chunk stays small.
 import type { ErrorEntry } from './errorLog';
+import { getFirebaseAuthServices, getFirebaseFirestoreServices, isFirebaseConfigured } from '../lib/firebaseLoader';
 
 export const ERROR_REPORTS_OPT_IN_KEY = 'il_error_reports_optin_v1';
 export const REPORTS_PER_SESSION = 10;
@@ -60,7 +61,6 @@ export interface ReportSink {
 /** Real sink: Firestore addDoc, only with a signed-in user. Loaded on first use. */
 export const firestoreReportSink: ReportSink = {
     async send(doc) {
-        const { getFirebaseAuthServices, getFirebaseFirestoreServices, isFirebaseConfigured } = await import('../lib/firebaseLoader');
         if (!isFirebaseConfigured()) return false;
         const { auth } = await getFirebaseAuthServices();
         if (!auth?.currentUser) return false;

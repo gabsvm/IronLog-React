@@ -98,7 +98,7 @@ test.describe('Q12: training CSV import/export', () => {
             page.waitForEvent('download', { timeout: 10000 }),
             reopened.data.getByRole('button', { name: /Exportar CSV/ }).click(),
         ]);
-        expect(download.suggestedFilename()).toMatch(/^gainslab_history_\d{4}-\d{2}-\d{2}\.csv$/);
+        expect(download.suggestedFilename()).toMatch(/^repyntra_history_\d{4}-\d{2}-\d{2}\.csv$/);
         const content = readFileSync(await download.path(), 'utf8');
         const [header, ...rows] = content.split('\n');
         expect(header).toContain('Weight(kg)');

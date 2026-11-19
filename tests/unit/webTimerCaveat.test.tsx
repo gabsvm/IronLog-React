@@ -38,6 +38,14 @@ vi.mock('../../context/AppContext', () => ({
         setPersonalTemplates: vi.fn(),
     }),
     useAppPreferences: () => ({ lang: 'es', setLang: vi.fn() }),
+    useNutrition: () => ({
+        nutritionLogs: [], setNutritionLogs: vi.fn(),
+        cardioSessions: [], setCardioSessions: vi.fn(),
+        nutritionGoal: { calories: 2500, protein: 180, carbs: 280, fat: 70 }, setNutritionGoal: vi.fn(),
+        bodyLogs: [], setBodyLogs: vi.fn(),
+        macroGoals: null, setMacroGoals: vi.fn(),
+        customFoods: [], setCustomFoods: vi.fn(),
+    }),
     useSyncMeta: () => ({ localLastUpdated: null, localSectionSyncMeta: {} }),
     useSyncStatus: () => ({ isOnline: true, syncStatus: { pending: 0, isSyncing: false, lastSyncedAt: null } }),
 }));

@@ -50,7 +50,7 @@ export const shareFileOrDownload = async (
     content: string | Blob,
     filename: string,
     mime: string,
-    title = 'GainsLab',
+    title = 'Repyntra',
     deps: { nativeShare?: typeof nativeShareFile; isNative?: () => boolean } = {},
 ): Promise<'shared' | 'downloaded'> => {
     const isNative = deps.isNative ?? (() => Capacitor.isNativePlatform());

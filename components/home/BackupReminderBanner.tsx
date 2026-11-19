@@ -53,9 +53,11 @@ export const BackupReminderBanner: React.FC = () => {
     const handleExport = async () => {
         const {
             program, exercises, logs,
-            userProfile, nutritionLogs, cardioSessions, bodyLogs, macroGoals, nutritionGoal,
-            personalTemplates, customFoods, rpFeedback, config,
+            userProfile, personalTemplates, rpFeedback, config,
         } = appState;
+        const {
+            nutritionLogs, cardioSessions, bodyLogs, macroGoals, nutritionGoal, customFoods,
+        } = appState.getNutritionSnapshot ? appState.getNutritionSnapshot() : (appState as any);
         await exportCurrentBackup({
             program, exercises, logs, activeMeso, activeSession,
             userProfile, nutritionLogs, cardioSessions, bodyLogs, macroGoals, nutritionGoal,

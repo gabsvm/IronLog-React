@@ -90,7 +90,6 @@ export const createBackupEnvelope = (state: GainsLabBackupState): GainsLabBackup
         exportedAt: Date.now(),
         appVersion: APP_VERSION,
         state: backupState,
-        data: backupState,
     };
 };
 
@@ -293,5 +292,5 @@ export const restoreBackupToStorage = async (backup: GainsLabBackupV1): Promise<
  * Generates the standardized download filename.
  */
 export const getBackupDownloadFilename = (): string => {
-    return `gainslab_backup_${todayLocalDateKey()}.json`;
+    return `repyntra_backup_${todayLocalDateKey()}.json`;
 };

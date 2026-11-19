@@ -7,7 +7,7 @@ import { HomeSkeleton } from '../components/ui/SkeletonLoader';
 import { useAuth } from './AuthContext';
 import { useStore } from '../lib/store';
 import { isMeaningfullyEmptyLocalState } from '../services/syncHelpers';
-import { SyncMetaContextType, SyncStatusContextType, AppContext, SyncMetaContext, SyncStatusContext, AppPreferencesContext, AppConfigContext, TutorialContext, INITIAL_TUTORIAL_STATE } from './app/appContexts';
+import { SyncMetaContextType, SyncStatusContextType, NutritionContextType, NutritionSnapshot, AppContext, NutritionContext, SyncMetaContext, SyncStatusContext, AppPreferencesContext, AppConfigContext, TutorialContext, INITIAL_TUTORIAL_STATE } from './app/appContexts';
 import { useDefaultsBootstrap } from './app/useDefaultsBootstrap';
 import { useAppBootstrapEffects } from './app/useAppBootstrapEffects';
 import { useLanguage } from './app/useLanguage';
@@ -21,7 +21,7 @@ if (typeof window !== 'undefined') {
 }
 
 // S6: types/contexts moved to context/app/appContexts; re-exported for existing importers.
-export type { SyncMetaContextType, SyncStatusContextType } from './app/appContexts';
+export type { SyncMetaContextType, SyncStatusContextType, NutritionContextType, NutritionSnapshot } from './app/appContexts';
 
 export const AppProvider = ({ children }: PropsWithChildren) => {
     const { user, subscription } = useAuth();
@@ -109,7 +109,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         defaultsLoading &&
         !programLoading &&
         !exLoading &&
-        (program.length === 0 || exercises.length === 0 || globalTemplates.length === 0);
+        (program.length === 0 || exercises.length === 0);
 
     // Keep the training core atomic at launch, but do not hold the first
     // interactive Home render behind data that is only used by Nutrition.
@@ -152,7 +152,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     };
 
     // S6: bootstrap effects, cloud sync and theme/wake-lock live in context/app/.
-    useDefaultsBootstrap({
+    const { ensureGlobalTemplatesLoaded } = useDefaultsBootstrap({
         program,
         setProgram,
         programLoading,
@@ -164,6 +164,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         setDefaultLibrary,
         defaultTemplate,
         setDefaultTemplate,
+        baseTemplates,
         setBaseTemplates,
         setDefaultsLoading,
     });
@@ -186,7 +187,6 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         setGlobalTemplates,
         personalTemplates,
         baseTemplates,
-        defaultsLoading,
         rpFeedback,
         bodyLogs,
         macroGoals,
@@ -348,6 +348,52 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         resetTutorials,
     }), [tutorialProgress, markTutorialSeen, resetTutorials]);
 
+    const nutritionSnapshotRef = useRef<NutritionSnapshot>({
+        nutritionLogs,
+        cardioSessions,
+        nutritionGoal,
+        bodyLogs,
+        macroGoals,
+        customFoods,
+    });
+    nutritionSnapshotRef.current = {
+        nutritionLogs,
+        cardioSessions,
+        nutritionGoal,
+        bodyLogs,
+        macroGoals,
+        customFoods,
+    };
+    const getNutritionSnapshot = useCallback(() => nutritionSnapshotRef.current, []);
+
+    const nutritionValue = useMemo<NutritionContextType>(() => ({
+        nutritionLogs,
+        setNutritionLogs,
+        cardioSessions,
+        setCardioSessions,
+        nutritionGoal,
+        setNutritionGoal,
+        bodyLogs,
+        setBodyLogs,
+        macroGoals,
+        setMacroGoals,
+        customFoods,
+        setCustomFoods,
+    }), [
+        nutritionLogs,
+        setNutritionLogs,
+        cardioSessions,
+        setCardioSessions,
+        nutritionGoal,
+        setNutritionGoal,
+        bodyLogs,
+        setBodyLogs,
+        macroGoals,
+        setMacroGoals,
+        customFoods,
+        setCustomFoods,
+    ]);
+
     const contextValue = useMemo(() => ({
         lang, setLang, theme, setTheme, colorTheme, setColorTheme,
         effectsMode, setEffectsMode, resolvedEffects,
@@ -365,12 +411,8 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         globalTemplates, setGlobalTemplates,
         personalTemplates, setPersonalTemplates,
         userProfile, setUserProfile,
-        nutritionLogs, setNutritionLogs,
-        cardioSessions, setCardioSessions,
-        nutritionGoal, setNutritionGoal,
-        bodyLogs, setBodyLogs,
-        macroGoals, setMacroGoals,
-        customFoods, setCustomFoods,
+        getNutritionSnapshot,
+        ensureGlobalTemplatesLoaded,
     }), [
         lang, setLang, theme, setTheme, colorTheme, setColorTheme,
         effectsMode, setEffectsMode, resolvedEffects,
@@ -388,12 +430,8 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         globalTemplates, setGlobalTemplates,
         personalTemplates, setPersonalTemplates,
         userProfile, setUserProfile,
-        nutritionLogs, setNutritionLogs,
-        cardioSessions, setCardioSessions,
-        nutritionGoal, setNutritionGoal,
-        bodyLogs, setBodyLogs,
-        macroGoals, setMacroGoals,
-        customFoods, setCustomFoods,
+        getNutritionSnapshot,
+        ensureGlobalTemplatesLoaded,
     ]);
 
     const syncMetaValue = useMemo(() => ({
@@ -413,19 +451,21 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
 
     return (
         <AppContext.Provider value={contextValue}>
-            <SyncMetaContext.Provider value={syncMetaValue}>
-                <SyncStatusContext.Provider value={syncStatusValue}>
-                    <AppPreferencesContext.Provider value={preferencesValue}>
-                        <AppConfigContext.Provider value={configValue}>
-                            <TutorialContext.Provider value={tutorialValue}>
-                                <TimerProvider>
-                                    {children}
-                                </TimerProvider>
-                            </TutorialContext.Provider>
-                        </AppConfigContext.Provider>
-                    </AppPreferencesContext.Provider>
-                </SyncStatusContext.Provider>
-            </SyncMetaContext.Provider>
+            <NutritionContext.Provider value={nutritionValue}>
+                <SyncMetaContext.Provider value={syncMetaValue}>
+                    <SyncStatusContext.Provider value={syncStatusValue}>
+                        <AppPreferencesContext.Provider value={preferencesValue}>
+                            <AppConfigContext.Provider value={configValue}>
+                                <TutorialContext.Provider value={tutorialValue}>
+                                    <TimerProvider>
+                                        {children}
+                                    </TimerProvider>
+                                </TutorialContext.Provider>
+                            </AppConfigContext.Provider>
+                        </AppPreferencesContext.Provider>
+                    </SyncStatusContext.Provider>
+                </SyncMetaContext.Provider>
+            </NutritionContext.Provider>
         </AppContext.Provider>
     );
 };
@@ -433,6 +473,12 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
 export const useApp = () => {
     const context = useContext(AppContext);
     if (!context) throw new Error('useApp must be used within an AppProvider');
+    return context;
+};
+
+export const useNutrition = () => {
+    const context = useContext(NutritionContext);
+    if (!context) throw new Error('useNutrition must be used within an AppProvider');
     return context;
 };
 

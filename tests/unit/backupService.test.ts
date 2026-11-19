@@ -31,6 +31,7 @@ describe('backupService', () => {
         expect(backup.state.program).toHaveLength(1);
         expect(backup.state.customFoods).toHaveLength(1);
         expect(backup.state.cardioSessions).toHaveLength(1);
+        expect(backup.data).toBeUndefined();
     });
 
     it('summarizes backup domains accurately', () => {
@@ -51,6 +52,22 @@ describe('backupService', () => {
         expect(result.valid).toBe(true);
         if (result.valid) {
             expect(result.backup.schema).toBe(BACKUP_SCHEMA);
+            expect(result.summary.programsCount).toBe(1);
+            expect(result.summary.logsCount).toBe(1);
+        }
+    });
+
+    it('still validates a legacy v1 envelope containing only data without state', () => {
+        const legacyV1 = {
+            schema: BACKUP_SCHEMA,
+            version: CURRENT_BACKUP_VERSION,
+            exportedAt: Date.now(),
+            appVersion: '4.0.3',
+            data: sampleState,
+        };
+        const result = validateAndMigrateBackup(legacyV1);
+        expect(result.valid).toBe(true);
+        if (result.valid) {
             expect(result.summary.programsCount).toBe(1);
             expect(result.summary.logsCount).toBe(1);
         }

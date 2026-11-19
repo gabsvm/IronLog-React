@@ -90,7 +90,8 @@ export const useSetupWizardState = ({ onComplete }: SetupWizardProps) => {
             targetWeeks: 5,
             isDeload: false,
             plan,
-            duration: 5
+            duration: 5,
+            ...(recommendation.stageId ? { stageId: recommendation.stageId } : {})
         });
         onComplete({ mode: 'suggested', template: recommendation.template });
     };

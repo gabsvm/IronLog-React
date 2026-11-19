@@ -13,16 +13,18 @@ import { KONG_4DAY_V1 } from '../../programs/kong/kong4Day';
 import { resolveProgramWeek } from '../../programs/engine/ProgramResolver';
 import { startProgramRun } from '../../programs/engine/ProgramRunHelpers';
 import { getProgramBlockForWeek } from '../../programs/engine/ProgramResolver';
+import { needsTemplateMetadataOnHome } from '../../data/templateMetadata';
 
 export interface HomeViewProps {
     startSession: (dayIdx: number) => void;
     onEditProgram: () => void;
     onSkipSession?: (dayIdx: number) => void;
     onStartFreeSession?: () => void;
+    initialSubView?: 'workout' | 'mesos' | 'templates';
 }
 
-export const useHomeViewState = ({ startSession, onEditProgram, onSkipSession, onStartFreeSession }: HomeViewProps) => {
-    const { program, logs, isAppLoading, setProgram, globalTemplates, personalTemplates, userProfile, exercises } = useApp();
+export const useHomeViewState = ({ startSession, onEditProgram, onSkipSession, onStartFreeSession, initialSubView }: HomeViewProps) => {
+    const { program, logs, isAppLoading, setProgram, globalTemplates, personalTemplates, userProfile, exercises, ensureGlobalTemplatesLoaded } = useApp();
     const { lang } = useAppPreferences();
     const { tutorialProgress, markTutorialSeen } = useTutorial();
     const { config } = useAppConfig();
@@ -96,12 +98,24 @@ export const useHomeViewState = ({ startSession, onEditProgram, onSkipSession, o
 
     useEffect(() => {
         if (activeMeso && showMesoSettings) {
-            setEditWeeks(activeMeso.targetWeeks || 4);
+            setEditWeeks(activeMeso.targetWeeks || activeMeso.duration || 4);
             setEditDeload(activeMeso.isDeload || false);
             setEditNote(activeMeso.note || '');
             setEditStageId(activeMeso.stageId || activeTemplate?.defaultStageId || activeTemplate?.stages?.[0]?.id || '');
         }
     }, [activeMeso, showMesoSettings, activeTemplate]);
+
+    useEffect(() => {
+        if (globalTemplates.length > 0) return;
+        if (
+            showTemplateSelector ||
+            showMesoSettings ||
+            initialSubView === 'templates' ||
+            (activeMeso && needsTemplateMetadataOnHome(activeMeso))
+        ) {
+            void ensureGlobalTemplatesLoaded?.();
+        }
+    }, [globalTemplates.length, showTemplateSelector, showMesoSettings, initialSubView, activeMeso, ensureGlobalTemplatesLoaded]);
 
     // Find the current active guideline images
     const currentGuidelineImages = useMemo(() => {
@@ -120,11 +134,19 @@ export const useHomeViewState = ({ startSession, onEditProgram, onSkipSession, o
         if (selectedStage && stageChanged) {
             setProgram(selectedStage.program);
             const newPlan = selectedStage.program.map(day => (day.slots || []).map(slot => slot.exerciseId || null));
+            if (selectedDayIdx >= selectedStage.program.length) {
+                setSelectedDayIdx(0);
+            }
+            const currentSession = useStore.getState().activeSession;
+            if (currentSession && currentSession.mesoId === activeMeso.id) {
+                useStore.getState().setActiveSession(null);
+            }
             setActiveMeso(prev => prev ? {
                 ...prev,
                 stageId: selectedStage.id,
                 plan: newPlan,
                 targetWeeks: editWeeks,
+                duration: editWeeks,
                 isDeload: editDeload,
                 note: editNote
             } : null);
@@ -133,6 +155,7 @@ export const useHomeViewState = ({ startSession, onEditProgram, onSkipSession, o
                 ...prev,
                 stageId: selectedStage ? selectedStage.id : prev.stageId,
                 targetWeeks: editWeeks,
+                duration: editWeeks,
                 isDeload: editDeload,
                 note: editNote
             } : null);
@@ -159,8 +182,8 @@ export const useHomeViewState = ({ startSession, onEditProgram, onSkipSession, o
         
         // 2. Weekly computations
         const currentWeekLogs = mesoLogs.filter(l => l.week === activeMeso.week);
-        const daysDone = new Set(currentWeekLogs.map(l => l.dayIdx));
         const total = safeProgram.length;
+        const daysDone = new Set(currentWeekLogs.map(l => l.dayIdx).filter(idx => idx >= 0 && idx < total));
         const isComplete = daysDone.size >= total && total > 0;
 
         let nextIdx = -1;
@@ -253,14 +276,18 @@ export const useHomeViewState = ({ startSession, onEditProgram, onSkipSession, o
         if (!activeMeso) return;
         setActiveMeso(prev => prev ? {
             ...prev,
-            week: prev.week + 1
+            week: prev.week + 1,
+            isDeload: false
         } : null);
         triggerHaptic('success');
         setShowCompleteModal(null);
     };
 
     // --- TEMPLATE LOGIC ---
-    const handleOpenTemplateSelector = () => setShowTemplateSelector(true);
+    const handleOpenTemplateSelector = () => {
+        void ensureGlobalTemplatesLoaded?.();
+        setShowTemplateSelector(true);
+    };
 
     const handleSelectTemplate = (tpl: GlobalTemplate) => {
         if (tpl.isPro && !checkPro("Pro Template")) return;

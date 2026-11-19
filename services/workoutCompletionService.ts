@@ -101,25 +101,33 @@ export const calculateWorkoutProgression = (
 
   const allLogs = [log, ...(Array.isArray(existingLogs) ? existingLogs : [])];
 
-  const workoutsThisWeek = allLogs.filter(
-    (l) => l.mesoId === activeMeso.id && l.week === activeMeso.week && !l.skipped
+  const isKong = activeMeso.programSystem?.systemId === KONG_4DAY_V1.id;
+  const scheduledDayIndices = isKong
+    ? null
+    : new Set(
+        (program || [])
+          .map((d, idx) => ((d.slots || []).length > 0 ? idx : -1))
+          .filter((idx) => idx >= 0)
+      );
+  const totalProgramDays = isKong ? KONG_4DAY_V1.daysPerWeek : (scheduledDayIndices?.size ?? 0);
+  const isScheduledDay = (dayIdx: number) =>
+    isKong ? dayIdx >= 0 && dayIdx < KONG_4DAY_V1.daysPerWeek : Boolean(scheduledDayIndices?.has(dayIdx));
+
+  const resolvedDaysThisWeek = new Set(
+    allLogs
+      .filter((l) => l.mesoId === activeMeso.id && l.week === activeMeso.week && isScheduledDay(l.dayIdx))
+      .map((l) => l.dayIdx)
   );
 
-  const completedDaysThisWeek = new Set(workoutsThisWeek.map((l) => l.dayIdx));
-
-  const totalProgramDays =
-    activeMeso.programSystem?.systemId === KONG_4DAY_V1.id
-      ? 4
-      : (program || []).filter((d) => (d.slots || []).length > 0).length;
-
-  const isWeekComplete = completedDaysThisWeek.size >= totalProgramDays;
+  const isWeekComplete = totalProgramDays > 0 && resolvedDaysThisWeek.size >= totalProgramDays;
 
   if (!isWeekComplete) {
     return { updatedMeso: activeMeso, isWeekComplete: false, isMesoComplete: false };
   }
 
   // Week is complete: check if entire mesocycle is done
-  if (activeMeso.week >= activeMeso.duration) {
+  const totalWeeks = activeMeso.targetWeeks || activeMeso.duration;
+  if (activeMeso.week >= totalWeeks) {
     return { updatedMeso: activeMeso, isWeekComplete: true, isMesoComplete: true };
   }
 

@@ -52,7 +52,7 @@ export const buildSessionCardModel = (input: {
         .map(({ ex, done }) => ({ name: input.exerciseName(ex), detail: input.bestSetText(ex) ?? `${done} ${labels.sets.toLowerCase()}` }));
     return {
         badge: labels.workoutComplete,
-        title: log.name || 'GainsLab',
+        title: log.name || 'Repyntra',
         date: new Date(log.endTime || log.startTime || Date.now()).toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' }),
         stats: [
             { label: labels.time, value: formatSessionDuration(log.duration) },
@@ -61,7 +61,7 @@ export const buildSessionCardModel = (input: {
         ],
         topExercises,
         muscles: totals.muscles.slice(0, 6),
-        footer: 'GAINSLAB',
+        footer: 'REPYNTRA',
         musclesLabel: labels.musclesHit,
         highlightsLabel: labels.highlights || 'HIGHLIGHTS',
         sessionCaption: labels.sessionCaption || 'SESSION RECAP',
@@ -93,7 +93,7 @@ const textFit = (ctx: CanvasRenderingContext2D, value: string, width: number): s
 
 const wrapTitle = (ctx: CanvasRenderingContext2D, title: string, maxWidth: number): string[] => {
     const words = title.trim().split(/\s+/).filter(Boolean);
-    if (!words.length) return ['GainsLab'];
+    if (!words.length) return ['Repyntra'];
     const rows = [''];
     for (const word of words) {
         const i = rows.length - 1;
@@ -179,7 +179,7 @@ export const renderSessionCard = async (
     roundFill(ctx, P, 68, 48, 48, 15, accent);
     ctx.fillStyle = '#102015';
     ctx.font = font(900, 23);
-    ctx.fillText('G', P + 14, 100);
+    ctx.fillText('R', P + 14, 100);
     ctx.fillStyle = ink;
     ctx.font = font(850, 30);
     ctx.fillText(model.footer, P + 64, 102);

@@ -49,7 +49,7 @@ export const generateEmergencyBackup = async (): Promise<EmergencyBackupResult> 
   }
 
   const dateStr = new Date().toISOString().slice(0, 10);
-  const filename = `gainslab-emergency-backup-${dateStr}.json`;
+  const filename = `repyntra-emergency-backup-${dateStr}.json`;
 
   const payload = {
     schema: 'gainslab-backup',

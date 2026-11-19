@@ -8,8 +8,12 @@ import { getFirebaseFirestoreServices } from '../../../lib/firebaseLoader';
 import { SUPERSET_COLORS, HARDCODED_IDS, TemplateStatus } from './templateConstants';
 
 export const useAdminTemplateState = ({ onClose }: { onClose: () => void }) => {
-    const { globalTemplates, setGlobalTemplates, lang, exercises } = useApp();
+    const { globalTemplates, setGlobalTemplates, lang, exercises, ensureGlobalTemplatesLoaded } = useApp();
     const t = TRANSLATIONS[lang];
+
+    useEffect(() => {
+        void ensureGlobalTemplatesLoaded?.();
+    }, [ensureGlobalTemplatesLoaded]);
 
     const [view, setView] = useState<'list' | 'edit'>('list');
     const [editingTemplate, setEditingTemplate] = useState<GlobalTemplate | null>(null);

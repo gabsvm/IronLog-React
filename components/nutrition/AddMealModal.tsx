@@ -5,7 +5,7 @@ import { FoodEntry, CustomFood } from '../../types';
 import { Icon } from '../ui/Icon';
 import { Button } from '../ui/Button';
 import { Sheet } from '../ui/Sheet';
-import { useApp } from '../../context/AppContext';
+import { useNutrition } from '../../context/AppContext';
 import { MEAL_TYPES, PRESET_DB, PORTION_MULTIPLIERS } from './addMeal/mealData';
 
 interface AddMealModalProps {
@@ -72,7 +72,7 @@ const FoodCard: React.FC<{
 };
 
 export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onAdd, lang }) => {
-  const { customFoods, setCustomFoods } = useApp();
+  const { customFoods, setCustomFoods } = useNutrition();
 
   const [tab, setTab] = useState<ModalTab>('quick');
   const [mealType, setMealType] = useState<FoodEntry['mealType']>('lunch');

@@ -15,35 +15,45 @@ describe('recommendProgram', () => {
         activityLevel: 'moderate',
     };
 
-    it('recommends Upper/Lower (hyp_2) for 4 days per week', () => {
+    it('recommends Ultimate Bridge (nh_ult_bridge) for 4 days per week', () => {
         const rec = recommendProgram({ ...baseProfile, daysPerWeek: 4 });
-        expect(rec.mesoType).toBe('hyp_2');
+        expect(rec.mesoType).toBe('nh_ult_bridge');
+        expect(rec.stageId).toBe('bridge');
         expect(rec.reasonKey).toBe('rec_4_day');
         expect(rec.template.length).toBe(4);
     });
 
-    it('recommends Wizard v3 (wizard) for 3 days per week', () => {
+    it('recommends Ultimate Novice (nh_ult_novice) for 3 days per week intermediate', () => {
         const rec = recommendProgram({ ...baseProfile, daysPerWeek: 3 });
-        expect(rec.mesoType).toBe('wizard');
+        expect(rec.mesoType).toBe('nh_ult_novice');
+        expect(rec.stageId).toBe('novice');
         expect(rec.reasonKey).toBe('rec_wizard');
         expect(rec.template.length).toBe(3);
     });
 
-    it('recommends Resensitization for <= 2 days per week', () => {
+    it('recommends Ultimate Beginner for <= 2 days per week', () => {
         const rec = recommendProgram({ ...baseProfile, daysPerWeek: 2 });
-        expect(rec.mesoType).toBe('resensitization');
+        expect(rec.mesoType).toBe('nh_ult_beginner');
+        expect(rec.stageId).toBe('beginner');
         expect(rec.reasonKey).toBe('rec_low_freq');
     });
 
-    it('recommends PPL (hyp_1) for 5+ days per week', () => {
-        const rec = recommendProgram({ ...baseProfile, daysPerWeek: 5 });
-        expect(rec.mesoType).toBe('hyp_1');
-        expect(rec.reasonKey).toBe('rec_ppl');
+    it('recommends Ultimate Intermediate (nh_ult_intermediate) for 5 days and Doom Slayer PPL for 6+ days', () => {
+        const rec5 = recommendProgram({ ...baseProfile, daysPerWeek: 5 });
+        expect(rec5.mesoType).toBe('nh_ult_intermediate');
+        expect(rec5.stageId).toBe('intermediate');
+        expect(rec5.reasonKey).toBe('rec_ppl');
+
+        const rec6 = recommendProgram({ ...baseProfile, daysPerWeek: 6 });
+        expect(rec6.mesoType).toBe('nh_doom_slayer');
+        expect(rec6.stageId).toBeUndefined();
+        expect(rec6.reasonKey).toBe('rec_ppl');
     });
 
-    it('overrides with Metabolite for endurance goal', () => {
+    it('overrides with Tokita Ohma Program for endurance goal', () => {
         const rec = recommendProgram({ ...baseProfile, goal: 'endurance', daysPerWeek: 4 });
-        expect(rec.mesoType).toBe('metabolite');
+        expect(rec.mesoType).toBe('tokita');
+        expect(rec.stageId).toBe('barbell');
         expect(rec.reasonKey).toBe('rec_endurance');
     });
 

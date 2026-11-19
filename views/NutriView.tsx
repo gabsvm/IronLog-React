@@ -1,6 +1,6 @@
 import { pickLang } from '../utils/i18n';
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
-import { useApp } from '../context/AppContext';
+import { useApp, useNutrition } from '../context/AppContext';
 import { FoodEntry, CardioSession, BodyLog } from '../types';
 import { AddMealModal } from '../components/nutrition/AddMealModal';
 import { AddCardioModal } from '../components/nutrition/AddCardioModal';
@@ -24,12 +24,13 @@ import { HistoryTab } from './nutri/HistoryTab';
 type SubTab = 'today' | 'body' | 'history';
 
 export const NutriView: React.FC = () => {
+  const { lang, userProfile, setUserProfile, config } = useApp();
   const {
-    lang, nutritionLogs, setNutritionLogs,
+    nutritionLogs, setNutritionLogs,
     cardioSessions, setCardioSessions,
     nutritionGoal, setNutritionGoal,
-    userProfile, setUserProfile, bodyLogs, setBodyLogs, config
-  } = useApp();
+    bodyLogs, setBodyLogs,
+  } = useNutrition();
   const unit = resolveWeightUnit(config);
 
   const nutritionLogsRef = useRef(nutritionLogs);

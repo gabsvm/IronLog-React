@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useApp } from '../../../context/AppContext';
+import { useApp, useNutrition } from '../../../context/AppContext';
 import { TRANSLATIONS } from '../../../constants';
 import { BodyMetricsModal } from '../BodyMetricsModal';
 import { HealthConnectCard } from '../HealthConnectCard';
@@ -8,7 +8,8 @@ import { todayLocalDateKey, formatLocalDateKey } from '../../../utils/localDate'
 
 /** Q18: "Tu cuerpo" section, moved verbatim from ProfileSheet. */
 export const BodySection: React.FC = () => {
-    const { lang, userProfile, setUserProfile, config, bodyLogs, setBodyLogs } = useApp();
+    const { lang, userProfile, setUserProfile, config } = useApp();
+    const { bodyLogs, setBodyLogs } = useNutrition();
     const t = TRANSLATIONS[lang];
     const ty = t.you;
 

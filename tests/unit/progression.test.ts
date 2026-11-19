@@ -16,11 +16,11 @@ describe('Q15: recommendProgram goldens (behavior locked)', () => {
     }) as any;
 
     it.each([
-        [2, 'resensitization', 'rec_low_freq'],
-        [3, 'wizard', 'rec_wizard'],
-        [4, 'hyp_2', 'rec_4_day'],
-        [5, 'hyp_1', 'rec_ppl'],
-        [6, 'hyp_1', 'rec_ppl'],
+        [2, 'nh_ult_beginner', 'rec_low_freq'],
+        [3, 'nh_ult_novice', 'rec_wizard'],
+        [4, 'nh_ult_bridge', 'rec_4_day'],
+        [5, 'nh_ult_intermediate', 'rec_ppl'],
+        [6, 'nh_doom_slayer', 'rec_ppl'],
     ])('%i days/week → %s (%s)', (days, mesoType, reasonKey) => {
         const result = recommendProgram(profile(days as number));
         expect(result.mesoType).toBe(mesoType);
@@ -31,7 +31,7 @@ describe('Q15: recommendProgram goldens (behavior locked)', () => {
 
     it('endurance goal overrides the frequency template', () => {
         const result = recommendProgram(profile(4, { goal: 'endurance' }));
-        expect(result.mesoType).toBe('metabolite');
+        expect(result.mesoType).toBe('tokita');
         expect(result.reasonKey).toBe('rec_endurance');
     });
 

@@ -48,7 +48,7 @@ describe('U9: toHealthWorkout', () => {
     const base = { id: 42, name: 'Push A', startTime: 1_000_000, endTime: 4_600_000, duration: 3600, exercises: [{ sets: [{ completed: true }, { completed: true, skipped: true }, { completed: false }] }] } as any;
 
     it('maps the log to an idempotent session payload', () => {
-        expect(toHealthWorkout(base)).toEqual({ id: '42', startMs: 1_000_000, endMs: 4_600_000, title: 'Push A', notes: 'GainsLab · 1 sets' });
+        expect(toHealthWorkout(base)).toEqual({ id: '42', startMs: 1_000_000, endMs: 4_600_000, title: 'Push A', notes: 'Repyntra · 1 sets' });
     });
 
     it('falls back to duration; rejects logs without a valid range', () => {

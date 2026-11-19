@@ -116,8 +116,8 @@ export const toHealthWorkout = (log: Log): HealthWorkoutPayload | null => {
         id: String(log.id),
         startMs: start,
         endMs: end,
-        title: log.name || 'GainsLab',
-        notes: done > 0 ? `GainsLab · ${done} sets` : 'GainsLab',
+        title: log.name || 'Repyntra',
+        notes: done > 0 ? `Repyntra · ${done} sets` : 'Repyntra',
     };
 };
 

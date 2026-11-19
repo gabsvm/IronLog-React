@@ -1,6 +1,5 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { ExerciseDef, ProgramDay, GlobalTemplate } from '../../types';
-import { scheduleWhenIdle } from '../../lib/idle';
 import type { Dispatch, SetStateAction } from 'react';
 
 export interface UseDefaultsBootstrapDeps {
@@ -11,15 +10,16 @@ export interface UseDefaultsBootstrapDeps {
     setExercises: (value: ExerciseDef[] | ((val: ExerciseDef[]) => ExerciseDef[])) => void;
     exLoading: boolean;
     setGlobalTemplates: Dispatch<SetStateAction<GlobalTemplate[]>>;
-    defaultLibrary: ExerciseDef[];
-    setDefaultLibrary: Dispatch<SetStateAction<ExerciseDef[]>>;
-    defaultTemplate: ProgramDay[];
-    setDefaultTemplate: Dispatch<SetStateAction<ProgramDay[]>>;
-    setBaseTemplates: Dispatch<SetStateAction<GlobalTemplate[]>>;
+    defaultLibrary: ExerciseDef[] | null;
+    setDefaultLibrary: Dispatch<SetStateAction<ExerciseDef[] | null>>;
+    defaultTemplate: ProgramDay[] | null;
+    setDefaultTemplate: Dispatch<SetStateAction<ProgramDay[] | null>>;
+    baseTemplates: GlobalTemplate[] | null;
+    setBaseTemplates: Dispatch<SetStateAction<GlobalTemplate[] | null>>;
     setDefaultsLoading: Dispatch<SetStateAction<boolean>>;
 }
 
-/** S6: idle load of the bundled library/templates and empty-state defaults (moved verbatim from AppProvider; same hook order). */
+/** S6: seeds missing default program/library on first boot and lazy-loads full template catalog on demand. */
 export const useDefaultsBootstrap = ({
     program,
     setProgram,
@@ -32,49 +32,86 @@ export const useDefaultsBootstrap = ({
     setDefaultLibrary,
     defaultTemplate,
     setDefaultTemplate,
+    baseTemplates,
     setBaseTemplates,
     setDefaultsLoading,
 }: UseDefaultsBootstrapDeps) => {
-    const programRef = useRef(program);
-    programRef.current = program;
-    const exercisesRef = useRef(exercises);
-    exercisesRef.current = exercises;
-    const programLoadingRef = useRef(programLoading);
-    programLoadingRef.current = programLoading;
-    const exLoadingRef = useRef(exLoading);
-    exLoadingRef.current = exLoading;
+    const seededProgramRef = useRef(false);
+    const seededExercisesRef = useRef(false);
+    const baseTemplatesRef = useRef(baseTemplates);
+    baseTemplatesRef.current = baseTemplates;
+    const templatesLoadPromiseRef = useRef<Promise<void> | null>(null);
 
     useEffect(() => {
+        if (programLoading || exLoading) return;
+
+        const needProgram = program.length === 0 && !defaultTemplate && !seededProgramRef.current;
+        const needExercises = exercises.length === 0 && !defaultLibrary && !seededExercisesRef.current;
+
+        if (!needProgram && !needExercises) {
+            setDefaultsLoading(false);
+            return;
+        }
+
         let cancelled = false;
-        const cancelIdle = scheduleWhenIdle(async () => {
+        const loadMissingDefaults = async () => {
             try {
+                const [libMod, progMod] = await Promise.all([
+                    needExercises ? import('../../data/defaultLibrary') : Promise.resolve(null),
+                    needProgram ? import('../../data/defaultProgram') : Promise.resolve(null),
+                ]);
 
-                const loadDefaults = async () => {
-                    const [{ DEFAULT_LIBRARY }, { DEFAULT_TEMPLATE, INITIAL_TEMPLATES }] = await Promise.all([
-                        import('../../data/defaultLibrary'),
-                        import('../../data/defaultTemplates'),
-                    ]);
+                if (cancelled) return;
 
-                    if (cancelled) return;
-
-                    setDefaultLibrary(DEFAULT_LIBRARY);
-                    setDefaultTemplate(DEFAULT_TEMPLATE);
-                    setBaseTemplates(INITIAL_TEMPLATES);
-                    setGlobalTemplates((prev) => (prev.length > 0 ? prev : INITIAL_TEMPLATES));
-                };
-
-                await loadDefaults();
+                if (libMod?.DEFAULT_LIBRARY) {
+                    seededExercisesRef.current = true;
+                    setDefaultLibrary(libMod.DEFAULT_LIBRARY);
+                }
+                if (progMod?.DEFAULT_TEMPLATE) {
+                    seededProgramRef.current = true;
+                    setDefaultTemplate(progMod.DEFAULT_TEMPLATE);
+                }
             } finally {
                 if (!cancelled) setDefaultsLoading(false);
             }
-        }, 200);
+        };
+
+        void loadMissingDefaults();
 
         return () => {
             cancelled = true;
-            cancelIdle();
         };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- S6: dependency list moved verbatim from AppProvider; the omitted names are useState setters/refs (stable) or the per-render withDirtyTrackingSuppressed, exactly as before.
-    }, []);
+    }, [
+        programLoading,
+        exLoading,
+        program.length,
+        exercises.length,
+        defaultLibrary,
+        defaultTemplate,
+        setDefaultLibrary,
+        setDefaultTemplate,
+        setDefaultsLoading,
+    ]);
+
+    const ensureGlobalTemplatesLoaded = useCallback(async () => {
+        if (baseTemplatesRef.current) return;
+        if (templatesLoadPromiseRef.current) {
+            return templatesLoadPromiseRef.current;
+        }
+
+        const promise = import('../../data/defaultTemplates')
+            .then(({ INITIAL_TEMPLATES }) => {
+                setBaseTemplates(INITIAL_TEMPLATES);
+                setGlobalTemplates((prev) => (prev.length > 0 ? prev : INITIAL_TEMPLATES));
+            })
+            .catch((err) => {
+                templatesLoadPromiseRef.current = null;
+                throw err;
+            });
+
+        templatesLoadPromiseRef.current = promise;
+        return promise;
+    }, [setBaseTemplates, setGlobalTemplates]);
 
     useEffect(() => {
         if (programLoading || !defaultTemplate || program.length > 0) return;
@@ -85,4 +122,6 @@ export const useDefaultsBootstrap = ({
         if (exLoading || !defaultLibrary || exercises.length > 0) return;
         setExercises(defaultLibrary);
     }, [exLoading, defaultLibrary, exercises, setExercises]);
+
+    return { ensureGlobalTemplatesLoaded };
 };

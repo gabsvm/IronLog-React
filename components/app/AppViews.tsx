@@ -60,8 +60,8 @@ export const AppViews: React.FC<AppViewsProps> = ({
     const {
         program, exercises, lang, logs, setLogs,
         config, rpFeedback,
-        userProfile, nutritionLogs, cardioSessions, bodyLogs, macroGoals, nutritionGoal,
-        personalTemplates, customFoods,
+        userProfile,
+        personalTemplates, getNutritionSnapshot,
     } = useApp();
     const activeMeso = useStore(state => state.activeMeso);
     const setActiveMeso = useStore(state => state.setActiveMeso);
@@ -183,8 +183,7 @@ export const AppViews: React.FC<AppViewsProps> = ({
                                         exercises: Array.isArray(exercises) ? exercises : [],
                                         logs: result.updatedLogs,
                                         activeMeso: result.updatedMeso ?? activeMeso,
-                                        userProfile, nutritionLogs, cardioSessions, bodyLogs,
-                                        macroGoals, nutritionGoal, personalTemplates, customFoods,
+                                        userProfile, ...getNutritionSnapshot(), personalTemplates,
                                         rpFeedback, config,
                                     });
 

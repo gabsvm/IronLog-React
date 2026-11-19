@@ -7,7 +7,7 @@ import { parseTargetReps, roundWeight } from '../../../utils';
 import { getVolumeComparison } from '../../../utils/volumeComparison';
 import { canFillFromPrevious, copySourceIndex, copyToFollowing, fillFromPrevious, restoreSet } from '../../../utils/setConvenience';
 import { formatWeight, resolveWeightUnit, toDisplay, unitLabel as unitLabelFor } from '../../../utils/units';
-import { formatProgressionReason, recommendProgression } from '../../../utils/recommendationEngine';
+import { formatProgressionReason, recommendProgression } from '../../../utils/progressionEngine';
 import { triggerHaptic, playTimerFinishSound } from '../../../utils/audio';
 import { TRANSLATIONS } from '../../../constants';
 

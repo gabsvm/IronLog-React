@@ -53,5 +53,11 @@ docs/design-reference/extracted/
 # Local debug APK output (never commit binaries)
 apk-out/
 *.apk
+*.apk.sha256
+*.jks
+*.keystore
+android/build-broken-*/
+.agents/
+.serena/
 .vercel
 .env*

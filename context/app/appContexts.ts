@@ -3,7 +3,35 @@
 import React, { createContext } from 'react';
 import { AppState, Lang, Theme, ColorTheme, EffectsMode, ResolvedEffects, ExerciseDef, Log, ProgramDay, TutorialState, GlobalTemplate, UserProfile, BeforeInstallPromptEvent, NutritionLog, CardioSession, NutritionGoal, MacroGoals, BodyLog, CustomFood, DirtySyncSection, SectionSyncMeta } from '../../types';
 
-export interface AppContextType extends Omit<AppState, 'activeSession' | 'activeMeso'> {
+export interface NutritionSnapshot {
+    nutritionLogs: NutritionLog[];
+    cardioSessions: CardioSession[];
+    nutritionGoal: NutritionGoal;
+    bodyLogs: BodyLog[];
+    macroGoals: MacroGoals | null;
+    customFoods: CustomFood[];
+}
+
+export interface NutritionContextType extends NutritionSnapshot {
+    setNutritionLogs: (val: NutritionLog[] | ((prev: NutritionLog[]) => NutritionLog[])) => void;
+    setCardioSessions: (val: CardioSession[] | ((prev: CardioSession[]) => CardioSession[])) => void;
+    setNutritionGoal: (val: NutritionGoal | ((prev: NutritionGoal) => NutritionGoal)) => void;
+    setBodyLogs: (val: BodyLog[] | ((prev: BodyLog[]) => BodyLog[])) => void;
+    setMacroGoals: (val: MacroGoals | null | ((prev: MacroGoals | null) => MacroGoals | null)) => void;
+    setCustomFoods: (val: CustomFood[] | ((prev: CustomFood[]) => CustomFood[])) => void;
+}
+
+export interface AppContextType extends Omit<
+    AppState,
+    | 'activeSession'
+    | 'activeMeso'
+    | 'nutritionLogs'
+    | 'cardioSessions'
+    | 'nutritionGoal'
+    | 'bodyLogs'
+    | 'macroGoals'
+    | 'customFoods'
+> {
     lang: Lang;
     theme: Theme;
     colorTheme: ColorTheme;
@@ -28,21 +56,11 @@ export interface AppContextType extends Omit<AppState, 'activeSession' | 'active
     // NEW: User Profile Setter
     setUserProfile: (val: UserProfile | ((prev: UserProfile) => UserProfile)) => void;
 
-    // Nutrition & Cardio
-    nutritionLogs: NutritionLog[];
-    setNutritionLogs: (val: NutritionLog[] | ((prev: NutritionLog[]) => NutritionLog[])) => void;
-    cardioSessions: CardioSession[];
-    setCardioSessions: (val: CardioSession[] | ((prev: CardioSession[]) => CardioSession[])) => void;
-    nutritionGoal: NutritionGoal;
-    setNutritionGoal: (val: NutritionGoal | ((prev: NutritionGoal) => NutritionGoal)) => void;
+    // Non-subscribing nutrition snapshot reader for export / backup / force-sync
+    getNutritionSnapshot: () => NutritionSnapshot;
 
-    // Body Tracking
-    setBodyLogs: (val: BodyLog[] | ((prev: BodyLog[]) => BodyLog[])) => void;
-    setMacroGoals: (val: MacroGoals | null | ((prev: MacroGoals | null) => MacroGoals | null)) => void;
-
-    // Custom Food Database
-    customFoods: CustomFood[];
-    setCustomFoods: (val: CustomFood[] | ((prev: CustomFood[]) => CustomFood[])) => void;
+    // On-demand template catalog loader
+    ensureGlobalTemplatesLoaded: () => Promise<void>;
 
     // Tutorial Methods
     markTutorialSeen: (section: keyof TutorialState) => void;
@@ -81,6 +99,7 @@ export interface SyncStatusContextType {
 }
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
+export const NutritionContext = createContext<NutritionContextType | undefined>(undefined);
 export const SyncMetaContext = createContext<SyncMetaContextType | undefined>(undefined);
 export const SyncStatusContext = createContext<SyncStatusContextType | undefined>(undefined);
 export type AppPreferencesContextType = Pick<AppContextType, 'lang' | 'setLang' | 'theme' | 'setTheme' | 'colorTheme' | 'setColorTheme' | 'deferredPrompt' | 'installApp' | 'isStandalone' | 'reducedEffects' | 'effectsMode' | 'setEffectsMode' | 'resolvedEffects'>;
