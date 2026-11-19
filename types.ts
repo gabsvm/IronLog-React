@@ -159,6 +159,8 @@ export interface ProgramStage {
   program: ProgramDay[];
 }
 
+export type ProgramGuideId = 'rp_mpt';
+
 export interface GlobalTemplate {
   id: string;
   name: string;
@@ -169,6 +171,7 @@ export interface GlobalTemplate {
   order: number;
   /** Private templates are stored in the owner's account and never published. */
   scope?: 'personal';
+  guideId?: ProgramGuideId;
   guidelineImages?: string[]; // NEW: Array of images for guidelines
   stages?: ProgramStage[];
   defaultStageId?: string;

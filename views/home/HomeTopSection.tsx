@@ -11,8 +11,11 @@ export const HomeTopSection: React.FC<{ state: HomeViewState }> = ({ state }) =>
     const {
         uniqueDaysDone, activeMeso, setActiveMeso, t, h, lang, kongBlock, isPro,
         checkPro, setShowPlanActions, setShowGuidelines, setShowKongHub, setShowMesoSettings,
-        currentGuidelineImages, currentStage, safeProgram, selectedDayIdx
+        currentGuidelineImages, currentGuideId, hasGuidelines, currentStage, safeProgram, selectedDayIdx
     } = state;
+    const showGuideBtn = Boolean(
+        hasGuidelines || currentGuideId || (currentGuidelineImages && currentGuidelineImages.length > 0),
+    );
 
     if (!activeMeso) return null;
     const totalWeeks = activeMeso.targetWeeks || activeMeso.duration || 1;
@@ -52,7 +55,7 @@ export const HomeTopSection: React.FC<{ state: HomeViewState }> = ({ state }) =>
                             </>
                         )}
                     </div>
-                    {(kongBlock || currentStage || (currentGuidelineImages && currentGuidelineImages.length > 0)) && (
+                    {(kongBlock || currentStage || showGuideBtn) && (
                         <div className="flex items-center gap-2 mt-2 flex-wrap">
                             {currentStage && (
                                 <button
@@ -73,14 +76,14 @@ export const HomeTopSection: React.FC<{ state: HomeViewState }> = ({ state }) =>
                                     {`KONG · B${kongBlock.block.number}`}
                                 </button>
                             )}
-                            {currentGuidelineImages && currentGuidelineImages.length > 0 && (
+                            {showGuideBtn && (
                                 <button
                                     id="tut-guidelines"
                                     type="button"
                                     onClick={() => checkPro("Guidelines") && setShowGuidelines(true)}
                                     className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-[4px] bg-surface-raised text-blue-400 border border-border-subtle hover:text-white transition-colors flex items-center gap-1 active:scale-95"
                                 >
-                                    <Icon name="Info" size={12} /> {pickLang(lang, { en: 'GUIDELINES', es: 'GUÍA' })} {!isPro && <Icon name="Lock" size={10} className="text-yellow-500 ml-0.5" />}
+                                    <Icon name="BookOpen" size={12} /> {pickLang(lang, { en: 'GUIDELINES', es: 'GUÍA' })} {!isPro && <Icon name="Lock" size={10} className="text-yellow-500 ml-0.5" />}
                                 </button>
                             )}
                         </div>

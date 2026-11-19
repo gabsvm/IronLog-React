@@ -1,18 +1,30 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Icon } from '../../components/ui/Icon';
+import type { MesoCycle, ProgramGuideId } from '../../types';
+import { RpGuideView } from './RpGuideView';
 
 interface Props {
     isOpen: boolean;
     onClose: () => void;
     images?: string[];
+    guideId?: ProgramGuideId | null;
+    lang?: 'en' | 'es';
+    activeMeso?: MesoCycle | null;
 }
 
 /**
- * Full-screen viewer for program guideline images.
- * Supports double-tap zoom, drag-to-pan, and keyboard-free swipe between pages.
- * Extracted from HomeView to keep that view focused on dashboard composition.
+ * Guidelines viewer: renders rich native program guides (e.g. RP Periodization)
+ * when `guideId` is provided, and falls back to the zoomable page viewer for
+ * image-based guides (e.g. Tokita).
  */
-export const GuidelinesModal: React.FC<Props> = ({ isOpen, onClose, images }) => {
+export const GuidelinesModal: React.FC<Props> = ({
+    isOpen,
+    onClose,
+    images,
+    guideId,
+    lang = 'es',
+    activeMeso,
+}) => {
     const [idx, setIdx] = useState(0);
     const [scale, setScale] = useState(1);
     const [pos, setPos] = useState({ x: 0, y: 0 });
@@ -36,7 +48,13 @@ export const GuidelinesModal: React.FC<Props> = ({ isOpen, onClose, images }) =>
         resetZoom();
     }, [idx]);
 
-    if (!isOpen || !images || images.length === 0) return null;
+    if (!isOpen) return null;
+
+    if (guideId === 'rp_mpt') {
+        return <RpGuideView onClose={onClose} lang={lang} activeMeso={activeMeso} />;
+    }
+
+    if (!images || images.length === 0) return null;
 
     const currentImg = images[idx];
     const hasNext = idx < images.length - 1;

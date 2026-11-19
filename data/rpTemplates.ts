@@ -1,12 +1,5 @@
 import { ProgramDay, GlobalTemplate, MuscleGroup } from '../types';
 
-const ASSETS_BASE = (import.meta as any).env?.VITE_ASSETS_BASE || '';
-
-export const RP_GUIDELINE_IMAGES: string[] = Array.from(
-    { length: 18 },
-    (_, i) => `${ASSETS_BASE}/assets/templates/rp/rp_guide_${String(i + 1).padStart(2, '0')}.png`
-);
-
 export const RP_FB_3X_PROGRAM: ProgramDay[] = [
     {
         id: 'rp_fb_3x_d1',
@@ -62,7 +55,7 @@ export const RP_FB_3X_TEMPLATE: GlobalTemplate = {
     },
     isPro: false,
     order: 20,
-    guidelineImages: RP_GUIDELINE_IMAGES,
+    guideId: 'rp_mpt',
     program: RP_FB_3X_PROGRAM
 };
 
@@ -137,7 +130,7 @@ export const RP_FB_5X_TEMPLATE: GlobalTemplate = {
     },
     isPro: false,
     order: 21,
-    guidelineImages: RP_GUIDELINE_IMAGES,
+    guideId: 'rp_mpt',
     program: RP_FB_5X_PROGRAM
 };
 
@@ -220,7 +213,7 @@ export const RP_FB_6X_TEMPLATE: GlobalTemplate = {
     },
     isPro: false,
     order: 22,
-    guidelineImages: RP_GUIDELINE_IMAGES,
+    guideId: 'rp_mpt',
     program: RP_FB_6X_PROGRAM
 };
 
@@ -279,7 +272,7 @@ export const RP_ARMS_3X_TEMPLATE: GlobalTemplate = {
     },
     isPro: false,
     order: 23,
-    guidelineImages: RP_GUIDELINE_IMAGES,
+    guideId: 'rp_mpt',
     program: RP_ARMS_3X_PROGRAM
 };
 
@@ -348,7 +341,7 @@ export const RP_ARMS_4X_TEMPLATE: GlobalTemplate = {
     },
     isPro: false,
     order: 24,
-    guidelineImages: RP_GUIDELINE_IMAGES,
+    guideId: 'rp_mpt',
     program: RP_ARMS_4X_PROGRAM
 };
 
@@ -424,7 +417,7 @@ export const RP_ARMS_5X_TEMPLATE: GlobalTemplate = {
     },
     isPro: false,
     order: 25,
-    guidelineImages: RP_GUIDELINE_IMAGES,
+    guideId: 'rp_mpt',
     program: RP_ARMS_5X_PROGRAM
 };
 
@@ -510,7 +503,7 @@ export const RP_ARMS_6X_TEMPLATE: GlobalTemplate = {
     },
     isPro: false,
     order: 26,
-    guidelineImages: RP_GUIDELINE_IMAGES,
+    guideId: 'rp_mpt',
     program: RP_ARMS_6X_PROGRAM
 };
 
@@ -569,7 +562,7 @@ export const RP_CB_3X_TEMPLATE: GlobalTemplate = {
     },
     isPro: false,
     order: 27,
-    guidelineImages: RP_GUIDELINE_IMAGES,
+    guideId: 'rp_mpt',
     program: RP_CB_3X_PROGRAM
 };
 
@@ -638,7 +631,7 @@ export const RP_CB_4X_TEMPLATE: GlobalTemplate = {
     },
     isPro: false,
     order: 28,
-    guidelineImages: RP_GUIDELINE_IMAGES,
+    guideId: 'rp_mpt',
     program: RP_CB_4X_PROGRAM
 };
 
@@ -712,7 +705,7 @@ export const RP_CB_5X_TEMPLATE: GlobalTemplate = {
     },
     isPro: false,
     order: 29,
-    guidelineImages: RP_GUIDELINE_IMAGES,
+    guideId: 'rp_mpt',
     program: RP_CB_5X_PROGRAM
 };
 
@@ -796,7 +789,7 @@ export const RP_CB_6X_TEMPLATE: GlobalTemplate = {
     },
     isPro: false,
     order: 30,
-    guidelineImages: RP_GUIDELINE_IMAGES,
+    guideId: 'rp_mpt',
     program: RP_CB_6X_PROGRAM
 };
 
@@ -861,7 +854,7 @@ export const RP_LEGS_4X_TEMPLATE: GlobalTemplate = {
     },
     isPro: false,
     order: 31,
-    guidelineImages: RP_GUIDELINE_IMAGES,
+    guideId: 'rp_mpt',
     program: RP_LEGS_4X_PROGRAM
 };
 
@@ -933,7 +926,7 @@ export const RP_LEGS_5X_TEMPLATE: GlobalTemplate = {
     },
     isPro: false,
     order: 32,
-    guidelineImages: RP_GUIDELINE_IMAGES,
+    guideId: 'rp_mpt',
     program: RP_LEGS_5X_PROGRAM
 };
 
@@ -1017,7 +1010,7 @@ export const RP_LEGS_6X_TEMPLATE: GlobalTemplate = {
     },
     isPro: false,
     order: 33,
-    guidelineImages: RP_GUIDELINE_IMAGES,
+    guideId: 'rp_mpt',
     program: RP_LEGS_6X_PROGRAM
 };
 
@@ -1103,7 +1096,7 @@ export const RP_ADV_ARMS_6X_TEMPLATE: GlobalTemplate = {
     },
     isPro: false,
     order: 34,
-    guidelineImages: RP_GUIDELINE_IMAGES,
+    guideId: 'rp_mpt',
     program: RP_ADV_ARMS_6X_PROGRAM
 };
 
@@ -1187,7 +1180,7 @@ export const RP_ADV_LEGS_6X_TEMPLATE: GlobalTemplate = {
     },
     isPro: false,
     order: 35,
-    guidelineImages: RP_GUIDELINE_IMAGES,
+    guideId: 'rp_mpt',
     program: RP_ADV_LEGS_6X_PROGRAM
 };
 

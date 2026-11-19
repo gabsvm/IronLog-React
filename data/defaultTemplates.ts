@@ -1,7 +1,7 @@
 import { ProgramDay, GlobalTemplate, MuscleGroup } from '../types';
 import { NATURAL_HYPERTROPHY_TEMPLATES } from './naturalHypertrophy';
 import { GOLDEN_SIX_REVISITED_TEMPLATE } from './goldenSixRevisited';
-import { RP_ALL_TEMPLATES, RP_GUIDELINE_IMAGES } from './rpTemplates';
+import { RP_ALL_TEMPLATES } from './rpTemplates';
 import { DAVID_SHAUGHNESSY_SILVERBACK_TEMPLATE } from './davidShaughnessy';
 import { FULL_BODY_TEMPLATE, DEFAULT_TEMPLATE } from './defaultProgram';
 
@@ -335,7 +335,7 @@ export const INITIAL_TEMPLATES: GlobalTemplate[] = [
             `${ASSETS_BASE}/assets/templates/tokita/Tokita${i === 0 ? '' : `-${i+1}`}.png`
         )
     },
-    { id: 'full_body', name: 'full_body', title: { en: "Aesthetic V-Taper", es: "Aesthetic V-Taper" }, description: { en: "Dr. Mike Style. Focus on V-Taper (Lats/Side Delts).", es: "Estilo Dr. Mike. Foco en V-Taper (Dorsal/Hombro Lateral)." }, isPro: true, program: FULL_BODY_TEMPLATE, order: 4, guidelineImages: RP_GUIDELINE_IMAGES },
+    { id: 'full_body', name: 'full_body', title: { en: "Aesthetic V-Taper", es: "Aesthetic V-Taper" }, description: { en: "Dr. Mike Style. Focus on V-Taper (Lats/Side Delts).", es: "Estilo Dr. Mike. Foco en V-Taper (Dorsal/Hombro Lateral)." }, isPro: true, program: FULL_BODY_TEMPLATE, order: 4, guideId: 'rp_mpt' },
     // ── CALISTHENICS TEMPLATES ─────────────────────────────────────────────────
     {
         id: 'cal_beginner',

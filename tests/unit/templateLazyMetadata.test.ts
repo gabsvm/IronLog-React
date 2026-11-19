@@ -6,7 +6,7 @@ describe('templateMetadata drift guard', () => {
     it('flags every multi-stage or guideline-bearing template for Home metadata loading', () => {
         for (const tpl of INITIAL_TEMPLATES) {
             const hasMultiStages = (tpl.stages?.length ?? 0) > 1;
-            const hasGuidelines = (tpl.guidelineImages?.length ?? 0) > 0;
+            const hasGuidelines = (tpl.guidelineImages?.length ?? 0) > 0 || Boolean(tpl.guideId);
             if (hasMultiStages || hasGuidelines) {
                 expect(
                     needsTemplateMetadataOnHome({ mesoType: tpl.id }),

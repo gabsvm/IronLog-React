@@ -107,11 +107,14 @@ export const useAppBootstrapEffects = ({
                 fetchedTemplates.forEach(remote => {
                     const idx = mergedTemplates.findIndex(local => local.id === remote.id);
                     if (idx >= 0) {
-                        // Remote overrides local (allows updating content via CMS), but never overwrite official multi-stage definitions.
+                        // Remote overrides local (allows updating content via CMS), but never overwrite official multi-stage or native guide definitions.
                         const local = mergedTemplates[idx];
-                        mergedTemplates[idx] = local.stages && local.stages.length > 0
+                        const stagePreserved = local.stages && local.stages.length > 0
                             ? { ...remote, program: local.program, stages: local.stages, defaultStageId: local.defaultStageId }
                             : remote;
+                        mergedTemplates[idx] = local.guideId
+                            ? { ...stagePreserved, guideId: local.guideId, guidelineImages: undefined }
+                            : stagePreserved;
                     } else {
                         // Append new remote templates
                         mergedTemplates.push(remote);

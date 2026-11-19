@@ -5,7 +5,7 @@ import { useApp, useAppConfig, useAppPreferences, useTutorial } from '../../cont
 import { TRANSLATIONS } from '../../constants';
 import { getTranslated } from '../../utils';
 import { usePro } from '../../hooks/usePro';
-import { GlobalTemplate } from '../../types';
+import { GlobalTemplate, ProgramGuideId } from '../../types';
 import { triggerHaptic, updateWidgetData } from '../../utils/audio';
 import { scheduleWhenIdle } from '../../lib/idle';
 import { useStore } from '../../lib/store';
@@ -117,13 +117,27 @@ export const useHomeViewState = ({ startSession, onEditProgram, onSkipSession, o
         }
     }, [globalTemplates.length, showTemplateSelector, showMesoSettings, initialSubView, activeMeso, ensureGlobalTemplatesLoaded]);
 
-    // Find the current active guideline images
+    // Find the current active guideline images & native guideId
     const currentGuidelineImages = useMemo(() => {
         if (!activeMeso) return null;
         // Find matching global template to get the images
         const template = globalTemplates.find(t => t.id === activeMeso.mesoType);
         return template?.guidelineImages;
     }, [activeMeso, globalTemplates]);
+
+    const currentGuideId = useMemo<ProgramGuideId | null>(() => {
+        if (!activeMeso) return null;
+        if (activeTemplate?.guideId) return activeTemplate.guideId;
+        const mesoType = String(activeMeso.mesoType || '');
+        if (mesoType === 'full_body' || mesoType.startsWith('rp_')) {
+            return 'rp_mpt';
+        }
+        return null;
+    }, [activeMeso, activeTemplate]);
+
+    const hasGuidelines = Boolean(
+        currentGuideId || (currentGuidelineImages && currentGuidelineImages.length > 0),
+    );
 
     const handleSaveSettings = () => {
         if (!activeMeso) return;
@@ -348,7 +362,7 @@ export const useHomeViewState = ({ startSession, onEditProgram, onSkipSession, o
 
     const homeTutorialSteps = [
         { targetId: 'tut-up-next', title: t.tutorial.home[0].title, text: t.tutorial.home[0].text, position: 'bottom' as const },
-        ...(currentGuidelineImages && currentGuidelineImages.length > 0 ? [{ targetId: 'tut-guidelines', title: t.tutorial.home[1].title, text: t.tutorial.home[1].text, position: 'bottom' as const }] : []),
+        ...(hasGuidelines ? [{ targetId: 'tut-guidelines', title: t.tutorial.home[1].title, text: t.tutorial.home[1].text, position: 'bottom' as const }] : []),
         { targetId: 'tut-settings-btn', title: t.tutorial.home[2].title, text: t.tutorial.home[2].text, position: 'bottom' as const },
         { targetId: 'tut-nav-bar', title: t.tutorial.home[3].title, text: t.tutorial.home[3].text, position: 'top' as const }
     ];
@@ -418,6 +432,8 @@ export const useHomeViewState = ({ startSession, onEditProgram, onSkipSession, o
         editStageId,
         setEditStageId,
         currentGuidelineImages,
+        currentGuideId,
+        hasGuidelines,
         handleSaveSettings,
         safeProgram,
         safeLogs,
