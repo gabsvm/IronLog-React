@@ -28,45 +28,60 @@ export const RpSpecialCasesTab: React.FC<RpSpecialCasesTabProps> = ({ lang }) =>
 
     return (
         <>
-            {/* Sub-filter Pills */}
-            <div
-                className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar"
-                role="group"
-                aria-label={pickLang(lang, { es: 'Filtrar casos especiales', en: 'Filter special cases' })}
-            >
-                {FILTER_OPTIONS.map((opt) => {
-                    const active = filter === opt.id;
-                    return (
-                        <button
-                            key={opt.id}
-                            type="button"
-                            aria-pressed={active}
-                            data-testid={`rp-special-filter-${opt.id}`}
-                            onClick={() => setFilter(opt.id)}
-                            className={`shrink-0 rounded-[4px] px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wider transition-colors ${
-                                active
-                                    ? 'bg-primary-500 text-zinc-950'
-                                    : 'border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] text-zinc-400 hover:text-white'
-                            }`}
-                        >
-                            {opt.label[lang]}
-                        </button>
-                    );
-                })}
+            {/* Sub-filter Pills with right-edge scroll fade */}
+            <div className="relative">
+                <div
+                    className="flex items-center gap-2 overflow-x-auto pb-1 pr-8 no-scrollbar"
+                    role="group"
+                    aria-label={pickLang(lang, { es: 'Filtrar casos especiales', en: 'Filter special cases' })}
+                >
+                    {FILTER_OPTIONS.map((opt) => {
+                        const active = filter === opt.id;
+                        return (
+                            <button
+                                key={opt.id}
+                                type="button"
+                                aria-pressed={active}
+                                data-testid={`rp-special-filter-${opt.id}`}
+                                onClick={(e) => {
+                                    setFilter(opt.id);
+                                    e.currentTarget.scrollIntoView?.({
+                                        behavior: 'smooth',
+                                        inline: 'center',
+                                        block: 'nearest',
+                                    });
+                                }}
+                                className={`min-h-[40px] shrink-0 rounded-[6px] px-3.5 py-2 text-xs font-extrabold uppercase tracking-wider transition-colors ${
+                                    active
+                                        ? 'bg-primary-500 text-zinc-950'
+                                        : 'border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--text-primary))]'
+                                }`}
+                            >
+                                {opt.label[lang]}
+                            </button>
+                        );
+                    })}
+                </div>
+                <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-[rgb(var(--surface-app))] to-transparent"
+                />
             </div>
 
             {showTroubleshooting && (
                 <>
-                    <section className="rounded-[8px] border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4 space-y-2.5">
+                    <section className="rounded-[10px] border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4 space-y-3.5">
                         <div className="flex items-center gap-2">
-                            <Icon name="Search" size={16} className="text-primary-400" />
-                            <h3 className="text-sm font-black text-white">{sc.troubleshootingTitle[lang]}</h3>
+                            <Icon name="Search" size={18} className="text-primary-400 shrink-0" />
+                            <h3 className="text-base font-extrabold text-[rgb(var(--text-primary))] text-balance">
+                                {sc.troubleshootingTitle[lang]}
+                            </h3>
                         </div>
-                        <ul className="space-y-2">
+                        <ul className="space-y-3">
                             {sc.troubleshooting.map((item, idx) => (
                                 <li
                                     key={idx}
-                                    className="text-xs leading-relaxed text-[rgb(var(--text-secondary))]"
+                                    className="text-sm leading-[1.58] text-[rgb(var(--text-primary)/0.88)]"
                                 >
                                     {item[lang]}
                                 </li>
@@ -74,20 +89,20 @@ export const RpSpecialCasesTab: React.FC<RpSpecialCasesTabProps> = ({ lang }) =>
                         </ul>
                     </section>
 
-                    <section className="rounded-[8px] border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4 space-y-2.5">
+                    <section className="rounded-[10px] border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4 space-y-3.5">
                         <div className="flex items-center gap-2">
-                            <Icon name="BarChart2" size={16} className="text-emerald-400" />
-                            <h3 className="text-xs font-black uppercase tracking-wider text-white">
+                            <Icon name="BarChart2" size={18} className="text-emerald-400 shrink-0" />
+                            <h3 className="text-base font-extrabold text-[rgb(var(--text-primary))] text-balance">
                                 {sc.measuringProgressTitle[lang]}
                             </h3>
                         </div>
-                        <ul className="space-y-2">
+                        <ul className="space-y-3">
                             {sc.measuringProgressPoints.map((pt, idx) => (
                                 <li
                                     key={idx}
-                                    className="flex items-start gap-2 text-xs leading-relaxed text-[rgb(var(--text-secondary))]"
+                                    className="flex items-start gap-2.5 text-sm leading-[1.58] text-[rgb(var(--text-secondary))]"
                                 >
-                                    <Icon name="CheckCircle" size={13} className="mt-0.5 shrink-0 text-emerald-400" />
+                                    <Icon name="CheckCircle" size={16} className="mt-1 shrink-0 text-emerald-400" />
                                     <span>{pt[lang]}</span>
                                 </li>
                             ))}
@@ -97,26 +112,33 @@ export const RpSpecialCasesTab: React.FC<RpSpecialCasesTabProps> = ({ lang }) =>
             )}
 
             {showSpecialization && (
-                <section className="rounded-[8px] border border-primary-500/25 bg-primary-500/10 p-4 space-y-2">
+                <section className="rounded-r-[8px] border-l border-primary-400/75 bg-primary-500/[0.09] p-4 space-y-2">
                     <div className="flex items-center gap-2 text-primary-300">
-                        <Icon name="Star" size={16} />
-                        <h3 className="text-xs font-black uppercase tracking-wider">{sc.specializationTitle[lang]}</h3>
+                        <Icon name="Star" size={18} className="shrink-0" />
+                        <h3 className="text-base font-extrabold text-[rgb(var(--text-primary))] text-balance">
+                            {sc.specializationTitle[lang]}
+                        </h3>
                     </div>
-                    <p className="text-xs leading-relaxed text-[rgb(var(--text-secondary))]">
+                    <p className="text-[15px] leading-[1.62] text-pretty text-[rgb(var(--text-primary)/0.92)]">
                         {sc.specializationBody[lang]}
                     </p>
                 </section>
             )}
 
             {showTime && (
-                <section className="rounded-[8px] border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4 space-y-2.5">
+                <section className="rounded-[10px] border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4 space-y-3.5">
                     <div className="flex items-center gap-2">
-                        <Icon name="Clock" size={16} className="text-amber-400" />
-                        <h3 className="text-sm font-black text-white">{sc.timeCrunchedTitle[lang]}</h3>
+                        <Icon name="Clock" size={18} className="text-amber-400 shrink-0" />
+                        <h3 className="text-base font-extrabold text-[rgb(var(--text-primary))] text-balance">
+                            {sc.timeCrunchedTitle[lang]}
+                        </h3>
                     </div>
-                    <ul className="space-y-2">
+                    <ul className="space-y-3">
                         {sc.timeCrunched.map((tip, idx) => (
-                            <li key={idx} className="text-xs leading-relaxed text-[rgb(var(--text-secondary))]">
+                            <li
+                                key={idx}
+                                className="text-sm leading-[1.58] text-[rgb(var(--text-primary)/0.88)]"
+                            >
                                 {tip[lang]}
                             </li>
                         ))}
@@ -126,44 +148,57 @@ export const RpSpecialCasesTab: React.FC<RpSpecialCasesTabProps> = ({ lang }) =>
 
             {showInjury && (
                 <>
-                    <section className="rounded-[8px] border border-amber-500/30 bg-amber-500/10 p-4 space-y-2.5">
+                    <section className="rounded-[10px] border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4 space-y-3.5">
                         <div className="flex items-center gap-2 text-amber-400">
-                            <Icon name="Shield" size={16} />
-                            <h3 className="text-sm font-black">{sc.lowInjuryRiskTitle[lang]}</h3>
+                            <Icon name="Shield" size={18} className="shrink-0" />
+                            <h3 className="text-base font-extrabold text-[rgb(var(--text-primary))] text-balance">
+                                {sc.lowInjuryRiskTitle[lang]}
+                            </h3>
                         </div>
-                        <p className="text-[11px] leading-relaxed text-zinc-300">{sc.lowInjuryRiskIntro[lang]}</p>
-                        <ul className="space-y-1.5">
+                        <p className="text-[15px] leading-[1.6] text-[rgb(var(--text-secondary))]">
+                            {sc.lowInjuryRiskIntro[lang]}
+                        </p>
+                        <ul className="space-y-2.5 border-t border-[rgb(var(--border-subtle)/0.65)] pt-3.5">
                             {sc.lowInjuryRisk.map((rule, idx) => (
-                                <li key={idx} className="text-xs leading-relaxed text-[rgb(var(--text-secondary))]">
+                                <li
+                                    key={idx}
+                                    className="text-sm leading-[1.58] text-[rgb(var(--text-primary)/0.88)]"
+                                >
                                     {rule[lang]}
                                 </li>
                             ))}
                         </ul>
                     </section>
 
-                    <section className="rounded-[8px] border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4 space-y-3">
+                    <section className="rounded-[10px] border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-4 space-y-4">
                         <div className="flex items-center gap-2">
-                            <Icon name="RotateCcw" size={16} className="text-emerald-400" />
-                            <h3 className="text-sm font-black text-white">{sc.postInjuryTitle[lang]}</h3>
+                            <Icon name="RotateCcw" size={18} className="text-emerald-400 shrink-0" />
+                            <h3 className="text-base font-extrabold text-[rgb(var(--text-primary))] text-balance">
+                                {sc.postInjuryTitle[lang]}
+                            </h3>
                         </div>
 
-                        <div className="rounded-[6px] border border-red-500/30 bg-red-500/10 px-3 py-2 flex items-start gap-2 text-[11px] leading-relaxed text-red-200">
-                            <Icon name="AlertTriangle" size={14} className="mt-0.5 shrink-0 text-red-400" />
+                        <div className="rounded-r-[6px] border-l border-red-400/75 bg-red-500/[0.09] px-3.5 py-3 flex items-start gap-2.5 text-sm leading-[1.55] text-[rgb(var(--text-primary)/0.92)]">
+                            <Icon name="AlertTriangle" size={16} className="mt-0.5 shrink-0 text-red-400" />
                             <span>{sc.postInjuryDisclaimer[lang]}</span>
                         </div>
 
-                        <div className="space-y-2">
+                        <div className="divide-y divide-[rgb(var(--border-subtle)/0.65)] border-t border-[rgb(var(--border-subtle)/0.65)]">
                             {sc.postInjuryPhases.map((step) => (
                                 <article
                                     key={step.phase}
-                                    className="rounded-[6px] border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-app)/0.55)] p-3 flex items-start gap-2.5"
+                                    className="py-3.5 flex items-start gap-3"
                                 >
-                                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[4px] bg-emerald-500/15 text-[11px] font-black text-emerald-400 tabular-nums">
+                                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[5px] bg-emerald-500/15 text-xs font-black text-emerald-300 tabular-nums mt-0.5">
                                         {step.phase}
                                     </span>
-                                    <div className="space-y-0.5">
-                                        <h4 className="text-xs font-black text-white">{step.title[lang]}</h4>
-                                        <p className="text-[11px] leading-relaxed text-zinc-300">{step.body[lang]}</p>
+                                    <div className="space-y-1">
+                                        <h4 className="text-sm font-extrabold text-[rgb(var(--text-primary))]">
+                                            {step.title[lang]}
+                                        </h4>
+                                        <p className="text-sm leading-[1.55] text-[rgb(var(--text-secondary))]">
+                                            {step.body[lang]}
+                                        </p>
                                     </div>
                                 </article>
                             ))}

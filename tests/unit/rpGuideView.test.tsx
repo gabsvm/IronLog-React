@@ -29,6 +29,8 @@ describe('GuidelinesModal & Native RpGuideView', () => {
         );
 
         expect(screen.getByText('Guía del Programa')).toBeTruthy();
+        expect(screen.getByText('W2/5')).toBeTruthy();
+        expect(screen.queryByLabelText('Volver')).toBeNull();
         expect(screen.queryByRole('img')).toBeNull();
         expect(screen.getByText('Hipertrofia Básica 1')).toBeTruthy();
         expect(screen.getByText('Hipertrofia Básica 2')).toBeTruthy();
@@ -37,7 +39,8 @@ describe('GuidelinesModal & Native RpGuideView', () => {
 
         // Switch across native tabs
         fireEvent.click(screen.getByTestId('rp-guide-tab-principles'));
-        expect(screen.getByText('1. Especificidad (Specificity)')).toBeTruthy();
+        expect(screen.getByText('Especificidad')).toBeTruthy();
+        expect(screen.getByText('01')).toBeTruthy();
         fireEvent.click(screen.getByTestId('rp-age-beginner'));
         expect(screen.getByText(/Checklist de carga del principiante/i)).toBeTruthy();
         fireEvent.click(screen.getByTestId('rp-age-advanced'));
@@ -116,6 +119,7 @@ describe('GuidelinesModal & Native RpGuideView', () => {
         );
 
         expect(screen.getByText('Program Guide')).toBeTruthy();
+        expect(screen.queryByLabelText('Back')).toBeNull();
         expect(screen.getByText('Basic Hypertrophy 1')).toBeTruthy();
         fireEvent.click(screen.getByTestId('rp-guide-tab-execution'));
         expect(screen.getByText('Deload Week Protocol')).toBeTruthy();

@@ -192,10 +192,10 @@ export const RP_PRINCIPLES_DATA = {
             rank: 1,
             id: 'specificity',
             icon: 'Target',
-            name: { es: '1. Especificidad (Specificity)', en: '1. Specificity' },
+            name: { es: 'Especificidad', en: 'Specificity' },
             tagline: {
-                es: 'El principio #1: entrená exactamente la adaptación que buscás y mantenela en secuencia.',
-                en: 'The #1 principle: train specifically for hypertrophy and sustain directed adaptation.',
+                es: 'Entrená exactamente la adaptación que buscás y mantenela en secuencia.',
+                en: 'Train specifically for hypertrophy and sustain directed adaptation.',
             },
             summary: {
                 es: 'Todo entrenamiento debe estimular hipertrofia directa, conservar masa o potenciar crecimiento futuro. Además, la adaptación dirigida exige repetir patrones estables durante semanas y meses en lugar de cambiar todo al azar. Si tu meta es masa muscular, tu análisis de necesidades prioriza los grupos musculares deseados y respalda el proceso con superávit calórico o dieta acorde.',
@@ -226,10 +226,10 @@ export const RP_PRINCIPLES_DATA = {
             rank: 2,
             id: 'overload',
             icon: 'TrendingUp',
-            name: { es: '2. Sobrecarga (Overload)', en: '2. Overload' },
+            name: { es: 'Sobrecarga', en: 'Overload' },
             tagline: {
-                es: 'El principio #2: superá el umbral efectivo y aumentá el desafío progresivamente de MEV a MRV.',
-                en: 'The #2 principle: cross the effective stimulus threshold and progress from MEV to MRV.',
+                es: 'Superá el umbral efectivo y aumentá el desafío progresivamente de MEV a MRV.',
+                en: 'Cross the effective stimulus threshold and progress from MEV to MRV.',
             },
             summary: {
                 es: 'Regla maestra de la sobrecarga hipertrófica: "Hacé múltiples series de 5–30 repeticiones controladas (≤9 s/rep) con rango completo seguro, llevadas cerca del fallo (5–0 RIR) con 30%–85% 1RM, donde el músculo objetivo sea el factor limitante, progresando entre MEV y MRV".',
@@ -256,7 +256,7 @@ export const RP_PRINCIPLES_DATA = {
             rank: 3,
             id: 'fatigue',
             icon: 'Shield',
-            name: { es: '3. Gestión de la Fatiga (Fatigue Management)', en: '3. Fatigue Management' },
+            name: { es: 'Gestión de la Fatiga', en: 'Fatigue Management' },
             tagline: {
                 es: 'Equilibrá estímulo y costo recuperativo usando el Ratio Estímulo-Fatiga (SFR).',
                 en: 'Balance hypertrophy stimulus against recovery cost using the Stimulus-to-Fatigue Ratio (SFR).',
@@ -290,7 +290,7 @@ export const RP_PRINCIPLES_DATA = {
             rank: 4,
             id: 'sra',
             icon: 'Repeat',
-            name: { es: '4. SRA y Frecuencia (Stimulus-Recovery-Adaptation)', en: '4. SRA & Frequency' },
+            name: { es: 'SRA y Frecuencia', en: 'SRA & Frequency' },
             tagline: {
                 es: 'Volvé a estimular cada músculo apenas se disipa la fatiga y termina la adaptación.',
                 en: 'Re-stimulate each muscle as soon as fatigue clears and hypertrophy adaptation completes.',
@@ -320,7 +320,7 @@ export const RP_PRINCIPLES_DATA = {
             rank: 5,
             id: 'variation',
             icon: 'Shuffle',
-            name: { es: '5. Variación (Variation)', en: '5. Variation' },
+            name: { es: 'Variación', en: 'Variation' },
             tagline: {
                 es: 'Introducí novedad estratégica para evitar mesetas y lesiones por sobreuso sin perder inercia.',
                 en: 'Use directed, strategic novelty to prevent adaptive resistance and overuse without losing momentum.',
@@ -350,7 +350,7 @@ export const RP_PRINCIPLES_DATA = {
             rank: 6,
             id: 'potentiation',
             icon: 'Layers',
-            name: { es: '6. Potenciación entre Fases (Phase Potentiation)', en: '6. Phase Potentiation' },
+            name: { es: 'Potenciación entre Fases', en: 'Phase Potentiation' },
             tagline: {
                 es: 'Hacé que el bloque actual prepare y multiplique los resultados del bloque siguiente.',
                 en: 'Sequence workouts, mesocycles, and blocks so each phase amplifies the responsiveness of the next.',
@@ -380,7 +380,7 @@ export const RP_PRINCIPLES_DATA = {
             rank: 7,
             id: 'individualization',
             icon: 'Cpu',
-            name: { es: '7. Individualización (Individualization)', en: '7. Individualization' },
+            name: { es: 'Individualización', en: 'Individualization' },
             tagline: {
                 es: 'Ajustá los seis principios anteriores a tu genética, edad de entrenamiento, estilo de vida y respuesta real.',
                 en: 'Tailor all six prior principles around your genetics, training age, diet phase, lifestyle, and real feedback.',
