@@ -52,7 +52,7 @@ export const buildSessionCardModel = (input: {
         .map(({ ex, done }) => ({ name: input.exerciseName(ex), detail: input.bestSetText(ex) ?? `${done} ${labels.sets.toLowerCase()}` }));
     return {
         badge: labels.workoutComplete,
-        title: log.name || 'Repyntra',
+        title: log.name || 'MEVRA',
         date: new Date(log.endTime || log.startTime || Date.now()).toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' }),
         stats: [
             { label: labels.time, value: formatSessionDuration(log.duration) },
@@ -61,7 +61,7 @@ export const buildSessionCardModel = (input: {
         ],
         topExercises,
         muscles: totals.muscles.slice(0, 6),
-        footer: 'REPYNTRA',
+        footer: 'MEVRA',
         musclesLabel: labels.musclesHit,
         highlightsLabel: labels.highlights || 'HIGHLIGHTS',
         sessionCaption: labels.sessionCaption || 'SESSION RECAP',
@@ -93,7 +93,7 @@ const textFit = (ctx: CanvasRenderingContext2D, value: string, width: number): s
 
 const wrapTitle = (ctx: CanvasRenderingContext2D, title: string, maxWidth: number): string[] => {
     const words = title.trim().split(/\s+/).filter(Boolean);
-    if (!words.length) return ['Repyntra'];
+    if (!words.length) return ['MEVRA'];
     const rows = [''];
     for (const word of words) {
         const i = rows.length - 1;

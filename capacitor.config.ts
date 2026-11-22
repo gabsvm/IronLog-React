@@ -3,7 +3,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.gainslab.pro',
-  appName: 'Repyntra',
+  appName: 'MEVRA',
   webDir: 'dist',
   server: {
     androidScheme: 'https'

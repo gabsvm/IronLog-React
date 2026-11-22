@@ -49,7 +49,7 @@ describe('U6: ErrorBoundary and Emergency Backup', () => {
 
         const { filename, payload } = await generateEmergencyBackup();
 
-        expect(filename).toMatch(/^repyntra-emergency-backup-\d{4}-\d{2}-\d{2}\.json$/);
+        expect(filename).toMatch(/^mevra-emergency-backup-\d{4}-\d{2}-\d{2}\.json$/);
         expect(payload.schema).toBe('gainslab-backup');
         expect(payload.version).toBe(1);
         expect(payload.state.program).toEqual(mockPrograms);

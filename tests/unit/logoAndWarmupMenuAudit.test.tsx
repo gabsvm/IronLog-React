@@ -19,33 +19,22 @@ vi.mock('../../context/AppContext', async (importOriginal) => {
 });
 
 describe('Impeccable Visual Audit: Logo & Wordmark', () => {
-    it('renders the semantic split Rep + yntra and 2 terminal pulse circle nodes', () => {
+    it('renders the MEVRA Volume Strata M wordmark and 4 geometric polygon strata', () => {
         const { container } = render(<Logo size={32} variant="lockup" />);
 
-        // Semantic wordmark split
-        const repSpan = container.querySelector('span.font-sans span:first-child');
-        const yntraSpan = container.querySelector('span.font-sans span:last-child');
-        expect(repSpan?.textContent).toBe('Rep');
-        expect(yntraSpan?.textContent).toBe('yntra');
+        // Unified MEVRA wordmark
+        const wordmark = container.querySelector('span.font-sans');
+        expect(wordmark?.textContent).toBe('MEVRA');
 
         // Squircle badge
         const badge = container.querySelector('.rounded-\\[8px\\]');
         expect(badge).not.toBeNull();
 
-        // Terminal pulse circles in SVG
-        const circles = container.querySelectorAll('svg circle');
-        expect(circles.length).toBe(2);
-
-        const companionDot = Array.from(circles).find(c => c.getAttribute('cy') === '25');
-        const dominantDot = Array.from(circles).find(c => c.getAttribute('cy') === '12');
-
-        expect(companionDot).toBeDefined();
-        expect(companionDot?.getAttribute('cx')).toBe('100');
-        expect(companionDot?.getAttribute('r')).toBe('4.2');
-
-        expect(dominantDot).toBeDefined();
-        expect(dominantDot?.getAttribute('cx')).toBe('100');
-        expect(dominantDot?.getAttribute('r')).toBe('5.5');
+        // Volume Strata M polygons in SVG (2 primary text + 2 primary accent)
+        const polygons = Array.from(container.querySelectorAll('svg polygon'));
+        expect(polygons.length).toBe(4);
+        expect(polygons.filter(p => (p.getAttribute('class') || '').includes('text-primary')).length).toBe(2);
+        expect(polygons.filter(p => (p.getAttribute('class') || '').includes('fill-primary-500')).length).toBe(2);
     });
 
     it('renders standalone icon without text when variant="icon"', () => {
@@ -53,7 +42,7 @@ describe('Impeccable Visual Audit: Logo & Wordmark', () => {
         expect(container.querySelector('span')).toBeNull();
         const svg = container.querySelector('svg');
         expect(svg).not.toBeNull();
-        expect(svg?.querySelectorAll('circle').length).toBe(2);
+        expect(svg?.querySelectorAll('polygon').length).toBe(4);
     });
 });
 

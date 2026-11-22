@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#050505" />
-    <title>Repyntra Offline</title>
+    <title>MEVRA Offline</title>
     <style>
       :root {
         color-scheme: dark;
@@ -18,7 +18,7 @@
           radial-gradient(circle at top, rgba(200, 255, 0, 0.15), transparent 38%),
           #050505;
         color: #f4f4f5;
-        font-family: Inter, system-ui, sans-serif;
+        font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
       }
       .card {
         width: min(420px, calc(100vw - 32px));
@@ -34,26 +34,6 @@
         height: 88px;
         object-fit: contain;
         filter: drop-shadow(0 0 18px rgba(200, 255, 0, 0.12));
-      }
-      .eyebrow {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        margin-top: 18px;
-        padding: 6px 10px;
-        border-radius: 999px;
-        background: rgba(39, 39, 42, 0.95);
-        color: #a1a1aa;
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 0.16em;
-        text-transform: uppercase;
-      }
-      .dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 999px;
-        background: #c8ff00;
       }
       h1 {
         margin: 18px 0 8px;
@@ -99,11 +79,10 @@
   </head>
   <body>
     <main class="card">
-      <img class="mark" src="/assets/branding/repyntra-icon.png" alt="Repyntra" />
-      <div class="eyebrow"><span class="dot"></span> Offline Mode</div>
-      <h1>Rep<span class="accent">yntra</span></h1>
+      <img class="mark" src="/assets/branding/mevra-icon.png" alt="MEVRA" />
+      <h1>ME<span class="accent">VRA</span></h1>
       <p>
-        No network available right now. Your local data is still on this device.
+        <strong>Offline Mode.</strong> No network available right now. Your local data is still on this device.
         Reconnect and the app will resume cloud sync automatically.
       </p>
       <div class="actions">

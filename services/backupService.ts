@@ -292,5 +292,5 @@ export const restoreBackupToStorage = async (backup: GainsLabBackupV1): Promise<
  * Generates the standardized download filename.
  */
 export const getBackupDownloadFilename = (): string => {
-    return `repyntra_backup_${todayLocalDateKey()}.json`;
+    return `mevra_backup_${todayLocalDateKey()}.json`;
 };

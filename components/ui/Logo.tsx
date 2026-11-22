@@ -9,15 +9,15 @@ export interface LogoProps {
 }
 
 /**
- * Repyntra "Peak Signal" brand mark & lockup.
- * Exact dual ascending polyline geometry matching RepyntraWordmark.kt.
- * Theme-reactive via currentColor & Tailwind semantic tokens.
+ * MEVRA "Volume Strata M" brand mark & lockup.
+ * Four razor-parallel ascending geometric strata representing MEV -> MAV -> MRV.
+ * Theme-reactive via Tailwind semantic tokens and CSS variables.
  */
 export const Logo: React.FC<LogoProps> = ({
     className = '',
     size,
     variant,
-    alt = 'Repyntra',
+    alt = 'MEVRA',
     showText,
 }) => {
     // Sizing: prioritize explicit `size`, inspect Tailwind `h-XX` from className, or default to 32px
@@ -38,9 +38,9 @@ export const Logo: React.FC<LogoProps> = ({
             ? Boolean(showText)
             : true;
 
-    const renderPeakSignalSvg = (svgClassName?: string, customSize?: number) => (
+    const renderVolumeStrataSvg = (svgClassName?: string, customSize?: number) => (
         <svg
-            viewBox="-6 -6 112 112"
+            viewBox="0 0 100 100"
             width={customSize ?? effectiveSize}
             height={customSize ?? effectiveSize}
             role="img"
@@ -48,33 +48,19 @@ export const Logo: React.FC<LogoProps> = ({
             className={svgClassName}
             fill="none"
         >
-            {/* RepyntraPeakCompanion (trailing lower stroke, accent lime) */}
-            <polyline
-                points="0,93 18,93 30,53 42,77 54,35 66,67 78,67 100,25"
-                strokeWidth="4.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                fill="none"
-                className="text-primary-500"
-                stroke="currentColor"
-            />
-            <circle cx="100" cy="25" r="4.2" className="fill-primary-500" />
-            {/* RepyntraPeakDominant (leading upper stroke, theme text primary) */}
-            <polyline
-                points="0,82 18,82 30,40 42,66 54,22 66,56 78,56 100,12"
-                strokeWidth="10.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                fill="none"
-                className="text-[rgb(var(--text-primary))]"
-                stroke="currentColor"
-            />
-            <circle cx="100" cy="12" r="5.5" className="fill-[rgb(var(--text-primary))]" />
+            {/* Left diagonal bar (MEV, theme text primary) */}
+            <polygon points="13,84 37,40 51,40 27,84" className="fill-[rgb(var(--text-primary))]" />
+            {/* Center diagonal lower half (MAV, theme text primary) */}
+            <polygon points="35,84 63,32.5 63,58.3 49,84" className="fill-[rgb(var(--text-primary))]" />
+            {/* Center diagonal upper peak (MRV, theme primary accent) */}
+            <polygon points="63,32.5 72,16 86,16 63,58.3" className="fill-primary-500" />
+            {/* Right vertical pillar (theme primary accent) */}
+            <polygon points="72,57 86,31.3 86,84 72,84" className="fill-primary-500" />
         </svg>
     );
 
     if (!isLockup) {
-        return renderPeakSignalSvg(className || undefined);
+        return renderVolumeStrataSvg(className || undefined);
     }
 
     // Lockup: strip fixed width/height classes from container so lockup text isn't constrained
@@ -91,14 +77,13 @@ export const Logo: React.FC<LogoProps> = ({
                 className="inline-flex shrink-0 items-center justify-center rounded-[8px] border border-primary-500/30 bg-primary-500/10"
                 style={{ width: effectiveSize, height: effectiveSize }}
             >
-                {renderPeakSignalSvg(undefined, innerSvgSize)}
+                {renderVolumeStrataSvg(undefined, innerSvgSize)}
             </span>
             <span
-                className="font-sans font-extrabold tracking-[-0.035em] leading-none"
-                style={{ fontSize: Math.round(effectiveSize * 0.68) }}
+                className="font-sans font-extrabold tracking-[0.06em] uppercase leading-none text-[rgb(var(--text-primary))]"
+                style={{ fontSize: Math.round(effectiveSize * 0.66) }}
             >
-                <span className="text-[rgb(var(--text-primary))]">Rep</span>
-                <span className="text-primary-500">yntra</span>
+                MEVRA
             </span>
         </div>
     );

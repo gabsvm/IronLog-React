@@ -60,7 +60,7 @@ describe('U8: session card model', () => {
         ]);
         expect(model.topExercises).toEqual([{ name: 'Bench', detail: '85 kg × 6' }, { name: 'Fly', detail: '20 kg × 12' }]);
         expect(model.muscles).toEqual(['CHEST']);
-        expect(model.footer).toBe('REPYNTRA');
+        expect(model.footer).toBe('MEVRA');
     });
 
     it('formats durations', () => {

@@ -123,7 +123,7 @@ export const renderPRCard = async (input: {
     });
 
     // Subtle uppercase watermark at bottom
-    const watermark = (input.watermark || 'REPYNTRA PRO').toUpperCase();
+    const watermark = (input.watermark || 'MEVRA PRO').toUpperCase();
     ctx.fillStyle = 'rgba(255, 255, 255, 0.42)';
     ctx.font = font(700, 24);
     ctx.fillText(watermark, W / 2, H - 110);

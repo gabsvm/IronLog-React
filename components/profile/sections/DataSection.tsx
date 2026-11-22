@@ -40,7 +40,7 @@ export const DataSection: React.FC<DataSectionProps> = ({
     const handleExportCsv = () => {
         const unit = resolveWeightUnit(config);
         const csv = buildTrainingCsv(logs, unit);
-        const filename = `repyntra_history_${new Date().toISOString().slice(0, 10)}.csv`;
+        const filename = `mevra_history_${new Date().toISOString().slice(0, 10)}.csv`;
         void shareFileOrDownload(csv, filename, 'text/csv');
     };
 

@@ -87,7 +87,7 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
             const day = new Date(log.endTime || Date.now()).toISOString().slice(0, 10);
             return {
                 blob, title: model.title, mime: native ? 'image/jpeg' : 'image/png',
-                filename: `repyntra-${day}.${native ? 'jpg' : 'png'}`,
+                filename: `mevra-${day}.${native ? 'jpg' : 'png'}`,
             };
         })();
         cardCacheRef.current.set(cacheKey, promise);

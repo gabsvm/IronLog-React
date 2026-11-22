@@ -22,11 +22,11 @@ export const PRCelebrationOverlay: React.FC<PRCelebrationOverlayProps> = ({ onDi
             const blob = await renderPRCard({
                 title: t.newRecord,
                 message: t.prMessage,
-                watermark: 'REPYNTRA PRO',
+                watermark: 'MEVRA PRO',
             });
             await shareFileOrDownload(
                 blob,
-                'repyntra-pr.png',
+                'mevra-pr.png',
                 'image/png',
                 TRANSLATIONS[lang].copy.pRCelebrationOverlay.newPr,
             );
@@ -70,7 +70,7 @@ export const PRCelebrationOverlay: React.FC<PRCelebrationOverlayProps> = ({ onDi
 
                     {/* Watermark only visible in the exported image, usually hidden via CSS trick but we'll just leave it subtle */}
                     <div className="opacity-40 text-xs font-bold tracking-widest uppercase mb-10 flex gap-1 items-center">
-                        <Icon name="Activity" size={12} /> Repyntra Pro
+                        <Icon name="Activity" size={12} /> MEVRA Pro
                     </div>
                 </div>
 

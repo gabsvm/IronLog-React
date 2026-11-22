@@ -187,9 +187,9 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onGetStarted, onLogin
                         </div>
                     </div>
 
-                    {/* Right Column: Repyntra Kinetic Film Demo & Live Telemetry Card */}
+                    {/* Right Column: MEVRA Kinetic Film Demo & Live Telemetry Card */}
                     <div className="lg:col-span-7 flex flex-col space-y-3">
-                        {/* Repyntra Kinetic Film Player Frame */}
+                        {/* MEVRA Kinetic Film Player Frame */}
                         <div className="premium-landing-preview border border-white/[0.09] rounded-[6px] overflow-hidden shadow-2xl">
                             {/* Top Status Strip */}
                             <div className="bg-[#131316] border-b border-white/[0.07] px-3 py-2 flex items-center justify-between">
@@ -402,12 +402,12 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onGetStarted, onLogin
                 <footer className="mt-16 md:mt-24 border-t border-white/[0.07] pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-zinc-500">
                     <div className="flex items-center gap-2.5">
                         <BrandLogo size={20} className="text-[#C4F13A]" />
-                        <span className="font-black text-white uppercase tracking-wider">REPYNTRA</span>
+                        <span className="font-black text-white uppercase tracking-wider">MEVRA</span>
                         <span className="text-zinc-700">·</span>
-                        <span className="text-zinc-400">PEAK SIGNAL v4.0</span>
+                        <span className="text-zinc-400">VOLUME STRATA v4.4</span>
                     </div>
                     <div className="text-zinc-500 text-center sm:text-right">
-                        &copy; {new Date().getFullYear()} REPYNTRA HYPERTROPHY LABS · ALL RIGHTS RESERVED
+                        &copy; {new Date().getFullYear()} MEVRA HYPERTROPHY LABS · ALL RIGHTS RESERVED
                     </div>
                 </footer>
             </main>

@@ -21,8 +21,8 @@ const OPTIONAL_PRECACHE_URLS = [
   '/apple-touch-icon.png',
   '/favicon-32.png',
   '/favicon-16.png',
-  '/assets/branding/repyntra-icon.png',
-  '/assets/branding/repyntra-lockup.png',
+  '/assets/branding/mevra-icon.png',
+  '/assets/branding/mevra-lockup.png',
 ];
 
 const MAX_CACHE_ENTRIES = 120;
