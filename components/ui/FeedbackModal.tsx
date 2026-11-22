@@ -13,13 +13,23 @@ interface FeedbackModalProps {
 }
 
 interface MuscleFeedbackData {
-    jointPain: number; // 0..3
-    soreness: number;  // 0..3
-    pump: number;      // 0..2
-    volume: number;    // 0..3
+    jointPain?: number; // 0..3
+    soreness?: number;  // 0..3
+    pump?: number;      // 0..2
+    volume?: number;    // 0..3
 }
 
 type FeedbackState = Record<string, MuscleFeedbackData>;
+
+const isMuscleAnswered = (data?: MuscleFeedbackData): data is Required<MuscleFeedbackData> => {
+    if (!data) return false;
+    return (
+        typeof data.jointPain === 'number' &&
+        typeof data.soreness === 'number' &&
+        typeof data.pump === 'number' &&
+        typeof data.volume === 'number'
+    );
+};
 
 const computeAdjustment = (jointPain: number, soreness: number, pump: number, volume: number): number => {
     if (jointPain >= 2 || soreness === 3 || volume === 3) {
@@ -50,7 +60,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
     const [feedbackState, setFeedbackState] = useState<FeedbackState>(() => {
         const initial: FeedbackState = {};
         uniqueMuscles.forEach(m => {
-            initial[m as string] = { jointPain: 0, soreness: 1, pump: 1, volume: 1 };
+            initial[m as string] = {};
         });
         return initial;
     });
@@ -75,16 +85,19 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
     const muscleName = activeMuscle ? getMuscleName(activeMuscle) : '';
     const isLast = step >= uniqueMuscles.length - 1;
 
-    const currentData = activeMuscle && feedbackState[activeMuscle]
+    const currentData: MuscleFeedbackData = activeMuscle && feedbackState[activeMuscle]
         ? feedbackState[activeMuscle]
-        : { jointPain: 0, soreness: 1, pump: 1, volume: 1 };
+        : {};
+
+    const isCurrentAnswered = isMuscleAnswered(currentData);
+    const isAllAnswered = uniqueMuscles.every(m => isMuscleAnswered(feedbackState[m as string]));
 
     const handleSelectOption = (field: keyof MuscleFeedbackData, value: number) => {
         if (!activeMuscle) return;
         setFeedbackState(prev => ({
             ...prev,
             [activeMuscle]: {
-                ...(prev[activeMuscle] || { jointPain: 0, soreness: 1, pump: 1, volume: 1 }),
+                ...(prev[activeMuscle] || {}),
                 [field]: value,
             },
         }));
@@ -94,7 +107,8 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
         const result: Record<string, { soreness: number; performance: number; adjustment: number }> = {};
         uniqueMuscles.forEach(m => {
             const mKey = m as string;
-            const d = feedbackState[mKey] || { jointPain: 0, soreness: 1, pump: 1, volume: 1 };
+            const raw = feedbackState[mKey];
+            const d = isMuscleAnswered(raw) ? raw : { jointPain: 0, soreness: 1, pump: 1, volume: 1 };
             const perf = computePerformance(d.volume, d.jointPain);
             const adj = computeAdjustment(d.jointPain, d.soreness, d.pump, d.volume);
             result[mKey] = {
@@ -107,6 +121,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
     };
 
     const handleSave = () => {
+        if (!isAllAnswered) return;
         onConfirm(buildResult());
     };
 
@@ -131,12 +146,14 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
         );
     }
 
-    const currentAdjustment = computeAdjustment(
-        currentData.jointPain,
-        currentData.soreness,
-        currentData.pump,
-        currentData.volume
-    );
+    const currentAdjustment = isCurrentAnswered
+        ? computeAdjustment(
+              currentData.jointPain!,
+              currentData.soreness!,
+              currentData.pump!,
+              currentData.volume!
+          )
+        : null;
 
     const jointPainOptions = [
         { value: 0, label: pickLang(lang, { es: 'Ninguno', en: 'None' }) },
@@ -212,7 +229,13 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
                                     ) : (
                                         <span>{mName}</span>
                                     )}
-                                    <span className="w-1.5 h-1.5 rounded-full bg-primary-500 ml-0.5" />
+                                    <span
+                                        className={`w-2 h-2 rounded-full ml-0.5 ${
+                                            isMuscleAnswered(feedbackState[m as string])
+                                                ? 'bg-emerald-400'
+                                                : 'bg-zinc-600'
+                                        }`}
+                                    />
                                 </button>
                             );
                         })}
@@ -225,16 +248,6 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
                         </span>
                     </div>
                 )}
-
-                {/* Hidden button for testing-library skipFinish compatibility */}
-                <button
-                    type="button"
-                    onClick={skipAndFinish}
-                    className="sr-only"
-                    tabIndex={-1}
-                >
-                    {t.copy.feedbackModal.skipFinish}
-                </button>
 
                 {/* Scrollable container with all 4 sections simultaneously */}
                 <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5 no-scrollbar">
@@ -391,48 +404,65 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
                     {/* Progression Feedback Preview */}
                     <div className="flex items-center gap-2.5 rounded-[4px] border border-border-subtle/70 bg-surface-raised/60 px-3.5 py-2.5 text-[12px] text-zinc-300">
                         <Icon
-                            name={isStructuredProgram ? 'Info' : currentAdjustment !== 0 ? 'TrendingUp' : 'CheckCircle'}
+                            name={isStructuredProgram ? 'Info' : currentAdjustment === null ? 'HelpCircle' : currentAdjustment !== 0 ? 'TrendingUp' : 'CheckCircle'}
                             size={16}
                             className="shrink-0 text-primary-500"
                         />
                         <span className="leading-snug">
                             {isStructuredProgram
                                 ? t.copy.feedbackModal.thisIsStoredAs
-                                : currentAdjustment === 0
-                                    ? t.copy.feedbackModal.recommendedVolumeKeepCurrent
-                                    : currentAdjustment > 0
-                                        ? formatMessage(t.copy.feedbackModal.positiveResponseFutureAdjustment, { adjustment: currentAdjustment })
-                                        : formatMessage(t.copy.feedbackModal.recoveryLimitedFutureAdjustment, { adjustment: currentAdjustment })}
+                                : currentAdjustment === null
+                                    ? pickLang(lang, {
+                                          es: 'Responde dolor articular, agujetas, bombeo y volumen para guardar.',
+                                          en: 'Answer joint pain, soreness, pump and workload to continue.',
+                                      })
+                                    : currentAdjustment === 0
+                                        ? t.copy.feedbackModal.recommendedVolumeKeepCurrent
+                                        : currentAdjustment > 0
+                                            ? formatMessage(t.copy.feedbackModal.positiveResponseFutureAdjustment, { adjustment: currentAdjustment })
+                                            : formatMessage(t.copy.feedbackModal.recoveryLimitedFutureAdjustment, { adjustment: currentAdjustment })}
                         </span>
                     </div>
                 </div>
 
                 {/* Bottom Footer Bar */}
-                <div className="flex items-center justify-end gap-3 px-5 py-3.5 border-t border-border-subtle/60 bg-surface-base shrink-0">
+                <div className="flex items-center justify-between gap-2 px-5 py-3.5 border-t border-border-subtle/60 bg-surface-base shrink-0">
                     <button
                         type="button"
-                        onClick={onCancel}
-                        className="px-4 py-2 rounded-[4px] text-[13px] font-semibold text-zinc-300 hover:bg-white/5 active:scale-[0.98] transition-colors cursor-pointer"
+                        onClick={skipAndFinish}
+                        className="px-2 py-2 rounded-[4px] text-[12px] font-semibold text-zinc-400 hover:text-white transition-colors cursor-pointer"
                     >
-                        {pickLang(lang, { es: 'Cancelar', en: 'Cancel' })}
+                        {t.copy.feedbackModal.skipFinish}
                     </button>
-                    {uniqueMuscles.length > 1 && !isLast && (
+                    <div className="flex items-center gap-2.5">
                         <button
                             type="button"
-                            onClick={() => setStep(prev => Math.min(prev + 1, uniqueMuscles.length - 1))}
-                            className="px-4 py-2 rounded-[4px] border border-border-subtle bg-surface-raised text-zinc-200 text-[13px] font-bold hover:bg-surface-elevated active:scale-[0.98] transition-colors cursor-pointer"
+                            onClick={onCancel}
+                            className="px-3.5 py-2 rounded-[4px] text-[13px] font-semibold text-zinc-300 hover:bg-white/5 active:scale-[0.98] transition-colors cursor-pointer"
                         >
-                            {pickLang(lang, { es: 'Siguiente', en: 'Next' })}
+                            {pickLang(lang, { es: 'Cancelar', en: 'Cancel' })}
                         </button>
-                    )}
-                    <button
-                        type="button"
-                        onClick={handleSave}
-                        className="px-5 py-2 rounded-[4px] bg-primary-500 text-zinc-950 text-[13px] font-bold hover:brightness-110 active:scale-[0.98] transition-all shadow-sm cursor-pointer"
-                    >
-                        <span>{pickLang(lang, { es: 'Guardar', en: 'Save' })}</span>
-                        <span className="sr-only">{t.copy.feedbackModal.saveFinish}</span>
-                    </button>
+                        {uniqueMuscles.length > 1 && !isLast && (
+                            <button
+                                type="button"
+                                disabled={!isCurrentAnswered}
+                                onClick={() => setStep(prev => Math.min(prev + 1, uniqueMuscles.length - 1))}
+                                className="px-4 py-2 rounded-[4px] border border-border-subtle bg-surface-raised text-zinc-200 text-[13px] font-bold hover:bg-surface-elevated active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                            >
+                                {pickLang(lang, { es: 'Siguiente', en: 'Next' })}
+                            </button>
+                        )}
+                        <button
+                            type="button"
+                            data-testid="feedback-save-btn"
+                            disabled={!isAllAnswered}
+                            onClick={handleSave}
+                            className="px-5 py-2 rounded-[4px] bg-primary-500 text-zinc-950 text-[13px] font-bold hover:brightness-110 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm cursor-pointer"
+                        >
+                            <span>{pickLang(lang, { es: 'Guardar', en: 'Save' })}</span>
+                            <span className="sr-only">{t.copy.feedbackModal.saveFinish}</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

@@ -2,9 +2,10 @@
 import { useState } from 'react';
 import { useApp } from '../../../context/AppContext';
 import { TRANSLATIONS } from '../../../constants';
-import { UserProfile, ProgramDay } from '../../../types';
+import { UserProfile, ProgramDay, EquipmentType } from '../../../types';
 import { Icon } from '../../ui/Icon';
 import { recommendProgram, RecommendationResult } from '../../../utils/recommendationEngine';
+import { ALL_EQUIPMENT_IDS } from '../../../utils/equipment';
 import { useStore } from '../../../lib/store';
 
 export interface SetupWizardProps {
@@ -19,13 +20,21 @@ export interface OnboardingOutcome {
 export type Mode = 'suggested' | 'custom' | 'freestyle';
 
 export const useSetupWizardState = ({ onComplete }: SetupWizardProps) => {
-    const { lang, setLang, setProgram, userProfile, setUserProfile } = useApp();
+    const appCtx = useApp() as any;
+    const { lang, setLang, setProgram, userProfile, setUserProfile } = appCtx;
+    const setConfig = appCtx?.setConfig;
     const setActiveMeso = useStore(state => state.setActiveMeso);
     const t = TRANSLATIONS[lang];
     const w = t.wizard;
 
     // 0–3: profile steps, 4: recommendation, 5: launch mode picker
     const [step, setStep] = useState(0);
+    const [preferredEquipment, setPreferredEquipment] = useState<EquipmentType[]>(
+        () => (Array.isArray(appCtx?.config?.preferredEquipment) && appCtx.config.preferredEquipment.length > 0
+            ? appCtx.config.preferredEquipment
+            : ALL_EQUIPMENT_IDS)
+    );
+    const [equipmentTouched, setEquipmentTouched] = useState(false);
     const [profile, setProfile] = useState<UserProfile>(() => ({
         experience: userProfile?.experience || 'intermediate',
         daysPerWeek: userProfile?.daysPerWeek || 4,
@@ -57,6 +66,12 @@ export const useSetupWizardState = ({ onComplete }: SetupWizardProps) => {
             goal: profile.goal,
             sessionDuration: profile.sessionDuration,
         }));
+        if (equipmentTouched && typeof setConfig === 'function') {
+            setConfig({
+                preferredEquipment,
+                useExerciseTypeFilters: preferredEquipment.length < ALL_EQUIPMENT_IDS.length,
+            });
+        }
 
         if (mode === 'freestyle') {
             setActiveMeso(null);
@@ -145,6 +160,15 @@ export const useSetupWizardState = ({ onComplete }: SetupWizardProps) => {
         handleNext,
         handleApply,
         OptionBtn,
+        preferredEquipment,
+        toggleEquipment: (eqId: EquipmentType) => {
+            setEquipmentTouched(true);
+            setPreferredEquipment(prev => {
+                const exists = prev.includes(eqId);
+                if (exists && prev.length <= 1) return prev;
+                return exists ? prev.filter(id => id !== eqId) : [...prev, eqId];
+            });
+        },
     };
 };
 

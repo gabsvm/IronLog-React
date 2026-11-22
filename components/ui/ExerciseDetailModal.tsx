@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
-import { ExerciseDef, SessionExercise, VolumeCountingMode } from '../../types';
+import { ExerciseDef, Log, SessionExercise, VolumeCountingMode } from '../../types';
 import { Icon } from './Icon';
 import { getTranslated } from '../../utils';
 import { pickLang } from '../../utils/i18n';
+import { getEquipmentLabel, inferExerciseEquipment } from '../../utils/equipment';
+import { resolveWeightUnit, toDisplay, unitLabel } from '../../utils/units';
 import { exerciseIdGroup } from '../../utils/exerciseLibrary';
 import { Button } from './Button';
 import { ProgressChart } from '../stats/ProgressChart';
@@ -149,10 +151,14 @@ const YouTubeCard: React.FC<{ videoId: string; title: string; youtubeUrl: string
 };
 
 export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exercise, onClose }) => {
-    const { lang, logs, exercises, setExercises, setLogs } = useApp();
+    const appCtx = useApp() as any;
+    const { lang, logs, exercises, setExercises, setLogs } = appCtx;
+    const config = appCtx?.config || {};
     const t = TRANSLATIONS[lang];
     const [activeTab, setActiveTab] = useState<'guide' | 'history'>('guide');
     const [volumeCountingMode, setVolumeCountingMode] = useState<VolumeCountingMode>(exercise.volumeCountingMode || 'total');
+    const exerciseNote = (exercise as any).note || '';
+    const [pinnedNoteDraft, setPinnedNoteDraft] = useState<string>(exercise.pinnedNote || exerciseNote);
     const setActiveSession = useStore(state => state.setActiveSession);
 
     const { isWorkerReady, calculateChartData } = useStatsWorker();
@@ -161,7 +167,39 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
 
     useEffect(() => {
         setVolumeCountingMode(exercise.volumeCountingMode || 'total');
-    }, [exercise.id, exercise.volumeCountingMode]);
+        setPinnedNoteDraft(exercise.pinnedNote || exerciseNote);
+    }, [exercise.id, exercise.volumeCountingMode, exercise.pinnedNote, exerciseNote]);
+
+    const unit = resolveWeightUnit(config);
+    const uLabel = unitLabel(unit);
+    const equipLabel = getEquipmentLabel(inferExerciseEquipment(exercise), lang);
+
+    const historySessions = useMemo(() => {
+        const safeLogs = Array.isArray(logs) ? (logs as Log[]) : [];
+        const groupIds = new Set(exerciseIdGroup(exercises || [], String(exercise.id)));
+        const entries: Array<{ id: number; dateLabel: string; name: string; note?: string; sets: Array<{ weight: string | number; reps: string | number }> }> = [];
+
+        const sorted = [...safeLogs]
+            .filter(l => l && !l.skipped && Array.isArray(l.exercises))
+            .sort((a, b) => (b.endTime || b.startTime || 0) - (a.endTime || a.startTime || 0));
+
+        for (const log of sorted) {
+            const matchedEx = (log.exercises || []).find(item => groupIds.has(String(item.id)));
+            if (!matchedEx) continue;
+            const completedSets = (matchedEx.sets || []).filter(s => s.completed && !s.skipped);
+            if (completedSets.length === 0) continue;
+            const ts = log.endTime || log.startTime || Date.now();
+            entries.push({
+                id: log.id,
+                dateLabel: new Date(ts).toLocaleDateString(),
+                name: log.name || pickLang(lang, { es: 'Entrenamiento', en: 'Workout' }),
+                note: matchedEx.note,
+                sets: completedSets.map(s => ({ weight: s.weight, reps: s.reps })),
+            });
+            if (entries.length >= 20) break;
+        }
+        return entries;
+    }, [logs, exercises, exercise.id, lang]);
 
     useEffect(() => {
         if (activeTab === 'history' && isWorkerReady) {
@@ -186,20 +224,23 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
         : `https://www.youtube.com/results?search_query=${encodeURIComponent(String(translatedName) + ' technique tutorial')}`;
 
     const saveVolumeCountingMode = () => {
+        const trimmedPin = pinnedNoteDraft.trim() || undefined;
         const updateExercise = <T extends ExerciseDef>(item: T): T => (
-            item.id === exercise.id ? { ...item, volumeCountingMode } : item
+            item.id === exercise.id ? { ...item, volumeCountingMode, pinnedNote: trimmedPin } : item
         ) as T;
 
         setExercises(prev => prev.map(updateExercise));
-        // Logs store a snapshot of the exercise. Update matching snapshots too so
-        // existing history and every summary use the configuration the user chose.
         setLogs(prev => prev.map(log => ({
             ...log,
             exercises: (log.exercises || []).map(updateExercise),
         })));
         setActiveSession(session => session ? {
             ...session,
-            exercises: session.exercises.map(updateExercise as (item: SessionExercise) => SessionExercise),
+            exercises: session.exercises.map(item =>
+                item.id === exercise.id
+                    ? { ...item, volumeCountingMode, pinnedNote: trimmedPin, note: trimmedPin ?? item.note, notePinned: Boolean(trimmedPin) }
+                    : item
+            ),
         } : session);
         onClose();
     };
@@ -209,20 +250,20 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
             open={true}
             onOpenChange={(o) => { if (!o) onClose(); }}
             title={String(translatedName)}
-            description={resolveMuscleLabel(exercise.muscle, lang)}
+            description={`${resolveMuscleLabel(exercise.muscle, lang)} · ${equipLabel}`}
             accent="primary"
             contentId="exercise-detail-scroll"
             dragHandleOnly
             footer={
                 <div className="flex gap-3">
                     <Button fullWidth onClick={onClose} variant="secondary" className="rounded-[6px]">{t.close}</Button>
-                    {activeTab === 'guide' && exercise.muscle !== 'CARDIO' && (
+                    {activeTab === 'guide' && (
                         <Button fullWidth onClick={saveVolumeCountingMode} className="rounded-[6px]">{TRANSLATIONS[lang].copy.exerciseDetailModal.save}</Button>
                     )}
                 </div>
             }
         >
-            {/* Tabs */}
+            {/* 2-Way Segmented Tabs (1:1 RP: Detail | History) */}
             <div role="tablist" className="mx-4 mt-3 flex rounded-[6px] border border-border-subtle bg-surface-raised p-1">
                 <button
                     role="tab"
@@ -234,7 +275,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                             : 'text-zinc-400 hover:text-white'
                     }`}
                 >
-                    {t.guide || 'Guide'}
+                    {pickLang(lang, { es: 'Detalle', en: 'Detail' })}
                 </button>
                 <button
                     role="tab"
@@ -317,6 +358,34 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                                 </div>
                             </div>
 
+                            {/* Pinned Notes (RP Video #10 Technique & Notes) */}
+                            <div>
+                                <div className="flex items-center justify-between mb-2">
+                                    <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-2">
+                                        <Icon name="Edit3" size={13} /> {pickLang(lang, { es: 'Notas fijadas', en: 'Pinned notes' })}
+                                    </h4>
+                                    {pinnedNoteDraft.trim() && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setPinnedNoteDraft('')}
+                                            className="text-[11px] font-semibold text-zinc-400 hover:text-white"
+                                        >
+                                            {pickLang(lang, { es: 'Limpiar', en: 'Clear' })}
+                                        </button>
+                                    )}
+                                </div>
+                                <textarea
+                                    rows={2}
+                                    value={pinnedNoteDraft}
+                                    onChange={(e) => setPinnedNoteDraft(e.target.value)}
+                                    placeholder={pickLang(lang, {
+                                        es: 'Anota ajustes de máquina, agarre o tips técnicos fijados...',
+                                        en: 'Add pinned machine setup, grip, or technique cues...',
+                                    })}
+                                    className="w-full rounded-[6px] border border-border-subtle bg-surface-raised p-3 text-sm text-white placeholder:text-zinc-500 outline-none focus:border-primary-500 resize-none"
+                                />
+                            </div>
+
                             {exercise.muscle !== 'CARDIO' && (
                                 <div>
                                     <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400 mb-3 flex items-center gap-2">
@@ -355,7 +424,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                         </div>
                     </>
                 ) : (
-                    <div className="p-5">
+                    <div className="p-5 space-y-4">
                         <div className="rounded-[8px] border border-border-subtle bg-surface-raised p-4">
                             <div className="mb-4">
                                 <h4 className="text-sm font-bold text-white uppercase tracking-tight">{t.statsProgress}</h4>
@@ -369,11 +438,43 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                                 loading={chartLoading}
                             />
                         </div>
-                        {chartData.length === 0 && !chartLoading && (
+
+                        {historySessions.length > 0 ? (
+                            <div className="space-y-2.5" data-testid="exercise-history-log-list">
+                                <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400 px-0.5">
+                                    {pickLang(lang, { es: 'Historial de sesiones', en: 'Session history' })}
+                                </h4>
+                                {historySessions.map((entry) => (
+                                    <div key={entry.id} className="rounded-[8px] border border-border-subtle bg-surface-raised p-3.5 space-y-2">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className="text-xs font-bold text-white truncate">{entry.name}</span>
+                                            <span className="text-[11px] font-medium text-zinc-400 shrink-0 tabular-nums">{entry.dateLabel}</span>
+                                        </div>
+                                        {entry.note && (
+                                            <p className="text-xs text-amber-300/90 italic">{entry.note}</p>
+                                        )}
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {entry.sets.map((s, idx) => {
+                                                const wNum = Number(s.weight);
+                                                const shownW = Number.isFinite(wNum) ? toDisplay(wNum, unit) : s.weight;
+                                                return (
+                                                    <span
+                                                        key={idx}
+                                                        className="rounded-[4px] border border-border-subtle bg-surface-base px-2 py-0.5 font-mono text-xs font-semibold text-zinc-200 tabular-nums"
+                                                    >
+                                                        {shownW}{uLabel} × {s.reps}
+                                                    </span>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : !chartLoading && chartData.length === 0 ? (
                             <div className="text-center py-8 text-zinc-500 text-xs italic">
                                 {t.statsNoData}
                             </div>
-                        )}
+                        ) : null}
                     </div>
                 )}
             </div>

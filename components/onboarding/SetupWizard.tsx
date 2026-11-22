@@ -2,6 +2,7 @@ import React from 'react';
 import { TRANSLATIONS } from '../../constants';
 import { Icon } from '../ui/Icon';
 import { Logo } from '../ui/Logo';
+import { pickLang } from '../../utils/i18n';
 import { useSetupWizardState, type SetupWizardProps } from './wizard/useSetupWizardState';
 import { SetupWizardStep } from './wizard/SetupWizardStep';
 
@@ -65,14 +66,18 @@ export const SetupWizard: React.FC<SetupWizardProps> = (props) => {
                     </div>
                 </div>
 
-                {/* Progress bar */}
+                {/* RP 1:1 4-Segment Progress Bar */}
                 {step < totalSteps && (
-                    <div className="space-y-2">
-                        <div className="h-1.5 bg-[rgb(var(--surface-elevated))] rounded-full overflow-hidden">
-                            <div
-                                className="h-full bg-primary-500 rounded-full transition-all duration-500"
-                                style={{ width: `${progress}%` }}
-                            />
+                    <div className="space-y-2" data-testid="setup-wizard-progress">
+                        <div className="grid grid-cols-4 gap-1.5">
+                            {Array.from({ length: totalSteps }, (_, i) => (
+                                <div
+                                    key={i}
+                                    className={`h-1.5 rounded-full transition-all duration-300 ${
+                                        i <= step ? 'bg-primary-500' : 'bg-[rgb(var(--surface-elevated))]'
+                                    }`}
+                                />
+                            ))}
                         </div>
                         <div className="flex justify-between">
                             {stepTitles.map((title, i) => (

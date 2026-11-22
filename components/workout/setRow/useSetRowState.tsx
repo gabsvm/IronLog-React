@@ -25,6 +25,7 @@ export interface SetRowProps {
     isActiveProtocolSet?: boolean;
     isNextSet?: boolean;
     showRIR?: boolean;
+    targetRir?: number;
     unit?: WeightUnit;
     onAddSet?: (exId: number) => void;
     onDeleteSet?: (exId: number, setId: number) => void;
@@ -35,7 +36,7 @@ export const useSetRowState = ({
     set, exInstanceId,
     onUpdate, onToggleComplete, onChangeType,
     lang, isCardio, isBodyweight, isIsometric, isometricTargetSecs,
-    setIndex, badgeLabel, tutorialId, disableTypeChange, isActiveProtocolSet, isNextSet, showRIR = false,
+    setIndex, badgeLabel, tutorialId, disableTypeChange, isActiveProtocolSet, isNextSet, showRIR = false, targetRir = 3,
     unit = 'kg',
     onAddSet, onDeleteSet, onModifySets,
 }: SetRowProps) => {
@@ -330,7 +331,7 @@ export const useSetRowState = ({
     }`;
 
     const weightPlaceholder = set.hintWeight ? String(shownWeight(set.hintWeight)) : '0';
-    const repsPlaceholder = set.hintReps ? String(set.hintReps) : '0';
+    const repsPlaceholder = set.hintReps ? String(set.hintReps) : typeof set.prescribedReps === 'number' ? String(set.prescribedReps) : `${targetRir ?? 3} RIR`;
     // Target (before the actual inputs) from fields the state already exposes: hintWeight x prescribedReps/hintReps, plus targetRpe as RIR when present.
     const targetWeightText = set.hintWeight !== undefined && set.hintWeight !== '' ? `${shownWeight(set.hintWeight)}${weightSuffix}` : null; const targetRirText = set.targetRpe !== undefined ? `RIR ${set.targetRpe}` : null; const targetRepsValue = set.prescribedReps ?? set.hintReps; const prescriptionHint = set.prescribedReps === 'FAILURE' ? [t.targetFailure, targetWeightText, targetRirText].filter(Boolean).join(' - ') : (targetWeightText || targetRepsValue !== undefined || targetRirText) ? `OBJ: ${[targetWeightText && targetRepsValue !== undefined ? `${targetWeightText} x ${targetRepsValue}` : targetWeightText ?? (targetRepsValue !== undefined ? `${targetRepsValue}` : null), targetRirText].filter(Boolean).join(' - ')}` : null;
 

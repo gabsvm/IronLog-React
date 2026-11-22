@@ -1,4 +1,4 @@
-import { formatMessage } from '../../utils/i18n';
+import { formatMessage, pickLang } from '../../utils/i18n';
 import React, { Suspense, useCallback } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
@@ -133,23 +133,58 @@ export const AppModals: React.FC<AppModalsProps> = ({
                 />
             </Suspense>
 
-            {/* Standard Modal Overlays */}
+            {/* Standard Modal Overlays (1:1 RP Mesocycle complete! sheet) */}
             {showMesoCompleteModal && (
                 (activeMeso?.programSystem?.systemId === KONG_4DAY_ID || activeMeso?.programSystem?.systemId === 'kong_4day') ? <Suspense fallback={null}><ProgramCompletionView meso={activeMeso} logs={logs} lang={lang} onFinish={() => { setActiveMeso(null); setShowMesoCompleteModal(false); }} onKeep={() => { setActiveMeso(null); setShowMesoCompleteModal(false); }} /></Suspense> :
-                <Suspense fallback={null}>
-                    <ConfirmModal
-                        isOpen={true}
-                        title={t.finishMesoTitle || "Complete Mesocycle?"}
-                        description={t.finishMesoDesc || "You've completed the final week. Great work! Conclude the mesocycle now?"}
-                        confirmText={t.complete || "Complete"}
-                        cancelText={t.notYet || "Not Yet"}
-                        onConfirm={() => {
-                            setActiveMeso(null);
-                            setShowMesoCompleteModal(false);
-                        }}
-                        onCancel={() => setShowMesoCompleteModal(false)}
-                    />
-                </Suspense>
+                <div className="fixed inset-0 z-modal flex items-center justify-center bg-black/80 backdrop-blur-sm p-6 animate-in fade-in" role="dialog" aria-modal="true">
+                    <div className="w-full max-w-sm rounded-2xl border border-border-subtle bg-surface-base p-6 text-center shadow-2xl space-y-4">
+                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-black text-white">
+                                {pickLang(lang, { es: '¡Mesociclo completado!', en: 'Mesocycle complete!' })}
+                            </h3>
+                            <p className="mt-1.5 text-xs text-zinc-400 leading-relaxed">
+                                {t.finishMesoDesc || pickLang(lang, {
+                                    es: 'Completaste la semana final. Revisa tus métricas o planifica tu siguiente bloque.',
+                                    en: "You've completed the final week. Review your stats or plan your next block.",
+                                })}
+                            </p>
+                        </div>
+                        <div className="space-y-2 pt-1">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setActiveMeso(null);
+                                    setShowMesoCompleteModal(false);
+                                    setView('mesos');
+                                }}
+                                className="w-full min-h-11 rounded-[8px] bg-primary-500 px-4 text-xs font-black uppercase tracking-wider text-zinc-950 hover:brightness-110 active:scale-[0.99] transition-all"
+                            >
+                                {pickLang(lang, { es: 'PLANIFICAR SIGUIENTE MESOCICLO', en: 'PLAN MY NEXT MESOCYCLE' })}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setActiveMeso(null);
+                                    setShowMesoCompleteModal(false);
+                                    setView('stats');
+                                }}
+                                className="w-full min-h-11 rounded-[8px] border border-border-subtle bg-surface-raised px-4 text-xs font-bold uppercase tracking-wider text-white hover:bg-surface-elevated active:scale-[0.99] transition-all"
+                            >
+                                {pickLang(lang, { es: 'VER ESTADÍSTICAS DEL CICLO', en: 'VIEW MESOCYCLE STATS' })}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setShowMesoCompleteModal(false)}
+                                className="w-full py-2 text-xs font-semibold text-zinc-400 hover:text-white transition-colors"
+                            >
+                                {t.notYet || pickLang(lang, { es: 'Todavía no', en: 'Not yet' })}
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
             {showAuthModal && (
                 <Suspense fallback={null}>

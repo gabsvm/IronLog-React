@@ -2,7 +2,7 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { SessionExercise, WorkoutSet, CardioType, SetType } from '../../../types';
+import { SessionExercise, WorkoutSet, CardioType, SetType, MusclePriorityLevel } from '../../../types';
 import { parseTargetReps, roundWeight } from '../../../utils';
 import { getVolumeComparison } from '../../../utils/volumeComparison';
 import { canFillFromPrevious, copySourceIndex, copyToFollowing, fillFromPrevious, restoreSet } from '../../../utils/setConvenience';
@@ -42,6 +42,10 @@ export interface SortableExerciseCardProps {
     tutorialId?: string;
     isExpanded?: boolean;
     onToggleExpand?: (id: number) => void;
+    musclePriority?: MusclePriorityLevel;
+    onMoveUp?: () => void;
+    onMoveDown?: () => void;
+    onPinNoteToLibrary?: (exId: string, note: string | undefined) => void;
 }
 
 export const useSortableExerciseCardState = ({
@@ -72,6 +76,10 @@ export const useSortableExerciseCardState = ({
     tutorialId,
     isExpanded = true,
     onToggleExpand,
+    musclePriority,
+    onMoveUp,
+    onMoveDown,
+    onPinNoteToLibrary,
 }: SortableExerciseCardProps) => {
     const [exDoneFlash, setExDoneFlash] = useState(false);
     const [activeEmomMinute, setActiveEmomMinute] = useState(0);
@@ -488,6 +496,10 @@ export const useSortableExerciseCardState = ({
         handleSupersetAction,
         heroMetric,
         isMenuOpen,
+        musclePriority,
+        onMoveUp,
+        onMoveDown,
+        onPinNoteToLibrary,
     };
 };
 

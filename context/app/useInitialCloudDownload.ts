@@ -1,6 +1,6 @@
 // S6: initial cloud download on login (apply on empty device / offer newer sections), moved verbatim from context/AppContext.tsx.
 import { useEffect } from 'react';
-import { AppState, ExerciseDef, ActiveSession, MesoCycle, Log, ProgramDay, GlobalTemplate, UserProfile, NutritionLog, CardioSession, NutritionGoal, MacroGoals, BodyLog, CustomFood, DirtySyncSection, WeightUnit } from '../../types';
+import { AppState, ExerciseDef, ActiveSession, MesoCycle, Log, ProgramDay, GlobalTemplate, UserProfile, NutritionLog, CardioSession, NutritionGoal, MacroGoals, BodyLog, CustomFood, DirtySyncSection, WeightUnit, EquipmentType } from '../../types';
 import { syncService } from '../../services/syncService';
 import { useStore } from '../../lib/store';
 import { dirtySyncState } from '../../services/dirtySyncState';
@@ -16,6 +16,9 @@ export interface UseInitialCloudDownloadDeps {
     setRpTargetRIR: (value: number | ((val: number) => number)) => void;
     setKeepScreenOn: (value: boolean | ((val: boolean) => boolean)) => void;
     setWeightUnit: (value: WeightUnit | ((val: WeightUnit) => WeightUnit)) => void;
+    setAutoMatchWeight?: (value: boolean | ((val: boolean) => boolean)) => void;
+    setUseExerciseTypeFilters?: (value: boolean | ((val: boolean) => boolean)) => void;
+    setPreferredEquipment?: (value: EquipmentType[] | ((val: EquipmentType[]) => EquipmentType[])) => void;
     setProgram: (value: ProgramDay[] | ((val: ProgramDay[]) => ProgramDay[])) => void;
     exercises: ExerciseDef[];
     setExercises: (value: ExerciseDef[] | ((val: ExerciseDef[]) => ExerciseDef[])) => void;
@@ -62,6 +65,9 @@ export const useInitialCloudDownload = ({
     setRpTargetRIR,
     setKeepScreenOn,
     setWeightUnit,
+    setAutoMatchWeight,
+    setUseExerciseTypeFilters,
+    setPreferredEquipment,
     setProgram,
     exercises,
     setExercises,
@@ -146,6 +152,9 @@ export const useInitialCloudDownload = ({
                                 if (cloudData.config.keepScreenOn !== undefined) setKeepScreenOn(cloudData.config.keepScreenOn);
                                 if (cloudData.config.weightUnit === 'kg' || cloudData.config.weightUnit === 'lb') setWeightUnit(cloudData.config.weightUnit);
                                 if (setRestTimerDisplay && cloudData.config.restTimerDisplay !== undefined) setRestTimerDisplay(cloudData.config.restTimerDisplay as any);
+                                if (setAutoMatchWeight && cloudData.config.autoMatchWeight !== undefined) setAutoMatchWeight(cloudData.config.autoMatchWeight);
+                                if (setUseExerciseTypeFilters && cloudData.config.useExerciseTypeFilters !== undefined) setUseExerciseTypeFilters(cloudData.config.useExerciseTypeFilters);
+                                if (setPreferredEquipment && Array.isArray(cloudData.config.preferredEquipment)) setPreferredEquipment(cloudData.config.preferredEquipment);
                             }
 
                             if (cloudData.userProfile) setUserProfile(cloudData.userProfile);

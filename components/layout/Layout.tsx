@@ -254,7 +254,7 @@ export const Layout: React.FC<LayoutProps> = ({
                     <NavBtn
                         id="workout"
                         label={t.nav?.workout || pickLang(lang, { es: 'Entreno', en: 'Workout' })}
-                        icon="Dumbbell"
+                        icon="Calendar"
                         isActive={view === 'workout' || view === 'home'}
                         onSelect={() => {
                             if (hasActiveSession) {
@@ -266,22 +266,15 @@ export const Layout: React.FC<LayoutProps> = ({
                     />
                     <NavBtn
                         id="mesos"
-                        label={t.nav?.mesos || 'Mesos'}
-                        icon="Calendar"
-                        isActive={view === 'mesos'}
+                        label={pickLang(lang, { es: 'Mesociclos', en: 'Mesocycles' })}
+                        icon="Folder"
+                        isActive={view === 'mesos' || view === 'templates'}
                         onSelect={() => setView('mesos')}
-                    />
-                    <NavBtn
-                        id="templates"
-                        label={t.nav?.templates || pickLang(lang, { es: 'Plantillas', en: 'Templates' })}
-                        icon="Grid3x3"
-                        isActive={view === 'templates'}
-                        onSelect={() => setView('templates')}
                     />
                     <NavBtn
                         id="exercises"
                         label={t.nav?.exercises || pickLang(lang, { es: 'Ejercicios', en: 'Exercises' })}
-                        icon="Activity"
+                        icon="Dumbbell"
                         isActive={view === 'exercises'}
                         onSelect={() => setView('exercises')}
                     />
@@ -317,6 +310,23 @@ export const Layout: React.FC<LayoutProps> = ({
                             </button>
                         </div>
                         <div className="space-y-1">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowMoreSheet(false);
+                                    setView('templates');
+                                }}
+                                className="flex w-full items-center gap-3.5 rounded-[6px] border border-border-subtle/60 bg-surface-raised/60 hover:bg-surface-raised p-3 text-left transition-colors active:scale-[0.98]"
+                            >
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[6px] bg-surface-raised text-primary-400">
+                                    <Icon name="Grid3x3" size={20} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <span className="block text-sm font-semibold text-white">{t.nav?.templates || pickLang(lang, { es: 'Plantillas', en: 'Templates' })}</span>
+                                    <span className="block text-xs text-muted">{pickLang(lang, { es: 'RP Periodization, Natural Hypertrophy y KONG', en: 'RP Periodization, Natural Hypertrophy & KONG' })}</span>
+                                </div>
+                                <Icon name="ChevronRight" size={16} className="text-muted shrink-0" />
+                            </button>
                             <button
                                 type="button"
                                 onClick={() => {

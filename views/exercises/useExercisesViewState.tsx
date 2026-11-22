@@ -5,9 +5,10 @@ import { useApp } from '../../context/AppContext';
 import { useStore } from '../../lib/store';
 import { TRANSLATIONS } from '../../constants';
 import { Icon } from '../../components/ui/Icon';
-import { MuscleGroup, ExerciseDef, VolumeCountingMode } from '../../types';
+import { MuscleGroup, ExerciseDef, VolumeCountingMode, EquipmentType } from '../../types';
 import { getTranslated } from '../../utils';
 import { pickLang } from '../../utils/i18n';
+import { ALL_EQUIPMENT_TYPES, getEquipmentLabel, inferExerciseEquipment } from '../../utils/equipment';
 import { matchesExerciseQuery, mergeExercises, suggestDuplicatePairs, unmergeExercise } from '../../utils/exerciseLibrary';
 import { triggerHaptic } from '../../utils/audio';
 import { statsCache } from '../../services/statsCache';
@@ -29,6 +30,7 @@ export const useExercisesViewState = ({ onBack }: ExercisesViewProps) => {
     const [mode, setMode] = useState<'list' | 'create'>('list');
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedMuscle, setSelectedMuscle] = useState<MuscleGroup | 'ALL'>('ALL');
+    const [selectedEquipment, setSelectedEquipment] = useState<EquipmentType | 'ALL'>('ALL');
     const [filterCategory, setFilterCategory] = useState<'all' | 'custom' | 'archived'>('all');
 
     // Detail Modal State
@@ -183,6 +185,9 @@ export const useExercisesViewState = ({ onBack }: ExercisesViewProps) => {
                 if (selectedMuscle !== 'ALL' && ex.muscle !== selectedMuscle) {
                     return false;
                 }
+                if (selectedEquipment !== 'ALL' && inferExerciseEquipment(ex) !== selectedEquipment) {
+                    return false;
+                }
                 // Accent-insensitive search across names in both languages plus
                 // library aliases (Q14).
                 return matchesExerciseQuery(ex, searchQuery);
@@ -192,7 +197,7 @@ export const useExercisesViewState = ({ onBack }: ExercisesViewProps) => {
                 const nb = getTranslated(b.name, lang);
                 return na.localeCompare(nb);
             });
-    }, [exercises, filterCategory, selectedMuscle, searchQuery, lang]);
+    }, [exercises, filterCategory, selectedMuscle, selectedEquipment, searchQuery, lang]);
 
     const Row = (_index: number, ex: ExerciseDef) => {
         const isBuiltIn = isBuiltInExercise(ex.id, exercises);
@@ -245,11 +250,10 @@ export const useExercisesViewState = ({ onBack }: ExercisesViewProps) => {
                             <div className="font-bold text-[15px] text-white truncate">
                                 {getTranslated(ex.name, lang)}
                             </div>
-                            {ex.volumeCountingMode === 'per_side' && (
-                                <div className="text-[11px] font-medium text-zinc-400 mt-0.5">
-                                    {ev.countPerSide} (×2)
-                                </div>
-                            )}
+                            <div className="text-[11px] font-medium text-zinc-400 mt-0.5 truncate">
+                                {getEquipmentLabel(inferExerciseEquipment(ex), lang)}
+                                {ex.volumeCountingMode === 'per_side' ? ` · ${ev.countPerSide} (×2)` : ''}
+                            </div>
                         </div>
                     </button>
 
@@ -334,6 +338,9 @@ export const useExercisesViewState = ({ onBack }: ExercisesViewProps) => {
         setSearchQuery,
         selectedMuscle,
         setSelectedMuscle,
+        selectedEquipment,
+        setSelectedEquipment,
+        equipmentTypes: ALL_EQUIPMENT_TYPES,
         filterCategory,
         setFilterCategory,
         detailEx,

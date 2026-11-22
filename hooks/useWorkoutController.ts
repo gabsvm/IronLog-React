@@ -39,7 +39,7 @@ const reorderList = <T,>(items: T[], from: number, to: number): T[] => {
 };
 
 export const useWorkoutController = (onFinishCallback: () => void, onDiscardCallback: () => void) => {
-    const { setProgram, exercises, rpFeedback, setRpFeedback, config, logs, userProfile } = useApp();
+    const { setProgram, exercises, setExercises, rpFeedback, setRpFeedback, config, logs, userProfile } = useApp();
     const activeSession = useStore(state => state.activeSession);
     const setActiveSession = useStore(state => state.setActiveSession);
     const setActiveMeso = useStore(state => state.setActiveMeso);
@@ -115,22 +115,43 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
         return () => { cancelled = true; };
     }, [logs, calculateAllBest1RMs]);
 
-    // Data Mutations
+    // Data Mutations (includes RP 1:1 Auto-match weight propagation down uncompleted working sets)
     const handleSetUpdate = useCallback((exInstanceId: number, setId: number, field: keyof WorkoutSet, value: any) => {
+        const shouldAutoMatch = field === 'weight' && config?.autoMatchWeight !== false;
         setActiveSession(prev => {
             if (!prev) return null;
             return {
                 ...prev,
                 exercises: (prev.exercises || []).map(ex => {
                     if (ex.instanceId !== exInstanceId) return ex;
+                    const sets = ex.sets || [];
+                    const editedIdx = sets.findIndex(s => s.id === setId);
+                    const editedSet = editedIdx >= 0 ? sets[editedIdx] : null;
+                    const prevWeight = editedSet?.weight;
+                    const canPropagate = shouldAutoMatch && editedSet && editedSet.type !== 'warmup' && editedSet.type !== 'avt_hop';
+
                     return {
                         ...ex,
-                        sets: (ex.sets || []).map(s => s.id === setId ? { ...s, [field]: value } : s)
+                        sets: sets.map((s, idx) => {
+                            if (s.id === setId) return { ...s, [field]: value };
+                            if (
+                                canPropagate &&
+                                idx > editedIdx &&
+                                !s.completed &&
+                                !s.skipped &&
+                                s.type !== 'warmup' &&
+                                s.type !== 'avt_hop' &&
+                                (s.weight === '' || s.weight === undefined || s.weight === null || s.weight === prevWeight)
+                            ) {
+                                return { ...s, weight: value };
+                            }
+                            return s;
+                        })
                     };
                 })
             };
         });
-    }, [setActiveSession]);
+    }, [setActiveSession, config?.autoMatchWeight]);
 
     // Implement Logic for Add Set
     const handleAddSet = useCallback((exInstanceId: number) => {
@@ -184,15 +205,25 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
         });
     }, [setActiveSession]);
 
-    const handleNoteUpdate = useCallback((exInstanceId: number, note: string) => {
+    const handleNoteUpdate = useCallback((exInstanceId: number, note: string, pinned?: boolean) => {
+        let matchedExerciseId: string | null = null;
         setActiveSession(prev => {
             if (!prev) return null;
             return {
                 ...prev,
-                exercises: (prev.exercises || []).map(ex => ex.instanceId === exInstanceId ? { ...ex, note } : ex)
+                exercises: (prev.exercises || []).map(ex => {
+                    if (ex.instanceId !== exInstanceId) return ex;
+                    matchedExerciseId = ex.id;
+                    const nextPinned = pinned !== undefined ? pinned : ex.notePinned;
+                    return { ...ex, note, notePinned: nextPinned, pinnedNote: nextPinned ? note : undefined };
+                })
             };
         });
-    }, [setActiveSession]);
+        if (pinned !== undefined && matchedExerciseId && typeof setExercises === 'function') {
+            const targetId = matchedExerciseId;
+            setExercises(prev => prev.map(e => e.id === targetId ? { ...e, pinnedNote: pinned && note.trim() ? note.trim() : undefined } : e));
+        }
+    }, [setActiveSession, setExercises]);
 
     const toggleSetComplete = useCallback((exInstanceId: number, setId: number) => {
         const state = useStore.getState();

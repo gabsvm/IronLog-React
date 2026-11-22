@@ -49,16 +49,24 @@ describe('Task 3: FeedbackModal payload (unchanged)', () => {
         vi.spyOn(AppContext, 'useAppPreferences').mockReturnValue({ lang: 'es' } as any);
     });
 
-    it('renders one worked muscle and saves soreness/performance/adjustment exactly as today', () => {
+    it('requires answering all 4 feedback questions before enabling Save and saves exact payload', () => {
         const onConfirm = vi.fn();
         render(React.createElement(FeedbackModal, { muscles: ['CHEST'], onConfirm, onCancel: vi.fn() } as any));
 
         expect(screen.getByTestId('feedback-modal')).toBeTruthy();
         expect(screen.getByTestId('feedback-muscle')).toBeTruthy();
 
+        const saveBtn = screen.getByTestId('feedback-save-btn') as HTMLButtonElement;
+        expect(saveBtn.disabled).toBe(true);
+
+        // Answer all 4 RP questions: jointPain (None), soreness[2], pump (Moderate pump), volume (performance[2])
+        fireEvent.click(screen.getByText('Ninguno'));
         fireEvent.click(screen.getByText(String(t.fb.soreness[2])));
+        fireEvent.click(screen.getByText('Bombeo moderado'));
         fireEvent.click(screen.getByText(String(t.fb.performance[2])));
-        fireEvent.click(screen.getByText(t.copy.feedbackModal.saveFinish));
+
+        expect(saveBtn.disabled).toBe(false);
+        fireEvent.click(saveBtn);
 
         expect(onConfirm).toHaveBeenCalledWith({
             CHEST: { soreness: 2, performance: 2, adjustment: calculateVolumeAdjustment(2, 2) },

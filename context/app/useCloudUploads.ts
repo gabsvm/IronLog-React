@@ -1,6 +1,6 @@
 // S6: online flush, session/state upload debounces and cloud-merge confirm/cancel, moved verbatim from context/AppContext.tsx.
 import { useEffect, useCallback } from 'react';
-import { AppState, ExerciseDef, ActiveSession, MesoCycle, Log, ProgramDay, GlobalTemplate, UserProfile, NutritionLog, CardioSession, NutritionGoal, MacroGoals, BodyLog, CustomFood, DirtySyncSection, SectionSyncMeta, WeightUnit } from '../../types';
+import { AppState, ExerciseDef, ActiveSession, MesoCycle, Log, ProgramDay, GlobalTemplate, UserProfile, NutritionLog, CardioSession, NutritionGoal, MacroGoals, BodyLog, CustomFood, DirtySyncSection, SectionSyncMeta, WeightUnit, EquipmentType } from '../../types';
 import { syncService } from '../../services/syncService';
 import { useStore } from '../../lib/store';
 import { dirtySyncState } from '../../services/dirtySyncState';
@@ -21,6 +21,12 @@ export interface UseCloudUploadsDeps {
     setKeepScreenOn: (value: boolean | ((val: boolean) => boolean)) => void;
     weightUnit: WeightUnit;
     setWeightUnit: (value: WeightUnit | ((val: WeightUnit) => WeightUnit)) => void;
+    autoMatchWeight?: boolean;
+    setAutoMatchWeight?: (value: boolean | ((val: boolean) => boolean)) => void;
+    useExerciseTypeFilters?: boolean;
+    setUseExerciseTypeFilters?: (value: boolean | ((val: boolean) => boolean)) => void;
+    preferredEquipment?: EquipmentType[];
+    setPreferredEquipment?: (value: EquipmentType[] | ((val: EquipmentType[]) => EquipmentType[])) => void;
     program: ProgramDay[];
     setProgram: (value: ProgramDay[] | ((val: ProgramDay[]) => ProgramDay[])) => void;
     exercises: ExerciseDef[];
@@ -76,6 +82,12 @@ export const useCloudUploads = ({
     setKeepScreenOn,
     weightUnit,
     setWeightUnit,
+    autoMatchWeight,
+    setAutoMatchWeight,
+    useExerciseTypeFilters,
+    setUseExerciseTypeFilters,
+    preferredEquipment,
+    setPreferredEquipment,
     program,
     setProgram,
     exercises,
@@ -131,7 +143,7 @@ export const useCloudUploads = ({
                         setLocalLastUpdated(now);
                         await syncService.uploadState(user.uid, {
                             program, activeMeso, exercises, logs,
-                            config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, restTimerDisplay },
+                            config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, restTimerDisplay, autoMatchWeight, useExerciseTypeFilters, preferredEquipment },
                             rpFeedback,
                             userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, personalTemplates,
                             email: user.email || null,
@@ -200,7 +212,7 @@ export const useCloudUploads = ({
                     void syncService.flushQueue();
                     syncService.uploadState(user.uid, {
                         program, activeMeso, exercises, logs,
-                        config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, restTimerDisplay },
+                        config: { showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, restTimerDisplay, autoMatchWeight, useExerciseTypeFilters, preferredEquipment },
                         rpFeedback,
                         userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, personalTemplates,
                         email: user.email || null,
@@ -212,7 +224,7 @@ export const useCloudUploads = ({
             }
         }, 10000);
         return () => clearTimeout(timer);
-    }, [user, subscription.isPro, program, activeMeso, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, restTimerDisplay, rpFeedback, isAppLoading, hasCheckedSync, pendingCloudData, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, personalTemplates, setLocalLastUpdated]);
+    }, [user, subscription.isPro, program, activeMeso, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, restTimerDisplay, autoMatchWeight, useExerciseTypeFilters, preferredEquipment, rpFeedback, isAppLoading, hasCheckedSync, pendingCloudData, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, personalTemplates, setLocalLastUpdated]);
 
     const confirmCloudSync = useCallback(() => {
         if (!pendingCloudData) return;
@@ -239,6 +251,9 @@ export const useCloudUploads = ({
                 if (setRestTimerDisplay && (pendingCloudData.config.restTimerDisplay === 'compact' || pendingCloudData.config.restTimerDisplay === 'expanded' || pendingCloudData.config.restTimerDisplay === 'Overlay' || pendingCloudData.config.restTimerDisplay === 'Banner')) {
                     setRestTimerDisplay(pendingCloudData.config.restTimerDisplay as any);
                 }
+                if (setAutoMatchWeight && pendingCloudData.config.autoMatchWeight !== undefined) setAutoMatchWeight(pendingCloudData.config.autoMatchWeight);
+                if (setUseExerciseTypeFilters && pendingCloudData.config.useExerciseTypeFilters !== undefined) setUseExerciseTypeFilters(pendingCloudData.config.useExerciseTypeFilters);
+                if (setPreferredEquipment && Array.isArray(pendingCloudData.config.preferredEquipment)) setPreferredEquipment(pendingCloudData.config.preferredEquipment);
             }
 
             if (pendingCloudSections.includes('userProfile') && pendingCloudData.userProfile) setUserProfile(pendingCloudData.userProfile);

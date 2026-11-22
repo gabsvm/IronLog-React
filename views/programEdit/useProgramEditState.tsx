@@ -1,14 +1,21 @@
-// T2: ProgramEditView state, effects and handlers, moved verbatim from
-// views/ProgramEditView.tsx (the view is now an orchestrator).
+// T2: ProgramEditView state, effects and handlers + RP 1:1 Meso Builder, Drafts, Muscle Priorities & Auto-Recommend.
 import { formatMessage } from '../../utils/i18n';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
 import { KONG_4DAY_V1 } from '../../programs/kong/kong4Day';
-import { MesoType } from '../../types';
+import type { MesoType, MuscleGroup, MusclePriorityLevel, ProgramDay, WeightUnit } from '../../types';
 import { getTranslated } from '../../utils';
 import { triggerHaptic } from '../../utils/audio';
 import { useStore } from '../../lib/store';
+import { recommendExercisesForMuscle } from '../../utils/equipment';
+import {
+    clearMesocycleDraft,
+    consumeMesoEditorIntent,
+    loadMesocycleDraft,
+    saveMesocycleDraft,
+    type MesoEditorIntent,
+} from '../../utils/mesoDraft';
 
 export interface ProgramEditViewProps {
     onBack: () => void;
@@ -25,12 +32,39 @@ export const isSamePlan = (a: ReadonlyArray<ReadonlyArray<string | null>>, b: Re
     !!b && a.length === b.length && a.every((day, i) => day.length === (b[i]?.length ?? -1) && day.every((id, j) => id === b[i][j]));
 
 export const useProgramEditState = ({ onBack }: ProgramEditViewProps) => {
-    const { program, setProgram, lang, exercises } = useApp();
+    const { program, setProgram, lang, exercises, config, setConfig } = useApp();
     const activeMeso = useStore(state => state.activeMeso);
     const setActiveMeso = useStore(state => state.setActiveMeso);
     const t = TRANSLATIONS[lang];
-    const isStructuredKong = activeMeso?.programSystem?.systemId === KONG_4DAY_V1.id;
-    const isEditingActiveRoutine = !!activeMeso;
+
+    const [editorIntent] = useState<MesoEditorIntent | null>(() => consumeMesoEditorIntent());
+    const [initialDraft] = useState(() => (editorIntent ? loadMesocycleDraft() : null));
+
+    const isCreatingWithDraft = editorIntent !== null;
+    const isStructuredKong = !isCreatingWithDraft && activeMeso?.programSystem?.systemId === KONG_4DAY_V1.id;
+    const isEditingActiveRoutine = !!activeMeso && !isCreatingWithDraft;
+
+    // Isolated draft program buffer when creating a new cycle while another meso may be active
+    const [draftProgram, setDraftProgramState] = useState<ProgramDay[]>(() => {
+        if (initialDraft?.program) return initialDraft.program;
+        return Array.isArray(program) ? program : [];
+    });
+
+    const workingProgram: ProgramDay[] = isCreatingWithDraft ? draftProgram : program;
+    const setWorkingProgram = useCallback((updater: ProgramDay[] | ((prev: ProgramDay[]) => ProgramDay[])) => {
+        if (isCreatingWithDraft) {
+            setDraftProgramState(prev => typeof updater === 'function' ? updater(prev) : updater);
+        } else {
+            setProgram(updater);
+        }
+    }, [isCreatingWithDraft, setProgram]);
+
+    const [showPrioritiesStep, setShowPrioritiesStep] = useState<boolean>(editorIntent === 'builder');
+    const [musclePriorities, setMusclePriorities] = useState<Partial<Record<MuscleGroup, MusclePriorityLevel>>>(() => {
+        if (initialDraft?.musclePriorities) return initialDraft.musclePriorities;
+        if (!isCreatingWithDraft && activeMeso?.musclePriorities) return activeMeso.musclePriorities;
+        return {};
+    });
 
     const [pickingForSlot, setPickingForSlot] = useState<{ dayId: string; slotIdx: number } | null>(null);
     const [showStartModal, setShowStartModal] = useState(false);
@@ -43,18 +77,16 @@ export const useProgramEditState = ({ onBack }: ProgramEditViewProps) => {
         type: MesoType;
         weeks: number;
     }>(() => ({
-        name: activeMeso?.name || (TRANSLATIONS[lang].copy.programEdit.customCycle),
-        type: activeMeso?.mesoType || 'hyp_1',
-        weeks: activeMeso?.targetWeeks || activeMeso?.duration || 4,
+        name: initialDraft?.name || activeMeso?.name || (TRANSLATIONS[lang].copy.programEdit.customCycle),
+        type: initialDraft?.mesoType || activeMeso?.mesoType || 'hyp_1',
+        weeks: initialDraft?.weeks || activeMeso?.targetWeeks || activeMeso?.duration || 5,
     }));
     const hasKnownPhase = Object.prototype.hasOwnProperty.call(t.phases, mesoConfig.type);
 
-    // Sync active meso plan if editing routine and program slots change
+    // Sync active meso plan & priorities if editing active routine
     useEffect(() => {
-        if (!activeMeso) return;
-        const updatedPlan = program.map(day => (day.slots || []).map(s => s.exerciseId || null));
-        // Only write when the plan actually changed: saving replaces `activeMeso`, which re-ran this
-        // effect and re-saved forever (permanent "Saving..." and a state write every 300 ms).
+        if (!isEditingActiveRoutine || !activeMeso) return;
+        const updatedPlan = program.map((day: ProgramDay) => (day.slots || []).map(s => s.exerciseId || null));
         if (isSamePlan(updatedPlan, activeMeso.plan)) {
             setSaveStatus('saved');
             return;
@@ -65,58 +97,144 @@ export const useProgramEditState = ({ onBack }: ProgramEditViewProps) => {
             setSaveStatus('saved');
         }, 300);
         return () => clearTimeout(timer);
-    }, [program, activeMeso, setActiveMeso]);
+    }, [isEditingActiveRoutine, program, activeMeso, setActiveMeso]);
+
+    // Auto-save draft when creating a new mesocycle ("Resume plan in progress")
+    useEffect(() => {
+        if (isEditingActiveRoutine || !workingProgram) return;
+        const hasContent = workingProgram.length > 0 && workingProgram.some(d => (d.slots || []).length > 0);
+        if (!hasContent && !isCreatingWithDraft) return;
+        const timer = setTimeout(() => {
+            saveMesocycleDraft({
+                name: mesoConfig.name,
+                mesoType: mesoConfig.type,
+                weeks: mesoConfig.weeks,
+                program: workingProgram,
+                musclePriorities,
+                updatedAt: Date.now(),
+            });
+        }, 350);
+        return () => clearTimeout(timer);
+    }, [isEditingActiveRoutine, isCreatingWithDraft, workingProgram, mesoConfig, musclePriorities]);
+
+    const handleSetMusclePriority = useCallback((muscle: MuscleGroup, level: MusclePriorityLevel) => {
+        setMusclePriorities(prev => ({ ...prev, [muscle]: level }));
+        if (!isEditingActiveRoutine) {
+            // Adjust default set targets smoothly for unassigned/builder slots matching this muscle
+            const suggestedSets = level === 'emphasize' ? 4 : level === 'grow' ? 3 : 2;
+            setWorkingProgram(prev => prev.map(d => ({
+                ...d,
+                slots: (d.slots || []).map(s => s.muscle === muscle ? { ...s, setTarget: suggestedSets } : s),
+            })));
+        }
+    }, [isEditingActiveRoutine, setWorkingProgram]);
+
+    const priorityCounts = useMemo(() => {
+        const musclesInPlan = new Set<MuscleGroup>();
+        for (const day of workingProgram || []) {
+            for (const slot of day.slots || []) {
+                if (slot.muscle && slot.muscle !== 'CARDIO') musclesInPlan.add(slot.muscle);
+            }
+        }
+        let emphasize = 0;
+        let grow = 0;
+        let maintain = 0;
+        for (const m of musclesInPlan) {
+            const lvl = musclePriorities[m] || 'grow';
+            if (lvl === 'emphasize') emphasize++;
+            else if (lvl === 'maintain') maintain++;
+            else grow++;
+        }
+        return { emphasize, grow, maintain, muscles: Array.from(musclesInPlan) };
+    }, [workingProgram, musclePriorities]);
 
     const handleUpdateDayName = useCallback((id: string, name: string) => {
-        setProgram(prev => prev.map(d => d.id === id ? { ...d, dayName: { en: name, es: name } } : d));
-    }, [setProgram]);
+        setWorkingProgram(prev => prev.map(d => d.id === id ? { ...d, dayName: { en: name, es: name } } : d));
+    }, [setWorkingProgram]);
 
     const handleAddDay = useCallback(() => {
-        const newDay = {
+        const newDay: ProgramDay = {
             id: `d_${Date.now()}`,
             dayName: { en: 'New Day', es: 'Nuevo Día' },
             slots: []
         };
-        setProgram(prev => [...prev, newDay]);
+        setWorkingProgram(prev => [...prev, newDay]);
         triggerHaptic('success');
-    }, [setProgram]);
+    }, [setWorkingProgram]);
 
     const handleDeleteDay = useCallback(() => {
         if (dayToDelete) {
-            setProgram(prev => prev.filter(d => d.id !== dayToDelete));
+            setWorkingProgram(prev => prev.filter(d => d.id !== dayToDelete));
             setDayToDelete(null);
             triggerHaptic('medium');
         }
-    }, [dayToDelete, setProgram]);
+    }, [dayToDelete, setWorkingProgram]);
 
     const handleAddSlot = useCallback((dayId: string) => {
-        setProgram(prev => prev.map(d => {
+        setWorkingProgram(prev => prev.map(d => {
             if (d.id !== dayId) return d;
             const currentSlots = d.slots || [];
             return { ...d, slots: [...currentSlots, { muscle: 'CHEST', setTarget: 3 }] };
         }));
         triggerHaptic('light');
-    }, [setProgram]);
+    }, [setWorkingProgram]);
 
     const handleRemoveSlot = useCallback((dayId: string, idx: number) => {
-        setProgram(prev => prev.map(d => {
+        setWorkingProgram(prev => prev.map(d => {
             if (d.id !== dayId) return d;
             const newSlots = [...(d.slots || [])];
             newSlots.splice(idx, 1);
             return { ...d, slots: newSlots };
         }));
         triggerHaptic('light');
-    }, [setProgram]);
+    }, [setWorkingProgram]);
+
+    const handleMoveSlot = useCallback((dayId: string, fromIdx: number, delta: -1 | 1) => {
+        setWorkingProgram(prev => prev.map(d => {
+            if (d.id !== dayId) return d;
+            const slots = [...(d.slots || [])];
+            const toIdx = fromIdx + delta;
+            if (toIdx < 0 || toIdx >= slots.length) return d;
+            const [item] = slots.splice(fromIdx, 1);
+            slots.splice(toIdx, 0, item);
+            return { ...d, slots };
+        }));
+        triggerHaptic('light');
+    }, [setWorkingProgram]);
 
     const handleUpdateSlot = useCallback((dayId: string, idx: number, field: string, val: any) => {
-        setProgram(prev => prev.map(d => {
+        setWorkingProgram(prev => prev.map(d => {
             if (d.id !== dayId) return d;
             const newSlots = [...(d.slots || [])];
             if (!newSlots[idx]) return d;
             newSlots[idx] = { ...newSlots[idx], [field]: val };
             return { ...d, slots: newSlots };
         }));
-    }, [setProgram]);
+    }, [setWorkingProgram]);
+
+    const handleAutoRecommendDay = useCallback((dayId: string) => {
+        const prefEquip = config?.useExerciseTypeFilters ? config?.preferredEquipment : undefined;
+        setWorkingProgram(prev => prev.map(day => {
+            if (day.id !== dayId) return day;
+            const slots = [...(day.slots || [])];
+            const hasEmpty = slots.some(s => !s.exerciseId);
+            const usedIds: string[] = hasEmpty
+                ? slots.map(s => s.exerciseId).filter((id): id is string => Boolean(id))
+                : [];
+
+            const nextSlots = slots.map(slot => {
+                if (hasEmpty && slot.exerciseId) return slot;
+                const recs = recommendExercisesForMuscle(exercises || [], slot.muscle, prefEquip, usedIds, lang);
+                if (recs.length > 0) {
+                    usedIds.push(recs[0].id);
+                    return { ...slot, exerciseId: recs[0].id };
+                }
+                return slot;
+            });
+            return { ...day, slots: nextSlots };
+        }));
+        triggerHaptic('success');
+    }, [config?.preferredEquipment, config?.useExerciseTypeFilters, exercises, lang, setWorkingProgram]);
 
     const handleSelectExercise = useCallback((exId: string) => {
         if (!pickingForSlot) return;
@@ -126,7 +244,7 @@ export const useProgramEditState = ({ onBack }: ProgramEditViewProps) => {
 
     const handleValidateAndOpenStartModal = () => {
         const unresolved: UnresolvedSlot[] = [];
-        program.forEach((day, dIdx) => {
+        workingProgram.forEach((day, dIdx) => {
             const dayLabel = getTranslated(day.dayName, lang) || (formatMessage(TRANSLATIONS[lang].copy.programEdit.day, { v: dIdx + 1 }));
             (day.slots || []).forEach((slot, sIdx) => {
                 if (!slot.exerciseId) {
@@ -149,7 +267,10 @@ export const useProgramEditState = ({ onBack }: ProgramEditViewProps) => {
     };
 
     const handleStartMeso = () => {
-        const plan = program.map(day => (day.slots || []).map(slot => slot.exerciseId || null));
+        if (isCreatingWithDraft) {
+            setProgram(workingProgram);
+        }
+        const plan = workingProgram.map(day => (day.slots || []).map(slot => slot.exerciseId || null));
         setActiveMeso({
             id: Date.now(),
             name: mesoConfig.name,
@@ -158,16 +279,23 @@ export const useProgramEditState = ({ onBack }: ProgramEditViewProps) => {
             targetWeeks: mesoConfig.weeks,
             plan,
             isDeload: false,
-            duration: mesoConfig.weeks
+            duration: mesoConfig.weeks,
+            ...(Object.keys(musclePriorities).length > 0 ? { musclePriorities } : {}),
         });
+        clearMesocycleDraft();
         triggerHaptic('success');
         onBack();
     };
 
+    const weightUnit: WeightUnit = config?.weightUnit === 'lb' ? 'lb' : 'kg';
+    const handleWeightUnitChange = useCallback((u: WeightUnit) => {
+        setConfig?.({ weightUnit: u });
+    }, [setConfig]);
+
     return {
         onBack,
-        program,
-        setProgram,
+        program: workingProgram,
+        setProgram: setWorkingProgram,
         lang,
         exercises,
         activeMeso,
@@ -188,15 +316,24 @@ export const useProgramEditState = ({ onBack }: ProgramEditViewProps) => {
         mesoConfig,
         setMesoConfig,
         hasKnownPhase,
+        showPrioritiesStep,
+        setShowPrioritiesStep,
+        musclePriorities,
+        handleSetMusclePriority,
+        priorityCounts,
         handleUpdateDayName,
         handleAddDay,
         handleDeleteDay,
         handleAddSlot,
         handleRemoveSlot,
+        handleMoveSlot,
         handleUpdateSlot,
+        handleAutoRecommendDay,
         handleSelectExercise,
         handleValidateAndOpenStartModal,
         handleStartMeso,
+        weightUnit,
+        handleWeightUnitChange,
     };
 };
 

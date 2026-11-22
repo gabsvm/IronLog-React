@@ -1,14 +1,18 @@
-// U5: SortableExerciseCard expanded view, moved verbatim from components/workout/SortableExerciseCardImpl.tsx.
+// U5: SortableExerciseCard expanded view, with 1:1 RP Note Modal, (i) detail button, real MuscleTag priority & dynamic guide pill.
 import React, { useState, useCallback } from 'react';
 import { Icon } from '../../ui/Icon';
 import { MuscleTag } from '../../ui/MuscleTag';
+import { Sheet } from '../../ui/Sheet';
+import { Button } from '../../ui/Button';
 import { ExerciseVolumeLine } from '../ExerciseVolumeLine';
 import { ExerciseCardMenu } from '../ExerciseCardMenu';
 import { ExerciseCardSets } from '../ExerciseCardSets';
 import { ExerciseProtocolBanners } from '../ExerciseProtocolBanners';
 import { getTranslated } from '../../../utils';
+import { ALL_EQUIPMENT_IDS, getEquipmentLabel } from '../../../utils/equipment';
 import { pickLang } from '../../../utils/i18n';
 import { resolveMuscleLabel } from '../../../utils/muscle';
+import type { EquipmentType } from '../../../types';
 import type { ExerciseCardState } from './useSortableExerciseCardState';
 
 export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ state }) => {
@@ -49,6 +53,7 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
         cardioMode,
         isInterval,
         regularSets,
+        completedCount,
         volumeComparison,
         allDone,
         isSuperseted,
@@ -79,23 +84,60 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
         confirmDelete,
         handleSupersetAction,
         heroMetric,
+        musclePriority,
+        onMoveUp,
+        onMoveDown,
+        onPinNoteToLibrary,
     } = state;
 
-    const [isEditingNote, setIsEditingNote] = useState(false);
+    const [noteModalOpen, setNoteModalOpen] = useState(false);
+    const [noteDraft, setNoteDraft] = useState('');
+    const [pinToExercise, setPinToExercise] = useState(true);
+    const [guideExpanded, setGuideExpanded] = useState(false);
+    const [guideDismissed, setGuideDismissed] = useState(false);
 
-    const handleSaveNote = useCallback((newNote: string) => {
-        setIsEditingNote(false);
+    const openNoteModal = useCallback(() => {
+        setNoteDraft(ex.note || ex.pinnedNote || '');
+        setPinToExercise(ex.notePinned !== undefined ? Boolean(ex.notePinned) : true);
+        setNoteModalOpen(true);
+    }, [ex.note, ex.pinnedNote, ex.notePinned]);
+
+    const handleSaveNote = useCallback((newNote: string, pinned: boolean) => {
+        const trimmed = newNote.trim();
+        setNoteModalOpen(false);
         if (onUpdateSession) {
             onUpdateSession((prev: any) => {
                 if (!prev) return prev;
                 return {
                     ...prev,
                     exercises: (prev.exercises || []).map((e: any) =>
-                        e.instanceId === ex.instanceId ? { ...e, note: newNote } : e
+                        e.instanceId === ex.instanceId
+                            ? { ...e, note: trimmed, notePinned: pinned, pinnedNote: pinned && trimmed ? trimmed : undefined }
+                            : e
                     ),
                 };
             });
         }
+        if (onPinNoteToLibrary && ex.id) {
+            onPinNoteToLibrary(ex.id, pinned && trimmed ? trimmed : undefined);
+        }
+    }, [ex.instanceId, ex.id, onUpdateSession, onPinNoteToLibrary]);
+
+    const handleSkipRemainingSets = useCallback(() => {
+        if (!onUpdateSession) return;
+        onUpdateSession((prev: any) => {
+            if (!prev) return prev;
+            return {
+                ...prev,
+                exercises: (prev.exercises || []).map((e: any) => {
+                    if (e.instanceId !== ex.instanceId) return e;
+                    return {
+                        ...e,
+                        sets: (e.sets || []).map((s: any) => (s.completed ? s : { ...s, skipped: true })),
+                    };
+                }),
+            };
+        });
     }, [ex.instanceId, onUpdateSession]);
 
     const handleModifySets = useCallback((exId: number, delta: number) => {
@@ -107,11 +149,32 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
     }, [onAddSet, onDeleteSet, sets]);
 
     const targetRepsLabel = ex.targetReps ? String(ex.targetReps) : null;
-    const noteOrRepRange = ex.note || (targetRepsLabel ? `${targetRepsLabel} reps` : '8-12 reps');
-    const exerciseSubtitle = (ex as any).equipment || ex.skillFamily || (ex.isBodyweight ? pickLang(lang, { es: 'Peso corporal', en: 'Bodyweight' }) : null);
+    const activeNoteText = ex.note || ex.pinnedNote || '';
+    const noteOrRepRange = activeNoteText || (targetRepsLabel ? `${targetRepsLabel} reps` : '8-12 reps');
+    const rawEquipment = (ex as any).equipment;
+    const resolvedEquip = rawEquipment
+        ? (ALL_EQUIPMENT_IDS.includes(rawEquipment as EquipmentType)
+            ? getEquipmentLabel(rawEquipment as EquipmentType, lang)
+            : String(rawEquipment))
+        : null;
+    const exerciseSubtitle = resolvedEquip || ex.skillFamily || (ex.isBodyweight ? pickLang(lang, { es: 'Peso corporal', en: 'Bodyweight' }) : null);
     const hasSet1Weight = Number(sets?.[0]?.weight || 0) > 0;
     const warmupTitle = hasSet1Weight ? t.warmup : t.warmupRequiresWeight;
     const warmupAriaLabel = hasSet1Weight ? t.warmup : `${t.warmup}: ${t.warmupRequiresWeight}`;
+
+    const isStartingWeightPhase = completedCount === 0;
+    const guideTitle = isStartingWeightPhase
+        ? pickLang(lang, { es: 'Cómo elegir tu peso inicial', en: 'How to choose your starting weight' })
+        : pickLang(lang, { es: 'Cómo descansar antes de tu próxima serie', en: 'How to rest before your next set' });
+    const guideDetail = isStartingWeightPhase
+        ? pickLang(lang, {
+              es: 'Elige una carga que te deje a ~3 RIR (repeticiones en reserva) con técnica limpia en el rango objetivo.',
+              en: 'Pick a load that leaves ~3 reps in reserve (RIR) with crisp form across your target rep range.',
+          })
+        : pickLang(lang, {
+              es: 'Descansa lo suficiente para que la respiración se normalice y el músculo objetivo rinda al máximo en la siguiente serie.',
+              en: 'Rest until your breathing settles and the target muscle feels ready to match or beat your effort.',
+          });
 
     return (
         <div
@@ -126,7 +189,7 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                 ${allDone ? 'shadow-[0_20px_50px_-24px_rgba(34,197,94,0.32)]' : ''}
             `}
         >
-            {/* Top row: Muscle Tag + Drag handle + Special protocol badge + Action Icons */}
+            {/* Top row: Muscle Tag (with real priority bars) + Drag handle + Protocol badges + (i) Detail & ⋮ Menu */}
             <div className="flex items-center justify-between gap-2 px-3 pt-2.5 pb-1">
                 <div className="flex items-center gap-1.5 flex-wrap min-w-0">
                     {dragEnabled && (
@@ -142,6 +205,7 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                     <MuscleTag
                         label={resolveMuscleLabel(ex.slotLabel || ex.muscle || 'CHEST', lang)}
                         muscle={ex.muscle || ex.slotLabel}
+                        priority={musclePriority}
                     />
 
                     {isCardio ? (
@@ -192,7 +256,7 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                         </button>
                     )}
 
-                    {/* History / Details button */}
+                    {/* RP (i) Info / Technique & History button */}
                     <button
                         type="button"
                         onClick={(event) => {
@@ -202,21 +266,7 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                         className="relative flex h-8 w-8 items-center justify-center rounded-[4px] text-zinc-400 hover:text-white transition-colors"
                         aria-label={t.detail || 'History'}
                     >
-                        <svg
-                            width="18"
-                            height="18"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            aria-hidden="true"
-                        >
-                            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                            <path d="M3 3v5h5" />
-                            <path d="M12 7v5l4 2" />
-                        </svg>
+                        <Icon name="Info" size={18} />
                     </button>
 
                     {/* ⋮ MoreVertical menu button */}
@@ -244,6 +294,11 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                             hasSuperset={!!ssStyle}
                             isLinking={isLinkSource}
                             onOpenDetail={onOpenDetail}
+                            onNewNote={openNoteModal}
+                            onMoveUp={onMoveUp}
+                            onMoveDown={onMoveDown}
+                            onAddSet={() => onAddSet(ex.instanceId)}
+                            onSkipRemainingSets={handleSkipRemainingSets}
                             onCardioModeChange={handleCardioModeChange}
                             onInjectWarmup={handleInjectWarmup}
                             onOpenWarmup={canWarmup && onOpenWarmup && hasSet1Weight ? () => onOpenWarmup(ex.instanceId) : undefined}
@@ -279,68 +334,82 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
 
             {/* Pinned Note / Target Rep Range Banner */}
             <div className="mx-3 mb-2 flex items-center justify-between gap-2 rounded-[4px] bg-amber-500/15 border border-amber-500/30 px-2.5 py-1.5 text-[12px] font-medium text-amber-900 dark:text-amber-200/90">
-                {isEditingNote ? (
-                    <div className="flex items-center gap-2 w-full">
+                <button
+                    type="button"
+                    onClick={openNoteModal}
+                    className="flex items-center justify-between gap-2 flex-1 min-w-0 text-left"
+                >
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
                         <Icon name="Edit3" size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
-                        <input
-                            type="text"
-                            autoFocus
-                            defaultValue={ex.note || ''}
-                            placeholder={pickLang(lang, { es: 'Añadir nota...', en: 'Add note...' })}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                    handleSaveNote((e.target as HTMLInputElement).value);
-                                } else if (e.key === 'Escape') {
-                                    setIsEditingNote(false);
-                                }
-                            }}
-                            onBlur={(e) => handleSaveNote(e.target.value)}
-                            className="w-full bg-transparent text-[12px] text-amber-900 dark:text-amber-100 placeholder:text-amber-600/50 dark:placeholder:text-amber-400/50 outline-none"
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setIsEditingNote(false)}
-                            className="text-[11px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider"
-                        >
-                            {pickLang(lang, { es: 'OK', en: 'Done' })}
-                        </button>
+                        <div className="flex flex-1 min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                            <span className="truncate">{noteOrRepRange}</span>
+                            {heroMetric && (
+                                <span className="inline-flex items-center rounded-[3px] bg-amber-500/20 border border-amber-500/35 px-1.5 py-0.5 text-[11px] font-semibold text-amber-900 dark:text-amber-200 truncate">
+                                    {heroMetric.label}
+                                </span>
+                            )}
+                        </div>
                     </div>
-                ) : (
+                    <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill={ex.notePinned ? 'currentColor' : 'none'}
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="shrink-0 text-amber-400/90"
+                        aria-hidden="true"
+                    >
+                        <line x1="12" y1="17" x2="12" y2="22" />
+                        <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" />
+                    </svg>
+                </button>
+                {activeNoteText && (
                     <button
                         type="button"
-                        onClick={() => setIsEditingNote(true)}
-                        className="flex items-center justify-between gap-2 w-full text-left"
+                        onClick={(event) => {
+                            event.stopPropagation();
+                            handleSaveNote('', false);
+                        }}
+                        aria-label={pickLang(lang, { es: 'Quitar nota fijada', en: 'Unpin note' })}
+                        className="shrink-0 rounded p-0.5 text-amber-400/80 hover:bg-amber-500/20 hover:text-white transition-colors"
                     >
-                        <div className="flex items-center gap-2 min-w-0 flex-1">
-                            <Icon name="Edit3" size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
-                            <div className="flex flex-1 min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                                <span className="truncate">{noteOrRepRange}</span>
-                                {heroMetric && (
-                                    <span className="inline-flex items-center rounded-[3px] bg-amber-500/20 border border-amber-500/35 px-1.5 py-0.5 text-[11px] font-semibold text-amber-900 dark:text-amber-200 truncate">
-                                        {heroMetric.label}
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-                        {/* Pushpin SVG */}
-                        <svg
-                            width="14"
-                            height="14"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="shrink-0 text-amber-400/90"
-                            aria-hidden="true"
-                        >
-                            <line x1="12" y1="17" x2="12" y2="22" />
-                            <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" />
-                        </svg>
+                        <Icon name="X" size={12} />
                     </button>
                 )}
             </div>
+
+            {/* Dynamic Sky-Blue Contextual Guide Pill (RP 1:1) */}
+            {!isCardio && !ex.isIsometric && !guideDismissed && (
+                <div className="mx-3 mb-2 rounded-[6px] border border-sky-400/35 bg-sky-500/12 px-2.5 py-1.5 text-[12px] text-sky-300">
+                    <div className="flex items-center justify-between gap-2">
+                        <button
+                            type="button"
+                            data-testid="rp-contextual-guide-pill"
+                            onClick={() => setGuideExpanded((prev) => !prev)}
+                            className="flex items-center gap-1.5 flex-1 min-w-0 text-left font-semibold"
+                        >
+                            <Icon name="Info" size={13} className="shrink-0 text-sky-400" />
+                            <span className="truncate">{guideTitle}</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setGuideDismissed(true)}
+                            aria-label={pickLang(lang, { es: 'Ocultar guía', en: 'Dismiss guide' })}
+                            className="shrink-0 rounded p-0.5 text-sky-300/70 hover:text-white"
+                        >
+                            <Icon name="X" size={12} />
+                        </button>
+                    </div>
+                    {guideExpanded && (
+                        <p className="mt-1.5 text-[12px] leading-snug text-sky-200/90">
+                            {guideDetail}
+                        </p>
+                    )}
+                </div>
+            )}
 
             {/* Protocol Banners & Stats if any */}
             {(isEMOM || isMyorep || isCluster || isGiant || isRestPause || isDrop || isTimeVolume || isTripleAdd || hasTopBackoff || isTabata || isHIIT) && (
@@ -421,6 +490,47 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                     <span>{c.setRemoved}</span>
                     <button type="button" onClick={handleUndoRemoveSet} className="font-bold uppercase tracking-wider text-primary-400 active:scale-95">{c.undo}</button>
                 </div>
+            )}
+
+            {/* RP 1:1 Exercise Note Sheet */}
+            {noteModalOpen && (
+                <Sheet
+                    open={noteModalOpen}
+                    onOpenChange={setNoteModalOpen}
+                    title={pickLang(lang, { es: 'Nota de ejercicio', en: 'Exercise Note' })}
+                    description={String(getTranslated(ex.name, lang))}
+                    accent="primary"
+                    footer={
+                        <div className="flex gap-3">
+                            <Button variant="secondary" fullWidth onClick={() => setNoteModalOpen(false)}>
+                                {t.cancel}
+                            </Button>
+                            <Button fullWidth onClick={() => handleSaveNote(noteDraft, pinToExercise)}>
+                                {pickLang(lang, { es: 'Guardar', en: 'Save' })}
+                            </Button>
+                        </div>
+                    }
+                >
+                    <div className="p-4 space-y-4">
+                        <textarea
+                            rows={4}
+                            autoFocus
+                            value={noteDraft}
+                            onChange={(e) => setNoteDraft(e.target.value)}
+                            placeholder={pickLang(lang, { es: 'Ej: Asiento en pin 4, pausa 1s abajo…', en: 'e.g. Seat pin 4, 1s pause at bottom…' })}
+                            className="w-full rounded-[8px] border border-border-subtle bg-surface-raised p-3 text-sm text-white placeholder:text-zinc-500 outline-none focus:border-primary-500 resize-none"
+                        />
+                        <label className="flex items-center gap-2.5 cursor-pointer text-sm text-zinc-200">
+                            <input
+                                type="checkbox"
+                                checked={pinToExercise}
+                                onChange={(e) => setPinToExercise(e.target.checked)}
+                                className="h-4 w-4 accent-primary-500 rounded"
+                            />
+                            <span>{pickLang(lang, { es: 'Fijar nota al ejercicio (recordar en futuras sesiones)', en: 'Pin note to exercise (carry over to future workouts)' })}</span>
+                        </label>
+                    </div>
+                </Sheet>
             )}
         </div>
     );

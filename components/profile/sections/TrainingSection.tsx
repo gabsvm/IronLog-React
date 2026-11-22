@@ -4,7 +4,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { usePro } from '../../../hooks/usePro';
 import { useStore } from '../../../lib/store';
 import { TRANSLATIONS } from '../../../constants';
-import { GlobalTemplate } from '../../../types';
+import { GlobalTemplate, EquipmentType } from '../../../types';
 import { Icon } from '../../ui/Icon';
 import { Button } from '../../ui/Button';
 import { Sheet } from '../../ui/Sheet';
@@ -12,6 +12,8 @@ import { ExactAlarmRow } from '../ExactAlarmRow';
 import { ReminderSettingsRow } from '../ReminderSettingsRow';
 import { AdminTemplateManager } from '../../admin/AdminTemplateManager';
 import { triggerHaptic } from '../../../utils/audio';
+import { pickLang } from '../../../utils/i18n';
+import { ALL_EQUIPMENT_IDS, ALL_EQUIPMENT_TYPES } from '../../../utils/equipment';
 import { requestTimerNotificationPermission } from '../../../hooks/useTimer';
 import { resolveWeightUnit, unitLabel } from '../../../utils/units';
 import { Capacitor } from '@capacitor/core';
@@ -307,6 +309,106 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                 {isNativeAndroid && (
                     <ReminderSettingsRow lang={lang} config={reminderConfig} onChange={handleReminderChange} />
                 )}
+            </div>
+
+            {/* RP 1:1 Auto-match & Exercise Type Filters (Video #2) */}
+            <div className="label-reference px-1 mt-4 mb-1.5">
+                {pickLang(lang, { es: 'Preferencias RP', en: 'RP Preferences' })}
+            </div>
+            <div className="card-reference rounded-[8px] divide-y divide-border-subtle overflow-hidden" data-testid="training-rp-preferences-card">
+                <div className="flex items-center gap-3 p-3">
+                    <span className="w-8 h-8 rounded-[6px] bg-surface-elevated flex items-center justify-center text-emerald-400 shrink-0">
+                        <Icon name="Repeat" size={17} />
+                    </span>
+                    <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-[rgb(var(--text-primary))]">
+                            {pickLang(lang, { es: 'Auto-igualar peso en series', en: 'Auto match weight updates' })}
+                        </div>
+                        <div className="text-xs text-muted">
+                            {pickLang(lang, {
+                                es: 'Al editar la serie 1, actualiza el peso de series abiertas siguientes',
+                                en: 'Updating a set propagates weight down remaining uncompleted sets',
+                            })}
+                        </div>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            triggerHaptic('light');
+                            setConfig({ autoMatchWeight: config.autoMatchWeight === false });
+                        }}
+                        aria-label={pickLang(lang, { es: 'Auto-igualar peso en series', en: 'Auto match weight updates' })}
+                        aria-pressed={config.autoMatchWeight !== false}
+                        className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${config.autoMatchWeight !== false ? 'bg-primary-500' : 'bg-surface-elevated border border-border-strong'}`}
+                    >
+                        <span className={`absolute top-0.5 w-5 h-5 rounded-full shadow transition-all ${config.autoMatchWeight !== false ? 'left-[22px] bg-white' : 'left-0.5 bg-white'}`} />
+                    </button>
+                </div>
+
+                <div className="p-3 space-y-3">
+                    <div className="flex items-center gap-3">
+                        <span className="w-8 h-8 rounded-[6px] bg-surface-elevated flex items-center justify-center text-violet-400 shrink-0">
+                            <Icon name="Filter" size={17} />
+                        </span>
+                        <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-[rgb(var(--text-primary))]">
+                                {pickLang(lang, { es: 'Usar filtros de equipamiento', en: 'Use exercise type filters' })}
+                            </div>
+                            <div className="text-xs text-muted">
+                                {pickLang(lang, {
+                                    es: 'Filtra el selector por tu equipo disponible (9 tipos)',
+                                    en: 'Filter exercise pickers by your preferred equipment (9 types)',
+                                })}
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                triggerHaptic('light');
+                                setConfig({ useExerciseTypeFilters: !config.useExerciseTypeFilters });
+                            }}
+                            aria-label={pickLang(lang, { es: 'Usar filtros de equipamiento', en: 'Use exercise type filters' })}
+                            aria-pressed={Boolean(config.useExerciseTypeFilters)}
+                            className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${config.useExerciseTypeFilters ? 'bg-primary-500' : 'bg-surface-elevated border border-border-strong'}`}
+                        >
+                            <span className={`absolute top-0.5 w-5 h-5 rounded-full shadow transition-all ${config.useExerciseTypeFilters ? 'left-[22px] bg-white' : 'left-0.5 bg-white'}`} />
+                        </button>
+                    </div>
+
+                    {config.useExerciseTypeFilters && (
+                        <div className="flex flex-wrap gap-1.5 pt-1" data-testid="rp-preferred-equipment-list">
+                            {ALL_EQUIPMENT_TYPES.map((eq) => {
+                                const currentPref: EquipmentType[] = Array.isArray(config.preferredEquipment) && config.preferredEquipment.length > 0
+                                    ? config.preferredEquipment
+                                    : ALL_EQUIPMENT_IDS;
+                                const isSelected = currentPref.includes(eq.id);
+                                return (
+                                    <button
+                                        key={eq.id}
+                                        type="button"
+                                        aria-pressed={isSelected}
+                                        onClick={() => {
+                                            triggerHaptic('light');
+                                            const next = isSelected
+                                                ? currentPref.filter((id) => id !== eq.id)
+                                                : [...currentPref, eq.id];
+                                            if (next.length > 0) {
+                                                setConfig({ preferredEquipment: next });
+                                            }
+                                        }}
+                                        className={`rounded-[6px] px-2.5 py-1.5 text-xs font-bold border transition-colors ${
+                                            isSelected
+                                                ? 'bg-primary-500/20 border-primary-500/50 text-primary-300'
+                                                : 'bg-surface-base border-border-subtle text-zinc-400 hover:text-white'
+                                        }`}
+                                    >
+                                        {pickLang(lang, eq.label)}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
             </div>
 
             {showPaywall && (

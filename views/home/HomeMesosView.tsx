@@ -1,11 +1,25 @@
-import React, { useState } from 'react';
+import React, { Suspense, useMemo, useState } from 'react';
 import { Icon } from '../../components/ui/Icon';
 import { MuscleTag } from '../../components/ui/MuscleTag';
 import { getTranslated } from '../../utils';
 import { pickLang } from '../../utils/i18n';
 import { resolveMuscleLabel } from '../../utils/muscle';
 import { triggerHaptic } from '../../utils/audio';
+import {
+    buildCopyFromActiveMeso,
+    buildMesoDraftFromProgram,
+    clearMesocycleDraft,
+    createDefaultMesoBuilderDays,
+    extractPastMesocycles,
+    saveMesocycleDraft,
+    setMesoEditorIntent,
+} from '../../utils/mesoDraft';
+import type { MesocycleDraft } from '../../types';
 import type { HomeViewState } from './useHomeViewState';
+
+const PlanMesocycleHubSheet = React.lazy(() =>
+    import('../../components/home/PlanMesocycleHubSheet').then(m => ({ default: m.PlanMesocycleHubSheet }))
+);
 
 export const HomeMesosView: React.FC<{ state: HomeViewState }> = ({ state }) => {
     const {
@@ -27,12 +41,30 @@ export const HomeMesosView: React.FC<{ state: HomeViewState }> = ({ state }) => 
     } = state;
 
     const [expandedDayIdx, setExpandedDayIdx] = useState<number | null>(0);
+    const [showPlanHub, setShowPlanHub] = useState(false);
+    const [openCopyMenuId, setOpenCopyMenuId] = useState<string | number | null>(null);
+
+    const stateLogs = (state as any).logs;
+    const pastMesocycles = useMemo(
+        () => extractPastMesocycles(stateLogs || [], activeMeso?.id, exercises || []),
+        [stateLogs, activeMeso?.id, exercises]
+    );
 
     if (!activeMeso) return null;
 
     const totalWeeks = activeMeso.targetWeeks || activeMeso.duration || 1;
     const weekPct = Math.min(100, Math.round((activeMeso.week / totalWeeks) * 100));
     const p = t.planActions;
+
+    const navigateToBuilderWithDraft = (draft: MesocycleDraft, intent: 'builder' | 'scratch' | 'resume' | 'copy') => {
+        saveMesocycleDraft(draft);
+        setMesoEditorIntent(intent);
+        if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('gainslab:navigate', { detail: { view: 'program' } }));
+        } else {
+            onEditProgram();
+        }
+    };
 
     return (
         <div className="space-y-4">
@@ -48,9 +80,8 @@ export const HomeMesosView: React.FC<{ state: HomeViewState }> = ({ state }) => 
                 </div>
                 <button
                     type="button"
-                    onClick={() => {
-                        window.dispatchEvent(new CustomEvent('gainslab:navigate', { detail: { view: 'templates' } }));
-                    }}
+                    data-testid="mesos-new-cycle-btn"
+                    onClick={() => setShowPlanHub(true)}
                     className="inline-flex min-h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[6px] bg-primary-500 px-3 py-1.5 text-xs font-extrabold uppercase tracking-wider text-zinc-950 shadow-sm transition-all hover:brightness-110 active:scale-95"
                 >
                     <Icon name="Plus" size={15} strokeWidth={2.5} />
@@ -95,6 +126,33 @@ export const HomeMesosView: React.FC<{ state: HomeViewState }> = ({ state }) => 
                         <p className="mt-0.5 text-xs text-zinc-400">
                             {safeProgram.length} {h.daysWord} / {pickLang(lang, { es: 'semana', en: 'week' })} · {uniqueDaysDone.size}/{safeProgram.length} {pickLang(lang, { es: 'completados esta semana', en: 'completed this week' })}
                         </p>
+                    </div>
+                    <div className="relative shrink-0">
+                        <button
+                            type="button"
+                            onClick={() => setOpenCopyMenuId(openCopyMenuId === 'active' ? null : 'active')}
+                            aria-label={pickLang(lang, { es: 'Opciones del mesociclo', en: 'Mesocycle options' })}
+                            className="flex h-8 w-8 items-center justify-center rounded-[4px] text-zinc-400 hover:bg-surface-elevated hover:text-white transition-colors"
+                        >
+                            <Icon name="MoreVertical" size={17} />
+                        </button>
+                        {openCopyMenuId === 'active' && (
+                            <div className="absolute right-0 top-full mt-1 w-48 rounded-xl border border-border-subtle bg-surface-base p-1.5 shadow-2xl z-30">
+                                <button
+                                    type="button"
+                                    data-testid="copy-active-meso-btn"
+                                    onClick={() => {
+                                        setOpenCopyMenuId(null);
+                                        const draft = buildCopyFromActiveMeso(activeMeso, safeProgram, lang);
+                                        navigateToBuilderWithDraft(draft, 'copy');
+                                    }}
+                                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-zinc-200 hover:bg-surface-raised hover:text-white"
+                                >
+                                    <Icon name="Copy" size={14} className="text-primary-400" />
+                                    <span>{pickLang(lang, { es: 'Copiar mesociclo', en: 'Copy mesocycle' })}</span>
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -279,6 +337,7 @@ export const HomeMesosView: React.FC<{ state: HomeViewState }> = ({ state }) => 
                                                         <MuscleTag
                                                             label={resolveMuscleLabel(slot.muscle, lang)}
                                                             muscle={slot.muscle}
+                                                            priority={activeMeso.musclePriorities?.[slot.muscle]}
                                                         />
                                                         <p className="text-xs font-bold text-white truncate">
                                                             {exName}
@@ -299,6 +358,57 @@ export const HomeMesosView: React.FC<{ state: HomeViewState }> = ({ state }) => 
                 </div>
             </div>
 
+            {/* Previous Mesocycles (Copy Previous Mesocycle - Video #6) */}
+            {pastMesocycles.length > 0 && (
+                <div className="space-y-2 pt-1" data-testid="past-mesocycles-list">
+                    <h3 className="text-xs font-black uppercase tracking-wider text-zinc-400 px-0.5">
+                        {pickLang(lang, { es: 'Mesociclos anteriores', en: 'Previous mesocycles' })}
+                    </h3>
+                    <div className="space-y-2">
+                        {pastMesocycles.slice(0, 6).map((pm) => (
+                            <div
+                                key={pm.mesoId}
+                                className="flex items-center justify-between gap-3 rounded-[6px] border border-border-subtle bg-surface-raised px-3.5 py-2.5"
+                            >
+                                <div className="min-w-0 flex-1">
+                                    <div className="text-sm font-bold text-white truncate">{pm.name}</div>
+                                    <div className="text-xs text-zinc-400 mt-0.5">
+                                        {pm.weeksLogged} {pickLang(lang, { es: pm.weeksLogged === 1 ? 'semana' : 'semanas', en: pm.weeksLogged === 1 ? 'week' : 'weeks' })} · {pm.sessionsCount} {pickLang(lang, { es: 'sesiones', en: 'sessions' })} · {pm.days.length} {h.daysWord}
+                                    </div>
+                                </div>
+                                <div className="relative shrink-0">
+                                    <button
+                                        type="button"
+                                        onClick={() => setOpenCopyMenuId(openCopyMenuId === pm.mesoId ? null : pm.mesoId)}
+                                        aria-label={pickLang(lang, { es: 'Copiar mesociclo', en: 'Copy mesocycle' })}
+                                        className="flex h-8 w-8 items-center justify-center rounded-[4px] text-zinc-400 hover:bg-surface-elevated hover:text-white transition-colors"
+                                    >
+                                        <Icon name="MoreVertical" size={16} />
+                                    </button>
+                                    {openCopyMenuId === pm.mesoId && (
+                                        <div className="absolute right-0 top-full mt-1 w-44 rounded-xl border border-border-subtle bg-surface-base p-1.5 shadow-2xl z-30">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setOpenCopyMenuId(null);
+                                                    const prefix = pickLang(lang, { es: 'Copia de', en: 'Copy of' });
+                                                    const draft = buildMesoDraftFromProgram(`${prefix} ${pm.name}`, pm.days, Math.max(4, Math.min(8, pm.weeksLogged || 5)));
+                                                    navigateToBuilderWithDraft(draft, 'copy');
+                                                }}
+                                                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-zinc-200 hover:bg-surface-raised hover:text-white"
+                                            >
+                                                <Icon name="Copy" size={14} className="text-primary-400" />
+                                                <span>{pickLang(lang, { es: 'Copiar', en: 'Copy' })}</span>
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             {/* Safe cycle-completion bar */}
             <div
                 data-testid="mesos-finish-cycle-bar"
@@ -318,6 +428,39 @@ export const HomeMesosView: React.FC<{ state: HomeViewState }> = ({ state }) => 
                     {t.finishCycle}
                 </button>
             </div>
+
+            {showPlanHub && (
+                <Suspense fallback={null}>
+                    <PlanMesocycleHubSheet
+                        open={showPlanHub}
+                        onOpenChange={setShowPlanHub}
+                        lang={lang}
+                        onResumeDraft={(draft) => navigateToBuilderWithDraft(draft, 'resume')}
+                        onStartTemplate={() => {
+                            if (typeof window !== 'undefined') {
+                                window.dispatchEvent(new CustomEvent('gainslab:navigate', { detail: { view: 'templates' } }));
+                            }
+                        }}
+                        onStartMesoBuilder={() => {
+                            const draft = buildMesoDraftFromProgram(
+                                pickLang(lang, { es: 'Mesociclo Personalizado', en: 'Custom Mesocycle' }),
+                                createDefaultMesoBuilderDays(lang),
+                                5,
+                            );
+                            navigateToBuilderWithDraft(draft, 'builder');
+                        }}
+                        onStartScratch={() => {
+                            clearMesocycleDraft();
+                            const draft = buildMesoDraftFromProgram(
+                                pickLang(lang, { es: 'Mesociclo Desde Cero', en: 'Scratch Mesocycle' }),
+                                [{ id: `d_${Date.now()}`, dayName: { en: 'Day 1', es: 'Día 1' }, slots: [] }],
+                                5,
+                            );
+                            navigateToBuilderWithDraft(draft, 'scratch');
+                        }}
+                    />
+                </Suspense>
+            )}
         </div>
     );
 };

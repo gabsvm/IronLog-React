@@ -1,7 +1,7 @@
 // S6: global data fetch, PWA install, connectivity/sync listeners, effects mode, dirty tracking and installApp, moved verbatim from context/AppContext.tsx.
 import { useDirtySection, type DirtyTrackingContext } from './useDirtySection';
 import { useEffect, useCallback } from 'react';
-import { EffectsMode, ResolvedEffects, ExerciseDef, MesoCycle, Log, ProgramDay, GlobalTemplate, UserProfile, BeforeInstallPromptEvent, NutritionLog, CardioSession, NutritionGoal, MacroGoals, BodyLog, CustomFood, DirtySyncSection, WeightUnit } from '../../types';
+import { EffectsMode, ResolvedEffects, ExerciseDef, MesoCycle, Log, ProgramDay, GlobalTemplate, UserProfile, BeforeInstallPromptEvent, NutritionLog, CardioSession, NutritionGoal, MacroGoals, BodyLog, CustomFood, DirtySyncSection, WeightUnit, EquipmentType } from '../../types';
 import { resolveEffectsMode } from '../../utils/effectsProfile';
 import { syncService } from '../../services/syncService';
 import { getFirebaseFirestoreServices, isFirebaseConfigured } from '../../lib/firebaseLoader';
@@ -18,6 +18,9 @@ export interface UseAppBootstrapEffectsDeps {
     rpTargetRIR: number;
     keepScreenOn: boolean;
     weightUnit: WeightUnit;
+    autoMatchWeight?: boolean;
+    useExerciseTypeFilters?: boolean;
+    preferredEquipment?: EquipmentType[];
     program: ProgramDay[];
     exercises: ExerciseDef[];
     setExercises: (value: ExerciseDef[] | ((val: ExerciseDef[]) => ExerciseDef[])) => void;
@@ -57,6 +60,9 @@ export const useAppBootstrapEffects = ({
     rpTargetRIR,
     keepScreenOn,
     weightUnit,
+    autoMatchWeight,
+    useExerciseTypeFilters,
+    preferredEquipment,
     program,
     exercises,
     setExercises,
@@ -307,7 +313,7 @@ export const useAppBootstrapEffects = ({
     useDirtySection('activeMeso', [activeMeso, isAppLoading, hasCheckedSync], dirtyTracking);
     useDirtySection('exercises', [exercises, isAppLoading, hasCheckedSync], dirtyTracking);
     useDirtySection('logs', [logs, isAppLoading, hasCheckedSync], dirtyTracking);
-    useDirtySection('config', [showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, isAppLoading, hasCheckedSync], dirtyTracking);
+    useDirtySection('config', [showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, autoMatchWeight, useExerciseTypeFilters, preferredEquipment, isAppLoading, hasCheckedSync], dirtyTracking);
     useDirtySection('rpFeedback', [rpFeedback, isAppLoading, hasCheckedSync], dirtyTracking);
     useDirtySection('userProfile', [userProfile, isAppLoading, hasCheckedSync], dirtyTracking);
     useDirtySection('nutritionLogs', [nutritionLogs, isAppLoading, hasCheckedSync], dirtyTracking);

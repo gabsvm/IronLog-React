@@ -28,6 +28,19 @@ export type MuscleGroup =
 
 export type CardioType = 'steady' | 'hiit' | 'tabata';
 
+export type EquipmentType =
+  | 'machine'
+  | 'barbell'
+  | 'smith_machine'
+  | 'dumbbell'
+  | 'cable'
+  | 'freemotion'
+  | 'bodyweight'
+  | 'bodyweight_loadable'
+  | 'machine_assistance';
+
+export type MusclePriorityLevel = 'emphasize' | 'grow' | 'maintain';
+
 /**
  * Defines how the load and reps entered for an exercise translate to external
  * tonnage. `per_side` is for entries such as 20 kg x 10 per arm, performed on
@@ -40,6 +53,8 @@ export interface ExerciseDef {
   id: string;
   name: string | { en: string; es: string };
   muscle: MuscleGroup;
+  equipment?: EquipmentType;
+  pinnedNote?: string;
   instructions?: { en: string; es: string };
   defaultCardioType?: CardioType;
   videoId?: string;
@@ -96,6 +111,7 @@ export interface SessionExercise extends ExerciseDef {
   slotLabel?: string;
   targetReps?: string;
   note?: string;
+  notePinned?: boolean;
   sets: WorkoutSet[];
   supersetId?: string;
   isPlaceholder?: boolean;
@@ -187,8 +203,19 @@ export interface MesoCycle {
   isDeload?: boolean;
   note?: string; // NEW: General mesocycle notes
   duration: number;
+  musclePriorities?: Partial<Record<MuscleGroup, MusclePriorityLevel>>;
+  completedAt?: number;
   programSystem?: ProgramRunState;
   stageId?: string;
+}
+
+export interface MesocycleDraft {
+  name: string;
+  mesoType: MesoType;
+  weeks: number;
+  program: ProgramDay[];
+  musclePriorities?: Partial<Record<MuscleGroup, MusclePriorityLevel>>;
+  updatedAt: number;
 }
 
 export interface Log {
@@ -298,6 +325,12 @@ export interface AppState {
     restTimerDisplay?: 'compact' | 'expanded';
     /** Q11: display/entry unit. Stored data is always kg. Absent = 'kg'. */
     weightUnit?: WeightUnit;
+    /** RP 1:1 auto-match Set weight down to uncompleted sets. Default true. */
+    autoMatchWeight?: boolean;
+    /** RP 1:1 filter exercise pickers by preferred equipment. Default false. */
+    useExerciseTypeFilters?: boolean;
+    /** RP 1:1 selected equipment types when useExerciseTypeFilters is enabled. */
+    preferredEquipment?: EquipmentType[];
   };
   rpFeedback: Record<string, Record<string, Record<string, FeedbackEntry>>>;
   hasSeenOnboarding: boolean;

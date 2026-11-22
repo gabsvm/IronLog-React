@@ -1,15 +1,27 @@
 // U5: per-step content of the setup wizard, moved verbatim from components/onboarding/SetupWizard.tsx.
-import { formatMessage } from '../../../utils/i18n';
+import { formatMessage, pickLang } from '../../../utils/i18n';
 import React from 'react';
 import { TRANSLATIONS } from '../../../constants';
 import { Icon } from '../../ui/Icon';
+import { ALL_EQUIPMENT_TYPES } from '../../../utils/equipment';
 import type { SetupWizardState, Mode } from './useSetupWizardState';
 
 export const SetupWizardStep: React.FC<{ state: SetupWizardState }> = ({ state }) => {
-    const { lang, t, w, step, profile, setProfile, recommendation, handleApply, OptionBtn } = state;
+    const { lang, t, w, step, profile, setProfile, recommendation, handleApply, OptionBtn, preferredEquipment, toggleEquipment } = state;
         switch (step) {
             case 0: return (
                 <div className="space-y-3 animate-in slide-in-from-right-4 duration-300">
+                    {/* Compact How RP Works strip (RP Onboarding Video #1) */}
+                    <div className="rounded-2xl border border-primary-500/25 bg-primary-500/10 p-3.5 space-y-2" data-testid="how-rp-works-card">
+                        <p className="text-[11px] font-black uppercase tracking-wider text-primary-400">
+                            {pickLang(lang, { es: 'Cómo funciona el sistema RP', en: 'How RP Progression Works' })}
+                        </p>
+                        <div className="grid grid-cols-1 gap-1.5 text-xs text-zinc-300">
+                            <div className="flex items-center gap-2"><Icon name="Layers" size={14} className="text-primary-400 shrink-0" /><span>{pickLang(lang, { es: 'Elige o personaliza tu mesociclo de 4–8 semanas', en: 'Build or customize a 4–8 week mesocycle' })}</span></div>
+                            <div className="flex items-center gap-2"><Icon name="TrendingUp" size={14} className="text-emerald-400 shrink-0" /><span>{pickLang(lang, { es: 'Registra carga y RIR (repeticiones en reserva)', en: 'Log load & RIR targets each workout' })}</span></div>
+                            <div className="flex items-center gap-2"><Icon name="SlidersHorizontal" size={14} className="text-amber-400 shrink-0" /><span>{pickLang(lang, { es: 'Ajusta series automáticamente según bombeo y fatiga', en: 'Auto-adjust weekly set volume from pump & fatigue' })}</span></div>
+                        </div>
+                    </div>
                     <OptionBtn
                         label={w.expOptions.beginner}
                         description={w.expDesc?.beginner}
@@ -67,28 +79,57 @@ export const SetupWizardStep: React.FC<{ state: SetupWizardState }> = ({ state }
                 </div>
             );
             case 2: return (
-                <div className="space-y-3 animate-in slide-in-from-right-4 duration-300">
-                    <OptionBtn
-                        label={w.goalOptions.hypertrophy}
-                        description={TRANSLATIONS[lang].copy.setupWizard.buildMuscleMassAnd}
-                        selected={profile.goal === 'hypertrophy'}
-                        onClick={() => setProfile({ ...profile, goal: 'hypertrophy' })}
-                        icon="Dumbbell"
-                    />
-                    <OptionBtn
-                        label={w.goalOptions.strength}
-                        description={TRANSLATIONS[lang].copy.setupWizard.increase1rmOnMain}
-                        selected={profile.goal === 'strength'}
-                        onClick={() => setProfile({ ...profile, goal: 'strength' })}
-                        icon="Shield"
-                    />
-                    <OptionBtn
-                        label={w.goalOptions.endurance}
-                        description={TRANSLATIONS[lang].copy.setupWizard.improveEnduranceAndConditioning}
-                        selected={profile.goal === 'endurance'}
-                        onClick={() => setProfile({ ...profile, goal: 'endurance' })}
-                        icon="Activity"
-                    />
+                <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
+                    <div className="space-y-3">
+                        <OptionBtn
+                            label={w.goalOptions.hypertrophy}
+                            description={TRANSLATIONS[lang].copy.setupWizard.buildMuscleMassAnd}
+                            selected={profile.goal === 'hypertrophy'}
+                            onClick={() => setProfile({ ...profile, goal: 'hypertrophy' })}
+                            icon="Dumbbell"
+                        />
+                        <OptionBtn
+                            label={w.goalOptions.strength}
+                            description={TRANSLATIONS[lang].copy.setupWizard.increase1rmOnMain}
+                            selected={profile.goal === 'strength'}
+                            onClick={() => setProfile({ ...profile, goal: 'strength' })}
+                            icon="Shield"
+                        />
+                        <OptionBtn
+                            label={w.goalOptions.endurance}
+                            description={TRANSLATIONS[lang].copy.setupWizard.improveEnduranceAndConditioning}
+                            selected={profile.goal === 'endurance'}
+                            onClick={() => setProfile({ ...profile, goal: 'endurance' })}
+                            icon="Activity"
+                        />
+                    </div>
+
+                    {/* Preferred exercise types (RP Onboarding Video #1) */}
+                    <div className="rounded-2xl border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-3.5 space-y-2.5" data-testid="onboarding-equipment-picker">
+                        <div className="text-xs font-black uppercase tracking-wider text-zinc-400">
+                            {pickLang(lang, { es: 'Tipos de ejercicio preferidos (opcional)', en: 'Preferred exercise types (optional)' })}
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                            {ALL_EQUIPMENT_TYPES.map(eq => {
+                                const active = preferredEquipment.includes(eq.id);
+                                return (
+                                    <button
+                                        key={eq.id}
+                                        type="button"
+                                        aria-pressed={active}
+                                        onClick={() => toggleEquipment(eq.id)}
+                                        className={`rounded-lg px-2.5 py-1.5 text-xs font-bold border transition-colors ${
+                                            active
+                                                ? 'bg-primary-500/20 border-primary-500/50 text-primary-400'
+                                                : 'bg-surface-base border-border-subtle text-zinc-400 hover:text-white'
+                                        }`}
+                                    >
+                                        {pickLang(lang, eq.label)}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
                 </div>
             );
             case 3: return (

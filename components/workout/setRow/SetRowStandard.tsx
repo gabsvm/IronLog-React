@@ -130,7 +130,11 @@ export const SetRowStandard: React.FC<{ state: SetRowState }> = ({ state }) => {
                         ref={weightRef}
                         type="number"
                         inputMode="decimal"
-                        className="h-9 w-full rounded-[4px] bg-surface-app border border-border-subtle/80 text-center text-[15px] font-semibold text-white placeholder:text-zinc-500 focus:border-primary-500 outline-none tabular-nums"
+                        className={`h-9 w-full rounded-[4px] border text-center text-[15px] font-semibold outline-none tabular-nums transition-colors ${
+                            isDone
+                                ? 'border-transparent bg-transparent text-zinc-400'
+                                : 'bg-surface-app border-border-subtle/80 text-white placeholder:text-zinc-500 focus:border-primary-500'
+                        }`}
                         placeholder={weightPlaceholder}
                         aria-label={t.weight}
                         value={localWeight}
@@ -153,7 +157,11 @@ export const SetRowStandard: React.FC<{ state: SetRowState }> = ({ state }) => {
                         ref={repsRef}
                         type="number"
                         inputMode="numeric"
-                        className="h-9 w-full rounded-[4px] bg-surface-app border border-border-subtle/80 text-center text-[15px] font-semibold text-white placeholder:text-zinc-500 focus:border-primary-500 outline-none tabular-nums"
+                        className={`h-9 w-full rounded-[4px] border text-center text-[15px] font-semibold outline-none tabular-nums transition-colors ${
+                            isDone
+                                ? 'border-transparent bg-transparent text-zinc-400'
+                                : 'bg-surface-app border-border-subtle/80 text-white placeholder:text-zinc-500 focus:border-primary-500'
+                        }`}
                         placeholder={repsPlaceholder}
                         aria-label={t.reps}
                         value={localReps}
@@ -175,7 +183,11 @@ export const SetRowStandard: React.FC<{ state: SetRowState }> = ({ state }) => {
                         <input
                             type="number"
                             inputMode="decimal"
-                            className="h-9 w-full rounded-[4px] bg-surface-app border border-border-subtle/80 text-center text-[15px] font-semibold text-white placeholder:text-zinc-500 focus:border-primary-500 outline-none tabular-nums"
+                            className={`h-9 w-full rounded-[4px] border text-center text-[15px] font-semibold outline-none tabular-nums transition-colors ${
+                                isDone
+                                    ? 'border-transparent bg-transparent text-zinc-400'
+                                    : 'bg-surface-app border-border-subtle/80 text-white placeholder:text-zinc-500 focus:border-primary-500'
+                            }`}
                             placeholder="RIR"
                             aria-label="RIR"
                             value={localRpe}
@@ -196,7 +208,7 @@ export const SetRowStandard: React.FC<{ state: SetRowState }> = ({ state }) => {
                         onClick={handleToggleComplete}
                         className={`relative flex h-[22px] w-[22px] items-center justify-center rounded-[3px] border-2 transition-colors active:scale-95 after:absolute after:-inset-2 after:content-[''] ${
                             isDone
-                                ? 'bg-primary-500 border-primary-500 text-zinc-950 font-black shadow-sm'
+                                ? 'bg-emerald-500 border-emerald-500 text-zinc-950 font-black shadow-sm'
                                 : 'border-zinc-500 bg-transparent hover:border-zinc-300'
                         }`}
                         aria-pressed={Boolean(isDone)}

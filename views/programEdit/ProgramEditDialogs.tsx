@@ -1,5 +1,5 @@
 // T2: exercise picker, unresolved-slots dialog, meso sheet and confirm, moved verbatim from views/ProgramEditView.tsx.
-import { formatMessage } from '../../utils/i18n';
+import { formatMessage, pickLang } from '../../utils/i18n';
 import React, { Suspense } from 'react';
 import { TRANSLATIONS } from '../../constants';
 import { Icon } from '../../components/ui/Icon';
@@ -12,12 +12,15 @@ const ExerciseSelector = React.lazy(() => import('../../components/ui/ExerciseSe
 const ConfirmModal = React.lazy(() => import('../../components/ui/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
 
 export const ProgramEditDialogs: React.FC<{ state: ProgramEditState }> = ({ state }) => {
-    const { lang, t, pickingForSlot, setPickingForSlot, showStartModal, setShowStartModal, unresolvedSlots, setUnresolvedSlots, dayToDelete, setDayToDelete, mesoConfig, setMesoConfig, hasKnownPhase, handleDeleteDay, handleSelectExercise, handleStartMeso } = state;
+    const { lang, t, pickingForSlot, setPickingForSlot, program, showStartModal, setShowStartModal, unresolvedSlots, setUnresolvedSlots, dayToDelete, setDayToDelete, mesoConfig, setMesoConfig, hasKnownPhase, handleDeleteDay, handleSelectExercise, handleStartMeso, weightUnit, handleWeightUnitChange } = state;
+    const pickingDay = pickingForSlot ? program.find(d => d.id === pickingForSlot.dayId) : undefined;
+    const pickingMuscle = pickingDay && pickingForSlot ? pickingDay.slots?.[pickingForSlot.slotIdx]?.muscle : undefined;
     return (
         <>
             {pickingForSlot && (
                 <Suspense fallback={null}>
                     <ExerciseSelector
+                        presetMuscle={pickingMuscle}
                         onClose={() => setPickingForSlot(null)}
                         onSelect={handleSelectExercise}
                     />
@@ -80,7 +83,7 @@ export const ProgramEditDialogs: React.FC<{ state: ProgramEditState }> = ({ stat
             <Sheet
                 open={showStartModal}
                 onOpenChange={setShowStartModal}
-                title={t.setupCycle}
+                title={pickLang(lang, { es: 'Crear tu mesociclo', en: 'Create your mesocycle' })}
                 accent="primary"
                 footer={
                     <Button fullWidth onClick={handleStartMeso} size="lg">
@@ -88,7 +91,7 @@ export const ProgramEditDialogs: React.FC<{ state: ProgramEditState }> = ({ stat
                     </Button>
                 }
             >
-                <div className="p-5 space-y-6">
+                <div className="p-5 space-y-5" data-testid="create-meso-final-sheet">
                     <p className="text-xs text-zinc-500 -mt-2">{t.saveAsMeso}</p>
                     <div>
                         <label className="mb-2 block px-1 text-sm font-semibold text-muted">{t.mesoName}</label>
@@ -98,6 +101,67 @@ export const ProgramEditDialogs: React.FC<{ state: ProgramEditState }> = ({ stat
                             value={mesoConfig.name}
                             onChange={(e) => setMesoConfig({ ...mesoConfig, name: e.target.value })}
                         />
+                    </div>
+
+                    <div>
+                        <label className="mb-2 block px-1 text-sm font-semibold text-muted">{t.targetWeeks}</label>
+                        <div className="grid grid-cols-5 gap-2 mb-3">
+                            {[4, 5, 6, 7, 8].map((wCount) => (
+                                <button
+                                    key={wCount}
+                                    type="button"
+                                    onClick={() => setMesoConfig(prev => ({ ...prev, weeks: wCount }))}
+                                    className={`h-11 rounded-[8px] font-black text-sm border transition-all ${
+                                        mesoConfig.weeks === wCount
+                                            ? 'bg-primary-500 border-primary-500 text-zinc-950 shadow-sm'
+                                            : 'bg-surface-raised border-border-subtle text-zinc-300 hover:border-zinc-500'
+                                    }`}
+                                >
+                                    {wCount}w
+                                </button>
+                            ))}
+                        </div>
+                        <div className="flex items-center gap-3 text-xs text-zinc-400">
+                            <button
+                                type="button"
+                                onClick={() => setMesoConfig(prev => ({ ...prev, weeks: Math.max(1, prev.weeks - 1) }))}
+                                className="w-8 h-8 rounded-lg bg-surface-raised border border-border-subtle flex items-center justify-center text-zinc-300 hover:text-white active:scale-95 transition-all"
+                                aria-label={pickLang(lang, { es: 'Disminuir semanas', en: 'Decrease weeks' })}
+                            >
+                                <Icon name="Minus" size={14} />
+                            </button>
+                            <span className="font-mono text-base font-bold text-white tabular-nums">{mesoConfig.weeks} {t.weeks}</span>
+                            <button
+                                type="button"
+                                onClick={() => setMesoConfig(prev => ({ ...prev, weeks: Math.min(16, prev.weeks + 1) }))}
+                                className="w-8 h-8 rounded-lg bg-surface-raised border border-border-subtle flex items-center justify-center text-zinc-300 hover:text-white active:scale-95 transition-all"
+                                aria-label={pickLang(lang, { es: 'Aumentar semanas', en: 'Increase weeks' })}
+                            >
+                                <Icon name="Plus" size={14} />
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="mb-2 block px-1 text-sm font-semibold text-muted">
+                            {pickLang(lang, { es: 'Unidad de peso', en: 'Weight unit' })}
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                            {(['lb', 'kg'] as const).map((u) => (
+                                <button
+                                    key={u}
+                                    type="button"
+                                    onClick={() => handleWeightUnitChange(u)}
+                                    className={`h-11 rounded-[8px] font-black text-xs uppercase tracking-wider border transition-all ${
+                                        weightUnit === u
+                                            ? 'bg-primary-500 border-primary-500 text-zinc-950 shadow-sm'
+                                            : 'bg-surface-raised border-border-subtle text-zinc-300 hover:border-zinc-500'
+                                    }`}
+                                >
+                                    {u.toUpperCase()}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
                     <div>
@@ -114,28 +178,6 @@ export const ProgramEditDialogs: React.FC<{ state: ProgramEditState }> = ({ stat
                                 <option key={key} value={key}>{label}</option>
                             ))}
                         </select>
-                    </div>
-
-                    <div>
-                        <label className="mb-2 block px-1 text-sm font-semibold text-muted">{t.targetWeeks}</label>
-                        <div className="flex items-center gap-4">
-                            <button
-                                onClick={() => setMesoConfig(prev => ({ ...prev, weeks: Math.max(1, prev.weeks - 1) }))}
-                                className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700/50 flex items-center justify-center text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white active:scale-95 transition-all"
-                                aria-label="Disminuir semanas"
-                            >
-                                <Icon name="Minus" size={16} />
-                            </button>
-                            <span className="font-mono text-2xl font-bold w-12 text-center text-zinc-900 dark:text-white">{mesoConfig.weeks}</span>
-                            <button
-                                onClick={() => setMesoConfig(prev => ({ ...prev, weeks: prev.weeks + 1 }))}
-                                className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700/50 flex items-center justify-center text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white active:scale-95 transition-all"
-                                aria-label="Aumentar semanas"
-                            >
-                                <Icon name="Plus" size={16} />
-                            </button>
-                            <span className="text-sm font-bold text-zinc-500">{t.weeks}</span>
-                        </div>
                     </div>
                 </div>
             </Sheet>

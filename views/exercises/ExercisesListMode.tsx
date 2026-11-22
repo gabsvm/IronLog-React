@@ -7,7 +7,7 @@ import { pickLang } from '../../utils/i18n';
 import type { ExercisesViewState } from './useExercisesViewState';
 
 export const ExercisesListMode: React.FC<{ state: ExercisesViewState }> = ({ state }) => {
-    const { exercises, lang, t, ev, searchQuery, setSearchQuery, selectedMuscle, setSelectedMuscle, filterCategory, setFilterCategory, setMergingExerciseId, setMergeCandidate, duplicateSuggestions, filteredExercises, Row } = state;
+    const { exercises, lang, t, ev, searchQuery, setSearchQuery, selectedMuscle, setSelectedMuscle, selectedEquipment, setSelectedEquipment, equipmentTypes, filterCategory, setFilterCategory, setMergingExerciseId, setMergeCandidate, duplicateSuggestions, filteredExercises, Row } = state;
     return (
         <>
             <div className="flex flex-col relative">
@@ -69,15 +69,44 @@ export const ExercisesListMode: React.FC<{ state: ExercisesViewState }> = ({ sta
                         </button>
                         {Object.values(MUSCLE_GROUPS).map(m => (
                             <button
-                                key={m}
                                 onClick={() => setSelectedMuscle(m)}
                                 className={`shrink-0 whitespace-nowrap rounded-[4px] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-colors ${
                                     selectedMuscle === m
                                         ? 'bg-primary-500 text-zinc-950'
                                         : 'bg-surface-raised border border-border-subtle text-zinc-400 hover:text-white'
                                 }`}
+                                key={m}
                             >
                                 {TRANSLATIONS[lang].muscle[m]}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Equipment filter chips (9 RP types) */}
+                    <div className="flex gap-1.5 overflow-x-auto no-scrollbar py-0.5" data-testid="exercises-equipment-chips">
+                        <button
+                            type="button"
+                            onClick={() => setSelectedEquipment('ALL')}
+                            className={`shrink-0 whitespace-nowrap rounded-[4px] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider transition-colors ${
+                                selectedEquipment === 'ALL'
+                                    ? 'bg-white text-zinc-950 font-black'
+                                    : 'bg-surface-raised border border-border-subtle text-zinc-400 hover:text-white'
+                            }`}
+                        >
+                            {pickLang(lang, { es: 'Todo equipo', en: 'All types' })}
+                        </button>
+                        {equipmentTypes.map(eq => (
+                            <button
+                                key={eq.id}
+                                type="button"
+                                onClick={() => setSelectedEquipment(eq.id)}
+                                className={`shrink-0 whitespace-nowrap rounded-[4px] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider transition-colors ${
+                                    selectedEquipment === eq.id
+                                        ? 'bg-primary-500 text-zinc-950 font-black'
+                                        : 'bg-surface-raised border border-border-subtle text-zinc-400 hover:text-white'
+                                }`}
+                            >
+                                {pickLang(lang, eq.label)}
                             </button>
                         ))}
                     </div>

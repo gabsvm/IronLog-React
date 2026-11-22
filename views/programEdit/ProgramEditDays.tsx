@@ -34,8 +34,12 @@ export const ProgramEditDays: React.FC<{ state: ProgramEditState }> = ({ state }
         handleAddDay,
         handleAddSlot,
         handleRemoveSlot,
+        handleMoveSlot,
         handleUpdateSlot,
+        handleAutoRecommendDay,
         handleValidateAndOpenStartModal,
+        musclePriorities,
+        setShowPrioritiesStep,
         onBack,
     } = state;
 
@@ -125,7 +129,29 @@ export const ProgramEditDays: React.FC<{ state: ProgramEditState }> = ({ state }
                     onChange={(e) => handleUpdateDayName(currentDay.id, e.target.value)}
                     placeholder={TRANSLATIONS[lang].copy.programEdit.dayName}
                 />
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-1.5 shrink-0">
+                    {(currentDay.slots || []).length > 0 && (
+                        <button
+                            type="button"
+                            data-testid="program-auto-recommend-btn"
+                            onClick={() => handleAutoRecommendDay(currentDay.id)}
+                            title={pickLang(lang, { es: 'Auto-recomendar ejercicios', en: 'Auto-recommend exercises' })}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[4px] text-[11px] font-extrabold uppercase tracking-wider bg-violet-500/15 border border-violet-500/35 text-violet-300 hover:bg-violet-500/25 active:scale-95 transition-all"
+                        >
+                            <Icon name="Zap" size={12} />
+                            <span>{pickLang(lang, { es: 'Auto', en: 'Auto' })}</span>
+                        </button>
+                    )}
+                    {!isEditingActiveRoutine && (
+                        <button
+                            type="button"
+                            onClick={() => setShowPrioritiesStep(true)}
+                            title={pickLang(lang, { es: 'Prioridades musculares', en: 'Muscle priorities' })}
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-[4px] text-[10px] font-extrabold uppercase tracking-wider bg-surface-elevated border border-border-subtle text-zinc-300 hover:text-white transition-colors"
+                        >
+                            <Icon name="SlidersHorizontal" size={11} />
+                        </button>
+                    )}
                     <button
                         type="button"
                         onClick={() => {
@@ -182,8 +208,10 @@ export const ProgramEditDays: React.FC<{ state: ProgramEditState }> = ({ state }
                                 bar: 'bg-primary-500',
                             };
                             const exName = slot.exerciseId
-                                ? getTranslated(exercises.find((e) => e.id === slot.exerciseId)?.name, lang)
+                                ? getTranslated((exercises as any[]).find((e) => e.id === slot.exerciseId)?.name, lang)
                                 : (TRANSLATIONS[lang].copy.programEdit.selectExercise || 'Select exercise');
+                            const slotPriority = musclePriorities?.[slot.muscle];
+                            const slotActiveBars = slotPriority === 'maintain' ? 1 : slotPriority === 'grow' ? 2 : 3;
 
                             return (
                                 <div
@@ -211,9 +239,9 @@ export const ProgramEditDays: React.FC<{ state: ProgramEditState }> = ({ state }
                                                         fill="currentColor"
                                                         aria-hidden="true"
                                                     >
-                                                        <rect x="2" y="2" width="2.5" height="12" rx="1.25" />
-                                                        <rect x="6.75" y="2" width="2.5" height="12" rx="1.25" />
-                                                        <rect x="11.5" y="2" width="2.5" height="12" rx="1.25" />
+                                                        <rect x="2" y="2" width="2.5" height="12" rx="1.25" opacity={slotActiveBars >= 1 ? 1 : 0.25} />
+                                                        <rect x="6.75" y="2" width="2.5" height="12" rx="1.25" opacity={slotActiveBars >= 2 ? 1 : 0.25} />
+                                                        <rect x="11.5" y="2" width="2.5" height="12" rx="1.25" opacity={slotActiveBars >= 3 ? 1 : 0.25} />
                                                     </svg>
                                                     <select
                                                         className="bg-transparent uppercase font-extrabold cursor-pointer border-none outline-none appearance-none"
@@ -270,16 +298,38 @@ export const ProgramEditDays: React.FC<{ state: ProgramEditState }> = ({ state }
                                         </div>
                                     </div>
 
-                                    {/* Right: Delete Slot Button */}
-                                    <button
-                                        type="button"
-                                        onClick={() => handleRemoveSlot(currentDay.id, idx)}
-                                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[4px] text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                                        aria-label={t.delete}
-                                        title={t.delete}
-                                    >
-                                        <Icon name="Trash2" size={16} />
-                                    </button>
+                                    {/* Right: Reorder & Delete Slot Buttons */}
+                                    <div className="flex items-center gap-0.5 shrink-0">
+                                        {idx > 0 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => handleMoveSlot(currentDay.id, idx, -1)}
+                                                aria-label={pickLang(lang, { es: 'Subir ejercicio', en: 'Move slot up' })}
+                                                className="flex h-7 w-7 items-center justify-center rounded-[4px] text-zinc-500 hover:text-white hover:bg-surface-elevated transition-colors"
+                                            >
+                                                <Icon name="ChevronUp" size={14} />
+                                            </button>
+                                        )}
+                                        {idx < (currentDay.slots || []).length - 1 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => handleMoveSlot(currentDay.id, idx, 1)}
+                                                aria-label={pickLang(lang, { es: 'Bajar ejercicio', en: 'Move slot down' })}
+                                                className="flex h-7 w-7 items-center justify-center rounded-[4px] text-zinc-500 hover:text-white hover:bg-surface-elevated transition-colors"
+                                            >
+                                                <Icon name="ChevronDown" size={14} />
+                                            </button>
+                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemoveSlot(currentDay.id, idx)}
+                                            className="flex h-8 w-8 items-center justify-center rounded-[4px] text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                                            aria-label={t.delete}
+                                            title={t.delete}
+                                        >
+                                            <Icon name="Trash2" size={16} />
+                                        </button>
+                                    </div>
                                 </div>
                             );
                         })}

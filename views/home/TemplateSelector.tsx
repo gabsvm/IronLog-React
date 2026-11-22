@@ -1,10 +1,10 @@
 import React, { Suspense, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from '../../components/ui/Icon';
-import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { GlobalTemplate } from '../../types';
 import { getTranslated } from '../../utils';
 import { pickLang } from '../../utils/i18n';
+import { buildMesoDraftFromProgram, saveMesocycleDraft, setMesoEditorIntent } from '../../utils/mesoDraft';
 import {
     SCHOOLS,
     CATEGORIES,
@@ -31,6 +31,9 @@ export {
 
 const ProgramDetailView = React.lazy(() =>
     import('../../components/programs/ProgramDetailView').then((module) => ({ default: module.ProgramDetailView }))
+);
+const TemplateDayPreviewSheet = React.lazy(() =>
+    import('../../components/home/TemplateDayPreviewSheet').then((module) => ({ default: module.TemplateDayPreviewSheet }))
 );
 
 interface Props {
@@ -447,28 +450,30 @@ export const TemplateSelector: React.FC<Props> = ({
                 </div>
             </div>
 
-            {/* Template Selection Confirmation Modal */}
+            {/* RP 1:1 Template Day Preview Sheet */}
             {pendingConfirm && (
-                <ConfirmModal
-                    isOpen={!!pendingConfirm}
-                    title={pickLang(lang, { es: '¿Iniciar plantilla?', en: 'Start Template?' })}
-                    description={
-                        pendingConfirm
-                            ? `${getTranslated(pendingConfirm.title, lang as any)}\n\n${pickLang(lang, {
-                                  es: '¿Deseas cargar esta rutina y comenzar el mesociclo?',
-                                  en: 'Do you want to load this routine and start the mesocycle?',
-                              })}`
-                            : ''
-                    }
-                    confirmText={pickLang(lang, { es: 'Iniciar', en: 'Start' })}
-                    cancelText={pickLang(lang, { es: 'Cancelar', en: 'Cancel' })}
-                    onConfirm={() => {
-                        const tpl = pendingConfirm;
-                        setPendingConfirm(null);
-                        onSelectTemplate(tpl);
-                    }}
-                    onCancel={() => setPendingConfirm(null)}
-                />
+                <Suspense fallback={null}>
+                    <TemplateDayPreviewSheet
+                        template={pendingConfirm}
+                        lang={lang as 'en' | 'es'}
+                        onClose={() => setPendingConfirm(null)}
+                        onStartNow={(tpl) => {
+                            setPendingConfirm(null);
+                            onSelectTemplate(tpl);
+                        }}
+                        onCustomize={(tpl) => {
+                            setPendingConfirm(null);
+                            const title = String(getTranslated(tpl.title, lang as any));
+                            const draft = buildMesoDraftFromProgram(title, tpl.program || [], 5, undefined, tpl.id);
+                            saveMesocycleDraft(draft);
+                            setMesoEditorIntent('template');
+                            onClose();
+                            if (typeof window !== 'undefined') {
+                                window.dispatchEvent(new CustomEvent('gainslab:navigate', { detail: { view: 'program' } }));
+                            }
+                        }}
+                    />
+                </Suspense>
             )}
 
             {showKongDetail && (

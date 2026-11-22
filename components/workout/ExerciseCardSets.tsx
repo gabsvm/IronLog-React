@@ -138,6 +138,7 @@ export const ExerciseCardSets: React.FC<Props> = React.memo(({
                     isActiveProtocolSet={isEMOM && activeEmomMinute === idx + 1}
                     isNextSet={nextSetIdx === idx}
                     showRIR={Boolean(config?.showRIR)}
+                    targetRir={typeof config?.rpTargetRIR === 'number' ? config.rpTargetRIR : 3}
                     unit={unit}
                 />
             ))}

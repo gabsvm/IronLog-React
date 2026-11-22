@@ -7,7 +7,7 @@ import { ExerciseDef, SetType } from '../../types';
 import { getMesoStageConfig, getLastLogForExercise } from '../../utils';
 import { useWorkoutController } from '../../hooks/useWorkoutController';
 import { useTimerActions } from '../../context/TimerContext';
-import { countWorkingSets, resolveInitialActiveExerciseId, toggleExerciseCardExpansion } from '../../utils/workoutProgress';
+import { countWorkingSets, isTemplateUpdateEligible, resolveInitialActiveExerciseId, toggleExerciseCardExpansion } from '../../utils/workoutProgress';
 import { useStore } from '../../lib/store';
 import { scheduleWhenIdle } from '../../lib/idle';
 import { MANUAL_REST_PRESETS } from './workoutConstants';
@@ -20,7 +20,7 @@ export interface WorkoutViewProps {
 }
 
 export const useWorkoutViewState = ({ onFinish, onDiscard, onBack, onOpenReorder }: WorkoutViewProps) => {
-    const { exercises, logs } = useApp();
+    const { exercises, setExercises, logs, userProfile, setUserProfile, setProgram } = useApp();
     const { lang } = useAppPreferences();
     const { config } = useAppConfig();
     const { tutorialProgress, markTutorialSeen } = useTutorial();
@@ -203,19 +203,22 @@ export const useWorkoutViewState = ({ onFinish, onDiscard, onBack, onOpenReorder
 
         updateSession(prev => !prev ? null : {
             ...prev,
-            exercises: [...(prev.exercises || []), { ...newDef, instanceId: newInstanceId, slotLabel: newDef.muscle, sets: initialSets as any }]
+            exercises: [...(prev.exercises || []), { ...newDef, instanceId: newInstanceId, slotLabel: newDef.muscle, note: newDef.pinnedNote || undefined, notePinned: Boolean(newDef.pinnedNote), sets: initialSets as any }]
         });
         setAddingExercise(false);
         setActiveExerciseId(newInstanceId);
     };
 
-    const handleReplace = (newExId: string, customDef?: ExerciseDef) => {
+    const handleReplace = (newExId: string, customDef?: ExerciseDef, repeatForMeso?: boolean) => {
         if (!replacingExId) return;
         const newDef = customDef || exercises.find(e => e.id === newExId);
         if (!newDef) return;
 
         const safeLogs = Array.isArray(logs) ? logs : [];
         const lastSets = getLastLogForExercise(newExId, safeLogs, exercises);
+        const currentSession = useStore.getState().activeSession;
+        const currentMeso = useStore.getState().activeMeso;
+        const replaceIdx = (currentSession?.exercises || []).findIndex(e => e.instanceId === replacingExId);
 
         let replacedSlotId: string | undefined;
         updateSession(prev => !prev ? null : {
@@ -242,6 +245,8 @@ export const useWorkoutViewState = ({ onFinish, onDiscard, onBack, onOpenReorder
                 return {
                     ...ex,
                     ...newDef,
+                    note: newDef.pinnedNote || undefined,
+                    notePinned: Boolean(newDef.pinnedNote),
                     slotLabel: newDef.muscle, // Explicitly update the slot label to match the new muscle
                     sets: resetSets
                 };
@@ -249,6 +254,27 @@ export const useWorkoutViewState = ({ onFinish, onDiscard, onBack, onOpenReorder
         });
         if (activeMeso?.programSystem?.systemId === 'kong_4day' && replacedSlotId) {
             setKongSubPrompt({ slotId: replacedSlotId, exId: newExId });
+        } else if (repeatForMeso && currentSession && currentMeso && replaceIdx >= 0 && isTemplateUpdateEligible(currentSession, currentMeso)) {
+            setUpdateTemplate(true);
+            const dayIdx = currentSession.dayIdx;
+            if (typeof setProgram === 'function') {
+                setProgram(prev => prev.map((day, dIdx) => {
+                    if (dIdx !== dayIdx) return day;
+                    return {
+                        ...day,
+                        slots: (day.slots || []).map((sl, sIdx) => sIdx === replaceIdx ? { ...sl, exerciseId: newExId, muscle: newDef.muscle } : sl)
+                    };
+                }));
+            }
+            setActiveMeso(prev => {
+                if (!prev || !Array.isArray(prev.plan)) return prev;
+                const nextPlan = prev.plan.map((dayPlan, dIdx) =>
+                    dIdx === dayIdx
+                        ? (dayPlan || []).map((id, sIdx) => sIdx === replaceIdx ? newExId : id)
+                        : dayPlan
+                );
+                return { ...prev, plan: nextPlan };
+            });
         }
         setReplacingExId(null);
         setReplaceFilter(null);
@@ -262,6 +288,24 @@ export const useWorkoutViewState = ({ onFinish, onDiscard, onBack, onOpenReorder
         }
         reorderSessionExercises(oldIndex, newIndex);
     }, [activeMeso?.programSystem?.systemId, reorderSessionExercises]);
+
+    const handlePinNoteToLibrary = useCallback((exId: string, pinnedNote: string | undefined) => {
+        if (typeof setExercises !== 'function') return;
+        setExercises(prev => prev.map(item => item.id === exId ? { ...item, pinnedNote } : item));
+    }, [setExercises]);
+
+    const handleQuickBodyweightUpdate = useCallback((weightKg: number) => {
+        if (typeof setUserProfile === 'function') {
+            setUserProfile(prev => ({ ...prev, bodyWeight: weightKg }));
+        }
+        updateSession(prev => prev ? { ...prev, bodyWeightSnapshot: weightKg } as any : prev);
+    }, [setUserProfile, updateSession]);
+
+    const handleSwapExerciseOrder = useCallback((fromIdx: number, delta: -1 | 1) => {
+        const toIdx = fromIdx + delta;
+        if (toIdx < 0 || toIdx >= sessionExercises.length) return;
+        reorderSessionExercises(fromIdx, toIdx);
+    }, [reorderSessionExercises, sessionExercises.length]);
 
     const workoutStats = useMemo(() => {
         return countWorkingSets(sessionExercises);
@@ -430,6 +474,10 @@ export const useWorkoutViewState = ({ onFinish, onDiscard, onBack, onOpenReorder
         handleAddExercise,
         handleReplace,
         handleReorder,
+        handlePinNoteToLibrary,
+        handleQuickBodyweightUpdate,
+        handleSwapExerciseOrder,
+        userBodyWeight: userProfile?.bodyWeight,
         workoutStats,
         hasWorkoutProgress,
         completedWorkingSets,

@@ -244,14 +244,51 @@ export const HomeView: React.FC<HomeViewPropsWithSubView> = (props) => {
 
             {showCompleteModal && (
                 <div className="fixed inset-0 z-modal bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in">
-                    <div className="glass-panel w-full max-w-sm rounded-2xl p-6 text-center">
+                    <div className="glass-panel w-full max-w-sm rounded-2xl p-6 text-center space-y-4">
                         {showCompleteModal === 'meso' ? (
                             <>
-                                <h3 className="text-white font-bold text-xl mb-2">{t.finishCycle}</h3>
-                                <p className="text-zinc-400 text-sm mb-6">{t.finishMesoConfirm}</p>
-                                <div className="flex gap-3">
-                                    <Button variant="secondary" onClick={() => setShowCompleteModal(null)} fullWidth>{t.cancel}</Button>
-                                    <Button onClick={() => handleFinishMeso()} fullWidth>{t.completed}</Button>
+                                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                    <Icon name="Trophy" size={24} />
+                                </div>
+                                <div>
+                                    <h3 className="text-white font-black text-xl">
+                                        {pickLang(lang, { es: '¡Mesociclo completado!', en: 'Mesocycle complete!' })}
+                                    </h3>
+                                    <p className="text-zinc-400 text-xs mt-1.5 leading-relaxed">
+                                        {t.finishMesoConfirm}
+                                    </p>
+                                </div>
+                                <div className="space-y-2 pt-1">
+                                    <Button
+                                        fullWidth
+                                        onClick={() => {
+                                            handleFinishMeso();
+                                            if (typeof window !== 'undefined') {
+                                                window.dispatchEvent(new CustomEvent('gainslab:navigate', { detail: { view: 'mesos' } }));
+                                            }
+                                        }}
+                                    >
+                                        {pickLang(lang, { es: 'PLANIFICAR SIGUIENTE MESOCICLO', en: 'PLAN MY NEXT MESOCYCLE' })}
+                                    </Button>
+                                    <Button
+                                        variant="secondary"
+                                        fullWidth
+                                        onClick={() => {
+                                            handleFinishMeso();
+                                            if (typeof window !== 'undefined') {
+                                                window.dispatchEvent(new CustomEvent('gainslab:navigate', { detail: { view: 'stats' } }));
+                                            }
+                                        }}
+                                    >
+                                        {pickLang(lang, { es: 'VER ESTADÍSTICAS DEL CICLO', en: 'VIEW MESOCYCLE STATS' })}
+                                    </Button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowCompleteModal(null)}
+                                        className="w-full py-2 text-xs font-semibold text-zinc-400 hover:text-white transition-colors"
+                                    >
+                                        {t.cancel}
+                                    </button>
                                 </div>
                             </>
                         ) : ( // 'week'

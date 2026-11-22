@@ -120,7 +120,14 @@ export const WorkoutView: React.FC<WorkoutViewProps> = (props) => {
             )}
             {replacingExId && (
                 <Suspense fallback={null}>
-                    <ExerciseSelector onSelect={handleReplace} onClose={() => { setReplacingExId(null); setReplaceFilter(null); }} presetMuscle={replaceFilter?.muscle} sourceFilter={replaceFilter?.source} />
+                    <ExerciseSelector
+                        mode="replace"
+                        onSelect={handleReplace}
+                        onReplaceConfirm={(exId, customDef, repeat) => handleReplace(exId, customDef, repeat)}
+                        onClose={() => { setReplacingExId(null); setReplaceFilter(null); }}
+                        presetMuscle={replaceFilter?.muscle}
+                        sourceFilter={replaceFilter?.source}
+                    />
                 </Suspense>
             )}
             {addingExercise && (

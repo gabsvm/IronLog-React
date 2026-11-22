@@ -1,12 +1,14 @@
 import React from 'react';
+import type { MusclePriorityLevel } from '../../types';
 
 export interface MuscleTagProps {
     label: string;
     muscle?: string;
+    priority?: MusclePriorityLevel;
     className?: string;
 }
 
-function getMuscleTint(key?: string): string {
+export function getMuscleTint(key?: string): string {
     if (!key) return 'border-rose-500/40 bg-rose-500/15 text-rose-300';
     const norm = key.toUpperCase();
     if (/BACK|LAT|TRAP|PULL|ESPALDA|TRAPECIO|TIR/i.test(norm)) {
@@ -28,10 +30,13 @@ function getMuscleTint(key?: string): string {
     return 'border-rose-500/40 bg-rose-500/15 text-rose-300';
 }
 
-export const MuscleTag: React.FC<MuscleTagProps> = React.memo(({ label, muscle, className = '' }) => {
+export const MuscleTag: React.FC<MuscleTagProps> = React.memo(({ label, muscle, priority, className = '' }) => {
     const tint = getMuscleTint(muscle || label);
+    const activeBars = priority === 'maintain' ? 1 : priority === 'grow' ? 2 : 3;
+
     return (
         <span
+            data-priority={priority || 'emphasize'}
             className={`inline-flex items-center gap-1.5 rounded-[4px] border px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ${tint} ${className}`}
         >
             <svg
@@ -42,9 +47,9 @@ export const MuscleTag: React.FC<MuscleTagProps> = React.memo(({ label, muscle, 
                 className="shrink-0"
                 aria-hidden="true"
             >
-                <rect x="1" y="2" width="2" height="8" rx="0.5" />
-                <rect x="5" y="1" width="2" height="10" rx="0.5" />
-                <rect x="9" y="3" width="2" height="7" rx="0.5" />
+                <rect x="1" y="2" width="2" height="8" rx="0.5" opacity={activeBars >= 1 ? 1 : 0.25} />
+                <rect x="5" y="1" width="2" height="10" rx="0.5" opacity={activeBars >= 2 ? 1 : 0.25} />
+                <rect x="9" y="3" width="2" height="7" rx="0.5" opacity={activeBars >= 3 ? 1 : 0.25} />
             </svg>
             <span>{label}</span>
         </span>

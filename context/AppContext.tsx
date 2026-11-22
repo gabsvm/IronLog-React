@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useRef, useState, PropsWithChildren, useMemo, useCallback } from 'react';
-import { AppState, Lang, Theme, ColorTheme, EffectsMode, ResolvedEffects, ExerciseDef, Log, ProgramDay, TutorialState, GlobalTemplate, UserProfile, BeforeInstallPromptEvent, NutritionLog, CardioSession, NutritionGoal, MacroGoals, BodyLog, CustomFood, DirtySyncSection, SectionSyncMeta, WeightUnit } from '../types';
+import { AppState, Lang, Theme, ColorTheme, EffectsMode, ResolvedEffects, ExerciseDef, Log, ProgramDay, TutorialState, GlobalTemplate, UserProfile, BeforeInstallPromptEvent, NutritionLog, CardioSession, NutritionGoal, MacroGoals, BodyLog, CustomFood, DirtySyncSection, SectionSyncMeta, WeightUnit, EquipmentType } from '../types';
+import { ALL_EQUIPMENT_IDS } from '../utils/equipment';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { usePersistedState } from '../hooks/usePersistedState';
 import { TimerProvider } from './TimerContext';
@@ -41,6 +42,9 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     const [keepScreenOn, setKeepScreenOn] = useLocalStorage('il_cfg_screen', false);
     const [weightUnit, setWeightUnit] = useLocalStorage<WeightUnit>('il_cfg_weight_unit', 'kg');
     const [restTimerDisplay, setRestTimerDisplay] = useLocalStorage<'compact' | 'expanded'>('il_cfg_rest_display', 'compact');
+    const [autoMatchWeight, setAutoMatchWeight] = useLocalStorage<boolean>('il_cfg_auto_match', true);
+    const [useExerciseTypeFilters, setUseExerciseTypeFilters] = useLocalStorage<boolean>('il_cfg_equip_filter', false);
+    const [preferredEquipment, setPreferredEquipment] = useLocalStorage<EquipmentType[]>('il_cfg_preferred_equip', ALL_EQUIPMENT_IDS);
     const [tutorialProgress, setTutorialProgress] = useLocalStorage<TutorialState>('il_tutorial_v2', INITIAL_TUTORIAL_STATE);
 
     // --- Heavy Data (IndexedDB) ---
@@ -176,6 +180,9 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         rpTargetRIR,
         keepScreenOn,
         weightUnit,
+        autoMatchWeight,
+        useExerciseTypeFilters,
+        preferredEquipment,
         program,
         exercises,
         setExercises,
@@ -214,6 +221,9 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         setRpTargetRIR,
         setKeepScreenOn,
         setWeightUnit,
+        setAutoMatchWeight,
+        setUseExerciseTypeFilters,
+        setPreferredEquipment,
         setProgram,
         exercises,
         setExercises,
@@ -264,6 +274,12 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         setKeepScreenOn,
         weightUnit,
         setWeightUnit,
+        autoMatchWeight,
+        setAutoMatchWeight,
+        useExerciseTypeFilters,
+        setUseExerciseTypeFilters,
+        preferredEquipment,
+        setPreferredEquipment,
         program,
         setProgram,
         exercises,
@@ -319,7 +335,10 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         if (newConfig.keepScreenOn !== undefined) setKeepScreenOn(newConfig.keepScreenOn);
         if (newConfig.restTimerDisplay !== undefined) setRestTimerDisplay(newConfig.restTimerDisplay);
         if (newConfig.weightUnit === 'kg' || newConfig.weightUnit === 'lb') setWeightUnit(newConfig.weightUnit);
-    }, [setShowRIR, setRpEnabled, setRpTargetRIR, setKeepScreenOn, setRestTimerDisplay, setWeightUnit]);
+        if (newConfig.autoMatchWeight !== undefined) setAutoMatchWeight(Boolean(newConfig.autoMatchWeight));
+        if (newConfig.useExerciseTypeFilters !== undefined) setUseExerciseTypeFilters(Boolean(newConfig.useExerciseTypeFilters));
+        if (Array.isArray(newConfig.preferredEquipment)) setPreferredEquipment(newConfig.preferredEquipment);
+    }, [setShowRIR, setRpEnabled, setRpTargetRIR, setKeepScreenOn, setRestTimerDisplay, setWeightUnit, setAutoMatchWeight, setUseExerciseTypeFilters, setPreferredEquipment]);
 
     const markTutorialSeen = useCallback((section: keyof TutorialState) => setTutorialProgress(prev => ({ ...prev, [section]: true })), [setTutorialProgress]);
     const resetTutorials = useCallback(() => setTutorialProgress(INITIAL_TUTORIAL_STATE), [setTutorialProgress]);
@@ -332,7 +351,10 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         keepScreenOn,
         restTimerDisplay,
         weightUnit,
-    }), [showRIR, rpEnabled, rpTargetRIR, keepScreenOn, restTimerDisplay, weightUnit]);
+        autoMatchWeight,
+        useExerciseTypeFilters,
+        preferredEquipment,
+    }), [showRIR, rpEnabled, rpTargetRIR, keepScreenOn, restTimerDisplay, weightUnit, autoMatchWeight, useExerciseTypeFilters, preferredEquipment]);
     const preferencesValue = useMemo(() => ({
         lang, setLang, theme, setTheme, colorTheme, setColorTheme,
         effectsMode, setEffectsMode, resolvedEffects,
