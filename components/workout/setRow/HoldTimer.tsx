@@ -11,6 +11,7 @@ export const getTypeLabel = (type: SetType) => {
         warmup: 'W',
         myorep: 'M',
         myorep_match: 'MM',
+        lengthened_partials: 'LP',
         giant: 'G',
         top: 'T',
         backoff: 'B',

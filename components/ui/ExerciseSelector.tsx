@@ -10,6 +10,7 @@ import { getTranslated } from '../../utils';
 import { pickLang } from '../../utils/i18n';
 import { isSelectorVisible, matchesExerciseQuery } from '../../utils/exerciseLibrary';
 import { ALL_EQUIPMENT_TYPES, getEquipmentLabel, inferExerciseEquipment, recommendExercisesForMuscle } from '../../utils/equipment';
+import { getExerciseSfrScore, loadExerciseSfrHistory } from '../../utils/rpAutoregulation';
 import { Virtuoso } from 'react-virtuoso';
 import { Sheet } from './Sheet';
 import { getFirebaseFirestoreServices } from '../../lib/firebaseLoader';
@@ -70,6 +71,8 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
         ? config.preferredEquipment
         : undefined;
 
+    const sfrHistory = useMemo(() => loadExerciseSfrHistory(), []);
+
     const filtered = useMemo(() => {
         const base = (exercises as ExerciseDef[])
             .filter(ex => !excludeIds.includes(ex.id))
@@ -94,15 +97,20 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
             });
 
         if (recommendMode && filterMuscle !== 'ALL') {
-            return recommendExercisesForMuscle(base, filterMuscle, preferredEquipmentList, excludeIds, lang);
+            return recommendExercisesForMuscle(base, filterMuscle, preferredEquipmentList, excludeIds, lang).sort((a, b) => {
+                const sfrDiff = getExerciseSfrScore(sfrHistory[b.id]) - getExerciseSfrScore(sfrHistory[a.id]);
+                return Math.abs(sfrDiff) > 0.01 ? sfrDiff : 0;
+            });
         }
 
         return base.sort((a, b) => {
+            const sfrDiff = getExerciseSfrScore(sfrHistory[b.id]) - getExerciseSfrScore(sfrHistory[a.id]);
+            if (Math.abs(sfrDiff) > 0.5) return sfrDiff;
             const na = getTranslated(a.name, lang);
             const nb = getTranslated(b.name, lang);
             return na.localeCompare(nb);
         });
-    }, [exercises, deferredSearch, filterMuscle, filterCustomOnly, selectedEquipment, preferredEquipmentList, recommendMode, lang, excludeIds, sourceFilter]);
+    }, [exercises, deferredSearch, filterMuscle, filterCustomOnly, selectedEquipment, preferredEquipmentList, recommendMode, lang, excludeIds, sourceFilter, sfrHistory]);
 
     const handleCreateStart = () => {
         setNewName(search);

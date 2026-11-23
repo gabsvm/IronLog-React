@@ -1318,6 +1318,75 @@ export const RP_PRINCIPLES_DATA = {
                 },
             },
         ],
+        membersModulesTitle: {
+            es: 'Módulos Avanzados y Members-Only RP',
+            en: 'RP Members-Only & Advanced Modules',
+        },
+        membersModules: [
+            {
+                id: 'deload_stages',
+                badge: { es: 'DELOAD', en: 'DELOAD' },
+                title: { es: 'Las 4 Etapas del Deload (Wired → Ready)', en: '4 Stages of Deload Recovery (Wired → Ready)' },
+                body: {
+                    es: '1. Wired (energía acelerada inicial: no subas peso ni bajes de 5 RIR) → 2. Tired (letargo profundo a mitad de semana al caer adrenalina) → 3. Restless (ansiedad por volver a entrenar duro: aguantá los días finales suaves) → 4. Ready (articulaciones limpias y explosividad intacta para Semana 1).',
+                    en: '1. Wired (initial amped bounce: never add volume or push below 5 RIR) → 2. Tired (deep mid-week lethargy as stress hormones normalize) → 3. Restless (itchy to lift heavy again: finish light days) → 4. Ready (snappy joints and bar speed for Week 1).',
+                },
+            },
+            {
+                id: 'active_vs_passive',
+                badge: { es: 'RECUPERACIÓN', en: 'RECOVERY' },
+                title: { es: 'Recuperación Activa vs. Pasiva', en: 'Active vs. Passive Recovery' },
+                body: {
+                    es: 'La recuperación activa (sesión al ~50% de carga y 5 RIR o caminatas suaves) acelera flujo sanguíneo y despeja agujetas locales mejor que el reposo absoluto en cama, siempre que no añadas fatiga nueva ni estrés excéntrico.',
+                    en: 'Active recovery (flush sets at ~50% load / 5 RIR plus easy walking) enhances local blood flow and soreness clearance compared to complete inactivity, provided it avoids eccentric damage.',
+                },
+            },
+            {
+                id: 'delayed_gains',
+                badge: { es: 'ADAPTACIÓN', en: 'ADAPTATION' },
+                title: { es: 'Delayed Gains y Supercompensación', en: 'Delayed Gains & Post-Meso Supercompensation' },
+                body: {
+                    es: 'El cansancio crónico de las semanas MRV enmascara tu fuerza y tamaño visual temporalmente. La síntesis proteica y fuerza explosiva suelen manifestarse recién tras limpiar fatiga al completar el Deload y abrir el siguiente bloque.',
+                    en: 'Cumulative fatigue during peak MRV weeks masks true strength and muscle fullness. Expressing delayed gains requires finishing the deload before judging a mesocycle outcome.',
+                },
+            },
+            {
+                id: 'low_volume_tradeoffs',
+                badge: { es: 'VOLUMEN', en: 'VOLUME' },
+                title: { es: 'Trade-offs del Bajo Volumen vs. Alto Volumen', en: 'Low-Volume Trade-offs' },
+                body: {
+                    es: 'Entrenar cerca de MV/MEV ahorra tiempo y articulaciones, ideal en mantenimiento, cortes agresivos o vida saturada, pero deja hipertrofia sin exprimir en músculos prioritarios respecto a recorrer todo tu rango MEV→MRV en superávit.',
+                    en: 'Training near MV/MEV preserves muscle with tiny fatigue and time cost—great during cuts or busy periods—but sacrifices maximal growth upside compared to progressing MEV→MRV in a surplus.',
+                },
+            },
+            {
+                id: 'rir_vs_rpe',
+                badge: { es: 'ESFUERZO', en: 'EFFORT' },
+                title: { es: 'RIR vs. RPE en Hipertrofia RP', en: 'RIR vs. RPE in RP Hypertrophy' },
+                body: {
+                    es: 'Aunque son inversos (2 RIR ≈ RPE 8), RP usa RIR porque contar repeticiones restantes en series de 10–30 reps es más concreto para autorregular cargas que estimar una escala subjetiva de esfuerzo global.',
+                    en: 'While mathematically inverse (2 RIR ≈ RPE 8), RP standardizes on RIR because counting reps left in reserve scales cleanly across 10–30 rep hypertrophy sets.',
+                },
+            },
+            {
+                id: 'mm_lp',
+                badge: { es: 'SET TYPES', en: 'SET TYPES' },
+                title: { es: 'Myorep Match (MM) y Lengthened Partials (LP)', en: 'Myorep Match (MM) & Lengthened Partials (LP)' },
+                body: {
+                    es: 'Myorep Match exige igualar la meta de reps de la serie 1 usando mini-descansos de 10–15 s cuando no llegas directo. Lengthened Partials extiende el rango estirado al alcanzar el fallo concéntrico completo en aislamientos seguros.',
+                    en: 'Myorep Match matches Set 1 reps via brief 10–15 s rest-pauses whenever straight reps fall short. Lengthened Partials add controlled stretch-range half-reps after concentric failure on safe isolations.',
+                },
+            },
+            {
+                id: 'cut_autoregulation',
+                badge: { es: 'DIETA', en: 'DIETING' },
+                title: { es: 'Autorregulación en Déficit Calórico', en: 'Caloric Deficit Autoregulation' },
+                body: {
+                    es: 'En déficit, tu MRV baja y tu MEV sube: no persigas PRs agresivos ni bloques de especialización. Usá los ajustes RP para sostener cargas actuales y detener la subida de series ni bien las articulaciones o recuperación avisen.',
+                    en: 'During fat loss, MRV compresses while MEV creeps up. Avoid aggressive PR chasing or specialization blocks; prioritize holding existing loads cleanly and capping set increases early.',
+                },
+            },
+        ],
     },
     glossary: [
         {

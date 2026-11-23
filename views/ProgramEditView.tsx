@@ -20,6 +20,7 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = (props) => {
     const {
         onBack, lang, t, isStructuredKong, isEditingActiveRoutine, saveStatus,
         showPrioritiesStep, setShowPrioritiesStep, musclePriorities, handleSetMusclePriority, priorityCounts,
+        reduceSynergists, setReduceSynergists, handleApplyPrioritiesToSplit,
     } = state;
 
     if (isStructuredKong) {
@@ -163,10 +164,36 @@ export const ProgramEditView: React.FC<ProgramEditViewProps> = (props) => {
                         })}
                     </div>
 
-                    <div className="shrink-0 border-t border-border-subtle bg-surface-app p-4 pb-safe">
-                        <Button fullWidth onClick={() => setShowPrioritiesStep(false)}>
-                            {pickLang(lang, { es: 'Continuar al editor de días', en: 'Continue to day editor' })}
-                        </Button>
+                    <div className="shrink-0 border-t border-border-subtle bg-surface-app p-4 pb-safe space-y-2.5">
+                        <label className="flex items-center justify-between gap-3 rounded-[6px] border border-border-subtle bg-surface-raised px-3 py-2 cursor-pointer">
+                            <span className="text-xs font-bold text-zinc-200">
+                                {pickLang(lang, {
+                                    es: 'Reducir sinergistas automáticamente (pasa auxiliares a Maintain)',
+                                    en: 'Auto-reduce synergists (shift helper muscles to Maintain)',
+                                })}
+                            </span>
+                            <input
+                                type="checkbox"
+                                checked={reduceSynergists}
+                                onChange={(e) => setReduceSynergists(e.target.checked)}
+                                className="h-4 w-4 accent-primary-500 rounded"
+                            />
+                        </label>
+                        <div className="flex gap-2">
+                            <Button
+                                variant="secondary"
+                                fullWidth
+                                onClick={() => {
+                                    handleApplyPrioritiesToSplit();
+                                    setShowPrioritiesStep(false);
+                                }}
+                            >
+                                {pickLang(lang, { es: 'Aplicar prioridades y orden', en: 'Apply priorities & order' })}
+                            </Button>
+                            <Button fullWidth onClick={() => setShowPrioritiesStep(false)}>
+                                {pickLang(lang, { es: 'Continuar al editor de días', en: 'Continue to day editor' })}
+                            </Button>
+                        </div>
                     </div>
                 </div>
             ) : (

@@ -11,12 +11,24 @@ import { pickLang } from '../../utils/i18n';
 import { resolveMuscleLabel } from '../../utils/muscle';
 import { fromDisplay, resolveWeightUnit, toDisplay, unitLabel } from '../../utils/units';
 import { countWorkingSets } from '../../utils/workoutProgress';
-import type { MuscleGroup, MusclePriorityLevel } from '../../types';
+import {
+    applyRecoverySessionToExercise,
+    detectConsecutiveMissesAndEarlyDeload,
+    getTargetRirForWeek,
+    isRetrospectiveSorenessDue,
+} from '../../utils/rpAutoregulation';
+import type { MuscleGroup, MusclePriorityLevel, SessionExercise } from '../../types';
 import type { WorkoutViewState } from './useWorkoutViewState';
 
 const WorkoutSortableList = React.lazy(() => import('../../components/workout/WorkoutSortableList'));
 const MusclePrioritiesSheet = React.lazy(() =>
     import('../../components/workout/MusclePrioritiesSheet').then(m => ({ default: m.MusclePrioritiesSheet }))
+);
+const DeloadRecoveryCard = React.lazy(() =>
+    import('../../components/workout/DeloadRecoveryCard').then(m => ({ default: m.DeloadRecoveryCard }))
+);
+const BadSessionTriageSheet = React.lazy(() =>
+    import('../../components/workout/DeloadRecoveryCard').then(m => ({ default: m.BadSessionTriageSheet }))
 );
 
 type SubSheetType = 'mesoNotes' | 'renameMeso' | 'mesoSummary' | 'workoutNote' | 'relabelDay' | 'bodyweight' | 'endMesoConfirm' | null;
@@ -38,8 +50,15 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
     const [showCalendarDrawer, setShowCalendarDrawer] = useState(false);
     const [showSessionMenu, setShowSessionMenu] = useState(false);
     const [showPrioritiesSheet, setShowPrioritiesSheet] = useState(false);
+    const [showBadSessionSheet, setShowBadSessionSheet] = useState(false);
     const [activeSubSheet, setActiveSubSheet] = useState<SubSheetType>(null);
     const [draftText, setDraftText] = useState('');
+    const [earlyDeloadDismissed, setEarlyDeloadDismissed] = useState(false);
+
+    const earlyDeloadStatus = useMemo(
+        () => detectConsecutiveMissesAndEarlyDeload(logs, activeMeso),
+        [logs, activeMeso]
+    );
 
     const workoutProgressPct = useMemo(() => {
         if (typeof state.progressPct === 'number') return state.progressPct;
@@ -133,6 +152,18 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                                     </span>
                                     <span className="text-[19px] sm:text-[22px] font-black uppercase tracking-tight text-zinc-500 ml-1.5">
                                         {pickLang(lang, { es: 'DÍA', en: 'DAY' })} {(activeSession.dayIdx ?? 0) + 1}
+                                    </span>
+                                    <span
+                                        data-testid="week-rir-pill"
+                                        className={`ml-2 inline-flex items-center rounded-[4px] border px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wider ${
+                                            activeMeso?.isDeload
+                                                ? 'border-sky-500/40 bg-sky-500/15 text-sky-300'
+                                                : 'border-primary-500/35 bg-primary-500/12 text-primary-300'
+                                        }`}
+                                    >
+                                        {activeMeso?.isDeload
+                                            ? 'DELOAD · 5 RIR'
+                                            : `W${activeSession.week} · ${getTargetRirForWeek(activeSession.week, totalWeeks, Boolean(activeMeso?.isDeload))} RIR`}
                                     </span>
                                 </>
                             )}
@@ -287,6 +318,18 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                                     >
                                         <Icon name="Activity" size={14} className="text-zinc-400" />
                                         <span>{pickLang(lang, { es: 'Peso corporal', en: 'Bodyweight' })}</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        data-testid="bad-session-btn"
+                                        onClick={() => {
+                                            setShowSessionMenu(false);
+                                            setShowBadSessionSheet(true);
+                                        }}
+                                        className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-amber-300 hover:bg-amber-500/10 transition-colors"
+                                    >
+                                        <Icon name="AlertTriangle" size={14} />
+                                        <span>{pickLang(lang, { es: 'Tuve una mala sesión', en: 'Had a bad workout' })}</span>
                                     </button>
                                     <div className="my-1 border-t border-border-subtle/50" />
                                     <button
@@ -548,11 +591,113 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                     data-testid="workout-main"
                     className={`flex-1 overflow-y-auto scroll-container px-3 space-y-2.5 pt-3 ${restTimer?.active ? 'pb-36' : 'pb-10'}`}
                 >
+                    {activeMeso?.isDeload && (
+                        <Suspense fallback={null}>
+                            <DeloadRecoveryCard
+                                stage={activeMeso.deloadStage || 'wired'}
+                                lang={lang}
+                                onSelectStage={(stage) =>
+                                    setActiveMeso?.((prev) => (prev ? { ...prev, deloadStage: stage } : prev))
+                                }
+                                onOpenBadSession={() => setShowBadSessionSheet(true)}
+                            />
+                        </Suspense>
+                    )}
+
+                    {earlyDeloadStatus.status === 'early_deload_recommended' && !earlyDeloadDismissed && (
+                        <div
+                            data-testid="early-deload-banner"
+                            className="rounded-[8px] border border-amber-500/40 bg-amber-500/12 p-3 flex flex-col gap-2"
+                        >
+                            <div className="flex items-start justify-between gap-2">
+                                <div className="flex items-center gap-2 text-amber-300 text-xs font-bold">
+                                    <Icon name="AlertTriangle" size={15} className="shrink-0" />
+                                    <span>
+                                        {pickLang(lang, {
+                                            es: `${earlyDeloadStatus.consecutiveMisses} sesiones seguidas bajo objetivo · Recomendado Deload anticipado`,
+                                            en: `${earlyDeloadStatus.consecutiveMisses} consecutive sessions below target · Early Deload recommended`,
+                                        })}
+                                    </span>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setEarlyDeloadDismissed(true)}
+                                    className="text-zinc-400 hover:text-white"
+                                    aria-label={t.cancel}
+                                >
+                                    <Icon name="X" size={14} />
+                                </button>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setActiveMeso?.(prev => prev ? { ...prev, isDeload: true, deloadStage: 'wired' } : prev);
+                                        setEarlyDeloadDismissed(true);
+                                    }}
+                                    className="rounded-[4px] bg-amber-500 px-3 py-1.5 text-xs font-bold text-zinc-950 hover:brightness-110"
+                                >
+                                    {pickLang(lang, { es: 'Activar Deload hoy', en: 'Start Early Deload' })}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowBadSessionSheet(true)}
+                                    className="rounded-[4px] border border-amber-500/40 px-3 py-1.5 text-xs font-bold text-amber-200 hover:bg-amber-500/15"
+                                >
+                                    {pickLang(lang, { es: 'Ver protocolo', en: 'Protocol' })}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {showBadSessionSheet && (
+                        <Suspense fallback={null}>
+                            <BadSessionTriageSheet
+                                open={showBadSessionSheet}
+                                onOpenChange={setShowBadSessionSheet}
+                                lang={lang}
+                                onTriggerDeload={() =>
+                                    setActiveMeso?.((prev) => (prev ? { ...prev, isDeload: true, deloadStage: 'wired' } : prev))
+                                }
+                            />
+                        </Suspense>
+                    )}
+
                     <Suspense fallback={null}>
                         <WorkoutSortableList itemIds={sortableItems} onReorder={handleReorder}>
                             {sessionExercises.map((ex, idx) => {
                                 const supersetColorIndex = ex.supersetId ? supersetColorIndexes[ex.supersetId] : undefined;
                                 const isLinkingTarget = !!linkingId && linkingId !== ex.instanceId;
+                                const isFirstForMuscle = sessionExercises.findIndex((item) => item.muscle === ex.muscle) === idx;
+                                const logsForMuscleCount = (logs || []).filter((l) => !l.skipped && l.mesoId === activeMeso?.id && (l.exercises || []).some((le) => le.muscle === ex.muscle)).length;
+                                const sorenessDue = isFirstForMuscle && isRetrospectiveSorenessDue(
+                                    ex.muscle,
+                                    activeSession.week,
+                                    logsForMuscleCount,
+                                    activeSession.sorenessCheckins
+                                );
+                                const handleAnswerSoreness = (soreness: number, recovery: boolean) => {
+                                    updateSession((prev) => {
+                                        if (!prev) return prev;
+                                        const nextCheckins = {
+                                            ...(prev.sorenessCheckins || {}),
+                                            [ex.muscle]: { soreness, recoveryMode: recovery, timestamp: Date.now() },
+                                        };
+                                        const nextExercises = recovery
+                                            ? (prev.exercises || []).map((item: SessionExercise) =>
+                                                  item.muscle === ex.muscle ? applyRecoverySessionToExercise(item, unit) : item
+                                              )
+                                            : prev.exercises;
+                                        return {
+                                            ...prev,
+                                            sorenessCheckins: nextCheckins,
+                                            recoveryMuscles: recovery
+                                                ? Array.from(new Set([...(prev.recoveryMuscles || []), ex.muscle]))
+                                                : prev.recoveryMuscles,
+                                            exercises: nextExercises,
+                                        };
+                                    });
+                                };
 
                                 return (
                                     <SortableExerciseCard
@@ -588,6 +733,8 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                                         onMoveUp={idx > 0 ? () => handleSwapExerciseOrder?.(idx, -1) : undefined}
                                         onMoveDown={idx < sessionExercises.length - 1 ? () => handleSwapExerciseOrder?.(idx, 1) : undefined}
                                         onPinNoteToLibrary={handlePinNoteToLibrary}
+                                        sorenessDue={sorenessDue}
+                                        onAnswerSoreness={handleAnswerSoreness}
                                     />
                                 );
                             })}

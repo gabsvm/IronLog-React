@@ -115,7 +115,17 @@ export const WorkoutView: React.FC<WorkoutViewProps> = (props) => {
 
             {showFeedbackModal && activeSession && (
                 <Suspense fallback={null}>
-                    <FeedbackModal muscles={sessionExercises.map(e => e?.muscle || 'CHEST')} onCancel={() => setShowFeedbackModal(false)} onConfirm={handleSaveFeedback} />
+                    <FeedbackModal
+                        muscles={sessionExercises.map(e => e?.muscle || 'CHEST')}
+                        exerciseIdsByMuscle={sessionExercises.reduce<Record<string, string[]>>((acc, ex) => {
+                            if (ex?.muscle && ex?.id) {
+                                acc[ex.muscle] = [...(acc[ex.muscle] || []), ex.id];
+                            }
+                            return acc;
+                        }, {})}
+                        onCancel={() => setShowFeedbackModal(false)}
+                        onConfirm={handleSaveFeedback}
+                    />
                 </Suspense>
             )}
             {replacingExId && (

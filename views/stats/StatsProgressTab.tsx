@@ -15,7 +15,7 @@ import { RepMaxTable } from './RepMaxTable';
 import { formatInteger } from '../../utils/i18n';
 
 export const StatsProgressTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
-    const { lang, t, s, unit, weightSuffix, selectedExId, chartMetric, setChartMetric, setShowPicker, setPickerSearch, availableExercises, chartPoints, loadingOverview, loadingChart, currentEx, hasExerciseHistory, prHistory, showAllPRs, setShowAllPRs, displayedPRs, metricButtons, selectedExerciseInsight, repMaxRows } = stats;
+    const { lang, t, s, unit, weightSuffix, selectedExId, setSelectedExId, chartMetric, setChartMetric, setShowPicker, setPickerSearch, availableExercises, chartPoints, loadingOverview, loadingChart, currentEx, hasExerciseHistory, prHistory, showAllPRs, setShowAllPRs, displayedPRs, metricButtons, selectedExerciseInsight, repMaxRows, exercisePlateaus } = stats;
     return (
         <>
                 <>
@@ -87,6 +87,47 @@ export const StatsProgressTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
                     </div>
                 )}
             </div>
+
+            {Array.isArray(exercisePlateaus) && exercisePlateaus.length > 0 && (
+                <div
+                    data-testid="plateau-alert-card"
+                    className="premium-theme-panel rounded-[8px] border border-amber-500/35 bg-amber-500/10 p-4 space-y-2.5"
+                >
+                    <div className="flex items-center gap-2 text-amber-300">
+                        <Icon name="AlertTriangle" size={15} className="shrink-0" />
+                        <h3 className="text-xs font-black uppercase tracking-wider">
+                            {pickLang(lang, { es: 'Alertas de Plateau (e1RM estancado)', en: 'Plateau Alerts (Stalled e1RM)' })}
+                        </h3>
+                    </div>
+                    <div className="space-y-2">
+                        {exercisePlateaus.map((alert) => (
+                            <div
+                                key={alert.exerciseId}
+                                className="flex items-center justify-between gap-3 rounded-[6px] border border-amber-500/25 bg-surface-base/80 px-3 py-2"
+                            >
+                                <div className="min-w-0">
+                                    <p className="text-xs font-extrabold text-white truncate">
+                                        {alert.exerciseName}
+                                        <span className="ml-2 text-amber-300 tabular-nums">
+                                            {`${Math.round(toDisplay(alert.latestE1rmKg, unit))} / ${Math.round(toDisplay(alert.bestE1rmKg, unit))} ${weightSuffix}`}
+                                        </span>
+                                    </p>
+                                    <p className="text-xs text-zinc-300 leading-snug mt-0.5">
+                                        {alert.suggestion[lang]}
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedExId?.(alert.exerciseId)}
+                                    className="shrink-0 rounded-[5px] border border-amber-500/40 px-2.5 py-1.5 text-xs font-bold text-amber-200 hover:bg-amber-500/15"
+                                >
+                                    {pickLang(lang, { es: 'Inspeccionar', en: 'Inspect' })}
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {selectedExerciseInsight && (
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

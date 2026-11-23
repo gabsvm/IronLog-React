@@ -76,7 +76,25 @@ export interface ExerciseDef {
   mergedInto?: string;
 }
 
-export type SetType = 'regular' | 'myorep' | 'myorep_match' | 'cluster' | 'top' | 'backoff' | 'giant' | 'warmup' | 'avt_hop' | 'emom' | 'drop' | 'rest_pause' | 'time_volume' | 'triple_add';
+export type SetType = 'regular' | 'myorep' | 'myorep_match' | 'lengthened_partials' | 'cluster' | 'top' | 'backoff' | 'giant' | 'warmup' | 'avt_hop' | 'emom' | 'drop' | 'rest_pause' | 'time_volume' | 'triple_add';
+
+export type DeloadStage = 'wired' | 'tired' | 'restless' | 'ready';
+
+export interface ExerciseFeedbackRecord {
+  jointPain: number;
+  pump?: number;
+  soreness?: number;
+  updatedAt: number;
+  count: number;
+  avgJointPain: number;
+  avgPump: number;
+}
+
+export interface SorenessCheckin {
+  soreness: number;
+  recoveryMode: boolean;
+  timestamp: number;
+}
 
 import type { ProgramRunState, SetPrescription, ProgramSetRole } from './programs/types';
 
@@ -134,6 +152,9 @@ export interface ActiveSession {
   exercises: SessionExercise[];
   skipped?: boolean;
   note?: string;            // Freeform session journal note
+  sorenessCheckins?: Record<string, SorenessCheckin>;
+  recoveryMuscles?: string[];
+  deloadCondensed?: boolean;
 }
 
 export interface ProgramSlot {
@@ -204,6 +225,14 @@ export interface MesoCycle {
   note?: string; // NEW: General mesocycle notes
   duration: number;
   musclePriorities?: Partial<Record<MuscleGroup, MusclePriorityLevel>>;
+  specializationBlock?: {
+    targetMuscles: MuscleGroup[];
+    currentMeso: number;
+    totalMesos: number;
+    phase: 'accumulate' | 'active_rest' | 'maintenance';
+  };
+  deloadStage?: DeloadStage;
+  condensedDeload?: boolean;
   completedAt?: number;
   programSystem?: ProgramRunState;
   stageId?: string;
@@ -426,6 +455,8 @@ export interface NutritionLog {
   date: string;       // "YYYY-MM-DD"
   entries: FoodEntry[];
   waterMl?: number;   // ml de agua consumida
+  steps?: number;
+  isTrainingDay?: boolean;
 }
 
 export interface NutritionGoal {
@@ -433,6 +464,11 @@ export interface NutritionGoal {
   protein: number;
   carbs: number;
   fat: number;
+  phase?: 'cut' | 'bulk' | 'maintenance';
+  phaseStartDate?: string;
+  targetWeeklyRatePct?: number;
+  trainingDayCarbDeltaG?: number;
+  dailyStepsTarget?: number;
 }
 
 // ─── CARDIO TYPES ───────────────────────────────────────────────────

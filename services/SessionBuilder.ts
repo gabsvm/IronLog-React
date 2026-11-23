@@ -4,6 +4,7 @@ import { getLastLogForExercise, uid } from '../utils';
 import { KONG_4DAY_V1 } from '../programs/kong/kong4Day';
 import { getProgramBlockForWeek, resolveProgramDay } from '../programs/engine/ProgramResolver';
 import { getKongDayDisplay } from '../programs/kong/kongDisplay';
+import { getTargetRirForWeek, predictSetTarget } from '../utils/rpAutoregulation';
 
 export class SessionBuilder {
     static buildFromProgramDay(
@@ -49,8 +50,11 @@ export class SessionBuilder {
             if (!exDef) exDef = { id: `placeholder_${slotDef.muscle}_${sIdx}`, name: slotDef.muscle || 'Unknown', muscle: slotDef.muscle || 'CHEST' };
 
             let setTarget = slotDef.setTarget || 3;
+            const musclePriority = activeMeso.musclePriorities?.[slotDef.muscle];
+            const totalWeeks = activeMeso.targetWeeks || activeMeso.duration || 5;
+            const weekTargetRir = getTargetRirForWeek(activeMeso.week, totalWeeks, isDeload);
 
-            // RP Feedback adjustments
+            // RP Feedback adjustments + Muscle Priority MV lock
             if (!slotDef.prescription && config.rpEnabled && activeMeso && activeMeso.week > 1) {
                 let accumulatedAdjustment = 0;
                 const fbForMeso = rpFeedback[activeMeso.id];
@@ -62,28 +66,48 @@ export class SessionBuilder {
                         }
                     }
                 }
+                if (musclePriority === 'maintain' && accumulatedAdjustment > 0) {
+                    accumulatedAdjustment = 0;
+                }
                 setTarget = Math.max(1, setTarget + accumulatedAdjustment);
+            }
+            if (!slotDef.prescription && musclePriority === 'maintain') {
+                setTarget = Math.min(3, Math.max(1, setTarget));
             }
             if (!slotDef.prescription && isDeload) setTarget = Math.max(1, Math.ceil(setTarget / 2));
 
             const lastSets = getLastLogForExercise(exDef.id, safeLogs, safeExercises);
 
-            const initialSets = (slotDef.prescription || Array.from({ length: setTarget }, () => undefined)).map((prescription, i) => ({
-                id: uid(),
-                weight: '',
-                reps: '',
-                rpe: '',
-                completed: false,
-                type: prescription?.role === 'top' ? 'top' : prescription?.role === 'backoff' || prescription?.role === 'high_rep_backoff' ? 'backoff' : slotDef.setType || 'regular',
-                prescribedReps: prescription?.reps,
-                targetRpe: prescription?.targetRpe,
-                prescriptionRole: prescription?.role,
-                programSetIndex: slotDef.prescription ? i : undefined,
-                hintWeight: lastSets?.[i]?.weight,
-                hintReps: lastSets?.[i]?.reps,
-                prevWeight: lastSets?.[i]?.weight,
-                prevReps: lastSets?.[i]?.reps
-            }));
+            const initialSets = (slotDef.prescription || Array.from({ length: setTarget }, () => undefined)).map((prescription, i) => {
+                const prevW = lastSets?.[i]?.weight;
+                const prevR = lastSets?.[i]?.reps;
+                const prediction = !prescription
+                    ? predictSetTarget({
+                          prevWeightKg: prevW,
+                          prevReps: prevR,
+                          unit: 'kg',
+                          targetRir: weekTargetRir,
+                          week: activeMeso.week,
+                          isDeload,
+                      })
+                    : null;
+                return {
+                    id: uid(),
+                    weight: '',
+                    reps: '',
+                    rpe: '',
+                    completed: false,
+                    type: prescription?.role === 'top' ? 'top' : prescription?.role === 'backoff' || prescription?.role === 'high_rep_backoff' ? 'backoff' : slotDef.setType || 'regular',
+                    prescribedReps: prescription?.reps,
+                    targetRpe: prescription?.targetRpe ?? weekTargetRir,
+                    prescriptionRole: prescription?.role,
+                    programSetIndex: slotDef.prescription ? i : undefined,
+                    hintWeight: prediction && prediction.targetWeightKg > 0 ? prediction.targetWeightKg : prevW,
+                    hintReps: prediction && prevR ? prediction.targetReps : prevR,
+                    prevWeight: prevW,
+                    prevReps: prevR,
+                };
+            });
 
             return {
                 ...exDef,

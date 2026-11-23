@@ -266,10 +266,10 @@ export const SetRowActionMenu: React.FC<SetRowActionMenuProps> = ({
                         <Icon name="Info" size={14} className="text-zinc-500" />
                     </button>
 
-                    {/* Cluster / Myorep Match */}
+                    {/* Myorep Match */}
                     <button
                         type="button"
-                        onClick={() => handleSelectType('cluster')}
+                        onClick={() => handleSelectType('myorep_match')}
                         className="flex items-center justify-between gap-3 px-3.5 py-2 text-left transition-colors hover:bg-white/5 active:bg-white/10"
                     >
                         <div className="flex items-center gap-3">
@@ -277,7 +277,7 @@ export const SetRowActionMenu: React.FC<SetRowActionMenuProps> = ({
                                 MM
                             </span>
                             <span className="text-[13px] font-medium text-zinc-200">
-                                {pickLang(lang, { es: 'Myorep Match / Cluster', en: 'Myorep Match' })}
+                                {pickLang(lang, { es: 'Myorep Match', en: 'Myorep Match' })}
                             </span>
                         </div>
                         <Icon name="Info" size={14} className="text-zinc-500" />
@@ -293,6 +293,20 @@ export const SetRowActionMenu: React.FC<SetRowActionMenuProps> = ({
                             D
                         </span>
                         <span className="text-[13px] font-medium text-zinc-200">Drop Set</span>
+                    </button>
+
+                    {/* Lengthened Partials */}
+                    <button
+                        type="button"
+                        onClick={() => handleSelectType('lengthened_partials')}
+                        className="flex items-center gap-3 px-3.5 py-2 text-left transition-colors hover:bg-white/5 active:bg-white/10"
+                    >
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-[3px] border border-sky-500/30 bg-sky-500/20 text-[10px] font-extrabold text-sky-300">
+                            LP
+                        </span>
+                        <span className="text-[13px] font-medium text-zinc-200">
+                            {pickLang(lang, { es: 'Parciales en estiramiento', en: 'Lengthened Partials' })}
+                        </span>
                     </button>
 
                     {/* Warmup */}

@@ -40,6 +40,8 @@ export const ProgramEditDays: React.FC<{ state: ProgramEditState }> = ({ state }
         handleValidateAndOpenStartModal,
         musclePriorities,
         setShowPrioritiesStep,
+        splitConflicts,
+        handleAutoFixConflicts,
         onBack,
     } = state;
 
@@ -185,6 +187,26 @@ export const ProgramEditDays: React.FC<{ state: ProgramEditState }> = ({ state }
 
             {/* Flat Muscle / Exercise Slot Rows (builder-4.png) */}
             <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2.5 pb-6 scroll-container">
+                {splitConflicts.length > 0 && (
+                    <div
+                        data-testid="split-conflict-guardrail"
+                        className="rounded-[6px] border border-amber-500/35 bg-amber-500/12 p-3 space-y-2"
+                    >
+                        <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-start gap-2 text-xs font-bold text-amber-200">
+                                <Icon name="AlertTriangle" size={15} className="shrink-0 text-amber-400 mt-0.5" />
+                                <span>{splitConflicts[0].description[lang]}</span>
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={handleAutoFixConflicts}
+                            className="rounded-[4px] bg-amber-500 px-2.5 py-1 text-[11px] font-black uppercase tracking-wider text-zinc-950 hover:brightness-110 transition-colors"
+                        >
+                            {pickLang(lang, { es: 'Reordenar automáticamente', en: 'Auto-reorder split' })}
+                        </button>
+                    </div>
+                )}
                 {(currentDay.slots || []).length === 0 ? (
                     <div className="text-center py-12 px-4 rounded-[6px] border border-dashed border-border-subtle bg-surface-raised/40">
                         <p className="text-xs font-semibold text-zinc-400">

@@ -10,6 +10,11 @@ import { triggerHaptic } from '../../utils/audio';
 import { useStore } from '../../lib/store';
 import { recommendExercisesForMuscle } from '../../utils/equipment';
 import {
+    applyMusclePrioritiesToProgram,
+    detectSplitConflicts,
+    reorderDaysToResolveConflicts,
+} from '../../utils/rpSplitBuilder';
+import {
     clearMesocycleDraft,
     consumeMesoEditorIntent,
     loadMesocycleDraft,
@@ -60,6 +65,7 @@ export const useProgramEditState = ({ onBack }: ProgramEditViewProps) => {
     }, [isCreatingWithDraft, setProgram]);
 
     const [showPrioritiesStep, setShowPrioritiesStep] = useState<boolean>(editorIntent === 'builder');
+    const [reduceSynergists, setReduceSynergists] = useState<boolean>(true);
     const [musclePriorities, setMusclePriorities] = useState<Partial<Record<MuscleGroup, MusclePriorityLevel>>>(() => {
         if (initialDraft?.musclePriorities) return initialDraft.musclePriorities;
         if (!isCreatingWithDraft && activeMeso?.musclePriorities) return activeMeso.musclePriorities;
@@ -147,6 +153,23 @@ export const useProgramEditState = ({ onBack }: ProgramEditViewProps) => {
         }
         return { emphasize, grow, maintain, muscles: Array.from(musclesInPlan) };
     }, [workingProgram, musclePriorities]);
+
+    const splitConflicts = useMemo(
+        () => detectSplitConflicts(workingProgram),
+        [workingProgram]
+    );
+
+    const handleApplyPrioritiesToSplit = useCallback(() => {
+        const res = applyMusclePrioritiesToProgram(workingProgram, musclePriorities, { reduceSynergists });
+        setWorkingProgram(res.program);
+        setMusclePriorities(res.updatedPriorities);
+        triggerHaptic('success');
+    }, [workingProgram, musclePriorities, reduceSynergists, setWorkingProgram]);
+
+    const handleAutoFixConflicts = useCallback(() => {
+        setWorkingProgram(prev => reorderDaysToResolveConflicts(prev));
+        triggerHaptic('success');
+    }, [setWorkingProgram]);
 
     const handleUpdateDayName = useCallback((id: string, name: string) => {
         setWorkingProgram(prev => prev.map(d => d.id === id ? { ...d, dayName: { en: name, es: name } } : d));
@@ -271,6 +294,10 @@ export const useProgramEditState = ({ onBack }: ProgramEditViewProps) => {
             setProgram(workingProgram);
         }
         const plan = workingProgram.map(day => (day.slots || []).map(slot => slot.exerciseId || null));
+        const emphasizedMuscles = Object.entries(musclePriorities)
+            .filter(([, p]) => p === 'emphasize')
+            .map(([m]) => m as MuscleGroup);
+
         setActiveMeso({
             id: Date.now(),
             name: mesoConfig.name,
@@ -281,6 +308,16 @@ export const useProgramEditState = ({ onBack }: ProgramEditViewProps) => {
             isDeload: false,
             duration: mesoConfig.weeks,
             ...(Object.keys(musclePriorities).length > 0 ? { musclePriorities } : {}),
+            ...(emphasizedMuscles.length > 0
+                ? {
+                    specializationBlock: {
+                        targetMuscles: emphasizedMuscles,
+                        currentMeso: 1,
+                        totalMesos: 3,
+                        phase: 'accumulate' as const,
+                    },
+                }
+                : {}),
         });
         clearMesocycleDraft();
         triggerHaptic('success');
@@ -321,6 +358,11 @@ export const useProgramEditState = ({ onBack }: ProgramEditViewProps) => {
         musclePriorities,
         handleSetMusclePriority,
         priorityCounts,
+        reduceSynergists,
+        setReduceSynergists,
+        splitConflicts,
+        handleApplyPrioritiesToSplit,
+        handleAutoFixConflicts,
         handleUpdateDayName,
         handleAddDay,
         handleDeleteDay,

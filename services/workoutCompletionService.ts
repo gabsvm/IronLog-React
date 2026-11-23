@@ -131,11 +131,12 @@ export const calculateWorkoutProgression = (
     return { updatedMeso: activeMeso, isWeekComplete: true, isMesoComplete: true };
   }
 
-  // Advance to next week
+  // Advance to next week (final week of a >=4w non-KONG RP meso automatically enters Deload)
+  const nextWeek = activeMeso.week + 1;
   const updatedMeso: MesoCycle = {
     ...activeMeso,
-    week: activeMeso.week + 1,
-    isDeload: false,
+    week: nextWeek,
+    isDeload: !isKong && totalWeeks >= 4 && nextWeek === totalWeeks,
   };
 
   return { updatedMeso, isWeekComplete: true, isMesoComplete: false };

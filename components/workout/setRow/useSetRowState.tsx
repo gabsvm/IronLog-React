@@ -6,6 +6,7 @@ import { triggerHaptic } from '../../../utils/audio';
 import { TRANSLATIONS } from '../../../constants/translations';
 import { fromDisplay, toDisplay } from '../../../utils/units';
 import { getTypeLabel } from './HoldTimer';
+import { predictSetTarget } from '../../../utils/rpAutoregulation';
 
 export interface SetRowProps {
     set: WorkoutSet;
@@ -331,7 +332,31 @@ export const useSetRowState = ({
     }`;
 
     const weightPlaceholder = set.hintWeight ? String(shownWeight(set.hintWeight)) : '0';
-    const repsPlaceholder = set.hintReps ? String(set.hintReps) : typeof set.prescribedReps === 'number' ? String(set.prescribedReps) : `${targetRir ?? 3} RIR`;
+    const predictiveTarget = useMemo(() => {
+        if (isDone || isCardio || isIsometric) return null;
+        if (!set.prevWeight || !set.prevReps) return null;
+        const currKg = Number(storedWeight(localWeight));
+        if (!Number.isFinite(currKg) || currKg <= 0) return null;
+        const result = predictSetTarget({
+            prevWeightKg: set.prevWeight,
+            prevReps: set.prevReps,
+            currentWeightKg: currKg,
+            unit,
+            targetRir: typeof set.targetRpe === 'number' ? set.targetRpe : targetRir,
+            week: 2,
+            isDeload: false,
+        });
+        if (result.deltaType !== 'matched_weight' && result.deltaType !== 'rir_fallback') return null;
+        return result;
+    }, [isDone, isCardio, isIsometric, localWeight, set.prevReps, set.prevWeight, set.targetRpe, storedWeight, targetRir, unit]);
+
+    const repsPlaceholder = predictiveTarget
+        ? (predictiveTarget.mode === 'rir' ? `${predictiveTarget.targetRir} RIR` : String(predictiveTarget.targetReps))
+        : set.hintReps
+            ? String(set.hintReps)
+            : typeof set.prescribedReps === 'number'
+                ? String(set.prescribedReps)
+                : `${set.targetRpe ?? targetRir ?? 3} RIR`;
     // Target (before the actual inputs) from fields the state already exposes: hintWeight x prescribedReps/hintReps, plus targetRpe as RIR when present.
     const targetWeightText = set.hintWeight !== undefined && set.hintWeight !== '' ? `${shownWeight(set.hintWeight)}${weightSuffix}` : null; const targetRirText = set.targetRpe !== undefined ? `RIR ${set.targetRpe}` : null; const targetRepsValue = set.prescribedReps ?? set.hintReps; const prescriptionHint = set.prescribedReps === 'FAILURE' ? [t.targetFailure, targetWeightText, targetRirText].filter(Boolean).join(' - ') : (targetWeightText || targetRepsValue !== undefined || targetRirText) ? `OBJ: ${[targetWeightText && targetRepsValue !== undefined ? `${targetWeightText} x ${targetRepsValue}` : targetWeightText ?? (targetRepsValue !== undefined ? `${targetRepsValue}` : null), targetRirText].filter(Boolean).join(' - ')}` : null;
 
@@ -455,6 +480,7 @@ export const useSetRowState = ({
         prescriptionHint,
         prevText,
         setNumber,
+        predictiveTarget,
         badgeAriaLabel,
         BadgeEl,
         badgeProps,

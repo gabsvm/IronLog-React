@@ -1,6 +1,7 @@
 // U5: SetRow standard gym / cardio mode, moved verbatim from components/workout/SetRow.tsx.
 import React, { useState, useRef } from 'react';
 import { Icon } from '../../ui/Icon';
+import { pickLang } from '../../../utils/i18n';
 import { SetRowActionMenu } from './SetRowActionMenu';
 import type { SetRowState } from './useSetRowState';
 
@@ -37,6 +38,7 @@ export const SetRowStandard: React.FC<{ state: SetRowState }> = ({ state }) => {
         handleRowClick,
         weightPlaceholder,
         repsPlaceholder,
+        predictiveTarget,
         prescriptionHint,
         prevText,
         badgeAriaLabel,
@@ -91,7 +93,19 @@ export const SetRowStandard: React.FC<{ state: SetRowState }> = ({ state }) => {
                         {setType === 'regular' ? (
                             <Icon name="MoreVertical" size={16} />
                         ) : (
-                            <span className="flex items-center gap-0.5 text-[11px] font-bold text-primary-400">
+                            <span
+                                className={`flex items-center gap-0.5 text-[11px] font-bold ${
+                                    setType === 'myorep'
+                                        ? 'text-purple-300'
+                                        : setType === 'myorep_match' || setType === 'cluster'
+                                            ? 'text-emerald-300'
+                                            : setType === 'drop'
+                                                ? 'text-amber-300'
+                                                : setType === 'lengthened_partials'
+                                                    ? 'text-sky-300'
+                                                    : 'text-primary-400'
+                                }`}
+                            >
                                 <span>{effectiveBadgeLabel}</span>
                                 <span className="text-[9px] text-zinc-500 leading-none">⋮</span>
                             </span>
@@ -218,6 +232,15 @@ export const SetRowStandard: React.FC<{ state: SetRowState }> = ({ state }) => {
                     </button>
                 </div>
             </div>
+            {predictiveTarget && !isDone && (
+                <div data-testid="predictive-match-pill" className="px-3 pb-2 -mt-1 flex items-center justify-end gap-1.5">
+                    <span className="inline-flex items-center gap-1 rounded-[4px] border border-primary-500/35 bg-primary-500/12 px-2 py-0.5 text-[11px] font-bold text-primary-300 tabular-nums">
+                        {predictiveTarget.mode === 'rir'
+                            ? pickLang(lang, { es: `Objetivo ajustado: ${predictiveTarget.targetRir} RIR`, en: `Matched target: ${predictiveTarget.targetRir} RIR` })
+                            : pickLang(lang, { es: `Objetivo recalculado: ${predictiveTarget.targetReps} reps`, en: `Predictive target: ${predictiveTarget.targetReps} reps` })}
+                    </span>
+                </div>
+            )}
         </div>
     );
 };

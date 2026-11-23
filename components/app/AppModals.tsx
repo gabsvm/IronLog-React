@@ -10,6 +10,8 @@ import { KONG_4DAY_ID } from '../../programs/kong/constants';
 import { convertKongToPersonalRoutine } from '../../programs/engine/ProgramConversion';
 import { resetLocalData } from '../../services/localDataReset';
 import { syncService } from '../../services/syncService';
+import { buildNextMesocycleCarryOver, saveMesocycleDraft, setMesoEditorIntent } from '../../utils/mesoDraft';
+import { hasJointPainWarning, loadExerciseSfrHistory } from '../../utils/rpAutoregulation';
 import {
     restoreBackupToStorage,
     type GainsLabBackupV1,
@@ -155,7 +157,28 @@ export const AppModals: React.FC<AppModalsProps> = ({
                         <div className="space-y-2 pt-1">
                             <button
                                 type="button"
+                                data-testid="plan-next-meso-carryover-btn"
                                 onClick={() => {
+                                    if (activeMeso && !activeMeso.programSystem) {
+                                        const sfrHistory = loadExerciseSfrHistory();
+                                        const jointPainIds = Object.keys(sfrHistory).filter((exId) =>
+                                            hasJointPainWarning(sfrHistory[exId]),
+                                        );
+                                        const carry = buildNextMesocycleCarryOver({
+                                            prevMeso: activeMeso,
+                                            program,
+                                            logs,
+                                            experience: (userProfile?.experience as any) || 'intermediate',
+                                            lang,
+                                            jointPainIds,
+                                        });
+                                        saveMesocycleDraft(carry.draft);
+                                        setMesoEditorIntent('builder');
+                                        setActiveMeso(null);
+                                        setShowMesoCompleteModal(false);
+                                        setView('program');
+                                        return;
+                                    }
                                     setActiveMeso(null);
                                     setShowMesoCompleteModal(false);
                                     setView('mesos');

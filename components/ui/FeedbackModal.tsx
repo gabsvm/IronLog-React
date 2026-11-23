@@ -4,10 +4,12 @@ import { TRANSLATIONS } from '../../constants';
 import { MuscleGroup } from '../../types';
 import { useStore } from '../../lib/store';
 import { Icon } from './Icon';
-import { formatMessage, pickLang } from '../../utils/i18n';
+import { pickLang, formatMessage } from '../../utils/i18n';
+import { computePriorityAwareSetDelta, recordExerciseSfrFeedback } from '../../utils/rpAutoregulation';
 
 interface FeedbackModalProps {
     muscles: (MuscleGroup | string)[];
+    exerciseIdsByMuscle?: Record<string, string[]>;
     onConfirm: (feedback: Record<string, { soreness: number; performance: number; adjustment: number }>) => void;
     onCancel: () => void;
 }
@@ -31,22 +33,12 @@ const isMuscleAnswered = (data?: MuscleFeedbackData): data is Required<MuscleFee
     );
 };
 
-const computeAdjustment = (jointPain: number, soreness: number, pump: number, volume: number): number => {
-    if (jointPain >= 2 || soreness === 3 || volume === 3) {
-        return -1;
-    }
-    if (soreness <= 1 && jointPain === 0 && (volume === 0 || (volume === 1 && pump <= 1))) {
-        return 1;
-    }
-    return 0;
-};
-
 const computePerformance = (volume: number, jointPain: number): number => {
     if (jointPain === 3) return 3;
     return volume;
 };
 
-export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm, onCancel }) => {
+export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, exerciseIdsByMuscle, onConfirm, onCancel }) => {
     const { lang } = useAppPreferences();
     const activeMeso = useStore(state => state.activeMeso);
     const t = TRANSLATIONS[lang];
@@ -110,7 +102,22 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
             const raw = feedbackState[mKey];
             const d = isMuscleAnswered(raw) ? raw : { jointPain: 0, soreness: 1, pump: 1, volume: 1 };
             const perf = computePerformance(d.volume, d.jointPain);
-            const adj = computeAdjustment(d.jointPain, d.soreness, d.pump, d.volume);
+            const priority = activeMeso?.musclePriorities?.[m];
+            const adj = computePriorityAwareSetDelta({
+                jointPain: d.jointPain,
+                soreness: d.soreness,
+                pump: d.pump,
+                workload: d.volume,
+                priority,
+            });
+            const exIds = exerciseIdsByMuscle?.[mKey] || [];
+            exIds.forEach((exId) => {
+                recordExerciseSfrFeedback(exId, {
+                    jointPain: d.jointPain,
+                    pump: d.pump,
+                    soreness: d.soreness,
+                });
+            });
             result[mKey] = {
                 soreness: d.soreness,
                 performance: perf,
@@ -146,13 +153,14 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ muscles, onConfirm
         );
     }
 
-    const currentAdjustment = isCurrentAnswered
-        ? computeAdjustment(
-              currentData.jointPain!,
-              currentData.soreness!,
-              currentData.pump!,
-              currentData.volume!
-          )
+    const currentAdjustment = isCurrentAnswered && activeMuscle
+        ? computePriorityAwareSetDelta({
+              jointPain: currentData.jointPain!,
+              soreness: currentData.soreness!,
+              pump: currentData.pump!,
+              workload: currentData.volume!,
+              priority: activeMeso?.musclePriorities?.[activeMuscle as MuscleGroup],
+          })
         : null;
 
     const jointPainOptions = [

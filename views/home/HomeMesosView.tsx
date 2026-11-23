@@ -9,6 +9,7 @@ import {
     buildCopyFromActiveMeso,
     buildMesoDraftFromProgram,
     clearMesocycleDraft,
+    condenseDeloadDays,
     createDefaultMesoBuilderDays,
     extractPastMesocycles,
     saveMesocycleDraft,
@@ -25,6 +26,7 @@ export const HomeMesosView: React.FC<{ state: HomeViewState }> = ({ state }) => 
     const {
         activeMeso,
         setActiveMeso,
+        setProgram,
         safeProgram,
         exercises,
         uniqueDaysDone,
@@ -114,6 +116,14 @@ export const HomeMesosView: React.FC<{ state: HomeViewState }> = ({ state }) => 
                                     {currentStage.label[lang]}
                                 </button>
                             )}
+                            {activeMeso.specializationBlock && (
+                                <span
+                                    data-testid="specialization-block-badge"
+                                    className="inline-flex items-center rounded-[4px] border border-primary-500/30 bg-primary-500/10 px-2 py-0.5 text-[11px] font-black uppercase tracking-wider text-primary-300"
+                                >
+                                    {`Meso ${activeMeso.specializationBlock.currentMeso}/${activeMeso.specializationBlock.totalMesos}`}
+                                </span>
+                            )}
                             {activeMeso.isDeload && (
                                 <span className="inline-flex items-center rounded-[4px] border border-amber-500/30 bg-amber-500/15 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-amber-400">
                                     DELOAD
@@ -177,25 +187,66 @@ export const HomeMesosView: React.FC<{ state: HomeViewState }> = ({ state }) => 
                     <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar">
                         {Array.from({ length: totalWeeks }, (_, i) => i + 1).map((wNum) => {
                             const isCurrent = wNum === activeMeso.week;
+                            const isAutoDeloadWeek = !activeMeso.programSystem && totalWeeks >= 4 && wNum === totalWeeks;
                             return (
                                 <button
                                     key={wNum}
                                     type="button"
                                     onClick={() => {
                                         triggerHaptic('light');
-                                        setActiveMeso(prev => (prev ? { ...prev, week: wNum } : prev));
+                                        setActiveMeso(prev => (prev ? { ...prev, week: wNum, isDeload: isAutoDeloadWeek } : prev));
                                     }}
                                     className={`flex h-8 min-w-[38px] px-2.5 items-center justify-center rounded-[4px] text-xs font-bold transition-all ${
                                         isCurrent
-                                            ? 'bg-primary-500 text-zinc-950 font-black'
-                                            : 'border border-border-subtle bg-surface-raised text-zinc-400 hover:text-white'
+                                            ? isAutoDeloadWeek
+                                                ? 'bg-amber-400 text-zinc-950 font-black'
+                                                : 'bg-primary-500 text-zinc-950 font-black'
+                                            : isAutoDeloadWeek
+                                                ? 'border border-amber-500/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20'
+                                                : 'border border-border-subtle bg-surface-raised text-zinc-400 hover:text-white'
                                     }`}
                                 >
-                                    W{wNum}
+                                    <span>{`W${wNum}`}</span>
+                                    {isAutoDeloadWeek && (
+                                        <span aria-label="Deload" className="ml-0.5 text-[10px] opacity-80">
+                                            ·DL
+                                        </span>
+                                    )}
                                 </button>
                             );
                         })}
                     </div>
+
+                    {activeMeso.isDeload && safeProgram.length >= 4 && !activeMeso.condensedDeload && (
+                        <div
+                            data-testid="condense-deload-card"
+                            className="flex items-center justify-between gap-3 rounded-[6px] border border-amber-500/30 bg-amber-500/10 px-3 py-2"
+                        >
+                            <div className="min-w-0">
+                                <p className="text-xs font-extrabold text-amber-300">
+                                    {pickLang(lang, { es: 'Deload condensado disponible', en: 'Condensed deload available' })}
+                                </p>
+                                <p className="text-xs text-zinc-300">
+                                    {pickLang(lang, {
+                                        es: `Fusiona tus ${safeProgram.length} días a la mitad para ganar días libres.`,
+                                        en: `Merge your ${safeProgram.length} days in half to earn extra rest days.`,
+                                    })}
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                data-testid="condense-deload-btn"
+                                onClick={() => {
+                                    triggerHaptic('medium');
+                                    setProgram(condenseDeloadDays(safeProgram));
+                                    setActiveMeso(prev => (prev ? { ...prev, condensedDeload: true } : prev));
+                                }}
+                                className="shrink-0 min-h-9 rounded-[6px] bg-amber-400 px-3 text-xs font-black uppercase tracking-wider text-zinc-950 hover:brightness-110 active:scale-95 transition-all"
+                            >
+                                {pickLang(lang, { es: 'Condensar (4d → 2d)', en: 'Condense (4d → 2d)' })}
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Management Actions Grid */}

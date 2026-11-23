@@ -14,6 +14,8 @@ import { Sheet } from './Sheet';
 import { useStatsWorker } from '../../hooks/useStatsWorker';
 import { resolveMuscleLabel } from '../../utils/muscle';
 import { useStore } from '../../lib/store';
+import { getExerciseSfrCue } from '../../utils/rpExerciseCues';
+import { getExerciseSfrScore, hasJointPainWarning, loadExerciseSfrHistory } from '../../utils/rpAutoregulation';
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -357,6 +359,57 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                                     </div>
                                 </div>
                             </div>
+
+                            {exercise.muscle !== 'CARDIO' && (() => {
+                                const sfrCue = getExerciseSfrCue(exercise.muscle);
+                                const sfrHistory = loadExerciseSfrHistory();
+                                const record = sfrHistory[exercise.id];
+                                const sfrScore = record ? getExerciseSfrScore(record) : null;
+                                const jointWarn = hasJointPainWarning(record);
+                                return (
+                                    <div
+                                        data-testid="exercise-sfr-cue-card"
+                                        className="rounded-[8px] border border-border-subtle bg-surface-raised p-4 space-y-2.5"
+                                    >
+                                        <div className="flex items-center justify-between gap-2">
+                                            <h4 className="text-xs font-black uppercase tracking-wider text-primary-300 flex items-center gap-1.5">
+                                                <Icon name="Target" size={13} />
+                                                <span>{pickLang(lang, { es: 'Cues RP & Optimización SFR', en: 'RP Form Cues & SFR Guide' })}</span>
+                                            </h4>
+                                            {sfrScore !== null && (
+                                                <span className="rounded-[4px] border border-emerald-500/30 bg-emerald-500/15 px-2 py-0.5 text-[11px] font-black text-emerald-300 tabular-nums">
+                                                    {`SFR ${sfrScore}/10`}
+                                                </span>
+                                            )}
+                                        </div>
+                                        {jointWarn && (
+                                            <div className="rounded-[6px] border border-amber-500/35 bg-amber-500/10 px-2.5 py-2 flex items-center gap-2 text-xs font-bold text-amber-300">
+                                                <Icon name="AlertTriangle" size={13} className="shrink-0" />
+                                                <span>
+                                                    {pickLang(lang, {
+                                                        es: 'Dolor articular reciente registrado · Considerá rotar variación.',
+                                                        en: 'Recent joint pain logged · Consider rotating variation.',
+                                                    })}
+                                                </span>
+                                            </div>
+                                        )}
+                                        <div className="space-y-1.5 text-xs leading-relaxed">
+                                            <p className="text-zinc-200">
+                                                <span className="font-bold text-emerald-300">{pickLang(lang, { es: 'Cue clave:', en: 'Key cue:' })}</span>{' '}
+                                                {sfrCue.cue[lang]}
+                                            </p>
+                                            <p className="text-zinc-300">
+                                                <span className="font-bold text-amber-300">{pickLang(lang, { es: 'Error común:', en: 'Common mistake:' })}</span>{' '}
+                                                {sfrCue.commonMistake[lang]}
+                                            </p>
+                                            <p className="text-zinc-300">
+                                                <span className="font-bold text-primary-300">{pickLang(lang, { es: 'Tip articular:', en: 'Joint tip:' })}</span>{' '}
+                                                {sfrCue.jointFriendlyTip[lang]}
+                                            </p>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
 
                             {/* Pinned Notes (RP Video #10 Technique & Notes) */}
                             <div>

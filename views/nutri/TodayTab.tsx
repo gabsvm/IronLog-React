@@ -1,12 +1,13 @@
 import { TRANSLATIONS } from '../../constants/translations';
 import { pickLang } from '../../utils/i18n';
-import React from 'react';
-import { FoodEntry, NutritionLog, NutritionGoal, CardioSession } from '../../types';
+import React, { useMemo } from 'react';
+import { BodyLog, CardioSession, FoodEntry, NutritionGoal, NutritionLog, ProgramDay } from '../../types';
 import { Icon } from '../../components/ui/Icon';
 import { MacroRing } from '../../components/nutrition/MacroRing';
 import { MacroBar } from './MacroBar';
 import { WaterTracker } from './WaterTracker';
 import { MEAL_ORDER, MEAL_META, ACTIVITY_EMOJI } from './nutritionHelpers';
+import { computeRpDietRecommendation, evaluateCardioInterference, type RpDietPhase } from '../../utils/rpDietEngine';
 
 const CARDIO_ACTIVITY_LABELS: Record<string, { en: string; es: string }> = {
     running: { en: 'Running', es: 'Correr' },
@@ -47,6 +48,11 @@ interface Props {
     onDeleteCardio: (id: string) => void;
     onEditEntry: (entry: FoodEntry) => void;
     onDeleteEntry: (id: string) => void;
+    bodyLogs?: BodyLog[];
+    upcomingDay?: ProgramDay;
+    onUpdateNutritionGoal?: (next: NutritionGoal) => void;
+    onUpdateSteps?: (steps: number) => void;
+    onToggleTrainingDay?: (isTraining: boolean) => void;
 }
 
 /**
@@ -74,7 +80,33 @@ export const TodayTab: React.FC<Props> = ({
     onDeleteCardio,
     onEditEntry,
     onDeleteEntry,
+    bodyLogs,
+    upcomingDay,
+    onUpdateNutritionGoal,
+    onUpdateSteps,
+    onToggleTrainingDay,
 }) => {
+    const dietRec = useMemo(
+        () => computeRpDietRecommendation({ goal: nutritionGoal, bodyLogs: bodyLogs || [] }),
+        [nutritionGoal, bodyLogs],
+    );
+    const cardioReport = useMemo(
+        () =>
+            evaluateCardioInterference({
+                stepsToday: todayLog.steps ?? 0,
+                stepsTarget: nutritionGoal.dailyStepsTarget ?? 9000,
+                todayCardio,
+                upcomingDay,
+            }),
+        [todayLog.steps, nutritionGoal.dailyStepsTarget, todayCardio, upcomingDay],
+    );
+    const isTrainingDay = todayLog.isTrainingDay ?? true;
+    const dayTargets = isTrainingDay ? dietRec.trainingDayMacros : dietRec.restDayMacros;
+    const PHASE_OPTIONS: { id: RpDietPhase; label: { es: string; en: string } }[] = [
+        { id: 'cut', label: { es: 'Cut', en: 'Cut' } },
+        { id: 'maintenance', label: { es: 'Mant.', en: 'Maint.' } },
+        { id: 'bulk', label: { es: 'Bulk', en: 'Bulk' } },
+    ];
 
     return (
         <div className="space-y-4 pt-1">
@@ -146,6 +178,149 @@ export const TodayTab: React.FC<Props> = ({
 
             {/* Water tracker */}
             <WaterTracker waterMl={todayWater} onAdd={onAddWater} lang={lang} />
+
+            {/* RP Diet 2.0 Phase & Peri-Workout Carb Cycling */}
+            <div
+                data-testid="rp-diet-phase-card"
+                className="premium-theme-panel rounded-[8px] border border-border-subtle bg-surface-raised p-4 space-y-3"
+            >
+                <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                        <Icon name="TrendingUp" size={14} className="text-primary-400" />
+                        <span className="text-xs font-black uppercase tracking-wider text-white">
+                            {pickLang(lang, { es: 'RP Diet 2.0 · Ritmo & Carbos', en: 'RP Diet 2.0 · Rate & Carbs' })}
+                        </span>
+                    </div>
+                    <span className="rounded-[4px] border border-border-subtle bg-surface-base px-2 py-0.5 text-xs font-bold text-primary-300 tabular-nums">
+                        {dietRec.weeklyRatePct !== null
+                            ? `${dietRec.weeklyRatePct > 0 ? '+' : ''}${dietRec.weeklyRatePct}%/sem`
+                            : `${dietRec.targetRateRange.minPct}%..${dietRec.targetRateRange.maxPct}%`}
+                    </span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-1.5" role="group" aria-label={pickLang(lang, { es: 'Fase nutricional', en: 'Diet phase' })}>
+                    {PHASE_OPTIONS.map((opt) => {
+                        const active = dietRec.phase === opt.id;
+                        return (
+                            <button
+                                key={opt.id}
+                                type="button"
+                                aria-pressed={active}
+                                data-testid={`rp-diet-phase-${opt.id}`}
+                                onClick={() =>
+                                    onUpdateNutritionGoal?.({
+                                        ...nutritionGoal,
+                                        phase: opt.id,
+                                        phaseStartDate: nutritionGoal.phaseStartDate || new Date().toISOString().slice(0, 10),
+                                    })
+                                }
+                                className={`min-h-8 rounded-[5px] border px-2 py-1 text-xs font-extrabold uppercase tracking-wider transition-colors ${
+                                    active
+                                        ? 'border-primary-500 bg-primary-500 text-zinc-950'
+                                        : 'border-border-subtle bg-surface-base text-zinc-300 hover:text-white'
+                                }`}
+                            >
+                                {opt.label[lang]}
+                            </button>
+                        );
+                    })}
+                </div>
+
+                {dietRec.dietBreakRecommended && (
+                    <div className="rounded-[6px] border border-amber-500/35 bg-amber-500/10 px-3 py-2 flex items-center gap-2 text-xs font-bold text-amber-300">
+                        <Icon name="AlertTriangle" size={14} className="shrink-0" />
+                        <span>
+                            {pickLang(lang, {
+                                es: `Semana ${dietRec.weeksInPhase} en déficit: recomendado Diet Break (1–2 sem mantenimiento).`,
+                                en: `Week ${dietRec.weeksInPhase} cutting: consider a 1–2 week Diet Break at maintenance.`,
+                            })}
+                        </span>
+                    </div>
+                )}
+
+                <div className="flex items-center justify-between gap-2 rounded-[6px] border border-border-subtle bg-surface-base px-3 py-2">
+                    <div className="text-xs text-zinc-300">
+                        <span className="font-bold text-white">
+                            {isTrainingDay
+                                ? pickLang(lang, { es: 'Día de entreno', en: 'Training day' })
+                                : pickLang(lang, { es: 'Día de descanso', en: 'Rest day' })}
+                        </span>
+                        <span className="ml-2 font-mono text-amber-300 tabular-nums">
+                            {`${dayTargets.calories} kcal · ${dayTargets.carbs}g C`}
+                        </span>
+                    </div>
+                    <button
+                        type="button"
+                        data-testid="toggle-training-day-carbs"
+                        onClick={() => onToggleTrainingDay?.(!isTrainingDay)}
+                        className="shrink-0 rounded-[5px] border border-border-subtle bg-surface-raised px-2.5 py-1 text-xs font-bold text-zinc-200 hover:text-white"
+                    >
+                        {isTrainingDay
+                            ? pickLang(lang, { es: 'Pasar a Descanso', en: 'Switch to Rest' })
+                            : pickLang(lang, { es: 'Pasar a Entreno', en: 'Switch to Training' })}
+                    </button>
+                </div>
+
+                {dietRec.suggestedCalorieDelta !== 0 && onUpdateNutritionGoal && (
+                    <div className="flex items-center justify-between gap-2 text-xs text-zinc-300">
+                        <span>
+                            {pickLang(lang, {
+                                es: `Ajuste sugerido según promedio móvil (${dietRec.avgCurrentWeightKg ?? '--'} kg):`,
+                                en: `Moving-average adjustment (${dietRec.avgCurrentWeightKg ?? '--'} kg):`,
+                            })}
+                        </span>
+                        <button
+                            type="button"
+                            onClick={() =>
+                                onUpdateNutritionGoal({
+                                    ...nutritionGoal,
+                                    calories: Math.max(1200, nutritionGoal.calories + dietRec.suggestedCalorieDelta),
+                                })
+                            }
+                            className="shrink-0 rounded-[5px] bg-primary-500/15 border border-primary-500/35 px-2.5 py-1 font-extrabold text-primary-300 hover:bg-primary-500/25 tabular-nums"
+                        >
+                            {`${dietRec.suggestedCalorieDelta > 0 ? '+' : ''}${dietRec.suggestedCalorieDelta} kcal`}
+                        </button>
+                    </div>
+                )}
+            </div>
+
+            {/* Cardio & NEAT Steps tracker */}
+            <div
+                data-testid="rp-neat-card"
+                className="premium-theme-panel rounded-[8px] border border-border-subtle bg-surface-raised p-4 space-y-2.5"
+            >
+                <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                        <Icon name="Footprints" size={14} className="text-emerald-400" />
+                        <span className="text-xs font-black uppercase tracking-wider text-white">
+                            {pickLang(lang, { es: 'NEAT Pasos & Interferencia', en: 'NEAT Steps & Interference' })}
+                        </span>
+                    </div>
+                    <span className="text-xs font-bold text-emerald-300 tabular-nums">
+                        {`${cardioReport.stepsToday.toLocaleString()} / ${cardioReport.stepsTarget.toLocaleString()}`}
+                    </span>
+                </div>
+                <div className="h-1.5 w-full rounded-full bg-surface-base overflow-hidden">
+                    <div
+                        className="h-full rounded-full bg-emerald-500 transition-all duration-300"
+                        style={{ width: `${cardioReport.stepsPct}%` }}
+                    />
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                    <p className={`text-xs leading-snug ${cardioReport.interferenceWarning ? 'text-amber-300 font-bold' : 'text-zinc-300'}`}>
+                        {cardioReport.recommendation[lang]}
+                    </p>
+                    <button
+                        type="button"
+                        data-testid="add-neat-steps-btn"
+                        onClick={() => onUpdateSteps?.(cardioReport.stepsToday + 2000)}
+                        className="shrink-0 rounded-[5px] border border-emerald-500/35 bg-emerald-500/10 px-2.5 py-1 text-xs font-bold text-emerald-300 hover:bg-emerald-500/20"
+                    >
+                        +2,000
+                    </button>
+                </div>
+            </div>
 
             {/* Quick actions */}
             <div className="grid grid-cols-2 gap-2">

@@ -46,6 +46,8 @@ export interface SortableExerciseCardProps {
     onMoveUp?: () => void;
     onMoveDown?: () => void;
     onPinNoteToLibrary?: (exId: string, note: string | undefined) => void;
+    sorenessDue?: boolean;
+    onAnswerSoreness?: (soreness: number, recovery: boolean) => void;
 }
 
 export const useSortableExerciseCardState = ({
@@ -80,6 +82,8 @@ export const useSortableExerciseCardState = ({
     onMoveUp,
     onMoveDown,
     onPinNoteToLibrary,
+    sorenessDue,
+    onAnswerSoreness,
 }: SortableExerciseCardProps) => {
     const [exDoneFlash, setExDoneFlash] = useState(false);
     const [activeEmomMinute, setActiveEmomMinute] = useState(0);
@@ -500,6 +504,8 @@ export const useSortableExerciseCardState = ({
         onMoveUp,
         onMoveDown,
         onPinNoteToLibrary,
+        sorenessDue,
+        onAnswerSoreness,
     };
 };
 

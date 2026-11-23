@@ -12,6 +12,7 @@ import { getTranslated } from '../../../utils';
 import { ALL_EQUIPMENT_IDS, getEquipmentLabel } from '../../../utils/equipment';
 import { pickLang } from '../../../utils/i18n';
 import { resolveMuscleLabel } from '../../../utils/muscle';
+import { hasJointPainWarning, loadExerciseSfrHistory } from '../../../utils/rpAutoregulation';
 import type { EquipmentType } from '../../../types';
 import type { ExerciseCardState } from './useSortableExerciseCardState';
 
@@ -88,6 +89,8 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
         onMoveUp,
         onMoveDown,
         onPinNoteToLibrary,
+        sorenessDue,
+        onAnswerSoreness,
     } = state;
 
     const [noteModalOpen, setNoteModalOpen] = useState(false);
@@ -95,6 +98,9 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
     const [pinToExercise, setPinToExercise] = useState(true);
     const [guideExpanded, setGuideExpanded] = useState(false);
     const [guideDismissed, setGuideDismissed] = useState(false);
+    const [pendingRecoveryPrompt, setPendingRecoveryPrompt] = useState(false);
+    const sfrRecord = React.useMemo(() => loadExerciseSfrHistory()[ex.id], [ex.id]);
+    const jointPainFlagged = hasJointPainWarning(sfrRecord);
 
     const openNoteModal = useCallback(() => {
         setNoteDraft(ex.note || ex.pinnedNote || '');
@@ -330,7 +336,95 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                         {exerciseSubtitle}
                     </div>
                 )}
+                {jointPainFlagged && !isCardio && (
+                    <button
+                        type="button"
+                        data-testid="joint-pain-sfr-alert"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onReplace(ex.instanceId);
+                        }}
+                        className="mt-1.5 inline-flex items-center gap-1.5 rounded-[4px] border border-amber-500/35 bg-amber-500/12 px-2.5 py-1 text-[12px] font-semibold text-amber-300 hover:bg-amber-500/20 transition-colors"
+                    >
+                        <Icon name="AlertTriangle" size={13} className="shrink-0 text-amber-400" />
+                        <span>{pickLang(lang, { es: 'Dolor articular previo · Cambiar por alternativa SFR →', en: 'Prior joint pain · Swap to SFR alternative →' })}</span>
+                    </button>
+                )}
             </div>
+
+            {/* Pre-Set Retrospective Soreness Check-in (RP 1:1) */}
+            {sorenessDue && onAnswerSoreness && !isCardio && (
+                <div
+                    data-testid="pre-set-soreness-checkin"
+                    className="mx-3 mb-2 rounded-[6px] border border-primary-500/30 bg-primary-500/10 p-2.5 space-y-2"
+                >
+                    <div className="text-[12px] font-bold text-white leading-snug">
+                        {pickLang(lang, {
+                            es: `¿Qué tan adolorido quedaste de ${resolveMuscleLabel(ex.muscle, lang).toLowerCase()} la sesión pasada?`,
+                            en: `How sore did your ${resolveMuscleLabel(ex.muscle, lang).toLowerCase()} get after last session?`,
+                        })}
+                    </div>
+                    <div className="grid grid-cols-4 gap-1.5">
+                        {[
+                            { val: 0, label: pickLang(lang, { es: 'Nada', en: 'Never' }) },
+                            { val: 1, label: pickLang(lang, { es: 'Leve', en: 'Mild' }) },
+                            { val: 2, label: pickLang(lang, { es: 'A tiempo', en: 'On time' }) },
+                            { val: 3, label: pickLang(lang, { es: '¡Sigo igual!', en: 'Still sore!' }) },
+                        ].map((opt) => (
+                            <button
+                                key={opt.val}
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (opt.val === 3) {
+                                        setPendingRecoveryPrompt(true);
+                                    } else {
+                                        onAnswerSoreness(opt.val, false);
+                                    }
+                                }}
+                                className="min-h-8 rounded-[4px] border border-border-subtle bg-surface-raised px-1.5 py-1 text-[12px] font-semibold text-zinc-200 hover:border-primary-500 hover:text-white transition-colors"
+                            >
+                                {opt.label}
+                            </button>
+                        ))}
+                    </div>
+                    {pendingRecoveryPrompt && (
+                        <div className="flex flex-wrap items-center justify-between gap-2 rounded-[4px] border border-emerald-500/35 bg-emerald-500/15 px-2.5 py-2">
+                            <span className="text-[12px] font-medium text-emerald-200">
+                                {pickLang(lang, {
+                                    es: '¿Activar Recovery Session hoy (2 series livianas al 50%)?',
+                                    en: 'Run Recovery Session today (2 light 50% flush sets)?',
+                                })}
+                            </span>
+                            <div className="flex items-center gap-1.5">
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setPendingRecoveryPrompt(false);
+                                        onAnswerSoreness(3, false);
+                                    }}
+                                    className="rounded px-2 py-1 text-[12px] font-semibold text-zinc-300 hover:text-white"
+                                >
+                                    {pickLang(lang, { es: 'Normal (-1 próx)', en: 'Normal (-1 next)' })}
+                                </button>
+                                <button
+                                    type="button"
+                                    data-testid="recovery-session-confirm-btn"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setPendingRecoveryPrompt(false);
+                                        onAnswerSoreness(3, true);
+                                    }}
+                                    className="rounded-[4px] bg-emerald-500 px-2.5 py-1 text-[12px] font-bold text-zinc-950 hover:brightness-110"
+                                >
+                                    {pickLang(lang, { es: 'Recovery Session', en: 'Recovery Session' })}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Pinned Note / Target Rep Range Banner */}
             <div className="mx-3 mb-2 flex items-center justify-between gap-2 rounded-[4px] bg-amber-500/15 border border-amber-500/30 px-2.5 py-1.5 text-[12px] font-medium text-amber-900 dark:text-amber-200/90">

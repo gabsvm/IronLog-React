@@ -7,7 +7,7 @@ interface RpSpecialCasesTabProps {
     lang: 'en' | 'es';
 }
 
-type SpecialSectionFilter = 'all' | 'troubleshooting' | 'specialization' | 'time' | 'injury';
+type SpecialSectionFilter = 'all' | 'troubleshooting' | 'specialization' | 'time' | 'injury' | 'members';
 
 const FILTER_OPTIONS: { id: SpecialSectionFilter; label: { es: string; en: string } }[] = [
     { id: 'all', label: { es: 'Todo', en: 'All' } },
@@ -15,6 +15,7 @@ const FILTER_OPTIONS: { id: SpecialSectionFilter; label: { es: string; en: strin
     { id: 'specialization', label: { es: 'Especializ.', en: 'Specialize' } },
     { id: 'time', label: { es: 'Poco Tiempo', en: 'Low Time' } },
     { id: 'injury', label: { es: 'Lesiones', en: 'Injury' } },
+    { id: 'members', label: { es: 'Pro RP', en: 'Members RP' } },
 ];
 
 export const RpSpecialCasesTab: React.FC<RpSpecialCasesTabProps> = ({ lang }) => {
@@ -25,6 +26,7 @@ export const RpSpecialCasesTab: React.FC<RpSpecialCasesTabProps> = ({ lang }) =>
     const showSpecialization = filter === 'all' || filter === 'specialization';
     const showTime = filter === 'all' || filter === 'time';
     const showInjury = filter === 'all' || filter === 'injury';
+    const showMembers = filter === 'all' || filter === 'members';
 
     return (
         <>
@@ -205,6 +207,40 @@ export const RpSpecialCasesTab: React.FC<RpSpecialCasesTabProps> = ({ lang }) =>
                         </div>
                     </section>
                 </>
+            )}
+
+            {showMembers && Array.isArray(sc.membersModules) && (
+                <section
+                    data-testid="rp-members-modules"
+                    className="rounded-[10px] border border-primary-500/25 bg-[rgb(var(--surface-raised))] p-4 space-y-3.5"
+                >
+                    <div className="flex items-center gap-2">
+                        <Icon name="Crown" size={18} className="text-primary-400 shrink-0" />
+                        <h3 className="text-base font-extrabold text-[rgb(var(--text-primary))] text-balance">
+                            {sc.membersModulesTitle[lang]}
+                        </h3>
+                    </div>
+                    <div className="space-y-3">
+                        {sc.membersModules.map((mod) => (
+                            <article
+                                key={mod.id}
+                                className="rounded-[8px] border border-[rgb(var(--border-subtle)/0.8)] bg-[rgb(var(--surface-app)/0.6)] p-3.5 space-y-1.5"
+                            >
+                                <div className="flex items-center justify-between gap-2">
+                                    <h4 className="text-sm font-extrabold text-[rgb(var(--text-primary))]">
+                                        {mod.title[lang]}
+                                    </h4>
+                                    <span className="shrink-0 rounded-[4px] border border-primary-500/30 bg-primary-500/15 px-2 py-0.5 text-[11px] font-black uppercase tracking-wider text-primary-300">
+                                        {mod.badge[lang]}
+                                    </span>
+                                </div>
+                                <p className="text-sm leading-[1.58] text-[rgb(var(--text-secondary))]">
+                                    {mod.body[lang]}
+                                </p>
+                            </article>
+                        ))}
+                    </div>
+                </section>
             )}
         </>
     );

@@ -15,6 +15,7 @@ import { resolveWeightUnit, unitLabel } from '../../utils/units';
 import { aggregateExerciseFrequency, exerciseIdGroup, matchesExerciseQuery, resolveExerciseId } from '../../utils/exerciseLibrary';
 import { buildSelectedExerciseInsight } from './exerciseInsight';
 import { computeRepMaxTable } from '../../utils/repMaxTable';
+import { detectExercisePlateaus } from '../../utils/rpExerciseCues';
 
 export const useStatsData = ({ activeTab, hideHeader, statsScope }: { activeTab?: 'overview' | 'progress' | 'volume'; hideHeader: boolean; statsScope: StatsScope }) => {
     const { logs, lang, exercises, tutorialProgress, markTutorialSeen, userProfile, config, rpFeedback } = useApp();
@@ -338,6 +339,11 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope }: { activeTab?
         return computeRepMaxTable(safeLogs, new Set(selectedGroupIds.map(String)));
     }, [currentEx, safeLogs, selectedGroupIds]);
 
+    const exercisePlateaus = useMemo(
+        () => detectExercisePlateaus(safeLogs, exercises, lang),
+        [safeLogs, exercises, lang],
+    );
+
     const statsTutorialSteps = [
         { targetId: 'tut-progress-chart', title: t.tutorial.stats[0].title, text: t.tutorial.stats[0].text, position: 'bottom' as const },
         { targetId: 'tut-radar-chart', title: t.tutorial.stats[1].title, text: t.tutorial.stats[1].text, position: 'top' as const },
@@ -415,6 +421,7 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope }: { activeTab?
         metricButtons,
         selectedExerciseInsight,
         repMaxRows,
+        exercisePlateaus,
         statsTutorialSteps,
     };
 };

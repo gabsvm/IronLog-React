@@ -11,6 +11,8 @@ import { Sheet } from '../components/ui/Sheet';
 import { triggerHaptic } from '../utils/audio';
 import { TRANSLATIONS } from '../constants';
 import { resolveWeightUnit } from '../utils/units';
+import { useStore } from '../lib/store';
+import type { NutritionGoal, ProgramDay } from '../types';
 
 
 // Extracted in Phase 6.3 to views/nutri/ for clarity
@@ -24,7 +26,8 @@ import { HistoryTab } from './nutri/HistoryTab';
 type SubTab = 'today' | 'body' | 'history';
 
 export const NutriView: React.FC = () => {
-  const { lang, userProfile, setUserProfile, config } = useApp();
+  const { lang, userProfile, setUserProfile, config, program } = useApp();
+  const activeSession = useStore(state => state.activeSession);
   const {
     nutritionLogs, setNutritionLogs,
     cardioSessions, setCardioSessions,
@@ -215,6 +218,35 @@ export const NutriView: React.FC = () => {
     setShowGoalEditor(false);
   }, [editGoal, setNutritionGoal]);
 
+  const handleUpdateSteps = useCallback((steps: number) => {
+    const today = todayStr();
+    const safeSteps = Math.max(0, Math.round(steps));
+    setNutritionLogs(prev => {
+      const existing = prev.find(l => l.date === today);
+      if (existing) return prev.map(l => l.date === today ? { ...l, steps: safeSteps } : l);
+      return [...prev, { date: today, entries: [], waterMl: 0, steps: safeSteps }];
+    });
+  }, [setNutritionLogs]);
+
+  const handleToggleTrainingDay = useCallback((isTrainingDay: boolean) => {
+    const today = todayStr();
+    setNutritionLogs(prev => {
+      const existing = prev.find(l => l.date === today);
+      if (existing) return prev.map(l => l.date === today ? { ...l, isTrainingDay } : l);
+      return [...prev, { date: today, entries: [], waterMl: 0, isTrainingDay }];
+    });
+  }, [setNutritionLogs]);
+
+  const upcomingDayForCardio: ProgramDay | undefined = useMemo(() => {
+    if (activeSession?.exercises?.length) {
+      return {
+        id: 'active_session_day',
+        dayName: { en: 'Today', es: 'Hoy' },
+        slots: activeSession.exercises.map(e => ({ muscle: e.muscle, setTarget: e.sets.length })),
+      };
+    }
+    return Array.isArray(program) ? program[0] : undefined;
+  }, [activeSession, program]);
 
   // Latest body log
   const latestWeight = weightTrend.length > 0 ? weightTrend[weightTrend.length - 1] : null;
@@ -275,6 +307,11 @@ export const NutriView: React.FC = () => {
             onDeleteCardio={handleDeleteCardio}
             onEditEntry={handleEditEntry}
             onDeleteEntry={handleDeleteMeal}
+            bodyLogs={bodyLogs}
+            upcomingDay={upcomingDayForCardio}
+            onUpdateNutritionGoal={(next: NutritionGoal) => setNutritionGoal(next)}
+            onUpdateSteps={handleUpdateSteps}
+            onToggleTrainingDay={handleToggleTrainingDay}
           />
         )}
         {/* ─── TAB: BODY ──────────────────────────────────────── */}
