@@ -16,6 +16,7 @@ import { aggregateExerciseFrequency, exerciseIdGroup, matchesExerciseQuery, reso
 import { buildSelectedExerciseInsight } from './exerciseInsight';
 import { computeRepMaxTable } from '../../utils/repMaxTable';
 import { detectExercisePlateaus } from '../../utils/rpExerciseCues';
+import { getExerciseSfrRanking, loadExerciseSfrHistory } from '../../utils/rpAutoregulation';
 
 export const useStatsData = ({ activeTab, hideHeader, statsScope }: { activeTab?: 'overview' | 'progress' | 'volume'; hideHeader: boolean; statsScope: StatsScope }) => {
     const { logs, lang, exercises, tutorialProgress, markTutorialSeen, userProfile, config, rpFeedback } = useApp();
@@ -344,6 +345,11 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope }: { activeTab?
         [safeLogs, exercises, lang],
     );
 
+    const sfrRanking = useMemo(
+        () => getExerciseSfrRanking(loadExerciseSfrHistory(), exercises, lang),
+        [exercises, lang],
+    );
+
     const statsTutorialSteps = [
         { targetId: 'tut-progress-chart', title: t.tutorial.stats[0].title, text: t.tutorial.stats[0].text, position: 'bottom' as const },
         { targetId: 'tut-radar-chart', title: t.tutorial.stats[1].title, text: t.tutorial.stats[1].text, position: 'top' as const },
@@ -422,6 +428,7 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope }: { activeTab?
         selectedExerciseInsight,
         repMaxRows,
         exercisePlateaus,
+        sfrRanking,
         statsTutorialSteps,
     };
 };

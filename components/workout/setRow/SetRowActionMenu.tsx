@@ -223,6 +223,24 @@ export const SetRowActionMenu: React.FC<SetRowActionMenuProps> = ({
                         <Icon name="Trash2" size={16} className="shrink-0 text-red-400" />
                         <span>{pickLang(lang, { es: 'Eliminar serie', en: 'Delete set' })}</span>
                     </button>
+                    <button
+                        type="button"
+                        data-testid="menu-unilateral-side-btn"
+                        onClick={() => {
+                            const nextSide = set.limitingSide === 'L' ? 'R' : set.limitingSide === 'R' ? undefined : 'L';
+                            onUpdate(exInstanceId, set.id, 'limitingSide', nextSide);
+                            onClose();
+                        }}
+                        className="flex items-center justify-between gap-3 px-3.5 py-2 text-[13px] font-medium text-zinc-200 transition-colors hover:bg-white/5 active:bg-white/10 text-left"
+                    >
+                        <span className="flex items-center gap-3">
+                            <Icon name="ArrowUpDown" size={15} className="shrink-0 text-zinc-400" />
+                            <span>{pickLang(lang, { es: 'Lado limitante (L/R)', en: 'Limiting side (L/R)' })}</span>
+                        </span>
+                        <span className="rounded bg-surface-base px-1.5 py-0.5 text-[11px] font-bold text-primary-300">
+                            {set.limitingSide || '—'}
+                        </span>
+                    </button>
                 </div>
 
                 <div className="my-1 border-t border-border-subtle" />

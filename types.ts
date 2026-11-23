@@ -80,6 +80,10 @@ export type SetType = 'regular' | 'myorep' | 'myorep_match' | 'lengthened_partia
 
 export type DeloadStage = 'wired' | 'tired' | 'restless' | 'ready';
 
+export type VolumeProgressionProfile = 'conservative' | 'standard' | 'aggressive';
+
+export type UnilateralSide = 'L' | 'R';
+
 export interface ExerciseFeedbackRecord {
   jointPain: number;
   pump?: number;
@@ -120,6 +124,7 @@ export interface WorkoutSet {
   programSetIndex?: number;
   avtRoundId?: number;  // ID compartido entre todos los hops de un mismo round AVT
   isLastHop?: boolean;  // true en el hop donde se llegó al fallo
+  limitingSide?: UnilateralSide;
 }
 
 export type WeightUnit = 'kg' | 'lb';
@@ -155,6 +160,7 @@ export interface ActiveSession {
   sorenessCheckins?: Record<string, SorenessCheckin>;
   recoveryMuscles?: string[];
   deloadCondensed?: boolean;
+  inlineJointPain?: Record<string, number>;
 }
 
 export interface ProgramSlot {
@@ -233,6 +239,9 @@ export interface MesoCycle {
   };
   deloadStage?: DeloadStage;
   condensedDeload?: boolean;
+  maxSetsPerExercise?: number | null;
+  volumeProfile?: VolumeProgressionProfile;
+  skipDeloadAccessories?: boolean;
   completedAt?: number;
   programSystem?: ProgramRunState;
   stageId?: string;

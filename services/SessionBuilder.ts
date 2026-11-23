@@ -4,7 +4,7 @@ import { getLastLogForExercise, uid } from '../utils';
 import { KONG_4DAY_V1 } from '../programs/kong/kong4Day';
 import { getProgramBlockForWeek, resolveProgramDay } from '../programs/engine/ProgramResolver';
 import { getKongDayDisplay } from '../programs/kong/kongDisplay';
-import { getTargetRirForWeek, predictSetTarget } from '../utils/rpAutoregulation';
+import { getTargetRirForWeek, predictSetTarget, DELOAD_ACCESSORY_MUSCLES } from '../utils/rpAutoregulation';
 
 export class SessionBuilder {
     static buildFromProgramDay(
@@ -41,7 +41,15 @@ export class SessionBuilder {
         const safeLogs = Array.isArray(logs) ? logs : [];
         const isDeload = !!activeMeso.isDeload;
 
-        const sessionExs = (resolvedDay.slots || []).map((slotDef, sIdx) => {
+        const sessionExs = (resolvedDay.slots || [])
+            .filter((slotDef) => {
+                if (!slotDef) return false;
+                if (isDeload && activeMeso.skipDeloadAccessories && !isKong && DELOAD_ACCESSORY_MUSCLES.has(slotDef.muscle)) {
+                    return false;
+                }
+                return true;
+            })
+            .map((slotDef, sIdx) => {
             if (!slotDef) return null;
             const exId = slotDef.exerciseId || dayPlan[sIdx];
             // Priority: exact ID match → same-muscle fallback → typed placeholder (never random index 0)
@@ -74,6 +82,9 @@ export class SessionBuilder {
             if (!slotDef.prescription && musclePriority === 'maintain') {
                 setTarget = Math.min(3, Math.max(1, setTarget));
             }
+            if (!slotDef.prescription && activeMeso.maxSetsPerExercise && activeMeso.maxSetsPerExercise > 0) {
+                setTarget = Math.min(setTarget, activeMeso.maxSetsPerExercise);
+            }
             if (!slotDef.prescription && isDeload) setTarget = Math.max(1, Math.ceil(setTarget / 2));
 
             const lastSets = getLastLogForExercise(exDef.id, safeLogs, safeExercises);
@@ -89,6 +100,7 @@ export class SessionBuilder {
                           targetRir: weekTargetRir,
                           week: activeMeso.week,
                           isDeload,
+                          isBodyweight: exDef.isBodyweight,
                       })
                     : null;
                 return {

@@ -429,7 +429,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
         const isPR = detectPRs();
         setHasNewPR(isPR);
 
-        if (config?.rpEnabled) {
+        if (config?.rpEnabled && !currentActiveMeso?.isDeload) {
             setShowFeedbackModal(true);
         } else {
             if (isPR) {

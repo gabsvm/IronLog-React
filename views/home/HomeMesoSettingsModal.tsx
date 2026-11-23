@@ -7,7 +7,21 @@ import type { HomeViewState } from './useHomeViewState';
 const TutorialOverlay = React.lazy(() => import('../../components/ui/TutorialOverlay').then(m => ({ default: m.TutorialOverlay })));
 
 export const HomeMesoSettingsModal: React.FC<{ state: HomeViewState }> = ({ state }) => {
-    const { onEditProgram, tutorialProgress, markTutorialSeen, t, h, lang, availableStages, editStageId, setEditStageId, setShowCompleteModal, showMesoSettings, setShowMesoSettings, editWeeks, setEditWeeks, editDeload, setEditDeload, editNote, setEditNote, handleSaveSettings, mesoSettingsTutorialSteps } = state;
+    const {
+        onEditProgram, tutorialProgress, markTutorialSeen, t, h, lang, availableStages,
+        editStageId, setEditStageId, setShowCompleteModal, showMesoSettings, setShowMesoSettings,
+        editWeeks, setEditWeeks, editDeload, setEditDeload,
+        editMaxSets, setEditMaxSets, editVolumeProfile, setEditVolumeProfile,
+        editSkipDeloadAccessories, setEditSkipDeloadAccessories,
+        editNote, setEditNote, handleSaveSettings, mesoSettingsTutorialSteps,
+    } = state as HomeViewState & {
+        editMaxSets?: number | null;
+        setEditMaxSets?: (val: number | null) => void;
+        editVolumeProfile?: 'conservative' | 'standard' | 'aggressive';
+        setEditVolumeProfile?: (val: 'conservative' | 'standard' | 'aggressive') => void;
+        editSkipDeloadAccessories?: boolean;
+        setEditSkipDeloadAccessories?: (val: boolean) => void;
+    };
     return (
         <>
             {showMesoSettings && (
@@ -94,6 +108,102 @@ export const HomeMesoSettingsModal: React.FC<{ state: HomeViewState }> = ({ stat
                                 >
                                     <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-300 ${editDeload ? 'translate-x-6' : 'translate-x-0'}`} />
                                 </button>
+                            </div>
+
+                            {/* Guardrails RP (Anti-Volume Trap & Deload Accessories) */}
+                            <div
+                                data-testid="meso-guardrails-section"
+                                className="rounded-[6px] border border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-raised))] p-3.5 space-y-3"
+                            >
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="text-xs font-extrabold uppercase tracking-wider text-[rgb(var(--text-primary))]">
+                                        {pickLang(lang, { es: 'Tope máx. series / ejercicio', en: 'Max sets / exercise' })}
+                                    </span>
+                                    <span className="text-xs font-bold text-primary-400">Anti-Volume Trap</span>
+                                </div>
+                                <div className="grid grid-cols-4 gap-1.5">
+                                    {[
+                                        { val: 4, label: '4 sets' },
+                                        { val: 5, label: '5 sets' },
+                                        { val: 6, label: '6 sets' },
+                                        { val: null, label: pickLang(lang, { es: 'Sin tope', en: 'No cap' }) },
+                                    ].map((opt) => {
+                                        const currentCap = editMaxSets ?? null;
+                                        const active = currentCap === opt.val;
+                                        return (
+                                            <button
+                                                key={String(opt.val)}
+                                                type="button"
+                                                aria-pressed={active}
+                                                data-testid={`guardrail-cap-${opt.val ?? 'none'}`}
+                                                onClick={() => setEditMaxSets?.(opt.val)}
+                                                className={`min-h-8 rounded-[5px] border px-1.5 py-1 text-xs font-bold transition-colors ${
+                                                    active
+                                                        ? 'border-primary-500 bg-primary-500 text-zinc-950'
+                                                        : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated))] text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--text-primary))]'
+                                                }`}
+                                            >
+                                                {opt.label}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                <div>
+                                    <span className="text-xs font-bold text-[rgb(var(--text-secondary))] block mb-1.5">
+                                        {pickLang(lang, { es: 'Ritmo de incremento semanal', en: 'Weekly set progression speed' })}
+                                    </span>
+                                    <div className="grid grid-cols-3 gap-1.5">
+                                        {([
+                                            { id: 'conservative', label: { es: 'Conservador', en: 'Conservative' } },
+                                            { id: 'standard', label: { es: 'Estándar RP', en: 'Standard RP' } },
+                                            { id: 'aggressive', label: { es: 'Agresivo', en: 'Aggressive' } },
+                                        ] as const).map((prof) => {
+                                            const active = (editVolumeProfile || 'standard') === prof.id;
+                                            return (
+                                                <button
+                                                    key={prof.id}
+                                                    type="button"
+                                                    aria-pressed={active}
+                                                    data-testid={`guardrail-profile-${prof.id}`}
+                                                    onClick={() => setEditVolumeProfile?.(prof.id)}
+                                                    className={`min-h-8 rounded-[5px] border px-1.5 py-1 text-xs font-bold transition-colors ${
+                                                        active
+                                                            ? 'border-primary-500 bg-primary-500 text-zinc-950'
+                                                            : 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--surface-elevated))] text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--text-primary))]'
+                                                    }`}
+                                                >
+                                                    {prof.label[lang]}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-between gap-3 pt-1 border-t border-[rgb(var(--border-subtle))]">
+                                    <span className="text-xs text-[rgb(var(--text-secondary))]">
+                                        {pickLang(lang, {
+                                            es: 'Omitir accesorios menores (gemelos/abs/antebrazo) en Deload',
+                                            en: 'Skip minor accessories (calves/abs/forearms) on Deload',
+                                        })}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        role="switch"
+                                        aria-checked={Boolean(editSkipDeloadAccessories)}
+                                        data-testid="guardrail-skip-deload-acc"
+                                        onClick={() => setEditSkipDeloadAccessories?.(!editSkipDeloadAccessories)}
+                                        className={`relative w-11 h-6 shrink-0 rounded-full transition-colors ${
+                                            editSkipDeloadAccessories ? 'bg-primary-500' : 'bg-[rgb(var(--surface-elevated))]'
+                                        }`}
+                                    >
+                                        <span
+                                            className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${
+                                                editSkipDeloadAccessories ? 'translate-x-5' : 'translate-x-0'
+                                            }`}
+                                        />
+                                    </button>
+                                </div>
                             </div>
 
                             {/* Edit Template Link */}

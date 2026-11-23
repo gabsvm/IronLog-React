@@ -334,9 +334,10 @@ export const useSetRowState = ({
     const weightPlaceholder = set.hintWeight ? String(shownWeight(set.hintWeight)) : '0';
     const predictiveTarget = useMemo(() => {
         if (isDone || isCardio || isIsometric) return null;
-        if (!set.prevWeight || !set.prevReps) return null;
+        if (!set.prevReps) return null;
+        if (!isBodyweight && !set.prevWeight) return null;
         const currKg = Number(storedWeight(localWeight));
-        if (!Number.isFinite(currKg) || currKg <= 0) return null;
+        if (!Number.isFinite(currKg) || (!isBodyweight && currKg <= 0) || (isBodyweight && currKg < 0)) return null;
         const result = predictSetTarget({
             prevWeightKg: set.prevWeight,
             prevReps: set.prevReps,
@@ -345,10 +346,11 @@ export const useSetRowState = ({
             targetRir: typeof set.targetRpe === 'number' ? set.targetRpe : targetRir,
             week: 2,
             isDeload: false,
+            isBodyweight,
         });
-        if (result.deltaType !== 'matched_weight' && result.deltaType !== 'rir_fallback') return null;
+        if (result.deltaType !== 'matched_weight' && result.deltaType !== 'rir_fallback' && !(isBodyweight && localWeight !== '')) return null;
         return result;
-    }, [isDone, isCardio, isIsometric, localWeight, set.prevReps, set.prevWeight, set.targetRpe, storedWeight, targetRir, unit]);
+    }, [isBodyweight, isDone, isCardio, isIsometric, localWeight, set.prevReps, set.prevWeight, set.targetRpe, storedWeight, targetRir, unit]);
 
     const repsPlaceholder = predictiveTarget
         ? (predictiveTarget.mode === 'rir' ? `${predictiveTarget.targetRir} RIR` : String(predictiveTarget.targetReps))

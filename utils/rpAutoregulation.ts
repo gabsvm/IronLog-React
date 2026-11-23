@@ -1,16 +1,26 @@
 import type {
+    ExerciseDef,
     ExerciseFeedbackRecord,
     Log,
     MesoCycle,
     MuscleGroup,
     MusclePriorityLevel,
     SessionExercise,
+    VolumeProgressionProfile,
     WeightUnit,
     WorkoutSet,
 } from '../types';
+import { getTranslated } from '../utils';
 import { PROGRESSION_STEP, toDisplay } from './units';
 
 export const EXERCISE_SFR_STORAGE_KEY = 'mevra_exercise_sfr_v1';
+
+export const DELOAD_ACCESSORY_MUSCLES: ReadonlySet<MuscleGroup> = new Set<MuscleGroup>([
+    'CALVES',
+    'ABS',
+    'FOREARMS',
+    'TRAPS',
+]);
 
 /**
  * Computes the official RP Hypertrophy App target RIR ramp for a mesocycle week:
@@ -58,10 +68,22 @@ export const predictSetTarget = (input: {
     targetRir: number;
     week: number;
     isDeload: boolean;
+    isBodyweight?: boolean;
+    bodyWeightKg?: number;
 }): PredictiveSetTarget => {
     const prevW = Number(input.prevWeightKg) || 0;
     const prevR = Number(input.prevReps) || 0;
     const currW = Number(input.currentWeightKg) || 0;
+
+    if (input.isBodyweight && prevW <= 0 && prevR > 0) {
+        return {
+            mode: 'reps',
+            targetWeightKg: 0,
+            targetReps: input.isDeload ? Math.max(4, Math.round(prevR * 0.6)) : prevR + 1,
+            targetRir: input.isDeload ? 5 : input.targetRir,
+            deltaType: input.isDeload ? 'deload' : 'rep_bump',
+        };
+    }
 
     if (prevW <= 0 || prevR <= 0) {
         return {
@@ -85,19 +107,20 @@ export const predictSetTarget = (input: {
         };
     }
 
-    // Standard RP baseline progression: nudge reps by +1 at same load on high-rep work
-    // or small load increment (~2.5-5%, minimum 1 step) when under ~10 reps.
+    const bwOffset = input.isBodyweight ? Math.max(40, input.bodyWeightKg || 75) : 0;
+    const effPrevW = prevW + bwOffset;
     const smallLoadBump = Math.max(PROGRESSION_STEP[input.unit], prevW * 0.025);
     const prescribedW = prevR < 10 ? roundToStepKg(prevW + smallLoadBump, input.unit) : prevW;
     const prescribedR = prevR < 10 ? prevR : prevR + 1;
 
-    const effectiveCurrW = currW > 0 ? currW : prescribedW;
-    const pctDiff = Math.abs(effectiveCurrW - prevW) / Math.max(0.5, prevW);
+    const effectiveCurrExternalW = currW > 0 ? currW : prescribedW;
+    const effCurrW = effectiveCurrExternalW + bwOffset;
+    const pctDiff = Math.abs(effCurrW - effPrevW) / Math.max(0.5, effPrevW);
 
     if (currW > 0 && pctDiff > 0.18) {
         return {
             mode: 'rir',
-            targetWeightKg: effectiveCurrW,
+            targetWeightKg: effectiveCurrExternalW,
             targetReps: prevR,
             targetRir: input.targetRir,
             deltaType: 'rir_fallback',
@@ -105,14 +128,14 @@ export const predictSetTarget = (input: {
     }
 
     // Epley-based relative e1RM overload match
-    const prevE1rm = prevW * (1 + prevR / 30);
+    const prevE1rm = effPrevW * (1 + prevR / 30);
     const targetE1rm = prevE1rm * 1.015;
-    let matchedReps = Math.round(((targetE1rm / Math.max(0.5, effectiveCurrW)) - 1) * 30);
+    let matchedReps = Math.round(((targetE1rm / Math.max(0.5, effCurrW)) - 1) * 30);
 
     // Exact RP rule: returning to last week's weight must require at least prevReps + 1
-    if (Math.abs(effectiveCurrW - prevW) < 0.25) {
+    if (Math.abs(effectiveCurrExternalW - prevW) < 0.25) {
         matchedReps = Math.max(prevR + 1, matchedReps);
-    } else if (effectiveCurrW < prevW) {
+    } else if (effectiveCurrExternalW < prevW) {
         matchedReps = Math.max(prevR + 2, matchedReps);
     } else {
         matchedReps = Math.max(1, Math.min(prevR, matchedReps));
@@ -126,7 +149,7 @@ export const predictSetTarget = (input: {
 
     return {
         mode: 'reps',
-        targetWeightKg: effectiveCurrW,
+        targetWeightKg: effectiveCurrExternalW,
         targetReps: Math.max(1, matchedReps),
         targetRir: input.targetRir,
         deltaType,
@@ -138,6 +161,7 @@ export const predictSetTarget = (input: {
  * - `maintain`: locked at MV (`<= 0` set additions; only reduces on excessive fatigue/pain)
  * - `grow`: conservative `+1` only with strong recovery
  * - `emphasize`: aggressive `+1` (or `+2` on zero fatigue + low pump)
+ * - `volumeProfile`: 'conservative' dampens jumps (Anti-Volume Trap), 'standard' (RP 1:1), 'aggressive'
  * - "Pushed my limits" (`workload === 2`) caps set additions at 0 across all tiers.
  */
 export const computePriorityAwareSetDelta = (input: {
@@ -146,8 +170,9 @@ export const computePriorityAwareSetDelta = (input: {
     pump: number;
     workload: number;
     priority?: MusclePriorityLevel;
+    volumeProfile?: VolumeProgressionProfile;
 }): number => {
-    const { jointPain, soreness, pump, workload, priority = 'grow' } = input;
+    const { jointPain, soreness, pump, workload, priority = 'grow', volumeProfile = 'standard' } = input;
 
     if (jointPain >= 2 || soreness === 3 || workload === 3) {
         return soreness === 3 && workload === 3 ? -2 : -1;
@@ -167,6 +192,13 @@ export const computePriorityAwareSetDelta = (input: {
         return 0;
     }
 
+    if (volumeProfile === 'conservative') {
+        if (jointPain === 0 && soreness === 0 && workload === 0) {
+            return 1;
+        }
+        return 0;
+    }
+
     if (priority === 'emphasize') {
         if (jointPain === 0 && soreness === 0 && workload === 0 && pump <= 1) {
             return pump === 0 ? 2 : 1;
@@ -177,12 +209,74 @@ export const computePriorityAwareSetDelta = (input: {
         return 0;
     }
 
+    if (volumeProfile === 'aggressive' && jointPain === 0 && soreness === 0 && workload === 0 && pump === 0) {
+        return 2;
+    }
+
     // Standard `grow`
     if (jointPain === 0 && soreness <= 1 && (workload === 0 || (workload === 1 && pump <= 1))) {
         return 1;
     }
 
     return 0;
+};
+
+export const explainPriorityAwareSetDelta = (input: {
+    jointPain: number;
+    soreness: number;
+    pump: number;
+    workload: number;
+    priority?: MusclePriorityLevel;
+    volumeProfile?: VolumeProgressionProfile;
+    delta: number;
+}): { es: string; en: string } => {
+    const { jointPain, soreness, workload, priority = 'grow', volumeProfile = 'standard', delta } = input;
+
+    if (delta < 0) {
+        return jointPain >= 2
+            ? {
+                  es: `Dolor articular elevado → descarga ${delta} serie para proteger tejido conectivo.`,
+                  en: `Elevated joint pain → reducing ${delta} set to protect connective tissue.`,
+              }
+            : {
+                  es: `Fatiga/agujetas acumuladas → descarga ${delta} serie la próxima semana.`,
+                  en: `Lingering soreness/fatigue → pulling back ${delta} set next week.`,
+              };
+    }
+
+    if (priority === 'maintain') {
+        return {
+            es: 'Prioridad Maintain: volumen bloqueado en mantenimiento (MV) para ahorrar recuperación.',
+            en: 'Maintain priority: volume locked at Maintenance Volume (MV) to save recovery.',
+        };
+    }
+
+    if (workload >= 2 && delta === 0) {
+        return {
+            es: 'Esfuerzo "Al límite" cerca del MRV → mantenemos series para no caer en junk volume.',
+            en: '"Pushed my limits" near MRV → holding sets steady to prevent junk volume.',
+        };
+    }
+
+    if (delta > 0) {
+        const tag = priority === 'emphasize' ? 'Emphasize' : volumeProfile === 'conservative' ? 'Conservador' : 'Óptimo';
+        return {
+            es: `Recuperación limpia + 0 dolor (${tag}) → +${delta} ${delta === 1 ? 'serie' : 'series'} la próxima semana.`,
+            en: `Clean recovery + zero pain (${tag}) → +${delta} ${delta === 1 ? 'set' : 'sets'} next week.`,
+        };
+    }
+
+    if (soreness >= 2) {
+        return {
+            es: 'Agujetas curadas justo a tiempo → mantenemos volumen estable sin sobrecargar.',
+            en: 'Soreness healed just on time → holding current set target steady.',
+        };
+    }
+
+    return {
+        es: 'Estímulo y recuperación equilibrados → mantenemos las series actuales.',
+        en: 'Balanced stimulus & recovery → maintaining current weekly sets.',
+    };
 };
 
 export interface EarlyDeloadStatus {
@@ -369,4 +463,44 @@ export const isRetrospectiveSorenessDue = (
     if (!muscle || muscle === 'CARDIO') return false;
     if (sessionCheckins && sessionCheckins[muscle]) return false;
     return week > 1 || activeMesoLogsCountForMuscle > 0;
+};
+
+export interface ExerciseSfrRankEntry {
+    exerciseId: string;
+    exerciseName: string;
+    muscle: MuscleGroup | string;
+    sfrScore: number;
+    avgJointPain: number;
+    avgPump: number;
+    jointPainWarning: boolean;
+    count: number;
+}
+
+/**
+ * Ranks logged exercises across mesocycles from persisted `mevra_exercise_sfr_v1`
+ * feedback by descending Stimulus-to-Fatigue Ratio (SFR), flagging any joint nag.
+ */
+export const getExerciseSfrRanking = (
+    history: Record<string, ExerciseFeedbackRecord>,
+    exercises: readonly ExerciseDef[],
+    lang: 'en' | 'es',
+): ExerciseSfrRankEntry[] => {
+    if (!history || typeof history !== 'object') return [];
+    const byId = new Map((exercises || []).map((e) => [String(e.id), e]));
+    return Object.entries(history)
+        .filter(([, rec]) => rec && rec.count > 0)
+        .map(([exId, rec]) => {
+            const def = byId.get(String(exId));
+            return {
+                exerciseId: exId,
+                exerciseName: def ? String(getTranslated(def.name, lang) || exId) : exId,
+                muscle: def?.muscle || 'CHEST',
+                sfrScore: getExerciseSfrScore(rec),
+                avgJointPain: rec.avgJointPain,
+                avgPump: rec.avgPump,
+                jointPainWarning: hasJointPainWarning(rec),
+                count: rec.count,
+            };
+        })
+        .sort((a, b) => b.sfrScore - a.sfrScore || a.avgJointPain - b.avgJointPain);
 };

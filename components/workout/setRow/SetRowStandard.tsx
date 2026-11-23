@@ -232,13 +232,31 @@ export const SetRowStandard: React.FC<{ state: SetRowState }> = ({ state }) => {
                     </button>
                 </div>
             </div>
-            {predictiveTarget && !isDone && (
-                <div data-testid="predictive-match-pill" className="px-3 pb-2 -mt-1 flex items-center justify-end gap-1.5">
-                    <span className="inline-flex items-center gap-1 rounded-[4px] border border-primary-500/35 bg-primary-500/12 px-2 py-0.5 text-[11px] font-bold text-primary-300 tabular-nums">
-                        {predictiveTarget.mode === 'rir'
-                            ? pickLang(lang, { es: `Objetivo ajustado: ${predictiveTarget.targetRir} RIR`, en: `Matched target: ${predictiveTarget.targetRir} RIR` })
-                            : pickLang(lang, { es: `Objetivo recalculado: ${predictiveTarget.targetReps} reps`, en: `Predictive target: ${predictiveTarget.targetReps} reps` })}
-                    </span>
+            {(predictiveTarget || set.limitingSide) && !isDone && (
+                <div className="px-3 pb-2 -mt-1 flex items-center justify-end gap-1.5 flex-wrap">
+                    {set.limitingSide && (
+                        <button
+                            type="button"
+                            data-testid="unilateral-side-toggle"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                const nextSide = set.limitingSide === 'L' ? 'R' : undefined;
+                                onUpdate(exInstanceId, set.id, 'limitingSide', nextSide);
+                            }}
+                            className="inline-flex items-center gap-1 rounded-[4px] border border-border-subtle bg-surface-elevated px-2 py-0.5 text-[11px] font-bold text-zinc-200 hover:text-white"
+                        >
+                            {pickLang(lang, { es: `Lado: ${set.limitingSide}`, en: `Side: ${set.limitingSide}` })}
+                        </button>
+                    )}
+                    {predictiveTarget && (
+                        <div data-testid="predictive-match-pill" className="inline-flex items-center gap-1">
+                            <span className="inline-flex items-center gap-1 rounded-[4px] border border-primary-500/35 bg-primary-500/12 px-2 py-0.5 text-[11px] font-bold text-primary-300 tabular-nums">
+                                {predictiveTarget.mode === 'rir'
+                                    ? pickLang(lang, { es: `Objetivo ajustado: ${predictiveTarget.targetRir} RIR`, en: `Matched target: ${predictiveTarget.targetRir} RIR` })
+                                    : pickLang(lang, { es: `Objetivo recalculado: ${predictiveTarget.targetReps} reps`, en: `Predictive target: ${predictiveTarget.targetReps} reps` })}
+                            </span>
+                        </div>
+                    )}
                 </div>
             )}
         </div>

@@ -13,6 +13,7 @@ import { ALL_EQUIPMENT_IDS, getEquipmentLabel } from '../../../utils/equipment';
 import { pickLang } from '../../../utils/i18n';
 import { resolveMuscleLabel } from '../../../utils/muscle';
 import { hasJointPainWarning, loadExerciseSfrHistory } from '../../../utils/rpAutoregulation';
+import { useStore } from '../../../lib/store';
 import type { EquipmentType } from '../../../types';
 import type { ExerciseCardState } from './useSortableExerciseCardState';
 
@@ -99,6 +100,9 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
     const [guideExpanded, setGuideExpanded] = useState(false);
     const [guideDismissed, setGuideDismissed] = useState(false);
     const [pendingRecoveryPrompt, setPendingRecoveryPrompt] = useState(false);
+    const sessionInlinePain = useStore(state => state.activeSession?.inlineJointPain?.[ex.id]);
+    const [localInlinePain, setLocalInlinePain] = useState<number | null>(null);
+    const effectiveInlinePain = typeof sessionInlinePain === 'number' ? sessionInlinePain : localInlinePain;
     const sfrRecord = React.useMemo(() => loadExerciseSfrHistory()[ex.id], [ex.id]);
     const jointPainFlagged = hasJointPainWarning(sfrRecord);
 
@@ -567,6 +571,64 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                 lang={lang}
                 tutorialId={tutorialId}
             />
+
+            {!isCardio && regularSets.length > 0 && regularSets.every(s => s.completed || s.skipped) && (
+                <div
+                    data-testid="inline-joint-pain-bar"
+                    className="mx-3 mb-2 mt-1 rounded-[6px] border border-border-subtle/80 bg-surface-base/75 px-3 py-2 space-y-1.5"
+                >
+                    <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-bold text-zinc-300">
+                            {pickLang(lang, { es: 'Dolor articular rápido (opcional)', en: 'Quick joint check (optional)' })}
+                        </span>
+                        {typeof effectiveInlinePain === 'number' && (
+                            <span className={`text-xs font-bold ${effectiveInlinePain >= 2 ? 'text-amber-300' : 'text-emerald-300'}`}>
+                                {pickLang(lang, { es: 'Guardado', en: 'Saved' })}
+                            </span>
+                        )}
+                    </div>
+                    <div className="grid grid-cols-4 gap-1.5">
+                        {[
+                            { val: 0, label: pickLang(lang, { es: 'Ninguno', en: 'None' }) },
+                            { val: 1, label: pickLang(lang, { es: 'Bajo', en: 'Low' }) },
+                            { val: 2, label: pickLang(lang, { es: 'Mod', en: 'Mod' }) },
+                            { val: 3, label: pickLang(lang, { es: 'Mucho', en: 'High' }) },
+                        ].map((opt) => {
+                            const active = effectiveInlinePain === opt.val;
+                            return (
+                                <button
+                                    key={opt.val}
+                                    type="button"
+                                    aria-pressed={active}
+                                    onClick={() => {
+                                        setLocalInlinePain(opt.val);
+                                        onUpdateSession?.((prev: any) =>
+                                            prev
+                                                ? {
+                                                      ...prev,
+                                                      inlineJointPain: {
+                                                          ...(prev.inlineJointPain || {}),
+                                                          [ex.id]: opt.val,
+                                                      },
+                                                  }
+                                                : prev,
+                                        );
+                                    }}
+                                    className={`min-h-8 rounded-[4px] border px-1.5 py-1 text-xs font-bold transition-colors ${
+                                        active
+                                            ? opt.val >= 2
+                                                ? 'border-amber-400 bg-amber-500/20 text-amber-200'
+                                                : 'border-primary-500 bg-primary-500 text-zinc-950'
+                                            : 'border-border-subtle bg-surface-raised text-zinc-300 hover:text-white'
+                                    }`}
+                                >
+                                    {opt.label}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
 
             {/* Completion flash */}
             {exDoneFlash && (

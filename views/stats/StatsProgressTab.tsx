@@ -15,7 +15,7 @@ import { RepMaxTable } from './RepMaxTable';
 import { formatInteger } from '../../utils/i18n';
 
 export const StatsProgressTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
-    const { lang, t, s, unit, weightSuffix, selectedExId, setSelectedExId, chartMetric, setChartMetric, setShowPicker, setPickerSearch, availableExercises, chartPoints, loadingOverview, loadingChart, currentEx, hasExerciseHistory, prHistory, showAllPRs, setShowAllPRs, displayedPRs, metricButtons, selectedExerciseInsight, repMaxRows, exercisePlateaus } = stats;
+    const { lang, t, s, unit, weightSuffix, selectedExId, setSelectedExId, chartMetric, setChartMetric, setShowPicker, setPickerSearch, availableExercises, chartPoints, loadingOverview, loadingChart, currentEx, hasExerciseHistory, prHistory, showAllPRs, setShowAllPRs, displayedPRs, metricButtons, selectedExerciseInsight, repMaxRows, exercisePlateaus, sfrRanking } = stats;
     return (
         <>
                 <>
@@ -123,6 +123,41 @@ export const StatsProgressTab: React.FC<{ stats: StatsData }> = ({ stats }) => {
                                 >
                                     {pickLang(lang, { es: 'Inspeccionar', en: 'Inspect' })}
                                 </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {Array.isArray(sfrRanking) && sfrRanking.length > 0 && (
+                <div
+                    data-testid="sfr-ranking-card"
+                    className="premium-theme-panel rounded-[8px] border border-border-subtle bg-surface-raised p-4 space-y-2.5"
+                >
+                    <div className="flex items-center justify-between gap-2">
+                        <h3 className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-white">
+                            <Icon name="Trophy" size={14} className="text-primary-400" />
+                            <span>{pickLang(lang, { es: 'Ranking Histórico SFR', en: 'Historical SFR Ranking' })}</span>
+                        </h3>
+                        <span className="text-xs font-semibold text-zinc-400">
+                            {pickLang(lang, { es: 'Estímulo / Fatiga', en: 'Stimulus / Fatigue' })}
+                        </span>
+                    </div>
+                    <div className="space-y-1.5">
+                        {sfrRanking.slice(0, 5).map((entry) => (
+                            <div
+                                key={entry.exerciseId}
+                                className={`flex items-center justify-between gap-3 rounded-[6px] border px-3 py-2 ${
+                                    entry.jointPainWarning
+                                        ? 'border-amber-500/35 bg-amber-500/10'
+                                        : 'border-border-subtle bg-surface-base/70'
+                                }`}
+                            >
+                                <span className="text-xs font-bold text-white truncate">{entry.exerciseName}</span>
+                                <span className={`shrink-0 font-mono text-xs font-bold tabular-nums ${entry.jointPainWarning ? 'text-amber-300' : 'text-emerald-300'}`}>
+                                    {`SFR ${entry.sfrScore}`}
+                                    {entry.jointPainWarning ? ` · ${pickLang(lang, { es: 'Dolor art.', en: 'Joint nag' })}` : ''}
+                                </span>
                             </div>
                         ))}
                     </div>

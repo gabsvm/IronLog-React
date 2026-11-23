@@ -78,6 +78,9 @@ export const useHomeViewState = ({ startSession, onEditProgram, onSkipSession, o
         setTransitionBlock(null);
     };
     const [editDeload, setEditDeload] = useState(false);
+    const [editMaxSets, setEditMaxSets] = useState<number | null>(null);
+    const [editVolumeProfile, setEditVolumeProfile] = useState<'conservative' | 'standard' | 'aggressive'>('standard');
+    const [editSkipDeloadAccessories, setEditSkipDeloadAccessories] = useState(false);
     const [editNote, setEditNote] = useState('');
     const [editStageId, setEditStageId] = useState<string>('');
 
@@ -100,6 +103,9 @@ export const useHomeViewState = ({ startSession, onEditProgram, onSkipSession, o
         if (activeMeso && showMesoSettings) {
             setEditWeeks(activeMeso.targetWeeks || activeMeso.duration || 4);
             setEditDeload(activeMeso.isDeload || false);
+            setEditMaxSets(activeMeso.maxSetsPerExercise ?? null);
+            setEditVolumeProfile(activeMeso.volumeProfile || 'standard');
+            setEditSkipDeloadAccessories(Boolean(activeMeso.skipDeloadAccessories));
             setEditNote(activeMeso.note || '');
             setEditStageId(activeMeso.stageId || activeTemplate?.defaultStageId || activeTemplate?.stages?.[0]?.id || '');
         }
@@ -162,6 +168,9 @@ export const useHomeViewState = ({ startSession, onEditProgram, onSkipSession, o
                 targetWeeks: editWeeks,
                 duration: editWeeks,
                 isDeload: editDeload,
+                maxSetsPerExercise: editMaxSets,
+                volumeProfile: editVolumeProfile,
+                skipDeloadAccessories: editSkipDeloadAccessories,
                 note: editNote
             } : null);
         } else {
@@ -171,6 +180,9 @@ export const useHomeViewState = ({ startSession, onEditProgram, onSkipSession, o
                 targetWeeks: editWeeks,
                 duration: editWeeks,
                 isDeload: editDeload,
+                maxSetsPerExercise: editMaxSets,
+                volumeProfile: editVolumeProfile,
+                skipDeloadAccessories: editSkipDeloadAccessories,
                 note: editNote
             } : null);
         }
@@ -425,6 +437,12 @@ export const useHomeViewState = ({ startSession, onEditProgram, onSkipSession, o
         closeTransition,
         editDeload,
         setEditDeload,
+        editMaxSets,
+        setEditMaxSets,
+        editVolumeProfile,
+        setEditVolumeProfile,
+        editSkipDeloadAccessories,
+        setEditSkipDeloadAccessories,
         editNote,
         setEditNote,
         availableStages,

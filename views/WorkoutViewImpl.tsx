@@ -123,6 +123,18 @@ export const WorkoutView: React.FC<WorkoutViewProps> = (props) => {
                             }
                             return acc;
                         }, {})}
+                        exercisesByMuscle={sessionExercises.reduce<Record<string, { id: string; name: string }[]>>((acc, ex) => {
+                            if (ex?.muscle && ex?.id) {
+                                acc[ex.muscle] = [
+                                    ...(acc[ex.muscle] || []),
+                                    { id: ex.id, name: String(getTranslated(ex.name, lang) || ex.id) },
+                                ];
+                            }
+                            return acc;
+                        }, {})}
+                        sessionWeek={activeSession.week}
+                        prefilledSoreness={activeSession.sorenessCheckins}
+                        prefilledJointPain={activeSession.inlineJointPain}
                         onCancel={() => setShowFeedbackModal(false)}
                         onConfirm={handleSaveFeedback}
                     />
