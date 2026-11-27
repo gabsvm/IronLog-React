@@ -14,6 +14,7 @@ import { resolveProgramWeek } from '../../programs/engine/ProgramResolver';
 import { startProgramRun } from '../../programs/engine/ProgramRunHelpers';
 import { getProgramBlockForWeek } from '../../programs/engine/ProgramResolver';
 import { needsTemplateMetadataOnHome } from '../../data/templateMetadata';
+import { setMesoEditorIntent } from '../../utils/mesoDraft';
 
 export interface HomeViewProps {
     startSession: (dayIdx: number) => void;
@@ -165,21 +166,36 @@ export const useHomeViewState = ({ startSession, onEditProgram, onSkipSession, o
                 ...prev,
                 stageId: selectedStage.id,
                 plan: newPlan,
+                week: Math.min(prev.week, editWeeks),
                 targetWeeks: editWeeks,
                 duration: editWeeks,
                 isDeload: editDeload,
+                condensedDeload: false,
+                preDeloadProgram: undefined,
                 maxSetsPerExercise: editMaxSets,
                 volumeProfile: editVolumeProfile,
                 skipDeloadAccessories: editSkipDeloadAccessories,
                 note: editNote
             } : null);
         } else {
+            const shouldRestorePreDeload = Boolean(activeMeso.isDeload && !editDeload && activeMeso.condensedDeload && activeMeso.preDeloadProgram);
+            const restoredProgram = shouldRestorePreDeload ? activeMeso.preDeloadProgram! : undefined;
+            if (restoredProgram) {
+                setProgram(restoredProgram);
+            }
+            const restoredPlan = restoredProgram
+                ? restoredProgram.map(day => (day.slots || []).map(slot => slot.exerciseId || null))
+                : undefined;
             setActiveMeso(prev => prev ? {
                 ...prev,
                 stageId: selectedStage ? selectedStage.id : prev.stageId,
+                ...(restoredPlan ? { plan: restoredPlan } : {}),
+                week: Math.min(prev.week, editWeeks),
                 targetWeeks: editWeeks,
                 duration: editWeeks,
                 isDeload: editDeload,
+                condensedDeload: editDeload ? prev.condensedDeload : false,
+                preDeloadProgram: editDeload ? prev.preDeloadProgram : undefined,
                 maxSetsPerExercise: editMaxSets,
                 volumeProfile: editVolumeProfile,
                 skipDeloadAccessories: editSkipDeloadAccessories,
@@ -260,8 +276,10 @@ export const useHomeViewState = ({ startSession, onEditProgram, onSkipSession, o
     useEffect(() => {
         if (nextWorkoutIdx !== -1) {
             setSelectedDayIdx(nextWorkoutIdx);
+        } else if (safeProgram.length > 0 && selectedDayIdx >= safeProgram.length) {
+            setSelectedDayIdx(0);
         }
-    }, [nextWorkoutIdx]);
+    }, [nextWorkoutIdx, safeProgram.length, selectedDayIdx]);
 
     // Q17: publish the next session name to the Android widget (no-op on web).
     useEffect(() => {
@@ -300,11 +318,16 @@ export const useHomeViewState = ({ startSession, onEditProgram, onSkipSession, o
     const handleFinishMeso = () => { setActiveMeso(null); setShowCompleteModal(null); };
     const handleFinishWeek = () => {
         if (!activeMeso) return;
-        setActiveMeso(prev => prev ? {
-            ...prev,
-            week: prev.week + 1,
-            isDeload: false
-        } : null);
+        setActiveMeso(prev => {
+            if (!prev) return null;
+            const nextWeek = prev.week + 1;
+            const targetWeeks = prev.targetWeeks || prev.duration || 5;
+            return {
+                ...prev,
+                week: nextWeek,
+                isDeload: nextWeek >= targetWeeks,
+            };
+        });
         triggerHaptic('success');
         setShowCompleteModal(null);
     };
@@ -315,8 +338,8 @@ export const useHomeViewState = ({ startSession, onEditProgram, onSkipSession, o
         setShowTemplateSelector(true);
     };
 
-    const handleSelectTemplate = (tpl: GlobalTemplate) => {
-        if (tpl.isPro && !checkPro("Pro Template")) return;
+    const handleSelectTemplate = (tpl: GlobalTemplate): boolean => {
+        if (tpl.isPro && !checkPro("Pro Template")) return false;
 
         setProgram(tpl.program);
 
@@ -336,6 +359,7 @@ export const useHomeViewState = ({ startSession, onEditProgram, onSkipSession, o
 
         setShowTemplateSelector(false);
         triggerHaptic('success');
+        return true;
     };
 
     const handleSelectProgram = (programId: string) => {
@@ -359,8 +383,8 @@ export const useHomeViewState = ({ startSession, onEditProgram, onSkipSession, o
     };
 
     const handleCreateCustom = () => {
-        // Clear program and go to editor
-        setProgram([]); // Start empty
+        // Open ProgramEditView in isolated scratch-draft mode without wiping active meso/program
+        setMesoEditorIntent('scratch');
         setShowTemplateSelector(false);
         onEditProgram(); // Navigate to Editor
     };

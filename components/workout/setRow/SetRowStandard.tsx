@@ -15,6 +15,7 @@ export const SetRowStandard: React.FC<{ state: SetRowState }> = ({ state }) => {
         showRIR,
         t,
         isDone,
+        isSkipped,
         setType,
         effectiveBadgeLabel,
         storedWeight,
@@ -59,7 +60,8 @@ export const SetRowStandard: React.FC<{ state: SetRowState }> = ({ state }) => {
             onTouchMove={onSwipeTouchMove}
             onTouchEnd={onSwipeTouchEnd}
             onClick={handleRowClick}
-            className="relative transition-colors"
+            className={`relative transition-colors ${isSkipped ? 'opacity-55' : ''}`}
+            data-testid={isSkipped ? `set-skipped-${set.id}` : undefined}
         >
             {SwipeOverlay}
             {/* Target text rendered before weight input for accessibility & unit tests */}
@@ -144,14 +146,17 @@ export const SetRowStandard: React.FC<{ state: SetRowState }> = ({ state }) => {
                         ref={weightRef}
                         type="number"
                         inputMode="decimal"
+                        disabled={isSkipped}
                         className={`h-9 w-full rounded-[4px] border text-center text-[15px] font-semibold outline-none tabular-nums transition-colors ${
-                            isDone
-                                ? 'border-transparent bg-transparent text-zinc-400'
-                                : 'bg-surface-app border-border-subtle/80 text-white placeholder:text-zinc-500 focus:border-primary-500'
+                            isSkipped
+                                ? 'border-dashed border-zinc-700 bg-transparent text-zinc-500'
+                                : isDone
+                                    ? 'border-transparent bg-transparent text-zinc-400'
+                                    : 'bg-surface-app border-border-subtle/80 text-white placeholder:text-zinc-500 focus:border-primary-500'
                         }`}
-                        placeholder={weightPlaceholder}
+                        placeholder={isSkipped ? pickLang(lang, { es: 'Saltada', en: 'Skipped' }) : weightPlaceholder}
                         aria-label={t.weight}
-                        value={localWeight}
+                        value={isSkipped ? '' : localWeight}
                         onChange={(e) => {
                             setLocalWeight(e.target.value);
                             scheduleCommit('weight', storedWeight(e.target.value), 180);
@@ -171,14 +176,17 @@ export const SetRowStandard: React.FC<{ state: SetRowState }> = ({ state }) => {
                         ref={repsRef}
                         type="number"
                         inputMode="numeric"
+                        disabled={isSkipped}
                         className={`h-9 w-full rounded-[4px] border text-center text-[15px] font-semibold outline-none tabular-nums transition-colors ${
-                            isDone
-                                ? 'border-transparent bg-transparent text-zinc-400'
-                                : 'bg-surface-app border-border-subtle/80 text-white placeholder:text-zinc-500 focus:border-primary-500'
+                            isSkipped
+                                ? 'border-dashed border-zinc-700 bg-transparent text-zinc-500'
+                                : isDone
+                                    ? 'border-transparent bg-transparent text-zinc-400'
+                                    : 'bg-surface-app border-border-subtle/80 text-white placeholder:text-zinc-500 focus:border-primary-500'
                         }`}
-                        placeholder={repsPlaceholder}
+                        placeholder={isSkipped ? '—' : repsPlaceholder}
                         aria-label={t.reps}
-                        value={localReps}
+                        value={isSkipped ? '' : localReps}
                         onChange={(e) => {
                             setLocalReps(e.target.value);
                             scheduleCommit('reps', e.target.value, 180);
@@ -197,14 +205,17 @@ export const SetRowStandard: React.FC<{ state: SetRowState }> = ({ state }) => {
                         <input
                             type="number"
                             inputMode="decimal"
+                            disabled={isSkipped}
                             className={`h-9 w-full rounded-[4px] border text-center text-[15px] font-semibold outline-none tabular-nums transition-colors ${
-                                isDone
-                                    ? 'border-transparent bg-transparent text-zinc-400'
-                                    : 'bg-surface-app border-border-subtle/80 text-white placeholder:text-zinc-500 focus:border-primary-500'
+                                isSkipped
+                                    ? 'border-dashed border-zinc-700 bg-transparent text-zinc-500'
+                                    : isDone
+                                        ? 'border-transparent bg-transparent text-zinc-400'
+                                        : 'bg-surface-app border-border-subtle/80 text-white placeholder:text-zinc-500 focus:border-primary-500'
                             }`}
-                            placeholder="RIR"
+                            placeholder={isSkipped ? '—' : 'RIR'}
                             aria-label="RIR"
-                            value={localRpe}
+                            value={isSkipped ? '' : localRpe}
                             onChange={(e) => {
                                 setLocalRpe(e.target.value);
                                 scheduleCommit('rpe', e.target.value, 180);
@@ -215,24 +226,37 @@ export const SetRowStandard: React.FC<{ state: SetRowState }> = ({ state }) => {
                     </div>
                 )}
 
-                {/* Right cell (44px): Checkbox for LOG */}
+                {/* Right cell (44px): Checkbox for LOG or Skip dash */}
                 <div className="flex justify-center">
                     <button
                         type="button"
-                        onClick={handleToggleComplete}
+                        onClick={(e) => {
+                            if (isSkipped) {
+                                e.stopPropagation();
+                                onUpdate(exInstanceId, set.id, 'skipped', false);
+                            } else {
+                                handleToggleComplete();
+                            }
+                        }}
                         className={`relative flex h-[22px] w-[22px] items-center justify-center rounded-[3px] border-2 transition-colors active:scale-95 after:absolute after:-inset-2 after:content-[''] ${
-                            isDone
-                                ? 'bg-emerald-500 border-emerald-500 text-zinc-950 font-black shadow-sm'
-                                : 'border-zinc-500 bg-transparent hover:border-zinc-300'
+                            isSkipped
+                                ? 'border-zinc-600 bg-zinc-800 text-zinc-400'
+                                : isDone
+                                    ? 'bg-emerald-500 border-emerald-500 text-zinc-950 font-black shadow-sm'
+                                    : 'border-zinc-500 bg-transparent hover:border-zinc-300'
                         }`}
                         aria-pressed={Boolean(isDone)}
-                        aria-label={completeSetAriaLabel}
+                        aria-label={isSkipped ? pickLang(lang, { es: 'Restaurar serie', en: 'Restore set' }) : completeSetAriaLabel}
                     >
-                        {isDone && <Icon name="Check" size={14} strokeWidth={3.5} />}
+                        {isSkipped ? (
+                            <Icon name="Minus" size={13} strokeWidth={3} />
+                        ) : isDone ? (
+                            <Icon name="Check" size={14} strokeWidth={3.5} />
+                        ) : null}
                     </button>
                 </div>
             </div>
-            {(predictiveTarget || set.limitingSide) && !isDone && (
+            {(predictiveTarget || set.limitingSide) && !isDone && !isSkipped && (
                 <div className="px-3 pb-2 -mt-1 flex items-center justify-end gap-1.5 flex-wrap">
                     {set.limitingSide && (
                         <button

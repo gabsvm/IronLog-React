@@ -162,7 +162,7 @@ export const useCloudUploads = ({
         window.addEventListener('offline', handleOffline);
         return () => { window.removeEventListener('online', handleOnline); window.removeEventListener('offline', handleOffline); };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- S6: dependency list moved verbatim from AppProvider; the omitted names are useState setters/refs (stable) or the per-render withDirtyTrackingSuppressed, exactly as before.
-    }, [user, subscription.isPro, program, activeMeso, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, restTimerDisplay, rpFeedback, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, personalTemplates, setLocalLastUpdated]);
+    }, [user, subscription.isPro, program, activeMeso, exercises, logs, showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, restTimerDisplay, autoMatchWeight, useExerciseTypeFilters, preferredEquipment, rpFeedback, userProfile, nutritionLogs, cardioSessions, nutritionGoal, bodyLogs, macroGoals, customFoods, personalTemplates, setLocalLastUpdated]);
 
     // ── Debounce A: session-only write (fast, lightweight) ─────────────────────
     // Watches state.activeSession via useStore.subscribe with a 5000ms debounce

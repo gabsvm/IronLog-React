@@ -18,6 +18,7 @@ export interface UseAppBootstrapEffectsDeps {
     rpTargetRIR: number;
     keepScreenOn: boolean;
     weightUnit: WeightUnit;
+    restTimerDisplay?: 'Overlay' | 'Banner' | 'compact' | 'expanded';
     autoMatchWeight?: boolean;
     useExerciseTypeFilters?: boolean;
     preferredEquipment?: EquipmentType[];
@@ -60,6 +61,7 @@ export const useAppBootstrapEffects = ({
     rpTargetRIR,
     keepScreenOn,
     weightUnit,
+    restTimerDisplay,
     autoMatchWeight,
     useExerciseTypeFilters,
     preferredEquipment,
@@ -313,7 +315,7 @@ export const useAppBootstrapEffects = ({
     useDirtySection('activeMeso', [activeMeso, isAppLoading, hasCheckedSync], dirtyTracking);
     useDirtySection('exercises', [exercises, isAppLoading, hasCheckedSync], dirtyTracking);
     useDirtySection('logs', [logs, isAppLoading, hasCheckedSync], dirtyTracking);
-    useDirtySection('config', [showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, autoMatchWeight, useExerciseTypeFilters, preferredEquipment, isAppLoading, hasCheckedSync], dirtyTracking);
+    useDirtySection('config', [showRIR, rpEnabled, rpTargetRIR, keepScreenOn, weightUnit, restTimerDisplay, autoMatchWeight, useExerciseTypeFilters, preferredEquipment, isAppLoading, hasCheckedSync], dirtyTracking);
     useDirtySection('rpFeedback', [rpFeedback, isAppLoading, hasCheckedSync], dirtyTracking);
     useDirtySection('userProfile', [userProfile, isAppLoading, hasCheckedSync], dirtyTracking);
     useDirtySection('nutritionLogs', [nutritionLogs, isAppLoading, hasCheckedSync], dirtyTracking);

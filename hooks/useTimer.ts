@@ -135,30 +135,45 @@ export const useTimer = (lang: Lang) => {
         langRef.current = lang;
     }, [lang]);
 
+    const fallbackIntervalRef = useRef<number | null>(null);
+    const handleTickRef = useRef<(suppressFeedback?: boolean) => void>(() => {});
+
     useEffect(() => {
         // The countdown is timestamp-based and only renders whole seconds, so a
-        // 1 Hz wakeup is enough. This replaces the old 250 ms worker cadence.
-        const workerCode = `
-            let interval = null;
-            self.onmessage = function(e) {
-                if (e.data === 'start') {
-                    if (interval) clearInterval(interval);
-                    interval = setInterval(() => {
-                        self.postMessage('tick');
-                    }, 1000);
-                } else if (e.data === 'stop') {
-                    if (interval) clearInterval(interval);
-                    interval = null;
-                }
-            };
-        `;
-        const blob = new Blob([workerCode], { type: 'application/javascript' });
-        const blobUrl = URL.createObjectURL(blob);
-        workerRef.current = new Worker(blobUrl);
+        // 1 Hz wakeup is enough. Guard Worker instantiation for strict CSP/WebView environments.
+        let blobUrl: string | null = null;
+        try {
+            if (typeof Worker !== 'undefined' && typeof Blob !== 'undefined' && typeof URL?.createObjectURL === 'function') {
+                const workerCode = `
+                    let interval = null;
+                    self.onmessage = function(e) {
+                        if (e.data === 'start') {
+                            if (interval) clearInterval(interval);
+                            interval = setInterval(() => {
+                                self.postMessage('tick');
+                            }, 1000);
+                        } else if (e.data === 'stop') {
+                            if (interval) clearInterval(interval);
+                            interval = null;
+                        }
+                    };
+                `;
+                const blob = new Blob([workerCode], { type: 'application/javascript' });
+                blobUrl = URL.createObjectURL(blob);
+                workerRef.current = new Worker(blobUrl);
+            }
+        } catch {
+            workerRef.current = null;
+        }
 
         return () => {
             workerRef.current?.terminate();
-            URL.revokeObjectURL(blobUrl);
+            workerRef.current = null;
+            if (fallbackIntervalRef.current !== null) {
+                window.clearInterval(fallbackIntervalRef.current);
+                fallbackIntervalRef.current = null;
+            }
+            if (blobUrl) URL.revokeObjectURL(blobUrl);
         };
     }, [isNative]);
 
@@ -200,7 +215,7 @@ export const useTimer = (lang: Lang) => {
         if (!isNative) {
             document.title = secondsLeft > 0
                 ? `(${Math.floor(secondsLeft / 60)}:${(secondsLeft % 60).toString().padStart(2, '0')}) Resting...`
-                : 'GainsLab Pro';
+                : 'MEVRA';
         }
 
         if (secondsLeft <= 0) {
@@ -251,7 +266,7 @@ export const useTimer = (lang: Lang) => {
                 }
             }
 
-            if (!isNative) document.title = 'GainsLab Pro';
+            if (!isNative) document.title = 'MEVRA';
             workerRef.current?.postMessage('stop');
             const nextState: TimerState = { ...current, active: false, timeLeft: 0, endAt: 0, source: undefined };
             timerRef.current = nextState;
@@ -270,23 +285,47 @@ export const useTimer = (lang: Lang) => {
         setTimer(nextState);
     }, [isNative]);
 
-    useEffect(() => {
-        if (!workerRef.current) return;
-        workerRef.current.onmessage = () => handleTick(false);
+    handleTickRef.current = handleTick;
 
-        if (timer.active) {
-            workerRef.current.postMessage('start');
-        } else {
-            workerRef.current.postMessage('stop');
-            if (!isNative) document.title = 'GainsLab Pro';
+    useEffect(() => {
+        if (workerRef.current) {
+            workerRef.current.onmessage = () => handleTick(false);
+
+            if (timer.active) {
+                workerRef.current.postMessage('start');
+            } else {
+                workerRef.current.postMessage('stop');
+                if (!isNative) document.title = 'MEVRA';
+            }
+            return;
         }
+
+        if (fallbackIntervalRef.current !== null) {
+            window.clearInterval(fallbackIntervalRef.current);
+            fallbackIntervalRef.current = null;
+        }
+        if (timer.active) {
+            fallbackIntervalRef.current = window.setInterval(() => handleTickRef.current(false), 1000);
+        } else if (!isNative) {
+            document.title = 'MEVRA';
+        }
+        return () => {
+            if (fallbackIntervalRef.current !== null) {
+                window.clearInterval(fallbackIntervalRef.current);
+                fallbackIntervalRef.current = null;
+            }
+        };
     }, [timer.active, handleTick, isNative]);
 
     // Web/PWA resyncs on resume. Native instead reads the OS snapshot FIRST.
     useEffect(() => {
         if (isNative) return;
         const onVisibilityChange = () => {
-            if (document.visibilityState === 'visible') handleTick(false);
+            if (document.visibilityState === 'visible') {
+                const current = timerRef.current;
+                const expiredWhileHidden = Boolean(current?.active && current.endAt > 0 && current.endAt <= Date.now());
+                handleTick(expiredWhileHidden);
+            }
         };
         document.addEventListener('visibilitychange', onVisibilityChange);
         return () => document.removeEventListener('visibilitychange', onVisibilityChange);
@@ -310,6 +349,7 @@ export const useTimer = (lang: Lang) => {
                     || userRevision !== nativeUserRevisionRef.current) return;
                 if (native) {
                     const validActive = native.active && native.endAt > Date.now();
+                    const wasActive = Boolean(timerRef.current?.active);
                     setTimer(prev => validActive ? {
                         ...prev,
                         active: true,
@@ -322,6 +362,9 @@ export const useTimer = (lang: Lang) => {
                     } : {
                         ...prev, active: false, timeLeft: 0, endAt: 0, source: undefined,
                     });
+                    if (wasActive && !validActive && typeof window !== 'undefined') {
+                        window.dispatchEvent(new CustomEvent('ironlog:rest-completed'));
+                    }
                 } else {
                     // Older native shell / test double without snapshot API.
                     const commands = stream.commands.length ? stream.commands : fallbackCommands;

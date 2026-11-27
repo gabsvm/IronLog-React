@@ -38,26 +38,30 @@ const getCalEstimate = (type: CardioActivityType, durationMin: number, bodyWeigh
 export const AddCardioModal: React.FC<AddCardioModalProps> = ({ isOpen, onClose, onAdd, lang }) => {
   const { userProfile } = useApp();
   const bodyWeight = userProfile?.bodyWeight ?? 75;
-  const today = todayLocalDateKey();
   const [activity, setActivity]   = useState<CardioActivityType>('running');
   const [duration, setDuration]   = useState('');
   const [distance, setDistance]   = useState('');
   const [heartRate, setHeartRate] = useState('');
   const [notes, setNotes]         = useState('');
 
-  const calEstimate = duration ? getCalEstimate(activity, Number(duration), bodyWeight) : 0;
+  const durationNum = Number(duration);
+  const calEstimate = Number.isFinite(durationNum) && durationNum > 0
+    ? getCalEstimate(activity, durationNum, bodyWeight)
+    : 0;
 
   const handleSubmit = () => {
-    if (!duration) return;
+    if (!Number.isFinite(durationNum) || durationNum <= 0) return;
+    const distNum = distance ? Number(distance) : undefined;
+    const hrNum = heartRate ? Number(heartRate) : undefined;
     onAdd({
       id: `cardio_${Date.now()}`,
-      date: today,
+      date: todayLocalDateKey(),
       activityType: activity,
-      durationMin: Number(duration),
-      distanceKm: distance ? Number(distance) : undefined,
+      durationMin: durationNum,
+      distanceKm: distNum !== undefined && Number.isFinite(distNum) && distNum > 0 ? distNum : undefined,
       caloriesBurned: calEstimate,
-      avgHeartRate: heartRate ? Number(heartRate) : undefined,
-      notes: notes || undefined,
+      avgHeartRate: hrNum !== undefined && Number.isFinite(hrNum) && hrNum > 0 ? hrNum : undefined,
+      notes: notes.trim() || undefined,
       timestamp: Date.now(),
     });
     setDuration(''); setDistance(''); setHeartRate(''); setNotes('');

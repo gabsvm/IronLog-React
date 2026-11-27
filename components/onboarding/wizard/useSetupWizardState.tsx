@@ -66,10 +66,13 @@ export const useSetupWizardState = ({ onComplete }: SetupWizardProps) => {
             goal: profile.goal,
             sessionDuration: profile.sessionDuration,
         }));
-        if (equipmentTouched && typeof setConfig === 'function') {
+        if (typeof setConfig === 'function') {
             setConfig({
-                preferredEquipment,
-                useExerciseTypeFilters: preferredEquipment.length < ALL_EQUIPMENT_IDS.length,
+                ...(mode === 'suggested' || mode === 'custom' ? { showRIR: true } : {}),
+                ...(equipmentTouched ? {
+                    preferredEquipment,
+                    useExerciseTypeFilters: preferredEquipment.length < ALL_EQUIPMENT_IDS.length,
+                } : {}),
             });
         }
 

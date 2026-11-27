@@ -85,7 +85,7 @@ export const AppViews: React.FC<AppViewsProps> = ({
             Array.isArray(logs) ? logs : [],
             lang,
             rpFeedback,
-            config
+            { ...config, bodyWeightKg: userProfile?.bodyWeight }
         );
 
         if (newSession) {

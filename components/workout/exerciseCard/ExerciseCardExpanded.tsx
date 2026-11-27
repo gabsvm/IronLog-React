@@ -1,5 +1,5 @@
 // U5: SortableExerciseCard expanded view, with 1:1 RP Note Modal, (i) detail button, real MuscleTag priority & dynamic guide pill.
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { Icon } from '../../ui/Icon';
 import { MuscleTag } from '../../ui/MuscleTag';
 import { Sheet } from '../../ui/Sheet';
@@ -150,13 +150,25 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
         });
     }, [ex.instanceId, onUpdateSession]);
 
+    const isDeload = useStore(s => Boolean(s?.activeMeso?.isDeload));
+    const sessionWeek = useStore(s => s?.activeSession?.week || 1);
+    const bodyWeightKg = useStore(s => s?.activeSession?.bodyWeightSnapshot);
     const handleModifySets = useCallback((exId: number, delta: number) => {
         if (delta > 0) {
             onAddSet(exId);
-        } else if (delta < 0 && sets.length > 0) {
-            onDeleteSet(exId, sets[sets.length - 1].id);
+            return;
         }
-    }, [onAddSet, onDeleteSet, sets]);
+        if (delta < 0) {
+            const latestSets = typeof useStore.getState === 'function'
+                ? (useStore.getState().activeSession?.exercises || []).find((e) => e.instanceId === exId)?.sets || []
+                : sets;
+            if (latestSets.length > 0) {
+                onDeleteSet(exId, latestSets[latestSets.length - 1].id);
+            }
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [onAddSet, onDeleteSet]);
+    const menuBtnRef = useRef<HTMLButtonElement>(null);
 
     const targetRepsLabel = ex.targetReps ? String(ex.targetReps) : null;
     const activeNoteText = ex.note || ex.pinnedNote || '';
@@ -282,6 +294,7 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                     {/* ⋮ MoreVertical menu button */}
                     <div className="relative">
                         <button
+                            ref={menuBtnRef}
                             type="button"
                             aria-label={c.moreOptions}
                             aria-haspopup="menu"
@@ -299,6 +312,7 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                             ex={ex}
                             isOpen={openMenuId === ex.instanceId}
                             onClose={() => setOpenMenuId(null)}
+                            anchorRef={menuBtnRef}
                             isCardio={isCardio}
                             cardioMode={cardioMode}
                             hasSuperset={!!ssStyle}
@@ -559,6 +573,9 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
                 activeEmomMinute={activeEmomMinute}
                 nextSetIdx={nextSetIdx}
                 setBadgeLabels={setBadgeLabels}
+                isDeload={isDeload}
+                sessionWeek={sessionWeek}
+                bodyWeightKg={bodyWeightKg}
                 onSetUpdate={onSetUpdate}
                 onSetComplete={onSetComplete}
                 onSetTypeChange={onSetTypeChange}
@@ -633,7 +650,7 @@ export const ExerciseCardExpanded: React.FC<{ state: ExerciseCardState }> = ({ s
             {/* Completion flash */}
             {exDoneFlash && (
                 <div className="absolute inset-0 z-10 flex items-center justify-center rounded-[8px] bg-green-500/5 ring-2 ring-green-500/60 pointer-events-none animate-in fade-in duration-150">
-                    <div className="animate-bounce rounded-full bg-green-500 px-3 py-1.5 text-xs font-black text-white shadow-lg shadow-green-500/30">
+                    <div className="animate-in zoom-in-95 fade-in duration-200 ease-out rounded-full bg-green-500 px-3 py-1.5 text-xs font-black text-white shadow-lg shadow-green-500/30">
                         <Icon name="CheckCircle" size={14} className="mr-1 inline" />
                         {c.done}
                     </div>

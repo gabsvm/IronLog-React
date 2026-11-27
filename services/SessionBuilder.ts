@@ -1,5 +1,5 @@
 import { pickLang } from '../utils/i18n';
-import { ProgramDay, MesoCycle, ExerciseDef, Log, ActiveSession, SessionExercise } from '../types';
+import { ProgramDay, MesoCycle, ExerciseDef, Log, ActiveSession, SessionExercise, MuscleGroup, WeightUnit } from '../types';
 import { getLastLogForExercise, uid } from '../utils';
 import { KONG_4DAY_V1 } from '../programs/kong/kong4Day';
 import { getProgramBlockForWeek, resolveProgramDay } from '../programs/engine/ProgramResolver';
@@ -15,7 +15,7 @@ export class SessionBuilder {
         logs: Log[],
         lang: string,
         rpFeedback: Record<string, Record<string, Record<string, any>>>,
-        config: { rpEnabled: boolean }
+        config: { rpEnabled: boolean; weightUnit?: WeightUnit; bodyWeightKg?: number }
     ): ActiveSession | null {
         if (!programDay) return null;
 
@@ -40,6 +40,8 @@ export class SessionBuilder {
         const safeExercises = Array.isArray(exercises) ? exercises.filter(e => !!e) : [];
         const safeLogs = Array.isArray(logs) ? logs : [];
         const isDeload = !!activeMeso.isDeload;
+        const unit: WeightUnit = config.weightUnit === 'lb' ? 'lb' : 'kg';
+        const appliedMuscleDelta = new Set<MuscleGroup>();
 
         const sessionExs = (resolvedDay.slots || [])
             .filter((slotDef) => {
@@ -62,8 +64,9 @@ export class SessionBuilder {
             const totalWeeks = activeMeso.targetWeeks || activeMeso.duration || 5;
             const weekTargetRir = getTargetRirForWeek(activeMeso.week, totalWeeks, isDeload);
 
-            // RP Feedback adjustments + Muscle Priority MV lock
-            if (!slotDef.prescription && config.rpEnabled && activeMeso && activeMeso.week > 1) {
+            // RP Feedback adjustments applied once per muscle group per session (not multiplied ×N slots) + MV lock
+            if (!slotDef.prescription && config.rpEnabled && activeMeso && activeMeso.week > 1 && !appliedMuscleDelta.has(slotDef.muscle)) {
+                appliedMuscleDelta.add(slotDef.muscle);
                 let accumulatedAdjustment = 0;
                 const fbForMeso = rpFeedback[activeMeso.id];
                 if (fbForMeso) {
@@ -85,22 +88,26 @@ export class SessionBuilder {
             if (!slotDef.prescription && activeMeso.maxSetsPerExercise && activeMeso.maxSetsPerExercise > 0) {
                 setTarget = Math.min(setTarget, activeMeso.maxSetsPerExercise);
             }
-            if (!slotDef.prescription && isDeload) setTarget = Math.max(1, Math.ceil(setTarget / 2));
+            if (!slotDef.prescription && isDeload && !activeMeso.condensedDeload) setTarget = Math.max(1, Math.ceil(setTarget / 2));
 
             const lastSets = getLastLogForExercise(exDef.id, safeLogs, safeExercises);
+            const fallbackLastSet = lastSets && lastSets.length > 0 ? lastSets[lastSets.length - 1] : undefined;
 
             const initialSets = (slotDef.prescription || Array.from({ length: setTarget }, () => undefined)).map((prescription, i) => {
-                const prevW = lastSets?.[i]?.weight;
-                const prevR = lastSets?.[i]?.reps;
+                const refPrevSet = lastSets?.[i] ?? fallbackLastSet;
+                const prevW = refPrevSet?.weight;
+                const prevR = refPrevSet?.reps;
                 const prediction = !prescription
                     ? predictSetTarget({
                           prevWeightKg: prevW,
                           prevReps: prevR,
-                          unit: 'kg',
+                          unit,
                           targetRir: weekTargetRir,
                           week: activeMeso.week,
                           isDeload,
                           isBodyweight: exDef.isBodyweight,
+                          equipment: exDef.equipment,
+                          bodyWeightKg: config.bodyWeightKg,
                       })
                     : null;
                 return {

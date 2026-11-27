@@ -15,7 +15,7 @@ describe('Q13: ReminderSettingsRow', () => {
         const { onChange } = renderRow({ enabled: false, days: [1], hour: 18, minute: 0 });
         // Days/time stay hidden until enabled.
         expect(screen.queryByLabelText('Días')).toBeNull();
-        fireEvent.click(screen.getByRole('button', { name: 'Recordarme entrenar' }));
+        fireEvent.click(screen.getByRole('switch', { name: 'Recordarme entrenar' }));
         expect(onChange).toHaveBeenCalledWith({ enabled: true, days: [1], hour: 18, minute: 0 });
     });
 
@@ -41,7 +41,7 @@ describe('Q13: ReminderSettingsRow', () => {
 
     it('renders English labels', () => {
         renderRow({ enabled: true, days: [], hour: 8, minute: 0 }, 'en');
-        expect(screen.getByRole('button', { name: 'Remind me to train' })).toBeTruthy();
+        expect(screen.getByRole('switch', { name: 'Remind me to train' })).toBeTruthy();
         expect(screen.getByRole('button', { name: 'Wednesday' })).toBeTruthy();
     });
 });

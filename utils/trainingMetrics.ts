@@ -13,17 +13,21 @@ export const getLogBodyWeight = (log: Pick<Log, 'bodyWeightSnapshot'>, fallbackB
 
 export const getEffectiveSetLoad = (
     set: Pick<WorkoutSet, 'weight'>,
-    exercise: Pick<ExerciseDef, 'isBodyweight'>,
+    exercise: Pick<ExerciseDef, 'isBodyweight' | 'equipment'>,
     userBodyWeight?: number
 ) => {
     const externalLoad = Number(set.weight || 0);
+    if (exercise.equipment === 'machine_assistance') {
+        const refBodyWeight = Number(userBodyWeight) > 0 ? Number(userBodyWeight) : 75;
+        return Math.max(1, refBodyWeight - externalLoad);
+    }
     const baseBodyWeight = exercise.isBodyweight ? Math.max(0, Number(userBodyWeight || 0)) : 0;
     return externalLoad + baseBodyWeight;
 };
 
 export const getSetLoadVolume = (
     set: Pick<WorkoutSet, 'weight' | 'reps' | 'completed' | 'skipped'>,
-    exercise: Pick<ExerciseDef, 'isBodyweight' | 'volumeCountingMode'>,
+    exercise: Pick<ExerciseDef, 'isBodyweight' | 'equipment' | 'volumeCountingMode'>,
     userBodyWeight?: number
 ) => {
     if (!set.completed || set.skipped) return 0;

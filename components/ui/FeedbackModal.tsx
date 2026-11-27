@@ -16,6 +16,7 @@ interface FeedbackModalProps {
     exerciseIdsByMuscle?: Record<string, string[]>;
     exercisesByMuscle?: Record<string, { id: string; name: string }[]>;
     sessionWeek?: number;
+    trainedMusclesInMeso?: string[];
     prefilledSoreness?: Record<string, SorenessCheckin>;
     prefilledJointPain?: Record<string, number>;
     onConfirm: (feedback: Record<string, { soreness: number; performance: number; adjustment: number }>) => void;
@@ -71,6 +72,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
     exerciseIdsByMuscle,
     exercisesByMuscle,
     sessionWeek,
+    trainedMusclesInMeso,
     prefilledSoreness,
     prefilledJointPain,
     onConfirm,
@@ -94,6 +96,8 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
         ...(prefilledJointPain || {}),
     }));
 
+    const trainedSet = useMemo(() => new Set(trainedMusclesInMeso || []), [trainedMusclesInMeso]);
+
     const [feedbackState, setFeedbackState] = useState<FeedbackState>(() => {
         const initial: FeedbackState = {};
         uniqueMuscles.forEach(m => {
@@ -107,9 +111,10 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
                 : undefined;
 
             const preSore = prefilledSoreness?.[mKey]?.soreness;
+            const firstExposureWeek1 = sessionWeek === 1 && !trainedSet.has(mKey);
             const initialSoreness = typeof preSore === 'number'
                 ? preSore
-                : sessionWeek === 1
+                : firstExposureWeek1
                     ? 0
                     : undefined;
 
@@ -202,8 +207,11 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
 
             const detailedEx = exercisesByMuscle?.[mKey] || [];
             if (detailedEx.length > 0) {
+                const singleExFallback = detailedEx.length === 1;
                 detailedEx.forEach((exItem) => {
-                    const exPain = typeof jointPainByEx[exItem.id] === 'number' ? jointPainByEx[exItem.id] : d.jointPain;
+                    const hasExplicitPain = typeof jointPainByEx[exItem.id] === 'number';
+                    if (!hasExplicitPain && !singleExFallback) return;
+                    const exPain = hasExplicitPain ? jointPainByEx[exItem.id] : d.jointPain;
                     recordExerciseSfrFeedback(exItem.id, {
                         jointPain: exPain,
                         pump: d.pump,
@@ -212,13 +220,14 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
                 });
             } else {
                 const exIds = exerciseIdsByMuscle?.[mKey] || [];
-                exIds.forEach((exId) => {
-                    recordExerciseSfrFeedback(exId, {
+                const singleExFallback = exIds.length === 1;
+                if (singleExFallback) {
+                    recordExerciseSfrFeedback(exIds[0], {
                         jointPain: d.jointPain,
                         pump: d.pump,
                         soreness: d.soreness,
                     });
-                });
+                }
             }
 
             result[mKey] = {
@@ -313,7 +322,9 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
     const hasPrefilledSorenessForActive = Boolean(
         activeMuscle && typeof prefilledSoreness?.[activeMuscle]?.soreness === 'number',
     );
-    const isWeek1SorenessAuto = Boolean(sessionWeek === 1 && !hasPrefilledSorenessForActive);
+    const isWeek1SorenessAuto = Boolean(
+        sessionWeek === 1 && !hasPrefilledSorenessForActive && !(activeMuscle && trainedSet.has(activeMuscle))
+    );
     const showFullSorenessGrid = Boolean(
         (activeMuscle && expandedSorenessMuscles[activeMuscle]) ||
         (!hasPrefilledSorenessForActive && !isWeek1SorenessAuto),
@@ -716,9 +727,9 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
                                 <span className="text-xs text-zinc-400">
                                     {pickLang(lang, { es: 'Override manual de series:', en: 'Manual set override:' })}
                                 </span>
-                                <div className="flex items-center gap-1.5">
-                                    {[-1, 0, 1].map((val) => {
-                                        const isActive = effectiveAdjustment === val || (val === 1 && effectiveAdjustment > 1);
+                                <div className="flex items-center gap-1">
+                                    {[-2, -1, 0, 1, 2].map((val) => {
+                                        const isActive = effectiveAdjustment === val;
                                         return (
                                             <button
                                                 key={val}
@@ -728,7 +739,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
                                                 onClick={() =>
                                                     setManualOverrides(prev => ({ ...prev, [activeMuscle]: val }))
                                                 }
-                                                className={`min-w-[34px] rounded-[4px] border px-2 py-1 text-xs font-black font-mono transition-colors cursor-pointer ${
+                                                className={`min-w-[32px] rounded-[4px] border px-1.5 py-1 text-xs font-black font-mono transition-colors cursor-pointer ${
                                                     isActive
                                                         ? 'border-primary-500 bg-primary-500 text-zinc-950'
                                                         : 'border-border-subtle bg-surface-base text-zinc-300 hover:text-white'

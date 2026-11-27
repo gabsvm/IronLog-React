@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Icon } from '../ui/Icon';
 import { SessionExercise, CardioType } from '../../types';
 import { TRANSLATIONS } from '../../constants';
@@ -8,6 +9,7 @@ interface Props {
     ex: SessionExercise;
     isOpen: boolean;
     onClose: () => void;
+    anchorRef?: React.RefObject<HTMLButtonElement | null>;
     isCardio: boolean;
     cardioMode: CardioType;
     hasSuperset: boolean;
@@ -34,6 +36,7 @@ export const ExerciseCardMenu: React.FC<Props> = ({
     ex,
     isOpen,
     onClose,
+    anchorRef,
     isCardio,
     cardioMode,
     hasSuperset,
@@ -56,11 +59,55 @@ export const ExerciseCardMenu: React.FC<Props> = ({
     lang,
 }) => {
     const [isDeleting, setIsDeleting] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+    const [pos, setPos] = useState<{ top?: number; bottom?: number; left: number; maxHeight: number } | null>(null);
     const m = TRANSLATIONS[lang].cardMenu;
 
     React.useEffect(() => {
         if (!isOpen) setIsDeleting(false);
     }, [isOpen]);
+
+    const updatePosition = useCallback(() => {
+        if (!anchorRef?.current) return;
+        const rect = anchorRef.current.getBoundingClientRect();
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const menuW = 256;
+        const margin = 8;
+        const left = Math.max(margin, Math.min(rect.right - menuW, vw - menuW - margin));
+        const spaceBelow = vh - rect.bottom - margin;
+        const spaceAbove = rect.top - margin;
+
+        if (spaceBelow < 320 && spaceAbove > spaceBelow) {
+            setPos({
+                bottom: vh - rect.top + 6,
+                left,
+                maxHeight: Math.min(480, spaceAbove - 10),
+            });
+        } else {
+            setPos({
+                top: rect.bottom + 6,
+                left,
+                maxHeight: Math.min(480, Math.max(220, spaceBelow - 10)),
+            });
+        }
+    }, [anchorRef]);
+
+    useEffect(() => {
+        if (!isOpen || !anchorRef) return;
+        updatePosition();
+        window.addEventListener('scroll', updatePosition, true);
+        window.addEventListener('resize', updatePosition);
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') onClose();
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => {
+            window.removeEventListener('scroll', updatePosition, true);
+            window.removeEventListener('resize', updatePosition);
+            window.removeEventListener('keydown', onKeyDown);
+        };
+    }, [isOpen, anchorRef, updatePosition, onClose]);
 
     if (!isOpen) return null;
 
@@ -69,11 +116,32 @@ export const ExerciseCardMenu: React.FC<Props> = ({
         setIsDeleting(false);
     };
 
-    return (
+    const usePortal = Boolean(anchorRef && typeof document !== 'undefined');
+
+    const menuBox = (
         <div
+            ref={menuRef}
             role="menu"
             aria-label={m.actions}
-            className="absolute right-0 top-full mt-2 w-64 overflow-hidden rounded-[8px] border border-border-subtle bg-surface-elevated shadow-2xl py-1 text-left z-dropdown animate-in fade-in zoom-in-95 duration-fast"
+            onClick={(e) => e.stopPropagation()}
+            style={
+                usePortal && pos
+                    ? {
+                          position: 'fixed',
+                          top: pos.top !== undefined ? `${pos.top}px` : undefined,
+                          bottom: pos.bottom !== undefined ? `${pos.bottom}px` : undefined,
+                          left: `${pos.left}px`,
+                          maxHeight: `${pos.maxHeight}px`,
+                      }
+                    : undefined
+            }
+            className={`${
+                usePortal
+                    ? 'fixed z-[9999] overflow-y-auto'
+                    : 'absolute right-0 top-full mt-2 z-dropdown overflow-hidden'
+            } w-64 rounded-[8px] border border-border-subtle bg-surface-elevated shadow-2xl py-1 text-left animate-in fade-in zoom-in-95 duration-fast ${
+                usePortal && !pos ? 'right-4 top-20' : ''
+            }`}
         >
             {!isDeleting ? (
                 <>
@@ -315,4 +383,22 @@ export const ExerciseCardMenu: React.FC<Props> = ({
             )}
         </div>
     );
+
+    if (usePortal) {
+        return createPortal(
+            <>
+                <div
+                    className="fixed inset-0 z-[9998] bg-black/15"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onClose();
+                    }}
+                />
+                {menuBox}
+            </>,
+            document.body
+        );
+    }
+
+    return menuBox;
 };

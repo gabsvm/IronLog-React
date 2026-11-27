@@ -30,6 +30,9 @@ export const buildSelectedExerciseInsight = ({
     const groupIds = new Set(exerciseIdGroup(exercises, String(currentEx.id)).map(String));
     let bestReps = 0;
     let bestAddedLoad = 0;
+    let bestSetReps = 0;
+    let bestSetAddedLoad = 0;
+    let bestSetScore = -1;
     let bestEstimated1RM = 0;
     let bestHoldSeconds = 0;
     let totalVolume = 0;
@@ -54,6 +57,14 @@ export const buildSelectedExerciseInsight = ({
                 if (effectiveLoad > 0 && reps > 0 && !exercise.isIsometric && exercise.muscle !== 'CARDIO') {
                     const e1rm = effectiveLoad * (1 + reps / 30);
                     if (e1rm > bestEstimated1RM) bestEstimated1RM = e1rm;
+                    if (e1rm > bestSetScore) {
+                        bestSetScore = e1rm;
+                        bestSetReps = reps;
+                        bestSetAddedLoad = addedLoad;
+                    }
+                } else if (reps > 0 && bestSetScore < 0 && reps >= bestSetReps) {
+                    bestSetReps = reps;
+                    bestSetAddedLoad = addedLoad;
                 }
             });
         });
@@ -74,8 +85,8 @@ export const buildSelectedExerciseInsight = ({
         level = getBodyweightLevel(profile, bestReps, bestAddedLoad, (currentEx as any).skillLevel, bestHoldSeconds);
         rationale = currentEx.isIsometric
             ? `${s.bestHold} ${bestHoldSeconds}s`
-            : `${s.bestSet} ${bestReps} reps${bestAddedLoad > 0 ? ` + ${formatWeight(bestAddedLoad, unit, lang)}${weightSuffix}` : ''}`;
-    } else if (!currentEx.isIsometric && currentEx.muscle !== 'CARDIO' && bodyWeight) {
+            : `${s.bestSet} ${bestSetReps || bestReps} reps${bestSetAddedLoad > 0 ? ` + ${formatWeight(bestSetAddedLoad, unit, lang)}${weightSuffix}` : ''}`;
+    } else if (!currentEx.isIsometric && currentEx.muscle !== 'CARDIO' && bestEstimated1RM > 0 && bodyWeight) {
         const relativeStrength = bestEstimated1RM / bodyWeight;
         level = getWeightedLevel(profile, relativeStrength);
         rationale = `${s.rel1rm} ${relativeStrength.toFixed(2)}x ${s.bodyweightWord}`;

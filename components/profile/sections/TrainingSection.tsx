@@ -1,4 +1,4 @@
-import React, { Suspense, useState } from 'react';
+import React, { Suspense, useEffect, useRef, useState } from 'react';
 import { useApp } from '../../../context/AppContext';
 import { useAuth } from '../../../context/AuthContext';
 import { usePro } from '../../../hooks/usePro';
@@ -43,6 +43,10 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
 
     const [showSaveTemplate, setShowSaveTemplate] = useState(false);
     const [templateSaved, setTemplateSaved] = useState(false);
+    const savedTimerRef = useRef<number | null>(null);
+    useEffect(() => () => {
+        if (savedTimerRef.current !== null) window.clearTimeout(savedTimerRef.current);
+    }, []);
     const [showTemplateManager, setShowTemplateManager] = useState(false);
     const [templateName, setTemplateName] = useState('');
     const [notificationPerm, setNotificationPerm] = useState<string>(typeof Notification !== 'undefined' ? Notification.permission : 'default');
@@ -83,7 +87,8 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
         setPersonalTemplates(prev => [...prev, template]);
         setShowSaveTemplate(false);
         setTemplateSaved(true);
-        window.setTimeout(() => setTemplateSaved(false), 3500);
+        if (savedTimerRef.current !== null) window.clearTimeout(savedTimerRef.current);
+        savedTimerRef.current = window.setTimeout(() => setTemplateSaved(false), 3500);
     };
 
     const handleToggleRIR = () => {
@@ -201,9 +206,10 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                     <div className="flex-1 text-sm font-medium text-[rgb(var(--text-primary))]">{t.showRIR}</div>
                     <button
                         type="button"
+                        role="switch"
+                        aria-checked={Boolean(config.showRIR)}
                         onClick={handleToggleRIR}
                         aria-label={t.showRIR}
-                        aria-pressed={config.showRIR}
                         className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${config.showRIR ? 'bg-primary-500' : 'bg-surface-elevated border border-border-strong'}`}
                     >
                         <span className={`absolute top-0.5 w-5 h-5 rounded-full shadow transition-all ${config.showRIR ? 'left-[22px] bg-white' : 'left-0.5 bg-white'}`} />
@@ -216,9 +222,10 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                     <div className="flex-1 text-sm font-medium text-[rgb(var(--text-primary))]">{t.keepScreen}</div>
                     <button
                         type="button"
+                        role="switch"
+                        aria-checked={Boolean(config.keepScreenOn)}
                         onClick={handleToggleWakeLock}
                         aria-label={t.keepScreen}
-                        aria-pressed={config.keepScreenOn}
                         className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${config.keepScreenOn ? 'bg-primary-500' : 'bg-surface-elevated border border-border-strong'}`}
                     >
                         <span className={`absolute top-0.5 w-5 h-5 rounded-full shadow transition-all ${config.keepScreenOn ? 'left-[22px] bg-white' : 'left-0.5 bg-white'}`} />
@@ -317,6 +324,42 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
             </div>
             <div className="card-reference rounded-[8px] divide-y divide-border-subtle overflow-hidden" data-testid="training-rp-preferences-card">
                 <div className="flex items-center gap-3 p-3">
+                    <span className="w-8 h-8 rounded-[6px] bg-surface-elevated flex items-center justify-center text-primary-400 shrink-0">
+                        <Icon name="Activity" size={17} />
+                    </span>
+                    <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-[rgb(var(--text-primary))]">
+                            {pickLang(lang, { es: 'Autorregulación RP', en: 'RP Autoregulation' })}
+                        </div>
+                        <div className="text-xs text-muted">
+                            {pickLang(lang, {
+                                es: 'Feedback post-entreno y ajuste semanal de series',
+                                en: 'Post-workout feedback & weekly set progression',
+                            })}
+                        </div>
+                    </div>
+                    <button
+                        type="button"
+                        role="switch"
+                        data-testid="toggle-rp-enabled"
+                        onClick={() => {
+                            triggerHaptic('light');
+                            setConfig({ rpEnabled: !config.rpEnabled });
+                        }}
+                        aria-label={pickLang(lang, { es: 'Autorregulación RP', en: 'RP Autoregulation' })}
+                        aria-checked={Boolean(config.rpEnabled)}
+                        className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${
+                            config.rpEnabled ? 'bg-primary-500' : 'bg-surface-elevated border border-border-strong'
+                        }`}
+                    >
+                        <span
+                            className={`absolute top-0.5 w-5 h-5 rounded-full shadow transition-all bg-white ${
+                                config.rpEnabled ? 'left-[22px]' : 'left-0.5'
+                            }`}
+                        />
+                    </button>
+                </div>
+                <div className="flex items-center gap-3 p-3">
                     <span className="w-8 h-8 rounded-[6px] bg-surface-elevated flex items-center justify-center text-emerald-400 shrink-0">
                         <Icon name="Repeat" size={17} />
                     </span>
@@ -333,12 +376,13 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                     </div>
                     <button
                         type="button"
+                        role="switch"
+                        aria-checked={config.autoMatchWeight !== false}
                         onClick={() => {
                             triggerHaptic('light');
                             setConfig({ autoMatchWeight: config.autoMatchWeight === false });
                         }}
                         aria-label={pickLang(lang, { es: 'Auto-igualar peso en series', en: 'Auto match weight updates' })}
-                        aria-pressed={config.autoMatchWeight !== false}
                         className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${config.autoMatchWeight !== false ? 'bg-primary-500' : 'bg-surface-elevated border border-border-strong'}`}
                     >
                         <span className={`absolute top-0.5 w-5 h-5 rounded-full shadow transition-all ${config.autoMatchWeight !== false ? 'left-[22px] bg-white' : 'left-0.5 bg-white'}`} />
@@ -363,12 +407,13 @@ export const TrainingSection: React.FC<TrainingSectionProps> = ({ onClose, onOpe
                         </div>
                         <button
                             type="button"
+                            role="switch"
+                            aria-checked={Boolean(config.useExerciseTypeFilters)}
                             onClick={() => {
                                 triggerHaptic('light');
                                 setConfig({ useExerciseTypeFilters: !config.useExerciseTypeFilters });
                             }}
                             aria-label={pickLang(lang, { es: 'Usar filtros de equipamiento', en: 'Use exercise type filters' })}
-                            aria-pressed={Boolean(config.useExerciseTypeFilters)}
                             className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${config.useExerciseTypeFilters ? 'bg-primary-500' : 'bg-surface-elevated border border-border-strong'}`}
                         >
                             <span className={`absolute top-0.5 w-5 h-5 rounded-full shadow transition-all ${config.useExerciseTypeFilters ? 'left-[22px] bg-white' : 'left-0.5 bg-white'}`} />

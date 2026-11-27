@@ -1,6 +1,6 @@
 // T2: ProgramEditView state, effects and handlers + RP 1:1 Meso Builder, Drafts, Muscle Priorities & Auto-Recommend.
 import { formatMessage } from '../../utils/i18n';
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
 import { TRANSLATIONS } from '../../constants';
 import { KONG_4DAY_V1 } from '../../programs/kong/kong4Day';
@@ -89,6 +89,47 @@ export const useProgramEditState = ({ onBack }: ProgramEditViewProps) => {
     }));
     const hasKnownPhase = Object.prototype.hasOwnProperty.call(t.phases, mesoConfig.type);
 
+    const latestSaveRef = useRef({
+        isEditingActiveRoutine,
+        program,
+        activeMeso,
+        workingProgram,
+        mesoConfig,
+        musclePriorities,
+        isCreatingWithDraft,
+    });
+    latestSaveRef.current = {
+        isEditingActiveRoutine,
+        program,
+        activeMeso,
+        workingProgram,
+        mesoConfig,
+        musclePriorities,
+        isCreatingWithDraft,
+    };
+
+    const flushSave = useCallback(() => {
+        const snap = latestSaveRef.current;
+        if (snap.isEditingActiveRoutine && snap.activeMeso) {
+            const updatedPlan = (snap.program || []).map((day: ProgramDay) => (day.slots || []).map(s => s.exerciseId || null));
+            if (!isSamePlan(updatedPlan, snap.activeMeso.plan)) {
+                setActiveMeso(prev => prev ? { ...prev, plan: updatedPlan } : prev);
+            }
+            setSaveStatus('saved');
+            return;
+        }
+        const hasContent = (snap.workingProgram || []).length > 0 && (snap.workingProgram || []).some(d => (d.slots || []).length > 0);
+        if (!hasContent && !snap.isCreatingWithDraft) return;
+        saveMesocycleDraft({
+            name: snap.mesoConfig.name,
+            mesoType: snap.mesoConfig.type,
+            weeks: snap.mesoConfig.weeks,
+            program: snap.workingProgram,
+            musclePriorities: snap.musclePriorities,
+            updatedAt: Date.now(),
+        });
+    }, [setActiveMeso]);
+
     // Sync active meso plan & priorities if editing active routine
     useEffect(() => {
         if (!isEditingActiveRoutine || !activeMeso) return;
@@ -122,6 +163,16 @@ export const useProgramEditState = ({ onBack }: ProgramEditViewProps) => {
         }, 350);
         return () => clearTimeout(timer);
     }, [isEditingActiveRoutine, isCreatingWithDraft, workingProgram, mesoConfig, musclePriorities]);
+
+    const handleToggleRestDay = useCallback((id: string, dayIdx: number, enableRest: boolean) => {
+        setWorkingProgram(prev => prev.map(d => d.id === id ? {
+            ...d,
+            dayName: enableRest
+                ? { en: 'Rest Day', es: 'Descanso' }
+                : { en: `Day ${dayIdx + 1}`, es: `Día ${dayIdx + 1}` },
+            slots: enableRest ? [] : d.slots,
+        } : d));
+    }, [setWorkingProgram]);
 
     const handleSetMusclePriority = useCallback((muscle: MuscleGroup, level: MusclePriorityLevel) => {
         setMusclePriorities(prev => ({ ...prev, [muscle]: level }));
@@ -364,6 +415,8 @@ export const useProgramEditState = ({ onBack }: ProgramEditViewProps) => {
         handleApplyPrioritiesToSplit,
         handleAutoFixConflicts,
         handleUpdateDayName,
+        handleToggleRestDay,
+        flushSave,
         handleAddDay,
         handleDeleteDay,
         handleAddSlot,

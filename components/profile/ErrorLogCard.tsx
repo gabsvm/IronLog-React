@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { TRANSLATIONS } from '../../constants/translations';
 import { Icon } from '../ui/Icon';
 import {
@@ -47,6 +47,7 @@ export const ErrorLogCard: React.FC<ErrorLogCardProps> = ({ lang, syncStatusText
     const [count, setCount] = useState<number | null>(null);
     const [copied, setCopied] = useState(false);
     const [reporting, setReporting] = useState(() => isErrorReportingEnabled());
+    const copyTimerRef = useRef<number | null>(null);
 
     useEffect(() => {
         let cancelled = false;
@@ -55,6 +56,7 @@ export const ErrorLogCard: React.FC<ErrorLogCardProps> = ({ lang, syncStatusText
         });
         return () => {
             cancelled = true;
+            if (copyTimerRef.current !== null) window.clearTimeout(copyTimerRef.current);
         };
     }, []);
 
@@ -63,7 +65,8 @@ export const ErrorLogCard: React.FC<ErrorLogCardProps> = ({ lang, syncStatusText
         const ok = await copyText(buildDiagnosticsText({ syncStatusText, entries }));
         if (ok) {
             setCopied(true);
-            window.setTimeout(() => setCopied(false), 2000);
+            if (copyTimerRef.current !== null) window.clearTimeout(copyTimerRef.current);
+            copyTimerRef.current = window.setTimeout(() => setCopied(false), 2000);
         }
     };
 

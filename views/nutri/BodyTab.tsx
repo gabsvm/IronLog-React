@@ -95,7 +95,7 @@ export const BodyTab: React.FC<Props> = ({
                     const points = weightTrend
                         .map((entry, i) => {
                             const x = (i / (weightTrend.length - 1)) * 100;
-                            const y = 100 - ((entry.weight - min) / range) * 100;
+                            const y = 36 - ((entry.weight - min) / range) * 32;
                             return `${x},${y}`;
                         })
                         .join(' ');

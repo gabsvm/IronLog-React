@@ -1,14 +1,30 @@
 // U5: active rest timer (compact pill and expanded view), moved verbatim from components/ui/RestTimerOverlay.tsx.
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Icon } from '../Icon';
 import { triggerHaptic } from '../../../utils/audio';
 import { calculateTimerPercentage } from './restTimerLogic';
 import { CircularTimer } from './CircularTimer';
 import type { RestTimerOverlayState } from './useRestTimerOverlayState';
-import { RestTimerNotifPrompt } from './RestTimerPrompts';
+import { RestTimerAlarmNotice, RestTimerNotifPrompt } from './RestTimerPrompts';
 
 export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ state }) => {
     const { restTimer, setRestTimer, lang, reducedEffects, t, mode, setMode, keyboardOffset, pillRef, currentSourceSet, showEffortFeedback, handleRateEffort, nextExerciseInfo } = state;
+    const [hasBottomNav, setHasBottomNav] = useState(false);
+
+    useEffect(() => {
+        if (typeof document === 'undefined') return;
+        setHasBottomNav(Boolean(document.querySelector('nav[aria-label="Main navigation"]')));
+    }, [restTimer?.active, mode]);
+
+    useEffect(() => {
+        if (!restTimer?.active || mode !== 'expanded') return;
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setMode('compact');
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, [restTimer?.active, mode, setMode]);
+
     // Same guard as the parent (it only renders this with an active rest).
     if (!restTimer || !restTimer.active) return null;
 
@@ -18,7 +34,6 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
     };
 
     const percentage = calculateTimerPercentage(restTimer.timeLeft, restTimer.duration);
-    const hasBottomNav = typeof document !== 'undefined' && Boolean(document.querySelector('nav[aria-label="Main navigation"]'));
     const baseBottom = hasBottomNav ? 80 : 16;
     const floatingBottom = baseBottom + keyboardOffset;
     // When the keyboard is open the pill would cover the input being edited,
@@ -33,12 +48,16 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
         triggerHaptic('light');
         setRestTimer((prev) => {
             if (!prev.active) return prev;
-            const nextTime = Math.max(0, prev.timeLeft + deltaSeconds);
+            const now = Date.now();
+            const rawEndAt = (prev.endAt || now) + deltaSeconds * 1000;
+            const minEndAt = now + 1000;
+            const endAt = deltaSeconds < 0 ? Math.max(minEndAt, rawEndAt) : rawEndAt;
+            const nextTime = Math.max(1, Math.ceil((endAt - now) / 1000));
             return {
                 ...prev,
-                endAt: (prev.endAt || Date.now()) + deltaSeconds * 1000,
+                endAt,
                 timeLeft: nextTime,
-                duration: deltaSeconds > 0 ? prev.duration + deltaSeconds : prev.duration,
+                duration: deltaSeconds > 0 ? prev.duration + deltaSeconds : Math.max(nextTime, prev.duration),
             };
         });
     };
@@ -183,6 +202,7 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
                 </div>
             </aside>
             <RestTimerNotifPrompt state={state} />
+            <RestTimerAlarmNotice state={state} />
             </>
         );
     }
@@ -273,7 +293,7 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
                                         : 'border-border-subtle bg-surface-elevated text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--text-primary))] hover:border-zinc-500'
                                 }`}
                             >
-                                OK
+                                {t.effortOk}
                             </button>
                             <button
                                 type="button"
@@ -337,6 +357,7 @@ export const RestTimerActive: React.FC<{ state: RestTimerOverlayState }> = ({ st
             </div>
         </div>
         <RestTimerNotifPrompt state={state} />
+        <RestTimerAlarmNotice state={state} />
         </>
     );
 };

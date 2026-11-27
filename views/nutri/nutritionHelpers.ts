@@ -41,9 +41,8 @@ export const WATER_PRESETS = [200, 300, 500];
  * Tolerant: today counts even if not logged yet.
  * Uses local calendar days to prevent UTC rollover bugs.
  */
-export const calcStreak = (logs: NutritionLog[]): number => {
+export const calcStreak = (logs: NutritionLog[], today = todayStr()): number => {
     const loggedDates = new Set(logs.filter((l) => l.entries.length > 0).map((l) => l.date));
-    const today = todayStr();
     const startOffset = loggedDates.has(today) ? 0 : 1;
     let streak = 0;
     for (let i = startOffset; i < 365; i++) {

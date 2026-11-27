@@ -35,13 +35,21 @@ export interface TimerCommandPayload {
 
 const NativeBridge = registerPlugin<NativeBridgePlugin>('NativeBridge');
 
-// Simple oscillator beep to avoid loading external assets
+let sharedAudioCtx: AudioContext | null = null;
+
+// Simple oscillator beep reusing a singleton AudioContext to avoid WebView/browser context leaks
 export const playTimerFinishSound = () => {
     try {
-        const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-        if (!AudioContext) return;
+        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+        if (!AudioCtx) return;
 
-        const ctx = new AudioContext();
+        if (!sharedAudioCtx || sharedAudioCtx.state === 'closed') {
+            sharedAudioCtx = new AudioCtx();
+        }
+        const ctx = sharedAudioCtx;
+        if (ctx.state === 'suspended') {
+            void ctx.resume().catch(() => {});
+        }
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
 

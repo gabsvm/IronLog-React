@@ -77,8 +77,8 @@ const uploadStateNow = async (userId: string, state: Partial<AppState> & { email
     if (shouldInclude('nutritionLogs')) rawMainData.nutritionLogs = capNutritionLogs(state.nutritionLogs);
     if (shouldInclude('cardioSessions')) rawMainData.cardioSessions = capCardioSessions(state.cardioSessions);
     if (shouldInclude('bodyLogs')) rawMainData.bodyLogs = capBodyLogs(state.bodyLogs);
-    if (shouldInclude('customFoods')) rawMainData.customFoods = capCustomFoods(state.customFoods);
-    if (shouldInclude('personalTemplates')) rawMainData.personalTemplates = state.personalTemplates || [];
+    if (shouldInclude('customFoods') && state.customFoods !== undefined) rawMainData.customFoods = capCustomFoods(state.customFoods);
+    if (shouldInclude('personalTemplates') && state.personalTemplates !== undefined) rawMainData.personalTemplates = state.personalTemplates || [];
     if (shouldInclude('nutritionGoal')) rawMainData.nutritionGoal = state.nutritionGoal || null;
     if (shouldInclude('macroGoals')) rawMainData.macroGoals = state.macroGoals || null;
     if (shouldInclude('userProfile')) rawMainData.userProfile = state.userProfile || null;

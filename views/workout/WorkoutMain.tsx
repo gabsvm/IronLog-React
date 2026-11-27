@@ -33,6 +33,19 @@ const BadSessionTriageSheet = React.lazy(() =>
 
 type SubSheetType = 'mesoNotes' | 'renameMeso' | 'mesoSummary' | 'workoutNote' | 'relabelDay' | 'bodyweight' | 'endMesoConfirm' | null;
 
+const WorkoutScrollContainer: React.FC<{ children: React.ReactNode }> = React.memo(({ children }) => {
+    const restTimer = useTimerState();
+    return (
+        <div
+            id="tut-exercise-list"
+            data-testid="workout-main"
+            className={`flex-1 overflow-y-auto scroll-container px-3 space-y-2.5 pt-3 ${restTimer?.active ? 'pb-36' : 'pb-10'}`}
+        >
+            {children}
+        </div>
+    );
+});
+
 export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) => {
     const {
         onBack, onOpenReorder, sessionExercises, openMenuId, setOpenMenuId,
@@ -46,14 +59,31 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
 
     const activeMeso = useStore(state => state.activeMeso);
     const setActiveMeso = useStore(state => state.setActiveMeso);
-    const restTimer = useTimerState();
+    const setActiveSession = useStore(state => state.setActiveSession);
+    const program = (state as any).program;
     const [showCalendarDrawer, setShowCalendarDrawer] = useState(false);
+    const [calendarWeek, setCalendarWeek] = useState<number>(activeSession.week || 1);
     const [showSessionMenu, setShowSessionMenu] = useState(false);
     const [showPrioritiesSheet, setShowPrioritiesSheet] = useState(false);
     const [showBadSessionSheet, setShowBadSessionSheet] = useState(false);
     const [activeSubSheet, setActiveSubSheet] = useState<SubSheetType>(null);
     const [draftText, setDraftText] = useState('');
     const [earlyDeloadDismissed, setEarlyDeloadDismissed] = useState(false);
+
+    React.useEffect(() => {
+        if (showCalendarDrawer) {
+            setCalendarWeek(activeSession.week || 1);
+        }
+    }, [showCalendarDrawer, activeSession.week]);
+
+    React.useEffect(() => {
+        if (!showSessionMenu) return;
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setShowSessionMenu(false);
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [showSessionMenu]);
 
     const earlyDeloadStatus = useMemo(
         () => detectConsecutiveMissesAndEarlyDeload(logs, activeMeso),
@@ -81,7 +111,23 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
             0
         );
         return { sessions: mesoLogs.length, totalSets };
-    }, [activeMeso, logs]);
+    }, [logs, activeMeso]);
+
+    const muscleMesoLogCounts = useMemo(() => {
+        const counts = new Map<string, number>();
+        if (!activeMeso?.id) return counts;
+        for (const l of logs || []) {
+            if (l.skipped || l.mesoId !== activeMeso.id) continue;
+            const seenInLog = new Set<string>();
+            for (const le of l.exercises || []) {
+                if (le?.muscle && !seenInLog.has(le.muscle)) {
+                    seenInLog.add(le.muscle);
+                    counts.set(le.muscle, (counts.get(le.muscle) || 0) + 1);
+                }
+            }
+        }
+        return counts;
+    }, [logs, activeMeso?.id]);
 
     if (!activeSession) return null;
 
@@ -172,16 +218,19 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
 
                     {/* Right side */}
                     <div className="flex items-center gap-1.5 shrink-0">
-                        {/* Calendar button */}
-                        <button
-                            type="button"
-                            onClick={() => setShowCalendarDrawer(true)}
-                            aria-label={calendarAria}
-                            title={calendarAria}
-                            className="relative flex h-8 w-8 items-center justify-center rounded-[4px] text-zinc-400 hover:text-white hover:bg-surface-raised active:scale-95 transition-all"
-                        >
-                            <Icon name="Calendar" size={19} />
-                        </button>
+                        {/* Calendar button (only when inside a planned mesocycle) */}
+                        {activeMeso && (
+                            <button
+                                type="button"
+                                data-testid="workout-calendar-btn"
+                                onClick={() => setShowCalendarDrawer(true)}
+                                aria-label={calendarAria}
+                                title={calendarAria}
+                                className="relative flex h-8 w-8 items-center justify-center rounded-[4px] text-zinc-400 hover:text-white hover:bg-surface-raised active:scale-95 transition-all"
+                            >
+                                <Icon name="Calendar" size={19} />
+                            </button>
+                        )}
 
                         {/* Finish Check / Button */}
                         <button
@@ -211,6 +260,15 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                             >
                                 <Icon name="MoreVertical" size={18} />
                             </button>
+                            {showSessionMenu && (
+                                <div
+                                    className="fixed inset-0 z-40"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setShowSessionMenu(false);
+                                    }}
+                                />
+                            )}
                             {showSessionMenu && (
                                 <div
                                     className="absolute right-0 top-full mt-1.5 w-60 rounded-xl border border-border-subtle bg-surface-base p-1.5 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150"
@@ -375,82 +433,129 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                 </div>
             </div>
 
-            {/* Calendar / Weeks & Days Drawer */}
-            {showCalendarDrawer && activeMeso && (
-                <div
-                    className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm"
-                    onClick={() => setShowCalendarDrawer(false)}
-                >
+            {/* Calendar / Weeks & Days Matrix Drawer */}
+            {showCalendarDrawer && activeMeso && (() => {
+                const plannedDays = Array.isArray(program) && program.length > 0
+                    ? program
+                    : (Array.isArray(activeMeso.plan) ? activeMeso.plan : []);
+                return (
                     <div
-                        className="w-full max-w-lg rounded-t-[20px] border-t border-border-subtle bg-surface-base p-4 pb-safe animate-in slide-in-from-bottom duration-200"
-                        onClick={(e) => e.stopPropagation()}
+                        data-testid="workout-calendar-drawer"
+                        className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm"
+                        onClick={() => setShowCalendarDrawer(false)}
                     >
-                        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-zinc-700" />
-                        <div className="flex items-center justify-between pb-3 border-b border-border-subtle">
-                            <div>
-                                <h3 className="text-base font-bold text-white">{activeMeso.name || 'Mesocycle'}</h3>
-                                <p className="text-xs text-muted">
-                                    {pickLang(lang, {
-                                        es: `Semana ${activeSession.week} de ${totalWeeks}`,
-                                        en: `Week ${activeSession.week} of ${totalWeeks}`,
+                        <div
+                            className="w-full max-w-lg rounded-t-[20px] border-t border-border-subtle bg-surface-base p-4 pb-safe animate-in slide-in-from-bottom duration-200"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-zinc-700" />
+                            <div className="flex items-center justify-between pb-3 border-b border-border-subtle">
+                                <div>
+                                    <h3 className="text-base font-bold text-white">{activeMeso.name || 'Mesocycle'}</h3>
+                                    <p className="text-xs text-muted">
+                                        {pickLang(lang, {
+                                            es: `Semana ${calendarWeek} de ${totalWeeks}${!activeMeso.programSystem && totalWeeks >= 4 && calendarWeek === totalWeeks ? ' · Deload' : ''}`,
+                                            en: `Week ${calendarWeek} of ${totalWeeks}${!activeMeso.programSystem && totalWeeks >= 4 && calendarWeek === totalWeeks ? ' · Deload' : ''}`,
+                                        })}
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowCalendarDrawer(false)}
+                                    className="rounded-lg p-1.5 text-zinc-400 hover:text-white"
+                                    aria-label={t.cancel}
+                                >
+                                    <Icon name="X" size={18} />
+                                </button>
+                            </div>
+                            <div className="py-3">
+                                <p className="text-xs font-semibold text-zinc-400 mb-2 uppercase tracking-wider">
+                                    {pickLang(lang, { es: 'Semanas', en: 'Weeks' })}
+                                </p>
+                                <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                                    {Array.from({ length: totalWeeks }, (_, i) => i + 1).map((wNum) => {
+                                        const isDeloadWk = !activeMeso.programSystem && totalWeeks >= 4 && wNum === totalWeeks;
+                                        const wkLogs = (logs || []).filter(l => l.mesoId === activeMeso.id && l.week === wNum && !l.skipped);
+                                        const wkDone = plannedDays.length > 0 && new Set(wkLogs.map(l => l.dayIdx)).size >= plannedDays.length;
+                                        const isSelected = wNum === calendarWeek;
+                                        return (
+                                            <button
+                                                key={wNum}
+                                                type="button"
+                                                data-testid={`calendar-week-btn-${wNum}`}
+                                                onClick={() => setCalendarWeek(wNum)}
+                                                className={`flex h-8 min-w-[44px] px-2.5 items-center justify-center gap-1 rounded-[6px] text-xs font-bold transition-colors ${
+                                                    isSelected
+                                                        ? 'bg-primary-500 text-zinc-950 font-black'
+                                                        : isDeloadWk
+                                                            ? 'border border-sky-500/35 bg-sky-500/10 text-sky-300'
+                                                            : 'bg-surface-raised text-zinc-300 border border-border-subtle hover:border-zinc-500'
+                                                }`}
+                                            >
+                                                <span>{isDeloadWk ? 'DL' : `W${wNum}`}</span>
+                                                {wkDone && <span className="text-[10px]">✓</span>}
+                                            </button>
+                                        );
                                     })}
-                                </p>
+                                </div>
                             </div>
-                            <button
-                                type="button"
-                                onClick={() => setShowCalendarDrawer(false)}
-                                className="rounded-lg p-1.5 text-zinc-400 hover:text-white"
-                                aria-label={t.cancel}
-                            >
-                                <Icon name="X" size={18} />
-                            </button>
+                            {plannedDays.length > 0 && (
+                                <div className="py-2 space-y-1.5 max-h-60 overflow-y-auto">
+                                    <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                                        {pickLang(lang, { es: 'Días del plan', en: 'Plan Days' })}
+                                    </p>
+                                    {plannedDays.map((dayEntry: any, dIdx: number) => {
+                                        const dayNameText = dayEntry?.dayName
+                                            ? (typeof dayEntry.dayName === 'object'
+                                                ? (dayEntry.dayName[lang] || dayEntry.dayName.es || dayEntry.dayName.en)
+                                                : String(dayEntry.dayName))
+                                            : pickLang(lang, { es: `Día ${dIdx + 1}`, en: `Day ${dIdx + 1}` });
+                                        const slotCount = Array.isArray(dayEntry?.slots)
+                                            ? dayEntry.slots.length
+                                            : (Array.isArray(dayEntry) ? dayEntry.length : 0);
+                                        const dayLog = (logs || []).find(
+                                            l => l.mesoId === activeMeso.id && l.week === calendarWeek && l.dayIdx === dIdx
+                                        );
+                                        const isToday = calendarWeek === activeSession.week && dIdx === activeSession.dayIdx;
+                                        return (
+                                            <div
+                                                key={dIdx}
+                                                className={`flex items-center justify-between gap-2 rounded-[6px] p-2.5 text-xs border ${
+                                                    isToday
+                                                        ? 'border-primary-500 bg-primary-500/10'
+                                                        : 'border-border-subtle bg-surface-raised/40'
+                                                }`}
+                                            >
+                                                <div className="min-w-0">
+                                                    <div className="font-bold text-white truncate">{dayNameText}</div>
+                                                    <div className="text-[11px] text-zinc-400">
+                                                        {`${slotCount} ${pickLang(lang, { es: 'ejercicios', en: 'exercises' })}`}
+                                                    </div>
+                                                </div>
+                                                {isToday ? (
+                                                    <span className="shrink-0 rounded-[4px] bg-primary-500 px-2 py-0.5 text-[10px] font-black text-zinc-950 uppercase">
+                                                        {pickLang(lang, { es: 'HOY', en: 'TODAY' })}
+                                                    </span>
+                                                ) : dayLog?.skipped ? (
+                                                    <span className="shrink-0 text-[11px] font-bold text-zinc-400">
+                                                        {pickLang(lang, { es: 'Saltado', en: 'Skipped' })}
+                                                    </span>
+                                                ) : dayLog ? (
+                                                    <span className="shrink-0 text-[11px] font-bold text-emerald-400">
+                                                        ✓ {pickLang(lang, { es: 'Hecho', en: 'Done' })}
+                                                    </span>
+                                                ) : (
+                                                    <span className="shrink-0 text-[11px] text-zinc-500">—</span>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </div>
-                        <div className="py-3">
-                            <p className="text-xs font-semibold text-zinc-400 mb-2 uppercase tracking-wider">
-                                {pickLang(lang, { es: 'Semanas', en: 'Weeks' })}
-                            </p>
-                            <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                                {Array.from({ length: totalWeeks }, (_, i) => i + 1).map((wNum) => (
-                                    <div
-                                        key={wNum}
-                                        className={`flex h-8 min-w-[36px] px-2 items-center justify-center rounded-[6px] text-xs font-bold ${
-                                            wNum === activeSession.week
-                                                ? 'bg-primary-500 text-zinc-950 font-black'
-                                                : 'bg-surface-raised text-zinc-400 border border-border-subtle'
-                                        }`}
-                                    >
-                                        W{wNum}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                        {Array.isArray(activeMeso.plan) && (
-                            <div className="py-2 space-y-1.5 max-h-56 overflow-y-auto">
-                                <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-                                    {pickLang(lang, { es: 'Días del plan', en: 'Plan Days' })}
-                                </p>
-                                {activeMeso.plan.map((dayPlan: any, dIdx: number) => (
-                                    <div
-                                        key={dIdx}
-                                        className={`flex items-center justify-between rounded-[6px] p-2 text-xs border ${
-                                            dIdx === activeSession.dayIdx
-                                                ? 'border-primary-500 bg-primary-500/10'
-                                                : 'border-border-subtle bg-surface-raised/40'
-                                        }`}
-                                    >
-                                        <span className="font-bold text-white">
-                                            {pickLang(lang, { es: `Día ${dIdx + 1}`, en: `Day ${dIdx + 1}` })}
-                                        </span>
-                                        <span className="text-muted">
-                                            {Array.isArray(dayPlan) ? `${dayPlan.length} ${pickLang(lang, { es: 'ejercicios', en: 'exercises' })}` : ''}
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
                     </div>
-                </div>
-            )}
+                );
+            })()}
 
             {/* Mid-Meso Muscle Priorities Sheet (RP Video #7) */}
             {showPrioritiesSheet && activeMeso && (
@@ -496,6 +601,7 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                                     onClick={() => {
                                         setActiveMeso?.(prev => prev ? { ...prev, completedAt: Date.now() } : null);
                                         setActiveSubSheet(null);
+                                        setActiveSession?.(null);
                                         setActiveMeso?.(null);
                                         onBack?.();
                                     }}
@@ -586,11 +692,7 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
             )}
 
             <div className="flex-1 overflow-hidden flex flex-col">
-                <div
-                    id="tut-exercise-list"
-                    data-testid="workout-main"
-                    className={`flex-1 overflow-y-auto scroll-container px-3 space-y-2.5 pt-3 ${restTimer?.active ? 'pb-36' : 'pb-10'}`}
-                >
+                <WorkoutScrollContainer>
                     {activeMeso?.isDeload && (
                         <Suspense fallback={null}>
                             <DeloadRecoveryCard
@@ -669,7 +771,7 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                                 const supersetColorIndex = ex.supersetId ? supersetColorIndexes[ex.supersetId] : undefined;
                                 const isLinkingTarget = !!linkingId && linkingId !== ex.instanceId;
                                 const isFirstForMuscle = sessionExercises.findIndex((item) => item.muscle === ex.muscle) === idx;
-                                const logsForMuscleCount = (logs || []).filter((l) => !l.skipped && l.mesoId === activeMeso?.id && (l.exercises || []).some((le) => le.muscle === ex.muscle)).length;
+                                const logsForMuscleCount = muscleMesoLogCounts.get(ex.muscle) || 0;
                                 const sorenessDue = isFirstForMuscle && isRetrospectiveSorenessDue(
                                     ex.muscle,
                                     activeSession.week,
@@ -751,7 +853,7 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                     </button>
 
                     <div className="h-6" />
-                </div>
+                </WorkoutScrollContainer>
             </div>
         </>
     );

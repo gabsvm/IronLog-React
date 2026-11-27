@@ -94,8 +94,13 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
     setCarbs('');
     setFat('');
     setServingSize('');
+    setMultiplier(1);
     setSaveToMyFoods(false);
   };
+
+  React.useEffect(() => {
+    if (!isOpen) setMultiplier(1);
+  }, [isOpen]);
 
   const filteredPresets = useMemo(() => {
     if (!search.trim()) return PRESET_DB;
@@ -114,13 +119,20 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
     [filteredMyFoods],
   );
 
-  const buildEntry = (entryCalories: number, entryProtein: number, entryCarbs: number, entryFat: number, entryName: string): FoodEntry => ({
+  const buildEntry = (
+    entryCalories: number,
+    entryProtein: number,
+    entryCarbs: number,
+    entryFat: number,
+    entryName: string,
+    portionMultiplier = multiplier,
+  ): FoodEntry => ({
     id: `meal_${Date.now()}_${Math.random()}`,
-    name: multiplier !== 1 ? `${entryName} (x${multiplier})` : entryName,
-    calories: Math.round(entryCalories * multiplier),
-    protein: Math.round(entryProtein * multiplier),
-    carbs: Math.round(entryCarbs * multiplier),
-    fat: Math.round(entryFat * multiplier),
+    name: portionMultiplier !== 1 ? `${entryName} (x${portionMultiplier})` : entryName,
+    calories: Math.max(0, Math.round(entryCalories * portionMultiplier)),
+    protein: Math.max(0, Math.round(entryProtein * portionMultiplier)),
+    carbs: Math.max(0, Math.round(entryCarbs * portionMultiplier)),
+    fat: Math.max(0, Math.round(entryFat * portionMultiplier)),
     mealType,
     timestamp: Date.now(),
   });
@@ -131,24 +143,26 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
   };
 
   const handleSubmitManual = () => {
-    if (!name || !calories) return;
+    const trimmedName = name.trim();
+    if (!trimmedName || !calories) return;
 
-    const parsedCalories = Number(calories) || 0;
-    const parsedProtein = Number(protein) || 0;
-    const parsedCarbs = Number(carbs) || 0;
-    const parsedFat = Number(fat) || 0;
+    const parsedCalories = Math.max(0, Number(calories) || 0);
+    const parsedProtein = Math.max(0, Number(protein) || 0);
+    const parsedCarbs = Math.max(0, Number(carbs) || 0);
+    const parsedFat = Math.max(0, Number(fat) || 0);
+    if (parsedCalories <= 0 && parsedProtein <= 0 && parsedCarbs <= 0 && parsedFat <= 0) return;
 
-    onAdd(buildEntry(parsedCalories, parsedProtein, parsedCarbs, parsedFat, name));
+    onAdd(buildEntry(parsedCalories, parsedProtein, parsedCarbs, parsedFat, trimmedName, 1));
 
     if (saveToMyFoods) {
       const newFood: CustomFood = {
         id: `cf_${Date.now()}`,
-        name,
+        name: trimmedName,
         calories: parsedCalories,
         protein: parsedProtein,
         carbs: parsedCarbs,
         fat: parsedFat,
-        servingSize: servingSize || undefined,
+        servingSize: servingSize.trim() || undefined,
         isFavorite: false,
         createdAt: Date.now(),
       };
@@ -167,7 +181,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
     setCustomFoods((prev) => prev.filter((food) => food.id !== id));
   };
 
-  const canSubmitManual = !!name && !!calories;
+  const canSubmitManual = !!name.trim() && Number(calories) > 0;
 
   return (
     <Sheet
@@ -202,7 +216,10 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({ isOpen, onClose, onA
           ] as { id: ModalTab; icon: string; label: string }[]).map((item) => (
             <button
               key={item.id}
-              onClick={() => setTab(item.id)}
+              onClick={() => {
+                setTab(item.id);
+                if (item.id === 'manual') setMultiplier(1);
+              }}
               className={`flex min-h-11 items-center justify-center gap-1 rounded-[4px] px-1 text-xs font-bold transition-all ${
                 tab === item.id ? 'bg-primary-500 font-black text-zinc-950' : 'text-muted'
               }`}

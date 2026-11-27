@@ -21,7 +21,7 @@ const MUSCLE_ORDER: MuscleGroup[] = [
     'CHEST', 'BACK', 'SHOULDERS',
     'BICEPS', 'TRICEPS', 'FOREARMS',
     'QUADS', 'HAMSTRINGS', 'GLUTES',
-    'CALVES', 'ABS', 'TRAPS'
+    'CALVES', 'ABS', 'TRAPS', 'NECK'
 ];
 
 export const MuscleHeatmapGrid: React.FC<MuscleHeatmapGridProps> = ({ volumeData, lang }) => {

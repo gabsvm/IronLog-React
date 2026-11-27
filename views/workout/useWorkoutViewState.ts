@@ -7,7 +7,7 @@ import { ExerciseDef, SetType } from '../../types';
 import { getMesoStageConfig, getLastLogForExercise } from '../../utils';
 import { useWorkoutController } from '../../hooks/useWorkoutController';
 import { useTimerActions } from '../../context/TimerContext';
-import { countWorkingSets, isTemplateUpdateEligible, resolveInitialActiveExerciseId, toggleExerciseCardExpansion } from '../../utils/workoutProgress';
+import { countWorkingSets, isMesoSessionTemplateEligible, resolveInitialActiveExerciseId, toggleExerciseCardExpansion } from '../../utils/workoutProgress';
 import { useStore } from '../../lib/store';
 import { scheduleWhenIdle } from '../../lib/idle';
 import { MANUAL_REST_PRESETS } from './workoutConstants';
@@ -20,7 +20,7 @@ export interface WorkoutViewProps {
 }
 
 export const useWorkoutViewState = ({ onFinish, onDiscard, onBack, onOpenReorder }: WorkoutViewProps) => {
-    const { exercises, setExercises, logs, userProfile, setUserProfile, setProgram } = useApp();
+    const { exercises, setExercises, logs, userProfile, setUserProfile, program, setProgram } = useApp();
     const { lang } = useAppPreferences();
     const { config } = useAppConfig();
     const { tutorialProgress, markTutorialSeen } = useTutorial();
@@ -259,25 +259,33 @@ export const useWorkoutViewState = ({ onFinish, onDiscard, onBack, onOpenReorder
         });
         if (activeMeso?.programSystem?.systemId === 'kong_4day' && replacedSlotId) {
             setKongSubPrompt({ slotId: replacedSlotId, exId: newExId });
-        } else if (repeatForMeso && currentSession && currentMeso && replaceIdx >= 0 && isTemplateUpdateEligible(currentSession, currentMeso)) {
-            setUpdateTemplate(true);
+        } else if (repeatForMeso && currentSession && currentMeso && replaceIdx >= 0 && isMesoSessionTemplateEligible(currentSession, currentMeso)) {
             const dayIdx = currentSession.dayIdx;
+            const targetEx = (currentSession.exercises || [])[replaceIdx];
             if (typeof setProgram === 'function') {
                 setProgram(prev => prev.map((day, dIdx) => {
                     if (dIdx !== dayIdx) return day;
+                    const slots = day.slots || [];
+                    const matchedSlotIdx = targetEx?.programSlotId
+                        ? slots.findIndex(sl => sl.programSlotId === targetEx.programSlotId)
+                        : targetEx?.id
+                            ? slots.findIndex(sl => sl.exerciseId === targetEx.id)
+                            : -1;
+                    const resolvedSlotIdx = matchedSlotIdx >= 0 ? matchedSlotIdx : replaceIdx;
                     return {
                         ...day,
-                        slots: (day.slots || []).map((sl, sIdx) => sIdx === replaceIdx ? { ...sl, exerciseId: newExId, muscle: newDef.muscle } : sl)
+                        slots: slots.map((sl, sIdx) => sIdx === resolvedSlotIdx ? { ...sl, exerciseId: newExId, muscle: newDef.muscle } : sl)
                     };
                 }));
             }
             setActiveMeso(prev => {
                 if (!prev || !Array.isArray(prev.plan)) return prev;
-                const nextPlan = prev.plan.map((dayPlan, dIdx) =>
-                    dIdx === dayIdx
-                        ? (dayPlan || []).map((id, sIdx) => sIdx === replaceIdx ? newExId : id)
-                        : dayPlan
-                );
+                const nextPlan = prev.plan.map((dayPlan, dIdx) => {
+                    if (dIdx !== dayIdx || !Array.isArray(dayPlan)) return dayPlan;
+                    const matchedPlanIdx = targetEx?.id ? dayPlan.findIndex(id => id === targetEx.id) : -1;
+                    const resolvedPlanIdx = matchedPlanIdx >= 0 ? matchedPlanIdx : replaceIdx;
+                    return dayPlan.map((id, sIdx) => sIdx === resolvedPlanIdx ? newExId : id);
+                });
                 return { ...prev, plan: nextPlan };
             });
         }
@@ -370,12 +378,6 @@ export const useWorkoutViewState = ({ onFinish, onDiscard, onBack, onOpenReorder
             position: 'bottom' as const
         },
         {
-            targetId: 'tut-warmup-btn',
-            title: t.warmup,
-            text: t.tutorialExtra.smartWarmupText,
-            position: 'bottom' as const
-        },
-        {
             targetId: 'tut-finish-btn',
             title: t.tutorial.workout[3].title,
             text: t.tutorial.workout[3].text,
@@ -444,6 +446,7 @@ export const useWorkoutViewState = ({ onFinish, onDiscard, onBack, onOpenReorder
         updateTemplate,
         setUpdateTemplate,
         exercises,
+        program,
         logs,
         lang,
         config,

@@ -35,7 +35,7 @@ export interface StatsChartCache {
  * a lightweight FNV-style fingerprint so cached summaries never survive a real
  * data change simply because the number of completed sets stayed constant.
  */
-export const buildStatsLogsSignature = (logs: Log[]) => {
+export const buildStatsLogsSignature = (logs: Log[], userBodyWeight?: number) => {
     const safeLogs = Array.isArray(logs) ? logs : [];
     if (safeLogs.length === 0) return 'empty-v2';
 
@@ -49,18 +49,25 @@ export const buildStatsLogsSignature = (logs: Log[]) => {
         }
     };
 
+    mix(userBodyWeight ?? '');
+
     safeLogs.forEach(log => {
         mix(log.id);
         mix(log.startTime);
         mix(log.endTime);
         mix(log.mesoId);
         mix(log.week);
+        mix(log.bodyWeightSnapshot ?? '');
         mix(log.skipped ? 1 : 0);
 
         (log.exercises || []).forEach(exercise => {
             mix(exercise.id);
             mix(exercise.instanceId);
             mix(exercise.muscle);
+            mix(exercise.equipment ?? '');
+            mix(exercise.volumeCountingMode ?? '');
+            mix(exercise.isBodyweight ? 1 : 0);
+            mix(exercise.isIsometric ? 1 : 0);
             (exercise.sets || []).forEach(set => {
                 if (!set.completed || set.skipped) return;
                 completedCount += 1;

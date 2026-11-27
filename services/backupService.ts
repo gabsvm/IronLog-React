@@ -1,8 +1,11 @@
-import { AppState, ExerciseDef, GlobalTemplate, Log, MesoCycle, NutritionGoal, NutritionLog, ProgramDay, UserProfile, CardioSession, BodyLog, MacroGoals, CustomFood, ActiveSession } from '../types';
+import { keys as idbKeys, del as idbDel } from 'idb-keyval';
+import { AppState, DirtySyncSection, ExerciseDef, GlobalTemplate, Log, MesoCycle, NutritionGoal, NutritionLog, ProgramDay, UserProfile, CardioSession, BodyLog, MacroGoals, CustomFood, ActiveSession } from '../types';
 import { db } from '../utils/db';
 import { useStore } from '../lib/store';
 import { todayLocalDateKey } from '../utils/localDate';
 import { cancelAllPersistedStateFlushes } from '../hooks/usePersistedState';
+import { dirtySyncState } from './dirtySyncState';
+import { buildSectionSyncMeta } from './syncHelpers';
 
 export const BACKUP_SCHEMA = 'gainslab-backup';
 export const CURRENT_BACKUP_VERSION = 1;
@@ -15,6 +18,9 @@ export interface GainsLabBackupConfig {
     keepScreenOn?: boolean;
     weightUnit?: 'kg' | 'lb';
     restTimerDisplay?: 'Overlay' | 'Banner' | 'compact' | 'expanded';
+    autoMatchWeight?: boolean;
+    useExerciseTypeFilters?: boolean;
+    preferredEquipment?: string[];
 }
 
 export interface GainsLabBackupState {
@@ -32,6 +38,7 @@ export interface GainsLabBackupState {
     personalTemplates?: GlobalTemplate[];
     customFoods?: CustomFood[];
     rpFeedback?: Record<string, any>;
+    exerciseSfrHistory?: Record<string, any>;
     config?: GainsLabBackupConfig;
 }
 
@@ -62,6 +69,25 @@ export interface BackupDomainSummary {
     customFoodsCount: number;
 }
 
+const readSfrHistoryFromStorage = (): Record<string, any> => {
+    try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+            const raw = window.localStorage.getItem('mevra_exercise_sfr_v1');
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) return parsed;
+            }
+        }
+    } catch { /* ignore */ }
+    return {};
+};
+
+const RESTORED_SYNC_SECTIONS: DirtySyncSection[] = [
+    'program', 'activeMeso', 'exercises', 'logs', 'config', 'rpFeedback',
+    'userProfile', 'nutritionLogs', 'cardioSessions', 'nutritionGoal',
+    'bodyLogs', 'macroGoals', 'customFoods', 'personalTemplates',
+];
+
 /**
  * Creates a versioned backup payload from current application state.
  */
@@ -81,6 +107,7 @@ export const createBackupEnvelope = (state: GainsLabBackupState): GainsLabBackup
         personalTemplates: state.personalTemplates ?? [],
         customFoods: state.customFoods ?? [],
         rpFeedback: state.rpFeedback ?? {},
+        exerciseSfrHistory: state.exerciseSfrHistory ?? readSfrHistoryFromStorage(),
         config: state.config,
     };
 
@@ -252,29 +279,77 @@ export const restoreBackupToStorage = async (backup: GainsLabBackupV1): Promise<
     // Ensure onboarding is marked complete if data was restored
     writeTasks.push(db.set('il_onboarded_v2', true));
 
-    // Restore configuration using actual production localStorage keys
-    if (s.config && typeof window !== 'undefined' && window.localStorage) {
-        if (s.config.showRIR !== undefined) {
-            window.localStorage.setItem('il_cfg_rir', JSON.stringify(s.config.showRIR));
-        }
-        if (s.config.rpEnabled !== undefined) {
-            window.localStorage.setItem('il_cfg_rp', JSON.stringify(s.config.rpEnabled));
-        }
-        if (s.config.rpTargetRIR !== undefined) {
-            window.localStorage.setItem('il_cfg_rp_rir', JSON.stringify(s.config.rpTargetRIR));
-        }
-        if (s.config.keepScreenOn !== undefined) {
-            window.localStorage.setItem('il_cfg_screen', JSON.stringify(s.config.keepScreenOn));
-        }
-        if (s.config.weightUnit !== undefined) {
-            window.localStorage.setItem('il_cfg_weight_unit', JSON.stringify(s.config.weightUnit));
-        }
-        if (s.config.restTimerDisplay !== undefined) {
-            window.localStorage.setItem('il_cfg_rest_display', JSON.stringify(s.config.restTimerDisplay));
-        }
-    }
+    // Reconcile cloud sync metadata & dirty sections so restored data uploads cleanly rather than being overwritten
+    const restoredAt = Date.now();
+    const restoredSections: DirtySyncSection[] = [];
+    if (s.program !== undefined) restoredSections.push('program');
+    if (s.exercises !== undefined) restoredSections.push('exercises');
+    if (s.logs !== undefined) restoredSections.push('logs');
+    if (s.activeMeso !== undefined) restoredSections.push('activeMeso');
+    if (s.rpFeedback !== undefined) restoredSections.push('rpFeedback');
+    if (s.userProfile !== undefined) restoredSections.push('userProfile');
+    if (s.nutritionLogs !== undefined) restoredSections.push('nutritionLogs');
+    if (s.cardioSessions !== undefined) restoredSections.push('cardioSessions');
+    if (s.bodyLogs !== undefined) restoredSections.push('bodyLogs');
+    if (s.macroGoals !== undefined) restoredSections.push('macroGoals');
+    if (s.nutritionGoal !== undefined) restoredSections.push('nutritionGoal');
+    if (s.personalTemplates !== undefined) restoredSections.push('personalTemplates');
+    if (s.customFoods !== undefined) restoredSections.push('customFoods');
+    if (s.config !== undefined) restoredSections.push('config');
+    const sectionsToMark = restoredSections.length > 0 ? restoredSections : RESTORED_SYNC_SECTIONS;
+    writeTasks.push(db.set('il_last_sync_ts', restoredAt));
+    writeTasks.push(db.set('il_section_sync_meta_v1', buildSectionSyncMeta(sectionsToMark, restoredAt)));
+    writeTasks.push(dirtySyncState.mark(sectionsToMark));
 
+    // Clear stale cloud sync cache & V2 incremental indexes so restored domains upload/reconcile cleanly
+    writeTasks.push((async () => {
+        try {
+            const allKeys = await idbKeys();
+            await Promise.all(
+                allKeys
+                    .filter((k): k is string => typeof k === 'string' && (
+                        k.startsWith('il_cloud_sync_cache_v1:') ||
+                        (k.startsWith('il_cloud_') && k.includes('_v2'))
+                    ))
+                    .map((k) => idbDel(k)),
+            );
+        } catch { /* ignore in test/restricted IDB mocks */ }
+    })());
+
+    // Restore configuration using actual production localStorage keys
     if (typeof window !== 'undefined' && window.localStorage) {
+        if (s.exerciseSfrHistory !== undefined) {
+            window.localStorage.setItem('mevra_exercise_sfr_v1', JSON.stringify(s.exerciseSfrHistory));
+        }
+        if (s.config) {
+            if (s.config.showRIR !== undefined) {
+                window.localStorage.setItem('il_cfg_rir', JSON.stringify(s.config.showRIR));
+            }
+            if (s.config.rpEnabled !== undefined) {
+                window.localStorage.setItem('il_cfg_rp', JSON.stringify(s.config.rpEnabled));
+            }
+            if (s.config.rpTargetRIR !== undefined) {
+                window.localStorage.setItem('il_cfg_rp_rir', JSON.stringify(s.config.rpTargetRIR));
+            }
+            if (s.config.keepScreenOn !== undefined) {
+                window.localStorage.setItem('il_cfg_screen', JSON.stringify(s.config.keepScreenOn));
+            }
+            if (s.config.weightUnit !== undefined) {
+                window.localStorage.setItem('il_cfg_weight_unit', JSON.stringify(s.config.weightUnit));
+            }
+            if (s.config.restTimerDisplay !== undefined) {
+                window.localStorage.setItem('il_cfg_rest_display', JSON.stringify(s.config.restTimerDisplay));
+            }
+            if (s.config.autoMatchWeight !== undefined) {
+                window.localStorage.setItem('il_cfg_auto_match', JSON.stringify(s.config.autoMatchWeight));
+            }
+            if (s.config.useExerciseTypeFilters !== undefined) {
+                window.localStorage.setItem('il_cfg_equip_filter', JSON.stringify(s.config.useExerciseTypeFilters));
+            }
+            if (s.config.preferredEquipment !== undefined) {
+                window.localStorage.setItem('il_cfg_preferred_equip', JSON.stringify(s.config.preferredEquipment));
+            }
+        }
         window.localStorage.setItem('il_has_seen_onboarding_v1', 'true');
     }
 

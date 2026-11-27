@@ -31,6 +31,8 @@ export const ProgramEditDays: React.FC<{ state: ProgramEditState }> = ({ state }
         setPickingForSlot,
         setDayToDelete,
         handleUpdateDayName,
+        handleToggleRestDay,
+        flushSave,
         handleAddDay,
         handleAddSlot,
         handleRemoveSlot,
@@ -46,6 +48,7 @@ export const ProgramEditDays: React.FC<{ state: ProgramEditState }> = ({ state }
     } = state;
 
     const [activeDayIdx, setActiveDayIdx] = useState(0);
+    const [setsDraftMap, setSetsDraftMap] = useState<Record<string, string>>({});
     const prevLengthRef = useRef(program.length);
 
     useEffect(() => {
@@ -84,8 +87,12 @@ export const ProgramEditDays: React.FC<{ state: ProgramEditState }> = ({ state }
 
     const currentIdx = Math.min(activeDayIdx, Math.max(0, program.length - 1));
     const currentDay = program[currentIdx];
-    const restMatchWord = pickLang(lang, { es: 'descanso', en: 'rest' });
-    const isRestDay = Boolean(currentDay.dayName[lang]?.toLowerCase().includes(restMatchWord));
+    const dayNameEs = String(getTranslated(currentDay.dayName, 'es') || '').toLowerCase();
+    const dayNameEn = String(getTranslated(currentDay.dayName, 'en') || '').toLowerCase();
+    const isRestDay = Boolean(
+        dayNameEs.includes('descanso') || dayNameEn.includes('rest') ||
+        (Array.isArray(currentDay.slots) && currentDay.slots.length === 0 && (dayNameEs === '' || dayNameEn === ''))
+    );
 
     return (
         <div className="relative flex flex-1 flex-col overflow-hidden">
@@ -95,7 +102,7 @@ export const ProgramEditDays: React.FC<{ state: ProgramEditState }> = ({ state }
                     {program.map((day, idx) => {
                         const isSelected = idx === currentIdx;
                         const fallbackLabel = `${pickLang(lang, { es: 'Día', en: 'Day' })} ${idx + 1}`;
-                        const label = day.dayName[lang] || fallbackLabel;
+                        const label = getTranslated(day.dayName, lang) || fallbackLabel;
                         return (
                             <button
                                 key={day.id}
@@ -127,7 +134,7 @@ export const ProgramEditDays: React.FC<{ state: ProgramEditState }> = ({ state }
             <div className="shrink-0 px-4 py-2 flex items-center justify-between gap-3 border-b border-border-subtle/50 bg-surface-app">
                 <input
                     className="bg-transparent font-black text-[17px] text-white outline-none flex-1 min-w-0 placeholder:text-zinc-500"
-                    value={currentDay.dayName[lang] || ''}
+                    value={String(getTranslated(currentDay.dayName, lang) || '')}
                     onChange={(e) => handleUpdateDayName(currentDay.id, e.target.value)}
                     placeholder={TRANSLATIONS[lang].copy.programEdit.dayName}
                 />
@@ -156,13 +163,7 @@ export const ProgramEditDays: React.FC<{ state: ProgramEditState }> = ({ state }
                     )}
                     <button
                         type="button"
-                        onClick={() => {
-                            if (isRestDay) {
-                                handleUpdateDayName(currentDay.id, `${pickLang(lang, { es: 'Día', en: 'Day' })} ${currentIdx + 1}`);
-                            } else {
-                                handleUpdateDayName(currentDay.id, pickLang(lang, { es: 'Descanso', en: 'Rest Day' }));
-                            }
-                        }}
+                        onClick={() => handleToggleRestDay(currentDay.id, currentIdx, !isRestDay)}
                         className={`px-2 py-1 rounded-[4px] text-[10px] font-extrabold uppercase tracking-wider border transition-colors ${
                             isRestDay
                                 ? 'bg-amber-500/15 border-amber-500/30 text-amber-400'
@@ -209,8 +210,15 @@ export const ProgramEditDays: React.FC<{ state: ProgramEditState }> = ({ state }
                 )}
                 {(currentDay.slots || []).length === 0 ? (
                     <div className="text-center py-12 px-4 rounded-[6px] border border-dashed border-border-subtle bg-surface-raised/40">
+                        <p className="text-sm font-black uppercase tracking-wider text-zinc-200 mb-1">
+                            {isRestDay
+                                ? pickLang(lang, { es: 'Día de Descanso', en: 'Rest Day' })
+                                : pickLang(lang, { es: 'Día sin ejercicios', en: 'Empty Day' })}
+                        </p>
                         <p className="text-xs font-semibold text-zinc-400">
-                            {pickLang(lang, { es: 'No hay ejercicios para este día', en: 'No exercises for this day yet' })}
+                            {isRestDay
+                                ? pickLang(lang, { es: 'Recuperación programada sin series asignadas', en: 'Scheduled recovery day with no active sets' })
+                                : pickLang(lang, { es: 'No hay ejercicios para este día', en: 'No exercises for this day yet' })}
                         </p>
                         <button
                             type="button"
@@ -234,10 +242,12 @@ export const ProgramEditDays: React.FC<{ state: ProgramEditState }> = ({ state }
                                 : (TRANSLATIONS[lang].copy.programEdit.selectExercise || 'Select exercise');
                             const slotPriority = musclePriorities?.[slot.muscle];
                             const slotActiveBars = slotPriority === 'maintain' ? 1 : slotPriority === 'grow' ? 2 : 3;
+                            const slotKey = `${currentDay.id}-${idx}`;
+                            const setsDraft = setsDraftMap[slotKey] ?? String(slot.setTarget || '');
 
                             return (
                                 <div
-                                    key={idx}
+                                    key={`${currentDay.id}-${slot.muscle}-${slot.exerciseId || 'empty'}-${idx}`}
                                     className="rounded-[6px] border border-border-subtle bg-surface-raised px-3 py-2.5 flex items-center justify-between gap-2.5 transition-colors"
                                 >
                                     {/* Left: Slot index + vertical accent bar + stacked info */}
@@ -287,10 +297,26 @@ export const ProgramEditDays: React.FC<{ state: ProgramEditState }> = ({ state }
                                                             min={1}
                                                             max={20}
                                                             className="w-6 bg-transparent text-center font-mono font-bold text-white outline-none"
-                                                            value={slot.setTarget || ''}
-                                                            onChange={(e) =>
-                                                                handleUpdateSlot(currentDay.id, idx, 'setTarget', Math.max(1, Number(e.target.value)))
-                                                            }
+                                                            value={setsDraft}
+                                                            onChange={(e) => {
+                                                                const raw = e.target.value;
+                                                                setSetsDraftMap(prev => ({ ...prev, [slotKey]: raw }));
+                                                                if (raw === '') return;
+                                                                const parsed = Number(raw);
+                                                                if (Number.isFinite(parsed) && parsed >= 1) {
+                                                                    handleUpdateSlot(currentDay.id, idx, 'setTarget', Math.min(20, Math.round(parsed)));
+                                                                }
+                                                            }}
+                                                            onBlur={() => {
+                                                                const parsed = Number(setsDraft);
+                                                                const clamped = Number.isFinite(parsed) ? Math.max(1, Math.min(20, Math.round(parsed))) : 1;
+                                                                handleUpdateSlot(currentDay.id, idx, 'setTarget', clamped);
+                                                                setSetsDraftMap(prev => {
+                                                                    const copy = { ...prev };
+                                                                    delete copy[slotKey];
+                                                                    return copy;
+                                                                });
+                                                            }}
                                                         />
                                                     </div>
                                                     <div className="flex items-center gap-1 text-[11px] font-bold text-zinc-400 bg-surface-elevated/80 rounded-[4px] px-2 py-0.5 border border-border-subtle">
@@ -374,7 +400,15 @@ export const ProgramEditDays: React.FC<{ state: ProgramEditState }> = ({ state }
             <div className="shrink-0 border-t border-border-subtle bg-surface-app/95 backdrop-blur-md p-4 pb-safe">
                 <button
                     type="button"
-                    onClick={isEditingActiveRoutine ? onBack : handleValidateAndOpenStartModal}
+                    onClick={() => {
+                        if (isEditingActiveRoutine) {
+                            flushSave();
+                            onBack();
+                        } else {
+                            flushSave();
+                            handleValidateAndOpenStartModal();
+                        }
+                    }}
                     className="w-full rounded-[4px] bg-primary-500 text-zinc-950 font-black uppercase tracking-wider py-3.5 hover:bg-primary-400 active:scale-[0.99] transition-all shadow-md text-sm"
                 >
                     {isEditingActiveRoutine

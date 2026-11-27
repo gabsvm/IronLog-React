@@ -97,7 +97,6 @@ export const PlanMesocycleHubSheet: React.FC<PlanMesocycleHubSheetProps> = ({
                     type="button"
                     data-testid="hub-start-template-btn"
                     onClick={() => {
-                        setMesoEditorIntent('template');
                         onOpenChange(false);
                         onStartTemplate();
                     }}

@@ -90,6 +90,8 @@ const ExerciseVisualHint: React.FC<{ exercise: ExerciseDef; lang: 'en' | 'es' }>
         isCardio ? 'Cardio' : (TRANSLATIONS[lang].copy.exerciseDetailModal.strength),
     ];
 
+    
+
     return (
         <div className={`w-full aspect-video bg-gradient-to-b ${gradient} flex flex-col items-center justify-center relative overflow-hidden`}>
             {/* Background rings */}
@@ -126,6 +128,8 @@ const YouTubeCard: React.FC<{ videoId: string; title: string; youtubeUrl: string
     const thumbSrc = thumbError
         ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
         : `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+
+    
 
     return (
         <a
@@ -186,6 +190,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
     const { isWorkerReady, calculateChartData } = useStatsWorker();
     const [chartData, setChartData] = useState<any[]>([]);
     const [chartLoading, setChartLoading] = useState(false);
+    const sfrHistory = useMemo(() => loadExerciseSfrHistory(), []);
 
     useEffect(() => {
         if (initialTab) {
@@ -359,6 +364,8 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
         videoId: activeVideoId,
     };
 
+    
+
     return (
         <Sheet
             open={true}
@@ -500,7 +507,6 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
 
                             {muscleDraft !== 'CARDIO' && (() => {
                                 const sfrCue = getExerciseSfrCue(muscleDraft);
-                                const sfrHistory = loadExerciseSfrHistory();
                                 const record = sfrHistory[exercise.id];
                                 const sfrScore = record ? getExerciseSfrScore(record) : null;
                                 const jointWarn = hasJointPainWarning(record);
@@ -868,7 +874,9 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                                             {entry.sets.map((s, idx) => {
                                                 const wNum = Number(s.weight);
                                                 const shownW = Number.isFinite(wNum) ? toDisplay(wNum, unit) : s.weight;
-                                                return (
+                                                
+
+    return (
                                                     <span
                                                         key={idx}
                                                         className="rounded-[4px] border border-border-subtle bg-surface-base px-2 py-0.5 font-mono text-xs font-semibold text-zinc-200 tabular-nums"

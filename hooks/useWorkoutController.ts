@@ -16,6 +16,8 @@ const TEMPLATE_SET_TYPES = new Set<SetType>([
     'warmup',
     'drop',
     'myorep',
+    'myorep_match',
+    'lengthened_partials',
     'cluster',
     'giant',
     'top',
@@ -133,8 +135,19 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
                     return {
                         ...ex,
                         sets: sets.map((s, idx) => {
-                            if (s.id === setId) return { ...s, [field]: value };
+                            if (s.id === setId) {
+                                if (field === 'skipped') {
+                                    const nextSkipped = Boolean(value);
+                                    return {
+                                        ...s,
+                                        skipped: nextSkipped,
+                                        completed: nextSkipped ? false : s.completed,
+                                    };
+                                }
+                                return { ...s, [field]: value };
+                            }
                             if (
+                                field !== 'skipped' &&
                                 canPropagate &&
                                 idx > editedIdx &&
                                 !s.completed &&
@@ -293,7 +306,7 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
                     dur = isMetabolite ? 45 : 90;
                 }
 
-                if (set.type === 'myorep' || set.type === 'myorep_match' || set.type === 'giant') dur = 30;
+                if (set.type === 'myorep' || set.type === 'giant') dur = 30;
                 if (set.type === 'cluster') dur = 15;
                 if (set.type === 'drop') dur = 0; // Drop sets have no rest — skip timer
                 if (set.type === 'rest_pause') dur = 20;     // 20s between rest-pause mini-sets
@@ -465,11 +478,24 @@ export const useWorkoutController = (onFinishCallback: () => void, onDiscardCall
         const { mesoId, week } = session;
         setRpFeedback(prev => {
             const newFb = { ...prev };
-            if (!newFb[mesoId]) newFb[mesoId] = {};
-            if (!newFb[mesoId][week]) newFb[mesoId][week] = {};
+            const prevMesoFb = newFb[mesoId] ? { ...newFb[mesoId] } : {};
+            const prevWeekFb = prevMesoFb[week] ? { ...prevMesoFb[week] } : {};
             Object.keys(feedbackData).forEach(m => {
-                newFb[mesoId][week][m] = feedbackData[m];
+                const incoming = feedbackData[m];
+                const existing = prevWeekFb[m];
+                if (existing && incoming) {
+                    const mergedAdj = Math.max(-2, Math.min(2, (existing.adjustment || 0) + (incoming.adjustment || 0)));
+                    prevWeekFb[m] = {
+                        soreness: Math.max(existing.soreness ?? 0, incoming.soreness ?? 0),
+                        performance: Math.round(((existing.performance ?? 1) + (incoming.performance ?? 1)) / 2),
+                        adjustment: mergedAdj,
+                    };
+                } else {
+                    prevWeekFb[m] = incoming;
+                }
             });
+            prevMesoFb[week] = prevWeekFb;
+            newFb[mesoId] = prevMesoFb;
             return newFb;
         });
 

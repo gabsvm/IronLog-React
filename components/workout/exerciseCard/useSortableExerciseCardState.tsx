@@ -191,22 +191,27 @@ export const useSortableExerciseCardState = ({
     }, [logs, ex.id, isCardio, ex.isIsometric, ex.isBodyweight, unit, unitLabel, lang]);
 
     const regularSets = useMemo(() => ex.sets.filter((set) => set.type !== 'avt_hop'), [ex.sets]);
-    const completedCount = regularSets.filter((set) => set.completed).length;
+    const activeSets = useMemo(() => regularSets.filter((set) => !set.skipped), [regularSets]);
+    const completedCount = activeSets.filter((set) => set.completed).length;
     const volumeComparison = useMemo(() => getVolumeComparison(ex.sets || [], previousSets, {
-        isBodyweight: ex.isBodyweight, isIsometric: ex.isIsometric, isCardio,
-    }), [ex.sets, previousSets, ex.isBodyweight, ex.isIsometric, isCardio]);
-    const allDone = regularSets.length > 0 && completedCount === regularSets.length;
+        isBodyweight: ex.isBodyweight,
+        isIsometric: ex.isIsometric,
+        isCardio,
+        equipment: ex.equipment,
+        volumeCountingMode: ex.volumeCountingMode,
+    }), [ex.sets, previousSets, ex.isBodyweight, ex.isIsometric, isCardio, ex.equipment, ex.volumeCountingMode]);
+    const allDone = activeSets.length > 0 && completedCount === activeSets.length;
     const isSuperseted = !!ex.supersetId;
     const isLinkSource = linkingId === ex.instanceId;
 
     const overloadSuggest = useMemo(() => {
-        if (!logs || isCardio || ex.isBodyweight || ex.isIsometric || !ex.id) return null;
+        if (!logs || isCardio || ex.isIsometric || !ex.id) return null;
         for (let i = logs.length - 1; i >= 0; i -= 1) {
             const log = logs[i];
             if (log.skipped) continue;
             const pastEx = log.exercises?.find((item) => item.id === ex.id);
             if (!pastEx) continue;
-            const working = (pastEx.sets || []).filter((set: any) => set.type !== 'warmup' && set.type !== 'avt_hop');
+            const working = (pastEx.sets || []).filter((set: any) => !set.skipped && set.type !== 'warmup' && set.type !== 'avt_hop');
             if (working.length === 0) return null;
             // Q15: full up/hold/down table with a reason line (null cases and
             // the no-range step match the legacy rule).
@@ -215,27 +220,37 @@ export const useSortableExerciseCardState = ({
                 range: parseTargetReps(ex.targetReps),
                 rirTarget: typeof config?.rpTargetRIR === 'number' ? config.rpTargetRIR : 2,
                 unit,
+                equipment: ex.equipment,
+                isBodyweight: ex.isBodyweight,
             });
         }
         return null;
-    }, [logs, ex.id, ex.targetReps, isCardio, ex.isBodyweight, ex.isIsometric, unit, config?.rpTargetRIR]);
+    }, [logs, ex.id, ex.targetReps, ex.equipment, isCardio, ex.isBodyweight, ex.isIsometric, unit, config?.rpTargetRIR]);
 
 
 
     const prevCompletedRef = useRef(completedCount);
+    const menuBtnRef = useRef<HTMLButtonElement | null>(null);
     const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
+        return () => {
+            if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
+            if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+        };
+    }, []);
+
+    useEffect(() => {
         if (completedCount > prevCompletedRef.current) {
-            if (completedCount === regularSets.length && regularSets.length > 0) {
+            if (completedCount === activeSets.length && activeSets.length > 0) {
                 setExDoneFlash(true);
                 triggerHaptic('success');
                 playTimerFinishSound();
                 if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
                 flashTimerRef.current = setTimeout(() => setExDoneFlash(false), 1200);
             }
-            const nextSet = regularSets.find((set) => !set.completed);
+            const nextSet = regularSets.find((set) => !set.completed && !set.skipped);
             if (nextSet) {
                 if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
                 scrollTimerRef.current = setTimeout(() => {
@@ -244,11 +259,7 @@ export const useSortableExerciseCardState = ({
             }
         }
         prevCompletedRef.current = completedCount;
-        return () => {
-            if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
-            if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
-        };
-    }, [completedCount, regularSets]);
+    }, [completedCount, activeSets.length, regularSets]);
 
     const isProtocol = !isCardio && !ex.isIsometric;
     const canWarmup = !ex.isBodyweight && !ex.isIsometric && !isCardio;
@@ -264,7 +275,7 @@ export const useSortableExerciseCardState = ({
     const isTimeVolume = isProtocol && regularSets.length > 0 && regularSets.every((set) => set.type === 'time_volume');
     const isTripleAdd = isProtocol && regularSets.length > 0 && regularSets.every((set) => set.type === 'triple_add');
     const isSpecialProtocol = isEMOM || isMyorep || isCluster || isGiant;
-    const nextSetIdx = (!isSpecialProtocol && !isTabata && !isHIIT) ? regularSets.findIndex((set) => !set.completed) : -1;
+    const nextSetIdx = (!isSpecialProtocol && !isTabata && !isHIIT) ? regularSets.findIndex((set) => !set.completed && !set.skipped) : -1;
 
     const setBadgeLabels = useMemo((): (string | undefined)[] => {
         if (isEMOM) return regularSets.map((_, index) => String(index + 1));
@@ -469,6 +480,7 @@ export const useSortableExerciseCardState = ({
         isLinkSource,
         overloadSuggest,
         prevCompletedRef,
+        menuBtnRef,
         flashTimerRef,
         scrollTimerRef,
         isProtocol,

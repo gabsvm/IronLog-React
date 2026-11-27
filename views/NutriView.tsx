@@ -17,7 +17,7 @@ import type { NutritionGoal, ProgramDay } from '../types';
 
 // Extracted in Phase 6.3 to views/nutri/ for clarity
 import { todayStr, getTodayLog, sumMacros, calcStreak, calcTDEE } from './nutri/nutritionHelpers';
-import { formatLocalDateKey, addLocalDays } from '../utils/localDate';
+import { formatLocalDateKey, addLocalDays, parseLocalDateKey } from '../utils/localDate';
 import { TodayTab } from './nutri/TodayTab';
 import { BodyTab } from './nutri/BodyTab';
 import { HistoryTab } from './nutri/HistoryTab';
@@ -51,6 +51,23 @@ export const NutriView: React.FC = () => {
     };
   }, []);
 
+  const [todayKey, setTodayKey]         = useState<string>(() => todayStr());
+  useEffect(() => {
+    const checkDate = () => {
+      const next = todayStr();
+      setTodayKey((prev) => (prev === next ? prev : next));
+    };
+    const interval = window.setInterval(checkDate, 60_000);
+    const onVis = () => {
+      if (document.visibilityState === 'visible') checkDate();
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVis);
+    };
+  }, []);
+
   const [subTab, setSubTab]             = useState<SubTab>('today');
   const [showAddMeal, setShowAddMeal]   = useState(false);
   const [showAddCardio, setShowAddCardio] = useState(false);
@@ -58,16 +75,17 @@ export const NutriView: React.FC = () => {
   const [showLogWeight, setShowLogWeight] = useState(false);
   const [expandedMeal, setExpandedMeal]   = useState<string | null>(null);
   const [editingEntry, setEditingEntry]     = useState<FoodEntry | null>(null);
+  const [editingEntryDate, setEditingEntryDate] = useState<string | null>(null);
   const [editEntryDraft, setEditEntryDraft] = useState<FoodEntry | null>(null);
   const [editGoal, setEditGoal]           = useState(nutritionGoal);
   const [lastDeletedEntry, setLastDeletedEntry] = useState<{ entry: FoodEntry; date: string } | null>(null);
   const [lastDeletedCardio, setLastDeletedCardio] = useState<CardioSession | null>(null);
 
-  const todayLog    = useMemo(() => getTodayLog(nutritionLogs), [nutritionLogs]);
+  const todayLog    = useMemo(() => nutritionLogs.find(l => l.date === todayKey) ?? { date: todayKey, entries: [], waterMl: 0 }, [nutritionLogs, todayKey]);
   const todayMacros = useMemo(() => sumMacros(todayLog.entries), [todayLog]);
   const todayWater  = todayLog.waterMl ?? 0;
-  const todayCardio = useMemo(() => { const d = todayStr(); return cardioSessions.filter(s => s.date === d); }, [cardioSessions]);
-  const streak      = useMemo(() => calcStreak(nutritionLogs), [nutritionLogs]);
+  const todayCardio = useMemo(() => cardioSessions.filter(s => s.date === todayKey), [cardioSessions, todayKey]);
+  const streak      = useMemo(() => calcStreak(nutritionLogs, todayKey), [nutritionLogs, todayKey]);
   const tdee        = useMemo(() => calcTDEE(userProfile), [userProfile]);
 
   const caloriesBurned    = useMemo(() => todayCardio.reduce((a, s) => a + (s.caloriesBurned || 0), 0), [todayCardio]);
@@ -77,10 +95,9 @@ export const NutriView: React.FC = () => {
   // Last 14 days for history (show more data)
   const last14Days = useMemo(() => {
     const days = [];
-    const todayKey = todayStr();
     for (let i = 13; i >= 0; i--) {
       const dateStr = addLocalDays(todayKey, -i);
-      const d = new Date(); d.setDate(d.getDate() - i);
+      const d = parseLocalDateKey(dateStr);
       const log = nutritionLogs.find(l => l.date === dateStr);
       const macros = log ? sumMacros(log.entries) : { calories: 0, protein: 0, carbs: 0, fat: 0 };
       days.push({
@@ -92,7 +109,7 @@ export const NutriView: React.FC = () => {
       });
     }
     return days;
-  }, [nutritionLogs, lang]);
+  }, [nutritionLogs, lang, todayKey]);
 
   // Body weight last 30 days
   const weightTrend = useMemo(() => {
@@ -148,23 +165,26 @@ export const NutriView: React.FC = () => {
   }, [lastDeletedEntry, setNutritionLogs]);
 
   const handleEditEntry = useCallback((entry: FoodEntry) => {
+    const foundLog = nutritionLogsRef.current.find(l => l.entries.some(e => e.id === entry.id));
     setEditingEntry(entry);
+    setEditingEntryDate(foundLog?.date ?? todayStr());
     setEditEntryDraft({ ...entry });
   }, []);
 
   const handleSaveEditEntry = useCallback(() => {
     if (!editEntryDraft) return;
-    const today = todayStr();
+    const targetDate = editingEntryDate ?? todayStr();
     setNutritionLogs(prev =>
-      prev.map(l => l.date === today
+      prev.map(l => l.date === targetDate
         ? { ...l, entries: l.entries.map(e => e.id === editEntryDraft.id ? editEntryDraft : e) }
         : l
       )
     );
     setEditingEntry(null);
+    setEditingEntryDate(null);
     setEditEntryDraft(null);
     triggerHaptic('success');
-  }, [editEntryDraft, setNutritionLogs]);
+  }, [editEntryDraft, editingEntryDate, setNutritionLogs]);
 
   const handleAddCardio = useCallback((session: CardioSession) => {
     setCardioSessions(prev => [session, ...prev]);
@@ -214,7 +234,13 @@ export const NutriView: React.FC = () => {
   }, [setBodyLogs, setUserProfile]);
 
   const saveGoal = useCallback(() => {
-    setNutritionGoal(editGoal);
+    setNutritionGoal({
+      ...editGoal,
+      calories: Math.max(0, Math.round(Number(editGoal.calories) || 0)),
+      protein: Math.max(0, Math.round(Number(editGoal.protein) || 0)),
+      carbs: Math.max(0, Math.round(Number(editGoal.carbs) || 0)),
+      fat: Math.max(0, Math.round(Number(editGoal.fat) || 0)),
+    });
     setShowGoalEditor(false);
   }, [editGoal, setNutritionGoal]);
 
@@ -432,8 +458,9 @@ export const NutriView: React.FC = () => {
                 <input
                   type="number"
                   inputMode="numeric"
+                  min={0}
                   value={editGoal[key]}
-                  onChange={e => setEditGoal(prev => ({ ...prev, [key]: Number(e.target.value) }))}
+                  onChange={e => setEditGoal(prev => ({ ...prev, [key]: Math.max(0, Number(e.target.value) || 0) }))}
                   className="w-full bg-zinc-800 border border-zinc-700/50 rounded-[6px] px-4 py-3 text-white text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all glow-input-neon"
                 />
               </div>

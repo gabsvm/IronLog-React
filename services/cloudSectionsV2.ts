@@ -52,8 +52,8 @@ const descText = (a: string, b: string): number => (a < b ? 1 : a > b ? -1 : 0);
 
 /** One meal; `date` is the day it belongs to (NutritionLog.date). */
 export type NutritionEntryItem = Stamped<FoodEntry> & { date: string };
-/** Per-day values that are not meals (today: water). */
-export type NutritionDayItem = { date: string; waterMl: number; updatedAt?: number };
+/** Per-day values that are not meals (today: water, steps, carb-cycling training day flag). */
+export type NutritionDayItem = { date: string; waterMl: number; steps?: number; isTrainingDay?: boolean; updatedAt?: number };
 
 const legacyNutrition = (userData: Record<string, unknown> | undefined): NutritionLog[] => {
     const raw = userData?.nutritionLogs;
@@ -66,7 +66,13 @@ export const splitNutrition = (logs: NutritionLog[] | undefined | null): [Nutrit
     const days: NutritionDayItem[] = [];
     for (const day of Array.isArray(logs) ? logs : []) {
         if (!day || typeof day.date !== 'string') continue;
-        days.push({ date: day.date, waterMl: Number(day.waterMl) || 0, ...(typeof (day as Stamped<NutritionLog>).updatedAt === 'number' ? { updatedAt: (day as Stamped<NutritionLog>).updatedAt } : {}) });
+        days.push({
+            date: day.date,
+            waterMl: Number(day.waterMl) || 0,
+            ...(typeof day.steps === 'number' ? { steps: day.steps } : {}),
+            ...(typeof day.isTrainingDay === 'boolean' ? { isTrainingDay: day.isTrainingDay } : {}),
+            ...(typeof (day as Stamped<NutritionLog>).updatedAt === 'number' ? { updatedAt: (day as Stamped<NutritionLog>).updatedAt } : {}),
+        });
         for (const entry of Array.isArray(day.entries) ? day.entries : []) {
             if (entry && entry.id) entries.push({ ...entry, date: day.date });
         }
@@ -88,6 +94,8 @@ export const joinNutrition = (entries: NutritionEntryItem[], days: NutritionDayI
     for (const d of days) {
         const day = ensure(d.date);
         day.waterMl = Number(d.waterMl) || 0;
+        if (typeof d.steps === 'number') day.steps = d.steps;
+        if (typeof d.isTrainingDay === 'boolean') day.isTrainingDay = d.isTrainingDay;
         if (typeof d.updatedAt === 'number') day.updatedAt = d.updatedAt;
     }
     for (const e of entries) {
@@ -113,7 +121,7 @@ export const NUTRITION_ENTRY_SPEC: CollectionSpec<NutritionEntryItem> = {
 export const NUTRITION_DAY_SPEC: CollectionSpec<NutritionDayItem> = {
     collection: 'nutritionDays',
     idField: 'date',
-    keys: ['date', 'waterMl', 'updatedAt', 'deleted'],
+    keys: ['date', 'waterMl', 'steps', 'isTrainingDay', 'updatedAt', 'deleted'],
     stampOf: (d) => firstStamp(d.updatedAt, dayMs(d.date)),
     compare: (a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0),
     marker: markerFor('nutritionDays'),

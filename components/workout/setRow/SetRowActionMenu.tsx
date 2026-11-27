@@ -141,9 +141,7 @@ export const SetRowActionMenu: React.FC<SetRowActionMenuProps> = ({
     };
 
     const handleSkip = () => {
-        onUpdate(exInstanceId, set.id, 'weight', 0);
-        onUpdate(exInstanceId, set.id, 'reps', 0);
-        onUpdate(exInstanceId, set.id, 'completed', true);
+        onUpdate(exInstanceId, set.id, 'skipped', !set.skipped);
         onClose();
     };
 
@@ -209,11 +207,16 @@ export const SetRowActionMenu: React.FC<SetRowActionMenuProps> = ({
                     </button>
                     <button
                         type="button"
+                        data-testid="menu-skip-set-btn"
                         onClick={handleSkip}
                         className="flex items-center gap-3 px-3.5 py-2 text-[13px] font-medium text-zinc-200 transition-colors hover:bg-white/5 active:bg-white/10 text-left"
                     >
                         <Icon name="FastForward" size={16} className="shrink-0 text-zinc-400" />
-                        <span>{pickLang(lang, { es: 'Saltar serie', en: 'Skip set' })}</span>
+                        <span>
+                            {set.skipped
+                                ? pickLang(lang, { es: 'Restaurar serie', en: 'Restore set' })
+                                : pickLang(lang, { es: 'Saltar serie', en: 'Skip set' })}
+                        </span>
                     </button>
                     <button
                         type="button"

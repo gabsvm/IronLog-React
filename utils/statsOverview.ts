@@ -8,7 +8,7 @@ export interface OverviewNumbers {
     weeks: number;
 }
 
-const MUSCLES = ['CHEST', 'BACK', 'QUADS', 'HAMSTRINGS', 'GLUTES', 'CALVES', 'SHOULDERS', 'BICEPS', 'TRICEPS', 'TRAPS', 'ABS', 'FOREARMS', 'CARDIO'];
+const MUSCLES = ['CHEST', 'BACK', 'QUADS', 'HAMSTRINGS', 'GLUTES', 'CALVES', 'SHOULDERS', 'BICEPS', 'TRICEPS', 'TRAPS', 'ABS', 'FOREARMS', 'NECK', 'CARDIO'];
 
 /** ISO calendar week key (UTC) for logs without meso/week coordinates. */
 const isoWeekKey = (ts: number): string => {

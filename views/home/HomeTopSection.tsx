@@ -9,7 +9,7 @@ import type { HomeViewState } from './useHomeViewState';
 
 export const HomeTopSection: React.FC<{ state: HomeViewState }> = ({ state }) => {
     const {
-        uniqueDaysDone, activeMeso, setActiveMeso, t, h, lang, kongBlock, isPro,
+        uniqueDaysDone, activeMeso, setActiveMeso, setProgram, t, h, lang, kongBlock, isPro,
         checkPro, setShowPlanActions, setShowGuidelines, setShowKongHub, setShowMesoSettings,
         currentGuidelineImages, currentGuideId, hasGuidelines, currentStage, safeProgram, selectedDayIdx
     } = state;
@@ -19,12 +19,29 @@ export const HomeTopSection: React.FC<{ state: HomeViewState }> = ({ state }) =>
 
     if (!activeMeso) return null;
     const totalWeeks = activeMeso.targetWeeks || activeMeso.duration || 1;
-    const goWeek = (delta: number) => {
-        const next = Math.min(totalWeeks, Math.max(1, activeMeso.week + delta));
-        if (next === activeMeso.week) return;
+    const selectWeek = (targetWeek: number) => {
+        const clamped = Math.min(totalWeeks, Math.max(1, targetWeek));
+        if (clamped === activeMeso.week) return;
         triggerHaptic('light');
-        setActiveMeso(prev => (prev ? { ...prev, week: next } : prev));
+        const leavingCondensedDeload = Boolean(
+            activeMeso.isDeload && activeMeso.condensedDeload && activeMeso.preDeloadProgram && clamped < totalWeeks
+        );
+        const restoredProgram = leavingCondensedDeload ? activeMeso.preDeloadProgram! : undefined;
+        if (restoredProgram) {
+            setProgram(restoredProgram);
+        }
+        const restoredPlan = restoredProgram
+            ? restoredProgram.map(day => (day.slots || []).map(slot => slot.exerciseId || null))
+            : undefined;
+        setActiveMeso(prev => (prev ? {
+            ...prev,
+            week: clamped,
+            isDeload: totalWeeks > 1 ? clamped === totalWeeks : prev.isDeload,
+            ...(restoredPlan ? { plan: restoredPlan } : {}),
+            ...(leavingCondensedDeload ? { condensedDeload: false, preDeloadProgram: undefined } : {}),
+        } : prev));
     };
+    const goWeek = (delta: number) => selectWeek(activeMeso.week + delta);
 
     const firstIncompleteDayIdx = safeProgram.findIndex((_, idx) => !uniqueDaysDone.has(idx));
     const effectiveDayIdx = selectedDayIdx >= 0 ? selectedDayIdx : (firstIncompleteDayIdx >= 0 ? firstIncompleteDayIdx : 0);
@@ -121,10 +138,7 @@ export const HomeTopSection: React.FC<{ state: HomeViewState }> = ({ state }) =>
                             <button
                                 key={wNum}
                                 type="button"
-                                onClick={() => {
-                                    triggerHaptic('light');
-                                    setActiveMeso(prev => prev ? { ...prev, week: wNum } : prev);
-                                }}
+                                onClick={() => selectWeek(wNum)}
                                 className={`flex h-8 min-w-[32px] px-2 items-center justify-center rounded-[6px] text-xs font-bold transition-all ${
                                     isCurrent
                                         ? 'bg-primary-500 text-zinc-950 font-black'

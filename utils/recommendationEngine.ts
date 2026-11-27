@@ -25,7 +25,7 @@ export const recommendProgram = (profile: UserProfile): RecommendationResult => 
 
     // 1. Logic based on Frequency & Experience
     if (daysPerWeek <= 2) {
-        selectedTemplate = NH_ULT_BEGINNER;
+        selectedTemplate = NH_ULT_BEGINNER.slice(0, Math.max(1, daysPerWeek || 2));
         selectedType = 'nh_ult_beginner';
         selectedStageId = 'beginner';
         reason = 'rec_low_freq';
@@ -42,7 +42,7 @@ export const recommendProgram = (profile: UserProfile): RecommendationResult => 
         }
         reason = 'rec_wizard';
     }
-    else if (daysPerWeek === 4) {
+    else if (daysPerWeek === 4 || experience === 'beginner') {
         selectedTemplate = NH_ULT_BRIDGE;
         selectedType = 'nh_ult_bridge';
         selectedStageId = 'bridge';

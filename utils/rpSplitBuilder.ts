@@ -4,7 +4,7 @@ export const SYNERGIST_MAP: Partial<Record<MuscleGroup, MuscleGroup[]>> = {
     CHEST: ['TRICEPS', 'SHOULDERS'],
     BACK: ['BICEPS', 'FOREARMS', 'TRAPS', 'SHOULDERS'],
     QUADS: ['GLUTES', 'HAMSTRINGS'],
-    HAMSTRINGS: ['GLUTES', 'BACK'],
+    HAMSTRINGS: ['GLUTES'],
     SHOULDERS: ['TRICEPS', 'TRAPS'],
     GLUTES: ['HAMSTRINGS', 'QUADS'],
 };
@@ -218,13 +218,45 @@ export const applyMusclePrioritiesToProgram = (
     return { program: nextProgram, updatedPriorities };
 };
 
+const scoreSplitConflicts = (conflicts: SplitConflict[]): number =>
+    conflicts.reduce((sum, c) => sum + (c.type === 'consecutive_muscle' ? 10 : c.type === 'synergist_adjacent' ? 2 : 1), 0);
+
 /**
- * Simple deterministic split reorder helper to eliminate back-to-back muscle/synergist clashes
- * by interleaving push/pull/lower days across the week.
+ * Permutes days (preserving Rest Days or evaluating minimum conflict score across permutations)
+ * so reordering never worsens consecutive-muscle or synergist clashes.
  */
 export const reorderDaysToResolveConflicts = (programDays: ProgramDay[]): ProgramDay[] => {
     if (!Array.isArray(programDays) || programDays.length <= 2) return programDays;
-    const evens = programDays.filter((_, i) => i % 2 === 0);
-    const odds = programDays.filter((_, i) => i % 2 === 1);
-    return [...evens, ...odds];
+    const baseScore = scoreSplitConflicts(detectSplitConflicts(programDays));
+    if (baseScore === 0) return programDays;
+
+    if (programDays.length > 7) {
+        const evens = programDays.filter((_, i) => i % 2 === 0);
+        const odds = programDays.filter((_, i) => i % 2 === 1);
+        const candidate = [...evens, ...odds];
+        return scoreSplitConflicts(detectSplitConflicts(candidate)) < baseScore ? candidate : programDays;
+    }
+
+    let best = programDays;
+    let bestScore = baseScore;
+    const rest = programDays.slice(1);
+    const permute = (arr: ProgramDay[], l: number) => {
+        if (l === arr.length) {
+            const candidate = [programDays[0], ...arr];
+            const score = scoreSplitConflicts(detectSplitConflicts(candidate));
+            if (score < bestScore) {
+                bestScore = score;
+                best = candidate;
+            }
+            return;
+        }
+        for (let i = l; i < arr.length; i += 1) {
+            [arr[l], arr[i]] = [arr[i], arr[l]];
+            permute(arr, l + 1);
+            [arr[l], arr[i]] = [arr[i], arr[l]];
+            if (bestScore === 0) return;
+        }
+    };
+    permute([...rest], 0);
+    return best;
 };

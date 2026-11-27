@@ -1,6 +1,6 @@
 import { formatMessage, pickLang } from '../../utils/i18n';
 import React, { Suspense, useCallback } from 'react';
-import { useApp } from '../../context/AppContext';
+import { useApp, useSyncMeta } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { usePro } from '../../hooks/usePro';
 import { useStore } from '../../lib/store';
@@ -8,8 +8,11 @@ import { TRANSLATIONS } from '../../constants';
 import type { CommandAction } from '../../components/ui/CommandPalette';
 import { KONG_4DAY_ID } from '../../programs/kong/constants';
 import { convertKongToPersonalRoutine } from '../../programs/engine/ProgramConversion';
+import { dirtySyncState } from '../../services/dirtySyncState';
 import { resetLocalData } from '../../services/localDataReset';
+import { buildSectionSyncMeta } from '../../services/syncHelpers';
 import { syncService } from '../../services/syncService';
+import { db } from '../../utils/db';
 import { buildNextMesocycleCarryOver, saveMesocycleDraft, setMesoEditorIntent } from '../../utils/mesoDraft';
 import { hasJointPainWarning, loadExerciseSfrHistory } from '../../utils/rpAutoregulation';
 import {
@@ -70,9 +73,10 @@ export const AppModals: React.FC<AppModalsProps> = ({
     const {
         lang, program, exercises, logs, config, rpFeedback,
         pendingCloudData, pendingCloudSections, confirmCloudSync, cancelCloudSync,
-        userProfile, getNutritionSnapshot,
+        userProfile, getNutritionSnapshot, personalTemplates,
         setProgram,
     } = useApp();
+    const { setLocalLastUpdated } = useSyncMeta();
     const activeMeso = useStore(state => state.activeMeso);
     const setActiveMeso = useStore(state => state.setActiveMeso);
     const { user } = useAuth();
@@ -85,7 +89,8 @@ export const AppModals: React.FC<AppModalsProps> = ({
         setIsSyncing(true);
         setShowForceSyncModal(false);
         const currentActiveSession = useStore.getState().activeSession;
-        const { nutritionLogs, cardioSessions, bodyLogs, macroGoals, nutritionGoal } = getNutritionSnapshot();
+        const { nutritionLogs, cardioSessions, bodyLogs, macroGoals, nutritionGoal, customFoods } = getNutritionSnapshot();
+        const now = Date.now();
         try {
             await syncService.uploadState(user.uid, {
                 program, activeMeso, activeSession: currentActiveSession, exercises, logs,
@@ -93,9 +98,18 @@ export const AppModals: React.FC<AppModalsProps> = ({
                 userProfile, nutritionLogs, cardioSessions, bodyLogs,
                 macroGoals: macroGoals ?? undefined,
                 nutritionGoal,
+                customFoods,
+                personalTemplates,
                 email: user.email || null,
-                lastUpdated: Date.now(),
+                lastUpdated: now,
             });
+            setLocalLastUpdated(now);
+            await db.set('il_section_sync_meta_v1', buildSectionSyncMeta([
+                'program', 'activeMeso', 'exercises', 'logs', 'config', 'rpFeedback',
+                'userProfile', 'nutritionLogs', 'cardioSessions', 'nutritionGoal',
+                'bodyLogs', 'macroGoals', 'customFoods', 'personalTemplates',
+            ], now));
+            await dirtySyncState.clear();
             setForceSyncFeedback({
                 type: 'success',
                 message: t.forceSyncSuccess || (TRANSLATIONS[lang].copy.appModals.dataSyncedToCloud)
@@ -109,7 +123,7 @@ export const AppModals: React.FC<AppModalsProps> = ({
         } finally {
             setIsSyncing(false);
         }
-    }, [user, program, activeMeso, exercises, logs, config, rpFeedback, userProfile, getNutritionSnapshot, t, lang, setIsSyncing, setShowForceSyncModal, setForceSyncFeedback]);
+    }, [user, program, activeMeso, exercises, logs, config, rpFeedback, userProfile, getNutritionSnapshot, personalTemplates, setLocalLastUpdated, t, lang, setIsSyncing, setShowForceSyncModal, setForceSyncFeedback]);
 
     const confirmImport = useCallback(async () => {
         if (!validatedBackup) return;
@@ -171,6 +185,7 @@ export const AppModals: React.FC<AppModalsProps> = ({
                                             experience: (userProfile?.experience as any) || 'intermediate',
                                             lang,
                                             jointPainIds,
+                                            exercises,
                                         });
                                         saveMesocycleDraft(carry.draft);
                                         setMesoEditorIntent('builder');

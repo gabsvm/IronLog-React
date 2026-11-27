@@ -7,7 +7,7 @@ import { Button } from '../components/ui/Button';
 import { Sheet } from '../components/ui/Sheet';
 import type { SessionCardVariant } from '../utils/sessionCard';
 import { useApp } from '../context/AppContext';
-import { getLogBodyWeight, getSetLoadVolume } from '../utils/trainingMetrics';
+import { getEffectiveSetLoad, getLogBodyWeight, getSetLoadVolume } from '../utils/trainingMetrics';
 import { resolveWeightUnit, toDisplay, unitLabel } from '../utils/units';
 import { TRANSLATIONS } from '../constants/translations';
 import { getTranslated, formatDurationShort } from '../utils';
@@ -76,10 +76,29 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
                 totals: stats, volumeText,
                 exerciseName: (ex) => getTranslated(ex.name as any, lang) || String(ex.name ?? ''),
                 bestSetText: (ex) => {
-                    const done = (ex.sets || []).filter((s) => s.completed && !s.skipped && Number(s.weight) > 0);
+                    const done = (ex.sets || []).filter((s) => s.completed && !s.skipped && s.type !== 'avt_hop');
                     if (!done.length) return null;
-                    const best = done.reduce((a, b) => (Number(b.weight) > Number(a.weight) ? b : a));
-                    return `${toDisplay(Number(best.weight), unit)} ${unitLabel(unit).toLowerCase()} × ${best.reps}`;
+                    if (ex.isIsometric) {
+                        const bestHold = Math.max(...done.map((s) => Number(s.duration || 0)));
+                        return bestHold > 0 ? `${bestHold}s hold` : null;
+                    }
+                    const logBw = getLogBodyWeight(log, userProfile?.bodyWeight);
+                    const best = done.reduce((a, b) => {
+                        const ea = getEffectiveSetLoad(a, ex, logBw);
+                        const eb = getEffectiveSetLoad(b, ex, logBw);
+                        if (eb !== ea) return eb > ea ? b : a;
+                        return Number(b.reps || 0) > Number(a.reps || 0) ? b : a;
+                    });
+                    const rawW = Number(best.weight || 0);
+                    const unitStr = unitLabel(unit).toLowerCase();
+                    if (ex.equipment === 'machine_assistance') {
+                        return `-${toDisplay(rawW, unit)} ${unitStr} × ${best.reps}`;
+                    }
+                    if (ex.isBodyweight && rawW <= 0) {
+                        return `BW × ${best.reps}`;
+                    }
+                    if (rawW <= 0) return null;
+                    return `${toDisplay(rawW, unit)} ${unitStr} × ${best.reps}`;
                 },
             });
             const native = Capacitor.isNativePlatform();
@@ -96,7 +115,7 @@ export const SessionSummaryView: React.FC<SessionSummaryViewProps> = ({ log, onC
             if (cardCacheRef.current.get(cacheKey) === promise) cardCacheRef.current.delete(cacheKey);
         });
         return promise;
-    }, [key, log, lang, unit, stats, volumeText]);
+    }, [key, log, lang, unit, stats, volumeText, userProfile?.bodyWeight]);
 
     useEffect(() => {
         // Prepare the main template after first paint, not on the share button.

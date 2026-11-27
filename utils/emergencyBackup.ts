@@ -25,7 +25,7 @@ export const generateEmergencyBackup = async (): Promise<EmergencyBackupResult> 
   if (typeof window !== 'undefined' && window.localStorage) {
     for (let i = 0; i < window.localStorage.length; i++) {
       const key = window.localStorage.key(i);
-      if (key && (key.startsWith('il_') || key.startsWith('ironlog_') || key === 'active_session')) {
+      if (key && (key.startsWith('il_') || key.startsWith('ironlog_') || key.startsWith('mevra_') || key.startsWith('repyntra_') || key === 'active_session')) {
         try {
           const val = window.localStorage.getItem(key);
           lsData[key] = val ? JSON.parse(val) : val;
@@ -40,7 +40,7 @@ export const generateEmergencyBackup = async (): Promise<EmergencyBackupResult> 
   try {
     const idbEntries = await entries();
     for (const [key, val] of idbEntries) {
-      if (typeof key === 'string' && (key.startsWith('il_') || key.startsWith('ironlog_') || key === 'active_session')) {
+      if (typeof key === 'string' && (key.startsWith('il_') || key.startsWith('ironlog_') || key.startsWith('mevra_') || key.startsWith('repyntra_') || key === 'active_session')) {
         idbData[key] = val;
       }
     }
@@ -71,11 +71,17 @@ export const generateEmergencyBackup = async (): Promise<EmergencyBackupResult> 
       personalTemplates: idbData.il_personal_templates_v1 ?? lsData.il_personal_templates_v1 ?? [],
       customFoods: idbData.il_custom_foods_v1 ?? lsData.il_custom_foods_v1 ?? [],
       rpFeedback: idbData.il_rp_fb_v1 ?? lsData.il_rp_fb_v1 ?? {},
+      exerciseSfrHistory: lsData.mevra_exercise_sfr_v1 ?? {},
       config: {
         showRIR: lsData.il_cfg_rir,
         rpEnabled: lsData.il_cfg_rp,
         rpTargetRIR: lsData.il_cfg_rp_rir,
         keepScreenOn: lsData.il_cfg_screen,
+        weightUnit: lsData.il_cfg_weight_unit,
+        restTimerDisplay: lsData.il_cfg_rest_display,
+        autoMatchWeight: lsData.il_cfg_auto_match,
+        useExerciseTypeFilters: lsData.il_cfg_equip_filter,
+        preferredEquipment: lsData.il_cfg_preferred_equip,
       },
     },
     rawStorage: {

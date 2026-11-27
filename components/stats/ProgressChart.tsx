@@ -18,7 +18,7 @@ export interface ChartDataPoint {
 
 interface ProgressChartProps {
     dataPoints: ChartDataPoint[];
-    metric: '1rm' | 'volume' | 'duration' | 'distance';
+    metric: '1rm' | 'volume' | 'duration' | 'distance' | 'max_reps' | 'hold_time';
     loading?: boolean;
     /** Display unit for weight-based metrics (stored values are kg). */
     unit?: WeightUnit;
@@ -36,6 +36,8 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ dataPoints, metric
             case 'volume': return `Volume (${weightSuffix})`;
             case 'duration': return 'Duration (min)';
             case 'distance': return 'Distance (km)';
+            case 'max_reps': return 'Max Reps';
+            case 'hold_time': return 'Hold (s)';
             default: return 'Value';
         }
     };
@@ -96,11 +98,15 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ dataPoints, metric
                     label: (item) => {
                         const point = dataPoints[item.dataIndex];
                         if (metric === '1rm') {
-                             return `Est. 1RM: ${item.formattedValue}${weightSuffix} (${toShownValue(point.weight)}x${point.reps})`;
+                             return `Est. 1RM: ${item.formattedValue}${weightSuffix} (${point.weight < 0 ? `-${toShownValue(Math.abs(point.weight))}` : toShownValue(point.weight)}x${point.reps})`;
                         } else if (metric === 'duration') {
                             return `Time: ${item.formattedValue} min`;
                         } else if (metric === 'distance') {
                             return `Dist: ${item.formattedValue} km`;
+                        } else if (metric === 'max_reps') {
+                            return `Max Reps: ${item.formattedValue} reps`;
+                        } else if (metric === 'hold_time') {
+                            return `Hold: ${item.formattedValue}s`;
                         }
                         return `Volume: ${item.formattedValue}${weightSuffix}`;
                     }

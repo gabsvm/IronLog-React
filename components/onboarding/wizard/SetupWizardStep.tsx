@@ -4,6 +4,7 @@ import React from 'react';
 import { TRANSLATIONS } from '../../../constants';
 import { Icon } from '../../ui/Icon';
 import { ALL_EQUIPMENT_TYPES } from '../../../utils/equipment';
+import { getExperienceFrequencyRecommendation } from '../../../utils/rpSplitBuilder';
 import type { SetupWizardState, Mode } from './useSetupWizardState';
 
 export const SetupWizardStep: React.FC<{ state: SetupWizardState }> = ({ state }) => {
@@ -51,8 +52,13 @@ export const SetupWizardStep: React.FC<{ state: SetupWizardState }> = ({ state }
                     )}
                 </div>
             );
-            case 1: return (
+            case 1: {
+                const freqGuide = getExperienceFrequencyRecommendation(profile.experience);
+                return (
                 <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
+                    <div className="rounded-xl border border-primary-500/20 bg-primary-500/10 px-3 py-2 text-xs font-semibold text-primary-300">
+                        {freqGuide.label[lang]}
+                    </div>
                     <div className="grid grid-cols-5 gap-2">
                         {[2, 3, 4, 5, 6].map(d => (
                             <button
@@ -78,6 +84,7 @@ export const SetupWizardStep: React.FC<{ state: SetupWizardState }> = ({ state }
                     </div>
                 </div>
             );
+            }
             case 2: return (
                 <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
                     <div className="space-y-3">
@@ -194,6 +201,15 @@ export const SetupWizardStep: React.FC<{ state: SetupWizardState }> = ({ state }
                             <p className="text-xs font-semibold tracking-normal text-zinc-400 px-1">
                                 {TRANSLATIONS[lang].copy.setupWizard.howDoYouWant}
                             </p>
+
+                            <button
+                                type="button"
+                                onClick={() => state.setStep(3)}
+                                className="inline-flex items-center gap-1.5 text-xs font-bold text-zinc-400 hover:text-white px-1 py-1 transition-colors"
+                            >
+                                <Icon name="ChevronLeft" size={14} />
+                                <span>{pickLang(lang, { es: 'Atrás · Ajustar respuestas', en: 'Back · Edit answers' })}</span>
+                            </button>
 
                             <button
                                 onClick={() => handleApply('suggested')}

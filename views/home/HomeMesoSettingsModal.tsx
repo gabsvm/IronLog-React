@@ -1,5 +1,5 @@
 import { pickLang } from '../../utils/i18n';
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import { Icon } from '../../components/ui/Icon';
 import { Button } from '../../components/ui/Button';
 import type { HomeViewState } from './useHomeViewState';
@@ -22,14 +22,35 @@ export const HomeMesoSettingsModal: React.FC<{ state: HomeViewState }> = ({ stat
         editSkipDeloadAccessories?: boolean;
         setEditSkipDeloadAccessories?: (val: boolean) => void;
     };
+
+    useEffect(() => {
+        if (!showMesoSettings) return;
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setShowMesoSettings(false);
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, [showMesoSettings, setShowMesoSettings]);
+
     return (
         <>
             {showMesoSettings && (
                 <div className="fixed inset-0 z-modal bg-black/65 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in" onClick={() => setShowMesoSettings(false)}>
-                    <div className="premium-theme-panel w-full max-w-sm rounded-[8px] p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label={t.mesoConfig}
+                        className="premium-theme-panel w-full max-w-sm rounded-[8px] p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto"
+                        onClick={e => e.stopPropagation()}
+                    >
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-[rgb(var(--text-primary))] font-bold text-xl">{t.mesoConfig}</h3>
-                            <button onClick={() => setShowMesoSettings(false)} className="text-muted hover:text-[rgb(var(--text-primary))]">
+                            <button
+                                type="button"
+                                aria-label={pickLang(lang, { es: 'Cerrar', en: 'Close' })}
+                                onClick={() => setShowMesoSettings(false)}
+                                className="text-muted hover:text-[rgb(var(--text-primary))]"
+                            >
                                 <Icon name="X" size={24} />
                             </button>
                         </div>
@@ -81,6 +102,8 @@ export const HomeMesoSettingsModal: React.FC<{ state: HomeViewState }> = ({ stat
                                 <label className="text-xs font-semibold uppercase text-muted tracking-wider block mb-2 px-1">{t.targetWeeks}</label>
                                 <div className="flex items-center gap-4 bg-[rgb(var(--surface-elevated))] p-2 rounded-[6px] border border-[rgb(var(--border-subtle))]">
                                     <button
+                                        type="button"
+                                        aria-label={pickLang(lang, { es: 'Reducir semanas', en: 'Decrease weeks' })}
                                         onClick={() => setEditWeeks(Math.max(1, editWeeks - 1))}
                                         className="w-10 h-10 rounded-[4px] bg-[rgb(var(--surface-raised))] border border-[rgb(var(--border-subtle))] flex items-center justify-center text-muted hover:text-[rgb(var(--text-primary))]"
                                     >
@@ -88,7 +111,9 @@ export const HomeMesoSettingsModal: React.FC<{ state: HomeViewState }> = ({ stat
                                     </button>
                                     <span className="flex-1 text-center font-mono text-2xl font-bold text-[rgb(var(--text-primary))]">{editWeeks}</span>
                                     <button
-                                        onClick={() => setEditWeeks(editWeeks + 1)}
+                                        type="button"
+                                        aria-label={pickLang(lang, { es: 'Aumentar semanas', en: 'Increase weeks' })}
+                                        onClick={() => setEditWeeks(Math.min(16, editWeeks + 1))}
                                         className="w-10 h-10 rounded-[4px] bg-[rgb(var(--surface-raised))] border border-[rgb(var(--border-subtle))] flex items-center justify-center text-muted hover:text-[rgb(var(--text-primary))]"
                                     >
                                         <Icon name="Plus" size={16} />
@@ -103,6 +128,10 @@ export const HomeMesoSettingsModal: React.FC<{ state: HomeViewState }> = ({ stat
                                     <span className="text-xs text-[rgb(var(--text-secondary))] block leading-tight">{t.deloadDesc}</span>
                                 </div>
                                 <button
+                                    type="button"
+                                    role="switch"
+                                    aria-checked={editDeload}
+                                    aria-label={t.deloadMode}
                                     onClick={() => setEditDeload(!editDeload)}
                                     className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${editDeload ? 'bg-primary-500 shadow-[0_2px_8px] shadow-primary-500/30' : 'bg-[rgb(var(--surface-elevated))]'}`}
                                 >

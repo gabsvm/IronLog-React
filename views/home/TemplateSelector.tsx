@@ -44,6 +44,7 @@ interface Props {
     t: any;
     lang: string;
     onSelectProgram?: (programId: string) => void;
+    checkPro?: (feature: string) => boolean;
     inline?: boolean;
 }
 
@@ -55,6 +56,7 @@ export const TemplateSelector: React.FC<Props> = ({
     t,
     lang,
     onSelectProgram,
+    checkPro,
     inline = false,
 }) => {
     const [showKongDetail, setShowKongDetail] = useState(false);
@@ -462,6 +464,7 @@ export const TemplateSelector: React.FC<Props> = ({
                             onSelectTemplate(tpl);
                         }}
                         onCustomize={(tpl) => {
+                            if (tpl.isPro && checkPro && !checkPro('Pro Template')) return;
                             setPendingConfirm(null);
                             const title = String(getTranslated(tpl.title, lang as any));
                             const draft = buildMesoDraftFromProgram(title, tpl.program || [], 5, undefined, tpl.id);

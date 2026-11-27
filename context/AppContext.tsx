@@ -36,7 +36,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
 
     // FIXED: Default to FALSE for PRO features
     const [showRIR, setShowRIR] = useLocalStorage('il_cfg_rir', false);
-    const [rpEnabled, setRpEnabled] = useLocalStorage('il_cfg_rp', false);
+    const [rpEnabled, setRpEnabled] = useLocalStorage('il_cfg_rp', true);
 
     const [rpTargetRIR, setRpTargetRIR] = useLocalStorage('il_cfg_rp_rir', 2);
     const [keepScreenOn, setKeepScreenOn] = useLocalStorage('il_cfg_screen', false);
@@ -180,6 +180,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         rpTargetRIR,
         keepScreenOn,
         weightUnit,
+        restTimerDisplay,
         autoMatchWeight,
         useExerciseTypeFilters,
         preferredEquipment,

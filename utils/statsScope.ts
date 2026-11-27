@@ -1,4 +1,5 @@
-import type { Log } from '../types';
+import type { ExerciseDef, Log } from '../types';
+import { resolveExerciseId } from './exerciseLibrary';
 
 export type StatsScope = 'plan' | 'history';
 
@@ -51,7 +52,11 @@ export interface ScopeSummary {
  * at least one completed set, distinct muscles with completed sets excluding
  * CARDIO. Cardio sets still count toward the sets total (as in the doughnut).
  */
-export const summarizeLogsByScope = (logs: Log[], mesoId?: number | null): ScopeSummary => {
+export const summarizeLogsByScope = (
+    logs: Log[],
+    mesoId?: number | null,
+    exercises: readonly ExerciseDef[] = [],
+): ScopeSummary => {
     const scoped = filterLogsByScope(logs, mesoId);
     const exerciseIds = new Set<string>();
     const muscles = new Set<string>();
@@ -61,7 +66,11 @@ export const summarizeLogsByScope = (logs: Log[], mesoId?: number | null): Scope
         (log.exercises || []).forEach((exercise, exerciseIndex) => {
             const completedSets = (exercise.sets || []).filter(set => set.completed && !set.skipped);
             if (completedSets.length === 0) return;
-            exerciseIds.add(String(exercise.id ?? (exercise as { instanceId?: unknown }).instanceId ?? `${log.id}-${exerciseIndex}`));
+            const rawId = exercise.id ?? (exercise as { instanceId?: unknown }).instanceId ?? `${log.id}-${exerciseIndex}`;
+            const canonicalId = exercise.id != null && exercises.length > 0
+                ? resolveExerciseId(exercises, String(exercise.id))
+                : String(rawId);
+            exerciseIds.add(canonicalId);
             if (exercise.muscle && exercise.muscle !== 'CARDIO') muscles.add(String(exercise.muscle));
             sets += completedSets.length;
         });

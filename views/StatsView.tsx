@@ -19,7 +19,7 @@ import { StatsScope, StatsSection, effectiveScopeFor, scopeMesoId as scopeMesoId
  */
 export const StatsView: React.FC = () => {
     const { lang } = useAppPreferences();
-    const { logs, config } = useApp();
+    const { logs, config, exercises, userProfile } = useApp();
     const activeMeso = useStore(state => state.activeMeso);
     const [section, setSection] = useState<StatsSection>('overview');
     const safeLogs = useMemo(() => Array.isArray(logs) ? logs : [], [logs]);
@@ -47,7 +47,7 @@ export const StatsView: React.FC = () => {
     // Drop cache generations from older log signatures whenever the data
     // fingerprint changes (at most once per signature per session, off the
     // critical path).
-    const logsSignature = useMemo(() => buildStatsLogsSignature(safeLogs), [safeLogs]);
+    const logsSignature = useMemo(() => buildStatsLogsSignature(safeLogs, userProfile?.bodyWeight), [safeLogs, userProfile?.bodyWeight]);
     useEffect(() => {
         void statsCache.pruneStaleSignatureKeys(logsSignature);
     }, [logsSignature]);
@@ -60,8 +60,8 @@ export const StatsView: React.FC = () => {
     const scope = effectiveScopeFor(section, userScope, activeMeso != null);
     const scopeMesoId = scopeMesoIdFor(scope, activeMeso?.id);
     const scopedSummary = useMemo(
-        () => summarizeLogsByScope(safeLogs, scopeMesoId),
-        [safeLogs, scopeMesoId],
+        () => summarizeLogsByScope(safeLogs, scopeMesoId, exercises),
+        [safeLogs, scopeMesoId, exercises],
     );
     const premiumInsights = useMemo(
         () => buildPremiumInsights(safeLogs, scopeMesoId),

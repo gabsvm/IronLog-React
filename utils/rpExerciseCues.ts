@@ -1,5 +1,7 @@
 import type { ExerciseDef, Log, MuscleGroup } from '../types';
 import { getTranslated } from '../utils';
+import { resolveExerciseId } from './exerciseLibrary';
+import { getEffectiveSetLoad, getLogBodyWeight } from './trainingMetrics';
 
 export interface MuscleSfrCue {
     cue: { es: string; en: string };
@@ -180,21 +182,29 @@ export const detectExercisePlateaus = (
         .filter((l) => !l.skipped)
         .sort((a, b) => (a.endTime || a.startTime) - (b.endTime || b.startTime));
 
+    const exById = new Map((exercises || []).map((e) => [String(e.id), e]));
+
     for (const log of sortedLogs) {
+        const logBw = getLogBodyWeight(log);
         for (const ex of log.exercises || []) {
-            if (!ex.id || ex.muscle === 'CARDIO') continue;
-            const working = (ex.sets || []).filter((s) => s.completed && !s.skipped && s.type !== 'warmup');
+            if (!ex.id || ex.muscle === 'CARDIO' || ex.isIsometric) continue;
+            const canonicalId = resolveExerciseId(exercises || [], String(ex.id));
+            const canonicalDef = exById.get(canonicalId);
+            const eq = canonicalDef?.equipment ?? ex.equipment;
+            const isBw = canonicalDef?.isBodyweight ?? ex.isBodyweight;
+            const working = (ex.sets || []).filter((s) => s.completed && !s.skipped && s.type !== 'warmup' && s.type !== 'avt_hop');
             if (!working.length) continue;
             const e1rm = working.reduce((best, s) => {
-                const w = Number(s.weight) || 0;
                 const r = Number(s.reps) || 0;
-                if (w <= 0 || r <= 0) return best;
-                return Math.max(best, w * (1 + r / 30));
+                if (r <= 0) return best;
+                const eff = getEffectiveSetLoad(s, { isBodyweight: isBw, equipment: eq }, logBw);
+                if (eff <= 0) return best;
+                return Math.max(best, eff * (1 + r / 30));
             }, 0);
             if (e1rm <= 0) continue;
-            const list = byExercise.get(ex.id) || [];
+            const list = byExercise.get(canonicalId) || [];
             list.push({ time: log.endTime || log.startTime || 0, e1rm, mesoId: log.mesoId });
-            byExercise.set(ex.id, list);
+            byExercise.set(canonicalId, list);
         }
     }
 

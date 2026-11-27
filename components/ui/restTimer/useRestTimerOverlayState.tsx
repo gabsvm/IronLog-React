@@ -25,23 +25,20 @@ export const useRestTimerOverlayState = () => {
     const [keyboardOffset, setKeyboardOffset] = useState(0);
     const [showNotifPrompt, setShowNotifPrompt] = useState(false);
     const [showAlarmNotice, setShowAlarmNotice] = useState(false);
-    const lastFreshStartRef = useRef(0);
+    const prevActiveRef = useRef(Boolean(restTimer?.active));
     const pillRef = useRef<HTMLElement>(null);
 
-    // Reset to user preference when a new rest begins
+    // Apply user's preferred initial mode only when a rest session starts (inactive -> active),
+    // never force-collapsing if the user picks a preset (30s/60s/90s) while expanded.
     useEffect(() => {
-        if (!restTimer?.active) {
+        const active = Boolean(restTimer?.active);
+        if (!active) {
             setMode(config?.restTimerDisplay === 'expanded' ? 'expanded' : 'compact');
-            lastFreshStartRef.current = 0;
-            return;
-        }
-
-        const looksLikeFreshStart = restTimer.duration > 0 && restTimer.timeLeft >= restTimer.duration - 1;
-        if (looksLikeFreshStart && restTimer.endAt !== lastFreshStartRef.current) {
-            lastFreshStartRef.current = restTimer.endAt;
+        } else if (!prevActiveRef.current) {
             setMode(config?.restTimerDisplay === 'expanded' ? 'expanded' : 'compact');
         }
-    }, [restTimer?.active, restTimer?.duration, restTimer?.endAt, restTimer?.timeLeft, config?.restTimerDisplay]);
+        prevActiveRef.current = active;
+    }, [restTimer?.active, config?.restTimerDisplay]);
 
     // Keyboard avoidance via visualViewport only
     useEffect(() => {
@@ -244,7 +241,6 @@ export const useRestTimerOverlayState = () => {
         setShowNotifPrompt,
         showAlarmNotice,
         setShowAlarmNotice,
-        lastFreshStartRef,
         pillRef,
         currentSourceSet,
         showEffortFeedback,

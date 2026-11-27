@@ -268,7 +268,7 @@ export const parseStrongCsv = (text: string, fileWeightUnit: WeightUnit): Parsed
         const raw = toNumberOrNull(row['weight'] || '');
         ex.sets.push({
             index: toNumberOrNull(row['set order'] || '') ?? ex.sets.length,
-            type: mapStrongSetType(''),
+            type: mapStrongSetType(row['set order'] || ''),
             weightKg: raw != null ? (fileWeightUnit === 'lb' ? kg4(raw * KG_PER_LB) : kg4(raw)) : null,
             reps: toNumberOrNull(row['reps'] || ''),
             rpe: toNumberOrNull(row['rpe'] || ''),
@@ -458,6 +458,21 @@ export const buildTrainingCsv = (logs: Log[], unit: WeightUnit): string => {
                 if (!set.completed || set.skipped) continue;
                 setNumber += 1;
                 const kg = Number(set.weight || 0);
+                const isAssisted = ex.equipment === 'machine_assistance';
+                const isIso = !!ex.isIsometric;
+                const isCardio = ex.muscle === 'CARDIO';
+                const weightCell = (isIso || isCardio)
+                    ? ''
+                    : (Number.isFinite(kg) && (kg > 0 || !ex.isBodyweight)
+                        ? String(isAssisted && kg > 0 ? -toDisplay(kg, unit) : toDisplay(kg, unit))
+                        : '');
+                const repsCell = isIso
+                    ? (set.duration ? `${set.duration}s` : (set.reps ?? ''))
+                    : (isCardio ? (set.distance ? `${set.distance}km` : '') : (set.reps ?? ''));
+                const extraParts = [
+                    isCardio && set.duration ? `${set.duration}` : '',
+                    ex.note ?? '',
+                ].filter(Boolean);
                 rows.push([
                     date,
                     log.name || '',
@@ -465,10 +480,10 @@ export const buildTrainingCsv = (logs: Log[], unit: WeightUnit): string => {
                     ex.muscle || '',
                     setNumber,
                     set.type || 'regular',
-                    Number.isFinite(kg) ? String(toDisplay(kg, unit)) : '',
-                    set.reps ?? '',
+                    weightCell,
+                    repsCell,
                     set.rpe ?? '',
-                    ex.note ?? '',
+                    extraParts.join(' | '),
                 ]);
             }
         }

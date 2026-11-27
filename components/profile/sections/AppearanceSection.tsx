@@ -25,6 +25,7 @@ export const AppearanceSection: React.FC = () => {
                     <div className="seg-reference grid grid-cols-3 gap-1 p-1 rounded-[6px] bg-surface-app/60 border border-border-subtle">
                         <button
                             type="button"
+                            aria-pressed={theme === 'dark'}
                             onClick={() => setTheme('dark')}
                             className={`min-h-11 rounded-[4px] text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
                                 theme === 'dark'
@@ -36,6 +37,7 @@ export const AppearanceSection: React.FC = () => {
                         </button>
                         <button
                             type="button"
+                            aria-pressed={theme === 'light'}
                             onClick={() => setTheme('light')}
                             className={`min-h-11 rounded-[4px] text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
                                 theme === 'light'
@@ -47,6 +49,7 @@ export const AppearanceSection: React.FC = () => {
                         </button>
                         <button
                             type="button"
+                            aria-pressed={theme === 'system'}
                             onClick={() => setTheme('system')}
                             className={`min-h-11 rounded-[4px] text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
                                 theme === 'system'
@@ -124,6 +127,7 @@ export const AppearanceSection: React.FC = () => {
                 <div className="seg-reference grid grid-cols-4 gap-1 p-1 rounded-[6px] bg-surface-raised border border-border-subtle">
                     <button
                         type="button"
+                        aria-pressed={effectsMode === 'system'}
                         onClick={() => setEffectsMode('system')}
                         className={`min-h-11 py-2 px-1 rounded-[4px] text-xs flex flex-col items-center justify-center gap-1 transition-all ${
                             effectsMode === 'system'
@@ -136,6 +140,7 @@ export const AppearanceSection: React.FC = () => {
                     </button>
                     <button
                         type="button"
+                        aria-pressed={effectsMode === 'full'}
                         onClick={() => setEffectsMode('full')}
                         className={`min-h-11 py-2 px-1 rounded-[4px] text-xs flex flex-col items-center justify-center gap-1 transition-all ${
                             effectsMode === 'full'
@@ -148,6 +153,7 @@ export const AppearanceSection: React.FC = () => {
                     </button>
                     <button
                         type="button"
+                        aria-pressed={effectsMode === 'balanced'}
                         onClick={() => setEffectsMode('balanced')}
                         className={`min-h-11 py-2 px-1 rounded-[4px] text-xs flex flex-col items-center justify-center gap-1 transition-all ${
                             effectsMode === 'balanced'
@@ -160,6 +166,7 @@ export const AppearanceSection: React.FC = () => {
                     </button>
                     <button
                         type="button"
+                        aria-pressed={effectsMode === 'reduced'}
                         onClick={() => setEffectsMode('reduced')}
                         className={`min-h-11 py-2 px-1 rounded-[4px] text-xs flex flex-col items-center justify-center gap-1 transition-all ${
                             effectsMode === 'reduced'

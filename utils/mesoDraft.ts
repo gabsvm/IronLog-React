@@ -229,40 +229,56 @@ export function buildNextMesocycleCarryOver(input: {
     experience?: 'beginner' | 'intermediate' | 'advanced';
     lang: 'en' | 'es';
     jointPainIds?: string[];
+    exercises?: readonly ExerciseDef[];
 }): NextMesoCarryOverResult {
-    const { prevMeso, program, logs, experience = 'intermediate', lang, jointPainIds = [] } = input;
+    const { prevMeso, program, logs, experience = 'intermediate', lang, jointPainIds = [], exercises = [] } = input;
+    const baseProgram = prevMeso.preDeloadProgram && prevMeso.preDeloadProgram.length > 0
+        ? prevMeso.preDeloadProgram
+        : program;
     const bumpPct = experience === 'advanced' ? 0.025 : 0.05;
+    const exById = new Map(exercises.map((ex) => [ex.id, ex]));
 
     const w1Logs = (logs || []).filter((l) => l.mesoId === prevMeso.id && !l.skipped && l.week === 1);
-    const w1Weights = new Map<string, number>();
+    const w1Weights = new Map<string, { weightKg: number; isAssisted: boolean }>();
     for (const log of w1Logs) {
         for (const ex of log.exercises || []) {
             if (!ex.id || w1Weights.has(ex.id)) continue;
             const working = (ex.sets || []).filter((s) => !s.skipped && s.type !== 'warmup' && Number(s.weight) > 0);
             if (working.length > 0) {
-                w1Weights.set(ex.id, Number(working[0].weight));
+                const eq = ex.equipment || exById.get(ex.id)?.equipment;
+                w1Weights.set(ex.id, {
+                    weightKg: Number(working[0].weight),
+                    isAssisted: eq === 'machine_assistance',
+                });
             }
         }
     }
 
     const carryOverLoads: Record<string, { w1PrevKg: number; nextW1Kg: number; deltaPct: number }> = {};
-    w1Weights.forEach((w1Kg, exId) => {
-        const nextKg = Math.round((w1Kg * (1 + bumpPct)) * 2) / 2;
-        carryOverLoads[exId] = { w1PrevKg: w1Kg, nextW1Kg: nextKg, deltaPct: bumpPct * 100 };
+    w1Weights.forEach(({ weightKg, isAssisted }, exId) => {
+        const nextKg = isAssisted
+            ? Math.max(0, Math.round((weightKg * (1 - bumpPct)) * 2) / 2)
+            : Math.round((weightKg * (1 + bumpPct)) * 2) / 2;
+        carryOverLoads[exId] = {
+            w1PrevKg: weightKg,
+            nextW1Kg: nextKg,
+            deltaPct: isAssisted ? -bumpPct * 100 : bumpPct * 100,
+        };
     });
 
     const priorities = prevMeso.musclePriorities || {};
     const flaggedSet = new Set<string>(jointPainIds);
 
-    const resetProgram: ProgramDay[] = (program || []).map((day, idx) => ({
+    const resetProgram: ProgramDay[] = (baseProgram || []).map((day, idx) => ({
         ...day,
         id: `next_d_${Date.now()}_${idx}`,
         slots: (day.slots || []).map((slot) => {
             const prio = priorities[slot.muscle] || 'grow';
             const mevSets = prio === 'emphasize' ? 3 : prio === 'maintain' ? 2 : 2;
             const carry = slot.exerciseId ? carryOverLoads[slot.exerciseId] : undefined;
+            const signPrefix = carry && carry.deltaPct > 0 ? '+' : '';
             const nextNote = carry
-                ? `W1 start: ${carry.nextW1Kg} kg (+${carry.deltaPct}% vs prior W1)`
+                ? `W1 start: ${carry.nextW1Kg} kg (${signPrefix}${carry.deltaPct}% vs prior W1)`
                 : undefined;
             return {
                 ...slot,

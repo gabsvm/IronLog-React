@@ -1,6 +1,7 @@
 // U5: SetRow bodyweight mode, moved verbatim from components/workout/SetRow.tsx.
 import React, { useState, useRef } from 'react';
 import { Icon } from '../../ui/Icon';
+import { pickLang } from '../../../utils/i18n';
 import { SetRowActionMenu } from './SetRowActionMenu';
 import type { SetRowState } from './useSetRowState';
 
@@ -14,6 +15,7 @@ export const SetRowBodyweight: React.FC<{ state: SetRowState }> = ({ state }) =>
         showRIR,
         t,
         isDone,
+        isSkipped,
         setType,
         effectiveBadgeLabel,
         storedWeight,
@@ -37,6 +39,7 @@ export const SetRowBodyweight: React.FC<{ state: SetRowState }> = ({ state }) =>
         handleRowClick,
         weightPlaceholder,
         repsPlaceholder,
+        predictiveTarget,
         prescriptionHint,
         prevText,
         badgeAriaLabel,
@@ -57,7 +60,8 @@ export const SetRowBodyweight: React.FC<{ state: SetRowState }> = ({ state }) =>
             onTouchMove={onSwipeTouchMove}
             onTouchEnd={onSwipeTouchEnd}
             onClick={handleRowClick}
-            className="relative transition-colors"
+            className={`relative transition-colors ${isSkipped ? 'opacity-55' : ''}`}
+            data-testid={isSkipped ? `set-skipped-${set.id}` : undefined}
         >
             {SwipeOverlay}
             {/* Target text rendered before weight input for accessibility & unit tests */}
@@ -91,7 +95,19 @@ export const SetRowBodyweight: React.FC<{ state: SetRowState }> = ({ state }) =>
                         {setType === 'regular' ? (
                             <Icon name="MoreVertical" size={16} />
                         ) : (
-                            <span className="flex items-center gap-0.5 text-[11px] font-bold text-primary-400">
+                            <span
+                                className={`flex items-center gap-0.5 text-[11px] font-bold ${
+                                    setType === 'myorep'
+                                        ? 'text-purple-300'
+                                        : setType === 'myorep_match' || setType === 'cluster'
+                                            ? 'text-emerald-300'
+                                            : setType === 'drop'
+                                                ? 'text-amber-300'
+                                                : setType === 'lengthened_partials'
+                                                    ? 'text-sky-300'
+                                                    : 'text-primary-400'
+                                }`}
+                            >
                                 <span>{effectiveBadgeLabel}</span>
                                 <span className="text-[9px] text-zinc-500 leading-none">⋮</span>
                             </span>
@@ -130,10 +146,17 @@ export const SetRowBodyweight: React.FC<{ state: SetRowState }> = ({ state }) =>
                         ref={extraWeightRef}
                         type="number"
                         inputMode="decimal"
-                        className="h-9 w-full rounded-[4px] bg-surface-app border border-border-subtle/80 text-center text-[15px] font-semibold text-white placeholder:text-zinc-500 focus:border-primary-500 outline-none tabular-nums"
-                        placeholder={weightPlaceholder}
+                        disabled={isSkipped}
+                        className={`h-9 w-full rounded-[4px] border text-center text-[15px] font-semibold outline-none tabular-nums transition-colors ${
+                            isSkipped
+                                ? 'border-dashed border-zinc-700 bg-transparent text-zinc-500'
+                                : isDone
+                                    ? 'border-transparent bg-transparent text-zinc-400'
+                                    : 'bg-surface-app border-border-subtle/80 text-white placeholder:text-zinc-500 focus:border-primary-500'
+                        }`}
+                        placeholder={isSkipped ? pickLang(lang, { es: 'Saltada', en: 'Skipped' }) : weightPlaceholder}
                         aria-label={t.weight}
-                        value={localWeight}
+                        value={isSkipped ? '' : localWeight}
                         onChange={(e) => {
                             setLocalWeight(e.target.value);
                             scheduleCommit('weight', storedWeight(e.target.value), 180);
@@ -153,10 +176,17 @@ export const SetRowBodyweight: React.FC<{ state: SetRowState }> = ({ state }) =>
                         ref={repsRef}
                         type="number"
                         inputMode="numeric"
-                        className="h-9 w-full rounded-[4px] bg-surface-app border border-border-subtle/80 text-center text-[15px] font-semibold text-white placeholder:text-zinc-500 focus:border-primary-500 outline-none tabular-nums"
-                        placeholder={repsPlaceholder}
+                        disabled={isSkipped}
+                        className={`h-9 w-full rounded-[4px] border text-center text-[15px] font-semibold outline-none tabular-nums transition-colors ${
+                            isSkipped
+                                ? 'border-dashed border-zinc-700 bg-transparent text-zinc-500'
+                                : isDone
+                                    ? 'border-transparent bg-transparent text-zinc-400'
+                                    : 'bg-surface-app border-border-subtle/80 text-white placeholder:text-zinc-500 focus:border-primary-500'
+                        }`}
+                        placeholder={isSkipped ? '—' : repsPlaceholder}
                         aria-label={t.reps}
-                        value={localReps}
+                        value={isSkipped ? '' : localReps}
                         onChange={(e) => {
                             setLocalReps(e.target.value);
                             scheduleCommit('reps', e.target.value, 180);
@@ -175,10 +205,17 @@ export const SetRowBodyweight: React.FC<{ state: SetRowState }> = ({ state }) =>
                         <input
                             type="number"
                             inputMode="decimal"
-                            className="h-9 w-full rounded-[4px] bg-surface-app border border-border-subtle/80 text-center text-[15px] font-semibold text-white placeholder:text-zinc-500 focus:border-primary-500 outline-none tabular-nums"
-                            placeholder="RIR"
+                            disabled={isSkipped}
+                            className={`h-9 w-full rounded-[4px] border text-center text-[15px] font-semibold outline-none tabular-nums transition-colors ${
+                                isSkipped
+                                    ? 'border-dashed border-zinc-700 bg-transparent text-zinc-500'
+                                    : isDone
+                                        ? 'border-transparent bg-transparent text-zinc-400'
+                                        : 'bg-surface-app border-border-subtle/80 text-white placeholder:text-zinc-500 focus:border-primary-500'
+                            }`}
+                            placeholder={isSkipped ? '—' : 'RIR'}
                             aria-label="RIR"
-                            value={localRpe}
+                            value={isSkipped ? '' : localRpe}
                             onChange={(e) => {
                                 setLocalRpe(e.target.value);
                                 scheduleCommit('rpe', e.target.value, 180);
@@ -189,23 +226,63 @@ export const SetRowBodyweight: React.FC<{ state: SetRowState }> = ({ state }) =>
                     </div>
                 )}
 
-                {/* Right cell (44px): Checkbox for LOG */}
+                {/* Right cell (44px): Checkbox for LOG or Skip dash */}
                 <div className="flex justify-center">
                     <button
                         type="button"
-                        onClick={handleToggleComplete}
+                        onClick={(e) => {
+                            if (isSkipped) {
+                                e.stopPropagation();
+                                onUpdate(exInstanceId, set.id, 'skipped', false);
+                            } else {
+                                handleToggleComplete();
+                            }
+                        }}
                         className={`relative flex h-[22px] w-[22px] items-center justify-center rounded-[3px] border-2 transition-colors active:scale-95 after:absolute after:-inset-2 after:content-[''] ${
-                            isDone
-                                ? 'bg-primary-500 border-primary-500 text-zinc-950 font-black shadow-sm'
-                                : 'border-zinc-500 bg-transparent hover:border-zinc-300'
+                            isSkipped
+                                ? 'border-zinc-600 bg-zinc-800 text-zinc-400'
+                                : isDone
+                                    ? 'bg-emerald-500 border-emerald-500 text-zinc-950 font-black shadow-sm'
+                                    : 'border-zinc-500 bg-transparent hover:border-zinc-300'
                         }`}
                         aria-pressed={Boolean(isDone)}
-                        aria-label={completeSetAriaLabel}
+                        aria-label={isSkipped ? pickLang(lang, { es: 'Restaurar serie', en: 'Restore set' }) : completeSetAriaLabel}
                     >
-                        {isDone && <Icon name="Check" size={14} strokeWidth={3.5} />}
+                        {isSkipped ? (
+                            <Icon name="Minus" size={13} strokeWidth={3} />
+                        ) : isDone ? (
+                            <Icon name="Check" size={14} strokeWidth={3.5} />
+                        ) : null}
                     </button>
                 </div>
             </div>
+            {(predictiveTarget || set.limitingSide) && !isDone && !isSkipped && (
+                <div className="px-3 pb-2 -mt-1 flex items-center justify-end gap-1.5 flex-wrap">
+                    {set.limitingSide && (
+                        <button
+                            type="button"
+                            data-testid="unilateral-side-toggle"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                const nextSide = set.limitingSide === 'L' ? 'R' : undefined;
+                                onUpdate(exInstanceId, set.id, 'limitingSide', nextSide);
+                            }}
+                            className="inline-flex items-center gap-1 rounded-[4px] border border-border-subtle bg-surface-elevated px-2 py-0.5 text-[11px] font-bold text-zinc-200 hover:text-white"
+                        >
+                            {pickLang(lang, { es: `Lado: ${set.limitingSide}`, en: `Side: ${set.limitingSide}` })}
+                        </button>
+                    )}
+                    {predictiveTarget && (
+                        <div data-testid="predictive-match-pill" className="inline-flex items-center gap-1">
+                            <span className="inline-flex items-center gap-1 rounded-[4px] border border-primary-500/35 bg-primary-500/12 px-2 py-0.5 text-[11px] font-bold text-primary-300 tabular-nums">
+                                {predictiveTarget.mode === 'rir'
+                                    ? pickLang(lang, { es: `Objetivo ajustado: ${predictiveTarget.targetRir} RIR`, en: `Matched target: ${predictiveTarget.targetRir} RIR` })
+                                    : pickLang(lang, { es: `Objetivo recalculado: ${predictiveTarget.targetReps} reps`, en: `Predictive target: ${predictiveTarget.targetReps} reps` })}
+                            </span>
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 };

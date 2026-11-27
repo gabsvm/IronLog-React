@@ -8,6 +8,7 @@ import { MacroBar } from './MacroBar';
 import { WaterTracker } from './WaterTracker';
 import { MEAL_ORDER, MEAL_META, ACTIVITY_EMOJI } from './nutritionHelpers';
 import { computeRpDietRecommendation, evaluateCardioInterference, type RpDietPhase } from '../../utils/rpDietEngine';
+import { todayLocalDateKey } from '../../utils/localDate';
 
 const CARDIO_ACTIVITY_LABELS: Record<string, { en: string; es: string }> = {
     running: { en: 'Running', es: 'Correr' },
@@ -102,6 +103,9 @@ export const TodayTab: React.FC<Props> = ({
     );
     const isTrainingDay = todayLog.isTrainingDay ?? true;
     const dayTargets = isTrainingDay ? dietRec.trainingDayMacros : dietRec.restDayMacros;
+    const effectiveGoalCalories = dayTargets.calories + caloriesBurned;
+    const syncedCaloriesRemaining = effectiveGoalCalories - todayMacros.calories;
+    const syncedProteinRemaining = dayTargets.protein - todayMacros.protein;
     const PHASE_OPTIONS: { id: RpDietPhase; label: { es: string; en: string } }[] = [
         { id: 'cut', label: { es: 'Cut', en: 'Cut' } },
         { id: 'maintenance', label: { es: 'Mant.', en: 'Maint.' } },
@@ -120,18 +124,18 @@ export const TodayTab: React.FC<Props> = ({
                                 <span className="ml-2 text-orange-400">🔥 {streak} {TRANSLATIONS[lang].copy.todayTab.dayStreak}</span>
                             )}
                         </p>
-                        <div className={`text-4xl font-black leading-none ${caloriesRemaining < 0 ? 'text-orange-400' : caloriesRemaining < 200 ? 'text-yellow-400' : 'text-white'}`}>
-                            {caloriesRemaining > 0 ? caloriesRemaining : Math.abs(caloriesRemaining)}
+                        <div className={`text-4xl font-black leading-none ${syncedCaloriesRemaining < 0 ? 'text-orange-400' : syncedCaloriesRemaining < 200 ? 'text-yellow-400' : 'text-white'}`}>
+                            {syncedCaloriesRemaining > 0 ? syncedCaloriesRemaining : Math.abs(syncedCaloriesRemaining)}
                         </div>
                         <p className="text-xs text-zinc-500 mt-1">
-                            {caloriesRemaining >= 0
+                            {syncedCaloriesRemaining >= 0
                                 ? TRANSLATIONS[lang].copy.todayTab.kcalRemaining
                                 : TRANSLATIONS[lang].copy.todayTab.kcalOverGoal}
                         </p>
                     </div>
                     <MacroRing
                         calories={todayMacros.calories}
-                        goalCalories={nutritionGoal.calories}
+                        goalCalories={effectiveGoalCalories}
                         protein={todayMacros.protein}
                         carbs={todayMacros.carbs}
                         fat={todayMacros.fat}
@@ -141,17 +145,17 @@ export const TodayTab: React.FC<Props> = ({
 
                 {/* Macro bars */}
                 <div className="flex gap-3">
-                    <MacroBar value={todayMacros.protein} goal={nutritionGoal.protein} color="text-blue-400" label={TRANSLATIONS[lang].copy.todayTab.protein} />
-                    <MacroBar value={todayMacros.carbs} goal={nutritionGoal.carbs} color="text-amber-400" label={TRANSLATIONS[lang].copy.todayTab.carbs || pickLang(lang, { en: 'Carbs', es: 'Carbos' })} />
-                    <MacroBar value={todayMacros.fat} goal={nutritionGoal.fat} color="text-pink-400" label={TRANSLATIONS[lang].copy.todayTab.fat} />
+                    <MacroBar value={todayMacros.protein} goal={dayTargets.protein} color="text-blue-400" label={TRANSLATIONS[lang].copy.todayTab.protein} />
+                    <MacroBar value={todayMacros.carbs} goal={dayTargets.carbs} color="text-amber-400" label={TRANSLATIONS[lang].copy.todayTab.carbs || pickLang(lang, { en: 'Carbs', es: 'Carbos' })} />
+                    <MacroBar value={todayMacros.fat} goal={dayTargets.fat} color="text-pink-400" label={TRANSLATIONS[lang].copy.todayTab.fat} />
                 </div>
 
                 {/* Protein callout */}
-                {proteinRemaining > 0 && (
+                {syncedProteinRemaining > 0 && (
                     <div className="mt-3 pt-3 border-t border-zinc-800 flex items-center gap-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
                         <p className="text-[11px] text-zinc-400">
-                            <span className="text-blue-400 font-bold">{Math.round(proteinRemaining)}g</span>{' '}
+                            <span className="text-blue-400 font-bold">{Math.round(syncedProteinRemaining)}g</span>{' '}
                             {TRANSLATIONS[lang].copy.todayTab.proteinToHitYour}
                         </p>
                     </div>
@@ -211,7 +215,9 @@ export const TodayTab: React.FC<Props> = ({
                                     onUpdateNutritionGoal?.({
                                         ...nutritionGoal,
                                         phase: opt.id,
-                                        phaseStartDate: nutritionGoal.phaseStartDate || new Date().toISOString().slice(0, 10),
+                                        phaseStartDate: nutritionGoal.phase === opt.id
+                                            ? (nutritionGoal.phaseStartDate || todayLocalDateKey())
+                                            : todayLocalDateKey(),
                                     })
                                 }
                                 className={`min-h-8 rounded-[5px] border px-2 py-1 text-xs font-extrabold uppercase tracking-wider transition-colors ${
@@ -271,12 +277,16 @@ export const TodayTab: React.FC<Props> = ({
                         </span>
                         <button
                             type="button"
-                            onClick={() =>
+                            onClick={() => {
+                                const nextCalories = Math.max(1200, nutritionGoal.calories + dietRec.suggestedCalorieDelta);
+                                const deltaApplied = nextCalories - nutritionGoal.calories;
+                                const nextCarbs = Math.max(0, nutritionGoal.carbs + Math.round(deltaApplied / 4));
                                 onUpdateNutritionGoal({
                                     ...nutritionGoal,
-                                    calories: Math.max(1200, nutritionGoal.calories + dietRec.suggestedCalorieDelta),
-                                })
-                            }
+                                    calories: nextCalories,
+                                    carbs: nextCarbs,
+                                });
+                            }}
                             className="shrink-0 rounded-[5px] bg-primary-500/15 border border-primary-500/35 px-2.5 py-1 font-extrabold text-primary-300 hover:bg-primary-500/25 tabular-nums"
                         >
                             {`${dietRec.suggestedCalorieDelta > 0 ? '+' : ''}${dietRec.suggestedCalorieDelta} kcal`}

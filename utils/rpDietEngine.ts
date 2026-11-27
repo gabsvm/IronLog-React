@@ -1,4 +1,5 @@
 import type { BodyLog, CardioSession, MuscleGroup, NutritionGoal, ProgramDay } from '../types';
+import { parseLocalDateKey } from './localDate';
 
 export type RpDietPhase = 'cut' | 'bulk' | 'maintenance';
 
@@ -94,9 +95,11 @@ export const computeRpDietRecommendation = (input: {
 
     let weeksInPhase = 1;
     if (goal.phaseStartDate) {
-        const startMs = Date.parse(goal.phaseStartDate);
-        if (Number.isFinite(startMs) && startMs <= now) {
-            weeksInPhase = Math.max(1, Math.floor((now - startMs) / (7 * dayMs)) + 1);
+        const localStart = /^\d{4}-\d{2}-\d{2}$/.test(goal.phaseStartDate)
+            ? parseLocalDateKey(goal.phaseStartDate).getTime()
+            : Date.parse(goal.phaseStartDate);
+        if (Number.isFinite(localStart) && localStart <= now) {
+            weeksInPhase = Math.max(1, Math.floor((now - localStart) / (7 * dayMs)) + 1);
         }
     }
 

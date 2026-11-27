@@ -9,6 +9,7 @@ import { usePro } from '../hooks/usePro';
 import { useStore } from '../lib/store';
 import { Log, WeightUnit } from '../types';
 import { resolveWeightUnit, toDisplay, unitLabel } from '../utils/units';
+import { getEffectiveSetLoad, getLogBodyWeight } from '../utils/trainingMetrics';
 import { buildUndoLog } from '../utils/historyEdit';
 import { uid } from '../utils';
 import { buildTrainingCsv } from '../services/trainingCsv';
@@ -105,16 +106,39 @@ interface HistoryCardProps {
 }
 
 const HistoryCard = memo(({ log, lang, id, onOpen, unit = 'kg' }: HistoryCardProps) => {
-    const previews = useMemo(() => (log.exercises || []).map(ex => {
-        const completed = (ex.sets || []).filter(set => set.completed && set.type !== 'avt_hop' && !set.skipped);
-        if (!completed.length) return null;
-        if (ex.muscle === 'CARDIO') {
-            const distance = completed.reduce((sum, set) => sum + Number(set.distance || 0), 0);
-            return { name: getTranslated(ex.name, lang), value: distance > 0 ? `${distance.toFixed(1)} km` : `${completed.length} ${pickLang(lang, { es: 'series', en: 'sets' })}` };
-        }
-        const best = completed.reduce((current, set) => Number(set.weight || 0) > Number(current.weight || 0) ? set : current, completed[0]);
-        return { name: getTranslated(ex.name, lang), value: `${toDisplay(Number(best.weight || 0), unit)} ${unitLabel(unit).toLowerCase()} × ${best.reps || 0}` };
-    }).filter(Boolean), [log.exercises, lang, unit]);
+    const previews = useMemo(() => {
+        const logBw = getLogBodyWeight(log);
+        const unitStr = unitLabel(unit).toLowerCase();
+        return (log.exercises || []).map((ex, idx) => {
+            const completed = (ex.sets || []).filter(set => set.completed && set.type !== 'avt_hop' && !set.skipped);
+            if (!completed.length) return null;
+            const key = `${ex.id || ex.instanceId || 'ex'}-${idx}`;
+            const name = getTranslated(ex.name, lang);
+            if (ex.muscle === 'CARDIO') {
+                const distance = completed.reduce((sum, set) => sum + Number(set.distance || 0), 0);
+                return { key, name, value: distance > 0 ? `${distance.toFixed(1)} km` : `${completed.length} ${pickLang(lang, { es: 'series', en: 'sets' })}` };
+            }
+            if (ex.isIsometric) {
+                const bestHold = Math.max(...completed.map(set => Number(set.duration || 0)));
+                return { key, name, value: bestHold > 0 ? `${bestHold}s hold` : `${completed.length} ${pickLang(lang, { es: 'series', en: 'sets' })}` };
+            }
+            const best = completed.reduce((current, set) => {
+                const curEff = getEffectiveSetLoad(current, ex, logBw);
+                const nextEff = getEffectiveSetLoad(set, ex, logBw);
+                if (nextEff !== curEff) return nextEff > curEff ? set : current;
+                return Number(set.reps || 0) > Number(current.reps || 0) ? set : current;
+            }, completed[0]);
+            const rawWeight = Number(best.weight || 0);
+            const shownWeight = toDisplay(rawWeight, unit);
+            if (ex.equipment === 'machine_assistance') {
+                return { key, name, value: `-${shownWeight} ${unitStr} × ${best.reps || 0}` };
+            }
+            if (ex.isBodyweight && rawWeight <= 0) {
+                return { key, name, value: `BW × ${best.reps || 0}` };
+            }
+            return { key, name, value: `${shownWeight} ${unitStr} × ${best.reps || 0}` };
+        }).filter(Boolean);
+    }, [log, lang, unit]);
 
     return (
         <button
@@ -135,14 +159,16 @@ const HistoryCard = memo(({ log, lang, id, onOpen, unit = 'kg' }: HistoryCardPro
                 </div>
             </div>
 
-            <div className="mt-3 divide-y divide-border-subtle/50 rounded-[6px] border border-border-subtle/60 bg-surface-base/60 px-2.5 py-1">
-                {previews.slice(0, 3).map((preview: any) => (
-                    <div key={preview.name} className="flex items-center justify-between gap-3 py-1.5 text-xs">
-                        <span className="min-w-0 flex-1 truncate font-medium text-zinc-400">{preview.name}</span>
-                        <span className="shrink-0 font-mono text-[11px] font-bold text-zinc-200">{preview.value}</span>
-                    </div>
-                ))}
-            </div>
+            {previews.length > 0 && (
+                <div className="mt-3 divide-y divide-border-subtle/50 rounded-[6px] border border-border-subtle/60 bg-surface-base/60 px-2.5 py-1">
+                    {previews.slice(0, 3).map((preview: any) => (
+                        <div key={preview.key} className="flex items-center justify-between gap-3 py-1.5 text-xs">
+                            <span className="min-w-0 flex-1 truncate font-medium text-zinc-400">{preview.name}</span>
+                            <span className="shrink-0 font-mono text-[11px] font-bold text-zinc-200">{preview.value}</span>
+                        </div>
+                    ))}
+                </div>
+            )}
 
             <div className="mt-3 flex items-center justify-between border-t border-border-subtle/50 pt-2.5">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-muted">
@@ -244,8 +270,16 @@ export const HistoryView: React.FC = () => {
     const repeatWorkout = useCallback((log: Log) => {
         if (activeSession) return;
         const now = Date.now();
+        const {
+            bodyWeightSnapshot: _bw,
+            skipped: _skipped,
+            importKey: _importKey,
+            importedFrom: _importedFrom,
+            programSystem: _programSystem,
+            ...baseLog
+        } = log as Log & Record<string, unknown>;
         const repeated = {
-            ...log,
+            ...baseLog,
             id: now,
             startTime: now,
             endTime: undefined,

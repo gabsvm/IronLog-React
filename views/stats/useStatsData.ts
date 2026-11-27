@@ -9,7 +9,8 @@ import { getTranslated } from '../../utils';
 import { useStatsWorker, ChartMetric } from '../../hooks/useStatsWorker';
 import { useStore } from '../../lib/store';
 import { buildStatsLogsSignature, statsCache } from '../../services/statsCache';
-import { countSessionsByScope, scopeMesoId as scopeMesoIdFor, StatsScope } from '../../utils/statsScope';
+import { countSessionsByScope, filterLogsByScope, scopeMesoId as scopeMesoIdFor, StatsScope } from '../../utils/statsScope';
+import { getEffectiveSetLoad, getLogBodyWeight } from '../../utils/trainingMetrics';
 import { buildDoughnutData, buildIntensityPalette } from '../../utils/chartColors';
 import { resolveWeightUnit, unitLabel } from '../../utils/units';
 import { aggregateExerciseFrequency, exerciseIdGroup, matchesExerciseQuery, resolveExerciseId } from '../../utils/exerciseLibrary';
@@ -44,7 +45,7 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope }: { activeTab?
     const { isWorkerReady, calculateOverview, calculateChartData } = useStatsWorker();
 
     const safeLogs = useMemo(() => Array.isArray(logs) ? logs : [], [logs]);
-    const logsSignature = useMemo(() => buildStatsLogsSignature(safeLogs), [safeLogs]);
+    const logsSignature = useMemo(() => buildStatsLogsSignature(safeLogs, userProfile?.bodyWeight), [safeLogs, userProfile?.bodyWeight]);
     const scopeMesoId = scopeMesoIdFor(statsScope, activeMeso?.id);
     const exerciseMetaById = useMemo(() => {
         const byId = new Map<string, any>();
@@ -273,24 +274,27 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope }: { activeTab?
         safeLogs.forEach(log => {
             if (log.skipped) return;
             if (scopeMesoId != null && log.mesoId !== scopeMesoId) return;
+            const logBw = getLogBodyWeight(log, userProfile?.bodyWeight);
             (log.exercises || []).forEach(ex => {
                 if (!ex.id || ex.isBodyweight || ex.isIsometric || ex.muscle === 'CARDIO') return;
                 // Merged duplicates share one PR row under the surviving exercise.
                 const canonicalId = resolveExerciseId(exercises, String(ex.id));
-                const working = (ex.sets || []).filter(set => set.completed && set.type !== 'warmup' && set.type !== 'avt_hop');
+                const canonicalDef = exercises.find(e => String(e.id) === canonicalId) || null;
+                const eq = canonicalDef?.equipment ?? ex.equipment;
+                const working = (ex.sets || []).filter(set => set.completed && !set.skipped && set.type !== 'warmup' && set.type !== 'avt_hop');
                 working.forEach(set => {
-                    const weight = Number(set.weight || 0);
+                    const rawWeight = Number(set.weight || 0);
                     const reps = Number(set.reps || 0);
-                    if (weight <= 0 || reps <= 0) return;
-                    const e1rm = weight * (1 + reps / 30);
+                    if (reps <= 0) return;
+                    if (eq !== 'machine_assistance' && rawWeight <= 0) return;
+                    const effLoad = getEffectiveSetLoad(set, { isBodyweight: false, equipment: eq }, logBw);
+                    if (effLoad <= 0) return;
+                    const e1rm = effLoad * (1 + reps / 30);
                     const existing = bestMap[canonicalId];
                     if (!existing || e1rm > existing.e1rm) {
-                        const canonicalDef = canonicalId !== String(ex.id)
-                            ? exercises.find(e => String(e.id) === canonicalId)
-                            : null;
                         bestMap[canonicalId] = {
                             e1rm,
-                            weight,
+                            weight: eq === 'machine_assistance' ? -rawWeight : rawWeight,
                             reps,
                             date: log.startTime,
                             name: canonicalDef ? getTranslated(canonicalDef.name, lang) : getTranslated(ex.name, lang),
@@ -304,7 +308,7 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope }: { activeTab?
         return Object.entries(bestMap)
             .sort((a, b) => b[1].date - a[1].date)
             .slice(0, 20);
-    }, [safeLogs, lang, scopeMesoId, exercises]);
+    }, [safeLogs, lang, scopeMesoId, exercises, userProfile?.bodyWeight]);
 
     const [showAllPRs, setShowAllPRs] = useState(false);
     const displayedPRs = showAllPRs ? prHistory : prHistory.slice(0, 6);
@@ -337,8 +341,13 @@ export const useStatsData = ({ activeTab, hideHeader, statsScope }: { activeTab?
 
     const repMaxRows = useMemo(() => {
         if (!currentEx || currentEx.isBodyweight || currentEx.isIsometric || currentEx.muscle === 'CARDIO') return [];
-        return computeRepMaxTable(safeLogs, new Set(selectedGroupIds.map(String)));
-    }, [currentEx, safeLogs, selectedGroupIds]);
+        const scopedLogs = filterLogsByScope(safeLogs, scopeMesoId);
+        return computeRepMaxTable(scopedLogs, new Set(selectedGroupIds.map(String)), {
+            equipment: currentEx.equipment,
+            isBodyweight: currentEx.isBodyweight,
+            bodyWeight: userProfile?.bodyWeight,
+        });
+    }, [currentEx, safeLogs, scopeMesoId, selectedGroupIds, userProfile?.bodyWeight]);
 
     const exercisePlateaus = useMemo(
         () => detectExercisePlateaus(safeLogs, exercises, lang),

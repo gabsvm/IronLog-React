@@ -1,5 +1,6 @@
 import type { Log } from '../types';
 import { filterLogsByScope } from './statsScope';
+import { getEffectiveSetLoad, getLogBodyWeight } from './trainingMetrics';
 
 export interface PremiumBestSet {
     name: Log['exercises'][number]['name'];
@@ -38,6 +39,7 @@ export const buildPremiumInsights = (logs: Log[], mesoId: number | null, now = D
         const timestamp = Number(log.startTime);
         const validDate = Number.isFinite(timestamp) && timestamp > 0 && timestamp <= now;
         if (!validDate) continue;
+        const logBw = getLogBodyWeight(log);
         const weekIndex = starts.findIndex((start, i) =>
             timestamp >= start && timestamp < (i === 3 ? exclusiveEnd : starts[i + 1]));
         for (const exercise of (log.exercises || [])) {
@@ -46,12 +48,21 @@ export const buildPremiumInsights = (logs: Log[], mesoId: number | null, now = D
                 if (!set.completed || set.skipped || set.type === 'warmup' || set.type === 'avt_hop') continue;
                 if (weekIndex !== -1) weeklyWorkingSets[weekIndex] += 1;
                 if (!isWeighted) continue;
-                const weight = Number(set.weight);
+                const rawWeight = Number(set.weight);
                 const reps = Number(set.reps);
-                if (!Number.isFinite(weight) || !Number.isFinite(reps) || weight <= 0 || reps <= 0) continue;
-                const e1rm = weight * (1 + reps / 30);
+                if (!Number.isFinite(reps) || reps <= 0) continue;
+                if (exercise.equipment !== 'machine_assistance' && (!Number.isFinite(rawWeight) || rawWeight <= 0)) continue;
+                const effectiveLoad = getEffectiveSetLoad(set, exercise, logBw);
+                if (!Number.isFinite(effectiveLoad) || effectiveLoad <= 0) continue;
+                const e1rm = effectiveLoad * (1 + reps / 30);
                 if (!bestSet || e1rm > bestSet.estimatedOneRepMax) {
-                    bestSet = { name: exercise.name, weight, reps, estimatedOneRepMax: e1rm, date: timestamp };
+                    bestSet = {
+                        name: exercise.name,
+                        weight: exercise.equipment === 'machine_assistance' ? -Math.max(0, rawWeight || 0) : rawWeight,
+                        reps,
+                        estimatedOneRepMax: e1rm,
+                        date: timestamp,
+                    };
                 }
             }
         }

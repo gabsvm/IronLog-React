@@ -46,6 +46,20 @@ export const HomeMesosView: React.FC<{ state: HomeViewState }> = ({ state }) => 
     const [showPlanHub, setShowPlanHub] = useState(false);
     const [openCopyMenuId, setOpenCopyMenuId] = useState<string | number | null>(null);
 
+    React.useEffect(() => {
+        if (openCopyMenuId === null) return;
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setOpenCopyMenuId(null);
+        };
+        const onDocClick = () => setOpenCopyMenuId(null);
+        window.addEventListener('keydown', onKeyDown);
+        document.addEventListener('click', onDocClick);
+        return () => {
+            window.removeEventListener('keydown', onKeyDown);
+            document.removeEventListener('click', onDocClick);
+        };
+    }, [openCopyMenuId]);
+
     const stateLogs = (state as any).logs;
     const pastMesocycles = useMemo(
         () => extractPastMesocycles(stateLogs || [], activeMeso?.id, exercises || []),
@@ -140,14 +154,20 @@ export const HomeMesosView: React.FC<{ state: HomeViewState }> = ({ state }) => 
                     <div className="relative shrink-0">
                         <button
                             type="button"
-                            onClick={() => setOpenCopyMenuId(openCopyMenuId === 'active' ? null : 'active')}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenCopyMenuId(openCopyMenuId === 'active' ? null : 'active');
+                            }}
                             aria-label={pickLang(lang, { es: 'Opciones del mesociclo', en: 'Mesocycle options' })}
                             className="flex h-8 w-8 items-center justify-center rounded-[4px] text-zinc-400 hover:bg-surface-elevated hover:text-white transition-colors"
                         >
                             <Icon name="MoreVertical" size={17} />
                         </button>
                         {openCopyMenuId === 'active' && (
-                            <div className="absolute right-0 top-full mt-1 w-48 rounded-xl border border-border-subtle bg-surface-base p-1.5 shadow-2xl z-30">
+                            <div
+                                onClick={(e) => e.stopPropagation()}
+                                className="absolute right-0 top-full mt-1 w-48 rounded-xl border border-border-subtle bg-surface-base p-1.5 shadow-2xl z-30"
+                            >
                                 <button
                                     type="button"
                                     data-testid="copy-active-meso-btn"
@@ -194,7 +214,15 @@ export const HomeMesosView: React.FC<{ state: HomeViewState }> = ({ state }) => 
                                     type="button"
                                     onClick={() => {
                                         triggerHaptic('light');
-                                        setActiveMeso(prev => (prev ? { ...prev, week: wNum, isDeload: isAutoDeloadWeek } : prev));
+                                        if (!isAutoDeloadWeek && activeMeso.condensedDeload && activeMeso.preDeloadProgram?.length) {
+                                            setProgram(activeMeso.preDeloadProgram);
+                                        }
+                                        setActiveMeso(prev => (prev ? {
+                                            ...prev,
+                                            week: wNum,
+                                            isDeload: isAutoDeloadWeek,
+                                            condensedDeload: isAutoDeloadWeek ? prev.condensedDeload : false,
+                                        } : prev));
                                     }}
                                     className={`flex h-8 min-w-[38px] px-2.5 items-center justify-center rounded-[4px] text-xs font-bold transition-all ${
                                         isCurrent
@@ -238,12 +266,16 @@ export const HomeMesosView: React.FC<{ state: HomeViewState }> = ({ state }) => 
                                 data-testid="condense-deload-btn"
                                 onClick={() => {
                                     triggerHaptic('medium');
+                                    const snapshot = activeMeso.preDeloadProgram?.length ? activeMeso.preDeloadProgram : safeProgram;
                                     setProgram(condenseDeloadDays(safeProgram));
-                                    setActiveMeso(prev => (prev ? { ...prev, condensedDeload: true } : prev));
+                                    setActiveMeso(prev => (prev ? { ...prev, condensedDeload: true, preDeloadProgram: snapshot } : prev));
                                 }}
                                 className="shrink-0 min-h-9 rounded-[6px] bg-amber-400 px-3 text-xs font-black uppercase tracking-wider text-zinc-950 hover:brightness-110 active:scale-95 transition-all"
                             >
-                                {pickLang(lang, { es: 'Condensar (4d → 2d)', en: 'Condense (4d → 2d)' })}
+                                {pickLang(lang, {
+                                    es: `Condensar (${safeProgram.length}d → ${Math.ceil(safeProgram.length / 2)}d)`,
+                                    en: `Condense (${safeProgram.length}d → ${Math.ceil(safeProgram.length / 2)}d)`,
+                                })}
                             </button>
                         </div>
                     )}

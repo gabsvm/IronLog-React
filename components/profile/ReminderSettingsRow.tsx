@@ -43,9 +43,10 @@ export const ReminderSettingsRow: React.FC<ReminderSettingsRowProps> = ({ lang, 
                 <div className="flex-1 text-sm font-medium text-white">{r.enable}</div>
                 <button
                     type="button"
+                    role="switch"
+                    aria-checked={config.enabled}
                     onClick={() => onChange({ ...config, enabled: !config.enabled })}
                     aria-label={r.enable}
-                    aria-pressed={config.enabled}
                     className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${config.enabled ? 'bg-primary-500' : 'bg-surface-elevated border border-border-strong'}`}
                 >
                     <span className={`absolute top-0.5 w-5 h-5 rounded-full shadow transition-all ${config.enabled ? 'left-[22px] bg-white' : 'left-0.5 bg-white'}`} />

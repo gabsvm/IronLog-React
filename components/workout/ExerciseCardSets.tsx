@@ -21,6 +21,9 @@ interface Props {
     activeEmomMinute: number;
     nextSetIdx: number;
     setBadgeLabels: (string | undefined)[];
+    isDeload?: boolean;
+    sessionWeek?: number;
+    bodyWeightKg?: number;
 
     // Handlers
     onSetUpdate: (exId: number, setId: number, field: string, value: any) => void;
@@ -56,6 +59,9 @@ export const ExerciseCardSets: React.FC<Props> = React.memo(({
     activeEmomMinute,
     nextSetIdx,
     setBadgeLabels,
+    isDeload,
+    sessionWeek,
+    bodyWeightKg,
     onSetUpdate,
     onSetComplete,
     onSetTypeChange,
@@ -68,6 +74,10 @@ export const ExerciseCardSets: React.FC<Props> = React.memo(({
     tutorialId,
 }) => {
     const h = TRANSLATIONS[lang].setsHeader;
+    const isAssisted = ex.equipment === 'machine_assistance';
+    const firstLoggedReps = Number(regularSets[0]?.reps || 0);
+    const myorepMatchTargetReps = firstLoggedReps > 0 ? firstLoggedReps : undefined;
+
     return (
     <>
         {/* Column header row */}
@@ -106,7 +116,13 @@ export const ExerciseCardSets: React.FC<Props> = React.memo(({
                 } items-center gap-3 border-t border-b border-border-subtle/80 px-3 py-2 text-center text-[11px] font-bold uppercase tracking-wider text-zinc-400`}
             >
                 <div></div>
-                <div>{ex.isBodyweight ? `+${unitLabel}` : pickLang(lang, { es: 'PESO', en: 'WEIGHT' })}</div>
+                <div>
+                    {isAssisted
+                        ? `-${unitLabel}`
+                        : ex.isBodyweight
+                            ? `+${unitLabel}`
+                            : pickLang(lang, { es: 'PESO', en: 'WEIGHT' })}
+                </div>
                 <div>REPS</div>
                 {config?.showRIR && <div>{String(t.rir)}</div>}
                 <div>LOG</div>
@@ -129,6 +145,11 @@ export const ExerciseCardSets: React.FC<Props> = React.memo(({
                     lang={lang}
                     isCardio={isCardio}
                     isBodyweight={ex.isBodyweight}
+                    equipment={ex.equipment}
+                    isDeload={isDeload}
+                    sessionWeek={sessionWeek}
+                    bodyWeightKg={bodyWeightKg}
+                    myorepMatchTargetReps={set.type === 'myorep_match' && idx > 0 ? myorepMatchTargetReps : undefined}
                     isIsometric={ex.isIsometric}
                     isometricTargetSecs={ex.isIsometric ? (ex as any).isometricTargetSecs : undefined}
                     setIndex={idx}

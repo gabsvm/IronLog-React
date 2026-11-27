@@ -133,11 +133,14 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
             newId = `custom_${Date.now()}`;
         }
 
+        const resolvedEquipment = isBodyweight && newEquipment !== 'bodyweight_loadable'
+            ? 'bodyweight'
+            : newEquipment;
         const newEx: ExerciseDef = {
             id: newId,
             name: { en: newName, es: newName },
             muscle: newMuscle,
-            equipment: isBodyweight ? 'bodyweight' : newEquipment,
+            equipment: resolvedEquipment,
             isCustom: !persistToGlobal,
             isBodyweight,
             volumeCountingMode,
@@ -295,7 +298,6 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
                                 <div className="relative flex-1">
                                     <Icon name="Search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
                                     <input
-                                        autoFocus
                                         type="text"
                                         placeholder={t.searchPlaceholder}
                                         aria-label={pickLang(lang, { es: 'Buscar ejercicios', en: 'Search exercises' })}

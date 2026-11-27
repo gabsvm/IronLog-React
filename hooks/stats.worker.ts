@@ -5,14 +5,24 @@ type MetricType = '1rm' | 'volume' | 'duration' | 'distance' | 'max_reps' | 'hol
 
 let cachedLogs: any[] = [];
 
-const parseDuration = (val: any) => {
-    if (typeof val === 'number') return val;
+const parseDuration = (val: any): number => {
+    if (typeof val === 'number') return Number.isFinite(val) ? val : 0;
     if (!val) return 0;
-    if (String(val).includes(':')) {
-        const parts = String(val).split(':').map(Number);
-        return parts[0] + (parts[1] / 60);
+    const raw = String(val).trim();
+    if (!raw) return 0;
+    if (raw.includes(':')) {
+        const parts = raw.split(':').map((p) => Number(p.trim()));
+        if (parts.some((n) => !Number.isFinite(n) || n < 0)) return 0;
+        if (parts.length === 3) {
+            return parts[0] * 60 + parts[1] + parts[2] / 60;
+        }
+        if (parts.length === 2) {
+            return parts[0] + parts[1] / 60;
+        }
+        return 0;
     }
-    return Number(val) || 0;
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
 };
 
 self.onmessage = function(e: MessageEvent) {
@@ -54,13 +64,21 @@ self.onmessage = function(e: MessageEvent) {
             for (const ex of matches) {
             if ((metric as MetricType) === '1rm') {
                 for (const s of (ex.sets || [])) {
-                    if (s.completed && !s.skipped && (s.weight || s.weight === 0 || s.weight === '0') && s.reps) {
+                    const hasValidReps = Number(s.reps) > 0;
+                    const hasWeight = s.weight !== undefined && s.weight !== null && (
+                        s.weight !== '' || ex.isBodyweight || ex.equipment === 'machine_assistance'
+                    );
+                    if (s.completed && !s.skipped && hasWeight && hasValidReps) {
                         const w = getEffectiveSetLoad(s, ex, logBodyWeight);
                         const r = Number(s.reps);
                         const est1rm = w * (1 + r / 30);
                         if (est1rm > bestValue) {
                             bestValue = est1rm;
-                            bestSetDetails = { w: Number(s.weight), r };
+                            const rawW = Number(s.weight || 0);
+                            bestSetDetails = {
+                                w: ex.equipment === 'machine_assistance' ? -rawW : rawW,
+                                r,
+                            };
                         }
                     }
                 }

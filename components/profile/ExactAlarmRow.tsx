@@ -31,13 +31,16 @@ export const ExactAlarmRow: React.FC<ExactAlarmRowProps> = ({ lang }) => {
             }
         };
         void refresh();
-        const onReturn = () => void refresh();
-        document.addEventListener('visibilitychange', onReturn);
-        window.addEventListener('focus', onReturn);
+        const onVisibility = () => {
+            if (document.visibilityState === 'visible') void refresh();
+        };
+        const onFocus = () => void refresh();
+        document.addEventListener('visibilitychange', onVisibility);
+        window.addEventListener('focus', onFocus);
         return () => {
             cancelled = true;
-            document.removeEventListener('visibilitychange', onReturn);
-            window.removeEventListener('focus', onReturn);
+            document.removeEventListener('visibilitychange', onVisibility);
+            window.removeEventListener('focus', onFocus);
         };
     }, []);
 

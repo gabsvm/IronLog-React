@@ -79,7 +79,7 @@ service cloud.firestore {
     }
 
     function nutritionDayAllowedKeys() {
-      return ['date', 'waterMl', 'updatedAt', 'deleted'];
+      return ['date', 'waterMl', 'steps', 'isTrainingDay', 'updatedAt', 'deleted'];
     }
 
     function bodyDocAllowedKeys() {
@@ -112,7 +112,9 @@ service cloud.firestore {
       let data = request.resource.data;
       return itemDocBase(nutritionDayAllowedKeys())
         && data.date is string
-        && (!('waterMl' in data) || data.waterMl is number);
+        && (!('waterMl' in data) || data.waterMl is number)
+        && (!('steps' in data) || data.steps is number)
+        && (!('isTrainingDay' in data) || data.isTrainingDay is bool);
     }
 
     function bodyDocOk() {

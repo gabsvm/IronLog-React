@@ -184,16 +184,16 @@ describe('Visual Redesign Critical Interactions & Corrective Logic', () => {
                 createExercise(2, undefined, [
                     { id: 4, type: 'avt_hop', completed: true }, // ignored
                     { id: 5, type: 'myorep', completed: true },
-                    { id: 6, type: 'drop', completed: false, skipped: true }, // skipped not counted as completed
+                    { id: 6, type: 'drop', completed: false, skipped: true }, // skipped excluded from totals & completion
                     { id: 7, type: 'regular', completed: false },
                 ]),
             ];
 
             const counts = countWorkingSets(exercises);
-            expect(counts.totalWorkingSets).toBe(5); // sets 2, 3, 5, 6, 7
+            expect(counts.totalWorkingSets).toBe(4); // sets 2, 3, 5, 7 (set 6 skipped)
             expect(counts.completedWorkingSets).toBe(3); // sets 2, 3, 5
-            expect(counts.remainingWorkingSets).toBe(2); // sets 6, 7
-            expect(counts.progressPct).toBe(60);
+            expect(counts.remainingWorkingSets).toBe(1); // set 7
+            expect(counts.progressPct).toBe(75);
         });
     });
 

@@ -71,7 +71,7 @@ export function countWorkingSets(
 
     for (const ex of exercises) {
         for (const s of (ex.sets || [])) {
-            if (isWorkingSet(s)) {
+            if (isWorkingSet(s) && !s.skipped) {
                 totalWorkingSets++;
                 if (s.completed) {
                     completedWorkingSets++;
@@ -116,29 +116,15 @@ export interface TemplateEligibilityMeso {
 }
 
 /**
- * Determines whether the current session qualifies for the "Actualizar plantilla"
- * (Update Template) toggle in the Finish Session sheet.
- *
- * Requirements:
- * - completed workout data exists (at least one completed working set);
- * - active mesocycle exists;
- * - session is a planned session belonging to that mesocycle (matching mesoId);
- * - dayIdx is a valid in-range program day (0 <= dayIdx < activeMeso.plan.length);
- * - target routine is user-editable;
- * - canonical KONG definitions are not directly mutated;
- * - detached sessions (Freestyle, WOD, Calisthenics) do not show the control.
+ * Checks structural eligibility of updating a planned mesocycle session template
+ * even before Set 1 has been logged (used by mid-session "Repeat for meso" swaps).
  */
-export function isTemplateUpdateEligible(
+export function isMesoSessionTemplateEligible(
     activeSession: TemplateEligibilitySession | null | undefined,
     activeMeso: TemplateEligibilityMeso | null | undefined
 ): boolean {
     if (!activeSession || !activeMeso) return false;
 
-    // 1. Completed workout data exists (at least one completed working set)
-    const { completedWorkingSets } = countWorkingSets(activeSession.exercises);
-    if (completedWorkingSets <= 0) return false;
-
-    // 2. Active session must belong to the active mesocycle
     if (
         activeSession.mesoId === undefined ||
         activeSession.mesoId === null ||
@@ -148,7 +134,6 @@ export function isTemplateUpdateEligible(
         return false;
     }
 
-    // 3. Detached sessions (Freestyle, WOD, Calisthenics, etc.)
     if (
         activeSession.isDetached ||
         activeSession.sessionType === 'freestyle' ||
@@ -158,12 +143,13 @@ export function isTemplateUpdateEligible(
         activeSession.type === 'freestyle' ||
         activeSession.type === 'wod' ||
         activeSession.type === 'calisthenics' ||
-        activeSession.type === 'two_block'
+        activeSession.type === 'two_block' ||
+        activeSession.isKong ||
+        (activeSession as any).isCalisthenics
     ) {
         return false;
     }
 
-    // 4. Day index must be valid and in-range for the planned routine
     if (
         typeof activeSession.dayIdx !== 'number' ||
         activeSession.dayIdx < 0 ||
@@ -173,7 +159,6 @@ export function isTemplateUpdateEligible(
         return false;
     }
 
-    // 5. Canonical KONG definitions are immutable and cannot be updated via template update
     const systemId = String(activeMeso.programSystem?.systemId || '').toLowerCase();
     const mesoId = String(activeMeso.id || '').toLowerCase();
     const mesoName = String(activeMeso.name || '').toLowerCase();
@@ -188,6 +173,22 @@ export function isTemplateUpdateEligible(
     ) {
         return false;
     }
+
+    return true;
+}
+
+/**
+ * Determines whether the current session qualifies for the "Actualizar plantilla"
+ * (Update Template) toggle in the Finish Session sheet.
+ */
+export function isTemplateUpdateEligible(
+    activeSession: TemplateEligibilitySession | null | undefined,
+    activeMeso: TemplateEligibilityMeso | null | undefined
+): boolean {
+    if (!isMesoSessionTemplateEligible(activeSession, activeMeso)) return false;
+
+    const { completedWorkingSets } = countWorkingSets(activeSession?.exercises);
+    if (completedWorkingSets <= 0) return false;
 
     return true;
 }

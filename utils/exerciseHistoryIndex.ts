@@ -120,22 +120,23 @@ export const buildExerciseHistoryIndex = (
                     summary.bestBodyweightWeight = externalWeight;
                 }
 
-                if (externalWeight > 0 && reps > 0) {
-                    const external1RM = estimate1RM(externalWeight, reps);
-                    if (external1RM > summary.bestWeighted1RM) {
-                        summary.bestWeighted1RM = external1RM;
+                const effectiveLoad = reps > 0 ? getEffectiveSetLoad(set, exercise, logBodyWeight) : 0;
+                const isAssisted = exercise.equipment === 'machine_assistance';
+
+                if (isAssisted ? (reps > 0 && effectiveLoad > 0) : (externalWeight > 0 && reps > 0)) {
+                    const rankWeight = isAssisted ? effectiveLoad : externalWeight;
+                    const weighted1RM = estimate1RM(rankWeight, reps);
+                    if (weighted1RM > summary.bestWeighted1RM) {
+                        summary.bestWeighted1RM = weighted1RM;
                         summary.bestWeightedWeight = set.weight;
                         summary.bestWeightedReps = set.reps;
                     }
                 }
 
-                if (reps > 0) {
-                    const effectiveLoad = getEffectiveSetLoad(set, exercise, logBodyWeight);
-                    if (effectiveLoad > 0) {
-                        const effective1RM = estimate1RM(effectiveLoad, reps);
-                        if (effective1RM > summary.bestEffective1RM) {
-                            summary.bestEffective1RM = effective1RM;
-                        }
+                if (reps > 0 && effectiveLoad > 0) {
+                    const effective1RM = estimate1RM(effectiveLoad, reps);
+                    if (effective1RM > summary.bestEffective1RM) {
+                        summary.bestEffective1RM = effective1RM;
                     }
                 }
             }

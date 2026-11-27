@@ -16,6 +16,7 @@ interface ColorPillProps {
 export const ColorPill: React.FC<ColorPillProps> = ({ color, active, onClick, label, checkDark }) => (
     <button
         type="button"
+        aria-pressed={active}
         onClick={onClick}
         className="flex flex-col items-center gap-1.5 transition-transform active:scale-95 group"
     >

@@ -212,7 +212,7 @@ export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat
                                 <div className="border-t border-border-subtle/60 px-3 py-2">
                                     {completed.length === 0 ? (
                                         <div className="px-2 py-3 text-xs text-zinc-500">{TRANSLATIONS[lang].copy.historyDetail.noCompletedSets}</div>
-                                    ) : (<><div className="grid grid-cols-[2rem_1fr_1fr] items-center gap-2 pb-1.5 text-center font-mono text-[10px] font-bold uppercase tracking-wider text-muted"><span>SET</span><span>{ex.muscle === 'CARDIO' ? 'DURATION' : unitLabel(unit).toUpperCase()}</span><span>{ex.muscle === 'CARDIO' ? 'DIST' : 'REPS'}</span></div>{completed.map((set, index) => {
+                                    ) : (<><div className="grid grid-cols-[2rem_1fr_1fr] items-center gap-2 pb-1.5 text-center font-mono text-[10px] font-bold uppercase tracking-wider text-muted"><span>SET</span><span>{ex.muscle === 'CARDIO' ? 'DURATION' : ex.isIsometric ? 'HOLD' : unitLabel(unit).toUpperCase()}</span><span>{ex.muscle === 'CARDIO' ? 'DIST' : ex.isIsometric ? 'RPE' : 'REPS'}</span></div>{completed.map((set, index) => {
                                         const isCardio = ex.muscle === 'CARDIO';
                                         return (
                                             <div key={`${set.id}-${index}`} className="grid grid-cols-[2rem_1fr_1fr] items-center gap-2 border-b border-border-subtle/30 py-2 last:border-0">
@@ -234,7 +234,7 @@ export const HistoryDetailView: React.FC<Props> = ({ log, lang, onBack, onRepeat
                                                         </>
                                                     )}
                                                 </div>
-                                                <div className="flex items-center justify-center gap-1.5 font-mono text-xs font-bold text-white">{isCardio ? (set.distance ? `${set.distance} km` : '—') : (<><span>{set.reps || 0}</span>{set.rpe !== '' && set.rpe != null && <span className="rounded-[3px] bg-surface-base px-1 py-0.5 text-[9px] font-extrabold text-muted">@{set.rpe}</span>}</>)}</div>
+                                                <div className="flex items-center justify-center gap-1.5 font-mono text-xs font-bold text-white">{isCardio ? (set.distance ? `${set.distance} km` : '—') : ex.isIsometric ? (set.rpe !== '' && set.rpe != null ? <span className="rounded-[3px] bg-surface-base px-1 py-0.5 text-[9px] font-extrabold text-muted">@{set.rpe}</span> : '—') : (<><span>{set.reps || 0}</span>{set.rpe !== '' && set.rpe != null && <span className="rounded-[3px] bg-surface-base px-1 py-0.5 text-[9px] font-extrabold text-muted">@{set.rpe}</span>}</>)}</div>
                                                     {/* RIR rendered in col 3 */}
                                                 {/* end col 3 */}
                                             </div>

@@ -62,4 +62,4 @@ const WorkoutSortableListComponent: React.FC<WorkoutSortableListProps> = ({
     );
 };
 
-export default WorkoutSortableListComponent;
+export default React.memo(WorkoutSortableListComponent);

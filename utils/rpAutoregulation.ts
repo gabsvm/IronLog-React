@@ -1,4 +1,5 @@
 import type {
+    EquipmentType,
     ExerciseDef,
     ExerciseFeedbackRecord,
     Log,
@@ -11,6 +12,7 @@ import type {
     WorkoutSet,
 } from '../types';
 import { getTranslated } from '../utils';
+import { resolveExerciseId } from './exerciseLibrary';
 import { PROGRESSION_STEP, toDisplay } from './units';
 
 export const EXERCISE_SFR_STORAGE_KEY = 'mevra_exercise_sfr_v1';
@@ -69,13 +71,15 @@ export const predictSetTarget = (input: {
     week: number;
     isDeload: boolean;
     isBodyweight?: boolean;
+    equipment?: EquipmentType;
     bodyWeightKg?: number;
 }): PredictiveSetTarget => {
     const prevW = Number(input.prevWeightKg) || 0;
     const prevR = Number(input.prevReps) || 0;
     const currW = Number(input.currentWeightKg) || 0;
+    const isAssisted = input.equipment === 'machine_assistance';
 
-    if (input.isBodyweight && prevW <= 0 && prevR > 0) {
+    if (input.isBodyweight && !isAssisted && prevW <= 0 && prevR > 0) {
         return {
             mode: 'reps',
             targetWeightKg: 0,
@@ -96,7 +100,9 @@ export const predictSetTarget = (input: {
     }
 
     if (input.isDeload) {
-        const deloadW = roundToStepKg(prevW * 0.85, input.unit);
+        const deloadW = isAssisted
+            ? roundToStepKg(prevW * 1.15, input.unit)
+            : roundToStepKg(prevW * 0.85, input.unit);
         const deloadR = Math.max(4, Math.round(prevR * 0.6));
         return {
             mode: 'reps',
@@ -107,7 +113,53 @@ export const predictSetTarget = (input: {
         };
     }
 
-    const bwOffset = input.isBodyweight ? Math.max(40, input.bodyWeightKg || 75) : 0;
+    const bodyW = Math.max(40, input.bodyWeightKg || 75);
+    if (isAssisted) {
+        const effPrevW = Math.max(5, bodyW - prevW);
+        const smallStep = Math.max(PROGRESSION_STEP[input.unit], prevW * 0.05);
+        const prescribedW = prevR < 10 ? Math.max(0, roundToStepKg(prevW - smallStep, input.unit)) : prevW;
+        const effectiveCurrExternalW = currW > 0 ? currW : prescribedW;
+        const effCurrW = Math.max(5, bodyW - effectiveCurrExternalW);
+        const pctDiff = Math.abs(effCurrW - effPrevW) / Math.max(5, effPrevW);
+
+        if (currW > 0 && pctDiff > 0.18) {
+            return {
+                mode: 'rir',
+                targetWeightKg: effectiveCurrExternalW,
+                targetReps: prevR,
+                targetRir: input.targetRir,
+                deltaType: 'rir_fallback',
+            };
+        }
+
+        const prevE1rm = effPrevW * (1 + prevR / 30);
+        const targetE1rm = prevE1rm * 1.015;
+        let matchedReps = Math.round(((targetE1rm / Math.max(5, effCurrW)) - 1) * 30);
+        if (Math.abs(effectiveCurrExternalW - prevW) < 0.25) {
+            matchedReps = Math.max(prevR + 1, matchedReps);
+        } else if (effectiveCurrExternalW > prevW) {
+            // More counterweight = easier -> require +2 reps
+            matchedReps = Math.max(prevR + 2, matchedReps);
+        } else {
+            // Less counterweight = harder
+            matchedReps = Math.max(1, Math.min(prevR, matchedReps));
+        }
+        const deltaType = currW > 0 && Math.abs(currW - prescribedW) >= 0.25
+            ? 'matched_weight'
+            : prescribedW < prevW
+                ? 'load_bump'
+                : 'rep_bump';
+
+        return {
+            mode: 'reps',
+            targetWeightKg: effectiveCurrExternalW,
+            targetReps: Math.max(1, matchedReps),
+            targetRir: input.targetRir,
+            deltaType,
+        };
+    }
+
+    const bwOffset = input.isBodyweight ? bodyW : 0;
     const effPrevW = prevW + bwOffset;
     const smallLoadBump = Math.max(PROGRESSION_STEP[input.unit], prevW * 0.025);
     const prescribedW = prevR < 10 ? roundToStepKg(prevW + smallLoadBump, input.unit) : prevW;
@@ -313,7 +365,11 @@ export const detectConsecutiveMissesAndEarlyDeload = (
             if (ex.muscle === 'CARDIO') continue;
             const currDone = (ex.sets || []).filter((s) => s.completed && !s.skipped && s.type !== 'warmup');
             if (!currDone.length) continue;
-            const currBest = currDone.reduce((best, s) => Math.max(best, Number(s.weight) * (1 + Number(s.reps) / 30)), 0);
+            const isAssisted = ex.equipment === 'machine_assistance';
+            const currBest = currDone.reduce((best, s) => {
+                const effW = isAssisted ? Math.max(5, 75 - Number(s.weight || 0)) : Number(s.weight);
+                return Math.max(best, effW * (1 + Number(s.reps) / 30));
+            }, 0);
 
             const prevMatch = priorLogs
                 .map((pl) => (pl.exercises || []).find((pe) => pe.id === ex.id))
@@ -321,7 +377,10 @@ export const detectConsecutiveMissesAndEarlyDeload = (
             if (!prevMatch) continue;
             const prevDone = (prevMatch.sets || []).filter((s) => s.completed && !s.skipped && s.type !== 'warmup');
             if (!prevDone.length) continue;
-            const prevBest = prevDone.reduce((best, s) => Math.max(best, Number(s.weight) * (1 + Number(s.reps) / 30)), 0);
+            const prevBest = prevDone.reduce((best, s) => {
+                const effW = isAssisted ? Math.max(5, 75 - Number(s.weight || 0)) : Number(s.weight);
+                return Math.max(best, effW * (1 + Number(s.reps) / 30));
+            }, 0);
 
             if (prevBest > 0 && currBest < prevBest * 0.96) {
                 missedIds.push(ex.id);
@@ -406,9 +465,9 @@ export const recordExerciseSfrFeedback = (
 
 export const getExerciseSfrScore = (record?: ExerciseFeedbackRecord): number => {
     if (!record) return 0;
-    const jointPenalty = record.jointPain >= 2 ? 4 : record.avgJointPain * 2;
-    const pumpBonus = record.avgPump * 1.5;
-    return Math.round((pumpBonus - jointPenalty) * 100) / 100;
+    const jointPenalty = record.jointPain >= 2 ? 3.5 : record.avgJointPain * 1.6;
+    const raw = 5.5 + record.avgPump * 2.0 - jointPenalty * 1.4;
+    return Math.round(Math.max(0, Math.min(10, raw)) * 10) / 10;
 };
 
 export const hasJointPainWarning = (record?: ExerciseFeedbackRecord): boolean => {
@@ -487,8 +546,28 @@ export const getExerciseSfrRanking = (
 ): ExerciseSfrRankEntry[] => {
     if (!history || typeof history !== 'object') return [];
     const byId = new Map((exercises || []).map((e) => [String(e.id), e]));
-    return Object.entries(history)
-        .filter(([, rec]) => rec && rec.count > 0)
+    const mergedRecords = new Map<string, ExerciseFeedbackRecord>();
+
+    for (const [rawId, rec] of Object.entries(history)) {
+        if (!rec || rec.count <= 0) continue;
+        const canonicalId = resolveExerciseId(exercises || [], String(rawId));
+        const existing = mergedRecords.get(canonicalId);
+        if (!existing) {
+            mergedRecords.set(canonicalId, { ...rec });
+        } else {
+            const totalCount = existing.count + rec.count;
+            const latest = (rec.updatedAt || 0) >= (existing.updatedAt || 0) ? rec : existing;
+            mergedRecords.set(canonicalId, {
+                ...latest,
+                avgJointPain: Number(((existing.avgJointPain * existing.count + rec.avgJointPain * rec.count) / totalCount).toFixed(2)),
+                avgPump: Number(((existing.avgPump * existing.count + rec.avgPump * rec.count) / totalCount).toFixed(2)),
+                count: totalCount,
+                updatedAt: Math.max(existing.updatedAt || 0, rec.updatedAt || 0),
+            });
+        }
+    }
+
+    return Array.from(mergedRecords.entries())
         .map(([exId, rec]) => {
             const def = byId.get(String(exId));
             return {

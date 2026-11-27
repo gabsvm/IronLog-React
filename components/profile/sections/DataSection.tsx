@@ -9,6 +9,7 @@ import { DriveBackupCard } from '../DriveBackupCard';
 import { useStore } from '../../../lib/store';
 import { resolveWeightUnit } from '../../../utils/units';
 import { shareFileOrDownload } from '../../../utils/shareFile';
+import { todayLocalDateKey } from '../../../utils/localDate';
 import { buildTrainingCsv } from '../../../services/trainingCsv';
 import { useCsvImportFlow } from '../useCsvImportFlow';
 
@@ -40,7 +41,7 @@ export const DataSection: React.FC<DataSectionProps> = ({
     const handleExportCsv = () => {
         const unit = resolveWeightUnit(config);
         const csv = buildTrainingCsv(logs, unit);
-        const filename = `mevra_history_${new Date().toISOString().slice(0, 10)}.csv`;
+        const filename = `mevra_history_${todayLocalDateKey()}.csv`;
         void shareFileOrDownload(csv, filename, 'text/csv');
     };
 
@@ -87,9 +88,9 @@ export const DataSection: React.FC<DataSectionProps> = ({
                         >
                             <Icon name="Download" size={14} /> {t.export}
                         </button>
-                        <label className="min-h-11 bg-[rgb(var(--surface-elevated))] border border-border-subtle rounded-[6px] text-xs font-bold cursor-pointer text-center flex items-center justify-center gap-2 hover:bg-primary-500/10 transition-colors">
+                        <label className="min-h-11 bg-[rgb(var(--surface-elevated))] border border-border-subtle rounded-[6px] text-xs font-bold cursor-pointer text-center flex items-center justify-center gap-2 hover:bg-primary-500/10 focus-within:ring-2 focus-within:ring-primary-500 transition-colors">
                             <Icon name="Upload" size={14} /> {t.import}
-                            <input type="file" onChange={onImportFile} accept=".json" className="hidden" />
+                            <input type="file" onChange={onImportFile} accept=".json" className="sr-only" />
                         </label>
                     </div>
                     <div className="grid grid-cols-2 gap-2 mt-2">
@@ -101,9 +102,9 @@ export const DataSection: React.FC<DataSectionProps> = ({
                         >
                             <Icon name="Download" size={14} /> {t.csv.exportBtn}
                         </button>
-                        <label className="min-h-11 bg-[rgb(var(--surface-elevated))] border border-border-subtle rounded-[6px] text-xs font-bold cursor-pointer text-center flex items-center justify-center gap-2 hover:bg-primary-500/10 transition-colors">
+                        <label className="min-h-11 bg-[rgb(var(--surface-elevated))] border border-border-subtle rounded-[6px] text-xs font-bold cursor-pointer text-center flex items-center justify-center gap-2 hover:bg-primary-500/10 focus-within:ring-2 focus-within:ring-primary-500 transition-colors">
                             <Icon name="Upload" size={14} /> {t.csv.importBtn}
-                            <input type="file" onChange={handleImportCsvFile} accept=".csv,text/csv" className="hidden" />
+                            <input type="file" onChange={handleImportCsvFile} accept=".csv,text/csv" className="sr-only" />
                         </label>
                     </div>
                     {csvError && (

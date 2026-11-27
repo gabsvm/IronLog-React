@@ -7,7 +7,7 @@ export interface ResetOptions {
     preservePreferences?: boolean; // If true, keeps lang/theme/effects preferences
 }
 
-const GAINSLAB_KEY_PREFIXES = ['il_', 'ironlog_', 'active_session'];
+const GAINSLAB_KEY_PREFIXES = ['il_', 'ironlog_', 'active_session', 'mevra_', 'repyntra_'];
 const PREFERENCE_KEYS = ['il_theme_v1', 'il_lang_v1', 'il_color_theme_v1', 'il_effects_mode'];
 
 /**

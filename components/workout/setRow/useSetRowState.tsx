@@ -1,6 +1,6 @@
 // U5: SetRow state and handlers, moved verbatim from components/workout/SetRow.tsx.
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { WorkoutSet, SetType, WeightUnit } from '../../../types';
+import { WorkoutSet, SetType, WeightUnit, EquipmentType } from '../../../types';
 import { Icon } from '../../ui/Icon';
 import { triggerHaptic } from '../../../utils/audio';
 import { TRANSLATIONS } from '../../../constants/translations';
@@ -17,6 +17,11 @@ export interface SetRowProps {
     lang: 'en' | 'es';
     isCardio?: boolean;
     isBodyweight?: boolean;
+    equipment?: EquipmentType;
+    isDeload?: boolean;
+    sessionWeek?: number;
+    bodyWeightKg?: number;
+    myorepMatchTargetReps?: number;
     isIsometric?: boolean;
     isometricTargetSecs?: number;  // countdown mode for isometric
     setIndex?: number;
@@ -36,7 +41,7 @@ export interface SetRowProps {
 export const useSetRowState = ({
     set, exInstanceId,
     onUpdate, onToggleComplete, onChangeType,
-    lang, isCardio, isBodyweight, isIsometric, isometricTargetSecs,
+    lang, isCardio, isBodyweight, equipment, isDeload = false, sessionWeek = 2, bodyWeightKg, myorepMatchTargetReps, isIsometric, isometricTargetSecs,
     setIndex, badgeLabel, tutorialId, disableTypeChange, isActiveProtocolSet, isNextSet, showRIR = false, targetRir = 3,
     unit = 'kg',
     onAddSet, onDeleteSet, onModifySets,
@@ -44,6 +49,7 @@ export const useSetRowState = ({
     const t = TRANSLATIONS[lang];
     const sr = t.setRow;
     const isDone = set.completed;
+    const isSkipped = Boolean(set.skipped);
     const setType = set.type || 'regular';
     // For regular sets: show the set number (1-based index) instead of the
     // opaque bullet glyph gives instant orientation ("I'm on set 2 of 3").
@@ -333,32 +339,36 @@ export const useSetRowState = ({
 
     const weightPlaceholder = set.hintWeight ? String(shownWeight(set.hintWeight)) : '0';
     const predictiveTarget = useMemo(() => {
-        if (isDone || isCardio || isIsometric) return null;
+        if (isDone || isSkipped || isCardio || isIsometric) return null;
         if (!set.prevReps) return null;
-        if (!isBodyweight && !set.prevWeight) return null;
+        if (!isBodyweight && equipment !== 'machine_assistance' && !set.prevWeight) return null;
         const currKg = Number(storedWeight(localWeight));
-        if (!Number.isFinite(currKg) || (!isBodyweight && currKg <= 0) || (isBodyweight && currKg < 0)) return null;
+        if (!Number.isFinite(currKg) || (!isBodyweight && equipment !== 'machine_assistance' && currKg <= 0) || ((isBodyweight || equipment === 'machine_assistance') && currKg < 0)) return null;
         const result = predictSetTarget({
             prevWeightKg: set.prevWeight,
             prevReps: set.prevReps,
             currentWeightKg: currKg,
             unit,
             targetRir: typeof set.targetRpe === 'number' ? set.targetRpe : targetRir,
-            week: 2,
-            isDeload: false,
+            week: sessionWeek,
+            isDeload,
             isBodyweight,
+            equipment,
+            bodyWeightKg,
         });
         if (result.deltaType !== 'matched_weight' && result.deltaType !== 'rir_fallback' && !(isBodyweight && localWeight !== '')) return null;
         return result;
-    }, [isBodyweight, isDone, isCardio, isIsometric, localWeight, set.prevReps, set.prevWeight, set.targetRpe, storedWeight, targetRir, unit]);
+    }, [bodyWeightKg, equipment, isBodyweight, isDeload, isDone, isSkipped, isCardio, isIsometric, localWeight, sessionWeek, set.prevReps, set.prevWeight, set.targetRpe, storedWeight, targetRir, unit]);
 
     const repsPlaceholder = predictiveTarget
         ? (predictiveTarget.mode === 'rir' ? `${predictiveTarget.targetRir} RIR` : String(predictiveTarget.targetReps))
-        : set.hintReps
-            ? String(set.hintReps)
-            : typeof set.prescribedReps === 'number'
-                ? String(set.prescribedReps)
-                : `${set.targetRpe ?? targetRir ?? 3} RIR`;
+        : setType === 'myorep_match' && myorepMatchTargetReps && myorepMatchTargetReps > 0
+            ? `Match ${myorepMatchTargetReps}`
+            : set.hintReps
+                ? String(set.hintReps)
+                : typeof set.prescribedReps === 'number'
+                    ? String(set.prescribedReps)
+                    : `${set.targetRpe ?? targetRir ?? 3} RIR`;
     // Target (before the actual inputs) from fields the state already exposes: hintWeight x prescribedReps/hintReps, plus targetRpe as RIR when present.
     const targetWeightText = set.hintWeight !== undefined && set.hintWeight !== '' ? `${shownWeight(set.hintWeight)}${weightSuffix}` : null; const targetRirText = set.targetRpe !== undefined ? `RIR ${set.targetRpe}` : null; const targetRepsValue = set.prescribedReps ?? set.hintReps; const prescriptionHint = set.prescribedReps === 'FAILURE' ? [t.targetFailure, targetWeightText, targetRirText].filter(Boolean).join(' - ') : (targetWeightText || targetRepsValue !== undefined || targetRirText) ? `OBJ: ${[targetWeightText && targetRepsValue !== undefined ? `${targetWeightText} x ${targetRepsValue}` : targetWeightText ?? (targetRepsValue !== undefined ? `${targetRepsValue}` : null), targetRirText].filter(Boolean).join(' - ')}` : null;
 
@@ -434,6 +444,7 @@ export const useSetRowState = ({
         t,
         sr,
         isDone,
+        isSkipped,
         setType,
         effectiveBadgeLabel,
         shownWeight,

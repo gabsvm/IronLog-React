@@ -54,7 +54,7 @@ export const buildWorkoutLog = (
     startTime: activeSession.startTime || endTime,
     endTime,
     duration,
-    bodyWeightSnapshot: userProfile?.bodyWeight,
+    bodyWeightSnapshot: activeSession.bodyWeightSnapshot ?? userProfile?.bodyWeight,
     mesoId: activeSession.mesoId ?? -1,
     week: activeSession.week ?? -1,
     exercises: (activeSession.exercises || []).map((ex) => ({

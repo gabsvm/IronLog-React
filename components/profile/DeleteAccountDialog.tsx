@@ -35,6 +35,15 @@ export const DeleteAccountDialog: React.FC<DeleteAccountDialogProps> = ({ open, 
         }
     }, [open ]);
 
+    useEffect(() => {
+        if (!open) return;
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && !deleting) onClose();
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, [open, deleting, onClose]);
+
     if (!open) return null;
 
     const canDelete = password.length > 0 && confirmWord.trim().toUpperCase() === t.confirmWord.toUpperCase() && !deleting;
@@ -55,7 +64,7 @@ export const DeleteAccountDialog: React.FC<DeleteAccountDialogProps> = ({ open, 
     return (
         <div
             className="modal-backdrop fixed inset-0 z-confirm backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-base"
-            onClick={onClose}
+            onClick={() => { if (!deleting) onClose(); }}
             role="alertdialog"
             aria-modal="true"
             aria-labelledby="delete-account-title"

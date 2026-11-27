@@ -8,7 +8,7 @@ const TemplateSelector = React.lazy(() => import('./TemplateSelector').then(m =>
 const PaywallModal = React.lazy(() => import('../../components/pro/PaywallModal').then(m => ({ default: m.PaywallModal })));
 
 export const HomeEmptyState: React.FC<{ state: HomeViewState }> = ({ state }) => {
-    const { onStartFreeSession, globalTemplates, personalTemplates, lang, t, h, showPaywall, setShowPaywall, featureAttempted, showTemplateSelector, setShowTemplateSelector, handleOpenTemplateSelector, handleSelectTemplate, handleSelectProgram, handleCreateCustom } = state;
+    const { onStartFreeSession, globalTemplates, personalTemplates, lang, t, h, checkPro, showPaywall, setShowPaywall, featureAttempted, showTemplateSelector, setShowTemplateSelector, handleOpenTemplateSelector, handleSelectTemplate, handleSelectProgram, handleCreateCustom } = state;
     return (
         <>
             <div className="flex flex-col items-center justify-center h-full p-6 text-center space-y-8 bg-[rgb(var(--surface-app))]">
@@ -73,6 +73,7 @@ export const HomeEmptyState: React.FC<{ state: HomeViewState }> = ({ state }) =>
                         t={t}
                         lang={lang}
                         onSelectProgram={handleSelectProgram}
+                        checkPro={checkPro}
                     />
                     </Suspense>
                 )}

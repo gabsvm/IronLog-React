@@ -31,7 +31,7 @@ export interface HomeViewPropsWithSubView extends HomeViewProps {
 
 export const HomeView: React.FC<HomeViewPropsWithSubView> = (props) => {
     const state = useHomeViewState(props);
-    const { onEditProgram, onStartFreeSession, logs, lang, tutorialProgress, markTutorialSeen, config, activeMeso, t, h, showPaywall, setShowPaywall, featureAttempted, showCompleteModal, setShowCompleteModal, showMesoSettings, setShowMesoSettings, showPlanActions, setShowPlanActions, showTemplateSelector, setShowTemplateSelector, handleOpenTemplateSelector, handleSelectTemplate, handleSelectProgram, handleCreateCustom, personalTemplates, globalTemplates, skipConfirmationId, setSkipConfirmationId, showGuidelines, setShowGuidelines, transitionBlock, showKongHub, setShowKongHub, closeTransition, currentGuidelineImages, currentGuideId, safeProgram, safeLogs, confirmSkip, handleFinishMeso, handleFinishWeek, homeTutorialSteps, selectedDayIdx, startSession, activeSession, uniqueDaysDone, handleSkipClick } = state;
+    const { onEditProgram, onStartFreeSession, logs, lang, tutorialProgress, markTutorialSeen, config, activeMeso, t, h, checkPro, showPaywall, setShowPaywall, featureAttempted, showCompleteModal, setShowCompleteModal, showMesoSettings, setShowMesoSettings, showPlanActions, setShowPlanActions, showTemplateSelector, setShowTemplateSelector, handleOpenTemplateSelector, handleSelectTemplate, handleSelectProgram, handleCreateCustom, personalTemplates, globalTemplates, skipConfirmationId, setSkipConfirmationId, showGuidelines, setShowGuidelines, transitionBlock, showKongHub, setShowKongHub, closeTransition, currentGuidelineImages, currentGuideId, safeProgram, safeLogs, confirmSkip, handleFinishMeso, handleFinishWeek, homeTutorialSteps, selectedDayIdx, startSession, activeSession, uniqueDaysDone, handleSkipClick } = state;
 
     React.useEffect(() => {
         if (props.initialSubView === 'mesos' || props.initialSubView === 'workout') {
@@ -47,8 +47,7 @@ export const HomeView: React.FC<HomeViewPropsWithSubView> = (props) => {
                         inline
                         onClose={() => setShowTemplateSelector(false)}
                         onSelectTemplate={(tpl) => {
-                            handleSelectTemplate(tpl);
-                            if (typeof window !== 'undefined') {
+                            if (handleSelectTemplate(tpl) && typeof window !== 'undefined') {
                                 window.dispatchEvent(new CustomEvent('gainslab:navigate', { detail: { view: 'home' } }));
                             }
                         }}
@@ -59,6 +58,7 @@ export const HomeView: React.FC<HomeViewPropsWithSubView> = (props) => {
                             }
                         }}
                         onCreateCustom={handleCreateCustom}
+                        checkPro={checkPro}
                         lang={lang}
                         t={t}
                         templates={[...personalTemplates, ...globalTemplates]}
@@ -228,6 +228,7 @@ export const HomeView: React.FC<HomeViewPropsWithSubView> = (props) => {
                         onSelectTemplate={handleSelectTemplate}
                         onSelectProgram={handleSelectProgram}
                         onCreateCustom={handleCreateCustom}
+                        checkPro={checkPro}
                         lang={lang}
                         t={t}
                         templates={[...personalTemplates, ...globalTemplates]}

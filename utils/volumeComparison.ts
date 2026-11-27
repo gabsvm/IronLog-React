@@ -1,4 +1,5 @@
-import type { WorkoutSet } from '../types';
+import type { EquipmentType, VolumeCountingMode, WorkoutSet } from '../types';
+import { getSetLoadVolume, getVolumeMultiplier } from './trainingMetrics';
 
 /**
  * Per-exercise "this session vs last session" figure shown on the expanded
@@ -29,10 +30,28 @@ const num = (value: unknown): number => {
     return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
 };
 
-const sumCounted = (sets: readonly WorkoutSet[], kind: VolumeComparisonKind): number => {
+interface SumCountedOptions {
+    isBodyweight?: boolean;
+    equipment?: EquipmentType;
+    volumeCountingMode?: VolumeCountingMode;
+    bodyWeight?: number;
+}
+
+const sumCounted = (sets: readonly WorkoutSet[], kind: VolumeComparisonKind, opts: SumCountedOptions = {}): number => {
     let total = 0;
+    const multiplier = getVolumeMultiplier({ volumeCountingMode: opts.volumeCountingMode });
     for (const set of sets) {
-        total += kind === 'reps' ? num(set.reps) : num(set.weight) * num(set.reps);
+        if (kind === 'reps') {
+            total += num(set.reps) * multiplier;
+        } else if (opts.equipment === 'machine_assistance' || (opts.isBodyweight && (opts.bodyWeight ?? 0) > 0)) {
+            total += getSetLoadVolume(set, {
+                isBodyweight: !!opts.isBodyweight,
+                equipment: opts.equipment,
+                volumeCountingMode: opts.volumeCountingMode,
+            }, opts.bodyWeight);
+        } else {
+            total += num(set.weight) * num(set.reps) * multiplier;
+        }
     }
     return total;
 };
@@ -46,19 +65,19 @@ export const hasCountedSets = (sets: readonly WorkoutSet[] | null | undefined): 
 export const getVolumeComparison = (
     currentSets: readonly WorkoutSet[],
     previousSets: readonly WorkoutSet[] | null | undefined,
-    opts: { isBodyweight?: boolean; isIsometric?: boolean; isCardio?: boolean },
+    opts: { isBodyweight?: boolean; isIsometric?: boolean; isCardio?: boolean; equipment?: EquipmentType; volumeCountingMode?: VolumeCountingMode; bodyWeight?: number },
 ): VolumeComparison | null => {
     if (opts.isCardio || opts.isIsometric) return null;
     const previousCounted = (previousSets ?? []).filter(isCountedSet);
     if (previousCounted.length === 0) return null;
 
     const kind: VolumeComparisonKind = opts.isBodyweight ? 'reps' : 'volume';
-    if (sumCounted(previousCounted, kind) <= 0) return null;
+    if (sumCounted(previousCounted, kind, opts) <= 0) return null;
 
     const currentCounted = currentSets.filter(isCountedSet);
     const done = currentCounted.length;
     const basis = done > 0 && done < previousCounted.length ? previousCounted.slice(0, done) : previousCounted;
-    const previous = sumCounted(basis, kind);
-    const current = sumCounted(currentCounted, kind);
+    const previous = sumCounted(basis, kind, opts);
+    const current = sumCounted(currentCounted, kind, opts);
     return { kind, current, previous, delta: done > 0 ? current - previous : null };
 };

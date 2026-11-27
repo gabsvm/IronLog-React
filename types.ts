@@ -152,6 +152,7 @@ export interface ActiveSession {
   name: string;
   startTime: number | null;
   endTime?: number;
+  bodyWeightSnapshot?: number;
   mesoId: number;
   week: number;
   exercises: SessionExercise[];
@@ -239,6 +240,7 @@ export interface MesoCycle {
   };
   deloadStage?: DeloadStage;
   condensedDeload?: boolean;
+  preDeloadProgram?: ProgramDay[];
   maxSetsPerExercise?: number | null;
   volumeProfile?: VolumeProgressionProfile;
   skipDeloadAccessories?: boolean;

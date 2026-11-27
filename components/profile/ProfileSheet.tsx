@@ -36,7 +36,12 @@ interface ProfileSheetProps {
  * Q18: orchestrator only — each section lives in sections/ with its own
  * state and dialogs; behavior is unchanged.
  */
-export const ProfileSheet: React.FC<ProfileSheetProps> = ({
+export const ProfileSheet: React.FC<ProfileSheetProps> = (props) => {
+    if (!props.open) return null;
+    return <ProfileSheetContent {...props} />;
+};
+
+const ProfileSheetContent: React.FC<ProfileSheetProps> = ({
     open, onClose, initialSection, onOpenProgram, onOpenExercises,
     onReset, onExport, onForceSync, onImportFile, onLogin, isSyncing,
 }) => {

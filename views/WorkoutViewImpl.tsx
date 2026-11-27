@@ -134,6 +134,13 @@ export const WorkoutView: React.FC<WorkoutViewProps> = (props) => {
                             return acc;
                         }, {})}
                         sessionWeek={activeSession.week}
+                        trainedMusclesInMeso={Array.from(
+                            new Set(
+                                (state.logs || [])
+                                    .filter(l => !l.skipped && l.mesoId === activeSession.mesoId)
+                                    .flatMap(l => (l.exercises || []).map(e => e.muscle))
+                            )
+                        )}
                         prefilledSoreness={activeSession.sorenessCheckins}
                         prefilledJointPain={activeSession.inlineJointPain}
                         onCancel={() => setShowFeedbackModal(false)}
