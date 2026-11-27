@@ -63,6 +63,11 @@ export const useWorkoutViewState = ({ onFinish, onDiscard, onBack, onOpenReorder
     } = ctrl;
 
     const [showAdvancedSetTypes, setShowAdvancedSetTypes] = useState(false);
+    const [detailInitialTab, setDetailInitialTab] = useState<'guide' | 'edit' | 'history'>('guide');
+    const openDetailExercise = useCallback((ex: typeof sessionExercises[number] | null, tab: 'guide' | 'edit' | 'history' = 'guide') => {
+        setDetailInitialTab(tab);
+        setDetailExercise(ex);
+    }, [setDetailExercise]);
     const [manualRestPreset, setManualRestPreset] = useState<number>(90);
     const [kongSubPrompt, setKongSubPrompt] = useState<{ slotId: string; exId: string } | null>(null);
     const [kongReorderPrompt, setKongReorderPrompt] = useState<{ oldIndex: number; newIndex: number } | null>(null);
@@ -421,6 +426,8 @@ export const useWorkoutViewState = ({ onFinish, onDiscard, onBack, onOpenReorder
         dismissPRSuccess,
         detailExercise,
         setDetailExercise,
+        detailInitialTab,
+        openDetailExercise,
         handleSetUpdate,
         handleSetTypeAll,
         handleAddSet,

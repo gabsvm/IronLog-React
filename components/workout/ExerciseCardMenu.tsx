@@ -12,7 +12,7 @@ interface Props {
     cardioMode: CardioType;
     hasSuperset: boolean;
     isLinking: boolean;
-    onOpenDetail?: (ex: SessionExercise) => void;
+    onOpenDetail?: (ex: SessionExercise, initialTab?: 'guide' | 'edit' | 'history') => void;
     onNewNote?: () => void;
     onMoveUp?: () => void;
     onMoveDown?: () => void;
@@ -82,6 +82,19 @@ export const ExerciseCardMenu: React.FC<Props> = ({
                         <div className="px-3.5 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
                             {pickLang(lang, { es: 'Ejercicio', en: 'Exercise' })}
                         </div>
+
+                        {onOpenDetail && (
+                            <button
+                                type="button"
+                                data-testid="card-menu-edit-exercise"
+                                onClick={(e) => { e.stopPropagation(); onClose(); onOpenDetail(ex, 'edit'); }}
+                                role="menuitem"
+                                className="flex min-h-10 w-full items-center gap-3 px-3.5 py-2 text-left text-[13px] font-medium text-zinc-200 transition-colors hover:bg-white/5 active:bg-white/10"
+                            >
+                                <Icon name="Pencil" size={16} className="shrink-0 text-primary-400" />
+                                <span className="flex-1">{pickLang(lang, { es: 'Editar ejercicio', en: 'Edit exercise' })}</span>
+                            </button>
+                        )}
 
                         {onNewNote && (
                             <button

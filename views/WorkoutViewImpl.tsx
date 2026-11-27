@@ -20,7 +20,7 @@ const TutorialOverlay = React.lazy(() => import('../components/ui/TutorialOverla
 // Container Component
 export const WorkoutView: React.FC<WorkoutViewProps> = (props) => {
     const state = useWorkoutViewState(props);
-    const { sessionExercises, setOpenMenuId, showFeedbackModal, setShowFeedbackModal, replacingExId, setReplacingExId, replaceFilter, setReplaceFilter, addingExercise, setAddingExercise, warmupExId, setWarmupExId, showPRSuccess, dismissPRSuccess, detailExercise, setDetailExercise, handleDiscardSession, showDiscardConfirm, setShowDiscardConfirm, handleSaveFeedback, reorderSessionExercises, lang, config, tutorialProgress, markTutorialSeen, activeSession, setActiveMeso, t, w, kongSubPrompt, setKongSubPrompt, kongReorderPrompt, setKongReorderPrompt, handleAddExercise, handleReplace, workoutTutorialSteps } = state;
+    const { sessionExercises, setOpenMenuId, showFeedbackModal, setShowFeedbackModal, replacingExId, setReplacingExId, replaceFilter, setReplaceFilter, addingExercise, setAddingExercise, warmupExId, setWarmupExId, showPRSuccess, dismissPRSuccess, detailExercise, detailInitialTab, openDetailExercise, handleDiscardSession, showDiscardConfirm, setShowDiscardConfirm, handleSaveFeedback, reorderSessionExercises, lang, config, tutorialProgress, markTutorialSeen, activeSession, setActiveMeso, t, w, kongSubPrompt, setKongSubPrompt, kongReorderPrompt, setKongReorderPrompt, handleAddExercise, handleReplace, workoutTutorialSteps } = state;
 
     if (!activeSession) return null;
 
@@ -42,7 +42,8 @@ export const WorkoutView: React.FC<WorkoutViewProps> = (props) => {
                 <Suspense fallback={null}>
                     <ExerciseDetailModal
                         exercise={detailExercise}
-                        onClose={() => setDetailExercise(null)}
+                        initialTab={detailInitialTab}
+                        onClose={() => openDetailExercise(null)}
                     />
                 </Suspense>
             )}

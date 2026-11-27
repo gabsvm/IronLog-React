@@ -10,13 +10,14 @@ const ConfirmModal = React.lazy(() => import('../../components/ui/ConfirmModal')
 const ExerciseSelector = React.lazy(() => import('../../components/ui/ExerciseSelector').then(m => ({ default: m.ExerciseSelector })));
 
 export const ExercisesDialogs: React.FC<{ state: ExercisesViewState }> = ({ state }) => {
-    const { exercises, lang, t, ev, detailEx, setDetailEx, pendingDeleteReport, setPendingDeleteReport, unreferencedDeleteId, setUnreferencedDeleteId, replacingExerciseId, setReplacingExerciseId, pendingReplacementCandidate, setPendingReplacementCandidate, mergingExerciseId, mergeCandidate, setMergeCandidate, handleConfirmPermanentDelete, handleArchiveFromReport, handleStartReplaceFlow, handleExecuteReplacement, handleCancelMerge, handleConfirmMerge } = state;
+    const { exercises, lang, t, ev, detailEx, setDetailEx, detailInitialTab, pendingDeleteReport, setPendingDeleteReport, unreferencedDeleteId, setUnreferencedDeleteId, replacingExerciseId, setReplacingExerciseId, pendingReplacementCandidate, setPendingReplacementCandidate, mergingExerciseId, mergeCandidate, setMergeCandidate, handleConfirmPermanentDelete, handleArchiveFromReport, handleStartReplaceFlow, handleExecuteReplacement, handleCancelMerge, handleConfirmMerge } = state;
     return (
         <>
             {/* Exercise Detail Modal */}
             {detailEx && (
                 <ExerciseDetailModal
                     exercise={detailEx}
+                    initialTab={detailInitialTab}
                     onClose={() => setDetailEx(null)}
                 />
             )}

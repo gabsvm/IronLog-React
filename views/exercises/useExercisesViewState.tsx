@@ -35,6 +35,11 @@ export const useExercisesViewState = ({ onBack }: ExercisesViewProps) => {
 
     // Detail Modal State
     const [detailEx, setDetailEx] = useState<ExerciseDef | null>(null);
+    const [detailInitialTab, setDetailInitialTab] = useState<'guide' | 'edit' | 'history'>('guide');
+    const openDetail = (ex: ExerciseDef, tab: 'guide' | 'edit' | 'history' = 'guide') => {
+        setDetailInitialTab(tab);
+        setDetailEx(ex);
+    };
 
     // Delete / Archive / Replace Modal State
     const [pendingDeleteReport, setPendingDeleteReport] = useState<ExerciseReferenceReport | null>(null);
@@ -51,20 +56,29 @@ export const useExercisesViewState = ({ onBack }: ExercisesViewProps) => {
     // Create State
     const [newName, setNewName] = useState('');
     const [newMuscle, setNewMuscle] = useState<MuscleGroup>('CHEST');
+    const [newEquipment, setNewEquipment] = useState<EquipmentType>('machine');
+    const [newIsBodyweight, setNewIsBodyweight] = useState<boolean>(false);
     const [newVolumeCountingMode, setNewVolumeCountingMode] = useState<VolumeCountingMode>('total');
 
     const handleCreate = () => {
         if (!newName.trim()) return;
+        const resolvedEquipment: EquipmentType = newIsBodyweight && newEquipment !== 'bodyweight_loadable'
+            ? 'bodyweight'
+            : newEquipment;
         const newEx: ExerciseDef = {
             id: `custom_${Date.now()}`,
             name: newName.trim(),
             muscle: newMuscle,
+            equipment: resolvedEquipment,
+            isBodyweight: newIsBodyweight,
             volumeCountingMode: newVolumeCountingMode,
             isCustom: true,
         };
         setExercises(prev => [...prev, newEx]);
         setMode('list');
         setNewName('');
+        setNewEquipment('machine');
+        setNewIsBodyweight(false);
         triggerHaptic('success');
     };
 
@@ -213,7 +227,7 @@ export const useExercisesViewState = ({ onBack }: ExercisesViewProps) => {
                     {/* Main card button (no nested buttons inside!) */}
                     <button
                         type="button"
-                        onClick={() => setDetailEx(ex)}
+                        onClick={() => openDetail(ex, 'guide')}
                         className="flex-1 min-w-0 text-left pr-2 flex flex-col justify-center focus:outline-none"
                         aria-label={pickLang(lang, { es: `Detalles de ${getTranslated(ex.name, lang)}`, en: `Details of ${getTranslated(ex.name, lang)}` })}
                     >
@@ -307,7 +321,21 @@ export const useExercisesViewState = ({ onBack }: ExercisesViewProps) => {
 
                         <button
                             type="button"
-                            onClick={() => setDetailEx(ex)}
+                            data-testid={`edit-exercise-btn-${ex.id}`}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                openDetail(ex, 'edit');
+                            }}
+                            className="flex min-h-9 min-w-9 items-center justify-center rounded-[4px] p-2 text-zinc-400 hover:bg-primary-500/10 hover:text-primary-400 transition-colors"
+                            title={pickLang(lang, { es: 'Editar ejercicio', en: 'Edit exercise' })}
+                            aria-label={`${pickLang(lang, { es: 'Editar', en: 'Edit' })}: ${getTranslated(ex.name, lang)}`}
+                        >
+                            <Icon name="Pencil" size={16} />
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => openDetail(ex, 'guide')}
                             className="p-2 text-zinc-400 hover:text-white rounded-[4px] hover:bg-surface-elevated transition-colors"
                             aria-label={pickLang(lang, { es: 'Ver detalles', en: 'View details' })}
                         >
@@ -345,6 +373,8 @@ export const useExercisesViewState = ({ onBack }: ExercisesViewProps) => {
         setFilterCategory,
         detailEx,
         setDetailEx,
+        detailInitialTab,
+        openDetail,
         pendingDeleteReport,
         setPendingDeleteReport,
         unreferencedDeleteId,
@@ -361,6 +391,10 @@ export const useExercisesViewState = ({ onBack }: ExercisesViewProps) => {
         setNewName,
         newMuscle,
         setNewMuscle,
+        newEquipment,
+        setNewEquipment,
+        newIsBodyweight,
+        setNewIsBodyweight,
         newVolumeCountingMode,
         setNewVolumeCountingMode,
         handleCreate,

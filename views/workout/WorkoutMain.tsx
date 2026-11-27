@@ -710,7 +710,7 @@ export const WorkoutMain: React.FC<{ state: WorkoutViewState }> = ({ state }) =>
                                         onSetTypeChange={handleSetTypeChange}
                                         onAddSet={handleAddSet}
                                         onDeleteSet={handleDeleteSet}
-                                        onOpenDetail={setDetailExercise}
+                                        onOpenDetail={state.openDetailExercise}
                                         onLink={setLinkingId}
                                         onReplace={setReplacingExId}
                                         onEditMuscle={setEditingMuscleId}

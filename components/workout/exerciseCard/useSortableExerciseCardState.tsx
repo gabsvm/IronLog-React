@@ -18,7 +18,7 @@ export interface SortableExerciseCardProps {
     onSetTypeChange: (exId: number, setId: number, type: SetType) => void;
     onAddSet: (id: number) => void;
     onDeleteSet: (exId: number, setId: number) => void;
-    onOpenDetail?: (ex: SessionExercise) => void;
+    onOpenDetail?: (ex: SessionExercise, initialTab?: 'guide' | 'edit' | 'history') => void;
     onLink: (id: number | null) => void;
     onReplace: (id: number | null) => void;
     onEditMuscle: (id: number | null) => void;

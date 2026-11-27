@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
-import { TRANSLATIONS } from '../../constants';
-import { ExerciseDef, Log, SessionExercise, VolumeCountingMode } from '../../types';
+import { MUSCLE_GROUPS, TRANSLATIONS } from '../../constants';
+import { EquipmentType, ExerciseDef, GlobalTemplate, Log, MuscleGroup, ProgramDay, SessionExercise, VolumeCountingMode } from '../../types';
 import { Icon } from './Icon';
 import { getTranslated } from '../../utils';
 import { pickLang } from '../../utils/i18n';
-import { getEquipmentLabel, inferExerciseEquipment } from '../../utils/equipment';
+import { ALL_EQUIPMENT_TYPES, getEquipmentLabel, inferExerciseEquipment } from '../../utils/equipment';
 import { resolveWeightUnit, toDisplay, unitLabel } from '../../utils/units';
 import { exerciseIdGroup } from '../../utils/exerciseLibrary';
+import { statsCache } from '../../services/statsCache';
+import { triggerHaptic } from '../../utils/audio';
 import { Button } from './Button';
 import { ProgressChart } from '../stats/ProgressChart';
 import { Sheet } from './Sheet';
@@ -28,9 +30,22 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler);
 
+export type ExerciseDetailTab = 'guide' | 'edit' | 'history';
+
+export function extractYouTubeVideoId(raw: string): string | undefined {
+    const trimmed = raw.trim();
+    if (!trimmed) return undefined;
+    const directMatch = trimmed.match(/^([A-Za-z0-9_-]{11})$/);
+    if (directMatch) return directMatch[1];
+    const urlMatch = trimmed.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/))([A-Za-z0-9_-]{11})/);
+    if (urlMatch) return urlMatch[1];
+    return undefined;
+}
+
 interface ExerciseDetailModalProps {
     exercise: ExerciseDef;
     onClose: () => void;
+    initialTab?: ExerciseDetailTab;
 }
 
 // Muscle → color map for the visual hint card
@@ -152,13 +167,18 @@ const YouTubeCard: React.FC<{ videoId: string; title: string; youtubeUrl: string
     );
 };
 
-export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exercise, onClose }) => {
+export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exercise, onClose, initialTab }) => {
     const appCtx = useApp() as any;
-    const { lang, logs, exercises, setExercises, setLogs } = appCtx;
+    const { lang, logs, exercises, setExercises, setLogs, setProgram, setPersonalTemplates } = appCtx;
     const config = appCtx?.config || {};
     const t = TRANSLATIONS[lang];
-    const [activeTab, setActiveTab] = useState<'guide' | 'history'>('guide');
+    const [activeTab, setActiveTab] = useState<ExerciseDetailTab>(initialTab || 'guide');
+    const [nameDraft, setNameDraft] = useState<string>(() => String(getTranslated(exercise.name, lang) || ''));
+    const [muscleDraft, setMuscleDraft] = useState<MuscleGroup>(exercise.muscle || 'CHEST');
+    const [equipmentDraft, setEquipmentDraft] = useState<EquipmentType>(() => inferExerciseEquipment(exercise));
+    const [isBodyweightDraft, setIsBodyweightDraft] = useState<boolean>(Boolean(exercise.isBodyweight));
     const [volumeCountingMode, setVolumeCountingMode] = useState<VolumeCountingMode>(exercise.volumeCountingMode || 'total');
+    const [videoInputDraft, setVideoInputDraft] = useState<string>(exercise.videoId || '');
     const exerciseNote = (exercise as any).note || '';
     const [pinnedNoteDraft, setPinnedNoteDraft] = useState<string>(exercise.pinnedNote || exerciseNote);
     const setActiveSession = useStore(state => state.setActiveSession);
@@ -168,13 +188,29 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
     const [chartLoading, setChartLoading] = useState(false);
 
     useEffect(() => {
+        if (initialTab) {
+            setActiveTab(initialTab);
+        }
+    }, [initialTab, exercise.id]);
+
+    useEffect(() => {
+        setNameDraft(String(getTranslated(exercise.name, lang) || ''));
+        setMuscleDraft(exercise.muscle || 'CHEST');
+        setEquipmentDraft(inferExerciseEquipment({
+            id: exercise.id,
+            name: exercise.name,
+            equipment: exercise.equipment,
+            isBodyweight: exercise.isBodyweight,
+        }));
+        setIsBodyweightDraft(Boolean(exercise.isBodyweight));
         setVolumeCountingMode(exercise.volumeCountingMode || 'total');
+        setVideoInputDraft(exercise.videoId || '');
         setPinnedNoteDraft(exercise.pinnedNote || exerciseNote);
-    }, [exercise.id, exercise.volumeCountingMode, exercise.pinnedNote, exerciseNote]);
+    }, [exercise.id, exercise.name, exercise.muscle, exercise.equipment, exercise.isBodyweight, exercise.volumeCountingMode, exercise.videoId, exercise.pinnedNote, exerciseNote, lang]);
 
     const unit = resolveWeightUnit(config);
     const uLabel = unitLabel(unit);
-    const equipLabel = getEquipmentLabel(inferExerciseEquipment(exercise), lang);
+    const equipLabel = getEquipmentLabel(equipmentDraft, lang);
 
     const historySessions = useMemo(() => {
         const safeLogs = Array.isArray(logs) ? (logs as Log[]) : [];
@@ -206,7 +242,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
     useEffect(() => {
         if (activeTab === 'history' && isWorkerReady) {
             setChartLoading(true);
-            const metric = exercise.muscle === 'CARDIO' ? 'duration' : '1rm';
+            const metric = muscleDraft === 'CARDIO' ? 'duration' : '1rm';
             const safeLogs = Array.isArray(logs) ? logs : [];
             // Merged duplicates share one history chart (canonical group).
             calculateChartData(safeLogs, exerciseIdGroup(exercises, String(exercise.id)), metric).then(points => {
@@ -216,59 +252,145 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
         }
         // `calculateChartData` from useStatsWorker is stable across renders.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeTab, isWorkerReady, exercise.id, logs, exercise.muscle, exercises]);
+    }, [activeTab, isWorkerReady, exercise.id, logs, muscleDraft, exercises]);
 
     const translatedName = getTranslated(exercise.name, lang);
+    const liveTitle = nameDraft.trim() || String(translatedName);
     const translatedInstructions = getTranslated(exercise.instructions, lang);
+    const parsedVideoId = extractYouTubeVideoId(videoInputDraft);
+    const activeVideoId = parsedVideoId ?? (videoInputDraft.trim() ? undefined : undefined);
 
-    const youtubeUrl = exercise.videoId
-        ? `https://www.youtube.com/watch?v=${exercise.videoId}`
-        : `https://www.youtube.com/results?search_query=${encodeURIComponent(String(translatedName) + ' technique tutorial')}`;
+    const youtubeUrl = activeVideoId
+        ? `https://www.youtube.com/watch?v=${activeVideoId}`
+        : `https://www.youtube.com/results?search_query=${encodeURIComponent(liveTitle + ' technique tutorial')}`;
 
-    const saveVolumeCountingMode = () => {
+    const resolveUpdatedName = (existingName: ExerciseDef['name'], trimmed: string): ExerciseDef['name'] => {
+        if (typeof existingName === 'object' && existingName !== null) {
+            const enVal = (existingName.en || '').trim();
+            const esVal = (existingName.es || '').trim();
+            if (exercise.isCustom || enVal === esVal) {
+                return { en: trimmed, es: trimmed };
+            }
+            return { ...existingName, [lang]: trimmed };
+        }
+        return trimmed;
+    };
+
+    const saveExerciseChanges = () => {
+        const trimmedName = nameDraft.trim();
+        if (!trimmedName) return;
+
         const trimmedPin = pinnedNoteDraft.trim() || undefined;
-        const updateExercise = <T extends ExerciseDef>(item: T): T => (
-            item.id === exercise.id ? { ...item, volumeCountingMode, pinnedNote: trimmedPin } : item
+        const nextVideoId = extractYouTubeVideoId(videoInputDraft);
+        const nextEquipment: EquipmentType = isBodyweightDraft && equipmentDraft !== 'bodyweight_loadable' && equipmentDraft !== 'bodyweight'
+            ? 'bodyweight'
+            : equipmentDraft;
+
+        const patchExercise = <T extends ExerciseDef>(item: T): T => (
+            item.id === exercise.id
+                ? {
+                    ...item,
+                    name: resolveUpdatedName(item.name, trimmedName),
+                    muscle: muscleDraft,
+                    equipment: nextEquipment,
+                    isBodyweight: isBodyweightDraft,
+                    volumeCountingMode,
+                    videoId: nextVideoId,
+                    pinnedNote: trimmedPin,
+                }
+                : item
         ) as T;
 
-        setExercises(prev => prev.map(updateExercise));
-        setLogs(prev => prev.map(log => ({
+        setExercises((prev: ExerciseDef[]) => (prev || []).map(patchExercise));
+        setLogs((prev: Log[]) => (prev || []).map(log => ({
             ...log,
-            exercises: (log.exercises || []).map(updateExercise),
+            exercises: (log.exercises || []).map(patchExercise),
         })));
         setActiveSession(session => session ? {
             ...session,
             exercises: session.exercises.map(item =>
                 item.id === exercise.id
-                    ? { ...item, volumeCountingMode, pinnedNote: trimmedPin, note: trimmedPin ?? item.note, notePinned: Boolean(trimmedPin) }
+                    ? {
+                        ...patchExercise(item),
+                        note: trimmedPin !== undefined ? trimmedPin : (item.notePinned ? undefined : item.note),
+                        notePinned: Boolean(trimmedPin),
+                    }
                     : item
             ),
         } : session);
+
+        if (typeof setProgram === 'function') {
+            setProgram((prev: ProgramDay[]) => (prev || []).map(day => ({
+                ...day,
+                slots: (day.slots || []).map(slot =>
+                    slot.exerciseId === exercise.id ? { ...slot, muscle: muscleDraft } : slot
+                ),
+            })));
+        }
+
+        if (typeof setPersonalTemplates === 'function') {
+            setPersonalTemplates((prev: GlobalTemplate[]) => (prev || []).map(tpl => ({
+                ...tpl,
+                program: (tpl.program || []).map(day => ({
+                    ...day,
+                    slots: (day.slots || []).map(slot =>
+                        slot.exerciseId === exercise.id ? { ...slot, muscle: muscleDraft } : slot
+                    ),
+                })),
+            })));
+        }
+
+        try {
+            void statsCache.invalidateChartCache?.();
+        } catch {
+            // Non-blocking in isolated test environments without IndexedDB
+        }
+        triggerHaptic('success');
         onClose();
+    };
+
+    const previewExercise: ExerciseDef = {
+        ...exercise,
+        name: liveTitle,
+        muscle: muscleDraft,
+        equipment: equipmentDraft,
+        isBodyweight: isBodyweightDraft,
+        volumeCountingMode,
+        videoId: activeVideoId,
     };
 
     return (
         <Sheet
             open={true}
             onOpenChange={(o) => { if (!o) onClose(); }}
-            title={String(translatedName)}
-            description={`${resolveMuscleLabel(exercise.muscle, lang)} · ${equipLabel}`}
+            title={liveTitle}
+            description={`${resolveMuscleLabel(muscleDraft, lang)} · ${equipLabel}`}
             accent="primary"
             contentId="exercise-detail-scroll"
             dragHandleOnly
             footer={
                 <div className="flex gap-3">
                     <Button fullWidth onClick={onClose} variant="secondary" className="rounded-[6px]">{t.close}</Button>
-                    {activeTab === 'guide' && (
-                        <Button fullWidth onClick={saveVolumeCountingMode} className="rounded-[6px]">{TRANSLATIONS[lang].copy.exerciseDetailModal.save}</Button>
+                    {(activeTab === 'guide' || activeTab === 'edit') && (
+                        <Button
+                            fullWidth
+                            onClick={saveExerciseChanges}
+                            disabled={!nameDraft.trim()}
+                            data-testid="exercise-detail-save"
+                            className="rounded-[6px]"
+                        >
+                            {TRANSLATIONS[lang].copy.exerciseDetailModal.save}
+                        </Button>
                     )}
                 </div>
             }
         >
-            {/* 2-Way Segmented Tabs (1:1 RP: Detail | History) */}
+            {/* 3-Way Segmented Tabs: Detail | Edit | History */}
             <div role="tablist" className="mx-4 mt-3 flex rounded-[6px] border border-border-subtle bg-surface-raised p-1">
                 <button
+                    type="button"
                     role="tab"
+                    data-testid="exercise-tab-guide"
                     aria-selected={activeTab === 'guide'}
                     onClick={() => setActiveTab('guide')}
                     className={`flex-1 rounded-[4px] py-2 text-xs font-bold uppercase tracking-wider transition-colors ${
@@ -280,7 +402,23 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                     {pickLang(lang, { es: 'Detalle', en: 'Detail' })}
                 </button>
                 <button
+                    type="button"
                     role="tab"
+                    data-testid="exercise-tab-edit"
+                    aria-selected={activeTab === 'edit'}
+                    onClick={() => setActiveTab('edit')}
+                    className={`flex-1 rounded-[4px] py-2 text-xs font-bold uppercase tracking-wider transition-colors ${
+                        activeTab === 'edit'
+                            ? 'bg-primary-500 text-zinc-950 shadow-sm'
+                            : 'text-zinc-400 hover:text-white'
+                    }`}
+                >
+                    {pickLang(lang, { es: 'Editar', en: 'Edit' })}
+                </button>
+                <button
+                    type="button"
+                    role="tab"
+                    data-testid="exercise-tab-history"
                     aria-selected={activeTab === 'history'}
                     onClick={() => setActiveTab('history')}
                     className={`flex-1 rounded-[4px] py-2 text-xs font-bold uppercase tracking-wider transition-colors ${
@@ -301,19 +439,19 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                     <>
                         {/* Video / Visual Section */}
                         <div className="mt-4 mx-4 overflow-hidden rounded-[8px] border border-border-subtle bg-black">
-                            {exercise.videoId ? (
+                            {activeVideoId ? (
                                 <YouTubeCard
-                                    videoId={exercise.videoId}
-                                    title={String(translatedName)}
+                                    videoId={activeVideoId}
+                                    title={liveTitle}
                                     youtubeUrl={youtubeUrl}
                                 />
                             ) : (
-                                <ExerciseVisualHint exercise={exercise} lang={lang} />
+                                <ExerciseVisualHint exercise={previewExercise} lang={lang} />
                             )}
                         </div>
 
                         {/* Search on YouTube fallback link */}
-                        {!exercise.videoId && (
+                        {!activeVideoId && (
                             <div
                                 data-testid="youtube-search-fallback-bar"
                                 className="flex items-center justify-between px-4 py-2.5 mx-4 mt-2 rounded-[6px] border border-border-subtle bg-surface-raised"
@@ -360,8 +498,8 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                                 </div>
                             </div>
 
-                            {exercise.muscle !== 'CARDIO' && (() => {
-                                const sfrCue = getExerciseSfrCue(exercise.muscle);
+                            {muscleDraft !== 'CARDIO' && (() => {
+                                const sfrCue = getExerciseSfrCue(muscleDraft);
                                 const sfrHistory = loadExerciseSfrHistory();
                                 const record = sfrHistory[exercise.id];
                                 const sfrScore = record ? getExerciseSfrScore(record) : null;
@@ -377,7 +515,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                                                 <span>{pickLang(lang, { es: 'Cues RP & Optimización SFR', en: 'RP Form Cues & SFR Guide' })}</span>
                                             </h4>
                                             {sfrScore !== null && (
-                                                <span className="rounded-[4px] border border-emerald-500/30 bg-emerald-500/15 px-2 py-0.5 text-[11px] font-black text-emerald-300 tabular-nums">
+                                                <span className="rounded-[4px] border border-emerald-500/30 bg-emerald-500/15 px-2 py-0.5 text-xs font-black text-emerald-300 tabular-nums">
                                                     {`SFR ${sfrScore}/10`}
                                                 </span>
                                             )}
@@ -421,7 +559,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                                         <button
                                             type="button"
                                             onClick={() => setPinnedNoteDraft('')}
-                                            className="text-[11px] font-semibold text-zinc-400 hover:text-white"
+                                            className="text-xs font-semibold text-zinc-400 hover:text-white"
                                         >
                                             {pickLang(lang, { es: 'Limpiar', en: 'Clear' })}
                                         </button>
@@ -439,7 +577,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                                 />
                             </div>
 
-                            {exercise.muscle !== 'CARDIO' && (
+                            {muscleDraft !== 'CARDIO' && (
                                 <div>
                                     <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400 mb-3 flex items-center gap-2">
                                         <Icon name="Dumbbell" size={13} /> {TRANSLATIONS[lang].copy.exerciseDetailModal.tonnageCalculation}
@@ -476,6 +614,226 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                             )}
                         </div>
                     </>
+                ) : activeTab === 'edit' ? (
+                    <div className="p-5 space-y-5" data-testid="exercise-edit-tab">
+                        {/* Exercise Name */}
+                        <div>
+                            <label
+                                htmlFor="edit-exercise-name-input"
+                                className="mb-2 block text-xs font-bold uppercase tracking-wider text-zinc-400"
+                            >
+                                {t.exName}
+                            </label>
+                            <input
+                                id="edit-exercise-name-input"
+                                data-testid="edit-exercise-name"
+                                type="text"
+                                value={nameDraft}
+                                onChange={(e) => setNameDraft(e.target.value)}
+                                placeholder={pickLang(lang, { es: 'Ej: Curl de Bíceps en Polea', en: 'e.g., Cable Biceps Curl' })}
+                                className="w-full min-h-11 rounded-[6px] border border-border-subtle bg-surface-raised px-3.5 py-2.5 text-sm font-semibold text-white placeholder:text-zinc-500 outline-none focus:border-primary-500 transition-colors"
+                            />
+                        </div>
+
+                        {/* Muscle Group */}
+                        <div>
+                            <div className="mb-2 flex items-center justify-between gap-2">
+                                <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                                    {t.selectMuscle}
+                                </span>
+                                <span className="text-xs font-bold text-primary-400">
+                                    {resolveMuscleLabel(muscleDraft, lang)}
+                                </span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2" data-testid="edit-muscle-grid">
+                                {Object.values(MUSCLE_GROUPS).map((m) => (
+                                    <button
+                                        key={m}
+                                        type="button"
+                                        data-testid={`edit-muscle-${m}`}
+                                        aria-pressed={muscleDraft === m}
+                                        onClick={() => setMuscleDraft(m)}
+                                        className={`min-h-10 rounded-[6px] border px-3 py-2 text-xs font-bold uppercase tracking-wider transition-colors ${
+                                            muscleDraft === m
+                                                ? 'border-primary-500 bg-primary-500 text-zinc-950'
+                                                : 'border-border-subtle bg-surface-raised text-zinc-300 hover:border-zinc-600 hover:text-white'
+                                        }`}
+                                    >
+                                        {TRANSLATIONS[lang].muscle[m]}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Equipment Type (9 RP categories) */}
+                        <div>
+                            <div className="mb-2 flex items-center justify-between gap-2">
+                                <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                                    {pickLang(lang, { es: 'Equipamiento / Tipo', en: 'Equipment / Type' })}
+                                </span>
+                                <span className="text-xs font-bold text-zinc-300">{equipLabel}</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2" data-testid="edit-equipment-grid">
+                                {ALL_EQUIPMENT_TYPES.map((eq) => (
+                                    <button
+                                        key={eq.id}
+                                        type="button"
+                                        data-testid={`edit-equipment-${eq.id}`}
+                                        aria-pressed={equipmentDraft === eq.id}
+                                        onClick={() => {
+                                            setEquipmentDraft(eq.id);
+                                            setIsBodyweightDraft(eq.id === 'bodyweight' || eq.id === 'bodyweight_loadable');
+                                        }}
+                                        className={`min-h-10 rounded-[6px] border px-3 py-2 text-left text-xs font-bold transition-colors ${
+                                            equipmentDraft === eq.id
+                                                ? 'border-primary-500 bg-primary-500/15 text-primary-300'
+                                                : 'border-border-subtle bg-surface-raised text-zinc-300 hover:border-zinc-600 hover:text-white'
+                                        }`}
+                                    >
+                                        {pickLang(lang, eq.label)}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Bodyweight Toggle */}
+                        <label
+                            htmlFor="edit-exercise-bw-checkbox"
+                            className="flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-[6px] border border-border-subtle bg-surface-raised px-3.5 py-2.5"
+                        >
+                            <div>
+                                <span className="block text-sm font-bold text-white">
+                                    {pickLang(lang, { es: 'Ejercicio de peso corporal (BW)', en: 'Bodyweight exercise (BW)' })}
+                                </span>
+                                <span className="block text-xs text-zinc-400">
+                                    {pickLang(lang, { es: 'Usa tu peso corporal o lastre añadido', en: 'Uses bodyweight or added external load' })}
+                                </span>
+                            </div>
+                            <input
+                                id="edit-exercise-bw-checkbox"
+                                data-testid="edit-exercise-bw"
+                                type="checkbox"
+                                checked={isBodyweightDraft}
+                                onChange={(e) => {
+                                    const checked = e.target.checked;
+                                    setIsBodyweightDraft(checked);
+                                    if (checked && equipmentDraft !== 'bodyweight' && equipmentDraft !== 'bodyweight_loadable') {
+                                        setEquipmentDraft('bodyweight');
+                                    } else if (!checked && (equipmentDraft === 'bodyweight' || equipmentDraft === 'bodyweight_loadable')) {
+                                        setEquipmentDraft('machine');
+                                    }
+                                }}
+                                className="h-5 w-5 accent-primary-500"
+                            />
+                        </label>
+
+                        {/* Volume Counting Mode */}
+                        {muscleDraft !== 'CARDIO' && (
+                            <div>
+                                <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400 mb-2 flex items-center gap-2">
+                                    <Icon name="Dumbbell" size={13} /> {TRANSLATIONS[lang].copy.exerciseDetailModal.tonnageCalculation}
+                                </h4>
+                                <div className="space-y-2">
+                                    <button
+                                        type="button"
+                                        data-testid="edit-volume-total"
+                                        aria-pressed={volumeCountingMode === 'total'}
+                                        onClick={() => setVolumeCountingMode('total')}
+                                        className={`w-full text-left rounded-[6px] border p-3 transition-colors ${
+                                            volumeCountingMode === 'total'
+                                                ? 'border-primary-500 bg-primary-500/10'
+                                                : 'border-border-subtle bg-surface-raised hover:border-zinc-600'
+                                        }`}
+                                    >
+                                        <span className="block text-sm font-bold text-white">{TRANSLATIONS[lang].copy.exerciseDetailModal.recordedTotal1}</span>
+                                        <span className="block mt-1 text-xs text-zinc-400">{TRANSLATIONS[lang].copy.exerciseDetailModal.forBarsBilateralMachines}</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        data-testid="edit-volume-per-side"
+                                        aria-pressed={volumeCountingMode === 'per_side'}
+                                        onClick={() => setVolumeCountingMode('per_side')}
+                                        className={`w-full text-left rounded-[6px] border p-3 transition-colors ${
+                                            volumeCountingMode === 'per_side'
+                                                ? 'border-primary-500 bg-primary-500/10'
+                                                : 'border-border-subtle bg-surface-raised hover:border-zinc-600'
+                                        }`}
+                                    >
+                                        <span className="block text-sm font-bold text-white">{TRANSLATIONS[lang].copy.exerciseDetailModal.perSide2}</span>
+                                        <span className="block mt-1 text-xs text-zinc-400">{TRANSLATIONS[lang].copy.exerciseDetailModal.whenYouRecordLoad}</span>
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* YouTube Video URL or ID */}
+                        <div>
+                            <div className="mb-2 flex items-center justify-between gap-2">
+                                <label
+                                    htmlFor="edit-exercise-video-input"
+                                    className="text-xs font-bold uppercase tracking-wider text-zinc-400"
+                                >
+                                    {pickLang(lang, { es: 'Video YouTube (URL o ID)', en: 'YouTube Video (URL or ID)' })}
+                                </label>
+                                {parsedVideoId && (
+                                    <span className="text-xs font-mono font-bold text-emerald-400">{`ID: ${parsedVideoId}`}</span>
+                                )}
+                            </div>
+                            <input
+                                id="edit-exercise-video-input"
+                                data-testid="edit-exercise-video"
+                                type="text"
+                                value={videoInputDraft}
+                                onChange={(e) => setVideoInputDraft(e.target.value)}
+                                placeholder="https://youtu.be/... o dQw4w9WgXcQ"
+                                className="w-full min-h-11 rounded-[6px] border border-border-subtle bg-surface-raised px-3.5 py-2.5 text-sm text-white placeholder:text-zinc-500 outline-none focus:border-primary-500 transition-colors"
+                            />
+                        </div>
+
+                        {/* Pinned Note */}
+                        <div>
+                            <div className="mb-2 flex items-center justify-between">
+                                <label
+                                    htmlFor="edit-exercise-pinned-note"
+                                    className="text-xs font-bold uppercase tracking-wider text-zinc-400"
+                                >
+                                    {pickLang(lang, { es: 'Nota técnica fijada', en: 'Pinned technique note' })}
+                                </label>
+                                {pinnedNoteDraft.trim() && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setPinnedNoteDraft('')}
+                                        className="text-xs font-semibold text-zinc-400 hover:text-white"
+                                    >
+                                        {pickLang(lang, { es: 'Limpiar', en: 'Clear' })}
+                                    </button>
+                                )}
+                            </div>
+                            <textarea
+                                id="edit-exercise-pinned-note"
+                                data-testid="edit-exercise-pinned-note"
+                                rows={2}
+                                value={pinnedNoteDraft}
+                                onChange={(e) => setPinnedNoteDraft(e.target.value)}
+                                placeholder={pickLang(lang, {
+                                    es: 'Ajustes de banco/polea, rango 8-12 reps o cues clave...',
+                                    en: 'Bench/cable setup, 8-12 rep target, or key cues...',
+                                })}
+                                className="w-full rounded-[6px] border border-border-subtle bg-surface-raised p-3 text-sm text-white placeholder:text-zinc-500 outline-none focus:border-primary-500 resize-none"
+                            />
+                        </div>
+
+                        {/* Live Propagation Notice */}
+                        <div className="flex items-start gap-2.5 rounded-[8px] border border-primary-500/20 bg-primary-500/10 p-3 text-xs text-primary-200 leading-relaxed">
+                            <Icon name="Info" size={15} className="mt-0.5 shrink-0 text-primary-400" />
+                            <span>
+                                {pickLang(lang, {
+                                    es: 'Al guardar se actualiza la biblioteca, la sesión activa, tus rutinas/plantillas e historial sin perder tus series registradas.',
+                                    en: 'Saving updates your library, active workout, routines/templates, and history without losing logged sets.',
+                                })}
+                            </span>
+                        </div>
+                    </div>
                 ) : (
                     <div className="p-5 space-y-4">
                         <div className="rounded-[8px] border border-border-subtle bg-surface-raised p-4">
@@ -487,7 +845,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                             </div>
                             <ProgressChart
                                 dataPoints={chartData}
-                                metric={exercise.muscle === 'CARDIO' ? 'duration' : '1rm'}
+                                metric={muscleDraft === 'CARDIO' ? 'duration' : '1rm'}
                                 loading={chartLoading}
                             />
                         </div>
@@ -501,7 +859,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({ exerci
                                     <div key={entry.id} className="rounded-[8px] border border-border-subtle bg-surface-raised p-3.5 space-y-2">
                                         <div className="flex items-center justify-between gap-2">
                                             <span className="text-xs font-bold text-white truncate">{entry.name}</span>
-                                            <span className="text-[11px] font-medium text-zinc-400 shrink-0 tabular-nums">{entry.dateLabel}</span>
+                                            <span className="text-xs font-medium text-zinc-400 shrink-0 tabular-nums">{entry.dateLabel}</span>
                                         </div>
                                         {entry.note && (
                                             <p className="text-xs text-amber-300/90 italic">{entry.note}</p>
